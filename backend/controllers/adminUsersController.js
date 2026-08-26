@@ -252,7 +252,7 @@ exports.getAllPsychologists = async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
         const offset = (page - 1) * limit;
-        const { search, status, plano, isVip, notAnalyzed } = req.query;
+        const { search, status, plano, isVip, notAnalyzed, utmChannel, startDate, endDate } = req.query;
         const whereClause = {};
         let isParanoid = true; 
         if (search) {
@@ -295,11 +295,44 @@ exports.getAllPsychologists = async (req, res) => {
                 whereClause.status = status;
             }
         }
+        
+        if (utmChannel) {
+            if (utmChannel === 'utm_whatsapp') {
+                whereClause.utm_source = 'whatsapp';
+            } else if (utmChannel === 'utm_meta') {
+                whereClause.utm_source = { [Op.in]: ['meta_ads', 'facebook', 'instagram'] };
+            } else if (utmChannel === 'utm_instagram_bio') {
+                whereClause.utm_source = 'instagram_bio';
+            } else if (utmChannel === 'utm_google') {
+                whereClause.utm_source = 'google';
+            } else if (utmChannel === 'utm_outros') {
+                whereClause.utm_source = {
+                    [Op.or]: [
+                        { [Op.is]: null },
+                        { [Op.notIn]: ['whatsapp', 'meta_ads', 'facebook', 'instagram', 'google', 'instagram_bio'] }
+                    ]
+                };
+            }
+        }
+        
+        if (startDate && endDate) {
+            whereClause.createdAt = {
+                [Op.between]: [new Date(startDate + 'T00:00:00.000Z'), new Date(endDate + 'T23:59:59.999Z')]
+            };
+        }
+        
         if (plano) whereClause.plano = plano;
         if (isVip === 'true') whereClause.is_exempt = true;
         if (notAnalyzed === 'true') {
             whereClause.isProfileAnalyzed = { [Op.ne]: true };
             whereClause.status = { [Op.in]: ['active', 'pending'] }; // Foca nos reais
+        }
+        let dateFilterQuery = '';
+        const replacements = {};
+        if (startDate && endDate) {
+            dateFilterQuery = ` AND "createdAt" BETWEEN :startDate AND :endDate `;
+            replacements.startDate = new Date(startDate + 'T00:00:00.000Z');
+            replacements.endDate = new Date(endDate + 'T23:59:59.999Z');
         }
 
         const kpisQuery = `
@@ -315,11 +348,17 @@ exports.getAllPsychologists = async (req, res) => {
                 COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram')) as utm_meta,
                 COUNT(*) FILTER (WHERE utm_source = 'instagram_bio') as utm_instagram_bio,
                 COUNT(*) FILTER (WHERE utm_source = 'google') as utm_google,
-                COUNT(*) FILTER (WHERE utm_source IS NULL OR utm_source NOT IN ('whatsapp', 'meta_ads', 'facebook', 'instagram', 'google', 'instagram_bio')) as utm_outros
+                COUNT(*) FILTER (WHERE utm_source IS NULL OR utm_source NOT IN ('whatsapp', 'meta_ads', 'facebook', 'instagram', 'google', 'instagram_bio')) as utm_outros,
+                
+                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram') AND status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as meta_paying,
+                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram') AND status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND "planExpiresAt" > NOW()) as meta_trial,
+                COUNT(*) FILTER (WHERE utm_source = 'google' AND status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as google_paying,
+                COUNT(*) FILTER (WHERE utm_source = 'google' AND status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND "planExpiresAt" > NOW()) as google_trial
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL AND ("isAdmin" IS NULL OR "isAdmin" = false)
+            ${dateFilterQuery}
         `;
-        const [kpiResults] = await db.sequelize.query(kpisQuery, { type: db.sequelize.QueryTypes.SELECT });
+        const [kpiResults] = await db.sequelize.query(kpisQuery, { type: db.sequelize.QueryTypes.SELECT, replacements });
 
         const { count, rows } = await db.Psychologist.findAndCountAll({
             where: whereClause,
@@ -348,7 +387,7 @@ exports.getAllPatients = async (req, res) => {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
         const offset = (page - 1) * limit;
-        const { search, status } = req.query;
+        const { search, status, utmChannel, startDate, endDate } = req.query;
         const whereClause = {};
         let isParanoid = true; 
 
@@ -382,6 +421,38 @@ exports.getAllPatients = async (req, res) => {
                 whereClause.status = status;
             }
         }
+        
+        if (utmChannel) {
+            if (utmChannel === 'utm_whatsapp') {
+                whereClause.utm_source = 'whatsapp';
+            } else if (utmChannel === 'utm_meta') {
+                whereClause.utm_source = { [Op.in]: ['meta_ads', 'facebook', 'instagram'] };
+            } else if (utmChannel === 'utm_instagram_bio') {
+                whereClause.utm_source = 'instagram_bio';
+            } else if (utmChannel === 'utm_google') {
+                whereClause.utm_source = 'google';
+            } else if (utmChannel === 'utm_outros') {
+                whereClause.utm_source = {
+                    [Op.or]: [
+                        { [Op.is]: null },
+                        { [Op.notIn]: ['whatsapp', 'meta_ads', 'facebook', 'instagram', 'google', 'instagram_bio'] }
+                    ]
+                };
+            }
+        }
+        
+        if (startDate && endDate) {
+            whereClause.createdAt = {
+                [Op.between]: [new Date(startDate + 'T00:00:00.000Z'), new Date(endDate + 'T23:59:59.999Z')]
+            };
+        }
+        let dateFilterQuery = '';
+        const replacements = {};
+        if (startDate && endDate) {
+            dateFilterQuery = ` AND "createdAt" BETWEEN :startDate AND :endDate `;
+            replacements.startDate = new Date(startDate + 'T00:00:00.000Z');
+            replacements.endDate = new Date(endDate + 'T23:59:59.999Z');
+        }
 
         const kpisQuery = `
             SELECT 
@@ -396,8 +467,9 @@ exports.getAllPatients = async (req, res) => {
                 COUNT(*) FILTER (WHERE "deletedAt" IS NOT NULL) as deleted
             FROM "Patients"
             WHERE ("deletedAt" IS NULL OR "deletedAt" IS NOT NULL)
+            ${dateFilterQuery}
         `;
-        const [kpiResults] = await db.sequelize.query(kpisQuery, { type: db.sequelize.QueryTypes.SELECT });
+        const [kpiResults] = await db.sequelize.query(kpisQuery, { type: db.sequelize.QueryTypes.SELECT, replacements });
 
         const { count, rows } = await db.Patient.findAndCountAll({
             where: whereClause,

@@ -54,6 +54,18 @@
     </div>
 
     <div class="container">
+        <!-- Controles de Data -->
+        <div style="background: white; padding: 15px 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <label style="font-weight: 600; font-size: 0.9rem; color: #475569;">Período:</label>
+                <input type="date" id="date-start" style="padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                <span style="color: #64748b;">até</span>
+                <input type="date" id="date-end" style="padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                <button onclick="applyDateFilter()" style="padding: 8px 15px; border: none; border-radius: 6px; background: #8b5cf6; color: white; font-weight: 600; cursor: pointer;">Aplicar Datas</button>
+            </div>
+            <div style="font-size: 0.8rem; color: #64748b;">Padrão: Últimos 30 dias</div>
+        </div>
+
         <!-- 1. Macro KPIs -->
         <div class="grid-3col">
             <div class="stat-card">
@@ -90,6 +102,31 @@
             </div>
         </div>
 
+        <!-- KPIs Cruzados de B2B -->
+        <h2 class="section-title">Resumo de Conversões B2B (Período Filtrado)</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+            <div class="stat-card" style="padding: 15px;">
+                <div class="stat-card-title">Meta Ads</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <div><span style="font-size:1.2rem; font-weight:800; color:#1d4ed8;" id="kpi-meta-trial">...</span><br><span style="font-size:0.75rem; color:#64748b;">Trials</span></div>
+                    <div><span style="font-size:1.2rem; font-weight:800; color:#059669;" id="kpi-meta-paying">...</span><br><span style="font-size:0.75rem; color:#64748b;">Assinantes</span></div>
+                </div>
+            </div>
+            <div class="stat-card" style="padding: 15px;">
+                <div class="stat-card-title">Google Ads</div>
+                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                    <div><span style="font-size:1.2rem; font-weight:800; color:#b91c1c;" id="kpi-google-trial">...</span><br><span style="font-size:0.75rem; color:#64748b;">Trials</span></div>
+                    <div><span style="font-size:1.2rem; font-weight:800; color:#059669;" id="kpi-google-paying">...</span><br><span style="font-size:0.75rem; color:#64748b;">Assinantes</span></div>
+                </div>
+            </div>
+            <div class="stat-card" style="padding: 15px;">
+                <div class="stat-card-title">WhatsApp (Manual)</div>
+                <div style="margin-top: 10px;">
+                    <span style="font-size:1.5rem; font-weight:800; color:#15803d;" id="kpi-wpp-total">...</span><br><span style="font-size:0.75rem; color:#64748b;">Total de Cadastros</span>
+                </div>
+            </div>
+        </div>
+
         <!-- 4. Leads B2B (Psicólogos) -->
         <h2 class="section-title">Leads B2B Captados (Psicólogos)</h2>
         <div style="margin-bottom: 15px; display: flex; gap: 10px;">
@@ -104,9 +141,10 @@
                 <option value="all">Todos os Canais</option>
                 <option value="utm_meta">Meta Ads</option>
                 <option value="utm_google">Google Ads</option>
+                <option value="utm_whatsapp">WhatsApp</option>
                 <option value="utm_outros">Orgânico/Outros</option>
             </select>
-            <button onclick="loadB2BLeads()" style="padding:8px 15px; border:none; border-radius:6px; background:#111827; color:white; cursor:pointer;">Filtrar</button>
+            <button onclick="currentPageB2B = 1; loadB2BLeads()" style="padding:8px 15px; border:none; border-radius:6px; background:#111827; color:white; cursor:pointer;">Filtrar B2B</button>
         </div>
         <table id="table-b2b">
             <thead>
@@ -121,6 +159,7 @@
                 <tr><td colspan="4">Carregando psicólogos...</td></tr>
             </tbody>
         </table>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;" id="b2b-pagination"></div>
 
         <!-- 5. Leads B2C (Pacientes) -->
         <h2 class="section-title" style="margin-top: 50px;">Leads B2C Captados (Pacientes)</h2>
@@ -131,7 +170,7 @@
                 <option value="utm_meta">Meta Ads</option>
                 <option value="utm_outros">Orgânico/Outros</option>
             </select>
-            <button onclick="loadB2CLeads()" style="padding:8px 15px; border:none; border-radius:6px; background:#111827; color:white; cursor:pointer;">Filtrar</button>
+            <button onclick="currentPageB2C = 1; loadB2CLeads()" style="padding:8px 15px; border:none; border-radius:6px; background:#111827; color:white; cursor:pointer;">Filtrar B2C</button>
         </div>
         <table id="table-b2c">
             <thead>
@@ -145,6 +184,7 @@
                 <tr><td colspan="3">Carregando pacientes...</td></tr>
             </tbody>
         </table>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;" id="b2c-pagination"></div>
     </div>
 
     <script src="/config.js"></script>

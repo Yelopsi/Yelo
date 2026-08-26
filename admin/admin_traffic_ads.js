@@ -1,5 +1,23 @@
+window.currentPageB2B = 1;
+window.currentPageB2C = 1;
+
 window.initializePage = function() {
+    // Set default dates: Last 30 days
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 30);
+    
+    document.getElementById('date-start').value = start.toISOString().split('T')[0];
+    document.getElementById('date-end').value = end.toISOString().split('T')[0];
+
     loadEfficiencyData();
+    loadB2BLeads();
+    loadB2CLeads();
+};
+
+window.applyDateFilter = function() {
+    currentPageB2B = 1;
+    currentPageB2C = 1;
     loadB2BLeads();
     loadB2CLeads();
 };
@@ -13,6 +31,12 @@ function formatBRL(value) {
 function formatDate(dateString) {
     if (!dateString) return 'N/D';
     return new Date(dateString).toLocaleDateString('pt-BR');
+}
+
+function getQueryDates() {
+    const s = document.getElementById('date-start').value;
+    const e = document.getElementById('date-end').value;
+    return `&startDate=${s}&endDate=${e}`;
 }
 
 // 1. EFICIÊNCIA GLOBAL E GRÁFICOS
@@ -30,10 +54,8 @@ window.loadEfficiencyData = async function() {
             const totalSpend = parseFloat(lastWeek.meta_ads || 0) + parseFloat(lastWeek.google_ads || 0);
             document.getElementById('kpi-spend').innerText = formatBRL(totalSpend);
             
-            // Renderizar gráficos
             renderCharts(data.weeklyHistory);
             
-            // Insight
             const lastInsight = data.insight || 'Nenhum insight gerado recentemente.';
             document.getElementById('ai-insight').innerHTML = `<h3>✨ Analisando eficiência das campanhas...</h3>${lastInsight}`;
         }
@@ -43,12 +65,10 @@ window.loadEfficiencyData = async function() {
 }
 
 function renderCharts(history) {
-    // Ultimas 4 a 6 semanas pra nao poluir
     const recentHistory = history.slice(-6);
-    
     const labels = recentHistory.map(h => {
         const d = new Date(h.week_start);
-        d.setDate(d.getDate() + 1); // fix timezone visual
+        d.setDate(d.getDate() + 1);
         return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     });
 
@@ -96,13 +116,22 @@ window.loadB2BLeads = async function() {
     document.querySelector('#table-b2b tbody').innerHTML = '<tr><td colspan="4">Carregando psicólogos...</td></tr>';
     
     try {
-        let url = `${API_BASE}/api/admin/psychologists?limit=50`;
+        let url = `${API_BASE}/api/admin/psychologists?limit=10&page=${currentPageB2B}${getQueryDates()}`;
         if (status !== 'all') url += `&status=${status}`;
-        if (channel !== 'all') url += `&status=${channel}`; // O backend usa status para filtros de UTM tb
+        if (channel !== 'all') url += `&utmChannel=${channel}`;
 
         const res = await fetch(url);
         const json = await res.json();
         
+        // Render KPIs
+        if (json.kpis) {
+            document.getElementById('kpi-meta-trial').innerText = json.kpis.meta_trial || 0;
+            document.getElementById('kpi-meta-paying').innerText = json.kpis.meta_paying || 0;
+            document.getElementById('kpi-google-trial').innerText = json.kpis.google_trial || 0;
+            document.getElementById('kpi-google-paying').innerText = json.kpis.google_paying || 0;
+            document.getElementById('kpi-wpp-total').innerText = json.kpis.utm_whatsapp || 0;
+        }
+
         let html = '';
         if (json.data && json.data.length > 0) {
             json.data.forEach(psi => {
@@ -123,6 +152,8 @@ window.loadB2BLeads = async function() {
         }
         document.querySelector('#table-b2b tbody').innerHTML = html;
         
+        // Paginação
+        renderPagination('b2b', json.totalPages, json.totalCount);
     } catch (e) {
         console.error(e);
         document.querySelector('#table-b2b tbody').innerHTML = '<tr><td colspan="4">Erro ao carregar psicólogos.</td></tr>';
@@ -136,8 +167,8 @@ window.loadB2CLeads = async function() {
     document.querySelector('#table-b2c tbody').innerHTML = '<tr><td colspan="3">Carregando pacientes...</td></tr>';
     
     try {
-        let url = `${API_BASE}/api/admin/patients?limit=50`;
-        if (channel !== 'all') url += `&status=${channel}`;
+        let url = `${API_BASE}/api/admin/patients?limit=10&page=${currentPageB2C}${getQueryDates()}`;
+        if (channel !== 'all') url += `&utmChannel=${channel}`;
 
         const res = await fetch(url);
         const json = await res.json();
@@ -160,9 +191,41 @@ window.loadB2CLeads = async function() {
         }
         document.querySelector('#table-b2c tbody').innerHTML = html;
         
+        // Paginação
+        renderPagination('b2c', json.totalPages, json.totalCount);
     } catch (e) {
         console.error(e);
         document.querySelector('#table-b2c tbody').innerHTML = '<tr><td colspan="3">Erro ao carregar pacientes.</td></tr>';
+    }
+}
+
+function renderPagination(type, totalPages, totalCount) {
+    const container = document.getElementById(`${type}-pagination`);
+    if (totalPages <= 1) {
+        container.innerHTML = `<span style="font-size:0.85rem; color:#64748b;">Total: ${totalCount} registros</span>`;
+        return;
+    }
+    
+    const currPage = type === 'b2b' ? currentPageB2B : currentPageB2C;
+    const btnStyle = "padding:6px 12px; background:#e2e8f0; border:none; border-radius:6px; cursor:pointer;";
+    const btnDisabled = "padding:6px 12px; background:#f1f5f9; color:#94a3b8; border:none; border-radius:6px;";
+    
+    container.innerHTML = `
+        <span style="font-size:0.85rem; color:#64748b;">Página ${currPage} de ${totalPages} (${totalCount} registros)</span>
+        <div style="display:flex; gap:10px;">
+            <button onclick="changePage('${type}', -1)" style="${currPage === 1 ? btnDisabled : btnStyle}" ${currPage === 1 ? 'disabled' : ''}>Anterior</button>
+            <button onclick="changePage('${type}', 1)" style="${currPage === totalPages ? btnDisabled : btnStyle}" ${currPage === totalPages ? 'disabled' : ''}>Próxima</button>
+        </div>
+    `;
+}
+
+window.changePage = function(type, dir) {
+    if (type === 'b2b') {
+        currentPageB2B += dir;
+        loadB2BLeads();
+    } else {
+        currentPageB2C += dir;
+        loadB2CLeads();
     }
 }
 
@@ -171,11 +234,11 @@ function getUtmBadge(source) {
     const s = source.toLowerCase();
     if (s.includes('meta') || s.includes('facebook') || s.includes('instagram')) return '<span class="badge badge-meta">Meta Ads</span>';
     if (s.includes('google')) return '<span class="badge badge-google">Google Ads</span>';
+    if (s.includes('whatsapp')) return '<span class="badge" style="background:#dcfce3; color:#166534;">WhatsApp</span>';
     return `<span class="badge badge-organic">${source}</span>`;
 }
 
 function getPsiStatusBadge(psi) {
-    // 14 dias de acesso grátis:
     if (psi.status === 'pending' || !psi.isProfileAnalyzed) {
         return '<span class="badge badge-pending">Perfil Incompleto (Pendente)</span>';
     }
