@@ -84,26 +84,76 @@ exports.getEfficiencyDashboard = async (req, res) => {
             return acc + (planPrices[psy.plano ? psy.plano.toLowerCase() : ''] || 0);
         }, 0);
 
-        // 2. Buscar o histórico semanal (Últimas 12 semanas)
-        const dozeSemanasAtras = moment().subtract(12, 'weeks').startOf('week').toDate();
-        const weeklyHistory = await db.WeeklyEfficiency.findAll({
+        // 2. Buscar despesas do YeloExpense
+        const expenses = await db.YeloExpense.findAll({
             where: {
-                week_start: { [Op.gte]: dozeSemanasAtras }
-            },
-            order: [['week_start', 'ASC']]
+                category: { [Op.in]: ['Google Ads', 'Meta Ads'] }
+            }
+        });
+        
+        const expensesByMonth = {};
+        expenses.forEach(e => {
+            if (!expensesByMonth[e.monthYear]) expensesByMonth[e.monthYear] = { meta_ads: 0, google_ads: 0 };
+            if (e.category === 'Meta Ads') expensesByMonth[e.monthYear].meta_ads += e.amount;
+            if (e.category === 'Google Ads') expensesByMonth[e.monthYear].google_ads += e.amount;
         });
 
-        // 3. Pegar os custos da última semana preenchida para o Net Burn Rate
+        // 3. Buscar conversões por mês do Psychologists
+        const conversionsQuery = `
+            SELECT 
+                TO_CHAR(DATE_TRUNC('month', "createdAt"), 'YYYY-MM') as month,
+                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram')) as meta_trials,
+                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram') AND status = 'active' AND "subscriptionId" IS NOT NULL) as meta_pagantes,
+                COUNT(*) FILTER (WHERE utm_source = 'google') as google_trials,
+                COUNT(*) FILTER (WHERE utm_source = 'google' AND status = 'active' AND "subscriptionId" IS NOT NULL) as google_pagantes
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+            GROUP BY month
+        `;
+        const [conversions] = await db.sequelize.query(conversionsQuery, { type: db.sequelize.QueryTypes.SELECT });
+        
+        // 4. Montar Histórico Mensal (Últimos 6 meses)
+        const weeklyHistory = [];
         let lastMetaAds = 0;
         let lastGoogleAds = 0;
-        if (weeklyHistory.length > 0) {
-            const lastWeek = weeklyHistory[weeklyHistory.length - 1];
-            lastMetaAds = parseFloat(lastWeek.meta_ads);
-            lastGoogleAds = parseFloat(lastWeek.google_ads);
+        
+        for (let i = 5; i >= 0; i--) {
+            const date = moment().subtract(i, 'months');
+            const monthStr = date.format('YYYY-MM');
+            
+            const exp = expensesByMonth[monthStr] || { meta_ads: 0, google_ads: 0 };
+            const conv = conversions.find(c => c.month === monthStr) || { meta_trials: 0, meta_pagantes: 0, google_trials: 0, google_pagantes: 0 };
+            
+            const mTrials = parseInt(conv.meta_trials || 0, 10);
+            const gTrials = parseInt(conv.google_trials || 0, 10);
+            const mPagantes = parseInt(conv.meta_pagantes || 0, 10);
+            const gPagantes = parseInt(conv.google_pagantes || 0, 10);
+            
+            const totalSpend = exp.meta_ads + exp.google_ads;
+            const totalTrials = mTrials + gTrials;
+            const totalPagantes = mPagantes + gPagantes;
+            
+            weeklyHistory.push({
+                week_start: date.format('YYYY-MM-01'), 
+                cpl: totalTrials > 0 ? parseFloat((totalSpend / totalTrials).toFixed(2)) : 0,
+                cac: totalPagantes > 0 ? parseFloat((totalSpend / totalPagantes).toFixed(2)) : 0,
+                meta_ads: exp.meta_ads,
+                google_ads: exp.google_ads,
+                meta_trials: mTrials,
+                google_trials: gTrials,
+                meta_pagantes: mPagantes,
+                google_pagantes: gPagantes,
+                is_month: true
+            });
+            
+            if (i === 0) { // Mês Atual
+                lastMetaAds = exp.meta_ads;
+                lastGoogleAds = exp.google_ads;
+            }
         }
         
-        // Net Burn mensal projetado baseado na última semana
-        const projectedMonthlyAds = (lastMetaAds + lastGoogleAds) * 4;
+        // Net Burn mensal projetado baseado no mês atual
+        const projectedMonthlyAds = lastMetaAds + lastGoogleAds;
         const netBurnRate = currentMRR - (FIXED_COST + projectedMonthlyAds);
 
         res.json({

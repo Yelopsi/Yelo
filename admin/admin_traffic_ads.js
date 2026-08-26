@@ -69,7 +69,7 @@ function renderCharts(history) {
     const labels = recentHistory.map(h => {
         const d = new Date(h.week_start);
         d.setDate(d.getDate() + 1);
-        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        return d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
     });
 
     const cplData = recentHistory.map(h => h.cpl);
