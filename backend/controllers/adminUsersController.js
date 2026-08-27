@@ -648,75 +648,6 @@ exports.getPendingActions = async (req, res) => {
         });
         incompleteCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'incomplete', reason: 'Perfil incompleto há mais de 24h' }));
 
-        // 3. Churn de trial (Trial expirado há >= 3 dias, E msg_churn_followup_sent_at NULA, STATUS inactive)
-        const churnCandidates = await db.Psychologist.findAll({
-            where: {
-                status: 'inactive',
-                subscriptionId: null,
-                planExpiresAt: { [Op.lte]: threeDaysAgo },
-                msg_churn_followup_sent_at: null,
-                deletedAt: null,
-                telefone: { [Op.ne]: null, [Op.not]: '' }
-            },
-            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks']
-        });
-
-        if (churnCandidates.length > 0) {
-            const churnIds = churnCandidates.map(c => c.id);
-            const wppLogs = await db.WhatsAppClickLog.findAll({
-                where: { psychologistId: { [Op.in]: churnIds } },
-                attributes: ['psychologistId', 'dealClosed']
-            });
-            
-            const matchEventsCount = await db.sequelize.query(`
-                SELECT "psychologistId", COUNT(*) as count 
-                FROM "MatchEvents" 
-                WHERE "psychologistId" IN (:churnIds) 
-                GROUP BY "psychologistId"
-            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
-                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
-                FROM "MatchEvents" 
-                WHERE "PsychologistId" IN (:churnIds) 
-                GROUP BY "PsychologistId"
-            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
-
-            const profileViewsCount = await db.sequelize.query(`
-                SELECT "psychologistId", COUNT(*) as count 
-                FROM "ProfileAppearanceLogs" 
-                WHERE "psychologistId" IN (:churnIds) 
-                GROUP BY "psychologistId"
-            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
-                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
-                FROM "ProfileAppearanceLogs" 
-                WHERE "PsychologistId" IN (:churnIds) 
-                GROUP BY "PsychologistId"
-            `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
-
-            churnCandidates.forEach(p => {
-                const logs = wppLogs.filter(l => l.psychologistId === p.id);
-                const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
-                const dealClosedCount = closedDeals.length;
-                
-                let clicks = logs.length;
-                
-                const matchEv = matchEventsCount.find(m => m.psychologistId == p.id);
-                let appearances = matchEv ? parseInt(matchEv.count, 10) : 0;
-                
-                const profView = profileViewsCount.find(v => v.psychologistId == p.id);
-                let views = profView ? parseInt(profView.count, 10) : 0;
-                
-                // Soma segura: Logs Novos + Histórico Antigo (evita zerar histórico quando o primeiro log novo entra)
-                appearances += (p.profile_appearances || 0);
-                clicks += (p.whatsapp_clicks || 0);
-
-                pendingList.push({ 
-                    ...p.toJSON(), 
-                    actionType: 'churn', 
-                    reason: 'Trial expirado há >3 dias',
-                    metrics: { appearances, views, clicks, dealClosedCount }
-                });
-            });
-        }
 
         // 4. Feedback / Cobrança (Clique WhatsApp > 48h E adminWppReminderSentAt NULA E feedbackGiven = false)
         if (db.WhatsAppClickLog) {
@@ -1092,17 +1023,6 @@ exports.getPendingActions = async (req, res) => {
 
         // MOCK PARA TESTE LOCAL
         if (req.hostname === 'localhost' || req.hostname === '127.0.0.1') {
-            pendingList.push({
-                id: 99999,
-                nome: 'MOCK CHURN - Dr. Local',
-                telefone: '5511999999999',
-                status: 'inactive',
-                plano: 'premium_mensal',
-                planExpiresAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-                actionType: 'churn',
-                reason: 'MOCK: Trial expirado há 5 dias (Apenas Local)',
-                metrics: { appearances: 200, views: 15, clicks: 2, dealClosedCount: 1 }
-            });
 
             pendingList.push({
                 id: 99999,
