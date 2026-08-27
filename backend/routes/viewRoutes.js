@@ -310,58 +310,7 @@ router.get('/mapa-do-site', async (req, res) => {
 
 // --- LANDING PAGE GOOGLE ADS ---
 router.get('/terapia-online', async (req, res) => {
-    try {
-        let mediaAvaliacao = '4.9';
-        let totalAvaliacoes = '150+';
-        let depoimentos = [];
-
-        try {
-            const [result] = await db.sequelize.query(`
-                SELECT AVG(CAST("searchParams"->'avaliacao_ux'->>'rating' AS NUMERIC)) as media, COUNT(*) as total 
-                FROM "DemandSearches" WHERE "searchParams"->'avaliacao_ux'->>'rating' IS NOT NULL
-            `, { type: db.sequelize.QueryTypes.SELECT });
-            
-            if (result && result.media) mediaAvaliacao = parseFloat(result.media).toFixed(1);
-            if (result && result.total > 0) {
-                // Cálculo de Crescimento Orgânico (Simulação)
-                const dataLancamento = new Date('2026-01-01');
-                const diasDeVida = Math.max(0, Math.floor((new Date() - dataLancamento) / (1000 * 60 * 60 * 24)));
-                const avaliacoesPorDia = 3; 
-                totalAvaliacoes = parseInt(result.total) + 1200 + (diasDeVida * avaliacoesPorDia);
-            }
-
-            const rows = await db.sequelize.query(`
-                SELECT "searchParams" FROM "DemandSearches"
-                WHERE "searchParams"->'avaliacao_ux'->>'feedback' IS NOT NULL
-                AND length("searchParams"->'avaliacao_ux'->>'feedback') > 10
-                AND CAST("searchParams"->'avaliacao_ux'->>'rating' AS NUMERIC) >= 4
-                ORDER BY "createdAt" DESC LIMIT 4
-            `, { type: db.sequelize.QueryTypes.SELECT });
-
-            if (rows && rows.length > 0) {
-                depoimentos = rows.map(r => {
-                    const p = r.searchParams || {};
-                    const av = p.avaliacao_ux || {};
-                    const nome = p.nome || 'Anônimo';
-                    const iniciais = nome.trim().split(/\s+/).map(n => n[0].toUpperCase() + '.').join(' ');
-                    return { nome: iniciais, texto: (av.feedback || "").replace("amei a plataforma (teste)", "amei a plataforma"), nota: parseInt(av.rating || 5), inicial: nome[0].toUpperCase() };
-                });
-            }
-        } catch (e) { }
-
-        if (depoimentos.length < 4) {
-            const mocks = [
-                { nome: "M. S.", texto: "Eu adiava a terapia por achar difícil encontrar alguém. O questionário da Yelo foi certeiro.", nota: 5, inicial: "M" },
-                { nome: "C. E.", texto: "A facilidade de fazer online mudou tudo pra mim. Plataforma estável e segura.", nota: 5, inicial: "C" },
-                { nome: "F. L.", texto: "O acolhimento que recebi foi fundamental. Recomendo a Yelo para todos.", nota: 5, inicial: "F" },
-                { nome: "J. P.", texto: "Encontrei um espaço seguro para falar sobre minhas angústias.", nota: 5, inicial: "J" }
-            ];
-            depoimentos = [...depoimentos, ...mocks.slice(0, 4 - depoimentos.length)];
-        }
-        res.render('terapia-online', { mediaAvaliacao, totalAvaliacoes, depoimentos });
-    } catch (error) {
-        res.render('terapia-online', { mediaAvaliacao: '4.9', totalAvaliacoes: '100+', depoimentos: [] });
-    }
+    res.redirect(301, '/');
 });
 
 // --- LOGOUT ---

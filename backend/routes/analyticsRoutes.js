@@ -118,7 +118,7 @@ router.get('/admin/analytics/visits', verifyTokenLocal, async (req, res) => {
 
         const results = await db.sequelize.query(`
             SELECT COUNT(*) as total FROM "SiteVisits" 
-            WHERE (url = '/' OR url LIKE '/?%' OR url = '/terapia-online' OR url LIKE '/terapia-online?%') ${dateFilter}
+            WHERE (url = '/' OR url LIKE '/?%') ${dateFilter}
         `, { type: db.sequelize.QueryTypes.SELECT, replacements });
         res.json({ total: parseInt(results[0]?.total || 0) });
     } catch (error) { res.status(500).json({ error: 'Erro interno' }); }

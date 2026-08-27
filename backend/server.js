@@ -164,7 +164,20 @@ app.get('/sitemap.xml', require('./controllers/qnaController').generateSitemap);
 const rootPublic = path.join(__dirname, '../public');
 const backendPublic = path.join(__dirname, 'public');
 
-app.use(express.static(rootPublic, { extensions: ['html'] }));
+const staticOptions = {
+    extensions: ['html'],
+    setHeaders: (res, pathStr) => {
+        if (express.static.mime.lookup(pathStr) === 'text/html') {
+            res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+        } else if (pathStr.match(/\.(js|css)$/)) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        } else if (pathStr.match(/\.(png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot|apk|pdf)$/)) {
+            res.setHeader('Cache-Control', 'public, max-age=2592000');
+        }
+    }
+};
+
+app.use(express.static(rootPublic, staticOptions));
 
 // Trava de segurança: Impede que a pasta backend/public sirva arquivos HTML antigos acidentalmente
 const backendStatic = express.static(backendPublic);
@@ -174,7 +187,7 @@ app.use((req, res, next) => {
 });
 
 // Permite servir os arquivos soltos na raiz do projeto (como psi_questionario.html e script.js) sem precisar movê-los
-app.use(express.static(path.join(__dirname, '..'), { extensions: ['html'] }));
+app.use(express.static(path.join(__dirname, '..'), staticOptions));
 
 // Permite servir scripts ou arquivos específicos de jobs da pasta backend/jobs
 app.use('/jobs', express.static(path.join(__dirname, 'jobs')));
@@ -191,7 +204,11 @@ app.get('/ajuda', (req, res) => res.render('ajuda'));
 // Silencia erro 404 do favicon.ico na raiz 
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+    setHeaders: (res, pathStr) => {
+        res.setHeader('Cache-Control', 'public, max-age=2592000'); // 30 dias para uploads em geral
+    }
+}));
 
 // Inicialização HTTP & Socket.IO
 const server = http.createServer(app);

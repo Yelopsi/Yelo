@@ -33,7 +33,7 @@ window.setupSessionNotifications = function() {
                 const token = localStorage.getItem('Yelo_token');
                 if (!token) return;
 
-                const resAppts = await fetch(`${API_BASE_URL}/api/appointments`, {
+                const resAppts = await fetch(`${API_BASE_URL}/api/appointments?upcoming=true`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -67,7 +67,7 @@ window.setupSessionNotifications = function() {
 
         checkAppointments();
         if (window.notifInterval) clearInterval(window.notifInterval);
-        window.notifInterval = setInterval(checkAppointments, 60000); // Checa a cada 1 minuto
+        window.notifInterval = setInterval(checkAppointments, 120000); // Checa a cada 2 minutos
     };
 
     if (Notification.permission === "default") {

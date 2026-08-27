@@ -14,8 +14,15 @@ router.get('/', verifyTokenLocal, async (req, res) => {
             return res.json([]);
         }
 
+        const whereClause = { psychologistId: psiId };
+        
+        // Se for polling de notificação, traz apenas do presente em diante
+        if (req.query.upcoming === 'true') {
+            whereClause.start = { [Op.gte]: new Date() };
+        }
+
         const appointments = await db.Appointment.findAll({
-            where: { psychologistId: psiId }
+            where: whereClause
         });
         const events = appointments.map(a => {
             const app = typeof a.toJSON === 'function' ? a.toJSON() : a;
