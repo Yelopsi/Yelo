@@ -12,7 +12,7 @@ async function getStandardMetrics(psiId, psi) {
 
     let clicksCount = 0;
     if (db.WhatsAppClickLog) {
-        clicksCount = await db.WhatsAppClickLog.count({ where: { [db.Sequelize.Op.or]: [{ psychologistId: numericId }, { PsychologistId: numericId }] } }).catch(() => 0);
+        clicksCount = await db.WhatsAppClickLog.count({ where: { psychologistId: numericId } }).catch(() => 0);
     }
     clicksCount += (psi.whatsapp_clicks || 0);
 
@@ -332,7 +332,7 @@ exports.generateAiChurnMessage = async (req, res) => {
             
             // Feedbacks
             const wppLogs = await db.WhatsAppClickLog.findAll({
-                where: { [db.Sequelize.Op.or]: [{ psychologistId: psiId }, { PsychologistId: psiId }] },
+                where: { psychologistId: psiId },
                 attributes: ['dealClosed']
             });
             
@@ -450,7 +450,7 @@ exports.generateAiPaidChurnMessage = async (req, res) => {
             
             // Feedbacks
             const wppLogs = await db.WhatsAppClickLog.findAll({
-                where: { [db.Sequelize.Op.or]: [{ psychologistId: psiId }, { PsychologistId: psiId }] },
+                where: { psychologistId: psiId },
                 attributes: ['dealClosed']
             });
             
@@ -557,7 +557,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
             
             // Feedbacks
             const wppLogs = await db.WhatsAppClickLog.findAll({
-                where: { [db.Sequelize.Op.or]: [{ psychologistId: psiId }, { PsychologistId: psiId }] },
+                where: { psychologistId: psiId },
                 attributes: ['dealClosed']
             });
             

@@ -664,8 +664,8 @@ exports.getPendingActions = async (req, res) => {
         if (churnCandidates.length > 0) {
             const churnIds = churnCandidates.map(c => c.id);
             const wppLogs = await db.WhatsAppClickLog.findAll({
-                where: { [Op.or]: [{ psychologistId: { [Op.in]: churnIds } }, { PsychologistId: { [Op.in]: churnIds } }] },
-                attributes: ['psychologistId', 'PsychologistId', 'dealClosed']
+                where: { psychologistId: { [Op.in]: churnIds } },
+                attributes: ['psychologistId', 'dealClosed']
             });
             
             const matchEventsCount = await db.sequelize.query(`
@@ -693,7 +693,7 @@ exports.getPendingActions = async (req, res) => {
             `, { replacements: { churnIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
 
             churnCandidates.forEach(p => {
-                const logs = wppLogs.filter(l => l.psychologistId === p.id || l.PsychologistId === p.id);
+                const logs = wppLogs.filter(l => l.psychologistId === p.id);
                 const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
                 const dealClosedCount = closedDeals.length;
                 
@@ -813,8 +813,8 @@ exports.getPendingActions = async (req, res) => {
         if (expiringCandidates.length > 0) {
             const expIds = expiringCandidates.map(c => c.id);
             const wppLogsExp = await db.WhatsAppClickLog.findAll({
-                where: { [Op.or]: [{ psychologistId: { [Op.in]: expIds } }, { PsychologistId: { [Op.in]: expIds } }] },
-                attributes: ['psychologistId', 'PsychologistId', 'dealClosed']
+                where: { psychologistId: { [Op.in]: expIds } },
+                attributes: ['psychologistId', 'dealClosed']
             });
             
             const matchEventsExpCount = await db.sequelize.query(`
@@ -842,7 +842,7 @@ exports.getPendingActions = async (req, res) => {
             `, { replacements: { expIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
 
             expiringCandidates.forEach(p => {
-                const logs = wppLogsExp.filter(l => l.psychologistId === p.id || l.PsychologistId === p.id);
+                const logs = wppLogsExp.filter(l => l.psychologistId === p.id);
                 const closedDeals = logs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'talking');
                 const dealClosed = closedDeals.length > 0;
                 const closedDealsCount = closedDeals.length;
@@ -905,8 +905,8 @@ exports.getPendingActions = async (req, res) => {
         if (expiredPixCandidates.length > 0) {
             const expPixIds = expiredPixCandidates.map(c => c.id);
             const wppLogsExpPix = await db.WhatsAppClickLog.findAll({
-                where: { [Op.or]: [{ psychologistId: { [Op.in]: expPixIds } }, { PsychologistId: { [Op.in]: expPixIds } }] },
-                attributes: ['psychologistId', 'PsychologistId', 'dealClosed']
+                where: { psychologistId: { [Op.in]: expPixIds } },
+                attributes: ['psychologistId', 'dealClosed']
             });
             
             const matchEventsExpPixCount = await db.sequelize.query(`
@@ -934,7 +934,7 @@ exports.getPendingActions = async (req, res) => {
             `, { replacements: { expPixIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
 
             expiredPixCandidates.forEach(p => {
-                const logs = wppLogsExpPix.filter(l => l.psychologistId === p.id || l.PsychologistId === p.id);
+                const logs = wppLogsExpPix.filter(l => l.psychologistId === p.id);
                 
                 const startedTherapyCount = logs.filter(l => l.dealClosed === 'yes').length;
                 const negotiatingCount = logs.filter(l => l.dealClosed === 'talking').length;

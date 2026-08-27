@@ -1030,7 +1030,7 @@ exports.analyzeProfile = async (req, res) => {
 
         let whatsappClicks = 0;
         if (db.WhatsAppClickLog) {
-            whatsappClicks = await db.WhatsAppClickLog.count({ where: { [db.Sequelize.Op.or]: [{ psychologistId: numericId }, { PsychologistId: numericId }] } }).catch(() => 0);
+            whatsappClicks = await db.WhatsAppClickLog.count({ where: { psychologistId: numericId } }).catch(() => 0);
         }
         whatsappClicks += (psi.whatsapp_clicks || 0);
 
