@@ -167,7 +167,7 @@ const backendPublic = path.join(__dirname, 'public');
 const staticOptions = {
     extensions: ['html'],
     setHeaders: (res, pathStr) => {
-        if (express.static.mime.lookup(pathStr) === 'text/html') {
+        if (pathStr.endsWith('.html') || pathStr.endsWith('.htm')) {
             res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
         } else if (pathStr.match(/\.(js|css)$/)) {
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
