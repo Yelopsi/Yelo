@@ -3,35 +3,18 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 async function getStandardMetrics(psiId, psi) {
     const numericId = parseInt(psiId, 10);
-    const fourteenDaysAgo = new Date();
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
-    const matchesStats = await db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
-        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
-    ).catch(() => db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
-        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
-    )).catch(() => [{ count: 0 }]);
-    const matchesCount = matchesStats[0] ? parseInt(matchesStats[0].count, 10) : 0;
+    const [matchEventsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`, { replacements: { id: numericId } }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id`, { replacements: { id: numericId } })).catch(() => [[{count: 0}]]);
+    const matchesCount = (parseInt(matchEventsRaw[0]?.count || 0, 10)) + (psi.profile_appearances || 0);
 
-    const viewsStats = await db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
-        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
-    ).catch(() => db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "PsychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
-        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
-    )).catch(() => [{ count: 0 }]);
-    const viewsCount = viewsStats[0] ? parseInt(viewsStats[0].count, 10) : 0;
+    const [profileViewsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`, { replacements: { id: numericId } }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "PsychologistId" = :id`, { replacements: { id: numericId } })).catch(() => [[{count: 0}]]);
+    const viewsCount = parseInt(profileViewsRaw[0]?.count || 0, 10);
 
-    const clicksStats = await db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "psychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
-        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
-    ).catch(() => db.sequelize.query(
-        `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "PsychologistId" = :id AND "createdAt" >= :fourteenDaysAgo`,
-        { replacements: { id: numericId, fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
-    )).catch(() => [{ count: 0 }]);
-    const clicksCount = clicksStats[0] ? parseInt(clicksStats[0].count, 10) : 0;
+    let clicksCount = 0;
+    if (db.WhatsAppClickLog) {
+        clicksCount = await db.WhatsAppClickLog.count({ where: { [db.Sequelize.Op.or]: [{ psychologistId: numericId }, { PsychologistId: numericId }] } }).catch(() => 0);
+    }
+    clicksCount += (psi.whatsapp_clicks || 0);
 
     return { matchesCount, viewsCount, clicksCount };
 }
@@ -349,7 +332,7 @@ exports.generateAiChurnMessage = async (req, res) => {
             
             // Feedbacks
             const wppLogs = await db.WhatsAppClickLog.findAll({
-                where: { psychologistId: psiId },
+                where: { [db.Sequelize.Op.or]: [{ psychologistId: psiId }, { PsychologistId: psiId }] },
                 attributes: ['dealClosed']
             });
             
@@ -467,7 +450,7 @@ exports.generateAiPaidChurnMessage = async (req, res) => {
             
             // Feedbacks
             const wppLogs = await db.WhatsAppClickLog.findAll({
-                where: { psychologistId: psiId },
+                where: { [db.Sequelize.Op.or]: [{ psychologistId: psiId }, { PsychologistId: psiId }] },
                 attributes: ['dealClosed']
             });
             
@@ -574,7 +557,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
             
             // Feedbacks
             const wppLogs = await db.WhatsAppClickLog.findAll({
-                where: { psychologistId: psiId },
+                where: { [db.Sequelize.Op.or]: [{ psychologistId: psiId }, { PsychologistId: psiId }] },
                 attributes: ['dealClosed']
             });
             
