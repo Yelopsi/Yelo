@@ -147,9 +147,10 @@ exports.getPublicFeedbackByToken = async (req, res) => {
         const { token } = req.params;
 
         if (!token) return res.status(400).json({ error: 'Token inválido' });
+        const cleanToken = token.trim();
 
         const clickLog = await db.WhatsAppClickLog.findOne({
-            where: { feedbackToken: token }
+            where: { feedbackToken: cleanToken }
         });
 
         if (!clickLog) {
@@ -185,9 +186,10 @@ exports.submitPublicFeedback = async (req, res) => {
         const { contact_received, deal_closed } = req.body;
 
         if (!token) return res.status(400).json({ error: 'Token inválido' });
+        const cleanToken = token.trim();
 
         const clickLog = await db.WhatsAppClickLog.findOne({
-            where: { feedbackToken: token }
+            where: { feedbackToken: cleanToken }
         });
 
         if (!clickLog) {

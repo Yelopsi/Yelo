@@ -481,7 +481,7 @@ window.initializePage = function () {
             }
         } else if (actionType === 'billing_feedback') {
             let baseUrlFeedback = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
-            let linkFeedback = feedbackToken ? `${baseUrlFeedback}/magic-feedback.html?token=${feedbackToken}` : `${baseUrlFeedback}/psi/dashboard`;
+            let linkFeedback = feedbackToken ? `${baseUrlFeedback}/magic-feedback?token=${feedbackToken}` : `${baseUrlFeedback}/psi/dashboard`;
             
             const pendingCount = metrics.pendingCount || 1;
             const isFirst = metrics.isFirstFeedbackRequest !== false;
@@ -499,7 +499,7 @@ window.initializePage = function () {
             }
 
             if (isFirst) {
-                msg = `Olá, ${firstName}. Como vai?\n\nAqui quem fala é o Anderson, da Yelo.\nPrecisamos da sua ajuda com um retorno rápido.\n\n${introText} em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nResponder agora:\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
+                msg = `Olá, ${firstName}. Como vai?\n\nAqui quem fala é o Anderson, da Yelo.\nPrecisamos da sua ajuda com um retorno rápido.\n\n${introText} em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nResponder agora:\n👉 ${linkFeedback} \n\nObrigado! 🌿`;
             } else {
                 let introTextRecorrente = '';
                 if (pendingCount > 1) {
@@ -512,7 +512,7 @@ window.initializePage = function () {
                     }
                 }
                 
-                msg = `Olá, ${firstName}! Tudo bem?\n\nO seu perfil continua gerando resultados na Yelo! ✨\nPercebemos que ${introTextRecorrente} entrar em contato com você recentemente.\n\nPara mantermos o seu perfil forte e continuarmos te indicando no nosso ranking, precisamos apenas da sua confirmação rápida. Acesse o link abaixo e nos conte:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto!\n\nResponder agora:\n👉 ${linkFeedback}\n\nMuito obrigado pela parceria! 🌿`;
+                msg = `Olá, ${firstName}! Tudo bem?\n\nO seu perfil continua gerando resultados na Yelo! ✨\nPercebemos que ${introTextRecorrente} entrar em contato com você recentemente.\n\nPara mantermos o seu perfil forte e continuarmos te indicando no nosso ranking, precisamos apenas da sua confirmação rápida. Acesse o link abaixo e nos conte:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto!\n\nResponder agora:\n👉 ${linkFeedback} \n\nMuito obrigado pela parceria! 🌿`;
             }
         } else if (actionType === 'low_performance') {
             try {

@@ -187,7 +187,7 @@ exports.generateAiDiagnosis = async (req, res) => {
             talkingLogs = recentLogs.filter(l => l.feedbackGiven === true && l.dealClosed === 'talking');
             closedLogs = recentLogs.filter(l => l.feedbackGiven === true && (l.dealClosed === 'yes' || l.dealClosed === 'started'));
             latestFeedbackToken = unansweredLogs[0]?.feedbackToken || talkingLogs[0]?.feedbackToken || recentLogs[0]?.feedbackToken || '';
-            magicLink = latestFeedbackToken ? `https://www.yelopsi.com.br/magic-feedback.html?token=${latestFeedbackToken}` : `https://www.yelopsi.com.br/psi/dashboard`;
+            magicLink = latestFeedbackToken ? `https://www.yelopsi.com.br/magic-feedback?token=${latestFeedbackToken}` : `https://www.yelopsi.com.br/psi/dashboard`;
 
             // Historico de otimizacao anterior
             history = psi.aiOptimizationHistory || [];
