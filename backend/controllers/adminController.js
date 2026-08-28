@@ -1032,7 +1032,6 @@ exports.analyzeProfile = async (req, res) => {
         if (db.WhatsAppClickLog) {
             whatsappClicks = await db.WhatsAppClickLog.count({ where: { psychologistId: numericId } }).catch(() => 0);
         }
-        whatsappClicks += (psi.whatsapp_clicks || 0);
 
         // 4. O SUPER PROMPT DA EQUIPE DE GROWTH
         const promptGrowth = `Você atua como a equipe de Growth e Customer Success (CS) da plataforma Yelo, especializada em marketing para clínicas de psicologia.

@@ -188,7 +188,7 @@ exports.getPsychologistFullDetails = async (req, res) => {
         
         let matchesCountFixed = matches.length + (psychologist.profile_appearances || 0);
         
-        let wpClicksFixed = (whatsappStats[0] ? parseInt(whatsappStats[0].count) : 0) + (psychologist.whatsapp_clicks || 0);
+        let wpClicksFixed = whatsappStats[0] ? parseInt(whatsappStats[0].count) : 0;
         
         let profileViewsFixed = profileViewsStats[0] ? parseInt(profileViewsStats[0].count) : 0;
 

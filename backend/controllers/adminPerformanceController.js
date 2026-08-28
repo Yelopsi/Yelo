@@ -14,7 +14,6 @@ async function getStandardMetrics(psiId, psi) {
     if (db.WhatsAppClickLog) {
         clicksCount = await db.WhatsAppClickLog.count({ where: { psychologistId: numericId } }).catch(() => 0);
     }
-    clicksCount += (psi.whatsapp_clicks || 0);
 
     return { matchesCount, viewsCount, clicksCount };
 }
@@ -336,7 +335,7 @@ exports.generateAiChurnMessage = async (req, res) => {
                 attributes: ['dealClosed']
             });
             
-            clicksCount = wppLogs.length > 0 ? wppLogs.length + (psi.whatsapp_clicks || 0) : clicksCount;
+            clicksCount = wppLogs.length > 0 ? wppLogs.length : clicksCount;
             dealYes = wppLogs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'started').length;
             dealGhosted = wppLogs.filter(l => l.dealClosed === 'ghosted').length;
             dealNo = wppLogs.filter(l => l.dealClosed === 'no' || l.dealClosed === 'not_started').length;
@@ -454,7 +453,7 @@ exports.generateAiPaidChurnMessage = async (req, res) => {
                 attributes: ['dealClosed']
             });
             
-            clicksCount = wppLogs.length > 0 ? wppLogs.length + (psi.whatsapp_clicks || 0) : clicksCount;
+            clicksCount = wppLogs.length > 0 ? wppLogs.length : clicksCount;
         }
 
         const prompt = `
@@ -561,7 +560,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
                 attributes: ['dealClosed']
             });
             
-            clicksCount = wppLogs.length > 0 ? wppLogs.length + (psi.whatsapp_clicks || 0) : clicksCount;
+            clicksCount = wppLogs.length > 0 ? wppLogs.length : clicksCount;
             dealYes = wppLogs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'started').length;
             dealGhosted = wppLogs.filter(l => l.dealClosed === 'ghosted').length;
             dealNo = wppLogs.filter(l => l.dealClosed === 'no' || l.dealClosed === 'not_started').length;
