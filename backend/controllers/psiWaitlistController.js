@@ -81,10 +81,30 @@ exports.addToWaitlist = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.getWaitingList = async (req, res) => {
     try {
-        const waitingList = await db.WaitingList.findAll({
+        const rawWaitingList = await db.WaitingList.findAll({
             where: { status: 'pending' },
             order: [['createdAt', 'DESC']]
         });
+        
+        // Busca psicólogos já cadastrados para cruzar dados
+        const activePsis = await db.Psychologist.findAll({
+            attributes: ['email', 'telefone']
+        });
+        
+        const registeredEmails = new Set(activePsis.map(p => p.email ? p.email.toLowerCase().trim() : ''));
+        const registeredPhones = new Set(activePsis.map(p => p.telefone ? p.telefone.replace(/\D/g, '') : ''));
+        
+        // Filtra leads que já se cadastraram (por email ou telefone)
+        const waitingList = rawWaitingList.filter(entry => {
+            const entryEmail = entry.email ? entry.email.toLowerCase().trim() : '';
+            const entryPhone = entry.telefone ? entry.telefone.replace(/\D/g, '') : '';
+            
+            if (entryEmail && registeredEmails.has(entryEmail)) return false;
+            if (entryPhone && entryPhone.length > 8 && registeredPhones.has(entryPhone)) return false;
+            
+            return true;
+        });
+
         res.status(200).json(waitingList);
     } catch (error) {
         res.status(500).json({ error: 'Erro interno no servidor.' });
