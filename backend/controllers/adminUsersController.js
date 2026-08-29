@@ -358,7 +358,18 @@ exports.getAllPsychologists = async (req, res) => {
             WHERE "deletedAt" IS NULL AND ("isAdmin" IS NULL OR "isAdmin" = false)
             ${dateFilterQuery}
         `;
+        const campaignsQuery = `
+            SELECT utm_campaign, utm_content, COUNT(*) as count
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL 
+              AND ("isAdmin" IS NULL OR "isAdmin" = false)
+              AND utm_source IN ('meta_ads', 'facebook', 'instagram', 'meta')
+              ${dateFilterQuery}
+            GROUP BY utm_campaign, utm_content
+            ORDER BY count DESC
+        `;
         const [kpiResults] = await db.sequelize.query(kpisQuery, { type: db.sequelize.QueryTypes.SELECT, replacements });
+        const campaignsResult = await db.sequelize.query(campaignsQuery, { type: db.sequelize.QueryTypes.SELECT, replacements });
 
         const { count, rows } = await db.Psychologist.findAndCountAll({
             where: whereClause,
@@ -369,12 +380,16 @@ exports.getAllPsychologists = async (req, res) => {
             paranoid: isParanoid
         });
         const totalPages = Math.ceil(count / limit);
+        
+        const kpisObj = kpiResults || { total: 0, active: 0, pending: 0, inactive: 0, vip: 0, fila_cs: 0 };
+        kpisObj.meta_campaigns = campaignsResult || [];
+        
         res.status(200).json({
             data: rows,
             totalPages,
             currentPage: page,
             totalCount: count,
-            kpis: kpiResults || { total: 0, active: 0, pending: 0, inactive: 0, vip: 0, fila_cs: 0 }
+            kpis: kpisObj
         });
     } catch (error) {
         console.error('Erro ao buscar lista de psicólogos:', error);

@@ -133,6 +133,20 @@ window.loadB2BLeads = async function() {
         }
 
         let html = '';
+        if (json.kpis && json.kpis.meta_campaigns && json.kpis.meta_campaigns.length > 0) {
+            let campHtml = '';
+            json.kpis.meta_campaigns.forEach(c => {
+                campHtml += `<tr>
+                    <td><strong>${c.utm_campaign || 'N/D'}</strong></td>
+                    <td>${c.utm_content || 'N/D'}</td>
+                    <td style="text-align: right; font-weight: 800; color: #1d4ed8;">${c.count}</td>
+                </tr>`;
+            });
+            document.querySelector('#table-campaigns tbody').innerHTML = campHtml;
+        } else {
+            document.querySelector('#table-campaigns tbody').innerHTML = '<tr><td colspan="3">Nenhuma campanha registrada no período filtrado.</td></tr>';
+        }
+
         if (json.data && json.data.length > 0) {
             json.data.forEach(psi => {
                 const badgeUtm = getUtmBadge(psi.utm_source);
