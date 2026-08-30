@@ -1,0 +1,169 @@
+/* ==========================================================================
+   ESTILOS ESPECÍFICOS DO MOTOR DE DECISÃO DE ADS
+   ========================================================================== */
+
+.decision-matrix-container {
+    background: var(--branco-puro);
+    border: 1px solid var(--cinza-borda);
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.decision-global-header {
+    padding: 25px;
+    border-bottom: 1px solid var(--cinza-borda);
+    background: var(--cinza-fundo);
+    transition: background-color 0.3s ease;
+}
+
+.decision-global-header h3 {
+    margin: 0 0 15px 0;
+    color: var(--verde-escuro);
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.decision-matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.matrix-item {
+    background: var(--branco-puro);
+    border: 1px solid var(--cinza-borda);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.matrix-item-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--cinza-texto);
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.decision-global-reason-box {
+    margin: 0;
+    color: var(--verde-escuro);
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-align: center;
+    background: rgba(255,255,255,0.7);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.decision-channels-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+}
+
+@media (max-width: 768px) {
+    .decision-channels-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.decision-channel-box {
+    padding: 20px;
+    border-right: 1px solid var(--cinza-borda);
+}
+
+.decision-channel-box:last-child {
+    border-right: none;
+}
+
+.decision-channel-title {
+    margin: 0 0 15px 0;
+    font-size: 1rem;
+    color: var(--verde-escuro);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.badge-status {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Ajustes para os Filtros e Chart Containers baseados no padrão */
+.ads-chart-container {
+    background: var(--branco-puro);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid var(--cinza-borda);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+}
+
+.ads-filter-row {
+    background: var(--branco-puro);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid var(--cinza-borda);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.ads-filter-inputs {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.ads-filter-inputs input,
+.ads-filter-inputs select {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid var(--cinza-borda);
+    font-size: 0.85rem;
+    color: var(--verde-escuro);
+    outline: none;
+}
+
+.ads-filter-inputs button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 6px;
+    background: var(--verde-escuro);
+    color: var(--branco-puro);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.ads-filter-inputs button:hover {
+    opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    .ads-filter-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .ads-filter-inputs {
+        flex-direction: column;
+        width: 100%;
+    }
+    .ads-filter-inputs input,
+    .ads-filter-inputs select,
+    .ads-filter-inputs button {
+        width: 100%;
+    }
+}

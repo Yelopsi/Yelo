@@ -1,227 +1,281 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yelo Admin - Tráfego Pago (Ads)</title>
-    <!-- Adicione os estilos padrão do Admin -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; padding: 0; color: #1e293b; }
-        .main-header { display: flex; justify-content: space-between; align-items: center; padding: 30px; background: white; border-bottom: 1px solid #e2e8f0; }
-        .main-header h1 { margin: 0; font-size: 1.5rem; font-weight: 800; color: #0f172a; }
-        .btn-back { background: #f1f5f9; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 600; color: #475569; cursor: pointer; }
-        .container { padding: 30px; max-width: 1400px; margin: 0 auto; }
-        
-        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .grid-3col { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        
-        .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
-        .stat-card-title { color: #6b7280; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
-        .stat-card-value { font-size: 1.8rem; font-weight: 800; color: #111827; }
-        .stat-card-sub { color: #64748b; font-size: 0.85rem; margin-top: 5px; }
-        
-        .chart-container { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); margin-bottom: 30px;}
-        
-        .section-title { font-size: 1.25rem; font-weight: 700; margin: 30px 0 15px 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-        
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f8fafc; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #64748b; }
-        td { font-size: 0.9rem; color: #1e293b; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
-        .badge-meta { background: #dbeafe; color: #1d4ed8; }
-        .badge-google { background: #fee2e2; color: #b91c1c; }
-        .badge-organic { background: #f1f5f9; color: #475569; }
-        .badge-active { background: #d1fae5; color: #059669; }
-        .badge-trial { background: #fef08a; color: #854d0e; }
-        .badge-pending { background: #ffedd5; color: #9a3412; }
-        .badge-inactive { background: #fef2f2; color: #991b1b; }
-
-        .ai-insight-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 12px; margin-bottom: 30px; }
-        .ai-insight-box h3 { color: #166534; margin-top: 0; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
-        
-        @media (max-width: 768px) {
-            .grid-2col, .grid-3col { grid-template-columns: 1fr; }
-            .container { padding: 15px; }
-            .main-header { padding: 15px; flex-direction: column; align-items: flex-start; gap: 10px; }
-            .date-controls { flex-direction: column; align-items: stretch !important; gap: 10px !important; }
-            .date-inputs { flex-direction: column; width: 100%; gap: 10px !important; }
-            .date-inputs input, .date-inputs button { width: 100%; }
-            .filter-row { flex-direction: column; width: 100%; }
-            .filter-row select, .filter-row button { width: 100%; }
-            .stat-card-value { font-size: 1.5rem; }
-            .section-title { font-size: 1.1rem; }
-            .chart-container { padding: 15px; }
-        }
-        
-        .table-responsive { width: 100%; overflow-x: auto; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
-        .table-responsive table { box-shadow: none; border-radius: 0; }
-    </style>
-</head>
-<body>
-    <div class="main-header">
-        <h1>Tráfego Pago (Ads) 🎯</h1>
-        <button class="btn-back" onclick="window.navigateToPage('admin_crm_hub.html')">← Voltar ao Hub</button>
+<div class="modern-dashboard-layout" style="padding-bottom: 120px;">
+    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); padding: 25px 30px; margin-bottom: 30px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div>
+            <h1 style="color: white; margin: 0 0 5px 0; font-size: 2rem; font-family: var(--font-titulos);">Tráfego Pago (Ads) 🎯</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 1.05rem;">Motor de Decisão de Investimento e Performance.</p>
+        </div>
+        <button onclick="window.navigateToPage('admin_crm_hub.html')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; font-weight: 600; color: white; cursor: pointer; transition: background 0.2s;">
+            ← Voltar ao Hub
+        </button>
     </div>
 
-    <div class="container">
-        <!-- Controles de Data -->
-        <div class="date-controls" style="background: white; padding: 15px 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-            <div class="date-inputs" style="display: flex; gap: 15px; align-items: center;">
-                <label style="font-weight: 600; font-size: 0.9rem; color: #475569;">Período:</label>
-                <input type="date" id="date-start" style="padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                <span style="color: #64748b;">até</span>
-                <input type="date" id="date-end" style="padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
-                <button onclick="applyDateFilter()" style="padding: 8px 15px; border: none; border-radius: 6px; background: #8b5cf6; color: white; font-weight: 600; cursor: pointer;">Aplicar Datas</button>
-            </div>
-            <div style="font-size: 0.8rem; color: #64748b;">Padrão: Últimos 30 dias</div>
-        </div>
-
-        <!-- 1. Macro KPIs -->
-        <div class="grid-3col">
-            <div class="stat-card">
-                <div class="stat-card-title">CPL Global (Mês Atual)</div>
-                <div class="stat-card-value" id="kpi-cpl">Carregando...</div>
-                <div class="stat-card-sub">Custo por Lead (Trial)</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-title">CAC Global (Mês Atual)</div>
-                <div class="stat-card-value" id="kpi-cac">Carregando...</div>
-                <div class="stat-card-sub">Custo por Assinante B2B</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-title">Gasto Total Ads</div>
-                <div class="stat-card-value" id="kpi-spend">Carregando...</div>
-                <div class="stat-card-sub" id="kpi-spend-sub">Meta + Google</div>
-            </div>
-        </div>
-
-        <!-- 2. AI Insight -->
-        <div class="ai-insight-box" id="ai-insight">
-            <h3>✨ Analisando eficiência das campanhas...</h3>
-        </div>
-
-        <!-- 3. Charts -->
-        <div class="grid-2col">
-            <div class="chart-container">
-                <h3 style="margin-top:0; color:#1e293b; font-size:1rem;">Evolução de Custos (CPL e CAC)</h3>
-                <canvas id="costChart" height="250"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3 style="margin-top:0; color:#1e293b; font-size:1rem;">Conversões por Canal (Trials)</h3>
-                <canvas id="channelChart" height="250"></canvas>
-            </div>
-        </div>
-
-        <!-- KPIs Cruzados de B2B -->
-        <h2 class="section-title">Resumo de Conversões B2B (Período Filtrado)</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
-            <div class="stat-card" style="padding: 15px;">
-                <div class="stat-card-title">Meta Ads</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                    <div><span style="font-size:1.2rem; font-weight:800; color:#1d4ed8;" id="kpi-meta-trial">...</span><br><span style="font-size:0.75rem; color:#64748b;">Trials</span></div>
-                    <div><span style="font-size:1.2rem; font-weight:800; color:#059669;" id="kpi-meta-paying">...</span><br><span style="font-size:0.75rem; color:#64748b;">Assinantes</span></div>
+    <!-- CAMADA 1: DECISÃO GLOBAL E POR CANAL -->
+    <h3 class="crm-section-title first">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        O Que Fazer Agora? (Decisão Automática)
+    </h3>
+    
+    <div class="decision-matrix-container">
+        <div id="decision-global" class="decision-global-header">
+            <h3>
+                Matriz de Decisão Global
+                <span id="decision-global-status" class="badge-status" style="background: #e2e8f0; color: #475569;">Calculando...</span>
+            </h3>
+            <div class="decision-matrix-grid">
+                <div class="matrix-item">
+                    <div class="matrix-item-title">📊 Estatística</div>
+                    <div id="matrix-stat-status" style="font-size: 1rem; font-weight: 700;">...</div>
+                    <div id="matrix-stat-desc" style="font-size: 0.8rem; color: var(--cinza-texto); margin-top: 5px;">...</div>
+                </div>
+                <div class="matrix-item">
+                    <div class="matrix-item-title">💰 Economia</div>
+                    <div id="matrix-econ-status" style="font-size: 1rem; font-weight: 700;">...</div>
+                    <div id="matrix-econ-desc" style="font-size: 0.8rem; color: var(--cinza-texto); margin-top: 5px;">...</div>
+                </div>
+                <div class="matrix-item">
+                    <div class="matrix-item-title">📉 Tendência</div>
+                    <div id="matrix-trend-status" style="font-size: 1rem; font-weight: 700;">...</div>
+                    <div id="matrix-trend-desc" style="font-size: 0.8rem; color: var(--cinza-texto); margin-top: 5px;">...</div>
                 </div>
             </div>
-            <div class="stat-card" style="padding: 15px;">
-                <div class="stat-card-title">Google Ads</div>
-                <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                    <div><span style="font-size:1.2rem; font-weight:800; color:#b91c1c;" id="kpi-google-trial">...</span><br><span style="font-size:0.75rem; color:#64748b;">Trials</span></div>
-                    <div><span style="font-size:1.2rem; font-weight:800; color:#059669;" id="kpi-google-paying">...</span><br><span style="font-size:0.75rem; color:#64748b;">Assinantes</span></div>
-                </div>
+            <p id="decision-global-reason" class="decision-global-reason-box">Analisando dados do último mês...</p>
+        </div>
+        <div class="decision-channels-grid">
+            <div id="decision-meta" class="decision-channel-box">
+                <h4 class="decision-channel-title">Meta Ads <span id="decision-meta-badge" class="badge-status" style="background:#e2e8f0; color:#475569;">...</span></h4>
+                <p id="decision-meta-reason" style="margin: 0; font-size: 0.9rem; color: var(--cinza-texto);">...</p>
             </div>
-            <div class="stat-card" style="padding: 15px;">
-                <div class="stat-card-title">WhatsApp (Manual)</div>
-                <div style="margin-top: 10px;">
-                    <span style="font-size:1.5rem; font-weight:800; color:#15803d;" id="kpi-wpp-total">...</span><br><span style="font-size:0.75rem; color:#64748b;">Total de Cadastros</span>
-                </div>
+            <div id="decision-google" class="decision-channel-box">
+                <h4 class="decision-channel-title">Google Ads <span id="decision-google-badge" class="badge-status" style="background:#e2e8f0; color:#475569;">...</span></h4>
+                <p id="decision-google-reason" style="margin: 0; font-size: 0.9rem; color: var(--cinza-texto);">...</p>
             </div>
         </div>
+    </div>
 
-        <!-- Análise por Campanha (Meta Ads) -->
-        <h2 class="section-title">Análise por Campanha (Meta Ads)</h2>
-        <div class="table-responsive" style="margin-bottom: 30px;">
-        <table id="table-campaigns">
-            <thead>
-                <tr>
-                    <th>Campanha (utm_campaign)</th>
-                    <th>Anúncio / Conteúdo (utm_content)</th>
-                    <th style="text-align: right;">Total de Cadastros</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="3">Carregando campanhas...</td></tr>
-            </tbody>
-        </table>
+    <!-- CAMADA 2: SINAIS QUE EXPLICAM A DECISÃO -->
+    <div style="margin-bottom: 40px;" id="decision-signals-container">
+        <h3 style="font-size: 0.9rem; text-transform: uppercase; color: var(--cinza-texto); margin-bottom: 15px; letter-spacing: 0.5px;">Sinais que explicam a decisão</h3>
+        <div id="decision-signals" style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="color: var(--cinza-texto); font-size: 0.9rem;">Carregando sinais...</div>
         </div>
+    </div>
 
-        <!-- 4. Leads B2B (Psicólogos) -->
-        <h2 class="section-title">Leads B2B Captados (Psicólogos)</h2>
-        <div class="filter-row" style="margin-bottom: 15px; display: flex; gap: 10px;">
-            <select id="filter-b2b-status" style="padding:8px; border-radius:6px; border:1px solid #cbd5e1;">
+    <!-- CAMADA 3: MÉTRICAS MACRO (Contexto) -->
+    <h3 class="crm-section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        Métricas Base (Contexto)
+    </h3>
+    
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-bottom: 20px;">
+        <div class="kpi-card" style="border-top-color: #8b5cf6;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="background: #ede9fe; padding: 12px; border-radius: 10px; color: #8b5cf6;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <span style="font-size: 0.75rem; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; color: #64748b; font-weight: bold; text-transform: uppercase;">Gasto Total Ads</span>
+            </div>
+            <h4 id="kpi-spend" style="font-size: 1.5rem; color: #1e293b; margin-bottom: 8px; font-weight: 800;">Carregando...</h4>
+            <p id="kpi-spend-sub" style="color: #64748b; font-size: 0.9rem; margin: 0;">Meta + Google</p>
+        </div>
+        
+        <div class="kpi-card" style="border-top-color: #3b82f6;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="background: #eff6ff; padding: 12px; border-radius: 10px; color: #3b82f6;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+                </div>
+                <span style="font-size: 0.75rem; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; color: #64748b; font-weight: bold; text-transform: uppercase;">CPL Global (Mês Atual)</span>
+            </div>
+            <h4 id="kpi-cpl" style="font-size: 1.5rem; color: #1e293b; margin-bottom: 8px; font-weight: 800;">Carregando...</h4>
+            <p id="kpi-cpl-trend" style="color: #64748b; font-size: 0.9rem; margin: 0; font-weight: 600;"></p>
+        </div>
+        
+        <div class="kpi-card" style="border-top-color: #f59e0b;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="background: #fffbeb; padding: 12px; border-radius: 10px; color: #f59e0b;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <span style="font-size: 0.75rem; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; color: #64748b; font-weight: bold; text-transform: uppercase;">CAC Global (Mês Atual)</span>
+            </div>
+            <h4 id="kpi-cac" style="font-size: 1.5rem; color: #1e293b; margin-bottom: 8px; font-weight: 800;">Carregando...</h4>
+            <p id="kpi-cac-trend" style="color: #64748b; font-size: 0.9rem; margin: 0; font-weight: 600;"></p>
+        </div>
+    </div>
+    
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-bottom: 30px;">
+        <div class="kpi-card" style="background: #eff6ff; border-color: #bfdbfe; border-top-color: #3b82f6;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span style="font-size: 0.75rem; background: rgba(59,130,246,0.1); padding: 4px 10px; border-radius: 20px; color: #1d4ed8; font-weight: bold; text-transform: uppercase;">Meta Ads</span>
+            </div>
+            <h4 style="font-size: 1.15rem; color: #1e3a8a; margin-bottom: 8px;">Custo Estimado por Assinante</h4>
+            <div id="kpi-meta-cac" style="font-size: 1.8rem; font-weight: 800; color: #1d4ed8; margin-bottom: 5px;">...</div>
+            <p id="kpi-meta-trend" style="color: #3b82f6; font-size: 0.9rem; margin: 0; font-weight: 600;"></p>
+        </div>
+        
+        <div class="kpi-card" style="background: #fef2f2; border-color: #fecaca; border-top-color: #ef4444;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span style="font-size: 0.75rem; background: rgba(239,68,68,0.1); padding: 4px 10px; border-radius: 20px; color: #b91c1c; font-weight: bold; text-transform: uppercase;">Google Ads</span>
+            </div>
+            <h4 style="font-size: 1.15rem; color: #7f1d1d; margin-bottom: 8px;">Custo Estimado por Assinante</h4>
+            <div id="kpi-google-cac" style="font-size: 1.8rem; font-weight: 800; color: #b91c1c; margin-bottom: 5px;">...</div>
+            <p id="kpi-google-trend" style="color: #ef4444; font-size: 0.9rem; margin: 0; font-weight: 600;"></p>
+        </div>
+    </div>
+
+    <!-- 3. Tendências / Charts -->
+    <h3 class="crm-section-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        Diagnóstico de Tendências (Últimos 6 Meses)
+    </h3>
+    
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); margin-bottom: 40px;">
+        <div class="ads-chart-container">
+            <h3 style="margin-top:0; color:#1e293b; font-size:1.1rem; margin-bottom:15px;">Evolução de Custos (CPL e CAC)</h3>
+            <div style="position: relative; height: 250px; width: 100%;">
+                <canvas id="costChart"></canvas>
+            </div>
+        </div>
+        <div class="ads-chart-container">
+            <h3 style="margin-top:0; color:#1e293b; font-size:1.1rem; margin-bottom:15px;">Volume de Trials por Canal</h3>
+            <div style="position: relative; height: 250px; width: 100%;">
+                <canvas id="channelChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- DIVISOR PARA A INVESTIGAÇÃO DETALHADA -->
+    <hr style="border: 0; border-top: 2px dashed #cbd5e1; margin: 40px 0;">
+
+    <!-- 4. Investigação de Período (Filtros e Detalhes) -->
+    <h3 class="crm-section-title" style="margin-bottom: 15px !important;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        Investigação Detalhada
+    </h3>
+    <p style="margin: 0 0 20px 0; color: #64748b; font-size: 0.95rem;">Filtre um período específico para analisar conversões e campanhas.</p>
+    
+    <div class="ads-filter-row">
+        <div class="ads-filter-inputs">
+            <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Período:</label>
+            <input type="date" id="date-start">
+            <span style="color: #64748b; font-size: 0.85rem;">até</span>
+            <input type="date" id="date-end">
+            <button onclick="applyDateFilter()">Aplicar Filtro</button>
+        </div>
+    </div>
+
+    <!-- KPIs Cruzados de B2B (Do período filtrado) -->
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 25px;">
+        <div class="kpi-card" style="border-top-color: #1d4ed8;">
+            <h4 style="font-size: 1rem; color: #1e293b; margin-bottom: 15px;">Meta Ads</h4>
+            <div style="display: flex; justify-content: space-between;">
+                <div><span style="font-size:1.5rem; font-weight:800; color:#1d4ed8;" id="kpi-meta-trial">...</span><br><span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700;">Trials</span></div>
+                <div><span style="font-size:1.5rem; font-weight:800; color:#059669;" id="kpi-meta-paying">...</span><br><span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700;">Assinantes</span></div>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-top-color: #b91c1c;">
+            <h4 style="font-size: 1rem; color: #1e293b; margin-bottom: 15px;">Google Ads</h4>
+            <div style="display: flex; justify-content: space-between;">
+                <div><span style="font-size:1.5rem; font-weight:800; color:#b91c1c;" id="kpi-google-trial">...</span><br><span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700;">Trials</span></div>
+                <div><span style="font-size:1.5rem; font-weight:800; color:#059669;" id="kpi-google-paying">...</span><br><span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700;">Assinantes</span></div>
+            </div>
+        </div>
+        <div class="kpi-card" style="border-top-color: #15803d;">
+            <h4 style="font-size: 1rem; color: #1e293b; margin-bottom: 15px;">WhatsApp (Manual)</h4>
+            <div>
+                <span style="font-size:1.5rem; font-weight:800; color:#15803d;" id="kpi-wpp-total">...</span><br><span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700;">Total Cadastros</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análise por Campanha (Meta Ads) -->
+    <h3 class="crm-section-title" style="margin-bottom: 15px !important; margin-top: 40px !important;">Análise por Campanha (Meta Ads)</h3>
+    <div class="tabela-container" style="margin-bottom: 30px;">
+        <div class="tabela-wrapper">
+            <table id="table-campaigns" class="tabela-gerenciamento">
+                <thead>
+                    <tr>
+                        <th>Campanha (utm_campaign)</th>
+                        <th>Anúncio / Conteúdo (utm_content)</th>
+                        <th style="text-align: right;">Total de Cadastros</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="3" style="text-align:center; padding: 20px;">Carregando campanhas...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 4. Leads B2B (Psicólogos) -->
+    <h3 class="crm-section-title" style="margin-bottom: 15px !important;">Leads B2B Captados (Psicólogos)</h3>
+    <div class="ads-filter-row" style="margin-bottom: 15px;">
+        <div class="ads-filter-inputs">
+            <select id="filter-b2b-status">
                 <option value="all">Todos os Status</option>
                 <option value="active_paying">Assinantes Pós-Trial</option>
                 <option value="active_trial">Em Trial (14 dias)</option>
                 <option value="pending">Perfil Incompleto (Não ativou)</option>
                 <option value="inactive">Cancelados / Churn</option>
             </select>
-            <select id="filter-b2b-channel" style="padding:8px; border-radius:6px; border:1px solid #cbd5e1;">
+            <select id="filter-b2b-channel">
                 <option value="all">Todos os Canais</option>
                 <option value="utm_meta">Meta Ads</option>
                 <option value="utm_google">Google Ads</option>
                 <option value="utm_whatsapp">WhatsApp</option>
                 <option value="utm_outros">Orgânico/Outros</option>
             </select>
-            <button onclick="currentPageB2B = 1; loadB2BLeads()" style="padding:8px 15px; border:none; border-radius:6px; background:#111827; color:white; cursor:pointer;">Filtrar B2B</button>
+            <button onclick="currentPageB2B = 1; loadB2BLeads()">Filtrar B2B</button>
         </div>
-        <div class="table-responsive">
-        <table id="table-b2b">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Data</th>
-                    <th>Status</th>
-                    <th>Origem / Campanha</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="4">Carregando psicólogos...</td></tr>
-            </tbody>
-        </table>
+    </div>
+    <div class="tabela-container" style="margin-bottom: 15px;">
+        <div class="tabela-wrapper">
+            <table id="table-b2b" class="tabela-gerenciamento">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                        <th>Origem / Campanha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="4" style="text-align:center; padding: 20px;">Carregando psicólogos...</td></tr>
+                </tbody>
+            </table>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; flex-wrap: wrap; gap: 10px;" id="b2b-pagination"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px;" id="b2b-pagination"></div>
 
-        <!-- 5. Leads B2C (Pacientes) -->
-        <h2 class="section-title" style="margin-top: 50px;">Leads B2C Captados (Pacientes)</h2>
-        <div class="filter-row" style="margin-bottom: 15px; display: flex; gap: 10px;">
-            <select id="filter-b2c-channel" style="padding:8px; border-radius:6px; border:1px solid #cbd5e1;">
+    <!-- 5. Leads B2C (Pacientes) -->
+    <h3 class="crm-section-title" style="margin-bottom: 15px !important; margin-top: 50px !important;">Leads B2C Captados (Pacientes)</h3>
+    <div class="ads-filter-row" style="margin-bottom: 15px;">
+        <div class="ads-filter-inputs">
+            <select id="filter-b2c-channel">
                 <option value="all">Todos os Canais</option>
                 <option value="utm_google">Google Ads</option>
                 <option value="utm_meta">Meta Ads</option>
                 <option value="utm_outros">Orgânico/Outros</option>
             </select>
-            <button onclick="currentPageB2C = 1; loadB2CLeads()" style="padding:8px 15px; border:none; border-radius:6px; background:#111827; color:white; cursor:pointer;">Filtrar B2C</button>
+            <button onclick="currentPageB2C = 1; loadB2CLeads()">Filtrar B2C</button>
         </div>
-        <div class="table-responsive">
-        <table id="table-b2c">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Data</th>
-                    <th>Origem / Campanha</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="3">Carregando pacientes...</td></tr>
-            </tbody>
-        </table>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; flex-wrap: wrap; gap: 10px;" id="b2c-pagination"></div>
     </div>
+    <div class="tabela-container" style="margin-bottom: 15px;">
+        <div class="tabela-wrapper">
+            <table id="table-b2c" class="tabela-gerenciamento">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Data</th>
+                        <th>Origem / Campanha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="3" style="text-align:center; padding: 20px;">Carregando pacientes...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px;" id="b2c-pagination"></div>
+</div>
 
-    <script src="/config.js"></script>
-    <script src="admin_traffic_ads.js"></script>
-</body>
-</html>
+<script src="/config.js"></script>
+<script src="admin_traffic_ads.js"></script>

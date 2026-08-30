@@ -39,30 +39,367 @@ function getQueryDates() {
     return `&startDate=${s}&endDate=${e}`;
 }
 
-// 1. EFICIÊNCIA GLOBAL E GRÁFICOS
+// 1. EFICIÊNCIA GLOBAL, DECISÃO E GRÁFICOS
 window.loadEfficiencyData = async function() {
     try {
-        const res = await fetch(`${API_BASE}/api/admin/efficiency`);
-        const data = await res.json();
+        // Fetch efficiency data and growth data concurrently
+        const [effRes, growthRes] = await Promise.all([
+            fetch(`${API_BASE}/api/admin/efficiency`),
+            fetch(`${API_BASE}/api/admin/growth/overview?days=30`)
+        ]);
+        
+        const data = await effRes.json();
+        const growthData = growthRes.ok ? await growthRes.json() : null;
+        
+        const ltvProjetado = (growthData && growthData.data && growthData.data.ltvProjetado) ? growthData.data.ltvProjetado : 0;
 
         if (data.weeklyHistory && data.weeklyHistory.length > 0) {
-            const lastWeek = data.weeklyHistory[data.weeklyHistory.length - 1];
+            const hist = data.weeklyHistory;
+            const curr = hist[hist.length - 1];
+            const prev = hist.length > 1 ? hist[hist.length - 2] : null;
             
-            document.getElementById('kpi-cpl').innerText = formatBRL(lastWeek.cpl);
-            document.getElementById('kpi-cac').innerText = formatBRL(lastWeek.cac);
+            // Render Trend KPIs
+            renderTrendKPI('kpi-cpl', 'kpi-cpl-trend', curr.cpl, prev ? prev.cpl : null, true);
+            renderTrendKPI('kpi-cac', 'kpi-cac-trend', curr.cac, prev ? prev.cac : null, true);
             
-            const totalSpend = parseFloat(lastWeek.meta_ads || 0) + parseFloat(lastWeek.google_ads || 0);
+            const totalSpend = parseFloat(curr.meta_ads || 0) + parseFloat(curr.google_ads || 0);
             document.getElementById('kpi-spend').innerText = formatBRL(totalSpend);
             
-            renderCharts(data.weeklyHistory);
+            // Custo Estimado por Assinante (Por Canal)
+            const metaSpend = parseFloat(curr.meta_ads || 0);
+            const googleSpend = parseFloat(curr.google_ads || 0);
+            const metaPagantes = parseInt(curr.meta_pagantes || 0, 10);
+            const googlePagantes = parseInt(curr.google_pagantes || 0, 10);
             
-            const lastInsight = data.insight || 'Nenhum insight gerado recentemente.';
-            document.getElementById('ai-insight').innerHTML = `<h3>✨ Analisando eficiência das campanhas...</h3>${lastInsight}`;
+            const metaCac = metaPagantes > 0 ? (metaSpend / metaPagantes) : 0;
+            const googleCac = googlePagantes > 0 ? (googleSpend / googlePagantes) : 0;
+            
+            const prevMetaCac = (prev && prev.meta_pagantes > 0) ? (parseFloat(prev.meta_ads||0) / parseInt(prev.meta_pagantes||0, 10)) : 0;
+            const prevGoogleCac = (prev && prev.google_pagantes > 0) ? (parseFloat(prev.google_ads||0) / parseInt(prev.google_pagantes||0, 10)) : 0;
+
+            renderTrendKPI('kpi-meta-cac', 'kpi-meta-trend', metaCac, prevMetaCac, true, metaPagantes === 0);
+            renderTrendKPI('kpi-google-cac', 'kpi-google-trend', googleCac, prevGoogleCac, true, googlePagantes === 0);
+            
+            renderCharts(hist);
+            
+            // Motor de Decisão
+            generateDecisionEngine(hist, ltvProjetado, metaCac, googleCac);
         }
     } catch (e) {
         console.error("Erro ao carregar dados de eficiência:", e);
     }
 }
+
+function renderTrendKPI(valId, trendId, current, previous, inverseGood = false, isND = false) {
+    const valEl = document.getElementById(valId);
+    const trendEl = document.getElementById(trendId);
+    
+    if (isND || current === 0) {
+        valEl.innerText = 'N/D';
+        if (trendEl) trendEl.innerText = '';
+        return;
+    }
+    
+    valEl.innerText = formatBRL(current);
+    
+    if (!trendEl || previous === null || previous === 0) {
+        if (trendEl) trendEl.innerText = '';
+        return;
+    }
+    
+    const pct = ((current - previous) / previous) * 100;
+    const isGood = inverseGood ? pct < 0 : pct > 0;
+    
+    if (Math.abs(pct) < 1) {
+        trendEl.innerText = 'Estável';
+        trendEl.style.color = '#64748b';
+        return;
+    }
+    
+    trendEl.innerHTML = `${pct > 0 ? '↑' : '↓'} ${Math.abs(pct).toFixed(1)}% vs ant.`;
+    trendEl.style.color = isGood ? '#16a34a' : '#dc2626';
+}
+
+function generateDecisionEngine(hist, ltv, metaCac, googleCac) {
+    const curr = hist[hist.length - 1];
+    const prev = hist.length > 1 ? hist[hist.length - 2] : null;
+    const prevPrev = hist.length > 2 ? hist[hist.length - 3] : null;
+
+    const totalPagantes = parseInt(curr.meta_pagantes || 0, 10) + parseInt(curr.google_pagantes || 0, 10);
+    const totalSpend = parseFloat(curr.meta_ads || 0) + parseFloat(curr.google_ads || 0);
+    const globalCac = curr.cac || 0;
+    
+    // Cálculo da Tendência agregada dos 3 meses ANTERIORES (exclui o mês atual)
+    let sumSpend3mPrev = 0;
+    let sumPagantes3mPrev = 0;
+    for(let i = Math.max(0, hist.length - 4); i < hist.length - 1; i++) {
+        sumSpend3mPrev += (parseFloat(hist[i].meta_ads||0) + parseFloat(hist[i].google_ads||0));
+        sumPagantes3mPrev += (parseInt(hist[i].meta_pagantes||0, 10) + parseInt(hist[i].google_pagantes||0, 10));
+    }
+    const avgCac3mPrev = sumPagantes3mPrev > 0 ? (sumSpend3mPrev / sumPagantes3mPrev) : (sumSpend3mPrev > 0 ? sumSpend3mPrev : 0);
+    const cacTrendPct = avgCac3mPrev > 0 ? ((globalCac - avgCac3mPrev) / avgCac3mPrev) * 100 : 0;
+
+    // 1. Matriz Estatística
+    let statStatus = 'BAIXA';
+    let statDesc = `Apenas ${totalPagantes} assinantes no mês.`;
+    let statColor = '#ca8a04';
+    
+    if (totalPagantes >= 10 && totalSpend >= 100) {
+        statStatus = 'ALTA';
+        statDesc = `Volume excelente (${totalPagantes} assinantes).`;
+        statColor = '#16a34a';
+    } else if (totalPagantes >= 5 && totalSpend >= 50) {
+        statStatus = 'MÉDIA';
+        statDesc = `Volume razoável (${totalPagantes} assinantes).`;
+        statColor = '#ea580c';
+    }
+
+    // 2. Matriz Econômica
+    const ratio = (ltv > 0 && globalCac > 0) ? (ltv / globalCac) : 0;
+    let econStatus = 'DESCONHECIDA';
+    let econDesc = 'LTV não disponível para cálculo.';
+    let econColor = '#64748b';
+    
+    if (ltv > 0 && globalCac > 0) {
+        if (ratio >= 3) {
+            econStatus = 'FAVORÁVEL';
+            econDesc = `LTV (${formatBRL(ltv)}) é >= 3x o CAC.`;
+            econColor = '#16a34a';
+        } else if (ratio >= 1.5) {
+            econStatus = 'ACEITÁVEL';
+            econDesc = `LTV cobre CAC com margem.`;
+            econColor = '#ea580c';
+        } else {
+            econStatus = 'PERIGOSA';
+            econDesc = `CAC muito alto para o LTV atual.`;
+            econColor = '#dc2626';
+        }
+    }
+
+    // 3. Matriz Tendência (Persistência)
+    let trendStatus = 'ESTÁVEL';
+    let trendDesc = 'Custo consistente com a média anterior.';
+    let trendColor = '#64748b';
+    
+    let isPioraPersistente = false;
+    let isPioraRecente = false;
+
+    if (sumPagantes3mPrev >= 2) {
+        if (cacTrendPct <= -10) {
+            trendStatus = 'MELHORANDO';
+            trendDesc = `CAC atual está ${Math.abs(cacTrendPct).toFixed(0)}% menor que a média anterior.`;
+            trendColor = '#16a34a';
+        } else if (cacTrendPct >= 10 || (prev && curr.cac > prev.cac * 1.15)) {
+            if (prev && prevPrev && curr.cac > prev.cac && prev.cac > prevPrev.cac) {
+                trendStatus = 'PIORA PERSISTENTE';
+                trendDesc = `Deterioração contínua: CAC piorou por múltiplos meses consecutivos.`;
+                trendColor = '#dc2626';
+                isPioraPersistente = true;
+            } else {
+                trendStatus = 'PIORA RECENTE';
+                trendDesc = `CAC atual sofreu piora isolada recente.`;
+                trendColor = '#ca8a04';
+                isPioraRecente = true;
+            }
+        }
+    }
+
+    let globalStatus = '';
+    let globalReason = '';
+    let bgColor = '';
+    const signals = [];
+
+    // O CAC tolerado ideal é LTV / 3. A regra para pausar é gastar 3x o CAC tolerado sem NENHUMA conversão.
+    const cacTolerado = ltv > 0 ? (ltv / 3) : (globalCac > 0 ? globalCac : 200 / 3);
+    const maxSpendTolerated = cacTolerado * 3;
+
+    // DECISÃO GLOBAL (Tabela Definitiva)
+    if (totalSpend > 0 && totalPagantes === 0) {
+        if (totalSpend > maxSpendTolerated) {
+            globalStatus = '⛔ PAUSAR';
+            globalReason = `Desperdício grave: Gasto > limite tolerável sem nenhuma conversão.`;
+            bgColor = '#fef2f2';
+        } else {
+            globalStatus = '⚪ AGUARDAR MAIS DADOS';
+            globalReason = `Gasto inicial sem conversões, mas dentro do limite tolerável.`;
+            bgColor = '#f8fafc';
+        }
+    } else {
+        if (econStatus === 'FAVORÁVEL') {
+            if (statStatus === 'ALTA' || statStatus === 'MÉDIA') {
+                if (isPioraPersistente) {
+                    globalStatus = '🟠 REDUZIR PRESSÃO';
+                    globalReason = `A economia geral suportaria crescimento, mas a deterioração persistente do custo exige controle orçamentário.`;
+                    bgColor = '#ffedd5';
+                } else if (isPioraRecente) {
+                    globalStatus = '🟡 OTIMIZAR';
+                    globalReason = `Custo piorou recentemente. Corrija campanhas antes de voltar a escalar.`;
+                    bgColor = '#fefce8';
+                } else {
+                    globalStatus = '🟢 AUMENTAR';
+                    globalReason = `Economia altamente favorável com amostra segura e tendência positiva. Escalar.`;
+                    bgColor = '#f0fdf4';
+                }
+            } else {
+                globalStatus = '⚪ MANTER / NÃO ESCALAR';
+                globalReason = `A economia aponta retorno alto, mas a falta de volume de dados inibe segurança para escalar.`;
+                bgColor = '#f8fafc';
+            }
+        } else if (econStatus === 'ACEITÁVEL') {
+            if (statStatus === 'ALTA' || statStatus === 'MÉDIA') {
+                if (isPioraPersistente) {
+                    globalStatus = '🟠 REDUZIR PRESSÃO';
+                    globalReason = `Margem de lucro estreita + piora persistente de custos = pare de pressionar o orçamento.`;
+                    bgColor = '#ffedd5';
+                } else if (isPioraRecente) {
+                    globalStatus = '🟡 OTIMIZAR';
+                    globalReason = `Sinal amarelo no custo recente. Otimizar criativos/público.`;
+                    bgColor = '#fefce8';
+                } else {
+                    globalStatus = '🔵 MANTER';
+                    globalReason = `As campanhas se pagam e têm volume. Manter para constância de receita.`;
+                    bgColor = '#f0f9ff';
+                }
+            } else {
+                globalStatus = '⚪ MANTER / AGUARDAR';
+                globalReason = `Economia tolerável e baixo volume. Não realize mudanças bruscas ainda.`;
+                bgColor = '#f8fafc';
+            }
+        } else { // PERIGOSA
+            if (statStatus === 'ALTA' || statStatus === 'MÉDIA') {
+                globalStatus = '🔴 REDUZIR';
+                globalReason = `O custo de aquisição atual destrói o valor projetado (LTV/CAC < 1.5). Urgente redução onde houver ineficiência.`;
+                bgColor = '#fef2f2';
+            } else {
+                globalStatus = '🟠 PRESERVAR CAPITAL / NÃO ESCALAR';
+                globalReason = `Sinais de perigo, mas amostra baixa. Congele orçamento e preserve caixa até o indicador melhorar.`;
+                bgColor = '#ffedd5';
+            }
+        }
+    }
+    
+    document.getElementById('decision-global-status').innerText = globalStatus;
+    document.getElementById('decision-global-status').style.color = (globalStatus.includes('AUMENTAR') ? '#166534' : globalStatus.includes('RED') || globalStatus.includes('PAUSAR') ? '#991b1b' : globalStatus.includes('MANTER / NÃO') || globalStatus.includes('PRESERVAR') || globalStatus.includes('REDUZIR PRESSÃO') ? '#c2410c' : globalStatus.includes('OTIMIZAR') ? '#854d0e' : globalStatus.includes('MANTER') ? '#0369a1' : '#475569');
+    document.getElementById('decision-global-status').style.backgroundColor = bgColor === '#f8fafc' ? '#e2e8f0' : (globalStatus.includes('AUMENTAR') ? '#bbf7d0' : globalStatus.includes('RED') || globalStatus.includes('PAUSAR') ? '#fecaca' : globalStatus.includes('OTIMIZAR') ? '#fef08a' : globalStatus.includes('PRESERVAR') || globalStatus.includes('REDUZIR PRESSÃO') ? '#ffedd5' : globalStatus.includes('🔵 MANTER') ? '#bae6fd' : '#e2e8f0');
+    document.getElementById('decision-global').style.backgroundColor = bgColor;
+    
+    // Matriz DOM
+    document.getElementById('matrix-stat-status').innerText = statStatus;
+    document.getElementById('matrix-stat-status').style.color = statColor;
+    document.getElementById('matrix-stat-desc').innerText = statDesc;
+
+    document.getElementById('matrix-econ-status').innerText = econStatus;
+    document.getElementById('matrix-econ-status').style.color = econColor;
+    document.getElementById('matrix-econ-desc').innerText = econDesc;
+
+    document.getElementById('matrix-trend-status').innerText = trendStatus;
+    document.getElementById('matrix-trend-status').style.color = trendColor;
+    document.getElementById('matrix-trend-desc').innerText = trendDesc;
+
+    const microDecisions = compareChannels(curr, metaCac, googleCac, ltv, globalCac, signals);
+    
+    // Resolve Conflito Operacional (Macro manda investir/manter, mas um micro manda pausar)
+    if ((globalStatus.includes('MANTER') || globalStatus.includes('AUMENTAR')) && 
+        (microDecisions.mDec.includes('PAUSAR') || microDecisions.gDec.includes('PAUSAR'))) {
+        let pausedChannel = microDecisions.mDec.includes('PAUSAR') ? 'Meta Ads' : 'Google Ads';
+        if (microDecisions.mDec.includes('PAUSAR') && microDecisions.gDec.includes('PAUSAR')) pausedChannel = 'Ambos os canais';
+        
+        globalReason += ` AVISO: ${pausedChannel} deve ser pausado por desperdício extremo. Redistribua a verba para o canal elegível.`;
+    }
+    
+    document.getElementById('decision-global-reason').innerText = globalReason;
+    
+    // Render Sinais
+    const sigContainer = document.getElementById('decision-signals');
+    if (signals.length === 0) sigContainer.innerHTML = '<div style="color:#64748b; font-size:0.9rem;">As justificativas principais estão explicadas na Matriz.</div>';
+    else sigContainer.innerHTML = signals.map(s => `<div style="font-size:0.95rem; font-weight:500; background:white; padding:10px 15px; border-radius:8px; border:1px solid #e2e8f0;">${s}</div>`).join('');
+}
+
+function compareChannels(curr, metaCac, googleCac, ltv, globalCac, signals) {
+    const THRESHOLD_EMPATE = 20; // %
+    const THRESHOLD_REDUZIR = 40; // %
+    
+    const mSpend = parseFloat(curr.meta_ads||0);
+    const mPag = parseInt(curr.meta_pagantes||0, 10);
+    const gSpend = parseFloat(curr.google_ads||0);
+    const gPag = parseInt(curr.google_pagantes||0, 10);
+    
+    // O CAC tolerado ideal é LTV / 3. A regra extrema avalia se gastamos > 3x o tolerado.
+    const cacTolerado = ltv > 0 ? (ltv / 3) : (globalCac > 0 ? globalCac : 200 / 3);
+    const tolerado = cacTolerado * 3;
+
+    // Fallback inicial
+    let mDec = '⚪ AVALIANDO', mRes = 'Processando...', mCol = 'background:#f1f5f9; color:#475569;';
+    let gDec = '⚪ AVALIANDO', gRes = 'Processando...', gCol = 'background:#f1f5f9; color:#475569;';
+
+    // Regra extrema (Pausar)
+    if (mSpend > tolerado && mPag === 0) { mDec = '🔴 PAUSAR'; mRes = 'Gasto excessivo sem conversão.'; mCol = 'background:#fecaca; color:#991b1b;'; signals.push(`🔴 Meta Ads sem gerar valor persistente.`); }
+    else if (mPag === 0 && mSpend > 0) { mDec = '⚪ AGUARDAR'; mRes = 'Coletando dados.'; mCol = 'background:#f1f5f9; color:#475569;'; }
+
+    if (gSpend > tolerado && gPag === 0) { gDec = '🔴 PAUSAR'; gRes = 'Gasto excessivo sem conversão.'; gCol = 'background:#fecaca; color:#991b1b;'; signals.push(`🔴 Google Ads sem gerar valor persistente.`); }
+    else if (gPag === 0 && gSpend > 0) { gDec = '⚪ AGUARDAR'; gRes = 'Coletando dados.'; gCol = 'background:#f1f5f9; color:#475569;'; }
+
+    // Comparação Relativa
+    if (mPag > 0 && gPag > 0) {
+        // Quem é mais barato?
+        let diffPct = 0;
+        
+        if (metaCac < googleCac) {
+            diffPct = ((googleCac - metaCac) / googleCac) * 100;
+            if (diffPct < THRESHOLD_EMPATE) {
+                // Empate técnico
+                mDec = '🟡 MANTER'; mRes = 'Empate técnico de eficiência.'; mCol = 'background:#fef08a; color:#854d0e;';
+                gDec = '🟡 MANTER'; gRes = 'Empate técnico de eficiência.'; gCol = 'background:#fef08a; color:#854d0e;';
+            } else if (diffPct <= THRESHOLD_REDUZIR) {
+                // Meta vencedor moderado
+                mDec = '🟢 PRIORIZAR'; mRes = `Custa ${diffPct.toFixed(0)}% a menos que o Google.`; mCol = 'background:#bbf7d0; color:#166534;';
+                gDec = '🟡 INVESTIGAR'; gRes = `Custa ${diffPct.toFixed(0)}% a mais que o Meta.`; gCol = 'background:#ffedd5; color:#9a3412;';
+            } else {
+                // Meta vencedor extremo
+                mDec = '🟢 PRIORIZAR'; mRes = `Custa ${diffPct.toFixed(0)}% a menos que o Google.`; mCol = 'background:#bbf7d0; color:#166534;';
+                gDec = '🔴 REDUZIR'; gRes = `Custa ${diffPct.toFixed(0)}% a mais que o Meta. Reduza distribuição.`; gCol = 'background:#fecaca; color:#991b1b;';
+                signals.push(`🔴 Google Ads está custando exageradamente mais caro que o Meta Ads.`);
+            }
+        } else {
+            diffPct = ((metaCac - googleCac) / metaCac) * 100;
+            if (diffPct < THRESHOLD_EMPATE) {
+                // Empate técnico
+                mDec = '🟡 MANTER'; mRes = 'Empate técnico de eficiência.'; mCol = 'background:#fef08a; color:#854d0e;';
+                gDec = '🟡 MANTER'; gRes = 'Empate técnico de eficiência.'; gCol = 'background:#fef08a; color:#854d0e;';
+            } else if (diffPct <= THRESHOLD_REDUZIR) {
+                // Google vencedor moderado
+                gDec = '🟢 PRIORIZAR'; gRes = `Custa ${diffPct.toFixed(0)}% a menos que o Meta.`; gCol = 'background:#bbf7d0; color:#166534;';
+                mDec = '🟡 INVESTIGAR'; mRes = `Custa ${diffPct.toFixed(0)}% a mais que o Google.`; mCol = 'background:#ffedd5; color:#9a3412;';
+            } else {
+                // Google vencedor extremo
+                gDec = '🟢 PRIORIZAR'; gRes = `Custa ${diffPct.toFixed(0)}% a menos que o Meta.`; gCol = 'background:#bbf7d0; color:#166534;';
+                mDec = '🔴 REDUZIR'; mRes = `Custa ${diffPct.toFixed(0)}% a mais que o Google. Reduza distribuição.`; mCol = 'background:#fecaca; color:#991b1b;';
+                signals.push(`🔴 Meta Ads está custando exageradamente mais caro que o Google Ads.`);
+            }
+        }
+    } else {
+        // Se um não tem pagantes, avalia individual contra Global se possível (fallback)
+        if (mPag > 0 && globalCac > 0) {
+            mDec = '🟡 MANTER'; mRes = 'Único canal convertendo.'; mCol = 'background:#fef08a; color:#854d0e;';
+        }
+        if (gPag > 0 && globalCac > 0) {
+            gDec = '🟡 MANTER'; gRes = 'Único canal convertendo.'; gCol = 'background:#fef08a; color:#854d0e;';
+        }
+    }
+    
+    const mBadgeEl = document.getElementById('decision-meta-badge');
+    const mReasonEl = document.getElementById('decision-meta-reason');
+    if (mBadgeEl) { mBadgeEl.innerText = mDec; mBadgeEl.style = mCol; mReasonEl.innerText = mRes; }
+
+    const gBadgeEl = document.getElementById('decision-google-badge');
+    const gReasonEl = document.getElementById('decision-google-reason');
+    if (gBadgeEl) { gBadgeEl.innerText = gDec; gBadgeEl.style = gCol; gReasonEl.innerText = gRes; }
+    
+    return { mDec, gDec };
+}
+
+var costChartInstance = null;
+var channelChartInstance = null;
 
 function renderCharts(history) {
     const recentHistory = history.slice(-6);
@@ -76,7 +413,10 @@ function renderCharts(history) {
     const cacData = recentHistory.map(h => h.cac);
 
     const ctxCost = document.getElementById('costChart').getContext('2d');
-    new Chart(ctxCost, {
+    if (costChartInstance) {
+        costChartInstance.destroy();
+    }
+    costChartInstance = new Chart(ctxCost, {
         type: 'line',
         data: {
             labels: labels,
@@ -92,7 +432,10 @@ function renderCharts(history) {
     const googleTrials = recentHistory.map(h => h.google_trials || 0);
 
     const ctxChannel = document.getElementById('channelChart').getContext('2d');
-    new Chart(ctxChannel, {
+    if (channelChartInstance) {
+        channelChartInstance.destroy();
+    }
+    channelChartInstance = new Chart(ctxChannel, {
         type: 'bar',
         data: {
             labels: labels,
