@@ -290,7 +290,7 @@ function generateDecisionEngine(hist, ltv, metaCac, googleCac, currIdx) {
                 bgColor = '#fef2f2';
             } else {
                 globalStatus = '🟠 PRESERVAR CAPITAL / NÃO ESCALAR';
-                globalReason = `Sinais de perigo, mas amostra baixa. Congele orçamento e preserve caixa até o volume de conversões ou o custo (CAC) melhorar.`;
+                globalReason = `Desempenho atual insustentável (LTV/CAC de ${ratio.toFixed(1)}x), mas amostra muito baixa. Congele orçamento até registrar pelo menos 5 conversões no mês ou o retorno superar a meta mínima de 2.5x.`;
                 bgColor = '#ffedd5';
             }
         }
