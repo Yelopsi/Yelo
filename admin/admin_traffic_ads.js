@@ -277,11 +277,19 @@ function generateDecisionEngine(hist, ltv, metaCac, googleCac, currIdx) {
     const cacTolerado = ltv > 0 ? (ltv / 3) : (globalCac > 0 ? globalCac : 200 / 3);
     const maxSpendTolerated = cacTolerado * 3;
 
+    const totalTrials = parseInt(curr.meta_trials||0, 10);
+    const pagantesProjetados = totalPagantes + (totalTrials * 0.20);
+    const globalCacProjetado = pagantesProjetados > 0 ? (totalSpend / pagantesProjetados) : totalSpend;
+
     // DECISÃO GLOBAL (Tabela Definitiva)
     if (totalSpend > 0 && totalPagantes === 0) {
-        if (totalSpend > maxSpendTolerated) {
+        if (totalTrials > 0 && globalCacProjetado <= cacTolerado * 1.5) {
+            globalStatus = '⚪ AGUARDAR MAIS DADOS';
+            globalReason = `Gasto com trials em andamento (14 dias). Custo global projetado dentro do aceitável.`;
+            bgColor = '#f8fafc';
+        } else if (totalSpend > maxSpendTolerated) {
             globalStatus = '⛔ PAUSAR';
-            globalReason = `Desperdício grave: Gasto > limite tolerável sem nenhuma conversão.`;
+            globalReason = `Desperdício grave: Gasto > limite tolerável sem conversões reais ou trials suficientes.`;
             bgColor = '#fef2f2';
         } else {
             globalStatus = '⚪ AGUARDAR MAIS DADOS';
