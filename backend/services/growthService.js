@@ -11,6 +11,10 @@ class GrowthService {
             status: 'active',
             is_exempt: { [Op.or]: [false, null] }
         };
+        
+        const MetricsService = require('./metricsService');
+        const metrics = await MetricsService.getMetrics(periodStart, now);
+        const ltvProjetado = metrics.ltvProjetado || 0;
 
         // 1. MRR
         // Calculado com base nos psicólogos pagantes ativos
@@ -205,6 +209,7 @@ class GrowthService {
             totalAtivos: pagantesAtivos.length,
             ativosIniciais,
             taxaChurnPagantes,
+            ltvProjetado,
             novosPagantes,
             churnPagantes,
             churnTrial,
