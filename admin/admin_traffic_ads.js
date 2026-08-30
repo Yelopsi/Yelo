@@ -141,16 +141,16 @@ function generateDecisionEngine(hist, ltv, metaCac, googleCac) {
 
     // 1. Matriz Estatística
     let statStatus = 'BAIXA';
-    let statDesc = `Apenas ${totalPagantes} assinantes no mês.`;
+    let statDesc = `Apenas ${totalPagantes} assinante(s) via tráfego pago no mês.`;
     let statColor = '#ca8a04';
     
     if (totalPagantes >= 10 && totalSpend >= 100) {
         statStatus = 'ALTA';
-        statDesc = `Volume excelente (${totalPagantes} assinantes).`;
+        statDesc = `Volume excelente (${totalPagantes} assinantes via anúncios).`;
         statColor = '#16a34a';
     } else if (totalPagantes >= 5 && totalSpend >= 50) {
         statStatus = 'MÉDIA';
-        statDesc = `Volume razoável (${totalPagantes} assinantes).`;
+        statDesc = `Volume razoável (${totalPagantes} assinantes via anúncios).`;
         statColor = '#ea580c';
     }
 
