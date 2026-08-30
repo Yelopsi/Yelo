@@ -22,7 +22,7 @@ const generateToken = (id) => {
 // ----------------------------------------------------------------------
 exports.registerPatient = async (req, res) => {
     try {
-        const { nome, email, senha, termos, marketing, utm_source, utm_medium, utm_campaign, utm_content } = req.body;
+        const { nome, email, senha, termos, marketing, utm_source, utm_medium, utm_campaign, utm_content, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_content } = req.body;
 
         // --- 1. Validação de Campos Obrigatórios ---
         if (!nome) return res.status(400).json({ error: 'O nome é obrigatório.' });
@@ -61,7 +61,11 @@ exports.registerPatient = async (req, res) => {
             utm_source,
             utm_medium,
             utm_campaign,
-            utm_content
+            utm_content,
+            first_utm_source,
+            first_utm_medium,
+            first_utm_campaign,
+            first_utm_content
         });
 
         // [AUDITORIA] Log de Sucesso Estratégico

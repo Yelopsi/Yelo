@@ -417,6 +417,18 @@ module.exports = (sequelize, DataTypes) => {
     utm_content: {
         type: DataTypes.STRING
     },
+    first_utm_source: {
+        type: DataTypes.STRING
+    },
+    first_utm_medium: {
+        type: DataTypes.STRING
+    },
+    first_utm_campaign: {
+        type: DataTypes.STRING
+    },
+    first_utm_content: {
+        type: DataTypes.STRING
+    },
     // --- GAMIFICATION (NOVO) ---
     authority_level: {
         type: DataTypes.STRING,

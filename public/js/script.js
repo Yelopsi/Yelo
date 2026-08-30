@@ -40,7 +40,14 @@ function captureUTMs() {
     
     ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(param => {
         if (urlParams.has(param)) {
-            localStorage.setItem('yelo_' + param, urlParams.get(param));
+            const val = urlParams.get(param);
+            localStorage.setItem('yelo_' + param, val);
+            
+            // First click attribution
+            if (!localStorage.getItem('yelo_first_' + param)) {
+                localStorage.setItem('yelo_first_' + param, val);
+            }
+            
             urlParams.delete(param);
             hasUTMs = true;
         }
@@ -117,6 +124,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 utm_content: urlParams.get('utm_content') || ''
             };
             localStorage.setItem('yelo_global_utms', JSON.stringify(utms));
+            
+            // First click attribution
+            if (!localStorage.getItem('yelo_global_first_utms')) {
+                localStorage.setItem('yelo_global_first_utms', JSON.stringify(utms));
+            }
         }
     } catch (e) { }
 

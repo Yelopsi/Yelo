@@ -102,8 +102,15 @@ exports.getEfficiencyDashboard = async (req, res) => {
         const conversionsQuery = `
             SELECT 
                 TO_CHAR(DATE_TRUNC('month', "createdAt"), 'YYYY-MM') as month,
-                COUNT(*) FILTER (WHERE utm_source ILIKE '%meta%' OR utm_source ILIKE '%facebook%' OR utm_source ILIKE '%instagram%' OR utm_source ILIKE '%ig%' OR utm_source ILIKE '%fb%') as meta_trials,
-                COUNT(*) FILTER (WHERE (utm_source ILIKE '%meta%' OR utm_source ILIKE '%facebook%' OR utm_source ILIKE '%instagram%' OR utm_source ILIKE '%ig%' OR utm_source ILIKE '%fb%') AND status = 'active' AND "subscriptionId" IS NOT NULL) as meta_pagantes,
+                COUNT(*) FILTER (WHERE 
+                    utm_source ILIKE '%meta%' OR utm_source ILIKE '%facebook%' OR utm_source ILIKE '%instagram%' OR utm_source ILIKE '%ig%' OR utm_source ILIKE '%fb%' OR
+                    first_utm_source ILIKE '%meta%' OR first_utm_source ILIKE '%facebook%' OR first_utm_source ILIKE '%instagram%' OR first_utm_source ILIKE '%ig%' OR first_utm_source ILIKE '%fb%'
+                ) as meta_trials,
+                COUNT(*) FILTER (WHERE 
+                    (utm_source ILIKE '%meta%' OR utm_source ILIKE '%facebook%' OR utm_source ILIKE '%instagram%' OR utm_source ILIKE '%ig%' OR utm_source ILIKE '%fb%' OR
+                     first_utm_source ILIKE '%meta%' OR first_utm_source ILIKE '%facebook%' OR first_utm_source ILIKE '%instagram%' OR first_utm_source ILIKE '%ig%' OR first_utm_source ILIKE '%fb%') 
+                    AND status = 'active' AND "subscriptionId" IS NOT NULL
+                ) as meta_pagantes,
                 COUNT(*) FILTER (WHERE status = 'active' AND "subscriptionId" IS NOT NULL) as total_geral_pagantes
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL

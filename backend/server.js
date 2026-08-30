@@ -269,6 +269,16 @@ const startServer = async () => {
         try {
             console.log('🛠️ [DB FIX] Injetando colunas faltantes nas tabelas...');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "ai_insights_cache" JSONB DEFAULT NULL;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "first_utm_source" VARCHAR(255) DEFAULT NULL;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "first_utm_medium" VARCHAR(255) DEFAULT NULL;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "first_utm_campaign" VARCHAR(255) DEFAULT NULL;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "first_utm_content" VARCHAR(255) DEFAULT NULL;');
+            
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "first_utm_source" VARCHAR(255) DEFAULT NULL;');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "first_utm_medium" VARCHAR(255) DEFAULT NULL;');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "first_utm_campaign" VARCHAR(255) DEFAULT NULL;');
+            await db.sequelize.query('ALTER TABLE "Patients" ADD COLUMN IF NOT EXISTS "first_utm_content" VARCHAR(255) DEFAULT NULL;');
+            
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscribedAt" TIMESTAMP WITH TIME ZONE;');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP WITH TIME ZONE;');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "subscriptionId" VARCHAR(255);');

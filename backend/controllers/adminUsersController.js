@@ -345,13 +345,13 @@ exports.getAllPsychologists = async (req, res) => {
                 COUNT(*) FILTER (WHERE is_exempt = true) as vip,
                 COUNT(*) FILTER (WHERE (status = 'active' OR status = 'pending') AND ("isProfileAnalyzed" IS NULL OR "isProfileAnalyzed" = false)) as fila_cs,
                 COUNT(*) FILTER (WHERE utm_source = 'whatsapp') as utm_whatsapp,
-                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram')) as utm_meta,
+                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram') OR first_utm_source IN ('meta_ads', 'facebook', 'instagram')) as utm_meta,
                 COUNT(*) FILTER (WHERE utm_source = 'instagram_bio') as utm_instagram_bio,
                 COUNT(*) FILTER (WHERE utm_source = 'google') as utm_google,
                 COUNT(*) FILTER (WHERE utm_source IS NULL OR utm_source NOT IN ('whatsapp', 'meta_ads', 'facebook', 'instagram', 'google', 'instagram_bio')) as utm_outros,
                 
-                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram') AND status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as meta_paying,
-                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram') AND status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND "planExpiresAt" > NOW()) as meta_trial,
+                COUNT(*) FILTER (WHERE (utm_source IN ('meta_ads', 'facebook', 'instagram') OR first_utm_source IN ('meta_ads', 'facebook', 'instagram')) AND status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as meta_paying,
+                COUNT(*) FILTER (WHERE (utm_source IN ('meta_ads', 'facebook', 'instagram') OR first_utm_source IN ('meta_ads', 'facebook', 'instagram')) AND status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND "planExpiresAt" > NOW()) as meta_trial,
                 COUNT(*) FILTER (WHERE utm_source = 'google' AND status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as google_paying,
                 COUNT(*) FILTER (WHERE utm_source = 'google' AND status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND "planExpiresAt" > NOW()) as google_trial
             FROM "Psychologists"
@@ -486,7 +486,7 @@ exports.getAllPatients = async (req, res) => {
                 COUNT(*) FILTER (WHERE status = 'active') as active,
                 COUNT(*) FILTER (WHERE status = 'inactive') as inactive,
                 COUNT(*) FILTER (WHERE utm_source = 'whatsapp') as utm_whatsapp,
-                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram')) as utm_meta,
+                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram') OR first_utm_source IN ('meta_ads', 'facebook', 'instagram')) as utm_meta,
                 COUNT(*) FILTER (WHERE utm_source = 'instagram_bio') as utm_instagram_bio,
                 COUNT(*) FILTER (WHERE utm_source = 'google') as utm_google,
                 COUNT(*) FILTER (WHERE utm_source IS NULL OR utm_source NOT IN ('whatsapp', 'meta_ads', 'facebook', 'instagram', 'google', 'instagram_bio')) as utm_outros,

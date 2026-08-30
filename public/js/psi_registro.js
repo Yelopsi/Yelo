@@ -196,7 +196,11 @@ document.addEventListener('DOMContentLoaded', () => {
             utm_source: localStorage.getItem('yelo_utm_source') || null,
             utm_medium: localStorage.getItem('yelo_utm_medium') || null,
             utm_campaign: localStorage.getItem('yelo_utm_campaign') || null,
-            utm_content: localStorage.getItem('yelo_utm_content') || null
+            utm_content: localStorage.getItem('yelo_utm_content') || null,
+            first_utm_source: localStorage.getItem('yelo_first_utm_source') || null,
+            first_utm_medium: localStorage.getItem('yelo_first_utm_medium') || null,
+            first_utm_campaign: localStorage.getItem('yelo_first_utm_campaign') || null,
+            first_utm_content: localStorage.getItem('yelo_first_utm_content') || null
         };
 
         // Se usou conta Google
@@ -220,10 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Se não for admin, limpa o cache. Se for admin, não precisa limpar nada.
                 if (modeParam !== 'admin') {
                     localStorage.removeItem('psi_questionario_respostas');
-                    localStorage.removeItem('yelo_utm_source');
-                    localStorage.removeItem('yelo_utm_medium');
-                    localStorage.removeItem('yelo_utm_campaign');
-                    localStorage.removeItem('yelo_utm_content');
+                    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(param => {
+                        localStorage.removeItem('yelo_' + param);
+                        localStorage.removeItem('yelo_first_' + param);
+                    });
                 }
                 
                 // Pega o valor do e-mail que o usuário digitou no formulário (SANITIZADO)

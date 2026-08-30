@@ -138,6 +138,22 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
+    first_utm_source: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    first_utm_medium: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    first_utm_campaign: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    first_utm_content: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
     status: {
       type: DataTypes.STRING,
       defaultValue: 'ativo'
