@@ -102,10 +102,10 @@ exports.getEfficiencyDashboard = async (req, res) => {
         const conversionsQuery = `
             SELECT 
                 TO_CHAR(DATE_TRUNC('month', "createdAt"), 'YYYY-MM') as month,
-                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram')) as meta_trials,
-                COUNT(*) FILTER (WHERE utm_source IN ('meta_ads', 'facebook', 'instagram') AND status = 'active' AND "subscriptionId" IS NOT NULL) as meta_pagantes,
-                COUNT(*) FILTER (WHERE utm_source = 'google') as google_trials,
-                COUNT(*) FILTER (WHERE utm_source = 'google' AND status = 'active' AND "subscriptionId" IS NOT NULL) as google_pagantes
+                COUNT(*) FILTER (WHERE utm_source ILIKE '%meta%' OR utm_source ILIKE '%facebook%' OR utm_source ILIKE '%instagram%' OR utm_source ILIKE '%ig%' OR utm_source ILIKE '%fb%') as meta_trials,
+                COUNT(*) FILTER (WHERE (utm_source ILIKE '%meta%' OR utm_source ILIKE '%facebook%' OR utm_source ILIKE '%instagram%' OR utm_source ILIKE '%ig%' OR utm_source ILIKE '%fb%') AND status = 'active' AND "subscriptionId" IS NOT NULL) as meta_pagantes,
+                COUNT(*) FILTER (WHERE utm_source ILIKE '%google%' OR utm_source ILIKE '%adwords%') as google_trials,
+                COUNT(*) FILTER (WHERE (utm_source ILIKE '%google%' OR utm_source ILIKE '%adwords%') AND status = 'active' AND "subscriptionId" IS NOT NULL) as google_pagantes
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
             GROUP BY month
