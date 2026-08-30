@@ -329,8 +329,8 @@ function compareChannels(curr, metaCac, googleCac, ltv, globalCac, signals) {
     const tolerado = cacTolerado * 3;
 
     // Fallback inicial
-    let mDec = '⚪ AVALIANDO', mRes = 'Processando...', mCol = 'background:#f1f5f9; color:#475569;';
-    let gDec = '⚪ AVALIANDO', gRes = 'Processando...', gCol = 'background:#f1f5f9; color:#475569;';
+    let mDec = '⚪ AVALIANDO', mRes = 'Sem dados no período.', mCol = 'background:#f1f5f9; color:#475569;';
+    let gDec = '⚪ AVALIANDO', gRes = 'Sem dados no período.', gCol = 'background:#f1f5f9; color:#475569;';
 
     // Regra extrema (Pausar)
     if (mSpend > tolerado && mPag === 0) { mDec = '🔴 PAUSAR'; mRes = 'Gasto excessivo sem conversão.'; mCol = 'background:#fecaca; color:#991b1b;'; signals.push(`🔴 Meta Ads sem gerar valor persistente.`); }
@@ -389,11 +389,11 @@ function compareChannels(curr, metaCac, googleCac, ltv, globalCac, signals) {
     
     const mBadgeEl = document.getElementById('decision-meta-badge');
     const mReasonEl = document.getElementById('decision-meta-reason');
-    if (mBadgeEl) { mBadgeEl.innerText = mDec; mBadgeEl.style = mCol; mReasonEl.innerText = mRes; }
+    if (mBadgeEl) { mBadgeEl.innerText = mDec; mBadgeEl.style.cssText = mCol; mReasonEl.innerText = mRes; }
 
     const gBadgeEl = document.getElementById('decision-google-badge');
     const gReasonEl = document.getElementById('decision-google-reason');
-    if (gBadgeEl) { gBadgeEl.innerText = gDec; gBadgeEl.style = gCol; gReasonEl.innerText = gRes; }
+    if (gBadgeEl) { gBadgeEl.innerText = gDec; gBadgeEl.style.cssText = gCol; gReasonEl.innerText = gRes; }
     
     return { mDec, gDec };
 }
