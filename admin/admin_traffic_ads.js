@@ -395,10 +395,18 @@ function evaluateMicroDecisions(curr, metaCac, googleCacProjetado, ltv, globalCa
     // ==========================================
     const cacToleradoB2B = ltv > 0 ? (ltv / 3) : (globalCac > 0 ? globalCac : 200 / 3);
     
+    const mTrials = parseInt(curr.meta_trials||0, 10);
+    
+    // Projeção de CAC considerando o Trial (taxa de conversão de segurança de 20%)
+    const pagantesProjetados = mPag + (mTrials * 0.20);
+    const cacProjetado = pagantesProjetados > 0 ? (mSpend / pagantesProjetados) : mSpend;
+
     if (mPag === 0) {
-        if (mSpend > cacToleradoB2B * 3) { 
-            mDec = '🔴 PAUSAR'; mRes = 'Gasto excessivo sem atrair psicólogos.'; mCol = 'background:#fecaca; color:#991b1b;'; 
-            signals.push(`🔴 Meta Ads está queimando caixa B2B sem gerar assinaturas.`); 
+        if (mTrials > 0 && cacProjetado <= cacToleradoB2B * 1.5) {
+            mDec = '⚪ AGUARDAR'; mRes = 'Trials em andamento (14 dias). Custo por trial saudável.'; mCol = 'background:#f1f5f9; color:#475569;';
+        } else if (mSpend > cacToleradoB2B * 3) { 
+            mDec = '🔴 PAUSAR'; mRes = 'Gasto excessivo sem atrair psicólogos suficientes.'; mCol = 'background:#fecaca; color:#991b1b;'; 
+            signals.push(`🔴 Meta Ads está queimando caixa B2B sem gerar trials ou assinaturas suficientes.`); 
         }
         else if (mSpend > 0) { 
             mDec = '⚪ AGUARDAR'; mRes = 'Coletando dados B2B.'; mCol = 'background:#f1f5f9; color:#475569;'; 
