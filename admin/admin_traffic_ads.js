@@ -113,26 +113,44 @@ window.renderEngine = function(currIdx) {
     renderTrendKPI('kpi-cpl', 'kpi-cpl-trend', curr.cpl, prev ? prev.cpl : null, true);
     renderTrendKPI('kpi-cac', 'kpi-cac-trend', curr.cac, prev ? prev.cac : null, true);
     
-    const totalSpend = parseFloat(curr.meta_ads || 0) + parseFloat(curr.google_ads || 0);
+    const totalSpend = parseFloat(curr.meta_ads || 0); // B2B Only
     document.getElementById('kpi-spend').innerText = formatBRL(totalSpend);
     
     // Custo Estimado por Assinante (Por Canal)
     const metaSpend = parseFloat(curr.meta_ads || 0);
-    const googleSpend = parseFloat(curr.google_ads || 0);
     const metaPagantes = parseInt(curr.meta_pagantes || 0, 10);
-    const googlePagantes = parseInt(curr.google_pagantes || 0, 10);
-    
     const metaCac = metaPagantes > 0 ? (metaSpend / metaPagantes) : 0;
-    const googleCac = googlePagantes > 0 ? (googleSpend / googlePagantes) : 0;
+    
+    // B2C Google Ads
+    const googleSpend = parseFloat(curr.google_ads || 0);
+    const googleClicks = parseInt(curr.google_b2c_clicks || 0, 10);
+    const taxaConversao = parseFloat(curr.google_b2c_taxa_conversao || 0.25);
+    
+    const googleCpa = googleClicks > 0 ? (googleSpend / googleClicks) : 0;
+    const googleCacProjetado = taxaConversao > 0 ? (googleCpa / taxaConversao) : 0;
     
     const prevMetaCac = (prev && prev.meta_pagantes > 0) ? (parseFloat(prev.meta_ads||0) / parseInt(prev.meta_pagantes||0, 10)) : 0;
-    const prevGoogleCac = (prev && prev.google_pagantes > 0) ? (parseFloat(prev.google_ads||0) / parseInt(prev.google_pagantes||0, 10)) : 0;
+    
+    let prevGoogleCacProjetado = 0;
+    if (prev) {
+        const pGS = parseFloat(prev.google_ads || 0);
+        const pGC = parseInt(prev.google_b2c_clicks || 0, 10);
+        const pTx = parseFloat(prev.google_b2c_taxa_conversao || 0.25);
+        const pCpa = pGC > 0 ? (pGS / pGC) : 0;
+        prevGoogleCacProjetado = pTx > 0 ? (pCpa / pTx) : 0;
+    }
 
     renderTrendKPI('kpi-meta-cac', 'kpi-meta-trend', metaCac, prevMetaCac, true, metaPagantes === 0);
-    renderTrendKPI('kpi-google-cac', 'kpi-google-trend', googleCac, prevGoogleCac, true, googlePagantes === 0);
+    renderTrendKPI('kpi-google-cac', 'kpi-google-trend', googleCacProjetado, prevGoogleCacProjetado, true, googleClicks === 0);
+    
+    const cpaEl = document.getElementById('kpi-google-cpa');
+    if(cpaEl) cpaEl.innerText = formatBRL(googleCpa);
+    
+    const txEl = document.getElementById('kpi-google-tx');
+    if(txEl) txEl.innerText = (taxaConversao * 100).toFixed(1) + '%';
     
     // Motor de Decisão
-    generateDecisionEngine(hist, ltv, metaCac, googleCac, currIdx);
+    generateDecisionEngine(hist, ltv, metaCac, googleCacProjetado, currIdx);
 };
 
 function renderTrendKPI(valId, trendId, current, previous, inverseGood = false, isND = false) {
@@ -342,7 +360,7 @@ function generateDecisionEngine(hist, ltv, metaCac, googleCac, currIdx) {
     document.getElementById('matrix-trend-status').style.color = trendColor;
     document.getElementById('matrix-trend-desc').innerText = trendDesc;
 
-    const microDecisions = compareChannels(curr, metaCac, googleCac, ltv, globalCac, signals);
+    const microDecisions = evaluateMicroDecisions(curr, metaCac, googleCac, ltv, globalCac, signals);
     
     // Resolve Conflito Operacional (Macro manda investir/manter, mas um micro manda pausar)
     if ((globalStatus.includes('MANTER') || globalStatus.includes('AUMENTAR')) && 
@@ -350,7 +368,7 @@ function generateDecisionEngine(hist, ltv, metaCac, googleCac, currIdx) {
         let pausedChannel = microDecisions.mDec.includes('PAUSAR') ? 'Meta Ads' : 'Google Ads';
         if (microDecisions.mDec.includes('PAUSAR') && microDecisions.gDec.includes('PAUSAR')) pausedChannel = 'Ambos os canais';
         
-        globalReason += ` AVISO: ${pausedChannel} deve ser pausado por desperdício extremo. Redistribua a verba para o canal elegível.`;
+        globalReason += ` AVISO: ${pausedChannel} excedeu o limite de segurança e deve ser pausado. Redistribua o orçamento.`;
     }
     
     document.getElementById('decision-global-reason').innerText = globalReason;
@@ -361,75 +379,62 @@ function generateDecisionEngine(hist, ltv, metaCac, googleCac, currIdx) {
     else sigContainer.innerHTML = signals.map(s => `<div style="font-size:0.95rem; font-weight:500; background:white; padding:10px 15px; border-radius:8px; border:1px solid #e2e8f0;">${s}</div>`).join('');
 }
 
-function compareChannels(curr, metaCac, googleCac, ltv, globalCac, signals) {
-    const THRESHOLD_EMPATE = 20; // %
-    const THRESHOLD_REDUZIR = 40; // %
-    
+function evaluateMicroDecisions(curr, metaCac, googleCacProjetado, ltv, globalCac, signals) {
     const mSpend = parseFloat(curr.meta_ads||0);
     const mPag = parseInt(curr.meta_pagantes||0, 10);
-    const gSpend = parseFloat(curr.google_ads||0);
-    const gPag = parseInt(curr.google_pagantes||0, 10);
     
-    // O CAC tolerado ideal é LTV / 3. A regra extrema avalia se gastamos > 3x o tolerado.
-    const cacTolerado = ltv > 0 ? (ltv / 3) : (globalCac > 0 ? globalCac : 200 / 3);
-    const tolerado = cacTolerado * 3;
-
+    const gSpend = parseFloat(curr.google_ads||0);
+    const gClicks = parseInt(curr.google_b2c_clicks||0, 10);
+    
     // Fallback inicial
     let mDec = '⚪ AVALIANDO', mRes = 'Sem dados no período.', mCol = 'background:#f1f5f9; color:#475569;';
     let gDec = '⚪ AVALIANDO', gRes = 'Sem dados no período.', gCol = 'background:#f1f5f9; color:#475569;';
 
-    // Regra extrema (Pausar)
-    if (mSpend > tolerado && mPag === 0) { mDec = '🔴 PAUSAR'; mRes = 'Gasto excessivo sem conversão.'; mCol = 'background:#fecaca; color:#991b1b;'; signals.push(`🔴 Meta Ads sem gerar valor persistente.`); }
-    else if (mPag === 0 && mSpend > 0) { mDec = '⚪ AGUARDAR'; mRes = 'Coletando dados.'; mCol = 'background:#f1f5f9; color:#475569;'; }
-
-    if (gSpend > tolerado && gPag === 0) { gDec = '🔴 PAUSAR'; gRes = 'Gasto excessivo sem conversão.'; gCol = 'background:#fecaca; color:#991b1b;'; signals.push(`🔴 Google Ads sem gerar valor persistente.`); }
-    else if (gPag === 0 && gSpend > 0) { gDec = '⚪ AGUARDAR'; gRes = 'Coletando dados.'; gCol = 'background:#f1f5f9; color:#475569;'; }
-
-    // Comparação Relativa
-    if (mPag > 0 && gPag > 0) {
-        // Quem é mais barato?
-        let diffPct = 0;
-        
-        if (metaCac < googleCac) {
-            diffPct = ((googleCac - metaCac) / googleCac) * 100;
-            if (diffPct < THRESHOLD_EMPATE) {
-                // Empate técnico
-                mDec = '🟡 MANTER'; mRes = 'Empate técnico de eficiência.'; mCol = 'background:#fef08a; color:#854d0e;';
-                gDec = '🟡 MANTER'; gRes = 'Empate técnico de eficiência.'; gCol = 'background:#fef08a; color:#854d0e;';
-            } else if (diffPct <= THRESHOLD_REDUZIR) {
-                // Meta vencedor moderado
-                mDec = '🟢 PRIORIZAR'; mRes = `Custa ${diffPct.toFixed(0)}% a menos que o Google.`; mCol = 'background:#bbf7d0; color:#166534;';
-                gDec = '🟡 INVESTIGAR'; gRes = `Custa ${diffPct.toFixed(0)}% a mais que o Meta.`; gCol = 'background:#ffedd5; color:#9a3412;';
-            } else {
-                // Meta vencedor extremo
-                mDec = '🟢 PRIORIZAR'; mRes = `Custa ${diffPct.toFixed(0)}% a menos que o Google.`; mCol = 'background:#bbf7d0; color:#166534;';
-                gDec = '🔴 REDUZIR'; gRes = `Custa ${diffPct.toFixed(0)}% a mais que o Meta. Reduza distribuição.`; gCol = 'background:#fecaca; color:#991b1b;';
-                signals.push(`🔴 Google Ads está custando exageradamente mais caro que o Meta Ads.`);
-            }
-        } else {
-            diffPct = ((metaCac - googleCac) / metaCac) * 100;
-            if (diffPct < THRESHOLD_EMPATE) {
-                // Empate técnico
-                mDec = '🟡 MANTER'; mRes = 'Empate técnico de eficiência.'; mCol = 'background:#fef08a; color:#854d0e;';
-                gDec = '🟡 MANTER'; gRes = 'Empate técnico de eficiência.'; gCol = 'background:#fef08a; color:#854d0e;';
-            } else if (diffPct <= THRESHOLD_REDUZIR) {
-                // Google vencedor moderado
-                gDec = '🟢 PRIORIZAR'; gRes = `Custa ${diffPct.toFixed(0)}% a menos que o Meta.`; gCol = 'background:#bbf7d0; color:#166534;';
-                mDec = '🟡 INVESTIGAR'; mRes = `Custa ${diffPct.toFixed(0)}% a mais que o Google.`; mCol = 'background:#ffedd5; color:#9a3412;';
-            } else {
-                // Google vencedor extremo
-                gDec = '🟢 PRIORIZAR'; gRes = `Custa ${diffPct.toFixed(0)}% a menos que o Meta.`; gCol = 'background:#bbf7d0; color:#166534;';
-                mDec = '🔴 REDUZIR'; mRes = `Custa ${diffPct.toFixed(0)}% a mais que o Google. Reduza distribuição.`; mCol = 'background:#fecaca; color:#991b1b;';
-                signals.push(`🔴 Meta Ads está custando exageradamente mais caro que o Google Ads.`);
-            }
+    // ==========================================
+    // AVALIAÇÃO META ADS (B2B - PSICÓLOGOS)
+    // ==========================================
+    const cacToleradoB2B = ltv > 0 ? (ltv / 3) : (globalCac > 0 ? globalCac : 200 / 3);
+    
+    if (mPag === 0) {
+        if (mSpend > cacToleradoB2B * 3) { 
+            mDec = '🔴 PAUSAR'; mRes = 'Gasto excessivo sem atrair psicólogos.'; mCol = 'background:#fecaca; color:#991b1b;'; 
+            signals.push(`🔴 Meta Ads está queimando caixa B2B sem gerar assinaturas.`); 
+        }
+        else if (mSpend > 0) { 
+            mDec = '⚪ AGUARDAR'; mRes = 'Coletando dados B2B.'; mCol = 'background:#f1f5f9; color:#475569;'; 
         }
     } else {
-        // Se um não tem pagantes, avalia individual contra Global se possível (fallback)
-        if (mPag > 0 && globalCac > 0) {
-            mDec = '🟡 MANTER'; mRes = 'Único canal convertendo.'; mCol = 'background:#fef08a; color:#854d0e;';
+        if (metaCac <= cacToleradoB2B) {
+            mDec = '🟢 ESCALAR'; mRes = `CAC B2B muito lucrativo.`; mCol = 'background:#bbf7d0; color:#166534;';
+        } else if (metaCac <= cacToleradoB2B * 1.5) {
+            mDec = '🟡 MANTER'; mRes = `CAC B2B aceitável.`; mCol = 'background:#fef08a; color:#854d0e;';
+        } else {
+            mDec = '🔴 REDUZIR'; mRes = `CAC B2B insustentável. Reduza orçamento.`; mCol = 'background:#fecaca; color:#991b1b;';
+            signals.push(`🔴 Meta Ads está captando psicólogos por um valor muito acima do LTV tolerado.`);
         }
-        if (gPag > 0 && globalCac > 0) {
-            gDec = '🟡 MANTER'; gRes = 'Único canal convertendo.'; gCol = 'background:#fef08a; color:#854d0e;';
+    }
+
+    // ==========================================
+    // AVALIAÇÃO GOOGLE ADS (B2C - PACIENTES)
+    // ==========================================
+    const TETO_CAC_B2C = 150.00; // Teto de segurança definido para pacientes
+    
+    if (gClicks === 0) {
+        if (gSpend > TETO_CAC_B2C * 3) { 
+            gDec = '🔴 PAUSAR'; gRes = 'Gasto excessivo sem gerar contatos de pacientes.'; gCol = 'background:#fecaca; color:#991b1b;'; 
+            signals.push(`🔴 Google Ads não está gerando leads B2C.`); 
+        }
+        else if (gSpend > 0) { 
+            gDec = '⚪ AGUARDAR'; gRes = 'Coletando leads B2C.'; gCol = 'background:#f1f5f9; color:#475569;'; 
+        }
+    } else {
+        if (googleCacProjetado <= 100) {
+            gDec = '🟢 ESCALAR'; gRes = `Custo por paciente projetado está excelente.`; gCol = 'background:#bbf7d0; color:#166534;';
+        } else if (googleCacProjetado <= TETO_CAC_B2C) {
+            gDec = '🟡 MANTER'; gRes = `Custo por paciente dentro do teto seguro (R$ 150).`; gCol = 'background:#fef08a; color:#854d0e;';
+        } else {
+            gDec = '🔴 REDUZIR'; gRes = `Custo por paciente projetado estourou o teto.`; gCol = 'background:#fecaca; color:#991b1b;';
+            signals.push(`🔴 Google Ads está captando pacientes por um valor insustentável para os psicólogos.`);
         }
     }
     
@@ -475,7 +480,7 @@ function renderCharts(history) {
     });
 
     const metaTrials = recentHistory.map(h => h.meta_trials || 0);
-    const googleTrials = recentHistory.map(h => h.google_trials || 0);
+    const googleTrials = recentHistory.map(h => h.google_b2c_clicks || 0);
 
     const ctxChannel = document.getElementById('channelChart').getContext('2d');
     if (channelChartInstance) {
@@ -487,7 +492,7 @@ function renderCharts(history) {
             labels: labels,
             datasets: [
                 { label: 'Trials Meta Ads', data: metaTrials, backgroundColor: '#1d4ed8' },
-                { label: 'Trials Google Ads', data: googleTrials, backgroundColor: '#dc2626' }
+                { label: 'Leads Google Ads (B2C)', data: googleTrials, backgroundColor: '#dc2626' }
             ]
         },
         options: { 
@@ -516,8 +521,8 @@ window.loadB2BLeads = async function() {
         if (json.kpis) {
             document.getElementById('kpi-meta-trial').innerText = json.kpis.meta_trial || 0;
             document.getElementById('kpi-meta-paying').innerText = json.kpis.meta_paying || 0;
-            document.getElementById('kpi-google-trial').innerText = json.kpis.google_trial || 0;
-            document.getElementById('kpi-google-paying').innerText = json.kpis.google_paying || 0;
+            document.getElementById('kpi-google-trial').innerText = json.kpis.google_b2c_clicks || 0;
+            document.getElementById('kpi-google-paying').innerText = json.kpis.google_b2c_fechados || 0;
             document.getElementById('kpi-wpp-total').innerText = json.kpis.utm_whatsapp || 0;
         }
 

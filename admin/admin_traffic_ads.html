@@ -77,7 +77,7 @@
                 <div style="background: #ede9fe; padding: 12px; border-radius: 10px; color: #8b5cf6;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                 </div>
-                <span style="font-size: 0.75rem; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; color: #64748b; font-weight: bold; text-transform: uppercase;">Gasto Total Ads</span>
+                <span style="font-size: 0.75rem; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; color: #64748b; font-weight: bold; text-transform: uppercase;">Investimento B2B (Meta)</span>
             </div>
             <h4 id="kpi-spend" style="font-size: 1.5rem; color: #1e293b; margin-bottom: 8px; font-weight: 800;">Carregando...</h4>
             <p id="kpi-spend-sub" style="color: #64748b; font-size: 0.9rem; margin: 0;">Meta + Google</p>
@@ -116,13 +116,20 @@
             <p id="kpi-meta-trend" style="color: #3b82f6; font-size: 0.9rem; margin: 0; font-weight: 600;"></p>
         </div>
         
-        <div class="kpi-card" style="background: #fef2f2; border-color: #fecaca; border-top-color: #ef4444;">
+        <div class="kpi-card" style="border-top-color: #b91c1c;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <span style="font-size: 0.75rem; background: rgba(239,68,68,0.1); padding: 4px 10px; border-radius: 20px; color: #b91c1c; font-weight: bold; text-transform: uppercase;">Google Ads</span>
+                <div style="background: #fef2f2; padding: 12px; border-radius: 10px; color: #b91c1c;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                </div>
+                <span style="font-size: 0.75rem; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; color: #64748b; font-weight: bold; text-transform: uppercase;">Google Ads (Pacientes B2C)</span>
             </div>
-            <h4 style="font-size: 1.15rem; color: #7f1d1d; margin-bottom: 8px;">Custo Estimado por Assinante</h4>
+            <h4 style="font-size: 0.85rem; color: #64748b; margin: 0 0 5px 0;">Custo Projetado por Paciente</h4>
             <div id="kpi-google-cac" style="font-size: 1.8rem; font-weight: 800; color: #b91c1c; margin-bottom: 5px;">...</div>
             <p id="kpi-google-trend" style="color: #ef4444; font-size: 0.9rem; margin: 0; font-weight: 600;"></p>
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 0.8rem; color: #64748b;">
+                <span>CPA do Lead: <strong id="kpi-google-cpa" style="color: #1e293b;">...</strong></span>
+                <span>Tx. Fechamento: <strong id="kpi-google-tx" style="color: #1e293b;">...</strong></span>
+            </div>
         </div>
     </div>
 
@@ -177,10 +184,10 @@
             </div>
         </div>
         <div class="kpi-card" style="border-top-color: #b91c1c;">
-            <h4 style="font-size: 1rem; color: #1e293b; margin-bottom: 15px;">Google Ads</h4>
+            <h4 style="font-size: 1rem; color: #1e293b; margin-bottom: 15px;">Google Ads (B2C)</h4>
             <div style="display: flex; justify-content: space-between;">
-                <div><span style="font-size:1.5rem; font-weight:800; color:#b91c1c;" id="kpi-google-trial">...</span><br><span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700;">Trials</span></div>
-                <div><span style="font-size:1.5rem; font-weight:800; color:#059669;" id="kpi-google-paying">...</span><br><span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700;">Assinantes</span></div>
+                <div><span style="font-size:1.5rem; font-weight:800; color:#b91c1c;" id="kpi-google-trial">...</span><br><span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700;">Leads (Cliques)</span></div>
+                <div><span style="font-size:1.5rem; font-weight:800; color:#059669;" id="kpi-google-paying">...</span><br><span style="font-size:0.75rem; color:#64748b; text-transform:uppercase; font-weight:700;">Pacientes Fechados</span></div>
             </div>
         </div>
         <div class="kpi-card" style="border-top-color: #15803d;">

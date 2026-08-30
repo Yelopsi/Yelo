@@ -104,14 +104,25 @@ exports.getEfficiencyDashboard = async (req, res) => {
                 TO_CHAR(DATE_TRUNC('month', "createdAt"), 'YYYY-MM') as month,
                 COUNT(*) FILTER (WHERE utm_source ILIKE '%meta%' OR utm_source ILIKE '%facebook%' OR utm_source ILIKE '%instagram%' OR utm_source ILIKE '%ig%' OR utm_source ILIKE '%fb%') as meta_trials,
                 COUNT(*) FILTER (WHERE (utm_source ILIKE '%meta%' OR utm_source ILIKE '%facebook%' OR utm_source ILIKE '%instagram%' OR utm_source ILIKE '%ig%' OR utm_source ILIKE '%fb%') AND status = 'active' AND "subscriptionId" IS NOT NULL) as meta_pagantes,
-                COUNT(*) FILTER (WHERE utm_source ILIKE '%google%' OR utm_source ILIKE '%adwords%') as google_trials,
-                COUNT(*) FILTER (WHERE (utm_source ILIKE '%google%' OR utm_source ILIKE '%adwords%') AND status = 'active' AND "subscriptionId" IS NOT NULL) as google_pagantes,
                 COUNT(*) FILTER (WHERE status = 'active' AND "subscriptionId" IS NOT NULL) as total_geral_pagantes
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
             GROUP BY month
         `;
         const conversions = await db.sequelize.query(conversionsQuery, { type: db.sequelize.QueryTypes.SELECT });
+
+        // 3B. Buscar Leads B2C e Conversões Reais do Google Ads no WhatsApp
+        const b2cQuery = `
+            SELECT 
+                TO_CHAR(DATE_TRUNC('month', "createdAt"), 'YYYY-MM') as month,
+                COUNT(*) as google_b2c_clicks,
+                COUNT(*) FILTER (WHERE "contactReceived" = true AND "dealClosed" IN ('yes', 'started')) as google_b2c_fechados,
+                COUNT(*) FILTER (WHERE "contactReceived" = true) as google_b2c_recebidas
+            FROM "WhatsAppClickLogs"
+            WHERE ("utmSource" ILIKE '%google%' OR "utmSource" ILIKE '%adwords%')
+            GROUP BY month
+        `;
+        const b2cConversions = await db.sequelize.query(b2cQuery, { type: db.sequelize.QueryTypes.SELECT });
         
         // 4. Montar Histórico Mensal (Últimos 6 meses)
         const weeklyHistory = [];
@@ -123,27 +134,34 @@ exports.getEfficiencyDashboard = async (req, res) => {
             const monthStr = date.format('YYYY-MM');
             
             const exp = expensesByMonth[monthStr] || { meta_ads: 0, google_ads: 0 };
-            const conv = conversions.find(c => c.month === monthStr) || { meta_trials: 0, meta_pagantes: 0, google_trials: 0, google_pagantes: 0 };
+            const conv = conversions.find(c => c.month === monthStr) || { meta_trials: 0, meta_pagantes: 0 };
+            const b2cConv = b2cConversions.find(c => c.month === monthStr) || { google_b2c_clicks: 0, google_b2c_fechados: 0, google_b2c_recebidas: 0 };
             
             const mTrials = parseInt(conv.meta_trials || 0, 10);
-            const gTrials = parseInt(conv.google_trials || 0, 10);
             const mPagantes = parseInt(conv.meta_pagantes || 0, 10);
-            const gPagantes = parseInt(conv.google_pagantes || 0, 10);
             
-            const totalSpend = exp.meta_ads + exp.google_ads;
-            const totalTrials = mTrials + gTrials;
-            const totalPagantes = mPagantes + gPagantes;
+            const b2cClicks = parseInt(b2cConv.google_b2c_clicks || 0, 10);
+            const b2cFechados = parseInt(b2cConv.google_b2c_fechados || 0, 10);
+            const b2cRecebidas = parseInt(b2cConv.google_b2c_recebidas || 0, 10);
+            
+            // Apenas Meta Ads entra na conta B2B (CAC SaaS)
+            const totalSpendB2B = exp.meta_ads;
+            const totalTrialsB2B = mTrials;
+            const totalPagantesB2B = mPagantes;
+            
+            // Taxa de Conversão B2C Dinâmica (Global Fallback se não houver feedbacks no mês)
+            let taxaConversaoB2C = b2cRecebidas > 0 ? (b2cFechados / b2cRecebidas) : 0.25; // fallback de 25%
             
             weeklyHistory.push({
                 week_start: date.format('YYYY-MM-01'), 
-                cpl: totalTrials > 0 ? parseFloat((totalSpend / totalTrials).toFixed(2)) : 0,
-                cac: totalPagantes > 0 ? parseFloat((totalSpend / totalPagantes).toFixed(2)) : 0,
+                cpl: totalTrialsB2B > 0 ? parseFloat((totalSpendB2B / totalTrialsB2B).toFixed(2)) : 0,
+                cac: totalPagantesB2B > 0 ? parseFloat((totalSpendB2B / totalPagantesB2B).toFixed(2)) : 0,
                 meta_ads: exp.meta_ads,
                 google_ads: exp.google_ads,
                 meta_trials: mTrials,
-                google_trials: gTrials,
                 meta_pagantes: mPagantes,
-                google_pagantes: gPagantes,
+                google_b2c_clicks: b2cClicks,
+                google_b2c_taxa_conversao: taxaConversaoB2C,
                 total_geral_pagantes: parseInt(conv.total_geral_pagantes || 0, 10),
                 is_month: true
             });

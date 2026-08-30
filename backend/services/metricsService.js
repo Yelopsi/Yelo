@@ -204,8 +204,18 @@ class MetricsService {
         const churnRateMedioMensal = mesesValidos > 0 ? (somaDeChurnRates / mesesValidos) : 0;
         const weightedChurnRate = somaBaseInicial > 0 ? (somaPaidChurns / somaBaseInicial) : 0;
         
-        let projectedLifetimeMonths = 60;
-        if (weightedChurnRate > 0) projectedLifetimeMonths = 1 / weightedChurnRate;
+        // Teto de segurança (Cap) dinâmico baseado na maturidade da base
+        let capSeguranca = 12; 
+        if (payingActiveCount >= 50) capSeguranca = 24;
+        if (payingActiveCount >= 150) capSeguranca = 36;
+        if (payingActiveCount >= 500) capSeguranca = 60;
+
+        let projectedLifetimeMonths = capSeguranca; 
+        if (weightedChurnRate > 0) {
+            const calculatedLifetime = 1 / weightedChurnRate;
+            // Se a matemática ultrapassar o teto, travamos no limite seguro para o tamanho atual da empresa.
+            projectedLifetimeMonths = Math.min(calculatedLifetime, capSeguranca);
+        }
 
         const ltvProjetado = ticketMedio * projectedLifetimeMonths;
         const cacMock = 150; 

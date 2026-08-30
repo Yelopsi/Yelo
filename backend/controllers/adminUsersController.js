@@ -368,8 +368,19 @@ exports.getAllPsychologists = async (req, res) => {
             GROUP BY utm_campaign, utm_content
             ORDER BY count DESC
         `;
+        
+        const b2cQuery = `
+            SELECT 
+                COUNT(*) as google_b2c_clicks,
+                COUNT(*) FILTER (WHERE "contactReceived" = true AND "dealClosed" IN ('yes', 'started')) as google_b2c_fechados
+            FROM "WhatsAppClickLogs"
+            WHERE ("utmSource" ILIKE '%google%' OR "utmSource" ILIKE '%adwords%')
+            ${dateFilterQuery}
+        `;
+        
         const [kpiResults] = await db.sequelize.query(kpisQuery, { type: db.sequelize.QueryTypes.SELECT, replacements });
         const campaignsResult = await db.sequelize.query(campaignsQuery, { type: db.sequelize.QueryTypes.SELECT, replacements });
+        const [b2cResult] = await db.sequelize.query(b2cQuery, { type: db.sequelize.QueryTypes.SELECT, replacements });
 
         const { count, rows } = await db.Psychologist.findAndCountAll({
             where: whereClause,
