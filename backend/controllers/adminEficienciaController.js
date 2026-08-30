@@ -105,7 +105,8 @@ exports.getEfficiencyDashboard = async (req, res) => {
                 COUNT(*) FILTER (WHERE utm_source ILIKE '%meta%' OR utm_source ILIKE '%facebook%' OR utm_source ILIKE '%instagram%' OR utm_source ILIKE '%ig%' OR utm_source ILIKE '%fb%') as meta_trials,
                 COUNT(*) FILTER (WHERE (utm_source ILIKE '%meta%' OR utm_source ILIKE '%facebook%' OR utm_source ILIKE '%instagram%' OR utm_source ILIKE '%ig%' OR utm_source ILIKE '%fb%') AND status = 'active' AND "subscriptionId" IS NOT NULL) as meta_pagantes,
                 COUNT(*) FILTER (WHERE utm_source ILIKE '%google%' OR utm_source ILIKE '%adwords%') as google_trials,
-                COUNT(*) FILTER (WHERE (utm_source ILIKE '%google%' OR utm_source ILIKE '%adwords%') AND status = 'active' AND "subscriptionId" IS NOT NULL) as google_pagantes
+                COUNT(*) FILTER (WHERE (utm_source ILIKE '%google%' OR utm_source ILIKE '%adwords%') AND status = 'active' AND "subscriptionId" IS NOT NULL) as google_pagantes,
+                COUNT(*) FILTER (WHERE status = 'active' AND "subscriptionId" IS NOT NULL) as total_geral_pagantes
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
             GROUP BY month
@@ -143,6 +144,7 @@ exports.getEfficiencyDashboard = async (req, res) => {
                 google_trials: gTrials,
                 meta_pagantes: mPagantes,
                 google_pagantes: gPagantes,
+                total_geral_pagantes: parseInt(conv.total_geral_pagantes || 0, 10),
                 is_month: true
             });
             

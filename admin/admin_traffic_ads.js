@@ -171,6 +171,7 @@ function generateDecisionEngine(hist, ltv, metaCac, googleCac, currIdx) {
     const prevPrev = currIdx > 1 ? hist[currIdx - 2] : null;
 
     const totalPagantes = parseInt(curr.meta_pagantes || 0, 10) + parseInt(curr.google_pagantes || 0, 10);
+    const totalGeral = parseInt(curr.total_geral_pagantes || 0, 10);
     const totalSpend = parseFloat(curr.meta_ads || 0) + parseFloat(curr.google_ads || 0);
     const globalCac = curr.cac || 0;
     
@@ -186,16 +187,16 @@ function generateDecisionEngine(hist, ltv, metaCac, googleCac, currIdx) {
 
     // 1. Matriz Estatística
     let statStatus = 'BAIXA';
-    let statDesc = `Apenas ${totalPagantes} assinante(s) via tráfego pago no mês.`;
+    let statDesc = `Apenas ${totalPagantes} assinante(s) via anúncios (de ${totalGeral} totais) no mês.`;
     let statColor = '#ca8a04';
     
     if (totalPagantes >= 10 && totalSpend >= 100) {
         statStatus = 'ALTA';
-        statDesc = `Volume excelente (${totalPagantes} assinantes via anúncios).`;
+        statDesc = `Volume excelente (${totalPagantes} de ${totalGeral} totais via anúncios).`;
         statColor = '#16a34a';
     } else if (totalPagantes >= 5 && totalSpend >= 50) {
         statStatus = 'MÉDIA';
-        statDesc = `Volume razoável (${totalPagantes} assinantes via anúncios).`;
+        statDesc = `Volume razoável (${totalPagantes} de ${totalGeral} totais via anúncios).`;
         statColor = '#ea580c';
     }
 
