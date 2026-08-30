@@ -54,59 +54,86 @@ window.loadEfficiencyData = async function() {
         const ltvProjetado = (growthData && growthData.data && growthData.data.ltvProjetado) ? growthData.data.ltvProjetado : 0;
 
         if (data.weeklyHistory && data.weeklyHistory.length > 0) {
-            const hist = data.weeklyHistory;
+            window.histData = data.weeklyHistory;
+            window.ltvProjetado = ltvProjetado;
+
+            // Preenche o seletor de meses dinamicamente
+            const sel = document.getElementById('engine-month-selector');
+            if (sel) {
+                sel.innerHTML = '';
+                window.histData.forEach((h, i) => {
+                    const mDate = new Date(h.week_start + 'T00:00:00');
+                    const mName = mDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                    const capName = mName.charAt(0).toUpperCase() + mName.slice(1);
+                    sel.innerHTML += `<option value="${i}" style="color:black;">${capName}</option>`;
+                });
+            }
             
             // Se o mês atual tem R$ 0,00 de gastos lançados, volta a avaliação para o mês passado (fallback dinâmico)
-            let currIdx = hist.length - 1;
-            const currentSpend = parseFloat(hist[currIdx].meta_ads || 0) + parseFloat(hist[currIdx].google_ads || 0);
+            let currIdx = window.histData.length - 1;
+            const currentSpend = parseFloat(window.histData[currIdx].meta_ads || 0) + parseFloat(window.histData[currIdx].google_ads || 0);
             if (currentSpend === 0 && currIdx > 0) {
                 currIdx = currIdx - 1;
             }
+            
+            if (sel) sel.value = currIdx;
 
-            const curr = hist[currIdx];
-            const prev = currIdx > 0 ? hist[currIdx - 1] : null;
-
-            // Ajusta o nome do mês nas etiquetas dinâmicas
-            const monthDate = new Date(curr.week_start + 'T00:00:00'); // Evita timezone bug
-            const monthName = monthDate.toLocaleDateString('pt-BR', { month: 'long' });
-            const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-            
-            const cplLabel = document.getElementById('label-cpl-month');
-            if (cplLabel) cplLabel.innerText = `CPL Global (${capitalizedMonth})`;
-            const cacLabel = document.getElementById('label-cac-month');
-            if (cacLabel) cacLabel.innerText = `CAC Global (${capitalizedMonth})`;
-            
-            // Render Trend KPIs
-            renderTrendKPI('kpi-cpl', 'kpi-cpl-trend', curr.cpl, prev ? prev.cpl : null, true);
-            renderTrendKPI('kpi-cac', 'kpi-cac-trend', curr.cac, prev ? prev.cac : null, true);
-            
-            const totalSpend = parseFloat(curr.meta_ads || 0) + parseFloat(curr.google_ads || 0);
-            document.getElementById('kpi-spend').innerText = formatBRL(totalSpend);
-            
-            // Custo Estimado por Assinante (Por Canal)
-            const metaSpend = parseFloat(curr.meta_ads || 0);
-            const googleSpend = parseFloat(curr.google_ads || 0);
-            const metaPagantes = parseInt(curr.meta_pagantes || 0, 10);
-            const googlePagantes = parseInt(curr.google_pagantes || 0, 10);
-            
-            const metaCac = metaPagantes > 0 ? (metaSpend / metaPagantes) : 0;
-            const googleCac = googlePagantes > 0 ? (googleSpend / googlePagantes) : 0;
-            
-            const prevMetaCac = (prev && prev.meta_pagantes > 0) ? (parseFloat(prev.meta_ads||0) / parseInt(prev.meta_pagantes||0, 10)) : 0;
-            const prevGoogleCac = (prev && prev.google_pagantes > 0) ? (parseFloat(prev.google_ads||0) / parseInt(prev.google_pagantes||0, 10)) : 0;
-
-            renderTrendKPI('kpi-meta-cac', 'kpi-meta-trend', metaCac, prevMetaCac, true, metaPagantes === 0);
-            renderTrendKPI('kpi-google-cac', 'kpi-google-trend', googleCac, prevGoogleCac, true, googlePagantes === 0);
-            
-            renderCharts(hist);
-            
-            // Motor de Decisão
-            generateDecisionEngine(hist, ltvProjetado, metaCac, googleCac, currIdx);
+            window.renderEngine(currIdx);
+            renderCharts(window.histData);
         }
     } catch (e) {
         console.error("Erro ao carregar dados de eficiência:", e);
     }
 }
+
+window.changeEngineMonth = function() {
+    const sel = document.getElementById('engine-month-selector');
+    if (sel && sel.value !== "") {
+        window.renderEngine(parseInt(sel.value, 10));
+    }
+};
+
+window.renderEngine = function(currIdx) {
+    const hist = window.histData;
+    const ltv = window.ltvProjetado;
+    const curr = hist[currIdx];
+    const prev = currIdx > 0 ? hist[currIdx - 1] : null;
+
+    // Ajusta o nome do mês nas etiquetas dinâmicas
+    const monthDate = new Date(curr.week_start + 'T00:00:00'); // Evita timezone bug
+    const monthName = monthDate.toLocaleDateString('pt-BR', { month: 'long' });
+    const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    
+    const cplLabel = document.getElementById('label-cpl-month');
+    if (cplLabel) cplLabel.innerText = `CPL Global (${capitalizedMonth})`;
+    const cacLabel = document.getElementById('label-cac-month');
+    if (cacLabel) cacLabel.innerText = `CAC Global (${capitalizedMonth})`;
+    
+    // Render Trend KPIs
+    renderTrendKPI('kpi-cpl', 'kpi-cpl-trend', curr.cpl, prev ? prev.cpl : null, true);
+    renderTrendKPI('kpi-cac', 'kpi-cac-trend', curr.cac, prev ? prev.cac : null, true);
+    
+    const totalSpend = parseFloat(curr.meta_ads || 0) + parseFloat(curr.google_ads || 0);
+    document.getElementById('kpi-spend').innerText = formatBRL(totalSpend);
+    
+    // Custo Estimado por Assinante (Por Canal)
+    const metaSpend = parseFloat(curr.meta_ads || 0);
+    const googleSpend = parseFloat(curr.google_ads || 0);
+    const metaPagantes = parseInt(curr.meta_pagantes || 0, 10);
+    const googlePagantes = parseInt(curr.google_pagantes || 0, 10);
+    
+    const metaCac = metaPagantes > 0 ? (metaSpend / metaPagantes) : 0;
+    const googleCac = googlePagantes > 0 ? (googleSpend / googlePagantes) : 0;
+    
+    const prevMetaCac = (prev && prev.meta_pagantes > 0) ? (parseFloat(prev.meta_ads||0) / parseInt(prev.meta_pagantes||0, 10)) : 0;
+    const prevGoogleCac = (prev && prev.google_pagantes > 0) ? (parseFloat(prev.google_ads||0) / parseInt(prev.google_pagantes||0, 10)) : 0;
+
+    renderTrendKPI('kpi-meta-cac', 'kpi-meta-trend', metaCac, prevMetaCac, true, metaPagantes === 0);
+    renderTrendKPI('kpi-google-cac', 'kpi-google-trend', googleCac, prevGoogleCac, true, googlePagantes === 0);
+    
+    // Motor de Decisão
+    generateDecisionEngine(hist, ltv, metaCac, googleCac, currIdx);
+};
 
 function renderTrendKPI(valId, trendId, current, previous, inverseGood = false, isND = false) {
     const valEl = document.getElementById(valId);

@@ -4,9 +4,14 @@
             <h1 style="color: white; margin: 0 0 5px 0; font-size: 2rem; font-family: var(--font-titulos);">Tráfego Pago (Ads) 🎯</h1>
             <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 1.05rem;">Motor de Decisão de Investimento e Performance.</p>
         </div>
-        <button onclick="window.navigateToPage('admin_crm_hub.html')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; font-weight: 600; color: white; cursor: pointer; transition: background 0.2s;">
-            ← Voltar ao Hub
-        </button>
+        <div style="display: flex; gap: 10px;">
+            <select id="engine-month-selector" onchange="changeEngineMonth()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; font-weight: 600; color: white; cursor: pointer; outline: none; appearance: auto;">
+                <option value="" style="color: black;">Carregando meses...</option>
+            </select>
+            <button onclick="window.navigateToPage('admin_crm_hub.html')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; font-weight: 600; color: white; cursor: pointer; transition: background 0.2s;">
+                ← Voltar ao Hub
+            </button>
+        </div>
     </div>
 
     <!-- CAMADA 1: DECISÃO GLOBAL E POR CANAL -->
