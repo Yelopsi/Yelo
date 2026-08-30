@@ -55,8 +55,26 @@ window.loadEfficiencyData = async function() {
 
         if (data.weeklyHistory && data.weeklyHistory.length > 0) {
             const hist = data.weeklyHistory;
-            const curr = hist[hist.length - 1];
-            const prev = hist.length > 1 ? hist[hist.length - 2] : null;
+            
+            // Se o mês atual tem R$ 0,00 de gastos lançados, volta a avaliação para o mês passado (fallback dinâmico)
+            let currIdx = hist.length - 1;
+            const currentSpend = parseFloat(hist[currIdx].meta_ads || 0) + parseFloat(hist[currIdx].google_ads || 0);
+            if (currentSpend === 0 && currIdx > 0) {
+                currIdx = currIdx - 1;
+            }
+
+            const curr = hist[currIdx];
+            const prev = currIdx > 0 ? hist[currIdx - 1] : null;
+
+            // Ajusta o nome do mês nas etiquetas dinâmicas
+            const monthDate = new Date(curr.week_start + 'T00:00:00'); // Evita timezone bug
+            const monthName = monthDate.toLocaleDateString('pt-BR', { month: 'long' });
+            const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+            
+            const cplLabel = document.getElementById('label-cpl-month');
+            if (cplLabel) cplLabel.innerText = `CPL Global (${capitalizedMonth})`;
+            const cacLabel = document.getElementById('label-cac-month');
+            if (cacLabel) cacLabel.innerText = `CAC Global (${capitalizedMonth})`;
             
             // Render Trend KPIs
             renderTrendKPI('kpi-cpl', 'kpi-cpl-trend', curr.cpl, prev ? prev.cpl : null, true);
@@ -83,7 +101,7 @@ window.loadEfficiencyData = async function() {
             renderCharts(hist);
             
             // Motor de Decisão
-            generateDecisionEngine(hist, ltvProjetado, metaCac, googleCac);
+            generateDecisionEngine(hist, ltvProjetado, metaCac, googleCac, currIdx);
         }
     } catch (e) {
         console.error("Erro ao carregar dados de eficiência:", e);
@@ -120,19 +138,19 @@ function renderTrendKPI(valId, trendId, current, previous, inverseGood = false, 
     trendEl.style.color = isGood ? '#16a34a' : '#dc2626';
 }
 
-function generateDecisionEngine(hist, ltv, metaCac, googleCac) {
-    const curr = hist[hist.length - 1];
-    const prev = hist.length > 1 ? hist[hist.length - 2] : null;
-    const prevPrev = hist.length > 2 ? hist[hist.length - 3] : null;
+function generateDecisionEngine(hist, ltv, metaCac, googleCac, currIdx) {
+    const curr = hist[currIdx];
+    const prev = currIdx > 0 ? hist[currIdx - 1] : null;
+    const prevPrev = currIdx > 1 ? hist[currIdx - 2] : null;
 
     const totalPagantes = parseInt(curr.meta_pagantes || 0, 10) + parseInt(curr.google_pagantes || 0, 10);
     const totalSpend = parseFloat(curr.meta_ads || 0) + parseFloat(curr.google_ads || 0);
     const globalCac = curr.cac || 0;
     
-    // Cálculo da Tendência agregada dos 3 meses ANTERIORES (exclui o mês atual)
+    // Cálculo da Tendência agregada dos 3 meses ANTERIORES (exclui o mês em avaliação)
     let sumSpend3mPrev = 0;
     let sumPagantes3mPrev = 0;
-    for(let i = Math.max(0, hist.length - 4); i < hist.length - 1; i++) {
+    for(let i = Math.max(0, currIdx - 3); i < currIdx; i++) {
         sumSpend3mPrev += (parseFloat(hist[i].meta_ads||0) + parseFloat(hist[i].google_ads||0));
         sumPagantes3mPrev += (parseInt(hist[i].meta_pagantes||0, 10) + parseInt(hist[i].google_pagantes||0, 10));
     }
@@ -272,7 +290,7 @@ function generateDecisionEngine(hist, ltv, metaCac, googleCac) {
                 bgColor = '#fef2f2';
             } else {
                 globalStatus = '🟠 PRESERVAR CAPITAL / NÃO ESCALAR';
-                globalReason = `Sinais de perigo, mas amostra baixa. Congele orçamento e preserve caixa até o indicador melhorar.`;
+                globalReason = `Sinais de perigo, mas amostra baixa. Congele orçamento e preserve caixa até o volume de conversões ou o custo (CAC) melhorar.`;
                 bgColor = '#ffedd5';
             }
         }
