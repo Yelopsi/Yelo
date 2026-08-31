@@ -28,7 +28,8 @@ exports.getLowPerformanceData = async () => {
         where: { 
             status: 'active', 
             deletedAt: null,
-            createdAt: { [Op.lt]: sevenDaysAgo }
+            createdAt: { [Op.lt]: sevenDaysAgo },
+            subscriptionId: { [Op.ne]: null }
         },
         attributes: ['id', 'nome', 'telefone', 'fotoUrl', 'slug', 'status', 'is_exempt', 'planExpiresAt', 'plano', 'createdAt', 'aiOptimizationHistory']
     });

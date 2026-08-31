@@ -370,6 +370,11 @@ window.openCSDrawer = async function(idStr) {
                     btnGenAI.innerHTML = 'Tentar Novamente';
                 }
             };
+            
+            // Auto-trigger para perfis que não são Churn
+            if (!isChurn) {
+                btnGenAI.click();
+            }
         }
         
     } catch (err) {
