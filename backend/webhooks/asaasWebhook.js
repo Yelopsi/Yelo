@@ -41,6 +41,17 @@ exports.handleWebhook = async (req, res) => {
             status: 'PENDING',
             payload: event
         });
+
+        // Garantir que o evento fique registrado no Dashboard de Logs
+        if (db.SystemLog) {
+            const customerStr = paymentData.customer || 'Desconhecido';
+            await db.SystemLog.create({
+                level: 'info',
+                message: `[ASAAS WEBHOOK BRUTO] Evento recebido: ${event.event}`,
+                meta: { userEmail: customerStr, eventId: eventId }
+            });
+        }
+
         console.log(`📥 [WEBHOOK] Evento ${eventId} (${event.event}) recebido com sucesso.`);
         return res.status(200).json({ received: true });
     } catch (error) {
