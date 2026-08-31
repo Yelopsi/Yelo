@@ -95,14 +95,10 @@ exports.getLowPerformanceData = async () => {
     // 3. Zero cliques mas com base razoável de matches (>=10)
     const nowTime = new Date();
     const lowPerformance = statsArray.filter(psi => {
-        // Ignora se o perfil já foi contatado nos últimos 7 dias (período de carência)
+        // Ignora se o perfil já foi contatado pela IA alguma vez (limite de 1 vez por psicólogo)
         if (psi.aiOptimizationHistory && Array.isArray(psi.aiOptimizationHistory)) {
-            const recentlySent = psi.aiOptimizationHistory.some(entry => {
-                if (!entry.sentAt) return false;
-                const diffDays = (nowTime - new Date(entry.sentAt)) / (1000 * 60 * 60 * 24);
-                return diffDays <= 7;
-            });
-            if (recentlySent) return false; // Remove da lista de baixa performance temporariamente
+            const alreadySent = psi.aiOptimizationHistory.some(entry => entry.action === 'whatsapp_ai_diagnosis' || entry.sentAt);
+            if (alreadySent) return false; // Nunca mais reavalia este psicólogo para baixa performance
         }
 
         const hasHighMatchesLowCtr = psi.matches_14d >= avgMatches && psi.ctr < (avgCtr * 0.5);

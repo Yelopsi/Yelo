@@ -938,14 +938,10 @@ exports.getPendingActions = async (req, res) => {
                         // Omitir se não tiver WhatsApp
                         if (!p.telefone || String(p.telefone).trim() === '') return;
                         
-                        // Omitir se já foi contatado pela IA nos últimos 7 dias
+                        // Omitir se já foi contatado pela IA alguma vez (limite de 1 vez por psicólogo)
                         if (p.aiOptimizationHistory && Array.isArray(p.aiOptimizationHistory)) {
-                            const recentlySent = p.aiOptimizationHistory.some(entry => {
-                                if (!entry.sentAt) return false;
-                                const diffDays = (now - new Date(entry.sentAt)) / (1000 * 60 * 60 * 24);
-                                return diffDays <= 7;
-                            });
-                            if (recentlySent) return;
+                            const alreadySent = p.aiOptimizationHistory.some(entry => entry.action === 'whatsapp_ai_diagnosis' || entry.sentAt);
+                            if (alreadySent) return;
                         }
 
                         pendingList.push({
