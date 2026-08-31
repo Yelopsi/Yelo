@@ -423,24 +423,8 @@ window.initializePage = function () {
             msg = `Bom dia, ${firstName}! Como vai?\n\nPassando por aqui com um aviso importante: a sua assinatura da Yelo venceu ontem e, por conta disso, o seu perfil acabou entrando em pausa no sistema e saiu do ar temporariamente.\n\nComo acompanho de perto a sua trajetória, não queria deixar você perder a ótima tração que construímos juntos. O seu perfil vinha com uma visibilidade excelente — ${performanceText}\n\n${potentialText}\n\nPara o seu perfil voltar ao ar imediatamente e não quebrarmos o ritmo que o algoritmo já gerou para você, basta regularizar a assinatura.\n\nÉ bem simples: basta acessar a sua conta, ir no menu *Ajustes > Assinaturas e Planos* e atualizar a forma de pagamento.\n\nSe precisar de qualquer ajuda com o acesso, sigo totalmente à disposição. 🌿`;
 
         } else if (actionType === 'paid_churn') {
-            try {
-                if (window.showToast) window.showToast('Gerando copy de resgate (Pago) com IA... Aguarde.', 'info');
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
-                const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-paid-churn-message`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
-                });
-                const data = await resAi.json();
-                if (data.whatsappCopy) {
-                    msg = data.whatsappCopy;
-                } else {
-                    if (window.showToast) window.showToast("Erro ao gerar copy de resgate (Pago)", "error");
-                    return;
-                }
-            } catch (e) {
-                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
-                return;
-            }
+            const currentMonthName = new Date().toLocaleString('pt-BR', { month: 'long' });
+            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo.\n\nEstou passando para te dar um toque rápido sobre a sua assinatura. Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e fiquei super feliz! Vi que só neste mês você recebeu [X] contatos e conseguiu fechar com [Y] pacientes novos. 🚀\n\nEu recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. O banco acabou recusando a transação no seu cartão de crédito (geralmente é só limite do mês virando ou bloqueio preventivo do banco para assinaturas).\n\nComo a gente sabe que só com os pacientes novos que você fechou agora em ${currentMonthName} (a R$ [VALOR] a sessão) a plataforma já se pagou com muita sobra, não quero que o seu perfil saia do ar e você perca o embalo de novos agendamentos que estamos construindo.\n\nPara regularizar e manter seu consultório virtual ativo recebendo pacientes, é só acessar a sua conta na Yelo, ir na aba "Ajustes" > "Assinaturas e Planos" e atualizar o seu cartão.\n\nSe precisar de alguma ajuda ou tiver qualquer dificuldade no painel, me dá um alô aqui. Um abraço! 🌿`;
 } else if (actionType === 'churn') {
             try {
                 if (window.showToast) window.showToast('Gerando copy de resgate com IA... Aguarde.', 'info');
