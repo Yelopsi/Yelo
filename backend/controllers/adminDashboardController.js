@@ -409,7 +409,13 @@ exports.getSystemLogs = async (req, res) => {
             const results = await Promise.all([
                 db.Patient.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
                 db.Psychologist.count({ where: { createdAt: { [Op.gte]: oneDayAgo } } }),
-                db.SystemLog.count({ where: { level: 'error', createdAt: { [Op.gte]: oneDayAgo } } }),
+                db.SystemLog.count({ 
+                    where: { 
+                        level: 'error', 
+                        createdAt: { [Op.gte]: oneDayAgo },
+                        message: { [Op.notILike]: '%Falha de login%' }
+                    } 
+                }),
                 db.SystemLog.count({ where: { level: 'error', message: { [Op.iLike]: '%asaas%' }, createdAt: { [Op.gte]: oneDayAgo } } }),
                 db.DemandSearch.count({ where: { status: 'started', createdAt: { [Op.gte]: oneDayAgo } } }),
                 db.DemandSearch.count({ where: { status: 'completed', createdAt: { [Op.gte]: oneDayAgo } } }),
