@@ -211,6 +211,43 @@ window.openCSDrawer = async function(idStr) {
                     }
                     
                     whatsappUrl += `?text=${encodeURIComponent(copyMsg)}`;
+                } else if (psy.status === 'inactive' && psy.plano && psy.plano !== 'nenhum') {
+                    const firstName = psy.nome ? psy.nome.split(' ')[0] : 'Psicólogo(a)';
+                    const currentMonthName = new Date().toLocaleString('pt-BR', { month: 'long' });
+                    const copyMsg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo.\n\nEstou passando para te dar um toque rápido sobre a sua assinatura. Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e fiquei super feliz! Vi que só neste mês você recebeu [X] contatos e conseguiu fechar com [Y] pacientes novos. 🚀\n\nEu recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. O banco acabou recusando a transação no seu cartão de crédito (geralmente é só limite do mês virando ou bloqueio preventivo do banco para assinaturas).\n\nComo a gente sabe que só com os pacientes novos que você fechou agora em ${currentMonthName} (a R$ [VALOR] a sessão) a plataforma já se pagou com muita sobra, não quero que o seu perfil saia do ar e você perca o embalo de novos agendamentos que estamos construindo.\n\nPara regularizar e manter seu consultório virtual ativo recebendo pacientes, é só acessar a sua conta na Yelo, ir na aba "Ajustes" > "Assinaturas e Planos" e atualizar o seu cartão.\n\nSe precisar de alguma ajuda ou tiver qualquer dificuldade no painel, me dá um alô aqui. Um abraço! 🌿`;
+                    
+                    const copyToClipboardFallback = (text) => {
+                        if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+                        return new Promise((resolve, reject) => {
+                            const textArea = document.createElement("textarea");
+                            textArea.value = text;
+                            textArea.style.position = "fixed"; textArea.style.left = "-999999px";
+                            document.body.appendChild(textArea);
+                            textArea.focus(); textArea.select();
+                            document.execCommand('copy') ? resolve() : reject();
+                            textArea.remove();
+                        });
+                    };
+
+                    try {
+                        await copyToClipboardFallback(copyMsg);
+                        
+                        let pReminders = JSON.parse(localStorage.getItem('yelo_psi_pending_reminder') || '[]');
+                        if (!pReminders.includes(String(psy.id))) {
+                            pReminders.push(String(psy.id));
+                            localStorage.setItem('yelo_psi_pending_reminder', JSON.stringify(pReminders));
+                        }
+                        const nameEl = document.getElementById(`name-psy-${psy.id}`);
+                        if (nameEl && !nameEl.innerHTML.includes('✉️')) {
+                            nameEl.innerHTML += '<span class="badge-pending" title="Mensagem Enviada" style="margin-left: 5px; font-size: 0.8rem;">✉️</span>';
+                        }
+                        
+                        if(window.showToast) window.showToast("Playbook Cartão Recusado copiado!", "success");
+                    } catch(e) {
+                        console.log("Erro ao copiar", e);
+                    }
+                    
+                    whatsappUrl += `?text=${encodeURIComponent(copyMsg)}`;
                 }
 
                 if (isMobile) window.location.href = whatsappUrl;
