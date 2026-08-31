@@ -369,6 +369,17 @@ exports.getSystemLogs = async (req, res) => {
             order: [['createdAt', 'DESC']]
         });
 
+        const paymentLogs = await db.SystemLog.findAll({
+            where: {
+                [db.Sequelize.Op.or]: [
+                    { message: { [db.Sequelize.Op.iLike]: '%asaas%' } },
+                    { message: { [db.Sequelize.Op.iLike]: '%pagamento%' } }
+                ]
+            },
+            limit: 50,
+            order: [['createdAt', 'DESC']]
+        });
+
         let webhooks = [];
         try {
             webhooks = await db.WebhookInbox.findAll({
@@ -392,10 +403,16 @@ exports.getSystemLogs = async (req, res) => {
             };
         });
 
-        // Mesclar e ordenar
-        let logs = [...systemLogs.map(l => l.toJSON()), ...formattedWebhooks];
+        // Mesclar e ordenar removendo duplicatas
+        const logMap = new Map();
+        systemLogs.forEach(l => logMap.set(l.id, l.toJSON()));
+        paymentLogs.forEach(l => logMap.set(l.id, l.toJSON()));
+        
+        let logs = [...Array.from(logMap.values()), ...formattedWebhooks];
         logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        logs = logs.slice(0, 100);
+        
+        // Garante que o frontend receba os logs recentes E os de pagamento
+        logs = logs.slice(0, 150);
 
         const oneDayAgo = new Date(new Date() - 24 * 60 * 60 * 1000);
         let metrics = {
