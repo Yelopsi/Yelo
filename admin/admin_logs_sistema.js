@@ -301,7 +301,7 @@ window.initializePage = async function () {
 
         let filteredByLevelAndType = processedLogs.filter(log => {
             if (filterType === 'all') return true; // Mostra todos
-            if (filterType === 'payment') return (log.message || '').toLowerCase().includes('pagamento');
+            if (filterType === 'payment') return (log.message || '').toLowerCase().includes('pagamento') || (log.message || '').toLowerCase().includes('asaas');
             // Garante que log.level exista antes de comparar
             return (log.level && log.level === filterType);
         });

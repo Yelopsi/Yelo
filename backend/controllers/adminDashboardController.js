@@ -364,10 +364,38 @@ exports.getDetailedReports = async (req, res) => {
  */
 exports.getSystemLogs = async (req, res) => {
     try {
-        const logs = await db.SystemLog.findAll({
+        const systemLogs = await db.SystemLog.findAll({
             limit: 100,
             order: [['createdAt', 'DESC']]
         });
+
+        let webhooks = [];
+        try {
+            webhooks = await db.WebhookInbox.findAll({
+                limit: 50,
+                order: [['receivedAt', 'DESC']]
+            });
+        } catch(e) {} // Fallback se tabela não existir
+
+        const formattedWebhooks = webhooks.map(wh => {
+            const payloadObj = typeof wh.payload === 'string' ? JSON.parse(wh.payload) : (wh.payload || {});
+            const customerStr = payloadObj.payment?.customer || payloadObj.customer || 'Sistema Asaas';
+            return {
+                id: 'wh_' + wh.id,
+                level: wh.status === 'ERROR' || wh.status === 'FAILED' ? 'error' : (wh.status === 'PENDING' ? 'warning' : 'info'),
+                message: `[ASAAS WEBHOOK] ${payloadObj.event || 'Atualização'} - Proc: ${wh.status}`,
+                createdAt: wh.receivedAt || wh.createdAt,
+                meta: {
+                    userEmail: customerStr,
+                    error: wh.lastError
+                }
+            };
+        });
+
+        // Mesclar e ordenar
+        let logs = [...systemLogs.map(l => l.toJSON()), ...formattedWebhooks];
+        logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        logs = logs.slice(0, 100);
 
         const oneDayAgo = new Date(new Date() - 24 * 60 * 60 * 1000);
         let metrics = {
