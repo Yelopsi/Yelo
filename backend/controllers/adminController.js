@@ -2170,19 +2170,12 @@ A mensagem final deve seguir esta estrutura.
 
 Curta, humana e acolhedora.
 
-Apresente-se como parte da Yelo.
+Substitua o tradicional "tudo bem?" por "como vai?".
 
-Dê boas-vindas à plataforma.
+A mensagem deve OBRIGATORIAMENTE iniciar a apresentação com:
+"Eu sou o Anderson, da Yelo. Pedi à minha equipe para analisar os seus primeiros sinais..."
 
-Não diga que uma equipe inteira analisou o perfil manualmente.
-
-Prefira:
-
-"Nós analisamos os primeiros sinais do seu perfil..."
-
-ou:
-
-"Preparamos uma primeira leitura do seu momento na plataforma..."
+Dê boas-vindas à plataforma de forma leve.
 
 ---
 
