@@ -598,7 +598,17 @@
                 <div style="display: flex; flex-direction: column; gap: 2px;">
                     <div id="mobile-sticky-rating" style="font-size: 0.95rem; font-weight: 700; color: #333; display: flex; align-items: center; gap: 4px;">
                         <% if (reviewCount === 0) { %>
-                            <span style="color: #666; font-size: 0.85rem; font-weight: 600;">Novo(a) na Yelo</span>
+                            <% 
+                                let novoTextMobile = 'Novo(a) na Yelo';
+                                if (psicologo.genero_identidade === 'Feminino') {
+                                    novoTextMobile = 'Nova na Yelo';
+                                } else if (psicologo.genero_identidade === 'Masculino') {
+                                    novoTextMobile = 'Novo na Yelo';
+                                } else if (psicologo.genero_identidade === 'Não-binário' || psicologo.genero_identidade === 'Outro') {
+                                    novoTextMobile = 'Nove na Yelo';
+                                }
+                            %>
+                            <span style="color: #666; font-size: 0.85rem; font-weight: 600;"><%= novoTextMobile %></span>
                         <% } else { %>
                             <span style="color: #f59e0b;">⭐</span> <%= averageRating.toString().replace('.', ',') %> de 5
                         <% } %>
