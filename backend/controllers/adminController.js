@@ -2149,7 +2149,7 @@ A mensagem será enviada pelo WhatsApp.
 
 Portanto:
 
-* utilize emojis com moderação;
+* utilize emojis na mensagem para deixá-la mais amigável, garantindo a presença do coração verde 💚 pelo menos uma vez, preferencialmente na saudação ou encerramento;
 * utilize *itálico* para destacar pontos importantes;
 * NÃO utilize **negrito**;
 * escreva parágrafos curtos;
