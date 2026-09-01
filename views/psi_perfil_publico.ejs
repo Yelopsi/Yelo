@@ -315,14 +315,16 @@
                                         </div>
                                     </div>
                                     <% } %>
+                                    <% const locSSR = (psicologo.cidade && psicologo.estado) ? `${psicologo.cidade}, ${psicologo.estado}` : ''; %>
+                                    <% if (locSSR) { %>
                                     <div class="mq-info-row">
                                         <div class="mq-icon" style="background: #e8f5e9; color: #16a34a;">📍</div>
                                         <div class="mq-text-group">
                                             <span class="mq-label">Localização</span>
-                                            <% const locSSR = (psicologo.cidade && psicologo.estado) ? `${psicologo.cidade}, ${psicologo.estado}` : 'Não informado'; %>
                                             <span id="psi-location-mobile" class="mq-value"><%= locSSR %></span>
                                         </div>
                                     </div>
+                                    <% } %>
                                     <div class="mq-info-row">
                                         <div class="mq-icon" style="background: #e0f2fe; color: #0284c7;">💻</div>
                                         <div class="mq-text-group">
@@ -578,7 +580,7 @@
             <div style="position: absolute; bottom: 100%; left: 0; width: 100%; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; padding: 0 24px 12px 15px; pointer-events: none; z-index: 10; box-sizing: border-box;">
                 
                 <% if (psicologo.free_session_active && psicologo.free_session_time) { %>
-                <div style="position: relative; display: inline-flex; align-items: center; gap: 4px; background-color: #FFF4E5; color: #B25E02; border: 1px solid #FFB020; padding: 4px 10px; border-radius: 12px; font-size: 0.70rem; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.04); animation: floatUpDown 3s ease-in-out infinite; pointer-events: auto; align-self: flex-end;">
+                <div style="position: relative; display: inline-flex; align-items: center; gap: 6px; background-color: #FFF4E5; color: #B25E02; border: 1px solid #FFB020; padding: 8px 14px; border-radius: 16px; font-size: 0.85rem; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.08); animation: floatUpDown 3s ease-in-out infinite; pointer-events: auto; align-self: flex-end;">
                     💬 Primeiro atendimento grátis: <%= psicologo.free_session_time %>
                     <div style="position: absolute; bottom: -6px; right: 20px; border-width: 6px 6px 0 6px; border-style: solid; border-color: #FFB020 transparent transparent transparent;"></div>
                     <div style="position: absolute; bottom: -5px; right: 20px; border-width: 6px 6px 0 6px; border-style: solid; border-color: #FFF4E5 transparent transparent transparent;"></div>

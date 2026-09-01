@@ -371,10 +371,7 @@ window.openCSDrawer = async function(idStr) {
                 }
             };
             
-            // Auto-trigger para perfis que não são Churn
-            if (!isChurn) {
-                btnGenAI.click();
-            }
+            // Auto-trigger removido conforme solicitado: o usuário precisa clicar no botão.
         }
         
     } catch (err) {
