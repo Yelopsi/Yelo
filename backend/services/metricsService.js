@@ -122,7 +122,7 @@ class MetricsService {
                 if (reactivated >= start && reactivated <= end) reactivatedCount++;
             }
             
-            const isCanceled = psy.canceledAt && new Date(psy.canceledAt) <= new Date();
+            const isCanceled = psy.status === 'inactive' || (psy.canceledAt && new Date(psy.canceledAt) <= new Date());
             
             if (isCanceled && !psy.reactivatedAt) {
                 if (hasPaid) {
