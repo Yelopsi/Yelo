@@ -91,6 +91,7 @@ class WebhookProcessor {
                 else if (attempts === 4) nextRetryAt = new Date(now.getTime() + 60 * 60 * 1000); // 1 hora
             } else {
                 console.error(`🚨 Webhook ${webhook.eventId} atingiu limite máximo de retentativas. Marcado como falha permanente.`);
+                nextStatus = 'FAILED';
             }
 
             await db.WebhookInbox.update({
