@@ -170,20 +170,37 @@ exports.cancelSubscription = async (req, res) => {
                 headers: { 'access_token': ASAAS_API_KEY }
             });
 
-            // C. Atualiza Banco Local (Revoga acesso imediatamente)
+            // C. Atualiza Banco Local (Revoga acesso premium, mas restaura trial se aplicável)
             const currentBadges = psychologist.badges || {};
             if (currentBadges.pioneiro) {
                 delete currentBadges.pioneiro;
             }
 
-            await psychologist.update({
-                status: 'inactive',
-                plano: null,
-                planExpiresAt: new Date(), // Expira já
-                cancelAtPeriodEnd: false,
-                subscriptionId: null, // Limpa o ID da assinatura
-                badges: currentBadges // Atualiza as badges
-            });
+            const accountCreatedAt = new Date(psychologist.createdAt);
+            const trialEndDate = new Date(accountCreatedAt);
+            trialEndDate.setDate(trialEndDate.getDate() + 14);
+
+            if (trialEndDate > new Date()) {
+                // Se a conta tem menos de 14 dias, devolve o plano "Essencial" (Trial)
+                await psychologist.update({
+                    status: 'active',
+                    plano: 'Essencial',
+                    planExpiresAt: trialEndDate,
+                    cancelAtPeriodEnd: false,
+                    subscriptionId: null,
+                    badges: currentBadges
+                });
+            } else {
+                // Se já passou do trial, corta o acesso na hora
+                await psychologist.update({
+                    status: 'inactive',
+                    plano: null,
+                    planExpiresAt: new Date(),
+                    cancelAtPeriodEnd: false,
+                    subscriptionId: null,
+                    badges: currentBadges
+                });
+            }
 
             // D. Envia E-mail de Cancelamento
             // [OTIMIZAÇÃO] Não espera o envio do e-mail para responder ao usuário (ganha ~2s)

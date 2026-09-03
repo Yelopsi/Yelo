@@ -222,8 +222,18 @@ exports.createPreference = async (req, res) => {
 
         // --- PREPARAÇÃO DO PAYLOAD DA ASSINATURA ---
         let nextDueDate = new Date(Date.now() - 10800000).toISOString().split('T')[0];
+        
+        const accountCreatedAt = new Date(localPsychologist.createdAt);
+        const trialEndDate = new Date(accountCreatedAt);
+        trialEndDate.setDate(trialEndDate.getDate() + 14);
+
         if (localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > new Date()) {
+            // Se já tem uma data futura (ex: trial ativo), cobra só no fim dela
             nextDueDate = new Date(localPsychologist.planExpiresAt).toISOString().split('T')[0];
+        } else if (trialEndDate > new Date()) {
+            // Se pulou etapas e planExpiresAt está nulo, mas a conta é nova, garante o trial
+            nextDueDate = trialEndDate.toISOString().split('T')[0];
+            await localPsychologist.update({ planExpiresAt: trialEndDate, status: 'active' });
         }
 
         let subscriptionPayload;
