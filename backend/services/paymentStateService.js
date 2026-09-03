@@ -332,7 +332,7 @@ class PaymentStateService {
 
             // O estorno/falha é da assinatura atual. Removendo acesso.
             await lockedPsi.update({
-                status: 'pending',
+                status: 'inactive',
                 subscriptionId: null
             }, { transaction: t });
 

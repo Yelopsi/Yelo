@@ -33,27 +33,35 @@ const getBaseTemplate = (title, content) => `
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .header { background-color: #1B4332; padding: 30px 20px; text-align: center; }
-        .header img { max-width: 150px; }
-        .content { padding: 40px 30px; color: #333333; line-height: 1.6; font-size: 16px; }
-        .footer { background-color: #f1f1f1; padding: 20px; text-align: center; color: #777777; font-size: 12px; }
-        .btn { display: inline-block; padding: 14px 28px; background-color: #1B4332; color: #ffffff !important; text-decoration: none; border-radius: 50px; font-weight: bold; margin-top: 20px; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f5f7; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        .wrapper { width: 100%; table-layout: fixed; background-color: #f4f5f7; padding: 40px 0; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.04); }
+        .header { background-color: #1B4332; padding: 35px 20px; text-align: center; }
+        .header img { max-width: 140px; }
+        .content { padding: 40px 35px; color: #333333; line-height: 1.6; font-size: 16px; }
+        .content h2 { color: #1B4332; margin-top: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+        .content p { margin: 16px 0; color: #4a5568; }
+        .footer { background-color: #f8f9fa; padding: 25px; text-align: center; color: #a0aec0; font-size: 13px; border-top: 1px solid #edf2f7; }
+        .btn { display: inline-block; padding: 14px 32px; background-color: #F59E0B; color: #ffffff !important; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 15px; margin-top: 10px; text-align: center; }
+        .btn-container { text-align: center; margin: 30px 0 10px 0; }
+        .highlight-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center; }
+        .highlight-code { font-family: monospace; font-size: 15px; color: #166534; word-break: break-all; margin-top: 10px; font-weight: bold; background: #fff; padding: 10px; border-radius: 4px; border: 1px dashed #86efac; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <img src="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/assets/logos/logo-branca.png" alt="Yelo">
-        </div>
-        <div class="content">
-            <h2 style="color: #1B4332; margin-top: 0;">${title}</h2>
-            ${content}
-        </div>
-        <div class="footer">
-            <p>Você está recebendo este e-mail porque está cadastrado na Yelo.</p>
-            <p>© ${new Date().getFullYear()} Yelo - Apoio Psicológico. Todos os direitos reservados.</p>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <img src="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/assets/logos/logo-branca.png" alt="Yelo">
+            </div>
+            <div class="content">
+                <h2>${title}</h2>
+                ${content}
+            </div>
+            <div class="footer">
+                <p>Você está recebendo este e-mail porque está cadastrado na Yelo.</p>
+                <p>© ${new Date().getFullYear()} Yelo - Apoio Psicológico. Todos os direitos reservados.</p>
+            </div>
         </div>
     </div>
 </body>
@@ -91,60 +99,107 @@ exports.sendEmail = sendEmail;
 exports.sendBillCreatedEmail = async (user, payment) => {
     const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
     const vencimento = payment.dueDate.split('-').reverse().join('/');
-    const title = 'Nova Fatura Disponível';
+    const title = 'Sua nova fatura da Yelo está disponível';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
     const content = `
-        <p>Olá, <strong>${user.nome}</strong>!</p>
-        <p>Uma nova fatura no valor de <strong>R$ ${valor}</strong> foi gerada e o vencimento é dia <strong>${vencimento}</strong>.</p>
-        <center><a href="${payment.invoiceUrl}" class="btn">Visualizar Fatura</a></center>
+        <p>Olá, <strong>${psiName}</strong>! Tudo bem?</p>
+        <p>A sua fatura referente ao uso da plataforma Yelo já foi gerada e está disponível para pagamento.</p>
+        <div style="background-color: #f7fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Valor:</strong> R$ ${valor}</p>
+            <p style="margin: 5px 0;"><strong>Vencimento:</strong> ${vencimento}</p>
+        </div>
+        <p>Para visualizar os detalhes ou realizar o pagamento, basta acessar o link seguro abaixo:</p>
+        <div class="btn-container"><a href="${payment.invoiceUrl}" class="btn">Acessar Minha Fatura</a></div>
     `;
-    await sendEmail(user.email, 'Nova Fatura Disponível - Yelo', getBaseTemplate(title, content));
+    await sendEmail(user.email, 'Sua nova fatura da Yelo está disponível', getBaseTemplate(title, content));
 };
 
 exports.sendDueDateWarningEmail = async (user, payment) => {
     const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
     const vencimento = payment.dueDate.split('-').reverse().join('/');
-    const title = 'Sua fatura vence em breve';
+    const title = 'Sua fatura da Yelo vence HOJE ⚠️';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
     const content = `
-        <p>Olá, <strong>${user.nome}</strong>!</p>
-        <p>Apenas um lembrete de que sua fatura de <strong>R$ ${valor}</strong> vence no dia <strong>${vencimento}</strong>.</p>
-        <center><a href="${payment.invoiceUrl}" class="btn">Pagar Fatura</a></center>
+        <p>Olá, <strong>${psiName}</strong>.</p>
+        <p>Este é um lembrete de que o vencimento da sua fatura de <strong>R$ ${valor}</strong> é HOJE.</p>
+        <p>Para facilitar o seu dia, você pode utilizar o link abaixo para efetuar o pagamento e manter seu perfil ativo:</p>
+        <div class="btn-container"><a href="${payment.invoiceUrl}" class="btn">Acessar Fatura</a></div>
     `;
-    await sendEmail(user.email, 'Lembrete: Sua fatura vence em breve', getBaseTemplate(title, content));
+    await sendEmail(user.email, 'Sua fatura da Yelo vence HOJE ⚠️', getBaseTemplate(title, content));
 };
 
 exports.sendDigitableLineEmail = async (user, payment) => {
-    const linha = payment.nossoNumero || "Acesse sua fatura para ver o código copia e cola"; 
+    let linha = payment.pixTransaction || payment.nossoNumero || "Acesse sua fatura para ver o código de pagamento";
     const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
-    const title = 'Sua fatura vence hoje';
+    const title = 'Sua fatura da Yelo vence HOJE ⚠️';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    
+    let highlightHtml = '';
+    if (payment.billingType === 'PIX' || payment.billingType === 'BOLETO') {
+        if (payment.billingType === 'PIX') {
+            try {
+                const fetch = require('node-fetch');
+                let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+                ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
+                if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+                    ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+                }
+                const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+                const qrRes = await fetch(`${ASAAS_API_URL}/payments/${payment.id}/pixQrCode`, { headers: { 'access_token': ASAAS_API_KEY } });
+                const qrData = await qrRes.json();
+                if (qrData.payload) linha = qrData.payload;
+            } catch(e) {}
+        }
+        
+        highlightHtml = `
+            <div class="highlight-box">
+                <p style="margin: 0; color: #166534; font-size: 14px;">Copie o código abaixo e cole no seu banco:</p>
+                <div class="highlight-code">${linha}</div>
+            </div>
+        `;
+    }
+
     const content = `
-        <p>Olá, <strong>${user.nome}</strong>.</p>
-        <p>Sua fatura no valor de <strong>R$ ${valor}</strong> vence hoje. Para facilitar, aqui está o código copia e cola:</p>
-        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 14px; margin: 15px 0; word-break: break-all; text-align: center; border: 1px dashed #ccc;">
-            <strong>${linha}</strong>
-        </div>
-        <center><a href="${payment.invoiceUrl}" class="btn">Visualizar Fatura</a></center>
+        <p>Olá, <strong>${psiName}</strong>.</p>
+        <p>Este é um lembrete amigável de que o vencimento da sua fatura de <strong>R$ ${valor}</strong> é <strong>HOJE</strong>.</p>
+        <p>Para facilitar o seu dia, você pode utilizar o link ou código abaixo para efetuar o pagamento e manter seu perfil ativo:</p>
+        ${highlightHtml}
+        <div class="btn-container"><a href="${payment.invoiceUrl}" class="btn">Pagar Agora</a></div>
     `;
-    await sendEmail(user.email, 'Sua fatura vence hoje - Yelo', getBaseTemplate(title, content));
+    await sendEmail(user.email, 'Sua fatura da Yelo vence HOJE ⚠️', getBaseTemplate(title, content));
 };
 
 exports.sendOverdueEmail = async (user, payment) => {
-    const title = 'Aviso de Fatura em Aberto';
+    const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
+    const vencimento = payment.dueDate.split('-').reverse().join('/');
+    const title = 'Ação Necessária: Fatura Yelo em atraso';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
     const content = `
-        <p>Olá, <strong>${user.nome}</strong>.</p>
-        <p>Não identificamos o pagamento da sua última fatura. Para evitar a suspensão do seu perfil nas buscas da plataforma, regularize sua situação o quanto antes.</p>
-        <center><a href="${payment.invoiceUrl}" class="btn">Regularizar Pagamento</a></center>
+        <p>Olá, <strong>${psiName}</strong>.</p>
+        <p>Ainda não identificamos o pagamento da sua fatura de <strong>R$ ${valor}</strong>, que venceu no dia <strong>${vencimento}</strong>.</p>
+        <p>Para evitar a suspensão automática do seu perfil nas buscas da plataforma e garantir que você continue recebendo pacientes, por favor, regularize sua assinatura o quanto antes.</p>
+        <p style="font-size: 13px; color: #718096; margin-top: 15px;"><em>(Se a fatura PIX estiver expirada no link, o sistema gerará um novo código automaticamente ao acessar a tela de assinatura ou trocar a forma de pagamento).</em></p>
+        <div class="btn-container"><a href="${payment.invoiceUrl}" class="btn">Regularizar Assinatura</a></div>
     `;
-    await sendEmail(user.email, 'Aviso de Fatura em Aberto - Yelo', getBaseTemplate(title, content));
+    await sendEmail(user.email, 'Ação Necessária: Fatura Yelo em atraso', getBaseTemplate(title, content));
 };
 
 exports.sendBillUpdatedEmail = async (user, payment) => {
     const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
-    const title = 'Atualização na sua Fatura';
+    const vencimento = payment.dueDate.split('-').reverse().join('/');
+    const title = 'Atualização na sua fatura da Yelo';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
     const content = `
-        <p>Sua fatura foi atualizada para o valor de <strong>R$ ${valor}</strong>.</p>
-        <center><a href="${payment.invoiceUrl}" class="btn">Visualizar Alterações</a></center>
+        <p>Olá, <strong>${psiName}</strong>.</p>
+        <p>Informamos que houve uma atualização na sua fatura (nova data de vencimento ou reajuste de valor).</p>
+        <div style="background-color: #f7fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Novo Valor:</strong> R$ ${valor}</p>
+            <p style="margin: 5px 0;"><strong>Novo Vencimento:</strong> ${vencimento}</p>
+        </div>
+        <p>Acesse o link abaixo para conferir a fatura atualizada:</p>
+        <div class="btn-container"><a href="${payment.invoiceUrl}" class="btn">Ver Fatura Atualizada</a></div>
     `;
-    await sendEmail(user.email, 'Atualização na sua Fatura - Yelo', getBaseTemplate(title, content));
+    await sendEmail(user.email, 'Atualização na sua fatura da Yelo', getBaseTemplate(title, content));
 };
 
 exports.sendInvitationEmail = async (candidate, invitationLink) => {
@@ -161,11 +216,12 @@ exports.sendPaymentConfirmationEmail = async (user, planType, value) => {
     const valor = parseFloat(value).toFixed(2).replace('.', ',');
     const plano = planType || 'Ecossistema Yelo';
     const title = 'Pagamento Confirmado! ✅';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
     const content = `
-        <p>Olá, <strong>${user.nome}</strong>!</p>
-        <p>Seu pagamento de <strong>R$ ${valor}</strong> referente ao plano <strong>${plano}</strong> foi confirmado com sucesso.</p>
-        <p>Seu perfil já está ativo e visível nas buscas de pacientes da Yelo.</p>
-        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Acessar Meu Painel</a></center>
+        <p>Olá, <strong>${psiName}</strong>!</p>
+        <p>Seu pagamento de <strong>R$ ${valor}</strong> foi processado e confirmado com sucesso.</p>
+        <p>Seu perfil continua ativo e visível na Yelo, pronto para conectar você a novos pacientes. Agradecemos por fazer parte da nossa comunidade!</p>
+        <div class="btn-container"><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Acessar Yelo</a></div>
     `;
     await sendEmail(user.email, 'Pagamento Confirmado - Yelo', getBaseTemplate(title, content));
 };

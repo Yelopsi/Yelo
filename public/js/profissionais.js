@@ -188,7 +188,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Avalia condições dinâmicas para pular slides
         while (questions[targetIndex] && questions[targetIndex].condition) {
             try {
-                const conditionFn = new Function('answers', `return ${questions[targetIndex].condition};`);
+                let conditionFn = questions[targetIndex].condition;
+                if (typeof conditionFn === 'string') {
+                    if (conditionFn === "answers.modalidade !== 'Apenas Online'") {
+                        conditionFn = (answers) => answers.modalidade !== 'Apenas Online';
+                    } else {
+                        conditionFn = () => true;
+                    }
+                }
+                
                 if (!conditionFn(userAnswers)) {
                     targetIndex += direction;
                 } else {

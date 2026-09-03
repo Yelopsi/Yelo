@@ -113,7 +113,7 @@
             if (method === 'CREDIT_CARD') {
                 creditSection.style.display = 'flex'; securityBadges.style.display = 'block';
                 if (elCepRow) elCepRow.style.display = 'flex';
-                btnSubmit.innerHTML = `Ativar Assinatura <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">Acesso Premium Ilimitado</span>`;
+                btnSubmit.innerHTML = `Ativar Assinatura`;
                 document.getElementById('card-holder-name').placeholder = "Nome impresso no cartão";
                 document.getElementById('card-number').required = true; document.getElementById('card-expiry').required = true; document.getElementById('card-ccv').required = true;
                 if (cepInput) cepInput.required = true; if (numInput) numInput.required = true;
@@ -142,21 +142,64 @@
             let loaderEl = document.getElementById('pix-direct-loader');
             if (!loaderEl) {
                 loaderEl = document.createElement('div'); loaderEl.id = 'pix-direct-loader';
-                loaderEl.innerHTML = '<div class="loader-spinner" style="margin: 0 auto;"></div><p style="text-align:center; color:#1B4332; margin-top:15px; font-weight:bold;">Gerando código PIX...</p>';
+                loaderEl.innerHTML = '<div class="loader-spinner" style="margin: 0 auto;"></div><p style="text-align:center; color:#1B4332; margin-top:15px; font-weight:bold;">Processando PIX...</p>';
                 stepMethod.parentNode.insertBefore(loaderEl, stepMethod.nextSibling);
             }
             loaderEl.style.display = 'block';
 
             try {
                 const cupom = document.getElementById('modal-cupom-input')?.value || '';
-                const res = await window.apiFetch(`${API_BASE_URL}/api/payments/create-preference`, {
-                    method: 'POST', body: JSON.stringify({ planType, cupom, billingType: 'PIX', creditCard: {} })
+                const endpoint = window.isUpdatePaymentMethodMode ? '/api/payments/update-method' : '/api/payments/create-preference';
+                const payload = window.isUpdatePaymentMethodMode 
+                    ? { billingType: 'PIX', creditCard: {} }
+                    : { planType, cupom, billingType: 'PIX', creditCard: {} };
+
+                const res = await window.apiFetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'POST', body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                if (res.ok && data.pix) {
-                    loaderEl.style.display = 'none'; pixResult.style.display = 'block';
-                    document.getElementById('pix-qr-image').src = `data:image/png;base64,${data.pix.encodedImage}`;
-                    document.getElementById('pix-copy-paste').value = data.pix.payload;
+                
+                if (res.ok) {
+                    if (data.pix) {
+                        loaderEl.style.display = 'none'; pixResult.style.display = 'block';
+                        document.getElementById('pix-qr-image').src = `data:image/png;base64,${data.pix.encodedImage}`;
+                        document.getElementById('pix-copy-paste').value = data.pix.payload;
+                        document.getElementById('btn-copy-pix').onclick = () => {
+                            const btnCopy = document.getElementById('btn-copy-pix');
+                            const payload = document.getElementById('pix-copy-paste').value;
+                            navigator.clipboard.writeText(payload).then(() => {
+                                if (window.showToast) window.showToast('Código PIX copiado!', 'success');
+                                const originalText = btnCopy.textContent;
+                                const originalBg = btnCopy.style.backgroundColor;
+                                btnCopy.textContent = "Copiado! ✓";
+                                btnCopy.style.backgroundColor = "#16a34a";
+                                setTimeout(() => {
+                                    btnCopy.textContent = originalText;
+                                    btnCopy.style.backgroundColor = originalBg;
+                                }, 2000);
+                            }).catch(() => {
+                                document.getElementById('pix-copy-paste').select();
+                                document.execCommand("copy");
+                                if (window.showToast) window.showToast('Código PIX copiado!', 'success');
+                            });
+                        };
+                        document.getElementById('btn-pix-paid').onclick = (e) => {
+                            const btn = e.target;
+                            btn.textContent = "Verificando...";
+                            btn.disabled = true;
+                            btn.style.opacity = "0.7";
+                            setTimeout(() => window.location.reload(), 1500);
+                        };
+                    } else if (window.isUpdatePaymentMethodMode) {
+                        window.showToast('PIX ativado! As próximas faturas serão por PIX.', 'success');
+                        modal.style.setProperty('display', 'none', 'important');
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        // Pode acontecer se for PIX mas o backend decidir não retornar qr (ex: assinatura já paga via migração)
+                        window.showToast('Assinatura PIX criada com sucesso!', 'success');
+                        modal.style.setProperty('display', 'none', 'important');
+                        setTimeout(() => window.location.reload(), 1500);
+                    }
                 } else throw new Error(data.error || 'Erro ao gerar PIX.');
             } catch (error) {
                 loaderEl.style.display = 'none'; stepMethod.style.display = 'block';
@@ -228,8 +271,13 @@
             const cupom = document.getElementById('modal-cupom-input')?.value || '';
 
             try {
-                const res = await window.apiFetch(`${API_BASE_URL}/api/payments/create-preference`, {
-                    method: 'POST', body: JSON.stringify({ planType, cupom, billingType: currentMethod, creditCard: cardData })
+                const endpoint = window.isUpdatePaymentMethodMode ? '/api/payments/update-method' : '/api/payments/create-preference';
+                const payload = window.isUpdatePaymentMethodMode 
+                    ? { billingType: currentMethod, creditCard: cardData }
+                    : { planType, cupom, billingType: currentMethod, creditCard: cardData };
+
+                const res = await window.apiFetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'POST', body: JSON.stringify(payload)
                 });
 
                 let data;
@@ -243,10 +291,34 @@
                         btnSubmit.style.display = 'none'; pixResult.style.display = 'block';
                         document.getElementById('pix-qr-image').src = `data:image/png;base64,${data.pix.encodedImage}`;
                         document.getElementById('pix-copy-paste').value = data.pix.payload;
-                        document.getElementById('btn-copy-pix').onclick = () => { document.getElementById('pix-copy-paste').select(); document.execCommand("copy"); window.showToast('Código PIX copiado!', 'success'); };
-                        document.getElementById('btn-pix-paid').onclick = () => window.location.reload();
+                        document.getElementById('btn-copy-pix').onclick = () => {
+                            const btnCopy = document.getElementById('btn-copy-pix');
+                            const payload = document.getElementById('pix-copy-paste').value;
+                            navigator.clipboard.writeText(payload).then(() => {
+                                if (window.showToast) window.showToast('Código PIX copiado!', 'success');
+                                const originalText = btnCopy.textContent;
+                                const originalBg = btnCopy.style.backgroundColor;
+                                btnCopy.textContent = "Copiado! ✓";
+                                btnCopy.style.backgroundColor = "#16a34a";
+                                setTimeout(() => {
+                                    btnCopy.textContent = originalText;
+                                    btnCopy.style.backgroundColor = originalBg;
+                                }, 2000);
+                            }).catch(() => {
+                                document.getElementById('pix-copy-paste').select();
+                                document.execCommand("copy");
+                                if (window.showToast) window.showToast('Código PIX copiado!', 'success');
+                            });
+                        };
+                        document.getElementById('btn-pix-paid').onclick = (e) => {
+                            const btn = e.target;
+                            btn.textContent = "Verificando...";
+                            btn.disabled = true;
+                            btn.style.opacity = "0.7";
+                            setTimeout(() => window.location.reload(), 1500);
+                        };
                     } else {
-                        window.showToast('Assinatura realizada com sucesso!', 'success');
+                        window.showToast(window.isUpdatePaymentMethodMode ? 'Forma de pagamento atualizada!' : 'Assinatura realizada com sucesso!', 'success');
                         modal.style.setProperty('display', 'none', 'important');
                         setTimeout(() => window.location.reload(), 1500); // Força um reload para garantir a busca dos dados atualizados
                     }
@@ -255,7 +327,7 @@
                 if(msgDiv) { msgDiv.classList.remove('hidden'); msgDiv.textContent = error.message; msgDiv.style.color = "red"; }
             } finally {
                 btnSubmit.disabled = false;
-                btnSubmit.innerHTML = currentMethod === 'CREDIT_CARD' ? `Ativar Assinatura <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">Acesso Premium Ilimitado</span>` : "Gerar PIX";
+                btnSubmit.innerHTML = currentMethod === 'CREDIT_CARD' ? `Ativar Assinatura` : "Gerar PIX";
             }
         };
     }
@@ -303,6 +375,7 @@
             }
 
             setupBotaoCancelamento(isCancelado);
+            setupPendingPixAndMethodUpdate(psychologistData);
         } else {
             if(cardResumo) cardResumo.style.display = 'none';
             if(areaCancelamento) areaCancelamento.style.display = 'none';
@@ -374,6 +447,124 @@
                 } catch(e) { window.showToast('Erro: ' + e.message, 'error'); } 
                 finally { this.textContent = "Sim, Cancelar"; }
             };
+        }
+    }
+
+    async function setupPendingPixAndMethodUpdate(psychologistData) {
+        // 1. Configura botão de Alterar Forma de Pagamento
+        const btnAlterar = document.getElementById('btn-alterar-pagamento');
+        if (btnAlterar && psychologistData && psychologistData.subscriptionId) {
+            btnAlterar.onclick = (e) => {
+                e.preventDefault();
+                window.isUpdatePaymentMethodMode = true;
+                const dummyBtn = { textContent: '', disabled: false };
+                abrirModalAsaas(psychologistData.plano, null);
+                // Esconde campo de cupom no modo atualização
+                const cupomArea = document.getElementById('cupom-area');
+                if (cupomArea) cupomArea.style.display = 'none';
+            };
+        }
+
+        // 2. Busca Fatura PIX Aberta
+        try {
+            const res = await window.apiFetch(`${API_BASE_URL}/api/payments/pending-pix`);
+            const data = await res.json();
+            
+            if (data.pending && data.dueDate) {
+                const dueDate = new Date(data.dueDate);
+                // Evita problemas de timezone zerando as horas
+                dueDate.setHours(0,0,0,0);
+                const hoje = new Date();
+                hoje.setHours(0,0,0,0);
+                
+                const diffTime = dueDate.getTime() - hoje.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                // Exibe se vence em 5 dias ou se já está vencido
+                if (diffDays <= 5) {
+                    const alertPending = document.getElementById('alert-pix-pending');
+                    const txtVencimento = document.getElementById('txt-pix-vencimento');
+                    const btnPayPix = document.getElementById('btn-pay-pending-pix');
+                    
+                    if (alertPending) alertPending.style.display = 'flex';
+                    
+                    if (txtVencimento) {
+                        const [year, month, day] = data.dueDate.split('-');
+                        const formattedDate = `${day}/${month}/${year}`;
+                        const formattedValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data.value);
+                        
+                        let vencimentoText = `Vence em: ${formattedDate}`;
+                        if (diffDays < 0) {
+                            vencimentoText = `<span style="color: #dc2626; font-weight: bold;">Vencida dia ${formattedDate}</span>`;
+                        } else if (diffDays === 0) {
+                            vencimentoText = `<span style="color: #dc2626; font-weight: bold;">Vence HOJE!</span>`;
+                        }
+                        
+                        txtVencimento.innerHTML = `${vencimentoText} &bull; ${formattedValue}`;
+                    }
+                    
+                    if (btnPayPix) {
+                        if (data.billingType === 'PIX' && data.pix) {
+                            btnPayPix.textContent = "Ver QR Code PIX";
+                            btnPayPix.onclick = (e) => {
+                                e.preventDefault();
+                                const modal = document.getElementById('payment-modal');
+                                const stepMethod = document.getElementById('step-payment-method');
+                                const form = document.getElementById('payment-form');
+                                const pixResult = document.getElementById('pix-result-container');
+                                
+                                if (modal) {
+                                    modal.style.display = 'flex';
+                                    modal.style.opacity = 1;
+                                    modal.style.visibility = 'visible';
+                                    
+                                    stepMethod.style.display = 'none';
+                                    form.style.display = 'none';
+                                    pixResult.style.display = 'block';
+                                    
+                                    document.getElementById('pix-qr-image').src = `data:image/png;base64,${data.pix.encodedImage}`;
+                                    document.getElementById('pix-copy-paste').value = data.pix.payload;
+                                    document.getElementById('btn-copy-pix').onclick = () => { 
+                                        const btnCopy = document.getElementById('btn-copy-pix');
+                                        const payload = document.getElementById('pix-copy-paste').value;
+                                        navigator.clipboard.writeText(payload).then(() => {
+                                            if (window.showToast) window.showToast('Código PIX copiado!', 'success');
+                                            const originalText = btnCopy.textContent;
+                                            const originalBg = btnCopy.style.backgroundColor;
+                                            btnCopy.textContent = "Copiado! ✓";
+                                            btnCopy.style.backgroundColor = "#16a34a";
+                                            setTimeout(() => {
+                                                btnCopy.textContent = originalText;
+                                                btnCopy.style.backgroundColor = originalBg;
+                                            }, 2000);
+                                        }).catch(() => {
+                                            document.getElementById('pix-copy-paste').select();
+                                            document.execCommand("copy");
+                                            if (window.showToast) window.showToast('Código PIX copiado!', 'success');
+                                        });
+                                    };
+                                    document.getElementById('btn-pix-paid').onclick = (e) => {
+                                        const btn = e.target;
+                                        btn.textContent = "Verificando...";
+                                        btn.disabled = true;
+                                        btn.style.opacity = "0.7";
+                                        setTimeout(() => window.location.reload(), 1500);
+                                    };
+                                }
+                            };
+                        } else {
+                            // Se for cartão recusado, o botão leva pra alterar a forma de pagamento
+                            btnPayPix.textContent = "Atualizar Cartão";
+                            btnPayPix.onclick = (e) => {
+                                e.preventDefault();
+                                if (btnAlterar) btnAlterar.click();
+                            };
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Erro ao buscar fatura pendente:', e);
         }
     }
 

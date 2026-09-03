@@ -176,7 +176,7 @@ exports.createPreference = async (req, res) => {
                         addressNumber: localPsychologist.numero,
                         province: localPsychologist.bairro,
                         complement: localPsychologist.complemento,
-                        notificationDisabled: true
+                        notificationDisabled: false
                     })
                 });
                 const newCustomer = await newCustomerReq.json();
@@ -187,6 +187,33 @@ exports.createPreference = async (req, res) => {
                 }
                 customerIdAsaas = newCustomer.id;
             }
+
+            // --- CONFIGURAÇÃO AUTOMÁTICA DE NOTIFICAÇÕES (Somente SMS) ---
+            try {
+                const notifRes = await fetch(`${ASAAS_API_URL}/customers/${customerIdAsaas}/notifications`, {
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                const notifData = await notifRes.json();
+                if (notifData && notifData.data && notifData.data.length > 0) {
+                    const notificationsToUpdate = notifData.data.map(n => ({
+                        id: n.id,
+                        emailEnabledForCustomer: false, // Yelo assume os e-mails
+                        smsEnabledForCustomer: true     // Asaas assume os SMS
+                    }));
+                    
+                    await fetch(`${ASAAS_API_URL}/notifications/batch`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                        body: JSON.stringify({
+                            customer: customerIdAsaas,
+                            notifications: notificationsToUpdate
+                        })
+                    });
+                }
+            } catch (notifErr) {
+                console.error("Aviso: Falha ao configurar notificações em lote no Asaas:", notifErr);
+            }
+
         } catch (custError) {
             // Se falhou ao achar/criar customer, Asaas não tem assinatura vinculada.
             await intent.update({ status: 'FAILED_LOCAL' });
@@ -337,11 +364,32 @@ exports.createPreference = async (req, res) => {
                 status: subscriptionData.status || 'ACTIVE'
             });
 
+            // Calcula a expiração baseada no nextDueDate
+            // Se nextDueDate for hoje ou no passado (cobrança imediata), liberamos 30 dias de acesso
+            // Se nextDueDate for no futuro (ex: trial de 14 dias), o plano expira na data da primeira cobrança (que renovará)
+            const parsedNextDueDate = new Date(nextDueDate + 'T12:00:00Z'); // Força meio-dia para evitar fuso
+            const now = new Date();
+            let newPlanExpiresAt = parsedNextDueDate;
+            
+            if (parsedNextDueDate <= now) {
+                newPlanExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            }
+
             // Atualiza o Psychologist
-            await localPsychologist.update({
+            const updateData = {
                 subscriptionId: subscriptionData.id,
-                plano: planType
-            });
+                plano: planType,
+                planExpiresAt: newPlanExpiresAt
+            };
+            
+            // Ativação Imediata para Cartão de Crédito (fluxo síncrono tem sucesso garantido aqui)
+            if (billingType === 'CREDIT_CARD') {
+                updateData.status = 'active';
+                updateData.is_exempt = false;
+            }
+
+            
+            await localPsychologist.update(updateData);
             
             // Sucesso Completo
             await intent.update({ status: 'COMPLETED' });
@@ -399,5 +447,176 @@ exports.createPreference = async (req, res) => {
         } catch (logErr) {}
         
         res.status(500).json({ error: error.message || 'Erro inesperado ao processar pagamento' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/payments/pending-pix
+// Descrição: Busca faturas pendentes da assinatura atual e retorna o QR Code
+// ----------------------------------------------------------------------
+exports.getPendingPix = async (req, res) => {
+    try {
+        const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
+        if (!psychologist || !psychologist.subscriptionId) {
+            return res.status(404).json({ error: 'Nenhuma assinatura encontrada.' });
+        }
+
+        // Busca pagamentos PENDING ou OVERDUE no Asaas
+        let paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.subscriptionId}/payments?status=PENDING`, {
+            headers: { 'access_token': ASAAS_API_KEY }
+        });
+        let paymentsData = await paymentsRes.json();
+        
+        let pendingPayments = paymentsData.data || [];
+        
+        if (pendingPayments.length === 0) {
+            paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.subscriptionId}/payments?status=OVERDUE`, {
+                headers: { 'access_token': ASAAS_API_KEY }
+            });
+            paymentsData = await paymentsRes.json();
+            pendingPayments = paymentsData.data || [];
+        }
+
+        if (pendingPayments.length === 0) {
+            return res.json({ pending: false });
+        }
+
+        // Ordena pela mais antiga vencida
+        pendingPayments.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        const firstPayment = pendingPayments[0];
+
+        // Retorna QR Code apenas se for PIX
+        if (firstPayment.billingType === 'PIX') {
+            const qrRes = await fetch(`${ASAAS_API_URL}/payments/${firstPayment.id}/pixQrCode`, {
+                headers: { 'access_token': ASAAS_API_KEY }
+            });
+            const qrData = await qrRes.json();
+            
+            return res.json({ 
+                pending: true,
+                billingType: 'PIX',
+                dueDate: firstPayment.dueDate,
+                value: firstPayment.value,
+                pix: { encodedImage: qrData.encodedImage, payload: qrData.payload }
+            });
+        }
+
+        return res.json({
+            pending: true,
+            billingType: firstPayment.billingType,
+            dueDate: firstPayment.dueDate,
+            value: firstPayment.value
+        });
+
+    } catch (error) {
+        console.error('Erro ao buscar fatura pendente:', error);
+        res.status(500).json({ error: 'Erro ao verificar faturas em aberto.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/payments/update-method
+// Descrição: Atualiza a forma de pagamento da assinatura no Asaas
+// ----------------------------------------------------------------------
+exports.updateSubscriptionMethod = async (req, res) => {
+    try {
+        const { billingType, creditCard } = req.body;
+        const psychologistId = req.psychologist.id;
+        
+        const localPsychologist = await db.Psychologist.findByPk(psychologistId);
+        if (!localPsychologist || !localPsychologist.subscriptionId) {
+            return res.status(404).json({ error: 'Assinatura não encontrada para atualização.' });
+        }
+
+        const subId = localPsychologist.subscriptionId;
+
+        // --- PREPARAÇÃO DO PAYLOAD DE ATUALIZAÇÃO ---
+        let updatePayload = {
+            billingType: billingType || 'CREDIT_CARD',
+            updatePendingPayments: true // Importante: aplica a nova forma na fatura atual
+        };
+
+        if (billingType !== 'PIX') {
+            if (!creditCard || !creditCard.holderName || !creditCard.holderCpf || !creditCard.holderPhone || !creditCard.number || !creditCard.expiry || !creditCard.ccv) {
+                return res.status(400).json({ error: 'Dados do cartão incompletos.' });
+            }
+
+            let expiryMonth = '', expiryYear = '';
+            [expiryMonth, expiryYear] = creditCard.expiry.split('/');
+            
+            let phone = creditCard.holderPhone.replace(/\D/g, '');
+            const cleanCpfCnpj = creditCard.holderCpf.replace(/\D/g, '');
+            const postalCode = creditCard.postalCode ? creditCard.postalCode.replace(/\D/g, '') : '';
+
+            updatePayload.creditCard = {
+                holderName: creditCard.holderName,
+                number: creditCard.number.replace(/\D/g, ''),
+                expiryMonth: expiryMonth,
+                expiryYear: expiryYear.length === 2 ? `20${expiryYear}` : expiryYear,
+                ccv: creditCard.ccv
+            };
+            updatePayload.creditCardHolderInfo = {
+                name: creditCard.holderName,
+                email: localPsychologist.email,
+                cpfCnpj: cleanCpfCnpj,
+                postalCode: postalCode,
+                addressNumber: creditCard.addressNumber,
+                addressComplement: creditCard.addressComplement || null,
+                phone: phone
+            };
+        }
+
+        // --- ATUALIZA A ASSINATURA NO ASAAS ---
+        const resUpdate = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+            method: 'POST', // Asaas permite atualizar Subscription enviando um POST no ID
+            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+            body: JSON.stringify(updatePayload)
+        });
+        
+        let dataUpdate;
+        try {
+            dataUpdate = await resUpdate.json();
+        } catch (e) {
+            return res.status(500).json({ error: 'Erro de comunicação com o gateway (Asaas não retornou JSON).' });
+        }
+
+        if (!resUpdate.ok || dataUpdate.errors) {
+            const errorMsg = dataUpdate.errors ? dataUpdate.errors[0].description : 'Operação recusada pelo cartão/banco.';
+            return res.status(400).json({ error: errorMsg });
+        }
+
+        // Retornos ao Client
+        if (billingType === 'PIX') {
+            // Se mudou para PIX, tenta já retornar a fatura PIX aberta
+            try {
+                const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}/payments?status=PENDING`, {
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                const paymentsData = await paymentsRes.json();
+                
+                if (paymentsData.data && paymentsData.data.length > 0) {
+                    const firstPayment = paymentsData.data[0];
+                    const qrRes = await fetch(`${ASAAS_API_URL}/payments/${firstPayment.id}/pixQrCode`, {
+                        headers: { 'access_token': ASAAS_API_KEY }
+                    });
+                    const qrData = await qrRes.json();
+                    
+                    return res.json({ 
+                        success: true, 
+                        subscriptionId: subId, 
+                        billingType: 'PIX',
+                        pix: { encodedImage: qrData.encodedImage, payload: qrData.payload }
+                    });
+                }
+            } catch (pixErr) {
+                console.error("Pagamento alterado para PIX, mas falha ao obter QRCode", pixErr);
+            }
+        }
+
+        res.json({ success: true, subscriptionId: subId, message: 'Forma de pagamento atualizada com sucesso!' });
+
+    } catch (error) {
+        console.error('Erro na atualização da forma de pagamento:', error);
+        res.status(500).json({ error: 'Erro inesperado ao atualizar a forma de pagamento' });
     }
 };

@@ -515,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let questionText = "";
         let choicesHTML = "";
 
-        const valTCC = "Terapia Cognitivo-Comportamental (TCC),Análise do Comportamento";
+        const valTCC = "Terapia Cognitivo-Comportamental (TCC),Análise do Comportamento,ACT - Terapia de Aceitação e Compromisso";
         const valPsi = "Psicanálise,Jungiana";
         const valPsiOnly = "Psicanálise";
         const valHum = "Humanista,Gestalt-terapia";

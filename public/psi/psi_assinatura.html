@@ -287,7 +287,7 @@
 
     <!-- RESUMO DO PLANO ATUAL (Invisível por padrão) -->
     <section id="card-resumo-assinatura" class="current-plan-summary" style="display: none;">
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 12px; flex: 1;">
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <h2 id="banner-nome-plano" style="margin: 0; font-family: var(--font-titulos); font-size: 1.8rem; color: #1B4332;">--</h2>
                 <div class="status-badge">
@@ -296,11 +296,24 @@
                 </div>
             </div>
             <span id="banner-renovacao" style="color: #666; font-size: 0.95rem; font-weight: 500;">Renova em: --/--/----</span>
+            
+            <!-- ALERTA DE FATURA PIX PENDENTE -->
+            <div id="alert-pix-pending" style="display: none; flex-wrap: wrap; background: #fffaf5; border: 1px solid #fde047; border-left: 4px solid #f59e0b; border-radius: 12px; padding: 16px 20px; margin-top: 20px; align-items: center; gap: 16px; width: 100%;">
+                <div style="flex: 1; min-width: 200px;">
+                    <strong style="color: #92400e; display: block; font-size: 1rem; margin-bottom: 4px;">Fatura em Aberto</strong>
+                    <span style="color: #b45309; font-size: 0.9rem;" id="txt-pix-vencimento">Vence em: --/--/---- • R$ --,--</span>
+                </div>
+                <button id="btn-pay-pending-pix" class="btn-modern" style="background: #f59e0b; color: #fff; padding: 10px 24px; font-size: 0.9rem; width: auto; border-radius: 50px; box-shadow: 0 4px 12px rgba(245,158,11,0.2);">Ver QR Code PIX</button>
+            </div>
         </div>
-        <div style="text-align: right;">
+        <div style="text-align: right; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 10px;">
             <div class="price-block" style="margin: 0;">
                 <div id="banner-preco" class="price" style="font-size: 2.2rem;">R$ --</div>
             </div>
+            <!-- BOTÃO ALTERAR FORMA DE PAGAMENTO -->
+            <button id="btn-alterar-pagamento" style="background: none; border: 1px solid #e5e7eb; color: #4b5563; font-weight: 600; font-size: 0.85rem; padding: 6px 14px; border-radius: 20px; cursor: pointer; transition: all 0.2s;">
+                Alterar Forma de Pagamento ⚙️
+            </button>
         </div>
     </section>
 
@@ -316,7 +329,7 @@
                 <span class="old-price">R$ 199</span>
                 <div class="price">R$ 99</div>
                 <span class="period">/mês</span>
-                <div style="font-size: 0.85rem; color: #16a34a; font-weight: 800; margin-top: 5px;">14 DIAS DE TESTE GRÁTIS<br>NÃO PRECISA DE CARTÃO DE CRÉDITO</div>
+                <div id="txt-trial-marketing" style="font-size: 0.85rem; color: #16a34a; font-weight: 800; margin-top: 5px;">14 DIAS DE TESTE GRÁTIS<br>NÃO PRECISA DE CARTÃO DE CRÉDITO</div>
             </div>
 
             <ul class="features-list">
@@ -489,6 +502,10 @@
                 
                 if (trialBannerGlobal) trialBannerGlobal.style.setProperty('display', 'flex', 'important');
                 if (trialBannerDesc) trialBannerDesc.innerHTML = `Você ainda tem <strong>${diffDays} dias</strong> para conhecer e testar a plataforma. Não se preocupe, <strong>não exigimos cartão de crédito agora</strong>. Mas se você já amou e quiser garantir a sua assinatura agora mesmo, <strong>a primeira cobrança só acontecerá no dia ${planExpiresAt.toLocaleDateString('pt-BR')}</strong>, quando o seu teste terminar. Fique tranquilo/a!`;
+            } else {
+                // Esconde a copy de marketing se já passou o trial ou já tem assinatura
+                const txtTrialMarketing = document.getElementById('txt-trial-marketing');
+                if (txtTrialMarketing) txtTrialMarketing.style.display = 'none';
             }
 
             // VERIFICAÇÃO VIP
@@ -533,37 +550,29 @@
                     promoCard.classList.remove('promo-ativa');
                 }
 
-                // Se o plano atual for o Essencial e estiver ATIVO, ajusta o botão para indicar isso.
-                // Se estiver INATIVO (ex: pagamento falhou), ignoramos para que ela possa clicar em "Assinar" e renovar.
-                if (user.plano === 'ESSENTIAL' && user.status === 'active') {
+                // Ajusta o botão do plano atual para evitar cliques repetidos
+                if (user.plano === 'ESSENTIAL') {
                     const btnEssencial = document.querySelector('#card-plano-essencial .btn-mudar-plano');
                     if (btnEssencial) {
-                        // LÓGICA DE REATIVAÇÃO
                         if (user.cancelAtPeriodEnd) {
                             // Modo: Cancelamento Agendado -> Botão vira "Reativar"
                             btnEssencial.textContent = 'Reativar Assinatura ↺';
                             btnEssencial.disabled = false;
-                            btnEssencial.style.backgroundColor = '#F59E0B'; // Cor de alerta/ação
+                            btnEssencial.style.backgroundColor = '#F59E0B'; 
                             btnEssencial.style.borderColor = '#F59E0B';
                             btnEssencial.style.color = '#fff';
                             btnEssencial.style.cursor = 'pointer';
                             
-                            // Ação de Reativar
                             btnEssencial.onclick = async (e) => {
                                 e.preventDefault();
-                                
-                                // 1. Abre o Modal Personalizado (Yelo Style)
                                 const modalReativacao = document.getElementById('modal-reativacao');
                                 const btnConfirmar = document.getElementById('btn-confirmar-reativacao');
                                 const btnFechar = document.getElementById('btn-fechar-modal-reativacao');
 
                                 if (modalReativacao) {
                                     modalReativacao.style.display = 'flex';
-
-                                    // Configura o botão de fechar
                                     btnFechar.onclick = () => modalReativacao.style.display = 'none';
 
-                                    // Configura o botão de confirmar (Clona para remover listeners antigos)
                                     const novoBtnConfirmar = btnConfirmar.cloneNode(true);
                                     btnConfirmar.parentNode.replaceChild(novoBtnConfirmar, btnConfirmar);
 
@@ -583,20 +592,12 @@
                                                 lancarConfetes();
                                                 setTimeout(() => window.location.reload(), 1500);
                                             } else { 
-                                                // Tratamento do Erro 400 (Assinatura não encontrada/inválida)
-                                                console.error("Erro reativação:", d);
-                                                
-                                                // Se a assinatura não existe mais (400/404), libera para assinar do zero
                                                 if (res.status === 400 || res.status === 404 || (d.error && (d.error.includes('encontrada') || d.error.includes('disponível')))) {
                                                     showToast('Assinatura anterior expirou. Por favor, realize uma nova assinatura.', 'info');
                                                     modalReativacao.style.display = 'none';
-                                                    
-                                                    // Transforma o botão de "Reativar" em "Assinar Agora"
                                                     btnEssencial.textContent = 'Assinar Agora 🚀';
                                                     btnEssencial.style.backgroundColor = '#1B4332';
                                                     btnEssencial.disabled = false;
-                                                    
-                                                    // Redireciona o clique para abrir o modal de pagamento (Fluxo de Assinatura Expirada)
                                                     btnEssencial.onclick = (evt) => {
                                                         evt.preventDefault();
                                                         abrirModalPagamento('ESSENTIAL');
@@ -613,8 +614,12 @@
                                     };
                                 }
                             };
+                        } else if (user.status === 'inactive') {
+                            // Inativo (pagamento falhou)
+                            btnEssencial.textContent = 'Reativar Assinatura';
+                            btnEssencial.disabled = false;
                         } else {
-                            // Modo: Ativo Normal
+                            // Ativo e não cancelado
                             btnEssencial.textContent = 'Seu Plano Atual';
                             btnEssencial.disabled = true;
                             btnEssencial.style.backgroundColor = '#e0e0e0';
@@ -622,12 +627,6 @@
                             btnEssencial.style.color = '#888';
                             btnEssencial.style.cursor = 'default';
                         }
-                    }
-                } else if (user.plano === 'ESSENTIAL' && user.status === 'inactive') {
-                    // Usuário inativo, mas já teve o plano Essencial (falhou cobrança)
-                    const btnEssencial = document.querySelector('#card-plano-essencial .btn-mudar-plano');
-                    if (btnEssencial) {
-                        btnEssencial.textContent = 'Reativar Assinatura';
                     }
                 }
             }

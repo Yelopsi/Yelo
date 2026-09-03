@@ -16,14 +16,14 @@ window.ProfissionaisConfig = {
         { id: 'modalidade', type: 'choice', question: "Como você prefere atender, colega?", choices: ["Apenas Online", "Apenas Presencial", "Híbrido (Online e Presencial)"], required: true },
 
         // 2. CEP com regra condicional
-        { id: 'cep', type: 'text', question: "Qual o CEP do seu local de atendimento?", placeholder: "CEP (ex: 12345-678)", required: true, inputMode: 'numeric', condition: "answers.modalidade !== 'Apenas Online'" },
+        { id: 'cep', type: 'text', question: "Qual o CEP do seu local de atendimento?", placeholder: "CEP (ex: 12345-678)", required: true, inputMode: 'numeric', condition: (answers) => answers.modalidade !== 'Apenas Online' },
 
         // 3. Perguntas de engajamento (Mantidas iguais)
         { id: 'nicho-intro', type: 'info', question: "Entendendo sua Prática e Especialidades", subtitle: "Suas respostas aqui são cruciais. Elas definem seu 'nicho de mercado' e nos permitem verificar se há uma demanda ativa de pacientes para o seu perfil." },
         { id: 'genero_identidade', question: "Com qual gênero você se identifica?", type: 'choice', choices: ["Feminino", "Masculino", "Não-binário", "Outro"], required: true },
         { id: 'valor_sessao_faixa', question: "Em qual faixa de preço você pretende atender?", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
         { id: 'temas_atuacao', question: "Quais são seus principais temas de atuação?", type: 'multiple-choice', scrollable: true, choices: ["Ansiedade ou Estresse", "Depressão ou Tristeza", "Relacionamentos", "Carreira e Trabalho", "Autoestima", "Luto ou Traumas", "Sexualidade", "Autoconhecimento", "Outro"], required: true },
-        { id: 'abordagens_tecnicas', question: "Qual a sua principal abordagem teórica?", type: 'choice', scrollable: true, choices: ["Psicanálise", "Terapia Cognitivo-Comportamental (TCC)", "Humanista / Centrada na Pessoa", "Gestalt-terapia", "Análise do Comportamento (ABA)", "Outra"], required: true },
+        { id: 'abordagens_tecnicas', question: "Qual a sua principal abordagem teórica?", type: 'choice', scrollable: true, choices: ["Psicanálise", "Terapia Cognitivo-Comportamental (TCC)", "ACT - Terapia de Aceitação e Compromisso", "Humanista / Centrada na Pessoa", "Gestalt-terapia", "Análise do Comportamento (ABA)", "Outra"], required: true },
         { id: 'praticas_afirmativas', question: "Sua prática é afirmativa para quais comunidades ou perspectivas?", type: 'multiple-choice', scrollable: true, choices: ["LGBTQIAPN+ Friendly 🏳️‍🌈", "Faz parte da comunidade LGBTQIAPN+", "Pessoa não-branca ou prática antirracista", "Perspectiva Feminista", "Especialista em Neurodiversidade (TDAH, Autismo)", "Nenhuma específica"], required: true },
 
         // 4. Captura de Lead no final da jornada
