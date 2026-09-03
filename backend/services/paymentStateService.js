@@ -287,6 +287,11 @@ class PaymentStateService {
                 novaValidade.setDate(0); // Recua para o último dia do mês correto
             }
 
+            if (lockedPsi.planExpiresAt && novaValidade < new Date(lockedPsi.planExpiresAt)) {
+                console.log(`[ASAAS] Evitando regressão de validade. Mantendo a atual (${lockedPsi.planExpiresAt}) que é maior que a calculada (${novaValidade}).`);
+                novaValidade = lockedPsi.planExpiresAt;
+            }
+
             const updatePayload = {
                 status: 'active',
                 planExpiresAt: novaValidade,
