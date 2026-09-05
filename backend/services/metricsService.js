@@ -41,7 +41,8 @@ class MetricsService {
         const firstPaid = this.getFirstPaidAt(psy.id, paymentsByPsy);
         if (!firstPaid || firstPaid > date) return false;
         
-        if (psy.canceledAt && new Date(psy.canceledAt) <= date) {
+        const deactivatedDate = psy.canceledAt ? new Date(psy.canceledAt) : (psy.status === 'inactive' ? new Date(psy.updatedAt) : null);
+        if (deactivatedDate && deactivatedDate <= date) {
             if (psy.reactivatedAt && new Date(psy.reactivatedAt) <= date) {
                 return true; 
             }
@@ -176,9 +177,9 @@ class MetricsService {
             for (const psy of allPsychologists) {
                 if (this.wasEffectivelyPayingAt(psy, monthExactStart, paymentsByPsy)) {
                     baseInicial++;
-                    if (psy.canceledAt) {
-                        const canceled = new Date(psy.canceledAt);
-                        if (canceled >= monthStart && canceled <= monthEnd && canceled <= new Date()) {
+                    const deactivatedDate = psy.canceledAt ? new Date(psy.canceledAt) : (psy.status === 'inactive' ? new Date(psy.updatedAt) : null);
+                    if (deactivatedDate) {
+                        if (deactivatedDate >= monthStart && deactivatedDate <= monthEnd && deactivatedDate <= new Date()) {
                             churnNoMes++;
                         }
                     }
