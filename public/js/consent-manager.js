@@ -205,6 +205,8 @@ const ConsentManager = (function() {
                 'https://connect.facebook.net/en_US/fbevents.js');
 
                 pixelIds.forEach(id => {
+                    // Previne que a Meta faça web scraping automático de botões e metadados (LGPD / Health Data)
+                    fbq('set', 'autoConfig', false, id);
                     fbq('init', id);
                 });
                 fbq('track', 'PageView');
