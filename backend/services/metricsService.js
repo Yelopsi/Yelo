@@ -6,8 +6,9 @@ class MetricsService {
         return ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'];
     }
 
-    static hasPaidCustomer(psyId, paymentsByPsy) {
-        const payments = paymentsByPsy[psyId] || [];
+    static hasPaidCustomer(psy, paymentsByPsy) {
+        if (psy.subscriptionId) return true;
+        const payments = paymentsByPsy[psy.id] || [];
         return payments.some(p => this.getValidStatuses().includes(p.status));
     }
 
@@ -19,7 +20,7 @@ class MetricsService {
     }
 
     static isCurrentlyPaying(psy, paymentsByPsy) {
-        if (!this.hasPaidCustomer(psy.id, paymentsByPsy)) return false;
+        if (!this.hasPaidCustomer(psy, paymentsByPsy)) return false;
         
         // Se cancelou voluntariamente
         if (psy.canceledAt && new Date(psy.canceledAt) <= new Date() && !psy.reactivatedAt) {
@@ -35,7 +36,7 @@ class MetricsService {
     }
 
     static wasEffectivelyPayingAt(psy, date, paymentsByPsy) {
-        if (!this.hasPaidCustomer(psy.id, paymentsByPsy)) return false;
+        if (!this.hasPaidCustomer(psy, paymentsByPsy)) return false;
         
         const firstPaid = this.getFirstPaidAt(psy.id, paymentsByPsy);
         if (!firstPaid || firstPaid > date) return false;
@@ -91,7 +92,7 @@ class MetricsService {
                 payingActiveCount++;
                 const pName = (psy.plano || '').toLowerCase();
                 mrrTotal += planPrices[pName] || 0;
-            } else if (this.hasPaidCustomer(psy.id, paymentsByPsy) && psy.status === 'inactive' && !psy.canceledAt) {
+            } else if (this.hasPaidCustomer(psy, paymentsByPsy) && psy.status === 'inactive') {
                 inadimplentesCount++;
             }
         }
@@ -109,7 +110,7 @@ class MetricsService {
         let trialChurnCountTotal = 0;
 
         for (const psy of allPsychologists) {
-            const hasPaid = this.hasPaidCustomer(psy.id, paymentsByPsy);
+            const hasPaid = this.hasPaidCustomer(psy, paymentsByPsy);
             const firstPaid = this.getFirstPaidAt(psy.id, paymentsByPsy);
 
             // Novos Pagantes no período
@@ -127,7 +128,7 @@ class MetricsService {
             if (isCanceled && !psy.reactivatedAt) {
                 if (hasPaid) {
                     totalHistoricalPaidChurned++;
-                    const validPys = paymentsByPsy[psy.id].filter(p => this.getValidStatuses().includes(p.status));
+                    const validPys = (paymentsByPsy[psy.id] || []).filter(p => this.getValidStatuses().includes(p.status));
                     totalGrossRevenueFromChurned += validPys.reduce((acc, p) => acc + parseFloat(p.value || 0), 0);
                     totalNetRevenueFromChurned += validPys.reduce((acc, p) => acc + parseFloat(p.netValue || p.value || 0), 0);
                 } else {
@@ -144,10 +145,10 @@ class MetricsService {
         let trialChurnCountNoPeriodo = 0;
 
         for (const psy of allPsychologists) {
-            if (psy.canceledAt) {
-                const canceled = new Date(psy.canceledAt);
-                if (canceled >= start && canceled <= end && canceled <= new Date()) {
-                    if (this.hasPaidCustomer(psy.id, paymentsByPsy)) {
+            const deactivatedDate = psy.canceledAt ? new Date(psy.canceledAt) : new Date(psy.updatedAt);
+            if (psy.status === 'inactive' || psy.canceledAt) {
+                if (deactivatedDate >= start && deactivatedDate <= end && deactivatedDate <= new Date()) {
+                    if (this.hasPaidCustomer(psy, paymentsByPsy)) {
                         paidChurnCountNoPeriodo++;
                     } else {
                         trialChurnCountNoPeriodo++;
