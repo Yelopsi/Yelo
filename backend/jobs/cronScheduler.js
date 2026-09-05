@@ -347,10 +347,10 @@ const startCronJobs = () => {
 
         // Se o minuto atual bater com algum horário sorteado, dispara o robô da IA
         if (aiScheduleTimes.includes(currentHM)) {
-            console.log(`🤖 [CRON IA] Horário sorteado atingido (${currentHM}). Iniciando Motor Editorial...`);
-            const generateAiQuestionV2 = require('./generateAiQuestionV2');
-            generateAiQuestionV2().catch(err => console.error("Erro na geração da IA:", err));
-            // Opcional: remover o horário para não rodar mais de uma vez naquele minuto,
+            console.log(`🤖 [CRON IA] Horário sorteado atingido (${currentHM}). Iniciando Motor de Publicação Gradual...`);
+            const releaseAiDraft = require('./releaseAiDraft');
+            releaseAiDraft().catch(err => console.error("Erro na liberação da IA:", err));
+            // Remove o horário para não rodar mais de uma vez naquele minuto,
             // mas o SetInterval já roda a cada 60s, então o "currentHM" muda e não roda duplo.
         }
 
