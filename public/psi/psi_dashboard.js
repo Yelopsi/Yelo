@@ -321,7 +321,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (urlParams.has('postId')) {
                 localStorage.setItem('yelo_intent_post', urlParams.get('postId'));
             }
-            window.location.href = '/';
+            const currentUrl = window.location.pathname + window.location.search;
+            window.location.href = '/login?redirect=' + encodeURIComponent(currentUrl);
             return false;
         }
         try {
@@ -403,7 +404,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 localStorage.removeItem('Yelo_token');
                 localStorage.removeItem('yelo_last_psi_page'); // Limpa resquícios da versão antiga
                 sessionStorage.removeItem('yelo_last_psi_page');
-                window.location.href = '/';
+                const currentUrl = window.location.pathname + window.location.search;
+                window.location.href = '/login?redirect=' + encodeURIComponent(currentUrl);
             } else {
                 // Não desloga em erro de rede/fetch
             }
@@ -1182,6 +1184,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 window.history.replaceState({}, document.title, window.location.pathname);
                 loadPage('psi_forum.html');
+            } else if (urlParams.has('page')) {
+                loadPage(urlParams.get('page'));
+                window.history.replaceState({}, document.title, window.location.pathname);
             } else {
                 // Carrega a última página visitada ou a visão geral como padrão.
                 let lastPage = sessionStorage.getItem('yelo_last_psi_page');

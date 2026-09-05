@@ -210,10 +210,25 @@
         // Callback do Google (Reutilizável)
         async function handleCredentialResponse(response) {
             try {
+                const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
+                const globalFirstUtms = JSON.parse(localStorage.getItem('yelo_global_first_utms') || '{}');
+
+                const payload = {
+                    token: response.credential,
+                    utm_source: globalUtms.utm_source || null,
+                    utm_medium: globalUtms.utm_medium || null,
+                    utm_campaign: globalUtms.utm_campaign || null,
+                    utm_content: globalUtms.utm_content || null,
+                    first_utm_source: globalFirstUtms.utm_source || null,
+                    first_utm_medium: globalFirstUtms.utm_medium || null,
+                    first_utm_campaign: globalFirstUtms.utm_campaign || null,
+                    first_utm_content: globalFirstUtms.utm_content || null
+                };
+
                 const res = await fetch('/api/auth/google', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: response.credential })
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await res.json();

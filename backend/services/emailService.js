@@ -367,3 +367,32 @@ exports.sendFeedbackRequestEmail = async (user, guestName) => {
     `;
     await sendEmail(user.email, 'Um paciente demonstrou interesse no seu perfil 👋', getBaseTemplate(title, content));
 };
+
+exports.sendWeeklyPerformanceEmail = async (user, matchesCount, profileViewsCount, topTheme) => {
+    const title = '📊 Veja o desempenho do seu perfil na Yelo nesta semana!';
+    const destaqueText = topTheme 
+        ? `Seu perfil esteve em alta nas buscas por <strong>${topTheme}</strong>.` 
+        : `Seu perfil esteve em evidência na nossa rede de buscas.`;
+
+    const content = `
+        <p>Olá, <strong>${user.nome.split(' ')[0]}</strong>, tudo bem?</p>
+        <p>Acreditamos que a gestão do seu consultório precisa ser transparente. Por isso, reunimos os dados de visibilidade do seu perfil na Yelo nos últimos 7 dias.</p>
+        <p>Mesmo quando o WhatsApp não toca, a plataforma continua trabalhando para posicionar o seu nome para os pacientes certos.</p>
+        
+        <p><strong>Seus números desta semana:</strong></p>
+        
+        <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0;">
+            <p style="margin-top: 0; margin-bottom: 15px;">🎯 <strong>${matchesCount} Matches Inteligentes:</strong> Vezes em que o algoritmo cruzou a dor de um paciente com a sua especialidade.</p>
+            <p style="margin-top: 0; margin-bottom: 15px;">👀 <strong>${profileViewsCount} Visualizações de Perfil:</strong> Pessoas que abriram a sua página para ler a sua biografia e formação.</p>
+            <p style="margin-bottom: 0;">⭐ <strong>Destaque:</strong> ${destaqueText}</p>
+        </div>
+
+        <p><strong>O que fazer com esses números?</strong></p>
+        <p>Se você teve boas visualizações, mas poucos contatos, o paciente pode estar em dúvida. Para quebrar essa barreira, experimente responder a uma pergunta anônima no nosso Fórum. Isso constrói autoridade instantânea e deixa o seu perfil em evidência para toda a comunidade.</p>
+        
+        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi/psi_dashboard?page=psi_forum.html" class="btn">Acessar meu Hub de Evolução</a></center>
+        
+        <p style="margin-top: 30px;">Um abraço,<br>Equipe Yelo</p>
+    `;
+    await sendEmail(user.email, title, getBaseTemplate(title, content));
+};

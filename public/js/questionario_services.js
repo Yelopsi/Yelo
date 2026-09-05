@@ -39,12 +39,18 @@ window.QuestionarioService = (function() {
         },
 
         trackStep: function(stepIndex, questionId, searchId) {
+            // Trava para não rastrear psicólogos logados e sujar o funil B2C
+            const userType = localStorage.getItem('Yelo_user_type');
+            if (userType === 'psychologist') {
+                return;
+            }
+
             try {
                 if (typeof window.gtag === 'function') {
-                    window.gtag('event', 'passo_questionario', { 'numero_pergunta': stepIndex, 'nome_pergunta': questionId });
+                    window.gtag('event', 'questionario_step', { 'step_id': questionId, 'numero_pergunta': stepIndex });
                 }
                 if (typeof window.fbq === 'function') {
-                    window.fbq('trackCustom', 'PassoQuestionario', { passo: stepIndex, nome_pergunta: questionId });
+                    window.fbq('trackCustom', 'QuestionarioStep', { step_id: questionId, passo: stepIndex });
                 }
             } catch (err) {}
 

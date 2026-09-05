@@ -154,13 +154,23 @@ exports.unifiedGoogleLogin = async (req, res) => {
         const hashedPassword = await bcrypt.hash(randomPassword, 10);
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0';
 
+        const { utm_source, utm_medium, utm_campaign, utm_content, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_content } = req.body;
+
         const newPatient = await db.Patient.create({
             nome: name,
             email: email,
             senha: hashedPassword,
             ip_registro: ip,
             termos_aceitos: true,
-            marketing_aceito: false
+            marketing_aceito: false,
+            utm_source: utm_source || null,
+            utm_medium: utm_medium || null,
+            utm_campaign: utm_campaign || null,
+            utm_content: utm_content || null,
+            first_utm_source: first_utm_source || null,
+            first_utm_medium: first_utm_medium || null,
+            first_utm_campaign: first_utm_campaign || null,
+            first_utm_content: first_utm_content || null
         });
 
         // Força a gravação burlando o cache do Sequelize (Novo Paciente)

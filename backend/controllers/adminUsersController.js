@@ -19,6 +19,8 @@ exports.getPendingVerifications = async (req, res) => {
     }
 };
 
+const MeasurementProtocolService = require('../services/MeasurementProtocolService');
+
 /**
  * Rota: PUT /api/admin/psychologists/:id/moderate (NOVA)
  * Descrição: Modera (aprova/rejeita) um psicólogo.
@@ -36,7 +38,27 @@ exports.moderatePsychologist = async (req, res) => {
         
         const psychologist = await db.Psychologist.findByPk(id);
         if (psychologist) {
+            const previousStatus = psychologist.status;
             await psychologist.update({ status });
+
+            // Evento GA4 Server-Side para conversão B2B real
+            if (status === 'active' && previousStatus === 'pending') {
+                const userProps = {
+                    utm_source: psychologist.utm_source,
+                    utm_medium: psychologist.utm_medium,
+                    utm_campaign: psychologist.utm_campaign,
+                    utm_content: psychologist.utm_content
+                };
+                
+                // Dispara assíncrono para não travar a request
+                MeasurementProtocolService.sendEvent(
+                    psychologist.email, 
+                    'psychologist_approved', 
+                    { psychologist_id: id },
+                    userProps
+                ).catch(err => console.error("Erro MP Event:", err));
+            }
+
             res.status(200).json({ message: `Psicólogo ${status} com sucesso.` });
         } else {
             res.status(404).json({ error: 'Psicólogo não encontrado.' });
@@ -536,7 +558,28 @@ exports.updatePsychologistStatus = async (req, res) => {
         if (!psychologist) {
             return res.status(404).json({ error: 'Psicólogo não encontrado.' });
         }
+
+        const previousStatus = psychologist.status;
         await psychologist.update({ status });
+
+        // Evento GA4 Server-Side para conversão B2B real
+        if (status === 'active' && previousStatus === 'pending') {
+            const userProps = {
+                utm_source: psychologist.utm_source,
+                utm_medium: psychologist.utm_medium,
+                utm_campaign: psychologist.utm_campaign,
+                utm_content: psychologist.utm_content
+            };
+            
+            // Dispara assíncrono para não travar a request
+            MeasurementProtocolService.sendEvent(
+                psychologist.email, 
+                'psychologist_approved', 
+                { psychologist_id: id },
+                userProps
+            ).catch(err => console.error("Erro MP Event:", err));
+        }
+
         res.status(200).json(psychologist);
     } catch (error) {
         console.error('Erro ao atualizar status do psicólogo:', error);

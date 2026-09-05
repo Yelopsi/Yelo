@@ -204,6 +204,70 @@ async function checkFeedbackReminders(now) {
 }
 
 // ============================================================================
+// 5. ROTINA DE RESUMO SEMANAL DE PERFORMANCE (Sexta-feira)
+// ============================================================================
+async function sendWeeklyPerformanceEmails(now) {
+    console.log("📊 [CRON] Iniciando rotina de Resumo Semanal de Performance...");
+    try {
+        const emailService = require('../services/emailService');
+        
+        // Buscar todos os psicólogos ativos
+        const activePsis = await db.Psychologist.findAll({
+            where: { status: 'active' }
+        });
+
+        if (activePsis.length === 0) {
+            console.log("📊 [CRON] Nenhum psicólogo ativo encontrado para o resumo semanal.");
+            return;
+        }
+
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        for (const psi of activePsis) {
+            try {
+                // Contar Matches nos últimos 7 dias
+                const matchesCountResult = await db.sequelize.query(
+                    `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id AND "createdAt" >= :date`,
+                    { replacements: { id: psi.id, date: sevenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
+                ).catch(() => db.sequelize.query(
+                    `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id AND "createdAt" >= :date`,
+                    { replacements: { id: psi.id, date: sevenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
+                )).catch(() => [{ count: 0 }]);
+                const matchesCount = parseInt(matchesCountResult[0].count);
+
+                // Contar Visualizações de Perfil nos últimos 7 dias
+                const profileViewsResult = await db.sequelize.query(
+                    `SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id AND "createdAt" >= :date`,
+                    { replacements: { id: psi.id, date: sevenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
+                ).catch(() => [{ count: 0 }]);
+                const profileViewsCount = parseInt(profileViewsResult[0].count);
+
+                // Obter o tema principal (mockado baseado nos temas_atuacao ou null)
+                let topTheme = null;
+                if (psi.temas_atuacao) {
+                    let temasArr = [];
+                    if (Array.isArray(psi.temas_atuacao)) {
+                        temasArr = psi.temas_atuacao;
+                    } else if (typeof psi.temas_atuacao === 'string') {
+                        temasArr = psi.temas_atuacao.split(',');
+                    }
+                    if (temasArr.length > 0) {
+                        topTheme = temasArr[0].trim ? temasArr[0].trim() : temasArr[0];
+                    }
+                }
+
+                await emailService.sendWeeklyPerformanceEmail(psi, matchesCount, profileViewsCount, topTheme);
+            } catch (err) {
+                console.error(`❌ [CRON] Erro ao enviar resumo semanal para ${psi.email}:`, err.message);
+            }
+        }
+        console.log(`✅ [CRON] Resumo Semanal de Performance enviado para ${activePsis.length} psicólogos.`);
+    } catch (e) {
+        console.error("❌ [CRON] Erro geral no cron de resumo semanal:", e.message);
+    }
+}
+
+// ============================================================================
 // ORQUESTRADOR CENTRAL (Apenas Inicia e Define Tempos)
 // ============================================================================
 const startCronJobs = () => {
@@ -222,6 +286,7 @@ const startCronJobs = () => {
     let lastScraperDay = -1;
     let lastAiScheduleDay = -1;
     let lastPrivacyPruningDay = -1;
+    let lastWeeklySummaryDay = -1;
     let aiScheduleTimes = [];
 
     setInterval(async () => {
@@ -248,6 +313,13 @@ const startCronJobs = () => {
         if (currentBrtHour === 3 && currentDay !== lastAuditDay) {
             lastAuditDay = currentDay;
             await runIntegrityAudit();
+        }
+
+        // NOVO: RESUMO SEMANAL DE PERFORMANCE (Roda toda sexta-feira às 10h)
+        const currentDayOfWeek = now.getDay(); // 0 = Domingo, 5 = Sexta-feira
+        if (currentDayOfWeek === 5 && currentBrtHour === 10 && currentDay !== lastWeeklySummaryDay) {
+            lastWeeklySummaryDay = currentDay;
+            await sendWeeklyPerformanceEmails(now);
         }
 
         // 3 & 4. LEMBRETES DE SESSÃO E FEEDBACK (Verifica a cada virada de hora)

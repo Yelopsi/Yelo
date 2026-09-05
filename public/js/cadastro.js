@@ -55,19 +55,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 4. Envio para API
         try {
+            const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
+            const globalFirstUtms = JSON.parse(localStorage.getItem('yelo_global_first_utms') || '{}');
+
             const payload = {
                 nome,
                 email,
                 senha,
                 termos,
-                utm_source: localStorage.getItem('yelo_utm_source') || null,
-                utm_medium: localStorage.getItem('yelo_utm_medium') || null,
-                utm_campaign: localStorage.getItem('yelo_utm_campaign') || null,
-                utm_content: localStorage.getItem('yelo_utm_content') || null,
-                first_utm_source: localStorage.getItem('yelo_first_utm_source') || null,
-                first_utm_medium: localStorage.getItem('yelo_first_utm_medium') || null,
-                first_utm_campaign: localStorage.getItem('yelo_first_utm_campaign') || null,
-                first_utm_content: localStorage.getItem('yelo_first_utm_content') || null
+                utm_source: globalUtms.utm_source || null,
+                utm_medium: globalUtms.utm_medium || null,
+                utm_campaign: globalUtms.utm_campaign || null,
+                utm_content: globalUtms.utm_content || null,
+                first_utm_source: globalFirstUtms.utm_source || null,
+                first_utm_medium: globalFirstUtms.utm_medium || null,
+                first_utm_campaign: globalFirstUtms.utm_campaign || null,
+                first_utm_content: globalFirstUtms.utm_content || null
             };
 
             const response = await fetch(`${BASE_URL}/api/patients/register`, {
@@ -90,10 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch(e) {}
             
             // Limpa UTMs após sucesso
-            ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(param => {
-                localStorage.removeItem('yelo_' + param);
-                localStorage.removeItem('yelo_first_' + param);
-            });
+            localStorage.removeItem('yelo_global_utms');
+            localStorage.removeItem('yelo_global_first_utms');
 
             msgFeedback.textContent = 'Conta criada com sucesso! Redirecionando...';
             msgFeedback.className = 'mensagem-sucesso';

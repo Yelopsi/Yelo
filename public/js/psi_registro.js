@@ -182,6 +182,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Gera um ID único para o evento (desduplicação do Meta Pixel + CAPI)
         const metaEventId = 'evt_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+        
+        const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
+        const globalFirstUtms = JSON.parse(localStorage.getItem('yelo_global_first_utms') || '{}');
 
         const registrationData = {
             nome: document.getElementById('nome-completo').value,
@@ -193,14 +196,14 @@ document.addEventListener('DOMContentLoaded', () => {
             senha: senha,
             invitationToken: tokenParam,
             meta_event_id: metaEventId,
-            utm_source: localStorage.getItem('yelo_utm_source') || null,
-            utm_medium: localStorage.getItem('yelo_utm_medium') || null,
-            utm_campaign: localStorage.getItem('yelo_utm_campaign') || null,
-            utm_content: localStorage.getItem('yelo_utm_content') || null,
-            first_utm_source: localStorage.getItem('yelo_first_utm_source') || null,
-            first_utm_medium: localStorage.getItem('yelo_first_utm_medium') || null,
-            first_utm_campaign: localStorage.getItem('yelo_first_utm_campaign') || null,
-            first_utm_content: localStorage.getItem('yelo_first_utm_content') || null
+            utm_source: globalUtms.utm_source || null,
+            utm_medium: globalUtms.utm_medium || null,
+            utm_campaign: globalUtms.utm_campaign || null,
+            utm_content: globalUtms.utm_content || null,
+            first_utm_source: globalFirstUtms.utm_source || null,
+            first_utm_medium: globalFirstUtms.utm_medium || null,
+            first_utm_campaign: globalFirstUtms.utm_campaign || null,
+            first_utm_content: globalFirstUtms.utm_content || null
         };
 
         // Se usou conta Google
@@ -224,10 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Se não for admin, limpa o cache. Se for admin, não precisa limpar nada.
                 if (modeParam !== 'admin') {
                     localStorage.removeItem('psi_questionario_respostas');
-                    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(param => {
-                        localStorage.removeItem('yelo_' + param);
-                        localStorage.removeItem('yelo_first_' + param);
-                    });
+                    localStorage.removeItem('yelo_global_utms');
+                    localStorage.removeItem('yelo_global_first_utms');
                 }
                 
                 // Pega o valor do e-mail que o usuário digitou no formulário (SANITIZADO)

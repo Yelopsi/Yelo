@@ -318,6 +318,22 @@ class PaymentStateService {
         // Background / Gamification
         gamificationService.assignPioneerBadge(psi.id).catch(() => {});
         emailService.sendPaymentConfirmationEmail(psi, planType, payment.value).catch(() => {});
+
+        // Evento GA4 Server-Side para Compra Confirmada (ROAS)
+        const MeasurementProtocolService = require('./MeasurementProtocolService');
+        const userProps = {
+            utm_source: psi.utm_source,
+            utm_medium: psi.utm_medium,
+            utm_campaign: psi.utm_campaign,
+            utm_content: psi.utm_content
+        };
+        const eventParams = {
+            transaction_id: payment.id,
+            value: payment.value,
+            currency: "BRL",
+            items: [{ item_id: planType, item_name: `Plano ${planType}` }]
+        };
+        MeasurementProtocolService.sendEvent(psi.email, 'purchase', eventParams, userProps).catch(() => {});
     }
 
     static async processPaymentFailure(psi, payment, eventType) {
