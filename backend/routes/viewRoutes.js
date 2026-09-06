@@ -169,6 +169,10 @@ router.get('/comunidade', async (req, res) => {
         res.render('perguntas', { stats: { perguntas: 53, respostas: 218, psis: 15 } });
     }
 });
+
+// Rota SEO para pergunta única
+router.get('/perguntas/:slug', require('../controllers/qnaController').getQuestionBySlug);
+
 router.get('/profissionais', async (req, res) => {
     console.log("➡️ [DEBUG] Acessou a rota EJS de /profissionais");
     let depoimentosPsi = [];
