@@ -38,23 +38,32 @@ function captureUTMs() {
     const urlParams = new URLSearchParams(window.location.search);
     let hasUTMs = false;
     
+    const globalUtms = {};
+    
     ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(param => {
         if (urlParams.has(param)) {
             const val = urlParams.get(param);
-            localStorage.setItem('yelo_' + param, val);
+            localStorage.setItem('yelo_' + param, val); // Legacy format
             
-            // First click attribution
+            // First click attribution legacy
             if (!localStorage.getItem('yelo_first_' + param)) {
                 localStorage.setItem('yelo_first_' + param, val);
             }
             
+            globalUtms[param] = val;
             urlParams.delete(param);
             hasUTMs = true;
         }
     });
     
-    // Se encontrou alguma UTM, reescreve a URL na barra de endereços para ficar limpa
     if (hasUTMs) {
+        // Save new global format
+        localStorage.setItem('yelo_global_utms', JSON.stringify(globalUtms));
+        if (!localStorage.getItem('yelo_global_first_utms')) {
+            localStorage.setItem('yelo_global_first_utms', JSON.stringify(globalUtms));
+        }
+
+        // Se encontrou alguma UTM, reescreve a URL na barra de endereços para ficar limpa
         const newSearch = urlParams.toString() ? '?' + urlParams.toString() : '';
         const newUrl = window.location.pathname + newSearch + window.location.hash;
         window.history.replaceState({}, document.title, newUrl);
@@ -111,26 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Pede ao observador para "vigiar" todos os elementos com a classe .hidden
     document.querySelectorAll('.hidden').forEach(el => observer.observe(el));
-
-    // --- CAPTURA GLOBAL DE UTMS ---
-    // Salva as UTMs no LocalStorage caso o usuário navegue por outras páginas antes de converter
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('utm_source') || urlParams.has('utm_campaign')) {
-            const utms = {
-                utm_source: urlParams.get('utm_source') || '',
-                utm_medium: urlParams.get('utm_medium') || '',
-                utm_campaign: urlParams.get('utm_campaign') || '',
-                utm_content: urlParams.get('utm_content') || ''
-            };
-            localStorage.setItem('yelo_global_utms', JSON.stringify(utms));
-            
-            // First click attribution
-            if (!localStorage.getItem('yelo_global_first_utms')) {
-                localStorage.setItem('yelo_global_first_utms', JSON.stringify(utms));
-            }
-        }
-    } catch (e) { }
 
     // --- LÓGICA DE SESSÃO ANÔNIMA (NOVO) ---
     try {
