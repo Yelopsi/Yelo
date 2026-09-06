@@ -61,6 +61,24 @@ async function fetchData() {
         document.getElementById('kpi-capacity').textContent = data.metrics.idealCapacity;
         document.getElementById('kpi-velocity').textContent = data.metrics.avgVelocity;
 
+        // Lógica da Fórmula de Escala (Custo de Manutenção B2C)
+        const totalDemand = Number(data.metrics.totalDemand || 0);
+        const idealCapacity = Number(data.metrics.idealCapacity || 0);
+        const alertBanner = document.getElementById('distribuicao-alert-banner');
+        const alertText = document.getElementById('distribuicao-alert-text');
+        
+        if (idealCapacity > totalDemand && alertBanner && alertText) {
+            const deficit = idealCapacity - totalDemand;
+            // O CAC da busca B2C atual (preço médio histórico para escalar)
+            const adIncrease = deficit * 2.24; 
+            const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+            
+            alertBanner.style.display = 'block';
+            alertText.innerHTML = `Temos um déficit de <b>${deficit} buscas</b> para suprir a Cota Justa da base atual. Adicione <b>${formatCurrency(adIncrease)}</b> no tráfego pago (Google Ads) este mês para estancar a ociosidade.`;
+        } else if (alertBanner) {
+            alertBanner.style.display = 'none';
+        }
+
         // Atualizar Suggestion Box
         const suggBox = document.getElementById('suggestion-box');
         suggBox.className = `suggestion-box suggestion-${data.alertLevel}`;

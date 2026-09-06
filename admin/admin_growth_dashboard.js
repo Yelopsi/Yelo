@@ -205,27 +205,34 @@ window.loadGrowthData = async function() {
                 document.getElementById('g-sample-unknowns').innerText = `${d.sampleData.unknowns} sem data de início (Unknowns)`;
             }
 
-            // Recomendação de Ads refatorada
+            // Fórmula de Escala - Bússola de Ads
             const overviewData = window.growthDataState.overview || {};
+            const ativos = overviewData.totalAtivos || 0;
+            const novos = overviewData.novosPagantes || 0;
+            const custoPorPsi = 26.88;
+            const aumentoSugerido = novos * custoPorPsi;
+            const idealTotal = ativos * custoPorPsi;
             
-            const adsRec = window.calculateAdsRecommendation({
-                ltvProjetado: d.ltvProjetado || 0,
-                metaSpend: metaSpend || 0,
-                novosPsis: novosPsis || 0,
-                payback: d.payback || 0,
-                netNewMrr: overviewData.netNewMrr || 0,
-                weightedChurnRate: d.weightedChurnRate || 0,
-                sampleData: d.sampleData || {}
-            });
+            const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+            let bussolaTitle = `Manter Google Ads em ${formatCurrency(idealTotal)}/mês`;
+            let bussolaReason = `Sua base de ${ativos} psicólogos exige este investimento para não passar fome.`;
+            
+            if (novos > 0) {
+                bussolaTitle = `Aumente +${formatCurrency(aumentoSugerido)} no Google Ads`;
+                bussolaReason = `Você ativou <b>${novos} novos psicólogos</b> pagantes neste período. Para alimentá-los, aumente a verba de demanda. O orçamento total ideal da plataforma agora é ${formatCurrency(idealTotal)}/mês.`;
+            }
 
             const cardElement = document.getElementById('g-invest-suggestion').parentElement;
             if (cardElement) {
-                cardElement.style.background = adsRec.cardColor;
-                cardElement.style.borderColor = adsRec.borderColor;
+                cardElement.style.background = '#f0fdf4';
+                cardElement.style.borderColor = '#bbf7d0';
             }
-            document.getElementById('g-invest-suggestion').style.color = adsRec.textColor;
-            document.getElementById('g-invest-suggestion').innerHTML = `${adsRec.status} <span style="font-size:0.75rem; color:#64748b; font-weight:normal; margin-left:8px;">[Confiabilidade: ${adsRec.confidenceStr}]</span>`;
-            document.getElementById('g-invest-reason').innerText = adsRec.reason;
+            document.getElementById('g-invest-suggestion').style.color = '#166534';
+            document.getElementById('g-invest-suggestion').innerHTML = `🚀 <b>${bussolaTitle}</b>`;
+            
+            const metaCac = (metaSpend > 0 && novosPsis > 0) ? (metaSpend / novosPsis) : 0;
+            document.getElementById('g-invest-reason').innerHTML = bussolaReason + `<br><br><span style="font-size:0.8rem; color:#475569;"><b>Meta Ads:</b> O custo de aquisição (CAC de ~${formatCurrency(metaCac)}) já foi pago para atraí-los. <br><b>Google Ads:</b> É a nutrição diária necessária para gerar os contatos (Manutenção de R$ 26,88/mês).</span>`;
 
             // Payback
             if (d.payback && d.payback > 0) {
