@@ -160,7 +160,16 @@ window.renderEngine = function(currIdx) {
         lifetimeMonths = Math.max(ltv / 99, 1);
     }
     
-    const amortizedCac = metaCac / lifetimeMonths;
+    // Calcula o CAC B2B médio histórico (últimos 6 meses) para amortizar na base toda
+    let sumMetaAdsHist = 0;
+    let sumMetaPagHist = 0;
+    hist.forEach(h => {
+        sumMetaAdsHist += parseFloat(h.meta_ads || 0);
+        sumMetaPagHist += parseInt(h.meta_pagantes || 0, 10);
+    });
+    const avgMetaCac = sumMetaPagHist > 0 ? (sumMetaAdsHist / sumMetaPagHist) : (sumMetaAdsHist > 0 ? sumMetaAdsHist : 0);
+    
+    const amortizedCac = avgMetaCac / lifetimeMonths;
     const consolidatedCost = amortizedCac + maintenanceCost;
 
     const mCostEl = document.getElementById('kpi-maintenance-cost');
