@@ -66,7 +66,7 @@ exports.getDashboardStats = async (req, res) => {
             db.sequelize.query(patientStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{total:0, active:0, deleted:0, new30d:0}]; }),
             db.sequelize.query(psychologistStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{total:0, active:0, deleted:0, new30d:0}]; }),
             db.sequelize.query(demandStatsQuery, { replacements: { startOfToday, tenMinutesAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{total:0, today:0, abandoned:0}]; }),
-            db.WaitingList.count({ where: { status: 'pending' } }).catch(() => 0),
+            db.WaitingList.findAll({ where: { status: 'pending' }, raw: true }).catch(() => []),
             db.Review.count({ where: { status: 'pending' } }).catch(() => 0),
             db.Psychologist.findAll({
                 attributes: ['plano', 'is_exempt', 'subscriptionId'],
@@ -126,6 +126,22 @@ exports.getDashboardStats = async (req, res) => {
         const totalClicks = parseInt(totalClicksResult?.[0]?.count || 0, 10);
         const overallConversionRate = totalMatches > 0 ? ((totalClicks / totalMatches) * 100).toFixed(1) : 0;
 
+        const activePsis = psychologistStatsResult[0] ? await db.Psychologist.findAll({ attributes: ['email', 'telefone'], raw: true }).catch(()=>[]) : [];
+        const registeredEmails = new Set(activePsis.map(p => p.email ? p.email.toLowerCase().trim() : ''));
+        const registeredPhones = new Set(activePsis.map(p => p.telefone ? p.telefone.replace(/\D/g, '') : ''));
+        
+        let validWaitingListCount = 0;
+        for (const entry of waitingListCount) {
+            const entryEmail = entry.email ? entry.email.toLowerCase().trim() : '';
+            const entryPhone = entry.telefone ? entry.telefone.replace(/\D/g, '') : '';
+            
+            if ((entryEmail && registeredEmails.has(entryEmail)) || (entryPhone && entryPhone.length > 8 && registeredPhones.has(entryPhone))) {
+                db.WaitingList.destroy({ where: { id: entry.id } }).catch(()=>{});
+                continue;
+            }
+            validWaitingListCount++;
+        }
+
         console.timeEnd('⏱️ Dashboard Stats Load');
         res.status(200).json({
             mrr: mrr.toFixed(2),
@@ -135,7 +151,7 @@ exports.getDashboardStats = async (req, res) => {
             patients: { total: parseInt(patientStats?.total || 0, 10), active: parseInt(patientStats?.active || 0, 10), deleted: parseInt(patientStats?.deleted || 0, 10) },
             psychologists: { total: parseInt(psychologistStats?.total || 0, 10), active: parseInt(psychologistStats?.active || 0, 10), deleted: parseInt(psychologistStats?.deleted || 0, 10), byPlan: plansCount, paying: payingCount, vip: vipCount },
             questionnaires: { total: parseInt(demandStats?.total || 0, 10), deleted: parseInt(demandStats?.abandoned || 0, 10) },
-            waitingListCount: waitingListCount,
+            waitingListCount: validWaitingListCount,
             pendingReviewsCount: pendingReviewsCount,
             emailHealth: { status: emailStatus, errors: emailErrors },
             overallConversionRate: parseFloat(overallConversionRate),

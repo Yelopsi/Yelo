@@ -94,16 +94,23 @@ exports.getWaitingList = async (req, res) => {
         const registeredEmails = new Set(activePsis.map(p => p.email ? p.email.toLowerCase().trim() : ''));
         const registeredPhones = new Set(activePsis.map(p => p.telefone ? p.telefone.replace(/\D/g, '') : ''));
         
-        // Filtra leads que já se cadastraram (por email ou telefone)
-        const waitingList = rawWaitingList.filter(entry => {
+        // Filtra leads que já se cadastraram e DELETA do banco para limpar a contagem do Dashboard
+        const waitingList = [];
+        for (const entry of rawWaitingList) {
             const entryEmail = entry.email ? entry.email.toLowerCase().trim() : '';
             const entryPhone = entry.telefone ? entry.telefone.replace(/\D/g, '') : '';
             
-            if (entryEmail && registeredEmails.has(entryEmail)) return false;
-            if (entryPhone && entryPhone.length > 8 && registeredPhones.has(entryPhone)) return false;
+            if (entryEmail && registeredEmails.has(entryEmail)) {
+                db.WaitingList.destroy({ where: { id: entry.id } }).catch(()=>{});
+                continue;
+            }
+            if (entryPhone && entryPhone.length > 8 && registeredPhones.has(entryPhone)) {
+                db.WaitingList.destroy({ where: { id: entry.id } }).catch(()=>{});
+                continue;
+            }
             
-            return true;
-        });
+            waitingList.push(entry);
+        }
 
         res.status(200).json(waitingList);
     } catch (error) {
