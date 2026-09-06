@@ -176,11 +176,37 @@ window.renderEngine = function(currIdx) {
     const aCacEl = document.getElementById('kpi-amortized-cac');
     const cCostEl = document.getElementById('kpi-consolidated-cost');
     const lifeDescEl = document.getElementById('kpi-lifetime-desc');
+    const profitBadgeEl = document.getElementById('kpi-profitability-badge');
     
     if (mCostEl) mCostEl.innerText = formatBRL(maintenanceCost);
     if (aCacEl) aCacEl.innerText = formatBRL(amortizedCac);
-    if (cCostEl) cCostEl.innerText = formatBRL(consolidatedCost);
     if (lifeDescEl) lifeDescEl.innerText = `(Diluído em ~${lifetimeMonths.toFixed(1)} meses de LTV)`;
+    
+    if (cCostEl) {
+        cCostEl.innerText = formatBRL(consolidatedCost);
+        if (consolidatedCost <= 70) {
+            cCostEl.style.color = '#16a34a'; // Verde
+            if (profitBadgeEl) {
+                profitBadgeEl.innerText = 'Lucrativo (Margem Saudável)';
+                profitBadgeEl.style.background = '#dcfce7';
+                profitBadgeEl.style.color = '#166534';
+            }
+        } else if (consolidatedCost <= 90) {
+            cCostEl.style.color = '#ca8a04'; // Amarelo/Laranja
+            if (profitBadgeEl) {
+                profitBadgeEl.innerText = 'Atenção (Margem Apertada)';
+                profitBadgeEl.style.background = '#fef08a';
+                profitBadgeEl.style.color = '#854d0e';
+            }
+        } else {
+            cCostEl.style.color = '#dc2626'; // Vermelho
+            if (profitBadgeEl) {
+                profitBadgeEl.innerText = 'Prejuízo (Custo > Mensalidade)';
+                profitBadgeEl.style.background = '#fee2e2';
+                profitBadgeEl.style.color = '#991b1b';
+            }
+        }
+    }
     
     // Motor de Decisão
     generateDecisionEngine(hist, ltv, metaCac, googleCacProjetado, currIdx);
