@@ -56,6 +56,7 @@ window.loadEfficiencyData = async function() {
         if (data.weeklyHistory && data.weeklyHistory.length > 0) {
             window.histData = data.weeklyHistory;
             window.ltvProjetado = ltvProjetado;
+            window.payingUsersCount = data.payingUsersCount || 1;
 
             // Preenche o seletor de meses dinamicamente
             const sel = document.getElementById('engine-month-selector');
@@ -150,8 +151,8 @@ window.renderEngine = function(currIdx) {
     if(txEl) txEl.innerText = (taxaConversao * 100).toFixed(1) + '%';
     
     // Custo de Manutenção / Psicólogo Ativo
-    const totalGeralAtivos = parseInt(curr.total_geral_pagantes || 1, 10);
-    const maintenanceCost = googleSpend / (totalGeralAtivos > 0 ? totalGeralAtivos : 1);
+    const totalGeralAtivos = window.payingUsersCount || 1;
+    const maintenanceCost = googleSpend / totalGeralAtivos;
     const mCostEl = document.getElementById('kpi-maintenance-cost');
     if (mCostEl) {
         mCostEl.innerText = formatBRL(maintenanceCost);
