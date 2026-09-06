@@ -73,7 +73,7 @@ async function fetchData() {
             const adIncrease = deficit * 2.24; 
             const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
             
-            suggestionText = `<b>${suggestionText}</b><br><br>⚠️ <b>Falta de Oxigênio no Algoritmo:</b> Temos um déficit de <b>${deficit} buscas</b> para suprir a Cota Justa da base atual. Adicione <b>${formatCurrency(adIncrease)}</b> no tráfego pago (Google Ads) este mês para estancar a ociosidade.`;
+            suggestionText = `<b>Aumentar Ads:</b> faltam <b>${deficit} buscas</b> para atingir a Cota Justa da base. Para recuperar esse volume e buscar 1 lead real/profissional, recomendamos adicionar <b>${formatCurrency(adIncrease)}</b> em Google Ads este mês.`;
             // Eleva o alerta caso falte oxigênio
             if (data.alertLevel !== 'danger') {
                 data.alertLevel = 'warning';
