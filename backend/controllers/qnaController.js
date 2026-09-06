@@ -7,7 +7,7 @@ const seoService = require('../services/seoService'); // Importa a Inteligência
 // 1. Paciente envia pergunta
 exports.createQuestion = async (req, res) => {
     try {
-        const { conteudo } = req.body;
+        const { conteudo, notify_email } = req.body;
         
         if (!conteudo || conteudo.length < 10) {
             return res.status(400).json({ error: "Conteúdo muito curto." });
