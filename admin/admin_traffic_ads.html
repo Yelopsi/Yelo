@@ -14,14 +14,31 @@
         </div>
     </div>
 
-    <!-- CUSTO DE MANUTENÇÃO POR PSICÓLOGO -->
+    <!-- UNIT ECONOMICS: CUSTO MENSAL POR PSICÓLOGO -->
     <div class="kpi-grid" style="grid-template-columns: 1fr; margin-bottom: 30px;">
-        <div class="kpi-card" style="border-top-color: #10b981; background: #ecfdf5; border: 1px solid #a7f3d0;" title="Custo Médio Mensal por Psicólogo Ativo para manutenção da plataforma (tráfego de pacientes).">
+        <div class="kpi-card" style="border-top-color: #10b981; background: #ecfdf5; border: 1px solid #a7f3d0;" title="Visão consolidada do Unit Economics: soma do Custo de Aquisição (amortizado pela vida útil) + Custo de Manutenção B2C.">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span style="font-size: 0.85rem; background: #d1fae5; padding: 4px 12px; border-radius: 20px; color: #047857; font-weight: bold; text-transform: uppercase;">Custo de Manutenção / Psicólogo Ativo (Mês Atual)</span>
+                <span style="font-size: 0.85rem; background: #d1fae5; padding: 4px 12px; border-radius: 20px; color: #047857; font-weight: bold; text-transform: uppercase;">Custo Mensal Consolidado / Profissional</span>
             </div>
-            <h4 id="kpi-maintenance-cost" style="font-size: 2.2rem; color: #065f46; margin: 0; font-weight: 800;">Carregando...</h4>
-            <p style="color: #059669; font-size: 0.95rem; margin-top: 5px; font-weight: 600;">Total Investido em Google Ads (B2C) dividido pelo nº Total de Assinantes</p>
+            <div style="display: flex; align-items: flex-end; gap: 15px; margin-bottom: 15px;">
+                <h4 id="kpi-consolidated-cost" style="font-size: 2.2rem; color: #065f46; margin: 0; font-weight: 800;">Carregando...</h4>
+                <div style="padding-bottom: 6px;">
+                    <span style="display: block; font-size: 0.85rem; color: #047857; font-weight: 600;">= Aquisição + Manutenção</span>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid #a7f3d0; padding-top: 15px;">
+                <div>
+                    <span style="font-size: 0.75rem; color: #059669; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 2px;">CAC B2B Amortizado (Meta Ads)</span>
+                    <strong id="kpi-amortized-cac" style="font-size: 1.1rem; color: #065f46;">...</strong>
+                    <span id="kpi-lifetime-desc" style="display: block; font-size: 0.75rem; color: #10b981;">(Diluído em X meses de LTV)</span>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: #059669; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 2px;">Manutenção B2C (Google Ads)</span>
+                    <strong id="kpi-maintenance-cost" style="font-size: 1.1rem; color: #065f46;">...</strong>
+                    <span style="display: block; font-size: 0.75rem; color: #10b981;">(Custo fixo mensal para envio de leads)</span>
+                </div>
+            </div>
         </div>
     </div>
 

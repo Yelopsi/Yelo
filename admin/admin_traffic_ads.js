@@ -150,13 +150,28 @@ window.renderEngine = function(currIdx) {
     const txEl = document.getElementById('kpi-google-tx');
     if(txEl) txEl.innerText = (taxaConversao * 100).toFixed(1) + '%';
     
-    // Custo de Manutenção / Psicólogo Ativo
+    // Custo Mensal / Profissional (Unit Economics Consolidado)
     const totalGeralAtivos = window.payingUsersCount || 1;
     const maintenanceCost = googleSpend / totalGeralAtivos;
-    const mCostEl = document.getElementById('kpi-maintenance-cost');
-    if (mCostEl) {
-        mCostEl.innerText = formatBRL(maintenanceCost);
+    
+    // Calcula vida média com base no LTV e plano base de R$ 99 (fallback: 6 meses)
+    let lifetimeMonths = 6;
+    if (ltv > 0) {
+        lifetimeMonths = Math.max(ltv / 99, 1);
     }
+    
+    const amortizedCac = metaCac / lifetimeMonths;
+    const consolidatedCost = amortizedCac + maintenanceCost;
+
+    const mCostEl = document.getElementById('kpi-maintenance-cost');
+    const aCacEl = document.getElementById('kpi-amortized-cac');
+    const cCostEl = document.getElementById('kpi-consolidated-cost');
+    const lifeDescEl = document.getElementById('kpi-lifetime-desc');
+    
+    if (mCostEl) mCostEl.innerText = formatBRL(maintenanceCost);
+    if (aCacEl) aCacEl.innerText = formatBRL(amortizedCac);
+    if (cCostEl) cCostEl.innerText = formatBRL(consolidatedCost);
+    if (lifeDescEl) lifeDescEl.innerText = `(Diluído em ~${lifetimeMonths.toFixed(1)} meses de LTV)`;
     
     // Motor de Decisão
     generateDecisionEngine(hist, ltv, metaCac, googleCacProjetado, currIdx);
