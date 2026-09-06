@@ -24,6 +24,10 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    notify_email: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.ENUM('pending_review', 'approved', 'answered', 'rejected'),
       defaultValue: 'pending_review',

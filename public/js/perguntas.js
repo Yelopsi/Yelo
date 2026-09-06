@@ -11,6 +11,22 @@ function initPerguntas() {
     const errorMessage = document.getElementById('char-error-message');
     const btnLoadMore = document.getElementById('btn-load-more');
     const loadMoreContainer = document.getElementById('load-more-container');
+    const notifyCheckbox = document.getElementById('notify-checkbox');
+    const notifyEmail = document.getElementById('notify-email');
+
+    if (notifyCheckbox && notifyEmail) {
+        notifyCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                notifyEmail.style.display = 'block';
+                notifyEmail.required = true;
+                notifyEmail.focus();
+            } else {
+                notifyEmail.style.display = 'none';
+                notifyEmail.required = false;
+                notifyEmail.value = '';
+            }
+        });
+    }
 
     // Variáveis de Paginação
     let allQuestions = [];
@@ -353,6 +369,16 @@ function initPerguntas() {
             const conteudo = textarea.value.trim();
             if (conteudo.length < 50) return;
 
+            let emailValue = null;
+            if (notifyCheckbox && notifyCheckbox.checked) {
+                emailValue = notifyEmail.value.trim();
+                if (!emailValue || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+                    showToast("Por favor, insira um e-mail válido para ser notificado.", "error");
+                    notifyEmail.focus();
+                    return;
+                }
+            }
+
             const originalText = submitBtn.textContent;
             submitBtn.textContent = "Enviando...";
             submitBtn.disabled = true;
@@ -365,7 +391,8 @@ function initPerguntas() {
                         conteudo: conteudo,
                         content: conteudo,
                         titulo: 'Dúvida da Comunidade',
-                        title: 'Dúvida da Comunidade' 
+                        title: 'Dúvida da Comunidade',
+                        notify_email: emailValue
                     })
                 });
 

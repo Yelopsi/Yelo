@@ -396,3 +396,17 @@ exports.sendWeeklyPerformanceEmail = async (user, matchesCount, profileViewsCoun
     `;
     await sendEmail(user.email, title, getBaseTemplate(title, content));
 };
+
+exports.sendQuestionAnsweredEmail = async (email, slug) => {
+    const title = "Sua dúvida foi respondida! 🎉";
+    const linkDaResposta = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/perguntas/${slug}`;
+    const content = `
+        <p>Olá,</p>
+        <p>Um de nossos especialistas acabou de responder a sua pergunta na comunidade Yelo.</p>
+        <p>Você pode conferir a resposta completa e o perfil do profissional clicando no botão abaixo:</p>
+        <center><a href="${linkDaResposta}" class="btn">Ver a resposta</a></center>
+        <p style="margin-top: 30px;">Esperamos que isso te ajude. Obrigado por participar da nossa comunidade!</p>
+        <p>Com carinho,<br>Equipe Yelo</p>
+    `;
+    await sendEmail(email, title, getBaseTemplate(title, content));
+};

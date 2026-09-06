@@ -64,6 +64,7 @@ exports.createQuestion = async (req, res) => {
             await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "title" VARCHAR(255);`);
             await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "slug" VARCHAR(255);`);
             await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "meta_description" TEXT;`);
+            await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "notify_email" VARCHAR(255);`);
         } catch(e) {}
 
         const newQ = await db.Question.create({
@@ -72,14 +73,15 @@ exports.createQuestion = async (req, res) => {
             content: conteudo,
             status: "approved",
             PatientId: patient.id,
+            notify_email: notify_email || null,
             createdAt: new Date(),
             updatedAt: new Date()
         });
 
         // FORÇA A GRAVAÇÃO POR FORA DO SEQUELIZE (Bypass de Modelo)
         await db.sequelize.query(
-            `UPDATE "${qTable}" SET "title" = :title, "slug" = :slug, "meta_description" = :meta WHERE id = :id`,
-            { replacements: { title, slug: slugFinal, meta: metaDescription, id: newQ.id } }
+            `UPDATE "${qTable}" SET "title" = :title, "slug" = :slug, "meta_description" = :meta, "notify_email" = :notify_email WHERE id = :id`,
+            { replacements: { title, slug: slugFinal, meta: metaDescription, notify_email: notify_email || null, id: newQ.id } }
         );
 
         // FIX: Garante que o slug seja retornado na resposta da API, mesmo que o modelo não esteja 100% sincronizado
@@ -212,9 +214,9 @@ exports.getQuestionBySlug = async (req, res) => {
             });
         }
 
-        // 2. Ordena as respostas da mais recente para a mais antiga via JavaScript
+        // 2. Ordena as respostas da mais antiga para a mais recente via JavaScript
         if (questionData.answers && questionData.answers.length > 0) {
-            questionData.answers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            questionData.answers.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
         }
         
         // 3. Garante que a capitalização do paciente não quebre a tela
@@ -411,6 +413,19 @@ exports.answerQuestion = async (req, res) => {
                 } catch (err) { console.error("Erro SEO Q&A:", err.message); }
             }
         });
+
+        // --- NOTIFICAÇÃO POR E-MAIL ---
+        if (question.notify_email) {
+            try {
+                const emailService = require('../services/emailService');
+                const slug = question.slug || question.id;
+                if (typeof emailService.sendQuestionAnsweredEmail === 'function') {
+                    emailService.sendQuestionAnsweredEmail(question.notify_email, slug).catch(e => console.error("Erro ao notificar usuário sobre resposta:", e));
+                }
+            } catch (error) {
+                console.error("Erro ao preparar email de notificação:", error);
+            }
+        }
 
         res.json({ success: true, message: 'Resposta enviada!', answerId: newAnswer.id });
 

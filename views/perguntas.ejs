@@ -120,6 +120,14 @@
 
                 <form id="anonymous-question-form">
                     <textarea id="question-text" placeholder="Escreva aqui sua dúvida... (Mínimo 50 caracteres)"></textarea>
+                    
+                    <div style="margin-top: 15px; text-align: left;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: #333; margin-bottom: 10px;">
+                            <input type="checkbox" id="notify-checkbox" style="accent-color: #1B4332; width: 16px; height: 16px; cursor: pointer;">
+                            Quero ser avisado(a) por e-mail quando responderem
+                        </label>
+                        <input type="email" id="notify-email" placeholder="Seu melhor e-mail" style="display: none; width: 100%; padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; font-family: var(--fonte-corpo); font-size: 0.95rem; margin-bottom: 5px; outline: none; transition: border-color 0.2s;">
+                    </div>
                     <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.9rem;">
                         <span id="char-error-message" style="color: #E63946; font-weight: bold;"></span>
                         <span id="char-counter" style="color: #666;">0/50 caracteres</span>
