@@ -61,22 +61,23 @@ async function fetchData() {
         document.getElementById('kpi-capacity').textContent = data.metrics.idealCapacity;
         document.getElementById('kpi-velocity').textContent = data.metrics.avgVelocity;
 
+        let suggestionText = data.suggestion;
+
         // Lógica da Fórmula de Escala (Custo de Manutenção B2C)
         const totalDemand = Number(data.metrics.totalDemand || 0);
         const idealCapacity = Number(data.metrics.idealCapacity || 0);
-        const alertBanner = document.getElementById('distribuicao-alert-banner');
-        const alertText = document.getElementById('distribuicao-alert-text');
         
-        if (idealCapacity > totalDemand && alertBanner && alertText) {
+        if (idealCapacity > totalDemand) {
             const deficit = idealCapacity - totalDemand;
             // O CAC da busca B2C atual (preço médio histórico para escalar)
             const adIncrease = deficit * 2.24; 
             const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
             
-            alertBanner.style.display = 'block';
-            alertText.innerHTML = `Temos um déficit de <b>${deficit} buscas</b> para suprir a Cota Justa da base atual. Adicione <b>${formatCurrency(adIncrease)}</b> no tráfego pago (Google Ads) este mês para estancar a ociosidade.`;
-        } else if (alertBanner) {
-            alertBanner.style.display = 'none';
+            suggestionText = `<b>${suggestionText}</b><br><br>⚠️ <b>Falta de Oxigênio no Algoritmo:</b> Temos um déficit de <b>${deficit} buscas</b> para suprir a Cota Justa da base atual. Adicione <b>${formatCurrency(adIncrease)}</b> no tráfego pago (Google Ads) este mês para estancar a ociosidade.`;
+            // Eleva o alerta caso falte oxigênio
+            if (data.alertLevel !== 'danger') {
+                data.alertLevel = 'warning';
+            }
         }
 
         // Atualizar Suggestion Box
@@ -87,7 +88,7 @@ async function fetchData() {
         if (data.alertLevel === 'danger') emoji = '🔥';
         if (data.alertLevel === 'success') emoji = '✅';
 
-        suggBox.innerHTML = `<span style="font-size: 1.8rem;">${emoji}</span><div>${data.suggestion}</div>`;
+        suggBox.innerHTML = `<span style="font-size: 1.8rem;">${emoji}</span><div>${suggestionText}</div>`;
 
         globalPsyData = data.psychologists;
         renderTable();

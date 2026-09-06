@@ -149,6 +149,14 @@ window.renderEngine = function(currIdx) {
     const txEl = document.getElementById('kpi-google-tx');
     if(txEl) txEl.innerText = (taxaConversao * 100).toFixed(1) + '%';
     
+    // Custo de Manutenção / Psicólogo Ativo
+    const totalGeralAtivos = parseInt(curr.total_geral_pagantes || 1, 10);
+    const maintenanceCost = googleSpend / (totalGeralAtivos > 0 ? totalGeralAtivos : 1);
+    const mCostEl = document.getElementById('kpi-maintenance-cost');
+    if (mCostEl) {
+        mCostEl.innerText = formatBRL(maintenanceCost);
+    }
+    
     // Motor de Decisão
     generateDecisionEngine(hist, ltv, metaCac, googleCacProjetado, currIdx);
 };
