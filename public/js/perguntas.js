@@ -163,8 +163,8 @@ function initPerguntas() {
                     if (target.tagName === 'BUTTON' || (target.closest && target.closest('button'))) return;
                     if (target.tagName === 'A' || (target.closest && target.closest('a'))) return;
                     
-                    if (q.slug) {
-                        window.location.href = `/perguntas/${q.slug}`;
+                    if (q.slug || q.id) {
+                        window.location.href = `/perguntas/${q.slug || q.id}`;
                     } else {
                         abrirDetalhesPergunta(q);
                     }

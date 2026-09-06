@@ -164,7 +164,7 @@ exports.getQuestionBySlug = async (req, res) => {
 
         // 1. Busca o ID da pergunta usando SQL puro para evitar erro de modelo desatualizado no Sequelize
         const rawResults = await db.sequelize.query(
-            `SELECT id, title, slug, meta_description FROM "${qTable}" WHERE "slug" = :slug LIMIT 1`,
+            `SELECT id, title, slug, meta_description FROM "${qTable}" WHERE "slug" = :slug OR "id"::text = :slug LIMIT 1`,
             { replacements: { slug }, type: db.sequelize.QueryTypes.SELECT }
         );
 
