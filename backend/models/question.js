@@ -28,6 +28,14 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    slug: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    meta_description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.ENUM('pending_review', 'approved', 'answered', 'rejected'),
       defaultValue: 'pending_review',
