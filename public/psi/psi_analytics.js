@@ -167,7 +167,7 @@ function renderTopTopicsChart(data) {
     let html = '<div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">';
     const medals = ['🥇', '🥈', '🥉', '🔹', '🔹'];
     
-    data.forEach((item, index) => {
+    data.slice(0, 3).forEach((item, index) => {
         html += `
             <div style="display: flex; align-items: center; background: #fff; border: 1px solid #f1f5f9; padding: 12px 16px; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: transform 0.2s; cursor: default;" onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='none'">
                 <div style="display: flex; align-items: center; gap: 12px;">
