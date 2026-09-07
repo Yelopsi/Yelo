@@ -191,7 +191,7 @@ exports.incrementProfileAppearance = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.getAnalyticsData = async (req, res) => {
     try {
-        const psychologistId = req.psychologist.id;
+        const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
         const psychologist = await db.Psychologist.findByPk(psychologistId);
         if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
