@@ -318,7 +318,18 @@
                     });
 
                     // 2. DICAS DE MARKETING / CONVERSÃO (Sempre exibidas como Lâmpada 💡)
-                    if (aiMarketingTip) {
+                    const reviewCount = psychologistData.reviewCount || stats.reviewCount || 0;
+                    
+                    if (reviewCount === 0) {
+                        // Prioridade máxima de dica manual: Prova Social
+                        stepsToRender.push({ 
+                            title: 'Você ainda não tem avaliações! Peça para pacientes antigos deixarem um depoimento no seu perfil público.', 
+                            impact: 'Prova Social', 
+                            completed: false, 
+                            url: 'psi_meu_perfil.html', 
+                            isTip: true 
+                        });
+                    } else if (aiMarketingTip) {
                         stepsToRender.push({ 
                             title: aiMarketingTip.title, 
                             impact: aiMarketingTip.impact, 
