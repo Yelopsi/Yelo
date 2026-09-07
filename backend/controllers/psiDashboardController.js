@@ -196,7 +196,7 @@ exports.getAnalyticsData = async (req, res) => {
         if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
         const myPrice = psychologist.valor_sessao_numero || 0;
-        const [cityAvgResult] = await db.sequelize.query(`SELECT AVG("valor_sessao_numero") as avg FROM "Psychologists" WHERE "cidade" = :city AND status = 'active' AND "valor_sessao_numero" > 0`, { replacements: { city: psychologist.cidade }, type: db.sequelize.QueryTypes.SELECT });
+        const [cityAvgResult] = await db.sequelize.query(`SELECT AVG("valor_sessao_numero") as avg FROM "Psychologists" WHERE "cidade" = :city AND status = 'active' AND "valor_sessao_numero" > 0`, { replacements: { city: psychologist.cidade || null }, type: db.sequelize.QueryTypes.SELECT });
         const cityAverage = parseFloat(cityAvgResult?.avg || 0);
         const [platformAvgResult] = await db.sequelize.query(`SELECT AVG("valor_sessao_numero") as avg FROM "Psychologists" WHERE status = 'active' AND "valor_sessao_numero" > 0`, { type: db.sequelize.QueryTypes.SELECT });
         const platformAverage = parseFloat(platformAvgResult?.avg || 0);
@@ -227,7 +227,10 @@ exports.getAnalyticsData = async (req, res) => {
                 averageScores: [7, normalize(parseFloat(platformStrength?.avgRating || 0), parseFloat(platformStrength?.avgRating || 0), 5), normalize(parseFloat(platformStrength?.avgEngagement || 0), parseFloat(platformStrength?.avgEngagement || 0), 5000), normalize(parseFloat(platformStrength?.avgPosts || 0), parseFloat(platformStrength?.avgPosts || 0), 10), 7]
             }
         });
-    } catch (error) { res.status(500).json({ error: 'Erro interno ao buscar dados de análise.' }); }
+    } catch (error) { 
+        console.error('Erro em getAnalyticsData:', error);
+        res.status(500).json({ error: 'Erro interno ao buscar dados de análise.' }); 
+    }
 };
 
 exports.getAnnouncements = async (req, res) => {
@@ -264,7 +267,7 @@ exports.markAnnouncementAsRead = async (req, res) => {
 
 exports.savePlatformReview = async (req, res) => {
     try {
-        const psychologistId = req.psychologist.id;
+        const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
         const { rating, comment } = req.body;
         if (!rating) return res.status(400).json({ error: 'A nota é obrigatória.' });
 
@@ -278,7 +281,7 @@ exports.savePlatformReview = async (req, res) => {
 
 exports.getAiInsights = async (req, res) => {
     try {
-        const psychologistId = req.psychologist.id;
+        const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
         const stats = req.body.stats || {};
         
         const psychologist = await db.Psychologist.findByPk(psychologistId);
