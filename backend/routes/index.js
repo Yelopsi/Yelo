@@ -23,6 +23,7 @@ const forumRoutes = require('./forumRoutes');
 const fixRoutes = require('./fixRoutes');
 const extraRoutes = require('./extraRoutes');
 const viewRoutes = require('./viewRoutes');
+const cmoRoutes = require('./cmoRoutes');
 
 const { authLimiter, expensiveLimiter, webhookLimiter } = require('../middlewares/rateLimiter');
 
@@ -50,6 +51,7 @@ module.exports = (app) => {
     app.use('/api/qna', qnaRoutes);
     app.use('/api/payments', paymentRoutes);
     app.use('/api/forum', forumRoutes);
+    app.use('/api/cmo', cmoRoutes);
 
     // Mapeamentos base devem vir por último
     app.use('/', fixRoutes);

@@ -1,0 +1,212 @@
+# Mapeamento Técnico do Dashboard Admin
+
+## 1. Arquitetura atual
+
+- **Ponto de entrada:** `admin.html` e `admin.js`
+- **Tipo de Arquitetura:** SPA Híbrida (Single Page Application simulada). As páginas são injetadas no `#main-content` do `admin.html` via a função `loadPage(url)` definida no `admin.js`. O JavaScript de cada página injetada é carregado dinamicamente criando um elemento `<script>` e anexado ao body.
+- **Navegação:** Controlada por menus laterais e bottom nav. A URL não muda (SPA hash-based ou memory-based, gerida via `data-page` e `sessionStorage`).
+- **Hubs/Containers:** A arquitetura categoriza as telas em grandes "Hubs" (ex: CRM Hub, Conteúdo Hub, Dados Hub, Ajustes). Apenas os Hubs principais aparecem no menu principal, e as subpáginas são acessadas através de menus/cards dentro desses hubs.
+
+## 2. Mapa completo de navegação e 3. Inventário de páginas
+
+### Lista de Páginas Identificadas
+
+- **admin.html**
+  - JS Relacionado: admin.js
+  - APIs Usadas: /api/appointments/available, /api/appointments/${id}, /api/admin/me, /api/admin/forum/posts/${postId}/pin, /api/admin/export/waitlist
+- **admin_analytics_funil.html**
+  - JS Relacionado: admin_analytics_funil.js
+  - APIs Usadas: /api/admin/analytics/funnel?${queryParams.toString()}, /api/admin/whatsapp-feedbacks?${queryParams.toString()}, /api/admin/analytics/ranking?${queryParams.toString()}, /api/admin/whatsapp-feedbacks/remind/${psiId}, /api/admin/psychologists/${psiId}/full-details, /api/admin/psychologists/${psiId}/analyze, /api/admin/termometro, /api/admin/leads-recentes?${queryParams.toString()}
+- **admin_automacao_wa.html**
+  - JS Relacionado: admin_automacao_wa.js
+  - APIs Usadas: ${BASE_URL}/api/admin/whatsapp/test, ${BASE_URL}/api/admin/whatsapp/test-batch
+- **admin_avaliacoes.html**
+  - JS Relacionado: admin_avaliacoes.js
+  - APIs Usadas: /api/admin/platform-reviews, /api/admin/feedbacks, /api/admin/reviews, /api/admin/platform-reviews/${id}/testimonial
+- **admin_avaliacoes_psi.html**
+  - JS Relacionado: admin_avaliacoes_psi.js
+  - APIs Usadas: /api/admin/exit-surveys?${params.toString()}
+- **admin_avisos.html**
+- **admin_caixa_entrada.html**
+  - JS Relacionado: admin_caixa_entrada.js
+  - APIs Usadas: /api/admin/messages/conversations?search=${searchTerm}&filter=all, /api/admin/messages/conversations?search=${searchTerm}&filter=archived, /api/admin/messages/conversations?search=${searchTerm}&filter=${currentFilter}, /api/admin/messages/conversation/${conversationId}, /api/admin/messages/reply
+- **admin_comunidade_gestao.html**
+  - JS Relacionado: admin_comunidade_gestao.js
+  - APIs Usadas: ${BASE_URL}/api/admin/community-event, ${BASE_URL}/api/admin/community-resources
+- **admin_configuracoes.html**
+  - JS Relacionado: admin_configuracoes.js
+  - APIs Usadas: ${baseUrl}/api/admin/push/vapid-public-key, ${baseUrl}/api/admin/push/subscribe, ${baseUrl}/api/admin/settings
+- **admin_configuracoes_hub.html**
+  - JS Relacionado: admin_configuracoes_hub.js
+- **admin_conteudo_hub.html**
+  - JS Relacionado: admin_conteudo_hub.js
+- **admin_crm_analytics.html**
+  - JS Relacionado: admin_crm_analytics.js
+  - APIs Usadas: /api/admin/reports/charts${query}, /api/admin/analytics/funnel${query}, /api/admin/stats/pwa${query}, /api/admin/financials${query}, /api/admin/cash-flow
+- **admin_crm_health.html**
+  - JS Relacionado: admin_crm_health.js
+  - APIs Usadas: /api/admin/analytics/growth/health
+- **admin_crm_hub.html**
+  - JS Relacionado: admin_crm_hub.js
+- **admin_crm_leads.html**
+  - JS Relacionado: admin_crm_leads.js
+  - APIs Usadas: ${BASE_URL}/api/admin/leads?filtro=${filtro}, ${window.API_BASE_URL || , ${BASE_URL}/api/admin/leads?filtro=todos
+- **admin_crm_pacientes.html**
+  - JS Relacionado: admin_crm_pacientes.js
+  - APIs Usadas: /api/admin/patients/${patient.id}/360, /api/admin/patients?page=${page}&search=${searchTerm}&status=${status}, /api/admin/patients/${id}, /api/admin/patients/${id}/force, /api/admin/patients/${id}/status
+- **admin_crm_psicologos.html**
+  - JS Relacionado: admin_crm_psicologos.js
+  - APIs Usadas: /api/admin/founder-metrics, /api/admin/pending-actions, /api/admin/psychologists/low-performance, /api/admin/psychologists?page=${page}&limit=${limit}&search=${searchTerm}&status=${status}&isVip=${isVipFilterActive}&notAnalyzed=${isNotAnalyzedFilterActive}&startDate=${startDate}&endDate=${endDate}, /api/admin/psychologists/${id}/analyze, /api/admin/psychologists/${id}/analyzed, /api/admin/psychologists/${id}/ai-churn-message, /api/admin/psychologists/${id}/ai-expiring-trial-message, /api/admin/psychologists/${id}/ai-diagnosis, /api/admin/psychologists/${id}/action-sent, /api/admin/psychologists/${id}, /api/admin/qna/pending, /api/admin/qna/${id}/moderate, /api/admin/qna/ai-drafts, /api/admin/qna/ai-drafts/generate-now
+- **admin_cs_drawer.html**
+  - JS Relacionado: admin_cs_drawer.js
+  - APIs Usadas: admin_cs_drawer.html, /api/admin/psychologists/${idStr}/full-details, /api/admin/psychologists/${psy.id}/analyzed, /api/admin/psychologists/${psy.id}/${endpoint}, /api/admin/psychologists/${psy.id}/action-sent, /api/admin/psychologists/${psiId}/analyze, /api/admin/psychologists/${psiId}/analyzed
+- **admin_dados_hub.html**
+  - JS Relacionado: admin_dados_hub.js
+- **admin_detalhes_psicologo.html**
+  - JS Relacionado: admin_detalhes_psicologo.js
+  - APIs Usadas: /api/admin/psychologists/${id}/full-details
+- **admin_distribuicao.html**
+  - JS Relacionado: admin_distribuicao.js
+- **admin_downloads.html**
+  - JS Relacionado: admin_downloads.js
+  - APIs Usadas: ${endpoint}, /api/admin/export/followups
+- **admin_editar_pagina.html**
+  - JS Relacionado: admin_editar_pagina.js
+- **admin_followup.html**
+  - JS Relacionado: admin_followup.js
+  - APIs Usadas: /api/admin/followups, /api/admin/followups/${id}
+- **admin_gestao_conteudo.html**
+  - JS Relacionado: admin_gestao_conteudo.js
+  - APIs Usadas: /api/admin/qna/pending, /api/admin/qna/${questionId}/moderate, ${endpoint}
+- **admin_growth_dashboard.html**
+  - JS Relacionado: admin_growth_dashboard.js
+  - APIs Usadas: /api/admin/growth/overview?days=${periodDays}, /api/admin/growth/acquisition?days=${periodDays}, /api/admin/growth/demand?days=${periodDays}, /api/admin/growth/marketing?days=${periodDays}, /api/admin/growth/cohorts, /api/admin/growth/pmf, /api/admin/growth/upcoming-trials, /api/admin/growth/pmf/details?group=${encodeURIComponent(groupName)}, /api/admin/analytics/growth/ai-insights, /api/admin/growth/payments-evolution, /api/admin/analytics/growth/ads-expenses, /api/admin/analytics/growth/ads-expenses/${monthYear}
+- **admin_indicadores.html**
+  - JS Relacionado: admin_indicadores.js
+  - APIs Usadas: /api/admin/questionnaire-analytics
+- **admin_lista_espera.html**
+  - JS Relacionado: admin_lista_espera.js
+  - APIs Usadas: /api/psychologists/waiting-list, /api/admin/waiting-list/${candidate.id}/status, /api/psychologists/waiting-list/${candidate.id}
+- **admin_logs_sistema.html**
+  - JS Relacionado: admin_logs_sistema.js
+  - APIs Usadas: ${localApiUrl}/api/admin/logs?_t=${new Date().getTime()}
+- **admin_minha_conta.html**
+  - JS Relacionado: admin_minha_conta.js
+  - APIs Usadas: /api/admin/me, /api/admin/me/password
+- **admin_moderacao_forum.html**
+  - JS Relacionado: admin_moderacao_forum.js
+  - APIs Usadas: /api/admin/forum/posts, /api/admin/forum/moderate
+- **admin_teste_ab.html**
+  - JS Relacionado: admin_teste_ab.js
+  - APIs Usadas: /api/admin/analytics/whatsapp-ab
+- **admin_traffic_ads.html**
+  - JS Relacionado: admin_traffic_ads.js
+  - APIs Usadas: ${API_BASE}/api/admin/efficiency, ${API_BASE}/api/admin/growth/overview?days=30
+- **admin_verificacoes.html**
+  - JS Relacionado: admin_verificacoes.js
+  - APIs Usadas: /api/admin/verifications, /api/admin/psychologists/${id}/moderate
+- **admin_visao_geral.html**
+  - JS Relacionado: admin_visao_geral.js
+  - APIs Usadas: ${BASE_URL}/api/admin/stats, ${BASE_URL}/api/admin/charts/new-users
+
+
+## 4. Inventário de APIs (Resumo)
+
+- `/api/appointments/available`
+- `/api/appointments/${id}`
+- `/api/admin/me`
+- `/api/admin/forum/posts/${postId}/pin`
+- `/api/admin/export/waitlist`
+- `/api/admin/analytics/funnel?${queryParams.toString()}`
+- `/api/admin/whatsapp-feedbacks?${queryParams.toString()}`
+- `/api/admin/analytics/ranking?${queryParams.toString()}`
+- `/api/admin/whatsapp-feedbacks/remind/${psiId}`
+- `/api/admin/psychologists/${psiId}/full-details`
+- `/api/admin/psychologists/${psiId}/analyze`
+- `/api/admin/termometro`
+- `/api/admin/leads-recentes?${queryParams.toString()}`
+- `${BASE_URL}/api/admin/whatsapp/test`
+- `${BASE_URL}/api/admin/whatsapp/test-batch`
+- `/api/admin/platform-reviews`
+- `/api/admin/feedbacks`
+- `/api/admin/reviews`
+- `/api/admin/platform-reviews/${id}/testimonial`
+- `/api/admin/exit-surveys?${params.toString()}`
+- `/api/admin/messages/conversations?search=${searchTerm}&filter=all`
+- `/api/admin/messages/conversations?search=${searchTerm}&filter=archived`
+- `/api/admin/messages/conversations?search=${searchTerm}&filter=${currentFilter}`
+- `/api/admin/messages/conversation/${conversationId}`
+- `/api/admin/messages/reply`
+- `${BASE_URL}/api/admin/community-event`
+- `${BASE_URL}/api/admin/community-resources`
+- `${baseUrl}/api/admin/push/vapid-public-key`
+- `${baseUrl}/api/admin/push/subscribe`
+- `${baseUrl}/api/admin/settings`
+- `/api/admin/reports/charts${query}`
+- `/api/admin/analytics/funnel${query}`
+- `/api/admin/stats/pwa${query}`
+- `/api/admin/financials${query}`
+- `/api/admin/cash-flow`
+- `/api/admin/analytics/growth/health`
+- `${BASE_URL}/api/admin/leads?filtro=${filtro}`
+- `${window.API_BASE_URL || `
+- `${BASE_URL}/api/admin/leads?filtro=todos`
+- `/api/admin/patients/${patient.id}/360`
+- `/api/admin/patients?page=${page}&search=${searchTerm}&status=${status}`
+- `/api/admin/patients/${id}`
+- `/api/admin/patients/${id}/force`
+- `/api/admin/patients/${id}/status`
+- `/api/admin/founder-metrics`
+- `/api/admin/pending-actions`
+- `/api/admin/psychologists/low-performance`
+- `/api/admin/psychologists?page=${page}&limit=${limit}&search=${searchTerm}&status=${status}&isVip=${isVipFilterActive}&notAnalyzed=${isNotAnalyzedFilterActive}&startDate=${startDate}&endDate=${endDate}`
+- `/api/admin/psychologists/${id}/analyze`
+- `/api/admin/psychologists/${id}/analyzed`
+- `/api/admin/psychologists/${id}/ai-churn-message`
+- `/api/admin/psychologists/${id}/ai-expiring-trial-message`
+- `/api/admin/psychologists/${id}/ai-diagnosis`
+- `/api/admin/psychologists/${id}/action-sent`
+- `/api/admin/psychologists/${id}`
+- `/api/admin/qna/pending`
+- `/api/admin/qna/${id}/moderate`
+- `/api/admin/qna/ai-drafts`
+- `/api/admin/qna/ai-drafts/generate-now`
+- `admin_cs_drawer.html`
+- `/api/admin/psychologists/${idStr}/full-details`
+- `/api/admin/psychologists/${psy.id}/analyzed`
+- `/api/admin/psychologists/${psy.id}/${endpoint}`
+- `/api/admin/psychologists/${psy.id}/action-sent`
+- `/api/admin/psychologists/${psiId}/analyzed`
+- `/api/admin/psychologists/${id}/full-details`
+- `${endpoint}`
+- `/api/admin/export/followups`
+- `/api/admin/followups`
+- `/api/admin/followups/${id}`
+- `/api/admin/qna/${questionId}/moderate`
+- `/api/admin/growth/overview?days=${periodDays}`
+- `/api/admin/growth/acquisition?days=${periodDays}`
+- `/api/admin/growth/demand?days=${periodDays}`
+- `/api/admin/growth/marketing?days=${periodDays}`
+- `/api/admin/growth/cohorts`
+- `/api/admin/growth/pmf`
+- `/api/admin/growth/upcoming-trials`
+- `/api/admin/growth/pmf/details?group=${encodeURIComponent(groupName)}`
+- `/api/admin/analytics/growth/ai-insights`
+- `/api/admin/growth/payments-evolution`
+- `/api/admin/analytics/growth/ads-expenses`
+- `/api/admin/analytics/growth/ads-expenses/${monthYear}`
+- `/api/admin/questionnaire-analytics`
+- `/api/psychologists/waiting-list`
+- `/api/admin/waiting-list/${candidate.id}/status`
+- `/api/psychologists/waiting-list/${candidate.id}`
+- `${localApiUrl}/api/admin/logs?_t=${new Date().getTime()}`
+- `/api/admin/me/password`
+- `/api/admin/forum/posts`
+- `/api/admin/forum/moderate`
+- `/api/admin/analytics/whatsapp-ab`
+- `${API_BASE}/api/admin/efficiency`
+- `${API_BASE}/api/admin/growth/overview?days=30`
+- `/api/admin/verifications`
+- `/api/admin/psychologists/${id}/moderate`
+- `${BASE_URL}/api/admin/stats`
+- `${BASE_URL}/api/admin/charts/new-users`

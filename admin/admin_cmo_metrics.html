@@ -1,0 +1,115 @@
+<div class="modern-dashboard-layout" style="padding-bottom: 120px;">
+    <div class="main-header" style="background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); padding: 25px 30px; margin-bottom: 30px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div>
+            <h1 style="color: white; margin: 0 0 5px 0; font-size: 2rem; font-family: var(--font-titulos);">Painel do CMO 🧠</h1>
+            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 1.05rem;">Motor de Decisão Executiva de Tráfego Pago (Meta & Google).</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <select id="cmo-month-selector" onchange="loadCMOMetrics()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; font-weight: 600; color: white; cursor: pointer; outline: none; appearance: auto;">
+                <option value="current" style="color: black;">Mês Atual</option>
+                <option value="last" style="color: black;">Mês Passado</option>
+            </select>
+            <button onclick="window.navigateToPage('admin_crm_hub.html')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; font-weight: 600; color: white; cursor: pointer; transition: background 0.2s;">
+                ← Voltar ao Hub
+            </button>
+        </div>
+    </div>
+
+    <!-- AI DECISION ENGINE -->
+    <div class="kpi-grid" style="grid-template-columns: 1fr; margin-bottom: 30px;">
+        <div class="kpi-card" style="border-top-color: #3b82f6; background: #eff6ff; border: 1px solid #bfdbfe;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span style="font-size: 0.85rem; background: #dbeafe; padding: 4px 12px; border-radius: 20px; color: #1e40af; font-weight: bold; text-transform: uppercase;">
+                    Recomendação da Inteligência Algorítmica
+                </span>
+            </div>
+            <div style="display: flex; align-items: flex-end; gap: 15px; margin-bottom: 10px;">
+                <h4 id="ai-decision-action" style="font-size: 2.2rem; color: #1e3a8a; margin: 0; font-weight: 900;">Processando...</h4>
+            </div>
+            <p id="ai-decision-reason" style="color: #3b82f6; font-size: 1.1rem; margin: 0; font-weight: 600;">
+                Calculando correlações entre CAC e Churn...
+            </p>
+        </div>
+    </div>
+
+    <!-- HIGH-LEVEL KPIs -->
+    <h3 class="crm-section-title first" style="margin-bottom: 15px;">Métricas Consolidadas (Meta + Google)</h3>
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-bottom: 30px;">
+        <!-- Gastos -->
+        <div class="kpi-card" style="border-top-color: #ef4444;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Gasto Total</div>
+            <h4 id="cmo-total-spend" style="font-size: 2rem; color: #1e293b; margin: 0; font-weight: 800;">R$ 0,00</h4>
+        </div>
+
+        <!-- Conversões -->
+        <div class="kpi-card" style="border-top-color: #10b981;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Assinaturas Geradas</div>
+            <h4 id="cmo-total-paying" style="font-size: 2rem; color: #1e293b; margin: 0; font-weight: 800;">0</h4>
+        </div>
+
+        <!-- CPL (Trials) -->
+        <div class="kpi-card" style="border-top-color: #f59e0b;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">CAC (Custo de Aquisição)</div>
+            <h4 id="cmo-cac" style="font-size: 2rem; color: #1e293b; margin: 0; font-weight: 800;">R$ 0,00</h4>
+        </div>
+
+        <!-- Churn -->
+        <div class="kpi-card" style="border-top-color: #64748b;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Volume de Churns (Cancelamentos)</div>
+            <h4 id="cmo-churn" style="font-size: 2rem; color: #1e293b; margin: 0; font-weight: 800;">0</h4>
+        </div>
+    </div>
+
+    <!-- TABELA DE CAMPANHAS META -->
+    <h3 class="crm-section-title" style="margin-bottom: 15px;">Campanhas do Meta Ads (Facebook/Instagram)</h3>
+    <div class="tabela-container" style="margin-bottom: 30px;">
+        <div class="tabela-wrapper">
+            <table id="cmo-meta-table" class="tabela-gerenciamento">
+                <thead>
+                    <tr>
+                        <th>Nome da Campanha</th>
+                        <th style="text-align: right;">Gasto (R$)</th>
+                        <th style="text-align: right;">Impressões</th>
+                        <th style="text-align: right;">Cliques</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="4" style="text-align:center; padding: 20px;">Carregando dados da API...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TABELA DE CAMPANHAS GOOGLE -->
+    <h3 class="crm-section-title" style="margin-bottom: 15px;">Campanhas do Google Ads (B2C)</h3>
+    <div class="tabela-container" style="margin-bottom: 30px;">
+        <div class="tabela-wrapper">
+            <table id="cmo-google-table" class="tabela-gerenciamento">
+                <thead>
+                    <tr>
+                        <th>Nome da Campanha</th>
+                        <th style="text-align: right;">Gasto (R$)</th>
+                        <th style="text-align: right;">Impressões</th>
+                        <th style="text-align: right;">Cliques</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="4" style="text-align:center; padding: 20px;">Carregando dados da API...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- CARD API SETUP -->
+    <div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 20px; border-radius: 12px; margin-top: 40px;">
+        <h4 style="margin: 0 0 10px 0; color: #334155; font-size: 1.1rem;">⚙️ Configuração das APIs Oficiais</h4>
+        <p style="margin: 0 0 15px 0; color: #64748b; font-size: 0.95rem; line-height: 1.5;">
+            Os dados acima estão sendo gerados provisoriamente via mock local. Para plugar a sua conta real, 
+            é necessário gerar os Tokens de Acesso. 
+            <strong>Consulte o agente IA para obter o passo a passo de como buscar os tokens no Facebook Developers e Google Cloud Console.</strong>
+        </p>
+    </div>
+</div>
+
+<script src="/config.js"></script>
+<script src="admin_cmo_metrics.js"></script>

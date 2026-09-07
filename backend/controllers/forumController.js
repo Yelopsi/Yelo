@@ -203,6 +203,9 @@ exports.getComments = async (req, res) => {
             offset
         });
 
+        const totalTopLevel = await ForumComment.count({ where: { ForumPostId: req.params.id, parentId: null } });
+        res.set('X-Total-Count', totalTopLevel);
+
         const topLevelIds = topLevelComments.map(c => c.id);
 
         let allReplies = [];

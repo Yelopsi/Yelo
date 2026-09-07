@@ -221,6 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Verifica se o token é válido no backend
             const response = await fetch(`${API_BASE_URL}/api/admin/me`, {
+                credentials: 'include',
                 headers: headers
             });
 
