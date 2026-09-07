@@ -140,29 +140,39 @@
 
 
 <div id="qna-answer-modal" class="custom-modal-overlay" style="display: none;">
-    <div class="custom-modal-box">
+    <div class="custom-modal-box" style="max-width: 850px; width: 95%;">
         <button class="modal-close-btn modal-close" style="position: absolute; top: 15px; right: 15px; background: #f5f5f5; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #666; transition: all 0.2s ease; z-index: 10;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
-        <h3 class="modal-title" style="margin-top: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.5rem; margin-bottom: 15px;">Responder Pergunta</h3>
         
-        <form id="qna-answer-form"> 
-            <p style="font-size: 14px; color: var(--cinza-texto); margin-bottom: 20px; line-height: 1.5;">
-                Sua resposta será pública e ajudará este usuário e outros na comunidade.
-            </p>
-            <div class="form-group" style="margin-bottom: 20px; text-align: left;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <label for="qna-answer-textarea" style="display: block; font-weight: 600; color: #333; margin: 0;">Sua Resposta</label>
-                    <button type="button" id="btn-generate-ai-qna" class="btn hidden" style="padding: 6px 14px; font-size: 0.85rem; min-width: 0; width: auto; border-radius: 50px; margin: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 2px 5px rgba(16,185,129,0.3); display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Gerar resposta com IA">✨ IA</button>
+        <div style="display: flex; flex-direction: row; gap: 30px; flex-wrap: wrap; margin-top: 10px;">
+            <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column;">
+                <h3 class="modal-title" style="margin-top: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.3rem; margin-bottom: 15px;">Respondendo à Pergunta:</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; border-left: 4px solid #f59e0b; flex-grow: 1;">
+                    <p id="qna-modal-question-text" style="margin: 0; font-size: 1.05rem; color: #444; line-height: 1.6; font-style: italic;">"é possível ter medo de dormir? toda vez que apago a luz começo a sentir uma agonia no peito e acabo virando a noite no celular"</p>
                 </div>
-                <textarea id="qna-answer-textarea" minlength="50" required placeholder="Digite sua resposta aqui... Mínimo de 50 caracteres." style="width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #ccc; font-family: var(--font-principal); font-size: 1rem; resize: vertical; min-height: 120px; box-sizing: border-box;"></textarea>
-                <div id="qna-char-counter" style="text-align: right; font-size: 0.85rem; color: #666; margin-top: 8px;">0/50 caracteres</div>
+                <p style="font-size: 0.9rem; color: var(--cinza-texto); margin-top: 15px; line-height: 1.5;">
+                    💡 Sua resposta será pública e ajudará este usuário e outros na comunidade que buscam pela mesma dúvida.
+                </p>
             </div>
             
-            <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px;">
-                <button type="button" class="btn btn-secundario modal-cancel" style="padding: 10px 20px; border-radius: 50px;">Cancelar</button>
-                <button type="submit" class="btn btn-principal" id="qna-submit-answer" disabled style="padding: 10px 20px; border-radius: 50px;">Enviar Resposta</button>
+            <div style="flex: 1.5; min-width: 300px;">
+                <form id="qna-answer-form" style="height: 100%; display: flex; flex-direction: column;"> 
+                    <div class="form-group" style="margin-bottom: 20px; text-align: left; flex-grow: 1; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <label for="qna-answer-textarea" style="display: block; font-weight: 600; color: #333; margin: 0; font-size: 1.1rem;">Sua Resposta</label>
+                            <button type="button" id="btn-generate-ai-qna" class="btn hidden" style="padding: 6px 14px; font-size: 0.85rem; min-width: 0; width: auto; border-radius: 50px; margin: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 2px 5px rgba(16,185,129,0.3); display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Gerar resposta com IA">✨ IA</button>
+                        </div>
+                        <textarea id="qna-answer-textarea" minlength="50" required placeholder="Escreva sua orientação profissional aqui... (Mínimo de 50 caracteres)" style="width: 100%; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0; font-family: var(--font-principal); font-size: 1rem; resize: vertical; min-height: 180px; flex-grow: 1; box-sizing: border-box; background: #fff; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); transition: border-color 0.2s;"></textarea>
+                        <div id="qna-char-counter" style="text-align: right; font-size: 0.85rem; color: #64748b; margin-top: 8px;">0/50 caracteres</div>
+                    </div>
+                    
+                    <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                        <button type="button" class="btn btn-secundario modal-cancel" style="padding: 12px 24px; border-radius: 50px; font-weight: 600;">Cancelar</button>
+                        <button type="submit" class="btn btn-principal" id="qna-submit-answer" disabled style="padding: 12px 24px; border-radius: 50px; font-weight: 600;">Enviar Resposta</button>
+                    </div>
+                </form> 
             </div>
-        </form> 
+        </div>
     </div>
 </div>

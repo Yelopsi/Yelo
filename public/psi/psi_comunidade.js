@@ -233,7 +233,10 @@
                             
                             currentQuestionIdToAnswer = q.id;
                             window.currentQnaCardEl = cardElement;
-                            modal.querySelector('.modal-title').textContent = `Respondendo: ${q.titulo || q.title || 'Dúvida'}`;
+                            const questionTextEl = modal.querySelector('#qna-modal-question-text');
+                            if (questionTextEl) {
+                                questionTextEl.textContent = `"${q.titulo || q.title || q.conteudo || q.content || 'Dúvida'}"`;
+                            }
                             textarea.value = '';
                             checkCharCount();
                             if (modal.parentNode !== document.body) document.body.appendChild(modal);
