@@ -30,7 +30,7 @@ class GoogleAdsService {
         try {
             const customerIdRaw = this.customerId.replace(/-/g, '');
             const response = await axios.post(
-                `https://googleads.googleapis.com/v16/customers/${customerIdRaw}/googleAds:searchStream`,
+                `https://googleads.googleapis.com/v16/customers/${customerIdRaw}/googleAds:search`,
                 { query },
                 {
                     headers: {

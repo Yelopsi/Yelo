@@ -1,9 +1,9 @@
-const token = localStorage.getItem('Yelo_token');
-if (!token) {
-    window.location.href = '/login';
-}
-
 async function loadCMOMetrics() {
+    const token = localStorage.getItem('Yelo_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
     const month = document.getElementById('cmo-month-selector').value;
     
     // Calcula datas simplificadas
