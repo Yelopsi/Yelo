@@ -19,7 +19,6 @@ async function initializeAnalyticsPage() {
         }
 
         const data = await response.json();
-        console.log("📊 Dados recebidos da API Analytics:", data);
         
         // Obtém o valor real cadastrado no perfil do psicólogo logado
         if (typeof window.getPsychologistData === 'function') {
@@ -45,7 +44,6 @@ async function initializeAnalyticsPage() {
             }
         }
 
-        console.log("📈 Iniciando renderização dos gráficos com data:", data);
         // Renderiza todos os gráficos com os dados reais
         renderPriceChart(data.priceComparison);
         renderTopTopicsChart(data.topTopics);
@@ -85,6 +83,24 @@ function renderPriceChart(data) {
     const platPos = calcPercent(data.platformAverage);
     const cityPos = data.cityAverage ? calcPercent(data.cityAverage) : platPos;
 
+    // Calcula a cor dinâmica baseada no gradiente da barra (0% = claro, 100% = escuro)
+    const getDynamicColor = (percent) => {
+        const c1 = [209, 250, 229]; // #d1fae5
+        const c2 = [16, 185, 129];  // #10b981
+        const c3 = [4, 120, 87];    // #047857
+        let rgb;
+        if (percent <= 50) {
+            const r = percent / 50;
+            rgb = c1.map((v, i) => Math.round(v + (c2[i] - v) * r));
+        } else {
+            const r = (percent - 50) / 50;
+            rgb = c2.map((v, i) => Math.round(v + (c3[i] - v) * r));
+        }
+        return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+    };
+    const badgeColor = getDynamicColor(myPos);
+    const badgeTextColor = myPos < 40 ? '#064e3b' : 'white'; // Usa texto escuro se estiver muito à esquerda
+
     container.innerHTML = `
         <div style="position: relative; width: 100%; height: 90px; margin-top: 15px;">
             <div style="position: absolute; top: 40px; left: 0; width: 100%; height: 8px; background: linear-gradient(90deg, #d1fae5, #10b981, #047857); border-radius: 4px;"></div>
@@ -102,11 +118,11 @@ function renderPriceChart(data) {
             </div>
 
             <!-- My Price -->
-            <div style="position: absolute; top: 30px; left: ${myPos}%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; z-index: 10;">
-                <div style="background: #1B4332; color: white; padding: 4px 10px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); white-space: nowrap;">
+            <div style="position: absolute; bottom: 50px; left: ${myPos}%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; z-index: 10;">
+                <div style="background: ${badgeColor}; color: ${badgeTextColor}; padding: 4px 10px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); white-space: nowrap;">
                     Você: ${formatCurrency(data.myPrice)}
                 </div>
-                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #1B4332;"></div>
+                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid ${badgeColor};"></div>
             </div>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase;">
