@@ -404,7 +404,7 @@
                         if (item.dataset.isReviewRequest === 'true') {
                             e.preventDefault();
                             const psiSlug = window.psychologistData?.customSlug || window.psychologistData?.id || '';
-                            const publicLink = `https://www.yelopsi.com.br/psi/${psiSlug}?review=true`;
+                            const publicLink = `https://www.yelopsi.com.br/${psiSlug}?review=true`;
                             
                             navigator.clipboard.writeText(publicLink).then(() => {
                                 const titleEl = item.querySelector('.action-title');
