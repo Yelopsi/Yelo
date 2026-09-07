@@ -33,8 +33,22 @@
             const matchImpressions = stats.matchImpressions || 0;
             const whatsappClicks = stats.whatsappClicks || 0;
 
-            if(document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = stats.last7DaysStats?.whatsappClicks > 0 ? `+${stats.last7DaysStats.whatsappClicks}` : '<span style="font-size: 1.1rem; opacity: 0.8; font-weight: 500;">Nenhum nesta semana</span>';
-            if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = stats.last7DaysStats?.profileViews > 0 ? `+${stats.last7DaysStats.profileViews}` : '<span style="font-size: 1.1rem; opacity: 0.8; font-weight: 500;">Nenhuma nesta semana</span>';
+            const last7DaysContacts = stats.last7DaysStats?.whatsappClicks || 0;
+            const last7DaysViews = stats.last7DaysStats?.profileViews || 0;
+
+            if (last7DaysContacts === 0 && last7DaysViews === 0) {
+                const subtitle = document.querySelector('.modern-hero-subtitle');
+                if (subtitle) subtitle.textContent = 'Fase de construção 🌱';
+                
+                if (document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = '<span style="font-size: 1.05rem; color: #1B4332; font-weight: 600; cursor: pointer; text-decoration: underline; text-decoration-style: dotted;" onclick="document.querySelector(\'.modern-checklist-card\').scrollIntoView({behavior: \'smooth\'})">Bora atrair pacientes? 🚀</span>';
+                if (document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = '<span style="font-size: 1.05rem; opacity: 0.8; font-weight: 500;">Seu perfil está sendo indexado 🔍</span>';
+            } else if (last7DaysViews > 0 && last7DaysContacts === 0) {
+                if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = `+${last7DaysViews}`;
+                if (document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = '<span style="font-size: 1.05rem; color: #1B4332; font-weight: 600; cursor: pointer; text-decoration: underline; text-decoration-style: dotted;" onclick="document.querySelector(\'.modern-checklist-card\').scrollIntoView({behavior: \'smooth\'})">Veja como converter mais 🎯</span>';
+            } else {
+                if(document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = `+${last7DaysContacts}`;
+                if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = `+${last7DaysViews}`;
+            }
             
             const realScore = stats.betterThanPercentage !== undefined ? stats.betterThanPercentage : 0;
             if(document.getElementById('hero-benchmark-text')) {
