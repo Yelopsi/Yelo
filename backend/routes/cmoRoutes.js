@@ -86,8 +86,13 @@ router.get('/dashboard', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('[CMO Metrics] Erro:', error);
-        res.status(500).json({ success: false, error: 'Erro ao gerar dashboard do CMO' });
+        console.error('[CMO Metrics] Erro Global na Rota:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao gerar dashboard do CMO', 
+            details: error.message,
+            stack: error.stack 
+        });
     }
 });
 

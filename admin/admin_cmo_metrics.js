@@ -19,6 +19,9 @@ async function loadCMOMetrics() {
     }
 
     try {
+        console.log(`[CMO Debug] Iniciando busca de dados. Período: ${dateStart} até ${dateEnd}`);
+        console.log(`[CMO Debug] Disparando requisição para: /api/cmo/dashboard?dateStart=${dateStart}&dateEnd=${dateEnd}`);
+        
         const response = await fetch(`/api/cmo/dashboard?dateStart=${dateStart}&dateEnd=${dateEnd}`, {
             credentials: 'include',
             headers: {
@@ -26,17 +29,36 @@ async function loadCMOMetrics() {
             }
         });
 
+        console.log(`[CMO Debug] Resposta HTTP status: ${response.status}`);
+
         if (!response.ok) {
-            console.error('Falha ao buscar dados do CMO.');
+            let errorDetails = '';
+            try {
+                const errorJson = await response.json();
+                errorDetails = errorJson.details || errorJson.error || JSON.stringify(errorJson);
+                console.error('[CMO Debug] Erro do Servidor:', errorJson);
+            } catch(err) {
+                errorDetails = await response.text();
+            }
+            console.error('[CMO Debug] Falha ao buscar dados do CMO. Detalhes:', errorDetails);
+            alert(`Falha na API CMO (Erro ${response.status}):\n${errorDetails.substring(0, 200)}`);
+            document.getElementById('ai-decision-action').textContent = 'Erro de Conexão';
+            document.getElementById('ai-decision-reason').textContent = 'Não foi possível carregar os dados. Veja o console (F12).';
             return;
         }
 
         const data = await response.json();
+        console.log('[CMO Debug] Dados recebidos com sucesso:', data);
+        
         if (data.success) {
             renderCMOMetrics(data);
+        } else {
+            console.error('[CMO Debug] Backend retornou success=false:', data);
+            alert('A API respondeu com falha. Verifique o console.');
         }
     } catch (e) {
-        console.error('Erro na requisição CMO:', e);
+        console.error('[CMO Debug] Erro catastrófico na requisição CMO:', e);
+        alert(`Erro Crítico: ${e.message}`);
     }
 }
 
