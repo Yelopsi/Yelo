@@ -125,9 +125,9 @@ function renderPriceChart(data) {
                 <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid ${badgeColor};"></div>
             </div>
         </div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase;">
-            <span>Acessível</span>
-            <span>Premium</span>
+        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 5px;">
+            <span style="display: flex; align-items: center; gap: 4px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px solid #f1f5f9;"><span style="font-size: 0.9rem;">🌱</span> Acessível</span>
+            <span style="display: flex; align-items: center; gap: 4px; background: #f8fafc; padding: 4px 8px; border-radius: 6px; border: 1px solid #f1f5f9;">Premium <span style="font-size: 0.9rem;">💎</span></span>
         </div>
     `;
 
