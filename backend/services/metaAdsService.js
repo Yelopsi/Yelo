@@ -36,7 +36,7 @@ class MetaAdsService {
             return { spend: 0, impressions: 0, clicks: 0, cpc: 0 };
         } catch (error) {
             console.error('[MetaAdsService] Erro ao buscar gastos:', error.response?.data || error.message);
-            throw new Error('Falha ao conectar com Meta Ads API');
+            return { spend: 0, impressions: 0, clicks: 0, cpc: 0 };
         }
     }
 

@@ -1,5 +1,3 @@
-// Google Ads API geralmente requer bibliotecas como 'google-ads-api' ou uso direto de REST.
-// Aqui vamos estruturar o serviço usando REST (axios) ou mock para facilitar a futura integração.
 const axios = require('axios');
 
 class GoogleAdsService {
@@ -11,42 +9,121 @@ class GoogleAdsService {
         this.customerId = process.env.GOOGLE_CUSTOMER_ID || 'MOCK_CUSTOMER_ID';
     }
 
-    /**
-     * Retorna os gastos gerais da conta por período.
-     */
-    async getAccountSpend(dateStart, dateEnd) {
+    async getAccessToken() {
         try {
-            if (this.developerToken === 'MOCK_DEV_TOKEN') {
-                return this.mockAccountSpend();
-            }
-
-            // A lógica de integração real exigiria fluxo de OAuth2 para obter accessToken
-            // e depois uma chamada para a API v16/v17 do Google Ads (GoogleAdsService.SearchStream).
-            // O código abaixo é apenas um scaffold estrutural.
-            return { spend: 0, impressions: 0, clicks: 0, cpc: 0 };
+            const response = await axios.post('https://oauth2.googleapis.com/token', null, {
+                params: {
+                    client_id: this.clientId,
+                    client_secret: this.clientSecret,
+                    refresh_token: this.refreshToken,
+                    grant_type: 'refresh_token'
+                }
+            });
+            return response.data.access_token;
         } catch (error) {
-            console.error('[GoogleAdsService] Erro ao buscar gastos:', error.message);
-            throw new Error('Falha ao conectar com Google Ads API');
+            console.error('[GoogleAdsService] Erro ao obter access token:', error.response?.data || error.message);
+            return null;
         }
     }
 
-    /**
-     * Retorna gastos segmentados por campanha.
-     */
-    async getCampaignInsights(dateStart, dateEnd) {
-        if (this.developerToken === 'MOCK_DEV_TOKEN') {
-            return this.mockCampaignInsights();
+    async queryGoogleAds(query, accessToken) {
+        try {
+            const customerIdRaw = this.customerId.replace(/-/g, '');
+            const response = await axios.post(
+                `https://googleads.googleapis.com/v16/customers/${customerIdRaw}/googleAds:searchStream`,
+                { query },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'developer-token': this.developerToken
+                    }
+                }
+            );
+            return response.data;
+        } catch (error) {
+            console.error('[GoogleAdsService] Erro na API:', error.response?.data || error.message);
+            return [];
         }
-        return [];
+    }
+
+    async getAccountSpend(dateStart, dateEnd) {
+        if (this.developerToken === 'MOCK_DEV_TOKEN') return this.mockAccountSpend();
+        
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) return { spend: 0, impressions: 0, clicks: 0, cpc: 0 };
+
+        const query = `
+            SELECT metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.average_cpc 
+            FROM customer 
+            WHERE segments.date >= '${dateStart}' AND segments.date <= '${dateEnd}'
+        `;
+
+        const data = await this.queryGoogleAds(query, accessToken);
+        
+        let spend = 0, impressions = 0, clicks = 0, cpc = 0;
+        
+        if (data && data.length > 0 && data[0].results) {
+            data.forEach(batch => {
+                if (batch.results) {
+                    batch.results.forEach(row => {
+                        const m = row.metrics;
+                        if (m) {
+                            spend += (parseInt(m.costMicros) || 0) / 1000000;
+                            impressions += (parseInt(m.impressions) || 0);
+                            clicks += (parseInt(m.clicks) || 0);
+                        }
+                    });
+                }
+            });
+            if (clicks > 0) cpc = spend / clicks;
+        }
+
+        return { spend, impressions, clicks, cpc };
+    }
+
+    async getCampaignInsights(dateStart, dateEnd) {
+        if (this.developerToken === 'MOCK_DEV_TOKEN') return this.mockCampaignInsights();
+
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) return [];
+
+        const query = `
+            SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.average_cpc 
+            FROM campaign 
+            WHERE segments.date >= '${dateStart}' AND segments.date <= '${dateEnd}'
+            AND metrics.cost_micros > 0
+        `;
+
+        const data = await this.queryGoogleAds(query, accessToken);
+        
+        const campaigns = [];
+        
+        if (data && data.length > 0 && data[0].results) {
+            data.forEach(batch => {
+                if (batch.results) {
+                    batch.results.forEach(row => {
+                        const c = row.campaign;
+                        const m = row.metrics;
+                        if (c && m) {
+                            campaigns.push({
+                                campaign_id: c.id,
+                                campaign_name: c.name,
+                                spend: (parseInt(m.costMicros) || 0) / 1000000,
+                                impressions: parseInt(m.impressions) || 0,
+                                clicks: parseInt(m.clicks) || 0,
+                                cpc: (parseInt(m.averageCpc) || 0) / 1000000
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        return campaigns;
     }
 
     mockAccountSpend() {
-        return {
-            spend: 850.20,
-            impressions: 110000,
-            clicks: 3200,
-            cpc: 0.26
-        };
+        return { spend: 850.20, impressions: 110000, clicks: 3200, cpc: 0.26 };
     }
 
     mockCampaignInsights() {

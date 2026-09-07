@@ -16,10 +16,30 @@
     </div>
 
     <!-- AI DECISION ENGINE -->
-    <div class="kpi-grid" style="grid-template-columns: 1fr; margin-bottom: 30px;">
+<style>
+    @media (max-width: 768px) {
+        #ai-decision-action {
+            font-size: 1.5rem !important;
+        }
+        .ai-tag-label {
+            font-size: 0.7rem !important;
+            padding: 4px 8px !important;
+            white-space: normal;
+            text-align: center;
+        }
+        #ai-decision-reason {
+            font-size: 0.95rem !important;
+        }
+        .ai-header-container {
+            justify-content: flex-start !important;
+            margin-bottom: 10px !important;
+        }
+    }
+</style>
+<div class="kpi-grid" style="grid-template-columns: 1fr; margin-bottom: 30px;">
         <div class="kpi-card" style="border-top-color: #3b82f6; background: #eff6ff; border: 1px solid #bfdbfe;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <span style="font-size: 0.85rem; background: #dbeafe; padding: 4px 12px; border-radius: 20px; color: #1e40af; font-weight: bold; text-transform: uppercase;">
+            <div class="ai-header-container" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span class="ai-tag-label" style="font-size: 0.85rem; background: #dbeafe; padding: 4px 12px; border-radius: 20px; color: #1e40af; font-weight: bold; text-transform: uppercase;">
                     Recomendação da Inteligência Algorítmica
                 </span>
             </div>
