@@ -204,6 +204,9 @@ app.get('/ajuda', (req, res) => res.render('ajuda'));
 // Silencia erro 404 do favicon.ico na raiz 
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
+// Health Check nativo para Zero-Downtime Deployments (Render)
+app.get('/api/health', (req, res) => res.status(200).send('OK'));
+
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
     setHeaders: (res, pathStr) => {
         res.setHeader('Cache-Control', 'public, max-age=2592000'); // 30 dias para uploads em geral
