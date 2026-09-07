@@ -117,12 +117,22 @@ function renderPriceChart(data) {
                 <span style="font-size: 0.7rem; color: #d97706; font-weight: bold; white-space: nowrap;">Sua Região</span>
             </div>
 
-            <!-- My Price -->
-            <div style="position: absolute; bottom: 50px; left: ${myPos}%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; z-index: 10;">
-                <div style="background: ${badgeColor}; color: ${badgeTextColor}; padding: 4px 10px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); white-space: nowrap;">
-                    Você: ${formatCurrency(data.myPrice)}
+            <!-- My Price Marker & Tooltip -->
+            <div style="position: absolute; top: 50%; left: ${myPos}%; transform: translate(-50%, -50%); z-index: 10; display: flex; flex-direction: column; align-items: center; cursor: pointer;"
+                 onmouseover="this.querySelector('.price-tooltip').style.opacity='1'; this.querySelector('.price-tooltip').style.transform='translateY(0)';" 
+                 onmouseout="this.querySelector('.price-tooltip').style.opacity='0'; this.querySelector('.price-tooltip').style.transform='translateY(5px)';"
+                 onclick="const t = this.querySelector('.price-tooltip'); const isVis = t.style.opacity === '1'; t.style.opacity = isVis ? '0' : '1'; t.style.transform = isVis ? 'translateY(5px)' : 'translateY(0)';">
+                
+                <!-- Tooltip (Initially hidden) -->
+                <div class="price-tooltip" style="position: absolute; bottom: 100%; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; opacity: 0; transform: translateY(5px); transition: all 0.2s ease; pointer-events: none;">
+                    <div style="background: ${badgeColor}; color: ${badgeTextColor}; padding: 4px 10px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); white-space: nowrap;">
+                        Você: ${formatCurrency(data.myPrice)}
+                    </div>
+                    <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid ${badgeColor};"></div>
                 </div>
-                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid ${badgeColor};"></div>
+
+                <!-- Ponto Marcador na Barra -->
+                <div style="width: 16px; height: 16px; background: #fff; border: 4px solid ${badgeColor}; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
             </div>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 5px;">
