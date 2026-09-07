@@ -1,15 +1,13 @@
-async function initializeAnalyticsPage() {
+const showEmptyState = (containerId, message) => {
+    const container = document.getElementById(containerId);
+    if (container) {
+        container.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#888; font-style:italic; padding: 20px; text-align: center;">${message}</div>`;
+    }
+};
 
+async function initializeAnalyticsPage() {
     const token = localStorage.getItem('Yelo_token');
     const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
-
-    // Helper para mostrar mensagem de "sem dados"
-    const showEmptyState = (containerId, message) => {
-        const container = document.getElementById(containerId);
-        if (container) {
-            container.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#888; font-style:italic; padding: 20px; text-align: center;">${message}</div>`;
-        }
-    };
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/psychologists/me/analytics`, {
@@ -21,6 +19,7 @@ async function initializeAnalyticsPage() {
         }
 
         const data = await response.json();
+        console.log("📊 Dados recebidos da API Analytics:", data);
         
         // Obtém o valor real cadastrado no perfil do psicólogo logado
         if (typeof window.getPsychologistData === 'function') {
@@ -46,6 +45,7 @@ async function initializeAnalyticsPage() {
             }
         }
 
+        console.log("📈 Iniciando renderização dos gráficos com data:", data);
         // Renderiza todos os gráficos com os dados reais
         renderPriceChart(data.priceComparison);
         renderTopTopicsChart(data.topTopics);
@@ -53,6 +53,7 @@ async function initializeAnalyticsPage() {
         renderProfileStrengthChart(data.profileStrength);
 
     } catch (error) {
+        console.error("❌ ERRO CRÍTICO NO FRONTEND (Analytics):", error);
         showEmptyState('price-chart-container', 'Não há dados de preço suficientes.');
         showEmptyState('topics-chart-container', 'Ainda não há temas em alta.');
         showEmptyState('visibility-chart-container', 'Sem dados de visibilidade.');
