@@ -201,7 +201,7 @@ exports.getAnalyticsData = async (req, res) => {
         const [platformAvgResult] = await db.sequelize.query(`SELECT AVG("valor_sessao_numero") as avg FROM "Psychologists" WHERE status = 'active' AND "valor_sessao_numero" > 0`, { type: db.sequelize.QueryTypes.SELECT });
         const platformAverage = parseFloat(platformAvgResult?.avg || 0);
 
-        const [topTopics] = await db.sequelize.query(`SELECT value as topic, COUNT(*) as count FROM "DemandSearches", jsonb_array_elements_text("searchParams"->'temas') as value WHERE "createdAt" >= NOW() - INTERVAL '30 days' AND jsonb_typeof("searchParams"->'temas') = 'array' GROUP BY value ORDER BY count DESC LIMIT 5;`);
+        const [topTopics] = await db.sequelize.query(`SELECT topic, COUNT(*) as count FROM (SELECT jsonb_array_elements_text("searchParams"->'temas') as topic FROM "DemandSearches" WHERE "createdAt" >= NOW() - INTERVAL '30 days' AND jsonb_typeof("searchParams"->'temas') = 'array' UNION ALL SELECT "searchParams"->>'temas' as topic FROM "DemandSearches" WHERE "createdAt" >= NOW() - INTERVAL '30 days' AND jsonb_typeof("searchParams"->'temas') = 'string') sub GROUP BY topic ORDER BY count DESC LIMIT 5;`);
 
         const [visibilityRaw] = await db.sequelize.query(`SELECT TO_CHAR(d.day, 'DD/MM') as label, COALESCE(COUNT(p.id), 0) as appearances FROM (SELECT generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, '1 day')::date AS day) d LEFT JOIN "ProfileAppearanceLogs" p ON p."createdAt"::date = d.day AND p."psychologistId" = :psychologistId GROUP BY d.day ORDER BY d.day ASC;`, { replacements: { psychologistId } });
         const visibility = { labels: visibilityRaw.map(v => v.label), appearances: visibilityRaw.map(v => parseInt(v.appearances, 10)) };
