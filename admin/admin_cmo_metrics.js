@@ -120,7 +120,5 @@ function renderCMOMetrics(data) {
     }
 }
 
-// Iniciar
-document.addEventListener('DOMContentLoaded', () => {
-    loadCMOMetrics();
-});
+// Iniciar imediatamente para arquitetura SPA
+loadCMOMetrics();
