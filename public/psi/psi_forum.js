@@ -396,11 +396,24 @@
                     comments.forEach(comment => renderComment(comment, commentThread));
                 }
 
+                const totalCount = parseInt(res.headers.get('X-Total-Count') || '0', 10);
+                const loadedCount = (page - 1) * COMMENTS_LIMIT + comments.length;
+                const remaining = totalCount - loadedCount;
+
                 if (hasMore) {
-                    loadMoreBtn.style.display = 'block';
-                    loadMoreBtn.textContent = 'Mostrar mais comentários';
+                    loadMoreBtn.style.display = 'inline-flex';
+                    // Premium Button Styles
+                    loadMoreBtn.className = 'btn';
+                    loadMoreBtn.style.cssText = 'padding: 10px 26px; border-radius: 50px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-weight: 600; border: none; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3); display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease; cursor: pointer; font-size: 0.95rem;';
+                    loadMoreBtn.onmouseover = () => { loadMoreBtn.style.transform = 'translateY(-2px)'; loadMoreBtn.style.boxShadow = '0 6px 14px rgba(245, 158, 11, 0.4)'; };
+                    loadMoreBtn.onmouseout = () => { loadMoreBtn.style.transform = 'none'; loadMoreBtn.style.boxShadow = '0 4px 10px rgba(245, 158, 11, 0.3)'; };
+                    
+                    if (remaining > 0) {
+                        loadMoreBtn.innerHTML = `Mostrar mais ${remaining} comentári${remaining > 1 ? 'os' : 'o'} <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+                    } else {
+                        loadMoreBtn.innerHTML = `Carregar mais comentários <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+                    }
                     loadMoreBtn.disabled = false;
-                    loadMoreBtn.classList.remove('hidden');
                 } else {
                     loadMoreBtn.style.display = 'none';
                 }
