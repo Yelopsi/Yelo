@@ -41,8 +41,9 @@ class GoogleAdsService {
             );
             return response.data;
         } catch (error) {
-            console.error('[GoogleAdsService] Erro na API:', error.response?.data || error.message);
-            return [];
+            const errorMsg = error.response?.data?.error?.message || error.response?.data || error.message;
+            console.error('[GoogleAdsService] Erro na API:', errorMsg);
+            return [{ id: 'ERRO_API', campaign_name: `[ERRO GOOGLE] ${JSON.stringify(errorMsg).substring(0,100)}`, spend: 0 }];
         }
     }
 

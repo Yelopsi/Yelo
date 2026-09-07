@@ -35,8 +35,9 @@ class MetaAdsService {
             }
             return { spend: 0, impressions: 0, clicks: 0, cpc: 0 };
         } catch (error) {
-            console.error('[MetaAdsService] Erro ao buscar gastos:', error.response?.data || error.message);
-            return { spend: 0, impressions: 0, clicks: 0, cpc: 0 };
+            const errorMsg = error.response?.data?.error?.message || error.message;
+            console.error('[MetaAdsService] Erro ao buscar gastos:', errorMsg);
+            return { spend: 0, impressions: 0, clicks: 0, cpc: 0, error: errorMsg };
         }
     }
 
@@ -60,8 +61,9 @@ class MetaAdsService {
 
             return response.data.data || [];
         } catch (error) {
-            console.error('[MetaAdsService] Erro ao buscar campanhas:', error.response?.data || error.message);
-            return [];
+            const errorMsg = error.response?.data?.error?.message || error.message;
+            console.error('[MetaAdsService] Erro ao buscar campanhas:', errorMsg);
+            return [{ id: 'ERRO', campaign_name: `[ERRO META] ${errorMsg.substring(0,100)}`, spend: 0 }];
         }
     }
 
