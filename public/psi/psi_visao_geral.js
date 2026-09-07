@@ -326,8 +326,9 @@
                             title: 'Você ainda não tem avaliações! Peça para pacientes antigos deixarem um depoimento no seu perfil público.', 
                             impact: 'Prova Social', 
                             completed: false, 
-                            url: 'psi_meu_perfil.html', 
-                            isTip: true 
+                            url: '#', 
+                            isTip: true,
+                            isReviewRequest: true
                         });
                     } else if (aiMarketingTip) {
                         stepsToRender.push({ 
@@ -380,7 +381,7 @@
                         : `<div class="action-checkbox">${step.completed ? '✓' : ''}</div>`;
 
                     const html = `
-                        <a href="javascript:void(0);" data-target-url="${step.url}" ${step.isMarketingAI ? 'data-is-marketing-ai="true"' : ''} class="modern-action-item ${step.completed ? 'completed' : ''} ${step.isTip ? 'tip-item' : ''}">
+                        <a href="javascript:void(0);" data-target-url="${step.url}" ${step.isMarketingAI ? 'data-is-marketing-ai="true"' : ''} ${step.isReviewRequest ? 'data-is-review-request="true"' : ''} class="modern-action-item ${step.completed ? 'completed' : ''} ${step.isTip ? 'tip-item' : ''}">
                             ${checkboxHtml}
                             <div class="action-content">
                                 <h4 class="action-title" style="${extraStyles}">${step.title}</h4>
@@ -400,7 +401,28 @@
                         const item = e.target.closest('.modern-action-item');
                         if (!item) return;
 
-                        if (item.dataset.targetUrl) {
+                        if (item.dataset.isReviewRequest === 'true') {
+                            e.preventDefault();
+                            const psiSlug = window.psychologistData?.customSlug || window.psychologistData?.id || '';
+                            const publicLink = `https://www.yelopsi.com.br/psi/${psiSlug}?review=true`;
+                            
+                            navigator.clipboard.writeText(publicLink).then(() => {
+                                const titleEl = item.querySelector('.action-title');
+                                const originalText = titleEl.textContent;
+                                const originalColor = titleEl.style.color;
+                                titleEl.textContent = '✅ Link copiado com sucesso! Envie aos pacientes.';
+                                titleEl.style.color = '#10b981';
+                                setTimeout(() => {
+                                    titleEl.textContent = originalText;
+                                    titleEl.style.color = originalColor;
+                                }, 3000);
+                            }).catch(err => {
+                                console.error('Falha ao copiar:', err);
+                            });
+                            return;
+                        }
+
+                        if (item.dataset.targetUrl && item.dataset.targetUrl !== '#') {
                             e.preventDefault();
                             if (window.loadPage) window.loadPage(item.dataset.targetUrl);
                         }
