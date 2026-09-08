@@ -27,100 +27,82 @@ class GoogleAdsService {
     }
 
     async queryGoogleAds(query, accessToken) {
-        try {
-            const customerIdRaw = this.customerId.replace(/-/g, '');
-            const response = await axios.post(
-                `https://googleads.googleapis.com/v16/customers/${customerIdRaw}/googleAds:search`,
-                { query },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'developer-token': this.developerToken
-                    }
+        const customerIdRaw = this.customerId.replace(/-/g, '');
+        const response = await axios.post(
+            `https://googleads.googleapis.com/v16/customers/${customerIdRaw}/googleAds:search`,
+            { query },
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'developer-token': this.developerToken
                 }
-            );
-            return response.data;
-        } catch (error) {
-            const errorMsg = error.response?.data?.error?.message || error.response?.data || error.message;
-            console.error('[GoogleAdsService] Erro na API:', errorMsg);
-            return [{ id: 'ERRO_API', campaign_name: `[ERRO GOOGLE] ${JSON.stringify(errorMsg).substring(0,100)}`, spend: 0 }];
-        }
+            }
+        );
+        return response.data;
     }
 
     async getAccountSpend(dateStart, dateEnd) {
         if (this.developerToken === 'MOCK_DEV_TOKEN') return this.mockAccountSpend();
-        
-        const accessToken = await this.getAccessToken();
-        if (!accessToken) return { spend: 0, impressions: 0, clicks: 0, cpc: 0 };
 
-        const query = `
-            SELECT metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.average_cpc 
-            FROM customer 
-            WHERE segments.date >= '${dateStart}' AND segments.date <= '${dateEnd}'
-        `;
+        try {
+            const accessToken = await this.getAccessToken();
+            if (!accessToken) return { spend: 0, impressions: 0, clicks: 0, cpc: 0, error: 'Sem Access Token' };
 
-        const data = await this.queryGoogleAds(query, accessToken);
-        
-        let spend = 0, impressions = 0, clicks = 0, cpc = 0;
-        
-        if (data && data.length > 0 && data[0].results) {
-            data.forEach(batch => {
-                if (batch.results) {
-                    batch.results.forEach(row => {
-                        const m = row.metrics;
-                        if (m) {
-                            spend += (parseInt(m.costMicros) || 0) / 1000000;
-                            impressions += (parseInt(m.impressions) || 0);
-                            clicks += (parseInt(m.clicks) || 0);
-                        }
-                    });
-                }
-            });
-            if (clicks > 0) cpc = spend / clicks;
+            const query = `
+                SELECT metrics.cost_micros, metrics.impressions, metrics.clicks 
+                FROM customer 
+                WHERE segments.date >= '${dateStart}' AND segments.date <= '${dateEnd}'
+            `;
+
+            const result = await this.queryGoogleAds(query, accessToken);
+            if (!result.results || result.results.length === 0) return { spend: 0, impressions: 0, clicks: 0, cpc: 0 };
+
+            const metrics = result.results[0].metrics;
+            const spend = (metrics.cost_micros || 0) / 1000000;
+            const clicks = metrics.clicks || 0;
+            
+            return {
+                spend: spend,
+                impressions: metrics.impressions || 0,
+                clicks: clicks,
+                cpc: clicks > 0 ? (spend / clicks) : 0
+            };
+        } catch (error) {
+            const errorMsg = error.response?.data?.error?.message || error.response?.data || error.message;
+            console.error('[GoogleAdsService] Erro ao buscar gastos:', errorMsg);
+            return { spend: 0, impressions: 0, clicks: 0, cpc: 0, error: `[ERRO GOOGLE] ${JSON.stringify(errorMsg).substring(0,100)}` };
         }
-
-        return { spend, impressions, clicks, cpc };
     }
 
     async getCampaignInsights(dateStart, dateEnd) {
         if (this.developerToken === 'MOCK_DEV_TOKEN') return this.mockCampaignInsights();
 
-        const accessToken = await this.getAccessToken();
-        if (!accessToken) return [];
+        try {
+            const accessToken = await this.getAccessToken();
+            if (!accessToken) return [{ id: 'ERRO', campaign_name: '[ERRO GOOGLE] Sem Access Token', spend: 0 }];
 
-        const query = `
-            SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.average_cpc 
-            FROM campaign 
-            WHERE segments.date >= '${dateStart}' AND segments.date <= '${dateEnd}'
-            AND metrics.cost_micros > 0
-        `;
+            const query = `
+                SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.impressions, metrics.clicks 
+                FROM campaign 
+                WHERE segments.date >= '${dateStart}' AND segments.date <= '${dateEnd}'
+                ORDER BY metrics.cost_micros DESC
+            `;
 
-        const data = await this.queryGoogleAds(query, accessToken);
-        
-        const campaigns = [];
-        
-        if (data && data.length > 0 && data[0].results) {
-            data.forEach(batch => {
-                if (batch.results) {
-                    batch.results.forEach(row => {
-                        const c = row.campaign;
-                        const m = row.metrics;
-                        if (c && m) {
-                            campaigns.push({
-                                campaign_id: c.id,
-                                campaign_name: c.name,
-                                spend: (parseInt(m.costMicros) || 0) / 1000000,
-                                impressions: parseInt(m.impressions) || 0,
-                                clicks: parseInt(m.clicks) || 0,
-                                cpc: (parseInt(m.averageCpc) || 0) / 1000000
-                            });
-                        }
-                    });
-                }
-            });
+            const result = await this.queryGoogleAds(query, accessToken);
+            if (!result.results) return [];
+
+            return result.results.map(row => ({
+                id: row.campaign.id,
+                campaign_name: row.campaign.name,
+                spend: (row.metrics.cost_micros || 0) / 1000000,
+                impressions: row.metrics.impressions || 0,
+                clicks: row.metrics.clicks || 0
+            }));
+        } catch (error) {
+            const errorMsg = error.response?.data?.error?.message || error.response?.data || error.message;
+            console.error('[GoogleAdsService] Erro ao buscar campanhas:', errorMsg);
+            return [{ id: 'ERRO_API', campaign_name: `[ERRO GOOGLE] ${JSON.stringify(errorMsg).substring(0,100)}`, spend: 0 }];
         }
-
-        return campaigns;
     }
 
     mockAccountSpend() {
