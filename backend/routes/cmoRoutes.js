@@ -45,19 +45,37 @@ router.get('/dashboard', async (req, res) => {
         const cpl = totalTrials > 0 ? (totalSpend / totalTrials).toFixed(2) : 0;
 
         // 3. Motor de Decisão Simples
-        let decision = "MANTER ORÇAMENTO";
-        let decisionReason = "Dados em linha com o esperado.";
-        
-        // Simulação de regras de negócio (Pode ser refinado pelo CMO)
-        if (totalSpend > 0 && totalPagantes === 0) {
-            decision = "PAUSAR CAMPANHAS / INVESTIGAR";
-            decisionReason = "Gastos altos sem novas conversões pagas.";
-        } else if (cac > 0 && cac < 300) { // Se CAC for menor que R$300 (Assumindo que o ticket seja alto)
-            decision = "AUMENTAR ORÇAMENTO";
-            decisionReason = `CAC (${cac}) está excelente. Escale o investimento B2B.`;
-        } else if (cac >= 300) {
-            decision = "OTIMIZAR / DIMINUIR ORÇAMENTO";
-            decisionReason = `CAC (${cac}) está acima da meta. Avaliar campanhas ruins.`;
+        // 3. Motor de Decisão Simples
+        const hasMetaError = metaSpend.error ? true : false;
+        const hasGoogleError = googleSpend.error ? true : false;
+
+        let decisionEngine = {
+            action: 'MÉTRICAS INDIRETAS',
+            reason: 'As APIs de anúncios não foram plugadas, analisando apenas KPIs nativos.'
+        };
+
+        if (hasMetaError || hasGoogleError) {
+            decisionEngine = {
+                action: 'DADOS INCOMPLETOS — INVESTIGAR INTEGRAÇÃO',
+                reason: `Não foi possível consultar a conta de anúncios (${hasMetaError ? 'Meta' : ''}${hasMetaError && hasGoogleError ? ' e ' : ''}${hasGoogleError ? 'Google' : ''}). A decisão de orçamento está temporariamente suspensa até a integração ser corrigida.`
+            };
+        } else if (totalSpend > 0) {
+            if (parseFloat(cac) > 0 && parseFloat(cac) < (parseFloat(cpl) * 1.5)) {
+                decisionEngine = {
+                    action: 'AUMENTAR ORÇAMENTO (SCALING) 🚀',
+                    reason: `Custo de aquisição (R$ ${cac}) excelente frente ao CPL.`
+                };
+            } else if (totalPagantes === 0 && totalSpend > 300) {
+                decisionEngine = {
+                    action: 'PAUSAR CAMPANHAS / INVESTIGAR 🚨',
+                    reason: 'Gastos altos sem novas conversões pagas. Revise o funil de vendas.'
+                };
+            } else {
+                decisionEngine = {
+                    action: 'MANTER ORÇAMENTO ⚖️',
+                    reason: 'Dados em linha com o esperado.'
+                };
+            }
         }
 
         res.json({
@@ -80,10 +98,7 @@ router.get('/dashboard', async (req, res) => {
                 cac: parseFloat(cac),
                 cpl: parseFloat(cpl)
             },
-            decisionEngine: {
-                action: decision,
-                reason: decisionReason
-            }
+            decisionEngine: decisionEngine
         });
     } catch (error) {
         console.error('[CMO Metrics] Erro Global na Rota:', error);

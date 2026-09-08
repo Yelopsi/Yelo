@@ -71,9 +71,27 @@ class GoogleAdsService {
                 cpc: clicks > 0 ? (spend / clicks) : 0
             };
         } catch (error) {
-            const errorMsg = error.response?.data?.error?.message || error.response?.data || error.message;
-            console.error('[GoogleAdsService] Erro ao buscar gastos:', errorMsg);
-            return { spend: 0, impressions: 0, clicks: 0, cpc: 0, error: `[ERRO GOOGLE] ${JSON.stringify(errorMsg).substring(0,100)}` };
+            console.log('\n========== CMO GOOGLE DEBUG CONFIG ==========');
+            console.log('customerId:', this.customerId);
+            console.log('loginCustomerId:', process.env.GOOGLE_LOGIN_CUSTOMER_ID || 'NÃO CONFIGURADO');
+            console.log('developerTokenConfigured:', this.developerToken !== 'MOCK_DEV_TOKEN');
+            console.log('=============================================\n');
+
+            let errorObj = error.response?.data || error.message;
+            console.error('\n💥 [GoogleAdsService] ERRO ORIGINAL COMPLETO:\n', JSON.stringify(errorObj, null, 2));
+            
+            let cleanMsg = "Erro desconhecido";
+            if (typeof errorObj === 'string' && errorObj.includes('<!DOCTYPE html>')) {
+                cleanMsg = "404 Not Found (URL incorreta ou API desativada)";
+            } else if (errorObj && errorObj[0] && errorObj[0].error) {
+                cleanMsg = errorObj[0].error.message;
+            } else if (errorObj && errorObj.error) {
+                cleanMsg = errorObj.error.message || errorObj.error;
+            } else {
+                cleanMsg = error.message;
+            }
+
+            return { spend: 0, impressions: 0, clicks: 0, cpc: 0, error: `[ERRO GOOGLE] ${cleanMsg}` };
         }
     }
 
@@ -102,9 +120,20 @@ class GoogleAdsService {
                 clicks: row.metrics.clicks || 0
             }));
         } catch (error) {
-            const errorMsg = error.response?.data?.error?.message || error.response?.data || error.message;
-            console.error('[GoogleAdsService] Erro ao buscar campanhas:', errorMsg);
-            return [{ id: 'ERRO_API', campaign_name: `[ERRO GOOGLE] ${JSON.stringify(errorMsg).substring(0,100)}`, spend: 0 }];
+            let errorObj = error.response?.data || error.message;
+            let cleanMsg = "Erro desconhecido";
+            
+            if (typeof errorObj === 'string' && errorObj.includes('<!DOCTYPE html>')) {
+                cleanMsg = "404 Not Found (URL incorreta ou API desativada)";
+            } else if (errorObj && errorObj[0] && errorObj[0].error) {
+                cleanMsg = errorObj[0].error.message;
+            } else if (errorObj && errorObj.error) {
+                cleanMsg = errorObj.error.message || errorObj.error;
+            } else {
+                cleanMsg = error.message;
+            }
+
+            return [{ id: 'ERRO_API', campaign_name: `[ERRO GOOGLE] ${cleanMsg}`, spend: 0 }];
         }
     }
 
