@@ -37,7 +37,7 @@ class GoogleAdsService {
         }
 
         const response = await axios.post(
-            `https://googleads.googleapis.com/v16/customers/${customerIdRaw}/googleAds:search`,
+            `https://googleads.googleapis.com/v25/customers/${customerIdRaw}/googleAds:search`,
             { query },
             { headers }
         );
