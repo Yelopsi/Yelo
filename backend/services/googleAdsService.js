@@ -28,15 +28,18 @@ class GoogleAdsService {
 
     async queryGoogleAds(query, accessToken) {
         const customerIdRaw = this.customerId.replace(/-/g, '');
+        const headers = {
+            'Authorization': `Bearer ${accessToken}`,
+            'developer-token': this.developerToken
+        };
+        if (process.env.GOOGLE_LOGIN_CUSTOMER_ID) {
+            headers['login-customer-id'] = process.env.GOOGLE_LOGIN_CUSTOMER_ID.replace(/-/g, '');
+        }
+
         const response = await axios.post(
             `https://googleads.googleapis.com/v16/customers/${customerIdRaw}/googleAds:search`,
             { query },
-            {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'developer-token': this.developerToken
-                }
-            }
+            { headers }
         );
         return response.data;
     }
