@@ -39,15 +39,11 @@ router.get('/dashboard', async (req, res) => {
 
         const actualGoogleSpend = googleSpend.spend > 0 ? googleSpend.spend : (manualGoogle ? parseFloat(manualGoogle.spend) || 0 : 0);
         const actualPrevGoogleSpend = prevGoogleSpend.spend > 0 ? prevGoogleSpend.spend : (prevManualGoogle ? parseFloat(prevManualGoogle.spend) || 0 : 0);
-        
+
         const totalSpend = metaSpend.spend + actualGoogleSpend;
         const totalPrevSpend = prevMetaSpend.spend + actualPrevGoogleSpend;
 
         // 3. Atribuição B2B (Meta Ads -> Psicólogos)
-        // NOTA: O rastreamento UTM nos anúncios Meta ainda não foi configurado nos links de destino.
-        // Por ora, contamos TODOS os psicólogos criados no período. 
-        // Quando os anúncios tiverem ?utm_source=meta_ads, adicionar filtro:
-        //   AND (utm_source IN ('meta_ads','facebook','instagram') OR "first_utm_source" IN (...))
         const b2bQuery = `
             SELECT 
                 SUM(CASE WHEN status = 'active' AND "firstPaidAt" IS NOT NULL THEN 1 ELSE 0 END) as pagantes,
@@ -55,8 +51,13 @@ router.get('/dashboard', async (req, res) => {
                 SUM(CASE WHEN status = 'inactive' OR "deletedAt" IS NOT NULL THEN 1 ELSE 0 END) as churned
             FROM "Psychologists"
             WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
+            AND "deletedAt" IS NULL
+            AND (
+                utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
+                OR first_utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
+            )
         `;
-        
+
         const [metaMetricsRes] = await sequelize.query(b2bQuery, {
             replacements: { dateStart, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
         });
@@ -68,10 +69,10 @@ router.get('/dashboard', async (req, res) => {
         const prevMetaPagantes = parseInt(prevMetaMetricsRes.pagantes || 0);
         const metaTrials = parseInt(metaMetricsRes.trials || 0);
         const metaChurned = parseInt(metaMetricsRes.churned || 0);
-        
+
         const metaCac = metaPagantes > 0 ? (metaSpend.spend / metaPagantes) : 0;
         const prevMetaCac = prevMetaPagantes > 0 ? (prevMetaSpend.spend / prevMetaPagantes) : 0;
-        
+
         const deltaMetaSpend = metaSpend.spend - prevMetaSpend.spend;
         const deltaMetaPagantes = metaPagantes - prevMetaPagantes;
         const metaMarginalCac = deltaMetaPagantes > 0 ? (deltaMetaSpend / deltaMetaPagantes) : 0;
@@ -89,7 +90,7 @@ router.get('/dashboard', async (req, res) => {
             FROM "WhatsAppClickLogs"
             WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
         `;
-        
+
         const [googleMetricsRes] = await sequelize.query(b2cQuery, {
             replacements: { dateStart, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
         });
@@ -121,7 +122,7 @@ router.get('/dashboard', async (req, res) => {
         if (metaSpend.spend > 0) {
             const isScaleHealthy = metaLtvCacRatio >= 3;
             const isMarginalDangerous = metaMarginalCac > (decisionEngineMeta.target * 1.2);
-            
+
             if (isScaleHealthy && !isMarginalDangerous && metaPagantes >= 5) {
                 decisionEngineMeta.action = 'SINAL VERDE: AUMENTAR 🚀';
                 decisionEngineMeta.confidence = metaPagantes < 15 ? 60 : 85;
@@ -159,7 +160,7 @@ router.get('/dashboard', async (req, res) => {
         if (actualGoogleSpend > 0) {
             const isCpaHealthy = googleCpa <= decisionEngineGoogle.target;
             const isMarginalDangerous = googleMarginalCpa > (decisionEngineGoogle.target * 1.5);
-            
+
             if (isCpaHealthy && !isMarginalDangerous && googleDeals >= 5) {
                 decisionEngineGoogle.action = 'SINAL VERDE: AUMENTAR 🚀';
                 decisionEngineGoogle.confidence = googleDeals < 15 ? 60 : 85;
@@ -201,11 +202,11 @@ router.get('/dashboard', async (req, res) => {
         });
     } catch (error) {
         console.error('[CMO Metrics] Erro Global na Rota:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Erro ao gerar dashboard do CMO', 
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao gerar dashboard do CMO',
             details: error.message,
-            stack: error.stack 
+            stack: error.stack
         });
     }
 });
@@ -217,14 +218,14 @@ router.post('/manual-ads', async (req, res) => {
         if (!dateStart || !dateEnd || !platform) {
             return res.status(400).json({ success: false, error: 'dateStart, dateEnd e platform são obrigatórios' });
         }
-        
+
         const { ManualAdMetric } = require('../models');
-        
+
         // Busca o registro existente
         let record = await ManualAdMetric.findOne({
             where: { dateStart, dateEnd, platform }
         });
-        
+
         let created = false;
         if (record) {
             record = await record.update({ campaignName, spend, impressions, clicks, conversions });
@@ -232,7 +233,7 @@ router.post('/manual-ads', async (req, res) => {
             record = await ManualAdMetric.create({ dateStart, dateEnd, platform, campaignName, spend, impressions, clicks, conversions });
             created = true;
         }
-        
+
         res.json({ success: true, record, created });
     } catch (error) {
         console.error('[CMO] Erro ao salvar dados manuais:', error);
@@ -249,11 +250,11 @@ router.get('/manual-ads', async (req, res) => {
         }
 
         const { ManualAdMetric } = require('../models');
-        
+
         const record = await ManualAdMetric.findOne({
             where: { dateStart, dateEnd, platform }
         });
-        
+
         res.json({ success: true, record });
     } catch (error) {
         console.error('[CMO] Erro ao buscar dados manuais:', error);
