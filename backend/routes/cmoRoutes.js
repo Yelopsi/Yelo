@@ -44,11 +44,12 @@ router.get('/dashboard', async (req, res) => {
         const totalPrevSpend = prevMetaSpend.spend + actualPrevGoogleSpend;
 
         // 3. Atribuição B2B (Meta Ads -> Psicólogos)
+        // Critérios idênticos ao adminUsersController.js (CRM de Psicólogos)
         const b2bQuery = `
             SELECT 
-                SUM(CASE WHEN status = 'active' AND "firstPaidAt" IS NOT NULL THEN 1 ELSE 0 END) as pagantes,
-                SUM(CASE WHEN status = 'active' AND "firstPaidAt" IS NULL THEN 1 ELSE 0 END) as trials,
-                SUM(CASE WHEN status = 'inactive' OR "deletedAt" IS NOT NULL THEN 1 ELSE 0 END) as churned
+                COUNT(*) FILTER (WHERE status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as pagantes,
+                COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND "planExpiresAt" > NOW()) as trials,
+                COUNT(*) FILTER (WHERE status = 'inactive') as churned
             FROM "Psychologists"
             WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
             AND "deletedAt" IS NULL
@@ -69,6 +70,7 @@ router.get('/dashboard', async (req, res) => {
         const prevMetaPagantes = parseInt(prevMetaMetricsRes.pagantes || 0);
         const metaTrials = parseInt(metaMetricsRes.trials || 0);
         const metaChurned = parseInt(metaMetricsRes.churned || 0);
+        console.log('[CMO B2B Debug]', { dateStart, dateEnd, metaPagantes, metaTrials, metaChurned, raw: metaMetricsRes });
 
         const metaCac = metaPagantes > 0 ? (metaSpend.spend / metaPagantes) : 0;
         const prevMetaCac = prevMetaPagantes > 0 ? (prevMetaSpend.spend / prevMetaPagantes) : 0;
