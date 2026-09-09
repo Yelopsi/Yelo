@@ -180,9 +180,12 @@ function renderCMOMetrics(data) {
             if(warningContainer) warningContainer.style.display = 'none';
         }
         
-        // Funnel Insight
-        if (data.decisionEngineGoogle.funnelInsight) {
-            document.getElementById('ai-funnel-insight').textContent = data.decisionEngineGoogle.funnelInsight;
+        // Global Insight 360
+        if (data.globalInsight) {
+            const formattedHTML = data.globalInsight
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br/>');
+            document.getElementById('ai-funnel-insight').innerHTML = formattedHTML;
         } else {
             document.getElementById('ai-funnel-insight').textContent = "Nenhuma análise disponível para o período.";
         }

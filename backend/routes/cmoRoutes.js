@@ -173,32 +173,7 @@ router.get('/dashboard', async (req, res) => {
         let decisionEngineGoogle = {
             action: 'RECOLHENDO DADOS ⏳', confidence: 0, target: 30, // Target CPA B2C
             scaleCapacity: 'BAIXA', trend: googleCpa - prevGoogleCpa, warning: null, recommendation: 'Aguarde mais conversões.',
-            funnelInsight: ''
-        };
-
-        // Funnel Insight Generation
-        if (actualGoogleClicks > 0 || wppClicks > 0) {
-            const clickToWpp = actualGoogleClicks > 0 ? ((wppClicks / actualGoogleClicks) * 100).toFixed(1) : 0;
-            let insight = `No período selecionado, a campanha Google gerou ${actualGoogleClicks} cliques no anúncio e ${wppClicks} pessoas chegaram a chamar um psicólogo no WhatsApp (${clickToWpp}% de conversão da página).\n\n`;
-            
-            if (wppClicks > 0) {
-                insight += `Destes ${wppClicks} leads no WhatsApp: ${googleDeals} fecharam terapia, ${lostDeals} foram perdidos (não responderam/recusaram) e ${pendingDeals} estão com feedback PENDENTE do psicólogo.\n\n`;
-                
-                if (pendingDeals > (wppClicks * 0.3)) {
-                    insight += `🚨 ATENÇÃO: Há muitos leads pendentes (${pendingDeals}). Cobre os psicólogos para darem o feedback! Se 20% deles fecharem, seu CPA cairá drasticamente. Não pause campanhas com base no CPA atual, pois ele está artificialmente alto devido ao atraso nos feedbacks.`;
-                } else if (googleDeals === 0 && lostDeals > 0) {
-                    insight += `⚠️ ALERTA: Os leads estão chamando no WhatsApp, mas nenhum fechou ainda. O problema provável não é a campanha, mas sim a qualificação do lead ou a abordagem de vendas do psicólogo.`;
-                } else {
-                    insight += `✅ O pipeline de pacientes está fluindo bem. Continue monitorando o CPA e a qualidade dos atendimentos no WhatsApp.`;
-                }
-            } else {
-                insight += `⚠️ ALERTA: As pessoas clicam no anúncio mas não chamam no WhatsApp. Verifique se a sua Landing Page está lenta, confusa, ou se a promessa do anúncio não condiz com a página.`;
-            }
-            decisionEngineGoogle.funnelInsight = insight;
-        } else {
-            decisionEngineGoogle.funnelInsight = 'Não há dados suficientes de cliques ou chamadas no WhatsApp no período para uma análise de funil.';
-        }
-
+        // Removed individual funnel insight string generation since we will create a global one
         if (googleDeals < 5) {
             decisionEngineGoogle.warning = `Amostra pequena (${googleDeals} pacientes fechados na Yelo).`;
         }
@@ -231,17 +206,72 @@ router.get('/dashboard', async (req, res) => {
             }
         }
 
+        // 7. Visão Global 360 (B2B + B2C)
+        let globalInsight = "👥 **B2B (Aquisição de Psicólogos)**\n";
+        
+        if (metaSpend.spend > 0) {
+            globalInsight += `No período, foram investidos R$ ${metaSpend.spend.toFixed(2).replace('.', ',')} gerando ${metaPagantes} novos assinantes (CAC: R$ ${metaCac.toFixed(2).replace('.', ',')}). `;
+            if (metaPaybackMonths > 0) {
+                globalInsight += `O payback estimado é de ${metaPaybackMonths.toFixed(1).replace('.', ',')} meses. `;
+                if (metaPaybackMonths <= 3) {
+                    globalInsight += `✅ Esse é um tempo de recuperação de capital excelente, garantindo previsibilidade de caixa. `;
+                } else if (metaPaybackMonths >= 6) {
+                    globalInsight += `⚠️ O tempo de payback está alto. Cuidado com o fluxo de caixa a curto prazo. `;
+                }
+            }
+            if (metaChurned > 0) {
+                globalInsight += `No entanto, tivemos ${metaChurned} cancelamentos (Churn de ${(metaChurnRate*100).toFixed(1).replace('.', ',')}%). `;
+                if (metaChurnRate > 0.1) {
+                    globalInsight += `🚨 ATENÇÃO: O churn está alto. Antes de escalar o Meta Ads, é vital focar na retenção. `;
+                }
+            }
+        } else {
+            globalInsight += `Não houve investimento significativo em Meta Ads no período.\n`;
+        }
+        
+        globalInsight += "\n\n🩺 **B2C (Atração de Pacientes)**\n";
+        if (actualGoogleClicks > 0 || wppClicks > 0) {
+            const clickToWpp = actualGoogleClicks > 0 ? ((wppClicks / actualGoogleClicks) * 100).toFixed(1).replace('.', ',') : 0;
+            globalInsight += `O Google Ads gerou ${actualGoogleClicks} cliques no anúncio e ${wppClicks} contatos no WhatsApp (conversão da LP: ${clickToWpp}%). `;
+            if (wppClicks > 0) {
+                globalInsight += `Desses leads, ${googleDeals} fecharam, ${lostDeals} foram perdidos e ${pendingDeals} estão PENDENTES. `;
+                if (pendingDeals > (wppClicks * 0.3)) {
+                    globalInsight += `🚨 O grande gargalo hoje é o feedback dos psicólogos. Há muitos leads travados, mascarando o verdadeiro CPA da campanha. `;
+                } else if (googleDeals === 0 && lostDeals > 0) {
+                    globalInsight += `⚠️ Os pacientes chegam, mas não fecham. Avalie a qualidade do lead ou o treinamento de vendas dos psicólogos. `;
+                } else {
+                    globalInsight += `✅ O fluxo de pacientes está saudável e com boa vazão de agendamentos. `;
+                }
+            } else {
+                globalInsight += `⚠️ A landing page não está retendo os cliques. Os pacientes saem antes de chamar no WhatsApp. `;
+            }
+        } else {
+            globalInsight += `Sem dados suficientes no Google Ads para o período.\n`;
+        }
+        
+        globalInsight += "\n\n💡 **Conclusão Estratégica da Diretoria**\n";
+        if (metaPaybackMonths > 0 && metaPaybackMonths <= 4 && pendingDeals > (wppClicks * 0.3)) {
+            globalInsight += `O negócio B2B está lucrativo (Payback < 4 meses), mas você está entregando valor B2C (pacientes) que não estão sendo devidamente registrados. Aperte o processo de feedback para provar o ROI aos psicólogos e blindar a sua retenção!`;
+        } else if (metaChurnRate > 0.1 && lostDeals > googleDeals) {
+            globalInsight += `🚨 CENÁRIO DE RISCO: Psicólogos estão cancelando (Churn alto) provavelmente porque os pacientes B2C gerados não estão fechando terapia. Foco total em alinhar a expectativa do paciente na landing page com o que o psicólogo oferece.`;
+        } else if (metaPaybackMonths <= 3 && googleDeals > lostDeals && googleDeals > 0) {
+            globalInsight += `🚀 CENÁRIO DE CRESCIMENTO: O motor B2B é rápido e o motor B2C entrega resultados reais. Pode acelerar o orçamento de ambas as pontas.`;
+        } else {
+            globalInsight += `Monitore de perto os custos de aquisição (CAC e CPA) e mantenha o equilíbrio entre a entrada de novos psicólogos e a geração de demanda de pacientes.`;
+        }
+
         res.json({
             success: true,
             period: { dateStart, dateEnd, prevDateStart, prevDateEnd },
+            globalInsight: globalInsight,
             ads: {
                 meta: { ...metaSpend, spend: metaSpend.spend, cac: metaCac, marginalCac: metaMarginalCac },
                 google: { ...googleSpend, spend: actualGoogleSpend, cpa: googleCpa, marginalCpa: googleMarginalCpa }
             },
             campaigns: { meta: metaCampaigns, google: googleCampaigns },
             platform: {
-                b2b: { trials: metaTrials, pagantes: metaPagantes, churned: metaChurned, ltv: metaLtv, ratio: metaLtvCacRatio },
-                b2c: { clicks: googleClicks, deals: googleDeals }
+                b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned },
+                b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals }
             },
             decisionEngineMeta,
             decisionEngineGoogle
