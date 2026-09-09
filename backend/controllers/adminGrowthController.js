@@ -867,7 +867,7 @@ exports.getClicksEvolution = async (req, res) => {
         const clicks = await db.WhatsAppClickLog.findAll({
             where: whereClause,
             attributes: [
-                [db.sequelize.fn('date_trunc', 'day', db.sequelize.col('createdAt')), 'day'],
+                [db.sequelize.literal(`date_trunc('day', "createdAt" AT TIME ZONE 'America/Sao_Paulo')`), 'day'],
                 [db.sequelize.fn('count', db.sequelize.col('id')), 'total_clicks'],
                 [db.sequelize.fn('sum', db.sequelize.literal('CASE WHEN "contactReceived" = true THEN 1 ELSE 0 END')), 'real_contacts']
             ],
