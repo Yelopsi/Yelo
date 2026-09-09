@@ -8,16 +8,13 @@ async function loadCMOMetrics() {
     let dateEnd = document.getElementById('cmo-date-end')?.value;
 
     if (!dateStart || !dateEnd) {
+        // Fallback rápido se ainda não inicializou o selector
         const now = new Date();
-        const start = new Date();
-        start.setDate(now.getDate() - 30);
-        const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        
-        dateStart = fmt(start);
-        dateEnd = fmt(now);
-        
-        if (document.getElementById('cmo-date-start')) document.getElementById('cmo-date-start').value = dateStart;
-        if (document.getElementById('cmo-date-end')) document.getElementById('cmo-date-end').value = dateEnd;
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const endDay = new Date(year, now.getMonth() + 1, 0).getDate();
+        dateStart = `${year}-${month}-01`;
+        dateEnd = `${year}-${month}-${String(endDay).padStart(2, '0')}`;
     }
     
     // Tenta carregar dados manuais gravados no localStorage para a data atual
@@ -270,5 +267,51 @@ async function loadGoogleManualInputs() {
     }
 }
 
+function initCMOMonthSelector() {
+    const selector = document.getElementById('cmo-month-selector');
+    if (!selector) return;
+    
+    const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    
+    const now = new Date();
+    let currentYear = now.getFullYear();
+    let currentMonth = now.getMonth();
+    
+    let html = '';
+    for (let i = 0; i < 12; i++) {
+        const monthName = months[currentMonth];
+        const year = currentYear;
+        
+        const start = `${year}-${String(currentMonth + 1).padStart(2, '0')}-01`;
+        const endDay = new Date(year, currentMonth + 1, 0).getDate();
+        const end = `${year}-${String(currentMonth + 1).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
+        
+        html += `<option value="${start}|${end}">${monthName} ${year}</option>`;
+        
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+    }
+    selector.innerHTML = html;
+    
+    const [start, end] = selector.value.split('|');
+    document.getElementById('cmo-date-start').value = start;
+    document.getElementById('cmo-date-end').value = end;
+}
+
+function updateCMOMonth() {
+    const selector = document.getElementById('cmo-month-selector');
+    if (!selector) return;
+    
+    const [start, end] = selector.value.split('|');
+    document.getElementById('cmo-date-start').value = start;
+    document.getElementById('cmo-date-end').value = end;
+    
+    loadCMOMetrics();
+}
+
 // Iniciar imediatamente para arquitetura SPA
+initCMOMonthSelector();
 loadCMOMetrics();
