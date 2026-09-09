@@ -641,6 +641,24 @@ window.setClicksPeriod = function(days) {
     document.getElementById('clicks-date-end').value = end.toISOString().split('T')[0];
     document.getElementById('clicks-date-start').value = start.toISOString().split('T')[0];
     
+    // Atualiza os estilos visuais dos botões
+    [7, 30, 60].forEach(d => {
+        const btn = document.getElementById('btn-clicks-' + d);
+        if (btn) {
+            if (d === days) {
+                btn.style.background = 'white';
+                btn.style.color = '#0f172a';
+                btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                btn.dataset.active = 'true';
+            } else {
+                btn.style.background = 'transparent';
+                btn.style.color = '#475569';
+                btn.style.boxShadow = 'none';
+                btn.dataset.active = 'false';
+            }
+        }
+    });
+
     window.loadClicksChartData();
 };
 
