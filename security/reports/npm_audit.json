@@ -43,6 +43,22 @@
             "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N"
           },
           "range": "<=2.0.1"
+        },
+        {
+          "source": 1193685,
+          "name": "extract-zip",
+          "dependency": "extract-zip",
+          "title": "extract-zip allows arbitrary file writes through symlink archive entries",
+          "url": "https://github.com/advisories/GHSA-7pqw-9j4j-h8q3",
+          "severity": "high",
+          "cwe": [
+            "CWE-22"
+          ],
+          "cvss": {
+            "score": 8.1,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:H/A:H"
+          },
+          "range": "<=2.0.1"
         }
       ],
       "effects": [
@@ -100,52 +116,6 @@
         "version": "25.10.0",
         "isSemVerMajor": true
       }
-    },
-    "qs": {
-      "name": "qs",
-      "severity": "moderate",
-      "isDirect": false,
-      "via": [
-        {
-          "source": 1158506,
-          "name": "qs",
-          "dependency": "qs",
-          "title": "qs array-limit bypass via bracket-key comma parsing",
-          "url": "https://github.com/advisories/GHSA-x5fp-wj9c-mxmx",
-          "severity": "moderate",
-          "cwe": [
-            "CWE-770"
-          ],
-          "cvss": {
-            "score": 3.7,
-            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:L"
-          },
-          "range": ">=6.14.2 <=6.15.3"
-        },
-        {
-          "source": 1158507,
-          "name": "qs",
-          "dependency": "qs",
-          "title": "qs: Denial of Service via Attacker Controlled isBuffer",
-          "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
-          "severity": "moderate",
-          "cwe": [
-            "CWE-248",
-            "CWE-703"
-          ],
-          "cvss": {
-            "score": 5.3,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
-          },
-          "range": ">=2.2.5 <6.16.0"
-        }
-      ],
-      "effects": [],
-      "range": "2.2.5 - 6.15.3",
-      "nodes": [
-        "node_modules/qs"
-      ],
-      "fixAvailable": true
     },
     "sequelize": {
       "name": "sequelize",
@@ -224,10 +194,10 @@
     "vulnerabilities": {
       "info": 0,
       "low": 0,
-      "moderate": 3,
+      "moderate": 2,
       "high": 5,
       "critical": 0,
-      "total": 8
+      "total": 7
     },
     "dependencies": {
       "prod": 353,

@@ -19,40 +19,96 @@
         </div>
     </div>
 
-    <!-- AI DECISION ENGINE -->
-<style>
-    @media (max-width: 768px) {
-        #ai-decision-action {
-            font-size: 1.5rem !important;
+    <!-- AI DECISION ENGINE 2.0 -->
+    <style>
+        @media (max-width: 768px) {
+            #ai-decision-action {
+                font-size: 1.5rem !important;
+                padding: 4px 8px !important;
+                white-space: normal;
+                text-align: center;
+            }
+            #ai-decision-reason {
+                font-size: 0.95rem !important;
+            }
+            .ai-header-container {
+                justify-content: flex-start !important;
+                margin-bottom: 10px !important;
+            }
         }
-        .ai-tag-label {
-            font-size: 0.7rem !important;
-            padding: 4px 8px !important;
-            white-space: normal;
-            text-align: center;
-        }
-        #ai-decision-reason {
-            font-size: 0.95rem !important;
-        }
-        .ai-header-container {
-            justify-content: flex-start !important;
-            margin-bottom: 10px !important;
-        }
-    }
-</style>
-<div class="kpi-grid" style="grid-template-columns: 1fr; margin-bottom: 30px;">
-        <div class="kpi-card" style="border-top-color: #3b82f6; background: #eff6ff; border: 1px solid #bfdbfe; grid-column: 1 / -1;">
+    </style>
+    
+    <div class="kpi-grid" style="grid-template-columns: 1fr; margin-bottom: 10px;">
+        <div class="kpi-card" style="border-top-color: #3b82f6; background: #eff6ff; border: 1px solid #bfdbfe; grid-column: 1 / -1; padding: 25px;">
             <div class="ai-header-container" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <span class="ai-tag-label" style="font-size: 0.85rem; background: #dbeafe; padding: 4px 12px; border-radius: 20px; color: #1e40af; font-weight: bold; text-transform: uppercase;">
-                    Recomendação da Inteligência Algorítmica
+                <span class="ai-tag-label" style="font-size: 0.85rem; background: #2563eb; padding: 6px 14px; border-radius: 20px; color: white; font-weight: bold; text-transform: uppercase;">
+                    Decisão de Investimento: Inteligência Algorítmica
+                </span>
+                <span id="ai-decision-confidence" style="font-size: 0.9rem; font-weight: bold; color: #1e3a8a; background: white; padding: 4px 10px; border-radius: 10px; border: 1px solid #93c5fd;">
+                    Confiança: 0%
                 </span>
             </div>
-            <div style="display: flex; align-items: flex-end; gap: 15px; margin-bottom: 10px;">
+            
+            <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px;">
                 <h4 id="ai-decision-action" style="font-size: 2.2rem; color: #1e3a8a; margin: 0; font-weight: 900;">Processando...</h4>
             </div>
-            <p id="ai-decision-reason" style="color: #3b82f6; font-size: 1.1rem; margin: 0; font-weight: 600;">
-                Calculando correlações entre CAC e Churn...
-            </p>
+
+            <!-- Grid de Detalhes da Decisão -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #dbeafe;">
+                    <p style="margin:0; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Teto de CAC Seguro</p>
+                    <h5 id="ai-target-cac" style="margin:0; font-size: 1.2rem; color: #0f172a;">-</h5>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #dbeafe;">
+                    <p style="margin:0; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Capacidade de Escala</p>
+                    <h5 id="ai-scale-capacity" style="margin:0; font-size: 1.2rem; color: #0f172a;">-</h5>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #dbeafe;">
+                    <p style="margin:0; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Tendência do CAC</p>
+                    <h5 id="ai-cac-trend" style="margin:0; font-size: 1.2rem; color: #0f172a;">-</h5>
+                </div>
+                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #dbeafe;">
+                    <p style="margin:0; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: bold;">CAC Marginal</p>
+                    <h5 id="ai-marginal-cac" style="margin:0; font-size: 1.2rem; color: #0f172a;">-</h5>
+                </div>
+            </div>
+
+            <div style="background: #1e3a8a; padding: 15px; border-radius: 10px;">
+                <p style="margin:0; font-size: 0.85rem; color: #93c5fd; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Recomendação Tática</p>
+                <p id="ai-decision-recommendation" style="color: white; font-size: 1.1rem; margin: 0; font-weight: 500;">
+                    Aguarde o processamento...
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerta de Invalidação -->
+    <div id="ai-decision-warning-container" style="display: none; background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #ef4444; padding: 15px 20px; border-radius: 8px; margin-bottom: 30px;">
+        <h4 style="margin: 0 0 5px 0; color: #991b1b; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+            ⚠️ O que pode invalidar essa decisão
+        </h4>
+        <p id="ai-decision-warning" style="margin: 0; color: #b91c1c; font-size: 0.95rem;">-</p>
+    </div>
+
+    <!-- TABELA COMPARATIVA DE CANAIS -->
+    <h3 class="crm-section-title" style="margin-bottom: 15px; margin-top: 40px;">Comparativo: Google vs Meta</h3>
+    <div class="tabela-container" style="margin-bottom: 30px;">
+        <div class="tabela-wrapper">
+            <table id="cmo-channels-table" class="tabela-gerenciamento">
+                <thead>
+                    <tr>
+                        <th>Canal</th>
+                        <th style="text-align: right;">Gasto Total</th>
+                        <th style="text-align: right;">Trials Gerados</th>
+                        <th style="text-align: right;">Assinantes (Pagantes)</th>
+                        <th style="text-align: right;">CPL</th>
+                        <th style="text-align: right;">CAC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="6" style="text-align: center;">Carregando...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
