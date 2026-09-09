@@ -45,7 +45,7 @@ html {
 }
 
 /* Campos de Data Arredondados (Pílula) para todo o Admin */
-input[type="date"] {
+input[type="date"], input.flatpickr-input {
     border-radius: 50px !important;
 }
 

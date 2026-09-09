@@ -274,7 +274,9 @@
     // Inicializa o Flatpickr globalmente em todos os inputs de data
     function initFlatpickr() {
         flatpickr("input[type='date']", {
-            dateFormat: "Y-m-d",
+            dateFormat: "Y-m-d", // Valor real enviado pro JS/API
+            altInput: true,      // Cria um input alternativo visual
+            altFormat: "d/m/Y",  // Formato visual Brasileiro
             locale: "pt",
             disableMobile: "true" // Força o calendário customizado no mobile
         });
