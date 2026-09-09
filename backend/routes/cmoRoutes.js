@@ -50,8 +50,7 @@ router.get('/dashboard', async (req, res) => {
                 SUM(CASE WHEN status = 'active' AND "firstPaidAt" IS NULL THEN 1 ELSE 0 END) as trials,
                 SUM(CASE WHEN status = 'inactive' OR "deletedAt" IS NOT NULL THEN 1 ELSE 0 END) as churned
             FROM "Psychologists"
-            WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd 
-            AND "first_utm_source" IN ('facebook', 'instagram', 'ig', 'meta', 'fb')
+            WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
         `;
         
         const [metaMetricsRes] = await sequelize.query(b2bQuery, {

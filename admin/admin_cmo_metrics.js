@@ -9,7 +9,8 @@ async function loadCMOMetrics() {
 
     if (!dateStart || !dateEnd) {
         const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const start = new Date();
+        start.setDate(now.getDate() - 30);
         const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         
         dateStart = fmt(start);
