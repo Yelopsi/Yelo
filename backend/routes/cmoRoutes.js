@@ -44,6 +44,10 @@ router.get('/dashboard', async (req, res) => {
         const totalPrevSpend = prevMetaSpend.spend + actualPrevGoogleSpend;
 
         // 3. Atribuição B2B (Meta Ads -> Psicólogos)
+        // NOTA: O rastreamento UTM nos anúncios Meta ainda não foi configurado nos links de destino.
+        // Por ora, contamos TODOS os psicólogos criados no período. 
+        // Quando os anúncios tiverem ?utm_source=meta_ads, adicionar filtro:
+        //   AND (utm_source IN ('meta_ads','facebook','instagram') OR "first_utm_source" IN (...))
         const b2bQuery = `
             SELECT 
                 SUM(CASE WHEN status = 'active' AND "firstPaidAt" IS NOT NULL THEN 1 ELSE 0 END) as pagantes,
@@ -51,7 +55,6 @@ router.get('/dashboard', async (req, res) => {
                 SUM(CASE WHEN status = 'inactive' OR "deletedAt" IS NOT NULL THEN 1 ELSE 0 END) as churned
             FROM "Psychologists"
             WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
-            AND "first_utm_source" IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
         `;
         
         const [metaMetricsRes] = await sequelize.query(b2bQuery, {
