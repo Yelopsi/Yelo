@@ -38,105 +38,129 @@
         }
     </style>
     
-    <div class="kpi-grid" style="grid-template-columns: 1fr; margin-bottom: 10px;">
-        <div class="kpi-card" style="border-top-color: #3b82f6; background: #eff6ff; border: 1px solid #bfdbfe; grid-column: 1 / -1; padding: 25px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 30px;">
+        <!-- MOTOR META B2B -->
+        <div class="kpi-card" style="border-top-color: #3b82f6; background: #eff6ff; border: 1px solid #bfdbfe; padding: 25px;">
             <div class="ai-header-container" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <span class="ai-tag-label" style="font-size: 0.85rem; background: #2563eb; padding: 6px 14px; border-radius: 20px; color: white; font-weight: bold; text-transform: uppercase;">
-                    Decisão de Investimento: Inteligência Algorítmica
+                    Decisão Meta (B2B - Psicólogos)
                 </span>
-                <span id="ai-decision-confidence" style="font-size: 0.9rem; font-weight: bold; color: #1e3a8a; background: white; padding: 4px 10px; border-radius: 10px; border: 1px solid #93c5fd;">
+                <span id="ai-meta-confidence" style="font-size: 0.9rem; font-weight: bold; color: #1e3a8a; background: white; padding: 4px 10px; border-radius: 10px; border: 1px solid #93c5fd;">
                     Confiança: 0%
                 </span>
             </div>
-            
             <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px;">
-                <h4 id="ai-decision-action" style="font-size: 2.2rem; color: #1e3a8a; margin: 0; font-weight: 900;">Processando...</h4>
+                <h4 id="ai-meta-action" style="font-size: 1.8rem; color: #1e3a8a; margin: 0; font-weight: 900;">Processando...</h4>
             </div>
-
-            <!-- Grid de Detalhes da Decisão -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #dbeafe;">
-                    <p style="margin:0; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Teto de CAC Seguro</p>
-                    <h5 id="ai-target-cac" style="margin:0; font-size: 1.2rem; color: #0f172a;">-</h5>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <div style="background: white; padding: 10px; border-radius: 8px; border: 1px solid #dbeafe;">
+                    <p style="margin:0; font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Teto CAC B2B</p>
+                    <h5 id="ai-meta-target" style="margin:0; font-size: 1.1rem; color: #0f172a;">-</h5>
                 </div>
-                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #dbeafe;">
-                    <p style="margin:0; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Capacidade de Escala</p>
-                    <h5 id="ai-scale-capacity" style="margin:0; font-size: 1.2rem; color: #0f172a;">-</h5>
+                <div style="background: white; padding: 10px; border-radius: 8px; border: 1px solid #dbeafe;">
+                    <p style="margin:0; font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Capacidade</p>
+                    <h5 id="ai-meta-scale" style="margin:0; font-size: 1.1rem; color: #0f172a;">-</h5>
                 </div>
-                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #dbeafe;">
-                    <p style="margin:0; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Tendência do CAC</p>
-                    <h5 id="ai-cac-trend" style="margin:0; font-size: 1.2rem; color: #0f172a;">-</h5>
-                </div>
-                <div style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #dbeafe;">
-                    <p style="margin:0; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: bold;">CAC Marginal</p>
-                    <h5 id="ai-marginal-cac" style="margin:0; font-size: 1.2rem; color: #0f172a;">-</h5>
+                <div style="background: white; padding: 10px; border-radius: 8px; border: 1px solid #dbeafe;">
+                    <p style="margin:0; font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Tendência CAC</p>
+                    <h5 id="ai-meta-trend" style="margin:0; font-size: 1.1rem; color: #0f172a;">-</h5>
                 </div>
             </div>
-
             <div style="background: #1e3a8a; padding: 15px; border-radius: 10px;">
-                <p style="margin:0; font-size: 0.85rem; color: #93c5fd; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Recomendação Tática</p>
-                <p id="ai-decision-recommendation" style="color: white; font-size: 1.1rem; margin: 0; font-weight: 500;">
+                <p style="margin:0; font-size: 0.8rem; color: #93c5fd; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Recomendação Meta</p>
+                <p id="ai-meta-recommendation" style="color: white; font-size: 1rem; margin: 0; font-weight: 500;">
                     Aguarde o processamento...
                 </p>
             </div>
+            <div id="ai-meta-warning-container" style="display: none; margin-top: 15px; background: #fef2f2; border-left: 4px solid #ef4444; padding: 10px; border-radius: 4px;">
+                <p id="ai-meta-warning" style="margin: 0; color: #b91c1c; font-size: 0.85rem;">-</p>
+            </div>
+        </div>
+
+        <!-- MOTOR GOOGLE B2C -->
+        <div class="kpi-card" style="border-top-color: #10b981; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 25px;">
+            <div class="ai-header-container" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span class="ai-tag-label" style="font-size: 0.85rem; background: #059669; padding: 6px 14px; border-radius: 20px; color: white; font-weight: bold; text-transform: uppercase;">
+                    Decisão Google (B2C - Pacientes)
+                </span>
+                <span id="ai-google-confidence" style="font-size: 0.9rem; font-weight: bold; color: #064e3b; background: white; padding: 4px 10px; border-radius: 10px; border: 1px solid #6ee7b7;">
+                    Confiança: 0%
+                </span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px;">
+                <h4 id="ai-google-action" style="font-size: 1.8rem; color: #064e3b; margin: 0; font-weight: 900;">Processando...</h4>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                <div style="background: white; padding: 10px; border-radius: 8px; border: 1px solid #a7f3d0;">
+                    <p style="margin:0; font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Teto CPA B2C</p>
+                    <h5 id="ai-google-target" style="margin:0; font-size: 1.1rem; color: #0f172a;">-</h5>
+                </div>
+                <div style="background: white; padding: 10px; border-radius: 8px; border: 1px solid #a7f3d0;">
+                    <p style="margin:0; font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Capacidade</p>
+                    <h5 id="ai-google-scale" style="margin:0; font-size: 1.1rem; color: #0f172a;">-</h5>
+                </div>
+                <div style="background: white; padding: 10px; border-radius: 8px; border: 1px solid #a7f3d0;">
+                    <p style="margin:0; font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: bold;">Tendência CPA</p>
+                    <h5 id="ai-google-trend" style="margin:0; font-size: 1.1rem; color: #0f172a;">-</h5>
+                </div>
+            </div>
+            <div style="background: #064e3b; padding: 15px; border-radius: 10px;">
+                <p style="margin:0; font-size: 0.8rem; color: #6ee7b7; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Recomendação Google</p>
+                <p id="ai-google-recommendation" style="color: white; font-size: 1rem; margin: 0; font-weight: 500;">
+                    Aguarde o processamento...
+                </p>
+            </div>
+            <div id="ai-google-warning-container" style="display: none; margin-top: 15px; background: #fef2f2; border-left: 4px solid #ef4444; padding: 10px; border-radius: 4px;">
+                <p id="ai-google-warning" style="margin: 0; color: #b91c1c; font-size: 0.85rem;">-</p>
+            </div>
         </div>
     </div>
 
-    <!-- Alerta de Invalidação -->
-    <div id="ai-decision-warning-container" style="display: none; background: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #ef4444; padding: 15px 20px; border-radius: 8px; margin-bottom: 30px;">
-        <h4 style="margin: 0 0 5px 0; color: #991b1b; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
-            ⚠️ O que pode invalidar essa decisão
-        </h4>
-        <p id="ai-decision-warning" style="margin: 0; color: #b91c1c; font-size: 0.95rem;">-</p>
-    </div>
-
-    <!-- TABELA COMPARATIVA DE CANAIS -->
-    <h3 class="crm-section-title" style="margin-bottom: 15px; margin-top: 40px;">Comparativo: Google vs Meta</h3>
-    <div class="tabela-container" style="margin-bottom: 30px;">
-        <div class="tabela-wrapper">
-            <table id="cmo-channels-table" class="tabela-gerenciamento">
-                <thead>
-                    <tr>
-                        <th>Canal</th>
-                        <th style="text-align: right;">Gasto Total</th>
-                        <th style="text-align: right;">Trials Gerados</th>
-                        <th style="text-align: right;">Assinantes (Pagantes)</th>
-                        <th style="text-align: right;">CPL</th>
-                        <th style="text-align: right;">CAC</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="6" style="text-align: center;">Carregando...</td></tr>
-                </tbody>
-            </table>
+    <!-- HIGH-LEVEL KPIs B2B (META) -->
+    <h3 class="crm-section-title first" style="margin-bottom: 15px; display:flex; align-items:center; gap:10px;">
+        <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16" style="color:#1877f2"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/></svg>
+        Desempenho B2B (Meta Ads / Psicólogos)
+    </h3>
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 30px;">
+        <div class="kpi-card" style="border-top-color: #3b82f6;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Gasto Meta</div>
+            <h4 id="cmo-meta-spend" style="font-size: 1.8rem; color: #1e293b; margin: 0; font-weight: 800;">R$ 0,00</h4>
         </div>
-    </div>
-
-    <!-- HIGH-LEVEL KPIs -->
-    <h3 class="crm-section-title first" style="margin-bottom: 15px;">Métricas Consolidadas (Meta + Google)</h3>
-    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-bottom: 30px;">
-        <!-- Gastos -->
-        <div class="kpi-card" style="border-top-color: #ef4444;">
-            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Gasto Total</div>
-            <h4 id="cmo-total-spend" style="font-size: 2rem; color: #1e293b; margin: 0; font-weight: 800;">R$ 0,00</h4>
-        </div>
-
-        <!-- Conversões -->
-        <div class="kpi-card" style="border-top-color: #10b981;">
-            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Assinaturas Geradas</div>
-            <h4 id="cmo-total-paying" style="font-size: 2rem; color: #1e293b; margin: 0; font-weight: 800;">0</h4>
-        </div>
-
-        <!-- CPL (Trials) -->
         <div class="kpi-card" style="border-top-color: #f59e0b;">
-            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">CAC (Custo de Aquisição)</div>
-            <h4 id="cmo-cac" style="font-size: 2rem; color: #1e293b; margin: 0; font-weight: 800;">R$ 0,00</h4>
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Trials Gerados</div>
+            <h4 id="cmo-meta-trials" style="font-size: 1.8rem; color: #1e293b; margin: 0; font-weight: 800;">0</h4>
         </div>
+        <div class="kpi-card" style="border-top-color: #10b981;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Novos Assinantes</div>
+            <h4 id="cmo-meta-pagantes" style="font-size: 1.8rem; color: #1e293b; margin: 0; font-weight: 800;">0</h4>
+        </div>
+        <div class="kpi-card" style="border-top-color: #8b5cf6;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">CAC B2B</div>
+            <h4 id="cmo-meta-cac" style="font-size: 1.8rem; color: #1e293b; margin: 0; font-weight: 800;">R$ 0,00</h4>
+        </div>
+    </div>
 
-        <!-- Churn -->
-        <div class="kpi-card" style="border-top-color: #64748b;">
-            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Volume de Churns (Cancelamentos)</div>
-            <h4 id="cmo-churn" style="font-size: 2rem; color: #1e293b; margin: 0; font-weight: 800;">0</h4>
+    <!-- HIGH-LEVEL KPIs B2C (GOOGLE) -->
+    <h3 class="crm-section-title" style="margin-bottom: 15px; display:flex; align-items:center; gap:10px;">
+        <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16" style="color:#ea4335"><path d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.689 7.689 0 0 1 5.352 2.082l-2.284 2.284A4.347 4.347 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.792 4.792 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.702 3.702 0 0 0 1.599-2.431H8v-3.08h7.545z"/></svg>
+        Desempenho B2C (Google Ads / Pacientes)
+    </h3>
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 40px;">
+        <div class="kpi-card" style="border-top-color: #ef4444;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Gasto Google</div>
+            <h4 id="cmo-google-spend" style="font-size: 1.8rem; color: #1e293b; margin: 0; font-weight: 800;">R$ 0,00</h4>
+        </div>
+        <div class="kpi-card" style="border-top-color: #f59e0b;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Cliques WPP</div>
+            <h4 id="cmo-google-clicks" style="font-size: 1.8rem; color: #1e293b; margin: 0; font-weight: 800;">0</h4>
+        </div>
+        <div class="kpi-card" style="border-top-color: #10b981;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Pacientes Fechados</div>
+            <h4 id="cmo-google-deals" style="font-size: 1.8rem; color: #1e293b; margin: 0; font-weight: 800;">0</h4>
+        </div>
+        <div class="kpi-card" style="border-top-color: #8b5cf6;">
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">CPA (Custo p/ Paciente)</div>
+            <h4 id="cmo-google-cpa" style="font-size: 1.8rem; color: #1e293b; margin: 0; font-weight: 800;">R$ 0,00</h4>
         </div>
     </div>
 

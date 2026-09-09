@@ -72,95 +72,86 @@ function renderCMOMetrics(data) {
     if (document.getElementById('cmo-churn')) document.getElementById('cmo-churn').textContent = data.platform?.churned || 0;
     
     // Popula Cards da Inteligência Algorítmica (Funil B2B)
-    if(document.getElementById('cmo-whatsapp-clicks')) {
-        document.getElementById('cmo-whatsapp-clicks').textContent = data.platform.whatsappClicks || 0;
-        document.getElementById('cmo-closed-deals').textContent = data.platform.closedDeals || 0;
-        document.getElementById('cmo-trials').textContent = data.platform.trials || 0;
-        document.getElementById('cmo-pagantes').textContent = data.platform.pagantes || 0;
-        document.getElementById('cmo-churn').textContent = data.platform.churned || 0;
-        document.getElementById('cmo-trial-to-paid').textContent = (data.platform.trialToPaid || 0) + '%';
-        document.getElementById('cmo-ltv').textContent = formatCurrency(data.platform.ltv || 0);
-        document.getElementById('cmo-ltvcac').textContent = (data.platform.ltvCacRatio || 0) + 'x';
+    if (data.platform) {
+        // B2B (Meta) KPIs
+        document.getElementById('cmo-meta-spend').textContent = formatCurrency(data.ads?.meta?.spend || 0);
+        document.getElementById('cmo-meta-trials').textContent = (data.platform.b2b?.trials || 0).toLocaleString('pt-BR');
+        document.getElementById('cmo-meta-pagantes').textContent = (data.platform.b2b?.pagantes || 0).toLocaleString('pt-BR');
+        document.getElementById('cmo-meta-cac').textContent = formatCurrency(data.ads?.meta?.cac || 0);
+
+        // B2C (Google) KPIs
+        document.getElementById('cmo-google-spend').textContent = formatCurrency(data.ads?.google?.spend || 0);
+        document.getElementById('cmo-google-clicks').textContent = (data.platform.b2c?.clicks || 0).toLocaleString('pt-BR');
+        document.getElementById('cmo-google-deals').textContent = (data.platform.b2c?.deals || 0).toLocaleString('pt-BR');
+        document.getElementById('cmo-google-cpa').textContent = formatCurrency(data.ads?.google?.cpa || 0);
     }
 
-    // 2. Atualizar Motor de Decisão
-    const actionEl = document.getElementById('ai-decision-action');
-    const warningContainer = document.getElementById('ai-decision-warning-container');
-    const warningEl = document.getElementById('ai-decision-warning');
+    // 2. Atualizar Motor de Decisão Meta (B2B)
+    if (data.decisionEngineMeta) {
+        const actionEl = document.getElementById('ai-meta-action');
+        const warningContainer = document.getElementById('ai-meta-warning-container');
+        const warningEl = document.getElementById('ai-meta-warning');
 
-    if (data.decisionEngine) {
         if(actionEl) {
-            actionEl.textContent = data.decisionEngine.action;
-            if (data.decisionEngine.action.includes('AUMENTAR')) {
-                actionEl.style.color = '#10b981'; // Verde
-            } else if (data.decisionEngine.action.includes('PAUSAR') || data.decisionEngine.action.includes('TETO') || data.decisionEngine.action.includes('INVESTIGAR')) {
-                actionEl.style.color = '#ef4444'; // Vermelho
-            } else {
-                actionEl.style.color = '#f59e0b'; // Laranja
-            }
+            actionEl.textContent = data.decisionEngineMeta.action;
+            if (data.decisionEngineMeta.action.includes('AUMENTAR')) actionEl.style.color = '#10b981';
+            else if (data.decisionEngineMeta.action.includes('PAUSAR') || data.decisionEngineMeta.action.includes('TETO') || data.decisionEngineMeta.action.includes('INVESTIGAR')) actionEl.style.color = '#ef4444';
+            else actionEl.style.color = '#f59e0b';
         }
 
-        if(document.getElementById('ai-decision-confidence')) document.getElementById('ai-decision-confidence').textContent = `Confiança: ${data.decisionEngine.confidence || 0}%`;
-        if(document.getElementById('ai-target-cac')) document.getElementById('ai-target-cac').textContent = formatCurrency(data.decisionEngine.targetCac);
-        if(document.getElementById('ai-scale-capacity')) document.getElementById('ai-scale-capacity').textContent = data.decisionEngine.scaleCapacity || '-';
+        document.getElementById('ai-meta-confidence').textContent = `Confiança: ${data.decisionEngineMeta.confidence || 0}%`;
+        document.getElementById('ai-meta-target').textContent = formatCurrency(data.decisionEngineMeta.target);
+        document.getElementById('ai-meta-scale').textContent = data.decisionEngineMeta.scaleCapacity || '-';
         
-        if(document.getElementById('ai-cac-trend')) {
-            const trend = data.decisionEngine.cacTrend || 0;
-            const trendEl = document.getElementById('ai-cac-trend');
+        const trend = data.decisionEngineMeta.trend || 0;
+        const trendEl = document.getElementById('ai-meta-trend');
+        if (trendEl) {
             trendEl.textContent = `${trend > 0 ? '↑' : '↓'} ${formatCurrency(Math.abs(trend))}`;
-            trendEl.style.color = trend > 0 ? '#ef4444' : '#10b981'; // Se aumentou o CAC, é ruim (vermelho)
+            trendEl.style.color = trend > 0 ? '#ef4444' : '#10b981';
         }
-
-        if(document.getElementById('ai-marginal-cac')) document.getElementById('ai-marginal-cac').textContent = formatCurrency(data.platform?.marginalCac || 0);
         
-        if(document.getElementById('ai-decision-recommendation')) {
-            document.getElementById('ai-decision-recommendation').textContent = data.decisionEngine.recommendation || '';
-        }
+        document.getElementById('ai-meta-recommendation').textContent = data.decisionEngineMeta.recommendation || '';
 
-        if (data.decisionEngine.warning) {
+        if (data.decisionEngineMeta.warning) {
             if(warningContainer) warningContainer.style.display = 'block';
-            if(warningEl) warningEl.textContent = data.decisionEngine.warning;
+            if(warningEl) warningEl.textContent = data.decisionEngineMeta.warning;
         } else {
             if(warningContainer) warningContainer.style.display = 'none';
         }
     }
 
-    // 3. Atualizar Tabela Comparativa de Canais
-    const channelsTable = document.querySelector('#cmo-channels-table tbody');
-    if (channelsTable && data.ads) {
-        channelsTable.innerHTML = '';
-        const canais = [
-            {
-                name: 'Google Ads',
-                spend: data.ads.google?.spend || 0,
-                trials: data.platform.google_trials || 0,
-                pagantes: data.platform.google_pagantes || 0,
-                cac: data.ads.google?.cac || 0,
-                icon: '<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="color:#ea4335"><path d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.689 7.689 0 0 1 5.352 2.082l-2.284 2.284A4.347 4.347 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.792 4.792 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.702 3.702 0 0 0 1.599-2.431H8v-3.08h7.545z"/></svg>'
-            },
-            {
-                name: 'Meta Ads (FB/IG)',
-                spend: data.ads.meta?.spend || 0,
-                trials: data.platform.meta_trials || 0,
-                pagantes: data.platform.meta_pagantes || 0,
-                cac: data.ads.meta?.cac || 0,
-                icon: '<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="color:#1877f2"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/></svg>'
-            }
-        ];
+    // 3. Atualizar Motor de Decisão Google (B2C)
+    if (data.decisionEngineGoogle) {
+        const actionEl = document.getElementById('ai-google-action');
+        const warningContainer = document.getElementById('ai-google-warning-container');
+        const warningEl = document.getElementById('ai-google-warning');
 
-        canais.forEach(c => {
-            const tr = document.createElement('tr');
-            const cpl = c.trials > 0 ? (c.spend / c.trials) : 0;
-            tr.innerHTML = `
-                <td style="display:flex; align-items:center; gap:8px; font-weight:600; color:#1e293b;">${c.icon} ${c.name}</td>
-                <td style="text-align: right;">${formatCurrency(c.spend)}</td>
-                <td style="text-align: right;">${c.trials.toLocaleString('pt-BR')}</td>
-                <td style="text-align: right;">${c.pagantes.toLocaleString('pt-BR')}</td>
-                <td style="text-align: right;">${formatCurrency(cpl)}</td>
-                <td style="text-align: right; font-weight:bold; color:${c.cac > 0 ? '#0f172a' : '#94a3b8'};">${formatCurrency(c.cac)}</td>
-            `;
-            channelsTable.appendChild(tr);
-        });
+        if(actionEl) {
+            actionEl.textContent = data.decisionEngineGoogle.action;
+            if (data.decisionEngineGoogle.action.includes('AUMENTAR')) actionEl.style.color = '#059669'; // Verde mais escuro para Google
+            else if (data.decisionEngineGoogle.action.includes('PAUSAR') || data.decisionEngineGoogle.action.includes('TETO') || data.decisionEngineGoogle.action.includes('INVESTIGAR')) actionEl.style.color = '#ef4444';
+            else actionEl.style.color = '#f59e0b';
+        }
+
+        document.getElementById('ai-google-confidence').textContent = `Confiança: ${data.decisionEngineGoogle.confidence || 0}%`;
+        document.getElementById('ai-google-target').textContent = formatCurrency(data.decisionEngineGoogle.target);
+        document.getElementById('ai-google-scale').textContent = data.decisionEngineGoogle.scaleCapacity || '-';
+        
+        const trend = data.decisionEngineGoogle.trend || 0;
+        const trendEl = document.getElementById('ai-google-trend');
+        if (trendEl) {
+            trendEl.textContent = `${trend > 0 ? '↑' : '↓'} ${formatCurrency(Math.abs(trend))}`;
+            trendEl.style.color = trend > 0 ? '#ef4444' : '#10b981';
+        }
+        
+        document.getElementById('ai-google-recommendation').textContent = data.decisionEngineGoogle.recommendation || '';
+
+        if (data.decisionEngineGoogle.warning) {
+            if(warningContainer) warningContainer.style.display = 'block';
+            if(warningEl) warningEl.textContent = data.decisionEngineGoogle.warning;
+        } else {
+            if(warningContainer) warningContainer.style.display = 'none';
+        }
     }
 
     // 4. Atualizar Tabela de Campanhas Meta (Detalhada)
