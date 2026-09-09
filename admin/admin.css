@@ -47,6 +47,24 @@ html {
 /* Campos de Data Arredondados (Pílula) para todo o Admin */
 input[type="date"], input.flatpickr-input {
     border-radius: 50px !important;
+    padding: 8px 15px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.9rem;
+    color: #475569;
+    background: white;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Estilo específico para inputs de data no cabeçalho (Header) do Dashboard CMO */
+.main-header input.flatpickr-input {
+    background: rgba(255,255,255,0.1) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    width: 140px;
+    text-align: center;
+    color-scheme: dark !important;
 }
 
 /* Botões em formato de Pílula para todo o Admin */

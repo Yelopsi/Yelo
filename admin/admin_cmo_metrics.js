@@ -63,11 +63,25 @@ async function loadCMOMetrics() {
 }
 
 function renderCMOMetrics(data) {
+    const formatCurrency = (val) => `R$ ${(val || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
     // 1. Atualizar KPIs Consolidados
-    if (document.getElementById('cmo-total-spend')) document.getElementById('cmo-total-spend').textContent = `R$ ${(data.ads?.totalSpend || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    if (document.getElementById('cmo-total-spend')) document.getElementById('cmo-total-spend').textContent = formatCurrency(data.ads?.totalSpend);
     if (document.getElementById('cmo-total-paying')) document.getElementById('cmo-total-paying').textContent = data.platform?.pagantes || 0;
-    if (document.getElementById('cmo-cac')) document.getElementById('cmo-cac').textContent = `R$ ${(data.platform?.cac || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    if (document.getElementById('cmo-cac')) document.getElementById('cmo-cac').textContent = formatCurrency(data.platform.cac);
     if (document.getElementById('cmo-churn')) document.getElementById('cmo-churn').textContent = data.platform?.churned || 0;
+    
+    // Popula Cards da Inteligência Algorítmica (Funil B2B)
+    if(document.getElementById('cmo-whatsapp-clicks')) {
+        document.getElementById('cmo-whatsapp-clicks').textContent = data.platform.whatsappClicks || 0;
+        document.getElementById('cmo-closed-deals').textContent = data.platform.closedDeals || 0;
+        document.getElementById('cmo-trials').textContent = data.platform.trials || 0;
+        document.getElementById('cmo-pagantes').textContent = data.platform.pagantes || 0;
+        document.getElementById('cmo-churn').textContent = data.platform.churned || 0;
+        document.getElementById('cmo-trial-to-paid').textContent = (data.platform.trialToPaid || 0) + '%';
+        document.getElementById('cmo-ltv').textContent = formatCurrency(data.platform.ltv || 0);
+        document.getElementById('cmo-ltvcac').textContent = (data.platform.ltvCacRatio || 0) + 'x';
+    }
 
     // 2. Atualizar Motor de Decisão
     const actionEl = document.getElementById('ai-decision-action');

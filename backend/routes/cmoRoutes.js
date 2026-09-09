@@ -40,9 +40,35 @@ router.get('/dashboard', async (req, res) => {
         const totalSpend = metaSpend.spend + googleSpend.spend;
         const totalTrials = parseInt(pMetrics.trials || 0);
         const totalPagantes = parseInt(pMetrics.pagantes || 0);
+        const totalChurned = parseInt(pMetrics.churned || 0);
         
         const cac = totalPagantes > 0 ? (totalSpend / totalPagantes).toFixed(2) : 0;
         const cpl = totalTrials > 0 ? (totalSpend / totalTrials).toFixed(2) : 0;
+
+        // Fetch Whatsapp Clicks and Deals (Feedback do Funil)
+        const clicksQuery = `
+            SELECT 
+                COUNT(*) as total_clicks,
+                SUM(CASE WHEN "dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as total_deals
+            FROM "WhatsAppClickLogs"
+            WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
+        `;
+        
+        const clicksResult = await sequelize.query(clicksQuery, {
+            replacements: { dateStart, dateEnd: dateEnd + ' 23:59:59' },
+            type: sequelize.QueryTypes.SELECT
+        });
+        
+        const wppMetrics = clicksResult[0];
+        const whatsappClicks = parseInt(wppMetrics.total_clicks || 0);
+        const closedDeals = parseInt(wppMetrics.total_deals || 0);
+
+        // LTV e LTV:CAC Ratio
+        const arpu = 99; // Ticket médio base
+        const churnRate = totalPagantes > 0 ? (totalChurned / (totalPagantes + totalChurned)) : 0.05; // 5% default se não houver dados reais suficientes
+        const ltv = arpu / (churnRate > 0 ? churnRate : 0.05);
+        const ltvCacRatio = cac > 0 ? (ltv / cac) : 0;
+        const trialToPaid = totalTrials > 0 ? ((totalPagantes / totalTrials) * 100).toFixed(1) : 0;
 
         // 3. Motor de Decisão Simples
         // 3. Motor de Decisão Simples
@@ -93,10 +119,15 @@ router.get('/dashboard', async (req, res) => {
             platform: {
                 trials: totalTrials,
                 pagantes: totalPagantes,
-                churned: parseInt(pMetrics.churned || 0),
+                churned: totalChurned,
                 total_cadastros: parseInt(pMetrics.total_cadastros || 0),
                 cac: parseFloat(cac),
-                cpl: parseFloat(cpl)
+                cpl: parseFloat(cpl),
+                whatsappClicks: whatsappClicks,
+                closedDeals: closedDeals,
+                ltv: parseFloat(ltv.toFixed(2)),
+                ltvCacRatio: parseFloat(ltvCacRatio.toFixed(2)),
+                trialToPaid: parseFloat(trialToPaid)
             },
             decisionEngine: decisionEngine
         });
