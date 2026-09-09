@@ -5,10 +5,10 @@
             <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 1.05rem;">Motor de Decisão Executiva de Tráfego Pago (Meta & Google).</p>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <select id="cmo-month-selector" onchange="loadCMOMetrics()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; font-weight: 600; color: white; cursor: pointer; outline: none; appearance: auto;">
-                <option value="current" style="color: black;">Mês Atual</option>
-                <option value="last" style="color: black;">Mês Passado</option>
-            </select>
+            <div style="display: flex; gap: 5px; align-items: center;">
+                <input type="date" id="cmo-date-start" onchange="loadCMOMetrics()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 50px; font-weight: 600; color: white; cursor: pointer; outline: none; color-scheme: dark;">
+                <input type="date" id="cmo-date-end" onchange="loadCMOMetrics()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 50px; font-weight: 600; color: white; cursor: pointer; outline: none; color-scheme: dark;">
+            </div>
             <button onclick="loadCMOMetrics()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; font-weight: 600; color: white; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s;">
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
                 Atualizar
@@ -41,7 +41,7 @@
     }
 </style>
 <div class="kpi-grid" style="grid-template-columns: 1fr; margin-bottom: 30px;">
-        <div class="kpi-card" style="border-top-color: #3b82f6; background: #eff6ff; border: 1px solid #bfdbfe;">
+        <div class="kpi-card" style="border-top-color: #3b82f6; background: #eff6ff; border: 1px solid #bfdbfe; grid-column: 1 / -1;">
             <div class="ai-header-container" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <span class="ai-tag-label" style="font-size: 0.85rem; background: #dbeafe; padding: 4px 12px; border-radius: 20px; color: #1e40af; font-weight: bold; text-transform: uppercase;">
                     Recomendação da Inteligência Algorítmica
@@ -95,10 +95,11 @@
                         <th style="text-align: right;">Gasto (R$)</th>
                         <th style="text-align: right;">Impressões</th>
                         <th style="text-align: right;">Cliques</th>
+                        <th style="text-align: right;">Conversões</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td colspan="4" style="text-align:center; padding: 20px;">Carregando dados da API...</td></tr>
+                    <tr><td colspan="5" style="text-align:center; padding: 20px;">Carregando dados da API...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -111,14 +112,22 @@
             <table id="cmo-google-table" class="tabela-gerenciamento">
                 <thead>
                     <tr>
-                        <th>Nome da Campanha</th>
+                        <th>Nome da Campanha (Manual)</th>
                         <th style="text-align: right;">Gasto (R$)</th>
                         <th style="text-align: right;">Impressões</th>
                         <th style="text-align: right;">Cliques</th>
+                        <th style="text-align: right;">Conversões</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td colspan="4" style="text-align:center; padding: 20px;">Carregando dados da API...</td></tr>
+                    <!-- Inputs Manuais -->
+                    <tr>
+                        <td><input type="text" placeholder="Nome da Campanha" style="width: 100%; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px;"></td>
+                        <td style="text-align: right;"><input type="text" placeholder="R$ 0,00" style="width: 100px; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px; text-align: right;"></td>
+                        <td style="text-align: right;"><input type="number" placeholder="0" style="width: 80px; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px; text-align: right;"></td>
+                        <td style="text-align: right;"><input type="number" placeholder="0" style="width: 80px; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px; text-align: right;"></td>
+                        <td style="text-align: right;"><input type="number" placeholder="0" style="width: 80px; border: 1px solid #e2e8f0; padding: 6px; border-radius: 4px; text-align: right;"></td>
+                    </tr>
                 </tbody>
             </table>
         </div>

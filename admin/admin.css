@@ -43,6 +43,11 @@ body.pagina-dashboard {
 html {
     height: 100%; /* Garante que o html ocupe 100% da altura do viewport */
 }
+
+/* Campos de Data Arredondados (Pílula) para todo o Admin */
+input[type="date"] {
+    border-radius: 50px !important;
+}
 .pagina-dashboard h1, .pagina-dashboard h2, .pagina-dashboard h3, .pagina-dashboard h4 {
     font-family: var(--font-titulos); /* Padronizado: New Kansas */
     font-weight: 500; /* Medium para melhor leitura */

@@ -4,17 +4,19 @@ async function loadCMOMetrics() {
         window.location.href = '/login';
         return;
     }
-    const month = document.getElementById('cmo-month-selector')?.value || 'current';
-    
-    const now = new Date();
-    let dateStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    let dateEnd = new Date().toISOString().split('T')[0];
+    let dateStart = document.getElementById('cmo-date-start')?.value;
+    let dateEnd = document.getElementById('cmo-date-end')?.value;
 
-    if (month === 'last') {
-        const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-        dateStart = firstDayLastMonth.toISOString().split('T')[0];
-        dateEnd = lastDayLastMonth.toISOString().split('T')[0];
+    if (!dateStart || !dateEnd) {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        
+        dateStart = fmt(start);
+        dateEnd = fmt(now);
+        
+        if (document.getElementById('cmo-date-start')) document.getElementById('cmo-date-start').value = dateStart;
+        if (document.getElementById('cmo-date-end')) document.getElementById('cmo-date-end').value = dateEnd;
     }
 
     try {
@@ -91,33 +93,18 @@ function renderCMOMetrics(data) {
                     <td style="text-align: right;">R$ ${(c.spend || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                     <td style="text-align: right;">${(c.impressions || 0).toLocaleString('pt-BR')}</td>
                     <td style="text-align: right;">${(c.clicks || 0).toLocaleString('pt-BR')}</td>
+                    <td style="text-align: right;">${(c.conversions || 0).toLocaleString('pt-BR')}</td>
                 `;
                 metaTable.appendChild(tr);
             });
         } else {
-            metaTable.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhuma campanha Meta encontrada no período.</td></tr>';
+            metaTable.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhuma campanha Meta encontrada no período.</td></tr>';
         }
     }
 
     // 4. Atualizar Tabela Google
-    const googleTable = document.querySelector('#cmo-google-table tbody');
-    if (googleTable) {
-        googleTable.innerHTML = '';
-        if (data.campaigns?.google && data.campaigns.google.length > 0) {
-            data.campaigns.google.forEach(c => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${c.campaign_name || c.id}</td>
-                    <td style="text-align: right;">R$ ${(c.spend || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td style="text-align: right;">${(c.impressions || 0).toLocaleString('pt-BR')}</td>
-                    <td style="text-align: right;">${(c.clicks || 0).toLocaleString('pt-BR')}</td>
-                `;
-                googleTable.appendChild(tr);
-            });
-        } else {
-            googleTable.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhuma campanha Google encontrada no período.</td></tr>';
-        }
-    }
+    // A tabela do Google está em modo manual temporário (HTML estático).
+    // O JS não sobrescreve os inputs do usuário.
 }
 
 // Iniciar imediatamente para arquitetura SPA
