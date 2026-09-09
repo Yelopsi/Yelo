@@ -98,6 +98,18 @@ function renderCMOMetrics(data) {
         document.getElementById('cmo-google-clicks').textContent = (data.platform.b2c?.clicks || 0).toLocaleString('pt-BR');
         document.getElementById('cmo-google-deals').textContent = (data.platform.b2c?.deals || 0).toLocaleString('pt-BR');
         document.getElementById('cmo-google-cpa').textContent = formatCurrency(data.ads?.google?.cpa || 0);
+
+        // Cards de Transparência (seção inferior)
+        const setDbg = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        setDbg('dbg-meta-spend',    formatCurrency(data.ads?.meta?.spend || 0));
+        setDbg('dbg-meta-trials',   (data.platform.b2b?.trials || 0).toLocaleString('pt-BR'));
+        setDbg('dbg-meta-pagantes', (data.platform.b2b?.pagantes || 0).toLocaleString('pt-BR'));
+        setDbg('dbg-meta-cac',      formatCurrency(data.ads?.meta?.cac || 0));
+        setDbg('dbg-meta-churn',    (data.platform.b2b?.churned || 0).toLocaleString('pt-BR'));
+        setDbg('dbg-google-spend',  formatCurrency(data.ads?.google?.spend || 0));
+        setDbg('dbg-google-clicks', (data.platform.b2c?.clicks || 0).toLocaleString('pt-BR'));
+        setDbg('dbg-google-deals',  (data.platform.b2c?.deals || 0).toLocaleString('pt-BR'));
+        setDbg('dbg-google-cpa',    formatCurrency(data.ads?.google?.cpa || 0));
     }
 
     // 2. Atualizar Motor de Decisão Meta (B2B)
