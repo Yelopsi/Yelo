@@ -213,10 +213,12 @@ router.get('/dashboard', async (req, res) => {
             globalInsight += `No período, foram investidos R$ ${metaSpend.spend.toFixed(2).replace('.', ',')} gerando ${metaPagantes} novos assinantes (CAC: R$ ${metaCac.toFixed(2).replace('.', ',')}). `;
             if (metaPaybackMonths > 0) {
                 globalInsight += `O payback estimado é de ${metaPaybackMonths.toFixed(1).replace('.', ',')} meses. `;
-                if (metaPaybackMonths <= 3) {
-                    globalInsight += `✅ Esse é um tempo de recuperação de capital excelente, garantindo previsibilidade de caixa. `;
-                } else if (metaPaybackMonths >= 6) {
-                    globalInsight += `⚠️ O tempo de payback está alto. Cuidado com o fluxo de caixa a curto prazo. `;
+                if (metaPaybackMonths <= 6) {
+                    globalInsight += `✅ Esse é um tempo de recuperação excelente para a atual fase de tração, validando o modelo de negócios. `;
+                } else if (metaPaybackMonths >= 12) {
+                    globalInsight += `⚠️ O tempo de payback está alto (${metaPaybackMonths.toFixed(1).replace('.', ',')} meses). Como a plataforma está no início da tração, algum prejuízo é esperado no começo, mas monitore o fluxo de caixa de perto. `;
+                } else {
+                    globalInsight += `O payback está dentro do aceitável para empresas em início de tração (lucro no médio prazo). `;
                 }
             }
             if (metaChurned > 0) {
@@ -250,14 +252,14 @@ router.get('/dashboard', async (req, res) => {
         }
         
         globalInsight += "\n\n💡 **Conclusão Estratégica da Diretoria**\n";
-        if (metaPaybackMonths > 0 && metaPaybackMonths <= 4 && pendingDeals > (wppClicks * 0.3)) {
-            globalInsight += `O negócio B2B está lucrativo (Payback < 4 meses), mas você está entregando valor B2C (pacientes) que não estão sendo devidamente registrados. Aperte o processo de feedback para provar o ROI aos psicólogos e blindar a sua retenção!`;
+        if (metaPaybackMonths > 0 && metaPaybackMonths <= 8 && pendingDeals > (wppClicks * 0.3)) {
+            globalInsight += `A máquina B2B já está girando bem (Payback < 8 meses), mas o maior gargalo operacional é que você está entregando valor B2C (pacientes) que não estão sendo registrados. Aperte o processo de feedback para provar o ROI aos psicólogos, blindar a sua retenção e acelerar essa fase de tração!`;
         } else if (metaChurnRate > 0.1 && lostDeals > googleDeals) {
-            globalInsight += `🚨 CENÁRIO DE RISCO: Psicólogos estão cancelando (Churn alto) provavelmente porque os pacientes B2C gerados não estão fechando terapia. Foco total em alinhar a expectativa do paciente na landing page com o que o psicólogo oferece.`;
-        } else if (metaPaybackMonths <= 3 && googleDeals > lostDeals && googleDeals > 0) {
-            globalInsight += `🚀 CENÁRIO DE CRESCIMENTO: O motor B2B é rápido e o motor B2C entrega resultados reais. Pode acelerar o orçamento de ambas as pontas.`;
+            globalInsight += `🚨 CENÁRIO DE RISCO: É normal operar com prejuízo financeiro na tração, mas NÃO com churn alto. Psicólogos estão cancelando provavelmente porque os pacientes B2C gerados não estão fechando terapia. Foco total em alinhar a expectativa do paciente na landing page com o que o psicólogo oferece.`;
+        } else if (metaPaybackMonths <= 6 && googleDeals > lostDeals && googleDeals > 0) {
+            globalInsight += `🚀 CENÁRIO DE CRESCIMENTO: A validação B2B (psicólogos) está rápida e o motor B2C entrega resultados reais. Sendo um início de operação, esse é um sinal verde forte para acelerar os investimentos de aquisição!`;
         } else {
-            globalInsight += `Monitore de perto os custos de aquisição (CAC e CPA) e mantenha o equilíbrio entre a entrada de novos psicólogos e a geração de demanda de pacientes.`;
+            globalInsight += `A empresa está em fase de tração. Mantenha os custos operacionais enxutos e observe a relação entre a entrada de novos psicólogos e a geração de demanda (pacientes) para não desequilibrar a balança.`;
         }
 
         res.json({
