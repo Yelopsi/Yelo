@@ -18,19 +18,12 @@ async function loadCMOMetrics() {
     }
 
     try {
-        console.log(`[CMO Debug] Iniciando busca de dados. Período: ${dateStart} até ${dateEnd}`);
-        console.log(`[CMO Debug] Disparando requisição para: /api/cmo/dashboard?dateStart=${dateStart}&dateEnd=${dateEnd}`);
-        
-        console.log('🟢 CHECKPOINT 1 - Iniciando fetch');
         const response = await fetch(`/api/cmo/dashboard?dateStart=${dateStart}&dateEnd=${dateEnd}`, {
             credentials: 'include',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-
-        console.log(`[CMO Debug] Resposta HTTP status: ${response.status}`);
-        console.log('🟢 CHECKPOINT 2 - Fetch concluído');
 
         if (!response.ok) {
             let errorDetails = '';
@@ -47,49 +40,9 @@ async function loadCMOMetrics() {
         }
 
         const data = await response.json();
-        console.log('🟢 CHECKPOINT 3 - JSON convertido');
         
-        console.group('🔎 [CMO DEBUG] PAYLOAD COMPLETO');
-        console.log('📦 data completo:', data);
-        console.log('📦 data.success:', data?.success);
-        console.log('📦 data.period:', data?.period);
-        console.log('📊 data.ads:', data?.ads);
-        console.log('📊 data.ads keys:', data?.ads ? Object.keys(data.ads) : 'SEM ADS');
-        console.log('📣 data.campaigns:', data?.campaigns);
-        console.log('📣 data.campaigns keys:', data?.campaigns ? Object.keys(data.campaigns) : 'SEM CAMPAIGNS');
-        console.log('🏢 data.platform:', data?.platform);
-        console.log('🏢 data.platform keys:', data?.platform ? Object.keys(data.platform) : 'SEM PLATFORM');
-        console.log('🔑 Todas as chaves do payload:', Object.keys(data));
-        console.groupEnd();
-
         if (data.success) {
-            console.group('🎯 [CMO DEBUG] VALORES DOS KPIs');
-            console.log('Gasto total:', data?.ads?.totalSpend);
-            console.log('Assinaturas:', data?.platform?.pagantes);
-            console.log('CAC:', data?.platform?.cac);
-            console.log('Churn:', data?.platform?.churned);
-            console.groupEnd();
-            
-            console.group('🎨 [CMO DEBUG] DOM');
-            console.log('cmo-total-spend:', document.getElementById('cmo-total-spend'));
-            console.log('cmo-total-paying:', document.getElementById('cmo-total-paying'));
-            console.log('cmo-cac:', document.getElementById('cmo-cac'));
-            console.log('cmo-churn:', document.getElementById('cmo-churn'));
-            console.log('cmo-meta-table:', document.getElementById('cmo-meta-table'));
-            console.log('cmo-google-table:', document.getElementById('cmo-google-table'));
-            console.groupEnd();
-            
-            console.group('📣 [CMO DEBUG] CAMPAIGNS');
-            console.log('campaigns completo:', data?.campaigns);
-            console.log('Meta:', data?.campaigns?.meta);
-            console.log('Google:', data?.campaigns?.google);
-            console.log('Quantidade Meta:', Array.isArray(data?.campaigns?.meta) ? data.campaigns.meta.length : 'NÃO É ARRAY');
-            console.log('Quantidade Google:', Array.isArray(data?.campaigns?.google) ? data.campaigns.google.length : 'NÃO É ARRAY');
-            console.groupEnd();
-
-            console.log('🟢 CHECKPOINT 4 - iniciando KPIs');
             renderCMOMetrics(data);
-            console.log('🟢 CHECKPOINT 7 - Tudo concluído');
         } else {
             alert('A API respondeu com falha. Verifique o console.');
         }
@@ -103,10 +56,7 @@ async function loadCMOMetrics() {
 }
 
 function renderCMOMetrics(data) {
-    console.log('🚨 RENDER DASHBOARD FOI CHAMADO 🚨');
-    
     // 1. Atualizar KPIs Consolidados
-    console.log('🟢 CHECKPOINT 5 - Renderizando DOM');
     if (document.getElementById('cmo-total-spend')) document.getElementById('cmo-total-spend').textContent = `R$ ${(data.ads?.totalSpend || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
     if (document.getElementById('cmo-total-paying')) document.getElementById('cmo-total-paying').textContent = data.platform?.pagantes || 0;
     if (document.getElementById('cmo-cac')) document.getElementById('cmo-cac').textContent = `R$ ${(data.platform?.cac || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
@@ -130,7 +80,6 @@ function renderCMOMetrics(data) {
     }
 
     // 3. Atualizar Tabela Meta
-    console.log('🟢 CHECKPOINT 6 - Tabelas');
     const metaTable = document.querySelector('#cmo-meta-table tbody');
     if (metaTable) {
         metaTable.innerHTML = '';

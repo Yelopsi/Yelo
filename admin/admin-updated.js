@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         socket.on('connect', () => {
-            console.log('✅ Admin conectado ao Socket.IO:', socket.id);
+            // Log removido
         });
 
         socket.on('receiveMessage', (data) => {

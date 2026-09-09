@@ -7,7 +7,7 @@ window.API_BASE_URL = isLocalhost
     ? 'http://localhost:3001' // Em desenvolvimento, força a porta da API (3001)
     : window.location.origin; // Em produção, usa a própria URL do site (ex: https://yelo.onrender.com)
 
-console.log('🌍 GPS do Frontend definido para:', window.API_BASE_URL);
+// GPS log removido
 
 // --- GLOBAL FETCH INTERCEPTOR (Migração para Cookies) ---
 // Garante que todas as requisições para a API enviem os cookies automaticamente (HttpOnly)
