@@ -638,8 +638,10 @@ window.setClicksPeriod = function(days) {
     const start = new Date();
     start.setDate(end.getDate() - days);
     
-    document.getElementById('clicks-date-end').value = end.toISOString().split('T')[0];
-    document.getElementById('clicks-date-start').value = start.toISOString().split('T')[0];
+    const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    
+    document.getElementById('clicks-date-end').value = fmt(end);
+    document.getElementById('clicks-date-start').value = fmt(start);
     
     // Atualiza os estilos visuais dos botões
     [7, 30, 60].forEach(d => {
@@ -674,8 +676,10 @@ window.loadClicksChartData = async function() {
             const start = new Date();
             start.setDate(end.getDate() - 30);
             
-            endDate = end.toISOString().split('T')[0];
-            startDate = start.toISOString().split('T')[0];
+            const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            
+            endDate = fmt(end);
+            startDate = fmt(start);
             
             document.getElementById('clicks-date-end').value = endDate;
             document.getElementById('clicks-date-start').value = startDate;
