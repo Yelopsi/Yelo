@@ -839,3 +839,50 @@ exports.deleteAdsExpense = async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
+exports.getClicksEvolution = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        let whereClause = {};
+
+        if (startDate && endDate) {
+            // Include end of the day for endDate
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            
+            whereClause.createdAt = {
+                [db.Sequelize.Op.between]: [new Date(startDate), end]
+            };
+        } else {
+            // Default to last 30 days
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            whereClause.createdAt = {
+                [db.Sequelize.Op.gte]: thirtyDaysAgo
+            };
+        }
+
+        const clicks = await db.WhatsAppClickLog.findAll({
+            where: whereClause,
+            attributes: [
+                [db.sequelize.fn('date_trunc', 'day', db.sequelize.col('createdAt')), 'day'],
+                [db.sequelize.fn('count', db.sequelize.col('id')), 'total_clicks'],
+                [db.sequelize.fn('sum', db.sequelize.literal('CASE WHEN "contactReceived" = true THEN 1 ELSE 0 END')), 'real_contacts']
+            ],
+            group: ['day'],
+            order: [[db.sequelize.literal('day'), 'ASC']],
+            raw: true
+        });
+
+        const result = clicks.map(c => ({
+            date: c.day.toISOString().split('T')[0],
+            total: parseInt(c.total_clicks) || 0,
+            real: parseInt(c.real_contacts) || 0
+        }));
+
+        res.json({ success: true, data: result });
+    } catch (error) {
+        console.error('Error in getClicksEvolution:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+};

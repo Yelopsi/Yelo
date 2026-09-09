@@ -224,6 +224,22 @@
     .header-actions select, .header-actions button {
         width: 100%;
     }
+    .chart-filters {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+    .chart-filters > div {
+        justify-content: center;
+        width: 100%;
+    }
+    .chart-filters input, .chart-filters button {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .chart-filters span {
+        text-align: center;
+    }
     .main-header {
         padding: 20px 15px !important;
     }
@@ -441,6 +457,34 @@
                             <span style="font-weight:800; color:#10b981; width:50px; text-align:right;" id="f-acq-paid">0</span>
                             <span style="font-size:0.75rem; color:#10b981; width:95px; text-align:right;" id="f-acq-conv-4">0%</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO: GRÁFICO DE CLIQUES WPP -->
+        <div style="margin-bottom: 30px;">
+            <div style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
+                <div style="padding: 25px 25px 15px 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 0;">Cliques no WhatsApp (Demanda B2C)</h2>
+                        <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 0;">Visualização diária de geração de leads (cliques gerados para os psicólogos).</p>
+                    </div>
+                    <div class="chart-filters" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 5px; background: #f1f5f9; padding: 4px; border-radius: 50px;">
+                            <button onclick="setClicksPeriod(7)" style="background: transparent; border: none; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; color: #475569; cursor: pointer;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#475569'">7d</button>
+                            <button onclick="setClicksPeriod(30)" style="background: white; border: none; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer;">30d</button>
+                            <button onclick="setClicksPeriod(60)" style="background: transparent; border: none; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; color: #475569; cursor: pointer;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#475569'">60d</button>
+                        </div>
+                        <input type="date" id="clicks-date-start" style="padding: 6px 14px; border: 1px solid #cbd5e1; border-radius: 50px; font-size: 0.85rem; font-weight: 500; color: #475569; outline: none; background: #f8fafc; cursor: pointer;">
+                        <span style="color: #94a3b8; font-size: 0.8rem; font-weight: 600;">até</span>
+                        <input type="date" id="clicks-date-end" style="padding: 6px 14px; border: 1px solid #cbd5e1; border-radius: 50px; font-size: 0.85rem; font-weight: 500; color: #475569; outline: none; background: #f8fafc; cursor: pointer;">
+                        <button onclick="loadClicksChartData()" style="background: #1B4332; color: white; border: none; padding: 8px 18px; border-radius: 50px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.2s; box-shadow: 0 2px 4px rgba(27,67,50,0.2);" onmouseover="this.style.background='#0f2b20'" onmouseout="this.style.background='#1B4332'">Filtrar</button>
+                    </div>
+                </div>
+                <div style="padding: 0 25px 25px 25px;">
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="clicksEvolutionChart"></canvas>
                     </div>
                 </div>
             </div>

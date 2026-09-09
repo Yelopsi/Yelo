@@ -346,6 +346,9 @@ window.loadGrowthData = async function() {
         // 8. CHART PAGAMENTOS
         loadPaymentsEvolutionChart();
 
+        // 9. CHART CLIQUES
+        loadClicksChartData();
+
         document.getElementById('growth-loading').style.display = 'none';
         document.getElementById('growth-content').style.display = 'block';
         window.growthLastUpdate = new Date();
@@ -626,6 +629,129 @@ window.fetchGrowthAIInsights = async function() {
         btn.disabled = false;
         btn.style.opacity = '1';
         btn.innerText = 'Gerar Análise com IA';
+    }
+};
+
+// --- GRÁFICO DE CLIQUES WPP ---
+window.setClicksPeriod = function(days) {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days);
+    
+    document.getElementById('clicks-date-end').value = end.toISOString().split('T')[0];
+    document.getElementById('clicks-date-start').value = start.toISOString().split('T')[0];
+    
+    window.loadClicksChartData();
+};
+
+window.clicksEvolutionChartInstance = null;
+window.loadClicksChartData = async function() {
+    try {
+        let startDate = document.getElementById('clicks-date-start').value;
+        let endDate = document.getElementById('clicks-date-end').value;
+        
+        // Se estiverem vazios, define os últimos 30 dias como padrão visual
+        if (!startDate || !endDate) {
+            const end = new Date();
+            const start = new Date();
+            start.setDate(end.getDate() - 30);
+            
+            endDate = end.toISOString().split('T')[0];
+            startDate = start.toISOString().split('T')[0];
+            
+            document.getElementById('clicks-date-end').value = endDate;
+            document.getElementById('clicks-date-start').value = startDate;
+        }
+
+        let url = '/api/admin/growth/clicks-evolution';
+        if (startDate && endDate) {
+            url += `?startDate=${startDate}&endDate=${endDate}`;
+        }
+        
+        const res = await window.fetch(url, {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('adminToken') }
+        });
+        if (!res.ok) throw new Error('Falha ao buscar evolução de cliques');
+        
+        const result = await res.json();
+        if (!result.success || !result.data) return;
+
+        const ctx = document.getElementById('clicksEvolutionChart');
+        if (!ctx) return;
+
+        if (window.clicksEvolutionChartInstance) {
+            window.clicksEvolutionChartInstance.destroy();
+        }
+
+        const labels = result.data.map(d => {
+            const [y, m, day] = d.date.split('-');
+            return `${day}/${m}`;
+        });
+        const totalClicks = result.data.map(d => d.total);
+        const realContacts = result.data.map(d => d.real);
+
+        const gradientTotal = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+        gradientTotal.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+        gradientTotal.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+        
+        const gradientReal = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+        gradientReal.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+        gradientReal.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+        window.clicksEvolutionChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Contatos Reais',
+                        data: realContacts,
+                        borderColor: '#10b981',
+                        backgroundColor: gradientReal,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#10b981',
+                        pointBorderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Total de Cliques',
+                        data: totalClicks,
+                        borderColor: '#3b82f6',
+                        backgroundColor: gradientTotal,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#3b82f6',
+                        pointBorderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true, grid: { borderDash: [2, 4], color: '#f1f5f9' }, ticks: { stepSize: 1 } }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false }
+                }
+            }
+        });
+    } catch (err) {
+        console.error("Erro no Gráfico de Cliques:", err);
     }
 };
 
