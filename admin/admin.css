@@ -48,6 +48,16 @@ html {
 input[type="date"] {
     border-radius: 50px !important;
 }
+
+/* Botões em formato de Pílula para todo o Admin */
+button,
+.btn-primario,
+.btn-secundario,
+.btn-outline,
+.btn-delete-appt {
+    border-radius: 50px !important;
+}
+
 .pagina-dashboard h1, .pagina-dashboard h2, .pagina-dashboard h3, .pagina-dashboard h4 {
     font-family: var(--font-titulos); /* Padronizado: New Kansas */
     font-weight: 500; /* Medium para melhor leitura */
