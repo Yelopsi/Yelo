@@ -172,8 +172,8 @@ router.get('/dashboard', async (req, res) => {
         // 6. Motor de Decisão (Google/B2C)
         let decisionEngineGoogle = {
             action: 'RECOLHENDO DADOS ⏳', confidence: 0, target: 30, // Target CPA B2C
-            scaleCapacity: 'BAIXA', trend: googleCpa - prevGoogleCpa, warning: null, recommendation: 'Aguarde mais conversões.',
-        // Removed individual funnel insight string generation since we will create a global one
+            scaleCapacity: 'BAIXA', trend: googleCpa - prevGoogleCpa, warning: null, recommendation: 'Aguarde mais conversões.'
+        };
         if (googleDeals < 5) {
             decisionEngineGoogle.warning = `Amostra pequena (${googleDeals} pacientes fechados na Yelo).`;
         }
