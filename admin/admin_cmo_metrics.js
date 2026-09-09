@@ -25,6 +25,20 @@ async function loadCMOMetrics() {
         loadGoogleManualInputs();
     }
 
+    const btn = document.querySelector('button[onclick="loadCMOMetrics()"]');
+    const originalBtnHTML = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spin" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> Atualizando...';
+        if (!document.getElementById('cmo-spin-style')) {
+            const style = document.createElement('style');
+            style.id = 'cmo-spin-style';
+            style.textContent = '@keyframes spin { 100% { transform: rotate(360deg); } }';
+            document.head.appendChild(style);
+        }
+    }
+
     try {
         const response = await fetch(`/api/cmo/dashboard?dateStart=${dateStart}&dateEnd=${dateEnd}`, {
             credentials: 'include',
@@ -60,6 +74,12 @@ async function loadCMOMetrics() {
         console.error('Stack:', e.stack);
         console.error('Erro completo:', e);
         alert(`Erro Crítico: ${e.message}`);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.innerHTML = originalBtnHTML;
+        }
     }
 }
 
@@ -208,6 +228,8 @@ async function saveGoogleManualInputs() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            // Recarrega as métricas para a IA processar os novos gastos no funil B2C
+            loadCMOMetrics();
         } catch (e) {
             console.error('Erro ao salvar inputs manuais no DB:', e);
         }
