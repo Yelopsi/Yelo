@@ -217,11 +217,18 @@ router.post('/manual-ads', async (req, res) => {
         
         const { ManualAdMetric } = require('../models');
         
-        // Upsert usando a combinação dateStart, dateEnd e platform
-        const [record, created] = await ManualAdMetric.upsert(
-            { dateStart, dateEnd, platform, campaignName, spend, impressions, clicks, conversions },
-            { returning: true }
-        );
+        // Busca o registro existente
+        let record = await ManualAdMetric.findOne({
+            where: { dateStart, dateEnd, platform }
+        });
+        
+        let created = false;
+        if (record) {
+            record = await record.update({ campaignName, spend, impressions, clicks, conversions });
+        } else {
+            record = await ManualAdMetric.create({ dateStart, dateEnd, platform, campaignName, spend, impressions, clicks, conversions });
+            created = true;
+        }
         
         res.json({ success: true, record, created });
     } catch (error) {
