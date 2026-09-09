@@ -243,6 +243,17 @@ router.post('/manual-ads', async (req, res) => {
 
         let created = false;
         if (record) {
+            const now = new Date();
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const fifteenMinsAgo = new Date(now.getTime() - 15 * 60 * 1000);
+            
+            // Se foi atualizado entre 7 dias atrás e 15 minutos atrás (janela de bloqueio)
+            if (record.updatedAt > sevenDaysAgo && record.updatedAt < fifteenMinsAgo) {
+                return res.status(403).json({ 
+                    success: false, 
+                    error: 'Fase de aprendizado: Aguarde 7 dias da última alteração para inserir novos dados, ou exclua o registro atual.' 
+                });
+            }
             record = await record.update({ campaignName, spend, impressions, clicks, conversions });
         } else {
             record = await ManualAdMetric.create({ dateStart, dateEnd, platform, campaignName, spend, impressions, clicks, conversions });
@@ -273,6 +284,27 @@ router.get('/manual-ads', async (req, res) => {
         res.json({ success: true, record });
     } catch (error) {
         console.error('[CMO] Erro ao buscar dados manuais:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Rota para excluir inputs manuais
+router.delete('/manual-ads', async (req, res) => {
+    try {
+        const { dateStart, dateEnd, platform } = req.body;
+        if (!dateStart || !dateEnd || !platform) {
+            return res.status(400).json({ success: false, error: 'Parâmetros insuficientes' });
+        }
+
+        const { ManualAdMetric } = require('../models');
+
+        await ManualAdMetric.destroy({
+            where: { dateStart, dateEnd, platform }
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[CMO] Erro ao excluir dados manuais:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });

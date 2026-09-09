@@ -232,17 +232,56 @@ async function saveGoogleManualInputs() {
         };
         
         try {
-            await fetch('/api/cmo/manual-ads', {
+            const response = await fetch('/api/cmo/manual-ads', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            
+            const json = await response.json();
+            if (!json.success) {
+                // Se foi bloqueado pela regra dos 7 dias
+                alert('Aviso: ' + json.error);
+                loadGoogleManualInputs(); // reverte os inputs para o valor real do DB
+                return;
+            }
+
             // Recarrega as métricas para a IA processar os novos gastos no funil B2C
             loadCMOMetrics();
         } catch (e) {
             console.error('Erro ao salvar inputs manuais no DB:', e);
         }
     }, 1000); // Debounce de 1s
+}
+
+async function deleteGoogleManualInputs() {
+    const dateStart = document.getElementById('cmo-date-start')?.value;
+    const dateEnd = document.getElementById('cmo-date-end')?.value;
+    if (!dateStart || !dateEnd) return;
+
+    if (!confirm('Tem certeza que deseja excluir os dados do Google deste período? Você poderá preencher novamente.')) return;
+
+    try {
+        const response = await fetch('/api/cmo/manual-ads', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dateStart, dateEnd, platform: 'google' })
+        });
+        
+        const json = await response.json();
+        if (json.success) {
+            document.getElementById('google-manual-name').value = '';
+            document.getElementById('google-manual-spend').value = '';
+            document.getElementById('google-manual-impressions').value = '';
+            document.getElementById('google-manual-clicks').value = '';
+            document.getElementById('google-manual-conversions').value = '';
+            loadCMOMetrics();
+        } else {
+            alert('Erro ao excluir: ' + json.error);
+        }
+    } catch (e) {
+        console.error('Erro ao excluir inputs manuais do DB:', e);
+    }
 }
 
 async function loadGoogleManualInputs() {
