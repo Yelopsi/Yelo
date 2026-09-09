@@ -5,9 +5,15 @@
             <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 1.05rem;">Motor de Decisão Executiva de Tráfego Pago (Meta & Google).</p>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <div style="display: flex; gap: 5px; align-items: center;">
-                <select id="cmo-month-selector" onchange="updateCMOMonth()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: white; font-weight: 600; cursor: pointer; outline: none;">
+            <div style="position: relative; display: flex; align-items: center;">
+                <span style="position: absolute; left: 12px; pointer-events: none; color: rgba(255,255,255,0.7); display: flex; align-items: center;">
+                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>
+                </span>
+                <select id="cmo-month-selector" onchange="updateCMOMonth()" style="padding: 8px 16px 8px 34px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.12); color: white; font-weight: 700; font-size: 0.88rem; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; letter-spacing: 0.02em; backdrop-filter: blur(6px); transition: background 0.2s; min-width: 160px;">
                 </select>
+                <span style="position: absolute; right: 12px; pointer-events: none; color: rgba(255,255,255,0.6); display: flex; align-items: center;">
+                    <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>
+                </span>
                 <input type="hidden" id="cmo-date-start">
                 <input type="hidden" id="cmo-date-end">
             </div>
