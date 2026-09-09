@@ -754,9 +754,13 @@ window.loadClicksChartData = async function() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                events: [],
                 interaction: {
                     mode: 'index',
                     intersect: false,
+                },
+                layout: {
+                    padding: { left: 12, right: 12 }
                 },
                 scales: {
                     x: { grid: { display: false } },
@@ -764,10 +768,106 @@ window.loadClicksChartData = async function() {
                 },
                 plugins: {
                     legend: { position: 'top' },
-                    tooltip: { mode: 'index', intersect: false }
+                    tooltip: { 
+                        mode: 'index', 
+                        intersect: false,
+                        backgroundColor: '#1f2937',
+                        padding: 12,
+                        titleFont: { size: 13, family: 'Inter' },
+                        bodyFont: { size: 14, family: 'Inter', weight: 'bold' }
+                    }
                 }
             }
         });
+
+        // ==========================================
+        // LISTENER DE MOUSE MANUAL (CÁLCULO ESCALADO)
+        // ==========================================
+        if (ctx._mouseMoveHandler) {
+            ctx.removeEventListener('mousemove', ctx._mouseMoveHandler);
+            ctx.removeEventListener('mouseout', ctx._mouseOutHandler);
+        }
+
+        const chart = window.clicksEvolutionChartInstance;
+
+        ctx._mouseMoveHandler = function(e) {
+            if (!chart || !chart.chartArea || !chart.scales.x) return;
+
+            const rect = ctx.getBoundingClientRect();
+            const scaleX = chart.canvas.clientWidth / rect.width;
+            const scaleY = chart.canvas.clientHeight / rect.height;
+
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+
+            const { left, right, top, bottom } = chart.chartArea;
+
+            if (mouseX < left || mouseX > right || mouseY < top || mouseY > bottom) {
+                chart.tooltip.setActiveElements([], {});
+                chart.setActiveElements([]);
+                chart.update();
+                return;
+            }
+
+            const xScale = chart.scales.x;
+            const labelsCount = chart.data.labels.length;
+            
+            const positions = [];
+            for (let i = 0; i < labelsCount; i++) {
+                positions.push(xScale.getPixelForValue(i));
+            }
+
+            const boundaries = [];
+            if (labelsCount > 1) {
+                boundaries.push(positions[0] - (positions[1] - positions[0]) / 2);
+                for (let i = 0; i < labelsCount - 1; i++) {
+                    boundaries.push((positions[i] + positions[i + 1]) / 2);
+                }
+                boundaries.push(positions[labelsCount - 1] + (positions[labelsCount - 1] - positions[labelsCount - 2]) / 2);
+            } else {
+                boundaries.push(left, right);
+            }
+
+            let targetIndex = 0;
+            for (let i = 0; i < labelsCount; i++) {
+                if (mouseX >= boundaries[i] && mouseX <= boundaries[i + 1]) {
+                    targetIndex = i;
+                    break;
+                }
+            }
+
+            if (mouseX > boundaries[boundaries.length - 1]) targetIndex = labelsCount - 1;
+            if (mouseX < boundaries[0]) targetIndex = 0;
+
+            const meta0 = chart.getDatasetMeta(0);
+            const point0 = meta0.data[targetIndex];
+
+            chart.tooltip.setActiveElements(
+                [
+                    { datasetIndex: 0, index: targetIndex },
+                    { datasetIndex: 1, index: targetIndex }
+                ],
+                { x: point0 ? point0.x : mouseX, y: point0 ? point0.y : mouseY }
+            );
+            chart.setActiveElements(
+                [
+                    { datasetIndex: 0, index: targetIndex },
+                    { datasetIndex: 1, index: targetIndex }
+                ]
+            );
+            chart.update();
+        };
+
+        ctx._mouseOutHandler = function() {
+            if (!chart) return;
+            chart.tooltip.setActiveElements([], {});
+            chart.setActiveElements([]);
+            chart.update();
+        };
+
+        ctx.addEventListener('mousemove', ctx._mouseMoveHandler);
+        ctx.addEventListener('mouseout', ctx._mouseOutHandler);
+
     } catch (err) {
         console.error("Erro no Gráfico de Cliques:", err);
     }
