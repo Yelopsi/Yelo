@@ -44,11 +44,23 @@ router.get('/dashboard', async (req, res) => {
         const totalPrevSpend = prevMetaSpend.spend + actualPrevGoogleSpend;
 
         // 3. Atribuição B2B (Meta Ads -> Psicólogos)
-        // Critérios idênticos ao adminUsersController.js (CRM de Psicólogos)
+        // Funil B2B completo:
+        //   trials    = status 'pending' (aguardando aprovação - lead cru do anúncio)
+        //             + status 'active' sem subscription (aprovado, em trial)
+        //   pagantes  = status 'active' com subscriptionId OU firstPaidAt (converteu para pago)
+        //   churned   = status 'inactive'
         const b2bQuery = `
             SELECT 
-                COUNT(*) FILTER (WHERE status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as pagantes,
-                COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND "planExpiresAt" > NOW()) as trials,
+                COUNT(*) FILTER (
+                    WHERE status = 'active'
+                    AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL)
+                    AND (is_exempt IS NULL OR is_exempt = false)
+                ) as pagantes,
+                COUNT(*) FILTER (
+                    WHERE status IN ('pending', 'active')
+                    AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
+                    AND (is_exempt IS NULL OR is_exempt = false)
+                ) as trials,
                 COUNT(*) FILTER (WHERE status = 'inactive') as churned
             FROM "Psychologists"
             WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
@@ -71,6 +83,7 @@ router.get('/dashboard', async (req, res) => {
         const metaTrials = parseInt(metaMetricsRes.trials || 0);
         const metaChurned = parseInt(metaMetricsRes.churned || 0);
         console.log('[CMO B2B Debug]', { dateStart, dateEnd, metaPagantes, metaTrials, metaChurned, raw: metaMetricsRes });
+
 
         const metaCac = metaPagantes > 0 ? (metaSpend.spend / metaPagantes) : 0;
         const prevMetaCac = prevMetaPagantes > 0 ? (prevMetaSpend.spend / prevMetaPagantes) : 0;
