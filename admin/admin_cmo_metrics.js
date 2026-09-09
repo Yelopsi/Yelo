@@ -18,6 +18,11 @@ async function loadCMOMetrics() {
         if (document.getElementById('cmo-date-start')) document.getElementById('cmo-date-start').value = dateStart;
         if (document.getElementById('cmo-date-end')) document.getElementById('cmo-date-end').value = dateEnd;
     }
+    
+    // Tenta carregar dados manuais gravados no localStorage para a data atual
+    if (typeof loadGoogleManualInputs === 'function') {
+        loadGoogleManualInputs();
+    }
 
     try {
         const response = await fetch(`/api/cmo/dashboard?dateStart=${dateStart}&dateEnd=${dateEnd}`, {
@@ -105,6 +110,56 @@ function renderCMOMetrics(data) {
     // 4. Atualizar Tabela Google
     // A tabela do Google está em modo manual temporário (HTML estático).
     // O JS não sobrescreve os inputs do usuário.
+}
+
+// Funções para salvar e carregar os inputs manuais da tabela do Google
+function saveGoogleManualInputs() {
+    const dateStart = document.getElementById('cmo-date-start')?.value;
+    const dateEnd = document.getElementById('cmo-date-end')?.value;
+    if (!dateStart || !dateEnd) return;
+    
+    const data = {
+        name: document.getElementById('google-manual-name')?.value || '',
+        spend: document.getElementById('google-manual-spend')?.value || '',
+        impressions: document.getElementById('google-manual-impressions')?.value || '',
+        clicks: document.getElementById('google-manual-clicks')?.value || '',
+        conversions: document.getElementById('google-manual-conversions')?.value || ''
+    };
+    
+    const key = `cmo_google_manual_${dateStart}_${dateEnd}`;
+    localStorage.setItem(key, JSON.stringify(data));
+}
+
+function loadGoogleManualInputs() {
+    const dateStart = document.getElementById('cmo-date-start')?.value;
+    const dateEnd = document.getElementById('cmo-date-end')?.value;
+    
+    const nameEl = document.getElementById('google-manual-name');
+    const spendEl = document.getElementById('google-manual-spend');
+    const impEl = document.getElementById('google-manual-impressions');
+    const clicksEl = document.getElementById('google-manual-clicks');
+    const convEl = document.getElementById('google-manual-conversions');
+    
+    if (!nameEl) return;
+    
+    if (dateStart && dateEnd) {
+        const key = `cmo_google_manual_${dateStart}_${dateEnd}`;
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                nameEl.value = data.name || '';
+                spendEl.value = data.spend || '';
+                impEl.value = data.impressions || '';
+                clicksEl.value = data.clicks || '';
+                convEl.value = data.conversions || '';
+            } catch (e) {
+                nameEl.value = ''; spendEl.value = ''; impEl.value = ''; clicksEl.value = ''; convEl.value = '';
+            }
+        } else {
+            nameEl.value = ''; spendEl.value = ''; impEl.value = ''; clicksEl.value = ''; convEl.value = '';
+        }
+    }
 }
 
 // Iniciar imediatamente para arquitetura SPA
