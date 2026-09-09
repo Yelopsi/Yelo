@@ -221,7 +221,7 @@ async function saveGoogleManualInputs() {
         dateStart,
         dateEnd,
         platform: 'google',
-        campaignName: 'Manual',
+        campaignName: document.getElementById('google-manual-name')?.value || 'Manual',
         spend: spend,
         impressions: parseInt(document.getElementById('google-manual-impressions')?.value) || 0,
         clicks: parseInt(document.getElementById('google-manual-clicks')?.value) || 0,
@@ -254,6 +254,7 @@ async function saveGoogleManualInputs() {
 }
 
 function toggleGoogleInputs(disabled) {
+    if (document.getElementById('google-manual-name')) document.getElementById('google-manual-name').disabled = disabled;
     document.getElementById('google-manual-spend').disabled = disabled;
     document.getElementById('google-manual-impressions').disabled = disabled;
     document.getElementById('google-manual-clicks').disabled = disabled;
@@ -262,6 +263,7 @@ function toggleGoogleInputs(disabled) {
     
     // Opacidade visual para indicar bloqueio
     const opacity = disabled ? '0.6' : '1';
+    if (document.getElementById('google-manual-name')) document.getElementById('google-manual-name').style.opacity = opacity;
     document.getElementById('google-manual-spend').style.opacity = opacity;
     document.getElementById('google-manual-impressions').style.opacity = opacity;
     document.getElementById('google-manual-clicks').style.opacity = opacity;
@@ -285,6 +287,7 @@ async function deleteGoogleManualInputs() {
         
         const json = await response.json();
         if (json.success) {
+            if (document.getElementById('google-manual-name')) document.getElementById('google-manual-name').value = '';
             document.getElementById('google-manual-spend').value = '';
             document.getElementById('google-manual-impressions').value = '';
             document.getElementById('google-manual-clicks').value = '';
@@ -304,6 +307,7 @@ async function loadGoogleManualInputs() {
     const dateStart = document.getElementById('cmo-date-start')?.value;
     const dateEnd = document.getElementById('cmo-date-end')?.value;
     
+    const nameEl = document.getElementById('google-manual-name');
     const spendEl = document.getElementById('google-manual-spend');
     const impEl = document.getElementById('google-manual-impressions');
     const clicksEl = document.getElementById('google-manual-clicks');
@@ -318,6 +322,7 @@ async function loadGoogleManualInputs() {
             
             if (json.success && json.record) {
                 const data = json.record;
+                if (nameEl) nameEl.value = data.campaignName || '';
                 spendEl.value = `R$ ${(parseFloat(data.spend) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 impEl.value = data.impressions || '';
                 clicksEl.value = data.clicks || '';
@@ -326,11 +331,13 @@ async function loadGoogleManualInputs() {
                 // Bloqueia se já tiver dados carregados
                 toggleGoogleInputs(true);
             } else {
+                if (nameEl) nameEl.value = ''; 
                 spendEl.value = ''; impEl.value = ''; clicksEl.value = ''; convEl.value = '';
                 toggleGoogleInputs(false); // Libera os campos
             }
         } catch (e) {
             console.error('Erro ao buscar inputs manuais do DB:', e);
+            if (nameEl) nameEl.value = ''; 
             spendEl.value = ''; impEl.value = ''; clicksEl.value = ''; convEl.value = '';
             toggleGoogleInputs(false);
         }
