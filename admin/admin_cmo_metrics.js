@@ -128,6 +128,7 @@ function renderCMOMetrics(data) {
         document.getElementById('ai-meta-confidence').textContent = `Confiança: ${data.decisionEngineMeta.confidence || 0}%`;
         document.getElementById('ai-meta-target').textContent = formatCurrency(data.decisionEngineMeta.target);
         document.getElementById('ai-meta-scale').textContent = data.decisionEngineMeta.scaleCapacity || '-';
+        document.getElementById('ai-meta-payback').textContent = (data.decisionEngineMeta.paybackMonths || 0).toFixed(1).replace('.', ',') + ' Meses';
         
         const trend = data.decisionEngineMeta.trend || 0;
         const trendEl = document.getElementById('ai-meta-trend');

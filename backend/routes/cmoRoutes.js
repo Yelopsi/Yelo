@@ -129,9 +129,12 @@ router.get('/dashboard', async (req, res) => {
         const googleMarginalCpa = deltaGoogleDeals > 0 ? (deltaGoogleSpend / deltaGoogleDeals) : 0;
 
         // 5. Motor de Decisão (Meta/B2B)
+        const metaPaybackMonths = metaCac > 0 ? (metaCac / arpu) : 0;
+        
         let decisionEngineMeta = {
             action: 'RECOLHENDO DADOS ⏳', confidence: 0, target: arpu * 1.5,
-            scaleCapacity: 'BAIXA', trend: metaCac - prevMetaCac, warning: null, recommendation: 'Aguarde mais conversões.'
+            scaleCapacity: 'BAIXA', trend: metaCac - prevMetaCac, warning: null, recommendation: 'Aguarde mais conversões.',
+            paybackMonths: metaPaybackMonths
         };
 
         if (metaPagantes < 15) {
