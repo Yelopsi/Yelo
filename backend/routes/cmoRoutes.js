@@ -100,8 +100,10 @@ router.get('/dashboard', async (req, res) => {
         // 4. Atribuição B2C (Google Ads -> Pacientes)
         const b2cQuery = `
             SELECT 
-                COUNT(*) as total_clicks,
-                SUM(CASE WHEN "dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as total_deals
+                COUNT(*) as wpp_clicks,
+                SUM(CASE WHEN "dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as total_deals,
+                SUM(CASE WHEN "dealClosed" IN ('no', 'no_reply', 'not_interested', 'did_not_reply') THEN 1 ELSE 0 END) as total_lost,
+                SUM(CASE WHEN "dealClosed" IS NULL OR "dealClosed" = 'pending' THEN 1 ELSE 0 END) as total_pending
             FROM "WhatsAppClickLogs"
             WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
         `;
@@ -113,9 +115,11 @@ router.get('/dashboard', async (req, res) => {
             replacements: { dateStart: prevDateStart, dateEnd: prevDateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
         });
 
-        const googleClicks = parseInt(googleMetricsRes.total_clicks || 0);
+        const wppClicks = parseInt(googleMetricsRes.wpp_clicks || 0);
         const googleDeals = parseInt(googleMetricsRes.total_deals || 0);
         const prevGoogleDeals = parseInt(prevGoogleMetricsRes.total_deals || 0);
+        const lostDeals = parseInt(googleMetricsRes.total_lost || 0);
+        const pendingDeals = parseInt(googleMetricsRes.total_pending || 0);
 
         const googleCpa = googleDeals > 0 ? (actualGoogleSpend / googleDeals) : 0;
         const prevGoogleCpa = prevGoogleDeals > 0 ? (actualPrevGoogleSpend / prevGoogleDeals) : 0;
@@ -164,11 +168,35 @@ router.get('/dashboard', async (req, res) => {
 
         // 6. Motor de Decisão (Google/B2C)
         let decisionEngineGoogle = {
-            action: 'RECOLHENDO DADOS ⏳', confidence: 0, target: 30, // Teto sugerido de 30 reais por paciente
-            scaleCapacity: 'BAIXA', trend: googleCpa - prevGoogleCpa, warning: null, recommendation: 'Aguarde pacientes fechados.'
+            action: 'RECOLHENDO DADOS ⏳', confidence: 0, target: 30, // Target CPA B2C
+            scaleCapacity: 'BAIXA', trend: googleCpa - prevGoogleCpa, warning: null, recommendation: 'Aguarde mais conversões.',
+            funnelInsight: ''
         };
 
-        if (googleDeals < 15) {
+        // Funnel Insight Generation
+        if (actualGoogleClicks > 0 || wppClicks > 0) {
+            const clickToWpp = actualGoogleClicks > 0 ? ((wppClicks / actualGoogleClicks) * 100).toFixed(1) : 0;
+            let insight = `No período selecionado, a campanha Google gerou ${actualGoogleClicks} cliques no anúncio e ${wppClicks} pessoas chegaram a chamar um psicólogo no WhatsApp (${clickToWpp}% de conversão da página).\n\n`;
+            
+            if (wppClicks > 0) {
+                insight += `Destes ${wppClicks} leads no WhatsApp: ${googleDeals} fecharam terapia, ${lostDeals} foram perdidos (não responderam/recusaram) e ${pendingDeals} estão com feedback PENDENTE do psicólogo.\n\n`;
+                
+                if (pendingDeals > (wppClicks * 0.3)) {
+                    insight += `🚨 ATENÇÃO: Há muitos leads pendentes (${pendingDeals}). Cobre os psicólogos para darem o feedback! Se 20% deles fecharem, seu CPA cairá drasticamente. Não pause campanhas com base no CPA atual, pois ele está artificialmente alto devido ao atraso nos feedbacks.`;
+                } else if (googleDeals === 0 && lostDeals > 0) {
+                    insight += `⚠️ ALERTA: Os leads estão chamando no WhatsApp, mas nenhum fechou ainda. O problema provável não é a campanha, mas sim a qualificação do lead ou a abordagem de vendas do psicólogo.`;
+                } else {
+                    insight += `✅ O pipeline de pacientes está fluindo bem. Continue monitorando o CPA e a qualidade dos atendimentos no WhatsApp.`;
+                }
+            } else {
+                insight += `⚠️ ALERTA: As pessoas clicam no anúncio mas não chamam no WhatsApp. Verifique se a sua Landing Page está lenta, confusa, ou se a promessa do anúncio não condiz com a página.`;
+            }
+            decisionEngineGoogle.funnelInsight = insight;
+        } else {
+            decisionEngineGoogle.funnelInsight = 'Não há dados suficientes de cliques ou chamadas no WhatsApp no período para uma análise de funil.';
+        }
+
+        if (googleDeals < 5) {
             decisionEngineGoogle.warning = `Amostra pequena (${googleDeals} pacientes fechados na Yelo).`;
         }
 

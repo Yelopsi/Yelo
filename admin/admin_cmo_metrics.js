@@ -170,13 +170,20 @@ function renderCMOMetrics(data) {
             trendEl.style.color = trend > 0 ? '#ef4444' : '#10b981';
         }
         
-        document.getElementById('ai-google-recommendation').textContent = data.decisionEngineGoogle.recommendation || '';
+        document.getElementById('ai-google-recommendation').textContent = data.decisionEngineGoogle.recommendation || '-';
 
         if (data.decisionEngineGoogle.warning) {
             if(warningContainer) warningContainer.style.display = 'block';
             if(warningEl) warningEl.textContent = data.decisionEngineGoogle.warning;
         } else {
             if(warningContainer) warningContainer.style.display = 'none';
+        }
+        
+        // Funnel Insight
+        if (data.decisionEngineGoogle.funnelInsight) {
+            document.getElementById('ai-funnel-insight').textContent = data.decisionEngineGoogle.funnelInsight;
+        } else {
+            document.getElementById('ai-funnel-insight').textContent = "Nenhuma análise disponível para o período.";
         }
     }
 
