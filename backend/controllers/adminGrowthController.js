@@ -846,12 +846,14 @@ exports.getClicksEvolution = async (req, res) => {
         let whereClause = {};
 
         if (startDate && endDate) {
-            // Include end of the day for endDate
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
+            // No JavaScript, parse de "YYYY-MM-DD" assume UTC meia-noite, o que quebra
+            // quando aplicamos métodos locais ou rodamos num servidor com fuso diferente (ex: Render em UTC).
+            // Ao forçar o timezone do Brasil (-03:00), garantimos a janela exata do dia.
+            const start = new Date(`${startDate}T00:00:00-03:00`);
+            const end = new Date(`${endDate}T23:59:59-03:00`);
             
             whereClause.createdAt = {
-                [db.Sequelize.Op.between]: [new Date(startDate), end]
+                [db.Sequelize.Op.between]: [start, end]
             };
         } else {
             // Default to last 30 days
@@ -874,11 +876,17 @@ exports.getClicksEvolution = async (req, res) => {
             raw: true
         });
 
-        const result = clicks.map(c => ({
-            date: c.day.toISOString().split('T')[0],
-            total: parseInt(c.total_clicks) || 0,
-            real: parseInt(c.real_contacts) || 0
-        }));
+        const result = clicks.map(c => {
+            // Como o PostgreSQL agrupou, a data pode voltar como Date (UTC midnight do Postgres).
+            // Para extrair o dia correto no Brasil sem problemas de fuso, pegamos pelo YYYY-MM-DD no UTC.
+            const dayStr = c.day instanceof Date ? c.day.toISOString().split('T')[0] : c.day;
+            
+            return {
+                date: dayStr,
+                total: parseInt(c.total_clicks) || 0,
+                real: parseInt(c.real_contacts) || 0
+            };
+        });
 
         res.json({ success: true, data: result });
     } catch (error) {
