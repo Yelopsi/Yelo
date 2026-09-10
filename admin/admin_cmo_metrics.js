@@ -215,7 +215,11 @@ function renderCMOMetrics(data) {
             data.campaigns.meta.forEach(c => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${c.campaign_name || c.id}</td>
+                    <td>
+                        ${c.campaign_name || 'Sem Nome'}
+                        <br/>
+                        <small style="color:#64748b; font-size: 0.7rem; font-family: monospace;">ID: ${c.campaign_id || c.id || '-'}</small>
+                    </td>
                     <td style="text-align: right;">R$ ${(c.spend || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                     <td style="text-align: right;">${(c.impressions || 0).toLocaleString('pt-BR')}</td>
                     <td style="text-align: right;">${(c.clicks || 0).toLocaleString('pt-BR')}</td>
