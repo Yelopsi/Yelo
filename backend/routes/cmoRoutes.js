@@ -223,7 +223,7 @@ router.get('/dashboard', async (req, res) => {
 
         // Ação Google
         if (pendingDeals > (wppClicks * 0.3) && wppClicks > 0) {
-            globalInsight += `⚠️ **Google Ads (B2C):** **CONGELE** aumentos. O gargalo não é tráfego, é vendas. Foque em cobrar os ${pendingDeals} leads travados no CRM.\n`;
+            globalInsight += `⚠️ **Google Ads (B2C):** **CONGELE** aumentos. O gargalo não é tráfego, é conversão na ponta. Há ${pendingDeals} leads travados no funil (aguardando a janela de 48h de resposta do psicólogo ou prontos para cobrança no CRM).\n`;
         } else if (decisionEngineGoogle.action.includes('AUMENTAR')) {
             globalInsight += `✅ **Google Ads (B2C):** Aumente o orçamento diário em **20%** para entregar mais pacientes aos psicólogos.\n`;
         } else if (decisionEngineGoogle.action.includes('PAUSAR')) {
