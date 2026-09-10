@@ -46,7 +46,13 @@ const notifyNewPost = async (post, type) => {
             console.log(`[NotificationService] Aviso global criado com sucesso no dashboard.`);
         }
 
-        // 2. Buscar todos os psicólogos ativos (trial ou pago)
+        // 2. Bloqueio de e-mail para Blog a pedido do usuário (redução de custos)
+        if (type === 'blog') {
+            console.log('[NotificationService] Envio de e-mail para blog desativado para redução de custos.');
+            return;
+        }
+
+        // 3. Buscar todos os psicólogos ativos (trial ou pago) para envios do fórum
         // Consideramos ativos aqueles com status 'active'
         const activePsis = await db.Psychologist.findAll({
             where: { status: 'active' },
