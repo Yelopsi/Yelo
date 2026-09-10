@@ -38,6 +38,7 @@ router.get('/dashboard', async (req, res) => {
         ]);
 
         const actualGoogleSpend = googleSpend.spend > 0 ? googleSpend.spend : (manualGoogle ? parseFloat(manualGoogle.spend) || 0 : 0);
+        const actualGoogleClicks = googleSpend.clicks > 0 ? googleSpend.clicks : (manualGoogle ? parseInt(manualGoogle.clicks) || 0 : 0);
         const actualPrevGoogleSpend = prevGoogleSpend.spend > 0 ? prevGoogleSpend.spend : (prevManualGoogle ? parseFloat(prevManualGoogle.spend) || 0 : 0);
 
         const totalSpend = metaSpend.spend + actualGoogleSpend;
