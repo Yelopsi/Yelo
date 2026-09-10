@@ -54,6 +54,7 @@ const { initSocket } = require('./config/socket');
 const db = require('./models');
 const applyDatabaseFixes = require('./config/dbFixes');
 const { startCronJobs } = require('./jobs/cronScheduler');
+const { startMetaAdsCron } = require('./cron/metaAdsCron');
 
 // Middlewares
 const seoRedirect = require('./middlewares/seoMiddleware');
@@ -343,6 +344,10 @@ const startServer = async () => {
         console.log('✅ [SERVER] Sistema totalmente operacional.');
         
         if(typeof startCronJobs === 'function') startCronJobs();    
+        
+        // Inicia Cron Jobs Específicos do Meta Ads
+        const { startMetaAdsCron } = require('./cron/metaAdsCron');
+        startMetaAdsCron();
         
         // --- INICIA O PROCESSAMENTO EM LOTE DO SEO (BACKGROUND) ---
         try {
