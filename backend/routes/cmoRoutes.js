@@ -252,16 +252,33 @@ router.get('/dashboard', async (req, res) => {
             globalInsight += `Sem dados suficientes no Google Ads para o período.\n`;
         }
         
-        globalInsight += "\n\n💡 **Conclusão Estratégica da Diretoria**\n";
-        if (metaPaybackMonths > 0 && metaPaybackMonths <= 8 && pendingDeals > (wppClicks * 0.3)) {
-            globalInsight += `A máquina B2B já está girando bem (Payback < 8 meses), mas o maior gargalo operacional é que você está entregando valor B2C (pacientes) que não estão sendo registrados. Aperte o processo de feedback para provar o ROI aos psicólogos, blindar a sua retenção e acelerar essa fase de tração!`;
-        } else if (metaChurnRate > 0.1 && lostDeals > googleDeals) {
-            globalInsight += `🚨 CENÁRIO DE RISCO: É normal operar com prejuízo financeiro na tração, mas NÃO com churn alto. Psicólogos estão cancelando provavelmente porque os pacientes B2C gerados não estão fechando terapia. Foco total em alinhar a expectativa do paciente na landing page com o que o psicólogo oferece.`;
-        } else if (metaPaybackMonths <= 6 && googleDeals > lostDeals && googleDeals > 0) {
-            globalInsight += `🚀 CENÁRIO DE CRESCIMENTO: A validação B2B (psicólogos) está rápida e o motor B2C entrega resultados reais. Sendo um início de operação, esse é um sinal verde forte para acelerar os investimentos de aquisição!`;
+        globalInsight += "\n\n💡 **Plano de Ação Executivo (Imediato)**\n";
+        
+        // Ação Meta
+        if (decisionEngineMeta.action.includes('AUMENTAR')) {
+            globalInsight += `✅ **Meta Ads (B2B):** Aumente o orçamento diário em **20%** para escalar a aquisição de assinantes.\n`;
+        } else if (decisionEngineMeta.action.includes('PAUSAR')) {
+            globalInsight += `🚨 **Meta Ads (B2B):** **PAUSE** a campanha. Alto gasto sem conversões claras.\n`;
+        } else if (decisionEngineMeta.action.includes('TETO')) {
+            globalInsight += `⚠️ **Meta Ads (B2B):** Reduza o orçamento em **15%**. O custo marginal estourou (teto de eficiência atingido).\n`;
         } else {
-            globalInsight += `A empresa está em fase de tração. Mantenha os custos operacionais enxutos e observe a relação entre a entrada de novos psicólogos e a geração de demanda (pacientes) para não desequilibrar a balança.`;
+            globalInsight += `⚖️ **Meta Ads (B2B):** **MANTENHA** o orçamento atual. Números dentro do padrão de tração.\n`;
         }
+
+        // Ação Google
+        if (pendingDeals > (wppClicks * 0.3) && wppClicks > 0) {
+            globalInsight += `⚠️ **Google Ads (B2C):** **CONGELE** aumentos. O gargalo não é tráfego, é vendas. Foque em cobrar os ${pendingDeals} leads travados no CRM.\n`;
+        } else if (decisionEngineGoogle.action.includes('AUMENTAR')) {
+            globalInsight += `✅ **Google Ads (B2C):** Aumente o orçamento diário em **20%** para entregar mais pacientes aos psicólogos.\n`;
+        } else if (decisionEngineGoogle.action.includes('PAUSAR')) {
+            globalInsight += `🚨 **Google Ads (B2C):** **PAUSE** as campanhas. Queima de caixa sem pacientes fechados.\n`;
+        } else if (decisionEngineGoogle.action.includes('TETO')) {
+            globalInsight += `⚠️ **Google Ads (B2C):** Reduza o orçamento em **15%**. O aumento recente trouxe pacientes caros demais.\n`;
+        } else {
+            globalInsight += `⚖️ **Google Ads (B2C):** **MANTENHA** o orçamento atual. Aguarde mais volume para tomar decisões.\n`;
+        }
+
+        globalInsight += `\n⏳ **Regra de Ouro:** Após aplicar qualquer mudança, aguarde **7 dias corridos** sem mexer nas campanhas para permitir o aprendizado do algoritmo da IA (Meta/Google).`;
 
         res.json({
             success: true,
