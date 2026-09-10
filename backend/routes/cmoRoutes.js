@@ -122,12 +122,12 @@ router.get('/dashboard', async (req, res) => {
         const lostDeals = parseInt(googleMetricsRes.total_lost || 0);
         const pendingDeals = parseInt(googleMetricsRes.total_pending || 0);
 
-        const googleCpa = googleDeals > 0 ? (actualGoogleSpend / googleDeals) : 0;
-        const prevGoogleCpa = prevGoogleDeals > 0 ? (actualPrevGoogleSpend / prevGoogleDeals) : 0;
+        const googleCpl = wppClicks > 0 ? (actualGoogleSpend / wppClicks) : 0;
+        const prevGoogleCpl = (prevGoogleMetricsRes.wpp_clicks > 0) ? (actualPrevGoogleSpend / parseInt(prevGoogleMetricsRes.wpp_clicks)) : 0;
 
         const deltaGoogleSpend = actualGoogleSpend - actualPrevGoogleSpend;
-        const deltaGoogleDeals = googleDeals - prevGoogleDeals;
-        const googleMarginalCpa = deltaGoogleDeals > 0 ? (deltaGoogleSpend / deltaGoogleDeals) : 0;
+        const deltaGoogleClicks = wppClicks - parseInt(prevGoogleMetricsRes.wpp_clicks || 0);
+        const googleMarginalCpl = deltaGoogleClicks > 0 ? (deltaGoogleSpend / deltaGoogleClicks) : 0;
 
         // 5. Motor de Decisão (Meta/B2B)
         const metaPaybackMonths = metaCac > 0 ? (metaCac / arpu) : 0;
@@ -172,38 +172,38 @@ router.get('/dashboard', async (req, res) => {
 
         // 6. Motor de Decisão (Google/B2C)
         let decisionEngineGoogle = {
-            action: 'RECOLHENDO DADOS ⏳', confidence: 0, target: 30, // Target CPA B2C
-            scaleCapacity: 'BAIXA', trend: googleCpa - prevGoogleCpa, warning: null, recommendation: 'Aguarde mais conversões.'
+            action: 'RECOLHENDO DADOS ⏳', confidence: 0, target: 8, // Target CPL B2C (Custo por Lead/Clique WPP)
+            scaleCapacity: 'BAIXA', trend: googleCpl - prevGoogleCpl, warning: null, recommendation: 'Aguarde mais volume de cliques.'
         };
-        if (googleDeals < 5) {
-            decisionEngineGoogle.warning = `Amostra pequena (${googleDeals} pacientes fechados na Yelo).`;
+        if (wppClicks < 10) {
+            decisionEngineGoogle.warning = `Amostra pequena (${wppClicks} cliques WPP). O custo por lead pode variar muito.`;
         }
 
         if (actualGoogleSpend > 0) {
-            const isCpaHealthy = googleCpa <= decisionEngineGoogle.target;
-            const isMarginalDangerous = googleMarginalCpa > (decisionEngineGoogle.target * 1.5);
+            const isCplHealthy = googleCpl <= decisionEngineGoogle.target;
+            const isMarginalDangerous = googleMarginalCpl > (decisionEngineGoogle.target * 1.5);
 
-            if (isCpaHealthy && !isMarginalDangerous && googleDeals >= 5) {
+            if (isCplHealthy && !isMarginalDangerous && wppClicks >= 10) {
                 decisionEngineGoogle.action = 'SINAL VERDE: AUMENTAR 🚀';
-                decisionEngineGoogle.confidence = googleDeals < 15 ? 60 : 85;
+                decisionEngineGoogle.confidence = wppClicks < 30 ? 65 : 90;
                 decisionEngineGoogle.scaleCapacity = 'ALTA';
-                decisionEngineGoogle.recommendation = `O Custo por Paciente (CPA R$ ${googleCpa.toFixed(2)}) está excelente. Aumente o Google Ads para gerar mais pacientes para os psicólogos.`;
-            } else if (isCpaHealthy && isMarginalDangerous) {
+                decisionEngineGoogle.recommendation = `O Custo por Lead (CPL R$ ${googleCpl.toFixed(2)}) está excelente. Aumente o Google Ads para entregar mais contatos aos psicólogos.`;
+            } else if (isCplHealthy && isMarginalDangerous) {
                 decisionEngineGoogle.action = 'TETO DE EFICIÊNCIA ⚖️';
-                decisionEngineGoogle.confidence = 75;
+                decisionEngineGoogle.confidence = 80;
                 decisionEngineGoogle.scaleCapacity = 'LIMITADA';
-                decisionEngineGoogle.warning = decisionEngineGoogle.warning || 'O custo marginal do Google (R$ ' + googleMarginalCpa.toFixed(2) + ') está subindo rápido.';
-                decisionEngineGoogle.recommendation = 'Mantenha o orçamento do Google. O aumento recente de verba trouxe pacientes mais caros.';
-            } else if (googleDeals === 0 && actualGoogleSpend > 150) {
+                decisionEngineGoogle.warning = decisionEngineGoogle.warning || 'O custo marginal do lead (R$ ' + googleMarginalCpl.toFixed(2) + ') está subindo rápido.';
+                decisionEngineGoogle.recommendation = 'Mantenha o orçamento do Google. O aumento recente trouxe contatos mais caros.';
+            } else if (wppClicks === 0 && actualGoogleSpend > 50) {
                 decisionEngineGoogle.action = 'PAUSAR / INVESTIGAR 🚨';
                 decisionEngineGoogle.confidence = 90;
                 decisionEngineGoogle.scaleCapacity = 'ZERO';
-                decisionEngineGoogle.recommendation = 'Gasto no Google sem gerar pacientes fechados. Reveja o tráfego de pesquisa.';
+                decisionEngineGoogle.recommendation = 'Gasto no Google sem gerar nenhum contato WPP. Reveja as palavras-chave ou a landing page.';
             } else {
                 decisionEngineGoogle.action = 'MANTER ORÇAMENTO ⚖️';
-                decisionEngineGoogle.confidence = 70;
+                decisionEngineGoogle.confidence = 75;
                 decisionEngineGoogle.scaleCapacity = 'MÉDIA';
-                decisionEngineGoogle.recommendation = `CPA atual é R$ ${googleCpa.toFixed(2)}. Mantenha e monitore.`;
+                decisionEngineGoogle.recommendation = `CPL atual é R$ ${googleCpl.toFixed(2)}. Mantenha e monitore o volume de contatos.`;
             }
         }
 
@@ -242,7 +242,7 @@ router.get('/dashboard', async (req, res) => {
             globalInsight: globalInsight,
             ads: {
                 meta: { ...metaSpend, spend: metaSpend.spend, cac: metaCac, marginalCac: metaMarginalCac },
-                google: { ...googleSpend, spend: actualGoogleSpend, cpa: googleCpa, marginalCpa: googleMarginalCpa }
+                google: { ...googleSpend, spend: actualGoogleSpend, cpl: googleCpl, marginalCpl: googleMarginalCpl }
             },
             campaigns: { meta: metaCampaigns, google: googleCampaigns },
             platform: {
