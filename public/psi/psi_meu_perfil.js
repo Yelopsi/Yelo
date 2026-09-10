@@ -239,8 +239,28 @@
             const btnPublic = document.getElementById('btn-view-public-profile');
             if (btnPublic && data.slug) {
                 btnPublic.href = `/${data.slug}`;
-                btnPublic.style.opacity = 1;
-                btnPublic.style.pointerEvents = 'auto';
+                
+                // UX FIX: Verifica se o status é ativo para permitir o clique
+                const hoje = new Date();
+                const validade = data.planExpiresAt ? new Date(data.planExpiresAt) : null;
+                const isVip = data.is_exempt === true;
+                const isAtivoEValido = data.status === 'active' && (isVip || (validade && validade > hoje));
+                
+                if (data.status === 'pending' || !isAtivoEValido || data.profile_paused) {
+                    btnPublic.style.opacity = 0.5;
+                    btnPublic.style.pointerEvents = 'auto'; // Mantém o evento para disparar o alerta
+                    btnPublic.onclick = (e) => {
+                        e.preventDefault();
+                        const msg = data.status === 'pending' 
+                            ? 'Complete seu perfil (incluindo CPF) para liberar sua URL pública.'
+                            : 'Seu perfil está inativo ou pausado. Reative-o para visualizar sua página.';
+                        window.showToast ? window.showToast(msg, 'error') : alert(msg);
+                    };
+                } else {
+                    btnPublic.style.opacity = 1;
+                    btnPublic.style.pointerEvents = 'auto';
+                    btnPublic.onclick = null; // Limpa qualquer onclick anterior
+                }
             }
 
             ['nome', 'email', 'crp', 'telefone', 'bio', 'slug', 'cep', 'cidade', 'estado', 'rua', 'numero', 'bairro', 'complemento', 'razao_social', 'formacao_desc', 'ano_inicio_experiencia', 'cpf'].forEach(id => {
@@ -799,6 +819,20 @@
         if (btnCopyLink) {
             btnCopyLink.addEventListener('click', () => {
                 if (originalProfileData && originalProfileData.slug) {
+                    // UX FIX: Impede a cópia do link se o perfil não estiver ativo e válido
+                    const hoje = new Date();
+                    const validade = originalProfileData.planExpiresAt ? new Date(originalProfileData.planExpiresAt) : null;
+                    const isVip = originalProfileData.is_exempt === true;
+                    const isAtivoEValido = originalProfileData.status === 'active' && (isVip || (validade && validade > hoje));
+                    
+                    if (originalProfileData.status === 'pending' || !isAtivoEValido || originalProfileData.profile_paused) {
+                        const msg = originalProfileData.status === 'pending' 
+                            ? 'Sua URL não está ativa porque o perfil está incompleto (falta CPF).'
+                            : 'Sua URL está inativa. Reative seu perfil primeiro.';
+                        window.showToast ? window.showToast(msg, 'error') : alert(msg);
+                        return;
+                    }
+
                     const url = `${window.location.origin}/${originalProfileData.slug}`;
                     navigator.clipboard.writeText(url).then(() => showToast('Link copiado para a área de transferência!', 'success'));
                 }

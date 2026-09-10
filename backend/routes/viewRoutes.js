@@ -352,6 +352,7 @@ router.get('/:slug', async (req, res, next) => {
         });
 
         if (!psychologist) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
             return res.status(410).render('404');
         }
 
@@ -360,6 +361,7 @@ router.get('/:slug', async (req, res, next) => {
         const isAtivoEValido = psychologist.status === 'active' && (isVip || (validade && validade > hoje));
 
         if (psychologist.deletedAt !== null || !isAtivoEValido || psychologist.profile_paused) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
             return res.status(410).render('psi_inativo', { nome: psychologist.nome });
         }
 

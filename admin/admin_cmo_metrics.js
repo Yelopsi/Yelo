@@ -90,26 +90,26 @@ function renderCMOMetrics(data) {
         // B2B (Meta) KPIs
         document.getElementById('cmo-meta-spend').textContent = formatCurrency(data.ads?.meta?.spend || 0);
         document.getElementById('cmo-meta-trials').textContent = (data.platform.b2b?.trials || 0).toLocaleString('pt-BR');
-        document.getElementById('cmo-meta-pagantes').textContent = (data.platform.b2b?.pagantes || 0).toLocaleString('pt-BR');
+        document.getElementById('cmo-meta-pagantes').textContent = (data.platform.b2b?.active || 0).toLocaleString('pt-BR');
         document.getElementById('cmo-meta-cac').textContent = formatCurrency(data.ads?.meta?.cac || 0);
 
         // B2C (Google) KPIs
         document.getElementById('cmo-google-spend').textContent = formatCurrency(data.ads?.google?.spend || 0);
-        document.getElementById('cmo-google-clicks').textContent = (data.platform.b2c?.clicks || 0).toLocaleString('pt-BR');
-        document.getElementById('cmo-google-deals').textContent = (data.platform.b2c?.deals || 0).toLocaleString('pt-BR');
+        document.getElementById('cmo-google-clicks').textContent = (data.platform.b2c?.wpp_clicks || 0).toLocaleString('pt-BR');
+        document.getElementById('cmo-google-deals').textContent = (data.platform.b2c?.total_deals || 0).toLocaleString('pt-BR');
         document.getElementById('cmo-google-cpa').textContent = formatCurrency(data.ads?.google?.cpa || 0);
 
         // Cards de Transparência (seção inferior)
         const setDbg = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
         setDbg('dbg-meta-spend',    formatCurrency(data.ads?.meta?.spend || 0));
         setDbg('dbg-meta-trials',   (data.platform.b2b?.trials || 0).toLocaleString('pt-BR'));
-        setDbg('dbg-meta-pagantes', (data.platform.b2b?.pagantes || 0).toLocaleString('pt-BR'));
+        setDbg('dbg-meta-pagantes', (data.platform.b2b?.active || 0).toLocaleString('pt-BR'));
         setDbg('dbg-meta-cac',      formatCurrency(data.ads?.meta?.cac || 0));
         setDbg('dbg-meta-payback',  (data.decisionEngineMeta?.paybackMonths || 0).toFixed(1).replace('.', ',') + ' Meses');
         setDbg('dbg-meta-churn',    (data.platform.b2b?.churned || 0).toLocaleString('pt-BR'));
         setDbg('dbg-google-spend',  formatCurrency(data.ads?.google?.spend || 0));
-        setDbg('dbg-google-clicks', (data.platform.b2c?.clicks || 0).toLocaleString('pt-BR'));
-        setDbg('dbg-google-deals',  (data.platform.b2c?.deals || 0).toLocaleString('pt-BR'));
+        setDbg('dbg-google-clicks', (data.platform.b2c?.wpp_clicks || 0).toLocaleString('pt-BR'));
+        setDbg('dbg-google-deals',  (data.platform.b2c?.total_deals || 0).toLocaleString('pt-BR'));
         setDbg('dbg-google-cpa',    formatCurrency(data.ads?.google?.cpa || 0));
     }
 
