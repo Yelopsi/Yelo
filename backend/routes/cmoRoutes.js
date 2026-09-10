@@ -44,6 +44,15 @@ router.get('/dashboard', async (req, res) => {
         const totalSpend = metaSpend.spend + actualGoogleSpend;
         const totalPrevSpend = prevMetaSpend.spend + actualPrevGoogleSpend;
 
+        // FETCH HISTORICAL ADS SPEND
+        const metaSpendHistorical = await metaAdsService.getAccountSpend('2020-01-01', dateEnd);
+        const googleSpendHistorical = await googleAdsService.getAccountSpend('2020-01-01', dateEnd);
+        const manualGoogleHistorical = await sequelize.models.ManualAdMetric.findAll({ where: { platform: 'google' } });
+        let actualGoogleSpendHistorical = googleSpendHistorical.spend;
+        if (manualGoogleHistorical && manualGoogleHistorical.length > 0) {
+            actualGoogleSpendHistorical += manualGoogleHistorical.reduce((acc, m) => acc + (parseFloat(m.spend) || 0), 0);
+        }
+
         // 3. Atribuição B2B (Meta Ads -> Psicólogos)
         // Funil B2B completo:
         //   trials    = status 'pending' (aguardando aprovação - lead cru do anúncio)
@@ -147,6 +156,57 @@ router.get('/dashboard', async (req, res) => {
 
         const googleCpl = wppClicks > 0 ? (actualGoogleSpend / wppClicks) : 0;
         const prevGoogleCpl = (prevGoogleMetricsRes.wpp_clicks > 0) ? (actualPrevGoogleSpend / parseInt(prevGoogleMetricsRes.wpp_clicks)) : 0;
+
+        // HISTORICAL QUERIES
+        const b2bHistQuery = `
+            SELECT 
+                COUNT(*) FILTER (
+                    WHERE status = 'active'
+                    AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL)
+                    AND (is_exempt IS NULL OR is_exempt = false)
+                ) as pagantes,
+                COUNT(*) FILTER (
+                    WHERE status IN ('pending', 'active')
+                    AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
+                    AND (is_exempt IS NULL OR is_exempt = false)
+                ) as trials,
+                COUNT(*) FILTER (WHERE status = 'inactive') as churned
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+            AND (
+                utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
+                OR first_utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
+            )
+        `;
+        const [metaMetricsHistRes] = await sequelize.query(b2bHistQuery, { type: sequelize.QueryTypes.SELECT });
+        const histMetaPagantes = parseInt(metaMetricsHistRes.pagantes || 0);
+        const histMetaTrials = parseInt(metaMetricsHistRes.trials || 0);
+        const histMetaChurned = parseInt(metaMetricsHistRes.churned || 0);
+
+        const globalChurnHistQuery = `
+            SELECT COUNT(*) as churned
+            FROM "Psychologists"
+            WHERE status = 'inactive'
+            AND "deletedAt" IS NULL
+        `;
+        const [globalChurnHistRes] = await sequelize.query(globalChurnHistQuery, { type: sequelize.QueryTypes.SELECT });
+        const histGlobalChurned = parseInt(globalChurnHistRes.churned || 0);
+        
+        const histMetaCac = histMetaPagantes > 0 ? (metaSpendHistorical.spend / histMetaPagantes) : 0;
+        const histMetaChurnRate = histMetaPagantes > 0 ? (histMetaChurned / (histMetaPagantes + histMetaChurned)) : 0.05;
+        const histMetaPaybackMonths = histMetaCac > 0 ? (histMetaCac / arpu) : 0;
+        const histGlobalChurnRate = (totalActive + histGlobalChurned) > 0 ? (histGlobalChurned / (totalActive + histGlobalChurned)) : 0;
+
+        const b2cHistQuery = `
+            SELECT 
+                COUNT(*) as wpp_clicks,
+                SUM(CASE WHEN "dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as total_deals
+            FROM "WhatsAppClickLogs"
+        `;
+        const [googleMetricsHistRes] = await sequelize.query(b2cHistQuery, { type: sequelize.QueryTypes.SELECT });
+        const histWppClicks = parseInt(googleMetricsHistRes.wpp_clicks || 0);
+        const histGoogleDeals = parseInt(googleMetricsHistRes.total_deals || 0);
+        const histGoogleCpl = histWppClicks > 0 ? (actualGoogleSpendHistorical / histWppClicks) : 0;
 
         const deltaGoogleSpend = actualGoogleSpend - actualPrevGoogleSpend;
         const deltaGoogleClicks = wppClicks - parseInt(prevGoogleMetricsRes.wpp_clicks || 0);
@@ -268,6 +328,14 @@ router.get('/dashboard', async (req, res) => {
                 google: { ...googleSpend, spend: actualGoogleSpend, cpl: googleCpl, marginalCpl: googleMarginalCpl }
             },
             campaigns: { meta: metaCampaigns, google: googleCampaigns },
+            historical: {
+                meta: { spend: metaSpendHistorical.spend, cac: histMetaCac, paybackMonths: histMetaPaybackMonths, churn_rate: histMetaChurnRate },
+                google: { spend: actualGoogleSpendHistorical, cpl: histGoogleCpl },
+                platform: {
+                    b2b: { active: histMetaPagantes, trials: histMetaTrials, global_churn_rate: histGlobalChurnRate },
+                    b2c: { wpp_clicks: histWppClicks, total_deals: histGoogleDeals }
+                }
+            },
             platform: {
                 b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate },
                 b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals }

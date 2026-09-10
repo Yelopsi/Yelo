@@ -100,21 +100,32 @@ function renderCMOMetrics(data) {
         document.getElementById('cmo-google-cpl').textContent = formatCurrency(data.ads?.google?.cpl || 0);
 
         // Cards de Transparência (seção inferior)
-        const setDbg = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-        setDbg('dbg-meta-spend',    formatCurrency(data.ads?.meta?.spend || 0));
-        setDbg('dbg-meta-trials',   (data.platform.b2b?.trials || 0).toLocaleString('pt-BR'));
-        setDbg('dbg-meta-pagantes', (data.platform.b2b?.active || 0).toLocaleString('pt-BR'));
-        setDbg('dbg-meta-cac',      formatCurrency(data.ads?.meta?.cac || 0));
-        setDbg('dbg-meta-payback',  (data.decisionEngineMeta?.paybackMonths || 0).toFixed(1).replace('.', ',') + ' Meses');
+        const setDbgHist = (id, histVal, monthVal) => { 
+            const el = document.getElementById(id); 
+            if (el) {
+                el.style.fontSize = '1.05rem';
+                el.style.display = 'flex';
+                el.style.flexDirection = 'column';
+                el.style.gap = '2px';
+                el.style.marginTop = '4px';
+                el.innerHTML = `<span style="color: #64748b; font-size: 0.75rem;">Histórico: <strong style="color: #1e293b; font-size: 1.05rem;">${histVal}</strong></span><span style="color: #64748b; font-size: 0.75rem;">No Período: <strong style="color: #1e293b; font-size: 1.05rem;">${monthVal}</strong></span>`;
+            } 
+        };
+
+        setDbgHist('dbg-meta-spend',    formatCurrency(data.historical?.meta?.spend || 0), formatCurrency(data.ads?.meta?.spend || 0));
+        setDbgHist('dbg-meta-trials',   (data.historical?.platform?.b2b?.trials || 0).toLocaleString('pt-BR'), (data.platform.b2b?.trials || 0).toLocaleString('pt-BR'));
+        setDbgHist('dbg-meta-pagantes', (data.historical?.platform?.b2b?.active || 0).toLocaleString('pt-BR'), (data.platform.b2b?.active || 0).toLocaleString('pt-BR'));
+        setDbgHist('dbg-meta-cac',      formatCurrency(data.historical?.meta?.cac || 0), formatCurrency(data.ads?.meta?.cac || 0));
+        setDbgHist('dbg-meta-payback',  (data.historical?.meta?.paybackMonths || 0).toFixed(1).replace('.', ',') + ' Meses', (data.decisionEngineMeta?.paybackMonths || 0).toFixed(1).replace('.', ',') + ' Meses');
         
         const formatPercent = (val) => `${(val * 100).toFixed(1)}%`;
-        setDbg('dbg-meta-churn',    formatPercent(data.platform.b2b?.meta_churn_rate || 0));
-        setDbg('dbg-global-churn',  formatPercent(data.platform.b2b?.global_churn_rate || 0));
+        setDbgHist('dbg-meta-churn',    formatPercent(data.historical?.meta?.churn_rate || 0), formatPercent(data.platform.b2b?.meta_churn_rate || 0));
+        setDbgHist('dbg-global-churn',  formatPercent(data.historical?.platform?.b2b?.global_churn_rate || 0), formatPercent(data.platform.b2b?.global_churn_rate || 0));
         
-        setDbg('dbg-google-spend',  formatCurrency(data.ads?.google?.spend || 0));
-        setDbg('dbg-google-clicks', (data.platform.b2c?.wpp_clicks || 0).toLocaleString('pt-BR'));
-        setDbg('dbg-google-deals',  (data.platform.b2c?.total_deals || 0).toLocaleString('pt-BR'));
-        setDbg('dbg-google-cpl',    formatCurrency(data.ads?.google?.cpl || 0));
+        setDbgHist('dbg-google-spend',  formatCurrency(data.historical?.google?.spend || 0), formatCurrency(data.ads?.google?.spend || 0));
+        setDbgHist('dbg-google-clicks', (data.historical?.platform?.b2c?.wpp_clicks || 0).toLocaleString('pt-BR'), (data.platform.b2c?.wpp_clicks || 0).toLocaleString('pt-BR'));
+        setDbgHist('dbg-google-deals',  (data.historical?.platform?.b2c?.total_deals || 0).toLocaleString('pt-BR'), (data.platform.b2c?.total_deals || 0).toLocaleString('pt-BR'));
+        setDbgHist('dbg-google-cpl',    formatCurrency(data.historical?.google?.cpl || 0), formatCurrency(data.ads?.google?.cpl || 0));
     }
 
     // 2. Atualizar Motor de Decisão Meta (B2B)
