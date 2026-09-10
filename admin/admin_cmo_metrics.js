@@ -105,6 +105,7 @@ function renderCMOMetrics(data) {
         setDbg('dbg-meta-trials',   (data.platform.b2b?.trials || 0).toLocaleString('pt-BR'));
         setDbg('dbg-meta-pagantes', (data.platform.b2b?.pagantes || 0).toLocaleString('pt-BR'));
         setDbg('dbg-meta-cac',      formatCurrency(data.ads?.meta?.cac || 0));
+        setDbg('dbg-meta-payback',  (data.decisionEngineMeta?.paybackMonths || 0).toFixed(1).replace('.', ',') + ' Meses');
         setDbg('dbg-meta-churn',    (data.platform.b2b?.churned || 0).toLocaleString('pt-BR'));
         setDbg('dbg-google-spend',  formatCurrency(data.ads?.google?.spend || 0));
         setDbg('dbg-google-clicks', (data.platform.b2c?.clicks || 0).toLocaleString('pt-BR'));
