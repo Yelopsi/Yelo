@@ -83,7 +83,20 @@ router.get('/dashboard', async (req, res) => {
         const prevMetaPagantes = parseInt(prevMetaMetricsRes.pagantes || 0);
         const metaTrials = parseInt(metaMetricsRes.trials || 0);
         const metaChurned = parseInt(metaMetricsRes.churned || 0);
-        console.log('[CMO B2B Debug]', { dateStart, dateEnd, metaPagantes, metaTrials, metaChurned, raw: metaMetricsRes });
+
+        const globalChurnQuery = `
+            SELECT COUNT(*) as churned
+            FROM "Psychologists"
+            WHERE status = 'inactive'
+            AND "updatedAt" >= :dateStart AND "updatedAt" <= :dateEnd
+            AND "deletedAt" IS NULL
+        `;
+        const [globalChurnRes] = await sequelize.query(globalChurnQuery, {
+            replacements: { dateStart, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+        });
+        const globalChurned = parseInt(globalChurnRes.churned || 0);
+
+        console.log('[CMO B2B Debug]', { dateStart, dateEnd, metaPagantes, metaTrials, metaChurned, globalChurned, raw: metaMetricsRes });
 
 
         const metaCac = metaPagantes > 0 ? (metaSpend.spend / metaPagantes) : 0;
@@ -246,7 +259,7 @@ router.get('/dashboard', async (req, res) => {
             },
             campaigns: { meta: metaCampaigns, google: googleCampaigns },
             platform: {
-                b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned },
+                b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned },
                 b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals }
             },
             decisionEngineMeta,
