@@ -106,8 +106,11 @@ function renderCMOMetrics(data) {
         setDbg('dbg-meta-pagantes', (data.platform.b2b?.active || 0).toLocaleString('pt-BR'));
         setDbg('dbg-meta-cac',      formatCurrency(data.ads?.meta?.cac || 0));
         setDbg('dbg-meta-payback',  (data.decisionEngineMeta?.paybackMonths || 0).toFixed(1).replace('.', ',') + ' Meses');
-        setDbg('dbg-meta-churn',    (data.platform.b2b?.churned || 0).toLocaleString('pt-BR'));
-        setDbg('dbg-global-churn',  (data.platform.b2b?.global_churn || 0).toLocaleString('pt-BR'));
+        
+        const formatPercent = (val) => `${(val * 100).toFixed(1)}%`;
+        setDbg('dbg-meta-churn',    formatPercent(data.platform.b2b?.meta_churn_rate || 0));
+        setDbg('dbg-global-churn',  formatPercent(data.platform.b2b?.global_churn_rate || 0));
+        
         setDbg('dbg-google-spend',  formatCurrency(data.ads?.google?.spend || 0));
         setDbg('dbg-google-clicks', (data.platform.b2c?.wpp_clicks || 0).toLocaleString('pt-BR'));
         setDbg('dbg-google-deals',  (data.platform.b2c?.total_deals || 0).toLocaleString('pt-BR'));

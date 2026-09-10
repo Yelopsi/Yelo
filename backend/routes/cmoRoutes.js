@@ -96,7 +96,17 @@ router.get('/dashboard', async (req, res) => {
         });
         const globalChurned = parseInt(globalChurnRes.churned || 0);
 
-        console.log('[CMO B2B Debug]', { dateStart, dateEnd, metaPagantes, metaTrials, metaChurned, globalChurned, raw: metaMetricsRes });
+        const globalActiveQuery = `
+            SELECT COUNT(*) as total_active
+            FROM "Psychologists"
+            WHERE status = 'active'
+            AND "deletedAt" IS NULL
+        `;
+        const [globalActiveRes] = await sequelize.query(globalActiveQuery, { type: sequelize.QueryTypes.SELECT });
+        const totalActive = parseInt(globalActiveRes.total_active || 0);
+        const globalChurnRate = (totalActive + globalChurned) > 0 ? (globalChurned / (totalActive + globalChurned)) : 0;
+
+        console.log('[CMO B2B Debug]', { dateStart, dateEnd, metaPagantes, metaTrials, metaChurned, globalChurned, globalChurnRate, raw: metaMetricsRes });
 
 
         const metaCac = metaPagantes > 0 ? (metaSpend.spend / metaPagantes) : 0;
@@ -259,7 +269,7 @@ router.get('/dashboard', async (req, res) => {
             },
             campaigns: { meta: metaCampaigns, google: googleCampaigns },
             platform: {
-                b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned },
+                b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate },
                 b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals }
             },
             decisionEngineMeta,
