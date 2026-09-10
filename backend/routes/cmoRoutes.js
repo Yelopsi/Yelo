@@ -208,51 +208,7 @@ router.get('/dashboard', async (req, res) => {
         }
 
         // 7. Visão Global 360 (B2B + B2C)
-        let globalInsight = "👥 **B2B (Aquisição de Psicólogos)**\n";
-        
-        if (metaSpend.spend > 0) {
-            globalInsight += `No período, foram investidos R$ ${metaSpend.spend.toFixed(2).replace('.', ',')} gerando ${metaPagantes} novos assinantes (CAC: R$ ${metaCac.toFixed(2).replace('.', ',')}). `;
-            if (metaPaybackMonths > 0) {
-                globalInsight += `O payback estimado é de ${metaPaybackMonths.toFixed(1).replace('.', ',')} meses. `;
-                if (metaPaybackMonths <= 6) {
-                    globalInsight += `✅ Esse é um tempo de recuperação excelente para a atual fase de tração, validando o modelo de negócios. `;
-                } else if (metaPaybackMonths >= 12) {
-                    globalInsight += `⚠️ O tempo de payback está alto (${metaPaybackMonths.toFixed(1).replace('.', ',')} meses). Como a plataforma está no início da tração, algum prejuízo é esperado no começo, mas monitore o fluxo de caixa de perto. `;
-                } else {
-                    globalInsight += `O payback está dentro do aceitável para empresas em início de tração (lucro no médio prazo). `;
-                }
-            }
-            if (metaChurned > 0) {
-                globalInsight += `No entanto, tivemos ${metaChurned} cancelamentos (Churn de ${(metaChurnRate*100).toFixed(1).replace('.', ',')}%). `;
-                if (metaChurnRate > 0.1) {
-                    globalInsight += `🚨 ATENÇÃO: O churn está alto. Antes de escalar o Meta Ads, é vital focar na retenção. `;
-                }
-            }
-        } else {
-            globalInsight += `Não houve investimento significativo em Meta Ads no período.\n`;
-        }
-        
-        globalInsight += "\n\n🩺 **B2C (Atração de Pacientes)**\n";
-        if (actualGoogleClicks > 0 || wppClicks > 0) {
-            const clickToWpp = actualGoogleClicks > 0 ? ((wppClicks / actualGoogleClicks) * 100).toFixed(1).replace('.', ',') : 0;
-            globalInsight += `O Google Ads gerou ${actualGoogleClicks} cliques no anúncio e ${wppClicks} contatos no WhatsApp (conversão da LP: ${clickToWpp}%). `;
-            if (wppClicks > 0) {
-                globalInsight += `Desses leads, ${googleDeals} fecharam, ${lostDeals} foram perdidos e ${pendingDeals} estão PENDENTES. `;
-                if (pendingDeals > (wppClicks * 0.3)) {
-                    globalInsight += `🚨 O grande gargalo hoje é o feedback dos psicólogos. Há muitos leads travados, mascarando o verdadeiro CPA da campanha. `;
-                } else if (googleDeals === 0 && lostDeals > 0) {
-                    globalInsight += `⚠️ Os pacientes chegam, mas não fecham. Avalie a qualidade do lead ou o treinamento de vendas dos psicólogos. `;
-                } else {
-                    globalInsight += `✅ O fluxo de pacientes está saudável e com boa vazão de agendamentos. `;
-                }
-            } else {
-                globalInsight += `⚠️ A landing page não está retendo os cliques. Os pacientes saem antes de chamar no WhatsApp. `;
-            }
-        } else {
-            globalInsight += `Sem dados suficientes no Google Ads para o período.\n`;
-        }
-        
-        globalInsight += "\n\n💡 **Plano de Ação Executivo (Imediato)**\n";
+        let globalInsight = "💡 **Plano de Ação Executivo (Imediato)**\n";
         
         // Ação Meta
         if (decisionEngineMeta.action.includes('AUMENTAR')) {
