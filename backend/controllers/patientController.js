@@ -58,14 +58,14 @@ exports.registerPatient = async (req, res) => {
             ip_registro: ip,
             termos_aceitos: !!termos,
             marketing_aceito: !!marketing,
-            utm_source,
-            utm_medium,
-            utm_campaign,
-            utm_content,
-            first_utm_source,
-            first_utm_medium,
-            first_utm_campaign,
-            first_utm_content
+            utm_source: utm_source || 'organico',
+            utm_medium: utm_medium || 'organico',
+            utm_campaign: utm_campaign || 'organico',
+            utm_content: utm_content || null,
+            first_utm_source: first_utm_source || utm_source || 'organico',
+            first_utm_medium: first_utm_medium || utm_medium || 'organico',
+            first_utm_campaign: first_utm_campaign || utm_campaign || 'organico',
+            first_utm_content: first_utm_content || utm_content || null
         });
 
         // [AUDITORIA] Log de Sucesso Estratégico

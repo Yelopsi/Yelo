@@ -136,14 +136,14 @@ exports.registerPsychologist = async (req, res) => {
             planExpiresAt: cleanCpf ? trialEndDate : null,
             cpf: cleanCpf, // Salva na coluna CPF
             telefone, // Salva o número de telefone no banco
-            utm_source: utm_source || null,
-            utm_medium: utm_medium || null,
-            utm_campaign: utm_campaign || null,
+            utm_source: utm_source || 'organico',
+            utm_medium: utm_medium || 'organico',
+            utm_campaign: utm_campaign || 'organico',
             utm_content: utm_content || null,
-            first_utm_source: first_utm_source || null,
-            first_utm_medium: first_utm_medium || null,
-            first_utm_campaign: first_utm_campaign || null,
-            first_utm_content: first_utm_content || null
+            first_utm_source: first_utm_source || utm_source || 'organico',
+            first_utm_medium: first_utm_medium || utm_medium || 'organico',
+            first_utm_campaign: first_utm_campaign || utm_campaign || 'organico',
+            first_utm_content: first_utm_content || utm_content || null
         });
 
         // --- 6.1 LIMPEZA DA LISTA DE ESPERA ---
