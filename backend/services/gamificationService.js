@@ -30,7 +30,8 @@ const LEVELS = [
 // --- REGRAS DE BADGES (CONQUISTAS) ---
 const BADGE_THRESHOLDS = {
     SEMEADOR: { OURO: 15, PRATA: 5, BRONZE: 1 },
-    VOZ_ATIVA: { OURO: 200, PRATA: 50, BRONZE: 10 }
+    VOZ_ATIVA: { OURO: 200, PRATA: 50, BRONZE: 10 },
+    CONSELHEIRO: { OURO: 150, PRATA: 50, BRONZE: 10 }
 };
 
 // --- CAMPOS OBRIGATÓRIOS PARA O PERFIL 100% (Badge Autêntico) ---
@@ -114,6 +115,22 @@ async function calculateBadges(psychologistId) {
         else if (commentCount >= BADGE_THRESHOLDS.VOZ_ATIVA.PRATA) badges.voz_ativa = 'prata';
         else if (commentCount >= BADGE_THRESHOLDS.VOZ_ATIVA.BRONZE) badges.voz_ativa = 'bronze';
         else delete badges.voz_ativa;
+
+        let answerCount = 0;
+        try {
+            const answerRes = await db.sequelize.query(`SELECT COUNT(*) as count FROM "answers" WHERE "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT });
+            answerCount = parseInt(answerRes[0]?.count || 0, 10);
+        } catch (e) {
+            try {
+                const answerRes2 = await db.sequelize.query(`SELECT COUNT(*) as count FROM "answers" WHERE "PsychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT });
+                answerCount = parseInt(answerRes2[0]?.count || 0, 10);
+            } catch(e2) {}
+        }
+        
+        if (answerCount >= BADGE_THRESHOLDS.CONSELHEIRO.OURO) badges.conselheiro = 'ouro';
+        else if (answerCount >= BADGE_THRESHOLDS.CONSELHEIRO.PRATA) badges.conselheiro = 'prata';
+        else if (answerCount >= BADGE_THRESHOLDS.CONSELHEIRO.BRONZE) badges.conselheiro = 'bronze';
+        else delete badges.conselheiro;
 
         const isComplete = REQUIRED_PROFILE_FIELDS.every(field => psi[field] != null && String(psi[field]).trim() !== '') &&
                            REQUIRED_PROFILE_ARRAYS.every(field => Array.isArray(psi[field]) && psi[field].length > 0);
