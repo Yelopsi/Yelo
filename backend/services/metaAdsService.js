@@ -64,10 +64,10 @@ class MetaAdsService {
                 if (c.actions) {
                     // Soma as ações de conversão relevantes (leads e cadastros)
                     const conversionActions = c.actions.filter(a => 
-                        a.action_type.includes('lead') || 
-                        a.action_type.includes('complete_registration') || 
-                        a.action_type.includes('contact') ||
-                        a.action_type.includes('purchase')
+                        a.action_type === 'lead' || 
+                        a.action_type === 'complete_registration' || 
+                        a.action_type === 'contact' ||
+                        a.action_type === 'purchase'
                     );
                     conversions = conversionActions.reduce((sum, a) => sum + parseInt(a.value || 0), 0);
                 }
