@@ -342,8 +342,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Passa o UTM salvo no localStorage e o nome do visitante (se disponível)
                         let utmSource = 'organico';
                         try {
-                            const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
-                            utmSource = globalUtms.utm_source || 'organico';
+                            const urlParams = new URLSearchParams(window.location.search);
+                            if (urlParams.has('utm_source')) {
+                                utmSource = urlParams.get('utm_source');
+                            } else {
+                                const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
+                                utmSource = globalUtms.utm_source || 'organico';
+                            }
                         } catch(e) {}
                         const guestName = localStorage.getItem('yelo_guest_name') || '';
                         const abParams = new URLSearchParams();

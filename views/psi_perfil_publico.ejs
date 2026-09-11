@@ -721,7 +721,7 @@
         // Repassa os dados básicos pro frontend (útil para SEO e pre-load)
         window.YELO_PROFILE_DATA = <%- JSON.stringify(psicologo) %>;
     </script>
-    <script nonce="<%= nonce %>" src="/js/psi_perfil_publico.js"></script>
+    <script nonce="<%= nonce %>" src="/js/psi_perfil_publico.js?v=<%= Date.now() %>"></script>
 
     <%- include('partials/cookie_banner') %>
 </body>
