@@ -110,8 +110,33 @@ window.initializePage = function() {
                  updateSafe('kpi-psi-total', stats.psychologists.total);
                  updateSafe('kpi-psi-active', stats.psychologists.active);
                  updateSafe('kpi-psi-deleted', stats.psychologists.deleted);
-                 updateSafe('kpi-psi-paying', stats.psychologists.paying);
+                 
+                 const currentPaying = parseInt(stats.psychologists.paying) || 0;
+                 updateSafe('kpi-psi-paying', currentPaying);
                  updateSafe('kpi-psi-vip', stats.psychologists.vip);
+
+                 // --- 👑 EASTER EGG: RECORDE DE ASSINANTES ---
+                 const storedRecord = parseInt(localStorage.getItem('Yelo_Admin_Subscribers_Record') || "16");
+                 if (currentPaying > storedRecord) {
+                     localStorage.setItem('Yelo_Admin_Subscribers_Record', currentPaying.toString());
+                     
+                     if (typeof confetti === 'function') {
+                         setTimeout(() => {
+                             const duration = 3000;
+                             const animationEnd = Date.now() + duration;
+                             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 99999 };
+                             
+                             const interval = setInterval(function() {
+                                 const timeLeft = animationEnd - Date.now();
+                                 if (timeLeft <= 0) return clearInterval(interval);
+                                 const particleCount = 50 * (timeLeft / duration);
+                                 // Origens nos cantos esquerdo e direito
+                                 confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() * 0.2 + 0.1, y: Math.random() - 0.2 } }));
+                                 confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } }));
+                             }, 250);
+                         }, 600); // pequeno delay para a renderização do número
+                     }
+                 }
                  
                  const plans = stats.psychologists.byPlan || {};
                  updateSafe('kpi-plan-Essencial', plans['Essencial'] || 0);
