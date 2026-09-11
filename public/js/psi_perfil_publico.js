@@ -1,4 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // [CORREÇÃO]: A página de perfil não inclui script.js. Precisamos capturar as UTMs aqui.
+    if (window.location.search) {
+        const urlParams = new URLSearchParams(window.location.search);
+        let hasUTMs = false;
+        const globalUtms = {};
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(param => {
+            if (urlParams.has(param)) {
+                globalUtms[param] = urlParams.get(param);
+                hasUTMs = true;
+            }
+        });
+        if (hasUTMs) {
+            localStorage.setItem('yelo_global_utms', JSON.stringify(globalUtms));
+            if (!localStorage.getItem('yelo_global_first_utms')) {
+                localStorage.setItem('yelo_global_first_utms', JSON.stringify(globalUtms));
+            }
+        }
+    }
+
     const API_BASE_URL = window.API_BASE_URL || window.location.origin;
     const profileContainer = document.getElementById('profile-page-container');
     const loaderContainer = document.getElementById('loader-container');
