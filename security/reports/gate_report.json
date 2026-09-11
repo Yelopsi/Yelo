@@ -1,6 +1,6 @@
 {
-  "date": "2026-09-09T01:59:28.900Z",
-  "status": "PASS",
+  "date": "2026-09-11T01:28:51.178Z",
+  "status": "BLOCKED",
   "modules": {
     "dependency_scan": "PASS",
     "secret_scan": "PASS",
@@ -16,12 +16,12 @@
     "test_socket_data_min": "PASS",
     "test_socket_rate_limit": "PASS",
     "test_api_regression": "PASS",
-    "test_security_headers": "PASS",
-    "test_rate_limit": "PASS",
+    "test_security_headers": "FAIL",
+    "test_rate_limit": "FAIL",
     "test_retention": "PASS",
-    "test_payload_hardening": "PASS",
+    "test_payload_hardening": "FAIL",
     "test_log_sanitization": "PASS",
-    "test_upload_security": "PASS"
+    "test_upload_security": "FAIL"
   },
   "issues": []
 }

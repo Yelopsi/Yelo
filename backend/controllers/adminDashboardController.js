@@ -1380,3 +1380,119 @@ exports.markBillingSent = async (req, res) => {
         res.status(500).json({ error: 'Erro interno' });
     }
 };
+
+/**
+ * Rota: GET /api/admin/reports/clicks-growth
+ * Descrição: Dados para o gráfico B2C (Cliques vs Projeção)
+ */
+exports.getClicksGrowthChart = async (req, res) => {
+    try {
+        const parseDateBRT = (dateString, isEnd = false) => {
+            if (!dateString) return null;
+            const time = isEnd ? '23:59:59.999' : '00:00:00.000';
+            return new Date(`${dateString}T${time}-03:00`);
+        };
+
+        const days = parseInt(req.query.days || 30, 10);
+        let endDate = new Date();
+        endDate.setHours(endDate.getHours() - 3);
+        endDate.setUTCHours(23, 59, 59, 999);
+
+        let startDate = new Date();
+        startDate.setHours(startDate.getHours() - 3);
+        startDate.setDate(startDate.getDate() - (days - 1));
+        startDate.setUTCHours(0, 0, 0, 0);
+
+        // Se datas exatas vierem na query, sobrescreve
+        if (req.query.startDate) startDate = parseDateBRT(req.query.startDate, false);
+        if (req.query.endDate) endDate = parseDateBRT(req.query.endDate, true);
+
+        // Projeção Fixa Mensal de SEO
+        // 2026-09: 400 | 2026-10: 650 | 2026-11: 1100 | 2026-12: 1800 | 2027-01: 2650 | 2027-02: 3500 | 2027-03: 4500 | 2027-04: 5500 | 2027-05: 6500 | 2027-06: 7600 | 2027-07: 8800 | 2027-08: 10000
+        const expectedSessionsMap = {
+            '2026-09': 400, '2026-10': 650, '2026-11': 1100, '2026-12': 1800,
+            '2027-01': 2650, '2027-02': 3500, '2027-03': 4500, '2027-04': 5500,
+            '2027-05': 6500, '2027-06': 7600, '2027-07': 8800, '2027-08': 10000
+        };
+
+        // Query real agrupada por dia e utmSource
+        const db = require('../../backend/models');
+        const clicksQuery = `
+            SELECT 
+                TO_CHAR("createdAt" AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as data,
+                "utmSource",
+                COUNT(*) as total
+            FROM "WhatsAppClickLogs"
+            WHERE "createdAt" BETWEEN :start AND :end
+            GROUP BY data, "utmSource"
+            ORDER BY data ASC;
+        `;
+
+        const [realClicks] = await db.sequelize.query(clicksQuery, {
+            replacements: { start: startDate, end: endDate }
+        });
+
+        // Montagem do vetor de labels (cada dia no intervalo)
+        const labels = [];
+        const organicClicksData = [];
+        const paidClicksData = [];
+        const expectedClicksData = [];
+        const expectedSessionsData = [];
+
+        let current = new Date(startDate);
+        while (current <= endDate) {
+            const dayStr = current.toISOString().split('T')[0]; // YYYY-MM-DD
+            const monthStr = dayStr.substring(0, 7); // YYYY-MM
+
+            labels.push(dayStr);
+
+            // Filtra os reais deste dia
+            const dayLogs = realClicks.filter(r => r.data === dayStr);
+            
+            let organic = 0;
+            let paid = 0;
+
+            dayLogs.forEach(log => {
+                const source = (log.utmSource || '').toLowerCase();
+                // Classifica como pago ou orgânico
+                if (source.includes('google') || source.includes('fb') || source.includes('meta') || source.includes('ads') || source.includes('ig')) {
+                    paid += parseInt(log.total, 10);
+                } else {
+                    // Qualquer coisa que não seja pago explícito, assumimos como orgânico ou direto
+                    organic += parseInt(log.total, 10);
+                }
+            });
+
+            organicClicksData.push(organic);
+            paidClicksData.push(paid);
+
+            // Adiciona a projeção esperada para o dia (projeção mensal / dias do mês)
+            const monthlySessions = expectedSessionsMap[monthStr] || 0;
+            const daysInMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
+            
+            const dailySessions = Math.round(monthlySessions / daysInMonth);
+            const dailyExpectedClicks = Math.round(dailySessions * 0.04); // 4% de conversão
+
+            expectedSessionsData.push(dailySessions);
+            expectedClicksData.push(dailyExpectedClicks);
+
+            current.setDate(current.getDate() + 1);
+        }
+
+        res.json({
+            labels,
+            realData: {
+                organicClicks: organicClicksData,
+                paidClicks: paidClicksData
+            },
+            expectedData: {
+                sessions: expectedSessionsData,
+                clicks: expectedClicksData
+            }
+        });
+
+    } catch (error) {
+        console.error("Erro ao gerar gráfico de cliques:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
