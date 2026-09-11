@@ -125,39 +125,51 @@
         </div>
     </div>
 
-    <!-- GRÁFICOS (Elemento Único - Largura Total da Tela) -->
+    <!-- DESEMPENHO E CRESCIMENTO (TABBED CHART) -->
     <div style="margin-top: 30px; width: 100%;">
-        <div style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden;">
+        <div class="modern-performance-card" style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden;">
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));">
-                <!-- Lado Esquerdo: Cliques B2C -->
-                <div style="padding: 25px; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
-                        <div>
-                            <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 0; font-family: var(--font-titulos);">Cliques no WhatsApp (B2C)</h2>
-                            <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 0;">Comparativo entre cliques Reais vs Projeção SEO.</p>
-                        </div>
+            <!-- Cabeçalho com Abas -->
+            <div style="padding: 20px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; background: #f8fafc;">
+                <div>
+                    <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 0; font-family: var(--font-titulos);">Desempenho e Crescimento</h2>
+                    <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 0;">Acompanhe a aquisição de base e a geração de demanda B2C.</p>
+                </div>
+                
+                <div style="display: flex; gap: 5px; background: #e2e8f0; padding: 4px; border-radius: 8px;">
+                    <button id="tab-new-users" onclick="switchChartTab('new-users')" style="background: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.2s;">
+                        👤 Aquisição de Usuários
+                    </button>
+                    <button id="tab-clicks" onclick="switchChartTab('clicks')" style="background: transparent; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s;">
+                        📈 Demanda B2C (Cliques)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conteúdo das Abas -->
+            <div style="padding: 25px;">
+                
+                <!-- VISÃO: NOVOS USUÁRIOS -->
+                <div id="view-new-users" style="display: block;">
+                    <div style="position: relative; height: 350px; width: 100%;">
+                        <canvas id="new-users-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- VISÃO: CLIQUES B2C -->
+                <div id="view-clicks" style="display: none;">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
                         <div class="chart-filters" style="display: flex; gap: 5px; background: #f1f5f9; padding: 4px; border-radius: 50px;">
                             <button id="btn-clicks-7" onclick="setClicksPeriod(7)" style="background: transparent; border: none; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; color: #475569; cursor: pointer;">7d</button>
                             <button id="btn-clicks-30" onclick="setClicksPeriod(30)" data-active="true" style="background: white; border: none; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer;">30d</button>
                             <button id="btn-clicks-60" onclick="setClicksPeriod(60)" style="background: transparent; border: none; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; color: #475569; cursor: pointer;">60d</button>
                         </div>
                     </div>
-                    <div style="position: relative; height: 320px; width: 100%; flex-grow: 1;">
+                    <div style="position: relative; height: 350px; width: 100%;">
                         <canvas id="clicksEvolutionChart"></canvas>
                     </div>
                 </div>
-
-                <!-- Lado Direito: Novos Usuários -->
-                <div style="padding: 25px; display: flex; flex-direction: column;">
-                    <div style="margin-bottom: 20px;">
-                        <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 0; font-family: var(--font-titulos);">Novos Usuários (Últ. 6 Meses)</h2>
-                        <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 0;">Evolução de cadastro de psicólogos e pacientes.</p>
-                    </div>
-                    <div style="position: relative; height: 320px; width: 100%; flex-grow: 1;">
-                        <canvas id="new-users-chart"></canvas>
-                    </div>
-                </div>
+                
             </div>
             
         </div>

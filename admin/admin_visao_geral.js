@@ -229,6 +229,39 @@ window.initializePage = function() {
         }
     }
 
+    window.switchChartTab = function(tabName) {
+        const tabUsers = document.getElementById('tab-new-users');
+        const tabClicks = document.getElementById('tab-clicks');
+        const viewUsers = document.getElementById('view-new-users');
+        const viewClicks = document.getElementById('view-clicks');
+        
+        if (!tabUsers || !tabClicks || !viewUsers || !viewClicks) return;
+
+        if (tabName === 'new-users') {
+            tabUsers.style.background = 'white';
+            tabUsers.style.color = '#0f172a';
+            tabUsers.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            
+            tabClicks.style.background = 'transparent';
+            tabClicks.style.color = '#475569';
+            tabClicks.style.boxShadow = 'none';
+            
+            viewUsers.style.display = 'block';
+            viewClicks.style.display = 'none';
+        } else {
+            tabClicks.style.background = 'white';
+            tabClicks.style.color = '#0f172a';
+            tabClicks.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            
+            tabUsers.style.background = 'transparent';
+            tabUsers.style.color = '#475569';
+            tabUsers.style.boxShadow = 'none';
+            
+            viewUsers.style.display = 'none';
+            viewClicks.style.display = 'block';
+        }
+    };
+
     let clicksEvolutionChartInstance = null;
     let currentClicksPeriod = 30; // 30 dias por padrão
 
