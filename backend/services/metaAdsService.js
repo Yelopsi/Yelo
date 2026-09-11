@@ -55,11 +55,27 @@ class MetaAdsService {
                     access_token: this.accessToken,
                     level: 'campaign',
                     time_range: JSON.stringify({ since: dateStart, until: dateEnd }),
-                    fields: 'campaign_name,campaign_id,spend,impressions,clicks,cpc'
+                    fields: 'campaign_name,campaign_id,spend,impressions,clicks,cpc,actions'
                 }
             });
 
-            return response.data.data || [];
+            return (response.data.data || []).map(c => {
+                let conversions = 0;
+                if (c.actions) {
+                    // Soma as ações de conversão relevantes (leads e cadastros)
+                    const conversionActions = c.actions.filter(a => 
+                        a.action_type.includes('lead') || 
+                        a.action_type.includes('complete_registration') || 
+                        a.action_type.includes('contact') ||
+                        a.action_type.includes('purchase')
+                    );
+                    conversions = conversionActions.reduce((sum, a) => sum + parseInt(a.value || 0), 0);
+                }
+                return {
+                    ...c,
+                    conversions
+                };
+            });
         } catch (error) {
             const errorMsg = error.response?.data?.error?.message || error.message;
             console.error('[MetaAdsService] Erro ao buscar campanhas:', errorMsg);
