@@ -85,13 +85,44 @@
                 </div>
             </div>
 
-            <!-- Gráfico -->
-            <div class="modern-management-card" style="background: var(--branco-puro);">
-                <div class="management-header">
-                    Novos Usuários (Últimos 6 Meses)
+            <!-- Gráfico de Cliques e Sessões (Demanda B2C) -->
+            <div style="margin-bottom: 30px; margin-top: 20px;">
+                <div style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
+                    <div style="padding: 25px 25px 15px 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 0; font-family: var(--font-titulos);">Cliques no WhatsApp (Demanda B2C)</h2>
+                            <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 0;">Comparativo entre cliques Reais vs Projeção SEO.</p>
+                        </div>
+                        <div class="chart-filters" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <div style="display: flex; gap: 5px; background: #f1f5f9; padding: 4px; border-radius: 50px;">
+                                <button id="btn-clicks-7" onclick="setClicksPeriod(7)" style="background: transparent; border: none; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; color: #475569; cursor: pointer;">7d</button>
+                                <button id="btn-clicks-30" onclick="setClicksPeriod(30)" data-active="true" style="background: white; border: none; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer;">30d</button>
+                                <button id="btn-clicks-60" onclick="setClicksPeriod(60)" style="background: transparent; border: none; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; color: #475569; cursor: pointer;">60d</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="padding: 0 25px 25px 25px;">
+                        <div style="position: relative; height: 350px; width: 100%;">
+                            <canvas id="clicksEvolutionChart"></canvas>
+                        </div>
+                    </div>
                 </div>
-                <div class="chart-container" style="height: 300px;">
-                    <canvas id="new-users-chart"></canvas>
+            </div>
+
+            <!-- Gráfico Novos Usuários (Refatorado para Layout Moderno) -->
+            <div style="margin-bottom: 30px;">
+                <div style="background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
+                    <div style="padding: 25px 25px 15px 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 0; font-family: var(--font-titulos);">Novos Usuários (Últimos 6 Meses)</h2>
+                            <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 0;">Evolução de cadastro de psicólogos e pacientes na plataforma.</p>
+                        </div>
+                    </div>
+                    <div style="padding: 0 25px 25px 25px;">
+                        <div style="position: relative; height: 300px; width: 100%;">
+                            <canvas id="new-users-chart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

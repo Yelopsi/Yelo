@@ -118,6 +118,7 @@ router.get('/logs', adminDashboardController.getSystemLogs);
 
 // Rota para dados de gráficos
 router.get('/charts/new-users', adminDashboardController.getNewUsersPerMonth);
+router.get('/charts/clicks-growth', adminDashboardController.getClicksGrowthChart);
 
 // Rota de Relatórios
 router.get('/reports/charts', protect, admin, adminDashboardController.getDetailedReports);

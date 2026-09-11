@@ -229,6 +229,122 @@ window.initializePage = function() {
         }
     }
 
+    let clicksEvolutionChartInstance = null;
+    let currentClicksPeriod = 30; // 30 dias por padrão
+
+    window.setClicksPeriod = function(days) {
+        currentClicksPeriod = days;
+        // Atualiza UI dos botões
+        [7, 30, 60].forEach(d => {
+            const btn = document.getElementById(`btn-clicks-${d}`);
+            if (btn) {
+                if (d === days) {
+                    btn.dataset.active = "true";
+                    btn.style.background = "white";
+                    btn.style.color = "#0f172a";
+                    btn.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+                } else {
+                    btn.dataset.active = "false";
+                    btn.style.background = "transparent";
+                    btn.style.color = "#475569";
+                    btn.style.boxShadow = "none";
+                }
+            }
+        });
+        window.loadClicksChartData();
+    };
+
+    window.loadClicksChartData = async function() {
+        try {
+            const chartCanvas = document.getElementById('clicksEvolutionChart');
+            if (!chartCanvas) return;
+            
+            const response = await fetch(`${BASE_URL}/api/admin/charts/clicks-growth?days=${currentClicksPeriod}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Falha ao buscar dados do gráfico B2C.');
+            const chartData = await response.json();
+
+            if (clicksEvolutionChartInstance) {
+                clicksEvolutionChartInstance.destroy();
+            }
+
+            const ctx = chartCanvas.getContext('2d');
+            clicksEvolutionChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'Cliques Pagos (Real)',
+                            data: chartData.realData.paidClicks,
+                            borderColor: '#8b5cf6', // Roxo
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Cliques Orgânicos (Real)',
+                            data: chartData.realData.organicClicks,
+                            borderColor: '#10b981', // Verde Forte
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Cliques Orgânicos (Esperado)',
+                            data: chartData.expectedData.clicks,
+                            borderColor: '#94a3b8', // Cinza tracejado
+                            borderDash: [5, 5],
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Sessões SEO (Projeção)',
+                            data: chartData.expectedData.sessions,
+                            borderColor: '#cbd5e1', // Cinza mais claro
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Cliques', color: '#64748b' },
+                            beginAtZero: true
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Sessões', color: '#64748b' },
+                            grid: { drawOnChartArea: false },
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: { tooltip: { mode: 'index', intersect: false } }
+                }
+            });
+        } catch (error) {
+            console.error("Erro ao carregar gráfico B2C:", error);
+        }
+    };
+
     // Função para iniciar a atualização automática
     function startAutoRefresh() {
         // Configura o botão de atualizar manual
@@ -237,12 +353,14 @@ window.initializePage = function() {
             btnRefresh.addEventListener('click', () => {
                 fetchAndRenderStats(true); // Força animação no clique manual
                 renderNewUsersChart();
+                if(window.loadClicksChartData) window.loadClicksChartData();
             });
         }
 
         // Busca os dados imediatamente na primeira vez (com animação)
         fetchAndRenderStats(true);
         renderNewUsersChart();
+        if(window.loadClicksChartData) window.loadClicksChartData();
 
         // Configura o intervalo para atualizar a cada 60 segundos (60000 ms)
         // No refresh automático, passamos false para não piscar a tela com spinners
