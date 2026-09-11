@@ -110,10 +110,22 @@ async function calculateBadges(psychologistId) {
         else if (postCount >= BADGE_THRESHOLDS.SEMEADOR.BRONZE) badges.semeador = 'bronze';
         else delete badges.semeador;
 
+        let forumPostCount = 0;
+        try {
+            const forumPostsRes = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ForumPosts" WHERE "PsychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT });
+            forumPostCount = parseInt(forumPostsRes[0]?.count || 0, 10);
+        } catch (e) {
+            try {
+                const forumPostsRes2 = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ForumPosts" WHERE "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT });
+                forumPostCount = parseInt(forumPostsRes2[0]?.count || 0, 10);
+            } catch(e2) {}
+        }
         const commentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } });
-        if (commentCount >= BADGE_THRESHOLDS.VOZ_ATIVA.OURO) badges.voz_ativa = 'ouro';
-        else if (commentCount >= BADGE_THRESHOLDS.VOZ_ATIVA.PRATA) badges.voz_ativa = 'prata';
-        else if (commentCount >= BADGE_THRESHOLDS.VOZ_ATIVA.BRONZE) badges.voz_ativa = 'bronze';
+        const forumActivityCount = commentCount + forumPostCount;
+
+        if (forumActivityCount >= BADGE_THRESHOLDS.VOZ_ATIVA.OURO) badges.voz_ativa = 'ouro';
+        else if (forumActivityCount >= BADGE_THRESHOLDS.VOZ_ATIVA.PRATA) badges.voz_ativa = 'prata';
+        else if (forumActivityCount >= BADGE_THRESHOLDS.VOZ_ATIVA.BRONZE) badges.voz_ativa = 'bronze';
         else delete badges.voz_ativa;
 
         let answerCount = 0;
