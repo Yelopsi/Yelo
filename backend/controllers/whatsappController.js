@@ -47,7 +47,7 @@ exports.getWhatsAppLink = async (req, res) => {
         res.cookie(cookieName, 'true', { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'Lax' });
 
         // 4. Captura UTM e nome do visitante (enviados pelo frontend via querystring)
-        const utmSource = req.query.utm_source || null;
+        const utmSource = req.query.utm_source || 'organico';
         const guestName = req.query.guest_name || 'um paciente';
 
         // 5. Lógica de Sorteio 50/50 do Teste A/B

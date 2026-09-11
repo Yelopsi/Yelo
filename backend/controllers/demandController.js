@@ -35,6 +35,11 @@ exports.recordSearch = async (req, res) => {
         const finalPayload = { ...data };
         delete finalPayload.searchId; 
 
+        // [CORREÇÃO] Força 'organico' para qualquer usuário sem UTM
+        if (!finalPayload.utm_source) {
+            finalPayload.utm_source = 'organico';
+        }
+
         if (data.avaliacao_ux) {
             finalPayload.rating = data.avaliacao_ux.rating;
             finalPayload.feedback = data.avaliacao_ux.feedback;

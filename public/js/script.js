@@ -67,6 +67,22 @@ function captureUTMs() {
         const newSearch = urlParams.toString() ? '?' + urlParams.toString() : '';
         const newUrl = window.location.pathname + newSearch + window.location.hash;
         window.history.replaceState({}, document.title, newUrl);
+    } else {
+        // Fallback para tráfego orgânico/direto se não houver UTM na URL nem salvo anteriormente
+        let existingUtms = {};
+        try {
+            existingUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
+        } catch(e) {}
+        
+        if (!existingUtms.utm_source && !localStorage.getItem('yelo_utm_source')) {
+            const orgUtms = { utm_source: 'organico' };
+            localStorage.setItem('yelo_utm_source', 'organico');
+            localStorage.setItem('yelo_global_utms', JSON.stringify(orgUtms));
+            if (!localStorage.getItem('yelo_global_first_utms')) {
+                localStorage.setItem('yelo_first_utm_source', 'organico');
+                localStorage.setItem('yelo_global_first_utms', JSON.stringify(orgUtms));
+            }
+        }
     }
 }
 window.captureUTMs = captureUTMs;

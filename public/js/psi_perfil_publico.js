@@ -321,7 +321,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         // Faz a requisição pro backend pra pegar a URL com a Variante A/B já montada
                         // Passa o UTM salvo no localStorage e o nome do visitante (se disponível)
-                        const utmSource = localStorage.getItem('yelo_utm_source') || '';
+                        let utmSource = 'organico';
+                        try {
+                            const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
+                            utmSource = globalUtms.utm_source || 'organico';
+                        } catch(e) {}
                         const guestName = localStorage.getItem('yelo_guest_name') || '';
                         const abParams = new URLSearchParams();
                         if (utmSource) abParams.append('utm_source', utmSource);

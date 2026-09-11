@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const utms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
 
             // Adiciona as UTMs capturadas da URL para aparecerem no gráfico de Canais de Aquisição
-            demandAnswers.utm_source = utms.utm_source;
+            demandAnswers.utm_source = utms.utm_source || 'organico';
             demandAnswers.utm_medium = utms.utm_medium;
             demandAnswers.utm_campaign = utms.utm_campaign;
             demandAnswers.utm_content = utms.utm_content;
