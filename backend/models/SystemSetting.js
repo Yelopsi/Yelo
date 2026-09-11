@@ -30,6 +30,11 @@ module.exports = (sequelize, DataTypes) => {
     email_support: {
       type: DataTypes.STRING,
       defaultValue: ''
+    },
+    // Easter Egg: Recorde Histórico de Assinantes
+    max_subscribers_record: {
+      type: DataTypes.INTEGER,
+      defaultValue: 16
     }
   });
 

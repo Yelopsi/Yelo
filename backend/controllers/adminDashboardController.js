@@ -142,6 +142,18 @@ exports.getDashboardStats = async (req, res) => {
             validWaitingListCount++;
         }
 
+        // --- EASTER EGG: RECORDE DE ASSINANTES PAGANTES ---
+        const settings = await db.SystemSetting.findOne();
+        let maxRecord = settings ? (settings.max_subscribers_record || 16) : 16;
+        let isNewRecord = false;
+        if (payingCount > maxRecord) {
+            maxRecord = payingCount;
+            if (settings) {
+                await settings.update({ max_subscribers_record: maxRecord });
+            }
+            isNewRecord = true;
+        }
+
         console.timeEnd('⏱️ Dashboard Stats Load');
         res.status(200).json({
             mrr: mrr.toFixed(2),
@@ -156,7 +168,8 @@ exports.getDashboardStats = async (req, res) => {
             emailHealth: { status: emailStatus, errors: emailErrors },
             overallConversionRate: parseFloat(overallConversionRate),
             totalMatches: totalMatches,
-            totalClicks: totalClicks
+            totalClicks: totalClicks,
+            isNewRecord: isNewRecord
         });
 
     } catch (error) {

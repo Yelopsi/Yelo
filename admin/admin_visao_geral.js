@@ -115,11 +115,8 @@ window.initializePage = function() {
                  updateSafe('kpi-psi-paying', currentPaying);
                  updateSafe('kpi-psi-vip', stats.psychologists.vip);
 
-                 // --- 👑 EASTER EGG: RECORDE DE ASSINANTES ---
-                 const storedRecord = parseInt(localStorage.getItem('Yelo_Admin_Subscribers_Record') || "16");
-                 if (currentPaying > storedRecord) {
-                     localStorage.setItem('Yelo_Admin_Subscribers_Record', currentPaying.toString());
-                     
+                 // --- 👑 EASTER EGG: RECORDE DE ASSINANTES (Controlado pelo Backend) ---
+                 if (stats.isNewRecord) {
                      if (typeof confetti === 'function') {
                          setTimeout(() => {
                              const duration = 3000;
