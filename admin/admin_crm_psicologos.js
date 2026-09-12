@@ -370,9 +370,18 @@ window.initializePage = function () {
         });
     }
 
-    window.dismissAction = async function(id, actionType) {
-        if (!confirm('Deseja ignorar esta ação e removê-la da lista (nenhuma mensagem será enviada)?')) return;
-        
+    window.dismissAction = function(id, actionType) {
+        if (window.openConfirmationModal) {
+            window.openConfirmationModal('Descartar Ação', 'Deseja ignorar esta ação e removê-la da lista (nenhuma mensagem será enviada)?', async () => {
+                await performDismiss(id, actionType);
+            });
+        } else {
+            if (!confirm('Deseja ignorar esta ação e removê-la da lista (nenhuma mensagem será enviada)?')) return;
+            performDismiss(id, actionType);
+        }
+    };
+
+    async function performDismiss(id, actionType) {
         try {
             const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/action-sent`, {
                 method: 'PATCH',
@@ -395,7 +404,7 @@ window.initializePage = function () {
             console.error('Erro ao descartar ação', e);
             if (window.showToast) window.showToast('Erro na requisição', 'error');
         }
-    };
+    }
 
     window.sendWhatsAppAction = async function (id, phone, name, actionType, patientName = '', feedbackToken = '', metricsStr = '{}') {
         if (!phone || phone === 'null') {
