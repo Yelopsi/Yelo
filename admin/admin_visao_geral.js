@@ -319,6 +319,7 @@ window.initializePage = function() {
                             borderWidth: 2,
                             fill: true,
                             tension: 0.3,
+                            pointHitRadius: 20,
                             yAxisID: 'y'
                         },
                         {
@@ -329,6 +330,7 @@ window.initializePage = function() {
                             borderWidth: 3,
                             fill: false,
                             tension: 0.3,
+                            pointHitRadius: 20,
                             yAxisID: 'y'
                         },
                         {
@@ -339,6 +341,7 @@ window.initializePage = function() {
                             borderWidth: 2,
                             fill: false,
                             tension: 0.3,
+                            pointHitRadius: 20,
                             yAxisID: 'y'
                         },
                         {
@@ -348,11 +351,13 @@ window.initializePage = function() {
                             borderWidth: 2,
                             fill: false,
                             tension: 0.3,
+                            pointHitRadius: 20,
                             yAxisID: 'y1'
                         }
                     ]
                 },
                 options: {
+                    layout: { padding: { right: 30, left: 10, top: 10, bottom: 10 } },
                     responsive: true,
                     maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
