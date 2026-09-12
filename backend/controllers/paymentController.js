@@ -30,11 +30,29 @@ exports.createPreference = async (req, res) => {
         if (!localPsychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
         // --- TRAVA DE INADIMPLÊNCIA (Evita bypass de dívida) ---
-        const hasOverdue = await db.Payment.findOne({
+        const overduePayments = await db.Payment.findAll({
             where: { psychologistId, status: 'OVERDUE' }
         });
-        if (hasOverdue) {
-            return res.status(403).json({ error: 'Você possui uma fatura em aberto. Por favor, acesse o painel financeiro para regularizar sua situação antes de realizar uma nova assinatura.' });
+        
+        if (overduePayments.length > 0) {
+            if (!localPsychologist.subscriptionId) {
+                // Perdão de dívida: Assinatura foi cancelada, cancela as faturas antigas e permite nova assinatura
+                try {
+                    const fetch = require('node-fetch');
+                    for (const overdue of overduePayments) {
+                        console.log(`[ASAAS] Assinatura cancelada identificada. Perdoando fatura ${overdue.asaasPaymentId}`);
+                        await fetch(`${ASAAS_API_URL}/payments/${overdue.asaasPaymentId}`, {
+                            method: 'DELETE',
+                            headers: { 'access_token': ASAAS_API_KEY }
+                        });
+                        await overdue.update({ status: 'CANCELED' });
+                    }
+                } catch (err) {
+                    console.error('[ASAAS] Erro ao deletar faturas atrasadas:', err);
+                }
+            } else {
+                return res.status(403).json({ error: 'Você possui uma fatura em aberto. Por favor, acesse o painel financeiro para regularizar sua situação antes de realizar uma nova assinatura.' });
+            }
         }
 
         // --- IDEMPOTÊNCIA: RECUPERAÇÃO DA OPERAÇÃO ---
