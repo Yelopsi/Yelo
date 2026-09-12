@@ -1,172 +1,744 @@
 <style>
-    .manual-section {
+    /* Design System para a Central de Conversão */
+    .playbook-container {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Top Navigation (Ecosystem) */
+    .playbook-ecosystem-nav {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+    }
+    .ecosystem-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    }
+    .ecosystem-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+    }
+    .ecosystem-btn.back-btn {
+        border-color: transparent;
+        background: transparent;
+        box-shadow: none;
+        color: var(--verde-escuro);
+        padding-left: 0;
+    }
+    .ecosystem-btn.back-btn:hover {
+        background: transparent;
+        opacity: 0.8;
+    }
+
+    /* Tabs */
+    .playbook-tabs {
+        display: flex;
+        gap: 10px;
+        background: #fff;
+        padding: 10px;
+        border-radius: 16px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 30px;
+        overflow-x: auto;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        
+        /* Mobile UX Improvements */
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none; /* Firefox */
+    }
+    .playbook-tabs::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+    .playbook-tab {
+        padding: 12px 24px;
+        border-radius: 12px;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+        scroll-snap-align: start;
+        flex-shrink: 0;
+    }
+    
+    @media (max-width: 768px) {
+        .playbook-tabs {
+            padding: 8px;
+            gap: 8px;
+            border-radius: 12px;
+            margin-left: -20px;
+            margin-right: -20px;
+            padding-left: 20px;
+            padding-right: 20px;
+            border-left: none;
+            border-right: none;
+        }
+        .playbook-tab {
+            font-size: 0.95rem;
+            padding: 10px 18px;
+        }
+    }
+    .playbook-tab.active {
+        background: var(--verde-escuro);
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(27, 67, 50, 0.2);
+    }
+    .playbook-tab:hover:not(.active) {
+        background: #f1f5f9;
+        color: #334155;
+    }
+
+    .playbook-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    .playbook-content.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Layout da Aba 1 (Templates) */
+    .templates-grid {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 25px;
+    }
+    @media (max-width: 900px) {
+        .templates-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .scenarios-sidebar {
         background: #fff;
         border-radius: 16px;
-        padding: 30px;
-        margin-bottom: 25px;
         border: 1px solid #e5e7eb;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.03), 0 2px 5px rgba(0,0,0,0.02);
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        max-height: 70vh;
+        overflow-y: auto;
     }
-    .manual-section-title {
-        color: #1B4332;
+    .scenario-item {
+        padding: 12px 15px;
+        border-radius: 10px;
+        cursor: pointer;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #475569;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+    .scenario-item:hover {
+        background: #f8fafc;
+    }
+    .scenario-item.active {
+        background: #f0fdf4;
+        color: var(--verde-escuro);
+        border-color: #bbf7d0;
+        font-weight: 600;
+    }
+
+    .scenario-display {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e5e7eb;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    }
+    .scenario-title {
         font-family: var(--font-titulos);
-        font-size: 1.5rem;
+        color: var(--verde-escuro);
+        font-size: 1.6rem;
         margin-top: 0;
+        margin-bottom: 10px;
+    }
+    .scenario-advice {
+        background: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        padding: 15px 20px;
+        border-radius: 0 12px 12px 0;
+        color: #92400e;
+        margin-bottom: 25px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .copy-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
         margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .copy-card-header {
+        background: #f8fafc;
+        padding: 12px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .copy-card-badge {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        padding: 4px 10px;
+        border-radius: 20px;
+    }
+    .badge-acolhedora { background: #fdf4ff; color: #a21caf; }
+    .badge-objetiva { background: #eff6ff; color: #1d4ed8; }
+    .badge-informal { background: #fef2f2; color: #b91c1c; }
+
+    .copy-card-body {
+        padding: 20px;
+        background: #fff;
+    }
+    .copy-text {
+        color: #334155;
+        font-size: 1rem;
+        line-height: 1.6;
+        margin: 0 0 15px 0;
+        font-style: italic;
+    }
+    .btn-copy-cta {
+        background: var(--verde-claro);
+        color: #1B4332;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(37,211,102,0.2);
+    }
+    .btn-copy-cta:hover {
+        background: #1eb956;
+        transform: translateY(-2px);
+    }
+
+    /* Layout da Aba 2 (AI Copilot) */
+    .ai-assistant-container {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e5e7eb;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    }
+    .ai-textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 15px;
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        font-family: inherit;
+        font-size: 1rem;
+        resize: vertical;
+        margin-bottom: 15px;
+        transition: border-color 0.2s;
+    }
+    .ai-textarea:focus {
+        outline: none;
+        border-color: var(--verde-escuro);
+    }
+    .btn-ai-generate {
+        background: #7c3aed;
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(124,58,237,0.3);
+    }
+    .btn-ai-generate:hover {
+        background: #6d28d9;
+        transform: translateY(-2px);
+    }
+    .btn-ai-generate:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    .ai-result-box {
+        margin-top: 25px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        display: none;
+    }
+
+    /* Layout da Aba 3 (Mindset) */
+    .mindset-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    .mindset-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 25px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    }
+    .mindset-card h4 {
+        margin-top: 0;
+        color: var(--verde-escuro);
+        font-size: 1.2rem;
         display: flex;
         align-items: center;
         gap: 10px;
     }
-    .manual-card {
-        background: #f8f9fa;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        border-left: 4px solid var(--verde-escuro);
-    }
-    .manual-card h4 {
-        margin: 0 0 10px 0;
-        color: #1B4332;
-        font-size: 1.1rem;
-    }
-    .manual-card p {
+    .mindset-list {
+        list-style: none;
+        padding: 0;
         margin: 0;
-        color: #555;
-        line-height: 1.6;
     }
-    .script-box {
-        background: #f0fdf4;
-        border: 1px solid #bbf7d0;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
-        position: relative;
+    .mindset-list li {
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        color: #475569;
+        line-height: 1.5;
     }
-    .script-box p {
-        margin: 0 0 15px 0;
-        color: #166534;
-        font-style: italic;
-        line-height: 1.6;
+    .mindset-list li:last-child {
+        border-bottom: none;
     }
-    .btn-copy {
-        background: #fff;
-        border: 1px solid #22c55e;
-        color: #166534;
-        padding: 8px 16px;
-        border-radius: 50px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .btn-copy:hover {
-        background: #166534;
-        color: #fff;
-    }
+    .icon-error { color: #ef4444; margin-top: 2px; }
+    .icon-check { color: #22c55e; margin-top: 2px; }
 </style>
 
-<div class="main-header" style="margin-bottom: 20px;">
-    <div class="header-content">
-        <h1>Manual de Conversão</h1>
-        <p>Transforme um clique no WhatsApp em um vínculo terapêutico real.</p>
-    </div>
-    <button class="btn-header-action" onclick="window.loadPage('psi_clinica_hub.html')">← Voltar</button>
-</div>
-
-<div style="margin-bottom: 30px; font-size: 1.05rem; line-height: 1.6; color: #444; background: #fff; padding: 25px; border-radius: 16px; border: 1px solid #e5e7eb;">
-    <p style="margin: 0;">Este guia rápido foi criado para ajudar você, profissional de psicologia, a conduzir o primeiro contato com os pacientes que chegam através do Match da Yelo. O objetivo é reduzir a insegurança de quem busca ajuda e potencializar seus resultados na plataforma.</p>
-</div>
-
-<!-- Seção 1 -->
-<div class="manual-section fade-in-up">
-    <h3 class="manual-section-title"><span>🌱</span> 1. A Preparação do Terreno (Antes do "Oi")</h3>
-    <div class="manual-card">
-        <h4>Desative mensagens automáticas robóticas</h4>
-        <p>O WhatsApp Business permite criar mensagens de saudação, mas respostas como "Olá, digite 1 para agendar" quebram o acolhimento imediato. Se precisar automatizar por conta do volume, humanize o texto: <em>"Olá! Vi que a sua mensagem chegou. Estou em atendimento agora, mas responderei pessoalmente assim que terminar. Um abraço!"</em></p>
-    </div>
-    <div class="manual-card">
-        <h4>Atenção à sua vitrine</h4>
-        <p>Garanta que a foto do seu perfil no WhatsApp passe uma imagem profissional e empática, alinhada com a foto que o paciente acabou de ver na plataforma.</p>
-    </div>
-</div>
-
-<!-- Seção 2 -->
-<div class="manual-section fade-in-up" style="animation-delay: 0.1s;">
-    <h3 class="manual-section-title"><span>⭐</span> 2. Regras de Ouro do Atendimento Digital</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
-        <div class="manual-card" style="border-left-color: #f59e0b; background: #fffbeb;">
-            <h4>⏳ A Regra das 2 Horas</h4>
-            <p>A urgência na internet é alta. Tente responder nas primeiras horas. Demorar 24 horas para dar um retorno aumenta drasticamente a chance de o paciente fechar com outro profissional.</p>
-        </div>
-        <div class="manual-card" style="border-left-color: #3b82f6; background: #eff6ff;">
-            <h4>🎙️ O Poder do Áudio Curto</h4>
-            <p>Mensagens de texto podem soar frias. Um áudio curto e gentil (15 a 30s) transmite seu tom de voz e empatia clínica. É a melhor forma de humanizar a tela do celular.</p>
-        </div>
-        <div class="manual-card" style="border-left-color: #ef4444; background: #fef2f2;">
-            <h4>🛑 O Limite Ético do Resgate</h4>
-            <p>Se o paciente visualizou e não respondeu, dê espaço. Envie apenas uma mensagem de acompanhamento no dia seguinte. Se não houver resposta, encerre de forma respeitosa.</p>
-        </div>
-    </div>
-</div>
-
-<!-- Seção 3 -->
-<div class="manual-section fade-in-up" style="animation-delay: 0.2s;">
-    <h3 class="manual-section-title"><span>📝</span> 3. Roteiros de Sucesso (Copie e Cole)</h3>
-    <p style="margin-bottom: 20px; color: #555;">Você pode usar as mensagens abaixo como base para conduzir as conversas. Sinta-se livre para adaptar ao seu tom de voz.</p>
+<div class="playbook-container fade-in-up">
     
-    <div class="script-box">
-        <h4 style="margin: 0 0 10px 0; color: #1B4332;">🧊 O Quebra-Gelo (Para a primeira mensagem do paciente)</h4>
-        <p id="script-1">"Olá, [Nome do Paciente]! Que bom que a Yelo cruzou os nossos perfis. Sei que dar esse primeiro passo de buscar terapia exige coragem, então seja muito bem-vindo(a). Me conte um pouco: o que te motivou a buscar esse espaço agora? Fique à vontade para perguntar o que quiser sobre como eu trabalho."</p>
-        <button class="btn-copy" onclick="copyToClipboard('script-1', this)">📋 Copiar</button>
+    <div class="playbook-ecosystem-nav">
+        <a onclick="window.loadPage('psi_clinica_hub.html')" class="ecosystem-btn back-btn">
+            ← Voltar para Clínica
+        </a>
+        <a onclick="window.loadPage('psi_historico_contatos.html')" class="ecosystem-btn">
+            📊 Ver Meus Leads Recebidos
+        </a>
+        <a onclick="window.loadPage('psi_calculadora_honorarios.html')" class="ecosystem-btn">
+            🧮 Simular Honorários e Receita
+        </a>
     </div>
-    <div class="script-box">
-        <h4 style="margin: 0 0 10px 0; color: #1B4332;">💰 A Ancoragem de Preço (Quando perguntam o valor logo de cara)</h4>
-        <p id="script-2">"Como viu no meu perfil, a sessão tem o valor de R$ [X] e dura 50 minutos. Mas antes de fecharmos a questão financeira, para mim é muito importante entender se eu sou a pessoa certa para te ajudar. Gostaria de me contar brevemente o que você busca nesse momento?"</p>
-        <button class="btn-copy" onclick="copyToClipboard('script-2', this)">📋 Copiar</button>
-    </div>
-    <div class="script-box">
-        <h4 style="margin: 0 0 10px 0; color: #1B4332;">🛟 O Resgate (Visualizou e sumiu há 24h)</h4>
-        <p id="script-3">"Olá, [Nome]! Passando só para deixar um abraço e dizer que sigo à disposição se você ainda estiver avaliando o início da terapia. Caso tenha ficado alguma dúvida sobre os horários ou como funciona o processo online, é só me chamar por aqui. Uma ótima semana!"</p>
-        <button class="btn-copy" onclick="copyToClipboard('script-3', this)">📋 Copiar</button>
-    </div>
-</div>
 
-<!-- Seção 4 -->
-<div class="manual-section fade-in-up" style="animation-delay: 0.3s;">
-    <h3 class="manual-section-title"><span>🤝</span> 4. O Alinhamento da Primeira Sessão</h3>
-    <div class="manual-card">
-        <h4>Seja transparente sobre o processo</h4>
-        <p>Assim que confirmar o interesse, envie um resumo claro de como a sessão vai funcionar. Informe o aplicativo (Google Meet, Zoom, WhatsApp) e a duração.</p>
+    <div class="main-header" style="border-radius: 16px; margin-bottom: 25px;">
+        <div class="header-content">
+            <h1 style="margin: 0; font-family: var(--font-titulos); font-size: 2.2rem; color: white;">Playbook de Conversão</h1>
+            <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.85); font-size: 1.1rem; max-width: 700px;">A sua "bíblia" de atendimento. O que dizer e como conduzir o paciente até a primeira sessão sem parecer um vendedor.</p>
+        </div>
     </div>
-    <div class="manual-card">
-        <h4>Combine o formato de pagamento</h4>
-        <p>A Yelo não intermedia os pagamentos. Deixe claro no fechamento do horário se o pagamento via Pix ou transferência deve ser feito antes ou logo após a primeira sessão.</p>
+
+    <div class="playbook-tabs">
+        <button class="playbook-tab active" onclick="switchTab('mindset')">🧠 Orientações</button>
+        <button class="playbook-tab" onclick="switchTab('templates')">💬 Templates Prontos</button>
+        <button class="playbook-tab" onclick="switchTab('copilot')">✨ Copilot IA (Gerador)</button>
     </div>
-    <div class="manual-card">
-        <h4>Envie o link com antecedência</h4>
-        <p>Para reduzir a ansiedade do primeiro encontro online, envie o link da sala virtual com 10 a 15 minutos de antecedência.</p>
+
+    <!-- ABA 1: ORIENTAÇÕES (AGORA É A PRIMEIRA) -->
+    <div id="tab-mindset" class="playbook-content active">
+        
+        <div style="background: linear-gradient(135deg, #1B4332 0%, #2d6a4f 100%); border-radius: 16px; padding: 35px; color: white; margin-bottom: 30px; box-shadow: 0 10px 25px rgba(27,67,50,0.15); display: flex; align-items: center; gap: 25px; flex-wrap: wrap;">
+            <div style="font-size: 3.5rem; line-height: 1;">🛋️</div>
+            <div style="flex: 1; min-width: 300px;">
+                <h3 style="margin: 0 0 10px 0; font-family: var(--font-titulos); font-size: 1.8rem; color: white;">Supervisão Clínica do Contato Inicial</h3>
+                <p style="margin: 0; font-size: 1.05rem; opacity: 0.9; line-height: 1.6; max-width: 800px;">
+                    O vínculo terapêutico não começa na primeira sessão; ele começa na primeira mensagem trocada. Enxergue o WhatsApp como a ante-sala do seu consultório. 
+                    Aqui, discutimos a postura ética e acolhedora necessária para transformar interessados em pacientes engajados, sem comprometer o rigor da sua prática.
+                </p>
+            </div>
+        </div>
+
+        <div class="mindset-grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
+            
+            <!-- Coluna 1 -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="mindset-card" style="border-left: 4px solid #3b82f6;">
+                    <h4>🛡️ A Ética da Conversão (Psicólogo ≠ Vendedor)</h4>
+                    <div style="color: #475569; line-height: 1.7; font-size: 0.95rem;">
+                        <p>O maior bloqueio dos profissionais de saúde ao captar online é o medo de "soar como um vendedor". É fundamental ressignificar essa etapa.</p>
+                        <p><strong>Você não está vendendo uma cura, está oferecendo um espaço seguro.</strong> Quando um paciente chega até você, ele traz angústias e vulnerabilidade. Sua clareza sobre preços, métodos e horários não é "técnica agressiva", é <strong>contorno e acolhimento</strong>.</p>
+                        <p>Deixar o paciente no vácuo, não ser transparente com valores ou hesitar na resposta gera ansiedade. Ser objetivo, seguro e empático é, por si só, uma intervenção terapêutica inicial poderosa.</p>
+                    </div>
+                </div>
+
+                <div class="mindset-card" style="border-left: 4px solid #22c55e;">
+                    <h4>✅ O Setting Terapêutico Virtual</h4>
+                    <p style="color: #64748b; font-size: 0.9rem; margin-top: -5px; margin-bottom: 15px;">Antes de responder ao primeiro paciente do dia, certifique-se de que sua "sala de espera digital" está pronta:</p>
+                    <ul class="mindset-list" style="font-size: 0.95rem;">
+                        <li><span class="icon-check">✔</span> <strong>Foto e Perfil:</strong> Sua foto do WhatsApp transmite a mesma seriedade e empatia do seu perfil na Yelo?</li>
+                        <li><span class="icon-check">✔</span> <strong>Sem Robôs:</strong> Mensagens automáticas frias ("Digite 1 para agendar") estão desativadas?</li>
+                        <li><span class="icon-check">✔</span> <strong>Contorno Financeiro:</strong> O valor da sua sessão e as formas de pagamento estão internalizados para que você os comunique sem hesitação?</li>
+                        <li><span class="icon-check">✔</span> <strong>Agenda Clara:</strong> Você sabe exatamente quais são seus próximos 3 horários livres para oferecer de imediato?</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Coluna 2 -->
+            <div class="mindset-card" style="border-left: 4px solid #ef4444;">
+                <h4>🛑 6 Falhas Críticas de Manejo (Matam o Vínculo)</h4>
+                <p style="color: #64748b; font-size: 0.9rem; margin-top: -5px; margin-bottom: 20px;">Comportamentos comuns que quebram a aliança terapêutica antes mesmo dela se formar:</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="background: #fef2f2; padding: 12px 15px; border-radius: 8px; border: 1px solid #fecaca;">
+                        <strong style="color: #991b1b; display: block; margin-bottom: 4px;">1. O Paredão de Texto</strong>
+                        <span style="color: #475569; font-size: 0.9rem; line-height: 1.5;">Despejar textos gigantes e regras de contrato na primeira resposta eleva a ansiedade do paciente. Seja breve no primeiro "Oi" e construa a conversa aos poucos.</span>
+                    </div>
+                    
+                    <div style="background: #fef2f2; padding: 12px 15px; border-radius: 8px; border: 1px solid #fecaca;">
+                        <strong style="color: #991b1b; display: block; margin-bottom: 4px;">2. Áudios Intrusivos</strong>
+                        <span style="color: #475569; font-size: 0.9rem; line-height: 1.5;">Muitos pacientes buscam ajuda escondidos no trabalho ou perto de familiares. Mandar áudios sem pedir licença prévia pode violar a privacidade imediata deles.</span>
+                    </div>
+
+                    <div style="background: #fef2f2; padding: 12px 15px; border-radius: 8px; border: 1px solid #fecaca;">
+                        <strong style="color: #991b1b; display: block; margin-bottom: 4px;">3. O Interrogatório Precoce</strong>
+                        <span style="color: #475569; font-size: 0.9rem; line-height: 1.5;">Fazer perguntas clínicas profundas pelo WhatsApp afasta o paciente. Lembre-se: o diagnóstico, o acolhimento profundo e a anamnese pertencem à sessão.</span>
+                    </div>
+
+                    <div style="background: #fef2f2; padding: 12px 15px; border-radius: 8px; border: 1px solid #fecaca;">
+                        <strong style="color: #991b1b; display: block; margin-bottom: 4px;">4. Fuga e Insegurança com Preço</strong>
+                        <span style="color: #475569; font-size: 0.9rem; line-height: 1.5;">Esconder o valor, enrolar para falar ou justificar excessivamente o porquê do seu preço transmite extrema insegurança sobre a própria capacidade profissional.</span>
+                    </div>
+
+                    <div style="background: #fef2f2; padding: 12px 15px; border-radius: 8px; border: 1px solid #fecaca;">
+                        <strong style="color: #991b1b; display: block; margin-bottom: 4px;">5. Frieza Burocrática</strong>
+                        <span style="color: #475569; font-size: 0.9rem; line-height: 1.5;">Responder de forma seca, robótica ou apenas mandando o valor do Pix ignora o sofrimento que levou a pessoa a buscar ajuda naquele dia.</span>
+                    </div>
+                    
+                    <div style="background: #fef2f2; padding: 12px 15px; border-radius: 8px; border: 1px solid #fecaca;">
+                        <strong style="color: #991b1b; display: block; margin-bottom: 4px;">6. Assédio Comercial (Falta de Espaço)</strong>
+                        <span style="color: #475569; font-size: 0.9rem; line-height: 1.5;">Insistir repetidas vezes após o silêncio. O espaço terapêutico exige respeito ao tempo do outro; faça no máximo um follow-up e dê espaço se ele recuar.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- ABA 2: TEMPLATES (MOVIDO PARA CÁ) -->
+    <div id="tab-templates" class="playbook-content">
+        <div class="templates-grid">
+            
+            <div class="scenarios-sidebar">
+                <h4 style="margin: 0 0 15px 0; color: #64748b; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Escolha a Situação</h4>
+                <div id="scenarios-list">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+
+            <div class="scenario-display">
+                <h2 id="scenario-title" class="scenario-title">Carregando...</h2>
+                <div id="scenario-advice" class="scenario-advice"></div>
+                
+                <div id="scenario-copies">
+                    <!-- Gerado via JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="tab-copilot" class="playbook-content">
+        <div class="ai-assistant-container">
+            <h2 style="font-family: var(--font-titulos); color: #1B4332; margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                ✨ Copilot de Conversão
+            </h2>
+            
+            <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 12px;">
+                <span style="font-size: 1.2rem;">⚠️</span>
+                <p style="margin: 0; font-size: 0.9rem; color: #991b1b; line-height: 1.5;">
+                    <strong>Atenção:</strong> Esta ferramenta foi desenvolvida <strong>exclusivamente</strong> para auxiliar no processo comercial e de conversão de pacientes (vendas, quebra-gelo, negociação de valores). Não utilize esta IA para buscar orientações clínicas, supervisão de casos, diagnósticos ou condutas terapêuticas. A IA é programada para bloquear perguntas clínicas.
+                </p>
+            </div>
+
+            <p style="color: #64748b; margin-bottom: 20px; line-height: 1.6;">
+                O paciente respondeu algo que você não esperava e não sabe bem como conduzir? Descreva rapidamente a situação abaixo e nossa Inteligência Artificial vai sugerir uma resposta ética e acolhedora para você continuar a conversa.
+            </p>
+
+            <textarea id="ai-prompt" class="ai-textarea" placeholder="Ex: Um paciente chamado João entrou em contato, perguntou sobre TCC para ansiedade, mas achou a sessão de R$ 200 cara porque está desempregado. Como posso responder acolhendo a situação dele, mas mantendo meu valor?"></textarea>
+            
+            <button id="btn-generate-ai" class="btn-ai-generate" onclick="generateAiResponse()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"></path><path d="m14 7 3 3"></path><path d="M5 6v4"></path><path d="M19 14v4"></path><path d="M10 2v2"></path><path d="M7 8H3"></path><path d="M21 16h-4"></path><path d="M11 3H9"></path></svg>
+                Gerar Resposta Personalizada
+            </button>
+
+            <div id="ai-result-area" class="ai-result-box">
+                <h4 style="margin: 0 0 15px 0; color: #475569; font-size: 0.95rem;">Resposta Sugerida:</h4>
+                <div id="ai-result-text" class="copy-text" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; white-space: pre-wrap;"></div>
+                <div style="margin-top: 15px;">
+                    <button class="btn-copy-cta" onclick="copyAiResult(this)">
+                        📋 Copiar Mensagem
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
 </div>
 
 <script>
-    // O script embutido facilita que tudo rode via AJAX injection
-    window.copyToClipboard = function(elementId, btn) {
-        const text = document.getElementById(elementId).innerText.replace(/^"|"$/g, '');
+    // === DADOS DOS CENÁRIOS E TEMPLATES ===
+    const scenariosData = [
+        {
+            id: 'quebra-gelo',
+            title: '👋 O Primeiro "Oi"',
+            shortLabel: 'O Primeiro "Oi"',
+            advice: 'Quando o paciente manda a primeira mensagem (geralmente gerada automaticamente pelo link da Yelo). O segredo aqui é acolhimento rápido e abertura para ouvir.',
+            copies: [
+                {
+                    tone: 'acolhedora',
+                    label: 'Acolhedora',
+                    text: 'Olá, [Nome]! Que bom que a Yelo cruzou nossos perfis. Sei que dar esse primeiro passo de buscar terapia exige coragem, então seja muito bem-vindo(a). Me conte um pouco: o que te motivou a buscar esse espaço agora?'
+                },
+                {
+                    tone: 'objetiva',
+                    label: 'Objetiva',
+                    text: 'Olá, [Nome]! Tudo bem? Prazer em falar com você. Recebi seu contato pela Yelo. Para que eu possa entender como te ajudar da melhor forma, você gostaria de me contar brevemente o que está buscando na terapia?'
+                },
+                {
+                    tone: 'informal',
+                    label: 'Mais Informal',
+                    text: 'Oi, [Nome]! Tudo bem por aí? Vi que você veio pelo meu perfil na Yelo. Fica à vontade para me perguntar qualquer dúvida sobre as sessões. Quer me contar rapidinho o que te fez buscar terapia nesse momento?'
+                }
+            ]
+        },
+        {
+            id: 'preco-direto',
+            title: '💰 Perguntou o Preço Direto',
+            shortLabel: 'Perguntou o Preço Direto',
+            advice: 'Não esconda o preço, mas não mande apenas um número seco. Ancore o valor ao seu serviço e tente puxar a conversa para a dor do paciente.',
+            copies: [
+                {
+                    tone: 'acolhedora',
+                    label: 'Acolhedora',
+                    text: 'Olá, [Nome]! Como viu no meu perfil, a sessão tem o valor de R$ [Valor] e dura 50 minutos. Mas antes de fecharmos a questão financeira, para mim é muito importante entender se eu sou a pessoa certa para te ajudar. Você se importaria de me contar brevemente o que você busca nesse momento?'
+                },
+                {
+                    tone: 'objetiva',
+                    label: 'Objetiva',
+                    text: 'Olá! O valor da minha sessão atual é R$ [Valor] (50 minutos, frequência semanal). Posso te explicar melhor como funciona o meu método de trabalho, caso você queira me contar um pouco sobre o motivo da sua busca.'
+                }
+            ]
+        },
+        {
+            id: 'pediu-desconto',
+            title: '📉 Pediu Desconto / "Tá Caro"',
+            shortLabel: 'Pediu Desconto',
+            advice: 'Mantenha a postura. Se você não trabalha com valor social, seja polido e encerre as portas abertas. Se você trabalha com pacotes, essa é a hora de oferecer.',
+            copies: [
+                {
+                    tone: 'objetiva',
+                    label: 'Não dou desconto',
+                    text: 'Entendo perfeitamente, [Nome]. No momento, este é o valor base do meu trabalho e infelizmente não consigo flexibilizar para não comprometer a qualidade do atendimento que ofereço. Desejo muita sorte na sua busca, e se no futuro fizer sentido, sigo à disposição!'
+                },
+                {
+                    tone: 'acolhedora',
+                    label: 'Oferecendo Pacote',
+                    text: 'Eu compreendo, [Nome]. O que eu costumo fazer para ajudar pacientes engajados é oferecer um pacote mensal. Fechando 4 sessões no mês, o valor de cada sessão cai para R$ [Valor Menor]. Fica mais acessível para você iniciar?'
+                }
+            ]
+        },
+        {
+            id: 'vou-pensar',
+            title: '🤔 Disse "Vou pensar"',
+            shortLabel: 'Disse "Vou pensar"',
+            advice: 'Não force a barra. Agradeça e deixe a porta aberta. A terapia é uma decisão que exige tempo para algumas pessoas.',
+            copies: [
+                {
+                    tone: 'acolhedora',
+                    label: 'Deixando a porta aberta',
+                    text: 'Claro, [Nome]! A escolha do psicólogo é algo muito pessoal e você precisa se sentir 100% confortável. Fique super à vontade para pensar o tempo que precisar. Se decidir iniciar, ou se surgir qualquer dúvida, é só me chamar por aqui. Um abraço!'
+                }
+            ]
+        },
+        {
+            id: 'follow-up-24h',
+            title: '🛟 Resgate (+24h de Vácuo)',
+            shortLabel: 'Follow-up (+24h)',
+            advice: 'O paciente visualizou sua resposta e não falou mais nada. Mande APENAS UMA mensagem de resgate no dia seguinte.',
+            copies: [
+                {
+                    tone: 'acolhedora',
+                    label: 'Acolhedora',
+                    text: 'Olá, [Nome]! Passando só para deixar um abraço e dizer que sigo à disposição se você ainda estiver avaliando o início da terapia. Caso tenha ficado alguma dúvida sobre os horários ou como funciona o processo online, é só perguntar. Uma ótima semana!'
+                },
+                {
+                    tone: 'objetiva',
+                    label: 'Objetiva',
+                    text: 'Oi, [Nome]! Tudo bem? Estou organizando minha agenda da semana e lembrei do nosso contato. Você conseguiu pensar sobre o início das sessões ou optou por deixar para um outro momento? Qualquer coisa, estou por aqui.'
+                }
+            ]
+        }
+    ];
+
+    let currentScenarioId = 'quebra-gelo';
+
+    // === LÓGICA DE ABAS ===
+    function switchTab(tabId) {
+        document.querySelectorAll('.playbook-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.playbook-content').forEach(c => c.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    // === LÓGICA DE TEMPLATES ===
+    function renderScenariosList() {
+        const listDiv = document.getElementById('scenarios-list');
+        listDiv.innerHTML = '';
+        scenariosData.forEach(sc => {
+            const div = document.createElement('div');
+            div.className = `scenario-item ${sc.id === currentScenarioId ? 'active' : ''}`;
+            div.innerText = sc.shortLabel;
+            div.onclick = () => {
+                currentScenarioId = sc.id;
+                renderScenariosList();
+                renderActiveScenario();
+            };
+            listDiv.appendChild(div);
+        });
+    }
+
+    function renderActiveScenario() {
+        const sc = scenariosData.find(s => s.id === currentScenarioId);
+        if(!sc) return;
+
+        document.getElementById('scenario-title').innerText = sc.title;
+        document.getElementById('scenario-advice').innerHTML = `<strong>Dica:</strong> ${sc.advice}`;
+
+        const copiesDiv = document.getElementById('scenario-copies');
+        copiesDiv.innerHTML = '';
+
+        sc.copies.forEach((copy, index) => {
+            let badgeClass = 'badge-acolhedora';
+            if(copy.tone === 'objetiva' || copy.tone === 'Não dou desconto') badgeClass = 'badge-objetiva';
+            if(copy.tone === 'informal' || copy.tone === 'Oferecendo Pacote') badgeClass = 'badge-informal';
+
+            const copyId = `copy-${sc.id}-${index}`;
+
+            const html = `
+                <div class="copy-card">
+                    <div class="copy-card-header">
+                        <span class="copy-card-badge ${badgeClass}">${copy.label}</span>
+                    </div>
+                    <div class="copy-card-body">
+                        <p class="copy-text" id="${copyId}">${copy.text}</p>
+                        <button class="btn-copy-cta" onclick="copyTemplateText('${copyId}', this)">
+                            📋 Copiar Mensagem
+                        </button>
+                    </div>
+                </div>
+            `;
+            copiesDiv.innerHTML += html;
+        });
+    }
+
+    function copyTemplateText(elementId, btn) {
+        const text = document.getElementById(elementId).innerText;
         navigator.clipboard.writeText(text).then(() => {
             const originalText = btn.innerHTML;
             btn.innerHTML = '✅ Copiado!';
             btn.style.backgroundColor = '#16a34a';
-            btn.style.borderColor = '#16a34a';
             btn.style.color = '#fff';
             setTimeout(() => {
                 btn.innerHTML = originalText;
-                btn.style.backgroundColor = '#fff';
-                btn.style.borderColor = '#22c55e';
-                btn.style.color = '#166534';
-            }, 2500);
+                btn.style.backgroundColor = 'var(--verde-claro)';
+                btn.style.color = '#1B4332';
+            }, 2000);
         });
     }
+
+    // === LÓGICA DO COPILOT IA ===
+    async function generateAiResponse() {
+        const promptInput = document.getElementById('ai-prompt');
+        const promptText = promptInput.value.trim();
+        const btn = document.getElementById('btn-generate-ai');
+        const resultArea = document.getElementById('ai-result-area');
+        const resultText = document.getElementById('ai-result-text');
+
+        if (!promptText) {
+            if (window.showToast) window.showToast("Por favor, descreva a situação.", "warning");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Pensando...';
+        resultArea.style.display = 'none';
+
+        try {
+            const token = localStorage.getItem('Yelo_token_psi') || sessionStorage.getItem('Yelo_token_psi');
+            const response = await fetch(`${API_BASE_URL}/api/psychologists/ai-message-assistant`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ prompt: promptText })
+            });
+
+            if (!response.ok) throw new Error('Falha na resposta da IA');
+            const data = await response.json();
+
+            resultText.innerText = data.suggestedMessage;
+            resultArea.style.display = 'block';
+
+        } catch (error) {
+            console.error(error);
+            if (window.showToast) window.showToast("Erro ao gerar resposta com a IA. Tente novamente.", "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '✨ Gerar Resposta Personalizada';
+        }
+    }
+
+    function copyAiResult(btn) {
+        const text = document.getElementById('ai-result-text').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '✅ Copiada!';
+            btn.style.backgroundColor = '#16a34a';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.backgroundColor = 'var(--verde-claro)';
+            }, 2000);
+        });
+    }
+
+    // Inicialização
+    renderScenariosList();
+    renderActiveScenario();
 </script>

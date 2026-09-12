@@ -349,7 +349,7 @@ window.openCSDrawer = async function(idStr) {
                                     'Authorization': `Bearer ${token}`,
                                     'Content-Type': 'application/json'
                                 },
-                                body: JSON.stringify({ actionType: 'low_performance' })
+                                body: JSON.stringify({ actionType: 'low_performance', messageContent: data.whatsappCopy })
                             });
                         } catch(e) {
                             console.warn("Falha ao salvar marcação de low_performance", e);

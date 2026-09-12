@@ -60,6 +60,7 @@ router.post('/psychologists/:id/ai-diagnosis', adminPerformanceController.genera
 router.post('/psychologists/:id/ai-churn-message', adminPerformanceController.generateAiChurnMessage);
 router.post('/psychologists/:id/ai-paid-churn-message', adminPerformanceController.generateAiPaidChurnMessage);
 router.post('/psychologists/:id/ai-expiring-trial-message', adminPerformanceController.generateAiExpiringTrialMessage);
+router.post('/psychologists/:id/ai-conversion-failure', adminController.generateAiConversionFailure);
 // Novas rotas para gerenciar psicólogos
 router.get('/psychologists/:id/full-details', adminController.getPsychologistFullDetails); // <--- NOVA ROTA
 router.get('/psychologists/:id/analyze', adminController.analyzeProfile);

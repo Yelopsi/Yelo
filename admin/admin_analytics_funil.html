@@ -15,6 +15,30 @@
     .crm-pill:hover { background: #e2e8f0; color: #1e293b; }
     .crm-pill.active { background: #1B4332; color: white; border-color: #1B4332; box-shadow: 0 2px 4px rgba(27, 67, 50, 0.2); }
     
+    .loading-spinner {
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-left-color: var(--verde-escuro);
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Tabs Mobile UX - Todas visíveis com quebra de linha */
+    .content-tabs {
+        margin-bottom: 25px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-bottom: 5px;
+    }
+    .content-tab-btn {
+        flex: 1 1 auto;
+        text-align: center;
+        white-space: nowrap;
+    }
+
     .crm-date-input {
         background: #f8f9fa; color: #64748b; border: 1px solid #e2e8f0; padding: 7px 18px; border-radius: 50px;
         font-size: 0.9rem; font-weight: 600; font-family: var(--font-principal); outline: none; transition: all 0.2s;
@@ -239,7 +263,7 @@
     </div>
 
     <!-- ABAS -->
-    <div class="content-tabs" style="margin-bottom: 25px; display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px;">
+    <div class="content-tabs">
         <button class="crm-pill active content-tab-btn" data-target="tab-funil" onclick="switchFunilTab(this)">🎯 Funil End-to-End</button>
         <button class="crm-pill content-tab-btn" data-target="tab-conversoes" onclick="switchFunilTab(this)">🤝 Conversões (PLG)</button>
         <button class="crm-pill content-tab-btn" data-target="tab-ranking" onclick="switchFunilTab(this)">🏆 Ranking de Psis</button>
@@ -403,17 +427,20 @@
         <div class="tabela-container" style="margin-top: 20px; margin-bottom: 30px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                 <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">Auditoria de Contatos (Pacientes ➔ Psicólogos)</h3>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="text" id="search-wpp-name" placeholder="Pesquisar por nome..." style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; font-size: 0.9rem; outline: none; width: 220px;" onkeyup="applyWppFilter()">
-                    <label for="filter-wpp-status" style="font-size: 0.9rem; font-weight: 500; color: #4b5563;">Filtrar:</label>
-                    <select id="filter-wpp-status" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; font-size: 0.9rem; outline: none; cursor: pointer;" onchange="applyWppFilter()">
-                        <option value="todos">Todos os Contatos</option>
-                        <option value="cobrar_agora">Cobrar Agora</option>
-                        <option value="pendente">Pendente (Sem Resposta)</option>
-                        <option value="respondido">Respondido (Todos)</option>
-                        <option value="fechou">Negócio Fechado</option>
-                        <option value="nao_recebeu">Não Recebeu Mensagem</option>
-                    </select>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="search-wpp-name" placeholder="Pesquisar por nome..." style="padding: 8px 16px; border-radius: 50px; border: 1px solid #d1d5db; background: #fff; font-size: 0.9rem; outline: none; flex: 1; min-width: 200px;" onkeyup="applyWppFilter()">
+                    
+                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px;">
+                        <label for="filter-wpp-status" style="font-size: 0.9rem; font-weight: 500; color: #4b5563; white-space: nowrap;">Filtrar:</label>
+                        <select id="filter-wpp-status" style="padding: 8px 16px; border-radius: 50px; border: 1px solid #d1d5db; background: #fff; font-size: 0.9rem; outline: none; cursor: pointer; flex: 1; min-width: 150px; appearance: none;" onchange="applyWppFilter()">
+                            <option value="todos">Todos os Contatos</option>
+                            <option value="cobrar_agora">Cobrar Agora</option>
+                            <option value="pendente">Pendente (Sem Resposta)</option>
+                            <option value="respondido">Respondido (Todos)</option>
+                            <option value="fechou">Negócio Fechado</option>
+                            <option value="nao_recebeu">Não Recebeu Mensagem</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="tabela-wrapper">

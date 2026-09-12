@@ -751,3 +751,61 @@ exports.cancelSubscription = subscriptionController.cancelSubscription;
 // Descrição: Remove o agendamento de cancelamento no Asaas e mantém o plano ativo.
 // ----------------------------------------------------------------------
 exports.reactivateSubscription = subscriptionController.reactivateSubscription;
+
+/**
+ * Rota: POST /api/psychologists/ai-message-assistant
+ * Descrição: Gera uma resposta acolhedora baseada no prompt do psicólogo
+ */
+exports.generateAiMessageAssistant = async (req, res) => {
+    try {
+        const { prompt } = req.body;
+        if (!prompt) {
+            return res.status(400).json({ error: 'O prompt é obrigatório.' });
+        }
+
+        const psychologist = req.psychologist;
+        if (!psychologist) {
+            return res.status(401).json({ error: 'Usuário não autenticado.' });
+        }
+
+        const { GoogleGenerativeAI } = require("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+
+        const systemPrompt = `
+Você é um assistente especializado em ajudar psicólogos clínicos a converterem contatos de WhatsApp em pacientes, mantendo uma postura ética, acolhedora e não-vendedora.
+
+DADOS DO SEU PERFIL (PARA PERSONALIZAR A RESPOSTA):
+- Nome: ${psychologist.nome}
+- Abordagem Técnica: ${psychologist.abordagens_tecnicas ? psychologist.abordagens_tecnicas.join(', ') : 'Não informada'}
+- Valor da Sessão: R$ ${psychologist.valor_sessao_numero || 'Não informado'}
+- Especialidades: ${psychologist.temas_atuacao ? psychologist.temas_atuacao.join(', ') : 'Clínica Geral'}
+- Público Alvo: ${psychologist.publico_alvo ? psychologist.publico_alvo.join(', ') : 'Público Geral'}
+- Modalidade: ${psychologist.modalidade ? psychologist.modalidade.join(', ') : 'Online'}
+- Resumo da Bio: ${psychologist.bio ? psychologist.bio.substring(0, 300) : 'Não informada'}
+
+O psicólogo enviará um contexto sobre a conversa com um possível paciente.
+Sua tarefa é gerar APENAS o texto da mensagem exata que o psicólogo deve copiar e colar no WhatsApp.
+
+REGRAS RIGOROSAS:
+1. TRAVA CLÍNICA (MUITO IMPORTANTE): Você é uma ferramenta de conversão e marketing, NÃO um supervisor clínico. Se o psicólogo pedir orientações sobre condução de caso, diagnóstico, testes psicológicos, ou como tratar um transtorno, você DEVE RECUSAR a resposta educadamente. Responda algo como: "Olá! Como assistente de conversão, sou focado em ajudar com vendas e quebra-gelo. Para discussões sobre condução de casos clínicos e diagnósticos, recomendo buscar a sua supervisão técnica."
+2. Seja humano, acolhedor e empático no processo de vendas.
+3. Não tente ser excessivamente vendedor; o objetivo é reduzir a insegurança do paciente e abrir espaço para o diálogo inicial.
+4. Se o assunto for preço, ancore o valor ao cuidado oferecido. Não esconda o preço, mas também não justifique demais.
+5. Mantenha a mensagem curta (no máximo 3 parágrafos curtos).
+6. Use linguagem natural para o WhatsApp (pode usar 1 ou 2 emojis leves).
+7. Não adicione textos de explicação tipo "Aqui está a sua mensagem:" antes ou depois. Responda APENAS o texto que será copiado.
+
+Situação relatada pelo psicólogo: "${prompt}"
+`;
+
+        const result = await model.generateContent(systemPrompt);
+        const suggestedMessage = result.response.text().trim().replace(/^"|"$/g, '');
+
+        res.status(200).json({ suggestedMessage });
+
+    } catch (error) {
+        console.error('Erro em generateAiMessageAssistant:', error);
+        res.status(500).json({ error: 'Erro ao gerar mensagem com IA.', details: error.message });
+    }
+};

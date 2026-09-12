@@ -199,15 +199,27 @@ window.initializePage = function () {
         const searchTerm = searchInput.value;
         const status = statusInput.value;
 
-        // NOVO LÓGICA PARA FOLLOW-UPS
-        if (status === 'pending_actions') {
+        // NOVO LÓGICA PARA FOLLOW-UPS E FILTROS DE CARDS
+        if (status && status.startsWith('pending_')) {
+            const specificPendingType = status.replace('pending_', '');
             try {
                 const response = await fetch(`${API_BASE_URL}/api/admin/pending-actions`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!response.ok) throw new Error('Falha ao buscar pendências.');
                 const pendingData = await response.json();
-                const actionsArray = pendingData.pendingActions || pendingData;
+                let actionsArray = pendingData.pendingActions || pendingData;
+
+                if (specificPendingType !== 'actions') {
+                    if (specificPendingType === 'paid_churn') {
+                        actionsArray = actionsArray.filter(a => ['paid_churn', 'billing_feedback', 'churn'].includes(a.actionType));
+                    } else if (specificPendingType === 'incomplete') {
+                        actionsArray = actionsArray.filter(a => a.actionType === 'incomplete');
+                    } else if (specificPendingType === 'expiring_trial') {
+                        actionsArray = actionsArray.filter(a => a.actionType === 'expiring_trial');
+                    }
+                }
+
                 renderPendingActionsTable(actionsArray);
                 const infoEl = document.getElementById('pagination-info');
                 if (infoEl) infoEl.textContent = `Mostrando ${actionsArray.length} ações`;
@@ -311,6 +323,7 @@ window.initializePage = function () {
             else if (item.actionType === 'billing_feedback') actionBadge = '<span class="status" style="background:#e0e7ff; color:#4338ca;">Feedback/Cobrança</span>';
             else if (item.actionType === 'expiring_trial') actionBadge = '<span class="status" style="background:#fef08a; color:#b45309;">Trial Expirando</span>';
             else if (item.actionType === 'low_performance') actionBadge = '<span class="status" style="background:#f3e8ff; color:#7c3aed;">Análise (IA)</span>';
+            else if (item.actionType === 'conversion_failure') actionBadge = '<span class="status" style="background:#fee2e2; color:#b91c1c;">Falha Conversão</span>';
             else if (item.actionType === 'negotiation') actionBadge = '<span class="status" style="background:#ffedd5; color:#c2410c;">Em Negociação</span>';
 
             let nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${item.nome}</strong>`;
@@ -345,8 +358,8 @@ window.initializePage = function () {
                     <span style="font-size: 0.8rem; color: #64748b;">${item.plano || '-'}</span>
                 </td>
                 <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
-                    <button class="btn-tabela" onclick="window.sendWhatsAppAction('${item.id}', '${item.telefone}', '${item.nome}', '${item.actionType}', '${item.patientName || ''}', '${item.feedbackToken || ''}', '${encodeURIComponent(JSON.stringify(item.metrics || {}))}')" style="background: ${item.actionType === 'low_performance' ? '#7c3aed' : '#25D366'}; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px ${item.actionType === 'low_performance' ? 'rgba(124,58,237,0.3)' : 'rgba(37,211,102,0.3)'};">
-                        ${item.actionType === 'low_performance' ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Analisar' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> Enviar'}
+                    <button class="btn-tabela" onclick="window.sendWhatsAppAction('${item.id}', '${item.telefone}', '${item.nome}', '${item.actionType}', '${item.patientName || ''}', '${item.feedbackToken || ''}', '${encodeURIComponent(JSON.stringify(item.metrics || {}))}')" style="background: ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? '#7c3aed' : '#25D366'}; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? 'rgba(124,58,237,0.3)' : 'rgba(37,211,102,0.3)'};">
+                        ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Analisar' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> Enviar'}
                     </button>
                 </td>
             `;
@@ -517,6 +530,25 @@ window.initializePage = function () {
                 if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
                 return;
             }
+        } else if (actionType === 'conversion_failure') {
+            try {
+                if (window.showToast) window.showToast('Analisando perfil para fundo de funil... Aguarde.', 'info');
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-conversion-failure`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                });
+                const data = await resAi.json();
+                if (data.whatsappCopy) {
+                    msg = data.whatsappCopy;
+                } else {
+                    if (window.showToast) window.showToast("Erro ao gerar consultoria", "error");
+                    return;
+                }
+            } catch (e) {
+                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
+                return;
+            }
         } else if (actionType === 'negotiation') {
             const metrics = metricsStr && metricsStr !== '{}' ? JSON.parse(decodeURIComponent(metricsStr)) : {};
             const dataNeg = metrics.dataNeg || 'alguns dias';
@@ -539,7 +571,7 @@ window.initializePage = function () {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ actionType })
+                body: JSON.stringify({ actionType, messageContent: msg })
             });
             if (res.ok) {
                 if (window.showToast) window.showToast('Ação registrada com sucesso!', 'success');

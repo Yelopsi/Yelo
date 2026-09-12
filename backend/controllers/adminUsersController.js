@@ -695,10 +695,13 @@ exports.getPendingActions = async (req, res) => {
                 createdAt: { [Op.lte]: sixHoursAgo },
                 status: 'active',
                 subscriptionId: null,
-                subscriptionId: null,
                 msg_analysis_sent_at: null,
                 deletedAt: null,
-                telefone: { [Op.ne]: null, [Op.not]: '' }
+                telefone: { [Op.ne]: null, [Op.not]: '' },
+                [Op.or]: [
+                    { is_exempt: true },
+                    { planExpiresAt: { [Op.gte]: startOfToday } }
+                ]
             },
             attributes: ['id', 'nome', 'telefone', 'createdAt', 'fotoUrl', 'bio']
         });
@@ -716,6 +719,53 @@ exports.getPendingActions = async (req, res) => {
             attributes: ['id', 'nome', 'telefone', 'createdAt']
         });
         incompleteCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'incomplete', reason: 'Perfil incompleto há mais de 24h' }));
+        // 3. Falha de Conversão (>= 2 cliques sem fechar)
+        if (db.WhatsAppClickLog) {
+            const lostClicks = await db.WhatsAppClickLog.findAll({
+                where: { feedbackGiven: true, dealClosed: { [Op.notIn]: ['yes'] } },
+                attributes: ['psychologistId']
+            });
+            
+            const lostCounts = {};
+            lostClicks.forEach(c => {
+                lostCounts[c.psychologistId] = (lostCounts[c.psychologistId] || 0) + 1;
+            });
+            
+            const conversionFailureIds = Object.keys(lostCounts).filter(id => lostCounts[id] >= 2);
+            
+            if (conversionFailureIds.length > 0) {
+                const cfCandidates = await db.Psychologist.findAll({
+                    where: {
+                        id: { [Op.in]: conversionFailureIds },
+                        deletedAt: null,
+                        telefone: { [Op.ne]: null, [Op.not]: '' },
+                        status: 'active',
+                        [Op.or]: [
+                            { is_exempt: true },
+                            { planExpiresAt: { [Op.gte]: startOfToday } }
+                        ]
+                    },
+                    attributes: ['id', 'nome', 'telefone', 'aiOptimizationHistory']
+                });
+                
+                const fifteenDaysAgo = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+                
+                cfCandidates.forEach(p => {
+                    let recentlySent = false;
+                    if (p.aiOptimizationHistory && Array.isArray(p.aiOptimizationHistory)) {
+                        recentlySent = p.aiOptimizationHistory.some(h => 
+                            h.action === 'conversion_failure' && new Date(h.sentAt) > fifteenDaysAgo
+                        );
+                    }
+                    
+                    if (!recentlySent) {
+                        const pObj = p.toJSON();
+                        delete pObj.aiOptimizationHistory;
+                        pendingList.push({ ...pObj, actionType: 'conversion_failure', reason: `Teve ${lostCounts[p.id]} contatos recentes e não fechou` });
+                    }
+                });
+            }
+        }
 
 
         // 4. Feedback / Cobrança (Clique WhatsApp > 48h E adminWppReminderSentAt NULA E feedbackGiven = false)
@@ -746,7 +796,12 @@ exports.getPendingActions = async (req, res) => {
                     where: {
                         id: { [Op.in]: clickedIds },
                         deletedAt: null,
-                        telefone: { [Op.ne]: null, [Op.not]: '' }
+                        telefone: { [Op.ne]: null, [Op.not]: '' },
+                        status: 'active',
+                        [Op.or]: [
+                            { is_exempt: true },
+                            { planExpiresAt: { [Op.gte]: startOfToday } }
+                        ]
                     },
                     attributes: ['id', 'nome', 'telefone']
                 });
@@ -981,6 +1036,11 @@ exports.getPendingActions = async (req, res) => {
                         // Omitir se não tiver WhatsApp
                         if (!p.telefone || String(p.telefone).trim() === '') return;
                         
+                        // Omitir se estiver expirado ou inativo (apenas ativos/trials)
+                        if (p.status !== 'active') return;
+                        const pExpiresAt = p.planExpiresAt ? new Date(p.planExpiresAt) : null;
+                        if (!p.is_exempt && (!pExpiresAt || pExpiresAt < startOfToday)) return;
+                        
                         // Omitir se já foi contatado pela IA alguma vez (limite de 1 vez por psicólogo)
                         if (p.aiOptimizationHistory && Array.isArray(p.aiOptimizationHistory)) {
                             const alreadySent = p.aiOptimizationHistory.some(entry => entry.action === 'whatsapp_ai_diagnosis' || entry.sentAt);
@@ -1056,7 +1116,12 @@ exports.getPendingActions = async (req, res) => {
                     where: {
                         id: { [Op.in]: negotiationPsiIds },
                         deletedAt: null,
-                        telefone: { [Op.ne]: null, [Op.not]: '' }
+                        telefone: { [Op.ne]: null, [Op.not]: '' },
+                        status: 'active',
+                        [Op.or]: [
+                            { is_exempt: true },
+                            { planExpiresAt: { [Op.gte]: startOfToday } }
+                        ]
                     },
                     attributes: ['id', 'nome', 'telefone']
                 });
@@ -1159,11 +1224,7 @@ exports.markActionSent = async (req, res) => {
         } else if (actionType === 'expiring_trial') {
             updateData.admin_billing_sent_at = now;
         } else if (actionType === 'low_performance') {
-            let history = psychologist.aiOptimizationHistory ? [...psychologist.aiOptimizationHistory] : [];
-            history.push({ sentAt: now, action: 'whatsapp_ai_diagnosis' });
-            psychologist.aiOptimizationHistory = history;
-            psychologist.changed('aiOptimizationHistory', true);
-            await psychologist.save();
+            // Logica unificada abaixo
         } else if (actionType === 'negotiation') {
             if (db.WhatsAppClickLog) {
                 await db.WhatsAppClickLog.update(
@@ -1173,6 +1234,17 @@ exports.markActionSent = async (req, res) => {
             }
         } else {
             return res.status(400).json({ error: 'Tipo de ação inválido.' });
+        }
+
+        if (req.body.messageContent) {
+            let history = psychologist.aiOptimizationHistory ? [...psychologist.aiOptimizationHistory] : [];
+            history.push({ 
+                sentAt: now, 
+                action: actionType, 
+                contentSnippet: req.body.messageContent.substring(0, 1000) 
+            });
+            if (history.length > 5) history = history.slice(history.length - 5);
+            updateData.aiOptimizationHistory = history;
         }
 
         if (Object.keys(updateData).length > 0) {

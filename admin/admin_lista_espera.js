@@ -164,6 +164,20 @@ window.initializePage = function() {
                         } else {
                             window.open(url, '_blank');
                         }
+                        
+                        // Ocultar a linha da tabela se estiver na visualização de pendentes
+                        const currentFilter = document.getElementById('crm-status-espera')?.value || 'pending';
+                        if (currentFilter === 'pending') {
+                            setTimeout(() => {
+                                const tr = actionsCell.closest('tr');
+                                if (tr) {
+                                    tr.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                                    tr.style.opacity = '0';
+                                    tr.style.transform = 'translateX(20px)';
+                                    setTimeout(() => tr.remove(), 500);
+                                }
+                            }, 1000);
+                        }
                     };
                     actionsCell.appendChild(whatsappButton);
                     const deleteButton = document.createElement('button');

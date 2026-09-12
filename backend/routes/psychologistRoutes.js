@@ -142,6 +142,7 @@ router.get('/me/contact-history', safeProtect, whatsappClickController.getContac
 // ROTAS MOBILE-SAFE: Usam safeProtect para aceitar Bearer token
 // Essas rotas precisam funcionar tanto com Cookie (web) quanto com Bearer (app)
 // ===============================================
+router.post('/ai-message-assistant', safeProtect, psychologistController.generateAiMessageAssistant);
 router.get('/me/stats', safeProtect, psiDashboardController.getStats);
 router.get('/me', safeProtect, psychologistController.getAuthenticatedPsychologistProfile);
 router.get('/me/analytics', safeProtect, psiDashboardController.getAnalyticsData);

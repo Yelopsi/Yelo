@@ -231,15 +231,15 @@
 
         </div>
         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 200px; background: #fffbeb; border: 1px solid #fde68a; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 5px;">
+            <div class="kpi-card" data-kpi="pending_expiring_trial" onclick="window.filterByKpi('pending_expiring_trial')" style="flex: 1; min-width: 200px; background: #fffbeb; border: 1px solid #fde68a; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 5px; cursor: pointer; transition: all 0.2s;">
                 <div style="font-size: 2.2rem; font-weight: bold; color: #d97706; line-height: 1;">3</div>
                 <div><strong style="color: #92400e; display: block; font-size: 1.1rem;">Trials Acabando</strong><span style="font-size: 0.85rem; color: #b45309;">Vencimento nas próximas 24h</span></div>
             </div>
-            <div style="flex: 1; min-width: 200px; background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 5px;">
+            <div class="kpi-card" data-kpi="pending_paid_churn" onclick="window.filterByKpi('pending_paid_churn')" style="flex: 1; min-width: 200px; background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 5px; cursor: pointer; transition: all 0.2s;">
                 <div style="font-size: 2.2rem; font-weight: bold; color: #dc2626; line-height: 1;">2</div>
                 <div><strong style="color: #991b1b; display: block; font-size: 1.1rem;">Pagamentos Falhados</strong><span style="font-size: 0.85rem; color: #b91c1c;">Necessitam de contato urgente</span></div>
             </div>
-            <div style="flex: 1; min-width: 200px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 5px;">
+            <div class="kpi-card" data-kpi="pending_incomplete" onclick="window.filterByKpi('pending_incomplete')" style="flex: 1; min-width: 200px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 5px; cursor: pointer; transition: all 0.2s;">
                 <div style="font-size: 2.2rem; font-weight: bold; color: #16a34a; line-height: 1;" id="kpi-alerta-pendentes">15</div>
                 <div><strong style="color: #166534; display: block; font-size: 1.1rem;">Perfis Incompletos</strong><span style="font-size: 0.85rem; color: #15803d;">Pendentes há mais de 3 dias</span></div>
             </div>
