@@ -145,6 +145,7 @@ exports.getDashboardStats = async (req, res) => {
         // --- EASTER EGG: RECORDE DE ASSINANTES PAGANTES ---
         let maxRecord = 16;
         let isNewRecord = false;
+        let easterEggDebug = null;
         try {
             const settings = await db.SystemSetting.findOne();
             maxRecord = settings ? (settings.max_subscribers_record || 16) : 16;
@@ -155,8 +156,16 @@ exports.getDashboardStats = async (req, res) => {
                 }
                 isNewRecord = true;
             }
+            easterEggDebug = { status: 'success', maxRecord, isNewRecord, settingsFound: !!settings };
         } catch (easterEggError) {
-            console.error('Erro ao acessar SystemSettings para easter egg (ignorado):', easterEggError.message);
+            console.error('Erro ao acessar SystemSettings para easter egg:', easterEggError);
+            easterEggDebug = {
+                status: 'error',
+                message: easterEggError.message,
+                stack: easterEggError.stack,
+                name: easterEggError.name,
+                sql: easterEggError.sql || 'N/A'
+            };
         }
 
         console.timeEnd('⏱️ Dashboard Stats Load');
@@ -174,12 +183,18 @@ exports.getDashboardStats = async (req, res) => {
             overallConversionRate: parseFloat(overallConversionRate),
             totalMatches: totalMatches,
             totalClicks: totalClicks,
-            isNewRecord: isNewRecord
+            isNewRecord: isNewRecord,
+            _debugEasterEgg: easterEggDebug
         });
 
     } catch (error) {
         console.error('Erro crítico no dashboard:', error);
-        res.status(500).json({ error: 'Erro ao calcular métricas.' });
+        res.status(500).json({ 
+            error: 'Erro ao calcular métricas.', 
+            debugMessage: error.message,
+            debugStack: error.stack,
+            debugName: error.name
+        });
     }
 };
 

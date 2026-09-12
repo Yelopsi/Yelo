@@ -96,8 +96,12 @@ window.initializePage = function() {
              });
              clearTimeout(timeoutId);
 
-             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const stats = await response.json();
+             if (!response.ok) {
+                 const errData = await response.json().catch(() => ({}));
+                 console.error("🔥 DETALHES DO ERRO DA API (500):", errData);
+                 throw new Error(`HTTP error! status: ${response.status} - ${errData.debugMessage || errData.error || ''}`);
+             }
+             const stats = await response.json();
  
              // --- 1. CARDS PRINCIPAIS (TOPO) ---
              updateSafe('kpi-mrr', formatCurrency(stats.mrr || 0));
