@@ -930,6 +930,9 @@ exports.getFunnelAnalytics = async (req, res) => {
         const whatsappClicksResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const whatsappClicks = parseInt(whatsappClicksResult[0]?.count || 0);
 
+        const whatsappUniqueResult = await db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE(CAST("searchId" AS VARCHAR), CAST("id" AS VARCHAR))) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
+        const whatsappUnique = parseInt(whatsappUniqueResult[0]?.count || 0);
+
         const desqualificadosResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "DemandSearches" WHERE "is_disqualified" = true AND "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const desqualificados = parseInt(desqualificadosResult[0]?.count || 0);
 
@@ -967,7 +970,7 @@ exports.getFunnelAnalytics = async (req, res) => {
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
-        res.json({ visitas, iniciaram, completaram, profileViews, whatsappClicks, abandonos, origens, desqualificados, inteligencia: { topTemas, faixaValor, modalidades } });
+        res.json({ visitas, iniciaram, completaram, profileViews, whatsappClicks, whatsappUnique, abandonos, origens, desqualificados, inteligencia: { topTemas, faixaValor, modalidades } });
     } catch (error) {
         console.error('Erro em getFunnelAnalytics:', error);
         res.status(500).json({ error: 'Erro ao gerar dados do funil' });

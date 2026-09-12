@@ -49,6 +49,7 @@ exports.getWhatsAppLink = async (req, res) => {
         // 4. Captura UTM e nome do visitante (enviados pelo frontend via querystring)
         const utmSource = req.query.utm_source || 'organico';
         const guestName = req.query.guest_name || 'um paciente';
+        const searchId = req.query.searchId || null;
 
         // 5. Lógica de Sorteio 50/50 do Teste A/B
         const primeiroNome = psi.nome.split(' ')[0];
@@ -65,7 +66,8 @@ exports.getWhatsAppLink = async (req, res) => {
             ab_variant: variantId,
             guestName,
             utmSource,
-            feedbackGiven: false
+            feedbackGiven: false,
+            searchId
         });
 
         // 7. Incrementa o contador agregado no perfil do psicólogo (usado p/ trial limit e gamificação)

@@ -20,7 +20,7 @@ const ensureTableExists = async () => {
 exports.registerClick = async (req, res) => {
     try {
         await ensureTableExists();
-        const { psychologistId, guestName, utmSource } = req.body;
+        const { psychologistId, guestName, utmSource, searchId } = req.body;
 
         if (!psychologistId) {
             return res.status(400).json({ error: 'psychologistId é obrigatório.' });
@@ -37,7 +37,8 @@ exports.registerClick = async (req, res) => {
             guestName: guestName || 'um paciente',
             utmSource: utmSource || null,
             feedbackGiven: false,
-            feedbackToken: uuidv4()
+            feedbackToken: uuidv4(),
+            searchId: searchId || null
         });
 
         res.status(201).json(clickLog);

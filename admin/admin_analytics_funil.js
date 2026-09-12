@@ -178,7 +178,10 @@ window.initializePage = function() {
             if(kpiCompletaram) kpiCompletaram.textContent = data.completaram.toLocaleString();
 
             const kpiWhatsapp = document.getElementById('kpi-whatsapp');
-            if (kpiWhatsapp) kpiWhatsapp.textContent = data.whatsappClicks.toLocaleString();
+            if (kpiWhatsapp) kpiWhatsapp.textContent = data.whatsappUnique.toLocaleString();
+            
+            const kpiWhatsappDistribuidos = document.getElementById('kpi-whatsapp-distribuidos');
+            if (kpiWhatsappDistribuidos) kpiWhatsappDistribuidos.textContent = `${data.whatsappClicks.toLocaleString()} leads distribuídos`;
             
             const kpiDesqualificados = document.getElementById('kpi-desqualificados');
             if(kpiDesqualificados) kpiDesqualificados.textContent = (data.desqualificados || 0).toLocaleString();
@@ -195,7 +198,7 @@ window.initializePage = function() {
             if (elTaxaCompletaram) elTaxaCompletaram.innerHTML = renderGoalBar(taxaCompletaram, 65, 'dos iniciados', corTaxaCompletaram);
             applyColorToKpi('kpi-completaram', corTaxaCompletaram);
 
-            const taxaGlobal = data.visitas > 0 ? ((data.whatsappClicks / data.visitas) * 100).toFixed(2) : 0;
+            const taxaGlobal = data.visitas > 0 ? ((data.whatsappUnique / data.visitas) * 100).toFixed(2) : 0;
             const corTaxaGlobal = getColorForGoal(taxaGlobal, 3);
             const elTaxaGlobal = document.getElementById('taxa-conclusao-final');
             if (elTaxaGlobal) elTaxaGlobal.innerHTML = renderGoalBar(taxaGlobal, 3, 'do tráfego', corTaxaGlobal);
@@ -210,7 +213,7 @@ window.initializePage = function() {
                 { id: 'step-2', icon: '🚀', bg: '#f3e8ff', color: '#7e22ce', label: '2. Iniciaram o Questionário', value: data.iniciaram, parent: data.visitas, desc: 'Clicaram em Começar' },
                 { id: 'step-3', icon: '📋', bg: '#fef3c7', color: '#d97706', label: '3. Finalizaram Questionário (Leads)', value: data.completaram, parent: data.iniciaram, desc: 'Chegaram aos Resultados' },
                 { id: 'step-4', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Visualizações de Perfis', value: data.profileViews, parent: data.completaram, desc: 'Acessos detalhados aos resultados' },
-                { id: 'step-5', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp (Pacientes)', value: data.whatsappClicks, parent: data.profileViews, desc: 'Conversão Final Efetiva' }
+                { id: 'step-5', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp (Pacientes)', value: data.whatsappUnique, parent: data.profileViews, desc: `Gerou ${data.whatsappClicks} clicks totais` }
             ].map((step, i, arr) => {
                 const rateToParentRaw = step.parent > 0 ? (step.value / step.parent) : 0;
                 const rateToParentPct = (rateToParentRaw * 100).toFixed(1);
@@ -364,7 +367,7 @@ window.initializePage = function() {
                 }
 
                 // Bottom Funnel Insight (Fim Questionário -> Clique WhatsApp)
-                const tWhats = data.completaram > 0 ? (data.whatsappClicks / data.completaram) : 0;
+                const tWhats = data.completaram > 0 ? (data.whatsappUnique / data.completaram) : 0;
                 if (tWhats < 0.35) {
                     insightsHtml += `<div class="insight-item"><div class="insight-icon">👀</div><div class="insight-text"><h5>Falta de Conexão Final (${(tWhats * 100).toFixed(1)}%)</h5><p>Sua meta é 35% a 40%. Os pacientes vêm os matches, mas não clicam. Soluções possíveis: forçar os psicólogos a melhorarem fotos/bios, ou refinar a IA para explicar melhor o porquê daquele match.</p></div></div>`;
                 } else if (tWhats >= 0.35) {
@@ -418,7 +421,7 @@ window.initializePage = function() {
         if (tabTarget === 'tab-funil') {
             if (!exportData) return alert("Nenhum dado para exportar. Atualize a página.");
             
-            const taxaConversao = exportData.visitas > 0 ? ((exportData.whatsappClicks / exportData.visitas) * 100).toFixed(2) : 0;
+            const taxaConversao = exportData.visitas > 0 ? ((exportData.whatsappUnique / exportData.visitas) * 100).toFixed(2) : 0;
 
             let csvContent = `RELATÓRIO DE BUSINESS INTELLIGENCE E FUNIL DE PACIENTES\n`;
             csvContent += `Período: ${periodStr}\n\n`;
@@ -428,7 +431,8 @@ window.initializePage = function() {
             csvContent += `2. Iniciaram Questionário;${exportData.iniciaram}\n`;
             csvContent += `3. Completaram Questionário;${exportData.completaram}\n`;
             csvContent += `4. Acessaram Perfis Detalhados;${exportData.profileViews}\n`;
-            csvContent += `5. Clicaram WhatsApp (Conversão);${exportData.whatsappClicks}\n`;
+            csvContent += `5. Pacientes Convertidos (Únicos);${exportData.whatsappUnique}\n`;
+            csvContent += `5.1 Leads Distribuídos (Total Cliques);${exportData.whatsappClicks}\n`;
             csvContent += `Taxa de Conversão Final;${taxaConversao}%\n\n`;
 
             csvContent += `--- RETENÇÃO E PERDAS ---\n`;

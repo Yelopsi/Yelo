@@ -22,6 +22,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: true
         },
+        searchId: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
         guestPhone: {
             type: DataTypes.STRING,
             allowNull: true

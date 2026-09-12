@@ -354,6 +354,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         const abParams = new URLSearchParams();
                         if (utmSource) abParams.append('utm_source', utmSource);
                         if (guestName) abParams.append('guest_name', guestName);
+                        
+                        // Busca o searchId (sessão do paciente) no sessionStorage
+                        const searchId = sessionStorage.getItem('currentSearchId') || '';
+                        if (searchId) {
+                            abParams.append('searchId', searchId);
+                        }
+
                         const abQuery = abParams.toString() ? `?${abParams.toString()}` : '';
                         const res = await fetch(`${API_BASE_URL}/api/public/whatsapp/link/${psi.id}${abQuery}`);
                         const data = await res.json();
