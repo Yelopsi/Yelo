@@ -1420,78 +1420,68 @@ exports.markBillingSent = async (req, res) => {
  */
 exports.getClicksGrowthChart = async (req, res) => {
     try {
-        const parseDateBRT = (dateString, isEnd = false) => {
-            if (!dateString) return null;
-            const time = isEnd ? '23:59:59.999' : '00:00:00.000';
-            return new Date(`${dateString}T${time}-03:00`);
-        };
+        const db = require('../../backend/models');
+        const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        
+        // Vamos pegar os últimos 6 meses
+        const labels = [];
+        const monthKeys = []; // Para buscar no expectedSessionsMap (ex: '2026-09')
+        const organicClicksData = [];
+        const paidClicksData = [];
+        const expectedClicksData = [];
+        const expectedSessionsData = [];
+        
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            labels.push(monthNames[d.getMonth()]);
+            
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            monthKeys.push(`${yyyy}-${mm}`);
+        }
 
-        const days = parseInt(req.query.days || 30, 10);
-        let endDate = new Date();
-        endDate.setHours(endDate.getHours() - 3);
-        endDate.setUTCHours(23, 59, 59, 999);
+        const startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 5);
+        startDate.setDate(1);
+        startDate.setHours(0, 0, 0, 0);
 
-        let startDate = new Date();
-        startDate.setHours(startDate.getHours() - 3);
-        startDate.setDate(startDate.getDate() - (days - 1));
-        startDate.setUTCHours(0, 0, 0, 0);
-
-        // Se datas exatas vierem na query, sobrescreve
-        if (req.query.startDate) startDate = parseDateBRT(req.query.startDate, false);
-        if (req.query.endDate) endDate = parseDateBRT(req.query.endDate, true);
+        const endDate = new Date(); // Hoje
 
         // Projeção Fixa Mensal de SEO
-        // 2026-09: 400 | 2026-10: 650 | 2026-11: 1100 | 2026-12: 1800 | 2027-01: 2650 | 2027-02: 3500 | 2027-03: 4500 | 2027-04: 5500 | 2027-05: 6500 | 2027-06: 7600 | 2027-07: 8800 | 2027-08: 10000
         const expectedSessionsMap = {
             '2026-09': 400, '2026-10': 650, '2026-11': 1100, '2026-12': 1800,
             '2027-01': 2650, '2027-02': 3500, '2027-03': 4500, '2027-04': 5500,
             '2027-05': 6500, '2027-06': 7600, '2027-07': 8800, '2027-08': 10000
         };
 
-        // Query real agrupada por dia e utmSource
-        const db = require('../../backend/models');
         const clicksQuery = `
             SELECT 
-                TO_CHAR("createdAt" AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as data,
+                TO_CHAR("createdAt" AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM') as month,
                 "utmSource",
                 COUNT(*) as total
             FROM "WhatsAppClickLogs"
-            WHERE "createdAt" BETWEEN :start AND :end
-            GROUP BY data, "utmSource"
-            ORDER BY data ASC;
+            WHERE "createdAt" >= :start AND "createdAt" <= :end
+            GROUP BY month, "utmSource"
+            ORDER BY month ASC;
         `;
 
         const [realClicks] = await db.sequelize.query(clicksQuery, {
             replacements: { start: startDate, end: endDate }
         });
 
-        // Montagem do vetor de labels (cada dia no intervalo)
-        const labels = [];
-        const organicClicksData = [];
-        const paidClicksData = [];
-        const expectedClicksData = [];
-        const expectedSessionsData = [];
-
-        let current = new Date(startDate);
-        while (current <= endDate) {
-            const dayStr = current.toISOString().split('T')[0]; // YYYY-MM-DD
-            const monthStr = dayStr.substring(0, 7); // YYYY-MM
-
-            labels.push(dayStr);
-
-            // Filtra os reais deste dia
-            const dayLogs = realClicks.filter(r => r.data === dayStr);
+        monthKeys.forEach((monthKey) => {
+            // Filtra os reais deste mês
+            const monthLogs = realClicks.filter(r => r.month === monthKey);
             
             let organic = 0;
             let paid = 0;
 
-            dayLogs.forEach(log => {
+            monthLogs.forEach(log => {
                 const source = (log.utmSource || '').toLowerCase();
-                // Classifica como pago ou orgânico
                 if (source.includes('google') || source.includes('fb') || source.includes('meta') || source.includes('ads') || source.includes('ig')) {
                     paid += parseInt(log.total, 10);
                 } else {
-                    // Qualquer coisa que não seja pago explícito, assumimos como orgânico ou direto
                     organic += parseInt(log.total, 10);
                 }
             });
@@ -1499,18 +1489,12 @@ exports.getClicksGrowthChart = async (req, res) => {
             organicClicksData.push(organic);
             paidClicksData.push(paid);
 
-            // Adiciona a projeção esperada para o dia (projeção mensal / dias do mês)
-            const monthlySessions = expectedSessionsMap[monthStr] || 0;
-            const daysInMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
-            
-            const dailySessions = Math.round(monthlySessions / daysInMonth);
-            const dailyExpectedClicks = Math.round(dailySessions * 0.04); // 4% de conversão
+            const monthlySessions = expectedSessionsMap[monthKey] || 0;
+            const monthlyExpectedClicks = Math.round(monthlySessions * 0.04); // 4% de conversão
 
-            expectedSessionsData.push(dailySessions);
-            expectedClicksData.push(dailyExpectedClicks);
-
-            current.setDate(current.getDate() + 1);
-        }
+            expectedSessionsData.push(monthlySessions);
+            expectedClicksData.push(monthlyExpectedClicks);
+        });
 
         res.json({
             labels,
@@ -1523,9 +1507,8 @@ exports.getClicksGrowthChart = async (req, res) => {
                 clicks: expectedClicksData
             }
         });
-
-    } catch (error) {
-        console.error("Erro ao gerar gráfico de cliques:", error);
-        res.status(500).json({ error: error.message });
+    } catch(err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao buscar gráfico de crescimento B2C.' });
     }
 };

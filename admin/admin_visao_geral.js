@@ -289,36 +289,13 @@ window.initializePage = function() {
     };
 
     let clicksEvolutionChartInstance = null;
-    let currentClicksPeriod = 30; // 30 dias por padrão
-
-    window.setClicksPeriod = function(days) {
-        currentClicksPeriod = days;
-        // Atualiza UI dos botões
-        [7, 30, 60].forEach(d => {
-            const btn = document.getElementById(`btn-clicks-${d}`);
-            if (btn) {
-                if (d === days) {
-                    btn.dataset.active = "true";
-                    btn.style.background = "white";
-                    btn.style.color = "#0f172a";
-                    btn.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
-                } else {
-                    btn.dataset.active = "false";
-                    btn.style.background = "transparent";
-                    btn.style.color = "#475569";
-                    btn.style.boxShadow = "none";
-                }
-            }
-        });
-        window.loadClicksChartData();
-    };
 
     window.loadClicksChartData = async function() {
         try {
             const chartCanvas = document.getElementById('clicksEvolutionChart');
             if (!chartCanvas) return;
             
-            const response = await fetch(`${BASE_URL}/api/admin/charts/clicks-growth?days=${currentClicksPeriod}`, {
+            const response = await fetch(`${BASE_URL}/api/admin/charts/clicks-growth`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao buscar dados do gráfico B2C.');
