@@ -143,15 +143,20 @@ exports.getDashboardStats = async (req, res) => {
         }
 
         // --- EASTER EGG: RECORDE DE ASSINANTES PAGANTES ---
-        const settings = await db.SystemSetting.findOne();
-        let maxRecord = settings ? (settings.max_subscribers_record || 16) : 16;
+        let maxRecord = 16;
         let isNewRecord = false;
-        if (payingCount > maxRecord) {
-            maxRecord = payingCount;
-            if (settings) {
-                await settings.update({ max_subscribers_record: maxRecord });
+        try {
+            const settings = await db.SystemSetting.findOne();
+            maxRecord = settings ? (settings.max_subscribers_record || 16) : 16;
+            if (payingCount > maxRecord) {
+                maxRecord = payingCount;
+                if (settings) {
+                    await settings.update({ max_subscribers_record: maxRecord });
+                }
+                isNewRecord = true;
             }
-            isNewRecord = true;
+        } catch (easterEggError) {
+            console.error('Erro ao acessar SystemSettings para easter egg (ignorado):', easterEggError.message);
         }
 
         console.timeEnd('⏱️ Dashboard Stats Load');
