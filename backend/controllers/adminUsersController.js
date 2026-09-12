@@ -1223,8 +1223,8 @@ exports.markActionSent = async (req, res) => {
             }
         } else if (actionType === 'expiring_trial') {
             updateData.admin_billing_sent_at = now;
-        } else if (actionType === 'low_performance') {
-            // Logica unificada abaixo
+        } else if (actionType === 'low_performance' || actionType === 'conversion_failure') {
+            // Logica unificada abaixo (apenas grava no histórico)
         } else if (actionType === 'negotiation') {
             if (db.WhatsAppClickLog) {
                 await db.WhatsAppClickLog.update(

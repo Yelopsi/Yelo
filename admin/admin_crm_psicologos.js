@@ -361,11 +361,41 @@ window.initializePage = function () {
                     <button class="btn-tabela" onclick="window.sendWhatsAppAction('${item.id}', '${item.telefone}', '${item.nome}', '${item.actionType}', '${item.patientName || ''}', '${item.feedbackToken || ''}', '${encodeURIComponent(JSON.stringify(item.metrics || {}))}')" style="background: ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? '#7c3aed' : '#25D366'}; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? 'rgba(124,58,237,0.3)' : 'rgba(37,211,102,0.3)'};">
                         ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Analisar' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> Enviar'}
                     </button>
+                    <button class="btn-tabela" onclick="window.dismissAction('${item.id}', '${item.actionType}')" style="background: transparent; color: #94a3b8; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 50px; cursor: pointer; display: inline-flex; align-items: center; margin-left: 5px;" title="Ignorar esta ação">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
                 </td>
             `;
             tableBody.appendChild(row);
         });
     }
+
+    window.dismissAction = async function(id, actionType) {
+        if (!confirm('Deseja ignorar esta ação e removê-la da lista (nenhuma mensagem será enviada)?')) return;
+        
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/action-sent`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ actionType, messageContent: 'Ação ignorada/descartada pelo Admin.' })
+            });
+            if (res.ok) {
+                if (window.showToast) window.showToast('Ação descartada com sucesso!', 'success');
+                const statusInput = document.getElementById('crm-status-psi');
+                if (statusInput && statusInput.value === 'pending_actions') {
+                    setTimeout(() => fetchAndRenderPsis(window.currentCrmPage || 1), 500);
+                }
+            } else {
+                if (window.showToast) window.showToast('Erro ao descartar ação', 'error');
+            }
+        } catch (e) {
+            console.error('Erro ao descartar ação', e);
+            if (window.showToast) window.showToast('Erro na requisição', 'error');
+        }
+    };
 
     window.sendWhatsAppAction = async function (id, phone, name, actionType, patientName = '', feedbackToken = '', metricsStr = '{}') {
         if (!phone || phone === 'null') {
