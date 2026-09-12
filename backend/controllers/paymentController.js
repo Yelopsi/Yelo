@@ -525,6 +525,60 @@ exports.getPendingPix = async (req, res) => {
 };
 
 // ----------------------------------------------------------------------
+// Rota: POST /api/payments/convert-overdue-to-pix
+// Descrição: Converte uma fatura pendente/vencida para PIX e retorna o QR Code
+// ----------------------------------------------------------------------
+exports.convertOverdueToPix = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist.id;
+        const pendingPayment = await db.Payment.findOne({
+            where: {
+                psychologistId,
+                status: { [db.Sequelize.Op.in]: ['PENDING', 'OVERDUE'] }
+            },
+            order: [['dueDate', 'ASC']]
+        });
+
+        if (!pendingPayment) {
+            return res.status(404).json({ error: 'Nenhuma fatura pendente encontrada.' });
+        }
+
+        const asaasPaymentId = pendingPayment.asaasPaymentId;
+
+        // 1. Converte a cobrança para PIX no Asaas
+        const updateRes = await fetch(`${ASAAS_API_URL}/payments/${asaasPaymentId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+            body: JSON.stringify({ billingType: 'PIX' })
+        });
+
+        if (!updateRes.ok) {
+            return res.status(400).json({ error: 'Erro ao converter a fatura para PIX.' });
+        }
+
+        // 2. Busca o QR Code gerado
+        const qrRes = await fetch(`${ASAAS_API_URL}/payments/${asaasPaymentId}/pixQrCode`, {
+            headers: { 'access_token': ASAAS_API_KEY }
+        });
+        
+        if (!qrRes.ok) {
+            return res.status(400).json({ error: 'Fatura convertida, mas erro ao gerar QR Code.' });
+        }
+
+        const qrData = await qrRes.json();
+        return res.json({ 
+            success: true,
+            asaasPaymentId,
+            pix: { encodedImage: qrData.encodedImage, payload: qrData.payload }
+        });
+    } catch (error) {
+        console.error('Erro ao converter fatura para PIX:', error);
+        res.status(500).json({ error: 'Erro interno ao processar a fatura.' });
+    }
+};
+
+
+// ----------------------------------------------------------------------
 // Rota: POST /api/payments/update-method
 // Descrição: Atualiza a forma de pagamento da assinatura no Asaas
 // ----------------------------------------------------------------------

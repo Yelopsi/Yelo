@@ -553,11 +553,89 @@
                                 }
                             };
                         } else {
-                            // Se for cartão recusado, o botão leva pra alterar a forma de pagamento
-                            btnPayPix.textContent = "Atualizar Cartão";
-                            btnPayPix.onclick = (e) => {
+                            // Se for cartão recusado, o botão leva pra alterar a forma de pagamento ou pagar com PIX
+                            btnPayPix.textContent = "Pagar Fatura com PIX";
+                            btnPayPix.onclick = async (e) => {
                                 e.preventDefault();
-                                if (btnAlterar) btnAlterar.click();
+                                
+                                const originalText = btnPayPix.textContent;
+                                btnPayPix.textContent = "Gerando PIX...";
+                                btnPayPix.disabled = true;
+
+                                try {
+                                    const convertRes = await window.apiFetch(`${API_BASE_URL}/api/payments/convert-overdue-to-pix`, {
+                                        method: 'POST'
+                                    });
+                                    const convertData = await convertRes.json();
+                                    
+                                    if (convertData.success && convertData.pix) {
+                                        // Abre o modal com o PIX gerado
+                                        const modal = document.getElementById('payment-modal');
+                                        const stepMethod = document.getElementById('step-payment-method');
+                                        const form = document.getElementById('payment-form');
+                                        const pixResult = document.getElementById('pix-result-container');
+                                        
+                                        if (modal) {
+                                            modal.style.display = 'flex';
+                                            modal.style.opacity = 1;
+                                            modal.style.visibility = 'visible';
+                                            
+                                            if (stepMethod) stepMethod.style.display = 'none';
+                                            if (form) form.style.display = 'none';
+                                            if (pixResult) {
+                                                pixResult.style.display = 'block';
+                                                
+                                                const qrImg = document.getElementById('pix-qrcode');
+                                                if (qrImg) qrImg.src = `data:image/png;base64,${convertData.pix.encodedImage}`;
+                                                
+                                                const payloadInput = document.getElementById('pix-copy-paste');
+                                                if (payloadInput) payloadInput.value = convertData.pix.payload;
+                                                
+                                                const btnCopy = document.getElementById('btn-copy-pix');
+                                                if (btnCopy) {
+                                                    btnCopy.onclick = (ev) => {
+                                                        ev.preventDefault();
+                                                        navigator.clipboard.writeText(convertData.pix.payload).then(() => {
+                                                            if (window.showToast) window.showToast('Código PIX copiado!', 'success');
+                                                            const oText = btnCopy.textContent;
+                                                            const oBg = btnCopy.style.backgroundColor;
+                                                            btnCopy.textContent = "Copiado! ✓";
+                                                            btnCopy.style.backgroundColor = "#16a34a";
+                                                            setTimeout(() => {
+                                                                btnCopy.textContent = oText;
+                                                                btnCopy.style.backgroundColor = oBg;
+                                                            }, 2000);
+                                                        }).catch(() => {
+                                                            document.getElementById('pix-copy-paste').select();
+                                                            document.execCommand("copy");
+                                                            if (window.showToast) window.showToast('Código PIX copiado!', 'success');
+                                                        });
+                                                    };
+                                                }
+
+                                                const btnPaid = document.getElementById('btn-pix-paid');
+                                                if (btnPaid) {
+                                                    btnPaid.onclick = (ev) => {
+                                                        ev.target.textContent = "Verificando...";
+                                                        ev.target.disabled = true;
+                                                        ev.target.style.opacity = "0.7";
+                                                        setTimeout(() => window.location.reload(), 1500);
+                                                    };
+                                                }
+                                            }
+                                        }
+                                        window.showToast('Fatura convertida para PIX com sucesso!', 'success');
+                                    } else {
+                                        window.showToast(convertData.error || 'Erro ao gerar PIX da fatura.', 'error');
+                                        if (btnAlterar) btnAlterar.click();
+                                    }
+                                } catch (err) {
+                                    console.error(err);
+                                    window.showToast('Erro ao comunicar com o servidor.', 'error');
+                                } finally {
+                                    btnPayPix.textContent = originalText;
+                                    btnPayPix.disabled = false;
+                                }
                             };
                         }
                     }
