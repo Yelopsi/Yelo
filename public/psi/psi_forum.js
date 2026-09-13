@@ -206,8 +206,12 @@
             });
 
             const supportBtn = card.querySelector('.support-btn');
+            supportBtn.dataset.postId = post.id;
             if (post.supportedByMe) supportBtn.classList.add('supported');
-            supportBtn.onclick = () => toggleSupport(post.id, supportBtn);
+            supportBtn.onclick = (e) => {
+                e.stopPropagation();
+                toggleSupport(post.id, supportBtn);
+            };
 
             const reportBtn = card.querySelector('.report-btn');
             const editBtn = card.querySelector('.edit-btn');
@@ -276,8 +280,12 @@
                 };
 
                 const supportBtn = postEl.querySelector('.support-btn');
+                supportBtn.dataset.postId = post.id;
                 if (post.supportedByMe) supportBtn.classList.add('supported');
-                supportBtn.onclick = () => toggleSupport(post.id, supportBtn);
+                supportBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleSupport(post.id, supportBtn);
+                };
                 
                 const reportBtnFull = postEl.querySelector('.report-btn');
                 const editBtnFull = postEl.querySelector('.edit-btn-full');
@@ -819,15 +827,48 @@
         }
 
         async function toggleSupport(postId, btnElement) {
-            const isSupported = btnElement.classList.toggle('supported');
+            // Pegar o estado atualizado (baseado no botão que foi clicado)
+            const isSupported = !btnElement.classList.contains('supported');
+            
+            // Pega os votos atuais (do botão clicado)
             const votesCountEl = btnElement.parentElement.querySelector('.post-votes-count');
-            let currentVotes = parseInt(votesCountEl.textContent);
-            votesCountEl.textContent = isSupported ? currentVotes + 1 : currentVotes - 1;
+            const currentVotes = parseInt(votesCountEl.textContent) || 0;
+            const newVotes = isSupported ? currentVotes + 1 : currentVotes - 1;
+
+            // Atualizar UI de todos os botões correspondentes na tela (Feed e Modal)
+            const allBtns = document.querySelectorAll(`.support-btn[data-post-id="${postId}"]`);
+            allBtns.forEach(btn => {
+                if (isSupported) {
+                    btn.classList.add('supported');
+                } else {
+                    btn.classList.remove('supported');
+                }
+                const countEl = btn.parentElement.querySelector('.post-votes-count');
+                if (countEl) countEl.textContent = newVotes;
+            });
+
             try {
-                await apiFetch(`${API_BASE_URL}/api/forum/posts/${postId}/vote`, { method: 'POST' });
+                const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${postId}/vote`, { method: 'POST' });
+                const data = await res.json();
+                
+                // Se a API retornar o número de votos exato, atualiza a UI novamente para garantir sincronia
+                if (data && data.votes !== undefined) {
+                    allBtns.forEach(btn => {
+                        const countEl = btn.parentElement.querySelector('.post-votes-count');
+                        if (countEl) countEl.textContent = data.votes;
+                    });
+                }
             } catch (err) {
-                btnElement.classList.toggle('supported');
-                votesCountEl.textContent = currentVotes;
+                // Reverter UI em caso de erro
+                allBtns.forEach(btn => {
+                    if (isSupported) {
+                        btn.classList.remove('supported');
+                    } else {
+                        btn.classList.add('supported');
+                    }
+                    const countEl = btn.parentElement.querySelector('.post-votes-count');
+                    if (countEl) countEl.textContent = currentVotes;
+                });
                 showToast('Erro ao registrar voto.', 'error');
             }
         }

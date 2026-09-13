@@ -124,8 +124,17 @@
 .reddit-pill { display: inline-flex; align-items: center; gap: 6px; background-color: #f1f3f5; color: #495057; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; border: none; cursor: pointer; transition: background 0.2s; }
 .reddit-pill:hover { background-color: #e2e6ea; }
 .reddit-pill svg { width: 16px; height: 16px; }
-.support-btn.supported.reddit-pill, .comment-like-btn.liked.reddit-pill { color: var(--coral-quente); background-color: #fff5f5; }
-.support-btn.supported.reddit-pill svg, .comment-like-btn.liked.reddit-pill svg { fill: var(--coral-quente); stroke: var(--coral-quente); }
+@keyframes heartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+.support-btn.supported.reddit-pill, .comment-like-btn.liked { color: var(--coral-quente); background-color: #fff5f5; }
+.support-btn.supported.reddit-pill svg, .comment-like-btn.liked svg { 
+    fill: var(--coral-quente); 
+    stroke: var(--coral-quente); 
+    animation: heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
 .post-actions-right { display: flex; gap: 4px; align-items: center; }
 .icon-btn-small { background: transparent; border: none; padding: 6px; border-radius: 50%; color: #878a8c; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .icon-btn-small:hover { background: #f1f3f5; color: #1c1c1c; }
