@@ -164,7 +164,7 @@ exports.getQuestionBySlug = async (req, res) => {
 
         // 1. Busca o ID da pergunta usando SQL puro para evitar erro de modelo desatualizado no Sequelize
         const rawResults = await db.sequelize.query(
-            `SELECT id, title, slug, meta_description FROM "${qTable}" WHERE "slug" = :slug OR "id"::text = :slug LIMIT 1`,
+            `SELECT id, title, slug, meta_description FROM "${qTable}" WHERE ("slug" = :slug OR "id"::text = :slug) AND "deletedAt" IS NULL LIMIT 1`,
             { replacements: { slug }, type: db.sequelize.QueryTypes.SELECT }
         );
 
@@ -188,6 +188,12 @@ exports.getQuestionBySlug = async (req, res) => {
                 }
             ]
         });
+
+        // Se a pergunta foi encontrada no SQL puro mas filtrada pelo Sequelize (ex: escopos globais), retorna 404
+        if (!question) {
+            res.status(404);
+            return res.render('404', { url: req.originalUrl });
+        }
 
         // 1. Converte a instância bruta do Sequelize para um objeto JavaScript puro (Evita erros no EJS)
         const questionData = question.toJSON();
@@ -247,7 +253,7 @@ exports.generateSitemap = async (req, res) => {
 
         // Usa SQL puro para buscar os slugs e evitar falhas de cache do modelo
         const questions = await db.sequelize.query(
-            `SELECT slug, "updatedAt" FROM "${qTable}" WHERE slug IS NOT NULL ORDER BY "updatedAt" DESC`,
+            `SELECT slug, "updatedAt" FROM "${qTable}" WHERE slug IS NOT NULL AND "deletedAt" IS NULL AND status = 'approved' ORDER BY "updatedAt" DESC`,
             { type: db.sequelize.QueryTypes.SELECT }
         );
 
@@ -268,12 +274,12 @@ exports.generateSitemap = async (req, res) => {
         let posts = [];
         try {
             posts = await db.sequelize.query(
-                `SELECT id, slug, "updated_at" as "updatedAt" FROM "${postTable}" WHERE "slug" IS NOT NULL`,
+                `SELECT id, slug, "updated_at" as "updatedAt" FROM "${postTable}" WHERE "slug" IS NOT NULL AND "deleted_at" IS NULL AND status = 'published'`,
                 { type: db.sequelize.QueryTypes.SELECT }
             );
         } catch(e) {
             try {
-                posts = await db.sequelize.query(`SELECT id, slug, "updated_at" as "updatedAt" FROM "posts" WHERE "slug" IS NOT NULL`, { type: db.sequelize.QueryTypes.SELECT });
+                posts = await db.sequelize.query(`SELECT id, slug, "updated_at" as "updatedAt" FROM "posts" WHERE "slug" IS NOT NULL AND "deleted_at" IS NULL AND status = 'published'`, { type: db.sequelize.QueryTypes.SELECT });
             } catch(e2) { console.error("Erro ao buscar posts para o sitemap:", e2.message); }
         }
 
