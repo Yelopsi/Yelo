@@ -7,7 +7,7 @@ const emailService = require('../services/emailService'); // Importação do ser
 exports.getAllPosts = async (req, res) => {
     try {
         const psychologistId = req.user.id;
-        const { filter, search, page = 1, limit = 3, pageSize } = req.query; 
+        const { filter, search, category, page = 1, limit = 3, pageSize } = req.query; 
         const parsedLimit = parseInt(limit, 10);
         // Se pageSize não for enviado, usa o limit. Se for, usa ele para calcular o offset.
         const parsedPageSize = pageSize ? parseInt(pageSize, 10) : parsedLimit;
@@ -38,6 +38,10 @@ exports.getAllPosts = async (req, res) => {
                 { content: { [Op.iLike]: `%${search}%` } }
             ];
         }
+        if (category) {
+            where.category = category;
+        }
+        console.log('--- FORUM FILTER DEBUG ---', { filter, search, category, where });
 
         const posts = await ForumPost.findAll({
             where,

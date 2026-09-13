@@ -34,8 +34,21 @@
 
         <div class="widget" style="border-radius: 24px; padding: 25px;">
             <div class="forum-controls">
-                <div class="forum-search-bar">
-                    <input type="text" id="forum-search-input" placeholder="Buscar por título ou palavra-chave..." style="border-radius: 50px; padding: 14px 20px 14px 45px; border: 1px solid #e0e0e0; background-color: #f9fafb;">
+                <div style="display: flex; gap: 15px; flex-grow: 1; max-width: 650px; flex-wrap: wrap;">
+                    <div class="forum-search-bar" style="flex-grow: 1; max-width: unset; min-width: 250px;">
+                        <input type="text" id="forum-search-input" placeholder="Buscar por título ou palavra-chave..." style="width: 100%; border-radius: 50px; padding: 14px 20px 14px 45px; border: 1px solid #e0e0e0; background-color: #f9fafb;">
+                    </div>
+                    <div class="forum-category-filter" style="min-width: 200px; flex-grow: 1;">
+                        <select id="forum-category-select" style="width: 100%; border-radius: 50px; padding: 14px 20px; border: 1px solid #e0e0e0; background-color: #f9fafb; outline: none; font-family: var(--font-principal); color: #495057; cursor: pointer; height: 48px; box-sizing: border-box;">
+                            <option value="">Todas as Categorias</option>
+                            <option value="Discussão de Casos (Intervisão)">Discussão de Casos (Intervisão)</option>
+                            <option value="Burocracia e Legislação (CRP/CFP)">Burocracia e Legislação (CRP/CFP)</option>
+                            <option value="Indicações e Encaminhamentos">Indicações e Encaminhamentos</option>
+                            <option value="Ferramentas e Referências">Ferramentas e Referências</option>
+                            <option value="Marketing e Carreira">Marketing e Carreira</option>
+                            <option value="Sala de Café (Off-topic)">Sala de Café (Off-topic)</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="forum-tabs" style="display: flex; gap: 15px;">
                     <span class="tab-item" data-filter="populares">Populares</span>

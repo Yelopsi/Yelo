@@ -688,6 +688,7 @@
             try {
                 const activeFilter = document.querySelector('.forum-tabs .tab-item.active')?.dataset.filter || 'populares';
                 const searchTerm = document.getElementById('forum-search-input')?.value || '';
+                const category = document.getElementById('forum-category-select')?.value || '';
                 let posts;
                 
                 if (page === 1 && preFetchedData) {
@@ -695,7 +696,7 @@
                     preFetchedData = null;
                 } else {
                     const fetchLimit = POSTS_LIMIT + 1;
-                    const res = await apiFetch(`${API_BASE_URL}/api/forum/posts?filter=${activeFilter}&search=${encodeURIComponent(searchTerm)}&page=${page}&limit=${fetchLimit}&pageSize=${POSTS_LIMIT}`);
+                    const res = await apiFetch(`${API_BASE_URL}/api/forum/posts?filter=${activeFilter}&category=${encodeURIComponent(category)}&search=${encodeURIComponent(searchTerm)}&page=${page}&limit=${fetchLimit}&pageSize=${POSTS_LIMIT}`);
                     if (!res.ok) throw new Error('Erro ao buscar posts');
                     posts = await res.json();
                 }
@@ -1084,6 +1085,14 @@
                     currentPage = 1;
                     fetchAndRenderPosts(1, false);
                 }, 500); 
+            });
+        }
+        
+        const categoryFilter = document.getElementById('forum-category-select');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', () => {
+                currentPage = 1;
+                fetchAndRenderPosts(1, false);
             });
         }
 
