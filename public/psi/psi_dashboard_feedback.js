@@ -111,10 +111,16 @@ window.PsiFeedback = (function() {
             const adiadoAte = localStorage.getItem('yelo_platform_feedback_adiado_ate');
             if (adiadoAte && new Date().getTime() < parseInt(adiadoAte)) return;
             
-            const accountCreated = new Date(psychologistData.createdAt);
-            const daysSinceCreation = (new Date() - accountCreated) / (1000 * 60 * 60 * 24);
+            // Exibe apenas para profissionais com assinatura ativa (pagantes)
+            if (!psychologistData.subscriptionId || psychologistData.status !== 'active') {
+                return;
+            }
+
+            const referenceDate = new Date(psychologistData.subscribedAt || psychologistData.createdAt);
+            const daysSincePaid = (new Date() - referenceDate) / (1000 * 60 * 60 * 24);
             
-            if (daysSinceCreation >= 7 && psychologistData.status === 'active') {
+            // Aparece 20 dias após a assinatura
+            if (daysSincePaid >= 20) {
                 setTimeout(abrirModalFeedbackPlataforma, 4000); 
             }
         }

@@ -345,6 +345,17 @@ window.initializePage = function() {
                             yAxisID: 'y'
                         },
                         {
+                            label: 'Sessões Orgânicas (Real)',
+                            data: chartData.realData.organicSessions,
+                            borderColor: '#3b82f6', // Azul
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            pointHitRadius: 20,
+                            yAxisID: 'y1'
+                        },
+                        {
                             label: 'Sessões SEO (Projeção)',
                             data: chartData.expectedData.sessions,
                             borderColor: '#cbd5e1', // Cinza mais claro

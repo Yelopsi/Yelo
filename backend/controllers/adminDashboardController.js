@@ -1431,6 +1431,7 @@ exports.getClicksGrowthChart = async (req, res) => {
         const monthKeys = []; // Para buscar no expectedSessionsMap (ex: '2026-09')
         const organicClicksData = [];
         const paidClicksData = [];
+        const organicSessionsData = [];
         const expectedClicksData = [];
         const expectedSessionsData = [];
         
@@ -1473,6 +1474,20 @@ exports.getClicksGrowthChart = async (req, res) => {
             replacements: { start: startDate, end: endDate }
         });
 
+        const visitsQuery = `
+            SELECT 
+                TO_CHAR("createdAt" AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM') as month,
+                COUNT(*) as total
+            FROM "SiteVisits"
+            WHERE "createdAt" >= :start AND "createdAt" <= :end
+            GROUP BY month
+            ORDER BY month ASC;
+        `;
+
+        const [realVisits] = await db.sequelize.query(visitsQuery, {
+            replacements: { start: startDate, end: endDate }
+        });
+
         monthKeys.forEach((monthKey) => {
             // Filtra os reais deste mês
             const monthLogs = realClicks.filter(r => r.month === monthKey);
@@ -1492,6 +1507,9 @@ exports.getClicksGrowthChart = async (req, res) => {
             organicClicksData.push(organic);
             paidClicksData.push(paid);
 
+            const monthVisits = realVisits.find(v => v.month === monthKey);
+            organicSessionsData.push(monthVisits ? parseInt(monthVisits.total, 10) : 0);
+
             const monthlySessions = expectedSessionsMap[monthKey] || 0;
             const monthlyExpectedClicks = Math.round(monthlySessions * 0.04); // 4% de conversão
 
@@ -1503,7 +1521,8 @@ exports.getClicksGrowthChart = async (req, res) => {
             labels,
             realData: {
                 organicClicks: organicClicksData,
-                paidClicks: paidClicksData
+                paidClicks: paidClicksData,
+                organicSessions: organicSessionsData
             },
             expectedData: {
                 sessions: expectedSessionsData,

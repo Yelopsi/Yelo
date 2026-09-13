@@ -112,9 +112,11 @@
 
         /* Seção de Números (Prova Social) */
         .stats-section {
-            background-color: #ffffff;
+            background-color: var(--off-white);
             z-index: 2;
-            margin-top: 0; /* Ajuste para não cobrir a wave */
+            margin-top: 0;
+            padding: 40px 20px 80px;
+            position: relative;
         }
 
         /* Ajuste de cores alternadas para o fluxo das ondas */
@@ -127,14 +129,9 @@
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
+            gap: 40px;
             max-width: 1000px;
-            margin: 40px auto 0;
-            background: #fff;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
-            border: 1px solid rgba(0,0,0,0.05);
+            margin: 0 auto;
             position: relative;
             z-index: 2;
         }
@@ -146,15 +143,18 @@
         .stat-number {
             display: block;
             font-family: var(--font-titulos);
-            font-size: 2.5rem;
-            color: #1B4332;
+            font-size: 3rem;
+            color: #FFEE8C;
+            margin-bottom: 8px;
             font-weight: 700;
         }
 
         .stat-label {
-            font-size: 1rem;
-            color: #666;
+            display: block;
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.9);
             font-weight: 500;
+            line-height: 1.4;
         }
 
         /* Seção Benefícios (Grid Orgânico) */
@@ -430,13 +430,35 @@
         }
         .texto-leitura {
             max-width: 800px;
-            margin: 0 auto;
+            margin: 40px auto;
+            padding: 40px 50px;
+            background: var(--off-white);
+            border-radius: 20px;
+            border-left: 6px solid #1B4332;
             font-size: 1.15rem;
-            line-height: 1.8; /* Leitura escaneável */
-            color: #555;
+            line-height: 1.8;
+            color: #444;
             text-align: left;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            position: relative;
         }
-        .texto-leitura p { margin-bottom: 20px; }
+        .texto-leitura::before {
+            content: '"';
+            font-size: 8rem;
+            color: #1B4332;
+            opacity: 0.05;
+            position: absolute;
+            top: -20px;
+            left: 20px;
+            font-family: serif;
+        }
+        .texto-leitura p { margin-bottom: 20px; position: relative; z-index: 2; }
+        .texto-leitura p:last-child { margin-bottom: 0; }
+        .texto-leitura .lead-text {
+            font-size: 1.35rem;
+            color: #1B4332;
+            font-weight: 500;
+        }
 
         /* Diferenciais (Grid 2x2) */
         .diferenciais-section {
@@ -673,38 +695,28 @@
 
             <div class="container" style="padding-bottom: 0; position: relative; z-index: 2;">
                 <h1>Viva da Psicologia com autonomia e segurança</h1>
-                <p>A Yelo conecta você a pacientes que buscam exatamente a sua abordagem. Simplifique sua gestão, receba pagamentos garantidos e foque no que importa: o atendimento.</p>
+                <p>A Yelo conecta você a pacientes que buscam exatamente a sua abordagem. Simplifique a gestão da sua agenda, fortaleça sua presença digital e foque no que mais importa: o atendimento e o cuidado.</p>
                 <a href="/psi_questionario" class="btn-cta-principal" style="background-color: #FFEE8C; color: #1B4332;">Criar meu perfil (14 dias grátis)</a>
                 <p style="font-size: 0.95rem; margin-top: 15px; opacity: 0.9; font-weight: 500;">Sem cartão de crédito. Depois, apenas R$99/mês.</p>
+                
+                <div class="stats-grid" style="margin-top: 60px;">
+                    <div class="stat-item">
+                        <span class="stat-number" data-count="1967" data-suffix="+">1.967+</span>
+                        <span class="stat-label">Pacientes impactados</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" data-count="523" data-suffix="+">523+</span>
+                        <span class="stat-label">Profissionais que já escolheram a Yelo</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" data-count="64" data-suffix="%">64%</span>
+                        <span class="stat-label">Taxa Média de Fechamento</span>
+                    </div>
+                </div>
             </div>
-
             <div class="wave-divider wave-bottom">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
-            </div>
-        </section>
-
-        <!-- STATS -->
-        <section class="stats-section">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <span class="stat-number" data-count="14" data-suffix="">0</span>
-                    <span class="stat-label">Dias de Teste Gratuito</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" data-count="100" data-suffix="%">0%</span>
-                    <span class="stat-label">Do Valor da Consulta é Seu</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" data-count="100" data-suffix="%">0%</span>
-                    <span class="stat-label">De Autonomia<br>(Sua Agenda, Seus Preços)</span>
-                </div>
-            </div>
-            
-            <div class="wave-divider wave-bottom">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                    <path fill="#ffffff" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                 </svg>
             </div>
         </section>
@@ -776,7 +788,7 @@
             <div class="container" style="position: relative; z-index: 2;">
                 <h2 class="titulo-secao">Do consultório vazio à gestão de alta performance</h2>
                 <div class="texto-leitura">
-                    <p>Sabemos que a faculdade nos prepara para a clínica, mas não para o mercado. Muitos psicólogos iniciam sua jornada divididos entre o desejo de ajudar e a burocracia de captar pacientes, cobrar sessões e gerir faltas. A Yelo nasce para eliminar esse ruído.</p>
+                    <p class="lead-text">Sabemos que a faculdade nos prepara para a clínica, mas não para o mercado. Muitos psicólogos iniciam sua jornada divididos entre o desejo de ajudar e a burocracia de captar pacientes, cobrar sessões e gerir faltas. <strong>A Yelo nasce para eliminar esse ruído.</strong></p>
                     <p>Imagine não precisar mais enviar mensagens de cobrança constrangedoras ou passar horas tentando configurar anúncios no Google. Nós cuidamos da infraestrutura digital para que sua única preocupação seja o acolhimento e o manejo clínico.</p>
                 </div>
             </div>

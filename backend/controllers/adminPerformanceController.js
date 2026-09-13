@@ -567,7 +567,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
         const prompt = `
 Atue como Anderson, gerente de Customer Success da Yelo. 
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}.
-Situação atual: O período de testes gratuito (Trial) de 14 dias deste profissional vai expirar em exatos ${daysLeft} dias.
+Situação atual: O período de testes gratuito (Trial) de 14 dias deste profissional expira hoje ou amanhã (restam ${daysLeft} dia(s)).
 
 Aja de forma humanizada, empática e consultiva. NÃO seja agressivamente vendedor e não use gírias.
 
@@ -585,7 +585,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
 
 [INSTRUÇÕES DA COPY (MENSAGEM)]
 1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\n\n).
-2. Cumprimente pelo nome. Seja SUAVE ao informar que faltam apenas ${daysLeft} dia(s) para o Trial expirar.
+2. Cumprimente pelo nome. Como restam ${daysLeft} dia(s) para o Trial expirar, seja SUAVE ao informar que este é o último dia do período gratuito (ou que o período gratuito está chegando ao fim nas próximas horas) e avise-o.
 3. Apresente os resultados dele (Aparições, Visitas, Cliques e Fechamentos).
 4. Analise os resultados de fechamento de forma consultiva e parceira.
    - Se ele fechou pacientes, parabenize-o! É a maior prova de que vale a pena assinar.
@@ -610,7 +610,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
             }
 
             return res.status(200).json({ 
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nVi que faltam apenas ${daysLeft} dias para o seu período gratuito encerrar, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matchesCount} aparições nas buscas, ${viewsCount} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nVale muito a pena continuar colhendo os frutos do perfil ativo. Para não perdermos esse fluxo de pacientes, basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos". Se precisar de ajuda, estou por aqui!`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nVi que estamos no último dia (restam ${daysLeft} dia(s)) do seu período gratuito, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matchesCount} aparições nas buscas, ${viewsCount} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nVale muito a pena continuar colhendo os frutos do perfil ativo. Para não perdermos esse fluxo de pacientes nas próximas horas, basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos". Se precisar de ajuda, estou por aqui!`
             });
         }
 

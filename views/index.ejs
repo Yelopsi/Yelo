@@ -153,7 +153,7 @@
         .doodle-bg.right { bottom: 5%; right: -50px; width: 250px; transform: rotate(-45deg); }
         
         /* --- SEÇÃO DEPOIMENTOS MODERNA --- */
-        .secao-depoimentos { padding: 100px 20px 40px 20px; background-color: var(--off-white); position: relative; }
+        .secao-depoimentos { padding: 40px 20px 100px 20px; background-color: #F8F3ED; position: relative; }
         .header-depoimentos { text-align: center; margin-bottom: 4rem; }
         
         /* Badge de Nota */
@@ -459,6 +459,47 @@
         .wave-top-organica .shape-fill {
             fill: #ffffff; /* Cor da seção anterior */
         }
+        /* Estilos Colagem Passos (How it works) */
+        .step-collage { position: relative; width: 100%; max-width: 450px; margin: 0 auto; height: 350px; }
+        .step-collage img { position: absolute; border-radius: 16px; object-fit: cover; box-shadow: 0 15px 35px rgba(0,0,0,0.15); transition: transform 0.3s ease; }
+        .step-collage img:hover { transform: translateY(-5px); }
+        .step-collage .shape { position: absolute; z-index: 0; }
+        
+        /* Passo 1 Layout */
+        .sc1-img-main { width: 60%; height: 220px; top: 10%; right: 5%; z-index: 2; }
+        .sc1-img-sec { width: 50%; height: 180px; bottom: 5%; left: 5%; z-index: 3; border: 4px solid #fff; }
+        .sc1-svg { position: absolute; z-index: 4; width: 60px; height: 60px; }
+        .sc1-svg.badge { bottom: 10%; right: 15%; background: #fff; border-radius: 50%; padding: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .sc1-shape { top: 0; left: 10%; width: 120px; height: 120px; background-color: #F4A261; border-radius: 120px 0 0 120px; z-index: 1; opacity: 0.8; transform: rotate(-30deg); }
+        
+        /* Passo 2 Layout */
+        .sc2-img-main { width: 65%; height: 250px; top: 15%; left: 0; z-index: 2; border-radius: 16px 16px 16px 120px !important; }
+        .sc2-img-sec { width: 45%; height: 160px; top: 30%; right: 5%; z-index: 3; border: 4px solid #fff; }
+        .sc2-svg { position: absolute; z-index: 4; width: 50px; height: 50px; top: 5%; right: 20%; color: #2A9D8F; }
+        .sc2-shape { bottom: 5%; left: 30%; width: 80px; height: 80px; background-color: #E9C46A; border-radius: 0 40px 40px 40px; transform: rotate(15deg); z-index: 1; }
+
+        /* Passo 3 Layout (Mockups de Celular) */
+        .phone-mockup { position: absolute; border: 8px solid #222; border-radius: 30px; background: #fff; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); z-index: 2; }
+        .phone-mockup::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 40%; height: 12px; background: #222; border-radius: 0 0 10px 10px; z-index: 10; }
+        
+        .sc3-phone-left { width: 45%; height: 320px; bottom: 0; left: 5%; }
+        .sc3-phone-right { width: 45%; height: 300px; bottom: 10%; right: 5%; z-index: 3; }
+        
+        /* UI do Chat no Celular Esquerdo */
+        .chat-ui { display: flex; flex-direction: column; height: 100%; font-family: sans-serif; background: #f9f9f9; }
+        .chat-ui-header { background: #2A9D8F; color: #fff; padding: 15px 10px 5px; font-size: 0.7rem; text-align: center; font-weight: bold; }
+        .chat-ui-body { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+        .chat-msg { max-width: 85%; padding: 6px 8px; border-radius: 10px; font-size: 0.55rem; line-height: 1.3; }
+        .chat-msg.rcv { background: #e0e0e0; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .chat-msg.snd { background: #2A9D8F; color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
+        
+        .sc3-shape { top: 20%; left: -5%; width: 60px; height: 60px; background-color: #a3da9d; border-radius: 50%; z-index: 1; }
+        .sc3-shape2 { bottom: 0; right: -5%; width: 80px; height: 80px; background-color: #F4A261; border-radius: 80px 80px 0 0; z-index: 1; }
+
+        @media (max-width: 768px) {
+            .step-collage { height: 300px; }
+            .sc3-phone-left, .sc3-phone-right { height: 280px; }
+        }
     </style>
 </head>
 <body>
@@ -499,10 +540,12 @@
                     </div>
                 </div>
             </div>
-            <a href="/questionario" class="btn-cta-principal">Encontrar meu psicólogo</a>
-            <p style="font-size: 0.85rem; color: #E6F4F1; margin-top: 12px; opacity: 0.9; text-align: center; position: relative; z-index: 2; font-weight: 500;">
-                ✨ O match é por nossa conta e sem compromisso. O pagamento das sessões é combinado direto com o/a psicólogo/a.
-            </p>
+            <div style="text-align: center; margin-top: 15px; position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center;">
+                <a href="/questionario" class="btn-cta-principal">Encontrar meu psicólogo</a>
+                <p style="font-size: 0.85rem; color: #E6F4F1; margin-top: 12px; opacity: 0.9; text-align: center; font-weight: 500; max-width: 500px; line-height: 1.4;">
+                    ✨ O match é por nossa conta, sem compromisso e <strong>leva menos de 1 minuto</strong>.<br>O pagamento das sessões é combinado direto com o/a psicólogo/a.
+                </p>
+            </div>
             <div class="wave-divider">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
                     <path fill="#ffffff" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
@@ -570,50 +613,36 @@
                     <span class="tag-destaque-organica">Segurança e Qualidade</span>
                     <h2 class="titulo-organico">Profissionais verificados em quem você pode confiar.</h2>
                     <p class="texto-organico">
-                        Nossa curadoria é rigorosa. Apenas psicólogos com CRP ativo e aprovados em nossa entrevista técnica entram na plataforma. 
-                        Aqui, você encontra especialistas em ansiedade, depressão, carreira, relacionamentos e muito mais.
+                        Garantimos a sua segurança através de um processo de verificação rigoroso. Todos os profissionais da plataforma possuem registro ativo no Conselho Regional de Psicologia (CRP). 
+                        Aqui, você encontra especialistas prontos para te ajudar com ansiedade, depressão, carreira, relacionamentos e muito mais.
                     </p>
                     
-                    <div class="trust-indicators" style="justify-content: flex-start; margin-top: 30px;">
-                        <div class="trust-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                            CRP Ativo
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 30px;">
+                        <div style="display: inline-flex; align-items: center; gap: 10px; background: #ffffff; padding: 8px 16px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03);">
+                            <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: #E6F4F1; color: #1B4332;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            </div>
+                            <span style="font-weight: 600; font-size: 0.9rem; color: #1B4332;">CRP Ativo</span>
                         </div>
-                        <div class="trust-item">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>
-                            Profissionais Verificados
+                        
+                        <div style="display: inline-flex; align-items: center; gap: 10px; background: #ffffff; padding: 8px 16px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03);">
+                            <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: #FFF8E1; color: #B38600;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>
+                            </div>
+                            <span style="font-weight: 600; font-size: 0.9rem; color: #1B4332;">Profissionais Verificados</span>
                         </div>
                     </div>
 
-                    <div style="margin-top: 40px;">
+                    <div style="margin-top: 40px; position: relative;">
                         <a href="/questionario" class="btn-cta-principal">Encontrar meu psicólogo</a>
+                        <p style="font-size: 0.85rem; color: #666; margin-top: 8px; font-weight: 500; font-style: italic; display: block;">leva menos de 1 minuto</p>
                     </div>
                 </div>
 
                 <!-- Coluna Direita: Collage de Imagens -->
                 <div class="coluna-collage">
-                    <div class="collage-wrapper">
-                        <!-- Doodles (Elementos Decorativos) -->
-                        <svg class="doodle doodle-lines" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3">
-                            <path d="M10 50 Q 50 10 90 50" />
-                            <path d="M10 60 Q 50 20 90 60" />
-                            <path d="M10 70 Q 50 30 90 70" />
-                        </svg>
-                        <svg class="doodle doodle-loop" viewBox="0 0 100 50" fill="none" stroke="currentColor" stroke-width="3">
-                            <path d="M10 25 C 30 50, 70 50, 90 25 C 70 0, 30 0, 10 25" />
-                        </svg>
-                        <svg class="doodle doodle-sparkle" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
-                        </svg>
-
-                        <!-- Imagens -->
-                        <img src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Psicóloga sorrindo" class="collage-img img-central">
-                        
-                        <img src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Homem jovem" class="collage-img img-sat-1">
-                        <img src="https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Mulher pensativa" class="collage-img img-sat-2">
-                        <img src="https://images.pexels.com/photos/1121796/pexels-photo-1121796.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Homem sorrindo" class="collage-img img-sat-3">
-                        <img src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Mulher profissional" class="collage-img img-sat-4">
-                        <img src="https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=300" alt="Homem casual" class="collage-img img-sat-5">
+                    <div style="display: flex; align-items: center; justify-content: center;">
+                        <img src="/assets/images/Psicólogos_yelo.png" alt="Psicólogos Verificados" style="width: 100%; height: auto; max-width: 650px; display: block;">
                     </div>
                 </div>
             </div>
@@ -637,13 +666,10 @@
                         <div class="step-content">
                             <span class="step-tag">Passo 01</span>
                             <h3>Encontre o profissional ideal para você</h3>
-                            <p>Esqueça as listas infinitas. Responda ao nosso questionário inteligente sobre suas necessidades e preferências. Nossa tecnologia fará a curadoria e te apresentará os psicólogos mais compatíveis com o seu perfil.</p>
+                            <p>Esqueça as listas infinitas. Responda ao nosso questionário inteligente sobre suas necessidades e preferências — <strong>leva menos de 1 minuto!</strong> Nossa tecnologia fará a curadoria e te apresentará os psicólogos mais compatíveis com o seu perfil. Se não gostar dos resultados, você pode refazer o questionário quantas vezes quiser.</p>
                         </div>
-                        <div class="step-image-col">
-                            <div class="step-blob"></div>
-                            <div class="step-img-frame">
-                                <img src="/assets/images/passo_1.png" alt="Ilustração flat de lista de verificação e questionário" width="400" height="311">
-                            </div>
+                        <div class="step-image-col" style="background: transparent; display: flex; align-items: center; justify-content: center;">
+                            <img src="/assets/images/passo_1.png" alt="Como funciona - Passo 1" style="width: 100%; height: auto; max-width: 600px; display: block; mix-blend-mode: multiply;">
                         </div>
                     </div>
                     
@@ -655,13 +681,10 @@
                         <div class="step-content">
                             <span class="step-tag">Passo 02</span>
                             <h3>Conheça e conecte-se com segurança</h3>
-                            <p>Veja o perfil detalhado, assista ao vídeo de apresentação e leia avaliações reais. Quando sentir confiança, inicie uma conversa ou agende sua sessão diretamente pela plataforma, sem intermediários.</p>
+                            <p>Veja o perfil detalhado, conheça a abordagem e a trajetória do profissional e leia avaliações reais. Quando sentir confiança, inicie uma conversa ou agende sua sessão diretamente pelo WhatsApp, sem intermediários.</p>
                         </div>
-                        <div class="step-image-col">
-                            <div class="step-blob"></div>
-                            <div class="step-img-frame">
-                                <img src="/assets/images/passo_2.png" alt="Ilustração flat de pessoa em videochamada no laptop" width="400" height="311">
-                            </div>
+                        <div class="step-image-col" style="background: transparent; display: flex; align-items: center; justify-content: center;">
+                            <img src="/assets/images/passo_2.png" alt="Como funciona - Passo 2" style="width: 100%; height: auto; max-width: 600px; display: block; mix-blend-mode: multiply;">
                         </div>
                     </div>
 
@@ -673,24 +696,22 @@
                         <div class="step-content">
                             <span class="step-tag">Passo 03</span>
                             <h3>Comece sua jornada de transformação</h3>
-                            <p>Realize suas sessões online no conforto da sua casa. Se não se adaptar, nosso sistema de <strong>Troca Facilitada</strong> permite que você encontre outro profissional rapidamente.</p>
+                            <p>Realize suas sessões online no conforto da sua casa ou presencialmente. Se não se adaptar, nosso sistema de <strong>Troca Facilitada</strong> permite que você encontre outro profissional rapidamente.</p>
                         </div>
-                        <div class="step-image-col">
-                            <div class="step-blob"></div>
-                            <div class="step-img-frame">
-                                <img src="/assets/images/passo_3.png" alt="Ilustração flat de pessoa em paz e equilíbrio mental" width="400" height="311">
-                            </div>
+                        <div class="step-image-col" style="background: transparent; display: flex; align-items: center; justify-content: center;">
+                            <img src="/assets/images/passo_3.png" alt="Como funciona - Passo 3" style="width: 100%; height: auto; max-width: 600px; display: block; mix-blend-mode: multiply;">
                         </div>
                     </div>
                 </div>
             <div class="container">
-                <div style="margin-top: 40px; margin-bottom: 60px; text-align: center; position: relative; z-index: 2;">
+                <div style="margin-top: 40px; margin-bottom: 10px; text-align: center; position: relative; z-index: 2;">
                     <a href="/questionario" class="btn-cta-principal">Encontrar meu psicólogo</a>
+                    <p style="font-size: 0.85rem; color: #666; margin-top: 8px; font-weight: 500; font-style: italic; display: block;">leva menos de 1 minuto</p>
                 </div>
             </div>
             <div class="wave-divider">
                 <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: auto;">
-                    <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill" style="fill:#fdfaf6;"></path>
+                    <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill" style="fill:#F8F3ED;"></path>
                 </svg>
             </div>
         </section>
@@ -739,6 +760,11 @@
                     </div>
                 </div>
             </div>
+            <div class="wave-divider" style="position: absolute; bottom: 0; left: 0; width: 100%; overflow: hidden; line-height: 0; transform: rotate(180deg);">
+                <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" style="display: block; width: 100%; height: auto;">
+                    <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill" style="fill:#ffffff;"></path>
+                </svg>
+            </div>
         </section>
 
         <section class="faq-secao hidden">
@@ -774,11 +800,13 @@
             <div style="text-align: center; margin-top: 40px;">
                 <a href="/faq" class="faq-ver-mais">Ver todas as perguntas frequentes</a>
             </div>
-            <div class="wave-divider">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
-                    <path fill="#fdfaf6" fill-opacity="1" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                </svg>
+            <div class="container" style="text-align: center; margin-top: 40px; margin-bottom: 40px;">
+                <div style="display: inline-block;">
+                    <a href="/questionario" class="btn-cta-principal">Encontrar meu psicólogo</a>
+                    <p style="font-size: 0.85rem; color: #666; margin-top: 8px; font-weight: 500; font-style: italic; display: block;">leva menos de 1 minuto</p>
+                </div>
             </div>
+
         </section>
 
         <section class="aviso-crise hidden">

@@ -846,8 +846,8 @@ exports.getPendingActions = async (req, res) => {
             }
         }
 
-        // 5. Expirando Trial (Ativos, Trial, expirando em <= 3 dias e >= -2 dias, admin_billing_sent_at NULA)
-        const expirationUpperBound = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+        // 5. Expirando Trial (Ativos, Trial, expirando em <= 1 dia e >= -2 dias, admin_billing_sent_at NULA)
+        const expirationUpperBound = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
         const expirationLowerBound = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
         
         const expiringCandidates = await db.Psychologist.findAll({
