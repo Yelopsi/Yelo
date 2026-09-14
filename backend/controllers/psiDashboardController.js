@@ -93,8 +93,49 @@ exports.getStats = async (req, res) => {
         }));
 
         const myEngagement = psychologist?.xp || 0;
-        const [betterThanResult] = await db.sequelize.query(`SELECT COALESCE(COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM "Psychologists" WHERE status = 'active'), 0), 0) as percentage FROM "Psychologists" WHERE status = 'active' AND xp < :myEngagement`, { replacements: { myEngagement }, type: db.sequelize.QueryTypes.SELECT });
-        const betterThanPercentage = Math.round(parseFloat(betterThanResult?.percentage || 0));
+        const myCompletion = (psychologist?.badges && psychologist.badges.autentico) ? 10 : 5;
+        
+        let myAvgRating = 0;
+        try {
+            const myReviews = await db.Review.findAll({ where: { psychologistId }, attributes: [[db.sequelize.fn('AVG', db.sequelize.col('rating')), 'avgRating']] });
+            myAvgRating = parseFloat(myReviews[0]?.dataValues.avgRating || 0);
+        } catch(e) {}
+
+        let platformStrength = {};
+        try {
+            const [pStrength] = await db.sequelize.query(`SELECT AVG(xp) as "avgEngagement", (SELECT AVG(rating) FROM "Reviews") as "avgRating", (SELECT CAST(COUNT(*) AS FLOAT) / NULLIF((SELECT COUNT(*) FROM "Psychologists" WHERE status='active'), 0) FROM posts) as "avgPosts" FROM "Psychologists" WHERE status = 'active'`);
+            platformStrength = pStrength || {};
+        } catch(e) {}
+        
+        const myPostCount = (blogPostCountResult && blogPostCountResult[0]?.count) ? parseInt(blogPostCountResult[0].count, 10) : 0;
+        const normalize = (value, avg, max) => Math.min(10, Math.max(0, (value / (avg * 1.5 || max)) * 10));
+
+        const myScores = [
+            myCompletion, 
+            normalize(myAvgRating, parseFloat(platformStrength.avgRating || 0), 5), 
+            normalize(myEngagement, parseFloat(platformStrength.avgEngagement || 0), 5000), 
+            normalize(myPostCount, parseFloat(platformStrength.avgPosts || 0), 10), 
+            8
+        ];
+        
+        const averageScores = [
+            7, 
+            normalize(parseFloat(platformStrength.avgRating || 0), parseFloat(platformStrength.avgRating || 0), 5), 
+            normalize(parseFloat(platformStrength.avgEngagement || 0), parseFloat(platformStrength.avgEngagement || 0), 5000), 
+            normalize(parseFloat(platformStrength.avgPosts || 0), parseFloat(platformStrength.avgPosts || 0), 10), 
+            7
+        ];
+
+        const myScoreTotal = myScores.reduce((a, b) => a + b, 0);
+        const avgScoreTotal = averageScores.reduce((a, b) => a + b, 0);
+        
+        let percentage = 50;
+        if (myScoreTotal <= avgScoreTotal) {
+            percentage = (myScoreTotal / (avgScoreTotal || 1)) * 50;
+        } else {
+            percentage = 50 + ((myScoreTotal - avgScoreTotal) / (50 - avgScoreTotal)) * 49;
+        }
+        const betterThanPercentage = Math.round(percentage);
 
         let lastPostDate = null, lastForumDate = null, lastCommentDate = null;
         try { const [postRes] = await db.sequelize.query(`SELECT MAX(COALESCE(created_at, "createdAt")) as last_date FROM posts WHERE psychologist_id = :psiId OR "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }); lastPostDate = postRes?.last_date; } catch(e) {}
@@ -214,10 +255,22 @@ exports.getAnalyticsData = async (req, res) => {
         const myCompletion = (psychologist.badges && psychologist.badges.autentico) ? 10 : 5;
         const myAvgRating = parseFloat(myReviews[0]?.dataValues.avgRating || 0);
 
-        const [platformStrength] = await db.sequelize.query(`SELECT AVG(xp) as avgEngagement, (SELECT AVG(rating) FROM "Reviews") as avgRating, (SELECT CAST(COUNT(*) AS FLOAT) / (SELECT COUNT(*) FROM "Psychologists" WHERE status='active') FROM posts) as avgPosts FROM "Psychologists" WHERE status = 'active'`);
-        const [betterThanResult] = await db.sequelize.query(`SELECT COALESCE(COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM "Psychologists" WHERE status = 'active'), 0), 0) as percentage FROM "Psychologists" WHERE status = 'active' AND xp < :myEngagement`, { replacements: { myEngagement }, type: db.sequelize.QueryTypes.SELECT });
-        const betterThanPercentage = Math.round(parseFloat(betterThanResult?.percentage || 0));
+        const [platformStrength] = await db.sequelize.query(`SELECT AVG(xp) as "avgEngagement", (SELECT AVG(rating) FROM "Reviews") as "avgRating", (SELECT CAST(COUNT(*) AS FLOAT) / NULLIF((SELECT COUNT(*) FROM "Psychologists" WHERE status='active'), 0) FROM posts) as "avgPosts" FROM "Psychologists" WHERE status = 'active'`);
+        
         const normalize = (value, avg, max) => Math.min(10, Math.max(0, (value / (avg * 1.5 || max)) * 10));
+        
+        const myScores = [myCompletion, normalize(myAvgRating, parseFloat(platformStrength?.avgRating || 0), 5), normalize(myEngagement, parseFloat(platformStrength?.avgEngagement || 0), 5000), normalize(myPostCount, parseFloat(platformStrength?.avgPosts || 0), 10), 8];
+        const averageScores = [7, normalize(parseFloat(platformStrength?.avgRating || 0), parseFloat(platformStrength?.avgRating || 0), 5), normalize(parseFloat(platformStrength?.avgEngagement || 0), parseFloat(platformStrength?.avgEngagement || 0), 5000), normalize(parseFloat(platformStrength?.avgPosts || 0), parseFloat(platformStrength?.avgPosts || 0), 10), 7];
+        
+        const myScoreTotal = myScores.reduce((a, b) => a + b, 0);
+        const avgScoreTotal = averageScores.reduce((a, b) => a + b, 0);
+        let percentage = 50;
+        if (myScoreTotal <= avgScoreTotal) {
+            percentage = (myScoreTotal / (avgScoreTotal || 1)) * 50;
+        } else {
+            percentage = 50 + ((myScoreTotal - avgScoreTotal) / (50 - avgScoreTotal)) * 49;
+        }
+        const betterThanPercentage = Math.round(percentage);
 
         res.json({
             priceComparison: { myPrice, cityAverage, platformAverage },
