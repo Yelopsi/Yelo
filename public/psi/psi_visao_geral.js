@@ -52,7 +52,11 @@
             
             const realScore = stats.betterThanPercentage !== undefined ? stats.betterThanPercentage : 0;
             if(document.getElementById('hero-benchmark-text')) {
-                document.getElementById('hero-benchmark-text').innerHTML = `Seu crescimento esse mês:`;
+                if (realScore > 0) {
+                    document.getElementById('hero-benchmark-text').innerHTML = `🔥 Seu perfil tem um histórico melhor que <strong>${realScore}%</strong> dos psicólogos`;
+                } else {
+                    document.getElementById('hero-benchmark-text').innerHTML = `🔥 Seu perfil tem um histórico crescente na plataforma`;
+                }
             }
 
             // Variação diária pseudoaleatória baseada na data
