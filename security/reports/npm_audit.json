@@ -19,7 +19,7 @@
       ],
       "fixAvailable": {
         "name": "puppeteer",
-        "version": "25.10.0",
+        "version": "25.11.0",
         "isSemVerMajor": true
       }
     },
@@ -70,7 +70,7 @@
       ],
       "fixAvailable": {
         "name": "puppeteer",
-        "version": "25.10.0",
+        "version": "25.11.0",
         "isSemVerMajor": true
       }
     },
@@ -92,7 +92,7 @@
       ],
       "fixAvailable": {
         "name": "puppeteer",
-        "version": "25.10.0",
+        "version": "25.11.0",
         "isSemVerMajor": true
       }
     },
@@ -113,7 +113,7 @@
       ],
       "fixAvailable": {
         "name": "puppeteer",
-        "version": "25.10.0",
+        "version": "25.11.0",
         "isSemVerMajor": true
       }
     },

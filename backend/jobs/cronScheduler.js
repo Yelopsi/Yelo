@@ -297,6 +297,7 @@ const startCronJobs = () => {
         const now = new Date();
         const currentHM = now.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
         const currentBrtHour = parseInt(now.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit' }), 10);
+        const currentMinute = parseInt(now.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', minute: '2-digit' }), 10);
         const currentDay = now.getDate();
         
         // 1. PROCESSADOR DE WEBHOOKS (Roda a cada minuto)
@@ -382,12 +383,19 @@ const startCronJobs = () => {
             setCampaignStatus('ACTIVE').catch(e => console.error("Erro ao ativar campanha Meta:", e));
         }
 
-        // Pausa a campanha (PAUSED): toda terça-feira perto de 23:59 (ou na hora em que o servidor estiver rodando de noite)
-        if (currentDayOfWeek === 2 && currentBrtHour >= 23 && currentDay !== lastMetaAdsPausedDay) {
-            lastMetaAdsPausedDay = currentDay;
-            const { setCampaignStatus } = require('../cron/metaAdsCron');
-            console.log('⏸️ [CRON ORQUESTRADOR] Terça-feira à noite, pausando a campanha Meta Ads...');
-            setCampaignStatus('PAUSED').catch(e => console.error("Erro ao pausar campanha Meta:", e));
+        // Pausa a campanha (PAUSED): toda segunda-feira perto de 23:59 (exceção para hoje 14/09/2026)
+        if (currentDayOfWeek === 1 && currentBrtHour === 23 && currentMinute >= 50 && currentDay !== lastMetaAdsPausedDay) {
+            const todayStr = now.toLocaleDateString("sv-SE", {timeZone: "America/Sao_Paulo"}); // "YYYY-MM-DD"
+            
+            if (todayStr === '2026-09-14') {
+                console.log('⏸️ [CRON ORQUESTRADOR] Exceção de hoje (14/09/2026): A campanha NÃO será pausada automaticamente hoje.');
+                lastMetaAdsPausedDay = currentDay;
+            } else {
+                lastMetaAdsPausedDay = currentDay;
+                const { setCampaignStatus } = require('../cron/metaAdsCron');
+                console.log('⏸️ [CRON ORQUESTRADOR] Segunda-feira 23h50+, pausando a campanha Meta Ads...');
+                setCampaignStatus('PAUSED').catch(e => console.error("Erro ao pausar campanha Meta:", e));
+            }
         }
     }, 60000); 
 };
