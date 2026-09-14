@@ -50,7 +50,7 @@
                 if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = `+${profileViews}`;
             }
             
-            const realScore = stats.betterThanPercentage !== undefined ? stats.betterThanPercentage : 0;
+            const realScore = stats.betterThanPercentage !== undefined ? Math.min(stats.betterThanPercentage, 99) : 0;
             if(document.getElementById('hero-benchmark-text')) {
                 if (realScore > 0) {
                     document.getElementById('hero-benchmark-text').innerHTML = `🔥 Seu perfil tem um histórico melhor que <strong>${realScore}%</strong> dos psicólogos`;

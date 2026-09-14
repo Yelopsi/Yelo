@@ -128,13 +128,20 @@ exports.getContactHistory = async (req, res) => {
             return res.status(401).json({ error: 'Usuário não autenticado no getContactHistory.' });
         }
         
-        const history = await db.WhatsAppClickLog.findAll({
-            where: { psychologistId },
-            order: [['createdAt', 'DESC']],
-            attributes: ['id', 'guestName', 'feedbackGiven', 'contactReceived', 'dealClosed', 'createdAt']
-        });
+        let history;
+        try {
+            history = await db.sequelize.query(
+                `SELECT id, "guestName", "feedbackGiven", "contactReceived", "dealClosed", "createdAt" FROM "WhatsAppClickLogs" WHERE "psychologistId" = :psiId ORDER BY "createdAt" DESC`,
+                { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
+            );
+        } catch (err) {
+            history = await db.sequelize.query(
+                `SELECT id, "guestName", "feedbackGiven", "contactReceived", "dealClosed", "createdAt" FROM "WhatsAppClickLogs" WHERE "PsychologistId" = :psiId ORDER BY "createdAt" DESC`,
+                { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
+            );
+        }
 
-        res.status(200).json(history);
+        res.status(200).json(history || []);
     } catch (error) {
         console.error('Erro ao buscar histórico de contatos:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
