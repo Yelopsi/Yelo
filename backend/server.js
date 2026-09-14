@@ -54,7 +54,7 @@ const { initSocket } = require('./config/socket');
 const db = require('./models');
 const applyDatabaseFixes = require('./config/dbFixes');
 const { startCronJobs } = require('./jobs/cronScheduler');
-const { startMetaAdsCron } = require('./cron/metaAdsCron');
+// Meta Ads Cron is now handled centrally by cronScheduler
 
 // Middlewares
 const seoRedirect = require('./middlewares/seoMiddleware');
@@ -346,8 +346,7 @@ const startServer = async () => {
         if(typeof startCronJobs === 'function') startCronJobs();    
         
         // Inicia Cron Jobs Específicos do Meta Ads
-        const { startMetaAdsCron } = require('./cron/metaAdsCron');
-        startMetaAdsCron();
+        // startMetaAdsCron logic moved to cronScheduler
         
         // --- INICIA O PROCESSAMENTO EM LOTE DO SEO (BACKGROUND) ---
         try {

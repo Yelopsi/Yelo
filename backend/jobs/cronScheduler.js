@@ -288,6 +288,10 @@ const startCronJobs = () => {
     let lastPrivacyPruningDay = -1;
     let lastWeeklySummaryDay = -1;
     let aiScheduleTimes = [];
+    
+    // Controle de anúncios Meta (Evita problemas de node-cron com servidores hibernando)
+    let lastMetaAdsActiveDay = -1;
+    let lastMetaAdsPausedDay = -1;
 
     setInterval(async () => {
         const now = new Date();
@@ -367,6 +371,23 @@ const startCronJobs = () => {
             const { runPrivacyPruning } = require('./privacyPruningJob');
             // Executando como live-run na madrugada para descarte de dados expirados
             runPrivacyPruning({ dryRun: false }).catch(e => console.error("Erro no job de privacy:", e));
+        }
+
+        // 8. CONTROLE DE ANÚNCIOS META ADS
+        // Liga a campanha (ACTIVE): toda segunda-feira na virada do dia (ou quando acordar)
+        if (currentDayOfWeek === 1 && currentDay !== lastMetaAdsActiveDay) {
+            lastMetaAdsActiveDay = currentDay;
+            const { setCampaignStatus } = require('../cron/metaAdsCron');
+            console.log('▶️ [CRON ORQUESTRADOR] Segunda-feira, ligando a campanha Meta Ads...');
+            setCampaignStatus('ACTIVE').catch(e => console.error("Erro ao ativar campanha Meta:", e));
+        }
+
+        // Pausa a campanha (PAUSED): toda terça-feira perto de 23:59 (ou na hora em que o servidor estiver rodando de noite)
+        if (currentDayOfWeek === 2 && currentBrtHour >= 23 && currentDay !== lastMetaAdsPausedDay) {
+            lastMetaAdsPausedDay = currentDay;
+            const { setCampaignStatus } = require('../cron/metaAdsCron');
+            console.log('⏸️ [CRON ORQUESTRADOR] Terça-feira à noite, pausando a campanha Meta Ads...');
+            setCampaignStatus('PAUSED').catch(e => console.error("Erro ao pausar campanha Meta:", e));
         }
     }, 60000); 
 };

@@ -1,20 +1,4 @@
-const cron = require('node-cron');
-
-function startMetaAdsCron() {
-    // Liga a campanha (ACTIVE): toda segunda-feira às 00:00
-    cron.schedule('0 0 * * 1', async () => {
-        console.log('▶️ [CRON META ADS] Ligando campanha...');
-        await setCampaignStatus('ACTIVE');
-    }, { timezone: 'America/Sao_Paulo' });
-
-    // Pausa a campanha (PAUSED): toda terça-feira às 23:59
-    cron.schedule('59 23 * * 2', async () => {
-        console.log('⏸️ [CRON META ADS] Pausando campanha...');
-        await setCampaignStatus('PAUSED');
-    }, { timezone: 'America/Sao_Paulo' });
-    
-    console.log('⏱️ [CRON META ADS] Agendador de Liga/Desliga da Meta inicializado (Fuso: America/Sao_Paulo).');
-}
+// Removed node-cron logic. This is now orchestrated by cronScheduler.js
 
 async function setCampaignStatus(status) {
     const campaignId = process.env.META_CAMPAIGN_ID;
@@ -50,4 +34,4 @@ async function setCampaignStatus(status) {
     }
 }
 
-module.exports = { startMetaAdsCron };
+module.exports = { setCampaignStatus };
