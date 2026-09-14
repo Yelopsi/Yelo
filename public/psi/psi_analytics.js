@@ -107,6 +107,7 @@ function renderPriceChart(data) {
             
             <!-- Platform Avg -->
             <div style="position: absolute; top: 12px; left: ${platPos}%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center;">
+                <span style="font-size: 0.85rem; color: #64748b; font-weight: 900; margin-bottom: -2px;">${formatCurrency(data.platformAverage)}</span>
                 <span style="font-size: 0.7rem; color: #64748b; font-weight: bold; white-space: nowrap;">Média Plataforma</span>
                 <div style="width: 2px; height: 16px; background: #64748b; margin-top: 2px;"></div>
             </div>
@@ -115,6 +116,7 @@ function renderPriceChart(data) {
             <div style="position: absolute; top: 60px; left: ${cityPos}%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center;">
                 <div style="width: 2px; height: 16px; background: #f59e0b; margin-bottom: 2px;"></div>
                 <span style="font-size: 0.7rem; color: #d97706; font-weight: bold; white-space: nowrap;">Sua Região</span>
+                <span style="font-size: 0.85rem; color: #d97706; font-weight: 900; margin-top: -2px;">${formatCurrency(data.cityAverage)}</span>
             </div>
 
             <!-- My Price Marker & Tooltip -->
