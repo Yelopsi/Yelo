@@ -24,7 +24,7 @@
         });
 
         try {
-            const resStats = await apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=last30days&t=${new Date().getTime()}`);
+            const resStats = await apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=all_time&t=${new Date().getTime()}`);
             const stats = resStats.ok ? await resStats.json() : {};
             
             // Inicializa visualizações sem log no console
