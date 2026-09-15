@@ -67,7 +67,10 @@ class MetricsService {
         const start = new Date(startDate);
         const end = new Date(endDate);
         
-        const allPsychologists = await db.Psychologist.findAll({ paranoid: false, raw: true });
+        const allPsychologists = await db.Psychologist.findAll({ 
+            where: { is_exempt: { [Op.or]: [false, null] } },
+            paranoid: false, raw: true 
+        });
         const allPayments = await db.Payment.findAll({ raw: true });
 
         const paymentsByPsy = {};
