@@ -92,9 +92,9 @@ exports.createPreference = async (req, res) => {
         const validCoupon = process.env.VIP_COUPON;
         if (cupom && validCoupon && cupom.toUpperCase() === validCoupon.toUpperCase()) {
             await localPsychologist.update({ 
-                  status: 'inactive',
-                  plano: null,
-                  planExpiresAt: new Date(),
+                  status: 'active',
+                  plano: 'VIP',
+                  planExpiresAt: new Date('2099-12-31T23:59:59Z'),
                   cancelAtPeriodEnd: false,
                   subscriptionId: null
               });
