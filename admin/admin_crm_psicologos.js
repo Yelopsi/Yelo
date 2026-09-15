@@ -659,7 +659,7 @@ window.initializePage = function () {
                     // Força status "Expirado" no front caso a data já tenha passado (Lazy Evaluation Fallback)
                     statusLabel = 'Expirado';
                     statusClass = 'status-inactive';
-                } else if (!psy.subscriptionId) {
+                } else if (!psy.subscriptionId && !(psy.subscription_payments_count && psy.subscription_payments_count > 0)) {
                     statusLabel = 'Trial';
                     statusClass = 'status-pending'; // Trial usa cor amarela/pendente
                 } else {
