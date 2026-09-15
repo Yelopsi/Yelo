@@ -360,8 +360,8 @@ exports.getAllPsychologists = async (req, res) => {
         const kpisQuery = `
             SELECT 
                 COUNT(*) as total,
-                COUNT(*) FILTER (WHERE status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as active_paying,
-                COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND "planExpiresAt" > NOW()) as active_trial,
+                COUNT(*) FILTER (WHERE status = 'active' AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as active_paying,
+                COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0) AND "planExpiresAt" > NOW()) as active_trial,
                 COUNT(*) FILTER (WHERE status = 'pending') as pending,
                 COUNT(*) FILTER (WHERE status = 'inactive' OR ("status" = 'active' AND "planExpiresAt" < NOW())) as inactive,
                 COUNT(*) FILTER (WHERE is_exempt = true) as vip,
@@ -372,10 +372,10 @@ exports.getAllPsychologists = async (req, res) => {
                 COUNT(*) FILTER (WHERE utm_source = 'google') as utm_google,
                 COUNT(*) FILTER (WHERE utm_source IS NULL OR utm_source NOT IN ('whatsapp', 'meta_ads', 'facebook', 'instagram', 'google', 'instagram_bio')) as utm_outros,
                 
-                COUNT(*) FILTER (WHERE (utm_source IN ('meta_ads', 'facebook', 'instagram') OR first_utm_source IN ('meta_ads', 'facebook', 'instagram')) AND status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as meta_paying,
-                COUNT(*) FILTER (WHERE (utm_source IN ('meta_ads', 'facebook', 'instagram') OR first_utm_source IN ('meta_ads', 'facebook', 'instagram')) AND status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND "planExpiresAt" > NOW()) as meta_trial,
-                COUNT(*) FILTER (WHERE utm_source = 'google' AND status = 'active' AND ("subscriptionId" IS NOT NULL) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as google_paying,
-                COUNT(*) FILTER (WHERE utm_source = 'google' AND status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND "planExpiresAt" > NOW()) as google_trial
+                COUNT(*) FILTER (WHERE (utm_source IN ('meta_ads', 'facebook', 'instagram') OR first_utm_source IN ('meta_ads', 'facebook', 'instagram')) AND status = 'active' AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as meta_paying,
+                COUNT(*) FILTER (WHERE (utm_source IN ('meta_ads', 'facebook', 'instagram') OR first_utm_source IN ('meta_ads', 'facebook', 'instagram')) AND status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0) AND "planExpiresAt" > NOW()) as meta_trial,
+                COUNT(*) FILTER (WHERE utm_source = 'google' AND status = 'active' AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0) AND (is_exempt IS NULL OR is_exempt = false) AND "planExpiresAt" > NOW()) as google_paying,
+                COUNT(*) FILTER (WHERE utm_source = 'google' AND status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0) AND "planExpiresAt" > NOW()) as google_trial
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL AND ("isAdmin" IS NULL OR "isAdmin" = false)
             ${dateFilterQuery}

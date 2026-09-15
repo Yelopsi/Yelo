@@ -992,7 +992,7 @@ exports.analyzeProfile = async (req, res) => {
         // 3.2. Formatação de Status Financeiro/Ciclo de Vida
         const dataCadastro = new Date(psi.createdAt).toLocaleDateString('pt-BR');
         let statusPagamento = 'Desconhecido';
-        const hasSubscription = !!(psi.subscriptionId);
+        const hasSubscription = !!psi.subscriptionId || (psi.subscription_payments_count && psi.subscription_payments_count > 0) || (psi.plano && psi.plano !== 'Essencial');
         const isVip = psi.is_exempt;
         const agora = new Date();
         const expiracao = psi.planExpiresAt ? new Date(psi.planExpiresAt) : null;
