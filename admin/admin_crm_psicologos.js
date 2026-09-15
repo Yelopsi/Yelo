@@ -476,7 +476,30 @@ window.initializePage = function () {
 
         } else if (actionType === 'paid_churn') {
             const currentMonthName = new Date().toLocaleString('pt-BR', { month: 'long' });
-            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo.\n\nEstou passando para te dar um toque rápido sobre a sua assinatura. Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e fiquei super feliz! Vi que só neste mês você recebeu [X] contatos e conseguiu fechar com [Y] pacientes novos. 🚀\n\nEu recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. O banco acabou recusando a transação no seu cartão de crédito (geralmente é só limite do mês virando ou bloqueio preventivo do banco para assinaturas).\n\nComo a gente sabe que só com os pacientes novos que você fechou agora em ${currentMonthName} (a R$ [VALOR] a sessão) a plataforma já se pagou com muita sobra, não quero que o seu perfil saia do ar e você perca o embalo de novos agendamentos que estamos construindo.\n\nPara regularizar e manter seu consultório virtual ativo recebendo pacientes, é só acessar a sua conta na Yelo, ir na aba "Ajustes" > "Assinaturas e Planos" e atualizar o seu cartão.\n\nSe precisar de alguma ajuda ou tiver qualquer dificuldade no painel, me dá um alô aqui. Um abraço! 🌿`;
+            
+            let X = 0, Y = 0, VALOR = '150,00';
+            try {
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/full-details`, {
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                });
+                if(res.ok) {
+                    const data = await res.json();
+                    if(data.whatsappLogs) {
+                        const now = new Date();
+                        const currentMonthLogs = data.whatsappLogs.filter(log => {
+                            const logDate = new Date(log.createdAt);
+                            return logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
+                        });
+                        X = currentMonthLogs.length;
+                        Y = currentMonthLogs.filter(log => log.status === 'fechou' || log.dealClosed === 'yes').length;
+                    }
+                    const psy = data.psychologist || data;
+                    if(psy.valorSessao) VALOR = parseFloat(psy.valorSessao).toFixed(2).replace('.', ',');
+                }
+            } catch(e) { console.error('Erro ao buscar stats para churn', e); }
+
+            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo.\n\nEstou passando para te dar um toque rápido sobre a sua assinatura. Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e fiquei super feliz! Vi que só neste mês você recebeu ${X} contatos e conseguiu fechar com ${Y} pacientes novos. 🚀\n\nEu recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. O banco acabou recusando a transação no seu cartão de crédito (geralmente é só limite do mês virando ou bloqueio preventivo do banco para assinaturas).\n\nComo a gente sabe que só com os pacientes novos que você fechou agora em ${currentMonthName} (a R$ ${VALOR} a sessão) a plataforma já se pagou com muita sobra, não quero que o seu perfil saia do ar e você perca o embalo de novos agendamentos que estamos construindo.\n\nPara regularizar e manter seu consultório virtual ativo recebendo pacientes, é só acessar a sua conta na Yelo, ir na aba "Ajustes" > "Assinaturas e Planos" e atualizar o seu cartão.\n\nSe precisar de alguma ajuda ou tiver qualquer dificuldade no painel, me dá um alô aqui. Um abraço! 🌿`;
 } else if (actionType === 'churn') {
             try {
                 if (window.showToast) window.showToast('Gerando copy de resgate com IA... Aguarde.', 'info');
@@ -1005,5 +1028,32 @@ window.initializePage = function () {
         }
     };
 
+    async function fetchPendingCounts() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/admin/pending-actions`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const pendingData = await response.json();
+                const actionsArray = pendingData.pendingActions || pendingData || [];
+                
+                const countExpiring = actionsArray.filter(a => a.actionType === 'expiring_trial').length;
+                const countPaidChurn = actionsArray.filter(a => ['paid_churn', 'billing_feedback', 'churn'].includes(a.actionType)).length;
+                const countIncomplete = actionsArray.filter(a => a.actionType === 'incomplete').length;
+
+                const elExp = document.getElementById('kpi-alerta-expiring');
+                const elChurn = document.getElementById('kpi-alerta-paid-churn');
+                const elInc = document.getElementById('kpi-alerta-pendentes');
+
+                if(elExp) elExp.textContent = countExpiring;
+                if(elChurn) elChurn.textContent = countPaidChurn;
+                if(elInc) elInc.textContent = countIncomplete;
+            }
+        } catch(e) {
+            console.error('Erro ao buscar badges de pendencias', e);
+        }
+    }
+
+    fetchPendingCounts();
     fetchAndRenderPsis(1);
 };
