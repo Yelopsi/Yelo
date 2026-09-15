@@ -258,7 +258,7 @@ function renderBlogItem(post) {
 
 function renderPaymentItem(payment) {
     const dataVenc = payment.dueDate ? new Date(payment.dueDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/A';
-    const dataPag = payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString('pt-BR') : 'Pendente';
+    const dataPag = payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Pendente';
     const valor = parseFloat(payment.value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     let badgeClass = 'status-pending';
     let badgeText = payment.status;

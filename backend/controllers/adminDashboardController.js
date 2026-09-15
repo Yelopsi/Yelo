@@ -719,17 +719,16 @@ exports.getFinancials = async (req, res) => {
             } catch (err) {}
         }
 
-        let activePlans = activePsychologists
-            .filter(psy => !!psy.subscriptionId || (psy.subscription_payments_count && psy.subscription_payments_count > 0))
-            .map(psy => {
-                const planKey = (psy.plano || '').toLowerCase();
-                return {
-                    psychologistName: psy.nome,
-                    planName: psy.is_exempt ? `${psy.plano} (VIP)` : psy.plano,
-                    mrr: psy.is_exempt ? 0 : (planPrices[planKey] || 0),
-                    nextBilling: psy.is_exempt ? null : (psy.planExpiresAt ? new Date(psy.planExpiresAt) : new Date(new Date(psy.updatedAt).setMonth(new Date(psy.updatedAt).getMonth() + 1))) 
-                };
-            });
+        let activePlans = activePsychologists.map(psy => {
+            const hasSub = !!psy.subscriptionId || (psy.subscription_payments_count && psy.subscription_payments_count > 0);
+            const planKey = (psy.plano || '').toLowerCase();
+            return {
+                psychologistName: psy.nome,
+                planName: psy.is_exempt ? `${psy.plano} (VIP)` : (!hasSub ? `${psy.plano} (Trial)` : psy.plano),
+                mrr: (psy.is_exempt || !hasSub) ? 0 : (planPrices[planKey] || 0),
+                nextBilling: psy.is_exempt ? null : (psy.planExpiresAt ? new Date(psy.planExpiresAt) : new Date(new Date(psy.updatedAt).setMonth(new Date(psy.updatedAt).getMonth() + 1))) 
+            };
+        });
         
         // Sort active plans by nearest nextBilling (to populate upcoming payments table)
         activePlans.sort((a,b) => {

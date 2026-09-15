@@ -255,7 +255,7 @@ window.initializePage = function() {
             
             tbody.innerHTML += `<tr>
                 <td data-label="Cliente"><div class="user-cell"><div class="avatar">${getInitials(inv.psychologistName)}</div> ${inv.psychologistName}</div></td>
-                <td data-label="Data"><span style="color:var(--saas-muted);">${new Date(inv.date).toLocaleDateString('pt-BR')}</span></td>
+                <td data-label="Data"><span style="color:var(--saas-muted);">${new Date(inv.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span></td>
                 <td data-label="Valor" style="font-weight: 500;">R$ ${inv.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                 <td data-label="Status"><span class="status-badge ${badgeClass}">${inv.status}</span></td>
                 <td data-label="Ação"><button class="btn-detail" onclick="if('${inv.psiId}' && '${inv.psiId}' !== 'null') { window.openCSDrawer('${inv.psiId}') } else { alert('Cliente externo sem ID vinculado.'); }">Detalhes &rarr;</button></td>
