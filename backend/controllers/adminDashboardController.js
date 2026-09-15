@@ -69,7 +69,7 @@ exports.getDashboardStats = async (req, res) => {
             db.WaitingList.findAll({ where: { status: 'pending' }, raw: true }).catch(() => []),
             db.Review.count({ where: { status: 'pending' } }).catch(() => 0),
             db.Psychologist.findAll({
-                attributes: ['plano', 'is_exempt', 'subscriptionId'],
+                attributes: ['plano', 'is_exempt', 'subscriptionId', 'subscription_payments_count'],
                 where: { 
                     status: 'active', 
                     plano: { [Op.ne]: null },
@@ -101,7 +101,7 @@ exports.getDashboardStats = async (req, res) => {
         psisByPlan.forEach(p => {
             const plano = p.plano;
             const isExempt = p.is_exempt;
-            const hasSubscription = !!(p.subscriptionId);
+            const hasSubscription = !!p.subscriptionId || (p.subscription_payments_count && p.subscription_payments_count > 0);
             
             if (isExempt) {
                 vipCount++;
@@ -288,7 +288,7 @@ exports.getDetailedReports = async (req, res) => {
                     status: 'active',
                     [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
                 }, 
-                attributes: ['plano', 'is_exempt', 'subscriptionId'] 
+                attributes: ['plano', 'is_exempt', 'subscriptionId', 'subscription_payments_count'] 
             }),
             db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } }, paranoid: false }),
             db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
@@ -307,20 +307,13 @@ exports.getDetailedReports = async (req, res) => {
                 'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
                 'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
             };
-            const cashFlowService = require('../services/cashFlowService');
-            const asaasMRR = await cashFlowService.getAsaasMRR();
-            
             let mrr = activePsychologists.reduce((acc, psy) => {
                 if (psy.is_exempt) return acc;
-                const hasSub = !!(psy.subscriptionId);
+                const hasSub = !!psy.subscriptionId || (psy.subscription_payments_count && psy.subscription_payments_count > 0);
                 if (!hasSub) return acc;
                 const planoKey = (psy.plano || '').toLowerCase();
                 return acc + (planPrices[planoKey] || 0);
             }, 0);
-            
-            if (asaasMRR > 0) {
-                mrr = asaasMRR;
-            }
 
             const payingCondition = {
                 subscriptionId: { [Op.ne]: null }
@@ -632,10 +625,7 @@ exports.getFinancials = async (req, res) => {
         const metrics = await MetricsService.getMetrics(start, end);
         const prevMetrics = await MetricsService.getMetrics(prevStart, prevEnd);
         
-        const cashFlowService = require('../services/cashFlowService');
-        const asaasMRR = await cashFlowService.getAsaasMRR();
-
-        const mrr = asaasMRR > 0 ? asaasMRR : metrics.mrrTotal;
+        const mrr = metrics.mrrTotal;
         const prevMrr = prevMetrics.mrrTotal;
         const paidChurnRate = metrics.weightedChurnRate;
         const prevPaidChurnRate = prevMetrics.weightedChurnRate;
@@ -730,7 +720,7 @@ exports.getFinancials = async (req, res) => {
         }
 
         let activePlans = activePsychologists.map(psy => {
-            const hasSub = !!(psy.subscriptionId);
+            const hasSub = !!psy.subscriptionId || (psy.subscription_payments_count && psy.subscription_payments_count > 0);
             const planKey = (psy.plano || '').toLowerCase();
             return {
                 psychologistName: psy.nome,
