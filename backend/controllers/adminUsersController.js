@@ -291,12 +291,19 @@ exports.getAllPsychologists = async (req, res) => {
             } else if (status === 'active_paying') {
                 whereClause.status = 'active';
                 whereClause.is_exempt = { [Op.or]: [null, false] };
-                whereClause.subscriptionId = { [Op.ne]: null };
+                if (!whereClause[Op.and]) whereClause[Op.and] = [];
+                whereClause[Op.and].push({
+                    [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }]
+                });
                 whereClause.planExpiresAt = { [Op.gt]: new Date() };
             } else if (status === 'active_trial') {
                 whereClause.status = 'active';
                 whereClause.is_exempt = { [Op.or]: [null, false] };
-                whereClause.subscriptionId = null;
+                if (!whereClause[Op.and]) whereClause[Op.and] = [];
+                whereClause[Op.and].push({
+                    subscriptionId: null,
+                    [Op.or]: [{ subscription_payments_count: null }, { subscription_payments_count: 0 }]
+                });
                 whereClause.planExpiresAt = { [Op.gt]: new Date() };
             } else if (status === 'utm_whatsapp') {
                 whereClause.utm_source = 'whatsapp';
@@ -1065,7 +1072,7 @@ exports.getPendingActions = async (req, res) => {
         const paidChurnCandidates = await db.Psychologist.findAll({
             where: {
                 status: { [Op.in]: ['active', 'inactive'] },
-                subscriptionId: { [Op.ne]: null },
+                [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }],
                 planExpiresAt: { [Op.lt]: startOfToday },
                 msg_paid_churn_sent_at: null,
                 deletedAt: null,

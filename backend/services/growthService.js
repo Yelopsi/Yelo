@@ -21,7 +21,7 @@ class GrowthService {
         const pagantesAtivos = await db.Psychologist.findAll({
             where: {
                 ...activeFilter,
-                subscriptionId: { [Op.not]: null }
+                [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }]
             },
             attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
         });
@@ -63,7 +63,7 @@ class GrowthService {
         // ou usamos a data de update como proxy para quem assinou no período.
         const novosPagantes = await db.Psychologist.count({
             where: {
-                subscriptionId: { [Op.not]: null },
+                [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }],
                 updatedAt: { [Op.gte]: periodStart }
             }
         });
@@ -131,7 +131,7 @@ class GrowthService {
             where: {
                 is_exempt: { [Op.or]: [false, null] },
                 createdAt: { [Op.gte]: cohortStart, [Op.lte]: cohortEnd },
-                subscriptionId: { [Op.not]: null }
+                [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }]
             }
         });
 
@@ -183,7 +183,7 @@ class GrowthService {
 
         // MRR Perdido (calculado usando os churners com subscrição)
         for (const c of allChurners) {
-            if (c.subscriptionId) {
+            if (c.subscriptionId || (c.subscription_payments_count && c.subscription_payments_count > 0)) {
                 let valor = 0;
                 if (c.plano === 'ESSENTIAL' || c.plano === 'Essencial') valor = Number(priceEssencial);
                 else if (c.plano === 'CLINICAL' || c.plano === 'Clínico') valor = Number(priceClinico);

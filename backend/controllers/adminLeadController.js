@@ -28,8 +28,8 @@ exports.getLeads = async (req, res) => {
 
         const convitesWhatsapp = convitesWhatsappRaw.length;
         const convitesWhatsapp_Incompletos = convitesWhatsappRaw.filter(p => p.status !== 'active').length;
-        const convitesWhatsapp_Trial = convitesWhatsappRaw.filter(p => p.status === 'active' && !p.subscriptionId).length;
-        const convitesWhatsapp_Pagantes = convitesWhatsappRaw.filter(p => p.status === 'active' && p.subscriptionId).length;
+        const convitesWhatsapp_Trial = convitesWhatsappRaw.filter(p => p.status === 'active' && !p.subscriptionId && !(p.subscription_payments_count > 0)).length;
+        const convitesWhatsapp_Pagantes = convitesWhatsappRaw.filter(p => p.status === 'active' && (p.subscriptionId || p.subscription_payments_count > 0)).length;
 
         const { filtro } = req.query;
         let whereClause = {};

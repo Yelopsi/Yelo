@@ -297,8 +297,8 @@ exports.getAudit = async (req, res) => {
                 status: 'active',
                 is_exempt: { [Op.or]: [false, null] },
                 [Op.or]: [
-                    { subscriptionId: { [Op.not]: null } },
-                    { subscriptionId: { [Op.not]: null } }
+                    { [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }] },
+                    { [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }] }
                 ]
             },
             attributes: ['id', 'cancelAtPeriodEnd', 'planExpiresAt', 'plano', 'status']

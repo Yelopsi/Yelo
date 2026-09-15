@@ -7,7 +7,7 @@ class MetricsService {
     }
 
     static hasPaidCustomer(psy, paymentsByPsy) {
-        if (psy.subscriptionId) return true;
+        if (psy.subscriptionId || (psy.subscription_payments_count && psy.subscription_payments_count > 0)) return true;
         const payments = paymentsByPsy[psy.id] || [];
         return payments.some(p => this.getValidStatuses().includes(p.status));
     }

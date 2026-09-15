@@ -316,7 +316,7 @@ exports.getDetailedReports = async (req, res) => {
             }, 0);
 
             const payingCondition = {
-                subscriptionId: { [Op.ne]: null }
+                [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }]
             };
             const churnedPayingCount = await db.Psychologist.count({
                 where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] }, ...payingCondition }
@@ -1236,7 +1236,7 @@ exports.getFounderMetrics = async (req, res) => {
             where: {
                 [Op.or]: [
                     { subscribedAt: { [Op.not]: null } },
-                    { subscriptionId: { [Op.ne]: null } }
+                    { [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }] }
                 ]
             }
         });
@@ -1248,7 +1248,7 @@ exports.getFounderMetrics = async (req, res) => {
                 status: 'inactive',
                 [Op.or]: [
                     { subscribedAt: { [Op.not]: null } },
-                    { subscriptionId: { [Op.ne]: null } }
+                    { [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }] }
                 ]
             }
         });
@@ -1312,7 +1312,7 @@ exports.getFounderMetrics = async (req, res) => {
                 createdAt: { [Op.between]: [lastMonthStart, lastMonthEnd] },
                 [Op.or]: [
                     { subscribedAt: { [Op.not]: null } },
-                    { subscriptionId: { [Op.ne]: null } }
+                    { [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }] }
                 ]
             }
         });

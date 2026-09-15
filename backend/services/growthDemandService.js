@@ -72,7 +72,7 @@ class GrowthDemandService {
             where: {
                 status: 'active',
                 is_exempt: { [Op.or]: [false, null] },
-                subscriptionId: { [Op.not]: null }
+                [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }]
             },
             attributes: ['id', 'nome', 'plano', 'valor_mensal_numero', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt']
         });

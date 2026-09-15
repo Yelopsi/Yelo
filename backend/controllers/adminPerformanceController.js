@@ -29,7 +29,7 @@ exports.getLowPerformanceData = async () => {
             status: 'active', 
             deletedAt: null,
             createdAt: { [Op.lt]: sevenDaysAgo },
-            subscriptionId: { [Op.ne]: null }
+            [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }]
         },
         attributes: ['id', 'nome', 'telefone', 'fotoUrl', 'slug', 'status', 'is_exempt', 'planExpiresAt', 'plano', 'createdAt', 'aiOptimizationHistory']
     });
