@@ -292,7 +292,7 @@ window.initializePage = function() {
         }
         plans.forEach(plan => {
             tbody.innerHTML += `<tr>
-                <td data-label="Cliente"><div class="user-cell"><div class="avatar">${getInitials(plan.psychologistName)}</div> ${plan.psychologistName}</div></td>
+                <td data-label="Cliente"><div class="user-cell" onclick="window.openCSDrawer('${plan.psychologistId}')" style="cursor: pointer; transition: color 0.2s; text-decoration: underline; text-underline-offset: 4px;" onmouseover="this.style.color='var(--saas-blue)'" onmouseout="this.style.color='inherit'"><div class="avatar">${getInitials(plan.psychologistName)}</div> ${plan.psychologistName}</div></td>
                 <td data-label="Plano"><span style="background: var(--saas-bg); border: 1px solid var(--saas-border); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; color: var(--saas-text);">${plan.planName}</span></td>
                 <td data-label="Vencimento">${getRelativeDateLabel(plan.nextBilling)}</td>
             </tr>`;

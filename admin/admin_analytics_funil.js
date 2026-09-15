@@ -807,7 +807,7 @@ window.initializePage = function() {
             
             return `<tr>
                 <td data-label="Data do Clique" style="color: #666; font-size: 0.9rem;">${dataClique}</td>
-                <td data-label="Psicólogo"><strong style="color: var(--verde-escuro); cursor: pointer; text-decoration: underline;" onclick="openFunnelPsiDrawer('${safePsiId}')">${f.psychologist ? f.psychologist.nome : 'Psi Removido'}</strong></td>
+                <td data-label="Psicólogo"><strong style="color: var(--verde-escuro); cursor: pointer; text-decoration: underline;" onclick="window.openCSDrawer('${safePsiId}')">${f.psychologist ? f.psychologist.nome : 'Psi Removido'}</strong></td>
                 <td data-label="Paciente / Lead">${f.guestName || 'Visitante'}</td>
                 <td data-label="Origem (UTM)" style="color: #666; font-size: 0.85rem;">${f.utmSource || '-'}</td>
                 <td data-label="Recebeu Mensagem?" style="text-align: center;">${contato}</td>
@@ -950,7 +950,7 @@ window.initializePage = function() {
 
             return `<tr>
                 <td data-label="Posição" style="text-align: center;">${badgePos}</td>
-                <td data-label="Psicólogo"><strong style="color: var(--verde-escuro); cursor: pointer; text-decoration: underline;" onclick="openFunnelPsiDrawer('${item.id}')">${item.nome}</strong></td>
+                <td data-label="Psicólogo"><strong style="color: var(--verde-escuro); cursor: pointer; text-decoration: underline;" onclick="window.openCSDrawer('${item.id}')">${item.nome}</strong></td>
                 <td data-label="Cliques WhatsApp" style="text-align: center; font-weight: bold; color: #16a34a;">${item.cliquesWpp || 0}</td>
                 <td data-label="Aparições na Busca" style="text-align: center; color: #4b5563;">${item.aparicoesBusca || 0}</td>
                 <td data-label="Visitas Diretas" style="text-align: center; color: #4b5563;">${item.visitasDiretas || 0}</td>
@@ -959,137 +959,7 @@ window.initializePage = function() {
         }).join('');
     }
 
-    window.openFunnelPsiDrawer = async function(psiId) {
-        if(!psiId || psiId === 'undefined') return;
-        const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
-        
-        const drawer = document.getElementById('drawer-cs-overlay');
-        if(drawer) drawer.classList.add('active');
-        
-        document.getElementById('cs-name').textContent = "Carregando...";
-        document.getElementById('cs-email').textContent = "";
-        document.getElementById('cs-phone').textContent = "Tel: ";
-        document.getElementById('cs-crp').textContent = "CRP: ";
-        document.getElementById('cs-date').textContent = "Desde: ";
-        document.getElementById('cs-health-pct').textContent = "0%";
-        document.getElementById('cs-health-bar').style.width = "0%";
-        document.getElementById('cs-health-checks').innerHTML = '<li>Carregando...</li>';
-        document.getElementById('cs-plan').textContent = "-";
-        document.getElementById('cs-expire').textContent = "-";
-        document.getElementById('cs-actions-container').innerHTML = '';
 
-        try {
-            let psi = null;
-            
-            const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psiId}/full-details`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if(!res.ok) throw new Error("Falha ao buscar detalhes do profissional");
-            const data = await res.json();
-            psi = data.psychologist;
-            
-            if(!psi) throw new Error("Profissional não encontrado nos registros");
-
-            document.getElementById('cs-name').textContent = psi.nome;
-            document.getElementById('cs-email').textContent = psi.email || 'Sem e-mail';
-            document.getElementById('cs-phone').textContent = `Tel: ${psi.telefone || '-'}`;
-            document.getElementById('cs-crp').textContent = `CRP: ${psi.crp || '-'}`;
-            document.getElementById('cs-date').textContent = `Desde: ${new Date(psi.createdAt).toLocaleDateString('pt-BR')}`;
-            
-            const avatarImg = document.getElementById('cs-avatar');
-            const avatarFallback = document.getElementById('cs-avatar-fallback');
-            if (psi.fotoUrl) {
-                avatarImg.src = psi.fotoUrl;
-                avatarImg.style.display = 'block';
-                avatarFallback.style.display = 'none';
-            } else {
-                avatarImg.style.display = 'none';
-                avatarFallback.style.display = 'flex';
-                avatarFallback.textContent = psi.nome ? psi.nome.charAt(0).toUpperCase() : 'P';
-            }
-            
-            const checks = [
-                { text: 'Foto de Perfil', ok: !!psi.fotoUrl },
-                { text: 'Número do CRP', ok: !!(psi.crp && String(psi.crp).length > 3) },
-                { text: 'Biografia', ok: !!(psi.bio && psi.bio.trim().length >= 10) },
-                { text: 'WhatsApp', ok: !!(psi.telefone && String(psi.telefone).length > 8) },
-                { text: 'Temas de Atuação', ok: Array.isArray(psi.temas_atuacao) ? psi.temas_atuacao.length > 0 : !!psi.temas_atuacao }
-            ];
-            
-            const okCount = checks.filter(c => c.ok).length;
-            const score = Math.round((okCount / checks.length) * 100);
-            
-            document.getElementById('cs-health-pct').textContent = `${score}%`;
-            const bar = document.getElementById('cs-health-bar');
-            bar.style.width = `${score}%`;
-            bar.style.background = score >= 75 ? '#10b981' : (score >= 50 ? '#f59e0b' : '#ef4444');
-            const checksHtml = checks.map(c => `<li style="display:flex; align-items:center; gap:8px;">${c.ok ? '<span style="color:#10b981;">✓</span>' : '<span style="color:#ef4444;">✗</span>'} ${c.text}</li>`).join('');
-            document.getElementById('cs-health-checks').innerHTML = checksHtml;
-            
-            let isVip = psi.is_exempt === true || String(psi.is_exempt) === 'true';
-            document.getElementById('cs-plan').textContent = isVip ? 'VIP (Isento)' : (psi.planName || 'Nenhum');
-            document.getElementById('cs-expire').textContent = isVip ? 'Vitalício' : (psi.planExpiresAt ? new Date(psi.planExpiresAt).toLocaleDateString('pt-BR') : '-');
-            
-            let numZap = psi.telefone ? psi.telefone.replace(/\D/g, '') : '';
-            let actsHtml = '';
-            if(numZap && numZap.length >= 10) {
-                if(!numZap.startsWith('55')) numZap = '55' + numZap;
-                actsHtml += `<a href="https://wa.me/${numZap}" target="_blank" style="display:flex; justify-content:center; padding: 12px; background: #ecfdf5; color: #10b981; text-decoration: none; border-radius: 50px; font-weight: 600; border: 1px solid #a7f3d0;">Chamar no WhatsApp 📱</a>`;
-            }
-            actsHtml += `<button onclick="window.navigateToPage('admin_detalhes_psicologo.html?id=${psi.id}')" style="padding: 12px; background: white; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 50px; font-weight: 600; cursor: pointer;">Ver Dossiê Completo 🔗</button>`;
-            actsHtml += `<button onclick="window.gerarAnaliseCS('${psi.id}')" id="btn-analise-${psi.id}" style="padding: 12px; background: #fef08a; color: #b45309; border: 1px solid #fde047; border-radius: 50px; font-weight: 600; cursor: pointer;">✨ Análise de Perfil (IA)</button>`;
-            
-            document.getElementById('cs-actions-container').innerHTML = actsHtml;
-            
-        } catch(e) {
-            document.getElementById('cs-actions-container').innerHTML = `<p style="color:red; text-align:center;">Erro ao carregar dados.</p>`;
-        }
-    };
-
-    window.gerarAnaliseCS = async function(psiId) {
-        const btn = document.getElementById(`btn-analise-${psiId}`);
-        if(btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner-sm" style="width:14px; height:14px; margin-right:5px; border-width:2px; display:inline-block;"></span> Gerando...'; }
-        
-        try {
-            const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
-            const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psiId}/analyze`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if(data.message) {
-                const copyToClipboardFallback = (text) => {
-                    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
-                    return new Promise((resolve, reject) => {
-                        const textArea = document.createElement("textarea");
-                        textArea.value = text;
-                        textArea.style.position = "fixed"; textArea.style.left = "-999999px";
-                        document.body.appendChild(textArea);
-                        textArea.focus(); textArea.select();
-                        document.execCommand('copy') ? resolve() : reject();
-                        textArea.remove();
-                    });
-                };
-                
-                await copyToClipboardFallback(data.message);
-                
-                let currentList = JSON.parse(localStorage.getItem('yelo_psi_copied_analysis') || '[]');
-                if (!currentList.includes(String(psiId))) {
-                    currentList.push(String(psiId));
-                    localStorage.setItem('yelo_psi_copied_analysis', JSON.stringify(currentList));
-                }
-
-                if(window.showToast) window.showToast("Análise copiada para a área de transferência!", "success");
-                else alert("Análise copiada!");
-            } else {
-                throw new Error("Erro na resposta");
-            }
-        } catch(e) {
-            if(window.showToast) window.showToast("Erro ao gerar análise", "error");
-            else alert("Erro ao gerar análise");
-        } finally {
-            if(btn) { btn.disabled = false; btn.innerHTML = '✨ Copiado!'; setTimeout(() => btn.innerHTML = '✨ Análise de Perfil (IA)', 3000); }
-        }
-    };
 
     // Acopla o botão
     const btnAtualizar = document.getElementById('btn-atualizar-funil');

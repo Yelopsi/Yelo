@@ -723,6 +723,7 @@ exports.getFinancials = async (req, res) => {
             const hasSub = !!psy.subscriptionId || (psy.subscription_payments_count && psy.subscription_payments_count > 0);
             const planKey = (psy.plano || '').toLowerCase();
             return {
+                psychologistId: psy.id,
                 psychologistName: psy.nome,
                 planName: psy.is_exempt ? `${psy.plano} (VIP)` : (!hasSub ? `${psy.plano} (Trial)` : psy.plano),
                 mrr: (psy.is_exempt || !hasSub) ? 0 : (planPrices[planKey] || 0),
