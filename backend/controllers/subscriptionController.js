@@ -104,11 +104,7 @@ exports.cancelSubscription = async (req, res) => {
              // Se chegou aqui, o usuário quer cancelar. Se não temos ID para o Asaas,
              // cancelamos localmente para não prender o usuário.
              await psychologist.update({
-                status: 'inactive',
-                plano: null,
-                planExpiresAt: new Date(),
-                cancelAtPeriodEnd: false,
-                subscriptionId: null
+                cancelAtPeriodEnd: true
              });
              return res.status(200).json({ message: 'Assinatura cancelada localmente (Vínculo de pagamento não encontrado).' });
         }
@@ -123,11 +119,7 @@ exports.cancelSubscription = async (req, res) => {
         if (!subData.id) {
              // Se não achou no Asaas, assume cancelamento manual local e limpa tudo
              await psychologist.update({ 
-                  status: 'inactive',
-                  plano: null,
-                  planExpiresAt: new Date(),
-                  cancelAtPeriodEnd: false,
-                  subscriptionId: null
+                  cancelAtPeriodEnd: true
               });
              return res.json({ message: 'Assinatura cancelada localmente (Não encontrada no provedor).' });
         }
