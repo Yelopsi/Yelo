@@ -218,11 +218,13 @@ window.initializePage = function () {
                     } else if (specificPendingType === 'expiring_trial') {
                         actionsArray = actionsArray.filter(a => a.actionType === 'expiring_trial');
                     }
+                    renderTable(actionsArray);
+                } else {
+                    renderPendingActionsTable(actionsArray);
                 }
-
-                renderPendingActionsTable(actionsArray);
+                
                 const infoEl = document.getElementById('pagination-info');
-                if (infoEl) infoEl.textContent = `Mostrando ${actionsArray.length} ações`;
+                if (infoEl) infoEl.textContent = `Mostrando ${actionsArray.length} profissionais`;
                 return;
             } catch (error) {
                 tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar ações pendentes.</td></tr>`;
