@@ -415,6 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupZapButton('btn-agendar-whatsapp');
         setupZapButton('btn-agendar-whatsapp-mobile');
         setupZapButton('btn-agendar-whatsapp-reviews');
+        setupZapButton('btn-agendar-whatsapp-mobile-reviews');
 
         // Tags de Especialidades e Atuação
         populateTags('psi-temas-container', psi.temas_atuacao);
