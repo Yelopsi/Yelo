@@ -1114,7 +1114,7 @@ exports.getFounderMetrics = async (req, res) => {
                     }
                 ]
             },
-            attributes: ['id', 'nome', 'telefone', 'plano', 'status', 'subscriptionId', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances', 'admin_billing_sent_at']
+            attributes: ['id', 'nome', 'telefone', 'plano', 'status', 'subscriptionId', 'subscription_payments_count', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances', 'admin_billing_sent_at']
         });
 
         let currentMRR = 0;
