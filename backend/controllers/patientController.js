@@ -330,11 +330,21 @@ exports.googleLogin = async (req, res) => {
         }
 
         // 4. Retorna o token da Yelo (JWT)
+        const jwtToken = generateToken(patient.id);
+        
+        // Seta o cookie HttpOnly para compatibilidade com o authMiddleware LGPD-2
+        res.cookie('token', jwtToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+            sameSite: 'lax'
+        });
+
         res.status(200).json({
             id: patient.id,
             nome: patient.nome,
             email: patient.email,
-            token: generateToken(patient.id),
+            token: jwtToken,
             redirect: '/patient/patient_dashboard'
         });
 
