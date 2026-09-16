@@ -713,7 +713,7 @@
                         <div style="background: #ecfdf5; color: #059669; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 12px; border: 1px solid #a7f3d0;">✓ conversa sem compromisso</div>
                         
                         <div id="price-display-container-reviews">
-                            <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.0rem; font-weight: 700; color: var(--verde-escuro); margin: 5px 0 0 0; line-height: 1;"><%= psicologo.valor_sessao_numero ? 'R$ ' + psicologo.valor_sessao_numero.replace('.', ',') : 'R$ 120,00' %></div>
+                            <div class="price-display" style="font-family: var(--font-titulos); font-size: 2.0rem; font-weight: 700; color: var(--verde-escuro); margin: 5px 0 0 0; line-height: 1;"><%= psicologo.valor_sessao_numero ? 'R$ ' + parseFloat(psicologo.valor_sessao_numero).toFixed(2).replace('.', ',') : 'R$ 120,00' %></div>
                             <div class="price-suffix" style="font-size: 0.9rem; color: #999; font-weight: 500;">por sessão</div>
                         </div>
 
@@ -756,7 +756,7 @@
 
                     <div class="mobile-sticky-price" id="price-display-mobile-reviews" style="text-align: right; flex-direction: column; display: flex;">
                         <span class="label" style="font-size: 0.7rem; color: #888; text-transform: uppercase; font-weight: 700;">Por Sessão</span>
-                        <span class="value" style="font-size: 1.1rem; font-weight: 700; color: #1B4332;"><%= psicologo.valor_sessao_numero ? 'R$ ' + psicologo.valor_sessao_numero.replace('.', ',') : 'R$ 120,00' %></span>
+                        <span class="value" style="font-size: 1.1rem; font-weight: 700; color: #1B4332;"><%= psicologo.valor_sessao_numero ? 'R$ ' + parseFloat(psicologo.valor_sessao_numero).toFixed(2).replace('.', ',') : 'R$ 120,00' %></span>
                     </div>
                 </div>
 
