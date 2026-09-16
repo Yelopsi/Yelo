@@ -1126,7 +1126,7 @@ exports.getFounderMetrics = async (req, res) => {
         const activeTrialIds = [];
 
         activePsis.forEach(p => {
-            const hasSub = !!(p.subscriptionId);
+            const hasSub = !!(p.subscriptionId) || (p.subscription_payments_count > 0);
             
             let planEndsInFuture = false;
             let expiredSundayKeepMonday = false;
