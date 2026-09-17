@@ -78,6 +78,7 @@ router.put('/psychologists/:id/analyzed', async (req, res) => {
     }
 });
 router.put('/psychologists/:id/status', adminController.updatePsychologistStatus);
+router.post('/psychologists/:id/extend-trial', adminController.extendTrialPeriod);
 // Rota para ativar/desativar isenção (VIP)
 router.patch('/psychologists/:id/vip', adminController.updateVipStatus);
 router.delete('/psychologists/:id', adminController.deletePsychologist);

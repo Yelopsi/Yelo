@@ -568,6 +568,7 @@ exports.getInternalNotesForConversation = adminMessagesController.getInternalNot
 exports.addInternalNote = adminMessagesController.addInternalNote;
 
 exports.updatePsychologistStatus = adminUsersController.updatePsychologistStatus;
+exports.extendTrialPeriod = adminUsersController.extendTrialPeriod;
 exports.updatePatientStatus = adminUsersController.updatePatientStatus;
 exports.deletePsychologist = adminUsersController.deletePsychologist;
 exports.forceDeletePsychologist = adminUsersController.forceDeletePsychologist;

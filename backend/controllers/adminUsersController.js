@@ -592,7 +592,7 @@ exports.updatePsychologistStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
-        if (!status || !['active', 'inactive', 'pending'].includes(status)) {
+        if (!status || !['active', 'inactive', 'pending', 'vencido'].includes(status)) {
             return res.status(400).json({ error: 'Status inválido.' });
         }
         const psychologist = await db.Psychologist.findByPk(id);
@@ -624,6 +624,42 @@ exports.updatePsychologistStatus = async (req, res) => {
         res.status(200).json(psychologist);
     } catch (error) {
         console.error('Erro ao atualizar status do psicólogo:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+exports.extendTrialPeriod = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { days } = req.body;
+        
+        if (!days || isNaN(days)) {
+            return res.status(400).json({ error: 'Número de dias inválido.' });
+        }
+
+        const psychologist = await db.Psychologist.findByPk(id);
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        // Add `days` to `planExpiresAt`. If `planExpiresAt` is null or in the past, start from today.
+        const now = new Date();
+        let baseDate = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt) : now;
+        
+        if (baseDate < now) {
+            baseDate = now;
+        }
+
+        baseDate.setDate(baseDate.getDate() + parseInt(days));
+
+        await psychologist.update({ 
+            planExpiresAt: baseDate,
+            status: 'active'
+        });
+
+        res.json({ success: true, newExpirationDate: baseDate });
+    } catch (error) {
+        console.error('Erro ao estender período grátis:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };

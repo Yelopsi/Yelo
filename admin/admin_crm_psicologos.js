@@ -199,9 +199,8 @@ window.initializePage = function () {
         const searchTerm = searchInput.value;
         const status = statusInput.value;
 
-        // NOVO LÓGICA PARA FOLLOW-UPS E FILTROS DE CARDS
-        if (status && status.startsWith('pending_')) {
-            const specificPendingType = status.replace('pending_', '');
+        // NOVO LÓGICA PARA FOLLOW-UPS
+        if (status === 'pending_actions') {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/admin/pending-actions`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -210,21 +209,10 @@ window.initializePage = function () {
                 const pendingData = await response.json();
                 let actionsArray = pendingData.pendingActions || pendingData;
 
-                if (specificPendingType !== 'actions') {
-                    if (specificPendingType === 'paid_churn') {
-                        actionsArray = actionsArray.filter(a => ['paid_churn', 'billing_feedback', 'churn'].includes(a.actionType));
-                    } else if (specificPendingType === 'incomplete') {
-                        actionsArray = actionsArray.filter(a => a.actionType === 'incomplete');
-                    } else if (specificPendingType === 'expiring_trial') {
-                        actionsArray = actionsArray.filter(a => a.actionType === 'expiring_trial');
-                    }
-                    renderTable(actionsArray);
-                } else {
-                    renderPendingActionsTable(actionsArray);
-                }
+                renderPendingActionsTable(actionsArray);
                 
                 const infoEl = document.getElementById('pagination-info');
-                if (infoEl) infoEl.textContent = `Mostrando ${actionsArray.length} profissionais`;
+                if (infoEl) infoEl.textContent = `Mostrando ${actionsArray.length} ações`;
                 return;
             } catch (error) {
                 tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--coral-quente);">Erro ao carregar ações pendentes.</td></tr>`;

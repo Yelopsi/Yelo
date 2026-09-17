@@ -304,6 +304,89 @@ window.openCSDrawer = async function(idStr) {
         btnCopy.onclick = () => window.gerarAnaliseCS(psy.id);
         actionsContainer.appendChild(btnCopy);
         
+        // --- NOVAS AÇÕES (Expirar e Estender) ---
+        const btnExpire = document.createElement('button');
+        btnExpire.className = 'btn-tabela';
+        btnExpire.style.width = '100%'; btnExpire.style.justifyContent = 'center'; btnExpire.style.padding = '12px'; btnExpire.style.borderRadius = '50px';
+        btnExpire.style.background = '#fef2f2'; btnExpire.style.color = '#991b1b'; btnExpire.style.border = '1px solid #fecaca';
+        btnExpire.style.marginTop = '15px';
+        btnExpire.innerHTML = 'Expirar Perfil (Vencido) ⚠️';
+        btnExpire.onclick = () => {
+            const executeExpire = async () => {
+                try {
+                    btnExpire.innerHTML = 'Processando...';
+                    btnExpire.disabled = true;
+                    
+                    // Endpoint genérico para atualização de status
+                    const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psy.id}/status`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ status: 'vencido' })
+                    });
+                    
+                    if (!res.ok) throw new Error('Erro ao expirar perfil. Endpoint inexistente ou erro no servidor.');
+                    
+                    if(window.showToast) window.showToast("Perfil expirado com sucesso!", "success");
+                    else alert('Perfil expirado com sucesso!');
+                    setTimeout(() => window.location.reload(), 1500);
+                } catch(e) {
+                    alert('Aviso: ' + e.message + '\\n\\nO backend precisa ter a rota PUT /api/admin/psychologists/:id/status implementada.');
+                    btnExpire.innerHTML = 'Expirar Perfil (Vencido) ⚠️';
+                    btnExpire.disabled = false;
+                }
+            };
+
+            if (window.openConfirmationModal) {
+                window.openConfirmationModal('Expirar Perfil', `Tem certeza que deseja marcar o perfil de <strong>${psy.nome}</strong> como VENCIDO (Expirado)?`, executeExpire);
+            } else {
+                if (confirm(`Tem certeza que deseja marcar o perfil de ${psy.nome} como VENCIDO (Expirado)?`)) {
+                    executeExpire();
+                }
+            }
+        };
+        actionsContainer.appendChild(btnExpire);
+
+        const btnExtend = document.createElement('button');
+        btnExtend.className = 'btn-tabela';
+        btnExtend.style.width = '100%'; btnExtend.style.justifyContent = 'center'; btnExtend.style.padding = '12px'; btnExtend.style.borderRadius = '50px';
+        btnExtend.style.background = '#f0fdf4'; btnExtend.style.color = '#166534'; btnExtend.style.border = '1px solid #bbf7d0';
+        btnExtend.innerHTML = 'Estender Período Grátis 🎁';
+        btnExtend.onclick = () => {
+            const executeExtend = async (days = 7) => {
+                try {
+                    btnExtend.innerHTML = 'Processando...';
+                    btnExtend.disabled = true;
+                    
+                    // Endpoint genérico para estender trial
+                    const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psy.id}/extend-trial`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ days: parseInt(days) })
+                    });
+                    
+                    if (!res.ok) throw new Error('Erro ao estender período. Endpoint inexistente ou erro no servidor.');
+                    
+                    if(window.showToast) window.showToast(`Período estendido em ${days} dias!`, "success");
+                    else alert(`Período estendido em ${days} dias!`);
+                    setTimeout(() => window.location.reload(), 1500);
+                } catch(e) {
+                    alert('Aviso: ' + e.message + '\\n\\nO backend precisa ter a rota POST /api/admin/psychologists/:id/extend-trial implementada.');
+                    btnExtend.innerHTML = 'Estender Período Grátis 🎁';
+                    btnExtend.disabled = false;
+                }
+            };
+
+            if (window.openConfirmationModal) {
+                window.openConfirmationModal('Estender Período', `Deseja adicionar <strong>7 dias</strong> extras de período grátis para <strong>${psy.nome}</strong>?`, () => executeExtend(7));
+            } else {
+                const days = prompt(`Quantos dias extras de período grátis você quer dar para ${psy.nome}?`, '7');
+                if (days && !isNaN(days)) {
+                    executeExtend(days);
+                }
+            }
+        };
+        actionsContainer.appendChild(btnExtend);
+        
         // --- CONSULTOR IA (PERFORMANCE) ---
         const btnGenAI = document.getElementById('btn-generate-ai');
         const btnSendAI = document.getElementById('btn-send-ai-whatsapp');
