@@ -212,6 +212,7 @@ exports.getDetailedReports = async (req, res) => {
         };
 
         let startDate = parseDateBRT(req.query.startDate, false);
+        if (startDate && startDate < new Date(2026, 6, 1)) startDate.setTime(new Date(2026, 6, 1).getTime());
         let endDate = parseDateBRT(req.query.endDate, true);
 
         if (!startDate) {
@@ -538,8 +539,8 @@ exports.getSystemLogs = async (req, res) => {
  */
 exports.getNewUsersPerMonth = async (req, res) => {
     try {
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        const sixMonthsAgo = new Date(2026, 6, 1); // 1 de Julho de 2026 (Mês 6)
+        
         const newPatients = await db.Patient.findAll({
             attributes: [
                 [db.sequelize.fn('date_trunc', 'month', db.sequelize.col('createdAt')), 'month'],
@@ -559,9 +560,13 @@ exports.getNewUsersPerMonth = async (req, res) => {
             order: [['month', 'ASC']]
         });
         const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-        const labels = Array.from({ length: 6 }, (_, i) => {
-            const d = new Date();
-            d.setMonth(d.getMonth() - 5 + i);
+        
+        const today = new Date();
+        const totalMonths = (today.getFullYear() - sixMonthsAgo.getFullYear()) * 12 + (today.getMonth() - sixMonthsAgo.getMonth());
+        const monthsToIterate = Math.max(0, totalMonths);
+        
+        const labels = Array.from({ length: monthsToIterate + 1 }, (_, i) => {
+            const d = new Date(today.getFullYear(), today.getMonth() - monthsToIterate + i, 1);
             return monthNames[d.getMonth()];
         });
         const dataMap = new Map();
@@ -900,6 +905,7 @@ exports.getFunnelAnalytics = async (req, res) => {
         };
 
         let start = parseDateBRT(req.query.startDate, false);
+        if (start && start < new Date(2026, 6, 1)) start.setTime(new Date(2026, 6, 1).getTime());
         let end = parseDateBRT(req.query.endDate, true);
 
         if (!start) {
@@ -1417,7 +1423,7 @@ exports.getClicksGrowthChart = async (req, res) => {
         const db = require('../../backend/models');
         const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         
-        // Vamos pegar os últimos 6 meses
+        // Vamos pegar a partir de Julho de 2026
         const labels = [];
         const monthKeys = []; // Para buscar no expectedSessionsMap (ex: '2026-09')
         const organicClicksData = [];
@@ -1426,9 +1432,13 @@ exports.getClicksGrowthChart = async (req, res) => {
         const expectedClicksData = [];
         const expectedSessionsData = [];
         
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date();
-            d.setMonth(d.getMonth() - i);
+        const today = new Date();
+        const startMonthObj = new Date(2026, 6, 1); // Julho 2026 (mês 6)
+        const totalMonths = (today.getFullYear() - startMonthObj.getFullYear()) * 12 + (today.getMonth() - startMonthObj.getMonth());
+        const monthsToIterate = Math.max(0, totalMonths);
+        
+        for (let i = monthsToIterate; i >= 0; i--) {
+            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
             labels.push(monthNames[d.getMonth()]);
             
             const yyyy = d.getFullYear();
@@ -1436,10 +1446,8 @@ exports.getClicksGrowthChart = async (req, res) => {
             monthKeys.push(`${yyyy}-${mm}`);
         }
 
-        const startDate = new Date();
-        startDate.setMonth(startDate.getMonth() - 5);
-        startDate.setDate(1);
-        startDate.setHours(0, 0, 0, 0);
+        const startDate = new Date(2026, 6, 1); // 1 de Julho de 2026
+
 
         const endDate = new Date(); // Hoje
 

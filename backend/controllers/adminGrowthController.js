@@ -573,17 +573,8 @@ exports.getPaymentsEvolution = async (req, res) => {
             evolutionMap[r.monthYear] = parseInt(r.count, 10);
         });
         
-        // Descobrir qual o mês mais antigo com pagamento
-        const keys = Object.keys(evolutionMap).sort();
-        let startMonthObj;
-        if (keys.length > 0) {
-            const firstKey = keys[0]; // "YYYY-MM"
-            startMonthObj = new Date(parseInt(firstKey.substring(0, 4)), parseInt(firstKey.substring(5, 7)) - 1, 1);
-        } else {
-            // Se não houver nenhum pagamento, mostra apenas os últimos 5 meses como default
-            const today = new Date();
-            startMonthObj = new Date(today.getFullYear(), today.getMonth() - 5, 1);
-        }
+        // Vamos sempre forçar o gráfico a iniciar em Julho de 2026 (mês 6), pois antes não havia ads
+        const startMonthObj = new Date(2026, 6, 1);
         
         const labels = [];
         const data = [];
@@ -850,6 +841,7 @@ exports.getClicksEvolution = async (req, res) => {
             // quando aplicamos métodos locais ou rodamos num servidor com fuso diferente (ex: Render em UTC).
             // Ao forçar o timezone do Brasil (-03:00), garantimos a janela exata do dia.
             const start = new Date(`${startDate}T00:00:00-03:00`);
+            if (start < new Date(2026, 6, 1)) start.setTime(new Date(2026, 6, 1).getTime());
             const end = new Date(`${endDate}T23:59:59-03:00`);
             
             whereClause.createdAt = {
@@ -859,6 +851,7 @@ exports.getClicksEvolution = async (req, res) => {
             // Default to last 30 days
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            if (thirtyDaysAgo < new Date(2026, 6, 1)) thirtyDaysAgo.setTime(new Date(2026, 6, 1).getTime());
             whereClause.createdAt = {
                 [db.Sequelize.Op.gte]: thirtyDaysAgo
             };
