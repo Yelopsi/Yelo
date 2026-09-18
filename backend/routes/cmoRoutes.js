@@ -449,4 +449,35 @@ router.delete('/manual-ads', async (req, res) => {
     }
 });
 
+// GET /api/cmo/traffic
+router.get('/traffic', async (req, res) => {
+    try {
+        const dateStart = req.query.dateStart || moment().startOf('month').format('YYYY-MM-DD');
+        const dateEnd = req.query.dateEnd || moment().endOf('month').format('YYYY-MM-DD');
+        
+        // Define minimum start date like dashboard
+        const START_OF_TIME = '2026-05-01';
+        let safeDateStart = moment(dateStart).isBefore(START_OF_TIME) ? START_OF_TIME : dateStart;
+
+        const ga4Service = require('../services/googleAnalyticsService');
+        const gscService = require('../services/googleSearchConsoleService');
+
+        const [ga4Data, gscData] = await Promise.all([
+            ga4Service.getMetrics(safeDateStart, dateEnd),
+            gscService.getMetrics(safeDateStart, dateEnd)
+        ]);
+
+        res.json({
+            success: true,
+            data: {
+                ga4: ga4Data,
+                gsc: gscData
+            }
+        });
+    } catch (error) {
+        console.error('[CMO] Erro Global na Rota /traffic:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 module.exports = router;

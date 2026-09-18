@@ -62,6 +62,7 @@ async function loadCMOMetrics() {
         
         if (data.success) {
             renderCMOMetrics(data);
+            loadTrafficMetrics(dateStart, dateEnd, token);
         } else {
             alert('A API respondeu com falha. Verifique o console.');
         }
@@ -485,3 +486,40 @@ function updateCMOMonth() {
 // Iniciar imediatamente para arquitetura SPA
 initCMOMonthSelector();
 loadCMOMetrics();
+
+async function loadTrafficMetrics(dateStart, dateEnd, token) {
+    try {
+        const response = await fetch(`/api/cmo/traffic?dateStart=${dateStart}&dateEnd=${dateEnd}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (data.success && data.data) {
+            const { ga4, gsc } = data.data;
+
+            // Update GA4
+            if (ga4) {
+                document.getElementById('cmo-ga4-sessions').textContent = ga4.sessions.toLocaleString('pt-BR');
+                document.getElementById('cmo-ga4-users').textContent = ga4.users.toLocaleString('pt-BR');
+                document.getElementById('cmo-ga4-pageviews').textContent = ga4.pageviews.toLocaleString('pt-BR');
+                
+                const engagementRate = ga4.sessions > 0 ? (1 - ga4.bounceRate) * 100 : 0;
+                document.getElementById('cmo-ga4-engagement').textContent = engagementRate.toFixed(1).replace('.', ',') + '%';
+            }
+
+            // Update GSC
+            if (gsc) {
+                document.getElementById('cmo-gsc-clicks').textContent = gsc.clicks.toLocaleString('pt-BR');
+                document.getElementById('cmo-gsc-impressions').textContent = gsc.impressions.toLocaleString('pt-BR');
+                document.getElementById('cmo-gsc-position').textContent = gsc.position.toFixed(1).replace('.', ',') + 'º';
+                document.getElementById('cmo-gsc-ctr').textContent = (gsc.ctr * 100).toFixed(2).replace('.', ',') + '%';
+            }
+        }
+    } catch (e) {
+        console.error('Erro ao carregar Traffic & SEO:', e);
+    }
+}
