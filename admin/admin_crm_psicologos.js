@@ -200,7 +200,7 @@ window.initializePage = function () {
         const status = statusInput.value;
 
         // NOVO LÓGICA PARA FOLLOW-UPS
-        if (status === 'pending_actions') {
+        if (status === 'pending_actions' || status === 'pending_paid_churn' || status === 'pending_expiring_trial' || status === 'pending_incomplete') {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/admin/pending-actions`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -208,6 +208,14 @@ window.initializePage = function () {
                 if (!response.ok) throw new Error('Falha ao buscar pendências.');
                 const pendingData = await response.json();
                 let actionsArray = pendingData.pendingActions || pendingData;
+
+                if (status === 'pending_paid_churn') {
+                    actionsArray = actionsArray.filter(a => ['paid_churn', 'billing_feedback', 'churn'].includes(a.actionType));
+                } else if (status === 'pending_expiring_trial') {
+                    actionsArray = actionsArray.filter(a => a.actionType === 'expiring_trial');
+                } else if (status === 'pending_incomplete') {
+                    actionsArray = actionsArray.filter(a => a.actionType === 'incomplete');
+                }
 
                 renderPendingActionsTable(actionsArray);
                 
