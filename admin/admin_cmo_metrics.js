@@ -223,16 +223,27 @@ function renderCMOMetrics(data) {
                 
                 hasValidMeta = true;
                 const tr = document.createElement('tr');
+                const spend = c.spend || 0;
+                const clicks = c.clicks || 0;
+                const conversions = c.conversions || 0;
+                const cpc = clicks > 0 ? (spend / clicks) : 0;
+                const costPerConv = conversions > 0 ? (spend / conversions) : 0;
+                
                 tr.innerHTML = `
                     <td>
-                        ${c.campaign_name || 'Sem Nome'}
+                        <span style="display:flex; align-items:center; gap:5px; color: inherit; font-weight: normal;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                            ${c.campaign_name || 'Sem Nome'}
+                        </span>
                         <br/>
                         <small style="color:#64748b; font-size: 0.7rem; font-family: monospace;">ID: ${c.campaign_id || c.id || '-'}</small>
                     </td>
-                    <td style="text-align: right;">R$ ${(c.spend || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right; color: #1e293b; font-weight: 500;">R$ ${spend.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right;">R$ ${cpc.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right; color: #10b981; font-weight: 500;">R$ ${costPerConv.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                     <td style="text-align: right;">${(c.impressions || 0).toLocaleString('pt-BR')}</td>
-                    <td style="text-align: right;">${(c.clicks || 0).toLocaleString('pt-BR')}</td>
-                    <td style="text-align: right;">${(c.conversions || 0).toLocaleString('pt-BR')}</td>
+                    <td style="text-align: right;">${clicks.toLocaleString('pt-BR')}</td>
+                    <td style="text-align: right;">${conversions.toLocaleString('pt-BR')}</td>
                 `;
                 metaTable.appendChild(tr);
             });
@@ -262,7 +273,9 @@ function renderCMOMetrics(data) {
                 
                 const spend = c.spend || 0;
                 const clicks = c.clicks || 0;
+                const conversions = c.conversions || 0;
                 const cpc = clicks > 0 ? (spend / clicks) : 0;
+                const costPerConv = conversions > 0 ? (spend / conversions) : 0;
                 
                 tr.innerHTML = `
                     <td>
@@ -274,9 +287,10 @@ function renderCMOMetrics(data) {
                     </td>
                     <td style="text-align: right; color: #1e293b; font-weight: 500;">R$ ${spend.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                     <td style="text-align: right;">R$ ${cpc.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right; color: #10b981; font-weight: 500;">R$ ${costPerConv.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                     <td style="text-align: right;">${(c.impressions || 0).toLocaleString('pt-BR')}</td>
                     <td style="text-align: right;">${clicks.toLocaleString('pt-BR')}</td>
-                    <td style="text-align: right;">${(c.conversions || 0).toLocaleString('pt-BR')}</td>
+                    <td style="text-align: right;">${conversions.toLocaleString('pt-BR')}</td>
                 `;
                 googleTable.appendChild(tr);
             });
