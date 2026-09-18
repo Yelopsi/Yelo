@@ -52,6 +52,7 @@ router.get('/dashboard', async (req, res) => {
 
         const googleSpendAmount = getTargetSpend(googleCampaigns, 'Yelo MVP - Busca SP', true);
         const actualGoogleSpend = googleSpendAmount > 0 ? googleSpendAmount : (manualGoogle ? parseFloat(manualGoogle.spend) || 0 : 0);
+        const googleSpend = { spend: actualGoogleSpend };
         
         const prevGoogleSpendAmount = getTargetSpend(prevGoogleCampaigns, 'Yelo MVP - Busca SP', true);
         const actualPrevGoogleSpend = prevGoogleSpendAmount > 0 ? prevGoogleSpendAmount : (prevManualGoogle ? parseFloat(prevManualGoogle.spend) || 0 : 0);
