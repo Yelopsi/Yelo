@@ -6,8 +6,8 @@ class GrowthAcquisitionService {
         const now = new Date();
         const periodStart = new Date();
         periodStart.setDate(periodStart.getDate() - periodDays);
-        // Clamp para 1 de Julho de 2026 (não tinha ads antes)
-        if (periodStart < new Date(2026, 6, 1)) periodStart.setTime(new Date(2026, 6, 1).getTime());
+        // Clamp para 1 de Maio de 2026 (não tinha ads antes)
+        if (periodStart < new Date(2026, 4, 1)) periodStart.setTime(new Date(2026, 4, 1).getTime());
 
         // 1. Buscamos TODOS os Leads gerados no período
         const leads = await db.Lead.findAll({

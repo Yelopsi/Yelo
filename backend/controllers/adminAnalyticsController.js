@@ -75,7 +75,7 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
 exports.getPwaStats = async (req, res) => {
     try {
         let { startDate, endDate } = req.query;
-        if (startDate && new Date(startDate) < new Date(2026, 6, 1)) startDate = '2026-07-01';
+        if (startDate && new Date(startDate) < new Date(2026, 4, 1)) startDate = '2026-05-01';
         let dateCondition = '';
         if (startDate && endDate) {
             dateCondition = `WHERE "createdAt" >= '${startDate} 00:00:00-03:00' AND "createdAt" <= '${endDate} 23:59:59-03:00'`;
@@ -140,7 +140,7 @@ exports.getTermometroEscala = async (req, res) => {
 exports.getLeadsRecentes = async (req, res) => {
     try {
         let { startDate, endDate } = req.query;
-        if (startDate && new Date(startDate) < new Date(2026, 6, 1)) startDate = '2026-07-01';
+        if (startDate && new Date(startDate) < new Date(2026, 4, 1)) startDate = '2026-05-01';
         let dateCondition = `w."createdAt" >= CURRENT_DATE - INTERVAL '3 days'`;
         
         if (startDate && endDate) {
