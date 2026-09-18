@@ -236,8 +236,6 @@ function renderCMOMetrics(data) {
     // 5. Atualizar Tabela de Campanhas Google (API + Manual Backup)
     const googleTable = document.querySelector('#cmo-google-table tbody');
     if (googleTable) {
-        // Salvamos a linha de inputs manuais para recolocar no final
-        const manualRow = googleTable.lastElementChild;
         googleTable.innerHTML = ''; // Limpa tudo
         
         if (data.campaigns?.google && data.campaigns.google.length > 0 && data.campaigns.google[0].id !== 'ERRO_API' && data.campaigns.google[0].id !== 'ERRO') {
@@ -260,11 +258,6 @@ function renderCMOMetrics(data) {
                 `;
                 googleTable.appendChild(tr);
             });
-        }
-        
-        // Recoloca a linha manual embaixo como backup
-        if (manualRow) {
-            googleTable.appendChild(manualRow);
         }
     }
 
