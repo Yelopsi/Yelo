@@ -460,19 +460,28 @@ router.get('/traffic', async (req, res) => {
         const START_OF_TIME = '2026-05-01';
         let safeDateStart = moment(dateStart).isBefore(START_OF_TIME) ? START_OF_TIME : dateStart;
 
+        const duration = moment(dateEnd).diff(moment(safeDateStart), 'days') + 1;
+        const prevDateStart = moment(safeDateStart).subtract(duration, 'days').format('YYYY-MM-DD');
+        const prevDateEnd = moment(dateEnd).subtract(duration, 'days').format('YYYY-MM-DD');
+        let safePrevDateStart = moment(prevDateStart).isBefore(START_OF_TIME) ? START_OF_TIME : prevDateStart;
+
         const ga4Service = require('../services/googleAnalyticsService');
         const gscService = require('../services/googleSearchConsoleService');
 
-        const [ga4Data, gscData] = await Promise.all([
+        const [ga4Data, gscData, prevGa4Data, prevGscData] = await Promise.all([
             ga4Service.getMetrics(safeDateStart, dateEnd),
-            gscService.getMetrics(safeDateStart, dateEnd)
+            gscService.getMetrics(safeDateStart, dateEnd),
+            ga4Service.getMetrics(safePrevDateStart, prevDateEnd),
+            gscService.getMetrics(safePrevDateStart, prevDateEnd)
         ]);
 
         res.json({
             success: true,
             data: {
                 ga4: ga4Data,
-                gsc: gscData
+                gsc: gscData,
+                prevGa4: prevGa4Data,
+                prevGsc: prevGscData
             }
         });
     } catch (error) {

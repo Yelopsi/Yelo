@@ -209,94 +209,7 @@ function renderCMOMetrics(data) {
     }
 
 
-    // 4. Atualizar Tabela de Campanhas Meta (Detalhada)
-    const metaTable = document.querySelector('#cmo-meta-table tbody');
-    if (metaTable) {
-        metaTable.innerHTML = '';
-        if (data.campaigns?.meta && data.campaigns.meta.length > 0) {
-            let hasValidMeta = false;
-            data.campaigns.meta.forEach(c => {
-                // Filtra para manter APENAS a campanha '[Conversão] Captação de Psicólogos - Bloco de Notas'
-                const targetId = '120251213168140531';
-                if ((c.campaign_id || c.id) !== targetId) {
-                    return; // Ignora as outras campanhas
-                }
-                
-                hasValidMeta = true;
-                const tr = document.createElement('tr');
-                const spend = c.spend || 0;
-                const clicks = c.clicks || 0;
-                const conversions = c.conversions || 0;
-                const cpc = clicks > 0 ? (spend / clicks) : 0;
-                const costPerConv = conversions > 0 ? (spend / conversions) : 0;
-                
-                tr.innerHTML = `
-                    <td>
-                        <span style="display:flex; align-items:center; gap:5px; color: inherit; font-weight: normal;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
-                            ${c.campaign_name || 'Sem Nome'}
-                        </span>
-                        <br/>
-                        <small style="color:#64748b; font-size: 0.7rem; font-family: monospace;">ID: ${c.campaign_id || c.id || '-'}</small>
-                    </td>
-                    <td style="text-align: right; color: #1e293b; font-weight: 500;">R$ ${spend.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td style="text-align: right;">R$ ${cpc.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td style="text-align: right; color: #10b981; font-weight: 500;">R$ ${costPerConv.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td style="text-align: right;">${(c.impressions || 0).toLocaleString('pt-BR')}</td>
-                    <td style="text-align: right;">${clicks.toLocaleString('pt-BR')}</td>
-                    <td style="text-align: right;">${conversions.toLocaleString('pt-BR')}</td>
-                `;
-                metaTable.appendChild(tr);
-            });
-            
-            if (!hasValidMeta) {
-                metaTable.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhuma campanha Meta filtrada no período.</td></tr>';
-            }
-        } else {
-            metaTable.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhuma campanha Meta encontrada no período.</td></tr>';
-        }
-    }
 
-    // 5. Atualizar Tabela de Campanhas Google (API)
-    const googleTable = document.querySelector('#cmo-google-table tbody');
-    if (googleTable) {
-        googleTable.innerHTML = ''; // Limpa tudo
-        
-        if (data.campaigns?.google && data.campaigns.google.length > 0) {
-            data.campaigns.google.forEach(c => {
-                // Filtrar para mostrar APENAS "Yelo MVP - Busca SP" (ou se for erro)
-                if (c.id !== 'ERRO_API' && c.id !== 'ERRO' && c.campaign_name !== 'Yelo MVP - Busca SP') {
-                    return; // Ignora as outras campanhas
-                }
-
-                const tr = document.createElement('tr');
-                const isError = c.id === 'ERRO_API' || c.id === 'ERRO';
-                
-                const spend = c.spend || 0;
-                const clicks = c.clicks || 0;
-                const conversions = c.conversions || 0;
-                const cpc = clicks > 0 ? (spend / clicks) : 0;
-                const costPerConv = conversions > 0 ? (spend / conversions) : 0;
-                
-                tr.innerHTML = `
-                    <td>
-                        <span style="display:flex; align-items:center; gap:5px; color: ${isError ? '#ef4444' : 'inherit'}; font-weight: ${isError ? 'bold' : 'normal'};">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="${isError ? '#ef4444' : '#10b981'}"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
-                            ${c.campaign_name || 'Sem Nome'}
-                        </span>
-                        ${!isError ? `<br/><small style="color:#64748b; font-size: 0.7rem; font-family: monospace;">ID: ${c.campaign_id || c.id || '-'}</small>` : ''}
-                    </td>
-                    <td style="text-align: right; color: #1e293b; font-weight: 500;">R$ ${spend.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td style="text-align: right;">R$ ${cpc.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td style="text-align: right; color: #10b981; font-weight: 500;">R$ ${costPerConv.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td style="text-align: right;">${(c.impressions || 0).toLocaleString('pt-BR')}</td>
-                    <td style="text-align: right;">${clicks.toLocaleString('pt-BR')}</td>
-                    <td style="text-align: right;">${conversions.toLocaleString('pt-BR')}</td>
-                `;
-                googleTable.appendChild(tr);
-            });
-        }
-    }
 
 }
 
@@ -499,23 +412,37 @@ async function loadTrafficMetrics(dateStart, dateEnd, token) {
 
         const data = await response.json();
         if (data.success && data.data) {
-            const { ga4, gsc } = data.data;
+            const { ga4, gsc, prevGa4, prevGsc } = data.data;
+
+            const formatTrend = (current, previous, isReversed = false) => {
+                if (!previous || previous === 0) return '';
+                const diff = ((current - previous) / previous) * 100;
+                if (Math.abs(diff) < 0.1) return '';
+                let isPositive = diff > 0;
+                if (isReversed) isPositive = !isPositive;
+                
+                const color = isPositive ? '#10b981' : '#ef4444';
+                const icon = diff > 0 ? '▲' : '▼';
+                return `<span style="font-size: 0.8rem; font-weight: bold; margin-left: 8px; color: ${color};">${icon} ${Math.abs(diff).toFixed(1).replace('.', ',')}%</span>`;
+            };
 
             // Update GA4
             if (ga4) {
-                document.getElementById('cmo-ga4-sessions').textContent = ga4.sessions.toLocaleString('pt-BR');
+                document.getElementById('cmo-ga4-sessions').innerHTML = ga4.sessions.toLocaleString('pt-BR') + (prevGa4 ? formatTrend(ga4.sessions, prevGa4.sessions) : '');
                 document.getElementById('cmo-ga4-users').textContent = ga4.users.toLocaleString('pt-BR');
                 document.getElementById('cmo-ga4-pageviews').textContent = ga4.pageviews.toLocaleString('pt-BR');
                 
                 const engagementRate = ga4.sessions > 0 ? (1 - ga4.bounceRate) * 100 : 0;
-                document.getElementById('cmo-ga4-engagement').textContent = engagementRate.toFixed(1).replace('.', ',') + '%';
+                const prevEngagementRate = prevGa4 && prevGa4.sessions > 0 ? (1 - prevGa4.bounceRate) * 100 : 0;
+                
+                document.getElementById('cmo-ga4-engagement').innerHTML = engagementRate.toFixed(1).replace('.', ',') + '%' + (prevGa4 ? formatTrend(engagementRate, prevEngagementRate) : '');
             }
 
             // Update GSC
             if (gsc) {
-                document.getElementById('cmo-gsc-clicks').textContent = gsc.clicks.toLocaleString('pt-BR');
+                document.getElementById('cmo-gsc-clicks').innerHTML = gsc.clicks.toLocaleString('pt-BR') + (prevGsc ? formatTrend(gsc.clicks, prevGsc.clicks) : '');
                 document.getElementById('cmo-gsc-impressions').textContent = gsc.impressions.toLocaleString('pt-BR');
-                document.getElementById('cmo-gsc-position').textContent = gsc.position.toFixed(1).replace('.', ',') + 'º';
+                document.getElementById('cmo-gsc-position').innerHTML = gsc.position.toFixed(1).replace('.', ',') + 'º' + (prevGsc ? formatTrend(gsc.position, prevGsc.position, true) : ''); // true for reversed logic (lower position is better)
                 document.getElementById('cmo-gsc-ctr').textContent = (gsc.ctr * 100).toFixed(2).replace('.', ',') + '%';
             }
         }
