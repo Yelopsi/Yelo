@@ -25,33 +25,44 @@ router.get('/dashboard', async (req, res) => {
         const prevDateStart = prevStart.toISOString().split('T')[0];
         const prevDateEnd = prevEnd.toISOString().split('T')[0];
 
-        // 2. Fetch de Ads Services (Atual e Anterior)
-        const [metaSpend, googleSpend, metaCampaigns, googleCampaigns, manualGoogle, prevMetaSpend, prevGoogleSpend, prevManualGoogle] = await Promise.all([
-            metaAdsService.getAccountSpend(dateStart, dateEnd),
-            googleAdsService.getAccountSpend(dateStart, dateEnd),
+        // 2. Fetch de Ads Services (Atual, Anterior e Histórico via Campanhas Alvo)
+        const getTargetSpend = (campaigns, targetNameOrId, isGoogle) => {
+            if (!campaigns || campaigns.length === 0 || campaigns[0].id === 'ERRO_API' || campaigns[0].id === 'ERRO') return 0;
+            const target = isGoogle 
+                ? campaigns.find(c => c.campaign_name === targetNameOrId)
+                : campaigns.find(c => (c.campaign_id || c.id) === targetNameOrId);
+            return target ? (target.spend || 0) : 0;
+        };
+
+        const [metaCampaigns, googleCampaigns, prevMetaCampaigns, prevGoogleCampaigns, histMetaCampaigns, histGoogleCampaigns, manualGoogle, prevManualGoogle, manualGoogleHistorical] = await Promise.all([
             metaAdsService.getCampaignInsights(dateStart, dateEnd),
             googleAdsService.getCampaignInsights(dateStart, dateEnd),
+            metaAdsService.getCampaignInsights(prevDateStart, prevDateEnd),
+            googleAdsService.getCampaignInsights(prevDateStart, prevDateEnd),
+            metaAdsService.getCampaignInsights('2026-05-01', dateEnd),
+            googleAdsService.getCampaignInsights('2026-05-01', dateEnd),
             sequelize.models.ManualAdMetric.findOne({ where: { dateStart, dateEnd, platform: 'google' } }),
-            metaAdsService.getAccountSpend(prevDateStart, prevDateEnd),
-            googleAdsService.getAccountSpend(prevDateStart, prevDateEnd),
-            sequelize.models.ManualAdMetric.findOne({ where: { dateStart: prevDateStart, dateEnd: prevDateEnd, platform: 'google' } })
+            sequelize.models.ManualAdMetric.findOne({ where: { dateStart: prevDateStart, dateEnd: prevDateEnd, platform: 'google' } }),
+            sequelize.models.ManualAdMetric.findAll({ where: { platform: 'google' } })
         ]);
 
-        const actualGoogleSpend = googleSpend.spend > 0 ? googleSpend.spend : (manualGoogle ? parseFloat(manualGoogle.spend) || 0 : 0);
-        const actualGoogleClicks = googleSpend.clicks > 0 ? googleSpend.clicks : (manualGoogle ? parseInt(manualGoogle.clicks) || 0 : 0);
-        const actualPrevGoogleSpend = prevGoogleSpend.spend > 0 ? prevGoogleSpend.spend : (prevManualGoogle ? parseFloat(prevManualGoogle.spend) || 0 : 0);
+        const metaSpend = { spend: getTargetSpend(metaCampaigns, '120251213168140531', false) };
+        const prevMetaSpend = { spend: getTargetSpend(prevMetaCampaigns, '120251213168140531', false) };
+        const metaSpendHistorical = { spend: getTargetSpend(histMetaCampaigns, '120251213168140531', false) };
 
-        const totalSpend = metaSpend.spend + actualGoogleSpend;
-        const totalPrevSpend = prevMetaSpend.spend + actualPrevGoogleSpend;
+        const googleSpendAmount = getTargetSpend(googleCampaigns, 'Yelo MVP - Busca SP', true);
+        const actualGoogleSpend = googleSpendAmount > 0 ? googleSpendAmount : (manualGoogle ? parseFloat(manualGoogle.spend) || 0 : 0);
+        
+        const prevGoogleSpendAmount = getTargetSpend(prevGoogleCampaigns, 'Yelo MVP - Busca SP', true);
+        const actualPrevGoogleSpend = prevGoogleSpendAmount > 0 ? prevGoogleSpendAmount : (prevManualGoogle ? parseFloat(prevManualGoogle.spend) || 0 : 0);
 
-        // FETCH HISTORICAL ADS SPEND
-        const metaSpendHistorical = await metaAdsService.getAccountSpend('2020-01-01', dateEnd);
-        const googleSpendHistorical = await googleAdsService.getAccountSpend('2020-01-01', dateEnd);
-        const manualGoogleHistorical = await sequelize.models.ManualAdMetric.findAll({ where: { platform: 'google' } });
-        let actualGoogleSpendHistorical = googleSpendHistorical.spend;
+        let actualGoogleSpendHistorical = getTargetSpend(histGoogleCampaigns, 'Yelo MVP - Busca SP', true);
         if (manualGoogleHistorical && manualGoogleHistorical.length > 0) {
             actualGoogleSpendHistorical += manualGoogleHistorical.reduce((acc, m) => acc + (parseFloat(m.spend) || 0), 0);
         }
+
+        const totalSpend = metaSpend.spend + actualGoogleSpend;
+        const totalPrevSpend = prevMetaSpend.spend + actualPrevGoogleSpend;
 
         // 3. Atribuição B2B (Meta Ads -> Psicólogos)
         // Funil B2B completo:
