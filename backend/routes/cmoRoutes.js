@@ -3,6 +3,7 @@ const router = express.Router();
 const metaAdsService = require('../services/metaAdsService');
 const googleAdsService = require('../services/googleAdsService');
 const { sequelize } = require('../models');
+const moment = require('moment');
 
 // Rota de dashboard principal do CMO
 router.get('/dashboard', async (req, res) => {
