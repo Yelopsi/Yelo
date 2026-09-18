@@ -207,6 +207,7 @@ function renderCMOMetrics(data) {
         }
     }
 
+
     // 4. Atualizar Tabela de Campanhas Meta (Detalhada)
     const metaTable = document.querySelector('#cmo-meta-table tbody');
     if (metaTable) {
@@ -232,9 +233,41 @@ function renderCMOMetrics(data) {
         }
     }
 
-    // 4. Atualizar Tabela Google
-    // A tabela do Google está em modo manual temporário (HTML estático).
-    // O JS não sobrescreve os inputs do usuário.
+    // 5. Atualizar Tabela de Campanhas Google (API + Manual Backup)
+    const googleTable = document.querySelector('#cmo-google-table tbody');
+    if (googleTable) {
+        // Salvamos a linha de inputs manuais para recolocar no final
+        const manualRow = googleTable.lastElementChild;
+        googleTable.innerHTML = ''; // Limpa tudo
+        
+        if (data.campaigns?.google && data.campaigns.google.length > 0 && data.campaigns.google[0].id !== 'ERRO_API' && data.campaigns.google[0].id !== 'ERRO') {
+            data.campaigns.google.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <span style="display:flex; align-items:center; gap:5px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                            ${c.campaign_name || 'Sem Nome'}
+                        </span>
+                        <br/>
+                        <small style="color:#64748b; font-size: 0.7rem; font-family: monospace;">ID: ${c.campaign_id || c.id || '-'}</small>
+                    </td>
+                    <td style="text-align: right; color: #1e293b; font-weight: 500;">R$ ${(c.spend || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right;">${(c.impressions || 0).toLocaleString('pt-BR')}</td>
+                    <td style="text-align: right;">${(c.clicks || 0).toLocaleString('pt-BR')}</td>
+                    <td style="text-align: right;">${(c.conversions || 0).toLocaleString('pt-BR')}</td>
+                    <td style="text-align: center;"><span style="font-size: 0.7rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #475569;">API</span></td>
+                `;
+                googleTable.appendChild(tr);
+            });
+        }
+        
+        // Recoloca a linha manual embaixo como backup
+        if (manualRow) {
+            googleTable.appendChild(manualRow);
+        }
+    }
+
 }
 
 // Funções para salvar e carregar os inputs manuais da tabela do Google
