@@ -233,28 +233,38 @@ function renderCMOMetrics(data) {
         }
     }
 
-    // 5. Atualizar Tabela de Campanhas Google (API + Manual Backup)
+    // 5. Atualizar Tabela de Campanhas Google (API)
     const googleTable = document.querySelector('#cmo-google-table tbody');
     if (googleTable) {
         googleTable.innerHTML = ''; // Limpa tudo
         
-        if (data.campaigns?.google && data.campaigns.google.length > 0 && data.campaigns.google[0].id !== 'ERRO_API' && data.campaigns.google[0].id !== 'ERRO') {
+        if (data.campaigns?.google && data.campaigns.google.length > 0) {
             data.campaigns.google.forEach(c => {
+                // Filtrar para mostrar APENAS "Yelo MVP - Busca SP" (ou se for erro)
+                if (c.id !== 'ERRO_API' && c.id !== 'ERRO' && c.campaign_name !== 'Yelo MVP - Busca SP') {
+                    return; // Ignora as outras campanhas
+                }
+
                 const tr = document.createElement('tr');
+                const isError = c.id === 'ERRO_API' || c.id === 'ERRO';
+                
+                const spend = c.spend || 0;
+                const clicks = c.clicks || 0;
+                const cpc = clicks > 0 ? (spend / clicks) : 0;
+                
                 tr.innerHTML = `
                     <td>
-                        <span style="display:flex; align-items:center; gap:5px;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#10b981"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                        <span style="display:flex; align-items:center; gap:5px; color: ${isError ? '#ef4444' : 'inherit'}; font-weight: ${isError ? 'bold' : 'normal'};">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="${isError ? '#ef4444' : '#10b981'}"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
                             ${c.campaign_name || 'Sem Nome'}
                         </span>
-                        <br/>
-                        <small style="color:#64748b; font-size: 0.7rem; font-family: monospace;">ID: ${c.campaign_id || c.id || '-'}</small>
+                        ${!isError ? `<br/><small style="color:#64748b; font-size: 0.7rem; font-family: monospace;">ID: ${c.campaign_id || c.id || '-'}</small>` : ''}
                     </td>
-                    <td style="text-align: right; color: #1e293b; font-weight: 500;">R$ ${(c.spend || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right; color: #1e293b; font-weight: 500;">R$ ${spend.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right;">R$ ${cpc.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                     <td style="text-align: right;">${(c.impressions || 0).toLocaleString('pt-BR')}</td>
-                    <td style="text-align: right;">${(c.clicks || 0).toLocaleString('pt-BR')}</td>
+                    <td style="text-align: right;">${clicks.toLocaleString('pt-BR')}</td>
                     <td style="text-align: right;">${(c.conversions || 0).toLocaleString('pt-BR')}</td>
-                    <td style="text-align: center;"><span style="font-size: 0.7rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #475569;">API</span></td>
                 `;
                 googleTable.appendChild(tr);
             });

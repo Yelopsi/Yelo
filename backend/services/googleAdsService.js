@@ -61,7 +61,7 @@ class GoogleAdsService {
             if (!result.results || result.results.length === 0) return { spend: 0, impressions: 0, clicks: 0, cpc: 0 };
 
             const metrics = result.results[0].metrics;
-            const spend = (metrics.cost_micros || 0) / 1000000;
+            const spend = (metrics.costMicros || 0) / 1000000;
             const clicks = metrics.clicks || 0;
             
             return {
@@ -103,7 +103,7 @@ class GoogleAdsService {
             if (!accessToken) return [{ id: 'ERRO', campaign_name: '[ERRO GOOGLE] Sem Access Token', spend: 0 }];
 
             const query = `
-                SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.impressions, metrics.clicks 
+                SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.conversions 
                 FROM campaign 
                 WHERE segments.date >= '${dateStart}' AND segments.date <= '${dateEnd}'
                 ORDER BY metrics.cost_micros DESC
@@ -115,9 +115,10 @@ class GoogleAdsService {
             return result.results.map(row => ({
                 id: row.campaign.id,
                 campaign_name: row.campaign.name,
-                spend: (row.metrics.cost_micros || 0) / 1000000,
+                spend: (row.metrics.costMicros || 0) / 1000000,
                 impressions: row.metrics.impressions || 0,
-                clicks: row.metrics.clicks || 0
+                clicks: row.metrics.clicks || 0,
+                conversions: row.metrics.conversions || 0
             }));
         } catch (error) {
             let errorObj = error.response?.data || error.message;
