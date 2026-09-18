@@ -213,7 +213,15 @@ function renderCMOMetrics(data) {
     if (metaTable) {
         metaTable.innerHTML = '';
         if (data.campaigns?.meta && data.campaigns.meta.length > 0) {
+            let hasValidMeta = false;
             data.campaigns.meta.forEach(c => {
+                // Filtra para manter APENAS a campanha '[Conversão] Captação de Psicólogos - Bloco de Notas'
+                const targetId = '120251213168140531';
+                if ((c.campaign_id || c.id) !== targetId) {
+                    return; // Ignora as outras campanhas
+                }
+                
+                hasValidMeta = true;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>
@@ -228,6 +236,10 @@ function renderCMOMetrics(data) {
                 `;
                 metaTable.appendChild(tr);
             });
+            
+            if (!hasValidMeta) {
+                metaTable.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhuma campanha Meta filtrada no período.</td></tr>';
+            }
         } else {
             metaTable.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhuma campanha Meta encontrada no período.</td></tr>';
         }
