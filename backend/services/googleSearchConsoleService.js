@@ -5,9 +5,13 @@ class GoogleSearchConsoleService {
         this.siteUrl = process.env.GSC_SITE_URL;
         
         try {
-            const auth = new google.auth.GoogleAuth({
+            let authOptions = {
                 scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
-            });
+            };
+            if (process.env.GOOGLE_CREDENTIALS_JSON) {
+                authOptions.credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+            }
+            const auth = new google.auth.GoogleAuth(authOptions);
             
             this.searchconsole = google.searchconsole({
                 version: 'v1',

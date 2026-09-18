@@ -3,8 +3,12 @@ const { BetaAnalyticsDataClient } = require('@google-analytics/data');
 class GoogleAnalyticsService {
     constructor() {
         this.propertyId = process.env.GA4_PROPERTY_ID;
-        // The client automatically picks up GOOGLE_APPLICATION_CREDENTIALS from env
-        this.analyticsDataClient = new BetaAnalyticsDataClient();
+        
+        let clientOptions = {};
+        if (process.env.GOOGLE_CREDENTIALS_JSON) {
+            clientOptions.credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+        }
+        this.analyticsDataClient = new BetaAnalyticsDataClient(clientOptions);
     }
 
     async getMetrics(dateStart, dateEnd) {
