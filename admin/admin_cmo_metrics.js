@@ -207,7 +207,42 @@ function renderCMOMetrics(data) {
             document.getElementById('ai-funnel-insight').textContent = "Nenhuma análise disponível para o período.";
         }
     }
+    // 4. Preencher cards individuais de campanhas Meta (Detalhada)
+    if (data.campaigns?.meta && data.campaigns.meta.length > 0) {
+        const targetId = '120251213168140531';
+        const c = data.campaigns.meta.find(camp => (camp.campaign_id || camp.id) === targetId);
+        if (c) {
+            const spend = c.spend || 0;
+            const clicks = c.clicks || 0;
+            const conversions = c.conversions || 0;
+            const cpc = clicks > 0 ? (spend / clicks) : 0;
+            const costPerConv = conversions > 0 ? (spend / conversions) : 0;
+            
+            document.getElementById('cmo-meta-impressions-metric').textContent = (c.impressions || 0).toLocaleString('pt-BR');
+            document.getElementById('cmo-meta-clicks-metric').textContent = clicks.toLocaleString('pt-BR');
+            document.getElementById('cmo-meta-conversions-metric').textContent = conversions.toLocaleString('pt-BR');
+            document.getElementById('cmo-meta-cpc-metric').textContent = 'R$ ' + cpc.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('cmo-meta-cpa-metric').textContent = 'R$ ' + costPerConv.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+    }
 
+    // 5. Preencher cards individuais de campanhas Google
+    if (data.campaigns?.google && data.campaigns.google.length > 0) {
+        const c = data.campaigns.google.find(camp => camp.campaign_name === 'Yelo MVP - Busca SP');
+        if (c) {
+            const spend = c.spend || 0;
+            const clicks = c.clicks || 0;
+            const conversions = c.conversions || 0;
+            const cpc = clicks > 0 ? (spend / clicks) : 0;
+            const costPerConv = conversions > 0 ? (spend / conversions) : 0;
+            
+            document.getElementById('cmo-google-impressions-metric').textContent = (c.impressions || 0).toLocaleString('pt-BR');
+            document.getElementById('cmo-google-clicks-metric').textContent = clicks.toLocaleString('pt-BR');
+            document.getElementById('cmo-google-conversions-metric').textContent = conversions.toLocaleString('pt-BR');
+            document.getElementById('cmo-google-cpc-metric').textContent = 'R$ ' + cpc.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('cmo-google-cpa-metric').textContent = 'R$ ' + costPerConv.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+    }
 
 
 
