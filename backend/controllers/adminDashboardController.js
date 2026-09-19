@@ -168,6 +168,32 @@ exports.getDashboardStats = async (req, res) => {
             };
         }
 
+        let netGrowth90d = 0;
+        try {
+            const [newPaying90dRes] = await db.sequelize.query(`
+                SELECT COUNT(*) as count 
+                FROM "Psychologists" 
+                WHERE "createdAt" >= NOW() - INTERVAL '90 days' 
+                AND status = 'active' 
+                AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0) 
+                AND (is_exempt IS NULL OR is_exempt = false)
+            `, { type: db.sequelize.QueryTypes.SELECT });
+            
+            const [churnedPaying90dRes] = await db.sequelize.query(`
+                SELECT COUNT(*) as count 
+                FROM "Psychologists" 
+                WHERE "updatedAt" >= NOW() - INTERVAL '90 days' 
+                AND status = 'inactive' 
+                AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+            `, { type: db.sequelize.QueryTypes.SELECT });
+
+            const new90d = parseInt(newPaying90dRes?.count || 0, 10);
+            const churned90d = parseInt(churnedPaying90dRes?.count || 0, 10);
+            netGrowth90d = new90d - churned90d;
+        } catch (err) {
+            console.error('Erro ao calcular netGrowth90d:', err);
+        }
+
         console.timeEnd('⏱️ Dashboard Stats Load');
         res.status(200).json({
             mrr: mrr.toFixed(2),
@@ -184,6 +210,7 @@ exports.getDashboardStats = async (req, res) => {
             totalMatches: totalMatches,
             totalClicks: totalClicks,
             isNewRecord: isNewRecord,
+            netGrowth90d: netGrowth90d,
             _debugEasterEgg: easterEggDebug
         });
 

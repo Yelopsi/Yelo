@@ -185,16 +185,15 @@ window.initializePage = function() {
                      if (isNaN(breakevenTarget) || breakevenTarget < 10) breakevenTarget = 10; // Fallback seguro
                      updateSafe('milestone-breakeven-target', breakevenTarget);
 
-                     // Calcular média de crescimento móvel (Último mês fechado vs Mês atual via CMO)
-                     // O CMO Dashboard retorna o active do período atual e do período anterior.
-                     let currentActive = parseInt(cmoData?.platform?.b2b?.active) || currentPaying;
-                     let prevActive = parseInt(cmoData?.historical?.platform?.b2b?.active) || currentPaying;
+                     // Calcular média de crescimento móvel (Baseado no netGrowth90d calculado pelo backend)
+                     // A divisão por 3 nos dá a média mensal de crescimento líquido dos últimos 3 meses
+                     let netGrowthPerMonth = 0;
+                     if (stats.netGrowth90d !== undefined && stats.netGrowth90d !== null) {
+                         netGrowthPerMonth = stats.netGrowth90d / 3;
+                     }
                      
-                     // A diferença entre o atual e o mês anterior dá a velocidade mensal
-                     let netGrowthPerMonth = currentActive - prevActive;
-                     
-                     // Fallback caso a API do CMO não traga o dado histórico ou o crescimento seja 0
-                     // Usamos o new30d bruto dividido por 2 como uma aproximação de rede se o dado faltar
+                     // Fallback caso a API não traga o dado ou o crescimento seja nulo/negativo
+                     // Usamos o new30d bruto dividido por 2 como uma aproximação se o dado faltar e for a única métrica
                      if (netGrowthPerMonth <= 0) {
                          const rawNew30d = parseInt(stats.newPsis30d) || 0;
                          netGrowthPerMonth = rawNew30d > 0 ? (rawNew30d / 2) : 0; 
