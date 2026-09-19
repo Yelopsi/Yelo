@@ -162,6 +162,7 @@ window.initializePage = function() {
              updateSafe('kpi-geral-conversao', `${stats.overallConversionRate || 0}%`);
              updateSafe('kpi-total-matches', (stats.totalMatches || 0).toLocaleString('pt-BR'));
              updateSafe('kpi-total-cliques', (stats.totalClicks || 0).toLocaleString('pt-BR'));
+             updateSafe('kpi-waiting-list', stats.waitingListCount || 0);
 
 
              // --- 5. MARCOS DE CRESCIMENTO E BREAKEVEN ---
