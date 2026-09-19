@@ -170,20 +170,33 @@ const applyFairness = (scoredCandidates, fairShare) => {
 
             let finalScore = c.rawMatchScore;
 
-            // --- BÔNUS DE FOME (Cota Justa) ---
+            // Identificação precisa do perfil (Trial vs Pagante)
+            const isVip = c.is_exempt === true || String(c.is_exempt).toLowerCase() === 'true';
+            const hasSub = !!(c.subscriptionId) || (c.subscription_payments_count > 0);
+            const isPaid = isVip || hasSub;
+            const isTrial = !isPaid && c.status === 'active';
+
+            // --- BÔNUS DE FOME (Cota Justa) E FIRST BLOOD ---
             const conversoes = c.conversoes14d || 0;
             const leads = c.leads14d || 0;
 
-            if (conversoes === 0) {
-                finalScore += 50; // Maior bônus para quem não fechou ninguém
+            if (isTrial && leads === 0) {
+                finalScore += 100; // First Blood: Super boost para entregar o 1º paciente rápido no trial
+            } else if (conversoes === 0) {
+                finalScore += 50; // Maior bônus padrão para quem não fechou ninguém
             } else if (conversoes < fairShare) {
                 finalScore += 25; // Bônus médio para quem ainda não bateu a cota
             }
 
-            // --- PENALIDADE DE DESPERDÍCIO (Bad Sales) ---
-            // 7 ou mais cliques nos últimos 14 dias com ZERO conversões
-            if (leads >= 7 && conversoes === 0) {
-                finalScore *= 0.60; // Penalidade severa (-40%) no score final
+            // --- PENALIDADE DE DESPERDÍCIO (Bad Sales) E COTA MÁXIMA DE TRIAL ---
+            if (isTrial) {
+                if (leads >= 3) {
+                    finalScore *= 0.20; // Cota atingida: Penalidade de -80% para ceder espaço aos pagantes/novos
+                }
+            } else if (isPaid) {
+                if (leads >= 7 && conversoes === 0) {
+                    finalScore *= 0.60; // Penalidade severa (-40%) no score final (Regra normal de Bad Sales)
+                }
             }
 
             // --- TRIAL-END BOOST ---
@@ -192,6 +205,11 @@ const applyFairness = (scoredCandidates, fairShare) => {
                 if (daysUntilExpiry > 0 && daysUntilExpiry <= 3) {
                     finalScore += 5; 
                 }
+            }
+
+            // --- MULTIPLICADOR VIP (Pagantes) ---
+            if (isPaid) {
+                finalScore *= 1.25; // Boost de 25% garantido para manter assinantes no topo
             }
 
             // Aplica o cooldown no score FINAL
