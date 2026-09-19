@@ -169,7 +169,7 @@
 <!-- Template para a view de post completo -->
 <template id="forum-full-post-template">
     <div class="reddit-full-view">
-        <div class="forum-post-layout forum-layout-adjust">
+        <div style="max-width: 740px; margin: 0 auto; display: flex; flex-direction: column; width: 100%;">
             <div class="forum-post-main">
                 <div class="reddit-app-header">
                     <button id="forum-back-to-feed-btn" class="app-back-btn">
@@ -230,14 +230,13 @@
                             <button id="btn-load-more-comments" class="btn btn-secundario hidden">Mostrar mais comentários</button>
                         </div>
                     </div>
+                    
+                    <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                        <h3 style="font-size: 1rem; color: #64748b; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Ver Outros Posts</h3>
+                        <div id="related-posts-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
+                    </div>
                 </div>
             </div>
-            <aside class="forum-post-sidebar">
-                <div class="widget">
-                    <h3 style="margin-top:0;">Tópicos Populares</h3>
-                    <div id="related-posts-container"></div>
-                </div>
-            </aside>
         </div>
     </div>
 </template>
@@ -278,18 +277,4 @@
             <div class="comment-replies-container yt-replies"></div>
         </div>
     </div>
-</template>
-
-<!-- Template para um item na sidebar de posts relacionados -->
-<template id="forum-related-post-template">
-    <a href="#" class="related-post-item">
-        <div class="related-post-content">
-            <span class="related-post-category"></span>
-            <h5 class="related-post-title"></h5>
-        </div>
-        <div class="related-post-meta">
-            <span class="related-post-votes"></span>
-            <span class="related-post-comments"></span>
-        </div>
-    </a>
 </template>

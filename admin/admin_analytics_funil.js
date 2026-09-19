@@ -113,6 +113,7 @@ window.initializePage = function() {
                     item.originalPos = idx + 1; // Salva a posição oficial do backend
                     const visitasTotais = (item.aparicoesBusca || 0) + (item.visitasDiretas || 0);
                     item.conversaoVal = visitasTotais > 0 ? ((item.cliquesWpp || 0) / visitasTotais) * 100 : 0;
+                    item.conversaoFechamentoVal = (item.cliquesWpp || 0) > 0 ? ((item.fechamentos || 0) / item.cliquesWpp) * 100 : 0;
                 });
             }
             
@@ -920,8 +921,8 @@ window.initializePage = function() {
         }
         
         const sortedData = [...globalRankingData].sort((a, b) => {
-            let valA = column === 'conversao' ? a.conversaoVal : (column === 'posicao' ? a.originalPos : a[column]);
-            let valB = column === 'conversao' ? b.conversaoVal : (column === 'posicao' ? b.originalPos : b[column]);
+            let valA = column === 'conversao' ? a.conversaoVal : (column === 'conversaoFechamento' ? a.conversaoFechamentoVal : (column === 'posicao' ? a.originalPos : a[column]));
+            let valB = column === 'conversao' ? b.conversaoVal : (column === 'conversaoFechamento' ? b.conversaoFechamentoVal : (column === 'posicao' ? b.originalPos : b[column]));
             
             if (typeof valA === 'string') { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
             
@@ -947,12 +948,12 @@ window.initializePage = function() {
         if (!tbody) return;
 
         if (!ranking) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #b45309; background: #fffbeb; font-weight: 500;">O endpoint <code>/api/admin/analytics/ranking</code> está pendente no servidor backend.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #b45309; background: #fffbeb; font-weight: 500;">O endpoint <code>/api/admin/analytics/ranking</code> está pendente no servidor backend.</td></tr>';
             return;
         }
 
         if (ranking.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Nenhum dado de performance encontrado no período.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #666;">Nenhum dado de performance encontrado no período.</td></tr>';
             return;
         }
 
@@ -964,6 +965,7 @@ window.initializePage = function() {
 
             const visitasTotais = (item.aparicoesBusca || 0) + (item.visitasDiretas || 0);
             const conversao = visitasTotais > 0 ? (((item.cliquesWpp || 0) / visitasTotais) * 100).toFixed(1) + '%' : '0%';
+            const conversaoFechamento = (item.cliquesWpp || 0) > 0 ? (((item.fechamentos || 0) / item.cliquesWpp) * 100).toFixed(1) + '%' : '0%';
 
             return `<tr>
                 <td data-label="Posição" style="text-align: center;">${badgePos}</td>
@@ -972,6 +974,7 @@ window.initializePage = function() {
                 <td data-label="Aparições na Busca" style="text-align: center; color: #4b5563;">${item.aparicoesBusca || 0}</td>
                 <td data-label="Visitas Diretas" style="text-align: center; color: #4b5563;">${item.visitasDiretas || 0}</td>
                 <td data-label="Conversão" style="text-align: center; font-weight: bold; color: #3b82f6;">${conversao}</td>
+                <td data-label="Conv. Fechamento" style="text-align: center; font-weight: bold; color: #8b5cf6;">${conversaoFechamento} <span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">(${item.fechamentos || 0})</span></td>
             </tr>`;
         }).join('');
     }

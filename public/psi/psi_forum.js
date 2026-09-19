@@ -168,7 +168,8 @@
     }
 
         // --- Funções de Renderização ---
-        function renderPostCard(post) {
+        function renderPostCard(post, targetContainer = null) {
+            const container = (targetContainer instanceof HTMLElement) ? targetContainer : postsContainer;
             const card = postCardTemplate.content.cloneNode(true).firstElementChild;
             card.dataset.postId = post.id;
 
@@ -226,7 +227,7 @@
                 if (editBtn) editBtn.classList.add('hidden');
                 if (deleteBtn) deleteBtn.classList.add('hidden');
             }
-            postsContainer.appendChild(card);
+            container.appendChild(card);
         }
 
         async function loadFullPost(postId) {
@@ -449,15 +450,8 @@
                     container.innerHTML = '<p style="color:#999; font-size:0.9rem; padding:10px;">Nenhum tópico popular no momento.</p>';
                     return;
                 }
-                const relatedTemplate = document.getElementById('forum-related-post-template');
                 related.forEach(post => {
-                    const item = relatedTemplate.content.cloneNode(true).firstElementChild;
-                    item.querySelector('.related-post-category').textContent = post.category;
-                    item.querySelector('.related-post-title').textContent = post.title;
-                    item.querySelector('.related-post-votes').textContent = `❤️ ${post.votes}`;
-                    item.querySelector('.related-post-comments').textContent = `💬 ${post.commentCount}`;
-                    item.onclick = (e) => { e.preventDefault(); loadFullPost(post.id); };
-                    container.appendChild(item);
+                    renderPostCard(post, container);
                 });
             } catch (err) { container.innerHTML = ''; }
         }

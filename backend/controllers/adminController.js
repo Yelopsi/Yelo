@@ -448,6 +448,15 @@ exports.getPsiRanking = async (req, res) => {
             GROUP BY "psychologistId"
         `, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
 
+        // 1.5 Busca Fechamentos (Conversões) do WhatsApp
+        const dealsData = await db.sequelize.query(`
+            SELECT "psychologistId", COUNT(id) as total_fechamentos
+            FROM "WhatsAppClickLogs"
+            WHERE ("dealClosed" = 'yes' OR "dealClosed" = 'started')
+            ${dateFilter ? 'AND ' + dateFilter.replace('WHERE ', '') : ''}
+            GROUP BY "psychologistId"
+        `, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+
         // 2. Busca Aparições (Com fallback inteligente caso a coluna 'type' não exista na tabela antiga)
         let appearancesData = [];
         try {
@@ -479,13 +488,15 @@ exports.getPsiRanking = async (req, res) => {
         // 4. Mapeia e consolida os dados de cada um
         const rankingMap = psis.map(psi => {
             const clickRecord = clicksData.find(c => c.psychologistId === psi.id);
+            const dealRecord = dealsData.find(d => d.psychologistId === psi.id);
             const psiApps = appearancesData.filter(a => a.psychologistId === psi.id);
             
             const cliquesWpp = clickRecord ? parseInt(clickRecord.total_cliques) : 0;
+            const fechamentos = dealRecord ? parseInt(dealRecord.total_fechamentos) : 0;
             const aparicoesBusca = psiApps.filter(a => a.type === 'profile_click_funnel').reduce((acc, curr) => acc + parseInt(curr.total_aparicoes), 0);
             const visitasDiretas = psiApps.filter(a => a.type !== 'profile_click_funnel').reduce((acc, curr) => acc + parseInt(curr.total_aparicoes), 0);
             
-            return { id: psi.id, nome: psi.nome, cliquesWpp, aparicoesBusca, visitasDiretas };
+            return { id: psi.id, nome: psi.nome, cliquesWpp, fechamentos, aparicoesBusca, visitasDiretas };
         });
 
         // 5. Ordena o Ranking: Primeiro quem tem + Cliques, depois quem tem + Visitas/Aparições Totais
