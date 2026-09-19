@@ -286,11 +286,23 @@ window.initializePage = function() {
     function renderPlanosAtivos(plans) {
         const tbody = document.getElementById('planos-ativos-body');
         tbody.innerHTML = '';
-        if (!plans || plans.length === 0) {
+        
+        // Filtra para remover os que estao vencidos a mais de 2 dias
+        const activePlans = (plans || []).filter(plan => {
+            if (!plan.nextBilling) return true;
+            const d = new Date(plan.nextBilling);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            d.setHours(0,0,0,0);
+            const diffDays = Math.round((d - today) / 86400000);
+            return diffDays >= -2;
+        });
+
+        if (activePlans.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color:var(--saas-muted);">Nenhum próximo pagamento mapeado.</td></tr>';
             return;
         }
-        plans.forEach(plan => {
+        activePlans.forEach(plan => {
             tbody.innerHTML += `<tr>
                 <td data-label="Cliente"><div class="user-cell" onclick="window.openCSDrawer('${plan.psychologistId}')" style="cursor: pointer; transition: color 0.2s; text-decoration: underline; text-underline-offset: 4px;" onmouseover="this.style.color='var(--saas-blue)'" onmouseout="this.style.color='inherit'"><div class="avatar">${getInitials(plan.psychologistName)}</div> ${plan.psychologistName}</div></td>
                 <td data-label="Plano"><span style="background: var(--saas-bg); border: 1px solid var(--saas-border); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; color: var(--saas-text);">${plan.planName}</span></td>
