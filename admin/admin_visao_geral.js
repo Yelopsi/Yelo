@@ -190,17 +190,17 @@ window.initializePage = function() {
                      let netGrowthPerMonth = 0;
                      if (stats.netGrowth90d !== undefined && stats.netGrowth90d !== null) {
                          netGrowthPerMonth = stats.netGrowth90d / 3;
-                     }
-                     
-                     // Fallback caso a API não traga o dado ou o crescimento seja nulo/negativo
-                     // Usamos o new30d bruto dividido por 2 como uma aproximação se o dado faltar e for a única métrica
-                     if (netGrowthPerMonth <= 0) {
+                     } else {
+                         // Fallback APENAS se a API falhar em trazer o dado
                          const rawNew30d = parseInt(stats.newPsis30d) || 0;
+                         // Pega os novos de 30d, e tira uma estimativa conservadora de 50% de churn se não houver dados reais
                          netGrowthPerMonth = rawNew30d > 0 ? (rawNew30d / 2) : 0; 
                      }
 
                      function formatProjection(target) {
                          if (currentPaying >= target) return "Atingido ✓";
+                         
+                         // Se o crescimento líquido (novos - churn) for menor ou igual a 0, não vai atingir
                          if (netGrowthPerMonth <= 0) return "Estagnado";
                          
                          const monthsNeeded = (target - currentPaying) / netGrowthPerMonth;

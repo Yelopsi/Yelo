@@ -244,12 +244,12 @@ exports.getPsychologistFullDetails = async (req, res) => {
 
 /**
  * Rota: POST /api/admin/psychologists/grant-trial-all
- * Descrição: Libera 14 dias de teste (Premium) para todos os psicólogos pendentes/inativos.
+ * Descrição: Libera 7 dias de teste (Premium) para todos os psicólogos pendentes/inativos.
  */
 exports.grantTrialToAll = async (req, res) => {
     try {
         const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 14);
+        trialEndDate.setDate(trialEndDate.getDate() + 7);
 
         const [updatedRows, metadata] = await db.sequelize.query(`
             UPDATE "Psychologists" 
@@ -261,10 +261,10 @@ exports.grantTrialToAll = async (req, res) => {
             AND "subscriptionId" IS NULL
         `, { replacements: { trialEndDate } });
 
-        console.log(`[Admin] 14 dias de teste liberados para os psicólogos.`);
-        res.status(200).json({ message: `Sucesso! 14 dias liberados para os profissionais pendentes e inativos.` });
+        console.log(`[Admin] 7 dias de teste liberados para os psicólogos.`);
+        res.status(200).json({ message: `Sucesso! 7 dias liberados para os profissionais pendentes e inativos.` });
     } catch (error) {
-        console.error('Erro ao conceder 14 dias para todos:', error);
+        console.error('Erro ao conceder 7 dias para todos:', error);
         res.status(500).json({ error: 'Erro interno ao processar a liberação em massa.' });
     }
 };

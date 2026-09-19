@@ -307,6 +307,20 @@
 
         blogSubmitHandler = async function(e) {
             e.preventDefault();
+            
+            const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+            if (psiData && psiData.status === 'pending') {
+                if (typeof window.loadPage === 'function') {
+                    window.loadPage('psi_meu_perfil.html');
+                }
+                if (typeof window.showToast === 'function') {
+                    window.showToast("Preencha o seu CPF na aba 'Perfil Público' para ativar os seus 7 dias de teste e publicar no Blog!", 'error');
+                } else {
+                    alert("Preencha o seu CPF na aba 'Perfil Público' para ativar os seus 7 dias de teste e publicar no Blog!");
+                }
+                return;
+            }
+
             const btn = document.getElementById('btn-salvar-artigo');
             const originalText = btn.innerHTML;
             btn.innerHTML = "⏳ Salvando..."; btn.disabled = true;

@@ -213,7 +213,7 @@ router.get('/profissionais', async (req, res) => {
         const mocks = [
             { comment: "O suporte é, sem dúvida, um diferencial gigantesco. Recebi orientações super atenciosas de como ajustar a minha biografia para focar na dor do paciente e gerar mais conexão. Você não é tratado como apenas mais um número; a equipe realmente se importa em te ajudar a ter resultados.", nome: "Marina S.", fotoUrl: null, abordagem: "TCC", rating: 5 },
             { comment: "A plataforma é linda e super intuitiva. Dá pra ver que foi desenhada pra facilitar a nossa vida, sem aquela poluição visual pesada. Achei a proposta excelente e muito fácil de mexer!", nome: "Camila E.", fotoUrl: null, abordagem: "Humanista", rating: 5 },
-            { comment: "Estou começando na clínica agora e as ferramentas de gestão ajudam demais. A calculadora de honorários me deu muita segurança para precificar, e ter os 14 dias para testar sem compromisso tira qualquer peso.", nome: "Felipe L.", fotoUrl: null, abordagem: "Psicanálise", rating: 5 },
+            { comment: "Estou começando na clínica agora e as ferramentas de gestão ajudam demais. A calculadora de honorários me deu muita segurança para precificar, e ter os 7 dias para testar sem compromisso tira qualquer peso.", nome: "Felipe L.", fotoUrl: null, abordagem: "Psicanálise", rating: 5 },
             { comment: "não cobrarem comissão por sessão faz toda a diferença  . Adoro", nome: "Juliana P.", fotoUrl: null, abordagem: "Sistêmica", rating: 5 }
         ];
         

@@ -49,6 +49,25 @@
                 if(document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = `+${whatsappClicks}`;
                 if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = `+${profileViews}`;
             }
+
+            if (stats.matchImpressions > 0) {
+                const elItemMatch = document.getElementById('hero-item-match-impressions');
+                const elValMatch = document.getElementById('hero-match-impressions');
+                if (elItemMatch && elValMatch) {
+                    elItemMatch.style.display = '';
+                    elValMatch.innerHTML = `+${stats.matchImpressions}`;
+                }
+            }
+            
+            const contatosConvertidos = stats.contatosConvertidos || 0;
+            if (contatosConvertidos > 0) {
+                const elItemConv = document.getElementById('hero-item-conversions');
+                const elValConv = document.getElementById('hero-conversions');
+                if (elItemConv && elValConv) {
+                    elItemConv.style.display = '';
+                    elValConv.innerHTML = `+${contatosConvertidos}`;
+                }
+            }
             
             const realScore = stats.betterThanPercentage !== undefined ? Math.min(stats.betterThanPercentage, 99) : 0;
             if(document.getElementById('hero-benchmark-text')) {

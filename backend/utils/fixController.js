@@ -39,7 +39,7 @@ exports.debugJuliana = async (req, res) => {
         
         let motivo = "NÃO DEVERIA APARECER";
         if (isVip) motivo = "PASSOU PORQUE É VIP (is_exempt = true)";
-        else if (psy.status === 'pending' && daysSinceCreation <= 14) motivo = "PASSOU PORQUE ESTÁ NO TRIAL (pending <= 14 dias)";
+        else if (psy.status === 'pending' && daysSinceCreation <= 7) motivo = "PASSOU PORQUE ESTÁ NO TRIAL (pending <= 7 dias)";
         else if (validade && validade > agora) motivo = "PASSOU PORQUE A DATA DE VENCIMENTO ESTÁ NO FUTURO";
         
         res.json({
@@ -195,7 +195,7 @@ exports.runNotifyTrial = async (req, res) => {
             
             sentCount++;
         }
-        res.send(`<div style="font-family: sans-serif; padding: 20px;"><h2>✅ Ajuste Concluído!</h2><p>O acesso de 14 dias foi ativado no banco para ${sentCount} profissionais.<br><br><b>Nenhum e-mail foi enviado nesta execução.</b></p></div>`);
+        res.send(`<div style="font-family: sans-serif; padding: 20px;"><h2>✅ Ajuste Concluído!</h2><p>O acesso de 7 dias foi ativado no banco para ${sentCount} profissionais.<br><br><b>Nenhum e-mail foi enviado nesta execução.</b></p></div>`);
     } catch (error) { res.status(500).send("Erro: " + error.message); }
 };
 
@@ -220,14 +220,14 @@ exports.dispararErrataTrial = async (req, res) => {
                 <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
                     <h2 style="color: #1B4332;">Oops! Corrigimos um pequeno bug, ${psi.nome.split(' ')[0]}! 🛠️</h2>
                     <p>Aqui é o Anderson, da Yelo.</p>
-                    <p>Recentemente, liberamos o seu acesso Premium de 14 dias. Porém, devido a uma falha no nosso sistema, o seu painel pode ter exibido a mensagem de "Expirado" ou "Bloqueado" de forma incorreta logo após o seu login.</p>
+                    <p>Recentemente, liberamos o seu acesso Premium de 7 dias. Porém, devido a uma falha no nosso sistema, o seu painel pode ter exibido a mensagem de "Expirado" ou "Bloqueado" de forma incorreta logo após o seu login.</p>
                     <p><strong>A boa notícia: já resolvemos isso! ✅</strong></p>
-                    <p>O seu período de teste de 14 dias está 100% ativo a partir de agora. Você já pode acessar a plataforma normalmente, configurar seu perfil completo e explorar todas as ferramentas sem nenhum bloqueio.</p>
+                    <p>O seu período de teste de 7 dias está 100% ativo a partir de agora. Você já pode acessar a plataforma normalmente, configurar seu perfil completo e explorar todas as ferramentas sem nenhum bloqueio.</p>
                     <p>Pedimos desculpas pela confusão e agradecemos imensamente a paciência!</p>
                     <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" style="display: inline-block; padding: 12px 24px; background-color: #1B4332; color: #fff; text-decoration: none; border-radius: 50px; font-weight: bold; margin-top: 15px;">Acessar meu Painel</a>
                 </div>
             `;
-            try { await emailService.sendEmail(psi.email, "Correção: Seu acesso de 14 dias está liberado! ✅", htmlContent); sentCount++; } 
+            try { await emailService.sendEmail(psi.email, "Correção: Seu acesso de 7 dias está liberado! ✅", htmlContent); sentCount++; } 
             catch(e) { console.error(`Erro ao enviar errata para ${psi.email}:`, e.message); }
         }
         res.send(`<div style="font-family: sans-serif; padding: 20px;"><h2>✅ Errata Enviada!</h2><p>E-mails de correção enviados com sucesso para ${sentCount} profissionais.</p></div>`);
@@ -272,7 +272,7 @@ exports.runInadimplentes = async (req, res) => {
                 if (!subId) {
                     const isTrial = psi.planExpiresAt && new Date(psi.planExpiresAt) > new Date();
                     if (isTrial) {
-                        acao = '<span style="color:blue; font-weight:bold;">Mantido (Trial de 14 dias ativo)</span>';
+                        acao = '<span style="color:blue; font-weight:bold;">Mantido (Trial de 7 dias ativo)</span>';
                     } else {
                         await psi.update({ status: 'inactive', plano: null, planExpiresAt: new Date(0) });
                         acao = '<span style="color:red; font-weight:bold;">Revogado (Sem ID de Assinatura e Trial Vencido)</span>';

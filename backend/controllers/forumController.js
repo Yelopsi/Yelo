@@ -118,6 +118,9 @@ const notificationService = require('../services/notificationService');
 
 exports.createPost = async (req, res) => {
     try {
+        if (req.user.status === 'pending') {
+            return res.status(403).json({ error: 'Você precisa preencher seu CPF no perfil para liberar os 7 dias de teste e interagir no Fórum.' });
+        }
         const { title, content, category, isAnonymous } = req.body;
         const post = await ForumPost.create({
             title, content, category, isAnonymous,
@@ -301,6 +304,9 @@ exports.getComments = async (req, res) => {
 
 exports.createComment = async (req, res) => {
     try {
+        if (req.user.status === 'pending') {
+            return res.status(403).json({ error: 'Você precisa preencher seu CPF no perfil para liberar os 7 dias de teste e interagir no Fórum.' });
+        }
         const { content, isAnonymous, parentId } = req.body; // Adiciona parentId
         const comment = await ForumComment.create({
             content, isAnonymous,

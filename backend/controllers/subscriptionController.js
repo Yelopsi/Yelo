@@ -170,10 +170,10 @@ exports.cancelSubscription = async (req, res) => {
 
             const accountCreatedAt = new Date(psychologist.createdAt);
             const trialEndDate = new Date(accountCreatedAt);
-            trialEndDate.setDate(trialEndDate.getDate() + 14);
+            trialEndDate.setDate(trialEndDate.getDate() + 7);
 
             if (trialEndDate > new Date()) {
-                // Se a conta tem menos de 14 dias, devolve o plano "Essencial" (Trial)
+                // Se a conta tem menos de 7 dias, devolve o plano "Essencial" (Trial)
                 await psychologist.update({
                     status: 'active',
                     plano: 'Essencial',

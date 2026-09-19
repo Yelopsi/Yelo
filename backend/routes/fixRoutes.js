@@ -32,7 +32,7 @@ router.get('/api/run-clear-waitlist', fixController.runClearWaitlist);
 // --- ROTA DE CORREÇÃO: VER QUEM FOI CONVIDADO MAS O E-MAIL FALHOU E RESETAR ---
 router.get('/api/fix-reset-failed-invites', fixController.resetFailedInvites);
 
-// --- ROTA DE DISPARO DE E-MAIL (14 DIAS) PARA PSICÓLOGOS ANTIGOS ---
+// --- ROTA DE DISPARO DE E-MAIL (7 DIAS) PARA PSICÓLOGOS ANTIGOS ---
 router.get('/api/run-notify-trial', fixController.runNotifyTrial);
 
 // --- ROTA DE ERRATA: AVISO DE CORREÇÃO DO BUG "EXPIRADO" ---

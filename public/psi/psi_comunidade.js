@@ -227,6 +227,20 @@
                     if (btnResponder) {
                         btnResponder.onclick = (e) => {
                             if (e) e.stopPropagation();
+                            
+                            const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+                            if (psiData && psiData.status === 'pending') {
+                                if (typeof window.showToast === 'function') {
+                                    window.showToast("Preencha o seu CPF na aba 'Perfil Público' para ativar os seus 7 dias de teste e liberar o envio de respostas no Fórum!", 'error');
+                                } else {
+                                    alert("Preencha o seu CPF na aba 'Perfil Público' para ativar os seus 7 dias de teste e liberar o envio de respostas no Fórum!");
+                                }
+                                if (typeof window.loadPage === 'function') {
+                                    window.loadPage('psi_meu_perfil.html');
+                                }
+                                return;
+                            }
+
                             const modal = document.getElementById('qna-answer-modal');
                             const textarea = document.getElementById('qna-answer-textarea');
                             if (!modal || !textarea) return;

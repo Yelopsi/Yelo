@@ -96,7 +96,7 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         const hasValidCpf = !!(psychologist.cpf && psychologist.cpf.replace(/\D/g, '').length >= 11);
         responseData.showTrialBanner = (psychologist.status === 'pending' && !hasValidCpf);
         responseData.trialBannerMessage = responseData.showTrialBanner
-            ? "Complete seu CPF no perfil para liberar seus 14 dias Premium grátis."
+            ? "Complete seu CPF no perfil para liberar seus 7 dias Premium grátis."
             : null;
 
         responseData.globalStats = {
@@ -305,10 +305,10 @@ exports.updatePsychologistProfile = async (req, res) => {
         await psychologist.update(updatePayload);
 
         // --- ATIVAÇÃO DO TRIAL PÓS-CADASTRO (ANTI-ABUSO) ---
-        // Se o perfil estava pendente e o profissional preencheu um CPF válido agora, ativa os 14 dias
+        // Se o perfil estava pendente e o profissional preencheu um CPF válido agora, ativa os 7 dias
         if (psychologist.status === 'pending' && cpf && cpf.replace(/\D/g, '').length >= 11) {
             const trialEndDate = new Date();
-            trialEndDate.setDate(trialEndDate.getDate() + 14);
+            trialEndDate.setDate(trialEndDate.getDate() + 7);
             await psychologist.update({
                 status: 'active',
                 plano: 'Essencial',

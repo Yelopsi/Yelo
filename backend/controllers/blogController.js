@@ -79,6 +79,12 @@ module.exports = {
                 return res.status(400).json({ error: "Título/Conteúdo obrigatórios." });
             }
 
+            // [NOVO] Bloqueio para perfis pendentes
+            if (req.psychologist?.status === 'pending' || req.user?.status === 'pending') {
+                if (req.file) try { await fs.unlink(req.file.path); } catch(e){}
+                return res.status(403).json({ error: "Você precisa preencher seu CPF no perfil para publicar no blog." });
+            }
+
             const userId = req.psychologist?.id || req.user?.id || req.userId;
             let finalImageUrl = imagem_url;
 

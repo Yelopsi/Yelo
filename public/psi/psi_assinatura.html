@@ -329,7 +329,7 @@
                 <span class="old-price">R$ 199</span>
                 <div class="price">R$ 99</div>
                 <span class="period">/mês</span>
-                <div id="txt-trial-marketing" style="font-size: 0.85rem; color: #16a34a; font-weight: 800; margin-top: 5px;">14 DIAS DE TESTE GRÁTIS<br>NÃO PRECISA DE CARTÃO DE CRÉDITO</div>
+                <div id="txt-trial-marketing" style="font-size: 0.85rem; color: #16a34a; font-weight: 800; margin-top: 5px;">7 DIAS DE TESTE GRÁTIS<br>NÃO PRECISA DE CARTÃO DE CRÉDITO</div>
             </div>
 
             <ul class="features-list">
@@ -481,12 +481,12 @@
             // Fallback robusto para perfis de teste ou legados que não possuam a data preenchida
             if (!planExpiresAt && !hasSubscription && !user.is_exempt) {
                 planExpiresAt = new Date(user.createdAt || hoje);
-                planExpiresAt.setDate(planExpiresAt.getDate() + 14);
+                planExpiresAt.setDate(planExpiresAt.getDate() + 7);
                 
                 // Hack para garantir que o banner apareça na sua conta de testes mesmo que seja antiga
                 if (planExpiresAt <= hoje) {
                     planExpiresAt = new Date(hoje);
-                    planExpiresAt.setDate(planExpiresAt.getDate() + 14);
+                    planExpiresAt.setDate(planExpiresAt.getDate() + 7);
                 }
             }
 

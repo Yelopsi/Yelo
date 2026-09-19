@@ -11,7 +11,7 @@ window.initializePage = function() {
     // Inicializa as datas de filtro (últimos 30 dias por padrão)
     const startInput = document.getElementById('funil-start');
     const endInput = document.getElementById('funil-end');
-    if (startInput && endInput && !startInput.value) {
+    if (startInput && endInput) {
         const today = new Date();
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(today.getDate() - 30);
@@ -167,24 +167,35 @@ window.initializePage = function() {
                 }
             };
 
+            const renderTrend = (current, previous, inverted = false) => {
+                if (!previous || previous === 0) return '';
+                const delta = ((current - previous) / previous) * 100;
+                if (Math.abs(delta) < 0.1) return '';
+                let isGood = delta > 0;
+                if (inverted) isGood = !isGood;
+                const color = isGood ? '#10b981' : '#ef4444';
+                const icon = delta > 0 ? '▲' : '▼';
+                return `<span style="font-size: 0.8rem; font-weight: bold; margin-left: 8px; color: ${color};">${icon} ${Math.abs(delta).toFixed(1)}%</span>`;
+            };
+
             // --- 1. POPULA KPIs SUPERIORES ---
             const kpiVisitas = document.getElementById('kpi-visitas');
-            if (kpiVisitas) kpiVisitas.textContent = data.visitas.toLocaleString();
+            if (kpiVisitas) kpiVisitas.innerHTML = `${data.visitas.toLocaleString()}${renderTrend(data.visitas, data.prevVisitas)}`;
             
             const kpiIniciaram = document.getElementById('kpi-iniciaram');
-            if(kpiIniciaram) kpiIniciaram.textContent = data.iniciaram.toLocaleString();
+            if(kpiIniciaram) kpiIniciaram.innerHTML = `${data.iniciaram.toLocaleString()}${renderTrend(data.iniciaram, data.prevIniciaram)}`;
             
             const kpiCompletaram = document.getElementById('kpi-completaram');
-            if(kpiCompletaram) kpiCompletaram.textContent = data.completaram.toLocaleString();
+            if(kpiCompletaram) kpiCompletaram.innerHTML = `${data.completaram.toLocaleString()}${renderTrend(data.completaram, data.prevCompletaram)}`;
 
             const kpiWhatsapp = document.getElementById('kpi-whatsapp');
-            if (kpiWhatsapp) kpiWhatsapp.textContent = data.whatsappUnique.toLocaleString();
+            if (kpiWhatsapp) kpiWhatsapp.innerHTML = `${data.whatsappUnique.toLocaleString()}${renderTrend(data.whatsappUnique, data.prevWhatsappUnique)}`;
             
             const kpiWhatsappDistribuidos = document.getElementById('kpi-whatsapp-distribuidos');
             if (kpiWhatsappDistribuidos) kpiWhatsappDistribuidos.textContent = `${data.whatsappClicks.toLocaleString()} leads distribuídos`;
             
             const kpiDesqualificados = document.getElementById('kpi-desqualificados');
-            if(kpiDesqualificados) kpiDesqualificados.textContent = (data.desqualificados || 0).toLocaleString();
+            if(kpiDesqualificados) kpiDesqualificados.innerHTML = `${(data.desqualificados || 0).toLocaleString()}${renderTrend(data.desqualificados, data.prevDesqualificados, true)}`;
 
             const taxaInicio = data.visitas > 0 ? ((data.iniciaram / data.visitas) * 100).toFixed(1) : 0;
             const corTaxaInicio = getColorForGoal(taxaInicio, 15);
@@ -259,12 +270,18 @@ window.initializePage = function() {
                 const taxaDesistenciaPct = ((abandonosCount / data.iniciaram) * 100).toFixed(1);
                 const desistenciaColor = taxaDesistenciaPct <= 30 ? '#10b981' : '#dc2626';
                 
+                let prevTaxaDesistenciaPct = null;
+                if (data.prevIniciaram > 0) {
+                    const prevAbandonosCount = Math.max(0, data.prevIniciaram - data.prevCompletaram);
+                    prevTaxaDesistenciaPct = ((prevAbandonosCount / data.prevIniciaram) * 100).toFixed(1);
+                }
+                
                 if (kpiTxDesistencia) {
                     kpiTxDesistencia.textContent = `${taxaDesistenciaPct}%`;
                     kpiTxDesistencia.style.color = desistenciaColor; 
                 }
                 if (kpiTxDesistenciaGlobal) {
-                    kpiTxDesistenciaGlobal.textContent = `${taxaDesistenciaPct}%`;
+                    kpiTxDesistenciaGlobal.innerHTML = `${taxaDesistenciaPct}%${prevTaxaDesistenciaPct !== null ? renderTrend(taxaDesistenciaPct, prevTaxaDesistenciaPct, true) : ''}`;
                     applyColorToKpi('kpi-tx-desistencia-global', desistenciaColor);
                 }
             } else {

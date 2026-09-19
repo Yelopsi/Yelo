@@ -115,7 +115,7 @@ class GrowthService {
         });
 
         // 6. Trial -> Pagante (Cohorts maduras)
-        // Cohort Madura = cadastrados (createdAt) há mais de 14 dias dentro de um período mais amplo,
+        // Cohort Madura = cadastrados (createdAt) há mais de 7 dias dentro de um período mais amplo,
         // mas vamos olhar para quem foi CRIADO entre (now - periodDays - 14) e (now - 14).
         const cohortStart = new Date(periodStart);
         cohortStart.setDate(cohortStart.getDate() - 14); // Pega uma janela equivalente

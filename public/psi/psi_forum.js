@@ -731,6 +731,20 @@
 
         async function handlePostSubmit(e) {
             e.preventDefault();
+            
+            const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+            if (psiData && psiData.status === 'pending') {
+                if (typeof window.showToast === 'function') {
+                    window.showToast("Preencha o seu CPF na aba 'Perfil Público' para ativar os seus 7 dias de teste e interagir no Fórum!", 'error');
+                } else {
+                    alert("Preencha o seu CPF na aba 'Perfil Público' para ativar os seus 7 dias de teste e interagir no Fórum!");
+                }
+                if (typeof window.loadPage === 'function') {
+                    window.loadPage('psi_meu_perfil.html');
+                }
+                return;
+            }
+
             const btn = document.getElementById('forum-submit-post-btn');
             btn.disabled = true;
             btn.textContent = 'Publicando...';
@@ -759,6 +773,20 @@
 
         async function handleCommentSubmit(e, parentId = null) {
             e.preventDefault();
+            
+            const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+            if (psiData && psiData.status === 'pending') {
+                if (typeof window.showToast === 'function') {
+                    window.showToast("Preencha o seu CPF na aba 'Perfil Público' para ativar os seus 7 dias de teste e interagir no Fórum!", 'error');
+                } else {
+                    alert("Preencha o seu CPF na aba 'Perfil Público' para ativar os seus 7 dias de teste e interagir no Fórum!");
+                }
+                if (typeof window.loadPage === 'function') {
+                    window.loadPage('psi_meu_perfil.html');
+                }
+                return;
+            }
+
             const form = e.target;
             const textarea = form.querySelector('textarea');
             const checkbox = form.querySelector('input[type="checkbox"]');

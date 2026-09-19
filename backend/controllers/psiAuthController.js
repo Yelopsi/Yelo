@@ -120,9 +120,9 @@ exports.registerPsychologist = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(passwordInput, salt);
 
-        // --- Define o Trial Automático de 14 Dias ---
+        // --- Define o Trial Automático de 7 Dias ---
         const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 14);
+        trialEndDate.setDate(trialEndDate.getDate() + 7);
 
         // --- 6. CRIAÇÃO NO BANCO (USANDO COLUNAS REAIS) ---
         const newPsychologist = await db.Psychologist.create({

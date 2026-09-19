@@ -29,7 +29,7 @@ export default function AssinaturaScreen() {
           <View className="items-center">
             <Text className="font-title text-[#166534] text-[20px] mb-2 text-center">Você está no período de teste grátis!</Text>
             <Text className="font-sans text-[#15803d] text-[15px] leading-relaxed text-center">
-              Você ainda tem <Text className="font-bold">14 dias</Text> para conhecer e testar a plataforma. Não exigimos cartão de crédito agora.
+              Você ainda tem <Text className="font-bold">7 dias</Text> para conhecer e testar a plataforma. Não exigimos cartão de crédito agora.
             </Text>
           </View>
         </View>
@@ -52,7 +52,7 @@ export default function AssinaturaScreen() {
                 <Text className="font-sans font-medium text-[#888] text-[15px] ml-1 mb-1">/mês</Text>
               </View>
               <Text className="font-sans font-bold text-[#16a34a] text-[11px] text-center uppercase tracking-wide">
-                14 dias de teste grátis{'\n'}Não precisa de cartão
+                7 dias de teste grátis{'\n'}Não precisa de cartão
               </Text>
             </View>
 

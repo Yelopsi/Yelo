@@ -42,7 +42,7 @@ router.put('/psychologists/:id/moderate', adminController.moderatePsychologist);
 // Rota para buscar as estatísticas da Visão Geral
 router.get('/stats', adminDashboardController.getDashboardStats);
 
-// Rota para liberar 14 dias de teste para todos os usuários inativos/pendentes
+// Rota para liberar 7 dias de teste para todos os usuários inativos/pendentes
 router.post('/psychologists/grant-trial-all', adminController.grantTrialToAll);
 
 // Rota para buscar e atualizar os dados do admin logado

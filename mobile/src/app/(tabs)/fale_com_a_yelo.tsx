@@ -26,7 +26,7 @@ export default function FaleComAYeloScreen() {
     },
     {
       q: "Como funciona o teste grátis?",
-      a: "Você tem 14 dias para usar todas as funcionalidades da plataforma sem custo e sem precisar cadastrar um cartão de crédito. Após esse período, para continuar recebendo pacientes, você precisará escolher um dos nossos planos."
+      a: "Você tem 7 dias para usar todas as funcionalidades da plataforma sem custo e sem precisar cadastrar um cartão de crédito. Após esse período, para continuar recebendo pacientes, você precisará escolher um dos nossos planos."
     },
     {
       q: "Como cancelar minha assinatura?",

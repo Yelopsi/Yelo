@@ -34,27 +34,27 @@ exports.getLowPerformanceData = async () => {
         attributes: ['id', 'nome', 'telefone', 'fotoUrl', 'slug', 'status', 'is_exempt', 'planExpiresAt', 'plano', 'createdAt', 'aiOptimizationHistory']
     });
 
-    // Fetch matches grouped by psychologist in the last 14 days
+    // Fetch matches grouped by psychologist in the last 7 days
     const [matches] = await db.sequelize.query(`
         SELECT "psychologistId" as "id", COUNT(*) as count 
         FROM "MatchEvents" 
-        WHERE "createdAt" >= NOW() - INTERVAL '14 days' AND "psychologistId" IS NOT NULL
+        WHERE "createdAt" >= NOW() - INTERVAL '7 days' AND "psychologistId" IS NOT NULL
         GROUP BY "psychologistId"
     `).catch(() => [[], null]);
 
-    // Fetch clicks grouped by psychologist in the last 14 days
+    // Fetch clicks grouped by psychologist in the last 7 days
     const [clicks] = await db.sequelize.query(`
         SELECT "psychologistId" as "id", COUNT(*) as count 
         FROM "WhatsAppClickLogs" 
-        WHERE "createdAt" >= NOW() - INTERVAL '14 days' AND "psychologistId" IS NOT NULL
+        WHERE "createdAt" >= NOW() - INTERVAL '7 days' AND "psychologistId" IS NOT NULL
         GROUP BY "psychologistId"
     `).catch(() => [[], null]);
 
-    // Fetch profile views grouped by psychologist in the last 14 days
+    // Fetch profile views grouped by psychologist in the last 7 days
     const [views] = await db.sequelize.query(`
         SELECT "psychologistId" as "id", COUNT(*) as count 
         FROM "ProfileAppearanceLogs" 
-        WHERE "createdAt" >= NOW() - INTERVAL '14 days' AND "psychologistId" IS NOT NULL
+        WHERE "createdAt" >= NOW() - INTERVAL '7 days' AND "psychologistId" IS NOT NULL
         GROUP BY "psychologistId"
     `).catch(() => [[], null]);
 
@@ -236,7 +236,7 @@ REGRAS DA CONSULTORIA (SEJA HIPER-PERSONALIZADO E DIRETO):
    - SE "Há feedbacks pendentes (sem resposta)?" for SIM: adicione uma solicitação amigável e parceira pedindo para ele nos avisar o status dos atendimentos. OBRIGATÓRIO: Forneça SEMPRE o link rápido para ele responder sem precisar acessar a plataforma (${magicLink}). Exemplo: "Vi que você recebeu contatos no WhatsApp recentemente! Para que nosso algoritmo continue impulsionando seu perfil nas buscas, por favor nos atualize sobre o status desses atendimentos através deste link rápido (não precisa nem fazer login na plataforma): ${magicLink}". NUNCA peça para ele acessar ou logar na plataforma para dar feedback se temos o link rápido!
 
 ESTRUTURA OBRIGATÓRIA E TOM DE VOZ:
-7. Inicie com um gatilho de parceria EXATAMENTE com esta estrutura, trocando apenas o nome: "Olá, [Nome]. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance nos últimos 14 dias e trouxe alguns pontos para potencializarmos seus resultados: você teve ${matchesCount} aparições em resultados de matches, ${viewsCount} visitas no perfil e ${clicksCount} cliques no WhatsApp."
+7. Inicie com um gatilho de parceria EXATAMENTE com esta estrutura, trocando apenas o nome: "Olá, [Nome]. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance nos últimos 7 dias e trouxe alguns pontos para potencializarmos seus resultados: você teve ${matchesCount} aparições em resultados de matches, ${viewsCount} visitas no perfil e ${clicksCount} cliques no WhatsApp."
 8. Aja de forma EXTREMAMENTE EMPÁTICA, PARCEIRA e HUMANIZADA. Você está lá para ajudá-lo a ganhar dinheiro, mostre que o sucesso dele é o nosso sucesso. ZERO GÍRIAS.
 9. Após a introdução do passo 7, justifique onde está o gargalo dele (ex: "O nosso gargalo hoje está na conversão da visita para o contato...").
 10. Finalize com um gatilho de comprometimento: "Esses pequenos ajustes costumam destravar a agenda de muitos profissionais por aqui. Qualquer dúvida sobre como aplicar isso, é só me chamar. Estamos juntos nessa jornada para encher a sua clínica! 🌿"
@@ -341,7 +341,7 @@ exports.generateAiChurnMessage = async (req, res) => {
 
         const prompt = `
 Atue como Anderson, gerente de Customer Success da plataforma de saúde mental Yelo. 
-Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}, cujo período de testes (Trial) de 14 dias expirou recentemente (Churn).
+Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}, cujo período de testes (Trial) de 7 dias expirou recentemente (Churn).
 O objetivo da mensagem é convencer o profissional a reativar sua assinatura (que custa R$ 99,00/mês).
 
 Aja de forma humanizada, direta, e TOTALMENTE PROFISSIONAL. NÃO use NENHUMA gíria (como "dar um tchan", "dar um grito", etc.).
@@ -365,7 +365,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
 [INSTRUÇÕES DA COPY (MENSAGEM)]
 1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\n\n).
 2. Cumprimente o psicólogo pelo nome e se apresente. Comece em um tom acolhedor e agradeça por ele ter testado a plataforma.
-3. Seja SUAVE ao informar que o Trial de 14 dias expirou. Exemplo: "O seu período gratuito encerrou, mas eu estava analisando as suas métricas e os resultados foram super interessantes..."
+3. Seja SUAVE ao informar que o Trial de 7 dias expirou. Exemplo: "O seu período gratuito encerrou, mas eu estava analisando as suas métricas e os resultados foram super interessantes..."
 4. Apresente os resultados dele (os 3 indicadores numéricos são obrigatórios: Aparições, Visitas e Cliques).
 5. Analise os resultados de fechamento de forma consultiva e empática:
    - Se ele fechou pacientes, parabenize-o! É o maior argumento de que a plataforma funciona.
@@ -567,7 +567,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
         const prompt = `
 Atue como Anderson, gerente de Customer Success da Yelo. 
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}.
-Situação atual: O período de testes gratuito (Trial) de 14 dias deste profissional expira hoje ou amanhã (restam ${daysLeft} dia(s)).
+Situação atual: O período de testes gratuito (Trial) de 7 dias deste profissional expira hoje ou amanhã (restam ${daysLeft} dia(s)).
 
 Aja de forma humanizada, empática e consultiva. NÃO seja agressivamente vendedor e não use gírias.
 

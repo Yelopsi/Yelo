@@ -388,6 +388,10 @@ exports.answerQuestion = async (req, res) => {
         const { conteudo } = req.body; 
         const psychologistId = req.psychologist.id; 
 
+        if (req.psychologist.status === 'pending') {
+            return res.status(403).json({ error: 'Você precisa preencher seu CPF no perfil para liberar os 7 dias de teste e interagir na comunidade.' });
+        }
+
         const question = await db.Question.findByPk(id);
         if (!question) return res.status(404).json({ error: 'Pergunta não encontrada.' });
         

@@ -243,7 +243,7 @@ exports.createPreference = async (req, res) => {
         
         const accountCreatedAt = new Date(localPsychologist.createdAt);
         const trialEndDate = new Date(accountCreatedAt);
-        trialEndDate.setDate(trialEndDate.getDate() + 14);
+        trialEndDate.setDate(trialEndDate.getDate() + 7);
 
         if (localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > new Date()) {
             // Se já tem uma data futura (ex: trial ativo), cobra só no fim dela
@@ -394,7 +394,7 @@ exports.createPreference = async (req, res) => {
 
             // Calcula a expiração baseada no nextDueDate
             // Se nextDueDate for hoje ou no passado (cobrança imediata), liberamos 30 dias de acesso
-            // Se nextDueDate for no futuro (ex: trial de 14 dias), o plano expira na data da primeira cobrança (que renovará)
+            // Se nextDueDate for no futuro (ex: trial de 7 dias), o plano expira na data da primeira cobrança (que renovará)
             const parsedNextDueDate = new Date(nextDueDate + 'T12:00:00Z'); // Força meio-dia para evitar fuso
             const now = new Date();
             let newPlanExpiresAt = parsedNextDueDate;

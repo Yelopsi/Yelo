@@ -6,7 +6,7 @@ import api from '../../../services/api';
 export default function AvisosScreen() {
   const [target, setTarget] = useState('');
   const [title, setTitle] = useState('Instabilidade na Plataforma');
-  const [content, setContent] = useState('Olá, [nome]\n\nEstamos enfrentando uma instabilidade pontual na plataforma, que já está sendo tratada pela equipe técnica. A orientação, por ora, é aguardar a normalização.\n\nPara compensar o período de indisponibilidade:\n– Usuários ainda no período gratuito terão os 14 dias restituídos\n– Assinantes ativos receberão 50% de desconto na mensalidade\n\nSeguimos trabalhando para resolver isso o mais rápido possível.\n\nAgradecemos a compreensão.');
+  const [content, setContent] = useState('Olá, [nome]\n\nEstamos enfrentando uma instabilidade pontual na plataforma, que já está sendo tratada pela equipe técnica. A orientação, por ora, é aguardar a normalização.\n\nPara compensar o período de indisponibilidade:\n– Usuários ainda no período gratuito terão os 7 dias restituídos\n– Assinantes ativos receberão 50% de desconto na mensalidade\n\nSeguimos trabalhando para resolver isso o mais rápido possível.\n\nAgradecemos a compreensão.');
 
   const [scheduleType, setScheduleType] = useState('imediato');
   const [scheduleDate, setScheduleDate] = useState('');

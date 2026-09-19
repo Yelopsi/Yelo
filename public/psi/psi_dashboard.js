@@ -498,7 +498,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const titleEl = document.getElementById('trial-premium-title');
             const messageEl = document.getElementById('trial-premium-message');
             if (titleEl) titleEl.textContent = psychologistData.trialBannerMessage || "Complete seu CPF para liberar o Premium!";
-            if (messageEl) messageEl.textContent = "Seu perfil está quase pronto! Adicione seu CPF para ativar seus 14 dias Premium grátis e começar a receber pacientes.";
+            if (messageEl) messageEl.textContent = "Seu perfil está quase pronto! Adicione seu CPF para ativar seus 7 dias Premium grátis e começar a receber pacientes.";
         }
     }
 

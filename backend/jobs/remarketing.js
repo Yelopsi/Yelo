@@ -46,7 +46,7 @@ async function processRemarketing() {
                 console.log(`[REMARKETING] Email passo 3 enviado para ${psi.email}`);
                 enviados++;
             } else if (step === 3 && createdAt <= fourteenDaysAgo && psi.whatsapp_clicks > 0) {
-                // Passo 4: 14 dias após o cadastro (fim do trial) para usuários que receberam contatos
+                // Passo 4: 7 dias após o cadastro (fim do trial) para usuários que receberam contatos
                 await emailService.sendRemarketingEmail(psi, 4);
                 await psi.update({ remarketing_step: 4, last_remarketing_at: now });
                 console.log(`[REMARKETING] Email passo 4 (Conversão de Lead) enviado para ${psi.email}`);

@@ -148,7 +148,7 @@ window.loadGrowthData = async function() {
             const d = result.data;
             window.growthDataState.marketing = d;
             
-            // CAC B2B (Meta Ads) - Usando trialsIniciados para considerar os 14 dias de teste (mesma lógica do admin_traffic_ads)
+            // CAC B2B (Meta Ads) - Usando trialsIniciados para considerar os 7 dias de teste (mesma lógica do admin_traffic_ads)
             const metaSpend = d.spendByChannel ? d.spendByChannel['Meta Ads'] : 0;
             const novosPsis = window.growthDataState.acquisition ? window.growthDataState.acquisition.trialsIniciados : d.novosPagantes;
             if (metaSpend > 0 && novosPsis > 0) {
