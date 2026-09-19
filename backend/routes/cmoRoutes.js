@@ -35,16 +35,16 @@ router.get('/dashboard', async (req, res) => {
             return target ? (target.spend || 0) : 0;
         };
 
-        const [metaCampaigns, googleCampaigns, prevMetaCampaigns, prevGoogleCampaigns, histMetaCampaigns, histGoogleCampaigns, manualGoogle, prevManualGoogle, manualGoogleHistorical] = await Promise.all([
+        const [metaCampaigns, googleCampaigns, prevMetaCampaigns, prevGoogleCampaigns, histMetaCampaigns, histGoogleCampaigns] = await Promise.all([
             metaAdsService.getCampaignInsights(dateStart, dateEnd),
             googleAdsService.getCampaignInsights(dateStart, dateEnd),
             metaAdsService.getCampaignInsights(prevDateStart, prevDateEnd),
             googleAdsService.getCampaignInsights(prevDateStart, prevDateEnd),
             metaAdsService.getCampaignInsights('2026-05-01', dateEnd),
             googleAdsService.getCampaignInsights('2026-05-01', dateEnd),
-            sequelize.models.ManualAdMetric.findOne({ where: { dateStart, dateEnd, platform: 'google' } }),
-            sequelize.models.ManualAdMetric.findOne({ where: { dateStart: prevDateStart, dateEnd: prevDateEnd, platform: 'google' } }),
-            sequelize.models.ManualAdMetric.findAll({ where: { platform: 'google' } })
+            
+            
+            
         ]);
 
         const metaSpend = { spend: getTargetSpend(metaCampaigns, '120251213168140531', false) };
@@ -52,16 +52,14 @@ router.get('/dashboard', async (req, res) => {
         const metaSpendHistorical = { spend: getTargetSpend(histMetaCampaigns, '120251213168140531', false) };
 
         const googleSpendAmount = getTargetSpend(googleCampaigns, 'Yelo MVP - Busca SP', true);
-        const actualGoogleSpend = googleSpendAmount > 0 ? googleSpendAmount : (manualGoogle ? parseFloat(manualGoogle.spend) || 0 : 0);
+        const actualGoogleSpend = googleSpendAmount;
         const googleSpend = { spend: actualGoogleSpend };
         
         const prevGoogleSpendAmount = getTargetSpend(prevGoogleCampaigns, 'Yelo MVP - Busca SP', true);
-        const actualPrevGoogleSpend = prevGoogleSpendAmount > 0 ? prevGoogleSpendAmount : (prevManualGoogle ? parseFloat(prevManualGoogle.spend) || 0 : 0);
+        const actualPrevGoogleSpend = prevGoogleSpendAmount;
 
         let actualGoogleSpendHistorical = getTargetSpend(histGoogleCampaigns, 'Yelo MVP - Busca SP', true);
-        if (manualGoogleHistorical && manualGoogleHistorical.length > 0) {
-            actualGoogleSpendHistorical += manualGoogleHistorical.reduce((acc, m) => acc + (parseFloat(m.spend) || 0), 0);
-        }
+        
 
         const totalSpend = metaSpend.spend + actualGoogleSpend;
         const totalPrevSpend = prevMetaSpend.spend + actualPrevGoogleSpend;
