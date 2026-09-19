@@ -1,3 +1,4 @@
+let cmoWeeklyChartInstance = null;
 async function loadCMOMetrics() {
     const token = localStorage.getItem('Yelo_token');
     if (!token) {
@@ -398,4 +399,102 @@ function loadWeeklyMetrics() {
     }
 
     loadCMOMetrics();
+}
+
+
+function renderCMOWeeklyChart(data) {
+    const chartContainer = document.getElementById('cmo-weekly-chart-container');
+    
+    // Mostra o gráfico apenas se estivermos na aba semanal
+    const isWeekly = document.getElementById('tab-weekly').classList.contains('active');
+    if (!isWeekly) {
+        if(chartContainer) chartContainer.style.display = 'none';
+        return;
+    }
+    
+    if(chartContainer) chartContainer.style.display = 'block';
+
+    const ctx = document.getElementById('cmo-weekly-chart');
+    if (!ctx) return;
+
+    if (cmoWeeklyChartInstance) {
+        cmoWeeklyChartInstance.destroy();
+    }
+
+    const metaCac = data.ads?.meta?.cac || 0;
+    const metaTrend = data.decisionEngineMeta?.trend || 0;
+    const prevMetaCac = metaCac - metaTrend;
+
+    const googleCpl = data.ads?.google?.cpl || 0;
+    const googleTrend = data.decisionEngineGoogle?.trend || 0;
+    const prevGoogleCpl = googleCpl - googleTrend;
+
+    cmoWeeklyChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['CAC (Meta B2B)', 'CPL (Google B2C)'],
+            datasets: [
+                {
+                    label: 'Semana Anterior',
+                    data: [prevMetaCac, prevGoogleCpl],
+                    backgroundColor: 'rgba(100, 116, 139, 0.5)',
+                    borderColor: 'rgba(100, 116, 139, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Semana Atual',
+                    data: [metaCac, googleCpl],
+                    backgroundColor: function(context) {
+                        const index = context.dataIndex;
+                        const current = context.dataset.data[index];
+                        const previous = context.chart.data.datasets[0].data[index];
+                        // Menor custo é melhor (Verde)
+                        return current > previous ? 'rgba(239, 68, 68, 0.8)' : 'rgba(16, 185, 129, 0.8)';
+                    },
+                    borderColor: function(context) {
+                        const index = context.dataIndex;
+                        const current = context.dataset.data[index];
+                        const previous = context.chart.data.datasets[0].data[index];
+                        return current > previous ? 'rgba(239, 68, 68, 1)' : 'rgba(16, 185, 129, 1)';
+                    },
+                    borderWidth: 1,
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
