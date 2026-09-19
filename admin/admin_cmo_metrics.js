@@ -245,33 +245,6 @@ function renderCMOMetrics(data) {
 
 }
 
-// Funções para salvar e carregar os inputs manuais da tabela do Google
-
-        // Bloqueia os inputs após salvar
-        toggleGoogleInputs(true);
-
-        // Recarrega as métricas para a IA processar os novos gastos no funil B2C
-        loadCMOMetrics();
-    } catch (e) {
-        console.error('Erro ao salvar inputs manuais no DB:', e);
-    }
-}
-
-
-    } catch (e) {
-        console.error('Erro ao excluir inputs manuais do DB:', e);
-    }
-}
-
-        } catch (e) {
-            console.error('Erro ao buscar inputs manuais do DB:', e);
-            if (nameEl) nameEl.value = ''; 
-            spendEl.value = ''; impEl.value = ''; clicksEl.value = ''; convEl.value = '';
-            toggleGoogleInputs(false);
-        }
-    }
-}
-
 function initCMOMonthSelector() {
     const selector = document.getElementById('cmo-month-selector');
     if (!selector) return;
