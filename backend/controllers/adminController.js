@@ -2129,6 +2129,7 @@ INSTRUÇÕES PARA A MENSAGEM:
 5. Se o histórico já mostrar que falamos disso, cobre sutilmente se ele conseguiu ler o manual ou aplicar as dicas.
 6. A mensagem será enviada por WhatsApp (use negrito *assim* e itálico _assim_).
 7. Seja direto, prático e humano. Não crie um texto imenso. Mantenha em até 4 parágrafos pequenos.
+8. IMPORTANTE: Retorne APENAS o texto da mensagem. NÃO inclua nenhum comentário, aviso ou pré-texto informando que a mensagem foi gerada por IA (ex: "Aqui está a mensagem", "Essa mensagem foi gerada...").
 `;
 
         const { GoogleGenerativeAI } = require("@google/generative-ai");
