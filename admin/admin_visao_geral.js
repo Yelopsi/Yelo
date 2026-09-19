@@ -174,29 +174,41 @@ window.initializePage = function() {
                  if (cmoRes.ok) {
                      const cmoData = await cmoRes.json();
                      
-                     let metaSpend = cmoData.ads?.meta?.spend || 0;
-                     let googleSpend = cmoData.ads?.google?.spend || 0;
+                     // Proteção contra retornos vazios ou nulos (NaN)
+                     let metaSpend = parseFloat(cmoData?.ads?.meta?.spend) || 0;
+                     let googleSpend = parseFloat(cmoData?.ads?.google?.spend) || 0;
                      let totalAds = metaSpend + googleSpend;
                      
                      // Alvo Breakeven = (Custo Ads / 99) + 5
                      let breakevenTarget = Math.ceil((totalAds / 99) + 5);
-                     if (breakevenTarget < 10) breakevenTarget = 10; // Fallback minimal
+                     if (isNaN(breakevenTarget) || breakevenTarget < 10) breakevenTarget = 10; // Fallback seguro
                      updateSafe('milestone-breakeven-target', breakevenTarget);
 
-                     // Calcular media de crescimento (Desde Maio de 2026)
-                     const may2026 = new Date(2026, 4, 1); // Maio = 4 (0-indexado)
-                     const now = new Date();
-                     let monthsSinceMay = (now - may2026) / (1000 * 60 * 60 * 24 * 30.44);
-                     if (monthsSinceMay < 1) monthsSinceMay = 1;
+                     // Calcular média de crescimento móvel (Último mês fechado vs Mês atual via CMO)
+                     // O CMO Dashboard retorna o active do período atual e do período anterior.
+                     let currentActive = parseInt(cmoData?.platform?.b2b?.active) || currentPaying;
+                     let prevActive = parseInt(cmoData?.historical?.platform?.b2b?.active) || currentPaying;
                      
-                     let netGrowthPerMonth = currentPaying / monthsSinceMay;
+                     // A diferença entre o atual e o mês anterior dá a velocidade mensal
+                     let netGrowthPerMonth = currentActive - prevActive;
+                     
+                     // Fallback caso a API do CMO não traga o dado histórico ou o crescimento seja 0
+                     // Usamos o new30d bruto dividido por 2 como uma aproximação de rede se o dado faltar
+                     if (netGrowthPerMonth <= 0) {
+                         const rawNew30d = parseInt(stats.psychologists.new30d) || 0;
+                         netGrowthPerMonth = rawNew30d > 0 ? (rawNew30d / 2) : 0; 
+                     }
 
                      function formatProjection(target) {
-                         if (currentPaying >= target) return "Atingido";
+                         if (currentPaying >= target) return "Atingido ✓";
                          if (netGrowthPerMonth <= 0) return "Estagnado";
                          
                          const monthsNeeded = (target - currentPaying) / netGrowthPerMonth;
-                         const projDate = new Date(now.getTime() + (monthsNeeded * 30.44 * 24 * 60 * 60 * 1000));
+                         // Limitar a projeção máxima a 5 anos (60 meses) para não gerar datas absurdas
+                         if (monthsNeeded > 60 || !isFinite(monthsNeeded)) return "Longo Prazo";
+
+                         const projDate = new Date();
+                         projDate.setMonth(projDate.getMonth() + Math.ceil(monthsNeeded));
                          
                          let fMonth = projDate.toLocaleString('pt-BR', { month: 'short' });
                          let fYear = projDate.getFullYear();
