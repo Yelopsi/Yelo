@@ -1031,7 +1031,7 @@ exports.getPendingActions = async (req, res) => {
                 },
                 required: true // Só traz quem tem um pagamento PIX pendente/vencido
             }],
-            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks', 'abordagens_tecnicas']
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks', 'abordagens_tecnicas', 'aiOptimizationHistory']
         });
 
         if (expiredPixCandidates.length > 0) {
@@ -1066,6 +1066,12 @@ exports.getPendingActions = async (req, res) => {
             `, { replacements: { expPixIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
 
             expiredPixCandidates.forEach(p => {
+                let alreadySent = false;
+                if (p.aiOptimizationHistory && Array.isArray(p.aiOptimizationHistory)) {
+                    alreadySent = p.aiOptimizationHistory.some(h => h.action === 'expired_pix_fomo');
+                }
+                if (alreadySent) return;
+
                 const logs = wppLogsExpPix.filter(l => l.psychologistId === p.id);
                 
                 const startedTherapyCount = logs.filter(l => l.dealClosed === 'yes').length;
@@ -1300,7 +1306,7 @@ exports.markActionSent = async (req, res) => {
             }
         } else if (actionType === 'expiring_trial') {
             updateData.admin_billing_sent_at = now;
-        } else if (actionType === 'low_performance' || actionType === 'conversion_failure') {
+        } else if (actionType === 'low_performance' || actionType === 'conversion_failure' || actionType === 'expired_pix_fomo') {
             // Logica unificada abaixo (apenas grava no histórico)
         } else if (actionType === 'negotiation') {
             if (db.WhatsAppClickLog) {
