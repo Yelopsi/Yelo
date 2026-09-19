@@ -163,6 +163,76 @@ window.initializePage = function() {
              updateSafe('kpi-total-matches', (stats.totalMatches || 0).toLocaleString('pt-BR'));
              updateSafe('kpi-total-cliques', (stats.totalClicks || 0).toLocaleString('pt-BR'));
 
+
+             // --- 5. MARCOS DE CRESCIMENTO E BREAKEVEN ---
+             const currentPaying = parseInt(stats.psychologists.paying) || 0;
+             try {
+                 updateSafe('milestone-current-val', currentPaying);
+                 
+                 // Fetch CMO data for Ads expenses
+                 const cmoRes = await fetch(BASE_URL + '/api/cmo/dashboard', { headers: { 'Authorization': 'Bearer ' + token } });
+                 if (cmoRes.ok) {
+                     const cmoData = await cmoRes.json();
+                     
+                     let metaSpend = cmoData.ads?.meta?.spend || 0;
+                     let googleSpend = cmoData.ads?.google?.spend || 0;
+                     let totalAds = metaSpend + googleSpend;
+                     
+                     // Alvo Breakeven = (Custo Ads / 99) + 5
+                     let breakevenTarget = Math.ceil((totalAds / 99) + 5);
+                     if (breakevenTarget < 10) breakevenTarget = 10; // Fallback minimal
+                     updateSafe('milestone-breakeven-target', breakevenTarget);
+
+                     // Calcular media de crescimento (Desde Maio de 2026)
+                     const may2026 = new Date(2026, 4, 1); // Maio = 4 (0-indexado)
+                     const now = new Date();
+                     let monthsSinceMay = (now - may2026) / (1000 * 60 * 60 * 24 * 30.44);
+                     if (monthsSinceMay < 1) monthsSinceMay = 1;
+                     
+                     let netGrowthPerMonth = currentPaying / monthsSinceMay;
+
+                     function formatProjection(target) {
+                         if (currentPaying >= target) return "Atingido";
+                         if (netGrowthPerMonth <= 0) return "Estagnado";
+                         
+                         const monthsNeeded = (target - currentPaying) / netGrowthPerMonth;
+                         const projDate = new Date(now.getTime() + (monthsNeeded * 30.44 * 24 * 60 * 60 * 1000));
+                         
+                         let fMonth = projDate.toLocaleString('pt-BR', { month: 'short' });
+                         let fYear = projDate.getFullYear();
+                         return (fMonth + '/' + fYear).replace('.', '');
+                     }
+
+                     const projBreakeven = document.getElementById('milestone-breakeven-proj');
+                     if (projBreakeven) projBreakeven.textContent = formatProjection(breakevenTarget);
+
+                     const proj70 = document.getElementById('milestone-70-proj');
+                     if (proj70) proj70.textContent = formatProjection(70);
+
+                     const proj120 = document.getElementById('milestone-120-proj');
+                     if (proj120) proj120.textContent = formatProjection(120);
+
+                     // MAX_SCALE
+                     const MAX_SCALE = Math.max(120, currentPaying, breakevenTarget);
+                     const percentCurrent = Math.min(100, (currentPaying / MAX_SCALE) * 100);
+                     
+                     const fill = document.getElementById('milestone-progress-fill');
+                     if (fill) fill.style.width = percentCurrent + '%';
+
+                     const markerBreak = document.getElementById('marker-breakeven');
+                     if (markerBreak) markerBreak.style.left = Math.min(100, (breakevenTarget / MAX_SCALE) * 100) + '%';
+                     
+                     const marker70 = document.getElementById('marker-70');
+                     if (marker70) marker70.style.left = Math.min(100, (70 / MAX_SCALE) * 100) + '%';
+                     
+                     const marker120 = document.getElementById('marker-120');
+                     if (marker120) marker120.style.left = Math.min(100, (120 / MAX_SCALE) * 100) + '%';
+                 }
+             } catch(e) {
+                 console.error('Erro ao atualizar marcos:', e);
+             }
+
+
              // Log discreto para você saber que está atualizando
              // console.log(`[Dashboard] Atualizado às ${new Date().toLocaleTimeString()}`);
  

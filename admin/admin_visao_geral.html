@@ -83,6 +83,44 @@
                         <div class="p-metric-label" style="display: flex; align-items: center; justify-content: center; gap: 6px;">Total Cliques (Contato) <span class="info-tooltip" data-tooltip="Total de contatos efetivos realizados (cliques para abrir o WhatsApp dos psicólogos).">i</span></div>
                     </div>
                 </div>
+
+                <!-- MARCOS DE CRESCIMENTO (SINGLE BAR) -->
+                <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                    <h3 style="font-size: 0.95rem; color: #1e293b; margin: 0 0 15px 0; font-family: var(--font-titulos); display: flex; justify-content: space-between; align-items: flex-end;">
+                        Marcos Estratégicos (Pagantes)
+                        <span id="milestone-current-val" style="font-size: 1.5rem; font-weight: 800; color: #4338ca;">0</span>
+                    </h3>
+                    
+                    <div style="position: relative; height: 35px; background: #e0e7ff; border-radius: 20px; overflow: visible; margin-bottom: 30px;">
+                        <!-- Barra de preenchimento real -->
+                        <div id="milestone-progress-fill" style="position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); border-radius: 20px; transition: width 1s ease-in-out;"></div>
+                        
+                        <!-- Marcadores -->
+                        <!-- Breakeven -->
+                        <div id="marker-breakeven" style="position: absolute; top: -5px; height: 45px; width: 4px; background: #3b82f6; border-radius: 4px; left: 0%; transform: translateX(-50%); z-index: 10;">
+                            <div style="position: absolute; top: 50px; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center;">
+                                <div style="font-size: 0.75rem; font-weight: bold; color: #1d4ed8;">Breakeven (<span id="milestone-breakeven-target">...</span>)</div>
+                                <div id="milestone-breakeven-proj" style="font-size: 0.65rem; color: #64748b; margin-top: 2px;">Calculando...</div>
+                            </div>
+                        </div>
+
+                        <!-- Saída do MEI (70) -->
+                        <div id="marker-70" style="position: absolute; top: -5px; height: 45px; width: 4px; background: #8b5cf6; border-radius: 4px; left: 58.3%; transform: translateX(-50%); z-index: 10;">
+                            <div style="position: absolute; top: 50px; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center;">
+                                <div style="font-size: 0.75rem; font-weight: bold; color: #6d28d9;">Saída MEI (70)</div>
+                                <div id="milestone-70-proj" style="font-size: 0.65rem; color: #64748b; margin-top: 2px;">Calculando...</div>
+                            </div>
+                        </div>
+
+                        <!-- Pró-labore (120) -->
+                        <div id="marker-120" style="position: absolute; top: -5px; height: 45px; width: 4px; background: #ec4899; border-radius: 4px; left: 100%; transform: translateX(-50%); z-index: 10;">
+                            <div style="position: absolute; top: 50px; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center;">
+                                <div style="font-size: 0.75rem; font-weight: bold; color: #be185d;">Pró-labore (120)</div>
+                                <div id="milestone-120-proj" style="font-size: 0.65rem; color: #64748b; margin-top: 2px;">Calculando...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
