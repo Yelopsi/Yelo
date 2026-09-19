@@ -195,7 +195,7 @@ window.initializePage = function() {
                      // Fallback caso a API do CMO não traga o dado histórico ou o crescimento seja 0
                      // Usamos o new30d bruto dividido por 2 como uma aproximação de rede se o dado faltar
                      if (netGrowthPerMonth <= 0) {
-                         const rawNew30d = parseInt(stats.psychologists.new30d) || 0;
+                         const rawNew30d = parseInt(stats.newPsis30d) || 0;
                          netGrowthPerMonth = rawNew30d > 0 ? (rawNew30d / 2) : 0; 
                      }
 
