@@ -37,17 +37,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.appendChild(prefetchLink);
 
     const questions = [
-        { id: 'idade', question: "Para começarmos, qual a sua faixa etária?", type: 'choice', choices: ["Menor de 18 anos", "18-24 anos", "25-34 anos", "35-44 anos", "45-54 anos", "55+ anos"], required: true },
-        { id: 'responsavel_menor', question: "Você é o responsável legal por este paciente?", subtitle: "Atendimentos para menores de idade exigem o acompanhamento ou autorização de um responsável (pai, mãe ou tutor legal).", type: 'choice', choices: ["Sim, sou o responsável legal", "Não, sou o próprio menor"], required: true },
-        { id: 'pref_genero_prof', question: "Você tem preferência pelo gênero do(a) profissional?", subtitle: "Sua segurança e conforto são a nossa prioridade.", type: 'choice', choices: ["Indiferente", "Masculino", "Feminino", "Não-binário"], required: true },
-        { id: 'temas', question: "O que te motivou a procurar terapia agora?", subtitle: "Qual o foco principal que você gostaria de explorar?", type: 'choice', choices: ["Ansiedade, Estresse ou Tristeza", "Amor, Relacionamentos e Sexualidade", "Autoconhecimento e Autoestima", "Carreira e Trabalho", "Luto ou Traumas", "Outro"], required: true },
-        { id: 'abordagem_ideal', question: "Pensando nisso...", subtitle: "Qual formato te atrai mais?", type: 'choice', choices: [], required: true },
-        { id: 'caracteristicas_prof', question: "Existem características importantes para você no profissional?", subtitle: "A identidade de quem te escuta pode fazer diferença.", type: 'multiple-choice', choices: ["LGBTQIAPN+ Friendly 🏳️‍🌈", "Faz parte da comunidade LGBTQIAPN+", "Pessoa não-branca ou prática antirracista", "Perspectiva Feminista", "Especialista em Neurodiversidade (TDAH, Autismo)", "Indiferente"], required: true },
-        { id: 'faixa_valor', question: "Qual a faixa de valor que você pode investir por sessão?", subtitle: "Para conectarmos você a profissionais dentro do seu orçamento.", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
-        { id: 'modalidade_atendimento', question: "Como você prefere ser atendido(a)?", type: 'choice', choices: ["Online", "Presencial", "Indiferente (Online ou Presencial)"], required: true },
-        { id: 'cep', question: "Qual o seu CEP?", subtitle: "Para encontrarmos profissionais perto de você.", type: 'text', placeholder: "00000-000", required: true, inputMode: 'numeric' },
-        { id: 'nome', question: "Para finalizar, como podemos te chamar? (Opcional)", subtitle: "Isso nos ajuda a entregar uma experiência personalizada para você.", type: 'text', placeholder: "Digite o seu nome ou apelido", required: false, autocomplete: 'off', autofocus: true },
-        { id: 'final', type: 'final', question: "Tudo pronto, [NOME]!", subtitle: "Estamos cruzando as suas respostas para encontrar as conexões mais significativas. Em instantes, você verá as suas recomendações.<br><br><div style=\"display:flex; justify-content:center; margin-top:20px;\"><div style=\"width: 45px; height: 45px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #FFEE8C; border-radius: 50%; animation: spinYelo 1s linear infinite;\"></div></div><style>@keyframes spinYelo { to { transform: rotate(360deg); } }</style>" },
+        { id: 'idade', question: "Para começarmos, qual a sua faixa etária?", subtitle: "Precisamos saber sua idade para garantir que a sua experiência seja a mais adequada e segura para o seu momento de vida.", type: 'choice', choices: ["Menor de 18 anos", "18-24 anos", "25-34 anos", "35-44 anos", "45-54 anos", "55+ anos"], required: true },
+        { id: 'responsavel_menor', question: "Você é o responsável legal por este paciente?", subtitle: "Para cuidarmos de você da melhor forma, o atendimento de menores requer o acompanhamento ou autorização de um adulto responsável.", type: 'choice', choices: ["Sim, sou o responsável legal", "Não, sou o próprio menor"], required: true },
+        { id: 'pref_genero_prof', question: "Você tem preferência pelo gênero do(a) profissional?", subtitle: "Queremos que você se sinta em um ambiente totalmente seguro e à vontade. Escolha o que te deixa mais confortável.", type: 'choice', choices: ["Indiferente", "Masculino", "Feminino", "Não-binário"], required: true },
+        { id: 'temas', question: "O que te motivou a procurar terapia agora?", subtitle: "Entender o que te traz aqui nos ajuda a encontrar o(a) profissional com a experiência certa para te apoiar neste momento.", type: 'choice', choices: ["Ansiedade, Estresse ou Tristeza", "Amor, Relacionamentos e Sexualidade", "Autoconhecimento e Autoestima", "Carreira e Trabalho", "Luto ou Traumas", "Outro"], required: true },
+        { id: 'abordagem_ideal', question: "Pensando nisso...", subtitle: "Cada pessoa se adapta melhor a um estilo de terapia. Vamos descobrir qual jeito de conduzir a sessão mais combina com você.", type: 'choice', choices: [], required: true },
+        { id: 'caracteristicas_prof', question: "Existem características importantes para você no profissional?", subtitle: "Sabemos que a identificação com o profissional é fundamental para criar um espaço de confiança e empatia.", type: 'multiple-choice', choices: ["LGBTQIAPN+ Friendly 🏳️‍🌈", "Faz parte da comunidade LGBTQIAPN+", "Pessoa não-branca ou prática antirracista", "Perspectiva Feminista", "Especialista em Neurodiversidade (TDAH, Autismo)", "Indiferente"], required: true },
+        { id: 'faixa_valor', question: "Qual a faixa de valor que você pode investir por sessão?", subtitle: "Acreditamos que o cuidado com a saúde mental deve caber no seu bolso. Vamos focar em opções dentro da sua realidade.", type: 'choice', choices: ["Até R$ 50", "R$ 51 - R$ 90", "R$ 91 - R$ 150", "Acima de R$ 150"], required: true },
+        { id: 'modalidade_atendimento', question: "Como você prefere ser atendido(a)?", subtitle: "Você pode escolher o conforto da sua casa ou o ambiente acolhedor do consultório. O que funciona melhor para você?", type: 'choice', choices: ["Online", "Presencial", "Indiferente (Online ou Presencial)"], required: true },
+        { id: 'cep', question: "Qual o seu CEP?", subtitle: "Usaremos essa informação com todo o cuidado apenas para sugerir profissionais pertinho de você.", type: 'text', placeholder: "00000-000", required: true, inputMode: 'numeric' },
+        { id: 'final', type: 'final', question: "Tudo pronto!", subtitle: "Nossa inteligência está analisando com carinho as suas respostas. Em instantes, apresentaremos as melhores conexões para você.<br><br><div style=\"display:flex; justify-content:center; margin-top:20px;\"><div style=\"width: 45px; height: 45px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #FFEE8C; border-radius: 50%; animation: spinYelo 1s linear infinite;\"></div></div><style>@keyframes spinYelo { to { transform: rotate(360deg); } }</style>" },
         { id: 'erro-idade', type: 'error', question: "Atenção", subtitle: "A plataforma Yelo é destinada apenas para maiores de 18 anos...", buttonText: "Entendi e Sair" }
     ];
 
@@ -74,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Separa dados para salvar
-            const { nome, ...demandAnswers } = userAnswers;
+            const { ...demandAnswers } = userAnswers;
 
             const utms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
 
@@ -85,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
             demandAnswers.utm_content = utms.utm_content;
 
             // [NOVO] Salva o telefone para usar no clique do WhatsApp (mesmo se não logar)
-            if (nome) localStorage.setItem('yelo_guest_name', nome);
+
 
             // Normaliza o consentimento para booleano (para facilitar o filtro no Admin)
             demandAnswers.contact_consent = true;
@@ -100,10 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.QuestionarioService.trackMatchCompleted();
             }
 
-            // --- REDIRECIONAMENTO IMEDIATO ---
+            // --- REDIRECIONAMENTO ---
             // Salva as respostas para que a página de resultados faça o match e exiba o loading animado
             sessionStorage.setItem('pendingMatchAnswers', JSON.stringify(userAnswers));
-            window.location.href = '/resultados';
+            
+            // Adiciona um delay para que o usuário veja a animação de carregamento na tela final
+            setTimeout(() => {
+                window.location.href = '/resultados';
+            }, 2500);
 
         } catch (error) {
             console.error("❌ Erro no finalize():", error);
@@ -177,6 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (slideBody) slideBody.scrollTop = 0;
             } else {
                 inputToFocus.focus();
+            }
+
+            // SE O SLIDE FOR O FINAL, ENGATILHA O FINALIZE AUTOMATICAMENTE
+            if (questions[currentStep].type === 'final') {
+                finalize();
             }
         } else {
         }
@@ -287,17 +295,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isValid) {
             collectAnswer();
-            if (currentQuestion.id === 'nome') { updateNamePlaceholders(userAnswers.nome); }
+
             if (currentQuestion.id === 'temas') { updateAbordagemIdealSlide(); }
 
             const actionButton = currentSlideEl.querySelector('.cta-button');
             const action = actionButton ? actionButton.dataset.action : null;
 
-            if (action === 'finalize') {
-                finalize();
-            } else {
-                goToSlide(currentStep + 1);
-            }
+            // Sempre avança para o próximo slide. Se o próximo for o final, showNextSlide aciona finalize()
+            goToSlide(currentStep + 1);
         }
     }
 
@@ -389,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     } else if (currentQuestion.id === 'responsavel_menor') {
                         if (target.dataset.value === 'Não, sou o próprio menor') {
-                            sessionStorage.setItem('Yelo_user_name', userAnswers.nome || '');
+
 
                             try { if (typeof window.gtag === 'function') window.gtag('event', 'desqualificado_idade'); } catch (e) { }
 
@@ -432,22 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
             validateAndAdvance();
         });
 
-        // [NOVO] Salva o WhatsApp em tempo real para garantir que não se perca
-        slidesContainer.addEventListener('input', (e) => {
-            if (e.target.id === 'input-nome') {
-                // Capitaliza a primeira letra do nome (e sobrenomes) em tempo real
-                let val = e.target.value;
-                let newVal = val.replace(/(?:^|\s)\S/g, function (a) { return a.toUpperCase(); });
 
-                if (val !== newVal) {
-                    const start = e.target.selectionStart;
-                    const end = e.target.selectionEnd;
-                    e.target.value = newVal;
-                    e.target.setSelectionRange(start, end); // Evita que o cursor pule para o final
-                }
-                localStorage.setItem('yelo_guest_name', e.target.value);
-            }
-        });
 
         if (document.querySelector(`[data-index="0"]`)) {
             goToSlide(0);
@@ -469,34 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeQuiz();
 
-    function updateNamePlaceholders(name) {
-        let formattedName = '';
-        if (name && name.trim() !== '') {
-            // Pega apenas o primeiro nome e garante a primeira letra maiúscula
-            const firstName = name.trim().split(' ')[0];
-            formattedName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
-        }
 
-        const allSlides = document.querySelectorAll('.slide');
-        allSlides.forEach(slide => {
-            const title = slide.querySelector('h1');
-            const subtitle = slide.querySelector('p.subtitle');
-            if (title && title.innerHTML.includes('[NOME]')) {
-                if (formattedName) {
-                    title.innerHTML = title.innerHTML.replace(/\[NOME\]/g, formattedName);
-                } else {
-                    title.innerHTML = title.innerHTML.replace(/,\s*\[NOME\]/g, '').replace(/\[NOME\]/g, '');
-                }
-            }
-            if (subtitle && subtitle.innerHTML.includes('[NOME]')) {
-                if (formattedName) {
-                    subtitle.innerHTML = subtitle.innerHTML.replace(/\[NOME\]/g, formattedName);
-                } else {
-                    subtitle.innerHTML = subtitle.innerHTML.replace(/,\s*\[NOME\]/g, '').replace(/\[NOME\]/g, '');
-                }
-            }
-        });
-    }
 
     function updateAbordagemIdealSlide() {
         const temasSelecionados = [].concat(userAnswers['temas'] || []);
@@ -529,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="choice-button" data-value="${valPsiOnly}"><strong>Foco Profundo:</strong> Quero um espaço livre para investigar a raiz dos meus problemas.</button>
                 <button class="choice-button" data-value="${valHum}"><strong>Acolhimento:</strong> Quero focar em entender e aceitar meus sentimentos no presente.</button>
                 <button class="choice-button" data-value="${valSis}"><strong>Foco no Ambiente:</strong> Quero entender como as pessoas ao meu redor influenciam o que sinto.</button>
-                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px; background: rgba(255,255,255,0.05);">Não tenho certeza</button>
+                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px;"><strong>Não sei escolher</strong> / Pode me recomendar</button>
             `;
         } else if (categoria === "relacional") {
             questionText = "Ao focar nas suas relações e intimidade, qual dinâmica de terapia te atrai mais?";
@@ -538,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="choice-button" data-value="${valPsi}"><strong>Explorar o Passado:</strong> Quero entender de onde vêm os meus padrões de relacionamento.</button>
                 <button class="choice-button" data-value="${valTCC}"><strong>Estratégias:</strong> Gostaria de dicas diretas para me comunicar melhor e mudar atitudes.</button>
                 <button class="choice-button" data-value="${valHum}"><strong>Expressão Autêntica:</strong> Quero focar na forma como eu me sinto e me expresso na relação agora.</button>
-                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px; background: rgba(255,255,255,0.05);">Não tenho certeza</button>
+                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px;"><strong>Não sei escolher</strong> / Pode me recomendar</button>
             `;
         } else if (categoria === "outro") {
             questionText = "Independentemente do motivo que te trouxe aqui, como você prefere conduzir a sessão?";
@@ -547,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="choice-button" data-value="${valPsi}"><strong>Foco Profundo:</strong> Gosto da ideia de investigar a raiz das questões e o meu inconsciente.</button>
                 <button class="choice-button" data-value="${valHum}"><strong>Acolhimento:</strong> Quero um espaço focado na minha autoaceitação livre de julgamentos.</button>
                 <button class="choice-button" data-value="${valSis}"><strong>Foco no Ambiente:</strong> Quero entender como o meu convívio social influencia quem eu sou.</button>
-                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px; background: rgba(255,255,255,0.05);">Não tenho certeza</button>
+                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px;"><strong>Não sei escolher</strong> / Pode me recomendar</button>
             `;
         } else {
             questionText = "Buscando desenvolvimento pessoal, como você prefere conduzir a sessão?";
@@ -556,7 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="choice-button" data-value="${valPsi}"><strong>Mergulho Interior:</strong> Gosto da ideia de analisar meus sonhos e o meu inconsciente.</button>
                 <button class="choice-button" data-value="${valHum}"><strong>Potencial Humano:</strong> Quero focar na minha autoaceitação livre de julgamentos.</button>
                 <button class="choice-button" data-value="${valSis}"><strong>Padrões Sociais:</strong> Quero entender as expectativas que a sociedade colocou em mim.</button>
-                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px; background: rgba(255,255,255,0.05);">Não tenho certeza</button>
+                <button class="choice-button" data-value="${valIndiferente}" style="margin-top: 10px;"><strong>Não sei escolher</strong> / Pode me recomendar</button>
             `;
         }
 
