@@ -1,77 +1,179 @@
 <style>
-    .cookie-banner {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        max-width: 600px;
-        background-color: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        padding: 20px 25px;
-        z-index: 10000;
-        display: none; /* Oculto por padrão, JS ativa */
-        flex-direction: column;
-        gap: 15px;
-        border: 1px solid #e0e0e0;
-        font-family: var(--font-principal);
+    /* Premium Cookie Banner */
+    @keyframes slideUpCookie {
+        from { transform: translate(-50%, 100%); opacity: 0; }
+        to { transform: translate(-50%, 0); opacity: 1; }
     }
 
-    .cookie-content {
-        font-size: 0.95rem;
-        color: #333;
+    .premium-cookie-banner {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 24px 24px 0 0;
+        box-shadow: 0 -4px 30px rgba(27, 67, 50, 0.1);
+        padding: 20px 24px calc(20px + env(safe-area-inset-bottom));
+        z-index: 10000;
+        display: none; /* Ativado via JS */
+        flex-direction: column;
+        gap: 16px;
+        font-family: var(--font-principal, 'Inter', sans-serif);
+        animation: slideUpCookie 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: transform, opacity;
+        align-items: center;
+    }
+
+    .cookie-banner-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex: 1;
+        width: 100%;
+    }
+
+    .cookie-icon {
+        font-size: 24px;
+        line-height: 1;
+        background: #e8f5e9;
+        border-radius: 50%;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(27, 67, 50, 0.08);
+    }
+
+    .cookie-text-block {
+        flex: 1;
+    }
+
+    .cookie-text-block p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #2c3e50;
         line-height: 1.5;
     }
 
-    .cookie-content a {
-        color: #1B4332; /* Verde Yelo */
-        text-decoration: underline;
-        font-weight: bold;
+    .cookie-text-block a {
+        color: #1B4332;
+        text-decoration: none;
+        font-weight: 700;
+        position: relative;
+        transition: color 0.3s ease;
+        white-space: nowrap;
+    }
+    
+    .cookie-text-block a::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        bottom: -2px;
+        left: 0;
+        background-color: #1B4332;
+        transform: scaleX(0);
+        transform-origin: bottom right;
+        transition: transform 0.3s ease-out;
     }
 
-    .cookie-actions {
+    .cookie-text-block a:hover::after {
+        transform: scaleX(1);
+        transform-origin: bottom left;
+    }
+
+    .cookie-banner-actions {
         display: flex;
-        justify-content: flex-end;
+        flex-direction: row;
+        gap: 12px;
+        width: 100%;
+        justify-content: center;
     }
 
-    .btn-cookie-accept {
-        background-color: #1B4332; /* Verde Yelo */
-        color: white;
-        border: none;
+    .btn-cookie {
         padding: 10px 24px;
-        border-radius: 8px;
-        font-weight: bold;
-        cursor: pointer;
+        border-radius: 999px; /* Formato Pílula */
+        font-weight: 600;
         font-size: 0.9rem;
-        transition: background-color 0.3s ease;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: none;
+        flex: 1;
+        text-align: center;
     }
 
-    .btn-cookie-accept:hover {
-        background-color: #143326;
+    .btn-cookie-primary {
+        background: linear-gradient(135deg, #1B4332 0%, #143326 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(27, 67, 50, 0.2);
     }
 
-    /* Responsivo: Em desktop fica lado a lado */
-    @media (min-width: 768px) {
-        .cookie-banner {
+    .btn-cookie-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(27, 67, 50, 0.3);
+    }
+    
+    .btn-cookie-primary:active {
+        transform: translateY(0);
+    }
+
+    .btn-cookie-secondary {
+        background: rgba(255, 255, 255, 0.5);
+        color: #1B4332;
+        border: 1px solid rgba(27, 67, 50, 0.2);
+        backdrop-filter: blur(4px);
+    }
+
+    .btn-cookie-secondary:hover {
+        background: rgba(27, 67, 50, 0.05);
+        border-color: rgba(27, 67, 50, 0.4);
+    }
+
+    @media (min-width: 900px) {
+        .premium-cookie-banner {
+            bottom: 24px;
+            width: 96%;
+            max-width: 1200px;
+            border-radius: 999px; /* Banner inteiro como pílula no desktop */
+            border: 1px solid rgba(255, 255, 255, 0.6);
             flex-direction: row;
-            align-items: center;
             justify-content: space-between;
+            padding: 16px 24px;
+            box-shadow: 0 10px 40px rgba(27, 67, 50, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
         }
-        .cookie-actions {
-            margin-top: 0;
+        
+        .cookie-banner-actions {
+            width: auto;
             flex-shrink: 0;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        
+        .btn-cookie {
+            flex: none;
+            padding: 10px 28px;
         }
     }
 </style>
 
-<div id="cookie-consent-banner" class="cookie-banner">
-    <div class="cookie-content">
-        <p>A Yelo usa cookies essenciais para funcionar. Também gostaríamos de usar cookies de Analytics e Marketing para melhorar nosso serviço. <a href="/privacidade">Saiba mais</a>.</p>
+<div id="cookie-consent-banner" class="premium-cookie-banner">
+    <div class="cookie-banner-content">
+        <div class="cookie-icon">🍪</div>
+        <div class="cookie-text-block">
+            <p>A Yelo usa cookies essenciais para funcionar. Também gostaríamos de usar cookies de Analytics e Marketing para melhorar nosso serviço e a sua experiência. <a href="/privacidade">Saiba mais</a>.</p>
+        </div>
     </div>
-    <div class="cookie-actions" style="gap: 10px;">
-        <button id="btn-reject-cookies" class="btn-cookie-accept" style="background-color: transparent; color: #1B4332; border: 1px solid #1B4332;">Apenas Essenciais</button>
-        <button id="btn-accept-cookies" class="btn-cookie-accept">Aceitar Todos</button>
+    <div class="cookie-banner-actions">
+        <button id="btn-reject-cookies" class="btn-cookie btn-cookie-secondary">Apenas Essenciais</button>
+        <button id="btn-accept-cookies" class="btn-cookie btn-cookie-primary">Aceitar Todos</button>
     </div>
 </div>
 
@@ -87,17 +189,26 @@
             }, 500);
         }
 
+        const closeBanner = () => {
+            cookieBanner.style.opacity = '0';
+            cookieBanner.style.transform = 'translate(-50%, 20px)';
+            cookieBanner.style.transition = 'all 0.4s ease';
+            setTimeout(() => {
+                cookieBanner.style.display = 'none';
+            }, 400);
+        };
+
         if (acceptBtn) {
             acceptBtn.addEventListener('click', function() {
                 window.ConsentManager.acceptAll();
-                cookieBanner.style.display = 'none';
+                closeBanner();
             });
         }
         
         if (rejectBtn) {
             rejectBtn.addEventListener('click', function() {
                 window.ConsentManager.rejectAll();
-                cookieBanner.style.display = 'none';
+                closeBanner();
             });
         }
     });
