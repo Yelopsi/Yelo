@@ -37,7 +37,7 @@
     </div>
 
     <!-- MAIN GRID -->
-    <div class="modern-dashboard-grid" style="align-items: stretch;">
+    <div class="modern-dashboard-grid" style="display: flex; flex-direction: column; gap: 25px;">
         <!-- COLUNA ESQUERDA -->
         <div class="dashboard-column-main" style="display: flex; flex-direction: column;">
             <!-- Raio X -->
@@ -138,9 +138,9 @@
         </div>
 
         <!-- COLUNA DIREITA -->
-        <div class="dashboard-column-side">
+        <div class="dashboard-column-side" style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 25px; align-items: stretch;">
             <!-- Alertas -->
-            <div class="modern-notifications-card">
+            <div class="modern-notifications-card" style="flex: 0 0 380px;">
                 <div class="management-header">
                     Alertas e Ações Rápidas
                 </div>
@@ -164,7 +164,7 @@
             </div>
 
             <!-- Atividade Recente -->
-            <div class="modern-community-card">
+            <div class="modern-community-card" style="flex: 1; min-width: 300px;">
                 <div class="card-header-modern" style="margin-bottom: 15px;">
                     <h2 class="card-title-modern" style="font-size: 1.1rem;">Atividade Recente</h2>
                 </div>
