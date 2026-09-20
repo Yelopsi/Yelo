@@ -334,14 +334,9 @@ function initGrowthSimulator(data) {
         document.getElementById('sim-res-meta-budget').textContent = formatBRL(totalMetaBudget);
         document.getElementById('sim-res-meta-monthly').textContent = `${formatBRL(monthlyMetaBudget)}/mês`;
 
-        const gscClicksEl = document.getElementById('cmo-gsc-clicks');
-        let organicB2CClicks = 0;
-        if (gscClicksEl) {
-            const rawText = gscClicksEl.textContent || '0';
-            const cleanText = rawText.split('▲')[0].split('▼')[0].replace(/\./g, '').trim();
-            organicB2CClicks = parseInt(cleanText) || 0;
-        }
-        const projectedOrganicB2CClicksMonthly = Math.floor((organicB2CClicks / daysInPeriodSim) * 30);
+        // Usa a média histórica de 90 dias de cliques reais no botão de WPP, em vez dos acessos brutos
+        const organicWppClicks90d = data.platform.b2c.organic_wpp_clicks_90d || 0;
+        const projectedOrganicB2CClicksMonthly = Math.floor(organicWppClicks90d / 3);
 
         const currentB2CCpl = data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15;
         const targetClicksPerPsi = 2; // O psicólogo precisa de 2 contatos por mês no WhatsApp.

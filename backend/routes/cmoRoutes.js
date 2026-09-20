@@ -215,6 +215,15 @@ router.get('/dashboard', async (req, res) => {
         const googleCpl = wppClicks > 0 ? (actualGoogleSpend / wppClicks) : 0;
         const prevGoogleCpl = (prevGoogleMetricsRes.wpp_clicks > 0) ? (actualPrevGoogleSpend / parseInt(prevGoogleMetricsRes.wpp_clicks)) : 0;
 
+        const b2cOrganic90dQuery = `
+            SELECT COUNT(*) as organic_wpp_clicks
+            FROM "WhatsAppClickLogs"
+            WHERE "createdAt" >= NOW() - INTERVAL '90 days'
+            AND ("utmSource" IS NULL OR "utmSource" NOT IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads', 'google', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc'))
+        `;
+        const [organic90dRes] = await sequelize.query(b2cOrganic90dQuery, { type: sequelize.QueryTypes.SELECT });
+        const organicWppClicks90d = parseInt(organic90dRes.organic_wpp_clicks || 0);
+
         // HISTORICAL QUERIES
         const b2bHistQuery = `
             SELECT 
@@ -410,7 +419,7 @@ router.get('/dashboard', async (req, res) => {
             },
             platform: {
                 b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive, total_trials: totalTrials, organic_active: organicPagantes, organic_trials: organicTrials, total_new_active: totalNewPagantes, total_new_trials: totalNewTrials },
-                b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals }
+                b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals, organic_wpp_clicks_90d: organicWppClicks90d }
             },
             decisionEngineMeta,
             decisionEngineGoogle
@@ -553,6 +562,14 @@ router.get('/traffic', async (req, res) => {
 router.get('/simulator-settings', async (req, res) => {
     try {
         const db = require('../models');
+        
+        try {
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_target_subs INTEGER DEFAULT 70;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_target_months INTEGER DEFAULT 3;`);
+        } catch (e) {
+            console.error('[CMO] DB alter skip:', e.message);
+        }
+
         const settings = await db.SystemSetting.findOne({
             attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months']
         });
