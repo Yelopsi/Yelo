@@ -550,7 +550,9 @@ router.get('/traffic', async (req, res) => {
 router.get('/simulator-settings', async (req, res) => {
     try {
         const db = require('../models');
-        const settings = await db.SystemSetting.findOne();
+        const settings = await db.SystemSetting.findOne({
+            attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months']
+        });
         res.json({
             success: true,
             targetSubs: settings?.cmo_sim_target_subs ?? 70,
@@ -568,7 +570,9 @@ router.post('/simulator-settings', async (req, res) => {
         const db = require('../models');
         const { targetSubs, targetMonths } = req.body;
         
-        const settings = await db.SystemSetting.findOne();
+        const settings = await db.SystemSetting.findOne({
+            attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months']
+        });
         if (!settings) return res.status(404).json({ success: false, error: 'Settings not found' });
         
         if (targetSubs !== undefined) settings.cmo_sim_target_subs = parseInt(targetSubs);
