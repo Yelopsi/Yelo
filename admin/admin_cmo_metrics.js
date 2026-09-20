@@ -307,12 +307,12 @@ function initGrowthSimulator(data) {
         const targetTrials = gapReal > 0 ? Math.ceil(gapReal / trialConversionRate) : 0;
 
         document.getElementById('sim-res-new-subs').textContent = `+${gapTotal}`;
-        document.getElementById('sim-res-churn-info').innerHTML = `Crescimento Líquido: ${Math.max(0, targetSubs - basePagantes)} | Reposição Churn: ${projectedChurnLoss}<br><span style="color:#059669; font-weight:bold;">Orgânico projetado: -${projectedOrganicGain} (Só precisa comprar ${gapReal})</span>`;
+        document.getElementById('sim-res-churn-info').innerHTML = `A meta exige crescer +${Math.max(0, targetSubs - basePagantes)}, e repor ${projectedChurnLoss} que devem cancelar (Churn).<br><span style="color:#059669; font-weight:bold;">O SEO atrai ${projectedOrganicGain} de graça. Precisamos pagar para comprar ${gapReal}.</span>`;
         
         const elTrials = document.getElementById('sim-res-new-trials');
         if (elTrials) {
             elTrials.style.display = 'block';
-            elTrials.textContent = `Meta de Trials Pago: +${targetTrials} (Conv. ${(trialConversionRate * 100).toFixed(1)}%)`;
+            elTrials.textContent = `Precisamos de +${targetTrials} Trials (Conv. ${(trialConversionRate * 100).toFixed(1)}%)`;
         }
         
         const totalMetaBudget = gapReal * cacBase;
@@ -346,7 +346,7 @@ function initGrowthSimulator(data) {
         
         const card3Desc = document.getElementById('sim-card-3')?.querySelector('p:nth-of-type(3)');
         if (card3Desc) {
-            card3Desc.innerHTML = `Para não faltar paciente na base futura.<br><span style="color:#059669; font-weight:bold;">Orgânico projetado: -${projectedOrganicB2CClicksMonthly} cliques SEO/mês (Google Ads só precisa comprar ${requiredPaidB2CClicks} cliques)</span>`;
+            card3Desc.innerHTML = `Custo para gerar pacientes no Google e manter a base (de ${targetSubs} psicólogos) sem cancelar.<br><span style="color:#059669; font-weight:bold;">O SEO traz ${projectedOrganicB2CClicksMonthly} contatos de graça, o Google Ads comprará ${requiredPaidB2CClicks}.</span>`;
         }
 
         const paybackMonths = cacBase / 99; 
