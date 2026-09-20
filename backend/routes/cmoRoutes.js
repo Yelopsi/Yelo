@@ -78,7 +78,8 @@ router.get('/dashboard', async (req, res) => {
             SELECT 
                 COUNT(*) FILTER (
                     WHERE status = 'active'
-                    AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL)
+                    AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
+                    AND "planExpiresAt" > NOW()
                     AND (is_exempt IS NULL OR is_exempt = false)
                 ) as pagantes,
                 COUNT(*) FILTER (
@@ -112,7 +113,8 @@ router.get('/dashboard', async (req, res) => {
             SELECT 
                 COUNT(*) FILTER (
                     WHERE status = 'active'
-                    AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL)
+                    AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
+                    AND "planExpiresAt" > NOW()
                     AND (is_exempt IS NULL OR is_exempt = false)
                 ) as total_new_pagantes,
                 COUNT(*) FILTER (
@@ -147,7 +149,9 @@ router.get('/dashboard', async (req, res) => {
         const globalActiveQuery = `
             SELECT 
                 COUNT(*) FILTER (
-                    WHERE ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL)
+                    WHERE status = 'active'
+                    AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
+                    AND "planExpiresAt" > NOW()
                 ) as total_active,
                 COUNT(*) FILTER (
                     WHERE status = 'active'
@@ -210,7 +214,8 @@ router.get('/dashboard', async (req, res) => {
             SELECT 
                 COUNT(*) FILTER (
                     WHERE status = 'active'
-                    AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL)
+                    AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
+                    AND "planExpiresAt" > NOW()
                     AND (is_exempt IS NULL OR is_exempt = false)
                 ) as pagantes,
                 COUNT(*) FILTER (
