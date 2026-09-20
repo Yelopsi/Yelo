@@ -360,6 +360,35 @@ function initGrowthSimulator(data) {
             card3Desc.innerHTML = `Custo para gerar pacientes no Google e manter a base (de ${targetSubs} psicólogos) sem cancelar.<br><span style="color:#059669; font-weight:bold;">O SEO traz ${projectedOrganicB2CClicksMonthly} contatos de graça, o Google Ads comprará ${requiredPaidB2CClicks}.</span>`;
         }
 
+        // --- NOVO: CARD 4 (Fluxo de Caixa e Desembolso) ---
+        const currentRevenue = basePagantes * 99; // Usando ticket médio conservador de R$ 99
+        const totalProjectedExpense = monthlyMetaBudget + futureGoogleBudget;
+        const outOfPocket = totalProjectedExpense - currentRevenue;
+        
+        const elPocket = document.getElementById('sim-res-out-of-pocket');
+        const elPocketInfo = document.getElementById('sim-res-cashflow-info');
+        const card4 = document.getElementById('sim-card-4');
+        if (elPocket && elPocketInfo && card4) {
+            if (outOfPocket > 0) {
+                elPocket.textContent = formatBRL(outOfPocket) + '/mês';
+                elPocket.style.color = '#b45309';
+                card4.style.background = '#fffbeb';
+                card4.style.borderColor = '#fde68a';
+                card4.querySelector('p').style.color = '#b45309';
+                elPocketInfo.style.color = '#d97706';
+                elPocketInfo.innerHTML = `Faturamento Atual: ${formatBRL(currentRevenue)}/mês<br>Custo Mensal Ads Projetado: ${formatBRL(totalProjectedExpense)}<br><span style="color:#b45309; font-weight:bold;">O negócio precisa de injeção de capital.</span>`;
+            } else {
+                elPocket.textContent = 'R$ 0,00/mês';
+                elPocket.style.color = '#15803d'; // green
+                card4.style.background = '#f0fdf4';
+                card4.style.borderColor = '#86efac';
+                card4.querySelector('p').style.color = '#166534';
+                elPocketInfo.style.color = '#15803d';
+                elPocketInfo.innerHTML = `Faturamento Atual: ${formatBRL(currentRevenue)}/mês<br>Custo Mensal Ads Projetado: ${formatBRL(totalProjectedExpense)}<br><span style="color:#15803d; font-weight:bold;">Operação 100% paga pelo faturamento (Lucra: ${formatBRL(Math.abs(outOfPocket))}).</span>`;
+            }
+        }
+
+
         const paybackMonths = cacBase / 99; 
         const warningEl = document.getElementById('sim-res-warning');
         warningEl.style.display = 'block';
