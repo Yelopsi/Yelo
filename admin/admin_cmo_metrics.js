@@ -475,36 +475,33 @@ function initGrowthSimulator(data) {
         document.getElementById('sim-res-meta-budget').textContent = formatBRL(totalMetaBudget);
         document.getElementById('sim-res-meta-monthly').textContent = `${formatBRL(monthlyMetaBudget)}/mês`;
 
-        // Usa a média histórica de 90 dias de cliques reais no botão de WPP, em vez dos acessos brutos
+        // Usa a média histórica de 90 dias de cliques reais no botão de WPP (que são "Contatos")
         const projectedOrganicB2CClicksMonthly = orgMonthlyCalc;
 
-        // Usa o Custo por Lead histórico (90 dias) para uma projeção muito mais realista e imune a flutuações curtas
+        // Usa o Custo por Lead histórico (CPL = formulários preenchidos)
         const currentB2CCpl = data.historical?.google?.cpl > 0 
             ? data.historical?.google?.cpl 
             : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
-        const targetClicksPerPsi = 2; // O psicólogo precisa de 2 contatos por mês no WhatsApp.
+
+        const targetContactsPerPsi = 2; // O psicólogo precisa de 2 contatos por mês no WhatsApp.
         const psiSuggestedPerLead = 4.5; // O questionário sugere de 3 a 6 profissionais para cada paciente (média 4.5)
-        const costPerContact = currentB2CCpl / psiSuggestedPerLead;
-        const maintenancePerPsi = targetClicksPerPsi * costPerContact;
         
-        // O número de trials simultâneos (corpos ocupando espaço na base e consumindo Google Ads)
-        // é diretamente proporcional à agressividade do prazo. 
-        // Para espremer 800 trials em 3 meses, você terá ~266 trials ativos/mês consumindo pacientes.
-        // Para espremer em 12 meses, você terá apenas ~66 trials ativos/mês. É o "Preço da Velocidade".
+        // 1. Projeção Futura (Meta Final)
         const projectedTargetTrials = targetMonths > 0 ? Math.ceil(targetTrials / targetMonths) : targetTrials;
         const targetTotalActive = targetSubs + projectedTargetTrials;
         
-        const totalRequiredB2CBudget = targetTotalActive * maintenancePerPsi;
-        const totalRequiredB2CClicks = Math.ceil(totalRequiredB2CBudget / currentB2CCpl);
+        const totalFutureContacts = targetTotalActive * targetContactsPerPsi;
+        const futurePaidContactsNeeded = Math.max(0, totalFutureContacts - projectedOrganicB2CClicksMonthly);
+        const futurePaidLeadsNeeded = Math.ceil(futurePaidContactsNeeded / psiSuggestedPerLead);
         
-        const requiredPaidB2CClicks = Math.max(0, totalRequiredB2CClicks - projectedOrganicB2CClicksMonthly);
-        const futureGoogleBudget = requiredPaidB2CClicks * currentB2CCpl;
+        const futureGoogleBudget = futurePaidLeadsNeeded * currentB2CCpl;
+        const targetDailyGoogle = futureGoogleBudget / 30;
 
         document.getElementById('sim-res-google-budget').textContent = `${formatBRL(futureGoogleBudget)}/mês`;
         
         const card3Desc = document.getElementById('sim-card-3')?.querySelector('p:nth-of-type(3)');
         if (card3Desc) {
-            card3Desc.innerHTML = `Custo para gerar pacientes no Google e manter a base projetada (de ${targetTotalActive} psicólogos, sendo ${targetSubs} pagantes e ${projectedTargetTrials} em teste) sem cancelar.<br><span style="color:#059669; font-weight:bold;">O SEO traz ${projectedOrganicB2CClicksMonthly} contatos de graça, o Google Ads comprará ${requiredPaidB2CClicks}.</span>`;
+            card3Desc.innerHTML = `Custo para gerar pacientes no Google e manter a base projetada (de ${targetTotalActive} psicólogos, sendo ${targetSubs} pagantes e ${projectedTargetTrials} em teste) sem cancelar.<br><span style="color:#059669; font-weight:bold;">O SEO traz ${projectedOrganicB2CClicksMonthly} contatos de graça, o Google Ads precisará comprar ${futurePaidLeadsNeeded} Leads (gerando ${Math.ceil(futurePaidLeadsNeeded * psiSuggestedPerLead)} contatos pagos).</span>`;
         }
 
         // --- NOVO: CARD 4 (Fluxo de Caixa e Desembolso) ---
@@ -570,7 +567,6 @@ function initGrowthSimulator(data) {
             if (isNaN(daysInPeriod) || daysInPeriod <= 0) daysInPeriod = 30;
 
             const currentDailyGoogle = data.ads?.google?.configuredDailyBudget || (data.ads?.google?.spend / daysInPeriod) || 0;
-            const targetDailyGoogle = futureGoogleBudget / 30;
             const targetMetaDailyBudget = monthlyMetaBudget / 30; // Considerando 30 dias/mês, campanha rodando 7x na semana
 
             let metaAction = '';
@@ -590,10 +586,11 @@ function initGrowthSimulator(data) {
                 metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Para bater essa meta (com a campanha rodando os 7 dias da semana), você precisa de uma diária de <strong>${formatBRL(targetMetaDailyBudget)}</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> O aumento na plataforma é obrigatório. Aumente a sua configuração diária em <strong>20% a cada sábado</strong> por <strong>${weeks} semanas</strong>, até alcançar o teto ideal de <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>.`;
             }
 
-            const currentRequiredB2CBudget = baseRetention * maintenancePerPsi;
-            const currentRequiredB2CClicks = Math.ceil(currentRequiredB2CBudget / currentB2CCpl);
-            const currentRequiredPaidB2CClicks = Math.max(0, currentRequiredB2CClicks - projectedOrganicB2CClicksMonthly);
-            const currentIdealDailyGoogle = (currentRequiredPaidB2CClicks * currentB2CCpl) / 30;
+            // 2. Status Atual (Retenção da Base Atual)
+            const currentTotalContacts = baseRetention * targetContactsPerPsi;
+            const currentPaidContactsNeeded = Math.max(0, currentTotalContacts - projectedOrganicB2CClicksMonthly);
+            const currentPaidLeadsNeeded = Math.ceil(currentPaidContactsNeeded / psiSuggestedPerLead);
+            const currentIdealDailyGoogle = (currentPaidLeadsNeeded * currentB2CCpl) / 30;
 
             let googleAction = '';
             if (currentIdealDailyGoogle === 0 && targetDailyGoogle === 0) {
