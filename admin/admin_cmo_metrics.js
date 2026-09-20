@@ -249,12 +249,61 @@ function renderCMOMetrics(data) {
     }
 }
 
+function updateSimModeUI(mode) {
+    const btnAcel = document.getElementById('btn-mode-acelerador');
+    const btnInv = document.getElementById('btn-mode-investidor');
+    const contMonths = document.getElementById('container-sim-months');
+    const contBudget = document.getElementById('container-sim-budget');
+    const inputMonths = document.getElementById('sim-target-months');
+    const inputBudget = document.getElementById('sim-max-budget');
+
+    if (!btnAcel || !btnInv) return;
+
+    if (mode === 'acelerador') {
+        btnAcel.style.background = 'white';
+        btnAcel.style.color = '#475569';
+        btnAcel.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+        
+        btnInv.style.background = 'transparent';
+        btnInv.style.color = '#94a3b8';
+        btnInv.style.boxShadow = 'none';
+
+        if (contMonths) contMonths.style.display = 'block';
+        if (contBudget) contBudget.style.display = 'none';
+        if (inputMonths) {
+            inputMonths.disabled = false;
+            inputMonths.style.background = '#f1f5f9';
+        }
+        if (inputBudget) inputBudget.disabled = true;
+    } else {
+        btnInv.style.background = 'white';
+        btnInv.style.color = '#475569';
+        btnInv.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
+        
+        btnAcel.style.background = 'transparent';
+        btnAcel.style.color = '#94a3b8';
+        btnAcel.style.boxShadow = 'none';
+
+        if (contMonths) contMonths.style.display = 'block';
+        if (contBudget) contBudget.style.display = 'block';
+        if (inputMonths) {
+            inputMonths.disabled = true;
+            inputMonths.style.background = '#e2e8f0'; // Visual bloqueado
+        }
+        if (inputBudget) inputBudget.disabled = false;
+    }
+}
+
 function initGrowthSimulator(data) {
     const btnCalc = document.getElementById('btn-calc-simulator');
     if (!btnCalc) return;
 
+    const btnAcel = document.getElementById('btn-mode-acelerador');
+    const btnInv = document.getElementById('btn-mode-investidor');
+
     const inputSubs = document.getElementById('sim-target-subs');
     const inputMonths = document.getElementById('sim-target-months');
+    const inputBudget = document.getElementById('sim-max-budget');
 
     // Carrega as configurações salvas do banco de dados
     const token = localStorage.getItem('adminToken');
@@ -264,24 +313,53 @@ function initGrowthSimulator(data) {
             if (resp.ok) {
                 const saved = await resp.json();
                 if (saved.success) {
-                    inputSubs.value = saved.targetSubs;
-                    inputMonths.value = saved.targetMonths;
+                    if (inputSubs && saved.targetSubs) inputSubs.value = saved.targetSubs;
+                    if (inputMonths && saved.targetMonths) inputMonths.value = saved.targetMonths;
+                    if (inputBudget && saved.maxBudget) inputBudget.value = saved.maxBudget;
+                    if (saved.simMode) currentSimMode = saved.simMode;
                 }
             }
         } catch (e) { /* silencioso */ }
+
+        updateSimModeUI(currentSimMode);
+        runSimulation();
     };
 
+    if (btnAcel) {
+        btnAcel.addEventListener('click', () => {
+            currentSimMode = 'acelerador';
+            updateSimModeUI(currentSimMode);
+            runSimulation();
+        });
+    }
+
+    if (btnInv) {
+        btnInv.addEventListener('click', () => {
+            currentSimMode = 'investidor';
+            updateSimModeUI(currentSimMode);
+            runSimulation();
+        });
+    }
+
+    const newBtnCalc = btnCalc.cloneNode(true);
+    btnCalc.parentNode.replaceChild(newBtnCalc, btnCalc);
+    newBtnCalc.addEventListener('click', () => {
+        newBtnCalc.textContent = 'Calculando...';
+        newBtnCalc.style.opacity = '0.7';
+        setTimeout(() => {
+            runSimulation();
+            newBtnCalc.textContent = 'Nova Meta';
+            newBtnCalc.style.opacity = '1';
+        }, 500);
+    });
+
     const runSimulation = () => {
-        const targetSubs = parseInt(inputSubs.value) || 0;
-        const targetMonths = parseInt(inputMonths.value) || 1;
+        let targetSubs = parseInt(inputSubs?.value) || 70;
+        let targetMonths = parseInt(inputMonths?.value) || 3;
+        let maxBudget = parseFloat(inputBudget?.value) || 2000;
         
-        // Salva no banco de dados (persiste em todos os dispositivos)
-        fetch('/api/cmo/simulator-settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ targetSubs, targetMonths })
-        }).catch(() => {});
-        
+        let monthsToSave = targetMonths;
+
         const basePagantes = data.platform.b2b.total_active || 0;
         const baseTrials = data.platform.b2b.total_trials || 0;
         const baseRetention = basePagantes + baseTrials;
@@ -305,9 +383,53 @@ function initGrowthSimulator(data) {
         if (isNaN(daysInPeriodSim) || daysInPeriodSim <= 0) daysInPeriodSim = 30;
 
         const organicActive = data.platform.b2b.organic_active || 0;
+        const organicActivePerMonth = (organicActive / daysInPeriodSim) * 30;
+
+        if (currentSimMode === 'investidor') {
+            const gapRealCalc = Math.max(0, targetSubs - basePagantes);
+            const targetTrialsCalc = gapRealCalc > 0 ? Math.ceil(gapRealCalc / trialConversionRate) : 0;
+            const organicWppClicks90d = data.platform.b2c.organic_wpp_clicks_90d || 0;
+            const orgMonthly = Math.floor(organicWppClicks90d / 3);
+
+            const metaCac = cacBase;
+            const googleCpl = data.historical?.google?.cpl > 0 
+                ? data.historical?.google?.cpl 
+                : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
+
+            const A = targetTrialsCalc * metaCac;
+            const B = (targetSubs * 2 - orgMonthly) * googleCpl;
+            const C = targetTrialsCalc * 2 * googleCpl;
+            
+            const currentRevenue = basePagantes * 99; // Assume ticket R$99
+            const totalAvailableExpense = currentRevenue + maxBudget;
+
+            const denom = totalAvailableExpense - B;
+            
+            if (denom <= 0) {
+                targetMonths = 60; // 5 anos
+            } else {
+                let calculatedMonths = Math.ceil((A + C) / denom);
+                if (calculatedMonths < 1) calculatedMonths = 1;
+                targetMonths = calculatedMonths;
+            }
+            
+            if (inputMonths) inputMonths.value = targetMonths;
+            monthsToSave = targetMonths;
+        }
+        
+        // Salva no banco de dados (persiste em todos os dispositivos)
+        fetch('/api/cmo/simulator-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ 
+                targetSubs, 
+                targetMonths: monthsToSave,
+                simMode: currentSimMode,
+                maxBudget
+            })
+        }).catch(() => {});
         
         // Projeta o ganho orgânico (que vem "de graça" sem ads) baseado no ritmo do período selecionado
-        const organicActivePerMonth = (organicActive / daysInPeriodSim) * 30;
         const projectedOrganicGain = Math.floor(organicActivePerMonth * targetMonths);
 
         const projectedChurnLoss = Math.ceil(basePagantes * monthlyChurn * targetMonths);

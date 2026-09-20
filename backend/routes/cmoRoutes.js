@@ -576,12 +576,15 @@ router.get('/simulator-settings', async (req, res) => {
         }
 
         const settings = await db.SystemSetting.findOne({
-            attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months']
+            attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months', 'cmo_sim_mode', 'cmo_sim_max_budget']
         });
+
         res.json({
             success: true,
             targetSubs: settings?.cmo_sim_target_subs ?? 70,
-            targetMonths: settings?.cmo_sim_target_months ?? 3
+            targetMonths: settings?.cmo_sim_target_months ?? 3,
+            simMode: settings?.cmo_sim_mode ?? 'acelerador',
+            maxBudget: settings?.cmo_sim_max_budget ?? 2000.00
         });
     } catch (error) {
         console.error('[CMO] Erro ao carregar simulator settings:', error);
@@ -593,7 +596,7 @@ router.get('/simulator-settings', async (req, res) => {
 router.post('/simulator-settings', async (req, res) => {
     try {
         const db = require('../models');
-        const { targetSubs, targetMonths } = req.body;
+        const { targetSubs, targetMonths, simMode, maxBudget } = req.body;
         
         try {
             await db.SystemSetting.sync({ alter: true });
@@ -602,18 +605,22 @@ router.post('/simulator-settings', async (req, res) => {
         }
         
         let settings = await db.SystemSetting.findOne({
-            attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months']
+            attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months', 'cmo_sim_mode', 'cmo_sim_max_budget']
         });
         
         if (!settings) {
             settings = await db.SystemSetting.create({
                 id: 1, // Garantindo que a primeira linha tenha o ID 1
                 cmo_sim_target_subs: targetSubs !== undefined ? parseInt(targetSubs) : 70,
-                cmo_sim_target_months: targetMonths !== undefined ? parseInt(targetMonths) : 3
+                cmo_sim_target_months: targetMonths !== undefined ? parseInt(targetMonths) : 3,
+                cmo_sim_mode: simMode !== undefined ? simMode : 'acelerador',
+                cmo_sim_max_budget: maxBudget !== undefined ? parseFloat(maxBudget) : 2000.00
             });
         } else {
             if (targetSubs !== undefined) settings.cmo_sim_target_subs = parseInt(targetSubs);
             if (targetMonths !== undefined) settings.cmo_sim_target_months = parseInt(targetMonths);
+            if (simMode !== undefined) settings.cmo_sim_mode = simMode;
+            if (maxBudget !== undefined) settings.cmo_sim_max_budget = parseFloat(maxBudget);
             await settings.save();
         }
         
