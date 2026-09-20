@@ -573,14 +573,20 @@ router.post('/simulator-settings', async (req, res) => {
         const db = require('../models');
         const { targetSubs, targetMonths } = req.body;
         
-        const settings = await db.SystemSetting.findOne({
+        let settings = await db.SystemSetting.findOne({
             attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months']
         });
-        if (!settings) return res.status(404).json({ success: false, error: 'Settings not found' });
         
-        if (targetSubs !== undefined) settings.cmo_sim_target_subs = parseInt(targetSubs);
-        if (targetMonths !== undefined) settings.cmo_sim_target_months = parseInt(targetMonths);
-        await settings.save();
+        if (!settings) {
+            settings = await db.SystemSetting.create({
+                cmo_sim_target_subs: targetSubs !== undefined ? parseInt(targetSubs) : 70,
+                cmo_sim_target_months: targetMonths !== undefined ? parseInt(targetMonths) : 3
+            });
+        } else {
+            if (targetSubs !== undefined) settings.cmo_sim_target_subs = parseInt(targetSubs);
+            if (targetMonths !== undefined) settings.cmo_sim_target_months = parseInt(targetMonths);
+            await settings.save();
+        }
         
         res.json({ success: true });
     } catch (error) {

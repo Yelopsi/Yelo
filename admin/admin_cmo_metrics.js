@@ -451,10 +451,13 @@ function initGrowthSimulator(data) {
             const currentIdealDailyGoogle = (currentRequiredPaidB2CClicks * currentB2CCpl) / 30;
 
             let googleAction = '';
-            if (currentIdealDailyGoogle > currentDailyGoogle) {
+            if (currentIdealDailyGoogle === 0 && targetDailyGoogle === 0) {
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O tráfego orgânico (SEO) projetado para o mês já é mais que suficiente para gerar pacientes para toda a sua base atual e também para a meta futura.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DESLIGUE OU DIMINUA AO MÁXIMO</strong> o Google Ads, pois ele é desnecessário no momento. A própria busca orgânica já dá conta do recado!`;
+            } else if (currentIdealDailyGoogle > currentDailyGoogle) {
                 googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, mas a sua base ATUAL exige <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong> para evitar evasões.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE a diária agora</strong> para reter seus ${baseRetention} psicólogos, e continue subindo gradativamente até o teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
             } else if (currentDailyGoogle > currentIdealDailyGoogle) {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, porém sua base ATUAL exige apenas <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong>. Você está superinvestindo!<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA IMEDIATAMENTE</strong> a diária para acompanhar o tamanho real da sua base, e só suba conforme ganhar novos psicólogos (até o teto da meta de ${formatBRL(targetDailyGoogle)}/dia).`;
+                const limitText = targetDailyGoogle === 0 ? "já que o orgânico suprirá a meta" : `até o teto da meta de ${formatBRL(targetDailyGoogle)}/dia`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, porém sua base ATUAL exige apenas <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong>. Você está superinvestindo!<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA IMEDIATAMENTE</strong> a diária para acompanhar o tamanho real da sua base, e só suba conforme ganhar novos psicólogos (${limitText}).`;
             } else {
                 googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, perfeitamente alinhado com o tamanho da sua base atual.<br><br>💡 <strong>Ação Recomendada:</strong> Mantenha a configuração. Conforme o Meta Ads trouxer novos psicólogos, vá aumentando o Google aos poucos, até chegar no teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
             }
