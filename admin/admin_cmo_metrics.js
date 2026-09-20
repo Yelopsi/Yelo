@@ -319,9 +319,29 @@ function initGrowthSimulator(data) {
         document.getElementById('sim-res-meta-budget').textContent = formatBRL(totalMetaBudget);
         document.getElementById('sim-res-meta-monthly').textContent = `${formatBRL(monthlyMetaBudget)}/mês`;
 
+        const gscClicksEl = document.getElementById('cmo-gsc-clicks');
+        let organicB2CClicks = 0;
+        if (gscClicksEl) {
+            const rawText = gscClicksEl.textContent || '0';
+            const cleanText = rawText.split('▲')[0].split('▼')[0].replace(/\./g, '').trim();
+            organicB2CClicks = parseInt(cleanText) || 0;
+        }
+        const projectedOrganicB2CClicksMonthly = Math.floor((organicB2CClicks / daysInPeriodSim) * 30);
+
         const maintenancePerPsi = 26.88;
-        const futureGoogleBudget = targetSubs * maintenancePerPsi;
+        const totalRequiredB2CBudget = targetSubs * maintenancePerPsi;
+        const currentB2CCpl = data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15;
+        const totalRequiredB2CClicks = Math.ceil(totalRequiredB2CBudget / currentB2CCpl);
+        
+        const requiredPaidB2CClicks = Math.max(0, totalRequiredB2CClicks - projectedOrganicB2CClicksMonthly);
+        const futureGoogleBudget = requiredPaidB2CClicks * currentB2CCpl;
+
         document.getElementById('sim-res-google-budget').textContent = `${formatBRL(futureGoogleBudget)}/mês`;
+        
+        const card3Desc = document.getElementById('sim-card-3')?.querySelector('p:nth-of-type(2)');
+        if (card3Desc) {
+            card3Desc.innerHTML = `Para não faltar paciente na base futura.<br><span style="color:#059669; font-weight:bold;">Orgânico projetado: -${projectedOrganicB2CClicksMonthly} cliques SEO/mês (Google Ads só precisa comprar ${requiredPaidB2CClicks} cliques)</span>`;
+        }
 
         const paybackMonths = cacBase / 99; 
         const warningEl = document.getElementById('sim-res-warning');
