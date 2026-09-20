@@ -489,7 +489,6 @@ function initGrowthSimulator(data) {
                 }
             }
         }
-        }
         
         if (targetSubs > 0 && targetMonths > 0) {
             inputSubs.disabled = true;
