@@ -338,7 +338,10 @@ function initGrowthSimulator(data) {
         const organicWppClicks90d = data.platform.b2c.organic_wpp_clicks_90d || 0;
         const projectedOrganicB2CClicksMonthly = Math.floor(organicWppClicks90d / 3);
 
-        const currentB2CCpl = data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15;
+        // Usa o Custo por Lead histórico (90 dias) para uma projeção muito mais realista e imune a flutuações curtas
+        const currentB2CCpl = data.historical?.google?.cpl > 0 
+            ? data.historical?.google?.cpl 
+            : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
         const targetClicksPerPsi = 2; // O psicólogo precisa de 2 contatos por mês no WhatsApp.
         const maintenancePerPsi = targetClicksPerPsi * currentB2CCpl;
         
