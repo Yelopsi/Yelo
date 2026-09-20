@@ -434,7 +434,7 @@ function initGrowthSimulator(data) {
         document.getElementById('sim-res-meta-monthly').textContent = `${formatBRL(monthlyMetaBudget)}/mês`;
 
         // Usa a média histórica de 90 dias de cliques reais no botão de WPP, em vez dos acessos brutos
-        const projectedOrganicB2CClicksMonthly = orgMonthly;
+        const projectedOrganicB2CClicksMonthly = orgMonthlyCalc;
 
         // Usa o Custo por Lead histórico (90 dias) para uma projeção muito mais realista e imune a flutuações curtas
         const currentB2CCpl = data.historical?.google?.cpl > 0 
