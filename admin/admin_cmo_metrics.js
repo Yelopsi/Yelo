@@ -483,7 +483,9 @@ function initGrowthSimulator(data) {
             ? data.historical?.google?.cpl 
             : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
         const targetClicksPerPsi = 2; // O psicólogo precisa de 2 contatos por mês no WhatsApp.
-        const maintenancePerPsi = targetClicksPerPsi * currentB2CCpl;
+        const psiSuggestedPerLead = 4.5; // O questionário sugere de 3 a 6 profissionais para cada paciente (média 4.5)
+        const costPerContact = currentB2CCpl / psiSuggestedPerLead;
+        const maintenancePerPsi = targetClicksPerPsi * costPerContact;
         
         // O número de trials simultâneos (corpos ocupando espaço na base e consumindo Google Ads)
         // é diretamente proporcional à agressividade do prazo. 
@@ -506,9 +508,9 @@ function initGrowthSimulator(data) {
         }
 
         // --- NOVO: CARD 4 (Fluxo de Caixa e Desembolso) ---
-        const currentRevenue = basePagantes * 99; // Usando ticket médio conservador de R$ 99
+        const projectedRevenue = targetSubs * 99; // Usando ticket médio conservador de R$ 99
         const totalProjectedExpense = monthlyMetaBudget + futureGoogleBudget;
-        const outOfPocket = totalProjectedExpense - currentRevenue;
+        const outOfPocket = totalProjectedExpense - projectedRevenue;
         
         const elPocket = document.getElementById('sim-res-out-of-pocket');
         const elPocketInfo = document.getElementById('sim-res-cashflow-info');
@@ -521,7 +523,7 @@ function initGrowthSimulator(data) {
                 card4.style.borderColor = '#fde68a';
                 card4.querySelector('p').style.color = '#b45309';
                 elPocketInfo.style.color = '#d97706';
-                elPocketInfo.innerHTML = `Faturamento Atual: ${formatBRL(currentRevenue)}/mês<br>Custo Mensal Ads Projetado: ${formatBRL(totalProjectedExpense)}<br><span style="color:#b45309; font-weight:bold;">O negócio precisa de injeção de capital.</span>`;
+                elPocketInfo.innerHTML = `Faturamento (Final da Meta): ${formatBRL(projectedRevenue)}/mês<br>Custo Ads Projetado (Final da Meta): ${formatBRL(totalProjectedExpense)}<br><span style="color:#b45309; font-weight:bold;">O negócio precisará de injeção de capital no pico.</span>`;
             } else {
                 elPocket.textContent = 'R$ 0,00/mês';
                 elPocket.style.color = '#15803d'; // green
@@ -529,7 +531,7 @@ function initGrowthSimulator(data) {
                 card4.style.borderColor = '#86efac';
                 card4.querySelector('p').style.color = '#166534';
                 elPocketInfo.style.color = '#15803d';
-                elPocketInfo.innerHTML = `Faturamento Atual: ${formatBRL(currentRevenue)}/mês<br>Custo Mensal Ads Projetado: ${formatBRL(totalProjectedExpense)}<br><span style="color:#15803d; font-weight:bold;">Operação 100% paga pelo faturamento (Lucra: ${formatBRL(Math.abs(outOfPocket))}).</span>`;
+                elPocketInfo.innerHTML = `Faturamento (Final da Meta): ${formatBRL(projectedRevenue)}/mês<br>Custo Ads Projetado (Final da Meta): ${formatBRL(totalProjectedExpense)}<br><span style="color:#15803d; font-weight:bold;">Operação 100% paga pelo faturamento (Lucra: ${formatBRL(Math.abs(outOfPocket))}).</span>`;
             }
         }
 
