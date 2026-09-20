@@ -145,15 +145,22 @@ router.get('/dashboard', async (req, res) => {
         const globalChurned = parseInt(globalChurnRes.churned || 0);
 
         const globalActiveQuery = `
-            SELECT COUNT(*) as total_active
+            SELECT 
+                COUNT(*) FILTER (
+                    WHERE ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL)
+                ) as total_active,
+                COUNT(*) FILTER (
+                    WHERE status IN ('pending', 'active')
+                    AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
+                ) as total_trials
             FROM "Psychologists"
-            WHERE status = 'active'
-            AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL)
+            WHERE status IN ('pending', 'active')
             AND (is_exempt IS NULL OR is_exempt = false)
             AND "deletedAt" IS NULL
         `;
         const [globalActiveRes] = await sequelize.query(globalActiveQuery, { type: sequelize.QueryTypes.SELECT });
         const totalActive = parseInt(globalActiveRes.total_active || 0);
+        const totalTrials = parseInt(globalActiveRes.total_trials || 0);
         const globalChurnRate = (totalActive + globalChurned) > 0 ? (globalChurned / (totalActive + globalChurned)) : 0;
 
         console.log('[CMO B2B Debug]', { dateStart, dateEnd, metaPagantes, metaTrials, metaChurned, globalChurned, globalChurnRate, raw: metaMetricsRes });
@@ -390,7 +397,7 @@ router.get('/dashboard', async (req, res) => {
                 }
             },
             platform: {
-                b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive, organic_active: organicPagantes, organic_trials: organicTrials, total_new_active: totalNewPagantes, total_new_trials: totalNewTrials },
+                b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive, total_trials: totalTrials, organic_active: organicPagantes, organic_trials: organicTrials, total_new_active: totalNewPagantes, total_new_trials: totalNewTrials },
                 b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals }
             },
             decisionEngineMeta,

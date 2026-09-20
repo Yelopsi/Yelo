@@ -271,7 +271,9 @@ function initGrowthSimulator(data) {
         localStorage.setItem('yelo_sim_target_subs', targetSubs);
         localStorage.setItem('yelo_sim_target_months', targetMonths);
         
-        const totalActive = data.platform.b2b.total_active || 0;
+        const totalPagantes = data.platform.b2b.total_active || 0;
+        const totalTrials = data.platform.b2b.total_trials || 0;
+        const totalActive = totalPagantes + totalTrials;
         const monthlyChurn = data.platform.b2b.global_churn_rate > 0 ? data.platform.b2b.global_churn_rate : 0.05;
         
         const metaSpend = data.overview?.metaSpend || data.campaigns?.meta?.[0]?.spend || 0;
@@ -504,7 +506,7 @@ function initGrowthSimulator(data) {
         const progressContainer = document.getElementById('sim-progress-container');
         if (progressContainer) {
             progressContainer.style.display = 'block';
-            document.getElementById('sim-prog-current').textContent = totalActive;
+            document.getElementById('sim-prog-current').innerHTML = `${totalActive} <span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">(${totalPagantes} pagantes + ${totalTrials} trials)</span>`;
             document.getElementById('sim-prog-target').textContent = targetSubs;
             
             const percentage = targetSubs > 0 ? Math.min(100, Math.round((totalActive / targetSubs) * 100)) : 100;
