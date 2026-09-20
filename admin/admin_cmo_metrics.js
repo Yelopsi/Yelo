@@ -382,6 +382,72 @@ function initGrowthSimulator(data) {
                 <li><strong>Meta Ads (Aquisição):</strong> ${metaAction}</li>
                 <li><strong>Google Ads (Retenção):</strong> ${googleAction}</li>
             `;
+
+            // VISUAL FEEDBACK - CARD 1
+            const card1 = document.getElementById('sim-card-1');
+            const fb1 = document.getElementById('sim-res-subs-feedback');
+            if (card1 && fb1) {
+                fb1.style.display = 'inline-block';
+                if (newActiveInPeriod >= totalRequiredNewSubs && totalRequiredNewSubs > 0) {
+                    card1.style.background = '#f0fdf4';
+                    card1.style.borderColor = '#86efac';
+                    fb1.style.background = '#dcfce7';
+                    fb1.style.color = '#166534';
+                    fb1.innerHTML = `🎉 Meta Batida! (Atual: +${newActiveInPeriod} Pagantes | +${newTrialsInPeriod} Trials)`;
+                } else {
+                    card1.style.background = '#f8fafc';
+                    card1.style.borderColor = '#cbd5e1';
+                    fb1.style.background = '#f1f5f9';
+                    fb1.style.color = '#475569';
+                    fb1.innerHTML = `Atual: +${newActiveInPeriod} Pagantes | +${newTrialsInPeriod} Trials`;
+                }
+            }
+
+            // VISUAL FEEDBACK - CARD 2
+            const card2 = document.getElementById('sim-card-2');
+            const fb2 = document.getElementById('sim-res-meta-feedback');
+            if (card2 && fb2) {
+                fb2.style.display = 'inline-block';
+                if (currentMetaDailyBudget >= targetMetaDailyBudget && targetMetaDailyBudget > 0) {
+                    card2.style.background = '#f0fdf4';
+                    card2.style.borderColor = '#86efac';
+                    fb2.style.background = '#dcfce7';
+                    fb2.style.color = '#166534';
+                    fb2.innerHTML = `🎉 Orçamento Ideal Atingido! (Diária config: ${formatBRL(currentMetaDailyBudget)})`;
+                } else {
+                    card2.style.background = '#f0fdfa';
+                    card2.style.borderColor = '#5eead4';
+                    fb2.style.background = '#ccfbf1';
+                    fb2.style.color = '#0f766e';
+                    fb2.innerHTML = `Atual: ${formatBRL(currentMetaDailyBudget)}/dia config.`;
+                }
+            }
+
+            // VISUAL FEEDBACK - CARD 3
+            const card3 = document.getElementById('sim-card-3');
+            const fb3 = document.getElementById('sim-res-google-feedback');
+            if (card3 && fb3) {
+                fb3.style.display = 'inline-block';
+                if (Math.abs(currentDailyGoogle - targetDailyGoogle) <= 2) {
+                    card3.style.background = '#f0fdf4';
+                    card3.style.borderColor = '#86efac';
+                    fb3.style.background = '#dcfce7';
+                    fb3.style.color = '#166534';
+                    fb3.innerHTML = `🎉 Retenção ideal! (${formatBRL(currentDailyGoogle)}/dia config.)`;
+                } else if (currentDailyGoogle > targetDailyGoogle) {
+                    card3.style.background = '#fef2f2';
+                    card3.style.borderColor = '#fca5a5';
+                    fb3.style.background = '#fee2e2';
+                    fb3.style.color = '#991b1b';
+                    fb3.innerHTML = `⚠️ Superinvestimento (Atual: ${formatBRL(currentDailyGoogle)}/dia config.)`;
+                } else {
+                    card3.style.background = '#eff6ff';
+                    card3.style.borderColor = '#bfdbfe';
+                    fb3.style.background = '#dbeafe';
+                    fb3.style.color = '#1d4ed8';
+                    fb3.innerHTML = `Atual: ${formatBRL(currentDailyGoogle)}/dia config.`;
+                }
+            }
         }
 
         const progressContainer = document.getElementById('sim-progress-container');
