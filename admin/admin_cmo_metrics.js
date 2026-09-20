@@ -391,9 +391,9 @@ function initGrowthSimulator(data) {
             let metaAction = '';
             if (gapReal <= 0 || targetMetaDailyBudget <= currentMetaDailyBudget) {
                 if (Math.abs(targetMetaDailyBudget - currentMetaDailyBudget) < 5) {
-                    metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. A sua meta exige <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>. <strong>NÃO AUMENTE MAIS.</strong> Mantenha a campanha rodando os 7 dias da semana do jeito que está.`;
+                    metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. A sua meta exige <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>NÃO AUMENTE MAIS.</strong> Mantenha a campanha rodando os 7 dias da semana do jeito que está.`;
                 } else {
-                    metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Para bater essa meta rodando todos os dias, você só precisa gastar <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>. <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para otimizar seus custos.`;
+                    metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Para bater essa meta rodando todos os dias, você só precisa gastar <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para otimizar seus custos.`;
                 }
             } else {
                 let weeks = 0;
@@ -402,7 +402,7 @@ function initGrowthSimulator(data) {
                     simulatedDaily *= 1.20;
                     weeks++;
                 }
-                metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Para bater essa meta (com a campanha rodando os 7 dias da semana), você precisa de uma diária de <strong>${formatBRL(targetMetaDailyBudget)}</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> O aumento na plataforma é obrigatório. Aumente a sua configuração diária em <strong>20% a cada sábado</strong> por <strong>${weeks} semanas</strong>, até alcançar o teto ideal de <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>.`;
+                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Para bater essa meta (com a campanha rodando os 7 dias da semana), você precisa de uma diária de <strong>${formatBRL(targetMetaDailyBudget)}</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> O aumento na plataforma é obrigatório. Aumente a sua configuração diária em <strong>20% a cada sábado</strong> por <strong>${weeks} semanas</strong>, até alcançar o teto ideal de <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>.`;
             }
 
             const currentRequiredB2CBudget = baseRetention * maintenancePerPsi;
@@ -412,15 +412,16 @@ function initGrowthSimulator(data) {
 
             let googleAction = '';
             if (currentIdealDailyGoogle > currentDailyGoogle) {
-                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. A sua base ATUAL exige <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong>. <strong>AUMENTE a diária agora</strong> para reter seus ${baseRetention} psicólogos, e continue subindo gradativamente até o teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, mas a sua base ATUAL exige <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong> para evitar evasões.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE a diária agora</strong> para reter seus ${baseRetention} psicólogos, e continue subindo gradativamente até o teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
             } else if (currentDailyGoogle > currentIdealDailyGoogle) {
-                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. Você está queimando dinheiro! Sua base ATUAL exige apenas <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong>. <strong>DIMINUA IMEDIATAMENTE</strong> a diária para acompanhar o tamanho real da sua base, e só suba conforme ganhar novos psicólogos (até o teto da meta de ${formatBRL(targetDailyGoogle)}/dia).`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, porém sua base ATUAL exige apenas <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong>. Você está superinvestindo!<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA IMEDIATAMENTE</strong> a diária para acompanhar o tamanho real da sua base, e só suba conforme ganhar novos psicólogos (até o teto da meta de ${formatBRL(targetDailyGoogle)}/dia).`;
             } else {
-                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. Isso é perfeito para a sua base atual. Conforme o Meta Ads trouxer novos psicólogos, vá aumentando o Google aos poucos, até chegar no teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, perfeitamente alinhado com o tamanho da sua base atual.<br><br>💡 <strong>Ação Recomendada:</strong> Mantenha a configuração. Conforme o Meta Ads trouxer novos psicólogos, vá aumentando o Google aos poucos, até chegar no teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
             }
 
             actionList.innerHTML = `
                 <li><strong>Meta Ads (Aquisição):</strong> ${metaAction}</li>
+                <br>
                 <li><strong>Google Ads (Retenção):</strong> ${googleAction}</li>
             `;
 
