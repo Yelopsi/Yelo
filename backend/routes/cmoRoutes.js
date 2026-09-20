@@ -262,11 +262,17 @@ router.get('/dashboard', async (req, res) => {
                 decisionEngineMeta.confidence = 90;
                 decisionEngineMeta.scaleCapacity = 'ZERO';
                 decisionEngineMeta.recommendation = 'Gasto elevado sem novas assinaturas. Revise sua campanha B2B no Facebook/Insta.';
+            } else if (!isScaleHealthy && metaSpend.spend > 0) {
+                decisionEngineMeta.action = 'OTIMIZAR / REDUZIR 📉';
+                decisionEngineMeta.confidence = 80;
+                decisionEngineMeta.scaleCapacity = 'BAIXA';
+                decisionEngineMeta.warning = decisionEngineMeta.warning || `O CAC está alto demais em relação ao LTV (Ratio ${metaLtvCacRatio.toFixed(1)}x).`;
+                decisionEngineMeta.recommendation = 'Congele aumentos e foque em otimizar criativos e público. Escalar agora queimará caixa.';
             } else {
                 decisionEngineMeta.action = 'MANTER ORÇAMENTO ⚖️';
                 decisionEngineMeta.confidence = 70;
                 decisionEngineMeta.scaleCapacity = 'MÉDIA';
-                decisionEngineMeta.recommendation = 'O fluxo de aquisição está aceitável.';
+                decisionEngineMeta.recommendation = 'O fluxo de aquisição está aceitável, mas sem espaço óbvio para escala agressiva.';
             }
         }
 
@@ -299,6 +305,12 @@ router.get('/dashboard', async (req, res) => {
                 decisionEngineGoogle.confidence = 90;
                 decisionEngineGoogle.scaleCapacity = 'ZERO';
                 decisionEngineGoogle.recommendation = 'Gasto no Google sem gerar nenhum contato WPP. Reveja as palavras-chave ou a landing page.';
+            } else if (!isCplHealthy && actualGoogleSpend > 0) {
+                decisionEngineGoogle.action = 'OTIMIZAR / REDUZIR 📉';
+                decisionEngineGoogle.confidence = 85;
+                decisionEngineGoogle.scaleCapacity = 'BAIXA';
+                decisionEngineGoogle.warning = decisionEngineGoogle.warning || `O custo por lead (R$ ${googleCpl.toFixed(2)}) ultrapassou o teto de R$ ${decisionEngineGoogle.target.toFixed(2)}.`;
+                decisionEngineGoogle.recommendation = 'Congele aumentos e otimize anúncios/termos de pesquisa. O lead está muito caro.';
             } else {
                 decisionEngineGoogle.action = 'MANTER ORÇAMENTO ⚖️';
                 decisionEngineGoogle.confidence = 75;
