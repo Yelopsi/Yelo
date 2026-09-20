@@ -379,7 +379,6 @@ function initGrowthSimulator(data) {
         const basePagantes = data.platform.b2b.total_active || 0;
         const baseTrials = data.platform.b2b.total_trials || 0;
         const baseRetention = basePagantes + baseTrials;
-        const monthlyChurn = data.platform.b2b.global_churn_rate > 0 ? data.platform.b2b.global_churn_rate : 0.05;
         
         const metaSpend = data.overview?.metaSpend || data.campaigns?.meta?.[0]?.spend || 0;
         const metaPagantes = data.platform.b2b.active || 0;
@@ -390,13 +389,18 @@ function initGrowthSimulator(data) {
         
         const cacBase = metaPagantes > 0 ? (metaSpend / metaPagantes) : 150; 
 
-        // Descobre dias do período para projetar orgânico
+        // Descobre dias do período para projetar orgânico e normalizar o churn
         const dateStart = document.getElementById('cmo-date-start')?.value || '';
         const dateEnd = document.getElementById('cmo-date-end')?.value || '';
         const d1 = new Date(dateStart);
         const d2 = new Date(dateEnd);
         let daysInPeriodSim = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
         if (isNaN(daysInPeriodSim) || daysInPeriodSim <= 0) daysInPeriodSim = 30;
+
+        let monthlyChurn = 0.05;
+        if (data.platform.b2b.global_churn_rate > 0) {
+            monthlyChurn = (data.platform.b2b.global_churn_rate / daysInPeriodSim) * 30;
+        }
 
         const organicActive = data.platform.b2b.organic_active || 0;
         const organicActivePerMonth = (organicActive / daysInPeriodSim) * 30;
