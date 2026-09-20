@@ -331,36 +331,50 @@ function initGrowthSimulator(data) {
             actionPlanContainer.style.display = 'block';
             actionList.innerHTML = '';
             
-            if (gapReal <= 0) {
-                actionList.innerHTML = `
-                    <li><strong>Mantenha ou diminua</strong> o seu orçamento diário no Meta Ads, pois você já atingiu a meta.</li>
-                    <li>Mantenha o orçamento do Google Ads em <strong>${formatBRL(futureGoogleBudget)}/mês</strong> (aprox. ${formatBRL(futureGoogleBudget/30)}/dia) para nutrir a base atual e evitar cancelamentos.</li>
-                `;
-            } else {
-                const dailyMeta = monthlyMetaBudget / 30;
-                const dailyGoogle = futureGoogleBudget / 30;
-                
-                let metaAction = '';
-                const currentWeeklyMeta = metaSpend / 4.28;
-                const targetWeeklyMeta = monthlyMetaBudget / 4.28;
+            // Descobre dias do período para calcular a média diária atual
+            const dateStart = document.getElementById('cmo-date-start')?.value || '';
+            const dateEnd = document.getElementById('cmo-date-end')?.value || '';
+            const d1 = new Date(dateStart);
+            const d2 = new Date(dateEnd);
+            let daysInPeriod = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+            if (isNaN(daysInPeriod) || daysInPeriod <= 0) daysInPeriod = 30;
 
-                if (targetWeeklyMeta > currentWeeklyMeta) {
-                    let weeks = 0;
-                    let simulatedWeekly = currentWeeklyMeta > 0 ? currentWeeklyMeta : 50; 
-                    while (simulatedWeekly < targetWeeklyMeta && weeks < 52) {
-                        simulatedWeekly *= 1.20;
-                        weeks++;
-                    }
-                    metaAction = `<strong>Aumente</strong> o gasto do Meta Ads (Aquisição) em no máximo <strong>20% todos os sábados</strong> durante as próximas <strong>${weeks} semanas</strong> até atingir o teto de <strong>${formatBRL(monthlyMetaBudget)}/mês</strong> (aprox. ${formatBRL(dailyMeta)}/dia). Esse aumento gradual impede o reinício do aprendizado das campanhas.`;
-                } else {
-                    metaAction = `<strong>Diminua</strong> o gasto do Meta Ads (Aquisição) para <strong>${formatBRL(monthlyMetaBudget)}/mês</strong> (aprox. ${formatBRL(dailyMeta)}/dia), pois isso já é suficiente para bater a meta.`;
+            const currentDailyGoogle = (data.ads?.google?.spend || 0) / daysInPeriod;
+            const targetDailyGoogle = futureGoogleBudget / 30;
+            
+            // Meta Ads rodando 1 dia por semana: gasto no mês / semanas = gasto naquele 1 dia ativo.
+            const weeksInPeriod = daysInPeriod / 7;
+            const currentMetaDailyBudget = metaSpend / weeksInPeriod;
+            const targetMetaDailyBudget = monthlyMetaBudget / 4.28;
+
+            let metaAction = '';
+            if (gapReal <= 0 || targetMetaDailyBudget < currentMetaDailyBudget) {
+                metaAction = `Hoje você gasta aprox. <strong>${formatBRL(currentMetaDailyBudget)}/dia de campanha</strong> no Meta Ads. <strong>Diminua para ${formatBRL(targetMetaDailyBudget)}/dia</strong>, pois isso já é o suficiente.`;
+            } else if (targetMetaDailyBudget > currentMetaDailyBudget) {
+                let weeks = 0;
+                let simulatedWeekly = currentMetaDailyBudget > 0 ? currentMetaDailyBudget : 50; 
+                while (simulatedWeekly < targetMetaDailyBudget && weeks < 52) {
+                    simulatedWeekly *= 1.20;
+                    weeks++;
                 }
-
-                actionList.innerHTML = `
-                    <li>${metaAction}</li>
-                    <li>Suba gradativamente o Google Ads (Nutrição) em <strong>20% junto com o Meta Ads</strong> até atingir <strong>${formatBRL(futureGoogleBudget)}/mês</strong> (aprox. ${formatBRL(dailyGoogle)}/dia) no final do plano para garantir que os novos assinantes recebam pacientes e não cancelem.</li>
-                `;
+                metaAction = `Hoje você gasta aprox. <strong>${formatBRL(currentMetaDailyBudget)}/dia de campanha</strong> no Meta Ads (1x na semana). <strong>Aumente em 20% a cada sábado</strong> por ${weeks} semanas, até o teto de <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>.`;
+            } else {
+                metaAction = `Hoje você gasta aprox. <strong>${formatBRL(currentMetaDailyBudget)}/dia de campanha</strong> no Meta Ads. <strong>Mantenha</strong> esse valor.`;
             }
+
+            let googleAction = '';
+            if (targetDailyGoogle > currentDailyGoogle) {
+                googleAction = `Hoje você gasta <strong>${formatBRL(currentDailyGoogle)}/dia</strong> em Google Ads. <strong>Aumente 20% por semana</strong> junto com o Meta, até chegar em <strong>${formatBRL(targetDailyGoogle)}/dia</strong> (Nutrição de pacientes).`;
+            } else if (targetDailyGoogle < currentDailyGoogle) {
+                googleAction = `Hoje você gasta <strong>${formatBRL(currentDailyGoogle)}/dia</strong> em Google Ads. <strong>Diminua para ${formatBRL(targetDailyGoogle)}/dia</strong> para não gastar mais do que a base precisa.`;
+            } else {
+                googleAction = `Hoje você gasta <strong>${formatBRL(currentDailyGoogle)}/dia</strong> em Google Ads. <strong>Mantenha</strong> esse valor, está ideal para a meta.`;
+            }
+
+            actionList.innerHTML = `
+                <li><strong>Meta Ads (Aquisição):</strong> ${metaAction}</li>
+                <li><strong>Google Ads (Retenção):</strong> ${googleAction}</li>
+            `;
         }
 
         const progressContainer = document.getElementById('sim-progress-container');
