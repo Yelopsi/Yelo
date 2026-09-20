@@ -435,27 +435,58 @@ function initGrowthSimulator(data) {
             return totalProjectedExpense - currentRevenue;
         };
 
+        const dateStartForSim = document.getElementById('cmo-date-start')?.value || '';
+        const dateEndForSim = document.getElementById('cmo-date-end')?.value || '';
+        const d1ForSim = new Date(dateStartForSim);
+        const d2ForSim = new Date(dateEndForSim);
+        let daysInPeriodForSim = Math.ceil(Math.abs(d2ForSim - d1ForSim) / (1000 * 60 * 60 * 24)) + 1;
+        if (isNaN(daysInPeriodForSim) || daysInPeriodForSim <= 0) daysInPeriodForSim = 30;
+
+        // Get current Meta daily budget to use as the baseline
+        const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || (metaSpend / (daysInPeriodForSim / 7)) || 20.00;
+
         if (solveSource === 'budget' || solveSource === 'months' || solveSource === 'subs') {
-            let bestMonths = 60; // Limite máximo de 60 meses
-            let found = false;
+            let m = 0;
+            let currentBaseSim = basePagantes;
+            let possible = true;
+            let accumulatedChurn = 0;
             
-            // Procura o menor prazo possível (em meses) em que o custo cabe no orçamento extra
-            for (let m = 1; m <= 60; m++) {
-                let cost = calcOutOfPocket(targetSubs, m);
-                if (cost <= maxBudget) {
-                    bestMonths = m;
-                    found = true;
-                    break;
+            const monthlyGainFromMeta = cacBase > 0 ? ((currentMetaDailyBudget * 30) / cacBase) : 0;
+            const totalGainPerMonth = monthlyGainFromMeta + organicActivePerMonth;
+            
+            // Check if churn is greater than acquisition
+            if (totalGainPerMonth <= (currentBaseSim * monthlyChurn) && targetSubs > currentBaseSim) {
+                possible = false;
+            } else {
+                for (m = 1; m <= 60; m++) {
+                    let churnLoss = currentBaseSim * monthlyChurn;
+                    accumulatedChurn += churnLoss;
+                    currentBaseSim = currentBaseSim + totalGainPerMonth - churnLoss;
+                    if (currentBaseSim >= targetSubs) {
+                        break;
+                    }
                 }
+                if (m > 60) possible = false;
             }
-            targetMonths = bestMonths;
+            
+            if (!possible || currentBaseSim < targetSubs) {
+                // If it's impossible to reach with the current budget, we default to 12 months 
+                // so the algorithm can recommend a higher required budget to hit it in 1 year.
+                m = 12;
+                // Approximate churn loss linearly using average base size
+                accumulatedChurn = ((basePagantes + targetSubs) / 2) * monthlyChurn * m;
+            }
+            
+            targetMonths = m;
+            window.simulatedAccumulatedChurn = Math.ceil(accumulatedChurn);
             if (inputMonths) inputMonths.value = targetMonths;
         }
         
         // Projeta o ganho orgânico (que vem "de graça" sem ads) baseado no ritmo do período selecionado
         const projectedOrganicGain = Math.floor(organicActivePerMonth * targetMonths);
 
-        const projectedChurnLoss = Math.ceil(basePagantes * monthlyChurn * targetMonths);
+        // Churn loss usa a simulação compound ou aproximação para 12 meses
+        const projectedChurnLoss = window.simulatedAccumulatedChurn || Math.ceil(basePagantes * monthlyChurn * targetMonths);
         const gapTotal = Math.max(0, targetSubs - basePagantes) + projectedChurnLoss;
         
         // O GAP real de tráfego pago é o gap total subtraído do que já deve vir pelo orgânico
@@ -573,8 +604,6 @@ function initGrowthSimulator(data) {
 
             const currentDailyGoogle = data.ads?.google?.configuredDailyBudget || (data.ads?.google?.spend / daysInPeriod) || 0;
             const targetDailyGoogle = futureGoogleBudget / 30;
-            
-            const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || (metaSpend / (daysInPeriod / 7)) || 0;
             const targetMetaDailyBudget = monthlyMetaBudget / 30; // Considerando 30 dias/mês, campanha rodando 7x na semana
 
             let metaAction = '';
