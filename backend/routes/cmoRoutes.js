@@ -546,4 +546,40 @@ router.get('/traffic', async (req, res) => {
     }
 });
 
+// GET /api/cmo/simulator-settings — Carrega a meta do simulador do banco
+router.get('/simulator-settings', async (req, res) => {
+    try {
+        const db = require('../models');
+        const settings = await db.SystemSetting.findOne();
+        res.json({
+            success: true,
+            targetSubs: settings?.cmo_sim_target_subs ?? 70,
+            targetMonths: settings?.cmo_sim_target_months ?? 3
+        });
+    } catch (error) {
+        console.error('[CMO] Erro ao carregar simulator settings:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// POST /api/cmo/simulator-settings — Salva a meta do simulador no banco
+router.post('/simulator-settings', async (req, res) => {
+    try {
+        const db = require('../models');
+        const { targetSubs, targetMonths } = req.body;
+        
+        const settings = await db.SystemSetting.findOne();
+        if (!settings) return res.status(404).json({ success: false, error: 'Settings not found' });
+        
+        if (targetSubs !== undefined) settings.cmo_sim_target_subs = parseInt(targetSubs);
+        if (targetMonths !== undefined) settings.cmo_sim_target_months = parseInt(targetMonths);
+        await settings.save();
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[CMO] Erro ao salvar simulator settings:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 module.exports = router;

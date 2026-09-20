@@ -35,6 +35,15 @@ module.exports = (sequelize, DataTypes) => {
     max_subscribers_record: {
       type: DataTypes.INTEGER,
       defaultValue: 16
+    },
+    // CMO Simulator: Meta persistida no banco
+    cmo_sim_target_subs: {
+      type: DataTypes.INTEGER,
+      defaultValue: 70
+    },
+    cmo_sim_target_months: {
+      type: DataTypes.INTEGER,
+      defaultValue: 3
     }
   });
 

@@ -256,20 +256,31 @@ function initGrowthSimulator(data) {
     const inputSubs = document.getElementById('sim-target-subs');
     const inputMonths = document.getElementById('sim-target-months');
 
-    // Recupera dados salvos do localStorage
-    const savedSubs = localStorage.getItem('yelo_sim_target_subs');
-    const savedMonths = localStorage.getItem('yelo_sim_target_months');
-    
-    if (savedSubs) inputSubs.value = savedSubs;
-    if (savedMonths) inputMonths.value = savedMonths;
+    // Carrega as configurações salvas do banco de dados
+    const token = localStorage.getItem('adminToken');
+    const loadSimSettings = async () => {
+        try {
+            const resp = await fetch('/api/cmo/simulator-settings', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (resp.ok) {
+                const saved = await resp.json();
+                if (saved.success) {
+                    inputSubs.value = saved.targetSubs;
+                    inputMonths.value = saved.targetMonths;
+                }
+            }
+        } catch (e) { /* silencioso */ }
+    };
 
     const runSimulation = () => {
         const targetSubs = parseInt(inputSubs.value) || 0;
         const targetMonths = parseInt(inputMonths.value) || 1;
         
-        // Salva para persistir após reload
-        localStorage.setItem('yelo_sim_target_subs', targetSubs);
-        localStorage.setItem('yelo_sim_target_months', targetMonths);
+        // Salva no banco de dados (persiste em todos os dispositivos)
+        fetch('/api/cmo/simulator-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ targetSubs, targetMonths })
+        }).catch(() => {});
         
         const basePagantes = data.platform.b2b.total_active || 0;
         const baseTrials = data.platform.b2b.total_trials || 0;
@@ -594,12 +605,16 @@ function initGrowthSimulator(data) {
         document.getElementById('sim-res-google-budget').textContent = '--/mês';
         document.getElementById('sim-res-warning').style.display = 'none';
         
-        localStorage.removeItem('yelo_sim_target_subs');
-        localStorage.removeItem('yelo_sim_target_months');
+        // Reseta no banco para os valores padrão
+        fetch('/api/cmo/simulator-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ targetSubs: 70, targetMonths: 3 })
+        }).catch(() => {});
     });
 
-    // Roda a simulação automaticamente no load com os dados salvos ou os padrões (70 assinantes, 3 meses)
-    setTimeout(runSimulation, 200);
+    // Carrega as configurações do banco e roda automaticamente
+    loadSimSettings().then(() => { setTimeout(runSimulation, 200); });
 }
 
 function initCMOMonthSelector() {
