@@ -275,7 +275,6 @@ function initGrowthSimulator(data) {
 
     const unblockSimulatorInputs = () => {
         if (inputSubs) inputSubs.disabled = false;
-        if (inputMonths) inputMonths.disabled = false;
         if (inputBudget) inputBudget.disabled = false;
         newBtnSave.textContent = 'Salvar Meta';
         newBtnSave.style.background = '#10b981';
@@ -436,27 +435,21 @@ function initGrowthSimulator(data) {
             return totalProjectedExpense - currentRevenue;
         };
 
-        if (solveSource === 'budget' || solveSource === 'months') {
-            let low = basePagantes;
-            let high = basePagantes + 10000;
-            let bestSubs = basePagantes;
+        if (solveSource === 'budget' || solveSource === 'months' || solveSource === 'subs') {
+            let bestMonths = 60; // Limite máximo de 60 meses
+            let found = false;
             
-            for (let i = 0; i < 50; i++) {
-                let mid = Math.floor((low + high) / 2);
-                let cost = calcOutOfPocket(mid, targetMonths);
+            // Procura o menor prazo possível (em meses) em que o custo cabe no orçamento extra
+            for (let m = 1; m <= 60; m++) {
+                let cost = calcOutOfPocket(targetSubs, m);
                 if (cost <= maxBudget) {
-                    bestSubs = mid;
-                    low = mid + 1;
-                } else {
-                    high = mid - 1;
+                    bestMonths = m;
+                    found = true;
+                    break;
                 }
             }
-            targetSubs = bestSubs;
-            if (inputSubs) inputSubs.value = targetSubs;
-        } else {
-            let calculatedBudget = calcOutOfPocket(targetSubs, targetMonths);
-            maxBudget = Math.max(0, Math.ceil(calculatedBudget / 10) * 10);
-            if (inputBudget) inputBudget.value = maxBudget;
+            targetMonths = bestMonths;
+            if (inputMonths) inputMonths.value = targetMonths;
         }
         
         // Projeta o ganho orgânico (que vem "de graça" sem ads) baseado no ritmo do período selecionado
