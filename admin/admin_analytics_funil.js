@@ -91,11 +91,10 @@ window.initializePage = function() {
             if (startInput && startInput.value) queryParams.append('startDate', startInput.value);
             if (endInput && endInput.value) queryParams.append('endDate', endInput.value);
 
-            const [res, resWpp, resRanking, resCmo] = await Promise.all([
+            const [res, resWpp, resRanking] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/admin/analytics/funnel?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/analytics/ranking?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
-                fetch(`${API_BASE_URL}/api/cmo/dashboard?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+                fetch(`${API_BASE_URL}/api/admin/analytics/ranking?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
             ]);
 
             if (!res.ok) throw new Error("Falha ao buscar dados de funil");
@@ -138,20 +137,6 @@ window.initializePage = function() {
                 if (elBusca) elBusca.textContent = totalBusca.toLocaleString();
                 if (elDiretas) elDiretas.textContent = totalDiretas.toLocaleString();
                 if (elWpp) elWpp.textContent = totalWpp.toLocaleString();
-            }
-
-            // --- POPULA DADOS DO BREAKEVEN E CHAMA CALCULO ---
-            try {
-                const dataCmo = (resCmo && resCmo.ok) ? await resCmo.json() : null;
-                if (dataCmo) {
-                    const googleSpend = dataCmo.googleSpend ? (dataCmo.googleSpend.spend || 0) : 0;
-                    const metaSpend = dataCmo.metaSpend ? (dataCmo.metaSpend.spend || 0) : 0;
-                    document.getElementById('input-gasto-google').value = googleSpend.toFixed(2);
-                    document.getElementById('input-gasto-meta').value = metaSpend.toFixed(2);
-                    if (window.calcularBreakeven) window.calcularBreakeven();
-                }
-            } catch (err) {
-                console.error("Erro ao carregar dados do CMO para breakeven", err);
             }
 
             // --- FUNÇÃO AUXILIAR PARA RENDERIZAR AS METAS VISUAIS ---
@@ -913,32 +898,6 @@ window.initializePage = function() {
             </tr>`;
         }).join('');
     }
-
-    // --- CALCULADORA DE BREAKEVEN ---
-    window.calcularBreakeven = function() {
-        const googleVal = parseFloat(document.getElementById('input-gasto-google').value) || 0;
-        const metaVal = parseFloat(document.getElementById('input-gasto-meta').value) || 0;
-        
-        // 1. Custo fixo base: Impostos e Render (2 assinaturas x 99 = 198)
-        const custoFixo = 198;
-        const precoAssinatura = 99;
-        
-        const custoTotalBreakeven = googleVal + metaVal + custoFixo;
-        const subsBreakeven = Math.ceil(custoTotalBreakeven / precoAssinatura);
-        
-        document.getElementById('kpi-breakeven-custo').textContent = `R$ ${custoTotalBreakeven.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-        document.getElementById('kpi-breakeven-subs').textContent = `${subsBreakeven} subs`;
-
-        // 2. Pró-labore (6k líquido)
-        // Meta de receita = 6000 + custos (Google + Meta + Custo Fixo)
-        const metaProlabore = 6000 + custoTotalBreakeven;
-        const subsProlabore = Math.ceil(metaProlabore / precoAssinatura);
-        
-        const elProCusto = document.getElementById('kpi-prolabore-custo');
-        const elProSubs = document.getElementById('kpi-prolabore-subs');
-        if (elProCusto) elProCusto.textContent = `R$ ${metaProlabore.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-        if (elProSubs) elProSubs.textContent = `${subsProlabore} subs`;
-    };
 
     // --- ORDENAÇÃO DO RANKING (FRONTEND) ---
     window.sortRanking = function(column) {

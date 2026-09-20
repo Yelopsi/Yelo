@@ -20,21 +20,30 @@ window.initializePage = function () {
     // Fetch Advanced KPIs for Header (MRR, Activation, Retention)
     async function loadAdvancedKpis() {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/admin/founder-metrics`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
+            const [founderRes, statsRes] = await Promise.all([
+                fetch(`${API_BASE_URL}/api/admin/founder-metrics`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${API_BASE_URL}/api/admin/stats`, { headers: { 'Authorization': `Bearer ${token}` } })
+            ]);
 
-                // MRR
-                const mrrEl = document.getElementById('crm-mrr');
-                if (mrrEl) mrrEl.innerText = `R$ ${data.metrics.currentMRR.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
+            if (founderRes.ok) {
+                const data = await founderRes.json();
                 // Retenção (100% - Churn Pago)
                 const retentionEl = document.getElementById('crm-retention');
                 if (retentionEl) {
                     const retentionPct = Math.max(0, 100 - (data.metrics.churnRate * 100)).toFixed(1);
                     retentionEl.innerText = `${retentionPct}%`;
+                }
+            }
+
+            if (statsRes.ok) {
+                const stats = await statsRes.json();
+                // MRR (espelhando a lógica e valor do admin_visao_geral)
+                const mrrEl = document.getElementById('crm-mrr');
+                if (mrrEl) {
+                    mrrEl.innerText = (stats.mrr || 0).toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    });
                 }
             }
         } catch (e) {

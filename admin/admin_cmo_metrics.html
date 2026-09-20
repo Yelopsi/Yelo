@@ -162,6 +162,79 @@
         </div>
     </div>
 
+    <!-- SIMULADOR DE CRESCIMENTO (ENGENHARIA REVERSA) -->
+    <h3 class="crm-section-title" style="margin-bottom: 15px; margin-top: 10px; display:flex; align-items:center; gap:10px;">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:#8b5cf6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        Simulador de Escala (Engenharia Reversa)
+    </h3>
+    <div class="kpi-card" style="border-top-color: #8b5cf6; margin-bottom: 30px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; justify-content: space-between; padding: 25px 30px; width: 100%; box-sizing: border-box;">
+            
+            <!-- Entrada de Dados -->
+            <div style="flex: 1; min-width: 250px; display: flex; flex-direction: column; justify-content: center;">
+                <h4 style="display: flex; align-items: center; gap: 8px; font-size: 1.1rem !important; color: #1e293b; margin: 0 0 15px 0;">
+                    Para onde queremos ir?
+                </h4>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: bold;">Meta de Assinantes</label>
+                        <input type="number" id="sim-target-subs" value="70" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 1rem; outline: none; box-sizing: border-box;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: bold;">Prazo (Meses)</label>
+                        <input type="number" id="sim-target-months" value="4" min="1" max="60" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 1rem; outline: none; box-sizing: border-box;">
+                    </div>
+                </div>
+                
+                <button id="btn-calc-simulator" style="background: #8b5cf6; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: background 0.2s;">
+                    Calcular Crescimento
+                </button>
+            </div>
+            
+            <!-- Resultados -->
+            <div style="flex: 2; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); border-left: 1px solid #e2e8f0; padding-left: 20px; gap: 20px;">
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                    <p style="font-size: 0.75rem; color: #64748b; margin: 0 0 5px 0; font-weight: bold;">1. Necessidade Real (Gap + Churn)</p>
+                    <p id="sim-res-new-subs" style="font-size: 1.4rem; font-weight: 800; color: #1e293b; margin: 0;">--</p>
+                    <p id="sim-res-churn-info" style="font-size: 0.75rem; color: #94a3b8; margin: 5px 0 0 0; line-height: 1.3;">Aguardando cálculo...</p>
+                </div>
+                
+                <div style="background: #f0fdfa; padding: 15px; border-radius: 8px; border: 1px dashed #5eead4;">
+                    <p style="font-size: 0.75rem; color: #0f766e; margin: 0 0 5px 0; font-weight: bold;">2. Verba Aquisição (Meta Ads)</p>
+                    <p id="sim-res-meta-budget" style="font-size: 1.4rem; font-weight: 800; color: #0f766e; margin: 0;">--</p>
+                    <p id="sim-res-meta-monthly" style="font-size: 0.85rem; color: #0d9488; margin: 5px 0 0 0; font-weight: 600;">--/mês</p>
+                </div>
+                
+                <div style="background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px dashed #bfdbfe;">
+                    <p style="font-size: 0.75rem; color: #1d4ed8; margin: 0 0 5px 0; font-weight: bold;">3. Nova Manutenção (Google Ads)</p>
+                    <p id="sim-res-google-budget" style="font-size: 1.4rem; font-weight: 800; color: #1d4ed8; margin: 0;">--/mês</p>
+                    <p style="font-size: 0.75rem; color: #3b82f6; margin: 5px 0 0 0; line-height: 1.3;">Para não faltar paciente e evitar churn na base futura.</p>
+                </div>
+                
+            </div>
+            
+            <div id="sim-res-warning" style="flex: 100%; font-size: 0.85rem; padding: 12px; border-radius: 6px; display: none; margin-top: 10px;"></div>
+            
+            <div id="sim-progress-container" style="flex: 100%; display: none; margin-top: 15px; background: #f8fafc; padding: 20px 15px 35px 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; color: #475569; font-weight: bold;">
+                    <span>Base Atual: <span id="sim-prog-current" style="color: #1e293b;">0</span></span>
+                    <span>Meta: <span id="sim-prog-target" style="color: #1e293b;">0</span></span>
+                </div>
+                <div style="width: 100%; background: #e2e8f0; border-radius: 999px; height: 14px; position: relative; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);">
+                    <div id="sim-prog-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #3b82f6); border-radius: 999px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); position: absolute; left: 0; top: 0;"></div>
+                    
+                    <div id="sim-prog-milestones-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                        <!-- Injetado via JS -->
+                    </div>
+                </div>
+                <p id="sim-prog-percentage" style="text-align: center; margin: 30px 0 0 0; font-size: 0.75rem; color: #64748b; font-weight: bold;">0% concluído</p>
+            </div>
+
+        </div>
+    </div>
+
     <!-- HIGH-LEVEL KPIs B2B (META) -->
     <h3 class="crm-section-title first" style="margin-bottom: 15px; display:flex; align-items:center; gap:10px;">
         <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16" style="color:#1877f2"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/></svg>

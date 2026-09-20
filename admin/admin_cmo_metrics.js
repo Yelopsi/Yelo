@@ -242,8 +242,123 @@ function renderCMOMetrics(data) {
         }
     }
 
+    if (typeof initGrowthSimulator === 'function') {
+        initGrowthSimulator(data);
+    }
+}
 
+function initGrowthSimulator(data) {
+    const btnCalc = document.getElementById('btn-calc-simulator');
+    if (!btnCalc) return;
 
+    const inputSubs = document.getElementById('sim-target-subs');
+    const inputMonths = document.getElementById('sim-target-months');
+
+    // Recupera dados salvos do localStorage
+    const savedSubs = localStorage.getItem('yelo_sim_target_subs');
+    const savedMonths = localStorage.getItem('yelo_sim_target_months');
+    
+    if (savedSubs) inputSubs.value = savedSubs;
+    if (savedMonths) inputMonths.value = savedMonths;
+
+    const runSimulation = () => {
+        const targetSubs = parseInt(inputSubs.value) || 0;
+        const targetMonths = parseInt(inputMonths.value) || 1;
+        
+        // Salva para persistir após reload
+        localStorage.setItem('yelo_sim_target_subs', targetSubs);
+        localStorage.setItem('yelo_sim_target_months', targetMonths);
+        
+        const totalActive = data.platform.b2b.total_active || 0;
+        const monthlyChurn = data.platform.b2b.global_churn_rate > 0 ? data.platform.b2b.global_churn_rate : 0.05;
+        
+        const metaSpend = data.overview?.metaSpend || data.campaigns?.meta?.[0]?.spend || 0;
+        const metaPagantes = data.platform.b2b.active || 0;
+        const cacBase = metaPagantes > 0 ? (metaSpend / metaPagantes) : 150; 
+
+        const projectedChurnLoss = Math.ceil(totalActive * monthlyChurn * targetMonths);
+        const gapReal = Math.max(0, targetSubs - totalActive) + projectedChurnLoss;
+
+        document.getElementById('sim-res-new-subs').textContent = `+${gapReal}`;
+        document.getElementById('sim-res-churn-info').textContent = `Crescimento Líquido: ${Math.max(0, targetSubs - totalActive)} | Reposição Churn: ${projectedChurnLoss}`;
+        
+        const totalMetaBudget = gapReal * cacBase;
+        const monthlyMetaBudget = totalMetaBudget / targetMonths;
+
+        const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+        document.getElementById('sim-res-meta-budget').textContent = formatBRL(totalMetaBudget);
+        document.getElementById('sim-res-meta-monthly').textContent = `${formatBRL(monthlyMetaBudget)}/mês`;
+
+        const maintenancePerPsi = 26.88;
+        const futureGoogleBudget = targetSubs * maintenancePerPsi;
+        document.getElementById('sim-res-google-budget').textContent = `${formatBRL(futureGoogleBudget)}/mês`;
+
+        const paybackMonths = cacBase / 99; 
+        const warningEl = document.getElementById('sim-res-warning');
+        warningEl.style.display = 'block';
+
+        if (paybackMonths > 6) {
+            warningEl.style.backgroundColor = '#fef2f2';
+            warningEl.style.color = '#991b1b';
+            warningEl.innerHTML = `⚠️ <b>Atenção:</b> O CAC atual está alto (${formatBRL(cacBase)}). O Payback é de ${paybackMonths.toFixed(1)} meses. Despejar ${formatBRL(totalMetaBudget)} agora tem alto risco. Otimize as campanhas Meta antes de acelerar!`;
+        } else if (gapReal <= 0) {
+            warningEl.style.backgroundColor = '#f0fdfa';
+            warningEl.style.color = '#0f766e';
+            warningEl.innerHTML = `✅ <b>Você já atingiu ou superou essa meta.</b> Foco total em Retenção e no fluxo de Google Ads.`;
+        } else {
+            warningEl.style.backgroundColor = '#f0fdfa';
+            warningEl.style.color = '#0f766e';
+            warningEl.innerHTML = `✅ <b>Viável:</b> CAC atual (${formatBRL(cacBase)}) se paga em ${paybackMonths.toFixed(1)} meses. O Fluxo de Caixa suporta escalar R$ ${formatBRL(monthlyMetaBudget)} mensais com baixo risco.`;
+        }
+
+        const progressContainer = document.getElementById('sim-progress-container');
+        if (progressContainer) {
+            progressContainer.style.display = 'block';
+            document.getElementById('sim-prog-current').textContent = totalActive;
+            document.getElementById('sim-prog-target').textContent = targetSubs;
+            
+            const percentage = targetSubs > 0 ? Math.min(100, Math.round((totalActive / targetSubs) * 100)) : 100;
+            const bar = document.getElementById('sim-prog-bar');
+            
+            bar.style.width = '0%';
+            setTimeout(() => { bar.style.width = `${percentage}%`; }, 50);
+            
+            document.getElementById('sim-prog-percentage').textContent = `${percentage}% da meta alcançada`;
+            
+            const overlay = document.getElementById('sim-prog-milestones-overlay');
+            if (overlay) {
+                overlay.innerHTML = ''; 
+                if (targetMonths > 0 && targetSubs > totalActive) {
+                    const monthlyNetGrowth = Math.ceil((targetSubs - totalActive) / targetMonths);
+                    let currentMilestone = totalActive;
+                    
+                    for (let m = 1; m < targetMonths; m++) {
+                        currentMilestone += monthlyNetGrowth;
+                        if (currentMilestone >= targetSubs) break;
+                        
+                        const mPercentage = (currentMilestone / targetSubs) * 100;
+                        const marker = document.createElement('div');
+                        marker.style.cssText = `position: absolute; left: ${mPercentage}%; top: -4px; width: 4px; height: 22px; background: #e2e8f0; border: 1px solid #94a3b8; border-radius: 2px; z-index: 10; box-shadow: 0 0 2px rgba(0,0,0,0.2);`;
+                        marker.innerHTML = `
+                            <span style="position: absolute; top: 26px; left: -25px; width: 50px; text-align: center; font-size: 0.7rem; font-weight: bold; color: #475569; background: #f8fafc; padding: 2px; border-radius: 4px;">
+                                Mês ${m}<br/>
+                                <span style="color:#8b5cf6; font-size: 0.8rem;">${currentMilestone}</span>
+                            </span>
+                        `;
+                        overlay.appendChild(marker);
+                    }
+                }
+            }
+        }
+    };
+
+    btnCalc.onclick = runSimulation;
+
+    // Se já havia dados salvos, roda a simulação automaticamente no load
+    if (savedSubs && savedMonths) {
+        setTimeout(runSimulation, 200);
+    }
 }
 
 function initCMOMonthSelector() {

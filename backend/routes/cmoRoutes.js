@@ -348,7 +348,7 @@ router.get('/dashboard', async (req, res) => {
                 }
             },
             platform: {
-                b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate },
+                b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive },
                 b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals }
             },
             decisionEngineMeta,
