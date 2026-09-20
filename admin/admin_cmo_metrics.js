@@ -1,4 +1,6 @@
-let cmoWeeklyChartInstance = null;
+if (typeof window.cmoWeeklyChartInstance === 'undefined') {
+    window.cmoWeeklyChartInstance = null;
+}
 async function loadCMOMetrics() {
     const token = localStorage.getItem('Yelo_token');
     if (!token) {
@@ -401,18 +403,24 @@ function initGrowthSimulator(data) {
                 if (daysNeeded > 0 && daysNeeded <= 7) {
                     dicaText = `<br><span style="font-size:0.8rem; color:#64748b;">💡 <strong>Dica:</strong> Em vez de aumentar a diária na plataforma, você pode manter a configuração em <strong>${formatBRL(currentMetaDailyBudget)}</strong> e apenas ligar a campanha em <strong>${daysNeeded} dias na semana</strong>.</span>`;
                 } else if (daysNeeded > 7) {
-                    dicaText = `<br><span style="font-size:0.8rem; color:#64748b;">💡 <strong>Dica:</strong> Para bater o teto, você terá que rodar mais do que 7 dias por semana (o que é impossível). Portanto, neste caso, o aumento do valor configurado na diária é obrigatório.</span>`;
+                    const requiredDaily = targetMetaDailyBudget / 7;
+                    dicaText = `<br><span style="font-size:0.8rem; color:#64748b;">💡 <strong>Dica:</strong> Para manter a campanha ligada todos os dias (7x na semana) e ainda bater o teto, você precisa configurar a sua diária em <strong>${formatBRL(requiredDaily)}</strong>. O aumento de valor na plataforma é obrigatório.</span>`;
                 }
                 metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. <strong>Aumente a diária em 20% a cada sábado</strong> por <strong>${weeks} semanas</strong>, até que sua configuração diária alcance o teto de <strong>${formatBRL(targetMetaDailyBudget)}</strong>. ${dicaText}`;
             }
 
+            const currentRequiredB2CBudget = totalActive * maintenancePerPsi;
+            const currentRequiredB2CClicks = Math.ceil(currentRequiredB2CBudget / currentB2CCpl);
+            const currentRequiredPaidB2CClicks = Math.max(0, currentRequiredB2CClicks - projectedOrganicB2CClicksMonthly);
+            const currentIdealDailyGoogle = (currentRequiredPaidB2CClicks * currentB2CCpl) / 30;
+
             let googleAction = '';
-            if (targetDailyGoogle > currentDailyGoogle) {
-                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. <strong>Aumente a diária</strong> gradativamente até alcançar <strong>${formatBRL(targetDailyGoogle)}/dia</strong> (orçamento ideal para nutrição).`;
-            } else if (targetDailyGoogle < currentDailyGoogle && Math.abs(targetDailyGoogle - currentDailyGoogle) >= 2) {
-                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. <strong>DIMINUA</strong> a diária para <strong>${formatBRL(targetDailyGoogle)}/dia</strong> para evitar desperdício com uma base menor do que a meta.`;
+            if (currentIdealDailyGoogle > currentDailyGoogle) {
+                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. A sua base ATUAL exige <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong>. <strong>AUMENTE a diária agora</strong> para reter seus ${totalActive} psicólogos, e continue subindo gradativamente até o teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
+            } else if (currentDailyGoogle > currentIdealDailyGoogle) {
+                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. Você está queimando dinheiro! Sua base ATUAL exige apenas <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong>. <strong>DIMINUA IMEDIATAMENTE</strong> a diária para acompanhar o tamanho real da sua base, e só suba conforme ganhar novos psicólogos (até o teto da meta de ${formatBRL(targetDailyGoogle)}/dia).`;
             } else {
-                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. A meta pede <strong>${formatBRL(targetDailyGoogle)}/dia</strong>. <strong>NÃO AUMENTE MAIS.</strong> O Google já está retendo os clientes com sucesso.`;
+                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. Isso é perfeito para a sua base atual. Conforme o Meta Ads trouxer novos psicólogos, vá aumentando o Google aos poucos, até chegar no teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
             }
 
             actionList.innerHTML = `
@@ -767,11 +775,9 @@ function renderCMOWeeklyChart(data) {
     
     if(chartContainer) chartContainer.style.display = 'block';
 
-    const ctx = document.getElementById('cmo-weekly-chart');
-    if (!ctx) return;
-
-    if (cmoWeeklyChartInstance) {
-        cmoWeeklyChartInstance.destroy();
+    const ctx = document.getElementById('cmo-weekly-chart').getContext('2d');
+    if (window.cmoWeeklyChartInstance) {
+        window.cmoWeeklyChartInstance.destroy();
     }
 
     const metaCac = data.ads?.meta?.cac || 0;
@@ -782,7 +788,7 @@ function renderCMOWeeklyChart(data) {
     const googleTrend = data.decisionEngineGoogle?.trend || 0;
     const prevGoogleCpl = googleCpl - googleTrend;
 
-    cmoWeeklyChartInstance = new Chart(ctx, {
+    window.cmoWeeklyChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ['CAC (Meta B2B)', 'CPL (Google B2C)'],
