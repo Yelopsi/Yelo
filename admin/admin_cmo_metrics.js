@@ -268,14 +268,13 @@ function initGrowthSimulator(data) {
     const blockSimulatorInputs = () => {
         if (inputSubs) inputSubs.disabled = true;
         if (inputMonths) inputMonths.disabled = true;
-        if (inputBudget) inputBudget.disabled = true;
         newBtnSave.textContent = 'Alterar Meta';
         newBtnSave.style.background = '#f59e0b';
     };
 
     const unblockSimulatorInputs = () => {
         if (inputSubs) inputSubs.disabled = false;
-        if (inputBudget) inputBudget.disabled = false;
+        if (inputMonths) inputMonths.disabled = false;
         newBtnSave.textContent = 'Salvar Meta';
         newBtnSave.style.background = '#10b981';
     };
@@ -445,48 +444,14 @@ function initGrowthSimulator(data) {
         // Get current Meta daily budget to use as the baseline
         const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || (metaSpend / (daysInPeriodForSim / 7)) || 20.00;
 
-        if (solveSource === 'budget' || solveSource === 'months' || solveSource === 'subs') {
-            let m = 0;
-            let currentBaseSim = basePagantes;
-            let possible = true;
-            let accumulatedChurn = 0;
-            
-            const monthlyGainFromMeta = cacBase > 0 ? ((currentMetaDailyBudget * 30) / cacBase) : 0;
-            const totalGainPerMonth = monthlyGainFromMeta + organicActivePerMonth;
-            
-            // Check if churn is greater than acquisition
-            if (totalGainPerMonth <= (currentBaseSim * monthlyChurn) && targetSubs > currentBaseSim) {
-                possible = false;
-            } else {
-                for (m = 1; m <= 60; m++) {
-                    let churnLoss = currentBaseSim * monthlyChurn;
-                    accumulatedChurn += churnLoss;
-                    currentBaseSim = currentBaseSim + totalGainPerMonth - churnLoss;
-                    if (currentBaseSim >= targetSubs) {
-                        break;
-                    }
-                }
-                if (m > 60) possible = false;
-            }
-            
-            if (!possible || currentBaseSim < targetSubs) {
-                // If it's impossible to reach with the current budget, we default to 12 months 
-                // so the algorithm can recommend a higher required budget to hit it in 1 year.
-                m = 12;
-                // Approximate churn loss linearly using average base size
-                accumulatedChurn = ((basePagantes + targetSubs) / 2) * monthlyChurn * m;
-            }
-            
-            targetMonths = m;
-            window.simulatedAccumulatedChurn = Math.ceil(accumulatedChurn);
-            if (inputMonths) inputMonths.value = targetMonths;
-        }
+        // Since the user is inputting both targetSubs and targetMonths, we don't need a simulation loop.
+        // The goal is to output the REQUIRED investment.
         
         // Projeta o ganho orgânico (que vem "de graça" sem ads) baseado no ritmo do período selecionado
         const projectedOrganicGain = Math.floor(organicActivePerMonth * targetMonths);
 
-        // Churn loss usa a simulação compound ou aproximação para 12 meses
-        const projectedChurnLoss = window.simulatedAccumulatedChurn || Math.ceil(basePagantes * monthlyChurn * targetMonths);
+        // Churn loss uses linear approximation for the growing base
+        const projectedChurnLoss = Math.ceil(((basePagantes + targetSubs) / 2) * monthlyChurn * targetMonths);
         const gapTotal = Math.max(0, targetSubs - basePagantes) + projectedChurnLoss;
         
         // O GAP real de tráfego pago é o gap total subtraído do que já deve vir pelo orgânico
