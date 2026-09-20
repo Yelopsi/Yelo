@@ -598,10 +598,8 @@ function initGrowthSimulator(data) {
         localStorage.removeItem('yelo_sim_target_months');
     });
 
-    // Se já havia dados salvos, roda a simulação automaticamente no load
-    if (savedSubs && savedMonths) {
-        setTimeout(runSimulation, 200);
-    }
+    // Roda a simulação automaticamente no load com os dados salvos ou os padrões (70 assinantes, 3 meses)
+    setTimeout(runSimulation, 200);
 }
 
 function initCMOMonthSelector() {
