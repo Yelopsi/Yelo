@@ -676,7 +676,7 @@ function initGrowthSimulator(data) {
     };
 
     // Carrega as configurações do banco e roda automaticamente
-    loadSimSettings().then(() => { setTimeout(runSimulation, 200); });
+    loadSimSettings();
 }
 
 function initCMOMonthSelector() {
