@@ -347,8 +347,8 @@ function initGrowthSimulator(data) {
         
         // Estima quantos trials existirão no futuro baseando-se na proporção atual
         const currentTrialRatio = basePagantes > 0 ? (baseTrials / basePagantes) : 2;
-        const targetTrials = Math.ceil(targetSubs * currentTrialRatio);
-        const targetTotalActive = targetSubs + targetTrials;
+        const projectedTargetTrials = Math.ceil(targetSubs * currentTrialRatio);
+        const targetTotalActive = targetSubs + projectedTargetTrials;
         
         const totalRequiredB2CBudget = targetTotalActive * maintenancePerPsi;
         const totalRequiredB2CClicks = Math.ceil(totalRequiredB2CBudget / currentB2CCpl);
@@ -360,7 +360,7 @@ function initGrowthSimulator(data) {
         
         const card3Desc = document.getElementById('sim-card-3')?.querySelector('p:nth-of-type(3)');
         if (card3Desc) {
-            card3Desc.innerHTML = `Custo para gerar pacientes no Google e manter a base projetada (de ${targetTotalActive} psicólogos, sendo ${targetSubs} pagantes e ${targetTrials} em teste) sem cancelar.<br><span style="color:#059669; font-weight:bold;">O SEO traz ${projectedOrganicB2CClicksMonthly} contatos de graça, o Google Ads comprará ${requiredPaidB2CClicks}.</span>`;
+            card3Desc.innerHTML = `Custo para gerar pacientes no Google e manter a base projetada (de ${targetTotalActive} psicólogos, sendo ${targetSubs} pagantes e ${projectedTargetTrials} em teste) sem cancelar.<br><span style="color:#059669; font-weight:bold;">O SEO traz ${projectedOrganicB2CClicksMonthly} contatos de graça, o Google Ads comprará ${requiredPaidB2CClicks}.</span>`;
         }
 
         // --- NOVO: CARD 4 (Fluxo de Caixa e Desembolso) ---
