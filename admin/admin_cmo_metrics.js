@@ -386,31 +386,23 @@ function initGrowthSimulator(data) {
             const targetDailyGoogle = futureGoogleBudget / 30;
             
             const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || (metaSpend / (daysInPeriod / 7)) || 0;
-            const targetMetaDailyBudget = monthlyMetaBudget / 4.28;
+            const targetMetaDailyBudget = monthlyMetaBudget / 30; // Considerando 30 dias/mês, campanha rodando 7x na semana
 
             let metaAction = '';
             if (gapReal <= 0 || targetMetaDailyBudget <= currentMetaDailyBudget) {
                 if (Math.abs(targetMetaDailyBudget - currentMetaDailyBudget) < 5) {
-                    metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. A sua meta exige <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>. <strong>NÃO AUMENTE MAIS.</strong> Mantenha a campanha rodando do jeito que está.`;
+                    metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. A sua meta exige <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>. <strong>NÃO AUMENTE MAIS.</strong> Mantenha a campanha rodando os 7 dias da semana do jeito que está.`;
                 } else {
-                    metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Para bater essa meta, você só precisa gastar <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>. <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para otimizar seus custos.`;
+                    metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Para bater essa meta rodando todos os dias, você só precisa gastar <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>. <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para otimizar seus custos.`;
                 }
             } else {
                 let weeks = 0;
-                let simulatedWeekly = currentMetaDailyBudget > 0 ? currentMetaDailyBudget : 50; 
-                while (simulatedWeekly < targetMetaDailyBudget && weeks < 52) {
-                    simulatedWeekly *= 1.20;
+                let simulatedDaily = currentMetaDailyBudget > 0 ? currentMetaDailyBudget : 10; 
+                while (simulatedDaily < targetMetaDailyBudget && weeks < 52) {
+                    simulatedDaily *= 1.20;
                     weeks++;
                 }
-                let daysNeeded = currentMetaDailyBudget > 0 ? Math.ceil(targetMetaDailyBudget / currentMetaDailyBudget) : 0;
-                let dicaText = "";
-                if (daysNeeded > 0 && daysNeeded <= 7) {
-                    dicaText = `<br><span style="font-size:0.8rem; color:#64748b;">💡 <strong>Dica:</strong> Em vez de aumentar a diária na plataforma, você pode manter a configuração em <strong>${formatBRL(currentMetaDailyBudget)}</strong> e apenas ligar a campanha em <strong>${daysNeeded} dias na semana</strong>.</span>`;
-                } else if (daysNeeded > 7) {
-                    const requiredDaily = targetMetaDailyBudget / 7;
-                    dicaText = `<br><span style="font-size:0.8rem; color:#64748b;">💡 <strong>Dica:</strong> Para manter a campanha ligada todos os dias (7x na semana) e ainda bater o teto, você precisa configurar a sua diária em <strong>${formatBRL(requiredDaily)}</strong>. O aumento de valor na plataforma é obrigatório.</span>`;
-                }
-                metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. <strong>Aumente a diária em 20% a cada sábado</strong> por <strong>${weeks} semanas</strong>, até que sua configuração diária alcance o teto de <strong>${formatBRL(targetMetaDailyBudget)}</strong>. ${dicaText}`;
+                metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Para bater essa meta (com a campanha rodando os 7 dias da semana), você precisa de uma diária de <strong>${formatBRL(targetMetaDailyBudget)}</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> O aumento na plataforma é obrigatório. Aumente a sua configuração diária em <strong>20% a cada sábado</strong> por <strong>${weeks} semanas</strong>, até alcançar o teto ideal de <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>.`;
             }
 
             const currentRequiredB2CBudget = baseRetention * maintenancePerPsi;

@@ -150,7 +150,7 @@ router.get('/dashboard', async (req, res) => {
                     WHERE ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL)
                 ) as total_active,
                 COUNT(*) FILTER (
-                    WHERE status IN ('pending', 'active')
+                    WHERE status = 'active'
                     AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
                 ) as total_trials
             FROM "Psychologists"
