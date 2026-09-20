@@ -192,6 +192,7 @@ router.get('/dashboard', async (req, res) => {
         const b2cQuery = `
             SELECT 
                 COUNT(*) as wpp_clicks,
+                SUM(CASE WHEN "utmSource" IN ('google', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc') THEN 1 ELSE 0 END) as google_wpp_clicks,
                 SUM(CASE WHEN "dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as total_deals,
                 SUM(CASE WHEN "dealClosed" IN ('no', 'no_reply', 'not_interested', 'did_not_reply') THEN 1 ELSE 0 END) as total_lost,
                 SUM(CASE WHEN "dealClosed" IS NULL OR "dealClosed" = 'pending' THEN 1 ELSE 0 END) as total_pending
@@ -207,13 +208,15 @@ router.get('/dashboard', async (req, res) => {
         });
 
         const wppClicks = parseInt(googleMetricsRes.wpp_clicks || 0);
+        const googleWppClicks = parseInt(googleMetricsRes.google_wpp_clicks || 0);
+        const prevGoogleWppClicks = parseInt(prevGoogleMetricsRes.google_wpp_clicks || 0);
         const googleDeals = parseInt(googleMetricsRes.total_deals || 0);
         const prevGoogleDeals = parseInt(prevGoogleMetricsRes.total_deals || 0);
         const lostDeals = parseInt(googleMetricsRes.total_lost || 0);
         const pendingDeals = parseInt(googleMetricsRes.total_pending || 0);
 
-        const googleCpl = wppClicks > 0 ? (actualGoogleSpend / wppClicks) : 0;
-        const prevGoogleCpl = (prevGoogleMetricsRes.wpp_clicks > 0) ? (actualPrevGoogleSpend / parseInt(prevGoogleMetricsRes.wpp_clicks)) : 0;
+        const googleCpl = googleWppClicks > 0 ? (actualGoogleSpend / googleWppClicks) : 0;
+        const prevGoogleCpl = prevGoogleWppClicks > 0 ? (actualPrevGoogleSpend / prevGoogleWppClicks) : 0;
 
         const b2cOrganic90dQuery = `
             SELECT COUNT(*) as organic_wpp_clicks
@@ -269,13 +272,16 @@ router.get('/dashboard', async (req, res) => {
         const b2cHistQuery = `
             SELECT 
                 COUNT(*) as wpp_clicks,
+                SUM(CASE WHEN "utmSource" IN ('google', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc') THEN 1 ELSE 0 END) as google_wpp_clicks,
                 SUM(CASE WHEN "dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as total_deals
             FROM "WhatsAppClickLogs"
+            WHERE "createdAt" >= NOW() - INTERVAL '90 days'
         `;
         const [googleMetricsHistRes] = await sequelize.query(b2cHistQuery, { type: sequelize.QueryTypes.SELECT });
         const histWppClicks = parseInt(googleMetricsHistRes.wpp_clicks || 0);
+        const histGoogleWppClicks = parseInt(googleMetricsHistRes.google_wpp_clicks || 0);
         const histGoogleDeals = parseInt(googleMetricsHistRes.total_deals || 0);
-        const histGoogleCpl = histWppClicks > 0 ? (actualGoogleSpendHistorical / histWppClicks) : 0;
+        const histGoogleCpl = histGoogleWppClicks > 0 ? (actualGoogleSpendHistorical / histGoogleWppClicks) : 0;
 
         const deltaGoogleSpend = actualGoogleSpend - actualPrevGoogleSpend;
         const deltaGoogleClicks = wppClicks - parseInt(prevGoogleMetricsRes.wpp_clicks || 0);
@@ -564,10 +570,9 @@ router.get('/simulator-settings', async (req, res) => {
         const db = require('../models');
         
         try {
-            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_target_subs INTEGER DEFAULT 70;`);
-            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_target_months INTEGER DEFAULT 3;`);
+            await db.SystemSetting.sync({ alter: true });
         } catch (e) {
-            console.error('[CMO] DB alter skip:', e.message);
+            console.error('[CMO] DB sync skip:', e.message);
         }
 
         const settings = await db.SystemSetting.findOne({
@@ -591,10 +596,9 @@ router.post('/simulator-settings', async (req, res) => {
         const { targetSubs, targetMonths } = req.body;
         
         try {
-            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_target_subs INTEGER DEFAULT 70;`);
-            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_target_months INTEGER DEFAULT 3;`);
+            await db.SystemSetting.sync({ alter: true });
         } catch (e) {
-            console.error('DB alter skip in POST:', e.message);
+            console.error('DB sync skip in POST:', e.message);
         }
         
         let settings = await db.SystemSetting.findOne({
