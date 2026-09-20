@@ -103,7 +103,7 @@ class GoogleAdsService {
             if (!accessToken) return [{ id: 'ERRO', campaign_name: '[ERRO GOOGLE] Sem Access Token', spend: 0 }];
 
             const query = `
-                SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.conversions 
+                SELECT campaign.id, campaign.name, campaign_budget.amount_micros, metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.conversions 
                 FROM campaign 
                 WHERE segments.date >= '${dateStart}' AND segments.date <= '${dateEnd}'
                 ORDER BY metrics.cost_micros DESC
@@ -116,6 +116,7 @@ class GoogleAdsService {
                 id: row.campaign.id,
                 campaign_name: row.campaign.name,
                 spend: (row.metrics.costMicros || 0) / 1000000,
+                daily_budget: (row.campaignBudget?.amountMicros || 0) / 1000000,
                 impressions: row.metrics.impressions || 0,
                 clicks: row.metrics.clicks || 0,
                 conversions: row.metrics.conversions || 0

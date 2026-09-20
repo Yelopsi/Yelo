@@ -83,6 +83,40 @@ class MetaAdsService {
         }
     }
 
+    async getCampaignBudgets() {
+        try {
+            if (this.accessToken === 'MOCK_META_TOKEN') {
+                return [{ campaign_id: '120251213168140531', daily_budget: 35.00 }];
+            }
+
+            const [campRes, adsetRes] = await Promise.all([
+                axios.get(`${this.graphApiUrl}/act_${this.adAccountId}/campaigns`, {
+                    params: { access_token: this.accessToken, fields: 'id,daily_budget' }
+                }),
+                axios.get(`${this.graphApiUrl}/act_${this.adAccountId}/adsets`, {
+                    params: { access_token: this.accessToken, fields: 'campaign_id,daily_budget,status', effective_status: "['ACTIVE']" }
+                })
+            ]);
+
+            const campaigns = campRes.data?.data || [];
+            const adsets = adsetRes.data?.data || [];
+
+            return campaigns.map(c => {
+                let daily_budget = 0;
+                if (c.daily_budget) {
+                    daily_budget = parseInt(c.daily_budget) / 100;
+                } else {
+                    const cAdsets = adsets.filter(a => a.campaign_id === c.id && a.daily_budget);
+                    daily_budget = cAdsets.reduce((sum, a) => sum + (parseInt(a.daily_budget) / 100), 0);
+                }
+                return { campaign_id: c.id, daily_budget };
+            });
+        } catch (error) {
+            console.error('[MetaAdsService] Erro ao buscar budgets:', error.message);
+            return [];
+        }
+    }
+
     mockAccountSpend() {
         return {
             spend: 1450.50,

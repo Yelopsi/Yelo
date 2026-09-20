@@ -339,36 +339,36 @@ function initGrowthSimulator(data) {
             let daysInPeriod = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
             if (isNaN(daysInPeriod) || daysInPeriod <= 0) daysInPeriod = 30;
 
-            const currentDailyGoogle = (data.ads?.google?.spend || 0) / daysInPeriod;
+            const currentDailyGoogle = data.ads?.google?.configuredDailyBudget || (data.ads?.google?.spend / daysInPeriod) || 0;
             const targetDailyGoogle = futureGoogleBudget / 30;
             
-            // Meta Ads rodando 1 dia por semana: gasto no mês / semanas = gasto naquele 1 dia ativo.
-            const weeksInPeriod = daysInPeriod / 7;
-            const currentMetaDailyBudget = metaSpend / weeksInPeriod;
+            const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || (metaSpend / (daysInPeriod / 7)) || 0;
             const targetMetaDailyBudget = monthlyMetaBudget / 4.28;
 
             let metaAction = '';
-            if (gapReal <= 0 || targetMetaDailyBudget < currentMetaDailyBudget) {
-                metaAction = `Hoje você gasta aprox. <strong>${formatBRL(currentMetaDailyBudget)}/semana</strong> no Meta Ads. <strong>Diminua para ${formatBRL(targetMetaDailyBudget)}/semana</strong>, pois isso já é o suficiente.`;
-            } else if (targetMetaDailyBudget > currentMetaDailyBudget) {
+            if (gapReal <= 0 || targetMetaDailyBudget <= currentMetaDailyBudget) {
+                if (Math.abs(targetMetaDailyBudget - currentMetaDailyBudget) < 5) {
+                    metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. A sua meta exige <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>. <strong>NÃO AUMENTE MAIS.</strong> Mantenha a campanha rodando do jeito que está.`;
+                } else {
+                    metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Para bater essa meta, você só precisa gastar <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>. <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para otimizar seus custos.`;
+                }
+            } else {
                 let weeks = 0;
                 let simulatedWeekly = currentMetaDailyBudget > 0 ? currentMetaDailyBudget : 50; 
                 while (simulatedWeekly < targetMetaDailyBudget && weeks < 52) {
                     simulatedWeekly *= 1.20;
                     weeks++;
                 }
-                metaAction = `Hoje você investe aprox. <strong>${formatBRL(currentMetaDailyBudget)}/semana</strong> no Meta Ads (rodando 1x na semana). <strong>Aumente a verba em 20% a cada sábado</strong> por ${weeks} semanas, até atingir o teto de <strong>${formatBRL(targetMetaDailyBudget)}/semana</strong>. <br><span style="font-size:0.8rem; color:#64748b;">💡 <strong>Dica:</strong> Em vez de aumentar o valor da diária, você pode simplesmente ativar a campanha em mais dias da semana mantendo o valor atual, até atingir esse teto semanal.</span>`;
-            } else {
-                metaAction = `Hoje você gasta aprox. <strong>${formatBRL(currentMetaDailyBudget)}/semana</strong> no Meta Ads. <strong>Mantenha</strong> esse valor.`;
+                metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. <strong>Aumente a diária em 20% a cada sábado</strong> por <strong>${weeks} semanas</strong>, até que sua configuração diária alcance o teto de <strong>${formatBRL(targetMetaDailyBudget)}</strong>. <br><span style="font-size:0.8rem; color:#64748b;">💡 <strong>Dica:</strong> Em vez de aumentar a diária, você pode manter os <strong>${formatBRL(currentMetaDailyBudget)}</strong> e apenas ligar a campanha em mais dias na semana.</span>`;
             }
 
             let googleAction = '';
             if (targetDailyGoogle > currentDailyGoogle) {
-                googleAction = `Hoje você gasta <strong>${formatBRL(currentDailyGoogle)}/dia</strong> em Google Ads. <strong>Aumente 20% por semana</strong> junto com o Meta, até chegar em <strong>${formatBRL(targetDailyGoogle)}/dia</strong> (Nutrição de pacientes).`;
-            } else if (targetDailyGoogle < currentDailyGoogle) {
-                googleAction = `Hoje você gasta <strong>${formatBRL(currentDailyGoogle)}/dia</strong> em Google Ads. <strong>Diminua para ${formatBRL(targetDailyGoogle)}/dia</strong> para não gastar mais do que a base precisa.`;
+                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. <strong>Aumente a diária</strong> gradativamente até alcançar <strong>${formatBRL(targetDailyGoogle)}/dia</strong> (orçamento ideal para nutrição).`;
+            } else if (targetDailyGoogle < currentDailyGoogle && Math.abs(targetDailyGoogle - currentDailyGoogle) >= 2) {
+                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. <strong>DIMINUA</strong> a diária para <strong>${formatBRL(targetDailyGoogle)}/dia</strong> para evitar desperdício com uma base menor do que a meta.`;
             } else {
-                googleAction = `Hoje você gasta <strong>${formatBRL(currentDailyGoogle)}/dia</strong> em Google Ads. <strong>Mantenha</strong> esse valor, está ideal para a meta.`;
+                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. A meta pede <strong>${formatBRL(targetDailyGoogle)}/dia</strong>. <strong>NÃO AUMENTE MAIS.</strong> O Google já está retendo os clientes com sucesso.`;
             }
 
             actionList.innerHTML = `

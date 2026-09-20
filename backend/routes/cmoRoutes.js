@@ -35,25 +35,29 @@ router.get('/dashboard', async (req, res) => {
             return target ? (target.spend || 0) : 0;
         };
 
-        const [metaCampaigns, googleCampaigns, prevMetaCampaigns, prevGoogleCampaigns, histMetaCampaigns, histGoogleCampaigns] = await Promise.all([
+        const [metaCampaigns, googleCampaigns, prevMetaCampaigns, prevGoogleCampaigns, histMetaCampaigns, histGoogleCampaigns, metaBudgets] = await Promise.all([
             metaAdsService.getCampaignInsights(dateStart, dateEnd),
             googleAdsService.getCampaignInsights(dateStart, dateEnd),
             metaAdsService.getCampaignInsights(prevDateStart, prevDateEnd),
             googleAdsService.getCampaignInsights(prevDateStart, prevDateEnd),
             metaAdsService.getCampaignInsights('2026-05-01', dateEnd),
             googleAdsService.getCampaignInsights('2026-05-01', dateEnd),
-            
-            
-            
+            metaAdsService.getCampaignBudgets()
         ]);
 
         const metaSpend = { spend: getTargetSpend(metaCampaigns, '120251213168140531', false) };
         const prevMetaSpend = { spend: getTargetSpend(prevMetaCampaigns, '120251213168140531', false) };
         const metaSpendHistorical = { spend: getTargetSpend(histMetaCampaigns, '120251213168140531', false) };
+        
+        const metaTargetBudgetObj = metaBudgets.find(c => c.campaign_id === '120251213168140531');
+        metaSpend.configuredDailyBudget = metaTargetBudgetObj ? metaTargetBudgetObj.daily_budget : 0;
 
         const googleSpendAmount = getTargetSpend(googleCampaigns, 'Yelo MVP - Busca SP', true);
         const actualGoogleSpend = googleSpendAmount;
         const googleSpend = { spend: actualGoogleSpend };
+        
+        const googleTargetCamp = googleCampaigns.find(c => c.campaign_name === 'Yelo MVP - Busca SP');
+        googleSpend.configuredDailyBudget = googleTargetCamp ? (googleTargetCamp.daily_budget || 0) : 0;
         
         const prevGoogleSpendAmount = getTargetSpend(prevGoogleCampaigns, 'Yelo MVP - Busca SP', true);
         const actualPrevGoogleSpend = prevGoogleSpendAmount;
