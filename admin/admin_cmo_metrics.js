@@ -484,8 +484,10 @@ function initGrowthSimulator(data) {
             : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
 
         const targetContactsPerPsi = 2; // O psicólogo precisa de 2 contatos por mês no WhatsApp.
-        const psiSuggestedPerLead = 4.5; // O questionário sugere de 3 a 6 profissionais para cada paciente (média 4.5)
-        
+        // COMPORTAMENTO REAL DO PACIENTE (Dados do BD): 
+        // 1 Lead (Formulário preenchido) gera apenas 0.31 Contatos (Cliques no WhatsApp).
+        // Isso ocorre porque apenas 18% dos leads clicam no WhatsApp, e quando clicam, chamam 1.6 psicólogos.
+        const psiSuggestedPerLead = 0.31;         
         // 1. Projeção Futura (Meta Final)
         const projectedTargetTrials = targetMonths > 0 ? Math.ceil(targetTrials / targetMonths) : targetTrials;
         const targetTotalActive = targetSubs + projectedTargetTrials;
