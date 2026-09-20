@@ -271,9 +271,9 @@ function initGrowthSimulator(data) {
         localStorage.setItem('yelo_sim_target_subs', targetSubs);
         localStorage.setItem('yelo_sim_target_months', targetMonths);
         
-        const totalPagantes = data.platform.b2b.total_active || 0;
-        const totalTrials = data.platform.b2b.total_trials || 0;
-        const totalActive = totalPagantes + totalTrials;
+        const basePagantes = data.platform.b2b.total_active || 0;
+        const baseTrials = data.platform.b2b.total_trials || 0;
+        const baseRetention = basePagantes + baseTrials;
         const monthlyChurn = data.platform.b2b.global_churn_rate > 0 ? data.platform.b2b.global_churn_rate : 0.05;
         
         const metaSpend = data.overview?.metaSpend || data.campaigns?.meta?.[0]?.spend || 0;
@@ -299,15 +299,15 @@ function initGrowthSimulator(data) {
         const organicActivePerMonth = (organicActive / daysInPeriodSim) * 30;
         const projectedOrganicGain = Math.floor(organicActivePerMonth * targetMonths);
 
-        const projectedChurnLoss = Math.ceil(totalActive * monthlyChurn * targetMonths);
-        const gapTotal = Math.max(0, targetSubs - totalActive) + projectedChurnLoss;
+        const projectedChurnLoss = Math.ceil(basePagantes * monthlyChurn * targetMonths);
+        const gapTotal = Math.max(0, targetSubs - basePagantes) + projectedChurnLoss;
         
         // O GAP real de tráfego pago é o gap total subtraído do que já deve vir pelo orgânico
         const gapReal = Math.max(0, gapTotal - projectedOrganicGain);
         const targetTrials = gapReal > 0 ? Math.ceil(gapReal / trialConversionRate) : 0;
 
         document.getElementById('sim-res-new-subs').textContent = `+${gapTotal}`;
-        document.getElementById('sim-res-churn-info').innerHTML = `Crescimento Líquido: ${Math.max(0, targetSubs - totalActive)} | Reposição Churn: ${projectedChurnLoss}<br><span style="color:#059669; font-weight:bold;">Orgânico projetado: -${projectedOrganicGain} (Só precisa comprar ${gapReal})</span>`;
+        document.getElementById('sim-res-churn-info').innerHTML = `Crescimento Líquido: ${Math.max(0, targetSubs - basePagantes)} | Reposição Churn: ${projectedChurnLoss}<br><span style="color:#059669; font-weight:bold;">Orgânico projetado: -${projectedOrganicGain} (Só precisa comprar ${gapReal})</span>`;
         
         const elTrials = document.getElementById('sim-res-new-trials');
         if (elTrials) {
@@ -413,14 +413,14 @@ function initGrowthSimulator(data) {
                 metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. <strong>Aumente a diária em 20% a cada sábado</strong> por <strong>${weeks} semanas</strong>, até que sua configuração diária alcance o teto de <strong>${formatBRL(targetMetaDailyBudget)}</strong>. ${dicaText}`;
             }
 
-            const currentRequiredB2CBudget = totalActive * maintenancePerPsi;
+            const currentRequiredB2CBudget = baseRetention * maintenancePerPsi;
             const currentRequiredB2CClicks = Math.ceil(currentRequiredB2CBudget / currentB2CCpl);
             const currentRequiredPaidB2CClicks = Math.max(0, currentRequiredB2CClicks - projectedOrganicB2CClicksMonthly);
             const currentIdealDailyGoogle = (currentRequiredPaidB2CClicks * currentB2CCpl) / 30;
 
             let googleAction = '';
             if (currentIdealDailyGoogle > currentDailyGoogle) {
-                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. A sua base ATUAL exige <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong>. <strong>AUMENTE a diária agora</strong> para reter seus ${totalActive} psicólogos, e continue subindo gradativamente até o teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
+                googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. A sua base ATUAL exige <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong>. <strong>AUMENTE a diária agora</strong> para reter seus ${baseRetention} psicólogos, e continue subindo gradativamente até o teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
             } else if (currentDailyGoogle > currentIdealDailyGoogle) {
                 googleAction = `O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>. Você está queimando dinheiro! Sua base ATUAL exige apenas <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong>. <strong>DIMINUA IMEDIATAMENTE</strong> a diária para acompanhar o tamanho real da sua base, e só suba conforme ganhar novos psicólogos (até o teto da meta de ${formatBRL(targetDailyGoogle)}/dia).`;
             } else {
@@ -506,10 +506,10 @@ function initGrowthSimulator(data) {
         const progressContainer = document.getElementById('sim-progress-container');
         if (progressContainer) {
             progressContainer.style.display = 'block';
-            document.getElementById('sim-prog-current').innerHTML = `${totalActive} <span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">(${totalPagantes} pagantes + ${totalTrials} trials)</span>`;
+            document.getElementById('sim-prog-current').innerHTML = `${basePagantes} <span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">(+ ${baseTrials} trials em nutrição)</span>`;
             document.getElementById('sim-prog-target').textContent = targetSubs;
             
-            const percentage = targetSubs > 0 ? Math.min(100, Math.round((totalActive / targetSubs) * 100)) : 100;
+            const percentage = targetSubs > 0 ? Math.min(100, Math.round((basePagantes / targetSubs) * 100)) : 100;
             const bar = document.getElementById('sim-prog-bar');
             
             bar.style.width = '0%';
@@ -520,9 +520,9 @@ function initGrowthSimulator(data) {
             const overlay = document.getElementById('sim-prog-milestones-overlay');
             if (overlay) {
                 overlay.innerHTML = ''; 
-                if (targetMonths > 0 && targetSubs > totalActive) {
-                    const monthlyNetGrowth = Math.ceil((targetSubs - totalActive) / targetMonths);
-                    let currentMilestone = totalActive;
+                if (targetMonths > 0 && targetSubs > basePagantes) {
+                    const monthlyNetGrowth = Math.ceil((targetSubs - basePagantes) / targetMonths);
+                    let currentMilestone = basePagantes;
                     
                     for (let m = 1; m < targetMonths; m++) {
                         currentMilestone += monthlyNetGrowth;
