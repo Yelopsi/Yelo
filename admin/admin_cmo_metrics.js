@@ -274,12 +274,12 @@ function initGrowthSimulator(data) {
         } catch (e) { /* silencioso */ }
 
         // Na carga inicial, sempre assume que o Budget é a consequência das metas
-        runSimulation(data, 'months_subs');
+        runSimulation(data, 'subs');
     };
 
     // Auto-Solver Listeners
-    if (inputSubs) inputSubs.addEventListener('input', () => runSimulation(data, 'months_subs'));
-    if (inputMonths) inputMonths.addEventListener('input', () => runSimulation(data, 'months_subs'));
+    if (inputSubs) inputSubs.addEventListener('input', () => runSimulation(data, 'subs'));
+    if (inputMonths) inputMonths.addEventListener('input', () => runSimulation(data, 'months'));
     if (inputBudget) inputBudget.addEventListener('input', () => runSimulation(data, 'budget'));
 
     const newBtnSave = btnSave.cloneNode(true);
@@ -320,7 +320,7 @@ function initGrowthSimulator(data) {
         });
     });
 
-    const runSimulation = (data, solveSource = 'months_subs') => {
+    const runSimulation = (data, solveSource = 'subs') => {
         let targetSubs = parseInt(inputSubs?.value) || 0;
         let targetMonths = parseInt(inputMonths?.value) || 1;
         let maxBudget = parseFloat(inputBudget?.value) || 0;
@@ -352,48 +352,57 @@ function initGrowthSimulator(data) {
         const organicActive = data.platform.b2b.organic_active || 0;
         const organicActivePerMonth = (organicActive / daysInPeriodSim) * 30;
 
-        // --- THE MAGIC SOLVER TRIANGLE ---
-        const gapRealCalc = Math.max(0, targetSubs - basePagantes);
-        const targetTrialsCalc = gapRealCalc > 0 ? Math.ceil(gapRealCalc / trialConversionRate) : 0;
-        const organicWppClicks90d = data.platform.b2c.organic_wpp_clicks_90d || 0;
-        const orgMonthly = Math.floor(organicWppClicks90d / 3);
-
-        const metaCac = cacBase;
-        const googleCpl = data.historical?.google?.cpl > 0 
+        const currentB2CCplCalc = data.historical?.google?.cpl > 0 
             ? data.historical?.google?.cpl 
             : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
-
-        const averageSubs = (basePagantes + targetSubs) / 2;
-        const ticketMedio = 99; 
-
-        const A = targetTrialsCalc * metaCac; 
-        const C = targetTrialsCalc * 2 * googleCpl; 
-        const B1 = averageSubs * 2 * googleCpl; 
-        const B2 = orgMonthly * googleCpl; 
-        const averageRevenue = averageSubs * ticketMedio; 
-
-        if (solveSource === 'budget') {
-            // SOLVE FOR MONTHS
-            const totalMonthlyCash = averageRevenue + maxBudget;
-            const denom = totalMonthlyCash - B1 + B2;
             
-            if (denom <= 0) {
-                targetMonths = 60; 
-            } else {
-                let calculatedMonths = Math.ceil((A + C) / denom);
-                if (calculatedMonths < 1) calculatedMonths = 1;
-                targetMonths = calculatedMonths;
+        const organicWppClicks90dCalc = data.platform.b2c.organic_wpp_clicks_90d || 0;
+        const orgMonthlyCalc = Math.floor(organicWppClicks90dCalc / 3);
+
+        const calcOutOfPocket = (testSubs, testMonths) => {
+            const projectedOrganicGain = Math.floor(organicActivePerMonth * testMonths);
+            const projectedChurnLoss = Math.ceil(basePagantes * monthlyChurn * testMonths);
+            const gapTotal = Math.max(0, testSubs - basePagantes) + projectedChurnLoss;
+            const gapReal = Math.max(0, gapTotal - projectedOrganicGain);
+            const targetTrials = gapReal > 0 ? Math.ceil(gapReal / trialConversionRate) : 0;
+            
+            const totalMetaBudget = gapReal * cacBase;
+            const monthlyMetaBudget = testMonths > 0 ? totalMetaBudget / testMonths : totalMetaBudget;
+            
+            const projectedTargetTrials = testMonths > 0 ? Math.ceil(targetTrials / testMonths) : targetTrials;
+            const targetTotalActive = testSubs + projectedTargetTrials;
+            const maintenancePerPsi = 2 * currentB2CCplCalc;
+            
+            const totalRequiredB2CBudget = targetTotalActive * maintenancePerPsi;
+            const totalRequiredB2CClicks = Math.ceil(totalRequiredB2CBudget / currentB2CCplCalc);
+            const requiredPaidB2CClicks = Math.max(0, totalRequiredB2CClicks - orgMonthlyCalc);
+            const futureGoogleBudget = requiredPaidB2CClicks * currentB2CCplCalc;
+            
+            const totalProjectedExpense = monthlyMetaBudget + futureGoogleBudget;
+            const currentRevenue = basePagantes * 99;
+            return totalProjectedExpense - currentRevenue;
+        };
+
+        if (solveSource === 'budget' || solveSource === 'months') {
+            let low = basePagantes;
+            let high = basePagantes + 10000;
+            let bestSubs = basePagantes;
+            
+            for (let i = 0; i < 50; i++) {
+                let mid = Math.floor((low + high) / 2);
+                let cost = calcOutOfPocket(mid, targetMonths);
+                if (cost <= maxBudget) {
+                    bestSubs = mid;
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
             }
-            if (inputMonths) inputMonths.value = targetMonths;
+            targetSubs = bestSubs;
+            if (inputSubs) inputSubs.value = targetSubs;
         } else {
-            // SOLVE FOR BUDGET
-            // Budget = (A+C)/M + B1 - B2 - averageRevenue
-            let calculatedBudget = ((A + C) / targetMonths) + B1 - B2 - averageRevenue;
-            if (calculatedBudget < 0) calculatedBudget = 0;
-            maxBudget = calculatedBudget;
-            
-            // Round to nearest 10 for cleaner UI
-            maxBudget = Math.ceil(maxBudget / 10) * 10;
+            let calculatedBudget = calcOutOfPocket(targetSubs, targetMonths);
+            maxBudget = Math.max(0, Math.ceil(calculatedBudget / 10) * 10);
             if (inputBudget) inputBudget.value = maxBudget;
         }
         
