@@ -258,6 +258,46 @@ function initGrowthSimulator(data) {
     const inputMonths = document.getElementById('sim-target-months');
     const inputBudget = document.getElementById('sim-max-budget');
 
+    const newBtnSave = btnSave.cloneNode(true);
+    btnSave.parentNode.replaceChild(newBtnSave, btnSave);
+
+    const modal = document.getElementById('sim-new-target-modal');
+    const btnCancelModal = document.getElementById('btn-cancel-new-target');
+    const btnConfirmModal = document.getElementById('btn-confirm-new-target');
+
+    const blockSimulatorInputs = () => {
+        if (inputSubs) inputSubs.disabled = true;
+        if (inputMonths) inputMonths.disabled = true;
+        if (inputBudget) inputBudget.disabled = true;
+        newBtnSave.textContent = 'Alterar Meta';
+        newBtnSave.style.background = '#f59e0b';
+    };
+
+    const unblockSimulatorInputs = () => {
+        if (inputSubs) inputSubs.disabled = false;
+        if (inputMonths) inputMonths.disabled = false;
+        if (inputBudget) inputBudget.disabled = false;
+        newBtnSave.textContent = 'Salvar Meta';
+        newBtnSave.style.background = '#10b981';
+    };
+
+    if (btnCancelModal) {
+        btnCancelModal.addEventListener('click', () => {
+            modal.style.opacity = '0';
+            setTimeout(() => modal.style.display = 'none', 200);
+        });
+    }
+
+    if (btnConfirmModal) {
+        btnConfirmModal.addEventListener('click', () => {
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                unblockSimulatorInputs();
+            }, 200);
+        });
+    }
+
     // Carrega as configurações salvas do banco de dados
     const token = localStorage.getItem('adminToken');
     const loadSimSettings = async () => {
@@ -265,10 +305,11 @@ function initGrowthSimulator(data) {
             const resp = await fetch('/api/cmo/simulator-settings', { headers: { 'Authorization': `Bearer ${token}` } });
             if (resp.ok) {
                 const saved = await resp.json();
-                if (saved.success) {
-                    if (inputSubs && saved.targetSubs) inputSubs.value = saved.targetSubs;
-                    if (inputMonths && saved.targetMonths) inputMonths.value = saved.targetMonths;
-                    if (inputBudget && saved.maxBudget) inputBudget.value = saved.maxBudget;
+                if (saved.success && saved.targetSubs) {
+                    if (inputSubs) inputSubs.value = saved.targetSubs;
+                    if (inputMonths) inputMonths.value = saved.targetMonths;
+                    if (inputBudget) inputBudget.value = saved.maxBudget;
+                    blockSimulatorInputs();
                 }
             }
         } catch (e) { /* silencioso */ }
@@ -282,9 +323,18 @@ function initGrowthSimulator(data) {
     if (inputMonths) inputMonths.addEventListener('input', () => runSimulation(data, 'months'));
     if (inputBudget) inputBudget.addEventListener('input', () => runSimulation(data, 'budget'));
 
-    const newBtnSave = btnSave.cloneNode(true);
-    btnSave.parentNode.replaceChild(newBtnSave, btnSave);
     newBtnSave.addEventListener('click', () => {
+        if (newBtnSave.textContent === 'Alterar Meta') {
+            if (modal) {
+                modal.style.display = 'flex';
+                void modal.offsetWidth; // trigger reflow
+                modal.style.opacity = '1';
+            } else {
+                unblockSimulatorInputs();
+            }
+            return;
+        }
+
         newBtnSave.textContent = 'Salvando...';
         newBtnSave.style.opacity = '0.7';
         
@@ -305,8 +355,7 @@ function initGrowthSimulator(data) {
             newBtnSave.textContent = 'Salvo com Sucesso!';
             newBtnSave.style.background = '#059669';
             setTimeout(() => {
-                newBtnSave.textContent = 'Salvar Meta';
-                newBtnSave.style.background = '#10b981';
+                blockSimulatorInputs();
                 newBtnSave.style.opacity = '1';
             }, 2000);
         }).catch(() => {
