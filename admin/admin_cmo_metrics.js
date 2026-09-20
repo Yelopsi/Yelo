@@ -345,9 +345,11 @@ function initGrowthSimulator(data) {
         const targetClicksPerPsi = 2; // O psicólogo precisa de 2 contatos por mês no WhatsApp.
         const maintenancePerPsi = targetClicksPerPsi * currentB2CCpl;
         
-        // Estima quantos trials existirão no futuro baseando-se na proporção atual
-        const currentTrialRatio = basePagantes > 0 ? (baseTrials / basePagantes) : 2;
-        const projectedTargetTrials = Math.ceil(targetSubs * currentTrialRatio);
+        // O número de trials simultâneos (corpos ocupando espaço na base e consumindo Google Ads)
+        // é diretamente proporcional à agressividade do prazo. 
+        // Para espremer 800 trials em 3 meses, você terá ~266 trials ativos/mês consumindo pacientes.
+        // Para espremer em 12 meses, você terá apenas ~66 trials ativos/mês. É o "Preço da Velocidade".
+        const projectedTargetTrials = targetMonths > 0 ? Math.ceil(targetTrials / targetMonths) : targetTrials;
         const targetTotalActive = targetSubs + projectedTargetTrials;
         
         const totalRequiredB2CBudget = targetTotalActive * maintenancePerPsi;
