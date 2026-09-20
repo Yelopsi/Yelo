@@ -50,7 +50,7 @@ window.initializePage = function() {
     const smallKpis = [
         'kpi-psi-total', 'kpi-psi-active', 'kpi-psi-deleted',
         'kpi-plan-Essencial', 'kpi-plan-Clínico', 'kpi-plan-sol',
-        'kpi-psi-paying', 'kpi-psi-vip',
+        'kpi-psi-paying', 'kpi-psi-trials',
         'waiting-list-count', 'pending-reviews-count'
     ];
 
@@ -117,7 +117,7 @@ window.initializePage = function() {
                  
                  const currentPaying = parseInt(stats.psychologists.paying) || 0;
                  updateSafe('kpi-psi-paying', currentPaying);
-                 updateSafe('kpi-psi-vip', stats.psychologists.vip);
+                 updateSafe('kpi-psi-trials', stats.psychologists.trials);
 
                  // --- 👑 EASTER EGG: RECORDE DE ASSINANTES (Controlado pelo Backend) ---
                  if (stats.isNewRecord) {
@@ -148,7 +148,7 @@ window.initializePage = function() {
                  updateSafe('kpi-psi-active', '--');
                  updateSafe('kpi-psi-deleted', '--');
                  updateSafe('kpi-psi-paying', '--');
-                 updateSafe('kpi-psi-vip', '--');
+                 updateSafe('kpi-psi-trials', '--');
                  updateSafe('kpi-plan-Essencial', '--');
                  updateSafe('kpi-plan-Clínico', '--');
                  updateSafe('kpi-plan-sol', '--');

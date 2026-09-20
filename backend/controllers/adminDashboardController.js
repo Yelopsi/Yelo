@@ -97,6 +97,7 @@ exports.getDashboardStats = async (req, res) => {
         let mrr = 0;
         let payingCount = 0;
         let vipCount = 0;
+        let trialsCount = 0;
         
         psisByPlan.forEach(p => {
             const plano = p.plano;
@@ -107,6 +108,8 @@ exports.getDashboardStats = async (req, res) => {
                 vipCount++;
             } else if (hasSubscription) {
                 payingCount++;
+            } else {
+                trialsCount++;
             }
 
             if (!plano) return;
@@ -201,7 +204,7 @@ exports.getDashboardStats = async (req, res) => {
             newPsis30d: parseInt(psychologistStats?.new30d || 0, 10),
             questToday: parseInt(demandStats?.today || 0, 10),
             patients: { total: parseInt(patientStats?.total || 0, 10), active: parseInt(patientStats?.active || 0, 10), deleted: parseInt(patientStats?.deleted || 0, 10) },
-            psychologists: { total: parseInt(psychologistStats?.total || 0, 10), active: parseInt(psychologistStats?.active || 0, 10), deleted: parseInt(psychologistStats?.deleted || 0, 10), byPlan: plansCount, paying: payingCount, vip: vipCount },
+            psychologists: { total: parseInt(psychologistStats?.total || 0, 10), active: parseInt(psychologistStats?.active || 0, 10), deleted: parseInt(psychologistStats?.deleted || 0, 10), byPlan: plansCount, paying: payingCount, vip: vipCount, trials: trialsCount },
             questionnaires: { total: parseInt(demandStats?.total || 0, 10), deleted: parseInt(demandStats?.abandoned || 0, 10) },
             waitingListCount: validWaitingListCount,
             pendingReviewsCount: pendingReviewsCount,
