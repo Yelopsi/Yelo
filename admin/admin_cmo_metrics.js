@@ -274,13 +274,25 @@ function initGrowthSimulator(data) {
         
         const metaSpend = data.overview?.metaSpend || data.campaigns?.meta?.[0]?.spend || 0;
         const metaPagantes = data.platform.b2b.active || 0;
+        const metaTrials = data.platform.b2b.trials || 0;
+        
+        // Se houver pagantes + trials > 0, calcula real, se não, assume 15% seguro
+        const trialConversionRate = (metaPagantes + metaTrials) > 0 ? (metaPagantes / (metaPagantes + metaTrials)) : 0.15;
+        
         const cacBase = metaPagantes > 0 ? (metaSpend / metaPagantes) : 150; 
 
         const projectedChurnLoss = Math.ceil(totalActive * monthlyChurn * targetMonths);
         const gapReal = Math.max(0, targetSubs - totalActive) + projectedChurnLoss;
+        const targetTrials = gapReal > 0 ? Math.ceil(gapReal / trialConversionRate) : 0;
 
         document.getElementById('sim-res-new-subs').textContent = `+${gapReal}`;
         document.getElementById('sim-res-churn-info').textContent = `Crescimento Líquido: ${Math.max(0, targetSubs - totalActive)} | Reposição Churn: ${projectedChurnLoss}`;
+        
+        const elTrials = document.getElementById('sim-res-new-trials');
+        if (elTrials) {
+            elTrials.style.display = 'block';
+            elTrials.textContent = `Meta de Trials: +${targetTrials} (Conv. ${(trialConversionRate * 100).toFixed(1)}%)`;
+        }
         
         const totalMetaBudget = gapReal * cacBase;
         const monthlyMetaBudget = totalMetaBudget / targetMonths;
@@ -328,14 +340,25 @@ function initGrowthSimulator(data) {
                 const dailyMeta = monthlyMetaBudget / 30;
                 const dailyGoogle = futureGoogleBudget / 30;
                 
-                let metaAction = `<strong>Aumente</strong> o gasto do Meta Ads (Aquisição) para <strong>${formatBRL(monthlyMetaBudget)}/mês</strong> (aprox. ${formatBRL(dailyMeta)}/dia).`;
-                if (metaSpend > monthlyMetaBudget) {
+                let metaAction = '';
+                const currentWeeklyMeta = metaSpend / 4.28;
+                const targetWeeklyMeta = monthlyMetaBudget / 4.28;
+
+                if (targetWeeklyMeta > currentWeeklyMeta) {
+                    let weeks = 0;
+                    let simulatedWeekly = currentWeeklyMeta > 0 ? currentWeeklyMeta : 50; 
+                    while (simulatedWeekly < targetWeeklyMeta && weeks < 52) {
+                        simulatedWeekly *= 1.20;
+                        weeks++;
+                    }
+                    metaAction = `<strong>Aumente</strong> o gasto do Meta Ads (Aquisição) em no máximo <strong>20% todos os sábados</strong> durante as próximas <strong>${weeks} semanas</strong> até atingir o teto de <strong>${formatBRL(monthlyMetaBudget)}/mês</strong> (aprox. ${formatBRL(dailyMeta)}/dia). Esse aumento gradual impede o reinício do aprendizado das campanhas.`;
+                } else {
                     metaAction = `<strong>Diminua</strong> o gasto do Meta Ads (Aquisição) para <strong>${formatBRL(monthlyMetaBudget)}/mês</strong> (aprox. ${formatBRL(dailyMeta)}/dia), pois isso já é suficiente para bater a meta.`;
                 }
 
                 actionList.innerHTML = `
                     <li>${metaAction}</li>
-                    <li>Suba gradativamente o Google Ads (Nutrição) até atingir <strong>${formatBRL(futureGoogleBudget)}/mês</strong> (aprox. ${formatBRL(dailyGoogle)}/dia) no final do plano para garantir que os novos assinantes não cancelem.</li>
+                    <li>Suba gradativamente o Google Ads (Nutrição) em <strong>20% junto com o Meta Ads</strong> até atingir <strong>${formatBRL(futureGoogleBudget)}/mês</strong> (aprox. ${formatBRL(dailyGoogle)}/dia) no final do plano para garantir que os novos assinantes recebam pacientes e não cancelem.</li>
                 `;
             }
         }
