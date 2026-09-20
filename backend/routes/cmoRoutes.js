@@ -120,6 +120,8 @@ router.get('/dashboard', async (req, res) => {
             SELECT COUNT(*) as total_active
             FROM "Psychologists"
             WHERE status = 'active'
+            AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL)
+            AND (is_exempt IS NULL OR is_exempt = false)
             AND "deletedAt" IS NULL
         `;
         const [globalActiveRes] = await sequelize.query(globalActiveQuery, { type: sequelize.QueryTypes.SELECT });

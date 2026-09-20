@@ -312,6 +312,34 @@ function initGrowthSimulator(data) {
             warningEl.innerHTML = `✅ <b>Viável:</b> CAC atual (${formatBRL(cacBase)}) se paga em ${paybackMonths.toFixed(1)} meses. O Fluxo de Caixa suporta escalar R$ ${formatBRL(monthlyMetaBudget)} mensais com baixo risco.`;
         }
 
+        // Action Plan
+        const actionPlanContainer = document.getElementById('sim-action-plan');
+        const actionList = document.getElementById('sim-action-list');
+        if (actionPlanContainer && actionList) {
+            actionPlanContainer.style.display = 'block';
+            actionList.innerHTML = '';
+            
+            if (gapReal <= 0) {
+                actionList.innerHTML = `
+                    <li><strong>Mantenha ou diminua</strong> o seu orçamento diário no Meta Ads, pois você já atingiu a meta.</li>
+                    <li>Mantenha o orçamento do Google Ads em <strong>${formatBRL(futureGoogleBudget)}/mês</strong> (aprox. ${formatBRL(futureGoogleBudget/30)}/dia) para nutrir a base atual e evitar cancelamentos.</li>
+                `;
+            } else {
+                const dailyMeta = monthlyMetaBudget / 30;
+                const dailyGoogle = futureGoogleBudget / 30;
+                
+                let metaAction = `<strong>Aumente</strong> o gasto do Meta Ads (Aquisição) para <strong>${formatBRL(monthlyMetaBudget)}/mês</strong> (aprox. ${formatBRL(dailyMeta)}/dia).`;
+                if (metaSpend > monthlyMetaBudget) {
+                    metaAction = `<strong>Diminua</strong> o gasto do Meta Ads (Aquisição) para <strong>${formatBRL(monthlyMetaBudget)}/mês</strong> (aprox. ${formatBRL(dailyMeta)}/dia), pois isso já é suficiente para bater a meta.`;
+                }
+
+                actionList.innerHTML = `
+                    <li>${metaAction}</li>
+                    <li>Suba gradativamente o Google Ads (Nutrição) até atingir <strong>${formatBRL(futureGoogleBudget)}/mês</strong> (aprox. ${formatBRL(dailyGoogle)}/dia) no final do plano para garantir que os novos assinantes não cancelem.</li>
+                `;
+            }
+        }
+
         const progressContainer = document.getElementById('sim-progress-container');
         if (progressContainer) {
             progressContainer.style.display = 'block';
