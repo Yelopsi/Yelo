@@ -590,12 +590,20 @@ router.post('/simulator-settings', async (req, res) => {
         const db = require('../models');
         const { targetSubs, targetMonths } = req.body;
         
+        try {
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_target_subs INTEGER DEFAULT 70;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_target_months INTEGER DEFAULT 3;`);
+        } catch (e) {
+            console.error('DB alter skip in POST:', e.message);
+        }
+        
         let settings = await db.SystemSetting.findOne({
             attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months']
         });
         
         if (!settings) {
             settings = await db.SystemSetting.create({
+                id: 1, // Garantindo que a primeira linha tenha o ID 1
                 cmo_sim_target_subs: targetSubs !== undefined ? parseInt(targetSubs) : 70,
                 cmo_sim_target_months: targetMonths !== undefined ? parseInt(targetMonths) : 3
             });
@@ -608,7 +616,7 @@ router.post('/simulator-settings', async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         console.error('[CMO] Erro ao salvar simulator settings:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: error.message, stack: error.stack });
     }
 });
 
