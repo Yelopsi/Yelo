@@ -304,6 +304,16 @@ class PaymentStateService {
                 updatePayload.subscribedAt = new Date();
             }
 
+            if (!lockedPsi.firstPaidAt) {
+                // Se é o primeiro pagamento confirmado, registramos a data
+                let paymentDate = new Date();
+                if (payment.clientPaymentDate) paymentDate = new Date(payment.clientPaymentDate);
+                else if (payment.confirmedDate) paymentDate = new Date(payment.confirmedDate);
+                else if (payment.paymentDate) paymentDate = new Date(payment.paymentDate);
+                
+                updatePayload.firstPaidAt = paymentDate;
+            }
+
             await lockedPsi.update(updatePayload, { transaction: t });
 
             if (db.SystemLog) {
