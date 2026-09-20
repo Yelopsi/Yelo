@@ -396,17 +396,25 @@ function initGrowthSimulator(data) {
                 ? data.historical?.google?.cpl 
                 : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
 
-            const A = targetTrialsCalc * metaCac;
-            const B = (targetSubs * 2 - orgMonthly) * googleCpl;
-            const C = targetTrialsCalc * 2 * googleCpl;
-            
-            const currentRevenue = basePagantes * 99; // Assume ticket R$99
-            const totalAvailableExpense = currentRevenue + maxBudget;
+            // A inteligência suprema: calcular a "Média" durante a fase de crescimento.
+            // Se começamos com 20 e vamos para 70, a média durante o caminho é 45 assinantes.
+            const averageSubs = (basePagantes + targetSubs) / 2;
+            const ticketMedio = 99; // Mensalidade base do Yelo
 
-            const denom = totalAvailableExpense - B;
+            // Custos Totais independentes do tempo (Fixo pelo volume de meta)
+            const A = targetTrialsCalc * metaCac; // Custo total no Meta
+            const C = targetTrialsCalc * 2 * googleCpl; // Custo total no Google para alimentar esses novos trials
+
+            // Custos e Receitas Médias Mensais (Durante a Jornada)
+            const B1 = averageSubs * 2 * googleCpl; // Custo médio para reter a base crescente
+            const B2 = orgMonthly * googleCpl; // Desconto médio do SEO
+            const averageRevenue = averageSubs * ticketMedio; // MRR médio injetando caixa
+
+            const totalMonthlyCash = averageRevenue + maxBudget;
+            const denom = totalMonthlyCash - B1 + B2;
             
             if (denom <= 0) {
-                targetMonths = 60; // 5 anos
+                targetMonths = 60; // 5 anos (Matematicamente impossível crescer com esse budget)
             } else {
                 let calculatedMonths = Math.ceil((A + C) / denom);
                 if (calculatedMonths < 1) calculatedMonths = 1;
