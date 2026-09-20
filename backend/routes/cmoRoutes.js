@@ -572,7 +572,7 @@ router.get('/simulator-settings', async (req, res) => {
         try {
             await db.SystemSetting.sync({ alter: true });
         } catch (e) {
-            console.error('[CMO] DB sync skip:', e.message);
+            console.error('DB sync skip in GET:', e.message);
         }
 
         const settings = await db.SystemSetting.findOne({

@@ -1,6 +1,8 @@
 if (typeof window.cmoWeeklyChartInstance === 'undefined') {
     window.cmoWeeklyChartInstance = null;
 }
+let currentSimMode = 'acelerador';
+
 async function loadCMOMetrics() {
     const token = localStorage.getItem('Yelo_token');
     if (!token) {
