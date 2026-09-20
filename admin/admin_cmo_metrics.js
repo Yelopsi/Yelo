@@ -340,7 +340,7 @@ function initGrowthSimulator(data) {
 
         document.getElementById('sim-res-google-budget').textContent = `${formatBRL(futureGoogleBudget)}/mês`;
         
-        const card3Desc = document.getElementById('sim-card-3')?.querySelector('p:nth-of-type(2)');
+        const card3Desc = document.getElementById('sim-card-3')?.querySelector('p:nth-of-type(3)');
         if (card3Desc) {
             card3Desc.innerHTML = `Para não faltar paciente na base futura.<br><span style="color:#059669; font-weight:bold;">Orgânico projetado: -${projectedOrganicB2CClicksMonthly} cliques SEO/mês (Google Ads só precisa comprar ${requiredPaidB2CClicks} cliques)</span>`;
         }
