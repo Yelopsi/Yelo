@@ -673,71 +673,7 @@ function initGrowthSimulator(data) {
             }
         }
         
-        if (targetSubs > 0 && targetMonths > 0) {
-            inputSubs.disabled = true;
-            inputMonths.disabled = true;
-            inputSubs.style.background = '#f1f5f9';
-            inputMonths.style.background = '#f1f5f9';
-            btnCalc.textContent = 'Nova Meta';
-            btnCalc.style.background = '#475569';
-        }
     };
-
-    btnCalc.onclick = () => {
-        if (btnCalc.textContent.trim() === 'Nova Meta') {
-            const modal = document.getElementById('sim-new-target-modal');
-            const modalContent = modal.querySelector('div');
-            modal.style.display = 'flex';
-            setTimeout(() => {
-                modal.style.opacity = '1';
-                modalContent.style.transform = 'scale(1)';
-            }, 10);
-        } else {
-            runSimulation();
-        }
-    };
-
-    document.getElementById('btn-cancel-new-target')?.addEventListener('click', () => {
-        const modal = document.getElementById('sim-new-target-modal');
-        const modalContent = modal.querySelector('div');
-        modal.style.opacity = '0';
-        modalContent.style.transform = 'scale(0.95)';
-        setTimeout(() => { modal.style.display = 'none'; }, 200);
-    });
-
-    document.getElementById('btn-confirm-new-target')?.addEventListener('click', () => {
-        const modal = document.getElementById('sim-new-target-modal');
-        const modalContent = modal.querySelector('div');
-        modal.style.opacity = '0';
-        modalContent.style.transform = 'scale(0.95)';
-        setTimeout(() => { modal.style.display = 'none'; }, 200);
-        
-        inputSubs.disabled = false;
-        inputMonths.disabled = false;
-        inputSubs.style.background = '#fff';
-        inputMonths.style.background = '#fff';
-        inputSubs.value = '';
-        inputMonths.value = '1';
-        
-        btnCalc.textContent = 'Calcular Crescimento';
-        btnCalc.style.background = '#8b5cf6';
-        
-        document.getElementById('sim-action-plan').style.display = 'none';
-        document.getElementById('sim-progress-container').style.display = 'none';
-        document.getElementById('sim-res-new-subs').textContent = '--';
-        document.getElementById('sim-res-new-trials').style.display = 'none';
-        document.getElementById('sim-res-meta-budget').textContent = '--';
-        document.getElementById('sim-res-meta-monthly').textContent = '--/mês';
-        document.getElementById('sim-res-google-budget').textContent = '--/mês';
-        document.getElementById('sim-res-warning').style.display = 'none';
-        
-        // Reseta no banco para os valores padrão
-        fetch('/api/cmo/simulator-settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ targetSubs: 70, targetMonths: 3 })
-        }).catch(() => {});
-    });
 
     // Carrega as configurações do banco e roda automaticamente
     loadSimSettings().then(() => { setTimeout(runSimulation, 200); });
