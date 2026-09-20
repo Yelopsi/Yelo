@@ -281,17 +281,34 @@ function initGrowthSimulator(data) {
         
         const cacBase = metaPagantes > 0 ? (metaSpend / metaPagantes) : 150; 
 
+        // Descobre dias do período para projetar orgânico
+        const dateStart = document.getElementById('cmo-date-start')?.value || '';
+        const dateEnd = document.getElementById('cmo-date-end')?.value || '';
+        const d1 = new Date(dateStart);
+        const d2 = new Date(dateEnd);
+        let daysInPeriodSim = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+        if (isNaN(daysInPeriodSim) || daysInPeriodSim <= 0) daysInPeriodSim = 30;
+
+        const organicActive = data.platform.b2b.organic_active || 0;
+        
+        // Projeta o ganho orgânico (que vem "de graça" sem ads) baseado no ritmo do período selecionado
+        const organicActivePerMonth = (organicActive / daysInPeriodSim) * 30;
+        const projectedOrganicGain = Math.floor(organicActivePerMonth * targetMonths);
+
         const projectedChurnLoss = Math.ceil(totalActive * monthlyChurn * targetMonths);
-        const gapReal = Math.max(0, targetSubs - totalActive) + projectedChurnLoss;
+        const gapTotal = Math.max(0, targetSubs - totalActive) + projectedChurnLoss;
+        
+        // O GAP real de tráfego pago é o gap total subtraído do que já deve vir pelo orgânico
+        const gapReal = Math.max(0, gapTotal - projectedOrganicGain);
         const targetTrials = gapReal > 0 ? Math.ceil(gapReal / trialConversionRate) : 0;
 
-        document.getElementById('sim-res-new-subs').textContent = `+${gapReal}`;
-        document.getElementById('sim-res-churn-info').textContent = `Crescimento Líquido: ${Math.max(0, targetSubs - totalActive)} | Reposição Churn: ${projectedChurnLoss}`;
+        document.getElementById('sim-res-new-subs').textContent = `+${gapTotal}`;
+        document.getElementById('sim-res-churn-info').innerHTML = `Crescimento Líquido: ${Math.max(0, targetSubs - totalActive)} | Reposição Churn: ${projectedChurnLoss}<br><span style="color:#059669; font-weight:bold;">Orgânico projetado: -${projectedOrganicGain} (Só precisa comprar ${gapReal})</span>`;
         
         const elTrials = document.getElementById('sim-res-new-trials');
         if (elTrials) {
             elTrials.style.display = 'block';
-            elTrials.textContent = `Meta de Trials: +${targetTrials} (Conv. ${(trialConversionRate * 100).toFixed(1)}%)`;
+            elTrials.textContent = `Meta de Trials Pago: +${targetTrials} (Conv. ${(trialConversionRate * 100).toFixed(1)}%)`;
         }
         
         const totalMetaBudget = gapReal * cacBase;
@@ -384,6 +401,10 @@ function initGrowthSimulator(data) {
             `;
 
             // VISUAL FEEDBACK - CARD 1
+            const newActiveInPeriod = data.platform.b2b.total_new_active || data.platform.b2b.active || 0;
+            const newTrialsInPeriod = data.platform.b2b.total_new_trials || data.platform.b2b.trials || 0;
+            const totalRequiredNewSubs = typeof gapTotal !== 'undefined' ? gapTotal : gapReal;
+
             const card1 = document.getElementById('sim-card-1');
             const fb1 = document.getElementById('sim-res-subs-feedback');
             if (card1 && fb1) {
