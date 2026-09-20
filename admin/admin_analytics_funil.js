@@ -4,7 +4,6 @@ window.initializePage = function() {
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
     let exportData = null; // Guarda os dados do funil
     let globalRankingData = []; // Armazena o ranking para ordenação no front
-    window.termometroData = null;
     window.auditoriaData = null;
     let currentRankingSort = { column: 'posicao', direction: 'asc' }; // Estado da ordenação
 
@@ -92,10 +91,11 @@ window.initializePage = function() {
             if (startInput && startInput.value) queryParams.append('startDate', startInput.value);
             if (endInput && endInput.value) queryParams.append('endDate', endInput.value);
 
-            const [res, resWpp, resRanking] = await Promise.all([
+            const [res, resWpp, resRanking, resCmo] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/admin/analytics/funnel?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/analytics/ranking?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
+                fetch(`${API_BASE_URL}/api/admin/analytics/ranking?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null),
+                fetch(`${API_BASE_URL}/api/cmo/dashboard?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
             ]);
 
             if (!res.ok) throw new Error("Falha ao buscar dados de funil");
@@ -138,6 +138,20 @@ window.initializePage = function() {
                 if (elBusca) elBusca.textContent = totalBusca.toLocaleString();
                 if (elDiretas) elDiretas.textContent = totalDiretas.toLocaleString();
                 if (elWpp) elWpp.textContent = totalWpp.toLocaleString();
+            }
+
+            // --- POPULA DADOS DO BREAKEVEN E CHAMA CALCULO ---
+            try {
+                const dataCmo = (resCmo && resCmo.ok) ? await resCmo.json() : null;
+                if (dataCmo) {
+                    const googleSpend = dataCmo.googleSpend ? (dataCmo.googleSpend.spend || 0) : 0;
+                    const metaSpend = dataCmo.metaSpend ? (dataCmo.metaSpend.spend || 0) : 0;
+                    document.getElementById('input-gasto-google').value = googleSpend.toFixed(2);
+                    document.getElementById('input-gasto-meta').value = metaSpend.toFixed(2);
+                    if (window.calcularBreakeven) window.calcularBreakeven();
+                }
+            } catch (err) {
+                console.error("Erro ao carregar dados do CMO para breakeven", err);
             }
 
             // --- FUNÇÃO AUXILIAR PARA RENDERIZAR AS METAS VISUAIS ---
@@ -528,16 +542,7 @@ window.initializePage = function() {
             });
             downloadCSV(`yelo_ranking_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
             
-        } else if (tabTarget === 'tab-termometro') {
-            if (!window.termometroData) return alert("Nenhum dado do termômetro. Faça a análise primeiro.");
-            const data = window.termometroData;
-            let csvContent = `ESCALA (ADS) E SAÚDE DO TRÁFEGO\nData da Análise: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
-            csvContent += `Métrica;Valor\n`;
-            csvContent += `Total de Psicólogos Ativos;${data.totalPsis || 0}\n`;
-            csvContent += `Total de Leads Entregues no Período;${data.totalLeads || 0}\n`;
-            csvContent += `Média de Leads por Psicólogo;${(data.mediaLeads || 0).toFixed(2)}\n`;
-            downloadCSV(`yelo_escala_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
-            
+
         } else if (tabTarget === 'tab-auditoria') {
             if (!window.auditoriaData || window.auditoriaData.length === 0) return alert("Nenhum dado de auditoria. Faça a busca primeiro.");
             let csvContent = `AUDITORIA DE LEADS (PERÍODO)\nPeríodo: ${periodStr}\n\n`;
@@ -909,6 +914,32 @@ window.initializePage = function() {
         }).join('');
     }
 
+    // --- CALCULADORA DE BREAKEVEN ---
+    window.calcularBreakeven = function() {
+        const googleVal = parseFloat(document.getElementById('input-gasto-google').value) || 0;
+        const metaVal = parseFloat(document.getElementById('input-gasto-meta').value) || 0;
+        
+        // 1. Custo fixo base: Impostos e Render (2 assinaturas x 99 = 198)
+        const custoFixo = 198;
+        const precoAssinatura = 99;
+        
+        const custoTotalBreakeven = googleVal + metaVal + custoFixo;
+        const subsBreakeven = Math.ceil(custoTotalBreakeven / precoAssinatura);
+        
+        document.getElementById('kpi-breakeven-custo').textContent = `R$ ${custoTotalBreakeven.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        document.getElementById('kpi-breakeven-subs').textContent = `${subsBreakeven} subs`;
+
+        // 2. Pró-labore (6k líquido)
+        // Meta de receita = 6000 + custos (Google + Meta + Custo Fixo)
+        const metaProlabore = 6000 + custoTotalBreakeven;
+        const subsProlabore = Math.ceil(metaProlabore / precoAssinatura);
+        
+        const elProCusto = document.getElementById('kpi-prolabore-custo');
+        const elProSubs = document.getElementById('kpi-prolabore-subs');
+        if (elProCusto) elProCusto.textContent = `R$ ${metaProlabore.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        if (elProSubs) elProSubs.textContent = `${subsProlabore} subs`;
+    };
+
     // --- ORDENAÇÃO DO RANKING (FRONTEND) ---
     window.sortRanking = function(column) {
         if (!globalRankingData) return;
@@ -1051,79 +1082,6 @@ window.initializePage = function() {
         });
     }
 
-    // --- LÓGICA DO TERMÔMETRO DE ESCALA (ADS) ---
-    const btnAnalisarEscala = document.getElementById('btn-analisar-escala');
-    if (btnAnalisarEscala) {
-        btnAnalisarEscala.addEventListener('click', async () => {
-            const cpaStr = document.getElementById('input-cpa').value;
-            if (!cpaStr) return alert("Digite o CPA Atual do Google!");
-            
-            const cpaAtual = parseFloat(cpaStr);
-            
-            // UI de carregamento
-            const originalText = btnAnalisarEscala.innerHTML;
-            btnAnalisarEscala.innerHTML = '<span class="loading-spinner-sm" style="width:14px; height:14px; margin-right:5px; border-width:2px; display:inline-block;"></span> Analisando...';
-            btnAnalisarEscala.disabled = true;
-
-            try {
-                const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
-                const res = await fetch(`${API_BASE_URL}/api/admin/termometro`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                if (!res.ok) throw new Error("Falha ao buscar dados do termômetro.");
-                
-                const data = await res.json();
-                window.termometroData = data;
-                const media = parseFloat(data.mediaLeads || 0);
-                
-                // Exibe contêiner
-                const resultBox = document.getElementById('termometro-result');
-                resultBox.style.display = 'block';
-                
-                const luz = document.getElementById('semaforo-luz');
-                const titulo = document.getElementById('semaforo-titulo');
-                const msg = document.getElementById('semaforo-msg');
-                
-                document.getElementById('semaforo-media').textContent = media.toFixed(2);
-                document.getElementById('semaforo-totalpsi').textContent = data.totalPsis || 0;
-
-                // LÓGICA DE NEGÓCIO (Sinal)
-                if (cpaAtual <= 35 && media < 2) {
-                    // SINAL VERDE
-                    resultBox.style.backgroundColor = '#ecfdf5';
-                    resultBox.style.borderColor = '#a7f3d0';
-                    luz.textContent = '🟢';
-                    titulo.textContent = 'Sinal Verde: Aumentar Verba';
-                    titulo.style.color = '#059669';
-                    msg.textContent = 'Acelere o tráfego. Profissionais ociosos e CPA barato.';
-                } else if (cpaAtual <= 45 && media >= 2 && media <= 4) {
-                    // SINAL AMARELO
-                    resultBox.style.backgroundColor = '#fefce8';
-                    resultBox.style.borderColor = '#fde047';
-                    luz.textContent = '🟡';
-                    titulo.textContent = 'Sinal Amarelo: Manter Verba';
-                    titulo.style.color = '#ca8a04';
-                    msg.textContent = 'Ecossistema equilibrado. Mantenha o orçamento.';
-                } else {
-                    // SINAL VERMELHO
-                    resultBox.style.backgroundColor = '#fef2f2';
-                    resultBox.style.borderColor = '#fecaca';
-                    luz.textContent = '🔴';
-                    titulo.textContent = 'Sinal Vermelho: Congelar / Reduzir';
-                    titulo.style.color = '#dc2626';
-                    msg.textContent = 'Atenção: Tráfego muito caro ou profissionais lotados de leads.';
-                }
-                
-            } catch(e) {
-                console.error(e);
-                alert("Erro ao analisar a escala.");
-            } finally {
-                btnAnalisarEscala.innerHTML = originalText;
-                btnAnalisarEscala.disabled = false;
-            }
-        });
-    }
 
     // --- LÓGICA DA AUDITORIA DE LEADS RECENTES ---
     const btnBuscarLeads = document.getElementById('btn-buscar-leads');

@@ -198,31 +198,38 @@ window.initializePage = function() {
                      }
 
                      function formatProjection(target) {
-                         if (currentPaying >= target) return "Atingido ✓";
-                         
-                         // Se o crescimento líquido (novos - churn) for menor ou igual a 0, não vai atingir
-                         if (netGrowthPerMonth <= 0) return "Estagnado";
-                         
-                         const monthsNeeded = (target - currentPaying) / netGrowthPerMonth;
-                         // Limitar a projeção máxima a 5 anos (60 meses) para não gerar datas absurdas
-                         if (monthsNeeded > 60 || !isFinite(monthsNeeded)) return "Longo Prazo";
+                        const pct = (currentPaying / target) * 100;
+                        const pctSpan = pct >= 100 
+                            ? `<span style="font-size: 0.75rem; font-weight: bold; color: #10b981; margin-left: 6px;">✓ 100%</span>`
+                            : `<span style="font-size: 0.75rem; font-weight: bold; color: #10b981; margin-left: 6px;">▲ ${pct.toFixed(1).replace('.', ',')}%</span>`;
 
-                         const projDate = new Date();
-                         projDate.setMonth(projDate.getMonth() + Math.ceil(monthsNeeded));
-                         
-                         let fMonth = projDate.toLocaleString('pt-BR', { month: 'short' });
-                         let fYear = projDate.getFullYear();
-                         return (fMonth + '/' + fYear).replace('.', '');
-                     }
+                        if (currentPaying >= target) return `Atingido ${pctSpan}`;
+                        
+                        // Se o crescimento líquido (novos - churn) for menor ou igual a 0, não vai atingir
+                        if (netGrowthPerMonth <= 0) return `Estagnado ${pctSpan}`;
+                        
+                        const monthsNeeded = (target - currentPaying) / netGrowthPerMonth;
+                        // Limitar a projeção máxima a 5 anos (60 meses) para não gerar datas absurdas
+                        if (monthsNeeded > 60 || !isFinite(monthsNeeded)) return `Longo Prazo ${pctSpan}`;
+
+                        const projDate = new Date();
+                        projDate.setMonth(projDate.getMonth() + Math.ceil(monthsNeeded));
+                        
+                        let fMonth = projDate.toLocaleString('pt-BR', { month: 'short' });
+                        let fYear = projDate.getFullYear();
+                        let dateStr = (fMonth + '/' + fYear).replace('.', '');
+
+                        return `${dateStr} ${pctSpan}`;
+                    }
 
                      const projBreakeven = document.getElementById('milestone-breakeven-proj');
-                     if (projBreakeven) projBreakeven.textContent = formatProjection(breakevenTarget);
+                     if (projBreakeven) projBreakeven.innerHTML = formatProjection(breakevenTarget);
 
                      const proj70 = document.getElementById('milestone-70-proj');
-                     if (proj70) proj70.textContent = formatProjection(70);
+                     if (proj70) proj70.innerHTML = formatProjection(70);
 
                      const proj120 = document.getElementById('milestone-120-proj');
-                     if (proj120) proj120.textContent = formatProjection(120);
+                     if (proj120) proj120.innerHTML = formatProjection(120);
 
                      // MAX_SCALE
                      const MAX_SCALE = Math.max(120, currentPaying, breakevenTarget);
