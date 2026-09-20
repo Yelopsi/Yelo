@@ -1,7 +1,6 @@
 if (typeof window.cmoWeeklyChartInstance === 'undefined') {
     window.cmoWeeklyChartInstance = null;
 }
-let currentSimMode = 'acelerador';
 
 async function loadCMOMetrics() {
     const token = localStorage.getItem('Yelo_token');
@@ -251,57 +250,9 @@ function renderCMOMetrics(data) {
     }
 }
 
-function updateSimModeUI(mode) {
-    const btnAcel = document.getElementById('btn-mode-acelerador');
-    const btnInv = document.getElementById('btn-mode-investidor');
-    const contMonths = document.getElementById('container-sim-months');
-    const contBudget = document.getElementById('container-sim-budget');
-    const inputMonths = document.getElementById('sim-target-months');
-    const inputBudget = document.getElementById('sim-max-budget');
-
-    if (!btnAcel || !btnInv) return;
-
-    if (mode === 'acelerador') {
-        btnAcel.style.background = 'white';
-        btnAcel.style.color = '#475569';
-        btnAcel.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        
-        btnInv.style.background = 'transparent';
-        btnInv.style.color = '#94a3b8';
-        btnInv.style.boxShadow = 'none';
-
-        if (contMonths) contMonths.style.display = 'block';
-        if (contBudget) contBudget.style.display = 'none';
-        if (inputMonths) {
-            inputMonths.disabled = false;
-            inputMonths.style.background = '#f1f5f9';
-        }
-        if (inputBudget) inputBudget.disabled = true;
-    } else {
-        btnInv.style.background = 'white';
-        btnInv.style.color = '#475569';
-        btnInv.style.boxShadow = '0 1px 2px rgba(0,0,0,0.1)';
-        
-        btnAcel.style.background = 'transparent';
-        btnAcel.style.color = '#94a3b8';
-        btnAcel.style.boxShadow = 'none';
-
-        if (contMonths) contMonths.style.display = 'block';
-        if (contBudget) contBudget.style.display = 'block';
-        if (inputMonths) {
-            inputMonths.disabled = true;
-            inputMonths.style.background = '#e2e8f0'; // Visual bloqueado
-        }
-        if (inputBudget) inputBudget.disabled = false;
-    }
-}
-
 function initGrowthSimulator(data) {
-    const btnCalc = document.getElementById('btn-calc-simulator');
-    if (!btnCalc) return;
-
-    const btnAcel = document.getElementById('btn-mode-acelerador');
-    const btnInv = document.getElementById('btn-mode-investidor');
+    const btnSave = document.getElementById('btn-save-simulator');
+    if (!btnSave) return;
 
     const inputSubs = document.getElementById('sim-target-subs');
     const inputMonths = document.getElementById('sim-target-months');
@@ -318,47 +269,61 @@ function initGrowthSimulator(data) {
                     if (inputSubs && saved.targetSubs) inputSubs.value = saved.targetSubs;
                     if (inputMonths && saved.targetMonths) inputMonths.value = saved.targetMonths;
                     if (inputBudget && saved.maxBudget) inputBudget.value = saved.maxBudget;
-                    if (saved.simMode) currentSimMode = saved.simMode;
                 }
             }
         } catch (e) { /* silencioso */ }
 
-        updateSimModeUI(currentSimMode);
-        runSimulation();
+        // Na carga inicial, sempre assume que o Budget é a consequência das metas
+        runSimulation(data, 'months_subs');
     };
 
-    if (btnAcel) {
-        btnAcel.addEventListener('click', () => {
-            currentSimMode = 'acelerador';
-            updateSimModeUI(currentSimMode);
-            runSimulation();
-        });
-    }
+    // Auto-Solver Listeners
+    if (inputSubs) inputSubs.addEventListener('input', () => runSimulation(data, 'months_subs'));
+    if (inputMonths) inputMonths.addEventListener('input', () => runSimulation(data, 'months_subs'));
+    if (inputBudget) inputBudget.addEventListener('input', () => runSimulation(data, 'budget'));
 
-    if (btnInv) {
-        btnInv.addEventListener('click', () => {
-            currentSimMode = 'investidor';
-            updateSimModeUI(currentSimMode);
-            runSimulation();
-        });
-    }
+    const newBtnSave = btnSave.cloneNode(true);
+    btnSave.parentNode.replaceChild(newBtnSave, btnSave);
+    newBtnSave.addEventListener('click', () => {
+        newBtnSave.textContent = 'Salvando...';
+        newBtnSave.style.opacity = '0.7';
+        
+        const targetSubs = parseInt(inputSubs?.value) || 70;
+        const targetMonths = parseInt(inputMonths?.value) || 3;
+        const maxBudget = parseFloat(inputBudget?.value) || 2000;
 
-    const newBtnCalc = btnCalc.cloneNode(true);
-    btnCalc.parentNode.replaceChild(newBtnCalc, btnCalc);
-    newBtnCalc.addEventListener('click', () => {
-        newBtnCalc.textContent = 'Calculando...';
-        newBtnCalc.style.opacity = '0.7';
-        setTimeout(() => {
-            runSimulation();
-            newBtnCalc.textContent = 'Nova Meta';
-            newBtnCalc.style.opacity = '1';
-        }, 500);
+        fetch('/api/cmo/simulator-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ 
+                targetSubs, 
+                targetMonths,
+                simMode: 'auto',
+                maxBudget
+            })
+        }).then(() => {
+            newBtnSave.textContent = 'Salvo com Sucesso!';
+            newBtnSave.style.background = '#059669';
+            setTimeout(() => {
+                newBtnSave.textContent = 'Salvar Meta';
+                newBtnSave.style.background = '#10b981';
+                newBtnSave.style.opacity = '1';
+            }, 2000);
+        }).catch(() => {
+            newBtnSave.textContent = 'Erro ao Salvar';
+            newBtnSave.style.background = '#ef4444';
+            setTimeout(() => {
+                newBtnSave.textContent = 'Salvar Meta';
+                newBtnSave.style.background = '#10b981';
+                newBtnSave.style.opacity = '1';
+            }, 2000);
+        });
     });
 
-    const runSimulation = () => {
-        let targetSubs = parseInt(inputSubs?.value) || 70;
-        let targetMonths = parseInt(inputMonths?.value) || 3;
-        let maxBudget = parseFloat(inputBudget?.value) || 2000;
+    const runSimulation = (data, solveSource = 'months_subs') => {
+        let targetSubs = parseInt(inputSubs?.value) || 0;
+        let targetMonths = parseInt(inputMonths?.value) || 1;
+        let maxBudget = parseFloat(inputBudget?.value) || 0;
         
         let monthsToSave = targetMonths;
 
@@ -387,57 +352,50 @@ function initGrowthSimulator(data) {
         const organicActive = data.platform.b2b.organic_active || 0;
         const organicActivePerMonth = (organicActive / daysInPeriodSim) * 30;
 
-        if (currentSimMode === 'investidor') {
-            const gapRealCalc = Math.max(0, targetSubs - basePagantes);
-            const targetTrialsCalc = gapRealCalc > 0 ? Math.ceil(gapRealCalc / trialConversionRate) : 0;
-            const organicWppClicks90d = data.platform.b2c.organic_wpp_clicks_90d || 0;
-            const orgMonthly = Math.floor(organicWppClicks90d / 3);
+        // --- THE MAGIC SOLVER TRIANGLE ---
+        const gapRealCalc = Math.max(0, targetSubs - basePagantes);
+        const targetTrialsCalc = gapRealCalc > 0 ? Math.ceil(gapRealCalc / trialConversionRate) : 0;
+        const organicWppClicks90d = data.platform.b2c.organic_wpp_clicks_90d || 0;
+        const orgMonthly = Math.floor(organicWppClicks90d / 3);
 
-            const metaCac = cacBase;
-            const googleCpl = data.historical?.google?.cpl > 0 
-                ? data.historical?.google?.cpl 
-                : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
+        const metaCac = cacBase;
+        const googleCpl = data.historical?.google?.cpl > 0 
+            ? data.historical?.google?.cpl 
+            : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
 
-            // A inteligência suprema: calcular a "Média" durante a fase de crescimento.
-            // Se começamos com 20 e vamos para 70, a média durante o caminho é 45 assinantes.
-            const averageSubs = (basePagantes + targetSubs) / 2;
-            const ticketMedio = 99; // Mensalidade base do Yelo
+        const averageSubs = (basePagantes + targetSubs) / 2;
+        const ticketMedio = 99; 
 
-            // Custos Totais independentes do tempo (Fixo pelo volume de meta)
-            const A = targetTrialsCalc * metaCac; // Custo total no Meta
-            const C = targetTrialsCalc * 2 * googleCpl; // Custo total no Google para alimentar esses novos trials
+        const A = targetTrialsCalc * metaCac; 
+        const C = targetTrialsCalc * 2 * googleCpl; 
+        const B1 = averageSubs * 2 * googleCpl; 
+        const B2 = orgMonthly * googleCpl; 
+        const averageRevenue = averageSubs * ticketMedio; 
 
-            // Custos e Receitas Médias Mensais (Durante a Jornada)
-            const B1 = averageSubs * 2 * googleCpl; // Custo médio para reter a base crescente
-            const B2 = orgMonthly * googleCpl; // Desconto médio do SEO
-            const averageRevenue = averageSubs * ticketMedio; // MRR médio injetando caixa
-
+        if (solveSource === 'budget') {
+            // SOLVE FOR MONTHS
             const totalMonthlyCash = averageRevenue + maxBudget;
             const denom = totalMonthlyCash - B1 + B2;
             
             if (denom <= 0) {
-                targetMonths = 60; // 5 anos (Matematicamente impossível crescer com esse budget)
+                targetMonths = 60; 
             } else {
                 let calculatedMonths = Math.ceil((A + C) / denom);
                 if (calculatedMonths < 1) calculatedMonths = 1;
                 targetMonths = calculatedMonths;
             }
-            
             if (inputMonths) inputMonths.value = targetMonths;
-            monthsToSave = targetMonths;
+        } else {
+            // SOLVE FOR BUDGET
+            // Budget = (A+C)/M + B1 - B2 - averageRevenue
+            let calculatedBudget = ((A + C) / targetMonths) + B1 - B2 - averageRevenue;
+            if (calculatedBudget < 0) calculatedBudget = 0;
+            maxBudget = calculatedBudget;
+            
+            // Round to nearest 10 for cleaner UI
+            maxBudget = Math.ceil(maxBudget / 10) * 10;
+            if (inputBudget) inputBudget.value = maxBudget;
         }
-        
-        // Salva no banco de dados (persiste em todos os dispositivos)
-        fetch('/api/cmo/simulator-settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ 
-                targetSubs, 
-                targetMonths: monthsToSave,
-                simMode: currentSimMode,
-                maxBudget
-            })
-        }).catch(() => {});
         
         // Projeta o ganho orgânico (que vem "de graça" sem ads) baseado no ritmo do período selecionado
         const projectedOrganicGain = Math.floor(organicActivePerMonth * targetMonths);

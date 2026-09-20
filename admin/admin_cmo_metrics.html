@@ -174,28 +174,23 @@
                 <h4 style="display: flex; align-items: center; justify-content: space-between; font-size: 1.1rem !important; color: #1e293b; margin: 0 0 15px 0;">
                     <span>Para onde vamos?</span>
                 </h4>
-                
-                <div style="display: flex; background: #e2e8f0; border-radius: 50px; padding: 3px; margin-bottom: 15px; font-size: 0.75rem; font-weight: bold;">
-                    <div id="btn-mode-acelerador" style="flex: 1; text-align: center; padding: 5px 0; border-radius: 50px; cursor: pointer; transition: 0.2s; background: white; color: #475569; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">Acelerador</div>
-                    <div id="btn-mode-investidor" style="flex: 1; text-align: center; padding: 5px 0; border-radius: 50px; cursor: pointer; transition: 0.2s; color: #94a3b8;">Investidor</div>
-                </div>
 
                 <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
                     <div style="width: 100%;">
                         <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: bold;">Meta de Assinantes</label>
-                        <input type="number" id="sim-target-subs" value="70" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f1f5f9;" disabled />
+                        <input type="number" id="sim-target-subs" value="70" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 1rem; outline: none; box-sizing: border-box;" />
                     </div>
                     <div style="width: 100%;" id="container-sim-months">
                         <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: bold;">Prazo (Meses)</label>
-                        <input type="number" id="sim-target-months" value="3" min="1" max="60" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f1f5f9;" disabled />
+                        <input type="number" id="sim-target-months" value="3" min="1" max="60" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 1rem; outline: none; box-sizing: border-box;" />
                     </div>
-                    <div style="width: 100%; display: none;" id="container-sim-budget">
-                        <label style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: bold;">Caixa Extra/mês <span class="info-tooltip" data-tooltip="O quanto de dinheiro você pode tirar do bolso por mês (além do faturamento atual) para injetar na queima de caixa.">i</span></label>
-                        <input type="number" id="sim-max-budget" value="2000" min="0" step="100" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f1f5f9;" disabled />
+                    <div style="width: 100%;" id="container-sim-budget">
+                        <label style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: bold;">Caixa Extra/mês <span class="info-tooltip" title="O quanto de dinheiro você pode tirar do bolso por mês (além do faturamento atual) para injetar na queima de caixa.">i</span></label>
+                        <input type="number" id="sim-max-budget" value="2000" min="0" step="100" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 1rem; outline: none; box-sizing: border-box;" />
                     </div>
                 </div>
                 
-                <button id="btn-calc-simulator" style="background: #475569; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: background 0.2s; align-self: flex-start; width: 100%;">Nova Meta</button>
+                <button id="btn-save-simulator" style="background: #10b981; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: background 0.2s; align-self: flex-start; width: 100%;">Salvar Meta</button>
             </div>
             
             <!-- Resultados -->
