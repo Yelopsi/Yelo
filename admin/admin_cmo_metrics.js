@@ -349,7 +349,7 @@ function initGrowthSimulator(data) {
 
             let metaAction = '';
             if (gapReal <= 0 || targetMetaDailyBudget < currentMetaDailyBudget) {
-                metaAction = `Hoje você gasta aprox. <strong>${formatBRL(currentMetaDailyBudget)}/dia de campanha</strong> no Meta Ads. <strong>Diminua para ${formatBRL(targetMetaDailyBudget)}/dia</strong>, pois isso já é o suficiente.`;
+                metaAction = `Hoje você gasta aprox. <strong>${formatBRL(currentMetaDailyBudget)}/semana</strong> no Meta Ads. <strong>Diminua para ${formatBRL(targetMetaDailyBudget)}/semana</strong>, pois isso já é o suficiente.`;
             } else if (targetMetaDailyBudget > currentMetaDailyBudget) {
                 let weeks = 0;
                 let simulatedWeekly = currentMetaDailyBudget > 0 ? currentMetaDailyBudget : 50; 
@@ -357,9 +357,9 @@ function initGrowthSimulator(data) {
                     simulatedWeekly *= 1.20;
                     weeks++;
                 }
-                metaAction = `Hoje você gasta aprox. <strong>${formatBRL(currentMetaDailyBudget)}/dia de campanha</strong> no Meta Ads (1x na semana). <strong>Aumente em 20% a cada sábado</strong> por ${weeks} semanas, até o teto de <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>.`;
+                metaAction = `Hoje você investe aprox. <strong>${formatBRL(currentMetaDailyBudget)}/semana</strong> no Meta Ads (rodando 1x na semana). <strong>Aumente a verba em 20% a cada sábado</strong> por ${weeks} semanas, até atingir o teto de <strong>${formatBRL(targetMetaDailyBudget)}/semana</strong>. <br><span style="font-size:0.8rem; color:#64748b;">💡 <strong>Dica:</strong> Em vez de aumentar o valor da diária, você pode simplesmente ativar a campanha em mais dias da semana mantendo o valor atual, até atingir esse teto semanal.</span>`;
             } else {
-                metaAction = `Hoje você gasta aprox. <strong>${formatBRL(currentMetaDailyBudget)}/dia de campanha</strong> no Meta Ads. <strong>Mantenha</strong> esse valor.`;
+                metaAction = `Hoje você gasta aprox. <strong>${formatBRL(currentMetaDailyBudget)}/semana</strong> no Meta Ads. <strong>Mantenha</strong> esse valor.`;
             }
 
             let googleAction = '';
