@@ -330,9 +330,11 @@ function initGrowthSimulator(data) {
         }
         const projectedOrganicB2CClicksMonthly = Math.floor((organicB2CClicks / daysInPeriodSim) * 30);
 
-        const maintenancePerPsi = 26.88;
-        const totalRequiredB2CBudget = targetSubs * maintenancePerPsi;
         const currentB2CCpl = data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15;
+        const targetClicksPerPsi = 2; // O psicólogo precisa de 2 contatos por mês no WhatsApp.
+        const maintenancePerPsi = targetClicksPerPsi * currentB2CCpl;
+        
+        const totalRequiredB2CBudget = targetSubs * maintenancePerPsi;
         const totalRequiredB2CClicks = Math.ceil(totalRequiredB2CBudget / currentB2CCpl);
         
         const requiredPaidB2CClicks = Math.max(0, totalRequiredB2CClicks - projectedOrganicB2CClicksMonthly);
