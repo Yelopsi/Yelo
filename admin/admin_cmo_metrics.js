@@ -359,7 +359,14 @@ function initGrowthSimulator(data) {
                     simulatedWeekly *= 1.20;
                     weeks++;
                 }
-                metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. <strong>Aumente a diária em 20% a cada sábado</strong> por <strong>${weeks} semanas</strong>, até que sua configuração diária alcance o teto de <strong>${formatBRL(targetMetaDailyBudget)}</strong>. <br><span style="font-size:0.8rem; color:#64748b;">💡 <strong>Dica:</strong> Em vez de aumentar a diária, você pode manter os <strong>${formatBRL(currentMetaDailyBudget)}</strong> e apenas ligar a campanha em mais dias na semana.</span>`;
+                let daysNeeded = currentMetaDailyBudget > 0 ? Math.ceil(targetMetaDailyBudget / currentMetaDailyBudget) : 0;
+                let dicaText = "";
+                if (daysNeeded > 0 && daysNeeded <= 7) {
+                    dicaText = `<br><span style="font-size:0.8rem; color:#64748b;">💡 <strong>Dica:</strong> Em vez de aumentar a diária na plataforma, você pode manter a configuração em <strong>${formatBRL(currentMetaDailyBudget)}</strong> e apenas ligar a campanha em <strong>${daysNeeded} dias na semana</strong>.</span>`;
+                } else if (daysNeeded > 7) {
+                    dicaText = `<br><span style="font-size:0.8rem; color:#64748b;">💡 <strong>Dica:</strong> Para bater o teto, você terá que rodar mais do que 7 dias por semana (o que é impossível). Portanto, neste caso, o aumento do valor configurado na diária é obrigatório.</span>`;
+                }
+                metaAction = `O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. <strong>Aumente a diária em 20% a cada sábado</strong> por <strong>${weeks} semanas</strong>, até que sua configuração diária alcance o teto de <strong>${formatBRL(targetMetaDailyBudget)}</strong>. ${dicaText}`;
             }
 
             let googleAction = '';
