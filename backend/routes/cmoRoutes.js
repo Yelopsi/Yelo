@@ -87,6 +87,7 @@ router.get('/dashboard', async (req, res) => {
                     AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
                     AND (is_exempt IS NULL OR is_exempt = false)
                     AND "planExpiresAt" > NOW()
+                    AND ("fotoUrl" IS NOT NULL OR ("bio" IS NOT NULL AND "bio" != ''))
                 ) as trials,
                 COUNT(*) FILTER (WHERE status = 'inactive') as churned
             FROM "Psychologists"
@@ -123,6 +124,7 @@ router.get('/dashboard', async (req, res) => {
                     AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
                     AND (is_exempt IS NULL OR is_exempt = false)
                     AND "planExpiresAt" > NOW()
+                    AND ("fotoUrl" IS NOT NULL OR ("bio" IS NOT NULL AND "bio" != ''))
                 ) as total_new_trials
             FROM "Psychologists"
             WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
@@ -156,9 +158,10 @@ router.get('/dashboard', async (req, res) => {
                     AND "planExpiresAt" > NOW()
                 ) as total_active,
                 COUNT(*) FILTER (
-                    WHERE status = 'active'
+                    WHERE status IN ('pending', 'active')
                     AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
                     AND "planExpiresAt" > NOW()
+                    AND ("fotoUrl" IS NOT NULL OR ("bio" IS NOT NULL AND "bio" != ''))
                 ) as total_trials
             FROM "Psychologists"
             WHERE status IN ('pending', 'active')

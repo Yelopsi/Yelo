@@ -539,7 +539,7 @@ function initGrowthSimulator(data) {
         const progressContainer = document.getElementById('sim-progress-container');
         if (progressContainer) {
             progressContainer.style.display = 'block';
-            document.getElementById('sim-prog-current').innerHTML = `${basePagantes} <span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">(+ ${baseTrials} trials em nutrição)</span>`;
+            document.getElementById('sim-prog-current').innerHTML = `${basePagantes} <span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">(+ ${baseTrials} em período de teste)</span>`;
             document.getElementById('sim-prog-target').textContent = targetSubs;
             
             const percentage = targetSubs > 0 ? Math.min(100, Math.round((basePagantes / targetSubs) * 100)) : 100;
