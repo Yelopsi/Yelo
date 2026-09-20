@@ -570,14 +570,20 @@ router.get('/simulator-settings', async (req, res) => {
         const db = require('../models');
         
         try {
-            await db.SystemSetting.sync({ alter: true });
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_mode VARCHAR(255) DEFAULT 'acelerador';`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_max_budget DECIMAL(10,2) DEFAULT 2000.00;`);
         } catch (e) {
-            console.error('DB sync skip in GET:', e.message);
+            console.error('Raw ALTER TABLE skip in GET:', e.message);
         }
 
-        const settings = await db.SystemSetting.findOne({
-            attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months', 'cmo_sim_mode', 'cmo_sim_max_budget']
-        });
+        let settings = null;
+        try {
+            settings = await db.SystemSetting.findOne({
+                attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months', 'cmo_sim_mode', 'cmo_sim_max_budget']
+            });
+        } catch (e) {
+            console.error('findOne failed in GET, returning defaults:', e.message);
+        }
 
         res.json({
             success: true,
@@ -599,14 +605,20 @@ router.post('/simulator-settings', async (req, res) => {
         const { targetSubs, targetMonths, simMode, maxBudget } = req.body;
         
         try {
-            await db.SystemSetting.sync({ alter: true });
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_mode VARCHAR(255) DEFAULT 'acelerador';`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_max_budget DECIMAL(10,2) DEFAULT 2000.00;`);
         } catch (e) {
-            console.error('DB sync skip in POST:', e.message);
+            console.error('Raw ALTER TABLE skip in POST:', e.message);
         }
         
-        let settings = await db.SystemSetting.findOne({
-            attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months', 'cmo_sim_mode', 'cmo_sim_max_budget']
-        });
+        let settings = null;
+        try {
+            settings = await db.SystemSetting.findOne({
+                attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months', 'cmo_sim_mode', 'cmo_sim_max_budget']
+            });
+        } catch (e) {
+            console.error('findOne failed in POST:', e.message);
+        }
         
         if (!settings) {
             settings = await db.SystemSetting.create({
@@ -616,7 +628,7 @@ router.post('/simulator-settings', async (req, res) => {
                 cmo_sim_mode: simMode !== undefined ? simMode : 'acelerador',
                 cmo_sim_max_budget: maxBudget !== undefined ? parseFloat(maxBudget) : 2000.00
             });
-        } else {
+        } else if (settings) {
             if (targetSubs !== undefined) settings.cmo_sim_target_subs = parseInt(targetSubs);
             if (targetMonths !== undefined) settings.cmo_sim_target_months = parseInt(targetMonths);
             if (simMode !== undefined) settings.cmo_sim_mode = simMode;
