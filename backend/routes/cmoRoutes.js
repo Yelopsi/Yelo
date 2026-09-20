@@ -89,7 +89,7 @@ router.get('/dashboard', async (req, res) => {
                     AND "planExpiresAt" > NOW()
                     AND ("fotoUrl" IS NOT NULL OR ("bio" IS NOT NULL AND "bio" != ''))
                 ) as trials,
-                COUNT(*) FILTER (WHERE status = 'inactive') as churned
+                COUNT(*) FILTER (WHERE status = 'inactive' AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)) as churned
             FROM "Psychologists"
             WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
             AND "deletedAt" IS NULL
@@ -142,6 +142,7 @@ router.get('/dashboard', async (req, res) => {
             SELECT COUNT(*) as churned
             FROM "Psychologists"
             WHERE status = 'inactive'
+            AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
             AND "updatedAt" >= :dateStart AND "updatedAt" <= :dateEnd
             AND "deletedAt" IS NULL
         `;
@@ -242,7 +243,7 @@ router.get('/dashboard', async (req, res) => {
                     AND (is_exempt IS NULL OR is_exempt = false)
                     AND "planExpiresAt" > NOW()
                 ) as trials,
-                COUNT(*) FILTER (WHERE status = 'inactive') as churned
+                COUNT(*) FILTER (WHERE status = 'inactive' AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)) as churned
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
             AND (
