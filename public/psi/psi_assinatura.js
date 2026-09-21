@@ -63,12 +63,12 @@
             if (typeof window.abrirModalConfirmacaoPersonalizado === 'function') {
                 window.abrirModalConfirmacaoPersonalizado(
                     'Você está no período de teste! 🎁',
-                    'Você ainda tem dias grátis para conhecer a plataforma e <strong>não precisa cadastrar um cartão de crédito agora.</strong><br><br>Mas se preferir deixar sua assinatura já configurada, <strong>você só será cobrado no 15º dia</strong>.',
+                    'Você ainda tem dias grátis para conhecer a plataforma e <strong>não precisa cadastrar um cartão de crédito agora.</strong><br><br>Mas se preferir deixar sua assinatura já configurada, <strong>você só será cobrado no 8º dia</strong>.',
                     () => { proceedToPayment(); }
                 );
                 cancelPayment();
             } else {
-                const confirmou = confirm('Você está no período de teste grátis e não precisa cadastrar um cartão agora.\n\nSe quiser assinar mesmo assim, você só será cobrado no 15º dia. Deseja continuar?');
+                const confirmou = confirm('Você está no período de teste grátis e não precisa cadastrar um cartão agora.\n\nSe quiser assinar mesmo assim, você só será cobrado no 8º dia. Deseja continuar?');
                 if (confirmou) proceedToPayment(); else cancelPayment();
             }
         } else {

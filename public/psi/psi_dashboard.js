@@ -489,7 +489,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 mainEl.classList.add('restricted-mode');
                 const banner = document.createElement('div');
                 banner.className = 'restriction-floating-banner';
-                banner.innerHTML = `<span>🔒 Seu período de teste expirou. Ative o Premium para continuar.</span><button onclick="window.loadPage('psi_assinatura.html')">Assinar Agora</button>`;
+                banner.innerHTML = `<span>🔒 Seu período de teste expirou. Ative o Plano Essencial para continuar.</span><button onclick="window.loadPage('psi_assinatura.html')">Assinar Agora</button>`;
                 document.body.appendChild(banner);
             }
         } else if (psychologistData.showTrialBanner && trialPremiumBanner) {
@@ -497,8 +497,8 @@ document.addEventListener('DOMContentLoaded', function () {
             trialPremiumBanner.style.display = 'flex';
             const titleEl = document.getElementById('trial-premium-title');
             const messageEl = document.getElementById('trial-premium-message');
-            if (titleEl) titleEl.textContent = psychologistData.trialBannerMessage || "Complete seu CPF para liberar o Premium!";
-            if (messageEl) messageEl.textContent = "Seu perfil está quase pronto! Adicione seu CPF para ativar seus 7 dias Premium grátis e começar a receber pacientes.";
+            if (titleEl) titleEl.textContent = psychologistData.trialBannerMessage || "Complete seu CPF para liberar o Plano Essencial!";
+            if (messageEl) messageEl.textContent = "Seu perfil está quase pronto! Adicione seu CPF para ativar seus 7 dias de teste grátis do Plano Essencial e começar a receber pacientes.";
         }
     }
 

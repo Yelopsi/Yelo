@@ -279,7 +279,7 @@
     <!-- BANNER VIP -->
     <div id="vip-banner" class="vip-card-modern" style="display: none;">
         <h2 id="vip-plan-name">Plano Essencial VIP</h2>
-        <p>Sua isenção premium foi concedida pela administração da Yelo. Aproveite todos os recursos da plataforma sem custo algum.</p>
+        <p>Sua isenção do Plano Essencial foi concedida pela administração da Yelo. Aproveite todos os recursos da plataforma sem custo algum.</p>
         <div style="display: inline-block; background: rgba(255,255,255,0.15); padding: 8px 24px; border-radius: 50px; font-size: 0.95rem; font-weight: 600; backdrop-filter: blur(4px);">
             Status de Parceiro Ativo ✅
         </div>
@@ -494,14 +494,18 @@
 
             if (isInTrial) {
                 const diffTime = planExpiresAt.getTime() - hoje.getTime();
-                // Garante que mostre no mínimo 1 dia se estiver no dia do vencimento
-                const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+                // Garante que mostre no mínimo 1 dia e no máximo 7 dias (mesmo que a validade passe disso)
+                const diffDays = Math.min(7, Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24))));
                 
                 const trialBannerGlobal = document.getElementById('trial-banner-global');
                 const trialBannerDesc = document.getElementById('trial-banner-desc');
                 
+                // Calcula a data de cobrança mostrada alinhada aos dias exibidos
+                const displayDate = new Date();
+                displayDate.setDate(displayDate.getDate() + diffDays);
+                
                 if (trialBannerGlobal) trialBannerGlobal.style.setProperty('display', 'flex', 'important');
-                if (trialBannerDesc) trialBannerDesc.innerHTML = `Você ainda tem <strong>${diffDays} dias</strong> para conhecer e testar a plataforma. Não se preocupe, <strong>não exigimos cartão de crédito agora</strong>. Mas se você já amou e quiser garantir a sua assinatura agora mesmo, <strong>a primeira cobrança só acontecerá no dia ${planExpiresAt.toLocaleDateString('pt-BR')}</strong>, quando o seu teste terminar. Fique tranquilo/a!`;
+                if (trialBannerDesc) trialBannerDesc.innerHTML = `Você ainda tem <strong>${diffDays} dias</strong> para conhecer e testar a plataforma. Não se preocupe, <strong>não exigimos cartão de crédito agora</strong>. Mas se você já amou e quiser garantir a sua assinatura agora mesmo, <strong>a primeira cobrança só acontecerá no dia ${displayDate.toLocaleDateString('pt-BR')}</strong>, quando o seu teste terminar. Fique tranquilo/a!`;
             } else {
                 // Esconde a copy de marketing se já passou o trial ou já tem assinatura
                 const txtTrialMarketing = document.getElementById('txt-trial-marketing');

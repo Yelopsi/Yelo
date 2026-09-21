@@ -319,7 +319,7 @@ window.openCSDrawer = async function(idStr) {
         btnExpire.style.width = '100%'; btnExpire.style.justifyContent = 'center'; btnExpire.style.padding = '12px'; btnExpire.style.borderRadius = '50px';
         btnExpire.style.background = '#fef2f2'; btnExpire.style.color = '#991b1b'; btnExpire.style.border = '1px solid #fecaca';
         btnExpire.style.marginTop = '15px';
-        btnExpire.innerHTML = 'Expirar Perfil (Vencido) ⚠️';
+        btnExpire.innerHTML = 'Expirar Perfil (Inativo) ⚠️';
         btnExpire.onclick = () => {
             const executeExpire = async () => {
                 try {
@@ -330,7 +330,7 @@ window.openCSDrawer = async function(idStr) {
                     const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psy.id}/status`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                        body: JSON.stringify({ status: 'vencido' })
+                        body: JSON.stringify({ status: 'inactive' })
                     });
                     
                     if (!res.ok) throw new Error('Erro ao expirar perfil. Endpoint inexistente ou erro no servidor.');
@@ -340,15 +340,15 @@ window.openCSDrawer = async function(idStr) {
                     setTimeout(() => window.location.reload(), 1500);
                 } catch(e) {
                     alert('Aviso: ' + e.message + '\\n\\nO backend precisa ter a rota PUT /api/admin/psychologists/:id/status implementada.');
-                    btnExpire.innerHTML = 'Expirar Perfil (Vencido) ⚠️';
+                    btnExpire.innerHTML = 'Expirar Perfil (Inativo) ⚠️';
                     btnExpire.disabled = false;
                 }
             };
 
             if (window.openConfirmationModal) {
-                window.openConfirmationModal('Expirar Perfil', `Tem certeza que deseja marcar o perfil de <strong>${psy.nome}</strong> como VENCIDO (Expirado)?`, executeExpire);
+                window.openConfirmationModal('Expirar Perfil', `Tem certeza que deseja marcar o perfil de <strong>${psy.nome}</strong> como INATIVO (Expirado)?`, executeExpire);
             } else {
-                if (confirm(`Tem certeza que deseja marcar o perfil de ${psy.nome} como VENCIDO (Expirado)?`)) {
+                if (confirm(`Tem certeza que deseja marcar o perfil de ${psy.nome} como INATIVO (Expirado)?`)) {
                     executeExpire();
                 }
             }

@@ -44,6 +44,14 @@ module.exports = (sequelize, DataTypes) => {
     cmo_sim_target_months: {
       type: DataTypes.INTEGER,
       defaultValue: 3
+    },
+    cmo_sim_mode: {
+      type: DataTypes.STRING,
+      defaultValue: 'acelerador'
+    },
+    cmo_sim_max_budget: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 2000.00
     }
   });
 

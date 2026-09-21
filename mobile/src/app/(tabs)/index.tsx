@@ -187,7 +187,7 @@ export default function HomeScreen() {
               Período de teste expirou
             </Text>
             <Text className="font-sans text-[#555] text-[15px] text-center leading-relaxed mb-6">
-              Ative o Premium para continuar recebendo pacientes pela Yelo.
+              Ative o Plano Essencial para continuar recebendo pacientes pela Yelo.
             </Text>
             <TouchableOpacity className="bg-[#1B4332] py-4 w-full rounded-[16px] items-center">
               <Text className="font-sans font-bold text-white text-[16px]">Assinar Agora</Text>

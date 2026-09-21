@@ -244,7 +244,7 @@ exports.getPsychologistFullDetails = async (req, res) => {
 
 /**
  * Rota: POST /api/admin/psychologists/grant-trial-all
- * Descrição: Libera 7 dias de teste (Premium) para todos os psicólogos pendentes/inativos.
+ * Descrição: Libera 7 dias de teste do Plano Essencial para todos os psicólogos pendentes/inativos.
  */
 exports.grantTrialToAll = async (req, res) => {
     try {
@@ -599,9 +599,18 @@ exports.updatePsychologistStatus = async (req, res) => {
         if (!psychologist) {
             return res.status(404).json({ error: 'Psicólogo não encontrado.' });
         }
-
+        
         const previousStatus = psychologist.status;
-        await psychologist.update({ status });
+        
+        // Intercepta 'vencido' legado do cache do navegador e força para 'inactive'
+        let finalStatus = status === 'vencido' ? 'inactive' : status;
+        const updatePayload = { status: finalStatus };
+        
+        if (finalStatus === 'inactive') {
+            updatePayload.planExpiresAt = new Date(Date.now() - 24 * 60 * 60 * 1000); // Expira a validade
+        }
+        
+        await psychologist.update(updatePayload);
 
         // Evento GA4 Server-Side para conversão B2B real
         if (status === 'active' && previousStatus === 'pending') {

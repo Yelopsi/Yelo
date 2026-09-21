@@ -61,6 +61,26 @@ async function runIntegrityAudit() {
                         if (hasOverdue) {
                             shouldBlock = true;
                             reason = 'Pagamento em atraso (OVERDUE) no Asaas';
+
+                            const overduePayment = payments.find(p => p.status === 'OVERDUE');
+                            if (overduePayment && overduePayment.dueDate) {
+                                const dueDate = new Date(overduePayment.dueDate);
+                                const diffTime = now.getTime() - dueDate.getTime();
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                if (diffDays > 5) {
+                                    try {
+                                        const fetch = require('node-fetch');
+                                        await fetch(`${ASAAS_API_URL}/subscriptions/${psi.subscriptionId}`, {
+                                            method: 'DELETE',
+                                            headers: { 'access_token': process.env.ASAAS_API_KEY }
+                                        });
+                                        console.log(`[ASAAS] Assinatura ${psi.subscriptionId} CANCELADA. Motivo: Fatura vencida há mais de 5 dias (${diffDays} dias).`);
+                                    } catch (err) {
+                                        console.error(`[ASAAS] Falha ao cancelar assinatura ${psi.subscriptionId} após limite de tolerância:`, err.message);
+                                    }
+                                }
+                            }
                         } else {
                             // Não tem pagamento em atraso (ex: boleto aguardando, cartão agendado)
                             // Só bloqueia se já passou da tolerância de 3 dias do Yelo

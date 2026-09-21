@@ -185,7 +185,7 @@ export default function AdminCRMLeadsScreen() {
             <View className="gap-[10px] mb-[20px]">
               <TouchableOpacity className="bg-[#f8f9fa] border border-[#e2e8f0] rounded-[12px] p-[12px]">
                 <Text className="font-title text-[#1e293b] text-[14px] mb-[4px]">1. Pitch / Venda Direta</Text>
-                <Text className="font-sans text-[#64748b] text-[12px]">Explica a Yelo e oferece Trial Premium.</Text>
+                <Text className="font-sans text-[#64748b] text-[12px]">Explica a Yelo e oferece Teste Essencial.</Text>
               </TouchableOpacity>
               
               <TouchableOpacity className="bg-[#f8f9fa] border border-[#e2e8f0] rounded-[12px] p-[12px]">

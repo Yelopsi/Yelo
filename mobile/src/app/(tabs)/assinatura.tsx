@@ -43,7 +43,7 @@ export default function AssinaturaScreen() {
               <Text className="font-sans font-bold text-[#1B4332] text-[12px] tracking-wide">🔥 LICENÇA FUNDADOR</Text>
             </View>
 
-            <Text className="font-title text-[#1B4332] text-[24px] text-center mb-4 mt-2">Plano Premium Yelo</Text>
+            <Text className="font-title text-[#1B4332] text-[24px] text-center mb-4 mt-2">Plano Essencial Yelo</Text>
             
             <View className="items-center mb-6">
               <View className="flex-row items-end justify-center mb-2">

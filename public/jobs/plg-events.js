@@ -10,7 +10,9 @@ window.verificarConquistasPLG = function(user) {
     
     if (clicks > 0 && user.status !== 'active' && !user.is_exempt) {
         if (banner && title) {
-            title.innerText = `Opa, ${clicks} paciente(s) tentou falar com você! 💛`;
+            const pacienteTxt = clicks === 1 ? 'paciente tentou' : 'pacientes tentaram';
+            const primeiroNome = user.nome ? user.nome.split(' ')[0] : 'Psi';
+            title.innerText = `${primeiroNome}, ${clicks} ${pacienteTxt} falar com você! 💛`;
             banner.style.display = 'flex';
         }
     } else if (banner) {
