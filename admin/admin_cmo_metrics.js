@@ -484,10 +484,10 @@ function initGrowthSimulator(data) {
             : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
 
         const targetContactsPerPsi = 2; // O psicólogo precisa de 2 contatos por mês no WhatsApp.
-        // COMPORTAMENTO REAL DO PACIENTE (Dados do BD): 
-        // 1 Lead (Formulário preenchido) gera apenas 0.31 Contatos (Cliques no WhatsApp).
-        // Isso ocorre porque apenas 18% dos leads clicam no WhatsApp, e quando clicam, chamam 1.6 psicólogos.
-        const psiSuggestedPerLead = 0.31;         
+        // O usuário confirmou que a Conversão do Google Ads bate direto no botão do WhatsApp.
+        // Ou seja, 1 "Lead/Conversão" pago no Google = 1 Contato real com o psicólogo.
+        // Não há multiplicador, a relação é 1 para 1.
+        const psiSuggestedPerLead = 1;         
         // 1. Projeção Futura (Meta Final)
         const projectedTargetTrials = targetMonths > 0 ? Math.ceil(targetTrials / targetMonths) : targetTrials;
         const targetTotalActive = targetSubs + projectedTargetTrials;
