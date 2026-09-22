@@ -440,15 +440,36 @@ function initGrowthSimulator(data) {
             }
         }
 
-        // Update Cards
+        // Update Cards com textos contextuais
+        const currentMrr = basePagantes * arpu;
+        const mrrMultiple = (mrrAt12 / (currentMrr || 1)).toFixed(1);
+        const mrrGainMonthly = mrrAt12 - currentMrr;
         document.getElementById('sim-res-mrr-12m').textContent = formatBRL(mrrAt12);
-        document.getElementById('sim-res-mrr-feedback').textContent = `Múltiplo de ${(mrrAt12 / (basePagantes * arpu || 1)).toFixed(1)}x sobre hoje.`;
+        document.getElementById('sim-res-mrr-feedback').textContent =
+            `${mrrMultiple}x maior que hoje (${formatBRL(currentMrr)}/mês)`;
         
-        document.getElementById('sim-res-subs-12m').textContent = Math.floor(baseAt12);
+        const newSubs = Math.floor(baseAt12) - basePagantes;
+        const avgPatientsPerPsi = targetContactsPerPsi || 2;
+        const totalPatientsServed = Math.floor(baseAt12) * avgPatientsPerPsi;
+        const subsEl = document.getElementById('sim-res-subs-12m');
+        subsEl.textContent = Math.floor(baseAt12);
+        // Subtitle do card-2 (parágrafo filho)
+        const card2Sub = document.querySelector('#sim-card-2 p:last-child');
+        if (card2Sub) card2Sub.textContent =
+            `+${newSubs} novos psis. Juntos atenderão ~${totalPatientsServed.toLocaleString('pt-BR')} pacientes/mês.`;
         
+        const metaDailyAt12 = metaBudgetAt12 / 30;
         document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(metaBudgetAt12);
+        const card3Sub = document.querySelector('#sim-card-3 p:last-child');
+        if (card3Sub) card3Sub.textContent =
+            `≈ ${formatBRL(metaDailyAt12)}/dia disponíveis para comprar novos trials.`;
         
+        const googlePctOfRevenue = mrrAt12 > 0 ? ((googleBudgetAt12 / mrrAt12) * 100).toFixed(0) : 0;
+        const googleDailyAt12 = googleBudgetAt12 / 30;
         document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(googleBudgetAt12);
+        const card4Sub = document.querySelector('#sim-card-4 p:last-child');
+        if (card4Sub) card4Sub.textContent =
+            `≈ ${formatBRL(googleDailyAt12)}/dia — ${googlePctOfRevenue}% da receita do mês 12.`;
         
         const warningEl = document.getElementById('sim-res-warning');
         warningEl.style.display = 'block';
