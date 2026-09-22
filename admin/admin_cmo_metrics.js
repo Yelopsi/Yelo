@@ -390,42 +390,53 @@ function initGrowthSimulator(data) {
             // 1. Receita atual
             const monthlyRevenue = currentBase * arpu;
             
-            // 2. Orçamento Google (Retenção) para manter a base
-            const trialDurationFraction = 0.25; // Trial dura em média 7 dias (1/4 do mês)
-            const totalActiveThisMonth = currentBase + (currentTrials * trialDurationFraction);
-            const totalFutureContacts = totalActiveThisMonth * targetContactsPerPsi;
-            const futurePaidContactsNeeded = Math.max(0, totalFutureContacts - orgMonthlyCalc);
-            const futurePaidLeadsNeeded = Math.ceil(futurePaidContactsNeeded / psiSuggestedPerLead);
-            const googleBudget = futurePaidLeadsNeeded * currentB2CCplCalc;
+            // 2. Orçamento Google (Retenção) para manter a BASE ATUAL
+            const baseContactsNeeded = currentBase * targetContactsPerPsi;
+            // Assumimos que o orgânico atende primeiro a base atual
+            const basePaidContactsNeeded = Math.max(0, baseContactsNeeded - orgMonthlyCalc);
+            const baseGoogleBudget = Math.ceil(basePaidContactsNeeded / psiSuggestedPerLead) * currentB2CCplCalc;
             
             // 3. Fundo disponível para reinvestimento
             const reinvestmentFund = (monthlyRevenue * (reinvestRate / 100)) + extraCash;
-            const availableForMeta = Math.max(0, reinvestmentFund - googleBudget);
+            const availableForAcquisition = Math.max(0, reinvestmentFund - baseGoogleBudget);
             
-            // 4. Compra de novos clientes
-            const newPaidActive = Math.floor(availableForMeta / cacBase);
-            const newTrialsBought = Math.floor(newPaidActive / (trialConversionRate > 0 ? trialConversionRate : 0.15));
+            // 4. Cálculo do True CAC (Custo Meta + Custo Google dos Trials associados)
+            const trialDurationFraction = 0.25; // Trial dura em média 7 dias
+            const actualTrialConversionRate = trialConversionRate > 0 ? trialConversionRate : 0.15;
+            const trialsPerPaidUser = 1 / actualTrialConversionRate;
+            
+            const googleCostPerTrial = trialDurationFraction * targetContactsPerPsi * (currentB2CCplCalc / psiSuggestedPerLead);
+            const trueCac = cacBase + (trialsPerPaidUser * googleCostPerTrial);
+            
+            // 5. Compra de novos clientes
+            const newPaidActive = Math.floor(availableForAcquisition / trueCac);
+            const newTrialsBought = Math.floor(newPaidActive * trialsPerPaidUser);
+            
+            const metaBudget = newPaidActive * cacBase;
+            const trialsGoogleBudget = newTrialsBought * googleCostPerTrial;
+            const totalGoogleBudget = baseGoogleBudget + trialsGoogleBudget;
+            
             const newOrganicActive = Math.floor(organicActivePerMonth);
             const churnLoss = Math.floor(currentBase * monthlyChurn);
             
-            // 5. Atualização para o mês seguinte
+            // 6. Atualização para o mês seguinte
             currentBase = currentBase + newOrganicActive + newPaidActive - churnLoss;
-            currentTrials = newTrialsBought; // simplificação
+            currentTrials = newTrialsBought;
             
             labels.push(`Mês ${m}`);
             dataExpectedBase.push(currentBase);
             dataRevenue.push(monthlyRevenue);
             
             // O custo é o que de fato gastamos
-            const totalCosts = availableForMeta + googleBudget;
+            const totalCosts = metaBudget + totalGoogleBudget;
             dataCosts.push(totalCosts);
             dataCashflow.push(monthlyRevenue - totalCosts);
             
             if (m === 12) {
                 mrrAt12 = monthlyRevenue;
                 baseAt12 = currentBase;
-                metaBudgetAt12 = availableForMeta;
-                googleBudgetAt12 = googleBudget;
+                metaBudgetAt12 = metaBudget;
+                googleBudgetAt12 = totalGoogleBudget;
             }
         }
 
