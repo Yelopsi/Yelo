@@ -304,9 +304,18 @@ function initGrowthSimulator(data) {
             if (resp.ok) {
                 const saved = await resp.json();
                 if (saved.success && saved.targetSubs) {
-                    if (inputSubs) inputSubs.value = saved.targetSubs;
-                    if (inputMonths) inputMonths.value = saved.targetMonths;
-                    if (inputBudget) inputBudget.value = saved.maxBudget;
+                    if (inputSubs) {
+                        inputSubs.value = saved.targetSubs;
+                        inputSubs.setAttribute('value', saved.targetSubs);
+                    }
+                    if (inputMonths) {
+                        inputMonths.value = saved.targetMonths;
+                        inputMonths.setAttribute('value', saved.targetMonths);
+                    }
+                    if (inputBudget) {
+                        inputBudget.value = saved.maxBudget;
+                        inputBudget.setAttribute('value', saved.maxBudget);
+                    }
                     blockSimulatorInputs();
                 }
             }
@@ -634,13 +643,13 @@ function initGrowthSimulator(data) {
                     card1.style.borderColor = '#86efac';
                     fb1.style.background = '#dcfce7';
                     fb1.style.color = '#166534';
-                    fb1.innerHTML = `🎉 Meta Batida! (Atual: +${newActiveInPeriod} Pagantes | +${newTrialsInPeriod} Trials)`;
+                    fb1.innerHTML = `🎉 Meta Batida! (Atual: ${newActiveInPeriod} Pagantes | ${newTrialsInPeriod} Trials)`;
                 } else {
                     card1.style.background = '#f8fafc';
                     card1.style.borderColor = '#cbd5e1';
                     fb1.style.background = '#f1f5f9';
                     fb1.style.color = '#475569';
-                    fb1.innerHTML = `Atual: +${newActiveInPeriod} Pagantes | +${newTrialsInPeriod} Trials`;
+                    fb1.innerHTML = `Atual: ${newActiveInPeriod} Pagantes | ${newTrialsInPeriod} Trials`;
                 }
             }
 
