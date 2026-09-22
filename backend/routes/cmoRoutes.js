@@ -4,6 +4,7 @@ const metaAdsService = require('../services/metaAdsService');
 const googleAdsService = require('../services/googleAdsService');
 const { sequelize } = require('../models');
 const moment = require('moment');
+const db = require('../models');
 
 // Rota de dashboard principal do CMO
 router.get('/dashboard', async (req, res) => {
@@ -89,7 +90,12 @@ router.get('/dashboard', async (req, res) => {
                     AND "planExpiresAt" > NOW()
                     AND ("fotoUrl" IS NOT NULL OR ("bio" IS NOT NULL AND "bio" != ''))
                 ) as trials,
-                COUNT(*) FILTER (WHERE status = 'inactive' AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)) as churned
+                COUNT(*) FILTER (WHERE status = 'inactive' AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)) as churned,
+                COUNT(*) FILTER (
+                    WHERE status IN ('inactive', 'pending', 'active') 
+                    AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
+                    AND "planExpiresAt" <= NOW()
+                ) as failed_trials
             FROM "Psychologists"
             WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
             AND "deletedAt" IS NULL
@@ -184,7 +190,37 @@ router.get('/dashboard', async (req, res) => {
         const deltaMetaPagantes = metaPagantes - prevMetaPagantes;
         const metaMarginalCac = deltaMetaPagantes > 0 ? (deltaMetaSpend / deltaMetaPagantes) : 0;
 
-        const arpu = 99;
+        // Cálculo dinâmico do ARPU (MRR / Pagantes Ativos Globais)
+        let arpu = 99;
+        try {
+            const pagantesAtivos = await db.Psychologist.findAll({
+                where: {
+                    status: 'active',
+                    planExpiresAt: { [db.Sequelize.Op.gt]: new Date() }
+                },
+                attributes: ['id', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
+            });
+            let settings = await db.SystemSetting.findOne() || {};
+            const priceEssencial = settings.price_Essencial > 0 ? settings.price_Essencial : 99.00;
+            const priceClinico = settings.price_Clínico > 0 ? settings.price_Clínico : 159.00;
+            const priceReference = settings.price_sol > 0 ? settings.price_sol : 259.00;
+            
+            let mrrTotal = 0;
+            let validPagantes = 0;
+            const now = new Date();
+            for (const p of pagantesAtivos) {
+                if (p.cancelAtPeriodEnd && p.planExpiresAt && new Date(p.planExpiresAt) < now) continue;
+                validPagantes++;
+                if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') mrrTotal += Number(priceEssencial);
+                else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') mrrTotal += Number(priceClinico);
+                else if (p.plano === 'REFERENCE' || p.plano === 'Sol' || p.plano === 'SOL') mrrTotal += Number(priceReference);
+                else mrrTotal += Number(priceEssencial); // Fallback
+            }
+            if (validPagantes > 0) arpu = mrrTotal / validPagantes;
+        } catch (e) {
+            console.error('Erro ao calcular ARPU dinâmico no CMO:', e);
+        }
+
         const metaChurnRate = metaPagantes > 0 ? (metaChurned / (metaPagantes + metaChurned)) : 0.05;
         const metaLtv = arpu / (metaChurnRate > 0 ? metaChurnRate : 0.05);
         const metaLtvCacRatio = metaCac > 0 ? (metaLtv / metaCac) : 0;
@@ -243,7 +279,12 @@ router.get('/dashboard', async (req, res) => {
                     AND (is_exempt IS NULL OR is_exempt = false)
                     AND "planExpiresAt" > NOW()
                 ) as trials,
-                COUNT(*) FILTER (WHERE status = 'inactive' AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)) as churned
+                COUNT(*) FILTER (WHERE status = 'inactive' AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)) as churned,
+                COUNT(*) FILTER (
+                    WHERE status IN ('inactive', 'pending', 'active') 
+                    AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
+                    AND "planExpiresAt" <= NOW()
+                ) as failed_trials
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
             AND (
@@ -260,13 +301,25 @@ router.get('/dashboard', async (req, res) => {
             SELECT COUNT(*) as churned
             FROM "Psychologists"
             WHERE status = 'inactive'
+            AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
             AND "deletedAt" IS NULL
         `;
         const [globalChurnHistRes] = await sequelize.query(globalChurnHistQuery, { type: sequelize.QueryTypes.SELECT });
         const histGlobalChurned = parseInt(globalChurnHistRes.churned || 0);
         
-        const histMetaCac = histMetaPagantes > 0 ? (metaSpendHistorical.spend / histMetaPagantes) : 0;
-        const histMetaChurnRate = histMetaPagantes > 0 ? (histMetaChurned / (histMetaPagantes + histMetaChurned)) : 0.05;
+        // Calcular Taxa de Conversão Verdadeira (Historical True Conversion Rate)
+        // Convertidos = pagantes (ativos) + churned (já pagaram)
+        // Oportunidades = Convertidos + trials ativos + failed trials
+        const histFailedTrials = parseInt(metaMetricsHistRes.failed_trials || 0);
+        const totalConvertidos = histMetaPagantes + histMetaChurned;
+        const totalOportunidades = totalConvertidos + histMetaTrials + histFailedTrials;
+        const trueConversionRate = totalOportunidades > 0 ? (totalConvertidos / totalOportunidades) : 0.15;
+
+        const histMetaSpendVal = metaSpendHistorical.spend;
+        const trueCac = totalConvertidos > 0 ? (histMetaSpendVal / totalConvertidos) : 150;
+
+        const histConversionRate = trueConversionRate;
+        const histMetaCac = trueCac;
         const histMetaPaybackMonths = histMetaCac > 0 ? (histMetaCac / arpu) : 0;
         const histGlobalChurnRate = (totalActive + histGlobalChurned) > 0 ? (histGlobalChurned / (totalActive + histGlobalChurned)) : 0;
 
@@ -417,7 +470,7 @@ router.get('/dashboard', async (req, res) => {
             },
             campaigns: { meta: metaCampaigns, google: googleCampaigns },
             historical: {
-                meta: { spend: metaSpendHistorical.spend, cac: histMetaCac, paybackMonths: histMetaPaybackMonths, churn_rate: histMetaChurnRate },
+                meta: { spend: metaSpendHistorical.spend, cac: histMetaCac, paybackMonths: histMetaPaybackMonths, churn_rate: histGlobalChurnRate, trial_conversion_rate: histConversionRate },
                 google: { spend: actualGoogleSpendHistorical, cpl: histGoogleCpl },
                 platform: {
                     b2b: { active: histMetaPagantes, trials: histMetaTrials, global_churn_rate: histGlobalChurnRate },
@@ -425,7 +478,7 @@ router.get('/dashboard', async (req, res) => {
                 }
             },
             platform: {
-                b2b: { active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive, total_trials: totalTrials, organic_active: organicPagantes, organic_trials: organicTrials, total_new_active: totalNewPagantes, total_new_trials: totalNewTrials },
+                b2b: { arpu: arpu, active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive, total_trials: totalTrials, organic_active: organicPagantes, organic_trials: organicTrials, total_new_active: totalNewPagantes, total_new_trials: totalNewTrials },
                 b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals, organic_wpp_clicks_90d: organicWppClicks90d }
             },
             decisionEngineMeta,

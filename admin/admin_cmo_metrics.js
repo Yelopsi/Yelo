@@ -382,10 +382,9 @@ function initGrowthSimulator(data) {
         const metaPagantes = data.platform.b2b.active || 0;
         const metaTrials = data.platform.b2b.trials || 0;
         
-        // Se houver pagantes + trials > 0, calcula real, se não, assume 15% seguro
-        const trialConversionRate = (metaPagantes + metaTrials) > 0 ? (metaPagantes / (metaPagantes + metaTrials)) : 0.15;
-        
-        const cacBase = metaPagantes > 0 ? (metaSpend / metaPagantes) : 150; 
+        const trialConversionRate = data.historical?.meta?.trial_conversion_rate || 0.15;
+        const cacBase = data.historical?.meta?.cac || 150; 
+        const arpu = data.platform?.b2b?.arpu || 99;
 
         // Descobre dias do período para projetar orgânico e normalizar o churn
         const dateStart = document.getElementById('cmo-date-start')?.value || '';
@@ -430,7 +429,7 @@ function initGrowthSimulator(data) {
             const futureGoogleBudget = requiredPaidB2CClicks * currentB2CCplCalc;
             
             const totalProjectedExpense = monthlyMetaBudget + futureGoogleBudget;
-            const currentRevenue = basePagantes * 99;
+            const currentRevenue = basePagantes * arpu;
             return totalProjectedExpense - currentRevenue;
         };
 
@@ -606,10 +605,19 @@ function initGrowthSimulator(data) {
                 googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, perfeitamente alinhado com o tamanho da sua base atual.<br><br>💡 <strong>Ação Recomendada:</strong> Mantenha a configuração. Conforme o Meta Ads trouxer novos psicólogos, vá aumentando o Google aos poucos, até chegar no teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
             }
 
+            let roiAction = '';
+            if (outOfPocket > 0) {
+                roiAction = `<br>🔍 <strong>Diagnóstico:</strong> Seu custo total com anúncios projetado é de <strong>${formatBRL(totalProjectedExpense)}</strong>, enquanto sua receita recorrente esperada é de <strong>${formatBRL(projectedRevenue)}</strong>. A meta forçará um prejuízo mensal temporário (desembolso) de <strong>${formatBRL(outOfPocket)}</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> A operação precisa de caixa para escalar nessa velocidade. Se não houver caixa disponível, reduza a meta ou o prazo, ou trabalhe para diminuir seu CAC e aumentar seu preço.`;
+            } else {
+                roiAction = `<br>🔍 <strong>Diagnóstico:</strong> Seu custo total com anúncios projetado é de <strong>${formatBRL(totalProjectedExpense)}</strong>, perfeitamente coberto pela sua receita recorrente esperada de <strong>${formatBRL(projectedRevenue)}</strong> (lucro de <strong>${formatBRL(Math.abs(outOfPocket))}</strong>).<br><br>💡 <strong>Ação Recomendada:</strong> Operação lucrativa. Você pode escalar os anúncios com segurança até o teto da meta, pois o próprio negócio financia o crescimento.`;
+            }
+
             actionList.innerHTML = `
                 <li><strong>Meta Ads (Aquisição):</strong> ${metaAction}</li>
                 <br>
                 <li><strong>Google Ads (Retenção):</strong> ${googleAction}</li>
+                <br>
+                <li><strong>Lucratividade (ROI Geral):</strong> ${roiAction}</li>
             `;
 
             // VISUAL FEEDBACK - CARD 1
