@@ -331,6 +331,7 @@ router.get('/dashboard', async (req, res) => {
                 ) as failed_trials
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
+            AND "createdAt" < NOW() - INTERVAL '15 days'
             AND (
                 utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
                 OR first_utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
