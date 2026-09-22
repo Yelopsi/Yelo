@@ -207,6 +207,7 @@ router.get('/dashboard', async (req, res) => {
                     WHERE status = 'active'
                     AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND "planExpiresAt" > NOW()
+                    AND ("cancelAtPeriodEnd" IS NULL OR "cancelAtPeriodEnd" = false)
                 ) as total_active,
                 COUNT(*) FILTER (
                     WHERE status IN ('pending', 'active')
@@ -240,7 +241,8 @@ router.get('/dashboard', async (req, res) => {
             const pagantesAtivos = await db.Psychologist.findAll({
                 where: {
                     status: 'active',
-                    planExpiresAt: { [db.Sequelize.Op.gt]: new Date() }
+                    planExpiresAt: { [db.Sequelize.Op.gt]: new Date() },
+                    cancelAtPeriodEnd: { [db.Sequelize.Op.or]: [false, null] }
                 },
                 attributes: ['id', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
             });
@@ -251,9 +253,7 @@ router.get('/dashboard', async (req, res) => {
             
             let mrrTotal = 0;
             let validPagantes = 0;
-            const now = new Date();
             for (const p of pagantesAtivos) {
-                if (p.cancelAtPeriodEnd && p.planExpiresAt && new Date(p.planExpiresAt) < now) continue;
                 validPagantes++;
                 if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') mrrTotal += Number(priceEssencial);
                 else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') mrrTotal += Number(priceClinico);
