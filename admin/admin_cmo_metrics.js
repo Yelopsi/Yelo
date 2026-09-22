@@ -621,8 +621,8 @@ function initGrowthSimulator(data) {
             `;
 
             // VISUAL FEEDBACK - CARD 1
-            const newActiveInPeriod = data.platform.b2b.total_new_active || data.platform.b2b.active || 0;
-            const newTrialsInPeriod = data.platform.b2b.total_new_trials || data.platform.b2b.trials || 0;
+            const newActiveInPeriod = basePagantes;
+            const newTrialsInPeriod = baseTrials;
             const totalRequiredNewSubs = typeof gapTotal !== 'undefined' ? gapTotal : gapReal;
 
             const card1 = document.getElementById('sim-card-1');
