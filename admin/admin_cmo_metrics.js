@@ -391,7 +391,8 @@ function initGrowthSimulator(data) {
             const monthlyRevenue = currentBase * arpu;
             
             // 2. Orçamento Google (Retenção) para manter a base
-            const totalActiveThisMonth = currentBase + currentTrials;
+            const trialDurationFraction = 0.25; // Trial dura em média 7 dias (1/4 do mês)
+            const totalActiveThisMonth = currentBase + (currentTrials * trialDurationFraction);
             const totalFutureContacts = totalActiveThisMonth * targetContactsPerPsi;
             const futurePaidContactsNeeded = Math.max(0, totalFutureContacts - orgMonthlyCalc);
             const futurePaidLeadsNeeded = Math.ceil(futurePaidContactsNeeded / psiSuggestedPerLead);
@@ -402,9 +403,9 @@ function initGrowthSimulator(data) {
             const availableForMeta = Math.max(0, reinvestmentFund - googleBudget);
             
             // 4. Compra de novos clientes
-            const newTrialsBought = Math.floor(availableForMeta / cacBase);
+            const newPaidActive = Math.floor(availableForMeta / cacBase);
+            const newTrialsBought = Math.floor(newPaidActive / (trialConversionRate > 0 ? trialConversionRate : 0.15));
             const newOrganicActive = Math.floor(organicActivePerMonth);
-            const newPaidActive = Math.floor(newTrialsBought * trialConversionRate);
             const churnLoss = Math.floor(currentBase * monthlyChurn);
             
             // 5. Atualização para o mês seguinte

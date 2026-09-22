@@ -131,14 +131,14 @@
                 </ul>
             </div>
 
-            <div id="sim-timeline-container" style="flex: 100%; display: none; margin-top: 15px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
+            <div id="sim-timeline-container" style="flex: 1 1 100%; min-width: 0; overflow: hidden; display: none; margin-top: 15px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
                 <div style="padding: 25px 25px 15px 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                     <div>
                         <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 0;">📅 Rampa de Crescimento Mensal</h2>
                         <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 0;">Projeção do Caixa, Custos (Meta+Google) e Receita esperada mês a mês.</p>
                     </div>
                 </div>
-                <div style="padding: 0 25px 25px 25px;">
+                <div style="padding: 0 25px 25px 25px; width: 100%; box-sizing: border-box;">
                     <div style="position: relative; height: 300px; width: 100%;">
                         <canvas id="simTimelineChart"></canvas>
                     </div>
