@@ -9,8 +9,8 @@ const runTests = async () => {
         console.log('[HARDENING] Teste A: Auth Limiter (Brute Force Protection)');
         let authBlocked = false;
         
-        // O limite de auth é 10. Disparamos 12.
-        for (let i = 0; i < 12; i++) {
+        // O limite de auth é 15. Disparamos 16.
+        for (let i = 0; i < 16; i++) {
             const res = await request(app).post('/api/auth/login').set('X-Test-Bypass', 'true').send({ email: 'test@test.com', password: '123' });
             if (res.status === 429) authBlocked = true;
         }
