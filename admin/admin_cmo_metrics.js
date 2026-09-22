@@ -366,33 +366,14 @@ function initGrowthSimulator(data) {
         const organicWppClicks90dCalc = data.platform.b2c.organic_wpp_clicks_90d || 0;
         const orgMonthlyCalc = Math.floor(organicWppClicks90dCalc / 3);
         
-        // Usa a correlação churn × cliques para definir o limiar real de engajamento
-        // Prioridade: mediana de psis ATIVOS (mais robusto) → média de ativos → média do período → fallback 2
-        const clicksVsChurn = data.platform.b2b.clicks_vs_churn || {};
-        const activeClickData = clicksVsChurn.active;
-        const inactiveClickData = clicksVsChurn.inactive;
-        
-        let targetContactsPerPsi;
-        let contactsThresholdSource;
-        
-        if (activeClickData && parseFloat(activeClickData.median_clicks) >= 1) {
-            // Melhor opção: mediana de psis que ficaram — elimina outliers que inflam a média
-            targetContactsPerPsi = Math.round(parseFloat(activeClickData.median_clicks) * 10) / 10;
-            contactsThresholdSource = `mediana 90d real (${activeClickData.psi_count} psis ativos)`;
-        } else if (activeClickData && parseFloat(activeClickData.avg_clicks) >= 1) {
-            // Segunda opção: média de psis que ficaram
-            targetContactsPerPsi = Math.round(parseFloat(activeClickData.avg_clicks) * 10) / 10;
-            contactsThresholdSource = `média 90d real (${activeClickData.psi_count} psis ativos)`;
-        } else {
-            // Fallback: média simples do período (wppClicks / psis ativos / meses)
-            const totalWppClicks = data.platform.b2c.wpp_clicks || 0;
-            const monthsInPeriod = daysInPeriodSim / 30;
-            const periodAvg = (basePagantes > 0 && monthsInPeriod > 0)
-                ? (totalWppClicks / basePagantes / monthsInPeriod)
-                : 0;
-            targetContactsPerPsi = periodAvg >= 1 ? Math.round(periodAvg * 10) / 10 : 2;
-            contactsThresholdSource = periodAvg >= 1 ? 'média do período (sem correlação churn)' : 'estimativa padrão';
-        }
+        // Calcula a média histórica simples de cliques (sem falsa correlação com churn)
+        const totalWppClicks = data.platform.b2c.wpp_clicks || 0;
+        const monthsInPeriod = daysInPeriodSim / 30;
+        const periodAvg = (basePagantes > 0 && monthsInPeriod > 0)
+            ? (totalWppClicks / basePagantes / monthsInPeriod)
+            : 0;
+        const targetContactsPerPsi = periodAvg >= 1 ? Math.round(periodAvg * 10) / 10 : 2;
+        const contactsThresholdSource = periodAvg >= 1 ? 'média geral' : 'estimativa padrão';
         
         const psiSuggestedPerLead = 1;
 
@@ -558,11 +539,9 @@ function initGrowthSimulator(data) {
 
             let googleAction = '';
             if (targetGoogleDaily === 0) {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O tráfego orgânico (SEO) já é mais que suficiente para gerar pacientes para toda a sua base atual.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DESLIGUE OU DIMINUA AO MÁXIMO</strong> o Google Ads.`;
-            } else if (currentDailyGoogle < targetGoogleDaily) {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, mas a sua máquina (base atual + novos trials) exige <strong>${formatBRL(targetGoogleDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE a diária agora</strong> para reter seus psicólogos.`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O tráfego orgânico (SEO) já atende a demanda histórica média (${targetContactsPerPsi} cliques/psi) para toda a sua base atual.<br><br>💡 <strong>Ação Recomendada:</strong> Você pode pausar o Google Ads temporariamente.`;
             } else {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, porém sua máquina exige apenas <strong>${formatBRL(targetGoogleDaily)}/dia</strong>. Você está superinvestindo!<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA IMEDIATAMENTE</strong> a diária para acompanhar a sua demanda real.`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> Para manter a média histórica de <strong>${targetContactsPerPsi} cliques mensais</strong> por psicólogo na sua nova base projetada (${Math.floor(baseAt12)} assinantes), o custo associado é de <strong>${formatBRL(targetGoogleDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> Ajuste seu orçamento diário de Google Ads caso deseje manter o mesmo nível de tráfego por paciente (sem falsas garantias de redução de churn).`;
             }
 
             let roiAction = '';
