@@ -626,6 +626,11 @@ router.get('/simulator-settings', async (req, res) => {
         try {
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_mode VARCHAR(255) DEFAULT 'acelerador';`);
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_max_budget DECIMAL(10,2) DEFAULT 2000.00;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_start_date TIMESTAMP;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_start_subs INTEGER;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_reinvest_rate INTEGER DEFAULT 100;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_extra_cash DECIMAL(10,2) DEFAULT 0;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_curiosity_goal INTEGER;`);
         } catch (e) {
             console.error('Raw ALTER TABLE skip in GET:', e.message);
         }
@@ -633,7 +638,7 @@ router.get('/simulator-settings', async (req, res) => {
         let settings = null;
         try {
             settings = await db.SystemSetting.findOne({
-                attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months', 'cmo_sim_mode', 'cmo_sim_max_budget']
+                attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months', 'cmo_sim_mode', 'cmo_sim_max_budget', 'cmo_sim_start_date', 'cmo_sim_start_subs', 'cmo_sim_reinvest_rate', 'cmo_sim_extra_cash', 'cmo_sim_curiosity_goal']
             });
         } catch (e) {
             console.error('findOne failed in GET, returning defaults:', e.message);
@@ -644,7 +649,12 @@ router.get('/simulator-settings', async (req, res) => {
             targetSubs: settings?.cmo_sim_target_subs ?? 70,
             targetMonths: settings?.cmo_sim_target_months ?? 3,
             simMode: settings?.cmo_sim_mode ?? 'acelerador',
-            maxBudget: settings?.cmo_sim_max_budget ?? 2000.00
+            maxBudget: settings?.cmo_sim_max_budget ?? 2000.00,
+            startDate: settings?.cmo_sim_start_date ?? null,
+            startSubs: settings?.cmo_sim_start_subs ?? null,
+            reinvestRate: settings?.cmo_sim_reinvest_rate ?? 100,
+            extraCash: settings?.cmo_sim_extra_cash ?? 0,
+            curiosityGoal: settings?.cmo_sim_curiosity_goal ?? null
         });
     } catch (error) {
         console.error('[CMO] Erro ao carregar simulator settings:', error);
@@ -656,20 +666,23 @@ router.get('/simulator-settings', async (req, res) => {
 router.post('/simulator-settings', async (req, res) => {
     try {
         const db = require('../models');
-        const { targetSubs, targetMonths, simMode, maxBudget } = req.body;
+        const { targetSubs, targetMonths, simMode, maxBudget, startSubs, reinvestRate, extraCash, curiosityGoal } = req.body;
         
         try {
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_mode VARCHAR(255) DEFAULT 'acelerador';`);
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_max_budget DECIMAL(10,2) DEFAULT 2000.00;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_start_date TIMESTAMP;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_start_subs INTEGER;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_reinvest_rate INTEGER DEFAULT 100;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_extra_cash DECIMAL(10,2) DEFAULT 0;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_curiosity_goal INTEGER;`);
         } catch (e) {
             console.error('Raw ALTER TABLE skip in POST:', e.message);
         }
         
         let settings = null;
         try {
-            settings = await db.SystemSetting.findOne({
-                attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months', 'cmo_sim_mode', 'cmo_sim_max_budget']
-            });
+            settings = await db.SystemSetting.findOne();
         } catch (e) {
             console.error('findOne failed in POST:', e.message);
         }
@@ -679,18 +692,34 @@ router.post('/simulator-settings', async (req, res) => {
                 id: 1, // Garantindo que a primeira linha tenha o ID 1
                 cmo_sim_target_subs: targetSubs !== undefined ? parseInt(targetSubs) : 70,
                 cmo_sim_target_months: targetMonths !== undefined ? parseInt(targetMonths) : 3,
-                cmo_sim_mode: simMode !== undefined ? simMode : 'acelerador',
-                cmo_sim_max_budget: maxBudget !== undefined ? parseFloat(maxBudget) : 2000.00
+                cmo_sim_mode: simMode || 'acelerador',
+                cmo_sim_max_budget: maxBudget !== undefined ? parseFloat(maxBudget) : 2000.00,
+                cmo_sim_start_date: new Date(),
+                cmo_sim_start_subs: startSubs !== undefined ? parseInt(startSubs) : null,
+                cmo_sim_reinvest_rate: reinvestRate !== undefined ? parseInt(reinvestRate) : 100,
+                cmo_sim_extra_cash: extraCash !== undefined ? parseFloat(extraCash) : 0,
+                cmo_sim_curiosity_goal: curiosityGoal ? parseInt(curiosityGoal) : null
             });
-        } else if (settings) {
+        } else {
             if (targetSubs !== undefined) settings.cmo_sim_target_subs = parseInt(targetSubs);
             if (targetMonths !== undefined) settings.cmo_sim_target_months = parseInt(targetMonths);
-            if (simMode !== undefined) settings.cmo_sim_mode = simMode;
+            if (simMode) settings.cmo_sim_mode = simMode;
             if (maxBudget !== undefined) settings.cmo_sim_max_budget = parseFloat(maxBudget);
+            
+            // Só atualiza a start date se o usuário estiver reiniciando a máquina
+            if (startSubs !== undefined && req.body.resetTracking) {
+                settings.cmo_sim_start_date = new Date();
+                settings.cmo_sim_start_subs = parseInt(startSubs);
+            }
+            
+            if (reinvestRate !== undefined) settings.cmo_sim_reinvest_rate = parseInt(reinvestRate);
+            if (extraCash !== undefined) settings.cmo_sim_extra_cash = parseFloat(extraCash);
+            settings.cmo_sim_curiosity_goal = curiosityGoal ? parseInt(curiosityGoal) : null;
+            
             await settings.save();
         }
         
-        res.json({ success: true });
+        res.json({ success: true, message: 'Configurações salvas' });
     } catch (error) {
         console.error('[CMO] Erro ao salvar simulator settings:', error);
         res.status(500).json({ success: false, error: error.message, stack: error.stack });

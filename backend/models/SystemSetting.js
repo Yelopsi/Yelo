@@ -45,6 +45,26 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       defaultValue: 3
     },
+    cmo_sim_start_date: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    cmo_sim_start_subs: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    cmo_sim_reinvest_rate: {
+      type: DataTypes.INTEGER,
+      defaultValue: 100
+    },
+    cmo_sim_extra_cash: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0
+    },
+    cmo_sim_curiosity_goal: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     cmo_sim_mode: {
       type: DataTypes.STRING,
       defaultValue: 'acelerador'

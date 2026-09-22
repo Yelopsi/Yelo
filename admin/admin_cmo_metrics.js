@@ -130,84 +130,7 @@ function renderCMOMetrics(data) {
         setDbgHist('dbg-google-cpl',    formatCurrency(data.historical?.google?.cpl || 0), formatCurrency(data.ads?.google?.cpl || 0));
     }
 
-    // 2. Atualizar Motor de Decisão Meta (B2B)
-    if (data.decisionEngineMeta) {
-        const actionEl = document.getElementById('ai-meta-action');
-        const warningContainer = document.getElementById('ai-meta-warning-container');
-        const warningEl = document.getElementById('ai-meta-warning');
 
-        if(actionEl) {
-            actionEl.textContent = data.decisionEngineMeta.action;
-            if (data.decisionEngineMeta.action.includes('AUMENTAR')) actionEl.style.color = '#10b981';
-            else if (data.decisionEngineMeta.action.includes('PAUSAR') || data.decisionEngineMeta.action.includes('TETO') || data.decisionEngineMeta.action.includes('INVESTIGAR')) actionEl.style.color = '#ef4444';
-            else actionEl.style.color = '#f59e0b';
-        }
-
-        document.getElementById('ai-meta-confidence').textContent = `Confiança: ${data.decisionEngineMeta.confidence || 0}%`;
-        document.getElementById('ai-meta-target').textContent = formatCurrency(data.decisionEngineMeta.target);
-        document.getElementById('ai-meta-scale').textContent = data.decisionEngineMeta.scaleCapacity || '-';
-        document.getElementById('ai-meta-payback').textContent = (data.decisionEngineMeta.paybackMonths || 0).toFixed(1).replace('.', ',') + ' Meses';
-        
-        const trend = data.decisionEngineMeta.trend || 0;
-        const trendEl = document.getElementById('ai-meta-trend');
-        if (trendEl) {
-            trendEl.textContent = `${trend > 0 ? '↑' : '↓'} ${formatCurrency(Math.abs(trend))}`;
-            trendEl.style.color = trend > 0 ? '#ef4444' : '#10b981';
-        }
-        
-        document.getElementById('ai-meta-recommendation').textContent = data.decisionEngineMeta.recommendation || '';
-
-        if (data.decisionEngineMeta.warning) {
-            if(warningContainer) warningContainer.style.display = 'block';
-            if(warningEl) warningEl.textContent = data.decisionEngineMeta.warning;
-        } else {
-            if(warningContainer) warningContainer.style.display = 'none';
-        }
-    }
-
-    // 3. Atualizar Motor de Decisão Google (B2C)
-    if (data.decisionEngineGoogle) {
-        const actionEl = document.getElementById('ai-google-action');
-        const warningContainer = document.getElementById('ai-google-warning-container');
-        const warningEl = document.getElementById('ai-google-warning');
-
-        if(actionEl) {
-            actionEl.textContent = data.decisionEngineGoogle.action;
-            if (data.decisionEngineGoogle.action.includes('AUMENTAR')) actionEl.style.color = '#059669'; // Verde mais escuro para Google
-            else if (data.decisionEngineGoogle.action.includes('PAUSAR') || data.decisionEngineGoogle.action.includes('TETO') || data.decisionEngineGoogle.action.includes('INVESTIGAR')) actionEl.style.color = '#ef4444';
-            else actionEl.style.color = '#f59e0b';
-        }
-
-        document.getElementById('ai-google-confidence').textContent = `Confiança: ${data.decisionEngineGoogle.confidence || 0}%`;
-        document.getElementById('ai-google-target').textContent = formatCurrency(data.decisionEngineGoogle.target);
-        document.getElementById('ai-google-scale').textContent = data.decisionEngineGoogle.scaleCapacity || '-';
-        
-        const trend = data.decisionEngineGoogle.trend || 0;
-        const trendEl = document.getElementById('ai-google-trend');
-        if (trendEl) {
-            trendEl.textContent = `${trend > 0 ? '↑' : '↓'} ${formatCurrency(Math.abs(trend))}`;
-            trendEl.style.color = trend > 0 ? '#ef4444' : '#10b981';
-        }
-        
-        document.getElementById('ai-google-recommendation').textContent = data.decisionEngineGoogle.recommendation || '-';
-
-        if (data.decisionEngineGoogle.warning) {
-            if(warningContainer) warningContainer.style.display = 'block';
-            if(warningEl) warningEl.textContent = data.decisionEngineGoogle.warning;
-        } else {
-            if(warningContainer) warningContainer.style.display = 'none';
-        }
-        
-        // Global Insight 360
-        if (data.globalInsight) {
-            const formattedHTML = data.globalInsight
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br/>');
-            document.getElementById('ai-funnel-insight').innerHTML = formattedHTML;
-        } else {
-            document.getElementById('ai-funnel-insight').textContent = "Nenhuma análise disponível para o período.";
-        }
-    }
     // 4. Preencher cards individuais de campanhas Meta (Detalhada)
     if (data.campaigns?.meta && data.campaigns.meta.length > 0) {
         const targetId = '120251213168140531';
@@ -254,9 +177,9 @@ function initGrowthSimulator(data) {
     const btnSave = document.getElementById('btn-save-simulator');
     if (!btnSave) return;
 
-    const inputSubs = document.getElementById('sim-target-subs');
-    const inputMonths = document.getElementById('sim-target-months');
-    const inputBudget = document.getElementById('sim-max-budget');
+    const inputReinvestRate = document.getElementById('sim-reinvest-rate');
+    const inputExtraCash = document.getElementById('sim-extra-cash');
+    const inputCuriosityGoal = document.getElementById('sim-curiosity-goal');
 
     const newBtnSave = btnSave.cloneNode(true);
     btnSave.parentNode.replaceChild(newBtnSave, btnSave);
@@ -265,17 +188,22 @@ function initGrowthSimulator(data) {
     const btnCancelModal = document.getElementById('btn-cancel-new-target');
     const btnConfirmModal = document.getElementById('btn-confirm-new-target');
 
+    let simTrackingStartDate = null;
+    let simTrackingStartSubs = null;
+
     const blockSimulatorInputs = () => {
-        if (inputSubs) inputSubs.disabled = true;
-        if (inputMonths) inputMonths.disabled = true;
-        newBtnSave.textContent = 'Alterar Meta';
+        if (inputReinvestRate) inputReinvestRate.disabled = true;
+        if (inputExtraCash) inputExtraCash.disabled = true;
+        if (inputCuriosityGoal) inputCuriosityGoal.disabled = true;
+        newBtnSave.textContent = 'Alterar Parâmetros';
         newBtnSave.style.background = '#f59e0b';
     };
 
     const unblockSimulatorInputs = () => {
-        if (inputSubs) inputSubs.disabled = false;
-        if (inputMonths) inputMonths.disabled = false;
-        newBtnSave.textContent = 'Salvar Meta';
+        if (inputReinvestRate) inputReinvestRate.disabled = false;
+        if (inputExtraCash) inputExtraCash.disabled = false;
+        if (inputCuriosityGoal) inputCuriosityGoal.disabled = false;
+        newBtnSave.textContent = 'Salvar Parâmetros';
         newBtnSave.style.background = '#10b981';
     };
 
@@ -303,35 +231,51 @@ function initGrowthSimulator(data) {
             const resp = await fetch('/api/cmo/simulator-settings', { headers: { 'Authorization': `Bearer ${token}` } });
             if (resp.ok) {
                 const saved = await resp.json();
-                if (saved.success && saved.targetSubs) {
-                    if (inputSubs) {
-                        inputSubs.value = saved.targetSubs;
-                        inputSubs.setAttribute('value', saved.targetSubs);
+                if (saved.success) {
+                    if (inputReinvestRate && saved.reinvestRate !== undefined) {
+                        inputReinvestRate.value = saved.reinvestRate;
+                        inputReinvestRate.setAttribute('value', saved.reinvestRate);
                     }
-                    if (inputMonths) {
-                        inputMonths.value = saved.targetMonths;
-                        inputMonths.setAttribute('value', saved.targetMonths);
+                    if (inputExtraCash && saved.extraCash !== undefined) {
+                        let v = (parseFloat(saved.extraCash) || 0).toFixed(2);
+                        v = v.replace(".", ",");
+                        v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+                        inputExtraCash.value = v;
+                        inputExtraCash.setAttribute('value', v);
                     }
-                    if (inputBudget) {
-                        inputBudget.value = saved.maxBudget;
-                        inputBudget.setAttribute('value', saved.maxBudget);
+                    if (inputCuriosityGoal && saved.curiosityGoal !== undefined && saved.curiosityGoal !== null) {
+                        inputCuriosityGoal.value = saved.curiosityGoal;
+                        inputCuriosityGoal.setAttribute('value', saved.curiosityGoal);
                     }
-                    blockSimulatorInputs();
+                    simTrackingStartDate = saved.startDate;
+                    simTrackingStartSubs = saved.startSubs;
+                    
+                    // Só bloqueia se já tivermos um setup rodando
+                    if (simTrackingStartDate) {
+                        blockSimulatorInputs();
+                    }
                 }
             }
         } catch (e) { /* silencioso */ }
 
-        // Na carga inicial, sempre assume que o Budget é a consequência das metas
-        runSimulation(data, 'subs');
+        runSimulation(data);
     };
-
-    // Auto-Solver Listeners
-    if (inputSubs) inputSubs.addEventListener('input', () => runSimulation(data, 'subs'));
-    if (inputMonths) inputMonths.addEventListener('input', () => runSimulation(data, 'months'));
-    if (inputBudget) inputBudget.addEventListener('input', () => runSimulation(data, 'budget'));
+    // Listeners
+    if (inputReinvestRate) inputReinvestRate.addEventListener('input', () => runSimulation(data));
+    if (inputCuriosityGoal) inputCuriosityGoal.addEventListener('input', () => runSimulation(data));
+    if (inputExtraCash) {
+        inputExtraCash.addEventListener('input', function(e) {
+            let v = e.target.value.replace(/\D/g, "");
+            v = (v / 100).toFixed(2) + "";
+            v = v.replace(".", ",");
+            v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+            e.target.value = v;
+            runSimulation(data);
+        });
+    }
 
     newBtnSave.addEventListener('click', () => {
-        if (newBtnSave.textContent === 'Alterar Meta') {
+        if (newBtnSave.textContent === 'Alterar Parâmetros') {
             if (modal) {
                 modal.style.display = 'flex';
                 void modal.offsetWidth; // trigger reflow
@@ -345,18 +289,24 @@ function initGrowthSimulator(data) {
         newBtnSave.textContent = 'Salvando...';
         newBtnSave.style.opacity = '0.7';
         
-        const targetSubs = parseInt(inputSubs?.value) || 70;
-        const targetMonths = parseInt(inputMonths?.value) || 3;
-        const maxBudget = parseFloat(inputBudget?.value) || 2000;
+        const reinvestRate = parseFloat(inputReinvestRate?.value) || 100;
+        const extraCashStr = inputExtraCash?.value || '0';
+        const extraCash = parseFloat(extraCashStr.replace(/\./g, '').replace(',', '.')) || 0;
+        const curiosityGoal = parseInt(inputCuriosityGoal?.value) || null;
+        
+        // Sempre que salva os parâmetros, reseta o tracker para a base de hoje
+        const resetTracking = true;
+        const startSubs = data.platform.b2b.total_active || 0;
 
         fetch('/api/cmo/simulator-settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ 
-                targetSubs, 
-                targetMonths,
-                simMode: 'auto',
-                maxBudget
+                reinvestRate, 
+                extraCash,
+                curiosityGoal,
+                resetTracking,
+                startSubs
             })
         }).then(() => {
             newBtnSave.textContent = 'Salvo com Sucesso!';
@@ -376,26 +326,24 @@ function initGrowthSimulator(data) {
         });
     });
 
-    const runSimulation = (data, solveSource = 'subs') => {
-        let targetSubs = parseInt(inputSubs?.value) || 0;
-        let targetMonths = parseInt(inputMonths?.value) || 1;
-        let maxBudget = parseFloat(inputBudget?.value) || 0;
+    const runSimulation = (data) => {
+        const inputReinvestRate = document.getElementById('sim-reinvest-rate');
+        const inputExtraCash = document.getElementById('sim-extra-cash');
+        const inputCuriosityGoal = document.getElementById('sim-curiosity-goal');
         
-        let monthsToSave = targetMonths;
-
-        const basePagantes = data.platform.b2b.total_active || 0;
+        let reinvestRate = parseFloat(inputReinvestRate?.value) || 100;
+        let extraCashStr = inputExtraCash?.value || '0';
+        let extraCash = parseFloat(extraCashStr.replace(/\./g, '').replace(',', '.')) || 0;
+        let curiosityGoal = parseInt(inputCuriosityGoal?.value) || null;
+        
+        const basePagantes = simTrackingStartSubs !== null ? simTrackingStartSubs : (data.platform.b2b.total_active || 0);
         const baseTrials = data.platform.b2b.total_trials || 0;
-        const baseRetention = basePagantes + baseTrials;
-        
-        const metaSpend = data.overview?.metaSpend || data.campaigns?.meta?.[0]?.spend || 0;
-        const metaPagantes = data.platform.b2b.active || 0;
-        const metaTrials = data.platform.b2b.trials || 0;
         
         const trialConversionRate = data.historical?.meta?.trial_conversion_rate || 0.15;
         const cacBase = data.historical?.meta?.cac || 150; 
         const arpu = data.platform?.b2b?.arpu || 99;
 
-        // Descobre dias do período para projetar orgânico e normalizar o churn
+        // Discover days in period for organic gain and churn
         const dateStart = document.getElementById('cmo-date-start')?.value || '';
         const dateEnd = document.getElementById('cmo-date-end')?.value || '';
         const d1 = new Date(dateStart);
@@ -417,148 +365,90 @@ function initGrowthSimulator(data) {
             
         const organicWppClicks90dCalc = data.platform.b2c.organic_wpp_clicks_90d || 0;
         const orgMonthlyCalc = Math.floor(organicWppClicks90dCalc / 3);
-
-        const calcOutOfPocket = (testSubs, testMonths) => {
-            const projectedOrganicGain = Math.floor(organicActivePerMonth * testMonths);
-            const projectedChurnLoss = Math.ceil(basePagantes * monthlyChurn * testMonths);
-            const gapTotal = Math.max(0, testSubs - basePagantes) + projectedChurnLoss;
-            const gapReal = Math.max(0, gapTotal - projectedOrganicGain);
-            const targetTrials = gapReal > 0 ? Math.ceil(gapReal / trialConversionRate) : 0;
-            
-            const totalMetaBudget = gapReal * cacBase;
-            const monthlyMetaBudget = testMonths > 0 ? totalMetaBudget / testMonths : totalMetaBudget;
-            
-            const projectedTargetTrials = testMonths > 0 ? Math.ceil(targetTrials / testMonths) : targetTrials;
-            const targetTotalActive = testSubs + projectedTargetTrials;
-            const maintenancePerPsi = 2 * currentB2CCplCalc;
-            
-            const totalRequiredB2CBudget = targetTotalActive * maintenancePerPsi;
-            const totalRequiredB2CClicks = Math.ceil(totalRequiredB2CBudget / currentB2CCplCalc);
-            const requiredPaidB2CClicks = Math.max(0, totalRequiredB2CClicks - orgMonthlyCalc);
-            const futureGoogleBudget = requiredPaidB2CClicks * currentB2CCplCalc;
-            
-            const totalProjectedExpense = monthlyMetaBudget + futureGoogleBudget;
-            const currentRevenue = basePagantes * arpu;
-            return totalProjectedExpense - currentRevenue;
-        };
-
-        const dateStartForSim = document.getElementById('cmo-date-start')?.value || '';
-        const dateEndForSim = document.getElementById('cmo-date-end')?.value || '';
-        const d1ForSim = new Date(dateStartForSim);
-        const d2ForSim = new Date(dateEndForSim);
-        let daysInPeriodForSim = Math.ceil(Math.abs(d2ForSim - d1ForSim) / (1000 * 60 * 60 * 24)) + 1;
-        if (isNaN(daysInPeriodForSim) || daysInPeriodForSim <= 0) daysInPeriodForSim = 30;
-
-        // Get current Meta daily budget to use as the baseline
-        const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || (metaSpend / (daysInPeriodForSim / 7)) || 20.00;
-
-        // Since the user is inputting both targetSubs and targetMonths, we don't need a simulation loop.
-        // The goal is to output the REQUIRED investment.
-        
-        // Projeta o ganho orgânico (que vem "de graça" sem ads) baseado no ritmo do período selecionado
-        const projectedOrganicGain = Math.floor(organicActivePerMonth * targetMonths);
-
-        // Churn loss uses linear approximation for the growing base
-        const projectedChurnLoss = Math.ceil(((basePagantes + targetSubs) / 2) * monthlyChurn * targetMonths);
-        const gapTotal = Math.max(0, targetSubs - basePagantes) + projectedChurnLoss;
-        
-        // O GAP real de tráfego pago é o gap total subtraído do que já deve vir pelo orgânico
-        const gapReal = Math.max(0, gapTotal - projectedOrganicGain);
-        const targetTrials = gapReal > 0 ? Math.ceil(gapReal / trialConversionRate) : 0;
-
-        document.getElementById('sim-res-new-subs').textContent = `+${gapTotal}`;
-        document.getElementById('sim-res-churn-info').innerHTML = `A meta exige crescer +${Math.max(0, targetSubs - basePagantes)}, e repor ${projectedChurnLoss} que devem cancelar (Churn).<br><span style="color:#059669; font-weight:bold;">O SEO atrai ${projectedOrganicGain} de graça. Precisamos pagar para comprar ${gapReal}.</span>`;
-        
-        const elTrials = document.getElementById('sim-res-new-trials');
-        if (elTrials) {
-            elTrials.style.display = 'block';
-            elTrials.textContent = `Precisamos de +${targetTrials} Trials (Conv. ${(trialConversionRate * 100).toFixed(1)}%)`;
-        }
-        
-        const totalMetaBudget = gapReal * cacBase;
-        const monthlyMetaBudget = totalMetaBudget / targetMonths;
+        const targetContactsPerPsi = 2;
+        const psiSuggestedPerLead = 1;
 
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-        document.getElementById('sim-res-meta-budget').textContent = formatBRL(totalMetaBudget);
-        document.getElementById('sim-res-meta-monthly').textContent = `${formatBRL(monthlyMetaBudget)}/mês`;
-
-        // Usa a média histórica de 90 dias de cliques reais no botão de WPP (que são "Contatos")
-        const projectedOrganicB2CClicksMonthly = orgMonthlyCalc;
-
-        // Usa o Custo por Lead histórico (CPL = formulários preenchidos)
-        const currentB2CCpl = data.historical?.google?.cpl > 0 
-            ? data.historical?.google?.cpl 
-            : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
-
-        const targetContactsPerPsi = 2; // O psicólogo precisa de 2 contatos por mês no WhatsApp.
-        // O usuário confirmou que a Conversão do Google Ads bate direto no botão do WhatsApp.
-        // Ou seja, 1 "Lead/Conversão" pago no Google = 1 Contato real com o psicólogo.
-        // Não há multiplicador, a relação é 1 para 1.
-        const psiSuggestedPerLead = 1;         
-        // 1. Projeção Futura (Meta Final)
-        const projectedTargetTrials = targetMonths > 0 ? Math.ceil(targetTrials / targetMonths) : targetTrials;
-        const targetTotalActive = targetSubs + projectedTargetTrials;
+        // Snowball Projection
+        const targetMonths = 12; // Fixado em 12 meses
+        const labels = [];
+        const dataRevenue = [];
+        const dataCosts = [];
+        const dataCashflow = [];
+        const dataExpectedBase = [];
         
-        const totalFutureContacts = targetTotalActive * targetContactsPerPsi;
-        const futurePaidContactsNeeded = Math.max(0, totalFutureContacts - projectedOrganicB2CClicksMonthly);
-        const futurePaidLeadsNeeded = Math.ceil(futurePaidContactsNeeded / psiSuggestedPerLead);
+        let currentBase = basePagantes;
+        let currentTrials = baseTrials;
         
-        const futureGoogleBudget = futurePaidLeadsNeeded * currentB2CCpl;
-        const targetDailyGoogle = futureGoogleBudget / 30;
-
-        document.getElementById('sim-res-google-budget').textContent = `${formatBRL(futureGoogleBudget)}/mês`;
+        let mrrAt12 = 0;
+        let baseAt12 = 0;
+        let metaBudgetAt12 = 0;
+        let googleBudgetAt12 = 0;
         
-        const card3Desc = document.getElementById('sim-card-3')?.querySelector('p:nth-of-type(3)');
-        if (card3Desc) {
-            card3Desc.innerHTML = `Custo para gerar pacientes no Google e manter a base projetada (de ${targetTotalActive} psicólogos, sendo ${targetSubs} pagantes e ${projectedTargetTrials} em teste) sem cancelar.<br><span style="color:#059669; font-weight:bold;">O SEO traz ${projectedOrganicB2CClicksMonthly} contatos de graça, o Google Ads precisará comprar ${futurePaidLeadsNeeded} Leads (gerando ${Math.ceil(futurePaidLeadsNeeded * psiSuggestedPerLead)} contatos pagos).</span>`;
-        }
-
-        // --- NOVO: CARD 4 (Fluxo de Caixa e Desembolso) ---
-        const projectedRevenue = targetSubs * 99; // Usando ticket médio conservador de R$ 99
-        const totalProjectedExpense = monthlyMetaBudget + futureGoogleBudget;
-        const outOfPocket = totalProjectedExpense - projectedRevenue;
-        
-        const elPocket = document.getElementById('sim-res-out-of-pocket');
-        const elPocketInfo = document.getElementById('sim-res-cashflow-info');
-        const card4 = document.getElementById('sim-card-4');
-        if (elPocket && elPocketInfo && card4) {
-            if (outOfPocket > 0) {
-                elPocket.textContent = formatBRL(outOfPocket) + '/mês';
-                elPocket.style.color = '#b45309';
-                card4.style.background = '#fffbeb';
-                card4.style.borderColor = '#fde68a';
-                card4.querySelector('p').style.color = '#b45309';
-                elPocketInfo.style.color = '#d97706';
-                elPocketInfo.innerHTML = `Faturamento (Final da Meta): ${formatBRL(projectedRevenue)}/mês<br>Custo Ads Projetado (Final da Meta): ${formatBRL(totalProjectedExpense)}<br><span style="color:#b45309; font-weight:bold;">O negócio precisará de injeção de capital no pico.</span>`;
-            } else {
-                elPocket.textContent = 'R$ 0,00/mês';
-                elPocket.style.color = '#15803d'; // green
-                card4.style.background = '#f0fdf4';
-                card4.style.borderColor = '#86efac';
-                card4.querySelector('p').style.color = '#166534';
-                elPocketInfo.style.color = '#15803d';
-                elPocketInfo.innerHTML = `Faturamento (Final da Meta): ${formatBRL(projectedRevenue)}/mês<br>Custo Ads Projetado (Final da Meta): ${formatBRL(totalProjectedExpense)}<br><span style="color:#15803d; font-weight:bold;">Operação 100% paga pelo faturamento (Lucra: ${formatBRL(Math.abs(outOfPocket))}).</span>`;
+        for (let m = 1; m <= targetMonths; m++) {
+            // 1. Receita atual
+            const monthlyRevenue = currentBase * arpu;
+            
+            // 2. Orçamento Google (Retenção) para manter a base
+            const totalActiveThisMonth = currentBase + currentTrials;
+            const totalFutureContacts = totalActiveThisMonth * targetContactsPerPsi;
+            const futurePaidContactsNeeded = Math.max(0, totalFutureContacts - orgMonthlyCalc);
+            const futurePaidLeadsNeeded = Math.ceil(futurePaidContactsNeeded / psiSuggestedPerLead);
+            const googleBudget = futurePaidLeadsNeeded * currentB2CCplCalc;
+            
+            // 3. Fundo disponível para reinvestimento
+            const reinvestmentFund = (monthlyRevenue * (reinvestRate / 100)) + extraCash;
+            const availableForMeta = Math.max(0, reinvestmentFund - googleBudget);
+            
+            // 4. Compra de novos clientes
+            const newTrialsBought = Math.floor(availableForMeta / cacBase);
+            const newOrganicActive = Math.floor(organicActivePerMonth);
+            const newPaidActive = Math.floor(newTrialsBought * trialConversionRate);
+            const churnLoss = Math.floor(currentBase * monthlyChurn);
+            
+            // 5. Atualização para o mês seguinte
+            currentBase = currentBase + newOrganicActive + newPaidActive - churnLoss;
+            currentTrials = newTrialsBought; // simplificação
+            
+            labels.push(`Mês ${m}`);
+            dataExpectedBase.push(currentBase);
+            dataRevenue.push(monthlyRevenue);
+            
+            // O custo é o que de fato gastamos
+            const totalCosts = availableForMeta + googleBudget;
+            dataCosts.push(totalCosts);
+            dataCashflow.push(monthlyRevenue - totalCosts);
+            
+            if (m === 12) {
+                mrrAt12 = monthlyRevenue;
+                baseAt12 = currentBase;
+                metaBudgetAt12 = availableForMeta;
+                googleBudgetAt12 = googleBudget;
             }
         }
 
-
-        const paybackMonths = cacBase / 99; 
+        // Update Cards
+        document.getElementById('sim-res-mrr-12m').textContent = formatBRL(mrrAt12);
+        document.getElementById('sim-res-mrr-feedback').textContent = `Múltiplo de ${(mrrAt12 / (basePagantes * arpu || 1)).toFixed(1)}x sobre hoje.`;
+        
+        document.getElementById('sim-res-subs-12m').textContent = Math.floor(baseAt12);
+        
+        document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(metaBudgetAt12);
+        
+        document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(googleBudgetAt12);
+        
         const warningEl = document.getElementById('sim-res-warning');
         warningEl.style.display = 'block';
 
-        if (paybackMonths > 6) {
+        if (metaBudgetAt12 <= 0) {
             warningEl.style.backgroundColor = '#fef2f2';
             warningEl.style.color = '#991b1b';
-            warningEl.innerHTML = `⚠️ <b>Atenção:</b> O CAC atual está alto (${formatBRL(cacBase)}). O Payback é de ${paybackMonths.toFixed(1)} meses. Despejar ${formatBRL(totalMetaBudget)} agora tem alto risco. Otimize as campanhas Meta antes de acelerar!`;
-        } else if (gapReal <= 0) {
-            warningEl.style.backgroundColor = '#f0fdfa';
-            warningEl.style.color = '#0f766e';
-            warningEl.innerHTML = `✅ <b>Você já atingiu ou superou essa meta.</b> Foco total em Retenção e no fluxo de Google Ads.`;
+            warningEl.innerHTML = `⚠️ <b>Atenção:</b> A sua taxa de reinvestimento (${reinvestRate}%) não é suficiente nem para pagar a Retenção no Google Ads. O Motor de Crescimento travou. Aumente a taxa ou o Aporte Adicional!`;
         } else {
             warningEl.style.backgroundColor = '#f0fdfa';
             warningEl.style.color = '#0f766e';
-            warningEl.innerHTML = `✅ <b>Viável:</b> CAC atual (${formatBRL(cacBase)}) se paga em ${paybackMonths.toFixed(1)} meses. O Fluxo de Caixa suporta escalar R$ ${formatBRL(monthlyMetaBudget)} mensais com baixo risco.`;
+            warningEl.innerHTML = `✅ <b>Motor Girando:</b> Em 12 meses, você sairá de ${basePagantes} para ${Math.floor(baseAt12)} assinantes investindo apenas a receita gerada pela própria máquina.`;
         }
 
         // Action Plan
@@ -568,57 +458,46 @@ function initGrowthSimulator(data) {
             actionPlanContainer.style.display = 'block';
             actionList.innerHTML = '';
             
-            // Descobre dias do período para calcular a média diária atual
-            const dateStart = document.getElementById('cmo-date-start')?.value || '';
-            const dateEnd = document.getElementById('cmo-date-end')?.value || '';
-            const d1 = new Date(dateStart);
-            const d2 = new Date(dateEnd);
-            let daysInPeriod = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
-            if (isNaN(daysInPeriod) || daysInPeriod <= 0) daysInPeriod = 30;
-
-            const currentDailyGoogle = data.ads?.google?.configuredDailyBudget || (data.ads?.google?.spend / daysInPeriod) || 0;
-            const targetMetaDailyBudget = monthlyMetaBudget / 30; // Considerando 30 dias/mês, campanha rodando 7x na semana
-
+            const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || 0;
+            const currentDailyGoogle = data.ads?.google?.configuredDailyBudget || 0;
+            
+            const targetMetaDailyBudgetM1 = dataCosts.length > 0 ? (dataCosts[0] - (googleBudgetAt12 / 12 /* roughly */) /* I need the exact M1 cost */) / 30 : 0;
+            
+            // Actually let's calculate M1 exact budgets
+            const m1Revenue = basePagantes * arpu;
+            const totalActiveThisMonth1 = basePagantes + baseTrials;
+            const totalFutureContacts1 = totalActiveThisMonth1 * targetContactsPerPsi;
+            const futurePaidContactsNeeded1 = Math.max(0, totalFutureContacts1 - orgMonthlyCalc);
+            const futurePaidLeadsNeeded1 = Math.ceil(futurePaidContactsNeeded1 / psiSuggestedPerLead);
+            const googleBudgetM1 = futurePaidLeadsNeeded1 * currentB2CCplCalc;
+            
+            const reinvestmentFundM1 = (m1Revenue * (reinvestRate / 100)) + extraCash;
+            const metaBudgetM1 = Math.max(0, reinvestmentFundM1 - googleBudgetM1);
+            
+            const targetMetaDaily = metaBudgetM1 / 30;
+            const targetGoogleDaily = googleBudgetM1 / 30;
+            
             let metaAction = '';
-            if (gapReal <= 0 || targetMetaDailyBudget <= currentMetaDailyBudget) {
-                if (Math.abs(targetMetaDailyBudget - currentMetaDailyBudget) < 5) {
-                    metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. A sua meta exige <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>NÃO AUMENTE MAIS.</strong> Mantenha a campanha rodando os 7 dias da semana do jeito que está.`;
-                } else {
-                    metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Para bater essa meta rodando todos os dias, você só precisa gastar <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para otimizar seus custos.`;
-                }
+            if (targetMetaDaily <= currentMetaDailyBudget) {
+                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua taxa de reinvestimento, o orçamento máximo saudável para este mês é de <strong>${formatBRL(targetMetaDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para otimizar seus custos e respeitar o motor de crescimento.`;
             } else {
-                let weeks = 0;
-                let simulatedDaily = currentMetaDailyBudget > 0 ? currentMetaDailyBudget : 10; 
-                while (simulatedDaily < targetMetaDailyBudget && weeks < 52) {
-                    simulatedDaily *= 1.20;
-                    weeks++;
-                }
-                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Para bater essa meta (com a campanha rodando os 7 dias da semana), você precisa de uma diária de <strong>${formatBRL(targetMetaDailyBudget)}</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> O aumento na plataforma é obrigatório. Aumente a sua configuração diária em <strong>20% a cada sábado</strong> por <strong>${weeks} semanas</strong>, até alcançar o teto ideal de <strong>${formatBRL(targetMetaDailyBudget)}/dia</strong>.`;
+                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua taxa de reinvestimento, você tem caixa para subir até <strong>${formatBRL(targetMetaDaily)}/dia</strong> este mês.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE</strong> a sua configuração diária no Meta até bater o teto do seu orçamento deste mês.`;
             }
 
-            // 2. Status Atual (Retenção da Base Atual)
-            const currentTotalContacts = baseRetention * targetContactsPerPsi;
-            const currentPaidContactsNeeded = Math.max(0, currentTotalContacts - projectedOrganicB2CClicksMonthly);
-            const currentPaidLeadsNeeded = Math.ceil(currentPaidContactsNeeded / psiSuggestedPerLead);
-            const currentIdealDailyGoogle = (currentPaidLeadsNeeded * currentB2CCpl) / 30;
-
             let googleAction = '';
-            if (currentIdealDailyGoogle === 0 && targetDailyGoogle === 0) {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O tráfego orgânico (SEO) projetado para o mês já é mais que suficiente para gerar pacientes para toda a sua base atual e também para a meta futura.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DESLIGUE OU DIMINUA AO MÁXIMO</strong> o Google Ads, pois ele é desnecessário no momento. A própria busca orgânica já dá conta do recado!`;
-            } else if (currentIdealDailyGoogle > currentDailyGoogle) {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, mas a sua base ATUAL exige <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong> para evitar evasões.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE a diária agora</strong> para reter seus ${baseRetention} psicólogos, e continue subindo gradativamente até o teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
-            } else if (currentDailyGoogle > currentIdealDailyGoogle) {
-                const limitText = targetDailyGoogle === 0 ? "já que o orgânico suprirá a meta" : `até o teto da meta de ${formatBRL(targetDailyGoogle)}/dia`;
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, porém sua base ATUAL exige apenas <strong>${formatBRL(currentIdealDailyGoogle)}/dia</strong>. Você está superinvestindo!<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA IMEDIATAMENTE</strong> a diária para acompanhar o tamanho real da sua base, e só suba conforme ganhar novos psicólogos (${limitText}).`;
+            if (targetGoogleDaily === 0) {
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O tráfego orgânico (SEO) já é mais que suficiente para gerar pacientes para toda a sua base atual.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DESLIGUE OU DIMINUA AO MÁXIMO</strong> o Google Ads.`;
+            } else if (currentDailyGoogle < targetGoogleDaily) {
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, mas a sua base exige <strong>${formatBRL(targetGoogleDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE a diária agora</strong> para reter seus psicólogos.`;
             } else {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, perfeitamente alinhado com o tamanho da sua base atual.<br><br>💡 <strong>Ação Recomendada:</strong> Mantenha a configuração. Conforme o Meta Ads trouxer novos psicólogos, vá aumentando o Google aos poucos, até chegar no teto da meta final (${formatBRL(targetDailyGoogle)}/dia).`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, porém sua base exige apenas <strong>${formatBRL(targetGoogleDaily)}/dia</strong>. Você está superinvestindo!<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA IMEDIATAMENTE</strong> a diária para acompanhar o tamanho real da sua base.`;
             }
 
             let roiAction = '';
-            if (outOfPocket > 0) {
-                roiAction = `<br>🔍 <strong>Diagnóstico:</strong> Seu custo total com anúncios projetado é de <strong>${formatBRL(totalProjectedExpense)}</strong>, enquanto sua receita recorrente esperada é de <strong>${formatBRL(projectedRevenue)}</strong>. A meta forçará um prejuízo mensal temporário (desembolso) de <strong>${formatBRL(outOfPocket)}</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> A operação precisa de caixa para escalar nessa velocidade. Se não houver caixa disponível, reduza a meta ou o prazo, ou trabalhe para diminuir seu CAC e aumentar seu preço.`;
+            if (extraCash > 0) {
+                roiAction = `<br>🔍 <strong>Diagnóstico:</strong> Você configurou um aporte extra de <strong>${formatBRL(extraCash)}/mês</strong> do próprio bolso.<br><br>💡 <strong>Ação Recomendada:</strong> Certifique-se de que esse caixa está provisionado e disponível para cobrir os anúncios.`;
             } else {
-                roiAction = `<br>🔍 <strong>Diagnóstico:</strong> Seu custo total com anúncios projetado é de <strong>${formatBRL(totalProjectedExpense)}</strong>, perfeitamente coberto pela sua receita recorrente esperada de <strong>${formatBRL(projectedRevenue)}</strong> (lucro de <strong>${formatBRL(Math.abs(outOfPocket))}</strong>).<br><br>💡 <strong>Ação Recomendada:</strong> Operação lucrativa. Você pode escalar os anúncios com segurança até o teto da meta, pois o próprio negócio financia o crescimento.`;
+                roiAction = `<br>🔍 <strong>Diagnóstico:</strong> Você está operando 100% Bootstrap.<br><br>💡 <strong>Ação Recomendada:</strong> Operação autossustentável. Todo o investimento em anúncios sairá do próprio faturamento gerado.`;
             }
 
             actionList.innerHTML = `
@@ -628,244 +507,218 @@ function initGrowthSimulator(data) {
                 <br>
                 <li><strong>Lucratividade (ROI Geral):</strong> ${roiAction}</li>
             `;
-
-            // VISUAL FEEDBACK - CARD 1
-            const newActiveInPeriod = basePagantes;
-            const newTrialsInPeriod = baseTrials;
-            const totalRequiredNewSubs = typeof gapTotal !== 'undefined' ? gapTotal : gapReal;
-
-            const card1 = document.getElementById('sim-card-1');
-            const fb1 = document.getElementById('sim-res-subs-feedback');
-            if (card1 && fb1) {
-                fb1.style.display = 'inline-block';
-                if (newActiveInPeriod >= totalRequiredNewSubs && totalRequiredNewSubs > 0) {
-                    card1.style.background = '#f0fdf4';
-                    card1.style.borderColor = '#86efac';
-                    fb1.style.background = '#dcfce7';
-                    fb1.style.color = '#166534';
-                    fb1.innerHTML = `🎉 Meta Batida! (Atual: ${newActiveInPeriod} Pagantes | ${newTrialsInPeriod} Trials)`;
-                } else {
-                    card1.style.background = '#f8fafc';
-                    card1.style.borderColor = '#cbd5e1';
-                    fb1.style.background = '#f1f5f9';
-                    fb1.style.color = '#475569';
-                    fb1.innerHTML = `Atual: ${newActiveInPeriod} Pagantes | ${newTrialsInPeriod} Trials`;
-                }
-            }
-
-            // VISUAL FEEDBACK - CARD 2
-            const card2 = document.getElementById('sim-card-2');
-            const fb2 = document.getElementById('sim-res-meta-feedback');
-            if (card2 && fb2) {
-                fb2.style.display = 'inline-block';
-                if (currentMetaDailyBudget >= targetMetaDailyBudget && targetMetaDailyBudget > 0) {
-                    card2.style.background = '#f0fdf4';
-                    card2.style.borderColor = '#86efac';
-                    fb2.style.background = '#dcfce7';
-                    fb2.style.color = '#166534';
-                    fb2.innerHTML = `🎉 Orçamento Ideal Atingido! (Diária config: ${formatBRL(currentMetaDailyBudget)})`;
-                } else {
-                    card2.style.background = '#f0fdfa';
-                    card2.style.borderColor = '#5eead4';
-                    fb2.style.background = '#ccfbf1';
-                    fb2.style.color = '#0f766e';
-                    fb2.innerHTML = `Atual: ${formatBRL(currentMetaDailyBudget)}/dia config.`;
-                }
-            }
-
-            // VISUAL FEEDBACK - CARD 3
-            const card3 = document.getElementById('sim-card-3');
-            const fb3 = document.getElementById('sim-res-google-feedback');
-            if (card3 && fb3) {
-                fb3.style.display = 'inline-block';
-                if (Math.abs(currentDailyGoogle - targetDailyGoogle) <= 2) {
-                    card3.style.background = '#f0fdf4';
-                    card3.style.borderColor = '#86efac';
-                    fb3.style.background = '#dcfce7';
-                    fb3.style.color = '#166534';
-                    fb3.innerHTML = `🎉 Retenção ideal! (${formatBRL(currentDailyGoogle)}/dia config.)`;
-                } else if (currentDailyGoogle > targetDailyGoogle) {
-                    card3.style.background = '#fef2f2';
-                    card3.style.borderColor = '#fca5a5';
-                    fb3.style.background = '#fee2e2';
-                    fb3.style.color = '#991b1b';
-                    fb3.innerHTML = `⚠️ Superinvestimento (Atual: ${formatBRL(currentDailyGoogle)}/dia config.)`;
-                } else {
-                    card3.style.background = '#eff6ff';
-                    card3.style.borderColor = '#bfdbfe';
-                    fb3.style.background = '#dbeafe';
-                    fb3.style.color = '#1d4ed8';
-                    fb3.innerHTML = `Atual: ${formatBRL(currentDailyGoogle)}/dia config.`;
-                }
-            }
         }
 
-        const progressContainer = document.getElementById('sim-progress-container');
-        if (progressContainer) {
-            progressContainer.style.display = 'block';
-            document.getElementById('sim-prog-current').innerHTML = `${basePagantes} <span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">(+ ${baseTrials} em período de teste)</span>`;
-            document.getElementById('sim-prog-target').textContent = targetSubs;
+        // Real Data tracking (If a start date is set)
+        // Real Data tracking (If a start date is set)
+        const dataRealBase = [];
+        if (simTrackingStartDate) {
+            // Ideally we would query the database for historical progress month by month.
+            // Since we only have 'basePagantes' right now, we will plot it at the exact months passed.
+            const startDate = new Date(simTrackingStartDate);
+            const now = new Date();
+            let monthsPassed = (now.getFullYear() - startDate.getFullYear()) * 12;
+            monthsPassed -= startDate.getMonth();
+            monthsPassed += now.getMonth();
             
-            const percentage = targetSubs > 0 ? Math.min(100, Math.round((basePagantes / targetSubs) * 100)) : 100;
-            // PROGRESSÃO MENSAL (TIMELINE CHART)
-            const timelineContainer = document.getElementById('sim-timeline-container');
-            const ctxChart = document.getElementById('simTimelineChart');
-            if (timelineContainer && ctxChart) {
-                if (targetSubs > basePagantes && targetMonths > 0) {
-                    timelineContainer.style.display = 'block';
-                    
-                    const monthlyNetGrowth = (targetSubs - basePagantes) / targetMonths;
-                    let accumulatedBase = basePagantes;
-                    const targetContactsPerPsiT = 2;
-                    const psiSuggestedPerLeadT = 1;
-                    
-                    const labels = [];
-                    const dataRevenue = [];
-                    const dataCosts = [];
-                    const dataCashflow = [];
-                    
-                    for (let m = 1; m <= targetMonths; m++) {
-                        accumulatedBase += monthlyNetGrowth;
-                        const baseAtThisMonth = Math.ceil(accumulatedBase);
-                        
-                        const totalActiveThisMonth = baseAtThisMonth + Math.ceil(projectedTargetTrials);
-                        const totalFutureContactsM = totalActiveThisMonth * targetContactsPerPsiT;
-                        const futurePaidContactsNeededM = Math.max(0, totalFutureContactsM - projectedOrganicB2CClicksMonthly);
-                        const futurePaidLeadsNeededM = Math.ceil(futurePaidContactsNeededM / psiSuggestedPerLeadT);
-                        const googleBudgetThisMonthM = futurePaidLeadsNeededM * currentB2CCpl;
-                        
-                        const monthlyRevenue = baseAtThisMonth * arpu;
-                        const totalCosts = monthlyMetaBudget + googleBudgetThisMonthM;
-                        const monthlyCashflow = monthlyRevenue - totalCosts;
-                        
-                        labels.push(`Mês ${m}`);
-                        dataRevenue.push(monthlyRevenue);
-                        dataCosts.push(totalCosts);
-                        dataCashflow.push(monthlyCashflow);
-                    }
-                    
-                    if (window.simTimelineChartInstance) {
-                        window.simTimelineChartInstance.destroy();
-                    }
-                    
-                    window.simTimelineChartInstance = new Chart(ctxChart, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    label: 'Fluxo de Caixa Líquido',
-                                    type: 'line',
-                                    data: dataCashflow,
-                                    borderColor: '#8b5cf6',
-                                    backgroundColor: '#8b5cf6',
-                                    borderWidth: 3,
-                                    pointBackgroundColor: '#ffffff',
-                                    pointBorderColor: '#8b5cf6',
-                                    pointBorderWidth: 2,
-                                    pointRadius: 4,
-                                    tension: 0.4,
-                                    yAxisID: 'y'
-                                },
-                                {
-                                    label: 'Receita (MRR)',
-                                    data: dataRevenue,
-                                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                                    borderRadius: 4,
-                                    yAxisID: 'y'
-                                },
-                                {
-                                    label: 'Custos (Meta + Google)',
-                                    data: dataCosts,
-                                    backgroundColor: 'rgba(249, 115, 22, 0.8)',
-                                    borderRadius: 4,
-                                    yAxisID: 'y'
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            interaction: {
-                                mode: 'index',
-                                intersect: false,
-                            },
-                            scales: {
-                                x: { grid: { display: false } },
-                                y: { 
-                                    beginAtZero: true, 
-                                    grid: { borderDash: [2, 4], color: '#f1f5f9' },
-                                    ticks: {
-                                        callback: function(value) {
-                                            return 'R$ ' + value.toLocaleString('pt-BR');
-                                        }
-                                    }
-                                }
-                            },
-                            plugins: {
-                                legend: { position: 'top' },
-                                tooltip: {
-                                    mode: 'index',
-                                    intersect: false,
-                                    backgroundColor: '#1f2937',
-                                    padding: 12,
-                                    titleFont: { size: 13, family: 'Inter' },
-                                    bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
-                                    callbacks: {
-                                        label: function(context) {
-                                            let label = context.dataset.label || '';
-                                            if (label) {
-                                                label += ': ';
-                                            }
-                                            if (context.parsed.y !== null) {
-                                                label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
-                                            }
-                                            return label;
-                                        }
-                                    }
-                                }
-                            }
+            if (monthsPassed < 0) monthsPassed = 0;
+            if (monthsPassed > 11) monthsPassed = 11;
+            
+            // Preenche de null até o mês atual
+            for (let i = 0; i <= monthsPassed; i++) {
+                if (i === 0) {
+                    dataRealBase.push(simTrackingStartSubs);
+                } else if (i === monthsPassed) {
+                    dataRealBase.push(data.platform.b2b.total_active);
+                } else {
+                    // Nós não temos o dado do meio ainda, faz interpolação linear
+                    const start = simTrackingStartSubs;
+                    const end = data.platform.b2b.total_active;
+                    const step = (end - start) / monthsPassed;
+                    dataRealBase.push(Math.round(start + (step * i)));
+                }
+            }
+        } else {
+            // Se ainda não salvou, o Mês 1 (hoje) tem a base atual
+            dataRealBase.push(data.platform.b2b.total_active);
+        }
+
+        // Update Chart
+        const timelineContainer = document.getElementById('sim-timeline-container');
+        const ctxChart = document.getElementById('simTimelineChart');
+        if (timelineContainer && ctxChart) {
+            timelineContainer.style.display = 'block';
+            
+            const datasets = [
+                {
+                    label: 'Base Projetada (Esperada)',
+                    type: 'line',
+                    data: dataExpectedBase,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    borderDash: [5, 5],
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#10b981',
+                    pointRadius: 3,
+                    fill: false,
+                    tension: 0.4,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Base Realizada',
+                    type: 'line',
+                    data: dataRealBase,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 4,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#3b82f6',
+                    pointRadius: 5,
+                    fill: false,
+                    tension: 0.4,
+                    yAxisID: 'y'
+                }
+            ];
+            
+            if (curiosityGoal) {
+                const goalData = Array(12).fill(curiosityGoal);
+                datasets.push({
+                    label: 'Meta Curiosidade',
+                    type: 'line',
+                    data: goalData,
+                    borderColor: '#94a3b8',
+                    borderWidth: 2,
+                    borderDash: [2, 2],
+                    pointRadius: 0,
+                    fill: false,
+                    yAxisID: 'y'
+                });
+            }
+
+            if (window.simTimelineChartInstance) {
+                window.simTimelineChartInstance.destroy();
+            }
+            
+            window.simTimelineChartInstance = new Chart(ctxChart, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    events: [],
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { borderDash: [2, 4], color: '#f1f5f9' }
                         }
-                    });
-                    
-                } else {
-                    timelineContainer.style.display = 'none';
-                }
-            }
-
-            const bar = document.getElementById('sim-prog-bar');
-            
-            bar.style.width = '0%';
-            setTimeout(() => { bar.style.width = `${percentage}%`; }, 50);
-            
-            document.getElementById('sim-prog-percentage').textContent = `${percentage}% da meta alcançada`;
-            
-            const overlay = document.getElementById('sim-prog-milestones-overlay');
-            if (overlay) {
-                overlay.innerHTML = ''; 
-                if (targetMonths > 0 && targetSubs > basePagantes) {
-                    const monthlyNetGrowth = Math.ceil((targetSubs - basePagantes) / targetMonths);
-                    let currentMilestone = basePagantes;
-                    
-                    for (let m = 1; m < targetMonths; m++) {
-                        currentMilestone += monthlyNetGrowth;
-                        if (currentMilestone >= targetSubs) break;
-                        
-                        const mPercentage = (currentMilestone / targetSubs) * 100;
-                        const marker = document.createElement('div');
-                        marker.style.cssText = `position: absolute; left: ${mPercentage}%; top: -4px; width: 4px; height: 22px; background: #e2e8f0; border: 1px solid #94a3b8; border-radius: 2px; z-index: 10; box-shadow: 0 0 2px rgba(0,0,0,0.2);`;
-                        marker.innerHTML = `
-                            <span style="position: absolute; top: 26px; left: -25px; width: 50px; text-align: center; font-size: 0.7rem; font-weight: bold; color: #475569; background: #f8fafc; padding: 2px; border-radius: 4px;">
-                                Mês ${m}<br/>
-                                <span style="color:#8b5cf6; font-size: 0.8rem;">${currentMilestone}</span>
-                            </span>
-                        `;
-                        overlay.appendChild(marker);
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: '#1f2937',
+                            padding: 12,
+                            titleFont: { size: 13, family: 'Inter' },
+                            bodyFont: { size: 14, family: 'Inter', weight: 'bold' }
+                        }
                     }
                 }
+            });
+
+            // ==========================================
+            // LISTENER DE MOUSE MANUAL (CÁLCULO ESCALADO)
+            // ==========================================
+            if (ctxChart._mouseMoveHandler) {
+                ctxChart.removeEventListener('mousemove', ctxChart._mouseMoveHandler);
+                ctxChart.removeEventListener('mouseout', ctxChart._mouseOutHandler);
             }
+
+            const chart = window.simTimelineChartInstance;
+
+            ctxChart._mouseMoveHandler = function(e) {
+                if (!chart || !chart.chartArea || !chart.scales.x) return;
+
+                const rect = ctxChart.getBoundingClientRect();
+                
+                // FATOR DE ESCALA
+                const scaleX = chart.canvas.clientWidth / rect.width;
+                const scaleY = chart.canvas.clientHeight / rect.height;
+
+                const mouseX = (e.clientX - rect.left) * scaleX;
+                const mouseY = (e.clientY - rect.top) * scaleY;
+
+                const { left, right, top, bottom } = chart.chartArea;
+
+                if (mouseX < left || mouseX > right || mouseY < top || mouseY > bottom) {
+                    chart.tooltip.setActiveElements([], {});
+                    chart.setActiveElements([]);
+                    chart.update();
+                    return;
+                }
+
+                const xScale = chart.scales.x;
+                const labelsCount = chart.data.labels.length;
+                
+                const positions = [];
+                for (let i = 0; i < labelsCount; i++) {
+                    positions.push(xScale.getPixelForValue(i));
+                }
+
+                const boundaries = [];
+                if (labelsCount > 1) {
+                    boundaries.push(positions[0] - (positions[1] - positions[0]) / 2);
+                    for (let i = 0; i < labelsCount - 1; i++) {
+                        boundaries.push((positions[i] + positions[i + 1]) / 2);
+                    }
+                    boundaries.push(positions[labelsCount - 1] + (positions[labelsCount - 1] - positions[labelsCount - 2]) / 2);
+                } else {
+                    boundaries.push(left, right);
+                }
+
+                let targetIndex = 0;
+                for (let i = 0; i < labelsCount; i++) {
+                    if (mouseX >= boundaries[i] && mouseX <= boundaries[i + 1]) {
+                        targetIndex = i;
+                        break;
+                    }
+                }
+
+                if (mouseX > boundaries[boundaries.length - 1]) targetIndex = labelsCount - 1;
+                if (mouseX < boundaries[0]) targetIndex = 0;
+
+                const meta = chart.getDatasetMeta(0);
+                const point = meta.data[targetIndex];
+
+                chart.tooltip.setActiveElements(
+                    [{ datasetIndex: 0, index: targetIndex }],
+                    { x: point ? point.x : mouseX, y: point ? point.y : mouseY }
+                );
+                chart.setActiveElements(
+                    [{ datasetIndex: 0, index: targetIndex }]
+                );
+                chart.update();
+            };
+
+            ctxChart._mouseOutHandler = function() {
+                if (!chart) return;
+                chart.tooltip.setActiveElements([], {});
+                chart.setActiveElements([]);
+                chart.update();
+            };
+
+            ctxChart.addEventListener('mousemove', ctxChart._mouseMoveHandler);
+            ctxChart.addEventListener('mouseout', ctxChart._mouseOutHandler);
         }
-        
     };
 
     // Carrega as configurações do banco e roda automaticamente
