@@ -473,18 +473,29 @@ function initGrowthSimulator(data) {
             const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || 0;
             const currentDailyGoogle = data.ads?.google?.configuredDailyBudget || 0;
             
-            const targetMetaDailyBudgetM1 = dataCosts.length > 0 ? (dataCosts[0] - (googleBudgetAt12 / 12 /* roughly */) /* I need the exact M1 cost */) / 30 : 0;
-            
-            // Actually let's calculate M1 exact budgets
+            // Calculate M1 exact budgets using the TrueCAC logic
             const m1Revenue = basePagantes * arpu;
-            const totalActiveThisMonth1 = basePagantes + baseTrials;
-            const totalFutureContacts1 = totalActiveThisMonth1 * targetContactsPerPsi;
-            const futurePaidContactsNeeded1 = Math.max(0, totalFutureContacts1 - orgMonthlyCalc);
-            const futurePaidLeadsNeeded1 = Math.ceil(futurePaidContactsNeeded1 / psiSuggestedPerLead);
-            const googleBudgetM1 = futurePaidLeadsNeeded1 * currentB2CCplCalc;
+            
+            const baseContactsNeeded1 = basePagantes * targetContactsPerPsi;
+            const basePaidContactsNeeded1 = Math.max(0, baseContactsNeeded1 - orgMonthlyCalc);
+            const baseGoogleBudget1 = Math.ceil(basePaidContactsNeeded1 / psiSuggestedPerLead) * currentB2CCplCalc;
             
             const reinvestmentFundM1 = (m1Revenue * (reinvestRate / 100)) + extraCash;
-            const metaBudgetM1 = Math.max(0, reinvestmentFundM1 - googleBudgetM1);
+            const availableForAcquisition1 = Math.max(0, reinvestmentFundM1 - baseGoogleBudget1);
+            
+            const trialDurationFraction1 = 0.25;
+            const actualTrialConversionRate1 = trialConversionRate > 0 ? trialConversionRate : 0.15;
+            const trialsPerPaidUser1 = 1 / actualTrialConversionRate1;
+            
+            const googleCostPerTrial1 = trialDurationFraction1 * targetContactsPerPsi * (currentB2CCplCalc / psiSuggestedPerLead);
+            const trueCac1 = cacBase + (trialsPerPaidUser1 * googleCostPerTrial1);
+            
+            const newPaidActive1 = Math.floor(availableForAcquisition1 / trueCac1);
+            const newTrialsBought1 = Math.floor(newPaidActive1 * trialsPerPaidUser1);
+            
+            const metaBudgetM1 = newPaidActive1 * cacBase;
+            const trialsGoogleBudget1 = newTrialsBought1 * googleCostPerTrial1;
+            const googleBudgetM1 = baseGoogleBudget1 + trialsGoogleBudget1;
             
             const targetMetaDaily = metaBudgetM1 / 30;
             const targetGoogleDaily = googleBudgetM1 / 30;
@@ -500,9 +511,9 @@ function initGrowthSimulator(data) {
             if (targetGoogleDaily === 0) {
                 googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O tráfego orgânico (SEO) já é mais que suficiente para gerar pacientes para toda a sua base atual.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DESLIGUE OU DIMINUA AO MÁXIMO</strong> o Google Ads.`;
             } else if (currentDailyGoogle < targetGoogleDaily) {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, mas a sua base exige <strong>${formatBRL(targetGoogleDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE a diária agora</strong> para reter seus psicólogos.`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, mas a sua máquina (base atual + novos trials) exige <strong>${formatBRL(targetGoogleDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE a diária agora</strong> para reter seus psicólogos.`;
             } else {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, porém sua base exige apenas <strong>${formatBRL(targetGoogleDaily)}/dia</strong>. Você está superinvestindo!<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA IMEDIATAMENTE</strong> a diária para acompanhar o tamanho real da sua base.`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Google Ads está configurado para <strong>${formatBRL(currentDailyGoogle)}/dia</strong>, porém sua máquina exige apenas <strong>${formatBRL(targetGoogleDaily)}/dia</strong>. Você está superinvestindo!<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA IMEDIATAMENTE</strong> a diária para acompanhar a sua demanda real.`;
             }
 
             let roiAction = '';
