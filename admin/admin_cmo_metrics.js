@@ -366,16 +366,34 @@ function initGrowthSimulator(data) {
         const organicWppClicks90dCalc = data.platform.b2c.organic_wpp_clicks_90d || 0;
         const orgMonthlyCalc = Math.floor(organicWppClicks90dCalc / 3);
         
-        // Calcula contatos/psi/mês a partir dos dados reais do período
-        const totalWppClicks = data.platform.b2c.wpp_clicks || 0;
-        const monthsInPeriod = daysInPeriodSim / 30;
-        const realContactsPerPsiPerMonth = (totalActive > 0 && monthsInPeriod > 0)
-            ? (totalWppClicks / totalActive / monthsInPeriod)
-            : 0;
-        // Usa o dado real com floor de 1; fallback 2 se não houver dados suficientes
-        const targetContactsPerPsi = realContactsPerPsiPerMonth >= 1
-            ? Math.round(realContactsPerPsiPerMonth * 10) / 10
-            : 2;
+        // Usa a correlação churn × cliques para definir o limiar real de engajamento
+        // Prioridade: mediana de psis ATIVOS (mais robusto) → média de ativos → média do período → fallback 2
+        const clicksVsChurn = data.platform.b2b.clicks_vs_churn || {};
+        const activeClickData = clicksVsChurn.active;
+        const inactiveClickData = clicksVsChurn.inactive;
+        
+        let targetContactsPerPsi;
+        let contactsThresholdSource;
+        
+        if (activeClickData && parseFloat(activeClickData.median_clicks) >= 1) {
+            // Melhor opção: mediana de psis que ficaram — elimina outliers que inflam a média
+            targetContactsPerPsi = Math.round(parseFloat(activeClickData.median_clicks) * 10) / 10;
+            contactsThresholdSource = `mediana real (${activeClickData.psi_count} psis ativos no período)`;
+        } else if (activeClickData && parseFloat(activeClickData.avg_clicks) >= 1) {
+            // Segunda opção: média de psis que ficaram
+            targetContactsPerPsi = Math.round(parseFloat(activeClickData.avg_clicks) * 10) / 10;
+            contactsThresholdSource = `média real (${activeClickData.psi_count} psis ativos no período)`;
+        } else {
+            // Fallback: média simples do período (wppClicks / psis ativos / meses)
+            const totalWppClicks = data.platform.b2c.wpp_clicks || 0;
+            const monthsInPeriod = daysInPeriodSim / 30;
+            const periodAvg = (totalActive > 0 && monthsInPeriod > 0)
+                ? (totalWppClicks / totalActive / monthsInPeriod)
+                : 0;
+            targetContactsPerPsi = periodAvg >= 1 ? Math.round(periodAvg * 10) / 10 : 2;
+            contactsThresholdSource = periodAvg >= 1 ? 'média do período (sem correlação churn)' : 'estimativa padrão';
+        }
+        
         const psiSuggestedPerLead = 1;
 
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -479,7 +497,7 @@ function initGrowthSimulator(data) {
         document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(googleBudgetAt12);
         const card4Sub = document.querySelector('#sim-card-4 p:last-child');
         if (card4Sub) card4Sub.textContent =
-            `≈ ${formatBRL(googleDailyAt12)}/dia — ${googlePctOfRevenue}% da receita do mês 12.`;
+            `≈ ${formatBRL(googleDailyAt12)}/dia · limiar: ${targetContactsPerPsi} cliques/psi (${contactsThresholdSource}).`;
         
         const warningEl = document.getElementById('sim-res-warning');
         warningEl.style.display = 'block';

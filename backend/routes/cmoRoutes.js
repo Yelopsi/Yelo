@@ -157,6 +157,43 @@ router.get('/dashboard', async (req, res) => {
         });
         const globalChurned = parseInt(globalChurnRes.churned || 0);
 
+        // Correlação: cliques recebidos por psis ativos vs churned no período
+        // Responde: "quantos cliques um psi precisa receber para não cancelar?"
+        const clicksVsChurnQuery = `
+            SELECT
+                p.status,
+                COUNT(p.id) as psi_count,
+                ROUND(AVG(click_count)::numeric, 2) as avg_clicks,
+                PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY click_count) as median_clicks
+            FROM (
+                SELECT
+                    p.id,
+                    p.status,
+                    COUNT(w.id) as click_count
+                FROM "Psychologists" p
+                LEFT JOIN "WhatsAppClickLogs" w
+                    ON (w."psychologistId" = p.id OR w."PsychologistId" = p.id)
+                    AND w."createdAt" >= :dateStart AND w."createdAt" <= :dateEnd
+                WHERE (p."subscriptionId" IS NOT NULL OR p."firstPaidAt" IS NOT NULL OR p."subscription_payments_count" > 0)
+                AND (p.is_exempt IS NULL OR p.is_exempt = false)
+                AND p."deletedAt" IS NULL
+                AND p.status IN ('active', 'inactive')
+                GROUP BY p.id, p.status
+            ) p
+            GROUP BY p.status
+        `;
+        let clicksChurnActive = null;
+        let clicksChurnInactive = null;
+        try {
+            const clicksVsChurnRes = await sequelize.query(clicksVsChurnQuery, {
+                replacements: { dateStart, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+            });
+            clicksChurnActive = clicksVsChurnRes.find(r => r.status === 'active') || null;
+            clicksChurnInactive = clicksVsChurnRes.find(r => r.status === 'inactive') || null;
+        } catch (e) {
+            console.error('[CMO] Erro na query clicks vs churn:', e.message);
+        }
+
         const globalActiveQuery = `
             SELECT 
                 COUNT(*) FILTER (
@@ -478,7 +515,7 @@ router.get('/dashboard', async (req, res) => {
                 }
             },
             platform: {
-                b2b: { arpu: arpu, active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive, total_trials: totalTrials, organic_active: organicPagantes, organic_trials: organicTrials, total_new_active: totalNewPagantes, total_new_trials: totalNewTrials },
+                b2b: { arpu: arpu, active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive, total_trials: totalTrials, organic_active: organicPagantes, organic_trials: organicTrials, total_new_active: totalNewPagantes, total_new_trials: totalNewTrials, clicks_vs_churn: { active: clicksChurnActive, inactive: clicksChurnInactive } },
                 b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals, organic_wpp_clicks_90d: organicWppClicks90d }
             },
             decisionEngineMeta,
