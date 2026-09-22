@@ -707,25 +707,27 @@ function initGrowthSimulator(data) {
             document.getElementById('sim-prog-target').textContent = targetSubs;
             
             const percentage = targetSubs > 0 ? Math.min(100, Math.round((basePagantes / targetSubs) * 100)) : 100;
-            // PROGRESSÃO SEMANAL (TIMELINE)
+            // PROGRESSÃO MENSAL (TIMELINE CHART)
             const timelineContainer = document.getElementById('sim-timeline-container');
-            const timelineBody = document.getElementById('sim-timeline-body');
-            if (timelineContainer && timelineBody) {
+            const ctxChart = document.getElementById('simTimelineChart');
+            if (timelineContainer && ctxChart) {
                 if (targetSubs > basePagantes && targetMonths > 0) {
                     timelineContainer.style.display = 'block';
-                    timelineBody.innerHTML = '';
                     
                     const monthlyNetGrowth = (targetSubs - basePagantes) / targetMonths;
-                    
                     let accumulatedBase = basePagantes;
                     const targetContactsPerPsiT = 2;
                     const psiSuggestedPerLeadT = 1;
+                    
+                    const labels = [];
+                    const dataRevenue = [];
+                    const dataCosts = [];
+                    const dataCashflow = [];
                     
                     for (let m = 1; m <= targetMonths; m++) {
                         accumulatedBase += monthlyNetGrowth;
                         const baseAtThisMonth = Math.ceil(accumulatedBase);
                         
-                        // Google Ads Retenção para esta base mensal:
                         const totalActiveThisMonth = baseAtThisMonth + Math.ceil(projectedTargetTrials);
                         const totalFutureContactsM = totalActiveThisMonth * targetContactsPerPsiT;
                         const futurePaidContactsNeededM = Math.max(0, totalFutureContactsM - projectedOrganicB2CClicksMonthly);
@@ -733,20 +735,99 @@ function initGrowthSimulator(data) {
                         const googleBudgetThisMonthM = futurePaidLeadsNeededM * currentB2CCpl;
                         
                         const monthlyRevenue = baseAtThisMonth * arpu;
-                        const monthlyCashflow = monthlyRevenue - (monthlyMetaBudget + googleBudgetThisMonthM);
+                        const totalCosts = monthlyMetaBudget + googleBudgetThisMonthM;
+                        const monthlyCashflow = monthlyRevenue - totalCosts;
                         
-                        const tr = document.createElement('tr');
-                        tr.style.borderBottom = '1px solid #e2e8f0';
-                        tr.innerHTML = `
-                            <td style="padding: 10px; font-weight: bold; color: #64748b;">Mês ${m}</td>
-                            <td style="padding: 10px; color: #1e293b; font-weight: bold;">${baseAtThisMonth} <span style="font-size: 0.7rem; color: #94a3b8; font-weight: normal;">assinantes</span></td>
-                            <td style="padding: 10px; color: #0f766e;">${formatBRL(monthlyMetaBudget)}</td>
-                            <td style="padding: 10px; color: #1d4ed8;">${formatBRL(googleBudgetThisMonthM)}</td>
-                            <td style="padding: 10px; color: #166534;">${formatBRL(monthlyRevenue)}</td>
-                            <td style="padding: 10px; color: ${monthlyCashflow >= 0 ? '#166534' : '#b45309'}; font-weight: bold;">${formatBRL(monthlyCashflow)}</td>
-                        `;
-                        timelineBody.appendChild(tr);
+                        labels.push(`Mês ${m}`);
+                        dataRevenue.push(monthlyRevenue);
+                        dataCosts.push(totalCosts);
+                        dataCashflow.push(monthlyCashflow);
                     }
+                    
+                    if (window.simTimelineChartInstance) {
+                        window.simTimelineChartInstance.destroy();
+                    }
+                    
+                    window.simTimelineChartInstance = new Chart(ctxChart, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Fluxo de Caixa Líquido',
+                                    type: 'line',
+                                    data: dataCashflow,
+                                    borderColor: '#8b5cf6',
+                                    backgroundColor: '#8b5cf6',
+                                    borderWidth: 3,
+                                    pointBackgroundColor: '#ffffff',
+                                    pointBorderColor: '#8b5cf6',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 4,
+                                    tension: 0.4,
+                                    yAxisID: 'y'
+                                },
+                                {
+                                    label: 'Receita (MRR)',
+                                    data: dataRevenue,
+                                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                                    borderRadius: 4,
+                                    yAxisID: 'y'
+                                },
+                                {
+                                    label: 'Custos (Meta + Google)',
+                                    data: dataCosts,
+                                    backgroundColor: 'rgba(249, 115, 22, 0.8)',
+                                    borderRadius: 4,
+                                    yAxisID: 'y'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
+                            scales: {
+                                x: { grid: { display: false } },
+                                y: { 
+                                    beginAtZero: true, 
+                                    grid: { borderDash: [2, 4], color: '#f1f5f9' },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return 'R$ ' + value.toLocaleString('pt-BR');
+                                        }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: { position: 'top' },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    backgroundColor: '#1f2937',
+                                    padding: 12,
+                                    titleFont: { size: 13, family: 'Inter' },
+                                    bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
+                                    callbacks: {
+                                        label: function(context) {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+                                            if (context.parsed.y !== null) {
+                                                label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
                 } else {
                     timelineContainer.style.display = 'none';
                 }

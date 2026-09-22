@@ -246,23 +246,18 @@
                 <p id="sim-prog-percentage" style="text-align: center; margin: 30px 0 0 0; font-size: 0.75rem; color: #64748b; font-weight: bold;">0% concluído</p>
             </div>
 
-            <div id="sim-timeline-container" style="flex: 100%; display: none; margin-top: 15px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; overflow-x: auto;">
-                <h5 style="margin: 0 0 15px 0; color: #1e293b; font-size: 1rem; display: flex; align-items: center; gap: 5px;">📅 Rampa de Crescimento Mensal</h5>
-                <table class="yelo-table" style="width: 100%; min-width: 600px; font-size: 0.85rem; text-align: left; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background: #f8fafc; color: #475569; border-bottom: 2px solid #e2e8f0;">
-                            <th style="padding: 10px; font-weight: bold;">Mês</th>
-                            <th style="padding: 10px; font-weight: bold;">Meta da Base</th>
-                            <th style="padding: 10px; font-weight: bold;">Custo Meta Ads</th>
-                            <th style="padding: 10px; font-weight: bold;">Custo Google Ads</th>
-                            <th style="padding: 10px; font-weight: bold;">MRR Projetado</th>
-                            <th style="padding: 10px; font-weight: bold;">Fluxo de Caixa</th>
-                        </tr>
-                    </thead>
-                    <tbody id="sim-timeline-body">
-                        <!-- Preenchido via JS -->
-                    </tbody>
-                </table>
+            <div id="sim-timeline-container" style="flex: 100%; display: none; margin-top: 15px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
+                <div style="padding: 25px 25px 15px 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin-bottom: 0;">📅 Rampa de Crescimento Mensal</h2>
+                        <p style="color: #64748b; font-size: 0.85rem; margin-top: 5px; margin-bottom: 0;">Projeção do Caixa, Custos (Meta+Google) e Receita esperada mês a mês.</p>
+                    </div>
+                </div>
+                <div style="padding: 0 25px 25px 25px;">
+                    <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas id="simTimelineChart"></canvas>
+                    </div>
+                </div>
             </div>
 
         </div>
