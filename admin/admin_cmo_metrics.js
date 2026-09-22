@@ -378,11 +378,11 @@ function initGrowthSimulator(data) {
         if (activeClickData && parseFloat(activeClickData.median_clicks) >= 1) {
             // Melhor opção: mediana de psis que ficaram — elimina outliers que inflam a média
             targetContactsPerPsi = Math.round(parseFloat(activeClickData.median_clicks) * 10) / 10;
-            contactsThresholdSource = `mediana real (${activeClickData.psi_count} psis ativos no período)`;
+            contactsThresholdSource = `mediana 90d real (${activeClickData.psi_count} psis ativos)`;
         } else if (activeClickData && parseFloat(activeClickData.avg_clicks) >= 1) {
             // Segunda opção: média de psis que ficaram
             targetContactsPerPsi = Math.round(parseFloat(activeClickData.avg_clicks) * 10) / 10;
-            contactsThresholdSource = `média real (${activeClickData.psi_count} psis ativos no período)`;
+            contactsThresholdSource = `média 90d real (${activeClickData.psi_count} psis ativos)`;
         } else {
             // Fallback: média simples do período (wppClicks / psis ativos / meses)
             const totalWppClicks = data.platform.b2c.wpp_clicks || 0;

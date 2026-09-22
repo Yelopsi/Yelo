@@ -157,8 +157,14 @@ router.get('/dashboard', async (req, res) => {
         });
         const globalChurned = parseInt(globalChurnRes.churned || 0);
 
-        // Correlação: cliques recebidos por psis ativos vs churned no período
-        // Responde: "quantos cliques um psi precisa receber para não cancelar?"
+        // Correlação: cliques recebidos por psis ativos vs churned nos últimos 90 dias (janela fixa)
+        // Período fixo de 90d garante amostra estatisticamente robusta, independente do filtro do painel.
+        // Responde: "quantos cliques/mês um psi precisa receber para não cancelar?"
+        const churnCorrelation90dStart = new Date();
+        churnCorrelation90dStart.setDate(churnCorrelation90dStart.getDate() - 90);
+        const churnCorrelation90dStartStr = churnCorrelation90dStart.toISOString().split('T')[0];
+        const churnCorrelation90dEndStr = new Date().toISOString().split('T')[0];
+
         const clicksVsChurnQuery = `
             SELECT
                 p.status,
@@ -173,7 +179,7 @@ router.get('/dashboard', async (req, res) => {
                 FROM "Psychologists" p
                 LEFT JOIN "WhatsAppClickLogs" w
                     ON (w."psychologistId" = p.id OR w."PsychologistId" = p.id)
-                    AND w."createdAt" >= :dateStart AND w."createdAt" <= :dateEnd
+                    AND w."createdAt" >= :corr90dStart AND w."createdAt" <= :corr90dEnd
                 WHERE (p."subscriptionId" IS NOT NULL OR p."firstPaidAt" IS NOT NULL OR p."subscription_payments_count" > 0)
                 AND (p.is_exempt IS NULL OR p.is_exempt = false)
                 AND p."deletedAt" IS NULL
@@ -186,12 +192,13 @@ router.get('/dashboard', async (req, res) => {
         let clicksChurnInactive = null;
         try {
             const clicksVsChurnRes = await sequelize.query(clicksVsChurnQuery, {
-                replacements: { dateStart, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+                replacements: { corr90dStart: churnCorrelation90dStartStr, corr90dEnd: churnCorrelation90dEndStr + ' 23:59:59' },
+                type: sequelize.QueryTypes.SELECT
             });
             clicksChurnActive = clicksVsChurnRes.find(r => r.status === 'active') || null;
             clicksChurnInactive = clicksVsChurnRes.find(r => r.status === 'inactive') || null;
         } catch (e) {
-            console.error('[CMO] Erro na query clicks vs churn:', e.message);
+            console.error('[CMO] Erro na query clicks vs churn (90d):', e.message);
         }
 
         const globalActiveQuery = `
