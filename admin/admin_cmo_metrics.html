@@ -67,57 +67,136 @@
         <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:#8b5cf6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
         Simulador de Escala (Engenharia Reversa)
     </h3>
+    <style>
+        @media (max-width: 768px) {
+            .sim-left-col {
+                flex: 1 1 100% !important;
+                max-width: 100% !important;
+                align-items: center !important;
+            }
+            .sim-left-col > div {
+                width: 100% !important;
+                max-width: 350px !important;
+            }
+            .sim-left-col h4 {
+                justify-content: center !important;
+            }
+            .sim-cards-grid {
+                grid-template-columns: 1fr !important;
+                border-left: none !important;
+                padding-left: 0 !important;
+            }
+        }
+        .premium-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #f1f5f9;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #cbd5e1;
+        }
+        .premium-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+        }
+        .card-mrr::before { background: #3b82f6; }
+        .card-base::before { background: #8b5cf6; }
+        .card-meta::before { background: #10b981; }
+        .card-google::before { background: #f59e0b; }
+    </style>
+    
     <div class="kpi-card" style="border-top-color: #8b5cf6; margin-bottom: 30px;">
-        <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; justify-content: space-between; padding: 25px 30px; width: 100%; box-sizing: border-box;">
+        <div style="display: flex; flex-wrap: wrap; gap: 30px; align-items: stretch; justify-content: space-between; padding: 30px; width: 100%; box-sizing: border-box;">
             
-            <div style="flex: 0 0 200px; display: flex; flex-direction: column; justify-content: center;">
-                <h4 style="display: flex; align-items: center; justify-content: space-between; font-size: 1.1rem !important; color: #1e293b; margin: 0 0 15px 0;">
+            <div class="sim-left-col" style="flex: 1 1 250px; max-width: 320px; display: flex; flex-direction: column; justify-content: flex-start;">
+                <h4 style="display: flex; align-items: center; justify-content: space-between; font-size: 1.1rem !important; color: #1e293b; margin: 0 0 20px 0;">
                     <span>Motor de Crescimento</span>
                 </h4>
 
-                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; width: 100%;">
                     <div style="width: 100%;">
-                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: bold;">% Reinvestimento do MRR</label>
-                        <input type="number" id="sim-reinvest-rate" value="100" min="0" max="200" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 1rem; outline: none; box-sizing: border-box;" />
+                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">% Reinvestimento do MRR</label>
+                        <input type="number" id="sim-reinvest-rate" value="100" min="0" max="200" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; font-weight: 500; transition: border-color 0.2s;" />
                     </div>
                     <div style="width: 100%;">
-                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: bold;">Aporte Adicional (R$/mês)</label>
-                        <input type="text" id="sim-extra-cash" value="0,00" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 1rem; outline: none; box-sizing: border-box;" />
+                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Aporte Adicional (R$/mês)</label>
+                        <input type="text" id="sim-extra-cash" value="0,00" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; font-weight: 500; transition: border-color 0.2s;" />
                     </div>
                     <div style="width: 100%;">
-                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px; font-weight: bold;">Meta Curiosidade (Assinantes)</label>
-                        <input type="number" id="sim-curiosity-goal" value="" min="0" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 1rem; outline: none; box-sizing: border-box;" placeholder="Opcional" />
+                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Meta Curiosidade (Assinantes)</label>
+                        <input type="number" id="sim-curiosity-goal" value="" min="0" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; transition: border-color 0.2s;" placeholder="Opcional" />
                     </div>
                 </div>
                 
-                <button id="btn-save-simulator" style="background: #10b981; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: background 0.2s; align-self: flex-start; width: 100%;">Salvar Meta</button>
+                <button id="btn-save-simulator" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.95rem; transition: transform 0.2s, box-shadow 0.2s; align-self: center; width: 100%; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); max-width: 350px;">Salvar Parâmetros</button>
             </div>
             
             <!-- Resultados -->
-            <div style="flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border-left: 1px solid #e2e8f0; padding-left: 20px; gap: 15px;">
+            <div class="sim-cards-grid" style="flex: 1 1 450px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border-left: 1px solid #e2e8f0; padding-left: 30px; gap: 20px;">
                 
-                <div id="sim-card-1" title="Sua Receita Recorrente Mensal projetada daqui a 12 meses, considerando a máquina de Juros Compostos girando." style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1; transition: all 0.3s ease; cursor: help;">
-                    <p style="font-size: 0.75rem; color: #64748b; margin: 0 0 5px 0; font-weight: bold;">MRR Projetado (Mês 12)</p>
-                    <p id="sim-res-mrr-12m" style="font-size: 1.4rem; font-weight: 800; color: #1e293b; margin: 0;">--</p>
-                    <p id="sim-res-mrr-feedback" style="font-size: 0.75rem; color: #94a3b8; margin: 5px 0 0 0; line-height: 1.3;">Aguardando cálculo...</p>
+                <div id="sim-card-1" class="premium-card card-mrr" title="Sua Receita Recorrente Mensal projetada daqui a 12 meses.">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                            <div style="background: #eff6ff; padding: 8px; border-radius: 8px; color: #3b82f6; display: flex;">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">MRR Projetado (12M)</p>
+                        </div>
+                        <p id="sim-res-mrr-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                    </div>
+                    <div style="margin-top: 15px; display: inline-flex; align-items: center; background: #f8fafc; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <span id="sim-res-mrr-feedback" style="font-size: 0.8rem; color: #475569; font-weight: 600;">Aguardando cálculo...</span>
+                    </div>
                 </div>
                 
-                <div id="sim-card-2" title="Total de Psicólogos ativos na base daqui a 12 meses." style="background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px dashed #bfdbfe; transition: all 0.3s ease; cursor: help;">
-                    <p style="font-size: 0.75rem; color: #1d4ed8; margin: 0 0 5px 0; font-weight: bold;">Base Projetada (Mês 12)</p>
-                    <p id="sim-res-subs-12m" style="font-size: 1.4rem; font-weight: 800; color: #1d4ed8; margin: 0;">--</p>
-                    <p style="font-size: 0.75rem; color: #3b82f6; margin: 5px 0 0 0; line-height: 1.3;">Psicólogos ativos pagantes.</p>
+                <div id="sim-card-2" class="premium-card card-base" title="Total de Psicólogos ativos na base daqui a 12 meses.">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                            <div style="background: #f5f3ff; padding: 8px; border-radius: 8px; color: #8b5cf6; display: flex;">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            </div>
+                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Base Projetada (12M)</p>
+                        </div>
+                        <p id="sim-res-subs-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                    </div>
+                    <p style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Psicólogos assinantes na plataforma.</p>
                 </div>
                 
-                <div id="sim-card-3" title="Quanto dinheiro seu próprio MRR vai gerar livre para você colocar em campanhas de Aquisição no Meta Ads no 12º mês." style="background: #f0fdfa; padding: 15px; border-radius: 8px; border: 1px dashed #5eead4; transition: all 0.3s ease; cursor: help;">
-                    <p style="font-size: 0.75rem; color: #0f766e; margin: 0 0 5px 0; font-weight: bold;">Verba Meta Ads (Mês 12)</p>
-                    <p id="sim-res-meta-budget-12m" style="font-size: 1.4rem; font-weight: 800; color: #0f766e; margin: 0;">--</p>
-                    <p style="font-size: 0.85rem; color: #0d9488; margin: 5px 0 0 0; font-weight: 600;">Disponível para aquisição</p>
+                <div id="sim-card-3" class="premium-card card-meta" title="Verba mensal dedicada à aquisição de novos trials na Meta.">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                            <div style="background: #ecfdf5; padding: 8px; border-radius: 8px; color: #10b981; display: flex;">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            </div>
+                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Caixa Meta Ads (12M)</p>
+                        </div>
+                        <p id="sim-res-meta-budget-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                    </div>
+                    <p style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Orçamento livre p/ escalar aquisição.</p>
                 </div>
                 
-                <div id="sim-card-4" title="Quanto custará manter a retenção dessa base projetada rodando campanhas no Google Ads no 12º mês." style="background: #fffbeb; padding: 15px; border-radius: 8px; border: 1px dashed #fde68a; transition: all 0.3s ease; cursor: help;">
-                    <p style="font-size: 0.75rem; color: #b45309; margin: 0 0 5px 0; font-weight: bold;">Custo Google Ads (Mês 12)</p>
-                    <p id="sim-res-google-budget-12m" style="font-size: 1.4rem; font-weight: 800; color: #b45309; margin: 0;">--</p>
-                    <p style="font-size: 0.75rem; color: #d97706; margin: 5px 0 0 0; line-height: 1.3;">Para não faltar demanda.</p>
+                <div id="sim-card-4" class="premium-card card-google" title="Custo estimado no Google Ads para reter e alimentar a base de psicólogos com pacientes.">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                            <div style="background: #fffbeb; padding: 8px; border-radius: 8px; color: #f59e0b; display: flex;">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Custo Google (12M)</p>
+                        </div>
+                        <p id="sim-res-google-budget-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                    </div>
+                    <p style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Custo vitalício de retenção da base.</p>
                 </div>
                 
             </div>
