@@ -377,6 +377,11 @@ function initGrowthSimulator(data) {
         
         const psiSuggestedPerLead = 1;
 
+        // --- BASELINE PARA CÁLCULO DE DEGRADAÇÃO DO CAC (DIMINISHING RETURNS) ---
+        const histMetaSpend = data.historical?.meta?.spend || 0;
+        const histMetaMonthlySpend = (monthsInPeriod > 0 && histMetaSpend > 0) ? (histMetaSpend / monthsInPeriod) : 0;
+        const PENALTY_RATE = 0.20; // Aumento de 20% no CAC a cada 100% de aumento no orçamento validado
+
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
         // Snowball Projection
@@ -409,19 +414,34 @@ function initGrowthSimulator(data) {
             const reinvestmentFund = (monthlyRevenue * (reinvestRate / 100)) + extraCash;
             const availableForAcquisition = Math.max(0, reinvestmentFund - baseGoogleBudget);
             
-            // 4. Cálculo do True CAC (Custo Meta + Custo Google dos Trials associados)
+            // 4. Cálculo do True CAC (Custo Meta + Custo Google dos Trials associados) e Degradação
             const trialDurationFraction = 0.25; // Trial dura em média 7 dias
             const actualTrialConversionRate = trialConversionRate > 0 ? trialConversionRate : 0.15;
             const trialsPerPaidUser = 1 / actualTrialConversionRate;
             
             const googleCostPerTrial = trialDurationFraction * targetContactsPerPsi * (currentB2CCplCalc / psiSuggestedPerLead);
-            const trueCac = cacBase + (trialsPerPaidUser * googleCostPerTrial);
+            
+            // Estima o orçamento projetado no Meta para aplicar a degradação
+            const baseTrueCac = cacBase + (trialsPerPaidUser * googleCostPerTrial);
+            const projectedMetaBudget = availableForAcquisition * (cacBase / baseTrueCac);
+            
+            let fatorDeEscala = 1;
+            if (histMetaMonthlySpend > 0 && projectedMetaBudget > histMetaMonthlySpend) {
+                fatorDeEscala = projectedMetaBudget / histMetaMonthlySpend;
+            }
+            
+            let cacPenalizado = cacBase;
+            if (fatorDeEscala > 1) {
+                cacPenalizado = cacBase * (1 + ((fatorDeEscala - 1) * PENALTY_RATE));
+            }
+            
+            const trueCac = cacPenalizado + (trialsPerPaidUser * googleCostPerTrial);
             
             // 5. Compra de novos clientes
             const newPaidActive = Math.floor(availableForAcquisition / trueCac);
             const newTrialsBought = Math.floor(newPaidActive * trialsPerPaidUser);
             
-            const metaBudget = newPaidActive * cacBase;
+            const metaBudget = newPaidActive * cacPenalizado;
             const trialsGoogleBudget = newTrialsBought * googleCostPerTrial;
             const totalGoogleBudget = baseGoogleBudget + trialsGoogleBudget;
             
@@ -513,17 +533,32 @@ function initGrowthSimulator(data) {
             const reinvestmentFundM1 = (m1Revenue * (reinvestRate / 100)) + extraCash;
             const availableForAcquisition1 = Math.max(0, reinvestmentFundM1 - baseGoogleBudget1);
             
+            // 4. Cálculo do True CAC M1 e Degradação
             const trialDurationFraction1 = 0.25;
             const actualTrialConversionRate1 = trialConversionRate > 0 ? trialConversionRate : 0.15;
             const trialsPerPaidUser1 = 1 / actualTrialConversionRate1;
             
             const googleCostPerTrial1 = trialDurationFraction1 * targetContactsPerPsi * (currentB2CCplCalc / psiSuggestedPerLead);
-            const trueCac1 = cacBase + (trialsPerPaidUser1 * googleCostPerTrial1);
+            
+            const baseTrueCac1 = cacBase + (trialsPerPaidUser1 * googleCostPerTrial1);
+            const projectedMetaBudget1 = availableForAcquisition1 * (cacBase / baseTrueCac1);
+            
+            let fatorDeEscala1 = 1;
+            if (histMetaMonthlySpend > 0 && projectedMetaBudget1 > histMetaMonthlySpend) {
+                fatorDeEscala1 = projectedMetaBudget1 / histMetaMonthlySpend;
+            }
+            
+            let cacPenalizado1 = cacBase;
+            if (fatorDeEscala1 > 1) {
+                cacPenalizado1 = cacBase * (1 + ((fatorDeEscala1 - 1) * PENALTY_RATE));
+            }
+            
+            const trueCac1 = cacPenalizado1 + (trialsPerPaidUser1 * googleCostPerTrial1);
             
             const newPaidActive1 = Math.floor(availableForAcquisition1 / trueCac1);
             const newTrialsBought1 = Math.floor(newPaidActive1 * trialsPerPaidUser1);
             
-            const metaBudgetM1 = newPaidActive1 * cacBase;
+            const metaBudgetM1 = newPaidActive1 * cacPenalizado1;
             const trialsGoogleBudget1 = newTrialsBought1 * googleCostPerTrial1;
             const googleBudgetM1 = baseGoogleBudget1 + trialsGoogleBudget1;
             
