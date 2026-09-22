@@ -387,8 +387,8 @@ function initGrowthSimulator(data) {
             // Fallback: média simples do período (wppClicks / psis ativos / meses)
             const totalWppClicks = data.platform.b2c.wpp_clicks || 0;
             const monthsInPeriod = daysInPeriodSim / 30;
-            const periodAvg = (totalActive > 0 && monthsInPeriod > 0)
-                ? (totalWppClicks / totalActive / monthsInPeriod)
+            const periodAvg = (basePagantes > 0 && monthsInPeriod > 0)
+                ? (totalWppClicks / basePagantes / monthsInPeriod)
                 : 0;
             targetContactsPerPsi = periodAvg >= 1 ? Math.round(periodAvg * 10) / 10 : 2;
             contactsThresholdSource = periodAvg >= 1 ? 'média do período (sem correlação churn)' : 'estimativa padrão';
