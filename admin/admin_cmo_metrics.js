@@ -365,7 +365,17 @@ function initGrowthSimulator(data) {
             
         const organicWppClicks90dCalc = data.platform.b2c.organic_wpp_clicks_90d || 0;
         const orgMonthlyCalc = Math.floor(organicWppClicks90dCalc / 3);
-        const targetContactsPerPsi = 2;
+        
+        // Calcula contatos/psi/mês a partir dos dados reais do período
+        const totalWppClicks = data.platform.b2c.wpp_clicks || 0;
+        const monthsInPeriod = daysInPeriodSim / 30;
+        const realContactsPerPsiPerMonth = (totalActive > 0 && monthsInPeriod > 0)
+            ? (totalWppClicks / totalActive / monthsInPeriod)
+            : 0;
+        // Usa o dado real com floor de 1; fallback 2 se não houver dados suficientes
+        const targetContactsPerPsi = realContactsPerPsiPerMonth >= 1
+            ? Math.round(realContactsPerPsiPerMonth * 10) / 10
+            : 2;
         const psiSuggestedPerLead = 1;
 
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
