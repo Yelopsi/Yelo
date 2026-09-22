@@ -715,38 +715,35 @@ function initGrowthSimulator(data) {
                     timelineContainer.style.display = 'block';
                     timelineBody.innerHTML = '';
                     
-                    const totalWeeks = targetMonths * 4;
-                    const weeklyNetGrowth = (targetSubs - basePagantes) / totalWeeks;
-                    const weeklyMetaBudget = monthlyMetaBudget / 4;
+                    const monthlyNetGrowth = (targetSubs - basePagantes) / targetMonths;
                     
                     let accumulatedBase = basePagantes;
                     const targetContactsPerPsiT = 2;
                     const psiSuggestedPerLeadT = 1;
                     
-                    for (let w = 1; w <= totalWeeks; w++) {
-                        accumulatedBase += weeklyNetGrowth;
-                        const baseAtThisWeek = Math.ceil(accumulatedBase);
+                    for (let m = 1; m <= targetMonths; m++) {
+                        accumulatedBase += monthlyNetGrowth;
+                        const baseAtThisMonth = Math.ceil(accumulatedBase);
                         
-                        // Google Ads Retenção para esta base semanal:
-                        const totalActiveThisWeek = baseAtThisWeek + Math.ceil(projectedTargetTrials);
-                        const totalFutureContactsW = totalActiveThisWeek * targetContactsPerPsiT;
-                        const futurePaidContactsNeededW = Math.max(0, totalFutureContactsW - projectedOrganicB2CClicksMonthly);
-                        const futurePaidLeadsNeededW = Math.ceil(futurePaidContactsNeededW / psiSuggestedPerLeadT);
-                        const googleBudgetThisMonthW = futurePaidLeadsNeededW * currentB2CCpl;
+                        // Google Ads Retenção para esta base mensal:
+                        const totalActiveThisMonth = baseAtThisMonth + Math.ceil(projectedTargetTrials);
+                        const totalFutureContactsM = totalActiveThisMonth * targetContactsPerPsiT;
+                        const futurePaidContactsNeededM = Math.max(0, totalFutureContactsM - projectedOrganicB2CClicksMonthly);
+                        const futurePaidLeadsNeededM = Math.ceil(futurePaidContactsNeededM / psiSuggestedPerLeadT);
+                        const googleBudgetThisMonthM = futurePaidLeadsNeededM * currentB2CCpl;
                         
-                        const weeklyGoogleBudget = googleBudgetThisMonthW / 4;
-                        const weeklyRevenue = (baseAtThisWeek * arpu) / 4;
-                        const weeklyCashflow = weeklyRevenue - (weeklyMetaBudget + weeklyGoogleBudget);
+                        const monthlyRevenue = baseAtThisMonth * arpu;
+                        const monthlyCashflow = monthlyRevenue - (monthlyMetaBudget + googleBudgetThisMonthM);
                         
                         const tr = document.createElement('tr');
                         tr.style.borderBottom = '1px solid #e2e8f0';
                         tr.innerHTML = `
-                            <td style="padding: 10px; font-weight: bold; color: #64748b;">Semana ${w}</td>
-                            <td style="padding: 10px; color: #1e293b; font-weight: bold;">${baseAtThisWeek} <span style="font-size: 0.7rem; color: #94a3b8; font-weight: normal;">assinantes</span></td>
-                            <td style="padding: 10px; color: #0f766e;">${formatBRL(weeklyMetaBudget)}</td>
-                            <td style="padding: 10px; color: #1d4ed8;">${formatBRL(weeklyGoogleBudget)}</td>
-                            <td style="padding: 10px; color: #166534;">${formatBRL(weeklyRevenue)}</td>
-                            <td style="padding: 10px; color: ${weeklyCashflow >= 0 ? '#166534' : '#b45309'}; font-weight: bold;">${formatBRL(weeklyCashflow)}</td>
+                            <td style="padding: 10px; font-weight: bold; color: #64748b;">Mês ${m}</td>
+                            <td style="padding: 10px; color: #1e293b; font-weight: bold;">${baseAtThisMonth} <span style="font-size: 0.7rem; color: #94a3b8; font-weight: normal;">assinantes</span></td>
+                            <td style="padding: 10px; color: #0f766e;">${formatBRL(monthlyMetaBudget)}</td>
+                            <td style="padding: 10px; color: #1d4ed8;">${formatBRL(googleBudgetThisMonthM)}</td>
+                            <td style="padding: 10px; color: #166534;">${formatBRL(monthlyRevenue)}</td>
+                            <td style="padding: 10px; color: ${monthlyCashflow >= 0 ? '#166534' : '#b45309'}; font-weight: bold;">${formatBRL(monthlyCashflow)}</td>
                         `;
                         timelineBody.appendChild(tr);
                     }
