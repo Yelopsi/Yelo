@@ -592,18 +592,20 @@ function initGrowthSimulator(data) {
             
             let metaAction = '';
             if (unspentCash > 100) { // Margem de tolerância
-                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> Com ${reinvestRate}% de reinvestimento + R$ ${extraCash} de aporte, você tem <strong>${formatBRL(availableForAcquisition1)}</strong> livres. Injetar tudo isso no Meta de uma vez destruiria seu CAC.<br><br>💡 <strong>Ação Recomendada (Crescimento Saudável):</strong> Aumente o Meta Ads para no máximo <strong>${formatBRL(targetMetaDaily)}/dia</strong>. O excedente (<strong>${formatBRL(unspentCash)}/mês</strong>) deve ser poupado como caixa da empresa ou investido em expansão B2B orgânica (SEO/Parcerias).`;
+                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Fundo de Aquisição atual (após separar o custo de Retenção no Google) é de <strong>${formatBRL(availableForAcquisition1)}</strong>. Tentar despejar todo esse valor de uma vez no Meta Ads forçaria a máquina e faria seu Custo de Aquisição (CAC) explodir.<br><br>💡 <strong>Ação Recomendada (Escala Segura):</strong> Aumente o Meta Ads para no máximo <strong>${formatBRL(targetMetaDaily)}/dia</strong> para não corromper o algoritmo. Com isso, após pagar a captação de pacientes para os novos trials no Google, você ainda preservará <strong>${formatBRL(unspentCash)}/mês</strong> em caixa limpo. Use essa sobra para testar canais alternativos (Parcerias, Growth, SEO) em vez de inflacionar o Meta.`;
             } else if (targetMetaDaily <= currentMetaDailyBudget) {
-                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua taxa de reinvestimento, o orçamento máximo para este mês é de <strong>${formatBRL(targetMetaDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para otimizar seus custos e respeitar o fluxo de caixa.`;
+                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua política de reinvestimento, o teto financeiro para este mês é de apenas <strong>${formatBRL(targetMetaDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para estancar a sangria e respeitar o seu fluxo de caixa.`;
             } else {
-                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua taxa de reinvestimento, você tem caixa para subir com segurança até <strong>${formatBRL(targetMetaDaily)}/dia</strong> este mês.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE</strong> a sua configuração diária no Meta até bater o teto do seu orçamento saudável.`;
+                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua política de reinvestimento, você tem caixa para subir com segurança até <strong>${formatBRL(targetMetaDaily)}/dia</strong> este mês.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE</strong> a configuração diária no Meta Ads até bater este teto.`;
             }
 
             let googleAction = '';
+            const baseDaily = baseGoogleBudget1 / 30;
+            const trialsDaily = trialsGoogleBudget1 / 30;
             if (targetGoogleDaily === 0) {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O tráfego orgânico (SEO) já atende a demanda histórica média (${targetContactsPerPsi} cliques/psi) para toda a sua base atual.<br><br>💡 <strong>Ação Recomendada:</strong> Você pode pausar o Google Ads temporariamente.`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O tráfego orgânico (SEO) já atende a demanda histórica média (${targetContactsPerPsi} cliques/psi) para toda a sua base atual de assinantes.<br><br>💡 <strong>Ação Recomendada:</strong> Você pode pausar o Google Ads temporariamente.`;
             } else {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> Para manter a média histórica de <strong>${targetContactsPerPsi} cliques mensais</strong> por psicólogo na base de assinantes, o custo associado é de <strong>${formatBRL(targetGoogleDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> Ajuste seu orçamento diário de Google Ads caso deseje manter o mesmo nível de tráfego por paciente na plataforma.`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O Google Ads na Yelo sustenta tanto a <strong>Retenção</strong> dos assinantes atuais quanto a captação de pacientes para os <strong>Novos Trials</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> Ajuste o orçamento do Google para <strong>${formatBRL(targetGoogleDaily)}/dia</strong>. Sendo aprox. <strong>${formatBRL(baseDaily)}/dia</strong> apenas para manter a base atual recebendo pacientes (reduzindo churn), e <strong>${formatBRL(trialsDaily)}/dia</strong> para esquentar os novos profissionais em período de testes.`;
             }
 
             let roiAction = `<br>⏳ <strong>Diagnóstico:</strong> Analisando lucratividade com IA...<br><br>💡 <strong>Ação Recomendada:</strong> Processando motor de crescimento...`;
@@ -611,9 +613,9 @@ function initGrowthSimulator(data) {
             actionList.innerHTML = `
                 <li><strong>Meta Ads (Aquisição):</strong> ${metaAction}</li>
                 <br>
-                <li><strong>Google Ads (Retenção):</strong> ${googleAction}</li>
+                <li><strong>Google Ads (Google vs Meta Trials):</strong> ${googleAction}</li>
                 <br>
-                <li id="sim-roi-li"><strong>Lucratividade (ROI Geral):</strong> ${roiAction}</li>
+                <li id="sim-roi-li"><strong>Análise de Growth (IA CFO):</strong> ${roiAction}</li>
             `;
 
             // Chama a IA para diagnosticar o ROI
