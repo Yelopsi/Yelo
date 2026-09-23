@@ -512,10 +512,14 @@ router.get('/dashboard', async (req, res) => {
         let globalEffort = 'N/A', adsEffort = 'N/A', orgEffort = 'N/A', topTicket = 'N/A', ttvAvg = 'N/A';
         
         try {
+            const dateEnd90 = new Date();
+            const dateStart90 = new Date();
+            dateStart90.setDate(dateStart90.getDate() - 90);
+
             const dateCondition = {
                 createdAt: {
-                    [Op.gte]: new Date(dateStart + 'T00:00:00.000Z'),
-                    [Op.lte]: new Date(dateEnd + 'T23:59:59.999Z')
+                    [Op.gte]: dateStart90,
+                    [Op.lte]: dateEnd90
                 }
             };
             const closedCondition = { dealClosed: { [Op.in]: ['yes', 'started'] } };
@@ -546,7 +550,7 @@ router.get('/dashboard', async (req, res) => {
                 AND "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
                 GROUP BY "psychologistId"
                 ORDER BY "closedCount" DESC
-            `, { replacements: { dateStart: new Date(dateStart + 'T00:00:00.000Z'), dateEnd: new Date(dateEnd + 'T23:59:59.999Z') }, type: sequelize.QueryTypes.SELECT });
+            `, { replacements: { dateStart: dateStart90, dateEnd: dateEnd90 }, type: sequelize.QueryTypes.SELECT });
 
             if (topPerformersQuery.length > 0) {
                 const top20PercentCount = Math.max(1, Math.ceil(topPerformersQuery.length * 0.20));
@@ -569,7 +573,7 @@ router.get('/dashboard', async (req, res) => {
                 WHERE w."dealClosed" IN ('yes', 'started')
                 AND w."createdAt" >= :dateStart AND w."createdAt" <= :dateEnd
                 GROUP BY p.id, p."createdAt"
-            `, { replacements: { dateStart: new Date(dateStart + 'T00:00:00.000Z'), dateEnd: new Date(dateEnd + 'T23:59:59.999Z') }, type: sequelize.QueryTypes.SELECT });
+            `, { replacements: { dateStart: dateStart90, dateEnd: dateEnd90 }, type: sequelize.QueryTypes.SELECT });
 
             if (ttvQuery.length > 0) {
                 const validTtvs = ttvQuery.filter(q => q.days_to_value >= 0).map(q => parseFloat(q.days_to_value));
@@ -581,6 +585,68 @@ router.get('/dashboard', async (req, res) => {
             console.error('[CMO Metrics] Erro calculando Eficiência Comercial:', effError);
         }
 
+        // --- SIMULADOR MOTOR DE CRESCIMENTO (90 DIAS) ---
+        let simMetaCac = 150;
+        let simGoogleCpl = 40;
+        let simTrialConv = 0.15;
+        let simChurn = 0.05;
+
+        try {
+            const dateEnd90 = new Date(dateEnd + 'T23:59:59.999Z');
+            const dateStart90 = new Date(dateEnd90);
+            dateStart90.setDate(dateStart90.getDate() - 90);
+            const dateStart90Str = dateStart90.toISOString().split('T')[0];
+
+            const [metaCampaigns90, googleCampaigns90] = await Promise.all([
+                metaAdsService.getCampaignInsights(dateStart90Str, dateEnd),
+                googleAdsService.getCampaignInsights(dateStart90Str, dateEnd)
+            ]);
+
+            const metaSpend90 = getTargetSpend(metaCampaigns90, '120251213168140531', false);
+            const googleSpend90 = getTargetSpend(googleCampaigns90, 'Yelo MVP - Busca SP', true);
+
+            const [metaMetrics90Res] = await sequelize.query(b2bQuery, {
+                replacements: { dateStart: dateStart90Str, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+            });
+
+            const metaPagantes90 = parseInt(metaMetrics90Res.pagantes || 0);
+            const metaTrials90 = parseInt(metaMetrics90Res.trials || 0);
+            const metaFailedTrials90 = parseInt(metaMetrics90Res.failed_trials || 0);
+
+            if (metaPagantes90 > 0) {
+                simMetaCac = metaSpend90 / metaPagantes90;
+            } else if (metaTrials90 > 0) {
+                simMetaCac = metaSpend90 / metaTrials90 * (1 / 0.15);
+            }
+
+            const totalOportunidades90 = metaPagantes90 + metaTrials90 + metaFailedTrials90;
+            if (totalOportunidades90 > 0) {
+                simTrialConv = metaPagantes90 / totalOportunidades90;
+            }
+
+            simChurn = globalChurnRate > 0 ? globalChurnRate : 0.05;
+
+            const b2cQuery90 = `
+                SELECT 
+                    COUNT(*) as wpp_clicks,
+                    SUM(CASE WHEN "utmSource" IN ('google', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc') THEN 1 ELSE 0 END) as google_wpp_clicks
+                FROM "WhatsAppClickLogs"
+                WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
+            `;
+            const [googleMetrics90Res] = await sequelize.query(b2cQuery90, {
+                replacements: { dateStart: dateStart90Str, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+            });
+            const googleWppClicks90 = parseInt(googleMetrics90Res.google_wpp_clicks || 0);
+            
+            if (googleWppClicks90 > 0) {
+                simGoogleCpl = googleSpend90 / googleWppClicks90;
+            } else if (googleSpend90 > 0) {
+                simGoogleCpl = googleSpend90 / 1;
+            }
+        } catch (simError) {
+            console.error('[CMO Metrics] Erro calculando Simulador 90d:', simError);
+        }
+
         res.json({
             success: true,
             efficiency: {
@@ -589,6 +655,12 @@ router.get('/dashboard', async (req, res) => {
                 orgEffort,
                 topTicket,
                 ttvAvg
+            },
+            simulator: {
+                cac: simMetaCac,
+                cpl: simGoogleCpl,
+                trialConv: simTrialConv,
+                churn: simChurn
             },
             period: { dateStart, dateEnd, prevDateStart, prevDateEnd },
             globalInsight: globalInsight,

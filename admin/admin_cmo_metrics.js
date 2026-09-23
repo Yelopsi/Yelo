@@ -347,8 +347,8 @@ function initGrowthSimulator(data) {
         const basePagantes = simTrackingStartSubs !== null ? simTrackingStartSubs : (data.platform.b2b.total_active || 0);
         const baseTrials = data.platform.b2b.total_trials || 0;
         
-        const trialConversionRate = data.historical?.meta?.trial_conversion_rate || 0.15;
-        const cacBase = data.historical?.meta?.cac || 150; 
+        const trialConversionRate = data.simulator?.trialConv > 0 ? data.simulator.trialConv : 0.15;
+        const cacBase = data.simulator?.cac > 0 ? data.simulator.cac : 150; 
         const arpu = data.platform?.b2b?.arpu || 99;
 
         // Discover days in period for organic gain and churn
@@ -359,17 +359,12 @@ function initGrowthSimulator(data) {
         let daysInPeriodSim = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
         if (isNaN(daysInPeriodSim) || daysInPeriodSim <= 0) daysInPeriodSim = 30;
 
-        let monthlyChurn = 0.05;
-        if (data.platform.b2b.global_churn_rate > 0) {
-            monthlyChurn = (data.platform.b2b.global_churn_rate / daysInPeriodSim) * 30;
-        }
+        const monthlyChurn = data.simulator?.churn > 0 ? data.simulator.churn : 0.05;
 
         const organicActive = data.platform.b2b.organic_active || 0;
         const organicActivePerMonth = (organicActive / daysInPeriodSim) * 30;
 
-        const currentB2CCplCalc = data.historical?.google?.cpl > 0 
-            ? data.historical?.google?.cpl 
-            : (data.ads?.google?.cpl > 0 ? data.ads?.google?.cpl : 14.15);
+        const currentB2CCplCalc = data.simulator?.cpl > 0 ? data.simulator.cpl : 40;
             
         const organicWppClicks90dCalc = data.platform.b2c.organic_wpp_clicks_90d || 0;
         const orgMonthlyCalc = Math.floor(organicWppClicks90dCalc / 3);
