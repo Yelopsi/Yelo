@@ -512,10 +512,16 @@ router.get('/dashboard', async (req, res) => {
         let globalEffort = 'N/A', adsEffort = 'N/A', orgEffort = 'N/A', topTicket = 'N/A', ttvAvg = 'N/A';
         
         try {
+            const dateCondition = {
+                createdAt: {
+                    [Op.gte]: new Date(dateStart + 'T00:00:00.000Z'),
+                    [Op.lte]: new Date(dateEnd + 'T23:59:59.999Z')
+                }
+            };
             const closedCondition = { dealClosed: { [Op.in]: ['yes', 'started'] } };
 
-            const totalClicks = await WhatsAppClickLog.count();
-            const totalClosed = await WhatsAppClickLog.count({ where: closedCondition });
+            const totalClicks = await WhatsAppClickLog.count({ where: dateCondition });
+            const totalClosed = await WhatsAppClickLog.count({ where: { ...closedCondition, ...dateCondition } });
             globalEffort = totalClosed > 0 ? (totalClicks / totalClosed).toFixed(1) : 'N/A';
 
             const adsSources = ['google', 'meta', 'facebook', 'instagram', 'ig', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc'];
@@ -525,8 +531,8 @@ router.get('/dashboard', async (req, res) => {
                     { source: { [Op.iLike]: { [Op.any]: adsSources.map(s => `%${s}%`) } } }
                 ]
             };
-            const adsClicks = await WhatsAppClickLog.count({ where: isAdsCondition });
-            const adsClosed = await WhatsAppClickLog.count({ where: { ...isAdsCondition, ...closedCondition } });
+            const adsClicks = await WhatsAppClickLog.count({ where: { ...isAdsCondition, ...dateCondition } });
+            const adsClosed = await WhatsAppClickLog.count({ where: { ...isAdsCondition, ...closedCondition, ...dateCondition } });
             adsEffort = adsClosed > 0 ? (adsClicks / adsClosed).toFixed(1) : 'N/A';
             
             const orgClicks = totalClicks - adsClicks;
@@ -537,9 +543,10 @@ router.get('/dashboard', async (req, res) => {
                 SELECT "psychologistId", COUNT(id) as "closedCount"
                 FROM "WhatsAppClickLogs"
                 WHERE "dealClosed" IN ('yes', 'started') AND "psychologistId" IS NOT NULL
+                AND "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
                 GROUP BY "psychologistId"
                 ORDER BY "closedCount" DESC
-            `, { type: sequelize.QueryTypes.SELECT });
+            `, { replacements: { dateStart: new Date(dateStart + 'T00:00:00.000Z'), dateEnd: new Date(dateEnd + 'T23:59:59.999Z') }, type: sequelize.QueryTypes.SELECT });
 
             if (topPerformersQuery.length > 0) {
                 const top20PercentCount = Math.max(1, Math.ceil(topPerformersQuery.length * 0.20));
@@ -560,8 +567,9 @@ router.get('/dashboard', async (req, res) => {
                 FROM "Psychologists" p
                 JOIN "WhatsAppClickLogs" w ON p.id = w."psychologistId"
                 WHERE w."dealClosed" IN ('yes', 'started')
+                AND w."createdAt" >= :dateStart AND w."createdAt" <= :dateEnd
                 GROUP BY p.id, p."createdAt"
-            `, { type: sequelize.QueryTypes.SELECT });
+            `, { replacements: { dateStart: new Date(dateStart + 'T00:00:00.000Z'), dateEnd: new Date(dateEnd + 'T23:59:59.999Z') }, type: sequelize.QueryTypes.SELECT });
 
             if (ttvQuery.length > 0) {
                 const validTtvs = ttvQuery.filter(q => q.days_to_value >= 0).map(q => parseFloat(q.days_to_value));
