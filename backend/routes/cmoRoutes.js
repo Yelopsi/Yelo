@@ -512,11 +512,13 @@ router.get('/dashboard', async (req, res) => {
         let globalEffort = 'N/A', adsEffort = 'N/A', orgEffort = 'N/A', topTicket = 'N/A', ttvAvg = 'N/A';
         
         try {
+            const closedCondition = { dealClosed: { [Op.in]: ['yes', 'started'] } };
+
             const totalClicks = await WhatsAppClickLog.count();
-            const totalClosed = await WhatsAppClickLog.count({ where: { dealClosed: 'yes' } });
+            const totalClosed = await WhatsAppClickLog.count({ where: closedCondition });
             globalEffort = totalClosed > 0 ? (totalClicks / totalClosed).toFixed(1) : 'N/A';
 
-            const adsSources = ['google', 'meta', 'facebook', 'instagram', 'ig'];
+            const adsSources = ['google', 'meta', 'facebook', 'instagram', 'ig', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc'];
             const isAdsCondition = {
                 [Op.or]: [
                     { utmSource: { [Op.iLike]: { [Op.any]: adsSources.map(s => `%${s}%`) } } },
@@ -524,29 +526,31 @@ router.get('/dashboard', async (req, res) => {
                 ]
             };
             const adsClicks = await WhatsAppClickLog.count({ where: isAdsCondition });
-            const adsClosed = await WhatsAppClickLog.count({ where: { ...isAdsCondition, dealClosed: 'yes' } });
+            const adsClosed = await WhatsAppClickLog.count({ where: { ...isAdsCondition, ...closedCondition } });
             adsEffort = adsClosed > 0 ? (adsClicks / adsClosed).toFixed(1) : 'N/A';
             
             const orgClicks = totalClicks - adsClicks;
             const orgClosed = totalClosed - adsClosed;
             orgEffort = orgClosed > 0 ? (orgClicks / orgClosed).toFixed(1) : 'N/A';
 
-            const topPerformersQuery = await WhatsAppClickLog.findAll({
-                attributes: ['psychologistId', [sequelize.fn('COUNT', sequelize.col('id')), 'closedCount']],
-                where: { dealClosed: 'yes', psychologistId: { [Op.not]: null } },
-                group: ['psychologistId'],
-                order: [[sequelize.literal('"closedCount"'), 'DESC']],
-                raw: true
-            });
+            const topPerformersQuery = await sequelize.query(`
+                SELECT "psychologistId", COUNT(id) as "closedCount"
+                FROM "WhatsAppClickLogs"
+                WHERE "dealClosed" IN ('yes', 'started') AND "psychologistId" IS NOT NULL
+                GROUP BY "psychologistId"
+                ORDER BY "closedCount" DESC
+            `, { type: sequelize.QueryTypes.SELECT });
 
             if (topPerformersQuery.length > 0) {
                 const top20PercentCount = Math.max(1, Math.ceil(topPerformersQuery.length * 0.20));
                 const topPerformersIds = topPerformersQuery.slice(0, top20PercentCount).map(p => p.psychologistId);
-                const topPsychologists = await Psychologist.findAll({
-                    attributes: [[sequelize.fn('AVG', sequelize.col('valor_sessao_numero')), 'avgTicket']],
-                    where: { id: { [Op.in]: topPerformersIds }, valor_sessao_numero: { [Op.gt]: 0, [Op.not]: null } },
-                    raw: true
-                });
+                
+                const topPsychologists = await sequelize.query(`
+                    SELECT AVG(valor_sessao_numero) as "avgTicket"
+                    FROM "Psychologists"
+                    WHERE id IN (:ids) AND valor_sessao_numero > 0 AND valor_sessao_numero IS NOT NULL
+                `, { replacements: { ids: topPerformersIds }, type: sequelize.QueryTypes.SELECT });
+
                 topTicket = topPsychologists[0]?.avgTicket ? parseFloat(topPsychologists[0].avgTicket).toFixed(2) : 'N/A';
             }
 
@@ -555,7 +559,7 @@ router.get('/dashboard', async (req, res) => {
                     EXTRACT(EPOCH FROM (MIN(w."createdAt") - p."createdAt")) / 86400 as days_to_value
                 FROM "Psychologists" p
                 JOIN "WhatsAppClickLogs" w ON p.id = w."psychologistId"
-                WHERE w."dealClosed" = 'yes'
+                WHERE w."dealClosed" IN ('yes', 'started')
                 GROUP BY p.id, p."createdAt"
             `, { type: sequelize.QueryTypes.SELECT });
 
