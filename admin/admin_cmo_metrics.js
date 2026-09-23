@@ -597,7 +597,7 @@ function initGrowthSimulator(data) {
             fetch('/api/cmo/analyze-roi', {
                 method: 'POST',
                 headers: { 
-                    'Authorization': \`Bearer \${token}\`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json' 
                 },
                 body: JSON.stringify({
