@@ -914,15 +914,50 @@ router.post('/simulator-settings', async (req, res) => {
             
             if (reinvestRate !== undefined) settings.cmo_sim_reinvest_rate = parseInt(reinvestRate);
             if (extraCash !== undefined) settings.cmo_sim_extra_cash = parseFloat(extraCash);
-            settings.cmo_sim_curiosity_goal = curiosityGoal ? parseInt(curiosityGoal) : null;
+            settings.cmo_sim_curiosity_goal = curiosityGoal !== undefined && curiosityGoal !== '' ? parseInt(curiosityGoal) : null;
             
             await settings.save();
         }
         
-        res.json({ success: true, message: 'Configurações salvas' });
+        res.json({ success: true, message: 'Configurações salvas', settings });
     } catch (error) {
         console.error('[CMO] Erro ao salvar simulator settings:', error);
-        res.status(500).json({ success: false, error: error.message, stack: error.stack });
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// POST /api/cmo/analyze-roi — Analisa a lucratividade e projeções do Simulador com IA
+router.post('/analyze-roi', async (req, res) => {
+    try {
+        const { mrrAtual, mrr12M, reinvestRate, extraCash, cacAtual, cacPenalizado } = req.body;
+        
+        const { GoogleGenerativeAI } = require("@google/generative-ai");
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+
+        const prompt = `Você é um CMO/CFO experiente em negócios SaaS B2B2C. Analise os dados do simulador de crescimento de 12 meses da nossa plataforma e forneça um diagnóstico sobre a lucratividade e o risco da estratégia, além de uma recomendação clara e agressiva.
+
+DADOS DO MOTOR (Projeção 12 Meses):
+- MRR Atual: R$ ${mrrAtual} | MRR Projetado 12M: R$ ${mrr12M}
+- Reinvestimento da Receita: ${reinvestRate}% | Aporte Extra Mensal: R$ ${extraCash}
+- CAC B2B Atual: R$ ${cacAtual} | CAC Projetado c/ Degradação de Escala: R$ ${cacPenalizado}
+
+INSTRUÇÕES RESTRITAS:
+Retorne APENAS um bloco HTML com a seguinte estrutura (SEM MARKDOWN DE CÓDIGO NO INÍCIO OU FIM):
+<br>🔍 <strong>Diagnóstico:</strong> [Seu diagnóstico afiado de 2 frases sobre os dados (cite números se relevante)]<br><br>💡 <strong>Ação Recomendada:</strong> [Sua recomendação executiva focada em ROI, risco de queima de caixa ou potencial de escala]`;
+
+        const result = await model.generateContent(prompt);
+        let analysis = result.response.text().trim();
+        
+        if (analysis.startsWith('```html')) {
+            analysis = analysis.replace(/^```html/, '').replace(/```$/, '').trim();
+        }
+
+        res.json({ success: true, html: analysis });
+    } catch (error) {
+        console.error('[CMO] Erro ao analisar ROI com IA:', error);
+        // Fallback gracefull
+        res.json({ success: true, html: `<br>🔍 <strong>Diagnóstico (Fallback):</strong> Não foi possível acessar a IA no momento.<br><br>💡 <strong>Ação Recomendada:</strong> Monitore o custo marginal de aquisição caso aumente o investimento.` });
     }
 });
 

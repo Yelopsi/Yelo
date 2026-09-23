@@ -582,20 +582,43 @@ function initGrowthSimulator(data) {
                 googleAction = `<br>🔍 <strong>Diagnóstico:</strong> Para manter a média histórica de <strong>${targetContactsPerPsi} cliques mensais</strong> por psicólogo na sua nova base projetada (${Math.floor(baseAt12)} assinantes), o custo associado é de <strong>${formatBRL(targetGoogleDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> Ajuste seu orçamento diário de Google Ads caso deseje manter o mesmo nível de tráfego por paciente (sem falsas garantias de redução de churn).`;
             }
 
-            let roiAction = '';
-            if (extraCash > 0) {
-                roiAction = `<br>🔍 <strong>Diagnóstico:</strong> Você configurou um aporte extra de <strong>${formatBRL(extraCash)}/mês</strong> do próprio bolso.<br><br>💡 <strong>Ação Recomendada:</strong> Certifique-se de que esse caixa está provisionado e disponível para cobrir os anúncios.`;
-            } else {
-                roiAction = `<br>🔍 <strong>Diagnóstico:</strong> Você está operando 100% Bootstrap.<br><br>💡 <strong>Ação Recomendada:</strong> Operação autossustentável. Todo o investimento em anúncios sairá do próprio faturamento gerado.`;
-            }
+            let roiAction = `<br>⏳ <strong>Diagnóstico:</strong> Analisando lucratividade com IA...<br><br>💡 <strong>Ação Recomendada:</strong> Processando motor de crescimento...`;
 
             actionList.innerHTML = `
                 <li><strong>Meta Ads (Aquisição):</strong> ${metaAction}</li>
                 <br>
                 <li><strong>Google Ads (Retenção):</strong> ${googleAction}</li>
                 <br>
-                <li><strong>Lucratividade (ROI Geral):</strong> ${roiAction}</li>
+                <li id="sim-roi-li"><strong>Lucratividade (ROI Geral):</strong> ${roiAction}</li>
             `;
+
+            // Chama a IA para diagnosticar o ROI
+            const token = localStorage.getItem('token');
+            fetch('/api/cmo/analyze-roi', {
+                method: 'POST',
+                headers: { 
+                    'Authorization': \`Bearer \${token}\`,
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify({
+                    mrrAtual: formatBRL(basePagantes * arpu).replace('R$', '').trim(),
+                    mrr12M: formatBRL(mrrAt12).replace('R$', '').trim(),
+                    reinvestRate: reinvestRate,
+                    extraCash: extraCash,
+                    cacAtual: formatBRL(cacBase).replace('R$', '').trim(),
+                    cacPenalizado: formatBRL(trueCac1).replace('R$', '').trim()
+                })
+            })
+            .then(res => res.json())
+            .then(aiData => {
+                if (aiData.success && aiData.html) {
+                    const li = document.getElementById('sim-roi-li');
+                    if (li) {
+                        li.innerHTML = `<strong>Lucratividade (ROI Geral):</strong> ${aiData.html}`;
+                    }
+                }
+            })
+            .catch(err => console.error('[CMO] Erro ao analisar ROI com IA:', err));
         }
 
         // Real Data tracking (If a start date is set)
