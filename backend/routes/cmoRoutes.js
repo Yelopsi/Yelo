@@ -560,7 +560,7 @@ router.get('/dashboard', async (req, res) => {
             `, { type: sequelize.QueryTypes.SELECT });
 
             if (ttvQuery.length > 0) {
-                const validTtvs = ttvQuery.filter(q => q.days_to_value >= 0).map(q => q.days_to_value);
+                const validTtvs = ttvQuery.filter(q => q.days_to_value >= 0).map(q => parseFloat(q.days_to_value));
                 if (validTtvs.length > 0) {
                     ttvAvg = (validTtvs.reduce((sum, val) => sum + val, 0) / validTtvs.length).toFixed(1);
                 }
