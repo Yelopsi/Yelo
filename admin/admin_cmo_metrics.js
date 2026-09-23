@@ -101,6 +101,14 @@ function renderCMOMetrics(data) {
         document.getElementById('cmo-google-deals').textContent = (data.platform.b2c?.total_deals || 0).toLocaleString('pt-BR');
         document.getElementById('cmo-google-cpl').textContent = formatCurrency(data.ads?.google?.cpl || 0);
 
+        // Eficiência Comercial B2C KPIs
+        if (data.efficiency) {
+            document.getElementById('cmo-global-effort').textContent = data.efficiency.globalEffort || '0';
+            document.getElementById('cmo-channel-efficiency').textContent = `Ads: ${data.efficiency.adsEffort || '0'} | Org: ${data.efficiency.orgEffort || '0'}`;
+            document.getElementById('cmo-top-ticket').textContent = data.efficiency.topTicket ? `R$ ${data.efficiency.topTicket}` : 'R$ 0,00';
+            document.getElementById('cmo-ttv').textContent = data.efficiency.ttvAvg || '0';
+        }
+
         // Cards de Transparência (seção inferior)
         const setDbgHist = (id, histVal, monthVal) => { 
             const el = document.getElementById(id); 

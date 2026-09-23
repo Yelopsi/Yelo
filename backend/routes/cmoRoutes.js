@@ -505,8 +505,79 @@ router.get('/dashboard', async (req, res) => {
 
         globalInsight += `\n⏳ **Regra de Ouro:** Após aplicar qualquer mudança, aguarde **7 dias corridos** sem mexer nas campanhas para permitir o aprendizado do algoritmo da IA (Meta/Google).`;
 
+        // --- MÉTRICAS DE EFICIÊNCIA COMERCIAL (NOVO) ---
+        const { Op } = require('sequelize');
+        const { WhatsAppClickLog, Psychologist } = db;
+        
+        let globalEffort = 0, adsEffort = 0, orgEffort = 0, topTicket = 0, ttvAvg = 0;
+        
+        try {
+            const totalClicks = await WhatsAppClickLog.count();
+            const totalClosed = await WhatsAppClickLog.count({ where: { dealClosed: 'yes' } });
+            globalEffort = totalClosed > 0 ? (totalClicks / totalClosed).toFixed(1) : 0;
+
+            const adsSources = ['google', 'meta', 'facebook', 'instagram', 'ig'];
+            const isAdsCondition = {
+                [Op.or]: [
+                    { utmSource: { [Op.iLike]: { [Op.any]: adsSources.map(s => `%${s}%`) } } },
+                    { source: { [Op.iLike]: { [Op.any]: adsSources.map(s => `%${s}%`) } } }
+                ]
+            };
+            const adsClicks = await WhatsAppClickLog.count({ where: isAdsCondition });
+            const adsClosed = await WhatsAppClickLog.count({ where: { ...isAdsCondition, dealClosed: 'yes' } });
+            adsEffort = adsClosed > 0 ? (adsClicks / adsClosed).toFixed(1) : 0;
+            
+            const orgClicks = totalClicks - adsClicks;
+            const orgClosed = totalClosed - adsClosed;
+            orgEffort = orgClosed > 0 ? (orgClicks / orgClosed).toFixed(1) : 0;
+
+            const topPerformersQuery = await WhatsAppClickLog.findAll({
+                attributes: ['psychologistId', [sequelize.fn('COUNT', sequelize.col('id')), 'closedCount']],
+                where: { dealClosed: 'yes', psychologistId: { [Op.not]: null } },
+                group: ['psychologistId'],
+                order: [[sequelize.literal('"closedCount"'), 'DESC']],
+                raw: true
+            });
+
+            if (topPerformersQuery.length > 0) {
+                const top20PercentCount = Math.max(1, Math.ceil(topPerformersQuery.length * 0.20));
+                const topPerformersIds = topPerformersQuery.slice(0, top20PercentCount).map(p => p.psychologistId);
+                const topPsychologists = await Psychologist.findAll({
+                    attributes: [[sequelize.fn('AVG', sequelize.col('valor_sessao_numero')), 'avgTicket']],
+                    where: { id: { [Op.in]: topPerformersIds }, valor_sessao_numero: { [Op.gt]: 0, [Op.not]: null } },
+                    raw: true
+                });
+                topTicket = topPsychologists[0]?.avgTicket ? parseFloat(topPsychologists[0].avgTicket).toFixed(2) : 0;
+            }
+
+            const ttvQuery = await sequelize.query(`
+                SELECT 
+                    EXTRACT(EPOCH FROM (MIN(w."createdAt") - p."createdAt")) / 86400 as days_to_value
+                FROM "Psychologists" p
+                JOIN "WhatsAppClickLogs" w ON p.id = w."psychologistId"
+                WHERE w."dealClosed" = 'yes'
+                GROUP BY p.id, p."createdAt"
+            `, { type: sequelize.QueryTypes.SELECT });
+
+            if (ttvQuery.length > 0) {
+                const validTtvs = ttvQuery.filter(q => q.days_to_value >= 0).map(q => q.days_to_value);
+                if (validTtvs.length > 0) {
+                    ttvAvg = (validTtvs.reduce((sum, val) => sum + val, 0) / validTtvs.length).toFixed(1);
+                }
+            }
+        } catch (effError) {
+            console.error('[CMO Metrics] Erro calculando Eficiência Comercial:', effError);
+        }
+
         res.json({
             success: true,
+            efficiency: {
+                globalEffort,
+                adsEffort,
+                orgEffort,
+                topTicket,
+                ttvAvg
+            },
             period: { dateStart, dateEnd, prevDateStart, prevDateEnd },
             globalInsight: globalInsight,
             ads: {
