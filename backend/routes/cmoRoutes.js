@@ -929,22 +929,24 @@ router.post('/simulator-settings', async (req, res) => {
 // POST /api/cmo/analyze-roi — Analisa a lucratividade e projeções do Simulador com IA
 router.post('/analyze-roi', async (req, res) => {
     try {
-        const { mrrAtual, mrr12M, reinvestRate, extraCash, cacAtual, cacPenalizado } = req.body;
+        const { mrrAtual, mrr12M, reinvestRate, extraCash, cacAtual, cacPenalizado, unspentCash } = req.body;
         
         const { GoogleGenerativeAI } = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
 
-        const prompt = `Você é um CMO/CFO experiente em negócios SaaS B2B2C. Analise os dados do simulador de crescimento de 12 meses da nossa plataforma e forneça um diagnóstico sobre a lucratividade e o risco da estratégia, além de uma recomendação clara e agressiva.
+        const prompt = `Você é um CMO/CFO experiente em negócios SaaS B2B2C. Analise os dados do simulador de crescimento de 12 meses da nossa plataforma e forneça um diagnóstico sobre a lucratividade e o risco da estratégia.
 
 DADOS DO MOTOR (Projeção 12 Meses):
-- MRR Atual: R$ ${mrrAtual} | MRR Projetado 12M: R$ ${mrr12M}
+- MRR Atual: ${mrrAtual} | MRR Projetado 12M: ${mrr12M}
 - Reinvestimento da Receita: ${reinvestRate}% | Aporte Extra Mensal: R$ ${extraCash}
-- CAC B2B Atual: R$ ${cacAtual} | CAC Projetado c/ Degradação de Escala: R$ ${cacPenalizado}
+- CAC B2B Atual: ${cacAtual} | CAC Projetado (Teto Saudável): ${cacPenalizado}
+- Caixa Excedente / Poupado ao Mês: ${unspentCash} (dinheiro que o sistema se recusou a queimar no Meta Ads para não destruir o CAC)
 
 INSTRUÇÕES RESTRITAS:
+Avalie se a estratégia de travar o Meta Ads no Teto Saudável e poupar o "Caixa Excedente" foi inteligente financeiramente, ou se a empresa está poupando dinheiro mas crescendo devagar demais.
 Retorne APENAS um bloco HTML com a seguinte estrutura (SEM MARKDOWN DE CÓDIGO NO INÍCIO OU FIM):
-<br>🔍 <strong>Diagnóstico:</strong> [Seu diagnóstico afiado de 2 frases sobre os dados (cite números se relevante)]<br><br>💡 <strong>Ação Recomendada:</strong> [Sua recomendação executiva focada em ROI, risco de queima de caixa ou potencial de escala]`;
+<br>🔍 <strong>Diagnóstico:</strong> [Seu diagnóstico afiado de 2 frases sobre os dados e a sobra de caixa (cite os valores)]<br><br>💡 <strong>Ação Recomendada:</strong> [Sua recomendação executiva: o que fazer com a sobra de caixa ou aprovação da proteção de capital]`;
 
         const result = await model.generateContent(prompt);
         let analysis = result.response.text().trim();

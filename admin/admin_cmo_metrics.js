@@ -428,9 +428,16 @@ function initGrowthSimulator(data) {
             const baseTrueCac = cacBase + (trialsPerPaidUser * googleCostPerTrial);
             const projectedMetaBudget = availableForAcquisition * (cacBase / baseTrueCac);
             
+            // --- SMART CAP: Limit the Meta budget scaling to max 3.5x the historical average
+            const maxHealthyMetaBudget = histMetaMonthlySpend > 0 ? (histMetaMonthlySpend * 3.5) : 500;
+            let smartMetaBudget = projectedMetaBudget;
+            if (projectedMetaBudget > maxHealthyMetaBudget) {
+                smartMetaBudget = maxHealthyMetaBudget;
+            }
+            
             let fatorDeEscala = 1;
-            if (histMetaMonthlySpend > 0 && projectedMetaBudget > histMetaMonthlySpend) {
-                fatorDeEscala = projectedMetaBudget / histMetaMonthlySpend;
+            if (histMetaMonthlySpend > 0 && smartMetaBudget > histMetaMonthlySpend) {
+                fatorDeEscala = smartMetaBudget / histMetaMonthlySpend;
             }
             
             let cacPenalizado = cacBase;
@@ -440,8 +447,12 @@ function initGrowthSimulator(data) {
             
             const trueCac = cacPenalizado + (trialsPerPaidUser * googleCostPerTrial);
             
+            // We re-calculate how much of the "availableForAcquisition" we actually spend based on the smartMetaBudget limit
+            const smartAcquisitionBudget = smartMetaBudget * (trueCac / cacPenalizado);
+            const actualAcquisitionSpend = Math.min(availableForAcquisition, smartAcquisitionBudget);
+            
             // 5. Compra de novos clientes
-            const newPaidActive = Math.floor(availableForAcquisition / trueCac);
+            const newPaidActive = Math.floor(actualAcquisitionSpend / trueCac);
             const newTrialsBought = Math.floor(newPaidActive * trialsPerPaidUser);
             
             const metaBudget = newPaidActive * cacPenalizado;
@@ -546,9 +557,15 @@ function initGrowthSimulator(data) {
             const baseTrueCac1 = cacBase + (trialsPerPaidUser1 * googleCostPerTrial1);
             const projectedMetaBudget1 = availableForAcquisition1 * (cacBase / baseTrueCac1);
             
+            const maxHealthyMetaBudget1 = histMetaMonthlySpend > 0 ? (histMetaMonthlySpend * 3.5) : 500;
+            let smartMetaBudget1 = projectedMetaBudget1;
+            if (projectedMetaBudget1 > maxHealthyMetaBudget1) {
+                smartMetaBudget1 = maxHealthyMetaBudget1;
+            }
+            
             let fatorDeEscala1 = 1;
-            if (histMetaMonthlySpend > 0 && projectedMetaBudget1 > histMetaMonthlySpend) {
-                fatorDeEscala1 = projectedMetaBudget1 / histMetaMonthlySpend;
+            if (histMetaMonthlySpend > 0 && smartMetaBudget1 > histMetaMonthlySpend) {
+                fatorDeEscala1 = smartMetaBudget1 / histMetaMonthlySpend;
             }
             
             let cacPenalizado1 = cacBase;
@@ -558,28 +575,35 @@ function initGrowthSimulator(data) {
             
             const trueCac1 = cacPenalizado1 + (trialsPerPaidUser1 * googleCostPerTrial1);
             
-            const newPaidActive1 = Math.floor(availableForAcquisition1 / trueCac1);
+            const smartAcquisitionBudget1 = smartMetaBudget1 * (trueCac1 / cacPenalizado1);
+            const actualAcquisitionSpend1 = Math.min(availableForAcquisition1, smartAcquisitionBudget1);
+            
+            const newPaidActive1 = Math.floor(actualAcquisitionSpend1 / trueCac1);
             const newTrialsBought1 = Math.floor(newPaidActive1 * trialsPerPaidUser1);
             
             const metaBudgetM1 = newPaidActive1 * cacPenalizado1;
             const trialsGoogleBudget1 = newTrialsBought1 * googleCostPerTrial1;
             const googleBudgetM1 = baseGoogleBudget1 + trialsGoogleBudget1;
             
+            const unspentCash = Math.max(0, availableForAcquisition1 - (metaBudgetM1 + trialsGoogleBudget1));
+            
             const targetMetaDaily = metaBudgetM1 / 30;
             const targetGoogleDaily = googleBudgetM1 / 30;
             
             let metaAction = '';
-            if (targetMetaDaily <= currentMetaDailyBudget) {
-                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua taxa de reinvestimento, o orçamento máximo saudável para este mês é de <strong>${formatBRL(targetMetaDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para otimizar seus custos e respeitar o motor de crescimento.`;
+            if (unspentCash > 100) { // Margem de tolerância
+                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> Com ${reinvestRate}% de reinvestimento + R$ ${extraCash} de aporte, você tem <strong>${formatBRL(availableForAcquisition1)}</strong> livres. Injetar tudo isso no Meta de uma vez destruiria seu CAC.<br><br>💡 <strong>Ação Recomendada (Crescimento Saudável):</strong> Aumente o Meta Ads para no máximo <strong>${formatBRL(targetMetaDaily)}/dia</strong>. O excedente (<strong>${formatBRL(unspentCash)}/mês</strong>) deve ser poupado como caixa da empresa ou investido em expansão B2B orgânica (SEO/Parcerias).`;
+            } else if (targetMetaDaily <= currentMetaDailyBudget) {
+                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua taxa de reinvestimento, o orçamento máximo para este mês é de <strong>${formatBRL(targetMetaDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para otimizar seus custos e respeitar o fluxo de caixa.`;
             } else {
-                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua taxa de reinvestimento, você tem caixa para subir até <strong>${formatBRL(targetMetaDaily)}/dia</strong> este mês.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE</strong> a sua configuração diária no Meta até bater o teto do seu orçamento deste mês.`;
+                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua taxa de reinvestimento, você tem caixa para subir com segurança até <strong>${formatBRL(targetMetaDaily)}/dia</strong> este mês.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE</strong> a sua configuração diária no Meta até bater o teto do seu orçamento saudável.`;
             }
 
             let googleAction = '';
             if (targetGoogleDaily === 0) {
                 googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O tráfego orgânico (SEO) já atende a demanda histórica média (${targetContactsPerPsi} cliques/psi) para toda a sua base atual.<br><br>💡 <strong>Ação Recomendada:</strong> Você pode pausar o Google Ads temporariamente.`;
             } else {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> Para manter a média histórica de <strong>${targetContactsPerPsi} cliques mensais</strong> por psicólogo na sua nova base projetada (${Math.floor(baseAt12)} assinantes), o custo associado é de <strong>${formatBRL(targetGoogleDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> Ajuste seu orçamento diário de Google Ads caso deseje manter o mesmo nível de tráfego por paciente (sem falsas garantias de redução de churn).`;
+                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> Para manter a média histórica de <strong>${targetContactsPerPsi} cliques mensais</strong> por psicólogo na base de assinantes, o custo associado é de <strong>${formatBRL(targetGoogleDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> Ajuste seu orçamento diário de Google Ads caso deseje manter o mesmo nível de tráfego por paciente na plataforma.`;
             }
 
             let roiAction = `<br>⏳ <strong>Diagnóstico:</strong> Analisando lucratividade com IA...<br><br>💡 <strong>Ação Recomendada:</strong> Processando motor de crescimento...`;
@@ -601,12 +625,13 @@ function initGrowthSimulator(data) {
                     'Content-Type': 'application/json' 
                 },
                 body: JSON.stringify({
-                    mrrAtual: formatBRL(basePagantes * arpu).replace('R$', '').trim(),
-                    mrr12M: formatBRL(mrrAt12).replace('R$', '').trim(),
+                    mrrAtual: formatBRL(currentMrr),
+                    mrr12M: formatBRL(mrrAt12),
                     reinvestRate: reinvestRate,
                     extraCash: extraCash,
-                    cacAtual: formatBRL(cacBase).replace('R$', '').trim(),
-                    cacPenalizado: formatBRL(trueCac1).replace('R$', '').trim()
+                    cacAtual: formatBRL(cacBase),
+                    cacPenalizado: formatBRL(cacPenalizado1),
+                    unspentCash: formatBRL(unspentCash)
                 })
             })
             .then(res => res.json())
