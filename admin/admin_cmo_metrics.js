@@ -103,10 +103,10 @@ function renderCMOMetrics(data) {
 
         // Eficiência Comercial B2C KPIs
         if (data.efficiency) {
-            document.getElementById('cmo-global-effort').textContent = data.efficiency.globalEffort || '0';
-            document.getElementById('cmo-channel-efficiency').textContent = `Ads: ${data.efficiency.adsEffort || '0'} | Org: ${data.efficiency.orgEffort || '0'}`;
-            document.getElementById('cmo-top-ticket').textContent = data.efficiency.topTicket ? `R$ ${data.efficiency.topTicket}` : 'R$ 0,00';
-            document.getElementById('cmo-ttv').textContent = data.efficiency.ttvAvg || '0';
+            document.getElementById('cmo-global-effort').textContent = data.efficiency.globalEffort || 'N/A';
+            document.getElementById('cmo-channel-efficiency').textContent = `Ads: ${data.efficiency.adsEffort || 'N/A'} | Org: ${data.efficiency.orgEffort || 'N/A'}`;
+            document.getElementById('cmo-top-ticket').textContent = (data.efficiency.topTicket === 'N/A' || !data.efficiency.topTicket) ? 'N/A' : `R$ ${data.efficiency.topTicket}`;
+            document.getElementById('cmo-ttv').textContent = data.efficiency.ttvAvg || 'N/A';
         }
 
         // Cards de Transparência (seção inferior)

@@ -509,12 +509,12 @@ router.get('/dashboard', async (req, res) => {
         const { Op } = require('sequelize');
         const { WhatsAppClickLog, Psychologist } = db;
         
-        let globalEffort = 0, adsEffort = 0, orgEffort = 0, topTicket = 0, ttvAvg = 0;
+        let globalEffort = 'N/A', adsEffort = 'N/A', orgEffort = 'N/A', topTicket = 'N/A', ttvAvg = 'N/A';
         
         try {
             const totalClicks = await WhatsAppClickLog.count();
             const totalClosed = await WhatsAppClickLog.count({ where: { dealClosed: 'yes' } });
-            globalEffort = totalClosed > 0 ? (totalClicks / totalClosed).toFixed(1) : 0;
+            globalEffort = totalClosed > 0 ? (totalClicks / totalClosed).toFixed(1) : 'N/A';
 
             const adsSources = ['google', 'meta', 'facebook', 'instagram', 'ig'];
             const isAdsCondition = {
@@ -525,11 +525,11 @@ router.get('/dashboard', async (req, res) => {
             };
             const adsClicks = await WhatsAppClickLog.count({ where: isAdsCondition });
             const adsClosed = await WhatsAppClickLog.count({ where: { ...isAdsCondition, dealClosed: 'yes' } });
-            adsEffort = adsClosed > 0 ? (adsClicks / adsClosed).toFixed(1) : 0;
+            adsEffort = adsClosed > 0 ? (adsClicks / adsClosed).toFixed(1) : 'N/A';
             
             const orgClicks = totalClicks - adsClicks;
             const orgClosed = totalClosed - adsClosed;
-            orgEffort = orgClosed > 0 ? (orgClicks / orgClosed).toFixed(1) : 0;
+            orgEffort = orgClosed > 0 ? (orgClicks / orgClosed).toFixed(1) : 'N/A';
 
             const topPerformersQuery = await WhatsAppClickLog.findAll({
                 attributes: ['psychologistId', [sequelize.fn('COUNT', sequelize.col('id')), 'closedCount']],
@@ -547,7 +547,7 @@ router.get('/dashboard', async (req, res) => {
                     where: { id: { [Op.in]: topPerformersIds }, valor_sessao_numero: { [Op.gt]: 0, [Op.not]: null } },
                     raw: true
                 });
-                topTicket = topPsychologists[0]?.avgTicket ? parseFloat(topPsychologists[0].avgTicket).toFixed(2) : 0;
+                topTicket = topPsychologists[0]?.avgTicket ? parseFloat(topPsychologists[0].avgTicket).toFixed(2) : 'N/A';
             }
 
             const ttvQuery = await sequelize.query(`
