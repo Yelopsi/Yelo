@@ -406,7 +406,7 @@ function initGrowthSimulator(data) {
             const googleMaintenanceCost = requiredGoogleContacts * cplGoogle;
             
             const contributionAfterGoogle = Math.max(0, mrr - googleMaintenanceCost);
-            const growthFund = (contributionAfterGoogle * (reinvestRate / 100)) + (m === 1 ? extraCash : 0) + rolloverCash;
+            const growthFund = (contributionAfterGoogle * (reinvestRate / 100)) + extraCash + rolloverCash;
 
             const metaHardCap = histMetaMonthlySpendAvg * 3.5;
             let projectedMetaBudget = growthFund * 0.80; // 80% Meta / 20% Google Trials budget assumption
@@ -480,20 +480,20 @@ function initGrowthSimulator(data) {
         // Subtitle do card-2 (parágrafo filho)
         const card2Sub = document.querySelector('#sim-card-2 p:last-child');
         if (card2Sub) card2Sub.textContent =
-            `+${newSubs} novos psis. Juntos atenderão ~${totalPatientsServed.toLocaleString('pt-BR')} pacientes/mês.`;
+            `+${newSubs} assinantes líquidos na base em 12 meses. Juntos receberão ~${totalPatientsServed.toLocaleString('pt-BR')} contatos de pacientes/mês.`;
         
-        const metaDailyAt12 = metaBudgetAt12 / 30;
-        document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(metaBudgetAt12);
+        const metaDailyM1 = actionMetaSpend / 30;
+        document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(actionMetaSpend);
         const card3Sub = document.querySelector('#sim-card-3 p:last-child');
         if (card3Sub) card3Sub.textContent =
-            `≈ ${formatBRL(metaDailyAt12)}/dia disponíveis para comprar novos trials.`;
+            `≈ ${formatBRL(metaDailyM1)}/dia recomendados para Mês 1.`;
         
         const googlePctOfRevenue = mrrAt12 > 0 ? ((googleBudgetAt12 / mrrAt12) * 100).toFixed(0) : 0;
         const googleDailyAt12 = googleBudgetAt12 / 30;
         document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(googleBudgetAt12);
         const card4Sub = document.querySelector('#sim-card-4 p:last-child');
         if (card4Sub) card4Sub.textContent =
-            `≈ ${formatBRL(googleDailyAt12)}/dia · limiar: ${targetContactsPerPsi} cliques/psi (${contactsThresholdSource}).`;
+            `Custo mensal projetado p/ Mês 12 (≈ ${formatBRL(googleDailyAt12)}/dia).`;
         
         const warningEl = document.getElementById('sim-res-warning');
         warningEl.style.display = 'block';
@@ -532,18 +532,18 @@ function initGrowthSimulator(data) {
             
             let metaAction = '';
             if (unspentCash > 100) { // Margem de tolerância
-                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu Fundo de Aquisição atual (após separar o custo de Retenção no Google) é de <strong>${formatBRL(availableForAcquisition1)}</strong>. Tentar despejar todo esse valor de uma vez no Meta Ads forçaria a máquina e faria seu Custo de Aquisição (CAC) explodir.<br><br>💡 <strong>Ação Recomendada (Escala Segura):</strong> Aumente o Meta Ads para no máximo <strong>${formatBRL(targetMetaDaily)}/dia</strong> para não corromper o algoritmo. Com isso, após pagar a captação de pacientes para os novos trials no Google, você ainda preservará <strong>${formatBRL(unspentCash)}/mês</strong> em caixa limpo. Use essa sobra para testar canais alternativos (Parcerias, Growth, SEO) em vez de inflacionar o Meta.`;
+                metaAction = `<br>🔍 <strong>Fato Calculado:</strong> O Fundo de Aquisição atual (após separar a Retenção no Google) é de <strong>${formatBRL(availableForAcquisition1)}</strong>. Devido ao teto de escala saudável do Meta Ads, o motor limitou o orçamento diário.<br><br>💡 <strong>Sugestão Estratégica:</strong> Ajuste o Meta Ads para <strong>${formatBRL(targetMetaDaily)}/dia</strong>. O caixa excedente de <strong>${formatBRL(unspentCash)}/mês</strong> (Rollover) será preservado.`;
             } else if (targetMetaDaily <= currentMetaDailyBudget) {
-                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua política de reinvestimento, o teto financeiro para este mês é de apenas <strong>${formatBRL(targetMetaDaily)}/dia</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>DIMINUA</strong> sua configuração diária no Meta agora mesmo para estancar a sangria e respeitar o seu fluxo de caixa.`;
+                metaAction = `<br>🔍 <strong>Fato Calculado:</strong> O orçamento configurado no Meta (<strong>${formatBRL(currentMetaDailyBudget)}/dia</strong>) é maior que o teto matemático do reinvestimento (<strong>${formatBRL(targetMetaDaily)}/dia</strong>).<br><br>💡 <strong>Sugestão Estratégica:</strong> <strong>Reduza</strong> sua configuração diária no Meta para alinhar com o fluxo de caixa gerado.`;
             } else {
-                metaAction = `<br>🔍 <strong>Diagnóstico:</strong> O seu orçamento diário configurado no Meta hoje é de <strong>${formatBRL(currentMetaDailyBudget)}</strong>. Pela sua política de reinvestimento, você tem caixa para subir com segurança até <strong>${formatBRL(targetMetaDaily)}/dia</strong> este mês.<br><br>💡 <strong>Ação Recomendada:</strong> <strong>AUMENTE</strong> a configuração diária no Meta Ads até bater este teto.`;
+                metaAction = `<br>🔍 <strong>Fato Calculado:</strong> O orçamento configurado no Meta (<strong>${formatBRL(currentMetaDailyBudget)}/dia</strong>) está abaixo do teto matemático do reinvestimento.<br><br>💡 <strong>Sugestão Estratégica:</strong> Você tem caixa para <strong>aumentar</strong> o Meta Ads até <strong>${formatBRL(targetMetaDaily)}/dia</strong> neste mês.`;
             }
 
             let googleAction = '';
             if (targetGoogleDaily === 0) {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O tráfego orgânico (SEO) já atende a demanda histórica média (${targetContactsPerPsi} cliques/psi) para toda a sua base atual de assinantes.<br><br>💡 <strong>Ação Recomendada:</strong> Você pode pausar o Google Ads temporariamente.`;
+                googleAction = `<br>🔍 <strong>Fato Calculado:</strong> O tráfego orgânico (SEO) já atende a demanda histórica média (${targetContactsPerPsi} contatos/psi) para toda a sua base atual de assinantes.<br><br>💡 <strong>Sugestão Estratégica:</strong> Você pode pausar o Google Ads temporariamente.`;
             } else {
-                googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O Google Ads na Yelo sustenta tanto a <strong>Retenção</strong> dos assinantes atuais quanto a captação de pacientes para os <strong>Novos Trials</strong>.<br><br>💡 <strong>Ação Recomendada:</strong> Ajuste o orçamento do Google para <strong>${formatBRL(targetGoogleDaily)}/dia</strong>. Sendo aprox. <strong>${formatBRL(baseDaily)}/dia</strong> apenas para manter a base atual recebendo pacientes (reduzindo churn), e <strong>${formatBRL(trialsDaily)}/dia</strong> para esquentar os novos profissionais em período de testes.`;
+                googleAction = `<br>🔍 <strong>Fato Calculado:</strong> O Google Ads na Yelo sustenta tanto a <strong>Retenção</strong> dos assinantes atuais quanto a captação de contatos para os <strong>Novos Trials</strong>.<br><br>💡 <strong>Sugestão Estratégica:</strong> Ajuste o orçamento do Google para <strong>${formatBRL(targetGoogleDaily)}/dia</strong>. Sendo aprox. <strong>${formatBRL(baseDaily)}/dia</strong> apenas para reter a base atual, e <strong>${formatBRL(trialsDaily)}/dia</strong> para os novos profissionais em período de testes.`;
             }
 
             let roiAction = `<br>⏳ <strong>Diagnóstico:</strong> Analisando lucratividade com IA...<br><br>💡 <strong>Ação Recomendada:</strong> Processando motor de crescimento...`;

@@ -1002,9 +1002,11 @@ DADOS DO MOTOR (Projeção 12 Meses):
 - Caixa Excedente / Poupado ao Mês: ${unspentCash} (dinheiro que o sistema se recusou a queimar no Meta Ads para não destruir o CAC)
 
 INSTRUÇÕES RESTRITAS:
-Avalie se a estratégia de travar o Meta Ads no Teto Saudável e poupar o "Caixa Excedente" foi inteligente financeiramente, ou se a empresa está poupando dinheiro mas crescendo devagar demais.
+Avalie a saúde financeira da estratégia, baseando-se ESTRITAMENTE na matemática provada.
+NÃO use opiniões subjetivas como "ineficiência de escala", "perdendo momentum de mercado" ou "validar PMF".
+Separe rigidamente: FATO CALCULADO (matemático real) e SUGESTÃO ESTRATÉGICA (apenas se óbvia baseada nos números).
 Retorne APENAS um bloco HTML com a seguinte estrutura (SEM MARKDOWN DE CÓDIGO NO INÍCIO OU FIM):
-<br>🔍 <strong>Diagnóstico:</strong> [Seu diagnóstico afiado de 2 frases sobre os dados e a sobra de caixa (cite os valores)]<br><br>💡 <strong>Ação Recomendada:</strong> [Sua recomendação executiva: o que fazer com a sobra de caixa ou aprovação da proteção de capital]`;
+<br>🔍 <strong>Fato Calculado:</strong> [Leitura objetiva da sobra de caixa (cite os valores)]<br><br>💡 <strong>Sugestão Estratégica:</strong> [Alocação lógica do caixa excedente sem extrapolar contexto]`;
 
         const result = await model.generateContent(prompt);
         let analysis = result.response.text().trim();
