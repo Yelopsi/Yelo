@@ -106,7 +106,14 @@ function renderCMOMetrics(data) {
             document.getElementById('cmo-global-effort').textContent = data.efficiency.globalEffort || 'N/A';
             document.getElementById('cmo-channel-efficiency').textContent = `Ads: ${data.efficiency.adsEffort || 'N/A'} | Org: ${data.efficiency.orgEffort || 'N/A'}`;
             document.getElementById('cmo-top-ticket').textContent = (data.efficiency.topTicket === 'N/A' || !data.efficiency.topTicket) ? 'N/A' : `R$ ${data.efficiency.topTicket}`;
-            document.getElementById('cmo-ttv').textContent = data.efficiency.ttvAvg || 'N/A';
+            if (data.efficiency.ttfcData) {
+                document.getElementById('cmo-ttfc-median').textContent = data.efficiency.ttfcData.median !== 'N/A' ? `${data.efficiency.ttfcData.median} d` : 'N/A';
+                document.getElementById('cmo-ttfc-sub').textContent = `Média: ${data.efficiency.ttfcData.mean} dias · amostra: ${data.efficiency.ttfcData.sample} profissionais`;
+            }
+            if (data.efficiency.ttvData) {
+                document.getElementById('cmo-ttv-median').textContent = data.efficiency.ttvData.median !== 'N/A' ? `${data.efficiency.ttvData.median} d` : 'N/A';
+                document.getElementById('cmo-ttv-sub').textContent = `Média: ${data.efficiency.ttvData.mean} dias · amostra: ${data.efficiency.ttvData.sample} profissionais (PROXY)`;
+            }
         }
 
         // Cards de Transparência (seção inferior)
