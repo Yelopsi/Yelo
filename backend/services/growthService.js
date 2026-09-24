@@ -228,6 +228,7 @@ class GrowthService {
             trialConversionRate,
             totalContatos,
             pagantesComDemandaCount,
+            pagantesSemDemandaCount,
             pctDemanda,
             periodDays
         };

@@ -1028,7 +1028,7 @@ router.post('/generate-action-plan', async (req, res) => {
         
         const { GoogleGenerativeAI } = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
         const prompt = `Você é o Diretor de Crescimento (CMO) e Diretor Financeiro (CFO) da Yelo (Plataforma SaaS B2B2C para Psicólogos).
 Analise os dados do Motor de Crescimento e produza o "Seu Plano de Ação" para o administrador da plataforma.
@@ -1071,7 +1071,13 @@ Retorne APENAS E ESTRITAMENTE o código HTML das 3 tags <li> (sem tag <ul>, sem 
         res.json({ success: true, html: analysis });
     } catch (error) {
         console.error('[CMO] Erro ao analisar ROI com IA:', error);
-        res.json({ success: false, error: 'Erro ao chamar IA' });
+        
+        const fallbackHTML = `
+<li><strong>Meta Ads (Aquisição):</strong> <br>🔍 <strong>Fato Calculado:</strong> Sistema de IA temporariamente indisponível (Erro 503 no provedor). <br><br>💡 <strong>Sugestão Estratégica:</strong> Analise as métricas no topo desta página. Se o CAC estiver abaixo do teto saudável, considere aumentar gradativamente.</li>
+<br>
+<li><strong>Google Ads (Google vs Meta Trials):</strong> <br>🔍 <strong>Fato Calculado:</strong> Sistema de IA temporariamente indisponível. <br><br>💡 <strong>Sugestão Estratégica:</strong> Verifique o volume de Leads (B2C) travados na coluna de pendentes do funil antes de escalar o tráfego.</li>
+`;
+        res.json({ success: true, html: fallbackHTML });
     }
 });
 
