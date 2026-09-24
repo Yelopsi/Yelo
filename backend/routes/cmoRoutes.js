@@ -727,7 +727,7 @@ router.get('/dashboard', async (req, res) => {
             campaigns: { meta: metaCampaigns, google: googleCampaigns },
             
             historical: {
-                meta: { spend: metaSpendHistorical.spend, monthly_spend_avg: histMetaMonthlySpendAvg, cac: histMetaCac, paybackMonths: histMetaPaybackMonths, churn_rate: histGlobalChurnRate, trial_conversion_rate: histConversionRate, state: metaState, stateDate: metaStateDate },
+                meta: { spend: metaSpendHistorical.spend, monthly_spend_avg: histMetaMonthlySpendAvg, cac: histMetaCac, paybackMonths: histMetaPaybackMonths, churn_rate: histGlobalChurnRate, trial_conversion_rate: histConversionRate, state: null, stateDate: null },
 
                 google: { spend: actualGoogleSpendHistorical, cpl: histGoogleCpl },
                 platform: {
