@@ -1028,7 +1028,7 @@ router.post('/generate-action-plan', async (req, res) => {
         
         const { GoogleGenerativeAI } = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `Você é o Diretor de Crescimento (CMO) e Diretor Financeiro (CFO) da Yelo (Plataforma SaaS B2B2C para Psicólogos).
 Analise os dados do Motor de Crescimento e produza o "Seu Plano de Ação" para o administrador da plataforma.

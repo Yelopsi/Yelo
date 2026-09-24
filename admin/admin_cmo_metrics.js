@@ -871,6 +871,7 @@ initCMOMonthSelector();
 loadCMOMetrics();
 
 async function loadTrafficMetrics(dateStart, dateEnd, token) {
+    if (!document.getElementById('cmo-ga4-sessions')) return;
     try {
         const response = await fetch(`/api/cmo/traffic?dateStart=${dateStart}&dateEnd=${dateEnd}`, {
             headers: {
