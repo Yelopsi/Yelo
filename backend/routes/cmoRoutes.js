@@ -575,11 +575,11 @@ router.get('/dashboard', async (req, res) => {
 
             const ttfcQuery = await sequelize.query(`
                 SELECT 
-                    EXTRACT(EPOCH FROM (MIN(w."createdAt") - p."createdAt")) / 86400 as days_to_first_contact
+                    EXTRACT(EPOCH FROM (MIN(w."createdAt") - COALESCE(p."profileActivatedAt", p."createdAt"))) / 86400 as days_to_first_contact
                 FROM "Psychologists" p
                 JOIN "WhatsAppClickLogs" w ON p.id = w."psychologistId"
                 WHERE w."createdAt" >= :dateStart AND w."createdAt" <= :dateEnd
-                GROUP BY p.id, p."createdAt"
+                GROUP BY p.id, p."profileActivatedAt", p."createdAt"
             `, { replacements: { dateStart: dateStart90, dateEnd: dateEnd90 }, type: sequelize.QueryTypes.SELECT });
 
             if (ttfcQuery.length > 0) {
@@ -594,12 +594,12 @@ router.get('/dashboard', async (req, res) => {
             
             const ttvQuery = await sequelize.query(`
                 SELECT 
-                    EXTRACT(EPOCH FROM (MIN(w."createdAt") - p."createdAt")) / 86400 as days_to_value
+                    EXTRACT(EPOCH FROM (MIN(COALESCE(w."therapyStartedReportedAt", w."createdAt")) - COALESCE(p."profileActivatedAt", p."createdAt"))) / 86400 as days_to_value
                 FROM "Psychologists" p
                 JOIN "WhatsAppClickLogs" w ON p.id = w."psychologistId"
                 WHERE w."dealClosed" = 'started'
                 AND w."createdAt" >= :dateStart AND w."createdAt" <= :dateEnd
-                GROUP BY p.id, p."createdAt"
+                GROUP BY p.id, p."profileActivatedAt", p."createdAt"
             `, { replacements: { dateStart: dateStart90, dateEnd: dateEnd90 }, type: sequelize.QueryTypes.SELECT });
 
             if (ttvQuery.length > 0) {
@@ -1028,7 +1028,7 @@ router.post('/generate-action-plan', async (req, res) => {
         
         const { GoogleGenerativeAI } = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash" }); // Using a slightly better model for complex output
+        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
 
         const prompt = `Você é o Diretor de Crescimento (CMO) e Diretor Financeiro (CFO) da Yelo (Plataforma SaaS B2B2C para Psicólogos).
 Analise os dados do Motor de Crescimento e produza o "Seu Plano de Ação" para o administrador da plataforma.
