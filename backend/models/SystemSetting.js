@@ -72,6 +72,10 @@ module.exports = (sequelize, DataTypes) => {
     cmo_sim_max_budget: {
       type: DataTypes.DECIMAL(10, 2),
       defaultValue: 2000.00
+    },
+    cmo_ai_action_plan: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   });
 

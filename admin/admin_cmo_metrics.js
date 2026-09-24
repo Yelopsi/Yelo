@@ -520,77 +520,89 @@ function initGrowthSimulator(data) {
         const actionList = document.getElementById('sim-action-list');
         if (actionPlanContainer && actionList) {
             actionPlanContainer.style.display = 'block';
-            actionList.innerHTML = '';
             
-            const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || 0;
-            const currentDailyGoogle = data.ads?.google?.configuredDailyBudget || 0;
-            
-                        const unspentCash = actionUnspentCash;
-            const targetMetaDaily = actionMetaSpend / 30;
-            
-            const googleBudgetM1 = actionGoogleMaintenance + actionTrialGoogleSpend;
-            const targetGoogleDaily = googleBudgetM1 / 30;
-            
-            const baseDaily = actionGoogleMaintenance / 30;
-            const trialsDaily = actionTrialGoogleSpend / 30;
-            
-            const availableForAcquisition1 = actionMetaSpend + actionTrialGoogleSpend + actionUnspentCash;
-
-            
-            let metaAction = '';
-            if (unspentCash > 100) { // Margem de tolerância
-                metaAction = `<br>🔍 <strong>Fato Calculado:</strong> O Fundo de Aquisição atual (após separar a Retenção no Google) é de <strong>${formatBRL(availableForAcquisition1)}</strong>. Devido ao teto de escala saudável do Meta Ads, o motor limitou o orçamento diário.<br><br>💡 <strong>Sugestão Estratégica:</strong> Ajuste o Meta Ads para <strong>${formatBRL(targetMetaDaily)}/dia</strong>. O caixa excedente de <strong>${formatBRL(unspentCash)}/mês</strong> (Rollover) será preservado.`;
-            } else if (targetMetaDaily <= currentMetaDailyBudget) {
-                metaAction = `<br>🔍 <strong>Fato Calculado:</strong> O orçamento configurado no Meta (<strong>${formatBRL(currentMetaDailyBudget)}/dia</strong>) é maior que o teto matemático do reinvestimento (<strong>${formatBRL(targetMetaDaily)}/dia</strong>).<br><br>💡 <strong>Sugestão Estratégica:</strong> <strong>Reduza</strong> sua configuração diária no Meta para alinhar com o fluxo de caixa gerado.`;
-            } else {
-                metaAction = `<br>🔍 <strong>Fato Calculado:</strong> O orçamento configurado no Meta (<strong>${formatBRL(currentMetaDailyBudget)}/dia</strong>) está abaixo do teto matemático do reinvestimento.<br><br>💡 <strong>Sugestão Estratégica:</strong> Você tem caixa para <strong>aumentar</strong> o Meta Ads até <strong>${formatBRL(targetMetaDaily)}/dia</strong> neste mês.`;
+            // Check if title needs a button
+            const h5 = actionPlanContainer.querySelector('h5');
+            if (h5 && !document.getElementById('btn-generate-ai')) {
+                h5.innerHTML += ` <button id="btn-generate-ai" style="margin-left:auto; background:#7e22ce; color:#fff; border:none; padding:6px 12px; border-radius:15px; font-size:0.8rem; cursor:pointer; font-weight:bold;">Gerar Novo Diagnóstico com IA ✨</button>`;
             }
-
-            let googleAction = '';
-            if (targetGoogleDaily === 0) {
-                googleAction = `<br>🔍 <strong>Fato Calculado:</strong> O tráfego orgânico (SEO) já atende a demanda histórica média (${targetContactsPerPsi} contatos/psi) para toda a sua base atual de assinantes.<br><br>💡 <strong>Sugestão Estratégica:</strong> Você pode pausar o Google Ads temporariamente.`;
-            } else {
-                googleAction = `<br>🔍 <strong>Fato Calculado:</strong> O Google Ads na Yelo sustenta tanto a <strong>Retenção</strong> dos assinantes atuais quanto a captação de contatos para os <strong>Novos Trials</strong>.<br><br>💡 <strong>Sugestão Estratégica:</strong> Ajuste o orçamento do Google para <strong>${formatBRL(targetGoogleDaily)}/dia</strong>. Sendo aprox. <strong>${formatBRL(baseDaily)}/dia</strong> apenas para reter a base atual, e <strong>${formatBRL(trialsDaily)}/dia</strong> para os novos profissionais em período de testes.`;
-            }
-
-            let roiAction = `<br>⏳ <strong>Diagnóstico:</strong> Analisando lucratividade com IA...<br><br>💡 <strong>Ação Recomendada:</strong> Processando motor de crescimento...`;
-
-            actionList.innerHTML = `
-                <li><strong>Meta Ads (Aquisição):</strong> ${metaAction}</li>
-                <br>
-                <li><strong>Google Ads (Google vs Meta Trials):</strong> ${googleAction}</li>
-                <br>
-                <li id="sim-roi-li"><strong>Análise de Growth (IA CFO):</strong> ${roiAction}</li>
-            `;
-
-            // Chama a IA para diagnosticar o ROI
+            
+            const btnAi = document.getElementById('btn-generate-ai');
             const token = localStorage.getItem('token');
-            fetch('/api/cmo/analyze-roi', {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json' 
-                },
-                body: JSON.stringify({
-                    mrrAtual: formatBRL(currentMrr),
-                    mrr12M: formatBRL(mrrAt12),
-                    reinvestRate: reinvestRate,
-                    extraCash: extraCash,
-                    cacAtual: formatBRL(cacMeta),
-                    cacPenalizado: formatBRL(cacMeta),
-                    unspentCash: formatBRL(unspentCash)
+
+            // Load last plan on render
+            if (actionList.innerHTML.trim() === '') {
+                actionList.innerHTML = `<li>⏳ Carregando último diagnóstico...</li>`;
+                fetch('/api/cmo/action-plan', {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 })
-            })
-            .then(res => res.json())
-            .then(aiData => {
-                if (aiData.success && aiData.html) {
-                    const li = document.getElementById('sim-roi-li');
-                    if (li) {
-                        li.innerHTML = `<strong>Lucratividade (ROI Geral):</strong> ${aiData.html}`;
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.html) {
+                        actionList.innerHTML = data.html;
+                    } else {
+                        actionList.innerHTML = `<li>Nenhum diagnóstico salvo. Clique no botão acima para gerar.</li>`;
                     }
-                }
-            })
-            .catch(err => console.error('[CMO] Erro ao analisar ROI com IA:', err));
+                }).catch(() => actionList.innerHTML = `<li>Erro ao carregar o plano.</li>`);
+            }
+
+            if (btnAi) {
+                btnAi.onclick = () => {
+                    btnAi.disabled = true;
+                    btnAi.innerText = 'Processando...';
+                    actionList.innerHTML = `<li>⏳ <strong>A IA está analisando os dados do motor...</strong> Isso pode levar alguns segundos.</li>`;
+                    
+                    const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || 0;
+                    const currentDailyGoogle = data.ads?.google?.configuredDailyBudget || 0;
+                    const unspentCash = actionUnspentCash;
+                    const targetMetaDaily = actionMetaSpend / 30;
+                    const googleBudgetM1 = actionGoogleMaintenance + actionTrialGoogleSpend;
+                    const targetGoogleDaily = googleBudgetM1 / 30;
+                    const baseDaily = actionGoogleMaintenance / 30;
+                    const trialsDaily = actionTrialGoogleSpend / 30;
+                    const availableForAcquisition1 = actionMetaSpend + actionTrialGoogleSpend + actionUnspentCash;
+
+                    fetch('/api/cmo/generate-action-plan', {
+                        method: 'POST',
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json' 
+                        },
+                        body: JSON.stringify({
+                            mrrAtual: formatBRL(currentMrr),
+                            mrr12M: formatBRL(mrrAt12),
+                            reinvestRate: reinvestRate,
+                            extraCash: extraCash,
+                            cacAtual: formatBRL(cacMeta),
+                            cacPenalizado: formatBRL(cacMeta),
+                            unspentCash: formatBRL(unspentCash),
+                            targetMetaDaily: formatBRL(targetMetaDaily),
+                            currentMetaDailyBudget: formatBRL(currentMetaDailyBudget),
+                            availableForAcquisition1: formatBRL(availableForAcquisition1),
+                            targetGoogleDaily: formatBRL(targetGoogleDaily),
+                            currentDailyGoogle: formatBRL(currentDailyGoogle),
+                            baseDaily: formatBRL(baseDaily),
+                            trialsDaily: formatBRL(trialsDaily)
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(aiData => {
+                        if (aiData.success && aiData.html) {
+                            actionList.innerHTML = aiData.html;
+                        } else {
+                            actionList.innerHTML = `<li>❌ Falha ao gerar diagnóstico com IA.</li>`;
+                        }
+                    })
+                    .catch(err => {
+                        console.error('[CMO] Erro ao analisar ROI com IA:', err);
+                        actionList.innerHTML = `<li>❌ Falha de conexão ao gerar diagnóstico.</li>`;
+                    })
+                    .finally(() => {
+                        btnAi.disabled = false;
+                        btnAi.innerText = 'Gerar Novo Diagnóstico com IA ✨';
+                    });
+                };
+            }
         }
 
         // Real Data tracking (If a start date is set)
