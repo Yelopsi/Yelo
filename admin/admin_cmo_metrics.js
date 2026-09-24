@@ -971,70 +971,8 @@ async function loadTrafficMetrics(dateStart, dateEnd, token) {
 }
 
 
-// --- TAB & WEEKLY LOGIC ---
-function switchCMOTab(tabName) {
-    document.querySelectorAll('.cmo-tab').forEach(t => { t.style.borderBottomColor = 'transparent'; t.style.color = 'rgba(255,255,255,0.6)'; });
-    
-    
-    const activeTab = document.getElementById('tab-' + tabName);
-    activeTab.style.borderBottomColor = 'white'; activeTab.style.color = 'white';
-    
-
-    const monthSelector = document.getElementById('cmo-month-selector');
-    const weeklyBanner = document.getElementById('cmo-weekly-banner');
-
-    if (tabName === 'monthly') {
-        monthSelector.style.display = 'inline-block';
-        weeklyBanner.style.display = 'none';
-        updateCMOMonth();
-    } else {
-        monthSelector.style.display = 'none';
-        weeklyBanner.style.display = 'block';
-        loadWeeklyMetrics();
-    }
-}
-
-function loadWeeklyMetrics() {
-    const now = new Date();
-    const isSaturday = now.getDay() === 6;
-    
-    // Calcula ultimo domingo ate hoje
-    const today = new Date();
-    const lastSunday = new Date();
-    lastSunday.setDate(today.getDate() - today.getDay());
-    
-    const dateStart = lastSunday.toISOString().split('T')[0];
-    const dateEnd = today.toISOString().split('T')[0];
-    
-    document.getElementById('cmo-date-start').value = dateStart;
-    document.getElementById('cmo-date-end').value = dateEnd;
-
-    const bannerMsg = document.getElementById('cmo-weekly-msg');
-    const bannerContainer = document.getElementById('cmo-weekly-banner');
-    
-    if (isSaturday) {
-        bannerContainer.style.background = 'linear-gradient(135deg, #059669 0%, #064e3b 100%)';
-        bannerContainer.style.border = '1px solid #10b981';
-        bannerMsg.innerHTML = '<strong>🚨 FECHAMENTO DE SÁBADO.</strong> O ciclo de 7 dias (Dom-Sáb) está completo. Avalie a evolução abaixo (comparada à semana anterior) e faça seus ajustes de campanha hoje.';
-    } else {
-        bannerContainer.style.background = 'linear-gradient(135deg, #f59e0b 0%, #b45309 100%)';
-        bannerContainer.style.border = '1px solid #fbbf24';
-        bannerMsg.innerHTML = '<strong>⏳ MODO DE OBSERVAÇÃO.</strong> O ciclo semanal termina no Sábado. Acompanhe os resultados parciais, mas evite alterar campanhas hoje para não quebrar a aprendizagem da IA.';
-    }
-
-    loadCMOMetrics();
-}
 
 
-function renderCMOWeeklyChart(data) {
-    const chartContainer = document.getElementById('cmo-weekly-chart-container');
-    
-    // Mostra o gráfico apenas se estivermos na aba semanal
-    const isWeekly = document.getElementById('tab-weekly').classList.contains('active');
-    if (!isWeekly) {
-        if(chartContainer) chartContainer.style.display = 'none';
-        return;
-    }
     
     if(chartContainer) chartContainer.style.display = 'block';
 
