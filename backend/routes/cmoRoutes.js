@@ -361,6 +361,12 @@ router.get('/dashboard', async (req, res) => {
         const trueConversionRate = totalOportunidades > 0 ? (totalConvertidos / totalOportunidades) : 0.15;
 
         const histMetaSpendVal = metaSpendHistorical.spend;
+        const startOfTime = new Date('2026-05-01T00:00:00Z');
+        const endOfPeriod = new Date(dateEnd + 'T23:59:59Z');
+        const histDays = Math.max(1, Math.ceil(Math.abs(endOfPeriod - startOfTime) / (1000 * 60 * 60 * 24)));
+        const histMonths = histDays / 30;
+        const histMetaMonthlySpendAvg = histMonths > 0 ? (histMetaSpendVal / histMonths) : 0;
+        
         const trueCac = totalConvertidos > 0 ? (histMetaSpendVal / totalConvertidos) : 150;
 
         const histConversionRate = trueConversionRate;
@@ -603,7 +609,13 @@ router.get('/dashboard', async (req, res) => {
             ]);
 
             const metaSpend90 = getTargetSpend(metaCampaigns90, '120251213168140531', false);
-            const googleSpend90 = getTargetSpend(googleCampaigns90, 'Yelo MVP - Busca SP', true);
+            
+            // Correção: Gasto Google REAL de 90 dias lido do banco (ManualAdMetrics)
+            const googleManual90 = await db.ManualAdMetric.findAll({
+                where: { platform: 'google', dateEnd: { [Op.gte]: dateStart90Str } }
+            });
+            const googleSpend90 = googleManual90.reduce((acc, curr) => acc + parseFloat(curr.spend), 0);
+
 
             const [metaMetrics90Res] = await sequelize.query(b2bQuery, {
                 replacements: { dateStart: dateStart90Str, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
@@ -624,7 +636,41 @@ router.get('/dashboard', async (req, res) => {
                 simTrialConv = metaPagantes90 / totalOportunidades90;
             }
 
-            simChurn = globalChurnRate > 0 ? globalChurnRate : 0.05;
+            const globalChurn90dQuery = `
+                SELECT COUNT(*) as churned
+                FROM "Psychologists"
+                WHERE status = 'inactive'
+                AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
+                AND "updatedAt" >= :dateStart AND "updatedAt" <= :dateEnd
+                AND "deletedAt" IS NULL
+            `;
+            const [globalChurn90dRes] = await sequelize.query(globalChurn90dQuery, {
+                replacements: { dateStart: dateStart90Str, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+            });
+            const churned90d = parseInt(globalChurn90dRes.churned || 0);
+            
+            const churnRate90d = (totalActive + churned90d) > 0 ? (churned90d / (totalActive + churned90d)) : 0;
+            
+            const activePaidQuery = `
+              SELECT 
+                SUM(CASE WHEN ("subscriptionId" IS NOT NULL AND "planExpiresAt" > NOW() AND "cancelAtPeriodEnd" = false) THEN 1 ELSE 0 END) as renewable_base,
+                COUNT(*) as paid_access_base
+              FROM "Psychologists"
+              WHERE "deletedAt" IS NULL
+              AND (
+                ("subscriptionId" IS NOT NULL AND "planExpiresAt" > NOW()) OR
+                ("subscriptionId" IS NULL AND "planExpiresAt" > NOW() AND "subscription_payments_count" > 0)
+              )
+            `;
+            const [activePaidRes] = await sequelize.query(activePaidQuery, { type: sequelize.QueryTypes.SELECT });
+            const renewableSubscriberBase = parseInt(activePaidRes.renewable_base || 0);
+            const activePaidAccessBase = parseInt(activePaidRes.paid_access_base || 0);
+            const knownScheduledChurn = activePaidAccessBase - renewableSubscriberBase;
+
+            // Churn assumido fixo por enquanto (0.05)
+            simChurn = 0.05;
+            const simChurnType = 'ASSUMED';
+
 
             const b2cQuery90 = `
                 SELECT 
@@ -656,12 +702,18 @@ router.get('/dashboard', async (req, res) => {
                 topTicket,
                 ttvAvg
             },
+            
             simulator: {
                 cac: simMetaCac,
                 cpl: simGoogleCpl,
                 trialConv: simTrialConv,
-                churn: simChurn
+                churn: simChurn,
+                churnType: simChurnType,
+                knownScheduledChurn,
+                renewableSubscriberBase,
+                activePaidAccessBase
             },
+
             period: { dateStart, dateEnd, prevDateStart, prevDateEnd },
             globalInsight: globalInsight,
             ads: {
@@ -669,8 +721,10 @@ router.get('/dashboard', async (req, res) => {
                 google: { ...googleSpend, spend: actualGoogleSpend, cpl: googleCpl, marginalCpl: googleMarginalCpl }
             },
             campaigns: { meta: metaCampaigns, google: googleCampaigns },
+            
             historical: {
-                meta: { spend: metaSpendHistorical.spend, cac: histMetaCac, paybackMonths: histMetaPaybackMonths, churn_rate: histGlobalChurnRate, trial_conversion_rate: histConversionRate },
+                meta: { spend: metaSpendHistorical.spend, monthly_spend_avg: histMetaMonthlySpendAvg, cac: histMetaCac, paybackMonths: histMetaPaybackMonths, churn_rate: histGlobalChurnRate, trial_conversion_rate: histConversionRate, state: metaState, stateDate: metaStateDate },
+
                 google: { spend: actualGoogleSpendHistorical, cpl: histGoogleCpl },
                 platform: {
                     b2b: { active: histMetaPagantes, trials: histMetaTrials, global_churn_rate: histGlobalChurnRate },

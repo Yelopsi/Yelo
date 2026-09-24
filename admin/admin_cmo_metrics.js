@@ -382,7 +382,7 @@ function initGrowthSimulator(data) {
 
         // --- BASELINE PARA CÁLCULO DE DEGRADAÇÃO DO CAC (DIMINISHING RETURNS) ---
         const histMetaSpend = data.historical?.meta?.spend || 0;
-        const histMetaMonthlySpend = (monthsInPeriod > 0 && histMetaSpend > 0) ? (histMetaSpend / monthsInPeriod) : 0;
+        const histMetaMonthlySpend = data.historical?.meta?.monthly_spend_avg || 0;
         const PENALTY_RATE = 0.20; // Aumento de 20% no CAC a cada 100% de aumento no orçamento validado
 
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -397,6 +397,7 @@ function initGrowthSimulator(data) {
         
         let currentBase = basePagantes;
         let currentTrials = baseTrials;
+        let rolloverCash = 0;
         
         let mrrAt12 = 0;
         let baseAt12 = 0;
@@ -414,7 +415,7 @@ function initGrowthSimulator(data) {
             const baseGoogleBudget = Math.ceil(basePaidContactsNeeded / psiSuggestedPerLead) * currentB2CCplCalc;
             
             // 3. Fundo disponível para reinvestimento
-            const reinvestmentFund = (monthlyRevenue * (reinvestRate / 100)) + extraCash;
+            const reinvestmentFund = (monthlyRevenue * (reinvestRate / 100)) + extraCash + rolloverCash;
             const availableForAcquisition = Math.max(0, reinvestmentFund - baseGoogleBudget);
             
             // 4. Cálculo do True CAC (Custo Meta + Custo Google dos Trials associados) e Degradação
@@ -454,6 +455,9 @@ function initGrowthSimulator(data) {
             // 5. Compra de novos clientes
             const newPaidActive = Math.floor(actualAcquisitionSpend / trueCac);
             const newTrialsBought = Math.floor(newPaidActive * trialsPerPaidUser);
+            
+            const actualSpend = newPaidActive * trueCac;
+            rolloverCash = availableForAcquisition - actualSpend;
             
             const metaBudget = newPaidActive * cacPenalizado;
             const trialsGoogleBudget = newTrialsBought * googleCostPerTrial;
@@ -581,11 +585,13 @@ function initGrowthSimulator(data) {
             const newPaidActive1 = Math.floor(actualAcquisitionSpend1 / trueCac1);
             const newTrialsBought1 = Math.floor(newPaidActive1 * trialsPerPaidUser1);
             
+            const actualSpend1 = newPaidActive1 * trueCac1;
+            
             const metaBudgetM1 = newPaidActive1 * cacPenalizado1;
             const trialsGoogleBudget1 = newTrialsBought1 * googleCostPerTrial1;
             const googleBudgetM1 = baseGoogleBudget1 + trialsGoogleBudget1;
             
-            const unspentCash = Math.max(0, availableForAcquisition1 - (metaBudgetM1 + trialsGoogleBudget1));
+            const unspentCash = Math.max(0, availableForAcquisition1 - actualSpend1);
             
             const targetMetaDaily = metaBudgetM1 / 30;
             const targetGoogleDaily = googleBudgetM1 / 30;

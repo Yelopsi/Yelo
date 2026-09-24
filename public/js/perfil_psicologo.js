@@ -67,10 +67,16 @@ const initProfilePage = async () => {
                                 }).catch(() => {});
                                 
                                 // --- Tracking específico para o Modal PLG de Conversão ---
+                                let utmSource = 'organico';
+                                try {
+                                    const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
+                                    utmSource = globalUtms.utm_source || 'organico';
+                                } catch(e) {}
+                                
                                 fetch(`${BASE_URL}/api/public/whatsapp-click-log`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ psychologistId: profile.id, guestName })
+                                    body: JSON.stringify({ psychologistId: profile.id, guestName, utmSource })
                                 }).catch(() => {});
                                 
                             } catch (err) {
