@@ -504,7 +504,13 @@ window.initializePage = function() {
                 // Mapeia fechou granularmente
                 let fechou = 'Pendente';
                 if (l.dealClosed === 'yes' || l.dealClosed === 'started') fechou = 'Sim';
-                else if (l.dealClosed === 'no' || l.dealClosed === 'not_started' || l.dealClosed === 'ghosted' || (l.dealClosed && l.dealClosed.startsWith('not_started_'))) fechou = 'Não';
+                else if (l.dealClosed === 'no' || l.dealClosed === 'not_started' || l.dealClosed === 'ghosted' || (l.dealClosed && l.dealClosed.startsWith('not_started_'))) {
+                    if (l.dealClosed === 'not_started_price') fechou = 'Não (Motivo: Valor)';
+                    else if (l.dealClosed === 'not_started_schedule') fechou = 'Não (Motivo: Horário)';
+                    else if (l.dealClosed === 'not_started_other') fechou = 'Não (Motivo: Outro)';
+                    else if (l.dealClosed === 'ghosted') fechou = 'Não (Parou de responder)';
+                    else fechou = 'Não';
+                }
                 else if (l.dealClosed === 'talking') fechou = 'Em Negociação';
                 else if (l.dealClosed) fechou = 'Sem Contato';
 
@@ -745,7 +751,13 @@ window.initializePage = function() {
                     if (f.dealClosed === 'yes' || f.dealClosed === 'started') fechou = '✅ <strong style="color:#16a34a">Iniciou</strong>';
                     else if (f.dealClosed === 'talking') fechou = '🤝 <span style="color:#ca8a04">Em negociação</span>';
                     else if (f.dealClosed === 'ghosted') fechou = '👻 <span style="color:#6b7280">Parou de responder</span>';
-                    else if (f.dealClosed === 'no' || f.dealClosed === 'not_started' || (f.dealClosed && f.dealClosed.startsWith('not_started_'))) fechou = '❌ <span style="color:#dc2626">Não iniciou</span>';
+                    else if (f.dealClosed === 'no' || f.dealClosed === 'not_started' || (f.dealClosed && f.dealClosed.startsWith('not_started_'))) {
+                        let subTitle = '';
+                        if (f.dealClosed === 'not_started_price') subTitle = '<div style="font-size: 0.75rem; color: #888; margin-top: 4px;">Motivo: Valor / Preço</div>';
+                        else if (f.dealClosed === 'not_started_schedule') subTitle = '<div style="font-size: 0.75rem; color: #888; margin-top: 4px;">Motivo: Horário / Agenda</div>';
+                        else if (f.dealClosed === 'not_started_other') subTitle = '<div style="font-size: 0.75rem; color: #888; margin-top: 4px;">Motivo: Outro</div>';
+                        fechou = `❌ <span style="color:#dc2626">Não iniciou</span>${subTitle}`;
+                    }
                     else if (f.dealClosed === 'no_contact' || f.dealClosed === 'wpp_issue' || f.dealClosed === 'unknown') fechou = '🤷‍♂️ <span style="color:#6b7280">Desconhecido</span>';
                     else fechou = '❌ Não';
                 } else {
