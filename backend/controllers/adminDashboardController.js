@@ -1141,6 +1141,9 @@ exports.forceWhatsappResponse = async (req, res) => {
         }
 
         log.feedbackGiven = true;
+        if (dealClosed === 'started' && !log.therapyStartedReportedAt) {
+            log.therapyStartedReportedAt = new Date();
+        }
         log.contactReceived = contactReceived === 'yes' || contactReceived === true;
         log.dealClosed = dealClosed; // 'yes' or 'no'
 

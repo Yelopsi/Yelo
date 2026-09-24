@@ -251,7 +251,9 @@ exports.createPreference = async (req, res) => {
         } else if (trialEndDate > new Date()) {
             // Se pulou etapas e planExpiresAt está nulo, mas a conta é nova, garante o trial
             nextDueDate = trialEndDate.toISOString().split('T')[0];
-            await localPsychologist.update({ planExpiresAt: trialEndDate, status: 'active' });
+            const payload = { planExpiresAt: trialEndDate, status: 'active' };
+            if (!localPsychologist.profileActivatedAt) payload.profileActivatedAt = new Date();
+            await localPsychologist.update(payload);
         }
 
         let subscriptionPayload;

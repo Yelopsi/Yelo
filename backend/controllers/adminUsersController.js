@@ -661,10 +661,9 @@ exports.extendTrialPeriod = async (req, res) => {
 
         baseDate.setDate(baseDate.getDate() + parseInt(days));
 
-        await psychologist.update({ 
-            planExpiresAt: baseDate,
-            status: 'active'
-        });
+        const payload = { planExpiresAt: baseDate, status: 'active' };
+        if (!psychologist.profileActivatedAt) payload.profileActivatedAt = new Date();
+        await psychologist.update(payload);
 
         res.json({ success: true, newExpirationDate: baseDate });
     } catch (error) {

@@ -303,6 +303,9 @@ class PaymentStateService {
             if (!lockedPsi.subscribedAt) {
                 updatePayload.subscribedAt = new Date();
             }
+            if (!lockedPsi.profileActivatedAt) {
+                updatePayload.profileActivatedAt = new Date();
+            }
 
             if (!lockedPsi.firstPaidAt) {
                 // Se é o primeiro pagamento confirmado, registramos a data
