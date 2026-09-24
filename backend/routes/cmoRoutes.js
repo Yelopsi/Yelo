@@ -596,6 +596,10 @@ router.get('/dashboard', async (req, res) => {
         let simGoogleCpl = 40;
         let simTrialConv = 0.15;
         let simChurn = 0.05;
+        let simChurnType = 'ASSUMED';
+        let renewableSubscriberBase = 0;
+        let activePaidAccessBase = 0;
+        let knownScheduledChurn = 0;
 
         try {
             const dateEnd90 = new Date(dateEnd + 'T23:59:59.999Z');
@@ -663,13 +667,13 @@ router.get('/dashboard', async (req, res) => {
               )
             `;
             const [activePaidRes] = await sequelize.query(activePaidQuery, { type: sequelize.QueryTypes.SELECT });
-            const renewableSubscriberBase = parseInt(activePaidRes.renewable_base || 0);
-            const activePaidAccessBase = parseInt(activePaidRes.paid_access_base || 0);
-            const knownScheduledChurn = activePaidAccessBase - renewableSubscriberBase;
+            renewableSubscriberBase = parseInt(activePaidRes.renewable_base || 0);
+            activePaidAccessBase = parseInt(activePaidRes.paid_access_base || 0);
+            knownScheduledChurn = activePaidAccessBase - renewableSubscriberBase;
 
             // Churn assumido fixo por enquanto (0.05)
             simChurn = 0.05;
-            const simChurnType = 'ASSUMED';
+            simChurnType = 'ASSUMED';
 
 
             const b2cQuery90 = `
