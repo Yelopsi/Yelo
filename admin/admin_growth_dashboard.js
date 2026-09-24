@@ -61,7 +61,7 @@ window.loadGrowthData = async function() {
             document.getElementById('g-health-fraction').innerText = `${data.pagantesComDemandaCount} de ${data.totalAtivos}`;
             
             // 4. AÇÃO (SEM DEMANDA)
-            const semDemandaCount = data.totalAtivos - data.pagantesComDemandaCount;
+            const semDemandaCount = data.pagantesSemDemandaCount || 0;
             document.getElementById('g-sem-demanda-count').innerText = semDemandaCount;
             document.getElementById('g-mrr-sem-demanda').innerText = formatBRL(data.mrrSemDemanda);
 
@@ -389,7 +389,7 @@ window.generateDiagnostics = function() {
     }
 
     // 2. Health Rate
-    const semDem = o.totalAtivos - o.pagantesComDemandaCount;
+    const semDem = o.pagantesSemDemandaCount || 0;
     if (o.pctDemanda >= 80) {
         bullets.push(`🟢 <strong>${o.pctDemanda.toFixed(1)}%</strong> dos psicólogos ativos receberam demanda (Excelente engajamento).`);
     } else if (o.pctDemanda >= 50) {

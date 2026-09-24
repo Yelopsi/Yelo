@@ -423,6 +423,7 @@ exports.getPMFDetails = async (req, res) => {
                 AND (p.is_exempt IS NULL OR p.is_exempt = false)
                 AND NOT (p."cancelAtPeriodEnd" = true AND p."planExpiresAt" < NOW())
                 AND COALESCE(c.total_contacts, 0) = 0
+                AND p."createdAt" < NOW() - INTERVAL '14 days'
             `;
         }
         else if (group === "1-2 contatos") condition = "COALESCE(c.total_contacts, 0) BETWEEN 1 AND 2";

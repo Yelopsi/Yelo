@@ -25,7 +25,7 @@ class GrowthService {
                 ...activeFilter,
                 [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }]
             },
-            attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
+            attributes: ['id', 'valor_mensal_numero', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt']
         });
 
         // Tentar usar o SystemSetting, mas com fallback para os preços reais praticados
@@ -157,6 +157,8 @@ class GrowthService {
         let mrrSemDemanda = 0;
         let pagantesComDemandaCount = 0;
 
+        let pagantesSemDemandaCount = 0;
+
         for (const p of pagantesAtivos) {
             if (p.cancelAtPeriodEnd && p.planExpiresAt && new Date(p.planExpiresAt) < now) continue;
             
@@ -169,7 +171,12 @@ class GrowthService {
                 pagantesComDemandaCount++;
                 mrrComDemanda += valor;
             } else {
-                mrrSemDemanda += valor;
+                // Só considera alerta "sem demanda" se o psicólogo tem mais de 14 dias de plataforma
+                const diasDePlataforma = (now - new Date(p.createdAt)) / (1000 * 60 * 60 * 24);
+                if (diasDePlataforma >= 14) {
+                    pagantesSemDemandaCount++;
+                    mrrSemDemanda += valor;
+                }
             }
         }
 
