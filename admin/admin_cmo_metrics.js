@@ -339,64 +339,49 @@ function initGrowthSimulator(data) {
         const inputExtraCash = document.getElementById('sim-extra-cash');
         const inputCuriosityGoal = document.getElementById('sim-curiosity-goal');
         
-        let reinvestRate = parseFloat(inputReinvestRate?.value) || 100;
+        let reinvestRate = parseFloat(inputReinvestRate?.value) || 50;
         let extraCashStr = inputExtraCash?.value || '0';
         let extraCash = parseFloat(extraCashStr.replace(/\./g, '').replace(',', '.')) || 0;
         let curiosityGoal = parseInt(inputCuriosityGoal?.value) || null;
         
-        const basePagantes = simTrackingStartSubs !== null ? simTrackingStartSubs : (data.platform.b2b.total_active || 0);
+        // 1. BASE INICIAL VEM DA PRODUÇÃO ATUAL (Motor Final)
+        // Ignora simTrackingStartSubs (25) e usa activePaidAccessBase (29)
+        const activePaidAccessBase = data.simulator?.activePaidAccessBase || data.platform.b2b.total_active || 0;
+        const renewableSubscriberBase = data.simulator?.renewableSubscriberBase || activePaidAccessBase;
+        const knownScheduledChurn = activePaidAccessBase - renewableSubscriberBase;
+
+        let basePagantes = activePaidAccessBase;
         const baseTrials = data.platform.b2b.total_trials || 0;
         
         const trialConversionRate = data.simulator?.trialConv > 0 ? data.simulator.trialConv : 0.15;
-        const cacBase = data.simulator?.cac > 0 ? data.simulator.cac : 150; 
+        const cacMeta = data.simulator?.cac > 0 ? data.simulator.cac : 150; 
         const arpu = data.platform?.b2b?.arpu || 99;
 
-        // Discover days in period for organic gain and churn
-        const dateStart = document.getElementById('cmo-date-start')?.value || '';
-        const dateEnd = document.getElementById('cmo-date-end')?.value || '';
-        const d1 = new Date(dateStart);
-        const d2 = new Date(dateEnd);
-        let daysInPeriodSim = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
-        if (isNaN(daysInPeriodSim) || daysInPeriodSim <= 0) daysInPeriodSim = 30;
+        // 2. CONTATOS POR PSI (Fixado em 3.0 pelo Motor Final)
+        const contactsPerPaidPsiMonth = 3.0;
+        const targetContactsPerPsi = contactsPerPaidPsiMonth; // para manter compatibilidade com labels
+        const contactsThresholdSource = 'Motor de Crescimento';
 
+        const cplGoogle = data.simulator?.cpl > 0 ? data.simulator.cpl : 22.13;
         const monthlyChurn = data.simulator?.churn > 0 ? data.simulator.churn : 0.05;
-
-        const organicActive = data.platform.b2b.organic_active || 0;
-        const organicActivePerMonth = (organicActive / daysInPeriodSim) * 30;
-
-        const currentB2CCplCalc = data.simulator?.cpl > 0 ? data.simulator.cpl : 40;
-            
-        const organicWppClicks90dCalc = data.platform.b2c.organic_wpp_clicks_90d || 0;
-        const orgMonthlyCalc = Math.floor(organicWppClicks90dCalc / 3);
         
-        // Calcula a média histórica simples de cliques (sem falsa correlação com churn)
-        const totalWppClicks = data.platform.b2c.wpp_clicks || 0;
-        const monthsInPeriod = daysInPeriodSim / 30;
-        const periodAvg = (basePagantes > 0 && monthsInPeriod > 0)
-            ? (totalWppClicks / basePagantes / monthsInPeriod)
-            : 0;
-        const targetContactsPerPsi = periodAvg >= 1 ? Math.round(periodAvg * 10) / 10 : 2;
-        const contactsThresholdSource = periodAvg >= 1 ? 'média geral' : 'estimativa padrão';
+        const histMetaMonthlySpendAvg = data.historical?.meta?.monthly_spend_avg || 3000;
         
-        const psiSuggestedPerLead = 1;
-
-        // --- BASELINE PARA CÁLCULO DE DEGRADAÇÃO DO CAC (DIMINISHING RETURNS) ---
-        const histMetaSpend = data.historical?.meta?.spend || 0;
-        const histMetaMonthlySpend = data.historical?.meta?.monthly_spend_avg || 0;
-        const PENALTY_RATE = 0.20; // Aumento de 20% no CAC a cada 100% de aumento no orçamento validado
+        const verifiedOrganicContacts = 0; 
+        const newOrganicActive = 0; 
 
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-        // Snowball Projection
-        const targetMonths = 12; // Fixado em 12 meses
+        // Snowball Projection (Motor Final validado)
+        const targetMonths = 12;
         const labels = [];
         const dataRevenue = [];
         const dataCosts = [];
         const dataCashflow = [];
         const dataExpectedBase = [];
         
-        let currentBase = basePagantes;
-        let currentTrials = baseTrials;
+        let currentBase = activePaidAccessBase;
+        let currentRenewable = renewableSubscriberBase;
         let rolloverCash = 0;
         
         let mrrAt12 = 0;
@@ -404,90 +389,82 @@ function initGrowthSimulator(data) {
         let metaBudgetAt12 = 0;
         let googleBudgetAt12 = 0;
         
+        // M1 values for Action Plan
+        let actionMetaSpend = 0;
+        let actionGoogleMaintenance = 0;
+        let actionTrialGoogleSpend = 0;
+        let actionUnspentCash = 0;
+        
         for (let m = 1; m <= targetMonths; m++) {
-            // 1. Receita atual
-            const monthlyRevenue = currentBase * arpu;
+            let baseStart = currentBase;
+            let baseStartRenewable = currentRenewable;
+
+            const mrr = currentBase * arpu;
             
-            // 2. Orçamento Google (Retenção) para manter a BASE ATUAL
-            const baseContactsNeeded = currentBase * targetContactsPerPsi;
-            // Assumimos que o orgânico atende primeiro a base atual
-            const basePaidContactsNeeded = Math.max(0, baseContactsNeeded - orgMonthlyCalc);
-            const baseGoogleBudget = Math.ceil(basePaidContactsNeeded / psiSuggestedPerLead) * currentB2CCplCalc;
+            const totalContactDemand = currentBase * contactsPerPaidPsiMonth;
+            const requiredGoogleContacts = Math.max(0, totalContactDemand - verifiedOrganicContacts);
+            const googleMaintenanceCost = requiredGoogleContacts * cplGoogle;
             
-            // 3. Fundo disponível para reinvestimento
-            const reinvestmentFund = (monthlyRevenue * (reinvestRate / 100)) + extraCash + rolloverCash;
-            const availableForAcquisition = Math.max(0, reinvestmentFund - baseGoogleBudget);
+            const contributionAfterGoogle = Math.max(0, mrr - googleMaintenanceCost);
+            const growthFund = (contributionAfterGoogle * (reinvestRate / 100)) + (m === 1 ? extraCash : 0) + rolloverCash;
+
+            const metaHardCap = histMetaMonthlySpendAvg * 3.5;
+            let projectedMetaBudget = growthFund * 0.80; // 80% Meta / 20% Google Trials budget assumption
             
-            // 4. Cálculo do True CAC (Custo Meta + Custo Google dos Trials associados) e Degradação
-            const trialDurationFraction = 0.25; // Trial dura em média 7 dias
-            const actualTrialConversionRate = trialConversionRate > 0 ? trialConversionRate : 0.15;
-            const trialsPerPaidUser = 1 / actualTrialConversionRate;
+            const scaleFactor = Math.min(3.5, Math.max(1, projectedMetaBudget / (histMetaMonthlySpendAvg || 1)));
+            const metaCACPenalized = cacMeta * (1 + (Math.max(0, scaleFactor - 1) * 0.20));
             
-            const googleCostPerTrial = trialDurationFraction * targetContactsPerPsi * (currentB2CCplCalc / psiSuggestedPerLead);
+            const trialsPerPaid = 1 / trialConversionRate;
+            const trialDurationFraction = 0.5;
+            const trialContactDemand = contactsPerPaidPsiMonth * trialDurationFraction;
+            const avgGoogleCostPerTrial = trialContactDemand * cplGoogle;
             
-            // Estima o orçamento projetado no Meta para aplicar a degradação
-            const baseTrueCac = cacBase + (trialsPerPaidUser * googleCostPerTrial);
-            const projectedMetaBudget = availableForAcquisition * (cacBase / baseTrueCac);
+            const trialGoogleCostPerPaid = trialsPerPaid * avgGoogleCostPerTrial;
+            const blendedAcquisitionCost = metaCACPenalized + trialGoogleCostPerPaid;
+
+            const maxPaidByCash = Math.floor(growthFund / blendedAcquisitionCost);
+            const maxPaidByMeta = Math.floor(metaHardCap / metaCACPenalized);
+            const newPaidActive = Math.min(maxPaidByCash, maxPaidByMeta);
             
-            // --- SMART CAP: Limit the Meta budget scaling to max 3.5x the historical average
-            const maxHealthyMetaBudget = histMetaMonthlySpend > 0 ? (histMetaMonthlySpend * 3.5) : 500;
-            let smartMetaBudget = projectedMetaBudget;
-            if (projectedMetaBudget > maxHealthyMetaBudget) {
-                smartMetaBudget = maxHealthyMetaBudget;
-            }
+            const actualMetaSpend = newPaidActive * metaCACPenalized;
+            const actualTrialGoogleSpend = newPaidActive * trialGoogleCostPerPaid;
+            const actualGrowthSpend = actualMetaSpend + actualTrialGoogleSpend;
             
-            let fatorDeEscala = 1;
-            if (histMetaMonthlySpend > 0 && smartMetaBudget > histMetaMonthlySpend) {
-                fatorDeEscala = smartMetaBudget / histMetaMonthlySpend;
-            }
+            rolloverCash = growthFund - actualGrowthSpend;
+
+            let monthKnownChurn = m === 1 ? knownScheduledChurn : 0;
+            let expectedChurn = currentRenewable * monthlyChurn;
+            let churnLoss = expectedChurn + monthKnownChurn;
+
+            currentBase = currentBase + newPaidActive + newOrganicActive - churnLoss;
+            currentRenewable = currentRenewable + newPaidActive + newOrganicActive - expectedChurn;
             
-            let cacPenalizado = cacBase;
-            if (fatorDeEscala > 1) {
-                cacPenalizado = cacBase * (1 + ((fatorDeEscala - 1) * PENALTY_RATE));
-            }
-            
-            const trueCac = cacPenalizado + (trialsPerPaidUser * googleCostPerTrial);
-            
-            // We re-calculate how much of the "availableForAcquisition" we actually spend based on the smartMetaBudget limit
-            const smartAcquisitionBudget = smartMetaBudget * (trueCac / cacPenalizado);
-            const actualAcquisitionSpend = Math.min(availableForAcquisition, smartAcquisitionBudget);
-            
-            // 5. Compra de novos clientes
-            const newPaidActive = Math.floor(actualAcquisitionSpend / trueCac);
-            const newTrialsBought = Math.floor(newPaidActive * trialsPerPaidUser);
-            
-            const actualSpend = newPaidActive * trueCac;
-            rolloverCash = availableForAcquisition - actualSpend;
-            
-            const metaBudget = newPaidActive * cacPenalizado;
-            const trialsGoogleBudget = newTrialsBought * googleCostPerTrial;
-            const totalGoogleBudget = baseGoogleBudget + trialsGoogleBudget;
-            
-            const newOrganicActive = Math.floor(organicActivePerMonth);
-            const churnLoss = Math.floor(currentBase * monthlyChurn);
-            
-            // 6. Atualização para o mês seguinte
-            currentBase = currentBase + newOrganicActive + newPaidActive - churnLoss;
-            currentTrials = newTrialsBought;
-            
+            const totalGoogleBudget = googleMaintenanceCost + actualTrialGoogleSpend;
+
             labels.push(`Mês ${m}`);
             dataExpectedBase.push(currentBase);
-            dataRevenue.push(monthlyRevenue);
+            dataRevenue.push(mrr);
             
-            // O custo é o que de fato gastamos
-            const totalCosts = metaBudget + totalGoogleBudget;
+            const totalCosts = actualMetaSpend + totalGoogleBudget;
             dataCosts.push(totalCosts);
-            dataCashflow.push(monthlyRevenue - totalCosts);
+            dataCashflow.push(mrr - totalCosts);
+            
+            if (m === 1) {
+                actionMetaSpend = actualMetaSpend;
+                actionGoogleMaintenance = googleMaintenanceCost;
+                actionTrialGoogleSpend = actualTrialGoogleSpend;
+                actionUnspentCash = rolloverCash;
+            }
             
             if (m === 12) {
-                mrrAt12 = monthlyRevenue;
+                mrrAt12 = mrr;
                 baseAt12 = currentBase;
-                metaBudgetAt12 = metaBudget;
+                metaBudgetAt12 = actualMetaSpend;
                 googleBudgetAt12 = totalGoogleBudget;
             }
         }
 
-        // Update Cards com textos contextuais
+        // Update Cards com textos contextuais        // Update Cards com textos contextuais
         const currentMrr = basePagantes * arpu;
         const mrrMultiple = (mrrAt12 / (currentMrr || 1)).toFixed(1);
         const mrrGainMonthly = mrrAt12 - currentMrr;
@@ -541,60 +518,17 @@ function initGrowthSimulator(data) {
             const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || 0;
             const currentDailyGoogle = data.ads?.google?.configuredDailyBudget || 0;
             
-            // Calculate M1 exact budgets using the TrueCAC logic
-            const m1Revenue = basePagantes * arpu;
+                        const unspentCash = actionUnspentCash;
+            const targetMetaDaily = actionMetaSpend / 30;
             
-            const baseContactsNeeded1 = basePagantes * targetContactsPerPsi;
-            const basePaidContactsNeeded1 = Math.max(0, baseContactsNeeded1 - orgMonthlyCalc);
-            const baseGoogleBudget1 = Math.ceil(basePaidContactsNeeded1 / psiSuggestedPerLead) * currentB2CCplCalc;
-            
-            const reinvestmentFundM1 = (m1Revenue * (reinvestRate / 100)) + extraCash;
-            const availableForAcquisition1 = Math.max(0, reinvestmentFundM1 - baseGoogleBudget1);
-            
-            // 4. Cálculo do True CAC M1 e Degradação
-            const trialDurationFraction1 = 0.25;
-            const actualTrialConversionRate1 = trialConversionRate > 0 ? trialConversionRate : 0.15;
-            const trialsPerPaidUser1 = 1 / actualTrialConversionRate1;
-            
-            const googleCostPerTrial1 = trialDurationFraction1 * targetContactsPerPsi * (currentB2CCplCalc / psiSuggestedPerLead);
-            
-            const baseTrueCac1 = cacBase + (trialsPerPaidUser1 * googleCostPerTrial1);
-            const projectedMetaBudget1 = availableForAcquisition1 * (cacBase / baseTrueCac1);
-            
-            const maxHealthyMetaBudget1 = histMetaMonthlySpend > 0 ? (histMetaMonthlySpend * 3.5) : 500;
-            let smartMetaBudget1 = projectedMetaBudget1;
-            if (projectedMetaBudget1 > maxHealthyMetaBudget1) {
-                smartMetaBudget1 = maxHealthyMetaBudget1;
-            }
-            
-            let fatorDeEscala1 = 1;
-            if (histMetaMonthlySpend > 0 && smartMetaBudget1 > histMetaMonthlySpend) {
-                fatorDeEscala1 = smartMetaBudget1 / histMetaMonthlySpend;
-            }
-            
-            let cacPenalizado1 = cacBase;
-            if (fatorDeEscala1 > 1) {
-                cacPenalizado1 = cacBase * (1 + ((fatorDeEscala1 - 1) * PENALTY_RATE));
-            }
-            
-            const trueCac1 = cacPenalizado1 + (trialsPerPaidUser1 * googleCostPerTrial1);
-            
-            const smartAcquisitionBudget1 = smartMetaBudget1 * (trueCac1 / cacPenalizado1);
-            const actualAcquisitionSpend1 = Math.min(availableForAcquisition1, smartAcquisitionBudget1);
-            
-            const newPaidActive1 = Math.floor(actualAcquisitionSpend1 / trueCac1);
-            const newTrialsBought1 = Math.floor(newPaidActive1 * trialsPerPaidUser1);
-            
-            const actualSpend1 = newPaidActive1 * trueCac1;
-            
-            const metaBudgetM1 = newPaidActive1 * cacPenalizado1;
-            const trialsGoogleBudget1 = newTrialsBought1 * googleCostPerTrial1;
-            const googleBudgetM1 = baseGoogleBudget1 + trialsGoogleBudget1;
-            
-            const unspentCash = Math.max(0, availableForAcquisition1 - actualSpend1);
-            
-            const targetMetaDaily = metaBudgetM1 / 30;
+            const googleBudgetM1 = actionGoogleMaintenance + actionTrialGoogleSpend;
             const targetGoogleDaily = googleBudgetM1 / 30;
+            
+            const baseDaily = actionGoogleMaintenance / 30;
+            const trialsDaily = actionTrialGoogleSpend / 30;
+            
+            const availableForAcquisition1 = actionMetaSpend + actionTrialGoogleSpend + actionUnspentCash;
+
             
             let metaAction = '';
             if (unspentCash > 100) { // Margem de tolerância
@@ -606,8 +540,6 @@ function initGrowthSimulator(data) {
             }
 
             let googleAction = '';
-            const baseDaily = baseGoogleBudget1 / 30;
-            const trialsDaily = trialsGoogleBudget1 / 30;
             if (targetGoogleDaily === 0) {
                 googleAction = `<br>🔍 <strong>Diagnóstico:</strong> O tráfego orgânico (SEO) já atende a demanda histórica média (${targetContactsPerPsi} cliques/psi) para toda a sua base atual de assinantes.<br><br>💡 <strong>Ação Recomendada:</strong> Você pode pausar o Google Ads temporariamente.`;
             } else {
@@ -637,8 +569,8 @@ function initGrowthSimulator(data) {
                     mrr12M: formatBRL(mrrAt12),
                     reinvestRate: reinvestRate,
                     extraCash: extraCash,
-                    cacAtual: formatBRL(cacBase),
-                    cacPenalizado: formatBRL(cacPenalizado1),
+                    cacAtual: formatBRL(cacMeta),
+                    cacPenalizado: formatBRL(cacMeta),
                     unspentCash: formatBRL(unspentCash)
                 })
             })
