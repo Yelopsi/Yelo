@@ -82,6 +82,71 @@ async function loadCMOMetrics() {
     }
 }
 
+function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = false, formatType = 'number') {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    let formattedCurrent = currentValue;
+    if (typeof currentValue === 'number') {
+        if (formatType === 'currency') formattedCurrent = `R$ ${(currentValue || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        else if (formatType === 'percent') formattedCurrent = (currentValue * 100).toFixed(1) + '%';
+        else formattedCurrent = currentValue.toLocaleString('pt-BR');
+    }
+    el.textContent = formattedCurrent;
+
+    if (typeof currentValue === 'number' && typeof historicalValue === 'number') {
+        let pct = 0;
+        if (historicalValue > 0) {
+            pct = ((currentValue - historicalValue) / historicalValue) * 100;
+        } else if (currentValue > 0) {
+            pct = 100;
+        }
+        
+        let color = '#64748b';
+        let arrow = '';
+        
+        if (pct > 0) {
+            arrow = '↑';
+            color = inverseGood ? '#ef4444' : '#10b981';
+        } else if (pct < 0) {
+            arrow = '↓';
+            color = inverseGood ? '#10b981' : '#ef4444';
+        } else {
+            arrow = '−';
+            color = '#64748b';
+        }
+
+        let trendEl = document.getElementById(`trend-${id}`);
+        if (!trendEl) {
+            if (el.parentElement.style.display !== 'flex') {
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'flex';
+                wrapper.style.alignItems = 'baseline';
+                wrapper.style.gap = '8px';
+                el.parentNode.insertBefore(wrapper, el);
+                wrapper.appendChild(el);
+            }
+            trendEl = document.createElement('span');
+            trendEl.id = `trend-${id}`;
+            trendEl.style.fontSize = '0.85rem';
+            trendEl.style.fontWeight = 'bold';
+            trendEl.style.padding = '2px 6px';
+            trendEl.style.borderRadius = '4px';
+            el.parentElement.appendChild(trendEl);
+        }
+
+        if (pct !== 0) {
+            trendEl.textContent = `${arrow} ${Math.abs(pct).toFixed(1)}%`;
+            trendEl.style.color = color;
+            trendEl.style.backgroundColor = color + '1a';
+        } else {
+            trendEl.textContent = `${arrow} 0%`;
+            trendEl.style.color = '#64748b';
+            trendEl.style.backgroundColor = '#f1f5f9';
+        }
+    }
+}
+
 function renderCMOMetrics(data) {
     const formatCurrency = (val) => `R$ ${(val || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
 
@@ -90,16 +155,16 @@ function renderCMOMetrics(data) {
     // Popula Cards da Inteligência Algorítmica (Funil B2B)
     if (data.platform) {
         // B2B (Meta) KPIs
-        document.getElementById('cmo-meta-spend').textContent = formatCurrency(data.ads?.meta?.spend || 0);
-        document.getElementById('cmo-meta-trials').textContent = (data.platform.b2b?.trials || 0).toLocaleString('pt-BR');
-        document.getElementById('cmo-meta-pagantes').textContent = (data.platform.b2b?.active || 0).toLocaleString('pt-BR');
-        document.getElementById('cmo-meta-cac').textContent = formatCurrency(data.ads?.meta?.cac || 0);
+        setKpiValueAndTrend('cmo-meta-spend', data.ads?.meta?.spend || 0, data.prevAds?.meta?.spend || 0, true, 'currency');
+        setKpiValueAndTrend('cmo-meta-trials', data.platform.b2b?.trials || 0, data.prevPlatform?.b2b?.trials || 0, false, 'number');
+        setKpiValueAndTrend('cmo-meta-pagantes', data.platform.b2b?.active || 0, data.prevPlatform?.b2b?.active || 0, false, 'number');
+        setKpiValueAndTrend('cmo-meta-cac', data.ads?.meta?.cac || 0, data.prevAds?.meta?.cac || 0, true, 'currency');
 
         // B2C (Google) KPIs
-        document.getElementById('cmo-google-spend').textContent = formatCurrency(data.ads?.google?.spend || 0);
-        document.getElementById('cmo-google-clicks').textContent = (data.platform.b2c?.wpp_clicks || 0).toLocaleString('pt-BR');
-        document.getElementById('cmo-google-deals').textContent = (data.platform.b2c?.total_deals || 0).toLocaleString('pt-BR');
-        document.getElementById('cmo-google-cpl').textContent = formatCurrency(data.ads?.google?.cpl || 0);
+        setKpiValueAndTrend('cmo-google-spend', data.ads?.google?.spend || 0, data.prevAds?.google?.spend || 0, true, 'currency');
+        setKpiValueAndTrend('cmo-google-clicks', data.platform.b2c?.wpp_clicks || 0, data.prevPlatform?.b2c?.wpp_clicks || 0, false, 'number');
+        setKpiValueAndTrend('cmo-google-deals', data.platform.b2c?.total_deals || 0, data.prevPlatform?.b2c?.total_deals || 0, false, 'number');
+        setKpiValueAndTrend('cmo-google-cpl', data.ads?.google?.cpl || 0, data.prevAds?.google?.cpl || 0, true, 'currency');
 
         // Eficiência Comercial B2C KPIs
         if (data.efficiency) {
@@ -150,36 +215,50 @@ function renderCMOMetrics(data) {
     if (data.campaigns?.meta && data.campaigns.meta.length > 0) {
         const targetId = '120251213168140531';
         const c = data.campaigns.meta.find(camp => (camp.campaign_id || camp.id) === targetId);
+        const prevC = data.prevCampaigns?.meta?.find(camp => (camp.campaign_id || camp.id) === targetId) || {};
         if (c) {
             const spend = c.spend || 0;
             const clicks = c.clicks || 0;
             const conversions = c.conversions || 0;
             const cpc = clicks > 0 ? (spend / clicks) : 0;
             const costPerConv = conversions > 0 ? (spend / conversions) : 0;
+
+            const prevSpend = prevC.spend || 0;
+            const prevClicks = prevC.clicks || 0;
+            const prevConversions = prevC.conversions || 0;
+            const prevCpc = prevClicks > 0 ? (prevSpend / prevClicks) : 0;
+            const prevCostPerConv = prevConversions > 0 ? (prevSpend / prevConversions) : 0;
             
-            document.getElementById('cmo-meta-impressions-metric').textContent = (c.impressions || 0).toLocaleString('pt-BR');
-            document.getElementById('cmo-meta-clicks-metric').textContent = clicks.toLocaleString('pt-BR');
-            document.getElementById('cmo-meta-conversions-metric').textContent = conversions.toLocaleString('pt-BR');
-            document.getElementById('cmo-meta-cpc-metric').textContent = 'R$ ' + cpc.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('cmo-meta-cpa-metric').textContent = 'R$ ' + costPerConv.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            setKpiValueAndTrend('cmo-meta-impressions-metric', c.impressions || 0, prevC.impressions || 0, false, 'number');
+            setKpiValueAndTrend('cmo-meta-clicks-metric', clicks, prevClicks, false, 'number');
+            setKpiValueAndTrend('cmo-meta-conversions-metric', conversions, prevConversions, false, 'number');
+            setKpiValueAndTrend('cmo-meta-cpc-metric', cpc, prevCpc, true, 'currency');
+            setKpiValueAndTrend('cmo-meta-cpa-metric', costPerConv, prevCostPerConv, true, 'currency');
         }
     }
 
     // 5. Preencher cards individuais de campanhas Google
     if (data.campaigns?.google && data.campaigns.google.length > 0) {
         const c = data.campaigns.google.find(camp => camp.campaign_name === 'Yelo MVP - Busca SP');
+        const prevC = data.prevCampaigns?.google?.find(camp => camp.campaign_name === 'Yelo MVP - Busca SP') || {};
         if (c) {
             const spend = c.spend || 0;
             const clicks = c.clicks || 0;
             const conversions = c.conversions || 0;
             const cpc = clicks > 0 ? (spend / clicks) : 0;
             const costPerConv = conversions > 0 ? (spend / conversions) : 0;
+
+            const prevSpend = prevC.spend || 0;
+            const prevClicks = prevC.clicks || 0;
+            const prevConversions = prevC.conversions || 0;
+            const prevCpc = prevClicks > 0 ? (prevSpend / prevClicks) : 0;
+            const prevCostPerConv = prevConversions > 0 ? (prevSpend / prevConversions) : 0;
             
-            document.getElementById('cmo-google-impressions-metric').textContent = (c.impressions || 0).toLocaleString('pt-BR');
-            document.getElementById('cmo-google-clicks-metric').textContent = clicks.toLocaleString('pt-BR');
-            document.getElementById('cmo-google-conversions-metric').textContent = conversions.toLocaleString('pt-BR');
-            document.getElementById('cmo-google-cpc-metric').textContent = 'R$ ' + cpc.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('cmo-google-cpa-metric').textContent = 'R$ ' + costPerConv.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            setKpiValueAndTrend('cmo-google-impressions-metric', c.impressions || 0, prevC.impressions || 0, false, 'number');
+            setKpiValueAndTrend('cmo-google-clicks-metric', clicks, prevClicks, false, 'number');
+            setKpiValueAndTrend('cmo-google-conversions-metric', conversions, prevConversions, false, 'number');
+            setKpiValueAndTrend('cmo-google-cpc-metric', cpc, prevCpc, true, 'currency');
+            setKpiValueAndTrend('cmo-google-cpa-metric', costPerConv, prevCostPerConv, true, 'currency');
         }
     }
 

@@ -750,6 +750,15 @@ router.get('/dashboard', async (req, res) => {
                 google: { ...googleSpend, spend: actualGoogleSpend, cpl: googleCpl, marginalCpl: googleMarginalCpl }
             },
             campaigns: { meta: metaCampaigns, google: googleCampaigns },
+            prevCampaigns: { meta: prevMetaCampaigns, google: prevGoogleCampaigns },
+            prevPlatform: {
+                b2b: { active: prevMetaPagantes, trials: prevMetaTrials },
+                b2c: { wpp_clicks: prevGoogleWppClicks, total_deals: prevGoogleDeals }
+            },
+            prevAds: {
+                meta: { spend: prevMetaSpend.spend, cac: prevMetaCac },
+                google: { spend: actualPrevGoogleSpend, cpl: prevGoogleCpl }
+            },
             
             historical: {
                 meta: { spend: metaSpendHistorical.spend, monthly_spend_avg: histMetaMonthlySpendAvg, cac: histMetaCac, paybackMonths: histMetaPaybackMonths, churn_rate: histGlobalChurnRate, trial_conversion_rate: histConversionRate, state: null, stateDate: null },
