@@ -109,7 +109,7 @@ exports.submitFeedback = async (req, res) => {
         clickLog.contactReceived = contact_received;
         clickLog.dealClosed = deal_closed;
         clickLog.feedbackGiven = true;
-        if (dealClosed === 'started' && !clickLog.therapyStartedReportedAt) {
+        if (deal_closed === 'started' && !clickLog.therapyStartedReportedAt) {
             clickLog.therapyStartedReportedAt = new Date();
         }
         
@@ -211,7 +211,7 @@ exports.submitPublicFeedback = async (req, res) => {
         clickLog.contactReceived = contact_received;
         clickLog.dealClosed = deal_closed;
         clickLog.feedbackGiven = true;
-        if (dealClosed === 'started' && !clickLog.therapyStartedReportedAt) {
+        if (deal_closed === 'started' && !clickLog.therapyStartedReportedAt) {
             clickLog.therapyStartedReportedAt = new Date();
         }
         
