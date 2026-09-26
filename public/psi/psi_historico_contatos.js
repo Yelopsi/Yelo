@@ -96,7 +96,7 @@ window.renderHistoryPage = function(page) {
             } else if (log.dealClosed === 'talking') {
                 badgeClass = 'pendente';
                 badgeText = '⏳ Em negociação';
-            } else if (log.dealClosed === 'not_started' || log.dealClosed === 'ghosted' || log.dealClosed === 'no') {
+            } else if (log.dealClosed === 'not_started' || log.dealClosed === 'ghosted' || log.dealClosed === 'no' || log.dealClosed.startsWith('not_started_')) {
                 badgeClass = 'nao-fechado';
                 badgeText = '❌ Não Fechou';
             } else if (!log.contactReceived || log.dealClosed === 'no_contact' || log.dealClosed === 'wpp_issue' || log.dealClosed === 'unknown') {
@@ -158,7 +158,7 @@ window.abrirModalStatus = function(id, contact_received, deal_closed) {
     container.innerHTML = '';
 
     const isFantasma = (!contact_received || deal_closed === 'no_contact' || deal_closed === 'wpp_issue' || deal_closed === 'unknown');
-    const isNaoFechou = (deal_closed === 'not_started' || deal_closed === 'ghosted' || deal_closed === 'no');
+    const isNaoFechou = (deal_closed === 'not_started' || deal_closed === 'ghosted' || deal_closed === 'no' || (deal_closed && deal_closed.startsWith('not_started_')));
     const isTalking = (deal_closed === 'talking');
 
     if (isFantasma) {
