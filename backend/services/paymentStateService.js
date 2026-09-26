@@ -364,18 +364,37 @@ class PaymentStateService {
                 return;
             }
 
-            // O estorno/falha é da assinatura atual. Removendo acesso.
-            // NOTA: NÃO removemos o subscriptionId para que possamos monitorar o pagamento atrasado
-            // e para o cronScheduler.js deletar a assinatura do Asaas após 5 dias de atraso se não for pago.
-            await lockedPsi.update({
-                status: 'inactive'
-            }, { transaction: t });
+            // O estorno/falha é da assinatura atual.
+            // Para eventos como DELETED (ex: cancelamento da assinatura remove faturas futuras) 
+            // ou OVERDUE, NÃO devemos remover o acesso se o usuário ainda tem dias pagos (planExpiresAt no futuro).
+            const isRefundOrChargeback = ['PAYMENT_REFUNDED', 'PAYMENT_REVERSED', 'PAYMENT_CHARGEBACK_REQUESTED', 'PAYMENT_REFUND_IN_PROGRESS'].includes(eventType) ||
+                (eventType === 'PAYMENT_UPDATED' && ['REFUNDED', 'REFUND_IN_PROGRESS'].includes(payment.status));
+            
+            const now = new Date();
+            const hasValidPlan = lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > now;
+
+            if (isRefundOrChargeback) {
+                // Se o dinheiro foi devolvido, removemos o acesso imediatamente
+                await lockedPsi.update({
+                    status: 'inactive',
+                    planExpiresAt: now
+                }, { transaction: t });
+            } else {
+                // Para OVERDUE, DELETED, REFUSED, só inativamos se não tiver plano válido vigente
+                if (!hasValidPlan) {
+                    await lockedPsi.update({
+                        status: 'inactive'
+                    }, { transaction: t });
+                } else {
+                    console.log(`[ASAAS] Evento ${eventType} ignorado para inativação: psicólogo ${psi.email} ainda tem plano válido até ${lockedPsi.planExpiresAt}`);
+                }
+            }
 
             if (db.SystemLog) {
                 await db.SystemLog.create({
                     level: 'warning',
-                    message: `[ASAAS] Acesso Suspenso via Evento Negativo (${eventType}): ${lockedPsi.email}`,
-                    meta: { event: eventType, psychologistId: lockedPsi.id, paymentId: payment.id }
+                    message: `[ASAAS] Evento Negativo processado (${eventType}): ${lockedPsi.email} - Status mantido/alterado conforme validade.`,
+                    meta: { event: eventType, psychologistId: lockedPsi.id, paymentId: payment.id, isRefundOrChargeback, hasValidPlan }
                 }, { transaction: t });
             }
         });
