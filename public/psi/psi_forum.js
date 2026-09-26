@@ -443,7 +443,7 @@
                 const res = await apiFetch(`${API_BASE_URL}/api/forum/posts?filter=populares&limit=6`);
                 if (!res.ok) return;
                 const posts = await res.json();
-                const related = posts.filter(p => p.id != currentPostId).slice(0, 5);
+                const related = posts.filter(p => p.id != currentPostId).slice(0, 3);
                 
                 container.innerHTML = '';
                 if (related.length === 0) {

@@ -169,8 +169,12 @@
 <!-- Template para a view de post completo -->
 <template id="forum-full-post-template">
     <div class="reddit-full-view">
-        <div style="max-width: 740px; margin: 0 auto; display: flex; flex-direction: column; width: 100%;">
-            <div class="forum-post-main">
+        <!-- Novo wrapper para o Layout de 2 Colunas -->
+        <div class="forum-two-column-layout" style="max-width: 1100px; margin: 0 auto; display: flex; gap: 30px; width: 100%; align-items: stretch; flex-wrap: wrap;">
+            
+            <!-- Coluna Esquerda: Post Principal e Comentários -->
+            <div class="forum-main-column" style="flex: 1 1 600px; max-width: 740px;">
+                <div class="forum-post-main">
                 <div class="reddit-app-header">
                     <button id="forum-back-to-feed-btn" class="app-back-btn">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -229,15 +233,23 @@
                         <div style="text-align: center; margin-top: 20px;">
                             <button id="btn-load-more-comments" class="btn btn-secundario hidden">Mostrar mais comentários</button>
                         </div>
+                    </div> <!-- Fim de comment-section -->
+                </div> <!-- Fim do widget reddit-full-post-body -->
+                </div> <!-- Fim de forum-post-main -->
+            </div> <!-- Fim da Coluna Esquerda -->
+            
+            <!-- Coluna Direita (Sidebar): Posts Relacionados -->
+            <div class="forum-sidebar-column" style="flex: 1 1 320px; min-width: 300px; margin-bottom: 50px;">
+                <div style="position: sticky; top: 0; z-index: 10; padding: 25px; background-color: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 25px;">
+                        <div style="width: 32px; height: 32px; background: #e0f2fe; color: #0284c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem;">✨</div>
+                        <h3 style="font-size: 1.1rem; color: #334155; margin: 0; font-family: var(--font-titulos); font-weight: 700;">Continue Explorando</h3>
                     </div>
-                    
-                    <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                        <h3 style="font-size: 1rem; color: #64748b; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Ver Outros Posts</h3>
-                        <div id="related-posts-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
-                    </div>
+                    <div id="related-posts-container" style="display: flex; flex-direction: column; gap: 15px;"></div>
                 </div>
             </div>
-        </div>
+
+        </div> <!-- Fim do Wrapper 2 Colunas -->
     </div>
 </template>
 
