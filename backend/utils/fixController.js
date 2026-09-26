@@ -754,7 +754,7 @@ exports.testEmail = async (req, res) => {
             await emailService.sendFirstLeadEmail({ email: emailDestino, nome: 'Usuário Teste' });
             res.send(`✅ E-mail de PRIMEIRO LEAD enviado para: ${emailDestino}.`);
         } else if (type === 'limit_reached') {
-            await emailService.sendLimitReachedEmail({ email: emailDestino, nome: 'Usuário Teste' }, 3);
+
             res.send(`✅ E-mail de LIMITE ATINGIDO enviado para: ${emailDestino}.`);
         } else {
             await emailService.sendPasswordResetEmail({ email: emailDestino, nome: 'Teste Admin' }, 'https://www.yelopsi.com.br/teste-link');

@@ -323,16 +323,7 @@ exports.sendFirstLeadEmail = async (user) => {
     await sendEmail(user.email, title, getBaseTemplate(title, content));
 };
 
-exports.sendLimitReachedEmail = async (user, maxClicks) => {
-    const title = '⚠️ Seu limite de contatos gratuitos foi atingido!';
-    const content = `
-        <p>Incrível, <strong>${user.nome.split(' ')[0]}</strong>!</p>
-        <p>Você acabou de receber seu <strong>${maxClicks}º contato</strong> através da Yelo. Isso mostra que seu perfil atrai muito interesse.</p>
-        <p>Como seu limite de contatos gratuitos do período de teste foi atingido, seu botão de WhatsApp ficará indisponível para novos pacientes a partir de agora. Assine o plano Premium para desbloquear seu perfil e continuar recebendo pacientes!</p>
-        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Desbloquear meu Perfil</a></center>
-    `;
-    await sendEmail(user.email, 'Seu limite de contatos gratuitos foi atingido! 🚀', getBaseTemplate(title, content));
-};
+
 
 exports.sendEvaluationEmail = async (user) => {
     const title = 'Como foi sua experiência na Yelo? 💛';
