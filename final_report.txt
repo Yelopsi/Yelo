@@ -1,0 +1,630 @@
+◇ injected env (48) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+== ETAPA 1 ==
+Executing (default): INSERT INTO "Psychologists" ("id","nome","crp","email","senha","isAdmin","is_exempt","aiOptimizationHistory","plano","status","isProfileAnalyzed","hasSeenWelcome","evaluationEmailSent","cancelAtPeriodEnd","free_session_active","profile_paused","lifetimeRevenue","tipo_cobranca","temas_atuacao","abordagens_tecnicas","praticas_vivencias","disponibilidade_periodo","publico_alvo","estilo_terapia","praticas_inclusivas","modalidade","whatsapp_clicks","profile_appearances","subscription_payments_count","xp","remarketing_step","authority_level","dailySummaryTime","reminderHoursBefore","badges","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) RETURNING "id","nome","crp","email","senha","telefone","cep","rua","numero","bairro","complemento","cidade","estado","ai_insights_cache","fotoUrl","cpf","cnpj","razao_social","bio","slug","isAdmin","is_exempt","admin_billing_sent_at","msg_incomplete_profile_sent_at","aiOptimizationHistory","msg_analysis_sent_at","msg_feedback_billing_sent_at","msg_churn_followup_sent_at","msg_paid_churn_sent_at","plano","status","isProfileAnalyzed","hasSeenWelcome","evaluationEmailSent","cancelAtPeriodEnd","planExpiresAt","subscriptionId","subscribedAt","profileActivatedAt","firstPaidAt","canceledAt","reactivatedAt","free_session_active","free_session_time","profile_paused","lifetimeRevenue","valor_sessao_numero","tipo_cobranca","valor_mensal_numero","ano_inicio_experiencia","formacao_nivel","formacao_desc","temas_atuacao","abordagens_tecnicas","genero_identidade","praticas_vivencias","disponibilidade_periodo","publico_alvo","estilo_terapia","praticas_inclusivas","modalidade","linkedin_url","instagram_url","facebook_url","tiktok_url","x_url","whatsapp_clicks","profile_appearances","last_shown_match_at","subscription_payments_count","xp","remarketing_step","last_remarketing_at","utm_source","utm_medium","utm_campaign","utm_content","first_utm_source","first_utm_medium","first_utm_campaign","first_utm_content","authority_level","crpDocumentUrl","dailySummaryTime","reminderHoursBefore","badges","createdAt","updatedAt","deletedAt";
+Executing (default): INSERT INTO "Psychologists" ("id","nome","crp","email","senha","fotoUrl","cpf","bio","isAdmin","is_exempt","aiOptimizationHistory","plano","status","isProfileAnalyzed","hasSeenWelcome","evaluationEmailSent","cancelAtPeriodEnd","planExpiresAt","free_session_active","profile_paused","lifetimeRevenue","tipo_cobranca","temas_atuacao","abordagens_tecnicas","praticas_vivencias","disponibilidade_periodo","publico_alvo","estilo_terapia","praticas_inclusivas","modalidade","whatsapp_clicks","profile_appearances","subscription_payments_count","xp","remarketing_step","authority_level","dailySummaryTime","reminderHoursBefore","badges","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40) RETURNING "id","nome","crp","email","senha","telefone","cep","rua","numero","bairro","complemento","cidade","estado","ai_insights_cache","fotoUrl","cpf","cnpj","razao_social","bio","slug","isAdmin","is_exempt","admin_billing_sent_at","msg_incomplete_profile_sent_at","aiOptimizationHistory","msg_analysis_sent_at","msg_feedback_billing_sent_at","msg_churn_followup_sent_at","msg_paid_churn_sent_at","plano","status","isProfileAnalyzed","hasSeenWelcome","evaluationEmailSent","cancelAtPeriodEnd","planExpiresAt","subscriptionId","subscribedAt","profileActivatedAt","firstPaidAt","canceledAt","reactivatedAt","free_session_active","free_session_time","profile_paused","lifetimeRevenue","valor_sessao_numero","tipo_cobranca","valor_mensal_numero","ano_inicio_experiencia","formacao_nivel","formacao_desc","temas_atuacao","abordagens_tecnicas","genero_identidade","praticas_vivencias","disponibilidade_periodo","publico_alvo","estilo_terapia","praticas_inclusivas","modalidade","linkedin_url","instagram_url","facebook_url","tiktok_url","x_url","whatsapp_clicks","profile_appearances","last_shown_match_at","subscription_payments_count","xp","remarketing_step","last_remarketing_at","utm_source","utm_medium","utm_campaign","utm_content","first_utm_source","first_utm_medium","first_utm_campaign","first_utm_content","authority_level","crpDocumentUrl","dailySummaryTime","reminderHoursBefore","badges","createdAt","updatedAt","deletedAt";
+Executing (default): INSERT INTO "Psychologists" ("id","nome","crp","email","senha","isAdmin","is_exempt","aiOptimizationHistory","plano","status","isProfileAnalyzed","hasSeenWelcome","evaluationEmailSent","cancelAtPeriodEnd","free_session_active","profile_paused","lifetimeRevenue","tipo_cobranca","temas_atuacao","abordagens_tecnicas","praticas_vivencias","disponibilidade_periodo","publico_alvo","estilo_terapia","praticas_inclusivas","modalidade","whatsapp_clicks","profile_appearances","subscription_payments_count","xp","remarketing_step","authority_level","dailySummaryTime","reminderHoursBefore","badges","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36) RETURNING "id","nome","crp","email","senha","telefone","cep","rua","numero","bairro","complemento","cidade","estado","ai_insights_cache","fotoUrl","cpf","cnpj","razao_social","bio","slug","isAdmin","is_exempt","admin_billing_sent_at","msg_incomplete_profile_sent_at","aiOptimizationHistory","msg_analysis_sent_at","msg_feedback_billing_sent_at","msg_churn_followup_sent_at","msg_paid_churn_sent_at","plano","status","isProfileAnalyzed","hasSeenWelcome","evaluationEmailSent","cancelAtPeriodEnd","planExpiresAt","subscriptionId","subscribedAt","profileActivatedAt","firstPaidAt","canceledAt","reactivatedAt","free_session_active","free_session_time","profile_paused","lifetimeRevenue","valor_sessao_numero","tipo_cobranca","valor_mensal_numero","ano_inicio_experiencia","formacao_nivel","formacao_desc","temas_atuacao","abordagens_tecnicas","genero_identidade","praticas_vivencias","disponibilidade_periodo","publico_alvo","estilo_terapia","praticas_inclusivas","modalidade","linkedin_url","instagram_url","facebook_url","tiktok_url","x_url","whatsapp_clicks","profile_appearances","last_shown_match_at","subscription_payments_count","xp","remarketing_step","last_remarketing_at","utm_source","utm_medium","utm_campaign","utm_content","first_utm_source","first_utm_medium","first_utm_campaign","first_utm_content","authority_level","crpDocumentUrl","dailySummaryTime","reminderHoursBefore","badges","createdAt","updatedAt","deletedAt";
+Executing (default): INSERT INTO "Patients" ("id","nome","email","senha","temas_buscados","abordagem_desejada","praticas_afirmativas","disponibilidade_periodo","termos_aceitos","marketing_aceito","sessionValue","status","is_ghost_profile","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING "id","nome","email","senha","telefone","fotoUrl","valor_sessao_faixa","temas_buscados","abordagem_desejada","genero_profissional","praticas_afirmativas","modalidade_preferida","disponibilidade_periodo","ip_registro","termos_aceitos","marketing_aceito","sessionValue","faixa_etaria","idade","identidade_genero","utm_source","utm_medium","utm_campaign","utm_content","first_utm_source","first_utm_medium","first_utm_campaign","first_utm_content","status","is_ghost_profile","observacoes","resetPasswordToken","resetPasswordExpires","createdAt","updatedAt","deletedAt";
+== LOGIN TESTS ==
+[PASS] ADMIN_LOGIN_REAL
+[PASS] PSYCHOLOGIST_LOGIN_REAL
+[PASS] PATIENT_LOGIN_REAL
+== MATCH TEST ==
+[PASS] MATCH_REAL_TEST
+== TRIAL TEST ==
+Executing (default): INSERT INTO "Psychologists" ("id","nome","crp","email","senha","fotoUrl","isAdmin","is_exempt","aiOptimizationHistory","plano","status","isProfileAnalyzed","hasSeenWelcome","evaluationEmailSent","cancelAtPeriodEnd","free_session_active","profile_paused","lifetimeRevenue","tipo_cobranca","temas_atuacao","abordagens_tecnicas","praticas_vivencias","disponibilidade_periodo","publico_alvo","estilo_terapia","praticas_inclusivas","modalidade","whatsapp_clicks","profile_appearances","subscription_payments_count","xp","remarketing_step","authority_level","dailySummaryTime","reminderHoursBefore","badges","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37) RETURNING "id","nome","crp","email","senha","telefone","cep","rua","numero","bairro","complemento","cidade","estado","ai_insights_cache","fotoUrl","cpf","cnpj","razao_social","bio","slug","isAdmin","is_exempt","admin_billing_sent_at","msg_incomplete_profile_sent_at","aiOptimizationHistory","msg_analysis_sent_at","msg_feedback_billing_sent_at","msg_churn_followup_sent_at","msg_paid_churn_sent_at","plano","status","isProfileAnalyzed","hasSeenWelcome","evaluationEmailSent","cancelAtPeriodEnd","planExpiresAt","subscriptionId","subscribedAt","profileActivatedAt","firstPaidAt","canceledAt","reactivatedAt","free_session_active","free_session_time","profile_paused","lifetimeRevenue","valor_sessao_numero","tipo_cobranca","valor_mensal_numero","ano_inicio_experiencia","formacao_nivel","formacao_desc","temas_atuacao","abordagens_tecnicas","genero_identidade","praticas_vivencias","disponibilidade_periodo","publico_alvo","estilo_terapia","praticas_inclusivas","modalidade","linkedin_url","instagram_url","facebook_url","tiktok_url","x_url","whatsapp_clicks","profile_appearances","last_shown_match_at","subscription_payments_count","xp","remarketing_step","last_remarketing_at","utm_source","utm_medium","utm_campaign","utm_content","first_utm_source","first_utm_medium","first_utm_campaign","first_utm_content","authority_level","crpDocumentUrl","dailySummaryTime","reminderHoursBefore","badges","createdAt","updatedAt","deletedAt";
+Executing (default): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."email" = 'trial_1790536069521@example.com');
+[PASS] TRIAL_REAL_TEST
+== LEDGER & CMO ==
+Executing (default): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."email" = 'admin_1790536069521@example.com');
+Executing (default): INSERT INTO "Payments" ("id","psychologistId","status","value","billingType","dueDate","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING "id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt";
+Executing (default): INSERT INTO "PaymentFinancialEvents" ("id","paymentId","externalEventId","eventType","grossAmount","cashDeltaAmount","eventDate","eventOccurredAt","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id","paymentId","externalEventId","eventType","grossAmount","feeAmount","netCashAmount","cashDeltaAmount","eventDate","eventOccurredAt","sourceMetadata","createdAt","updatedAt";
+Executing (default): INSERT INTO "Payments" ("id","psychologistId","status","value","billingType","dueDate","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING "id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt";
+Executing (default): INSERT INTO "PaymentFinancialEvents" ("id","paymentId","externalEventId","eventType","grossAmount","cashDeltaAmount","eventDate","eventOccurredAt","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id","paymentId","externalEventId","eventType","grossAmount","feeAmount","netCashAmount","cashDeltaAmount","eventDate","eventOccurredAt","sourceMetadata","createdAt","updatedAt";
+Executing (default): INSERT INTO "YeloExpenses" ("id","name","amount","monthYear","category","nature","purpose","provider","entryMethod","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id","name","amount","monthYear","category","nature","purpose","provider","entryMethod","createdAt","updatedAt";
+Executing (default): INSERT INTO "YeloExpenses" ("id","name","amount","monthYear","category","nature","purpose","provider","entryMethod","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id","name","amount","monthYear","category","nature","purpose","provider","entryMethod","createdAt","updatedAt";
+Executing (default): INSERT INTO "YeloExpenses" ("id","name","amount","monthYear","category","nature","purpose","provider","entryMethod","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id","name","amount","monthYear","category","nature","purpose","provider","entryMethod","createdAt","updatedAt";
+[PASS] CMO_REAL_API
+== LEDGER ==
+[2026-09-27 19:08:14] DEBUG Creating transport: nodemailer (7.0.13; +https://nodemailer.com/; SMTP/7.0.13[client:7.0.13])
+Executing (default): INSERT INTO "Payments" ("id","psychologistId","status","value","billingType","dueDate","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING "id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt";
+Executing (default): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."id" = '3049');
+Executing (default): INSERT INTO "Payments" ("id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT ("id") DO UPDATE SET "id"=EXCLUDED."id","subscriptionId"=EXCLUDED."subscriptionId","psychologistId"=EXCLUDED."psychologistId","status"=EXCLUDED."status","value"=EXCLUDED."value","billingType"=EXCLUDED."billingType","dueDate"=EXCLUDED."dueDate","paymentDate"=EXCLUDED."paymentDate","createdAt"=EXCLUDED."createdAt","updatedAt"=EXCLUDED."updatedAt" RETURNING "id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt";
+[ASAAS] Pagamento test_ledger sincronizado no banco local com sucesso.
+Executing (57e34b2b-07da-45c8-b401-5aeb8b41c6f4): START TRANSACTION;
+Executing (57e34b2b-07da-45c8-b401-5aeb8b41c6f4): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."id" = 3049) FOR UPDATE;
+Executing (57e34b2b-07da-45c8-b401-5aeb8b41c6f4): UPDATE "Psychologists" SET "planExpiresAt"=$1,"plano"=$2,"subscription_payments_count"=$3,"subscribedAt"=$4,"profileActivatedAt"=$5,"firstPaidAt"=$6,"updatedAt"=$7 WHERE "id" = $8
+Executing (57e34b2b-07da-45c8-b401-5aeb8b41c6f4): INSERT INTO "SystemLogs" ("id","level","message","meta","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5) RETURNING "id","level","message","meta","createdAt","updatedAt";
+Executing (57e34b2b-07da-45c8-b401-5aeb8b41c6f4): COMMIT;
+[2026-09-27 19:08:14] DEBUG Sending mail using SMTP/7.0.13[client:7.0.13]
+Executing (8491d241-64e5-409c-bbee-3b3ac93792b4): START TRANSACTION;
+Executing (8491d241-64e5-409c-bbee-3b3ac93792b4): SELECT count(*) AS "count" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL);
+Executing (8491d241-64e5-409c-bbee-3b3ac93792b4): COMMIT;
+Executing (default): SELECT "id", "paymentId", "externalEventId", "eventType", "grossAmount", "feeAmount", "netCashAmount", "cashDeltaAmount", "eventDate", "eventOccurredAt", "sourceMetadata", "createdAt", "updatedAt" FROM "PaymentFinancialEvents" AS "PaymentFinancialEvent" WHERE "PaymentFinancialEvent"."paymentId" = 'test_ledger';
+Executing (9015772d-8d66-4497-b2d1-c607a084f6b8): START TRANSACTION;
+Executing (9015772d-8d66-4497-b2d1-c607a084f6b8): INSERT INTO "PaymentFinancialEvents" ("id","paymentId","externalEventId","eventType","grossAmount","feeAmount","netCashAmount","cashDeltaAmount","eventDate","sourceMetadata","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING "id","paymentId","externalEventId","eventType","grossAmount","feeAmount","netCashAmount","cashDeltaAmount","eventDate","eventOccurredAt","sourceMetadata","createdAt","updatedAt";
+[LEDGER] PAYMENT_CONFIRMED gravado para test_ledger.
+Executing (9015772d-8d66-4497-b2d1-c607a084f6b8): COMMIT;
+Executing (default): SELECT "id", "paymentId", "externalEventId", "eventType", "grossAmount", "feeAmount", "netCashAmount", "cashDeltaAmount", "eventDate", "eventOccurredAt", "sourceMetadata", "createdAt", "updatedAt" FROM "PaymentFinancialEvents" AS "PaymentFinancialEvent" WHERE "PaymentFinancialEvent"."paymentId" = 'test_ledger' AND "PaymentFinancialEvent"."eventType" = 'PAYMENT_CONFIRMED';
+Executing (default): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."id" = '3049');
+Executing (default): INSERT INTO "Payments" ("id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT ("id") DO UPDATE SET "id"=EXCLUDED."id","subscriptionId"=EXCLUDED."subscriptionId","psychologistId"=EXCLUDED."psychologistId","status"=EXCLUDED."status","value"=EXCLUDED."value","billingType"=EXCLUDED."billingType","dueDate"=EXCLUDED."dueDate","paymentDate"=EXCLUDED."paymentDate","createdAt"=EXCLUDED."createdAt","updatedAt"=EXCLUDED."updatedAt" RETURNING "id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt";
+[ASAAS] Pagamento test_ledger sincronizado no banco local com sucesso.
+Executing (fb33366a-3129-491c-9824-f9df2a2fc9a5): START TRANSACTION;
+Executing (fb33366a-3129-491c-9824-f9df2a2fc9a5): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."id" = 3049) FOR UPDATE;
+Executing (fb33366a-3129-491c-9824-f9df2a2fc9a5): UPDATE "Psychologists" SET "subscription_payments_count"=$1,"updatedAt"=$2 WHERE "id" = $3
+Executing (fb33366a-3129-491c-9824-f9df2a2fc9a5): INSERT INTO "SystemLogs" ("id","level","message","meta","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5) RETURNING "id","level","message","meta","createdAt","updatedAt";
+Executing (fb33366a-3129-491c-9824-f9df2a2fc9a5): COMMIT;
+[2026-09-27 19:08:14] DEBUG Sending mail using SMTP/7.0.13[client:7.0.13]
+Executing (2fe2bd0a-32f9-4711-ab5d-1f34a6c49644): START TRANSACTION;
+Executing (2fe2bd0a-32f9-4711-ab5d-1f34a6c49644): SELECT count(*) AS "count" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL);
+Executing (2fe2bd0a-32f9-4711-ab5d-1f34a6c49644): COMMIT;
+Executing (default): SELECT "id", "paymentId", "externalEventId", "eventType", "grossAmount", "feeAmount", "netCashAmount", "cashDeltaAmount", "eventDate", "eventOccurredAt", "sourceMetadata", "createdAt", "updatedAt" FROM "PaymentFinancialEvents" AS "PaymentFinancialEvent" WHERE "PaymentFinancialEvent"."paymentId" = 'test_ledger';
+Executing (21b05685-c174-4d90-8ba8-6399648f9871): START TRANSACTION;
+Executing (21b05685-c174-4d90-8ba8-6399648f9871): COMMIT;
+Executing (default): SELECT "id", "paymentId", "externalEventId", "eventType", "grossAmount", "feeAmount", "netCashAmount", "cashDeltaAmount", "eventDate", "eventOccurredAt", "sourceMetadata", "createdAt", "updatedAt" FROM "PaymentFinancialEvents" AS "PaymentFinancialEvent" WHERE "PaymentFinancialEvent"."paymentId" = 'test_ledger' AND "PaymentFinancialEvent"."eventType" = 'PAYMENT_CONFIRMED';
+Executing (default): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."id" = '3049');
+Executing (default): INSERT INTO "Payments" ("id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT ("id") DO UPDATE SET "id"=EXCLUDED."id","subscriptionId"=EXCLUDED."subscriptionId","psychologistId"=EXCLUDED."psychologistId","status"=EXCLUDED."status","value"=EXCLUDED."value","billingType"=EXCLUDED."billingType","dueDate"=EXCLUDED."dueDate","paymentDate"=EXCLUDED."paymentDate","createdAt"=EXCLUDED."createdAt","updatedAt"=EXCLUDED."updatedAt" RETURNING "id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt";
+[ASAAS] Pagamento test_ledger sincronizado no banco local com sucesso.
+Executing (44bc6bb3-d8be-473f-bc89-85c10f52a8ef): START TRANSACTION;
+Executing (44bc6bb3-d8be-473f-bc89-85c10f52a8ef): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."id" = 3049) FOR UPDATE;
+Executing (44bc6bb3-d8be-473f-bc89-85c10f52a8ef): UPDATE "Psychologists" SET "subscription_payments_count"=$1,"updatedAt"=$2 WHERE "id" = $3
+Executing (44bc6bb3-d8be-473f-bc89-85c10f52a8ef): INSERT INTO "SystemLogs" ("id","level","message","meta","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5) RETURNING "id","level","message","meta","createdAt","updatedAt";
+Executing (44bc6bb3-d8be-473f-bc89-85c10f52a8ef): COMMIT;
+[2026-09-27 19:08:14] DEBUG Sending mail using SMTP/7.0.13[client:7.0.13]
+Executing (d27b722f-2c23-4b09-8d90-f6b2b7f8eac8): START TRANSACTION;
+Executing (d27b722f-2c23-4b09-8d90-f6b2b7f8eac8): SELECT count(*) AS "count" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL);
+Executing (d27b722f-2c23-4b09-8d90-f6b2b7f8eac8): COMMIT;
+Executing (default): SELECT "id", "paymentId", "externalEventId", "eventType", "grossAmount", "feeAmount", "netCashAmount", "cashDeltaAmount", "eventDate", "eventOccurredAt", "sourceMetadata", "createdAt", "updatedAt" FROM "PaymentFinancialEvents" AS "PaymentFinancialEvent" WHERE "PaymentFinancialEvent"."paymentId" = 'test_ledger';
+Executing (9bc1c481-8f5b-434f-a0b0-510a247c5761): START TRANSACTION;
+Executing (9bc1c481-8f5b-434f-a0b0-510a247c5761): INSERT INTO "PaymentFinancialEvents" ("id","paymentId","externalEventId","eventType","grossAmount","feeAmount","netCashAmount","cashDeltaAmount","eventDate","sourceMetadata","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING "id","paymentId","externalEventId","eventType","grossAmount","feeAmount","netCashAmount","cashDeltaAmount","eventDate","eventOccurredAt","sourceMetadata","createdAt","updatedAt";
+[LEDGER] PAYMENT_CREDITED gravado para test_ledger. Caixa atualizado.
+Executing (9bc1c481-8f5b-434f-a0b0-510a247c5761): COMMIT;
+Executing (default): SELECT "id", "paymentId", "externalEventId", "eventType", "grossAmount", "feeAmount", "netCashAmount", "cashDeltaAmount", "eventDate", "eventOccurredAt", "sourceMetadata", "createdAt", "updatedAt" FROM "PaymentFinancialEvents" AS "PaymentFinancialEvent" WHERE "PaymentFinancialEvent"."paymentId" = 'test_ledger' AND "PaymentFinancialEvent"."eventType" = 'PAYMENT_CREDITED';
+Executing (default): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."id" = '3049');
+Executing (default): INSERT INTO "Payments" ("id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT ("id") DO UPDATE SET "id"=EXCLUDED."id","subscriptionId"=EXCLUDED."subscriptionId","psychologistId"=EXCLUDED."psychologistId","status"=EXCLUDED."status","value"=EXCLUDED."value","billingType"=EXCLUDED."billingType","dueDate"=EXCLUDED."dueDate","paymentDate"=EXCLUDED."paymentDate","createdAt"=EXCLUDED."createdAt","updatedAt"=EXCLUDED."updatedAt" RETURNING "id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt";
+[2026-09-27 19:08:14] DEBUG [tDW4jGVTAGk] Resolved smtp-relay.brevo.com as 1.179.117.1 [cache miss]
+[ASAAS] Pagamento test_ledger sincronizado no banco local com sucesso.
+Executing (811ef5c4-3eab-4b6a-97b6-c31635e3e801): START TRANSACTION;
+Executing (811ef5c4-3eab-4b6a-97b6-c31635e3e801): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."id" = 3049) FOR UPDATE;
+Executing (811ef5c4-3eab-4b6a-97b6-c31635e3e801): UPDATE "Psychologists" SET "subscription_payments_count"=$1,"updatedAt"=$2 WHERE "id" = $3
+Executing (811ef5c4-3eab-4b6a-97b6-c31635e3e801): INSERT INTO "SystemLogs" ("id","level","message","meta","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5) RETURNING "id","level","message","meta","createdAt","updatedAt";
+Executing (811ef5c4-3eab-4b6a-97b6-c31635e3e801): COMMIT;
+[2026-09-27 19:08:14] DEBUG Sending mail using SMTP/7.0.13[client:7.0.13]
+Executing (661024c2-1b70-4693-a6ab-02adc5f7843b): START TRANSACTION;
+[2026-09-27 19:08:14] DEBUG [aOLCYpnVEAI] Resolved smtp-relay.brevo.com as 1.179.117.1 [cache hit]
+Executing (661024c2-1b70-4693-a6ab-02adc5f7843b): SELECT count(*) AS "count" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL);
+Executing (661024c2-1b70-4693-a6ab-02adc5f7843b): COMMIT;
+Executing (default): SELECT "id", "paymentId", "externalEventId", "eventType", "grossAmount", "feeAmount", "netCashAmount", "cashDeltaAmount", "eventDate", "eventOccurredAt", "sourceMetadata", "createdAt", "updatedAt" FROM "PaymentFinancialEvents" AS "PaymentFinancialEvent" WHERE "PaymentFinancialEvent"."paymentId" = 'test_ledger';
+Executing (7b9519cf-2996-4a28-8493-452338b7ccc9): START TRANSACTION;
+Executing (7b9519cf-2996-4a28-8493-452338b7ccc9): COMMIT;
+Executing (default): SELECT "id", "paymentId", "externalEventId", "eventType", "grossAmount", "feeAmount", "netCashAmount", "cashDeltaAmount", "eventDate", "eventOccurredAt", "sourceMetadata", "createdAt", "updatedAt" FROM "PaymentFinancialEvents" AS "PaymentFinancialEvent" WHERE "PaymentFinancialEvent"."paymentId" = 'test_ledger' AND "PaymentFinancialEvent"."eventType" = 'PAYMENT_CREDITED';
+[PASS] LEDGER_POSITIVE_REAL_TEST
+[PASS] LEDGER_IDEMPOTENCY_REAL_TEST
+Executing (default): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."id" = '3049');
+Executing (default): INSERT INTO "Payments" ("id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT ("id") DO UPDATE SET "id"=EXCLUDED."id","subscriptionId"=EXCLUDED."subscriptionId","psychologistId"=EXCLUDED."psychologistId","status"=EXCLUDED."status","value"=EXCLUDED."value","billingType"=EXCLUDED."billingType","dueDate"=EXCLUDED."dueDate","paymentDate"=EXCLUDED."paymentDate","createdAt"=EXCLUDED."createdAt","updatedAt"=EXCLUDED."updatedAt" RETURNING "id","subscriptionId","psychologistId","status","value","billingType","dueDate","paymentDate","createdAt","updatedAt";
+[ASAAS] Pagamento test_ledger sincronizado no banco local com sucesso.
+Executing (dbb95193-6712-4a77-8401-29fe0f71c441): START TRANSACTION;
+Executing (dbb95193-6712-4a77-8401-29fe0f71c441): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."id" = 3049) FOR UPDATE;
+Executing (dbb95193-6712-4a77-8401-29fe0f71c441): UPDATE "Psychologists" SET "status"=$1,"planExpiresAt"=$2,"updatedAt"=$3 WHERE "id" = $4
+Executing (dbb95193-6712-4a77-8401-29fe0f71c441): INSERT INTO "SystemLogs" ("id","level","message","meta","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3,$4,$5) RETURNING "id","level","message","meta","createdAt","updatedAt";
+Executing (dbb95193-6712-4a77-8401-29fe0f71c441): COMMIT;
+Executing (default): SELECT "id", "paymentId", "externalEventId", "eventType", "grossAmount", "feeAmount", "netCashAmount", "cashDeltaAmount", "eventDate", "eventOccurredAt", "sourceMetadata", "createdAt", "updatedAt" FROM "PaymentFinancialEvents" AS "PaymentFinancialEvent" WHERE "PaymentFinancialEvent"."paymentId" = 'test_ledger';
+Executing (f26ae51d-91ae-4ade-8114-7f5532b01fb4): START TRANSACTION;
+Executing (f26ae51d-91ae-4ade-8114-7f5532b01fb4): INSERT INTO "PaymentFinancialEvents" ("id","paymentId","externalEventId","eventType","grossAmount","feeAmount","netCashAmount","cashDeltaAmount","eventDate","eventOccurredAt","sourceMetadata","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING "id","paymentId","externalEventId","eventType","grossAmount","feeAmount","netCashAmount","cashDeltaAmount","eventDate","eventOccurredAt","sourceMetadata","createdAt","updatedAt";
+Executing (f26ae51d-91ae-4ade-8114-7f5532b01fb4): COMMIT;
+Executing (default): SELECT "id", "paymentId", "externalEventId", "eventType", "grossAmount", "feeAmount", "netCashAmount", "cashDeltaAmount", "eventDate", "eventOccurredAt", "sourceMetadata", "createdAt", "updatedAt" FROM "PaymentFinancialEvents" AS "PaymentFinancialEvent" WHERE "PaymentFinancialEvent"."paymentId" = 'test_ledger' AND "PaymentFinancialEvent"."eventType" = 'REFUND';
+[PASS] LEDGER_NEGATIVE_REAL_TEST
+Executing (default): SELECT "id", "nome", "crp", "email", "senha", "telefone", "cep", "rua", "numero", "bairro", "complemento", "cidade", "estado", "ai_insights_cache", "fotoUrl", "cpf", "cnpj", "razao_social", "bio", "slug", "isAdmin", "is_exempt", "admin_billing_sent_at", "msg_incomplete_profile_sent_at", "aiOptimizationHistory", "msg_analysis_sent_at", "msg_feedback_billing_sent_at", "msg_churn_followup_sent_at", "msg_paid_churn_sent_at", "plano", "status", "isProfileAnalyzed", "hasSeenWelcome", "evaluationEmailSent", "cancelAtPeriodEnd", "planExpiresAt", "subscriptionId", "subscribedAt", "profileActivatedAt", "firstPaidAt", "canceledAt", "reactivatedAt", "free_session_active", "free_session_time", "profile_paused", "lifetimeRevenue", "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "ano_inicio_experiencia", "formacao_nivel", "formacao_desc", "temas_atuacao", "abordagens_tecnicas", "genero_identidade", "praticas_vivencias", "disponibilidade_periodo", "publico_alvo", "estilo_terapia", "praticas_inclusivas", "modalidade", "linkedin_url", "instagram_url", "facebook_url", "tiktok_url", "x_url", "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "subscription_payments_count", "xp", "remarketing_step", "last_remarketing_at", "utm_source", "utm_medium", "utm_campaign", "utm_content", "first_utm_source", "first_utm_medium", "first_utm_campaign", "first_utm_content", "authority_level", "crpDocumentUrl", "dailySummaryTime", "reminderHoursBefore", "badges", "createdAt", "updatedAt", "deletedAt" FROM "Psychologists" AS "Psychologist" WHERE ("Psychologist"."deletedAt" IS NULL AND "Psychologist"."email" LIKE '%@example.com');
+[2026-09-27 19:08:14] DEBUG [Xc9nZrNFQqA] Resolved smtp-relay.brevo.com as 1.179.117.1 [cache miss]
+Executing (default): DELETE FROM "GamificationLogs" WHERE "psychologistId" IN (3051, 3050, 3049, 3052)
+Executing (default): DELETE FROM "PaymentFinancialEvents" WHERE "paymentId" IN ('test1', 'test_ledger', 'test_conf_1790536069521', 'test_cred_1790536069521')
+Executing (default): DELETE FROM "Payments" WHERE "id" IN ('test1', 'test_ledger', 'test_conf_1790536069521', 'test_cred_1790536069521')
+Executing (default): DELETE FROM "Psychologists" WHERE "email" LIKE '%@example.com'
+[2026-09-27 19:08:14] DEBUG [n7SPHJsO2uc] Resolved smtp-relay.brevo.com as 1.179.117.1 [cache miss]
+Executing (default): DELETE FROM "Patients" WHERE "email" LIKE '%@example.com'
+Executing (default): DELETE FROM "YeloExpenses" WHERE "monthYear" = '2026-09' AND "category" = 'Outros'
+== SECURITY & FINAL CHECKS ==
+[PASS] SECURITY_GATE
+HARDCODED_PASS_TESTS=0
+
+MATCH_REAL_TEST=PASS
+TRIAL_REAL_TEST=PASS
+LEDGER_POSITIVE_REAL_TEST=PASS
+LEDGER_NEGATIVE_REAL_TEST=PASS
+LEDGER_IDEMPOTENCY_REAL_TEST=PASS
+CMO_REAL_API=PASS
+CMO_FIXTURE_CALCULATION=FAIL
+
+CMO_FIXTURE_DELTAS={
+  "ConfirmedGrossRevenue": 100,
+  "GatewayNetCash": 0,
+  "FixedOPEX": 50,
+  "OtherVariableOperatingCosts": 20
+}
+
+CMO_ZERO_VALUES=[]
+
+SECURITY_GATE=PASS
+REMAINING_BLOCKERS=[]
+
+SAFE_TO_DEPLOY=false
+[2026-09-27 19:08:19] INFO  [tDW4jGVTAGk] Connection established to 1.179.117.1:2525
+[2026-09-27 19:08:19] INFO  [aOLCYpnVEAI] Connection established to 1.179.117.1:2525
+[2026-09-27 19:08:19] INFO  [Xc9nZrNFQqA] Connection established to 1.179.117.1:2525
+[2026-09-27 19:08:19] INFO  [n7SPHJsO2uc] Connection established to 1.179.117.1:2525
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 220 smtp-relay.brevo.com ESMTP Service Ready
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] C: EHLO MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 220 smtp-relay.brevo.com ESMTP Service Ready
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] C: EHLO MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 220 smtp-relay.brevo.com ESMTP Service Ready
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] C: EHLO MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 220 smtp-relay.brevo.com ESMTP Service Ready
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] C: EHLO MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-Hello MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-PIPELINING
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-8BITMIME
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-ENHANCEDSTATUSCODES
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-CHUNKING
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-STARTTLS
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-AUTH PLAIN LOGIN CRAM-MD5
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250 SIZE 20971520
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] C: STARTTLS
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-Hello MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-PIPELINING
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-8BITMIME
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-ENHANCEDSTATUSCODES
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-CHUNKING
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-STARTTLS
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-AUTH PLAIN LOGIN CRAM-MD5
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250 SIZE 20971520
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] C: STARTTLS
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-Hello MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-PIPELINING
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-8BITMIME
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-ENHANCEDSTATUSCODES
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-CHUNKING
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-STARTTLS
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-AUTH CRAM-MD5 PLAIN LOGIN
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250 SIZE 20971520
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] C: STARTTLS
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-Hello MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-PIPELINING
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-8BITMIME
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-ENHANCEDSTATUSCODES
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-CHUNKING
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-STARTTLS
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-AUTH PLAIN LOGIN CRAM-MD5
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250 SIZE 20971520
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] C: STARTTLS
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 220 2.0.0 Ready to start TLS
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 220 2.0.0 Ready to start TLS
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 220 2.0.0 Ready to start TLS
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 220 2.0.0 Ready to start TLS
+[2026-09-27 19:08:19] INFO  [aOLCYpnVEAI] Connection upgraded with STARTTLS
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] C: EHLO MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] INFO  [Xc9nZrNFQqA] Connection upgraded with STARTTLS
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] C: EHLO MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] INFO  [tDW4jGVTAGk] Connection upgraded with STARTTLS
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] C: EHLO MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] INFO  [n7SPHJsO2uc] Connection upgraded with STARTTLS
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] C: EHLO MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-Hello MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-PIPELINING
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-8BITMIME
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-ENHANCEDSTATUSCODES
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-CHUNKING
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250-AUTH PLAIN LOGIN CRAM-MD5
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250 SIZE 20971520
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] SMTP handshake finished
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] C: AUTH PLAIN AGIyNjg3NjAwMUBzbXRwLWJyZXZvLmNvbQAvKiBzZWNyZXQgKi8=
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-Hello MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-PIPELINING
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-8BITMIME
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-ENHANCEDSTATUSCODES
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-CHUNKING
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250-AUTH PLAIN LOGIN CRAM-MD5
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250 SIZE 20971520
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] SMTP handshake finished
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] C: AUTH PLAIN AGIyNjg3NjAwMUBzbXRwLWJyZXZvLmNvbQAvKiBzZWNyZXQgKi8=
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-Hello MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-PIPELINING
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-8BITMIME
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-ENHANCEDSTATUSCODES
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-CHUNKING
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250-AUTH CRAM-MD5 PLAIN LOGIN
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250 SIZE 20971520
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] SMTP handshake finished
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] C: AUTH PLAIN AGIyNjg3NjAwMUBzbXRwLWJyZXZvLmNvbQAvKiBzZWNyZXQgKi8=
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-Hello MacBook-Air-de-Anderson.local
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-PIPELINING
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-8BITMIME
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-ENHANCEDSTATUSCODES
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-CHUNKING
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250-AUTH PLAIN LOGIN CRAM-MD5
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250 SIZE 20971520
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] SMTP handshake finished
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] C: AUTH PLAIN AGIyNjg3NjAwMUBzbXRwLWJyZXZvLmNvbQAvKiBzZWNyZXQgKi8=
+[GA4 Server] Evento purchase enviado com sucesso para clientId admin_1790536069521@example.com
+[GA4 Server] Evento purchase enviado com sucesso para clientId admin_1790536069521@example.com
+[GA4 Server] Evento purchase enviado com sucesso para clientId admin_1790536069521@example.com
+[GA4 Server] Evento purchase enviado com sucesso para clientId admin_1790536069521@example.com
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 235 2.0.0 Authentication succeeded
+[2026-09-27 19:08:19] INFO  [aOLCYpnVEAI] User "b26876001@smtp-brevo.com" authenticated
+[2026-09-27 19:08:19] INFO  Sending message <5839619c-f7c8-451a-1f17-ffc67b91bed0@yelopsi.com.br> to <admin_1790536069521@example.com>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] C: MAIL FROM:<contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 235 2.0.0 Authentication succeeded
+[2026-09-27 19:08:19] INFO  [Xc9nZrNFQqA] User "b26876001@smtp-brevo.com" authenticated
+[2026-09-27 19:08:19] INFO  Sending message <b8468ebc-de9c-83c3-f054-13ccc8ac530e@yelopsi.com.br> to <admin_1790536069521@example.com>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] C: MAIL FROM:<contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 235 2.0.0 Authentication succeeded
+[2026-09-27 19:08:19] INFO  [n7SPHJsO2uc] User "b26876001@smtp-brevo.com" authenticated
+[2026-09-27 19:08:19] INFO  Sending message <2ec91164-0600-e3ef-6592-5f22b9e7df0e@yelopsi.com.br> to <admin_1790536069521@example.com>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] C: MAIL FROM:<contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 235 2.0.0 Authentication succeeded
+[2026-09-27 19:08:19] INFO  [tDW4jGVTAGk] User "b26876001@smtp-brevo.com" authenticated
+[2026-09-27 19:08:19] INFO  Sending message <e832bbf2-da38-18a6-7368-6c55fdd6da00@yelopsi.com.br> to <admin_1790536069521@example.com>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] C: MAIL FROM:<contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250 2.0.0 Roger, accepting mail from <contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] C: RCPT TO:<admin_1790536069521@example.com>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250 2.0.0 Roger, accepting mail from <contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] C: RCPT TO:<admin_1790536069521@example.com>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250 2.0.0 Roger, accepting mail from <contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] C: RCPT TO:<admin_1790536069521@example.com>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250 2.0.0 Roger, accepting mail from <contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] C: RCPT TO:<admin_1790536069521@example.com>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250 2.0.0 I'll make sure <admin_1790536069521@example.com> gets this
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] C: DATA
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250 2.0.0 I'll make sure <admin_1790536069521@example.com> gets this
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] C: DATA
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250 2.0.0 I'll make sure <admin_1790536069521@example.com> gets this
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] C: DATA
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 354 Go ahead. End your data with <CR><LF>.<CR><LF>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] From: Anderson da Yelo <contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] To: admin_1790536069521@example.com
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] Subject: Pagamento Confirmado - Yelo
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] Message-ID: <5839619c-f7c8-451a-1f17-ffc67b91bed0@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] Content-Transfer-Encoding: quoted-printable
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] Date: Sun, 27 Sep 2026 19:08:14 +0000
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] MIME-Version: 1.0
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] Content-Type: text/html; charset=utf-8
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] 
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] 
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] <!DOCTYPE html>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] <html lang=3D"pt-BR">
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] <head>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]     <meta charset=3D"UTF-8">
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]     <style>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         body { font-family: 'Helvetica Neue', Helvetica, Arial,=
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]  sans-serif; background-color: #f4f5f7; margin: 0; padding: 0; =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] -webkit-font-smoothing: antialiased; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .wrapper { width: 100%; =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] table-layout: fixed; background-color: #f4f5f7; padding: 40px 0; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .container { max-width: 600px; margin: 0 auto; background-color: =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] rgba(0,0,0,0.04); }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .header { background-color: #1B4332; padding: =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] 35px 20px; text-align: center; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .header img { max-width: 140px; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .content { padding: 40px 35px; color: #333333; line-height: 1.6; =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] font-size: 16px; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .content h2 { color: #1B4332; margin-top: 0; =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .content p { margin: 16px 0; color: #4a5568; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .footer { background-color: #f8f9fa; padding: 25px; text-align: =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] center; color: #a0aec0; font-size: 13px; border-top: 1px solid #edf2f7; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .btn { display: inline-block; padding: 14px 32px; background-color:=
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]  #F59E0B; color: #ffffff !important; text-decoration: none; border-radius: =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] 50px; font-weight: 600; font-size: 15px; margin-top: 10px; text-align: =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] center; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .btn-container { text-align: center; margin: 30px 0 10px =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] 0; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .highlight-box { background-color: #f0fdf4; border: 1px solid =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] center; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         .highlight-code { font-family: monospace; font-size: =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] 15px; color: #166534; word-break: break-all; margin-top: 10px; font-weight:=
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]  bold; background: #fff; padding: 10px; border-radius: 4px; border: 1px =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] dashed #86efac; }
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]     </style>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] </head>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] <body>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]     <div class=3D"wrapper">
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         <div class=3D"container">
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]             <div class=3D"header">
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]                 <img src=3D"https://www.yelopsi.com.=
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] br/assets/logos/logo-branca.png" alt=3D"Yelo">
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]             </div>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]             <div class=3D"content">
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]                 <h2>Pagamento =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] Confirmado! =E2=9C=85</h2>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]                =20
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         <p>Ol=C3=A1, =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] <strong>A</strong>!</p>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         <p>Seu pagamento de <strong>R$ 100,=
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] 00</strong> foi processado e confirmado com sucesso.</p>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         <p>Seu perfil continua ativo e vis=C3=ADvel na Yelo, pronto para =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] conectar voc=C3=AA a novos pacientes. Agradecemos por fazer parte da nossa =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] comunidade!</p>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         <div class=3D"btn-container"><a href=3D"https://www=
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] ..yelopsi.com.br/login" class=3D"btn">Acessar Yelo</a></div>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]    =20
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]             </div>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]             <div class=3D"footer">
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]                 <p>Voc=C3=AA est=C3=A1 recebendo este e-mail porque =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] est=C3=A1 cadastrado na Yelo.</p>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]                 <p>=C2=A9 2026 Yelo - =
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] Apoio Psicol=C3=B3gico. Todos os direitos reservados.</p>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]             </div>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]         </div>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI]     </div>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] </body>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] </html>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] .
+[2026-09-27 19:08:19] INFO  [aOLCYpnVEAI] <3298 bytes encoded mime message (source size 3250 bytes)>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250 2.0.0 I'll make sure <admin_1790536069521@example.com> gets this
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] C: DATA
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 354 Go ahead. End your data with <CR><LF>.<CR><LF>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] From: Anderson da Yelo <contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] To: admin_1790536069521@example.com
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] Subject: Pagamento Confirmado - Yelo
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] Message-ID: <2ec91164-0600-e3ef-6592-5f22b9e7df0e@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] Content-Transfer-Encoding: quoted-printable
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] Date: Sun, 27 Sep 2026 19:08:14 +0000
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] MIME-Version: 1.0
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] Content-Type: text/html; charset=utf-8
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] 
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] 
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] <!DOCTYPE html>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] <html lang=3D"pt-BR">
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] <head>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]     <meta charset=3D"UTF-8">
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]     <style>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         body { font-family: 'Helvetica Neue', Helvetica, Arial,=
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]  sans-serif; background-color: #f4f5f7; margin: 0; padding: 0; =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] -webkit-font-smoothing: antialiased; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .wrapper { width: 100%; =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] table-layout: fixed; background-color: #f4f5f7; padding: 40px 0; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .container { max-width: 600px; margin: 0 auto; background-color: =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] rgba(0,0,0,0.04); }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .header { background-color: #1B4332; padding: =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] 35px 20px; text-align: center; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .header img { max-width: 140px; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .content { padding: 40px 35px; color: #333333; line-height: 1.6; =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] font-size: 16px; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .content h2 { color: #1B4332; margin-top: 0; =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .content p { margin: 16px 0; color: #4a5568; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .footer { background-color: #f8f9fa; padding: 25px; text-align: =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] center; color: #a0aec0; font-size: 13px; border-top: 1px solid #edf2f7; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .btn { display: inline-block; padding: 14px 32px; background-color:=
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]  #F59E0B; color: #ffffff !important; text-decoration: none; border-radius: =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] 50px; font-weight: 600; font-size: 15px; margin-top: 10px; text-align: =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] center; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .btn-container { text-align: center; margin: 30px 0 10px =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] 0; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .highlight-box { background-color: #f0fdf4; border: 1px solid =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] center; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         .highlight-code { font-family: monospace; font-size: =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] 15px; color: #166534; word-break: break-all; margin-top: 10px; font-weight:=
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]  bold; background: #fff; padding: 10px; border-radius: 4px; border: 1px =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] dashed #86efac; }
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]     </style>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] </head>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] <body>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]     <div class=3D"wrapper">
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         <div class=3D"container">
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]             <div class=3D"header">
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]                 <img src=3D"https://www.yelopsi.com.=
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] br/assets/logos/logo-branca.png" alt=3D"Yelo">
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]             </div>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]             <div class=3D"content">
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]                 <h2>Pagamento =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] Confirmado! =E2=9C=85</h2>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]                =20
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         <p>Ol=C3=A1, =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] <strong>A</strong>!</p>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         <p>Seu pagamento de <strong>R$ 100,=
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] 00</strong> foi processado e confirmado com sucesso.</p>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         <p>Seu perfil continua ativo e vis=C3=ADvel na Yelo, pronto para =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] conectar voc=C3=AA a novos pacientes. Agradecemos por fazer parte da nossa =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] comunidade!</p>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         <div class=3D"btn-container"><a href=3D"https://www=
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] ..yelopsi.com.br/login" class=3D"btn">Acessar Yelo</a></div>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]    =20
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]             </div>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]             <div class=3D"footer">
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]                 <p>Voc=C3=AA est=C3=A1 recebendo este e-mail porque =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] est=C3=A1 cadastrado na Yelo.</p>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]                 <p>=C2=A9 2026 Yelo - =
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] Apoio Psicol=C3=B3gico. Todos os direitos reservados.</p>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]             </div>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]         </div>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc]     </div>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] </body>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] </html>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] .
+[2026-09-27 19:08:19] INFO  [n7SPHJsO2uc] <3298 bytes encoded mime message (source size 3250 bytes)>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 354 Go ahead. End your data with <CR><LF>.<CR><LF>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] From: Anderson da Yelo <contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] To: admin_1790536069521@example.com
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] Subject: Pagamento Confirmado - Yelo
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] Message-ID: <b8468ebc-de9c-83c3-f054-13ccc8ac530e@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] Content-Transfer-Encoding: quoted-printable
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] Date: Sun, 27 Sep 2026 19:08:14 +0000
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] MIME-Version: 1.0
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] Content-Type: text/html; charset=utf-8
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] 
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] 
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] <!DOCTYPE html>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] <html lang=3D"pt-BR">
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] <head>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]     <meta charset=3D"UTF-8">
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]     <style>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         body { font-family: 'Helvetica Neue', Helvetica, Arial,=
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]  sans-serif; background-color: #f4f5f7; margin: 0; padding: 0; =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] -webkit-font-smoothing: antialiased; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .wrapper { width: 100%; =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] table-layout: fixed; background-color: #f4f5f7; padding: 40px 0; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .container { max-width: 600px; margin: 0 auto; background-color: =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] rgba(0,0,0,0.04); }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .header { background-color: #1B4332; padding: =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] 35px 20px; text-align: center; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .header img { max-width: 140px; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .content { padding: 40px 35px; color: #333333; line-height: 1.6; =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] font-size: 16px; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .content h2 { color: #1B4332; margin-top: 0; =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .content p { margin: 16px 0; color: #4a5568; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .footer { background-color: #f8f9fa; padding: 25px; text-align: =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] center; color: #a0aec0; font-size: 13px; border-top: 1px solid #edf2f7; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .btn { display: inline-block; padding: 14px 32px; background-color:=
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]  #F59E0B; color: #ffffff !important; text-decoration: none; border-radius: =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] 50px; font-weight: 600; font-size: 15px; margin-top: 10px; text-align: =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] center; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .btn-container { text-align: center; margin: 30px 0 10px =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] 0; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .highlight-box { background-color: #f0fdf4; border: 1px solid =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] center; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         .highlight-code { font-family: monospace; font-size: =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] 15px; color: #166534; word-break: break-all; margin-top: 10px; font-weight:=
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]  bold; background: #fff; padding: 10px; border-radius: 4px; border: 1px =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] dashed #86efac; }
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]     </style>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] </head>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] <body>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]     <div class=3D"wrapper">
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         <div class=3D"container">
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]             <div class=3D"header">
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]                 <img src=3D"https://www.yelopsi.com.=
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] br/assets/logos/logo-branca.png" alt=3D"Yelo">
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]             </div>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]             <div class=3D"content">
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]                 <h2>Pagamento =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] Confirmado! =E2=9C=85</h2>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]                =20
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         <p>Ol=C3=A1, =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] <strong>A</strong>!</p>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         <p>Seu pagamento de <strong>R$ 100,=
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] 00</strong> foi processado e confirmado com sucesso.</p>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         <p>Seu perfil continua ativo e vis=C3=ADvel na Yelo, pronto para =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] conectar voc=C3=AA a novos pacientes. Agradecemos por fazer parte da nossa =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] comunidade!</p>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         <div class=3D"btn-container"><a href=3D"https://www=
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] ..yelopsi.com.br/login" class=3D"btn">Acessar Yelo</a></div>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]    =20
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]             </div>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]             <div class=3D"footer">
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]                 <p>Voc=C3=AA est=C3=A1 recebendo este e-mail porque =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] est=C3=A1 cadastrado na Yelo.</p>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]                 <p>=C2=A9 2026 Yelo - =
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] Apoio Psicol=C3=B3gico. Todos os direitos reservados.</p>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]             </div>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]         </div>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA]     </div>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] </body>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] </html>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] .
+[2026-09-27 19:08:19] INFO  [Xc9nZrNFQqA] <3298 bytes encoded mime message (source size 3250 bytes)>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] S: 250 2.0.0 OK: queued as <2ec91164-0600-e3ef-6592-5f22b9e7df0e@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [n7SPHJsO2uc] Closing connection to the server using "end"
+📧 E-mail enviado para admin_1790536069521@example.com: Pagamento Confirmado - Yelo
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 354 Go ahead. End your data with <CR><LF>.<CR><LF>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] From: Anderson da Yelo <contato@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] To: admin_1790536069521@example.com
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] Subject: Pagamento Confirmado - Yelo
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] Message-ID: <e832bbf2-da38-18a6-7368-6c55fdd6da00@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] Content-Transfer-Encoding: quoted-printable
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] Date: Sun, 27 Sep 2026 19:08:14 +0000
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] MIME-Version: 1.0
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] Content-Type: text/html; charset=utf-8
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] 
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] 
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] <!DOCTYPE html>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] <html lang=3D"pt-BR">
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] <head>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]     <meta charset=3D"UTF-8">
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]     <style>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         body { font-family: 'Helvetica Neue', Helvetica, Arial,=
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]  sans-serif; background-color: #f4f5f7; margin: 0; padding: 0; =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] -webkit-font-smoothing: antialiased; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .wrapper { width: 100%; =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] table-layout: fixed; background-color: #f4f5f7; padding: 40px 0; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .container { max-width: 600px; margin: 0 auto; background-color: =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] rgba(0,0,0,0.04); }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .header { background-color: #1B4332; padding: =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] 35px 20px; text-align: center; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .header img { max-width: 140px; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .content { padding: 40px 35px; color: #333333; line-height: 1.6; =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] font-size: 16px; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .content h2 { color: #1B4332; margin-top: 0; =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .content p { margin: 16px 0; color: #4a5568; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .footer { background-color: #f8f9fa; padding: 25px; text-align: =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] center; color: #a0aec0; font-size: 13px; border-top: 1px solid #edf2f7; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .btn { display: inline-block; padding: 14px 32px; background-color:=
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]  #F59E0B; color: #ffffff !important; text-decoration: none; border-radius: =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] 50px; font-weight: 600; font-size: 15px; margin-top: 10px; text-align: =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] center; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .btn-container { text-align: center; margin: 30px 0 10px =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] 0; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .highlight-box { background-color: #f0fdf4; border: 1px solid =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] center; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         .highlight-code { font-family: monospace; font-size: =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] 15px; color: #166534; word-break: break-all; margin-top: 10px; font-weight:=
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]  bold; background: #fff; padding: 10px; border-radius: 4px; border: 1px =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] dashed #86efac; }
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]     </style>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] </head>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] <body>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]     <div class=3D"wrapper">
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         <div class=3D"container">
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]             <div class=3D"header">
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]                 <img src=3D"https://www.yelopsi.com.=
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] br/assets/logos/logo-branca.png" alt=3D"Yelo">
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]             </div>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]             <div class=3D"content">
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]                 <h2>Pagamento =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] Confirmado! =E2=9C=85</h2>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]                =20
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         <p>Ol=C3=A1, =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] <strong>A</strong>!</p>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         <p>Seu pagamento de <strong>R$ 100,=
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] 00</strong> foi processado e confirmado com sucesso.</p>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         <p>Seu perfil continua ativo e vis=C3=ADvel na Yelo, pronto para =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] conectar voc=C3=AA a novos pacientes. Agradecemos por fazer parte da nossa =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] comunidade!</p>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         <div class=3D"btn-container"><a href=3D"https://www=
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] ..yelopsi.com.br/login" class=3D"btn">Acessar Yelo</a></div>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]    =20
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]             </div>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]             <div class=3D"footer">
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]                 <p>Voc=C3=AA est=C3=A1 recebendo este e-mail porque =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] est=C3=A1 cadastrado na Yelo.</p>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]                 <p>=C2=A9 2026 Yelo - =
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] Apoio Psicol=C3=B3gico. Todos os direitos reservados.</p>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]             </div>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]         </div>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk]     </div>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] </body>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] </html>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] .
+[2026-09-27 19:08:19] INFO  [tDW4jGVTAGk] <3298 bytes encoded mime message (source size 3250 bytes)>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] S: 250 2.0.0 OK: queued as <5839619c-f7c8-451a-1f17-ffc67b91bed0@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [aOLCYpnVEAI] Closing connection to the server using "end"
+📧 E-mail enviado para admin_1790536069521@example.com: Pagamento Confirmado - Yelo
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] S: 250 2.0.0 OK: queued as <b8468ebc-de9c-83c3-f054-13ccc8ac530e@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [Xc9nZrNFQqA] Closing connection to the server using "end"
+📧 E-mail enviado para admin_1790536069521@example.com: Pagamento Confirmado - Yelo
+[2026-09-27 19:08:19] INFO  [n7SPHJsO2uc] Connection closed
+[2026-09-27 19:08:19] INFO  [aOLCYpnVEAI] Connection closed
+[2026-09-27 19:08:19] INFO  [Xc9nZrNFQqA] Connection closed
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] S: 250 2.0.0 OK: queued as <e832bbf2-da38-18a6-7368-6c55fdd6da00@yelopsi.com.br>
+[2026-09-27 19:08:19] DEBUG [tDW4jGVTAGk] Closing connection to the server using "end"
+📧 E-mail enviado para admin_1790536069521@example.com: Pagamento Confirmado - Yelo
+[2026-09-27 19:08:19] INFO  [tDW4jGVTAGk] Connection closed
