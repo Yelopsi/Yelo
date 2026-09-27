@@ -97,11 +97,11 @@ router.get('/dashboard', async (req, res) => {
                     AND ("bio" IS NOT NULL AND LENGTH("bio") >= 10)
                 ) as trials,
                 COUNT(*) FILTER (
-                    WHERE ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
+                    WHERE ("firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND ("planExpiresAt" <= NOW() OR "status" = 'inactive')
                 ) as churned,
                 COUNT(*) FILTER (
-                    WHERE ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
+                    WHERE ("firstPaidAt" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
                     AND "planExpiresAt" <= NOW()
                 ) as failed_trials
             FROM "Psychologists"
@@ -157,7 +157,7 @@ router.get('/dashboard', async (req, res) => {
             SELECT COUNT(*) as churned
             FROM "Psychologists"
             WHERE status = 'inactive'
-            AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
+            AND ("firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
             AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
             AND "deletedAt" IS NULL
         `;
@@ -492,10 +492,10 @@ router.get('/dashboard', async (req, res) => {
                     AND (is_exempt IS NULL OR is_exempt = false)
                     AND "planExpiresAt" > NOW()
                 ) as trials,
-                COUNT(*) FILTER (WHERE status = 'inactive' AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)) as churned,
+                COUNT(*) FILTER (WHERE status = 'inactive' AND ("firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)) as churned,
                 COUNT(*) FILTER (
                     WHERE status IN ('inactive', 'pending', 'active') 
-                    AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
+                    AND ("firstPaidAt" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
                     AND "planExpiresAt" <= NOW()
                 ) as failed_trials
             FROM "Psychologists"
@@ -515,7 +515,7 @@ router.get('/dashboard', async (req, res) => {
             SELECT COUNT(*) as churned
             FROM "Psychologists"
             WHERE status = 'inactive'
-            AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
+            AND ("firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
             AND "deletedAt" IS NULL
         `;
         const [globalChurnHistRes] = await sequelize.query(globalChurnHistQuery, { type: sequelize.QueryTypes.SELECT });
@@ -852,7 +852,7 @@ router.get('/dashboard', async (req, res) => {
                 SELECT COUNT(*) as churned
                 FROM "Psychologists"
                 WHERE status = 'inactive'
-                AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
+                AND ("firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
                 AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
                 AND "deletedAt" IS NULL
             `;
