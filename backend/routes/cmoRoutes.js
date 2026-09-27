@@ -259,7 +259,10 @@ router.get('/dashboard', async (req, res) => {
         let cashIn = 0;
         let arpu = 99;
         let pnlEngine = {};
-        const AssumedTargetWhatsAppChatsPerPsi = 10;
+        // O valor 3 é uma premissa de negócio do Motor de Crescimento,
+        // e não uma métrica observada nem uma restauração literal da fórmula histórica
+        // (não use monthlyClicks / basePagantes como substituto desse target).
+        const AssumedTargetWhatsAppChatsPerPsi = 3;
 
         // 4. Atribuição B2C (Google Ads -> Pacientes)
         const b2cQuery = `
@@ -1247,44 +1250,74 @@ router.post('/generate-action-plan', async (req, res) => {
             return a < i ? 'AUMENTAR' : 'REDUZIR';
         }
 
+        function formatActionText(atualStr, idealStr, action) {
+            const a = parseFloat(atualStr.replace(/[^\d.,-]/g, '').replace(',', '.'));
+            const i = parseFloat(idealStr.replace(/[^\d.,-]/g, '').replace(',', '.'));
+            
+            const formatVal = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+            const atualBRL = formatVal(a || 0);
+            const idealBRL = formatVal(i || 0);
+            const diffBRL = formatVal(Math.abs((i || 0) - (a || 0)));
+
+            if (action === 'MANTER') {
+                return `Mantenha ${atualBRL} por dia. O valor já está dentro da faixa de tolerância em relação ao alvo modelado de ${idealBRL}.`;
+            } else if (action === 'AUMENTAR') {
+                return `Aumente o orçamento diário de ${atualBRL} para ${idealBRL}. Isso representa um acréscimo de ${diffBRL} por dia.`;
+            } else if (action === 'REDUZIR') {
+                return `Reduza o orçamento diário de ${atualBRL} para ${idealBRL}.`;
+            }
+            return `Ajuste para ${idealBRL}`;
+        }
+
         const metaAction = calcAction(currentMetaDailyBudget, targetMetaDaily);
         const googleAction = calcAction(currentDailyGoogle, targetGoogleDaily);
+        
+        const metaActionText = formatActionText(currentMetaDailyBudget, targetMetaDaily, metaAction);
+        const googleActionText = formatActionText(currentDailyGoogle, targetGoogleDaily, googleAction);
 
         const prompt = `Você é o Diretor de Crescimento (CMO) e Diretor Financeiro (CFO) da Yelo.
-Analise os dados e produza um Plano de Ação curto e natural, sem jargões corporativos robóticos.
+Analise os dados e produza um contexto curto e natural, sem jargões corporativos robóticos, APENAS para explicar a situação atual das métricas abaixo.
+NÃO GERE AS AÇÕES (eu mesmo farei isso no sistema).
+Gere apenas o trecho de "Diagnóstico" ou "Situação".
 
 DADOS DO MOTOR:
-- MRR Atual: ${mrrAtual}
-- CAC B2B Atual: ${cacAtual} | CAC Projetado (Teto): ${cacPenalizado}
-- Orçamento Diário Meta Atual: ${currentMetaDailyBudget} | Orçamento Ideal (Meta): ${targetMetaDaily}
-- Orçamento Diário Google Atual: ${currentDailyGoogle} | Orçamento Ideal (Google): ${targetGoogleDaily}
 - Margem Distribuível Segura: Status: ${safeMarginStatus} | Estimativa Atual: ${safeDistributableMargin}% (${safeDistributableAmount})
-- Meta 30% de Retirada: ${target30PercentStatus} | Gap de Custo para chegar lá: ${gapTo30Percent}
-- Ação Determinística Meta: ${metaAction}
-- Ação Determinística Google: ${googleAction}
 
-REGRAS RÍGIDAS DE ANÁLISE:
-1. FAIXA DE TOLERÂNCIA E AÇÃO DETERMINÍSTICA: Você NÃO deve decidir o que fazer com os orçamentos do Meta e do Google. A decisão JÁ FOI TOMADA matematicamente e está no campo "Ação Determinística" (MANTER, AUMENTAR ou REDUZIR). Sua única função é transformar essa ação em um texto analítico e natural. Se a ação for MANTER, diga que a variação está dentro da margem de segurança de 10%.
-2. NÃO ZERAR O CAIXA: Nunca instrua a "esgotar o fundo" ou diga que "sobra de caixa pequena = capital perfeitamente alocado". Valorize a margem de segurança e a reserva de caixa para imprevistos e volatilidade.
-3. LUCRATIVIDADE: Se o Status da Margem Distribuível for MISSING_INPUT, você DEVE dizer EXATAMENTE: "Ainda não há dados financeiros suficientes para calcular uma retirada segura." e não deve inventar, supor ou estimar nenhum percentual. Caso o Status seja OK, responda "Quanto posso retirar hoje?" e "Posso retirar 30%?". Se não puder, explique o que falta. Exemplo: "Com os custos conhecidos, a operação ainda não sustenta uma retirada de 30% com segurança. A margem hoje é de X% (R$ Y). Para chegar aos 30%, reduza custos ou aumente o MRR."
-4. NATURALIDADE: Limite o texto a 3 blocos. Cada bloco deve ter no máximo 3-4 frases curtas (Situação atual, Ação e Por quê). Evite repetir números que já estão no painel visual do usuário.
+REGRAS:
+1. Meta Ads e Google Ads: Você pode adicionar 1 ou 2 frases curtas de contexto explicando se os orçamentos estão abaixo ou acima.
+2. NÃO ZERAR O CAIXA: Nunca instrua a "esgotar o fundo" ou diga que "sobra de caixa pequena = capital perfeitamente alocado".
+3. LUCRATIVIDADE: Se o Status for MISSING_INPUT, o Diagnóstico DEVE ser: "Ainda não há dados financeiros suficientes para calcular uma retirada segura."
 
-INSTRUÇÕES DE FORMATAÇÃO:
-Retorne APENAS o HTML das 3 tags <li> exatamente com os títulos abaixo (sem tags extras).
-<li><strong>Meta Ads (Aquisição):</strong> <br>🔍 <strong>Situação:</strong> [Texto] <br><br>💡 <strong>Ação:</strong> [Texto]</li>
-<br>
-<li><strong>Google Ads (Google vs Meta Trials):</strong> <br>🔍 <strong>Situação:</strong> [Texto] <br><br>💡 <strong>Ação:</strong> [Texto]</li>
-<br>
-<li><strong>Lucro e Caixa (ROI Geral):</strong> <br>🔍 <strong>Diagnóstico de Retirada:</strong> [Texto sobre a Margem Segura] <br><br>💡 <strong>Ação:</strong> [Texto]</li>`;
+Retorne os resultados EXATAMENTE como um objeto JSON estruturado:
+{
+  "metaContext": "texto da situação do Meta",
+  "googleContext": "texto da situação do Google",
+  "lucroContext": "texto do diagnóstico de lucro"
+}
+Não retorne Markdown (sem \`\`\`json). Apenas o JSON puro.`;
 
         const result = await model.generateContent(prompt);
-        let analysis = result.response.text().trim();
+        let analysisRaw = result.response.text().trim();
+        if (analysisRaw.startsWith('```json')) analysisRaw = analysisRaw.replace(/^```json/, '').replace(/```$/, '').trim();
+        else if (analysisRaw.startsWith('```')) analysisRaw = analysisRaw.replace(/^```/, '').replace(/```$/, '').trim();
         
-        if (analysis.startsWith('```html')) {
-            analysis = analysis.replace(/^```html/, '').replace(/```$/, '').trim();
-        } else if (analysis.startsWith('```')) {
-            analysis = analysis.replace(/^```/, '').replace(/```$/, '').trim();
+        let aiData = { metaContext: "Situação sob análise.", googleContext: "Situação sob análise.", lucroContext: "Ainda não há dados financeiros suficientes para calcular uma retirada segura." };
+        try {
+            aiData = JSON.parse(analysisRaw);
+        } catch (e) {
+            console.error("[CMO] Erro ao parsear JSON do Gemini:", analysisRaw);
         }
+        
+        const lucroActionText = safeMarginStatus === 'MISSING_INPUT'
+            ? "Complete os dados financeiros pendentes antes de definir um percentual de lucro."
+            : "Avalie a margem para retirar.";
+        
+        const analysis = `
+<li><strong>Meta Ads (Aquisição):</strong> <br>🔍 <strong>Situação:</strong> ${aiData.metaContext} <br><br>💡 <strong>Ação:</strong> ${metaActionText}</li>
+<br>
+<li><strong>Google Ads (Google vs Meta Trials):</strong> <br>🔍 <strong>Situação:</strong> ${aiData.googleContext} <br><br>💡 <strong>Ação:</strong> ${googleActionText}</li>
+<br>
+<li><strong>Lucro e Caixa (ROI Geral):</strong> <br>🔍 <strong>Diagnóstico:</strong> ${aiData.lucroContext} <br><br>💡 <strong>Ação:</strong> ${lucroActionText}</li>`;
 
         const db = require('../models');
         let setting = await db.SystemSetting.findOne();

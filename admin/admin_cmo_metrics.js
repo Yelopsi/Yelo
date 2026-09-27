@@ -668,7 +668,12 @@ function initGrowthSimulator(data) {
         } else {
             warningEl.style.backgroundColor = '#f0fdfa';
             warningEl.style.color = '#0f766e';
-            warningEl.innerHTML = `✅ <b>Motor Girando:</b> Em 12 meses, você sairá de ${currentBase} para ${Math.floor(baseAt12)} assinantes investindo apenas a receita gerada pela própria máquina.`;
+            if (extraCash > 0) {
+                const totalOwnerContribution = extraCash * 12;
+                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Em 12 meses, a projeção leva a base de ${currentBase} para ${Math.floor(baseAt12)} assinantes, considerando reinvestimento de ${reinvestRate}% do MRR e aporte adicional de ${formatBRL(extraCash)} por mês. Isso representa ${formatBRL(totalOwnerContribution)} de aporte externo ao longo dos 12 meses.`;
+            } else {
+                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Em 12 meses, você poderá sair de ${currentBase} para ${Math.floor(baseAt12)} assinantes reinvestindo ${reinvestRate}% da receita gerada pela operação.`;
+            }
         }
 
         // Action Plan
