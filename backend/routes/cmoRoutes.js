@@ -259,6 +259,7 @@ router.get('/dashboard', async (req, res) => {
         let cashIn = 0;
         let arpu = 99;
         let pnlEngine = {};
+        const AssumedTargetWhatsAppChatsPerPsi = 10;
 
         // 4. Atribuição B2C (Google Ads -> Pacientes)
         const b2cQuery = `
@@ -398,7 +399,6 @@ router.get('/dashboard', async (req, res) => {
             const NetRevenue = RevenueTaxes !== 'MISSING_INPUT' ? (ConfirmedGrossRevenue - RevenueTaxes - RealizedGatewayFees) : 'MISSING_INPUT';
             
             // Lógica Google Maintenance vs Growth Restaurada
-            const AssumedTargetWhatsAppChatsPerPsi = 10;
             const RequiredWhatsAppChats = renewableDemandEligibleBase * AssumedTargetWhatsAppChatsPerPsi;
             // Considerando organic igual à query anterior (simplificado aqui caso não tenha o número ainda)
             const PaidWhatsAppChatsRequired = Math.max(0, RequiredWhatsAppChats - 0 /* OrganicWhatsAppChatsAllocatedToRenewableBase */);
@@ -928,7 +928,8 @@ router.get('/dashboard', async (req, res) => {
                 renewableSubscriberBase,
                 renewableDemandEligibleBase,
                 demandEligiblePaidBase,
-                demandEligibilityRate
+                demandEligibilityRate,
+                contactsPerPaidPsiMonth: { value: AssumedTargetWhatsAppChatsPerPsi, type: 'ASSUMED' }
             },
 
             period: { dateStart, dateEnd, prevDateStart, prevDateEnd },

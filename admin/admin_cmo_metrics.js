@@ -544,9 +544,8 @@ function initGrowthSimulator(data) {
         const monthlyChurn = getSimValue(data.simulator?.churn);
         
         const arpu = data.platform?.b2b?.arpu || 99;
-        const contactsPerPaidPsiMonth = 3.0;
-        const targetContactsPerPsi = contactsPerPaidPsiMonth;
-        const contactsThresholdSource = 'Motor de Crescimento';
+        const contactsPerPaidPsiMonth = data.simulator?.contactsPerPaidPsiMonth?.value;
+        const contactsThresholdSource = data.simulator?.contactsPerPaidPsiMonth?.type || 'ASSUMED';
         
         let isSimulationPossible = cacMeta !== null && trialConversionRate !== null && monthlyChurn !== null && cplGoogle !== null;
         
@@ -637,7 +636,7 @@ function initGrowthSimulator(data) {
             `${mrrMultiple}x maior que hoje (${formatBRL(currentMrr)}/mês)`;
         
         const newSubs = Math.floor(baseAt12) - currentBase;
-        const avgPatientsPerPsi = targetContactsPerPsi || 2;
+        const avgPatientsPerPsi = contactsPerPaidPsiMonth || 2;
         const totalPatientsServed = Math.floor(baseAt12) * avgPatientsPerPsi;
         const subsEl = document.getElementById('sim-res-subs-12m');
         subsEl.textContent = Math.floor(baseAt12);
