@@ -228,16 +228,24 @@ const applyDatabaseFixes = async (db, sequelize) => {
         try { await runSchemaQuery(`ALTER TABLE "DemandSearches" ALTER COLUMN "searchParams" TYPE JSONB USING "searchParams"::text::jsonb;`); } catch (e) {}
 
         // queryInterface fallbacks
-        const queryInterface = sequelize.getQueryInterface();
-        const patientAttributes = await queryInterface.describeTable('Patients');
-        if (!patientAttributes.fotoUrl) { await queryInterface.addColumn('Patients', 'fotoUrl', { type: DataTypes.STRING(500) }); }
-        if (!patientAttributes.observacoes) { await queryInterface.addColumn('Patients', 'observacoes', { type: DataTypes.TEXT }); }
-        if (!patientAttributes.sessionValue) { await queryInterface.addColumn('Patients', 'sessionValue', { type: DataTypes.FLOAT, defaultValue: 0 }); }
-        if (!patientAttributes.recebe_mensagens) { await queryInterface.addColumn('Patients', 'recebe_mensagens', { type: DataTypes.BOOLEAN, defaultValue: true }); }
-        
-        const psyAttributes = await queryInterface.describeTable('Psychologists');
-        if (!psyAttributes.fotoUrl) { await queryInterface.addColumn('Psychologists', 'fotoUrl', { type: DataTypes.STRING(500) }); }
+        try {
+            const queryInterface = sequelize.getQueryInterface();
+            const patientAttributes = await queryInterface.describeTable('Patients');
+            if (!patientAttributes.fotoUrl) { await queryInterface.addColumn('Patients', 'fotoUrl', { type: DataTypes.STRING(500) }); }
+            if (!patientAttributes.observacoes) { await queryInterface.addColumn('Patients', 'observacoes', { type: DataTypes.TEXT }); }
+            if (!patientAttributes.sessionValue) { await queryInterface.addColumn('Patients', 'sessionValue', { type: DataTypes.FLOAT, defaultValue: 0 }); }
+            if (!patientAttributes.recebe_mensagens) { await queryInterface.addColumn('Patients', 'recebe_mensagens', { type: DataTypes.BOOLEAN, defaultValue: true }); }
+            
+            const psyAttributes = await queryInterface.describeTable('Psychologists');
+            if (!psyAttributes.fotoUrl) { await queryInterface.addColumn('Psychologists', 'fotoUrl', { type: DataTypes.STRING(500) }); }
+        } catch (qiErr) {
+            console.warn('⚠️ [DB SYNC] Aviso ao descrever tabelas (podem não existir ainda):', qiErr.message);
+        }
 
+        try {
+            await runSchemaQuery(`ALTER TYPE "enum_PaymentFinancialEvents_eventType" ADD VALUE 'GATEWAY_CASH_MOVEMENT';`);
+        } catch(e) {}
+        
         console.log('✅ [DB SYNC] Correções de schema aplicadas com sucesso.');
     } catch (error) {
         console.error("❌ Erro ao aplicar correções estruturais no banco de dados:", error);

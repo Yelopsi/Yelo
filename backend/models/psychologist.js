@@ -240,6 +240,10 @@ module.exports = (sequelize, DataTypes) => {
       comment: 'Data exata em que o psicólogo realizou a assinatura (conversão)'
     },
     // --- TIMELINE METRICS (LTV/CHURN) ---
+    profileActivatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     firstPaidAt: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -456,6 +460,7 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Psychologist',
     paranoid: true, // <--- ISSO É O SEGREDO! Ativa o soft delete (deletedAt)
     timestamps: true, // Garante que createdAt e updatedAt existam
+    
     indexes: [
         { name: 'idx_psychologists_slug', fields: ['slug'] },
         { name: 'idx_psychologists_email', fields: ['email'] },

@@ -525,24 +525,28 @@ function initGrowthSimulator(data) {
         
         // 1. BASE INICIAL VEM DA PRODUÇÃO ATUAL (Motor Final)
         // Ignora simTrackingStartSubs (25) e usa activePaidAccessBase (29)
-        const activePaidAccessBase = data.simulator?.activePaidAccessBase || data.platform.b2b.total_active || 0;
+        const activePaidAccessBase = data.platform.b2b.total_active || 0;
         const renewableSubscriberBase = data.simulator?.renewableSubscriberBase || activePaidAccessBase;
-        const knownScheduledChurn = activePaidAccessBase - renewableSubscriberBase;
-
-        let basePagantes = activePaidAccessBase;
-        const baseTrials = data.platform.b2b.total_trials || 0;
+        const knownScheduledChurn = data.simulator?.knownScheduledChurn || 0;
         
-        const trialConversionRate = data.simulator?.trialConv > 0 ? data.simulator.trialConv : 0.15;
-        const cacMeta = data.simulator?.cac > 0 ? data.simulator.cac : 150; 
+        const trialConversionObj = data.simulator?.trialConv || {};
+        const trialConversionRate = trialConversionObj.value; // Removido fallback
+        
+        const cacMetaObj = data.simulator?.cac || {};
+        const cacMeta = cacMetaObj.value; // Removido fallback
+        
         const arpu = data.platform?.b2b?.arpu || 99;
 
-        // 2. CONTATOS POR PSI (Fixado em 3.0 pelo Motor Final)
         const contactsPerPaidPsiMonth = 3.0;
-        const targetContactsPerPsi = contactsPerPaidPsiMonth; // para manter compatibilidade com labels
+        const targetContactsPerPsi = contactsPerPaidPsiMonth;
         const contactsThresholdSource = 'Motor de Crescimento';
 
         const cplGoogle = data.simulator?.cpl > 0 ? data.simulator.cpl : 22.13;
-        const monthlyChurn = data.simulator?.churn > 0 ? data.simulator.churn : 0.05;
+        
+        const churnObj = data.simulator?.churn || {};
+        const monthlyChurn = churnObj.value; // Removido fallback
+        
+        const isSimulationPossible = cacMeta !== null && trialConversionRate !== null && monthlyChurn !== null;
         
         const histMetaMonthlySpendAvg = data.historical?.meta?.monthly_spend_avg || 3000;
         
@@ -559,8 +563,7 @@ function initGrowthSimulator(data) {
         const dataCashflow = [];
         const dataExpectedBase = [];
         
-        let currentBase = activePaidAccessBase;
-        let currentRenewable = renewableSubscriberBase;
+        let currentBase = renewableSubscriberBase;
         let rolloverCash = 0;
         
         let mrrAt12 = 0;
@@ -573,84 +576,52 @@ function initGrowthSimulator(data) {
         let actionGoogleMaintenance = 0;
         let actionTrialGoogleSpend = 0;
         let actionUnspentCash = 0;
+        let actionCACPenalized = 0;
         
-        for (let m = 1; m <= targetMonths; m++) {
-            let baseStart = currentBase;
-            let baseStartRenewable = currentRenewable;
-
-            const mrr = currentBase * arpu;
-            
-            const totalContactDemand = currentBase * contactsPerPaidPsiMonth;
-            const requiredGoogleContacts = Math.max(0, totalContactDemand - verifiedOrganicContacts);
-            const googleMaintenanceCost = requiredGoogleContacts * cplGoogle;
-            
-            const contributionAfterGoogle = Math.max(0, mrr - googleMaintenanceCost);
-            const growthFund = (contributionAfterGoogle * (reinvestRate / 100)) + extraCash + rolloverCash;
-
-            // --- SOLUÇÃO DEFINITIVA: COLD START OVERRIDE ---
-            // Define um piso de segurança. Abaixo desse valor, a escala abrupta não quebra a empresa.
-            const MINIMUM_SAFE_SPEND = 1000; // Piso assumido de R$ 1.000,00
-            
-            // O algoritmo usa o seu histórico real OU o piso seguro (o que for maior).
-            const effectiveHistSpend = Math.max(histMetaMonthlySpendAvg || 0, MINIMUM_SAFE_SPEND);
-
-            // O Hard Cap agora é calculado sobre o gasto efetivo, destravando a inércia inicial.
-            const metaHardCap = effectiveHistSpend * 3.5;
-            let projectedMetaBudget = growthFund * 0.80; // 80% Meta / 20% Google Trials budget assumption
-            
-            // A penalidade do CAC (Scale Factor) também passa a respeitar o piso seguro.
-            const scaleFactor = Math.min(3.5, Math.max(1, projectedMetaBudget / effectiveHistSpend));
-            const metaCACPenalized = cacMeta * (1 + (Math.max(0, scaleFactor - 1) * 0.20));
-            
-            const trialsPerPaid = 1 / trialConversionRate;
-            const trialDurationFraction = 0.5;
-            const trialContactDemand = contactsPerPaidPsiMonth * trialDurationFraction;
-            const avgGoogleCostPerTrial = trialContactDemand * cplGoogle;
-            
-            const trialGoogleCostPerPaid = trialsPerPaid * avgGoogleCostPerTrial;
-            const blendedAcquisitionCost = metaCACPenalized + trialGoogleCostPerPaid;
-
-            const maxPaidByCash = Math.floor(growthFund / blendedAcquisitionCost);
-            const maxPaidByMeta = Math.floor(metaHardCap / metaCACPenalized);
-            const newPaidActive = Math.min(maxPaidByCash, maxPaidByMeta);
-            
-            const actualMetaSpend = newPaidActive * metaCACPenalized;
-            const actualTrialGoogleSpend = newPaidActive * trialGoogleCostPerPaid;
-            const actualGrowthSpend = actualMetaSpend + actualTrialGoogleSpend;
-            
-            rolloverCash = growthFund - actualGrowthSpend;
-
-            let monthKnownChurn = m === 1 ? knownScheduledChurn : 0;
-            let expectedChurn = currentRenewable * monthlyChurn;
-            let churnLoss = expectedChurn + monthKnownChurn;
-
-            currentBase = currentBase + newPaidActive + newOrganicActive - churnLoss;
-            currentRenewable = currentRenewable + newPaidActive + newOrganicActive - expectedChurn;
-            
-            const totalGoogleBudget = googleMaintenanceCost + actualTrialGoogleSpend;
-
-            labels.push(`Mês ${m}`);
-            dataExpectedBase.push(currentBase);
-            dataRevenue.push(mrr);
-            
-            const totalCosts = actualMetaSpend + totalGoogleBudget;
-            dataCosts.push(totalCosts);
-            dataCashflow.push(mrr - totalCosts);
-            
-            if (m === 1) {
-                actionMetaSpend = actualMetaSpend;
-                actionGoogleMaintenance = googleMaintenanceCost;
-                actionTrialGoogleSpend = actualTrialGoogleSpend;
-                actionUnspentCash = rolloverCash;
+        // PROJECTION PREMISES:
+        // Assume the eligibility rate from the current state remains constant (ASSUMED_FROM_CURRENT_RENEWABLE_RATIO).
+        const renewableDemandEligibleBase = data.simulator?.renewableDemandEligibleBase || 0;
+        const demandEligibilityRate = renewableSubscriberBase > 0 ? (renewableDemandEligibleBase / renewableSubscriberBase) : 0;
+        
+        if (!isSimulationPossible) {
+            const warningEl = document.getElementById('sim-res-warning');
+            if (warningEl) {
+                warningEl.style.display = 'block';
+                warningEl.style.backgroundColor = '#fef2f2';
+                warningEl.style.color = '#991b1b';
+                warningEl.innerHTML = `⚠️ <b>Atenção:</b> O simulador requer dados reais de CAC, Trial e Churn para projetar. Os dados históricos atuais não são qualificados matematicamente (PROXY/UNKNOWN). O Motor está pausado até termos dados observados da coorte.`;
             }
             
-            if (m === 12) {
-                mrrAt12 = mrr;
-                baseAt12 = currentBase;
-                metaBudgetAt12 = actualMetaSpend;
-                googleBudgetAt12 = totalGoogleBudget;
+            // Zerar os resultados do card
+            if (document.getElementById('sim-res-mrr-12m')) {
+                document.getElementById('sim-res-mrr-12m').textContent = formatBRL(0);
+                document.getElementById('sim-res-subs-12m').textContent = '0';
+                document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(0);
+                document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(0);
             }
+            return;
         }
+
+        const simResult = runGrowthSimulationMath({
+            targetMonths, currentBase, arpu, demandEligibilityRate, contactsPerPaidPsiMonth, verifiedOrganicContacts, cplGoogle,
+            reinvestRate, extraCash, rolloverCash, histMetaMonthlySpendAvg, cacMeta, trialConversionRate, monthlyChurn, newOrganicActive
+        });
+
+        labels.push(...simResult.labels);
+        dataExpectedBase.push(...simResult.dataExpectedBase);
+        dataRevenue.push(...simResult.dataRevenue);
+        dataCosts.push(...simResult.dataCosts);
+        dataCashflow.push(...simResult.dataCashflow);
+        
+        mrrAt12 = simResult.mrrAt12;
+        baseAt12 = simResult.baseAt12;
+        metaBudgetAt12 = simResult.metaBudgetAt12;
+        googleBudgetAt12 = simResult.googleBudgetAt12;
+        actionMetaSpend = simResult.actionMetaSpend;
+        actionGoogleMaintenance = simResult.actionGoogleMaintenance;
+        actionTrialGoogleSpend = simResult.actionTrialGoogleSpend;
+        actionUnspentCash = simResult.actionUnspentCash;
+        actionCACPenalized = simResult.actionCACPenalized;
 
         // Update Cards com textos contextuais        // Update Cards com textos contextuais
         const currentMrr = basePagantes * arpu;
@@ -755,7 +726,7 @@ function initGrowthSimulator(data) {
                             reinvestRate: reinvestRate,
                             extraCash: extraCash,
                             cacAtual: formatBRL(cacMeta),
-                            cacPenalizado: formatBRL(cacMeta),
+                            cacPenalizado: formatBRL(actionCACPenalized),
                             unspentCash: formatBRL(unspentCash),
                             targetMetaDaily: formatBRL(targetMetaDaily),
                             currentMetaDailyBudget: formatBRL(currentMetaDailyBudget),
@@ -1048,8 +1019,10 @@ function updateCMOMonth() {
 }
 
 // Iniciar imediatamente para arquitetura SPA
-initCMOMonthSelector();
-loadCMOMetrics();
+if (typeof module === 'undefined') {
+    initCMOMonthSelector();
+    loadCMOMetrics();
+}
 
 async function loadTrafficMetrics(dateStart, dateEnd, token) {
     if (!document.getElementById('cmo-ga4-sessions')) return;
@@ -1101,4 +1074,97 @@ async function loadTrafficMetrics(dateStart, dateEnd, token) {
     } catch (e) {
         console.error('Erro ao carregar Traffic & SEO:', e);
     }
+}
+
+function runGrowthSimulationMath(p) {
+    const labels = [];
+    const dataExpectedBase = [];
+    const dataRevenue = [];
+    const dataCosts = [];
+    const dataCashflow = [];
+    let currentBase = p.currentBase;
+    let rolloverCash = p.rolloverCash;
+    let actionMetaSpend = 0, actionGoogleMaintenance = 0, actionTrialGoogleSpend = 0;
+    let actionUnspentCash = 0, actionCACPenalized = 0;
+    let mrrAt12 = 0, baseAt12 = 0, metaBudgetAt12 = 0, googleBudgetAt12 = 0;
+
+    for (let m = 1; m <= p.targetMonths; m++) {
+        let baseStart = currentBase;
+        const startingMrr = baseStart * p.arpu;
+        
+        const projectedDemandEligibleBase = baseStart * p.demandEligibilityRate;
+        const totalContactDemand = projectedDemandEligibleBase * p.contactsPerPaidPsiMonth;
+        const requiredGoogleContacts = Math.max(0, totalContactDemand - p.verifiedOrganicContacts);
+        const googleMaintenanceCost = requiredGoogleContacts * p.cplGoogle;
+        
+        const contributionAfterGoogle = Math.max(0, startingMrr - googleMaintenanceCost);
+        const growthFund = (contributionAfterGoogle * (p.reinvestRate / 100)) + p.extraCash + rolloverCash;
+
+        const MINIMUM_SAFE_SPEND = 1000;
+        const effectiveHistSpend = Math.max(p.histMetaMonthlySpendAvg || 0, MINIMUM_SAFE_SPEND);
+
+        const metaHardCap = effectiveHistSpend * 3.5;
+        let projectedMetaBudget = growthFund * 0.80;
+        
+        const scaleFactor = Math.min(3.5, Math.max(1, projectedMetaBudget / effectiveHistSpend));
+        const metaCACPenalized = p.cacMeta * (1 + (Math.max(0, scaleFactor - 1) * 0.20));
+        
+        const trialsPerPaid = 1 / p.trialConversionRate;
+        const trialDurationFraction = 7 / 30;
+        const trialContactDemand = p.contactsPerPaidPsiMonth * trialDurationFraction;
+        const avgGoogleCostPerTrial = trialContactDemand * p.cplGoogle;
+        
+        const trialGoogleCostPerPaid = trialsPerPaid * avgGoogleCostPerTrial;
+        const blendedAcquisitionCost = metaCACPenalized + trialGoogleCostPerPaid;
+
+        const maxPaidByCash = Math.floor(growthFund / blendedAcquisitionCost);
+        const maxPaidByMeta = Math.floor(metaHardCap / metaCACPenalized);
+        const newPaidActive = Math.min(maxPaidByCash, maxPaidByMeta);
+        
+        const actualMetaSpend = newPaidActive * metaCACPenalized;
+        const actualTrialGoogleSpend = newPaidActive * trialGoogleCostPerPaid;
+        const actualGrowthSpend = actualMetaSpend + actualTrialGoogleSpend;
+        
+        rolloverCash = growthFund - actualGrowthSpend;
+
+        let expectedChurn = baseStart * p.monthlyChurn;
+        let churnLoss = expectedChurn;
+
+        currentBase = baseStart + newPaidActive + p.newOrganicActive - churnLoss;
+        const endOfMonthMRR = currentBase * p.arpu;
+        
+        const totalGoogleBudget = googleMaintenanceCost + actualTrialGoogleSpend;
+
+        labels.push(`Mês ${m}`);
+        dataExpectedBase.push(currentBase);
+        dataRevenue.push(endOfMonthMRR);
+        
+        const totalCosts = actualMetaSpend + totalGoogleBudget;
+        dataCosts.push(totalCosts);
+        dataCashflow.push(startingMrr - totalCosts);
+        
+        if (m === 1) {
+            actionMetaSpend = actualMetaSpend;
+            actionGoogleMaintenance = googleMaintenanceCost;
+            actionTrialGoogleSpend = actualTrialGoogleSpend;
+            actionUnspentCash = rolloverCash;
+            actionCACPenalized = metaCACPenalized;
+        }
+        if (m === 12) {
+            mrrAt12 = currentBase * p.arpu;
+            baseAt12 = currentBase;
+            metaBudgetAt12 = actualMetaSpend;
+            googleBudgetAt12 = totalGoogleBudget;
+        }
+    }
+    
+    return {
+        labels, dataExpectedBase, dataRevenue, dataCosts, dataCashflow,
+        mrrAt12, baseAt12, metaBudgetAt12, googleBudgetAt12,
+        actionMetaSpend, actionGoogleMaintenance, actionTrialGoogleSpend, actionUnspentCash, actionCACPenalized
+    };
+}
+
+if (typeof module !== 'undefined') {
+    module.exports = { runGrowthSimulationMath };
 }

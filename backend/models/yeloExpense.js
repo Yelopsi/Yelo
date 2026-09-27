@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false
         },
         amount: {
-            type: DataTypes.FLOAT,
+            type: DataTypes.DECIMAL(12, 2),
             allowNull: false
         },
         monthYear: {
@@ -24,6 +24,26 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
             defaultValue: 'Outros'
+        },
+        nature: {
+            type: DataTypes.ENUM('FIXED', 'VARIABLE', 'UNCLASSIFIED'),
+            allowNull: false,
+            defaultValue: 'UNCLASSIFIED'
+        },
+        purpose: {
+            type: DataTypes.ENUM('OPERATION', 'GROWTH', 'UNCLASSIFIED'),
+            allowNull: false,
+            defaultValue: 'UNCLASSIFIED'
+        },
+        provider: {
+            type: DataTypes.ENUM('GOOGLE', 'META', 'ASAAS', 'RENDER', 'OPENAI', 'WHATSAPP', 'ACCOUNTING', 'OTHER'),
+            allowNull: false,
+            defaultValue: 'OTHER'
+        },
+        entryMethod: {
+            type: DataTypes.ENUM('MANUAL', 'API', 'IMPORT', 'SYSTEM'),
+            allowNull: false,
+            defaultValue: 'MANUAL'
         }
     }, {
         sequelize,

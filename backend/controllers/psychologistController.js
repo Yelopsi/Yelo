@@ -1,4 +1,5 @@
 const db = require('../models');
+const matchService = require('../services/matchService');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const path = require('path');
@@ -302,6 +303,9 @@ exports.updatePsychologistProfile = async (req, res) => {
         }
         if (disponibilidade_periodo !== undefined) updatePayload.disponibilidade_periodo = disponibilidade_periodo;
 
+        // Captura o estado antes do update
+        const wasEligible = matchService.isEligibleForMatch(psychologist);
+
         await psychologist.update(updatePayload);
 
         // --- ATIVAÇÃO DO TRIAL PÓS-CADASTRO (ANTI-ABUSO) ---
@@ -314,6 +318,12 @@ exports.updatePsychologistProfile = async (req, res) => {
                 plano: 'Essencial',
                 planExpiresAt: trialEndDate
             });
+        }
+
+        // --- TRANSIÇÃO DE ELEGIBILIDADE (PROFILE ACTIVATED AT) ---
+        const isEligible = matchService.isEligibleForMatch(psychologist);
+        if (!psychologist.profileActivatedAt && !wasEligible && isEligible) {
+            await psychologist.update({ profileActivatedAt: new Date() });
         }
 
         // --- GAMIFICATION HOOK (BADGE AUTÊNTICO) ---

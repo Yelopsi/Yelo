@@ -9,10 +9,10 @@ app.use((req, res, next) => {
 
 app.use('/api/cmo', cmoRoutes);
 
-app.listen(3003, async () => {
+app.listen(3004, async () => {
     try {
         const fetch = require('node-fetch');
-        const res = await fetch('http://localhost:3003/api/cmo/dashboard?dateStart=2026-09-01&dateEnd=2026-09-30');
+        const res = await fetch('http://localhost:3004/api/cmo/dashboard?dateStart=2026-07-01&dateEnd=2026-09-26');
         const text = await res.text();
         console.log("RESPONSE:", text);
     } catch (e) {

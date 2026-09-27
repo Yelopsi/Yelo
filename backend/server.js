@@ -325,12 +325,16 @@ const startServer = async () => {
             console.log('🛠️ [DB FIX] Injetando colunas faltantes na tabela Questions...');
             
             // Garante a criação estrutural das tabelas do fórum/comunidade caso não existam
-            if (db.Question) await db.Question.sync();
-            if (db.Answer) await db.Answer.sync();
-            if (db.QuestionIgnore) await db.QuestionIgnore.sync();
-            if (db.WhatsAppClickLog) await db.WhatsAppClickLog.sync({ alter: true });
-            if (db.WeeklyEfficiency) await db.WeeklyEfficiency.sync({ alter: true });
-            if (db.YeloExpense) await db.YeloExpense.sync({ alter: true });
+            try {
+                if (db.Question) await db.Question.sync();
+                if (db.Answer) await db.Answer.sync();
+                if (db.QuestionIgnore) await db.QuestionIgnore.sync();
+                if (db.WhatsAppClickLog) await db.WhatsAppClickLog.sync({ alter: true });
+                if (db.WeeklyEfficiency) await db.WeeklyEfficiency.sync({ alter: true });
+                if (db.YeloExpense) await db.YeloExpense.sync({ alter: true });
+            } catch (syncErr) {
+                console.warn('⚠️ [DB SYNC] Aviso ao sincronizar tabelas extras:', syncErr.message);
+            }
 
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS title VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE;');

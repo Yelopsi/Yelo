@@ -5,6 +5,7 @@ const googleAdsService = require('../services/googleAdsService');
 const { sequelize } = require('../models');
 const moment = require('moment');
 const db = require('../models');
+const matchService = require('../services/matchService');
 
 // Rota de dashboard principal do CMO
 router.get('/dashboard', async (req, res) => {
@@ -12,6 +13,9 @@ router.get('/dashboard', async (req, res) => {
         // Data default para o mes atual
         const dateStart = req.query.dateStart || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
         const dateEnd = req.query.dateEnd || new Date().toISOString().split('T')[0];
+        const endDateObj = new Date(dateEnd);
+        endDateObj.setDate(endDateObj.getDate() + 1);
+        const nextDayStr = endDateObj.toISOString().split('T')[0];
 
         // 1. Definição de Períodos (Atual e Anterior)
         const start = new Date(dateStart + 'T00:00:00');
@@ -26,6 +30,9 @@ router.get('/dashboard', async (req, res) => {
 
         const prevDateStart = prevStart.toISOString().split('T')[0];
         const prevDateEnd = prevEnd.toISOString().split('T')[0];
+        const prevEndDateObj = new Date(prevDateEnd);
+        prevEndDateObj.setDate(prevEndDateObj.getDate() + 1);
+        const prevNextDayStr = prevEndDateObj.toISOString().split('T')[0];
 
         // 2. Fetch de Ads Services (Atual, Anterior e Histórico via Campanhas Alvo)
         const getTargetSpend = (campaigns, targetNameOrId, isGoogle) => {
@@ -78,26 +85,27 @@ router.get('/dashboard', async (req, res) => {
         const b2bQuery = `
             SELECT 
                 COUNT(*) FILTER (
-                    WHERE status = 'active'
-                    AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
+                    WHERE ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND "planExpiresAt" > NOW()
-                    AND (is_exempt IS NULL OR is_exempt = false)
+                    AND ("is_exempt" IS NULL OR "is_exempt" = false)
                 ) as pagantes,
                 COUNT(*) FILTER (
-                    WHERE status IN ('pending', 'active')
-                    AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
+                    WHERE ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
                     AND (is_exempt IS NULL OR is_exempt = false)
                     AND "planExpiresAt" > NOW()
-                    AND ("fotoUrl" IS NOT NULL OR ("bio" IS NOT NULL AND "bio" != ''))
+                    AND ("fotoUrl" IS NOT NULL AND "fotoUrl" NOT LIKE '%placehold.co%')
+                    AND ("bio" IS NOT NULL AND LENGTH("bio") >= 10)
                 ) as trials,
-                COUNT(*) FILTER (WHERE status = 'inactive' AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)) as churned,
                 COUNT(*) FILTER (
-                    WHERE status IN ('inactive', 'pending', 'active') 
-                    AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
+                    WHERE ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
+                    AND ("planExpiresAt" <= NOW() OR "status" = 'inactive')
+                ) as churned,
+                COUNT(*) FILTER (
+                    WHERE ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
                     AND "planExpiresAt" <= NOW()
                 ) as failed_trials
             FROM "Psychologists"
-            WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
+            WHERE "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
             AND "deletedAt" IS NULL
             AND (
                 utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
@@ -106,10 +114,10 @@ router.get('/dashboard', async (req, res) => {
         `;
 
         const [metaMetricsRes] = await sequelize.query(b2bQuery, {
-            replacements: { dateStart, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+            replacements: { dateStart, nextDayStr }, type: sequelize.QueryTypes.SELECT
         });
         const [prevMetaMetricsRes] = await sequelize.query(b2bQuery, {
-            replacements: { dateStart: prevDateStart, dateEnd: prevDateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+            replacements: { dateStart: prevDateStart, nextDayStr: prevNextDayStr }, type: sequelize.QueryTypes.SELECT
         });
 
         const metaPagantes = parseInt(metaMetricsRes.pagantes || 0);
@@ -134,11 +142,11 @@ router.get('/dashboard', async (req, res) => {
                     AND ("fotoUrl" IS NOT NULL OR ("bio" IS NOT NULL AND "bio" != ''))
                 ) as total_new_trials
             FROM "Psychologists"
-            WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
+            WHERE "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
             AND "deletedAt" IS NULL
         `;
         const [globalB2BRes] = await sequelize.query(globalB2BQuery, {
-            replacements: { dateStart, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+            replacements: { dateStart, nextDayStr }, type: sequelize.QueryTypes.SELECT
         });
         const totalNewPagantes = parseInt(globalB2BRes.total_new_pagantes || 0);
         const totalNewTrials = parseInt(globalB2BRes.total_new_trials || 0);
@@ -150,16 +158,16 @@ router.get('/dashboard', async (req, res) => {
             FROM "Psychologists"
             WHERE status = 'inactive'
             AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
-            AND "updatedAt" >= :dateStart AND "updatedAt" <= :dateEnd
+            AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
             AND "deletedAt" IS NULL
         `;
         const [globalChurnRes] = await sequelize.query(globalChurnQuery, {
-            replacements: { dateStart, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+            replacements: { dateStart, nextDayStr }, type: sequelize.QueryTypes.SELECT
         });
         const globalChurned = parseInt(globalChurnRes.churned || 0);
         
         const [prevGlobalChurnRes] = await sequelize.query(globalChurnQuery, {
-            replacements: { dateStart: prevDateStart, dateEnd: prevDateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+            replacements: { dateStart: prevDateStart, nextDayStr: prevNextDayStr }, type: sequelize.QueryTypes.SELECT
         });
         const prevGlobalChurned = parseInt(prevGlobalChurnRes.churned || 0);
 
@@ -207,28 +215,31 @@ router.get('/dashboard', async (req, res) => {
             console.error('[CMO] Erro na query clicks vs churn (90d):', e.message);
         }
 
-        const globalActiveQuery = `
-            SELECT 
-                COUNT(*) FILTER (
-                    WHERE status = 'active'
-                    AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
-                    AND "planExpiresAt" > NOW()
-                    AND ("cancelAtPeriodEnd" IS NULL OR "cancelAtPeriodEnd" = false)
-                ) as total_active,
-                COUNT(*) FILTER (
-                    WHERE status IN ('pending', 'active')
-                    AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
-                    AND "planExpiresAt" > NOW()
-                    AND ("fotoUrl" IS NOT NULL OR ("bio" IS NOT NULL AND "bio" != ''))
-                ) as total_trials
-            FROM "Psychologists"
-            WHERE status IN ('pending', 'active')
-            AND (is_exempt IS NULL OR is_exempt = false)
-            AND "deletedAt" IS NULL
+        const matchService = require('../services/matchService');
+        
+        const globalPaidQuery = `
+            SELECT * FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+            AND ("is_exempt" IS NULL OR "is_exempt" = false)
+            AND "planExpiresAt" > NOW()
+            AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
         `;
-        const [globalActiveRes] = await sequelize.query(globalActiveQuery, { type: sequelize.QueryTypes.SELECT });
-        const totalActive = parseInt(globalActiveRes.total_active || 0);
-        const totalTrials = parseInt(globalActiveRes.total_trials || 0);
+        const globalPaidRes = await sequelize.query(globalPaidQuery, { type: sequelize.QueryTypes.SELECT });
+        
+        const paidAccessBase = globalPaidRes.length;
+        const demandEligiblePaidBase = globalPaidRes.filter(p => matchService.isEligibleForMatch(p)).length;
+        const totalActive = paidAccessBase;
+
+        const globalTrialsQuery = `
+            SELECT COUNT(*) as total_trials
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+            AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
+            AND "planExpiresAt" > NOW()
+            AND ("is_exempt" IS NULL OR "is_exempt" = false)
+        `;
+        const [globalTrialsRes] = await sequelize.query(globalTrialsQuery, { type: sequelize.QueryTypes.SELECT });
+        const totalTrials = parseInt(globalTrialsRes.total_trials || 0);
         const globalChurnRate = (totalActive + globalChurned) > 0 ? (globalChurned / (totalActive + globalChurned)) : 0;
 
         console.log('[CMO B2B Debug]', { dateStart, dateEnd, metaPagantes, metaTrials, metaChurned, globalChurned, globalChurnRate, raw: metaMetricsRes });
@@ -241,34 +252,178 @@ router.get('/dashboard', async (req, res) => {
         const deltaMetaPagantes = metaPagantes - prevMetaPagantes;
         const metaMarginalCac = deltaMetaPagantes > 0 ? (deltaMetaSpend / deltaMetaPagantes) : 0;
 
-        // Cálculo dinâmico do ARPU (MRR / Pagantes Ativos Globais)
+        // Cálculo Dinâmico Real: Renewable Subscriber Base, MRR e Cash-In
+        let renewableSubscriberBase = 0;
+        let renewableDemandEligibleBase = 0;
+        let renewableMRR = 0;
+        let cashIn = 0;
         let arpu = 99;
+        let pnlEngine = {};
+
         try {
-            const pagantesAtivos = await db.Psychologist.findAll({
-                where: {
-                    status: 'active',
-                    planExpiresAt: { [db.Sequelize.Op.gt]: new Date() },
-                    cancelAtPeriodEnd: { [db.Sequelize.Op.or]: [false, null] }
-                },
-                attributes: ['id', 'plano', 'planExpiresAt', 'cancelAtPeriodEnd']
-            });
-            let settings = await db.SystemSetting.findOne() || {};
+            const settings = await db.SystemSetting.findOne() || {};
             const priceEssencial = settings.price_Essencial > 0 ? settings.price_Essencial : 99.00;
             const priceClinico = settings.price_Clínico > 0 ? settings.price_Clínico : 159.00;
             const priceReference = settings.price_sol > 0 ? settings.price_sol : 259.00;
-            
-            let mrrTotal = 0;
-            let validPagantes = 0;
-            for (const p of pagantesAtivos) {
-                validPagantes++;
-                if (p.plano === 'ESSENTIAL' || p.plano === 'Essencial') mrrTotal += Number(priceEssencial);
-                else if (p.plano === 'CLINICAL' || p.plano === 'Clínico') mrrTotal += Number(priceClinico);
-                else if (p.plano === 'REFERENCE' || p.plano === 'Sol' || p.plano === 'SOL') mrrTotal += Number(priceReference);
-                else mrrTotal += Number(priceEssencial); // Fallback
+
+            const resRenewables = await sequelize.query(`
+                SELECT p.*, s.status as sub_status, s.plan, p."cancelAtPeriodEnd" as p_cancel
+                FROM "Psychologists" p
+                LEFT JOIN "Subscriptions" s ON p."subscriptionId" = s.id
+                WHERE p."deletedAt" IS NULL
+                AND p."planExpiresAt" > NOW()
+                AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+                AND (p.is_exempt IS NULL OR p.is_exempt = false)
+            `, { type: sequelize.QueryTypes.SELECT });
+
+            for (const r of resRenewables) {
+                if (r.sub_status === 'ACTIVE' && r.p_cancel !== true) {
+                    renewableSubscriberBase++;
+                    if (r.plan === 'ESSENTIAL' || r.plan === 'Essencial') renewableMRR += Number(priceEssencial);
+                    else if (r.plan === 'CLINICAL' || r.plan === 'Clínico') renewableMRR += Number(priceClinico);
+                    else if (r.plan === 'REFERENCE' || r.plan === 'Sol' || r.plan === 'SOL') renewableMRR += Number(priceReference);
+                    else renewableMRR += Number(priceEssencial);
+
+                    // Check if this renewable user is demand eligible
+                    if (matchService.isEligibleForMatch(r)) {
+                        renewableDemandEligibleBase++;
+                    }
+                }
             }
-            if (validPagantes > 0) arpu = mrrTotal / validPagantes;
+
+            if (renewableSubscriberBase > 0) arpu = renewableMRR / renewableSubscriberBase;
+
+            
+            // --- LEDGER FINANCIAL METRICS ---
+            const ledgerStats = await sequelize.query(`
+                SELECT 
+                    SUM(CASE WHEN "eventType" = 'PAYMENT_CONFIRMED' THEN "grossAmount" ELSE 0 END) as "ConfirmedGrossRevenue",
+                    SUM(CASE WHEN "eventType" = 'PAYMENT_CREDITED' THEN "cashDeltaAmount" ELSE 0 END) as "RealizedPaymentCash",
+                    SUM(CASE WHEN "eventType" = 'GATEWAY_CASH_MOVEMENT' THEN "cashDeltaAmount" ELSE 0 END) as "GatewayCashAdjustments",
+                    SUM(CASE WHEN "eventType" = 'PAYMENT_CREDITED' THEN "feeAmount" ELSE 0 END) as "RealizedGatewayFees"
+                FROM "PaymentFinancialEvents"
+                WHERE "eventDate" >= :dateStart AND "eventDate" < :nextDayStr
+            `, { replacements: { dateStart, nextDayStr }, type: sequelize.QueryTypes.SELECT });
+
+            const lStats = ledgerStats[0];
+            const ConfirmedGrossRevenue = lStats.ConfirmedGrossRevenue ? parseFloat(lStats.ConfirmedGrossRevenue) : 0;
+            const RealizedPaymentCash = lStats.RealizedPaymentCash ? parseFloat(lStats.RealizedPaymentCash) : 0;
+            const GatewayCashAdjustments = lStats.GatewayCashAdjustments ? parseFloat(lStats.GatewayCashAdjustments) : 0;
+            const RealizedGatewayFees = lStats.RealizedGatewayFees ? parseFloat(lStats.RealizedGatewayFees) : 0;
+            const GatewayNetCash = RealizedPaymentCash + GatewayCashAdjustments;
+            
+            // Não usar cashIn = ConfirmedGrossRevenue. A UI legada pode usar o GatewayNetCash para caixa ou ConfirmedGrossRevenue para faturamento
+            // Como o nome é "cashIn", deve refletir CAIXA.
+            cashIn = GatewayNetCash; 
+            
+            // --- YELO EXPENSES (OPEX) ---
+            const expensesList = await db.YeloExpense.findAll({
+                where: { 
+                    monthYear: dateStart.substring(0, 7) // Assumindo formato YYYY-MM
+                }
+            });
+            
+            let FixedOPEX = 0;
+            let OtherVariableOperatingCosts = 0;
+            let unclassifiedCount = 0;
+            let cashOpexPaid = 0;
+            let hasFiscalConfig = false; // missing
+            
+            // OPEX_COMPLETENESS não pode ser provado por expensesList.length > 0
+            let OPEX_COMPLETENESS = 'MISSING_INPUT'; // Até que admin declare
+
+            let OwnerExtraCash = 'MISSING_INPUT'; 
+
+            for (const exp of expensesList) {
+                if (exp.nature === 'UNCLASSIFIED' || exp.purpose === 'UNCLASSIFIED' || !exp.nature || !exp.purpose) {
+                    unclassifiedCount++;
+                }
+
+                if (exp.nature === 'FIXED' && exp.purpose === 'OPERATION') {
+                    FixedOPEX += parseFloat(exp.amount || 0);
+                }
+                
+                if (exp.nature === 'VARIABLE' && exp.purpose === 'OPERATION') {
+                    OtherVariableOperatingCosts += parseFloat(exp.amount || 0);
+                }
+                
+                // cashOpexPaid DEVE ser apenas OPERATION, nunca GROWTH
+                if (exp.purpose === 'OPERATION') {
+                    cashOpexPaid += parseFloat(exp.amount || 0);
+                }
+            }
+
+            const isProfitCertified = hasFiscalConfig && (OPEX_COMPLETENESS !== 'MISSING_INPUT') && unclassifiedCount === 0;
+
+            const RevenueTaxes = 'MISSING_INPUT'; // não há config fiscal
+            const NetRevenue = RevenueTaxes !== 'MISSING_INPUT' ? (ConfirmedGrossRevenue - RevenueTaxes - RealizedGatewayFees) : 'MISSING_INPUT';
+            
+            // Lógica Google Maintenance vs Growth Restaurada
+            const AssumedTargetWhatsAppChatsPerPsi = 10;
+            const RequiredWhatsAppChats = renewableDemandEligibleBase * AssumedTargetWhatsAppChatsPerPsi;
+            // Considerando organic igual à query anterior (simplificado aqui caso não tenha o número ainda)
+            const PaidWhatsAppChatsRequired = Math.max(0, RequiredWhatsAppChats - 0 /* OrganicWhatsAppChatsAllocatedToRenewableBase */);
+            
+            // Precisamos do CPC real ou usamos fallback
+            const observedGoogleCostPerWhatsAppChat = (googleWppClicks > 0) ? (actualGoogleSpend / googleWppClicks) : 0; 
+            const RequiredGoogleMaintenanceBudget = PaidWhatsAppChatsRequired * observedGoogleCostPerWhatsAppChat;
+            
+            const AllocatedGoogleMaintenanceSpend = Math.min(actualGoogleSpend, RequiredGoogleMaintenanceBudget);
+            const AllocatedGoogleGrowthSpend = Math.max(0, actualGoogleSpend - AllocatedGoogleMaintenanceSpend);
+
+            const MetaGrowthSpend = metaSpend.spend;
+
+            const ContributionMargin = NetRevenue !== 'MISSING_INPUT' ? (NetRevenue - AllocatedGoogleMaintenanceSpend - OtherVariableOperatingCosts) : 'MISSING_INPUT';
+            const OperatingProfitBeforeGrowth = ContributionMargin !== 'MISSING_INPUT' ? (ContributionMargin - FixedOPEX) : 'MISSING_INPUT';
+            const OperatingProfitAfterGrowth = OperatingProfitBeforeGrowth !== 'MISSING_INPUT' ? (OperatingProfitBeforeGrowth - MetaGrowthSpend - AllocatedGoogleGrowthSpend) : 'MISSING_INPUT';
+
+            const cashMarketingPaid = MetaGrowthSpend + AllocatedGoogleGrowthSpend;
+            const currentCashBalance = 'MISSING_INPUT';
+            
+            const NetCashChange = (OwnerExtraCash !== 'MISSING_INPUT') ? (GatewayNetCash - cashOpexPaid - cashMarketingPaid + OwnerExtraCash) : 'MISSING_INPUT';
+
+            pnlEngine = {
+                LUCRO_GERENCIAL_CERTIFICADO: isProfitCertified,
+                PROFIT_CERTIFICATION_BLOCKED: unclassifiedCount > 0 || !hasFiscalConfig || OPEX_COMPLETENESS === 'MISSING_INPUT',
+                MISSING_INPUTS: [],
+                managerial: {
+                    ConfirmedGrossRevenue,
+                    RevenueTaxes,
+                    RealizedGatewayFees,
+                    NetRevenue,
+                    AllocatedGoogleMaintenanceSpend,
+                    OtherVariableOperatingCosts,
+                    ContributionMargin,
+                    FixedOPEX,
+                    OperatingProfitBeforeGrowth,
+                    MetaGrowthSpend,
+                    AllocatedGoogleGrowthSpend,
+                    OperatingProfitAfterGrowth
+                },
+                cashflow: {
+                    GatewayNetCash,
+                    cashOpexPaid,
+                    cashMarketingPaid,
+                    OwnerExtraCash,
+                    NetCashChange,
+                    currentCashBalance
+                },
+                ledger: {
+                    ConfirmedGrossRevenue,
+                    RealizedPaymentCash,
+                    GatewayCashAdjustments,
+                    GatewayNetCash
+                }
+            };
+            
+            if (!hasFiscalConfig) pnlEngine.MISSING_INPUTS.push('configuração fiscal');
+            if (currentCashBalance === 'MISSING_INPUT') pnlEngine.MISSING_INPUTS.push('saldo atual de caixa');
+            if (OPEX_COMPLETENESS === 'MISSING_INPUT') pnlEngine.MISSING_INPUTS.push('OPEX_COMPLETENESS (despesas no mes)');
+            if (OwnerExtraCash === 'MISSING_INPUT') pnlEngine.MISSING_INPUTS.push('OwnerExtraCash');
+
+
         } catch (e) {
-            console.error('Erro ao calcular ARPU dinâmico no CMO:', e);
+            console.error('[CMO] Erro ao calcular MRR e CashIn:', e);
         }
 
         const prevMetaChurned = parseInt(prevMetaMetricsRes.churned || 0);
@@ -287,14 +442,14 @@ router.get('/dashboard', async (req, res) => {
                 SUM(CASE WHEN "dealClosed" IN ('no', 'no_reply', 'not_interested', 'did_not_reply') THEN 1 ELSE 0 END) as total_lost,
                 SUM(CASE WHEN "dealClosed" IS NULL OR "dealClosed" = 'pending' THEN 1 ELSE 0 END) as total_pending
             FROM "WhatsAppClickLogs"
-            WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
+            WHERE "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
         `;
 
         const [googleMetricsRes] = await sequelize.query(b2cQuery, {
-            replacements: { dateStart, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+            replacements: { dateStart, nextDayStr }, type: sequelize.QueryTypes.SELECT
         });
         const [prevGoogleMetricsRes] = await sequelize.query(b2cQuery, {
-            replacements: { dateStart: prevDateStart, dateEnd: prevDateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+            replacements: { dateStart: prevDateStart, nextDayStr: prevNextDayStr }, type: sequelize.QueryTypes.SELECT
         });
 
         const wppClicks = parseInt(googleMetricsRes.wpp_clicks || 0);
@@ -540,6 +695,9 @@ router.get('/dashboard', async (req, res) => {
             dateStart180.setDate(dateStart180.getDate() - 90);
 
             const getEfficiencyMetrics = async (startDate, endDate) => {
+                const edObj = new Date(endDate);
+                edObj.setDate(edObj.getDate() + 1);
+                const nextDayStrEff = edObj.toISOString().split('T')[0];
                 const dateCondition = { createdAt: { [Op.gte]: startDate, [Op.lte]: endDate } };
                 const closedCondition = { dealClosed: { [Op.in]: ['yes', 'started'] } };
 
@@ -567,10 +725,10 @@ router.get('/dashboard', async (req, res) => {
                     SELECT "psychologistId", COUNT(id) as "closedCount"
                     FROM "WhatsAppClickLogs"
                     WHERE "dealClosed" IN ('yes', 'started') AND "psychologistId" IS NOT NULL
-                    AND "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
+                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
                     GROUP BY "psychologistId"
                     ORDER BY "closedCount" DESC
-                `, { replacements: { dateStart: startDate, dateEnd: endDate }, type: sequelize.QueryTypes.SELECT });
+                `, { replacements: { dateStart: startDate, nextDayStr: nextDayStrEff }, type: sequelize.QueryTypes.SELECT });
 
                 if (topPerformersQuery.length > 0) {
                     const top20PercentCount = Math.max(1, Math.ceil(topPerformersQuery.length * 0.20));
@@ -589,9 +747,9 @@ router.get('/dashboard', async (req, res) => {
                         EXTRACT(EPOCH FROM (MIN(w."createdAt") - p."createdAt")) / 86400 as days_to_first_contact
                     FROM "Psychologists" p
                     JOIN "WhatsAppClickLogs" w ON p.id = w."psychologistId"
-                    WHERE w."createdAt" >= :dateStart AND w."createdAt" <= :dateEnd
+                    WHERE w."createdAt" >= :dateStart AND w."createdAt" < :nextDayStr
                     GROUP BY p.id, p."createdAt"
-                `, { replacements: { dateStart: startDate, dateEnd: endDate }, type: sequelize.QueryTypes.SELECT });
+                `, { replacements: { dateStart: startDate, nextDayStr: nextDayStrEff }, type: sequelize.QueryTypes.SELECT });
                 if (ttfcQuery.length > 0) {
                     const validTtfcs = ttfcQuery.filter(q => q.days_to_first_contact >= 0).map(q => parseFloat(q.days_to_first_contact)).sort((a,b) => a-b);
                     if (validTtfcs.length > 0) {
@@ -609,9 +767,9 @@ router.get('/dashboard', async (req, res) => {
                     FROM "Psychologists" p
                     JOIN "WhatsAppClickLogs" w ON p.id = w."psychologistId"
                     WHERE w."dealClosed" IN ('yes', 'started')
-                    AND w."createdAt" >= :dateStart AND w."createdAt" <= :dateEnd
+                    AND w."createdAt" >= :dateStart AND w."createdAt" < :nextDayStr
                     GROUP BY p.id, p."createdAt"
-                `, { replacements: { dateStart: startDate, dateEnd: endDate }, type: sequelize.QueryTypes.SELECT });
+                `, { replacements: { dateStart: startDate, nextDayStr: nextDayStrEff }, type: sequelize.QueryTypes.SELECT });
                 if (ttvQuery.length > 0) {
                     const validTtvs = ttvQuery.filter(q => q.days_to_value >= 0).map(q => parseFloat(q.days_to_value)).sort((a,b) => a-b);
                     if (validTtvs.length > 0) {
@@ -639,13 +797,11 @@ router.get('/dashboard', async (req, res) => {
         }
 
         // --- SIMULADOR MOTOR DE CRESCIMENTO (90 DIAS) ---
-        let simMetaCac = 150;
+        let simMetaCac = null;
         let simGoogleCpl = 40;
-        let simTrialConv = 0.15;
-        let simChurn = 0.05;
+        let simTrialConv = null;
+        let simChurn = null;
         let simChurnType = 'ASSUMED';
-        let renewableSubscriberBase = 0;
-        let activePaidAccessBase = 0;
         let knownScheduledChurn = 0;
 
         try {
@@ -669,7 +825,7 @@ router.get('/dashboard', async (req, res) => {
 
 
             const [metaMetrics90Res] = await sequelize.query(b2bQuery, {
-                replacements: { dateStart: dateStart90Str, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+                replacements: { dateStart: dateStart90Str, nextDayStr }, type: sequelize.QueryTypes.SELECT
             });
 
             const metaPagantes90 = parseInt(metaMetrics90Res.pagantes || 0);
@@ -692,11 +848,11 @@ router.get('/dashboard', async (req, res) => {
                 FROM "Psychologists"
                 WHERE status = 'inactive'
                 AND ("subscriptionId" IS NOT NULL OR "firstPaidAt" IS NOT NULL OR "subscription_payments_count" > 0)
-                AND "updatedAt" >= :dateStart AND "updatedAt" <= :dateEnd
+                AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
                 AND "deletedAt" IS NULL
             `;
             const [globalChurn90dRes] = await sequelize.query(globalChurn90dQuery, {
-                replacements: { dateStart: dateStart90Str, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+                replacements: { dateStart: dateStart90Str, nextDayStr }, type: sequelize.QueryTypes.SELECT
             });
             const churned90d = parseInt(globalChurn90dRes.churned || 0);
             
@@ -704,23 +860,19 @@ router.get('/dashboard', async (req, res) => {
             
             const activePaidQuery = `
               SELECT 
-                SUM(CASE WHEN ("subscriptionId" IS NOT NULL AND "planExpiresAt" > NOW() AND "cancelAtPeriodEnd" = false) THEN 1 ELSE 0 END) as renewable_base,
-                COUNT(*) as paid_access_base
-              FROM "Psychologists"
-              WHERE "deletedAt" IS NULL
-              AND (
-                ("subscriptionId" IS NOT NULL AND "planExpiresAt" > NOW()) OR
-                ("subscriptionId" IS NULL AND "planExpiresAt" > NOW() AND "subscription_payments_count" > 0)
-              )
+                SUM(CASE WHEN ("cancelAtPeriodEnd" = true) THEN 1 ELSE 0 END) as scheduled_churn
+              FROM "Psychologists" p
+              LEFT JOIN "Subscriptions" s ON p."subscriptionId" = s.id
+              WHERE p."deletedAt" IS NULL
+              AND p."planExpiresAt" > NOW()
+              AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
             `;
             const [activePaidRes] = await sequelize.query(activePaidQuery, { type: sequelize.QueryTypes.SELECT });
-            renewableSubscriberBase = parseInt(activePaidRes.renewable_base || 0);
-            activePaidAccessBase = parseInt(activePaidRes.paid_access_base || 0);
-            knownScheduledChurn = activePaidAccessBase - renewableSubscriberBase;
+            knownScheduledChurn = parseInt(activePaidRes.scheduled_churn || 0);
 
             // Churn assumido fixo por enquanto (0.05)
-            simChurn = 0.05;
-            simChurnType = 'ASSUMED';
+            simChurn = null;
+            simChurnType = 'PROXY';
 
 
             const b2cQuery90 = `
@@ -728,10 +880,10 @@ router.get('/dashboard', async (req, res) => {
                     COUNT(*) as wpp_clicks,
                     SUM(CASE WHEN "utmSource" IN ('google', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc') THEN 1 ELSE 0 END) as google_wpp_clicks
                 FROM "WhatsAppClickLogs"
-                WHERE "createdAt" >= :dateStart AND "createdAt" <= :dateEnd
+                WHERE "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
             `;
             const [googleMetrics90Res] = await sequelize.query(b2cQuery90, {
-                replacements: { dateStart: dateStart90Str, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+                replacements: { dateStart: dateStart90Str, nextDayStr }, type: sequelize.QueryTypes.SELECT
             });
             const googleWppClicks90 = parseInt(googleMetrics90Res.google_wpp_clicks || 0);
             
@@ -757,14 +909,15 @@ router.get('/dashboard', async (req, res) => {
             prevEfficiency,
             
             simulator: {
-                cac: simMetaCac,
+                cac: { value: simMetaCac, type: 'PROXY' },
                 cpl: simGoogleCpl,
-                trialConv: simTrialConv,
-                churn: simChurn,
+                trialConv: { value: simTrialConv, type: 'UNKNOWN' },
+                churn: { value: simChurn, type: 'PROXY' },
                 churnType: simChurnType,
                 knownScheduledChurn,
                 renewableSubscriberBase,
-                activePaidAccessBase
+                renewableDemandEligibleBase,
+                demandEligiblePaidBase
             },
 
             period: { dateStart, dateEnd, prevDateStart, prevDateEnd },
@@ -794,7 +947,8 @@ router.get('/dashboard', async (req, res) => {
                 }
             },
             platform: {
-                b2b: { arpu: arpu, active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive, total_trials: totalTrials, organic_active: organicPagantes, organic_trials: organicTrials, total_new_active: totalNewPagantes, total_new_trials: totalNewTrials, clicks_vs_churn: { active: clicksChurnActive, inactive: clicksChurnInactive } },
+                pnl: pnlEngine,
+                b2b: { arpu: arpu, active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive, total_trials: totalTrials, organic_active: organicPagantes, organic_trials: organicTrials, total_new_active: totalNewPagantes, total_new_trials: totalNewTrials, clicks_vs_churn: { active: clicksChurnActive, inactive: clicksChurnInactive }, cashIn, renewableMRR },
                 b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals, organic_wpp_clicks_90d: organicWppClicks90d }
             },
             decisionEngineMeta,

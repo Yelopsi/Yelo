@@ -1,0 +1,233 @@
+{
+  "success": true,
+  "efficiency": {
+    "globalEffort": "31.0",
+    "adsEffort": "N/A",
+    "orgEffort": "31.0",
+    "topTicket": "N/A",
+    "ttfcData": {
+      "median": "96.9",
+      "mean": "96.9",
+      "sample": 1
+    },
+    "ttvData": {
+      "median": "106.1",
+      "mean": "106.1",
+      "sample": 1
+    }
+  },
+  "prevEfficiency": {
+    "globalEffort": "N/A",
+    "adsEffort": "N/A",
+    "orgEffort": "N/A",
+    "topTicket": "N/A",
+    "ttfcData": {
+      "median": "N/A",
+      "mean": "N/A",
+      "sample": 0
+    },
+    "ttvData": {
+      "median": "N/A",
+      "mean": "N/A",
+      "sample": 0
+    }
+  },
+  "simulator": {
+    "cac": 150,
+    "cpl": 100,
+    "trialConv": 0.15,
+    "churn": 0.05,
+    "churnType": "ASSUMED",
+    "knownScheduledChurn": 1,
+    "renewableSubscriberBase": 3,
+    "activePaidAccessBase": 4
+  },
+  "period": {
+    "dateStart": "2026-09-01",
+    "dateEnd": "2026-09-27",
+    "prevDateStart": "2026-08-05",
+    "prevDateEnd": "2026-08-31"
+  },
+  "globalInsight": "💡 **Plano de Ação Executivo (Imediato)**\n⚖️ **Meta Ads (B2B):** **MANTENHA** o orçamento atual. Números dentro do padrão de tração.\n⚖️ **Google Ads (B2C):** **MANTENHA** o orçamento atual. Aguarde mais volume para tomar decisões.\n\n⏳ **Regra de Ouro:** Após aplicar qualquer mudança, aguarde **7 dias corridos** sem mexer nas campanhas para permitir o aprendizado do algoritmo da IA (Meta/Google).",
+  "ads": {
+    "meta": {
+      "spend": 0,
+      "configuredDailyBudget": 35,
+      "cac": 0,
+      "marginalCac": 0
+    },
+    "google": {
+      "spend": 0,
+      "configuredDailyBudget": 0,
+      "cpl": 0,
+      "marginalCpl": 0
+    }
+  },
+  "campaigns": {
+    "meta": [
+      {
+        "campaign_name": "[B2B] Captacao Psicologos - Nacional",
+        "campaign_id": "123456789",
+        "spend": 800,
+        "impressions": 120000,
+        "clicks": 2100
+      },
+      {
+        "campaign_name": "[B2C] Terapia Ansiedade - SP",
+        "campaign_id": "987654321",
+        "spend": 650.5,
+        "impressions": 130000,
+        "clicks": 2400
+      }
+    ],
+    "google": [
+      {
+        "campaign_name": "[B2B] Rede de Pesquisa - Psicologos",
+        "campaign_id": "G123",
+        "spend": 300.2,
+        "impressions": 45000,
+        "clicks": 1200
+      },
+      {
+        "campaign_name": "[B2C] Rede de Pesquisa - Psicoterapia",
+        "campaign_id": "G456",
+        "spend": 550,
+        "impressions": 65000,
+        "clicks": 2000
+      }
+    ]
+  },
+  "prevCampaigns": {
+    "meta": [
+      {
+        "campaign_name": "[B2B] Captacao Psicologos - Nacional",
+        "campaign_id": "123456789",
+        "spend": 800,
+        "impressions": 120000,
+        "clicks": 2100
+      },
+      {
+        "campaign_name": "[B2C] Terapia Ansiedade - SP",
+        "campaign_id": "987654321",
+        "spend": 650.5,
+        "impressions": 130000,
+        "clicks": 2400
+      }
+    ],
+    "google": [
+      {
+        "campaign_name": "[B2B] Rede de Pesquisa - Psicologos",
+        "campaign_id": "G123",
+        "spend": 300.2,
+        "impressions": 45000,
+        "clicks": 1200
+      },
+      {
+        "campaign_name": "[B2C] Rede de Pesquisa - Psicoterapia",
+        "campaign_id": "G456",
+        "spend": 550,
+        "impressions": 65000,
+        "clicks": 2000
+      }
+    ]
+  },
+  "prevPlatform": {
+    "b2b": {
+      "active": 0,
+      "trials": 0,
+      "meta_churn_rate": 0.05,
+      "global_churn_rate": 0
+    },
+    "b2c": {
+      "wpp_clicks": 0,
+      "total_deals": 0
+    }
+  },
+  "prevAds": {
+    "meta": {
+      "spend": 0,
+      "cac": 0
+    },
+    "google": {
+      "spend": 0,
+      "cpl": 0
+    }
+  },
+  "historical": {
+    "meta": {
+      "spend": 0,
+      "monthly_spend_avg": 0,
+      "cac": 150,
+      "paybackMonths": 0.9846827133479211,
+      "churn_rate": 0.9943502824858758,
+      "trial_conversion_rate": 0.15,
+      "state": null,
+      "stateDate": null
+    },
+    "google": {
+      "spend": 0,
+      "cpl": 0
+    },
+    "platform": {
+      "b2b": {
+        "active": 0,
+        "trials": 0,
+        "global_churn_rate": 0.9943502824858758
+      },
+      "b2c": {
+        "wpp_clicks": 31,
+        "total_deals": 1
+      }
+    }
+  },
+  "platform": {
+    "b2b": {
+      "arpu": 152.33333333333334,
+      "active": 0,
+      "trials": 0,
+      "churned": 0,
+      "global_churn": 352,
+      "meta_churn_rate": 0.05,
+      "global_churn_rate": 0.9943502824858758,
+      "total_active": 2,
+      "total_trials": 0,
+      "organic_active": 2,
+      "organic_trials": 0,
+      "total_new_active": 2,
+      "total_new_trials": 0,
+      "clicks_vs_churn": {
+        "active": null,
+        "inactive": null
+      }
+    },
+    "b2c": {
+      "wpp_clicks": 31,
+      "total_deals": 1,
+      "pending_deals": 0,
+      "lost_deals": 3,
+      "organic_wpp_clicks_90d": 31
+    }
+  },
+  "decisionEngineMeta": {
+    "action": "RECOLHENDO DADOS ⏳",
+    "confidence": 0,
+    "target": 228.5,
+    "scaleCapacity": "BAIXA",
+    "trend": 0,
+    "warning": "Amostra pequena (0 pagantes). O LTV é estatisticamente volátil e qualquer cancelamento mudará a métrica.",
+    "recommendation": "Aguarde mais conversões.",
+    "paybackMonths": 0
+  },
+  "prevDecisionEngineMeta": {
+    "paybackMonths": 0
+  },
+  "decisionEngineGoogle": {
+    "action": "RECOLHENDO DADOS ⏳",
+    "confidence": 0,
+    "target": 8,
+    "scaleCapacity": "BAIXA",
+    "trend": 0,
+    "warning": null,
+    "recommendation": "Aguarde mais volume de cliques."
+  }
+}

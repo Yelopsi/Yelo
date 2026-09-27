@@ -245,9 +245,6 @@ exports.calculateMatches = async (preferences = {}) => {
         // --- MUDANÇA ESTRATÉGICA: BUSCA RESTRITA A ATIVOS E TRIALS COMPLETOS ---
         const baseWhereConditions = { 
             status: { [Op.in]: ['active', 'trial'] },
-            bio: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
-            cpf: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
-            fotoUrl: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
             profile_paused: { [Op.ne]: true }
         };
 
@@ -256,8 +253,12 @@ exports.calculateMatches = async (preferences = {}) => {
         }
 
         debugLog.push(`[${Date.now() - startTime}ms] 🔍 Buscando candidatos elegíveis no banco de dados...`);
-        const allEligiblePsychologists = await db.Psychologist.findAll({ where: baseWhereConditions });
-        debugLog.push(`[${Date.now() - startTime}ms] ✅ Encontrados ${allEligiblePsychologists.length} candidatos elegíveis.`);
+        const rawPsychologists = await db.Psychologist.findAll({ where: baseWhereConditions });
+        
+        // FILTRO DEFINITIVO DA ÚNICA FONTE DE VERDADE
+        const allEligiblePsychologists = rawPsychologists.filter(psy => exports.isEligibleForMatch(psy));
+        
+        debugLog.push(`[${Date.now() - startTime}ms] ✅ Encontrados ${allEligiblePsychologists.length} candidatos elegíveis após filtro de verdade.`);
 
         if (allEligiblePsychologists.length === 0) {
             debugLog.push(`[${Date.now() - startTime}ms] ❌ FIM DO MATCH: A base de dados não possui profissionais com assinatura ativa e perfil preenchido.`);
@@ -456,4 +457,16 @@ exports.calculateMatches = async (preferences = {}) => {
         console.error(debugLog.join('\n'), error);
         throw error;
     }
+};
+exports.isEligibleForMatch = (psy) => {
+    if (!psy) return false;
+    const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true';
+    const hasActivePlan = isVip || (psy.planExpiresAt && new Date(psy.planExpiresAt) > new Date());
+    const validStatus = psy.status === 'active' || psy.status === 'trial';
+    const hasMinBio = psy.bio && psy.bio.trim().length >= 10;
+    const hasPhoto = psy.fotoUrl && psy.fotoUrl.trim() !== '' && !psy.fotoUrl.includes('placehold.co');
+    const hasCpf = psy.cpf && psy.cpf.trim() !== '';
+    const isNotPaused = psy.profile_paused !== true && String(psy.profile_paused).toLowerCase() !== 'true';
+
+    return validStatus && hasActivePlan && hasMinBio && hasPhoto && hasCpf && isNotPaused;
 };
