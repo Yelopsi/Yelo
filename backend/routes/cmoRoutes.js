@@ -1033,7 +1033,7 @@ router.post('/simulator-settings', async (req, res) => {
             
             if (reinvestRate !== undefined) settings.cmo_sim_reinvest_rate = parseInt(reinvestRate);
             if (extraCash !== undefined) settings.cmo_sim_extra_cash = parseFloat(extraCash);
-            settings.cmo_sim_curiosity_goal = curiosityGoal !== undefined && curiosityGoal !== '' ? parseInt(curiosityGoal) : null;
+            settings.cmo_sim_curiosity_goal = (curiosityGoal !== undefined && curiosityGoal !== null && curiosityGoal !== '') ? parseInt(curiosityGoal) : null;
             
             await settings.save();
         }
