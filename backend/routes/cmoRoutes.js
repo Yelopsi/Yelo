@@ -948,6 +948,7 @@ router.get('/simulator-settings', async (req, res) => {
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_reinvest_rate INTEGER DEFAULT 100;`);
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_extra_cash DECIMAL(10,2) DEFAULT 0;`);
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_curiosity_goal INTEGER;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_ai_action_plan TEXT;`);
         } catch (e) {
             console.error('Raw ALTER TABLE skip in GET:', e.message);
         }
@@ -993,6 +994,7 @@ router.post('/simulator-settings', async (req, res) => {
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_reinvest_rate INTEGER DEFAULT 100;`);
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_extra_cash DECIMAL(10,2) DEFAULT 0;`);
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_curiosity_goal INTEGER;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_ai_action_plan TEXT;`);
         } catch (e) {
             console.error('Raw ALTER TABLE skip in POST:', e.message);
         }
