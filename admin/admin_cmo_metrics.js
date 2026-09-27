@@ -587,10 +587,19 @@ function initGrowthSimulator(data) {
             const contributionAfterGoogle = Math.max(0, mrr - googleMaintenanceCost);
             const growthFund = (contributionAfterGoogle * (reinvestRate / 100)) + extraCash + rolloverCash;
 
-            const metaHardCap = histMetaMonthlySpendAvg * 3.5;
+            // --- SOLUÇÃO DEFINITIVA: COLD START OVERRIDE ---
+            // Define um piso de segurança. Abaixo desse valor, a escala abrupta não quebra a empresa.
+            const MINIMUM_SAFE_SPEND = 1000; // Piso assumido de R$ 1.000,00
+            
+            // O algoritmo usa o seu histórico real OU o piso seguro (o que for maior).
+            const effectiveHistSpend = Math.max(histMetaMonthlySpendAvg || 0, MINIMUM_SAFE_SPEND);
+
+            // O Hard Cap agora é calculado sobre o gasto efetivo, destravando a inércia inicial.
+            const metaHardCap = effectiveHistSpend * 3.5;
             let projectedMetaBudget = growthFund * 0.80; // 80% Meta / 20% Google Trials budget assumption
             
-            const scaleFactor = Math.min(3.5, Math.max(1, projectedMetaBudget / (histMetaMonthlySpendAvg || 1)));
+            // A penalidade do CAC (Scale Factor) também passa a respeitar o piso seguro.
+            const scaleFactor = Math.min(3.5, Math.max(1, projectedMetaBudget / effectiveHistSpend));
             const metaCACPenalized = cacMeta * (1 + (Math.max(0, scaleFactor - 1) * 0.20));
             
             const trialsPerPaid = 1 / trialConversionRate;
