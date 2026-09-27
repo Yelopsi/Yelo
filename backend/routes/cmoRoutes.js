@@ -260,6 +260,45 @@ router.get('/dashboard', async (req, res) => {
         let arpu = 99;
         let pnlEngine = {};
 
+        // 4. Atribuição B2C (Google Ads -> Pacientes)
+        const b2cQuery = `
+            SELECT 
+                COUNT(*) as wpp_clicks,
+                SUM(CASE WHEN "utmSource" IN ('google', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc') THEN 1 ELSE 0 END) as google_wpp_clicks,
+                SUM(CASE WHEN "dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as total_deals,
+                SUM(CASE WHEN "dealClosed" IN ('no', 'no_reply', 'not_interested', 'did_not_reply') THEN 1 ELSE 0 END) as total_lost,
+                SUM(CASE WHEN "dealClosed" IS NULL OR "dealClosed" = 'pending' THEN 1 ELSE 0 END) as total_pending
+            FROM "WhatsAppClickLogs"
+            WHERE "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
+        `;
+
+        const [googleMetricsRes] = await sequelize.query(b2cQuery, {
+            replacements: { dateStart, nextDayStr }, type: sequelize.QueryTypes.SELECT
+        });
+        const [prevGoogleMetricsRes] = await sequelize.query(b2cQuery, {
+            replacements: { dateStart: prevDateStart, nextDayStr: prevNextDayStr }, type: sequelize.QueryTypes.SELECT
+        });
+
+        const wppClicks = parseInt(googleMetricsRes.wpp_clicks || 0);
+        const googleWppClicks = parseInt(googleMetricsRes.google_wpp_clicks || 0);
+        const prevGoogleWppClicks = parseInt(prevGoogleMetricsRes.google_wpp_clicks || 0);
+        const googleDeals = parseInt(googleMetricsRes.total_deals || 0);
+        const prevGoogleDeals = parseInt(prevGoogleMetricsRes.total_deals || 0);
+        const lostDeals = parseInt(googleMetricsRes.total_lost || 0);
+        const pendingDeals = parseInt(googleMetricsRes.total_pending || 0);
+
+        const googleCpl = googleWppClicks > 0 ? (actualGoogleSpend / googleWppClicks) : 0;
+        const prevGoogleCpl = prevGoogleWppClicks > 0 ? (actualPrevGoogleSpend / prevGoogleWppClicks) : 0;
+
+        const b2cOrganic90dQuery = `
+            SELECT COUNT(*) as organic_wpp_clicks
+            FROM "WhatsAppClickLogs"
+            WHERE "createdAt" >= NOW() - INTERVAL '90 days'
+            AND ("utmSource" IS NULL OR "utmSource" NOT IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads', 'google', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc'))
+        `;
+        const [organic90dRes] = await sequelize.query(b2cOrganic90dQuery, { type: sequelize.QueryTypes.SELECT });
+        const organicWppClicks90d = parseInt(organic90dRes.organic_wpp_clicks || 0);
+
         try {
             const settings = await db.SystemSetting.findOne() || {};
             const priceEssencial = settings.price_Essencial > 0 ? settings.price_Essencial : 99.00;
@@ -423,7 +462,7 @@ router.get('/dashboard', async (req, res) => {
 
 
         } catch (e) {
-            console.error('[CMO] Erro ao calcular MRR e CashIn:', e);
+            pnlEngine = { error: e.message, stack: e.stack }; console.error('[CMO] Erro ao calcular MRR e CashIn:', e);
         }
 
         const prevMetaChurned = parseInt(prevMetaMetricsRes.churned || 0);
@@ -433,44 +472,7 @@ router.get('/dashboard', async (req, res) => {
         const metaLtv = arpu / (metaChurnRate > 0 ? metaChurnRate : 0.05);
         const metaLtvCacRatio = metaCac > 0 ? (metaLtv / metaCac) : 0;
 
-        // 4. Atribuição B2C (Google Ads -> Pacientes)
-        const b2cQuery = `
-            SELECT 
-                COUNT(*) as wpp_clicks,
-                SUM(CASE WHEN "utmSource" IN ('google', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc') THEN 1 ELSE 0 END) as google_wpp_clicks,
-                SUM(CASE WHEN "dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as total_deals,
-                SUM(CASE WHEN "dealClosed" IN ('no', 'no_reply', 'not_interested', 'did_not_reply') THEN 1 ELSE 0 END) as total_lost,
-                SUM(CASE WHEN "dealClosed" IS NULL OR "dealClosed" = 'pending' THEN 1 ELSE 0 END) as total_pending
-            FROM "WhatsAppClickLogs"
-            WHERE "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
-        `;
 
-        const [googleMetricsRes] = await sequelize.query(b2cQuery, {
-            replacements: { dateStart, nextDayStr }, type: sequelize.QueryTypes.SELECT
-        });
-        const [prevGoogleMetricsRes] = await sequelize.query(b2cQuery, {
-            replacements: { dateStart: prevDateStart, nextDayStr: prevNextDayStr }, type: sequelize.QueryTypes.SELECT
-        });
-
-        const wppClicks = parseInt(googleMetricsRes.wpp_clicks || 0);
-        const googleWppClicks = parseInt(googleMetricsRes.google_wpp_clicks || 0);
-        const prevGoogleWppClicks = parseInt(prevGoogleMetricsRes.google_wpp_clicks || 0);
-        const googleDeals = parseInt(googleMetricsRes.total_deals || 0);
-        const prevGoogleDeals = parseInt(prevGoogleMetricsRes.total_deals || 0);
-        const lostDeals = parseInt(googleMetricsRes.total_lost || 0);
-        const pendingDeals = parseInt(googleMetricsRes.total_pending || 0);
-
-        const googleCpl = googleWppClicks > 0 ? (actualGoogleSpend / googleWppClicks) : 0;
-        const prevGoogleCpl = prevGoogleWppClicks > 0 ? (actualPrevGoogleSpend / prevGoogleWppClicks) : 0;
-
-        const b2cOrganic90dQuery = `
-            SELECT COUNT(*) as organic_wpp_clicks
-            FROM "WhatsAppClickLogs"
-            WHERE "createdAt" >= NOW() - INTERVAL '90 days'
-            AND ("utmSource" IS NULL OR "utmSource" NOT IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads', 'google', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc'))
-        `;
-        const [organic90dRes] = await sequelize.query(b2cOrganic90dQuery, { type: sequelize.QueryTypes.SELECT });
-        const organicWppClicks90d = parseInt(organic90dRes.organic_wpp_clicks || 0);
 
         // HISTORICAL QUERIES
         const b2bHistQuery = `
