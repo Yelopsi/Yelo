@@ -157,6 +157,11 @@ router.get('/dashboard', async (req, res) => {
             replacements: { dateStart, dateEnd: dateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
         });
         const globalChurned = parseInt(globalChurnRes.churned || 0);
+        
+        const [prevGlobalChurnRes] = await sequelize.query(globalChurnQuery, {
+            replacements: { dateStart: prevDateStart, dateEnd: prevDateEnd + ' 23:59:59' }, type: sequelize.QueryTypes.SELECT
+        });
+        const prevGlobalChurned = parseInt(prevGlobalChurnRes.churned || 0);
 
         // Correlação: cliques recebidos por psis ativos vs churned nos últimos 90 dias (janela fixa)
         // Período fixo de 90d garante amostra estatisticamente robusta, independente do filtro do painel.
@@ -266,7 +271,10 @@ router.get('/dashboard', async (req, res) => {
             console.error('Erro ao calcular ARPU dinâmico no CMO:', e);
         }
 
+        const prevMetaChurned = parseInt(prevMetaMetricsRes.churned || 0);
         const metaChurnRate = metaPagantes > 0 ? (metaChurned / (metaPagantes + metaChurned)) : 0.05;
+        const prevMetaChurnRate = prevMetaPagantes > 0 ? (prevMetaChurned / (prevMetaPagantes + prevMetaChurned)) : 0.05;
+        const prevGlobalChurnRate = (totalActive + prevGlobalChurned) > 0 ? (prevGlobalChurned / (totalActive + prevGlobalChurned)) : 0;
         const metaLtv = arpu / (metaChurnRate > 0 ? metaChurnRate : 0.05);
         const metaLtvCacRatio = metaCac > 0 ? (metaLtv / metaCac) : 0;
 
@@ -395,6 +403,7 @@ router.get('/dashboard', async (req, res) => {
 
         // 5. Motor de Decisão (Meta/B2B)
         const metaPaybackMonths = metaCac > 0 ? (metaCac / arpu) : 0;
+        const prevMetaPaybackMonths = prevMetaCac > 0 ? (prevMetaCac / arpu) : 0;
         
         let decisionEngineMeta = {
             action: 'RECOLHENDO DADOS ⏳', confidence: 0, target: arpu * 1.5,
@@ -767,7 +776,7 @@ router.get('/dashboard', async (req, res) => {
             campaigns: { meta: metaCampaigns, google: googleCampaigns },
             prevCampaigns: { meta: prevMetaCampaigns, google: prevGoogleCampaigns },
             prevPlatform: {
-                b2b: { active: prevMetaPagantes, trials: prevMetaTrials },
+                b2b: { active: prevMetaPagantes, trials: prevMetaTrials, meta_churn_rate: prevMetaChurnRate, global_churn_rate: prevGlobalChurnRate },
                 b2c: { wpp_clicks: prevGoogleWppClicks, total_deals: prevGoogleDeals }
             },
             prevAds: {
@@ -789,6 +798,7 @@ router.get('/dashboard', async (req, res) => {
                 b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals, organic_wpp_clicks_90d: organicWppClicks90d }
             },
             decisionEngineMeta,
+            prevDecisionEngineMeta: { paybackMonths: prevMetaPaybackMonths },
             decisionEngineGoogle
         });
     } catch (error) {
