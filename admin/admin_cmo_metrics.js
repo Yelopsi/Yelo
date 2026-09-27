@@ -545,6 +545,8 @@ function initGrowthSimulator(data) {
         
         const arpu = data.platform?.b2b?.arpu || 99;
         const contactsPerPaidPsiMonth = 3.0;
+        const targetContactsPerPsi = contactsPerPaidPsiMonth;
+        const contactsThresholdSource = 'Motor de Crescimento';
         
         let isSimulationPossible = cacMeta !== null && trialConversionRate !== null && monthlyChurn !== null && cplGoogle !== null;
         
