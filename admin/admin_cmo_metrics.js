@@ -529,24 +529,24 @@ function initGrowthSimulator(data) {
         const renewableSubscriberBase = data.simulator?.renewableSubscriberBase || activePaidAccessBase;
         const knownScheduledChurn = data.simulator?.knownScheduledChurn || 0;
         
-        const trialConversionObj = data.simulator?.trialConv || {};
-        const trialConversionRate = trialConversionObj.value; // Removido fallback
-        
-        const cacMetaObj = data.simulator?.cac || {};
-        const cacMeta = cacMetaObj.value; // Removido fallback
+        function getSimValue(obj) {
+            if (!obj) return null;
+            if (typeof obj !== 'object') return null;
+            if (obj.type === 'MISSING_INPUT') return null;
+            const v = obj.value;
+            if (v === undefined || Number.isNaN(v) || v === null || !isFinite(v)) return null;
+            return v;
+        }
+
+        const trialConversionRate = getSimValue(data.simulator?.trialConv);
+        const cacMeta = getSimValue(data.simulator?.cac);
+        const cplGoogle = getSimValue(data.simulator?.cpl);
+        const monthlyChurn = getSimValue(data.simulator?.churn);
         
         const arpu = data.platform?.b2b?.arpu || 99;
-
         const contactsPerPaidPsiMonth = 3.0;
-        const targetContactsPerPsi = contactsPerPaidPsiMonth;
-        const contactsThresholdSource = 'Motor de Crescimento';
-
-        const cplGoogle = data.simulator?.cpl > 0 ? data.simulator.cpl : 22.13;
         
-        const churnObj = data.simulator?.churn || {};
-        const monthlyChurn = churnObj.value; // Removido fallback
-        
-        const isSimulationPossible = cacMeta !== null && trialConversionRate !== null && monthlyChurn !== null;
+        let isSimulationPossible = cacMeta !== null && trialConversionRate !== null && monthlyChurn !== null && cplGoogle !== null;
         
         const histMetaMonthlySpendAvg = data.historical?.meta?.monthly_spend_avg || 3000;
         
@@ -579,9 +579,11 @@ function initGrowthSimulator(data) {
         let actionCACPenalized = 0;
         
         // PROJECTION PREMISES:
-        // Assume the eligibility rate from the current state remains constant (ASSUMED_FROM_CURRENT_RENEWABLE_RATIO).
-        const renewableDemandEligibleBase = data.simulator?.renewableDemandEligibleBase || 0;
-        const demandEligibilityRate = renewableSubscriberBase > 0 ? (renewableDemandEligibleBase / renewableSubscriberBase) : 0;
+        let demandEligibilityRate = data.simulator?.demandEligibilityRate;
+        if (demandEligibilityRate === 'MISSING_INPUT' || demandEligibilityRate === undefined || demandEligibilityRate === null) {
+            isSimulationPossible = false;
+            demandEligibilityRate = 0;
+        }
         
         if (!isSimulationPossible) {
             const warningEl = document.getElementById('sim-res-warning');
@@ -604,7 +606,8 @@ function initGrowthSimulator(data) {
 
         const simResult = runGrowthSimulationMath({
             targetMonths, currentBase, arpu, demandEligibilityRate, contactsPerPaidPsiMonth, verifiedOrganicContacts, cplGoogle,
-            reinvestRate, extraCash, rolloverCash, histMetaMonthlySpendAvg, cacMeta, trialConversionRate, monthlyChurn, newOrganicActive
+            reinvestRate, extraCash, rolloverCash, histMetaMonthlySpendAvg, cacMeta, trialConversionRate, monthlyChurn, newOrganicActive,
+            renewableSubscriberBase, knownScheduledChurn
         });
 
         labels.push(...simResult.labels);
@@ -714,6 +717,58 @@ function initGrowthSimulator(data) {
                     const trialsDaily = actionTrialGoogleSpend / 30;
                     const availableForAcquisition1 = actionMetaSpend + actionTrialGoogleSpend + actionUnspentCash;
 
+                    // MARGEM DISTRIBUÍVEL SEGURA
+                    const pnl = data.platform?.pnl;
+                    let safeMarginStatus = 'OK';
+                    let safeDistributableMargin = null;
+                    let safeDistributableAmount = null;
+                    let target30PercentStatus = 'MISSING_INPUT';
+                    let gapTo30Percent = null;
+                    
+                    const taxStatus = pnl?.managerial?.RevenueTaxes !== undefined ? 'OK' : 'MISSING_INPUT';
+                    const opexStatus = pnl?.PROFIT_CERTIFICATION_BLOCKED ? 'MISSING_INPUT' : 'OK';
+                    const cashBalanceStatus = pnl?.cashflow?.currentCashBalance === 'MISSING_INPUT' ? 'MISSING_INPUT' : 'OK';
+                    
+                    // Cash reserve is currently a missing concept in the input, thus it is missing.
+                    const requiredCashReserveContribution = 'MISSING_INPUT';
+                    
+                    if (!pnl || taxStatus === 'MISSING_INPUT' || opexStatus === 'MISSING_INPUT' || cashBalanceStatus === 'MISSING_INPUT' || requiredCashReserveContribution === 'MISSING_INPUT') {
+                        safeMarginStatus = 'MISSING_INPUT';
+                    } else {
+                        const netRevenue = pnl.managerial?.NetRevenue;
+                        const fixedOPEX = pnl.managerial?.FixedOPEX;
+                        const otherVarCosts = pnl.managerial?.OtherVariableOperatingCosts;
+                        
+                        if (netRevenue === undefined || netRevenue === null || fixedOPEX === undefined || fixedOPEX === null || otherVarCosts === undefined || otherVarCosts === null) {
+                            safeMarginStatus = 'MISSING_INPUT';
+                        } else {
+                            // Google Maintenance from M1
+                            const googleMaint = actionGoogleMaintenance;
+                            
+                            // Minimum growth budget to sustain churn (MODELLED)
+                            const minimumGrowthBudget = simResult.requiredReplacementPaidM1 * simResult.blendedAcquisitionCostM1;
+                            
+                            const safeDistributableProfit = Math.max(0, netRevenue - fixedOPEX - otherVarCosts - googleMaint - minimumGrowthBudget - requiredCashReserveContribution);
+                            
+                            if (netRevenue > 0) {
+                                safeDistributableMargin = safeDistributableProfit / netRevenue;
+                                safeDistributableAmount = safeDistributableProfit;
+                                
+                                const maxCostEnvelopeFor30 = netRevenue * 0.70;
+                                const currentTotalSustainingCosts = fixedOPEX + otherVarCosts + googleMaint + minimumGrowthBudget + requiredCashReserveContribution;
+                                
+                                if (currentTotalSustainingCosts <= maxCostEnvelopeFor30) {
+                                    target30PercentStatus = 'FEASIBLE';
+                                } else {
+                                    target30PercentStatus = 'NOT_YET_FEASIBLE';
+                                    gapTo30Percent = currentTotalSustainingCosts - maxCostEnvelopeFor30;
+                                }
+                            } else {
+                                safeMarginStatus = 'MISSING_INPUT';
+                            }
+                        }
+                    }
+
                     fetch('/api/cmo/generate-action-plan', {
                         method: 'POST',
                         headers: { 
@@ -721,7 +776,7 @@ function initGrowthSimulator(data) {
                             'Content-Type': 'application/json' 
                         },
                         body: JSON.stringify({
-                            mrrAtual: formatBRL(currentMrr),
+                            mrrAtual: formatBRL(currentBase * arpu),
                             mrr12M: formatBRL(mrrAt12),
                             reinvestRate: reinvestRate,
                             extraCash: extraCash,
@@ -734,7 +789,12 @@ function initGrowthSimulator(data) {
                             targetGoogleDaily: formatBRL(targetGoogleDaily),
                             currentDailyGoogle: formatBRL(currentDailyGoogle),
                             baseDaily: formatBRL(baseDaily),
-                            trialsDaily: formatBRL(trialsDaily)
+                            trialsDaily: formatBRL(trialsDaily),
+                            safeMarginStatus: safeMarginStatus,
+                            safeDistributableMargin: safeDistributableMargin !== null ? (safeDistributableMargin * 100).toFixed(1) : null,
+                            safeDistributableAmount: safeDistributableAmount !== null ? formatBRL(safeDistributableAmount) : null,
+                            target30PercentStatus: target30PercentStatus,
+                            gapTo30Percent: gapTo30Percent !== null ? formatBRL(gapTo30Percent) : null
                         })
                     })
                     .then(res => res.json())
@@ -1087,6 +1147,7 @@ function runGrowthSimulationMath(p) {
     let actionMetaSpend = 0, actionGoogleMaintenance = 0, actionTrialGoogleSpend = 0;
     let actionUnspentCash = 0, actionCACPenalized = 0;
     let mrrAt12 = 0, baseAt12 = 0, metaBudgetAt12 = 0, googleBudgetAt12 = 0;
+    let blendedAcquisitionCostM1 = 0, churnLossBaseM1 = 0, requiredReplacementPaidM1 = 0;
 
     for (let m = 1; m <= p.targetMonths; m++) {
         let baseStart = currentBase;
@@ -1127,10 +1188,16 @@ function runGrowthSimulationMath(p) {
         
         rolloverCash = growthFund - actualGrowthSpend;
 
-        let expectedChurn = baseStart * p.monthlyChurn;
-        let churnLoss = expectedChurn;
+        let baseUsedForChurn = (m === 1 && p.renewableSubscriberBase !== undefined) ? p.renewableSubscriberBase : baseStart;
+        let expectedChurn = baseUsedForChurn * p.monthlyChurn;
+        let appliedKnownChurn = (m === 1) ? (p.knownScheduledChurn || 0) : 0;
+        let reliableOrganicPaidAdditions = p.newOrganicActive || 0;
+        
+        // Required replacement to maintain base stable
+        let requiredReplacementPaid = Math.max(0, expectedChurn + appliedKnownChurn - reliableOrganicPaidAdditions);
+        let churnLoss = expectedChurn + appliedKnownChurn;
 
-        currentBase = baseStart + newPaidActive + p.newOrganicActive - churnLoss;
+        currentBase = baseStart + newPaidActive + reliableOrganicPaidAdditions - churnLoss;
         const endOfMonthMRR = currentBase * p.arpu;
         
         const totalGoogleBudget = googleMaintenanceCost + actualTrialGoogleSpend;
@@ -1149,6 +1216,9 @@ function runGrowthSimulationMath(p) {
             actionTrialGoogleSpend = actualTrialGoogleSpend;
             actionUnspentCash = rolloverCash;
             actionCACPenalized = metaCACPenalized;
+            blendedAcquisitionCostM1 = blendedAcquisitionCost;
+            churnLossBaseM1 = churnLoss;
+            requiredReplacementPaidM1 = requiredReplacementPaid;
         }
         if (m === 12) {
             mrrAt12 = currentBase * p.arpu;
@@ -1161,7 +1231,8 @@ function runGrowthSimulationMath(p) {
     return {
         labels, dataExpectedBase, dataRevenue, dataCosts, dataCashflow,
         mrrAt12, baseAt12, metaBudgetAt12, googleBudgetAt12,
-        actionMetaSpend, actionGoogleMaintenance, actionTrialGoogleSpend, actionUnspentCash, actionCACPenalized
+        actionMetaSpend, actionGoogleMaintenance, actionTrialGoogleSpend, actionUnspentCash, actionCACPenalized,
+        blendedAcquisitionCostM1, churnLossBaseM1, requiredReplacementPaidM1
     };
 }
 

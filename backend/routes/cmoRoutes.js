@@ -905,6 +905,8 @@ router.get('/dashboard', async (req, res) => {
             console.error('[CMO Metrics] Erro calculando Simulador 90d:', simError);
         }
 
+        const demandEligibilityRate = renewableSubscriberBase > 0 ? (renewableDemandEligibleBase / renewableSubscriberBase) : 'MISSING_INPUT';
+
         res.json({
             success: true,
             efficiency: {
@@ -918,15 +920,15 @@ router.get('/dashboard', async (req, res) => {
             prevEfficiency,
             
             simulator: {
-                cac: { value: simMetaCac, type: 'PROXY' },
-                cpl: simGoogleCpl,
-                trialConv: { value: simTrialConv, type: 'UNKNOWN' },
-                churn: { value: simChurn, type: 'PROXY' },
-                churnType: simChurnType,
+                cac: { value: simMetaCac, type: simMetaCac ? 'OBSERVED' : 'PROXY' },
+                cpl: { value: simGoogleCpl, type: 'OBSERVED' },
+                trialConv: { value: simTrialConv, type: simTrialConv ? 'OBSERVED' : 'MISSING_INPUT' },
+                churn: { value: simChurn, type: simChurnType },
                 knownScheduledChurn,
                 renewableSubscriberBase,
                 renewableDemandEligibleBase,
-                demandEligiblePaidBase
+                demandEligiblePaidBase,
+                demandEligibilityRate
             },
 
             period: { dateStart, dateEnd, prevDateStart, prevDateEnd },
@@ -1223,32 +1225,56 @@ router.get('/action-plan', async (req, res) => {
 // POST /api/cmo/generate-action-plan — Analisa a lucratividade e projeções do Simulador com IA
 router.post('/generate-action-plan', async (req, res) => {
     try {
-        const { mrrAtual, mrr12M, reinvestRate, extraCash, cacAtual, cacPenalizado, unspentCash, targetMetaDaily, currentMetaDailyBudget, availableForAcquisition1, targetGoogleDaily, currentDailyGoogle, baseDaily, trialsDaily } = req.body;
+        const { 
+            mrrAtual, mrr12M, reinvestRate, extraCash, cacAtual, cacPenalizado, unspentCash, 
+            targetMetaDaily, currentMetaDailyBudget, availableForAcquisition1, 
+            targetGoogleDaily, currentDailyGoogle, baseDaily, trialsDaily,
+            safeMarginStatus, safeDistributableMargin, safeDistributableAmount,
+            target30PercentStatus, gapTo30Percent
+        } = req.body;
         
         const { GoogleGenerativeAI } = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
-        const prompt = `Você é o Diretor de Crescimento (CMO) e Diretor Financeiro (CFO) da Yelo (Plataforma SaaS B2B2C para Psicólogos).
-Analise os dados do Motor de Crescimento e produza o "Seu Plano de Ação" para o administrador da plataforma.
+        function calcAction(atual, ideal) {
+            const a = parseFloat(atual.replace(/[^\d.,-]/g, '').replace(',', '.'));
+            const i = parseFloat(ideal.replace(/[^\d.,-]/g, '').replace(',', '.'));
+            if (!i || i === 0) return 'MANTER';
+            const diff = Math.abs(a - i) / i;
+            if (diff <= 0.10) return 'MANTER';
+            return a < i ? 'AUMENTAR' : 'REDUZIR';
+        }
+
+        const metaAction = calcAction(currentMetaDailyBudget, targetMetaDaily);
+        const googleAction = calcAction(currentDailyGoogle, targetGoogleDaily);
+
+        const prompt = `Você é o Diretor de Crescimento (CMO) e Diretor Financeiro (CFO) da Yelo.
+Analise os dados e produza um Plano de Ação curto e natural, sem jargões corporativos robóticos.
 
 DADOS DO MOTOR:
-- MRR Atual: ${mrrAtual} | MRR 12 Meses: ${mrr12M}
-- Reinvestimento: ${reinvestRate}% | Aporte Extra Mensal: R$ ${extraCash}
-- CAC B2B Meta Ads Atual: ${cacAtual} | CAC Projetado no teto: ${cacPenalizado}
-- Fundo de Aquisição Meta Ads (mês): ${availableForAcquisition1}
-- Sobra de Caixa (Rollover/mês): ${unspentCash}
-- Orçamento Diário Meta Atual Configurado: ${currentMetaDailyBudget} | Orçamento Matemático Ideal (Meta): ${targetMetaDaily}
-- Orçamento Diário Google Atual: ${currentDailyGoogle} | Orçamento Matemático Ideal (Google): ${targetGoogleDaily} (Sendo ${baseDaily} para base e ${trialsDaily} para trials)
+- MRR Atual: ${mrrAtual}
+- CAC B2B Atual: ${cacAtual} | CAC Projetado (Teto): ${cacPenalizado}
+- Orçamento Diário Meta Atual: ${currentMetaDailyBudget} | Orçamento Ideal (Meta): ${targetMetaDaily}
+- Orçamento Diário Google Atual: ${currentDailyGoogle} | Orçamento Ideal (Google): ${targetGoogleDaily}
+- Margem Distribuível Segura: Status: ${safeMarginStatus} | Estimativa Atual: ${safeDistributableMargin}% (${safeDistributableAmount})
+- Meta 30% de Retirada: ${target30PercentStatus} | Gap de Custo para chegar lá: ${gapTo30Percent}
+- Ação Determinística Meta: ${metaAction}
+- Ação Determinística Google: ${googleAction}
 
-INSTRUÇÕES:
-Retorne APENAS E ESTRITAMENTE o código HTML das 3 tags <li> (sem tag <ul>, sem markdown \`\`\`html) seguindo o padrão abaixo. Formate os valores em Reais (R$). Seja analítico, matemático e baseie-se nos dados acima.
+REGRAS RÍGIDAS DE ANÁLISE:
+1. FAIXA DE TOLERÂNCIA E AÇÃO DETERMINÍSTICA: Você NÃO deve decidir o que fazer com os orçamentos do Meta e do Google. A decisão JÁ FOI TOMADA matematicamente e está no campo "Ação Determinística" (MANTER, AUMENTAR ou REDUZIR). Sua única função é transformar essa ação em um texto analítico e natural. Se a ação for MANTER, diga que a variação está dentro da margem de segurança de 10%.
+2. NÃO ZERAR O CAIXA: Nunca instrua a "esgotar o fundo" ou diga que "sobra de caixa pequena = capital perfeitamente alocado". Valorize a margem de segurança e a reserva de caixa para imprevistos e volatilidade.
+3. LUCRATIVIDADE: Se o Status da Margem Distribuível for MISSING_INPUT, você DEVE dizer EXATAMENTE: "Ainda não há dados financeiros suficientes para calcular uma retirada segura." e não deve inventar, supor ou estimar nenhum percentual. Caso o Status seja OK, responda "Quanto posso retirar hoje?" e "Posso retirar 30%?". Se não puder, explique o que falta. Exemplo: "Com os custos conhecidos, a operação ainda não sustenta uma retirada de 30% com segurança. A margem hoje é de X% (R$ Y). Para chegar aos 30%, reduza custos ou aumente o MRR."
+4. NATURALIDADE: Limite o texto a 3 blocos. Cada bloco deve ter no máximo 3-4 frases curtas (Situação atual, Ação e Por quê). Evite repetir números que já estão no painel visual do usuário.
 
-<li><strong>Meta Ads (Aquisição):</strong> <br>🔍 <strong>Fato Calculado:</strong> [Análise comparando o orçamento atual com o ideal e o fundo] <br><br>💡 <strong>Sugestão Estratégica:</strong> [O que fazer com o Meta Ads]</li>
+INSTRUÇÕES DE FORMATAÇÃO:
+Retorne APENAS o HTML das 3 tags <li> exatamente com os títulos abaixo (sem tags extras).
+<li><strong>Meta Ads (Aquisição):</strong> <br>🔍 <strong>Situação:</strong> [Texto] <br><br>💡 <strong>Ação:</strong> [Texto]</li>
 <br>
-<li><strong>Google Ads (Google vs Meta Trials):</strong> <br>🔍 <strong>Fato Calculado:</strong> [Análise do orçamento do Google] <br><br>💡 <strong>Sugestão Estratégica:</strong> [O que fazer com o Google Ads]</li>
+<li><strong>Google Ads (Google vs Meta Trials):</strong> <br>🔍 <strong>Situação:</strong> [Texto] <br><br>💡 <strong>Ação:</strong> [Texto]</li>
 <br>
-<li><strong>Lucratividade (ROI Geral):</strong> <br>🔍 <strong>Diagnóstico:</strong> [Análise do caixa excedente, MRR e CAC] <br><br>💡 <strong>Ação Recomendada:</strong> [Sugestão final]</li>`;
+<li><strong>Lucro e Caixa (ROI Geral):</strong> <br>🔍 <strong>Diagnóstico de Retirada:</strong> [Texto sobre a Margem Segura] <br><br>💡 <strong>Ação:</strong> [Texto]</li>`;
 
         const result = await model.generateContent(prompt);
         let analysis = result.response.text().trim();
