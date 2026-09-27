@@ -872,9 +872,16 @@ router.get('/dashboard', async (req, res) => {
             const [activePaidRes] = await sequelize.query(activePaidQuery, { type: sequelize.QueryTypes.SELECT });
             knownScheduledChurn = parseInt(activePaidRes.scheduled_churn || 0);
 
-            // Churn assumido fixo por enquanto (0.05)
-            simChurn = null;
-            simChurnType = 'PROXY';
+            if ((totalActive + churned90d) > 0) {
+                // churnRate90d represents a cumulative 90-day churn.
+                // The engine expects monthlyChurn, so we convert it:
+                const monthlyChurnEq = 1 - Math.pow(1 - churnRate90d, 1 / 3);
+                simChurn = monthlyChurnEq;
+                simChurnType = 'PROXY'; // Preserved as PROXY because it relies on heuristic status updates rather than contractual logs
+            } else {
+                simChurn = null;
+                simChurnType = 'PROXY'; // Preserved original proxy fallback classification if no data
+            }
 
 
             const b2cQuery90 = `
