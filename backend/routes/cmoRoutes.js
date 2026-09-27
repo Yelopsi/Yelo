@@ -114,6 +114,7 @@ router.get('/dashboard', async (req, res) => {
 
         const metaPagantes = parseInt(metaMetricsRes.pagantes || 0);
         const prevMetaPagantes = parseInt(prevMetaMetricsRes.pagantes || 0);
+        const prevMetaTrials = parseInt(prevMetaMetricsRes.trials || 0);
         const metaTrials = parseInt(metaMetricsRes.trials || 0);
         const metaChurned = parseInt(metaMetricsRes.churned || 0);
 
