@@ -596,7 +596,7 @@ router.get('/dashboard', async (req, res) => {
                 let ttv = { median: 'N/A', mean: 'N/A', sample: 0 };
                 const ttvQuery = await sequelize.query(`
                     SELECT 
-                        EXTRACT(EPOCH FROM (MIN(COALESCE(w."therapyStartedReportedAt", w."createdAt")) - p."createdAt")) / 86400 as days_to_value
+                        EXTRACT(EPOCH FROM (MIN(COALESCE(w."updatedAt", w."createdAt")) - p."createdAt")) / 86400 as days_to_value
                     FROM "Psychologists" p
                     JOIN "WhatsAppClickLogs" w ON p.id = w."psychologistId"
                     WHERE w."dealClosed" IN ('yes', 'started')
