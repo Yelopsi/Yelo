@@ -90,6 +90,8 @@ function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = fa
     if (typeof currentValue === 'number') {
         if (formatType === 'currency') formattedCurrent = `R$ ${(currentValue || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         else if (formatType === 'percent') formattedCurrent = (currentValue * 100).toFixed(1) + '%';
+        else if (formatType === 'decimal') formattedCurrent = currentValue.toFixed(1);
+        else if (formatType === 'days') formattedCurrent = currentValue.toFixed(1) + ' d';
         else formattedCurrent = currentValue.toLocaleString('pt-BR');
     }
     el.textContent = formattedCurrent;
@@ -168,46 +170,137 @@ function renderCMOMetrics(data) {
 
         // Eficiência Comercial B2C KPIs
         if (data.efficiency) {
-            document.getElementById('cmo-global-effort').textContent = data.efficiency.globalEffort || 'N/A';
-            document.getElementById('cmo-channel-efficiency').textContent = `Ads: ${data.efficiency.adsEffort || 'N/A'} | Org: ${data.efficiency.orgEffort || 'N/A'}`;
-            document.getElementById('cmo-top-ticket').textContent = (data.efficiency.topTicket === 'N/A' || !data.efficiency.topTicket) ? 'N/A' : `R$ ${data.efficiency.topTicket}`;
+            const parseFloatOrNA = (val) => val === 'N/A' || !val ? 'N/A' : parseFloat(val);
+            
+            const currGlobal = parseFloatOrNA(data.efficiency.globalEffort);
+            const prevGlobal = parseFloatOrNA(data.prevEfficiency?.globalEffort);
+            setKpiValueAndTrend('cmo-global-effort', currGlobal, prevGlobal, true, 'decimal');
+
+            const topTicketStr = data.efficiency.topTicket === 'N/A' || !data.efficiency.topTicket ? 'N/A' : `R$ ${data.efficiency.topTicket}`;
+            const prevTopTicketStr = data.prevEfficiency?.topTicket === 'N/A' || !data.prevEfficiency?.topTicket ? 'N/A' : `R$ ${data.prevEfficiency?.topTicket}`;
+            // For top ticket, it's currency and higher is better.
+            const currTopTicket = data.efficiency.topTicket === 'N/A' || !data.efficiency.topTicket ? 'N/A' : parseFloat(data.efficiency.topTicket);
+            const prevTopTicket = data.prevEfficiency?.topTicket === 'N/A' || !data.prevEfficiency?.topTicket ? 'N/A' : parseFloat(data.prevEfficiency.topTicket);
+            setKpiValueAndTrend('cmo-top-ticket', currTopTicket, prevTopTicket, false, 'currency');
+
             if (data.efficiency.ttfcData) {
-                document.getElementById('cmo-ttfc-median').textContent = data.efficiency.ttfcData.median !== 'N/A' ? `${data.efficiency.ttfcData.median} d` : 'N/A';
+                const currTtfc = parseFloatOrNA(data.efficiency.ttfcData.median);
+                const prevTtfc = parseFloatOrNA(data.prevEfficiency?.ttfcData?.median);
+                setKpiValueAndTrend('cmo-ttfc-median', currTtfc, prevTtfc, true, 'days');
                 document.getElementById('cmo-ttfc-sub').textContent = `Média: ${data.efficiency.ttfcData.mean} dias · amostra: ${data.efficiency.ttfcData.sample} profissionais`;
             }
             if (data.efficiency.ttvData) {
-                document.getElementById('cmo-ttv-median').textContent = data.efficiency.ttvData.median !== 'N/A' ? `${data.efficiency.ttvData.median} d` : 'N/A';
+                const currTtv = parseFloatOrNA(data.efficiency.ttvData.median);
+                const prevTtv = parseFloatOrNA(data.prevEfficiency?.ttvData?.median);
+                setKpiValueAndTrend('cmo-ttv-median', currTtv, prevTtv, true, 'days');
                 document.getElementById('cmo-ttv-sub').textContent = `Média: ${data.efficiency.ttvData.mean} dias · amostra: ${data.efficiency.ttvData.sample} profissionais (PROXY)`;
+            }
+            
+            // Channel Efficiency (Ads / Org)
+            const elCh = document.getElementById('cmo-channel-efficiency');
+            if (elCh) {
+                const currAds = parseFloatOrNA(data.efficiency.adsEffort);
+                const prevAds = parseFloatOrNA(data.prevEfficiency?.adsEffort);
+                const currOrg = parseFloatOrNA(data.efficiency.orgEffort);
+                const prevOrg = parseFloatOrNA(data.prevEfficiency?.orgEffort);
+                
+                const calcPct = (c, p) => {
+                    if (typeof c === 'number' && typeof p === 'number') {
+                        if (p > 0) return ((c - p) / p) * 100;
+                        if (c > 0) return 100;
+                    }
+                    return null;
+                };
+                
+                const getArrow = (pct) => {
+                    if (pct === null) return '';
+                    if (pct > 0) return ` <span style="color:#ef4444;font-size:0.85rem">↑${Math.abs(pct).toFixed(1)}%</span>`;
+                    if (pct < 0) return ` <span style="color:#10b981;font-size:0.85rem">↓${Math.abs(pct).toFixed(1)}%</span>`;
+                    return ` <span style="color:#64748b;font-size:0.85rem">−0%</span>`;
+                };
+
+                const strAds = currAds !== 'N/A' ? currAds.toFixed(1) : 'N/A';
+                const strOrg = currOrg !== 'N/A' ? currOrg.toFixed(1) : 'N/A';
+                elCh.innerHTML = `Ads: ${strAds}${getArrow(calcPct(currAds, prevAds))} | Org: ${strOrg}${getArrow(calcPct(currOrg, prevOrg))}`;
             }
         }
 
         // Cards de Transparência (seção inferior)
-        const setDbgHist = (id, histVal, monthVal) => { 
+        const setDbgHist = (id, rawHist, rawMonth, formatType, inverseGood = false) => { 
             const el = document.getElementById(id); 
-            if (el) {
-                el.style.fontSize = '1.05rem';
-                el.style.display = 'flex';
-                el.style.flexDirection = 'column';
-                el.style.gap = '2px';
-                el.style.marginTop = '4px';
-                el.innerHTML = `<span style="color: #64748b; font-size: 0.75rem;">Histórico: <strong style="color: #1e293b; font-size: 1.05rem;">${histVal}</strong></span><span style="color: #64748b; font-size: 0.75rem;">No Período: <strong style="color: #1e293b; font-size: 1.05rem;">${monthVal}</strong></span>`;
-            } 
+            if (!el) return;
+
+            let histVal = rawHist;
+            let monthVal = rawMonth;
+
+            if (formatType === 'currency') {
+                histVal = formatCurrency(rawHist);
+                monthVal = formatCurrency(rawMonth);
+            } else if (formatType === 'percent') {
+                histVal = `${(rawHist * 100).toFixed(1)}%`;
+                monthVal = `${(rawMonth * 100).toFixed(1)}%`;
+            } else if (formatType === 'number') {
+                histVal = (rawHist || 0).toLocaleString('pt-BR');
+                monthVal = (rawMonth || 0).toLocaleString('pt-BR');
+            } else if (formatType === 'months') {
+                histVal = (rawHist || 0).toFixed(1).replace('.', ',') + ' Meses';
+                monthVal = (rawMonth || 0).toFixed(1).replace('.', ',') + ' Meses';
+            }
+
+            let pct = 0;
+            if (rawHist > 0) {
+                pct = ((rawMonth - rawHist) / rawHist) * 100;
+            } else if (rawMonth > 0) {
+                pct = 100;
+            }
+
+            let color = '#64748b';
+            let arrow = '';
+            
+            if (pct > 0) {
+                arrow = '↑';
+                color = inverseGood ? '#ef4444' : '#10b981';
+            } else if (pct < 0) {
+                arrow = '↓';
+                color = inverseGood ? '#10b981' : '#ef4444';
+            } else {
+                arrow = '−';
+            }
+
+            let trendHtml = '';
+            if (pct !== 0) {
+                trendHtml = `<span style="font-size: 0.85rem; font-weight: bold; color: ${color}; background-color: ${color}1a; padding: 2px 6px; border-radius: 4px; display: inline-block; align-self: flex-start; margin-left: auto;">${arrow} ${Math.abs(pct).toFixed(1)}%</span>`;
+            } else {
+                trendHtml = `<span style="font-size: 0.85rem; font-weight: bold; color: #64748b; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; display: inline-block; align-self: flex-start; margin-left: auto;">${arrow} 0%</span>`;
+            }
+
+            el.style.fontSize = '1.05rem';
+            el.style.display = 'flex';
+            el.style.flexDirection = 'column';
+            el.style.gap = '2px';
+            el.style.marginTop = '4px';
+            el.innerHTML = `
+                <span style="color: #64748b; font-size: 0.75rem;">Histórico: <strong style="color: #1e293b; font-size: 1.05rem;">${histVal}</strong></span>
+                <span style="color: #64748b; font-size: 0.75rem; display: flex; align-items: center;">
+                    <span>No Período: <strong style="color: #1e293b; font-size: 1.05rem;">${monthVal}</strong></span>
+                    ${trendHtml}
+                </span>
+            `;
         };
 
-        setDbgHist('dbg-meta-spend',    formatCurrency(data.historical?.meta?.spend || 0), formatCurrency(data.ads?.meta?.spend || 0));
-        setDbgHist('dbg-meta-trials',   (data.historical?.platform?.b2b?.trials || 0).toLocaleString('pt-BR'), (data.platform.b2b?.trials || 0).toLocaleString('pt-BR'));
-        setDbgHist('dbg-meta-pagantes', (data.historical?.platform?.b2b?.active || 0).toLocaleString('pt-BR'), (data.platform.b2b?.active || 0).toLocaleString('pt-BR'));
-        setDbgHist('dbg-meta-cac',      formatCurrency(data.historical?.meta?.cac || 0), formatCurrency(data.ads?.meta?.cac || 0));
-        setDbgHist('dbg-meta-payback',  (data.historical?.meta?.paybackMonths || 0).toFixed(1).replace('.', ',') + ' Meses', (data.decisionEngineMeta?.paybackMonths || 0).toFixed(1).replace('.', ',') + ' Meses');
+        setDbgHist('dbg-meta-spend',    data.historical?.meta?.spend || 0, data.ads?.meta?.spend || 0, 'currency', true);
+        setDbgHist('dbg-meta-trials',   data.historical?.platform?.b2b?.trials || 0, data.platform.b2b?.trials || 0, 'number', false);
+        setDbgHist('dbg-meta-pagantes', data.historical?.platform?.b2b?.active || 0, data.platform.b2b?.active || 0, 'number', false);
+        setDbgHist('dbg-meta-cac',      data.historical?.meta?.cac || 0, data.ads?.meta?.cac || 0, 'currency', true);
+        setDbgHist('dbg-meta-payback',  data.historical?.meta?.paybackMonths || 0, data.decisionEngineMeta?.paybackMonths || 0, 'months', true);
         
-        const formatPercent = (val) => `${(val * 100).toFixed(1)}%`;
-        setDbgHist('dbg-meta-churn',    formatPercent(data.historical?.meta?.churn_rate || 0), formatPercent(data.platform.b2b?.meta_churn_rate || 0));
-        setDbgHist('dbg-global-churn',  formatPercent(data.historical?.platform?.b2b?.global_churn_rate || 0), formatPercent(data.platform.b2b?.global_churn_rate || 0));
+        setDbgHist('dbg-meta-churn',    data.historical?.meta?.churn_rate || 0, data.platform.b2b?.meta_churn_rate || 0, 'percent', true);
+        setDbgHist('dbg-global-churn',  data.historical?.platform?.b2b?.global_churn_rate || 0, data.platform.b2b?.global_churn_rate || 0, 'percent', true);
         
-        setDbgHist('dbg-google-spend',  formatCurrency(data.historical?.google?.spend || 0), formatCurrency(data.ads?.google?.spend || 0));
-        setDbgHist('dbg-google-clicks', (data.historical?.platform?.b2c?.wpp_clicks || 0).toLocaleString('pt-BR'), (data.platform.b2c?.wpp_clicks || 0).toLocaleString('pt-BR'));
-        setDbgHist('dbg-google-deals',  (data.historical?.platform?.b2c?.total_deals || 0).toLocaleString('pt-BR'), (data.platform.b2c?.total_deals || 0).toLocaleString('pt-BR'));
-        setDbgHist('dbg-google-cpl',    formatCurrency(data.historical?.google?.cpl || 0), formatCurrency(data.ads?.google?.cpl || 0));
+        setDbgHist('dbg-google-spend',  data.historical?.google?.spend || 0, data.ads?.google?.spend || 0, 'currency', true);
+        setDbgHist('dbg-google-clicks', data.historical?.platform?.b2c?.wpp_clicks || 0, data.platform.b2c?.wpp_clicks || 0, 'number', false);
+        setDbgHist('dbg-google-deals',  data.historical?.platform?.b2c?.total_deals || 0, data.platform.b2c?.total_deals || 0, 'number', false);
+        setDbgHist('dbg-google-cpl',    data.historical?.google?.cpl || 0, data.ads?.google?.cpl || 0, 'currency', true);
     }
 
 
