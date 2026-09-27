@@ -624,14 +624,14 @@ function initGrowthSimulator(data) {
         actionCACPenalized = simResult.actionCACPenalized;
 
         // Update Cards com textos contextuais        // Update Cards com textos contextuais
-        const currentMrr = basePagantes * arpu;
+        const currentMrr = currentBase * arpu;
         const mrrMultiple = (mrrAt12 / (currentMrr || 1)).toFixed(1);
         const mrrGainMonthly = mrrAt12 - currentMrr;
         document.getElementById('sim-res-mrr-12m').textContent = formatBRL(mrrAt12);
         document.getElementById('sim-res-mrr-feedback').textContent =
             `${mrrMultiple}x maior que hoje (${formatBRL(currentMrr)}/mês)`;
         
-        const newSubs = Math.floor(baseAt12) - basePagantes;
+        const newSubs = Math.floor(baseAt12) - currentBase;
         const avgPatientsPerPsi = targetContactsPerPsi || 2;
         const totalPatientsServed = Math.floor(baseAt12) * avgPatientsPerPsi;
         const subsEl = document.getElementById('sim-res-subs-12m');
@@ -664,7 +664,7 @@ function initGrowthSimulator(data) {
         } else {
             warningEl.style.backgroundColor = '#f0fdfa';
             warningEl.style.color = '#0f766e';
-            warningEl.innerHTML = `✅ <b>Motor Girando:</b> Em 12 meses, você sairá de ${basePagantes} para ${Math.floor(baseAt12)} assinantes investindo apenas a receita gerada pela própria máquina.`;
+            warningEl.innerHTML = `✅ <b>Motor Girando:</b> Em 12 meses, você sairá de ${currentBase} para ${Math.floor(baseAt12)} assinantes investindo apenas a receita gerada pela própria máquina.`;
         }
 
         // Action Plan
