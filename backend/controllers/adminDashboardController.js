@@ -757,13 +757,17 @@ exports.getFinancials = async (req, res) => {
         const sparkTrialChurns = Array(10).fill(trialChurnCount / 10);
         const sparkMrr = Array(10).fill(mrr);
 
+        const currentPaidChurnDecimal = paidChurnRate / 100;
+        const currentProjectedLifetime = currentPaidChurnDecimal > 0 ? Math.min(1 / currentPaidChurnDecimal, 24) : 24;
+        const currentLtvProjetado = arpu * currentProjectedLifetime;
+
         const kpis = {
             mrr: { current: mrr, previous: prevMrr },
             paidChurnRate: { current: paidChurnRate, previous: prevPaidChurnRate },
             trialChurnCount: { current: trialChurnCount, previous: prevTrialChurnCount },
             paidChurnCount: { current: paidChurnCount, previous: cmoPrevPaidChurnCount },
             inadimplentesCount: { current: inadimplentesCount, previous: prevMetrics.inadimplentesCount },
-            ltv: { current: ltv, net: ltvNet, previous: prevLtv, projected: metrics.ltvProjetado },
+            ltv: { current: ltv, net: ltvNet, previous: prevLtv, projected: currentLtvProjetado },
             arpu: { current: arpu, previous: prevMetrics.arpu },
             proj30, proj60, proj90,
             cacPayback: { current: metrics.cacPaybackMonths }
