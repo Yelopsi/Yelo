@@ -96,57 +96,62 @@ function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = fa
     }
     el.textContent = formattedCurrent;
 
-    if (typeof currentValue === 'number' && typeof historicalValue === 'number') {
-        let pct = 0;
-        if (historicalValue > 0) {
-            pct = ((currentValue - historicalValue) / historicalValue) * 100;
-        } else if (currentValue > 0) {
-            pct = 100;
+    let trendEl = document.getElementById(`trend-${id}`);
+    if (!trendEl) {
+        if (el.parentElement.style.display !== 'flex') {
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'baseline';
+            wrapper.style.gap = '8px';
+            el.parentNode.insertBefore(wrapper, el);
+            wrapper.appendChild(el);
         }
-        
-        let color = '#64748b';
-        let arrow = '';
-        
-        if (pct > 0) {
-            arrow = '↑';
-            color = inverseGood ? '#ef4444' : '#10b981';
-        } else if (pct < 0) {
-            arrow = '↓';
-            color = inverseGood ? '#10b981' : '#ef4444';
-        } else {
-            arrow = '−';
-            color = '#64748b';
-        }
-
-        let trendEl = document.getElementById(`trend-${id}`);
-        if (!trendEl) {
-            if (el.parentElement.style.display !== 'flex') {
-                const wrapper = document.createElement('div');
-                wrapper.style.display = 'flex';
-                wrapper.style.alignItems = 'baseline';
-                wrapper.style.gap = '8px';
-                el.parentNode.insertBefore(wrapper, el);
-                wrapper.appendChild(el);
-            }
-            trendEl = document.createElement('span');
-            trendEl.id = `trend-${id}`;
-            trendEl.style.fontSize = '0.85rem';
-            trendEl.style.fontWeight = 'bold';
-            trendEl.style.padding = '2px 6px';
-            trendEl.style.borderRadius = '4px';
-            el.parentElement.appendChild(trendEl);
-        }
-
-        if (pct !== 0) {
-            trendEl.textContent = `${arrow} ${Math.abs(pct).toFixed(1)}%`;
-            trendEl.style.color = color;
-            trendEl.style.backgroundColor = color + '1a';
-        } else {
-            trendEl.textContent = `${arrow} 0%`;
-            trendEl.style.color = '#64748b';
-            trendEl.style.backgroundColor = '#f1f5f9';
-        }
+        trendEl = document.createElement('span');
+        trendEl.id = `trend-${id}`;
+        trendEl.style.fontSize = '0.85rem';
+        trendEl.style.fontWeight = 'bold';
+        trendEl.style.padding = '2px 6px';
+        trendEl.style.borderRadius = '4px';
+        el.parentElement.appendChild(trendEl);
     }
+
+    let comparisonType = '';
+    let pct = 0;
+    
+    if (historicalValue === null || historicalValue === undefined || historicalValue === 'N/A' || isNaN(historicalValue) || isNaN(currentValue)) {
+        comparisonType = 'INCOMPLETE';
+    } else if (historicalValue === 0 && currentValue > 0) {
+        comparisonType = 'NEW_FROM_ZERO';
+    } else if (historicalValue === 0 && currentValue === 0) {
+        comparisonType = 'NO_CHANGE';
+    } else {
+        comparisonType = 'CALCULATE';
+        pct = ((currentValue - historicalValue) / historicalValue) * 100;
+        if (pct === 0) comparisonType = 'NO_CHANGE';
+    }
+
+    let color = '#64748b';
+    let bgColor = '#f1f5f9';
+    let text = '';
+
+    if (comparisonType === 'INCOMPLETE') {
+        text = '—';
+    } else if (comparisonType === 'NEW_FROM_ZERO') {
+        text = 'Novo';
+        color = inverseGood ? '#ef4444' : '#10b981';
+        bgColor = color + '1a';
+    } else if (comparisonType === 'NO_CHANGE') {
+        text = '0%';
+    } else {
+        let arrow = pct > 0 ? '↑' : '↓';
+        color = (pct > 0) ? (inverseGood ? '#ef4444' : '#10b981') : (inverseGood ? '#10b981' : '#ef4444');
+        bgColor = color + '1a';
+        text = `${arrow} ${Math.abs(pct).toFixed(1)}%`;
+    }
+
+    trendEl.textContent = text;
+    trendEl.style.color = color;
+    trendEl.style.backgroundColor = bgColor;
 }
 
 function renderCMOMetrics(data) {
@@ -670,7 +675,7 @@ function initGrowthSimulator(data) {
             warningEl.style.color = '#0f766e';
             if (extraCash > 0) {
                 const totalOwnerContribution = extraCash * 12;
-                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Em 12 meses, a projeção leva a base de ${currentBase} para ${Math.floor(baseAt12)} assinantes, considerando reinvestimento de ${reinvestRate}% do MRR e aporte adicional de ${formatBRL(extraCash)} por mês. Isso representa ${formatBRL(totalOwnerContribution)} de aporte externo ao longo dos 12 meses.`;
+                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Em 12 meses, a projeção leva a base de ${currentBase} para ${Math.floor(baseAt12)} assinantes, considerando reinvestimento de ${reinvestRate}% da Sobra Operacional e aporte adicional de ${formatBRL(extraCash)} por mês. Isso representa ${formatBRL(totalOwnerContribution)} de aporte externo ao longo dos 12 meses.`;
             } else {
                 warningEl.innerHTML = `✅ <b>Motor Girando:</b> Em 12 meses, você poderá sair de ${currentBase} para ${Math.floor(baseAt12)} assinantes reinvestindo ${reinvestRate}% da receita gerada pela operação.`;
             }
@@ -1245,3 +1250,72 @@ function runGrowthSimulationMath(p) {
 if (typeof module !== 'undefined') {
     module.exports = { runGrowthSimulationMath };
 }
+
+
+// --- SNAPSHOT FUNCTIONS ---
+async function fetchMonthlyFinance(monthYear, managerialData = {}) {
+    try {
+        const token = localStorage.getItem('Yelo_token') || localStorage.getItem('adminToken');
+        const res = await fetch('/api/cmo/monthly-finance?monthYear=' + monthYear, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        const snap = data.snapshot;
+        const def = data.defaults;
+        
+        document.getElementById('mf-closing-cash').value = snap && snap.closingCashBalance !== null ? snap.closingCashBalance : '';
+        document.getElementById('mf-opex-complete').value = snap ? (snap.opexIsComplete ? 'true' : 'false') : 'false';
+        document.getElementById('mf-tax-var').value = snap && snap.appliedTaxVariableRate !== null ? snap.appliedTaxVariableRate : (def.tax_variable_rate !== null ? def.tax_variable_rate : '');
+        document.getElementById('mf-tax-fix').value = snap && snap.appliedTaxFixedMonthly !== null ? snap.appliedTaxFixedMonthly : (def.tax_fixed_monthly !== null ? def.tax_fixed_monthly : '');
+        document.getElementById('mf-reserve').value = snap && snap.appliedRequiredCashReserve !== null ? snap.appliedRequiredCashReserve : (def.required_cash_reserve !== null ? def.required_cash_reserve : '');
+        
+        const isClosed = snap && snap.isClosed;
+        const inputs = ['mf-closing-cash', 'mf-opex-complete', 'mf-tax-var', 'mf-tax-fix', 'mf-reserve'];
+        inputs.forEach(id => document.getElementById(id).disabled = isClosed);
+        
+        document.getElementById('mf-closed-badge').style.display = isClosed ? 'block' : 'none';
+
+        if(managerialData && managerialData.ConfirmedGrossRevenue !== undefined) {
+            document.getElementById('mf-gross-rev').innerText = formatBRL(managerialData.ConfirmedGrossRevenue);
+            document.getElementById('mf-gate-fee').innerText = formatBRL(managerialData.RealizedGatewayFees);
+            document.getElementById('mf-net-rev').innerText = managerialData.NetRevenue !== 'MISSING_INPUT' ? formatBRL(managerialData.NetRevenue) : 'N/A';
+            document.getElementById('mf-opex-fix').innerText = formatBRL(managerialData.FixedOPEX);
+            document.getElementById('mf-opex-var').innerText = formatBRL(managerialData.OtherVariableOperatingCosts);
+            document.getElementById('mf-ggl-main').innerText = managerialData.AllocatedGoogleMaintenanceSpend !== 'MISSING_INPUT' ? formatBRL(managerialData.AllocatedGoogleMaintenanceSpend) : 'N/A';
+            document.getElementById('mf-ggl-gro').innerText = managerialData.AllocatedGoogleGrowthSpend !== 'MISSING_INPUT' ? formatBRL(managerialData.AllocatedGoogleGrowthSpend) : 'N/A';
+            document.getElementById('mf-meta-gro').innerText = formatBRL(managerialData.MetaGrowthSpend);
+        }
+    } catch(e) { console.error('Erro mf:', e); }
+}
+
+window.saveMonthlyFinance = async function() {
+    await submitMonthlyFinance('save');
+}
+
+window.closeMonthlyFinance = async function() {
+    if(!confirm("Tem certeza? Mês fechado não poderá ser alterado!")) return;
+    await submitMonthlyFinance('close');
+}
+
+async function submitMonthlyFinance(action) {
+    const monthYear = document.getElementById('cmo-date-start').value.substring(0, 7);
+    const body = {
+        monthYear,
+        closingCashBalance: document.getElementById('mf-closing-cash').value,
+        opexIsComplete: document.getElementById('mf-opex-complete').value === 'true',
+        appliedTaxVariableRate: document.getElementById('mf-tax-var').value,
+        appliedTaxFixedMonthly: document.getElementById('mf-tax-fix').value,
+        appliedRequiredCashReserve: document.getElementById('mf-reserve').value,
+        action
+    };
+    try {
+        const token = localStorage.getItem('Yelo_token') || localStorage.getItem('adminToken');
+        await fetch('/api/cmo/monthly-finance', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+            body: JSON.stringify(body)
+        });
+        loadCMOMetrics();
+    } catch(e) {
+        alert("Erro: " + e.message);
+    }
+}
+// --- END SNAPSHOT ---

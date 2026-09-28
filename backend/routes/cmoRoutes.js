@@ -6,9 +6,10 @@ const { sequelize } = require('../models');
 const moment = require('moment');
 const db = require('../models');
 const matchService = require('../services/matchService');
+const { protect, admin } = require('../middlewares/authMiddleware');
 
 // Rota de dashboard principal do CMO
-router.get('/dashboard', async (req, res) => {
+router.get('/dashboard', protect, admin, async (req, res) => {
     try {
         // Data default para o mes atual
         const dateStart = req.query.dateStart || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
@@ -359,23 +360,35 @@ router.get('/dashboard', async (req, res) => {
             // Como o nome é "cashIn", deve refletir CAIXA.
             cashIn = GatewayNetCash; 
             
+            // --- YELO MONTHLY FINANCE SNAPSHOT ---
+            const monthStr = dateStart.substring(0, 7);
+            const monthlyFinance = await db.YeloMonthlyFinance.findOne({ where: { monthYear: monthStr } });
+            let setting = await db.SystemSetting.findOne();
+            if (!setting) {
+                setting = await db.SystemSetting.create({});
+            }
+            
+            let tax_variable_rate = monthlyFinance && monthlyFinance.appliedTaxVariableRate !== null ? parseFloat(monthlyFinance.appliedTaxVariableRate) : (setting.tax_variable_rate !== null ? parseFloat(setting.tax_variable_rate) : null);
+            let tax_fixed_monthly = monthlyFinance && monthlyFinance.appliedTaxFixedMonthly !== null ? parseFloat(monthlyFinance.appliedTaxFixedMonthly) : (setting.tax_fixed_monthly !== null ? parseFloat(setting.tax_fixed_monthly) : null);
+            let required_cash_reserve = monthlyFinance && monthlyFinance.appliedRequiredCashReserve !== null ? parseFloat(monthlyFinance.appliedRequiredCashReserve) : (setting.required_cash_reserve !== null ? parseFloat(setting.required_cash_reserve) : null);
+            
+            let currentCashBalance = monthlyFinance && monthlyFinance.closingCashBalance !== null ? parseFloat(monthlyFinance.closingCashBalance) : 'MISSING_INPUT';
+            let OPEX_COMPLETENESS = monthlyFinance && monthlyFinance.opexIsComplete ? true : 'MISSING_INPUT';
+            
+            let OwnerExtraCash = parseFloat(setting.cmo_sim_extra_cash || 0);
+            let reinvestRate = parseFloat(setting.cmo_sim_reinvest_rate || 100);
+
+            let hasFiscalConfig = (tax_variable_rate !== null && tax_fixed_monthly !== null);
+
             // --- YELO EXPENSES (OPEX) ---
             const expensesList = await db.YeloExpense.findAll({
-                where: { 
-                    monthYear: dateStart.substring(0, 7) // Assumindo formato YYYY-MM
-                }
+                where: { monthYear: monthStr }
             });
             
             let FixedOPEX = 0;
             let OtherVariableOperatingCosts = 0;
             let unclassifiedCount = 0;
             let cashOpexPaid = 0;
-            let hasFiscalConfig = false; // missing
-            
-            // OPEX_COMPLETENESS não pode ser provado por expensesList.length > 0
-            let OPEX_COMPLETENESS = 'MISSING_INPUT'; // Até que admin declare
-
-            let OwnerExtraCash = 'MISSING_INPUT'; 
 
             for (const exp of expensesList) {
                 if (exp.nature === 'UNCLASSIFIED' || exp.purpose === 'UNCLASSIFIED' || !exp.nature || !exp.purpose) {
@@ -390,57 +403,62 @@ router.get('/dashboard', async (req, res) => {
                     OtherVariableOperatingCosts += parseFloat(exp.amount || 0);
                 }
                 
-                // cashOpexPaid DEVE ser apenas OPERATION, nunca GROWTH
                 if (exp.purpose === 'OPERATION') {
                     cashOpexPaid += parseFloat(exp.amount || 0);
                 }
             }
 
-            const isProfitCertified = hasFiscalConfig && (OPEX_COMPLETENESS !== 'MISSING_INPUT') && unclassifiedCount === 0;
+            const isProfitCertified = hasFiscalConfig && (OPEX_COMPLETENESS === true) && unclassifiedCount === 0 && currentCashBalance !== 'MISSING_INPUT';
 
-            const RevenueTaxes = 'MISSING_INPUT'; // não há config fiscal
+            const RevenueTaxes = hasFiscalConfig ? (tax_fixed_monthly + (ConfirmedGrossRevenue * tax_variable_rate)) : 'MISSING_INPUT';
             const NetRevenue = RevenueTaxes !== 'MISSING_INPUT' ? (ConfirmedGrossRevenue - RevenueTaxes - RealizedGatewayFees) : 'MISSING_INPUT';
             
             // Lógica Google Maintenance vs Growth Restaurada
             const RequiredWhatsAppChats = renewableDemandEligibleBase * AssumedTargetWhatsAppChatsPerPsi;
-            // Considerando organic igual à query anterior (simplificado aqui caso não tenha o número ainda)
-            const PaidWhatsAppChatsRequired = Math.max(0, RequiredWhatsAppChats - 0 /* OrganicWhatsAppChatsAllocatedToRenewableBase */);
+            const PaidWhatsAppChatsRequired = Math.max(0, RequiredWhatsAppChats - 0);
             
-            // Precisamos do CPC real ou usamos fallback
-            const observedGoogleCostPerWhatsAppChat = (googleWppClicks > 0) ? (actualGoogleSpend / googleWppClicks) : 0; 
-            const RequiredGoogleMaintenanceBudget = PaidWhatsAppChatsRequired * observedGoogleCostPerWhatsAppChat;
+            const observedGoogleCostPerWhatsAppChat = (googleWppClicks > 0) ? (actualGoogleSpend / googleWppClicks) : ((actualGoogleSpend > 0) ? 'MISSING_INPUT' : 0); 
+            const RequiredGoogleMaintenanceBudget = observedGoogleCostPerWhatsAppChat !== 'MISSING_INPUT' ? (PaidWhatsAppChatsRequired * observedGoogleCostPerWhatsAppChat) : 'MISSING_INPUT';
             
-            const AllocatedGoogleMaintenanceSpend = Math.min(actualGoogleSpend, RequiredGoogleMaintenanceBudget);
-            const AllocatedGoogleGrowthSpend = Math.max(0, actualGoogleSpend - AllocatedGoogleMaintenanceSpend);
+            const AllocatedGoogleMaintenanceSpend = RequiredGoogleMaintenanceBudget !== 'MISSING_INPUT' ? Math.min(actualGoogleSpend, RequiredGoogleMaintenanceBudget) : 'MISSING_INPUT';
+            const AllocatedGoogleGrowthSpend = AllocatedGoogleMaintenanceSpend !== 'MISSING_INPUT' ? Math.max(0, actualGoogleSpend - AllocatedGoogleMaintenanceSpend) : 'MISSING_INPUT';
 
             const MetaGrowthSpend = metaSpend.spend;
 
-            const ContributionMargin = NetRevenue !== 'MISSING_INPUT' ? (NetRevenue - AllocatedGoogleMaintenanceSpend - OtherVariableOperatingCosts) : 'MISSING_INPUT';
-            const OperatingProfitBeforeGrowth = ContributionMargin !== 'MISSING_INPUT' ? (ContributionMargin - FixedOPEX) : 'MISSING_INPUT';
-            const OperatingProfitAfterGrowth = OperatingProfitBeforeGrowth !== 'MISSING_INPUT' ? (OperatingProfitBeforeGrowth - MetaGrowthSpend - AllocatedGoogleGrowthSpend) : 'MISSING_INPUT';
-
-            const cashMarketingPaid = MetaGrowthSpend + AllocatedGoogleGrowthSpend;
-            const currentCashBalance = 'MISSING_INPUT';
+            const OperatingCashBeforeReserve = (NetRevenue !== 'MISSING_INPUT' && AllocatedGoogleMaintenanceSpend !== 'MISSING_INPUT') ? (NetRevenue - FixedOPEX - OtherVariableOperatingCosts - AllocatedGoogleMaintenanceSpend) : 'MISSING_INPUT';
+            const ReserveGap = (currentCashBalance !== 'MISSING_INPUT' && required_cash_reserve !== null) ? Math.max(0, required_cash_reserve - currentCashBalance) : 'MISSING_INPUT';
+            const OperatingCashAvailable = (OperatingCashBeforeReserve !== 'MISSING_INPUT' && ReserveGap !== 'MISSING_INPUT') ? Math.max(0, OperatingCashBeforeReserve - ReserveGap) : 'MISSING_INPUT';
             
-            const NetCashChange = (OwnerExtraCash !== 'MISSING_INPUT') ? (GatewayNetCash - cashOpexPaid - cashMarketingPaid + OwnerExtraCash) : 'MISSING_INPUT';
+            const GrowthBudgetFromOperations = OperatingCashAvailable !== 'MISSING_INPUT' ? (OperatingCashAvailable * (reinvestRate / 100)) : 'MISSING_INPUT';
+            const TotalGrowthBudget = GrowthBudgetFromOperations !== 'MISSING_INPUT' ? (GrowthBudgetFromOperations + OwnerExtraCash) : 'MISSING_INPUT';
+
+            const TotalGoogleCashPaid = AllocatedGoogleMaintenanceSpend !== 'MISSING_INPUT' ? (AllocatedGoogleMaintenanceSpend + AllocatedGoogleGrowthSpend) : 'MISSING_INPUT';
+            const cashMarketingPaid = TotalGoogleCashPaid !== 'MISSING_INPUT' ? (MetaGrowthSpend + TotalGoogleCashPaid) : 'MISSING_INPUT';
+            const NetCashChange = (OwnerExtraCash !== 'MISSING_INPUT' && cashMarketingPaid !== 'MISSING_INPUT') ? (GatewayNetCash - cashOpexPaid - cashMarketingPaid + OwnerExtraCash) : 'MISSING_INPUT';
 
             pnlEngine = {
                 LUCRO_GERENCIAL_CERTIFICADO: isProfitCertified,
-                PROFIT_CERTIFICATION_BLOCKED: unclassifiedCount > 0 || !hasFiscalConfig || OPEX_COMPLETENESS === 'MISSING_INPUT',
+                PROFIT_CERTIFICATION_BLOCKED: unclassifiedCount > 0 || !hasFiscalConfig || OPEX_COMPLETENESS === 'MISSING_INPUT' || currentCashBalance === 'MISSING_INPUT',
                 MISSING_INPUTS: [],
                 managerial: {
                     ConfirmedGrossRevenue,
                     RevenueTaxes,
                     RealizedGatewayFees,
                     NetRevenue,
-                    AllocatedGoogleMaintenanceSpend,
-                    OtherVariableOperatingCosts,
-                    ContributionMargin,
                     FixedOPEX,
-                    OperatingProfitBeforeGrowth,
+                    OtherVariableOperatingCosts,
+                    AllocatedGoogleMaintenanceSpend,
+                    OperatingCashBeforeReserve,
+                    RequiredCashReserve: required_cash_reserve,
+                    currentCashBalance,
+                    ReserveGap,
+                    OperatingCashAvailable,
+                    ReinvestRate: reinvestRate,
+                    GrowthBudgetFromOperations,
+                    OwnerExtraCash,
+                    TotalGrowthBudget,
                     MetaGrowthSpend,
-                    AllocatedGoogleGrowthSpend,
-                    OperatingProfitAfterGrowth
+                    AllocatedGoogleGrowthSpend
                 },
                 cashflow: {
                     GatewayNetCash,
@@ -460,6 +478,7 @@ router.get('/dashboard', async (req, res) => {
             
             if (!hasFiscalConfig) pnlEngine.MISSING_INPUTS.push('configuração fiscal');
             if (currentCashBalance === 'MISSING_INPUT') pnlEngine.MISSING_INPUTS.push('saldo atual de caixa');
+            if (required_cash_reserve === null) pnlEngine.MISSING_INPUTS.push('required_cash_reserve');
             if (OPEX_COMPLETENESS === 'MISSING_INPUT') pnlEngine.MISSING_INPUTS.push('OPEX_COMPLETENESS (despesas no mes)');
             if (OwnerExtraCash === 'MISSING_INPUT') pnlEngine.MISSING_INPUTS.push('OwnerExtraCash');
 
@@ -982,7 +1001,7 @@ router.get('/dashboard', async (req, res) => {
 });
 
 // Rota para salvar inputs manuais (ex: Google Ads)
-router.post('/manual-ads', async (req, res) => {
+router.post('/manual-ads', protect, admin, async (req, res) => {
     try {
         const { dateStart, dateEnd, platform, campaignName, spend, impressions, clicks, conversions } = req.body;
         if (!dateStart || !dateEnd || !platform) {
@@ -1023,7 +1042,7 @@ router.post('/manual-ads', async (req, res) => {
 });
 
 // Rota para carregar inputs manuais
-router.get('/manual-ads', async (req, res) => {
+router.get('/manual-ads', protect, admin, async (req, res) => {
     try {
         const { dateStart, dateEnd, platform } = req.query;
         if (!dateStart || !dateEnd || !platform) {
@@ -1044,7 +1063,7 @@ router.get('/manual-ads', async (req, res) => {
 });
 
 // Rota para excluir inputs manuais
-router.delete('/manual-ads', async (req, res) => {
+router.delete('/manual-ads', protect, admin, async (req, res) => {
     try {
         const { dateStart, dateEnd, platform } = req.body;
         if (!dateStart || !dateEnd || !platform) {
@@ -1065,7 +1084,7 @@ router.delete('/manual-ads', async (req, res) => {
 });
 
 // GET /api/cmo/traffic
-router.get('/traffic', async (req, res) => {
+router.get('/traffic', protect, admin, async (req, res) => {
     try {
         const dateStart = req.query.dateStart || moment().startOf('month').format('YYYY-MM-DD');
         const dateEnd = req.query.dateEnd || moment().endOf('month').format('YYYY-MM-DD');
@@ -1105,7 +1124,7 @@ router.get('/traffic', async (req, res) => {
 });
 
 // GET /api/cmo/simulator-settings — Carrega a meta do simulador do banco
-router.get('/simulator-settings', async (req, res) => {
+router.get('/simulator-settings', protect, admin, async (req, res) => {
     try {
         const db = require('../models');
         
@@ -1150,7 +1169,7 @@ router.get('/simulator-settings', async (req, res) => {
 });
 
 // POST /api/cmo/simulator-settings — Salva a meta do simulador no banco
-router.post('/simulator-settings', async (req, res) => {
+router.post('/simulator-settings', protect, admin, async (req, res) => {
     try {
         const db = require('../models');
         const { targetSubs, targetMonths, simMode, maxBudget, startSubs, reinvestRate, extraCash, curiosityGoal } = req.body;
@@ -1215,7 +1234,7 @@ router.post('/simulator-settings', async (req, res) => {
 });
 
 // GET /api/cmo/action-plan - Recupera o último plano gerado
-router.get('/action-plan', async (req, res) => {
+router.get('/action-plan', protect, admin, async (req, res) => {
     try {
         const db = require('../models');
         const setting = await db.SystemSetting.findOne();
@@ -1227,7 +1246,7 @@ router.get('/action-plan', async (req, res) => {
 });
 
 // POST /api/cmo/generate-action-plan — Analisa a lucratividade e projeções do Simulador com IA
-router.post('/generate-action-plan', async (req, res) => {
+router.post('/generate-action-plan', protect, admin, async (req, res) => {
     try {
         const { 
             mrrAtual, mrr12M, reinvestRate, extraCash, cacAtual, cacPenalizado, unspentCash, 
@@ -1337,6 +1356,96 @@ Não retorne Markdown (sem \`\`\`json). Apenas o JSON puro.`;
 <li><strong>Google Ads (Google vs Meta Trials):</strong> <br>🔍 <strong>Fato Calculado:</strong> Sistema de IA temporariamente indisponível. <br><br>💡 <strong>Sugestão Estratégica:</strong> Verifique o volume de Leads (B2C) travados na coluna de pendentes do funil antes de escalar o tráfego.</li>
 `;
         res.json({ success: true, html: fallbackHTML });
+    }
+});
+
+
+// ----------------------------------------------------
+// ROTAS DE SNAPSHOT FINANCEIRO MENSAL
+// ----------------------------------------------------
+router.get('/monthly-finance', protect, admin, async (req, res) => {
+    try {
+        const { monthYear } = req.query; // format YYYY-MM
+        if (!monthYear) return res.status(400).json({ error: 'monthYear required' });
+
+        const snapshot = await db.YeloMonthlyFinance.findOne({ where: { monthYear } });
+        const settings = await db.SystemSetting.findOne() || {};
+
+        res.json({
+            snapshot: snapshot || null,
+            defaults: {
+                tax_variable_rate: settings.tax_variable_rate,
+                tax_fixed_monthly: settings.tax_fixed_monthly,
+                required_cash_reserve: settings.required_cash_reserve
+            }
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.post('/monthly-finance', protect, admin, async (req, res) => {
+    try {
+        const { monthYear, closingCashBalance, opexIsComplete, appliedTaxVariableRate, appliedTaxFixedMonthly, appliedRequiredCashReserve, action } = req.body;
+        if (!monthYear) return res.status(400).json({ error: 'monthYear required' });
+
+        let snapshot = await db.YeloMonthlyFinance.findOne({ where: { monthYear } });
+        if (snapshot && snapshot.isClosed) {
+            return res.status(403).json({ error: 'Mês já fechado. Não pode ser alterado.' });
+        }
+
+
+        if (!monthYear || !/^\d{4}-(0[1-9]|1[0-2])$/.test(monthYear)) {
+            return res.status(400).json({ error: 'monthYear inválido. Deve ser YYYY-MM.' });
+        }
+
+        const parseFinance = (val, min, max) => {
+            if (val === '' || val === null || val === undefined) return null;
+            const num = parseFloat(val);
+            if (isNaN(num)) throw new Error('Valor financeiro inválido: ' + val);
+            if (min !== undefined && num < min) throw new Error('Valor abaixo do permitido: ' + val);
+            if (max !== undefined && num > max) throw new Error('Valor acima do permitido: ' + val);
+            return num;
+        };
+
+        let parsedClosingCash, parsedTaxVar, parsedTaxFix, parsedReserve;
+        try {
+            parsedClosingCash = parseFinance(closingCashBalance); // Pode ser negativo
+            parsedTaxVar = parseFinance(appliedTaxVariableRate, 0, 1);
+            parsedTaxFix = parseFinance(appliedTaxFixedMonthly, 0);
+            parsedReserve = parseFinance(appliedRequiredCashReserve, 0);
+        } catch (err) {
+            return res.status(400).json({ error: err.message });
+        }
+
+        const data = {
+            closingCashBalance: parsedClosingCash,
+            opexIsComplete: !!opexIsComplete,
+            appliedTaxVariableRate: parsedTaxVar,
+            appliedTaxFixedMonthly: parsedTaxFix,
+            appliedRequiredCashReserve: parsedReserve
+        };
+
+        if (action === 'close') {
+            if (data.closingCashBalance === null || data.appliedTaxVariableRate === null || data.appliedTaxFixedMonthly === null || data.appliedRequiredCashReserve === null || data.opexIsComplete !== true) {
+                return res.status(422).json({ error: 'Mês não pode ser fechado porque possui campos financeiros incompletos.' });
+            }
+
+            data.isClosed = true;
+            data.closedAt = new Date();
+        }
+
+        if (snapshot) {
+            await snapshot.update(data);
+        } else {
+            snapshot = await db.YeloMonthlyFinance.create({ monthYear, ...data });
+        }
+
+        res.json({ success: true, snapshot });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
     }
 });
 

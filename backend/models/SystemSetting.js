@@ -76,6 +76,21 @@ module.exports = (sequelize, DataTypes) => {
     cmo_ai_action_plan: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    tax_variable_rate: {
+      type: DataTypes.DECIMAL(5, 4),
+      allowNull: true,
+      defaultValue: null
+    },
+    tax_fixed_monthly: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      defaultValue: null
+    },
+    required_cash_reserve: {
+      type: DataTypes.DECIMAL(12, 2),
+      allowNull: true,
+      defaultValue: null
     }
   });
 
