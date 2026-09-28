@@ -104,7 +104,7 @@ window.initializePage = function() {
                 .then(res => res.ok ? res.json() : {})
                 .then(dataFin => {
                     if (dataFin.kpis) {
-                        const formatBRL = (v) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}`;
+                        const formatBRL = (v) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
                         const formatPerc = (v) => `${v.toFixed(1)}%`;
                         const formatNum = (v) => `${v} usuários`;
                         
