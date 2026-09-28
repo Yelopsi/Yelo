@@ -674,10 +674,9 @@ function initGrowthSimulator(data) {
             warningEl.style.backgroundColor = '#f0fdfa';
             warningEl.style.color = '#0f766e';
             if (extraCash > 0) {
-                const totalOwnerContribution = extraCash * 12;
-                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Em 12 meses, a projeção leva a base de ${currentBase} para ${Math.floor(baseAt12)} assinantes, considerando reinvestimento de ${reinvestRate}% da Sobra Operacional e aporte adicional de ${formatBRL(extraCash)} por mês. Isso representa ${formatBRL(totalOwnerContribution)} de aporte externo ao longo dos 12 meses.`;
+                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Hoje há ${activePaidAccessBase} profissionais com acesso pago, dos quais ${renewableSubscriberBase} fazem parte da base renovável usada nesta projeção. Em 12 meses, o Motor projeta essa base de ${currentBase} para ${Math.floor(baseAt12)} assinantes, considerando reinvestimento de ${reinvestRate}% da Sobra Operacional e aporte adicional de ${formatBRL(extraCash)} por mês.`;
             } else {
-                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Em 12 meses, você poderá sair de ${currentBase} para ${Math.floor(baseAt12)} assinantes reinvestindo ${reinvestRate}% da receita gerada pela operação.`;
+                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Hoje há ${activePaidAccessBase} profissionais com acesso pago, dos quais ${renewableSubscriberBase} fazem parte da base renovável usada nesta projeção. Em 12 meses, o Motor projeta essa base de ${currentBase} para ${Math.floor(baseAt12)} assinantes, considerando reinvestimento de ${reinvestRate}% da Sobra Operacional.`;
             }
         }
 
