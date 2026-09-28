@@ -196,6 +196,10 @@
     .forum-post-sidebar .widget { position: static; }
     .forum-post-main { min-width: 0; width: 100%; }
     .forum-post-main .widget { padding: 20px; }
+    
+    .forum-main-column { max-width: 100% !important; flex: 1 1 100% !important; min-width: 0 !important; }
+    .forum-sidebar-column { max-width: 100% !important; flex: 1 1 100% !important; min-width: 0 !important; margin-bottom: 80px !important; }
+    .forum-sidebar-column > div { position: static !important; }
     .full-post-actions { flex-wrap: wrap; gap: 10px; }
     .comment-actions { flex-wrap: nowrap; }
     .category-wrapper { display: none; }
