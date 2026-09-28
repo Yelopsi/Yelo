@@ -195,7 +195,7 @@ Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split
 Aja em tom amigável, direto, profissional e de parceria. Sem introduções longas.
 
 [DADOS DO DESEMPENHO NA PLATAFORMA]
-- Aparições em Buscas (Matches): ${matchesCount}
+- Aparições nos resultados de matches: ${matchesCount}
 - Visitas no Perfil: ${viewsCount}
 - Cliques no WhatsApp: ${clicksCount}
 
@@ -252,7 +252,7 @@ Retorne SOMENTE um JSON com a seguinte estrutura (não use marcações markdown 
             console.warn("⚠️ MOCK: Utilizando texto gerado localmente para o Diagnóstico IA.");
             const mockResponse = {
                 diagnosis: "Baixa taxa de cliques no WhatsApp (0) e há feedbacks pendentes de pacientes que entraram em contato antes. A bio está muito curta e precisa de avaliação social.",
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance e decidi te trazer alguns pontos super estratégicos para te ajudar a destravar mais pacientes.\n\nA plataforma entregou uma excelente visibilidade para o seu perfil nos últimos dias: você teve *${matchesCount} aparições nas buscas* e *${viewsCount} pacientes visitaram a sua página*. No entanto, não registramos *nenhum clique* recente no seu WhatsApp.\n\nIsso mostra um gargalo na sua vitrine, mas super simples de corrigir! Recomendo focarmos em duas ações:\n\n1. *Acesse o "Manual de Conversão":* Vi que você já tem cliques antigos, mas a nossa plataforma tem um manual focado em como não perder pacientes que chegam no WhatsApp. Ele fica lá no seu Hub de Evolução!\n\n2. *Construa Prova Social:* Peça avaliações no seu perfil usando o seu link (https://www.yelopsi.com.br/${psi.slug}?review=true). A opinião de outras pessoas é o maior gatilho para destravar o agendamento de quem está em dúvida.\n\n⚠️ Ah, um ponto importante: notei que você tem contatos recentes e ainda há *${unansweredLogs.length} paciente(s)* sem status de fechamento informado. Para que nosso algoritmo continue impulsionando seu perfil nas buscas, por favor nos atualize sobre o status desses atendimentos através deste link rápido (não precisa nem fazer login na plataforma): ${magicLink}\n\nQualquer dúvida sobre como aplicar tudo isso, é só me chamar. Estamos juntos! 🌿`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance e decidi te trazer alguns pontos super estratégicos para te ajudar a destravar mais pacientes.\n\nA plataforma entregou uma excelente visibilidade para o seu perfil nos últimos dias: você teve *${matchesCount} aparições nos resultados de matches* e *${viewsCount} pacientes visitaram a sua página*. No entanto, não registramos *nenhum clique* recente no seu WhatsApp.\n\nIsso mostra um gargalo na sua vitrine, mas super simples de corrigir! Recomendo focarmos em duas ações:\n\n1. *Acesse o "Manual de Conversão":* Vi que você já tem cliques antigos, mas a nossa plataforma tem um manual focado em como não perder pacientes que chegam no WhatsApp. Ele fica lá no seu Hub de Evolução!\n\n2. *Construa Prova Social:* Peça avaliações no seu perfil usando o seu link (https://www.yelopsi.com.br/${psi.slug}?review=true). A opinião de outras pessoas é o maior gatilho para destravar o agendamento de quem está em dúvida.\n\n⚠️ Ah, um ponto importante: notei que você tem contatos recentes e ainda há *${unansweredLogs.length} paciente(s)* sem status de fechamento informado. Para que nosso algoritmo continue impulsionando seu perfil nas buscas, por favor nos atualize sobre o status desses atendimentos através deste link rápido (não precisa nem fazer login na plataforma): ${magicLink}\n\nQualquer dúvida sobre como aplicar tudo isso, é só me chamar. Estamos juntos! 🌿`
             };
             return res.status(200).json({ 
                 diagnosis: mockResponse.diagnosis,
@@ -348,7 +348,7 @@ Aja de forma humanizada, direta, e TOTALMENTE PROFISSIONAL. NÃO use NENHUMA gí
 
 [DADOS OBRIGATÓRIOS DO DESEMPENHO NO TRIAL]
 Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma clara:
-1. Aparições em Buscas (Matches): ${matchesCount}
+1. Aparições nos resultados de matches: ${matchesCount}
 2. Visitas na Página (Views): ${viewsCount}
 3. Cliques no WhatsApp: ${clicksCount}
 
@@ -390,7 +390,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
             }
 
             return res.status(200).json({ 
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nPassei para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito acabou encerrando, mas eu estava analisando as suas métricas e os resultados foram bem legais.\n\nDurante os testes, o seu perfil obteve ${matchesCount} aparições nas buscas, ${viewsCount} visualizações na sua página e gerou ${clicksCount} cliques no WhatsApp. ${feedbackText}\n\nPensando pelo seu lado financeiro, a assinatura da Yelo é apenas R$ 99,00 mensais. Como a sua sessão é de R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaria sentido para você reativar a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, clicar em "Ajustes" e depois ir em "Assinaturas e Planos". Qualquer dúvida, estou por aqui!`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nPassei para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito acabou encerrando, mas eu estava analisando as suas métricas e os resultados foram bem legais.\n\nDurante os testes, o seu perfil obteve ${matchesCount} aparições nos resultados de matches, ${viewsCount} visualizações na sua página e gerou ${clicksCount} cliques no WhatsApp. ${feedbackText}\n\nPensando pelo seu lado financeiro, a assinatura da Yelo é apenas R$ 99,00 mensais. Como a sua sessão é de R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaria sentido para você reativar a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, clicar em "Ajustes" e depois ir em "Assinaturas e Planos". Qualquer dúvida, estou por aqui!`
             });
         }
 
@@ -463,7 +463,7 @@ Aja de forma humanizada, parceira, e TOTALMENTE PROFISSIONAL. NÃO use NENHUMA g
 
 [DADOS HISTÓRICOS DE DESEMPENHO]
 Você DEVE SEMPRE citar esses três indicadores no corpo do texto para lembrá-lo do valor que a plataforma já gerou:
-1. Total de Aparições em Buscas (Matches): ${matchesCount}
+1. Total de Aparições nos resultados de matches: ${matchesCount}
 2. Total de Visitas na Página (Views): ${viewsCount}
 3. Total de Cliques no WhatsApp: ${clicksCount}
 
@@ -576,7 +576,7 @@ NÃO se apresente ("Aqui é o Anderson..." ou similar) pois o psicólogo já con
 
 [DADOS OBRIGATÓRIOS DO DESEMPENHO NO TRIAL]
 Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma clara:
-1. Aparições em Buscas (Matches): ${matchesCount}
+1. Aparições nos resultados de matches: ${matchesCount}
 2. Visitas na Página (Views): ${viewsCount}
 3. Cliques no WhatsApp: ${clicksCount}
 
@@ -618,7 +618,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
             }
 
             return res.status(200).json({ 
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem?\n\nVi que estamos no último dia (restam ${daysLeft} dia(s)) do seu período gratuito, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matchesCount} aparições nas buscas, ${viewsCount} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaz sentido para você ativar a assinatura para não perdermos esse fluxo de pacientes nas próximas horas? Basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos".`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem?\n\nVi que estamos no último dia (restam ${daysLeft} dia(s)) do seu período gratuito, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matchesCount} aparições nos resultados de matches, ${viewsCount} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaz sentido para você ativar a assinatura para não perdermos esse fluxo de pacientes nas próximas horas? Basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos".`
             });
         }
 
