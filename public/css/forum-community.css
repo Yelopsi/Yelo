@@ -199,7 +199,8 @@
     .full-post-actions { flex-wrap: wrap; gap: 10px; }
     .comment-actions { flex-wrap: nowrap; }
     .category-wrapper { display: none; }
-    .author-wrapper { white-space: nowrap; }
+    .author-wrapper { white-space: normal; word-break: break-word; }
+    .full-post-title, .post-snippet { word-break: break-word; overflow-wrap: break-word; }
 }
 
 /* --- 3. BADGES DE AUTOR (FÓRUM) --- */
