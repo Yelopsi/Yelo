@@ -161,7 +161,13 @@
 </div>
 <script nonce="<%= nonce %>" src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
 <script nonce="<%= nonce %>">
-    new window.VLibras.Widget('https://vlibras.gov.br/app');
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (!isMobile) {
+        new window.VLibras.Widget('https://vlibras.gov.br/app');
+    } else {
+        const vwElement = document.querySelector('[vw]');
+        if (vwElement) vwElement.style.display = 'none';
+    }
 </script>
 
 <script nonce="<%= nonce %>">
