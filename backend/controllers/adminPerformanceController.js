@@ -593,7 +593,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
 3. Apresente os resultados dele (Aparições, Visitas, Cliques e Fechamentos).
 4. Analise os resultados de fechamento de forma consultiva e parceira.
    - Se ele fechou pacientes, parabenize-o! É a maior prova de que vale a pena assinar.
-   - Se ele tem Contatos pendentes (Sem feedback), dê um forte incentivo para que ele chame esses contatos de volta! Reforce que se ele converter *apenas um* desses contatos pendentes já garante o pagamento da plataforma e o deixa com lucro.
+   - Se ele tem Contatos pendentes (Sem feedback), dê um forte incentivo para que ele chame esses contatos de volta! Reforce que se ele converter *apenas um* desses contatos já garante o pagamento da plataforma e o deixa com lucro. EM SEGUIDA, adicione obrigatoriamente a instrução: "Caso já tenha conversado com eles, atualize a situação na opção *Evolução > Histórico de Contatos* para que o nosso algoritmo te entregue sempre os melhores pacientes."
    - Se não fechou ou teve fantasmas, use uma frase de conforto como "Apesar de não ter fechado com nenhum paciente dessa vez, isso é super normal no início para quem está ajustando o público."
    - Se não teve cliques, diga que ele está sendo visto, mas a bio ou foto precisam de ajustes para converter melhor.
 5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: Compare amigavelmente o valor da sessão dele (R$ ${psi.valor_sessao_numero || 'X'}) com a mensalidade da Yelo (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".
@@ -610,7 +610,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
                 feedbackText = `Notei que você conseguiu fechar terapia com ${dealYes} sessão(ões)! 🎉`;
                 mathText = `essa sessão que você fechou já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
             } else if (dealNoFeedback > 0) {
-                feedbackText = `Vi que você tem ${dealNoFeedback} paciente(s) que ainda não deu retorno de fechamento. Vale muito a pena dar aquele "oi, tudo bem?" neles, porque se fechar apenas 1 deles já cobre a plataforma e deixa você com lucro!`;
+                feedbackText = `Vi que você tem ${dealNoFeedback} paciente(s) que ainda não deu retorno de fechamento. Vale muito a pena dar aquele "oi, tudo bem?" neles, porque se fechar apenas 1 deles já cobre a plataforma e deixa você com lucro! Caso já tenha conversado com eles, atualize a situação na opção *Evolução > Histórico de Contatos* para que o nosso algoritmo te entregue sempre os melhores pacientes.`;
                 mathText = `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
             } else {
                 feedbackText = `Apesar de os pacientes não terem fechado negócio dessa vez, não desanime, isso é super normal nesse período de adaptação de público!`;
