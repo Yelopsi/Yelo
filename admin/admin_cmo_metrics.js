@@ -515,8 +515,17 @@ function initGrowthSimulator(data) {
                 newBtnSave.style.background = '#10b981';
                 newBtnSave.style.opacity = '1';
             }, 2000);
-        });
     });
+
+    const inputIncludeOrganic = document.getElementById('sim-include-organic');
+    if (inputIncludeOrganic) {
+        // Remove old listeners by cloning
+        const newIncludeOrganic = inputIncludeOrganic.cloneNode(true);
+        inputIncludeOrganic.parentNode.replaceChild(newIncludeOrganic, inputIncludeOrganic);
+        newIncludeOrganic.addEventListener('change', () => {
+            runSimulation(data);
+        });
+    }
 
     const runSimulation = (data) => {
         const inputReinvestRate = document.getElementById('sim-reinvest-rate');
@@ -556,8 +565,9 @@ function initGrowthSimulator(data) {
         
         const histMetaMonthlySpendAvg = data.historical?.meta?.monthly_spend_avg || 3000;
         
-        const verifiedOrganicContacts = 0; 
-        const newOrganicActive = 0; 
+        const includeOrganic = document.getElementById('sim-include-organic')?.checked || false;
+        const verifiedOrganicContacts = (includeOrganic && data.platform?.b2c?.organic_wpp_clicks_90d) ? (data.platform.b2c.organic_wpp_clicks_90d / 3) : 0; 
+        const newOrganicActive = (includeOrganic && data.platform?.b2b?.organic_active) ? data.platform.b2b.organic_active : 0; 
 
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
