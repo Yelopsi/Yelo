@@ -515,6 +515,7 @@ function initGrowthSimulator(data) {
                 newBtnSave.style.background = '#10b981';
                 newBtnSave.style.opacity = '1';
             }, 2000);
+        });
     });
 
     const inputIncludeOrganic = document.getElementById('sim-include-organic');
