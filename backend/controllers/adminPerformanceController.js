@@ -568,8 +568,8 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
 
         const hasValorSessao = psi.valor_sessao_numero && psi.valor_sessao_numero > 0;
         const instrucaoFinanceira = hasValorSessao
-            ? `Compare amigavelmente o valor da sessão dele (R$ ${psi.valor_sessao_numero}) com a mensalidade da Yelo (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda.`
-            : `Lembre-o amigavelmente que a assinatura da Yelo é apenas R$ 99 mensais. Como o valor da sessão dele é "a combinar", afirme que independentemente do valor que ele fechar com o paciente, 1 única sessão convertida já pagará o custo da plataforma do mês inteiro.`;
+            ? `Compare amigavelmente o valor da sessão dele (R$ ${psi.valor_sessao_numero}) com a mensalidade da Yelo (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".`
+            : `Lembre-o amigavelmente que a assinatura da Yelo é apenas R$ 99 mensais. Como o valor da sessão dele é "a combinar", argumente que fechar com apenas 1 paciente (que fará em média de 2 a 4 sessões no mês) já garante o pagamento da plataforma do mês todo e ainda o deixa com lucro! USE livremente a expressão "fechar 1 paciente" neste cenário.`;
 
         const prompt = `
 Atue como Anderson, gerente de Customer Success da Yelo. 
@@ -601,7 +601,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
    - Se ele tem Contatos pendentes (Sem feedback), dê um forte incentivo para que ele chame esses contatos de volta! Reforce que se ele converter *apenas um* desses contatos já garante o pagamento da plataforma e o deixa com lucro. EM SEGUIDA, adicione obrigatoriamente a instrução: "Caso já tenha conversado com eles, atualize a situação na opção *Evolução > Histórico de Contatos* para que o nosso algoritmo te entregue sempre os melhores pacientes."
    - Se não fechou ou teve fantasmas, use uma frase de conforto como "Apesar de não ter fechado com nenhum paciente dessa vez, isso é super normal no início para quem está ajustando o público."
    - Se não teve cliques, diga que ele está sendo visto, mas a bio ou foto precisam de ajustes para converter melhor.
-5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: ${instrucaoFinanceira} NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".
+5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: ${instrucaoFinanceira}
 6. Finalize perguntando de forma aberta se faz sentido para ele ativar a assinatura para não perder a página e os pacientes que já estão chegando. Instrua-o a reativar acessando a conta na Yelo, indo em "Ajustes" e depois em "Assinaturas e Planos".
 7. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto. Finalize diretamente após a pergunta de assinatura.
 `;
@@ -614,7 +614,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
             const fraseSessaoMock = hasValorSessao ? `Como a sua sessão é R$ ${psi.valor_sessao_numero}` : `Como o valor da sua sessão é a combinar`;
             const defaultMathText = hasValorSessao 
                 ? `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.` 
-                : `fechar apenas 1 sessão, independentemente do valor combinado, já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
+                : `fechar com apenas 1 paciente (que costuma fazer de 2 a 4 sessões no mês) já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro!`;
 
             if (dealYes > 0) {
                 feedbackText = `Notei que você conseguiu fechar terapia com ${dealYes} sessão(ões)! 🎉`;
