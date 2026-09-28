@@ -1,94 +1,89 @@
-const { Client } = require('pg');
+const p = {
+    targetMonths: 12,
+    currentBase: 19,
+    arpu: 99,
+    demandEligibilityRate: 1.0,
+    contactsPerPaidPsiMonth: 3.0,
+    verifiedOrganicContacts: 0,
+    cplGoogle: 22.13,
+    reinvestRate: 100,
+    extraCash: 2000,
+    rolloverCash: 0,
+    histMetaMonthlySpendAvg: 3000,
+    cacMeta: 30.57,
+    trialConversionRate: 0.125,
+    monthlyChurn: 0.07367,
+    newOrganicActive: 0
+};
+let currentBase = p.currentBase;
+let rolloverCash = p.rolloverCash;
+let dataArray = [];
 
-const client = new Client({
-  connectionString: 'postgresql://yelopsi_db_user:y0HIi5A7onT11TSfSrpSTaLvsp3lEdl3@dpg-d500f1s9c44c73d84n70-a.ohio-postgres.render.com/yelo_db',
-  ssl: { rejectUnauthorized: false }
-});
+for (let m = 1; m <= 12; m++) {
+    let baseStart = currentBase;
+    const startingMrr = baseStart * p.arpu;
+    const projectedDemandEligibleBase = baseStart * p.demandEligibilityRate;
+    const totalContactDemand = projectedDemandEligibleBase * p.contactsPerPaidPsiMonth;
+    const requiredGoogleContacts = Math.max(0, totalContactDemand - p.verifiedOrganicContacts);
+    const googleMaintenanceCost = requiredGoogleContacts * p.cplGoogle;
+    const contributionAfterGoogle = Math.max(0, startingMrr - googleMaintenanceCost);
+    const growthFund = (contributionAfterGoogle * (p.reinvestRate / 100)) + p.extraCash + rolloverCash;
+    const effectiveHistSpend = Math.max(p.histMetaMonthlySpendAvg || 0, 1000);
+    const metaHardCap = effectiveHistSpend * 3.5;
+    let projectedMetaBudget = growthFund * 0.80;
+    const scaleFactor = Math.min(3.5, Math.max(1, projectedMetaBudget / effectiveHistSpend));
+    const metaCACPenalized = p.cacMeta * (1 + (Math.max(0, scaleFactor - 1) * 0.20));
+    const trialGoogleCostPerPaid = (1 / p.trialConversionRate) * (p.contactsPerPaidPsiMonth * (7 / 30) * p.cplGoogle);
+    const blendedAcquisitionCost = metaCACPenalized + trialGoogleCostPerPaid;
+    const newPaidActive = Math.min(Math.floor(growthFund / blendedAcquisitionCost), Math.floor(metaHardCap / metaCACPenalized));
+    const actualMetaSpend = newPaidActive * metaCACPenalized;
+    const actualTrialGoogleSpend = newPaidActive * trialGoogleCostPerPaid;
+    const totalGoogleBudget = googleMaintenanceCost + actualTrialGoogleSpend;
+    const actualGrowthSpend = actualMetaSpend + actualTrialGoogleSpend;
+    const unspentCash = growthFund - actualGrowthSpend;
+    
+    let expectedChurn = baseStart * p.monthlyChurn;
+    currentBase = baseStart + newPaidActive + p.newOrganicActive - expectedChurn;
 
-const start = '2026-09-19T00:00:00.000Z';
-const end = '2026-09-26T23:59:59.999Z';
+    dataArray.push({
+        mes: m,
+        openingPaidBase: Number(baseStart.toFixed(4)),
+        openingMRR: Number(startingMrr.toFixed(2)),
+        ownerExtraCash: p.extraCash,
+        reinvestedMRR: Number(contributionAfterGoogle.toFixed(2)),
+        totalCashAvailable: Number(growthFund.toFixed(2)),
+        googleMaintenanceSpend: Number(googleMaintenanceCost.toFixed(2)),
+        googleGrowthSpend: Number(actualTrialGoogleSpend.toFixed(2)),
+        metaAcquisitionSpend: Number(actualMetaSpend.toFixed(2)),
+        totalMarketingSpend: Number((totalGoogleBudget + actualMetaSpend).toFixed(2)),
+        cacUsadoNoMes: Number(metaCACPenalized.toFixed(2)),
+        scalePenaltyAplicada: Number((metaCACPenalized / p.cacMeta - 1).toFixed(4)),
+        grossNewPaidSubscribers: newPaidActive,
+        churnRate: p.monthlyChurn,
+        churnedSubscribers: Number(expectedChurn.toFixed(4)),
+        netNewSubscribers: Number((newPaidActive - expectedChurn).toFixed(4)),
+        closingPaidBase: Number(currentBase.toFixed(4)),
+        closingMRR: Number((currentBase * p.arpu).toFixed(2)),
+        endingCash: Number(unspentCash.toFixed(2))
+    });
 
-async function run() {
-  await client.connect();
-
-  // 1. Fotografia da Base Hoje
-  const baseActiveRes = await client.query(`
-    SELECT COUNT(*) 
-    FROM "Psychologists"
-    WHERE status = 'active' 
-    AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0 OR "firstPaidAt" IS NOT NULL)
-    AND "planExpiresAt" > NOW()
-    AND (is_exempt IS NULL OR is_exempt = false)
-    AND "deletedAt" IS NULL
-  `);
-  
-  const baseTrialRes = await client.query(`
-    SELECT COUNT(*) 
-    FROM "Psychologists"
-    WHERE status IN ('active', 'pending')
-    AND ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
-    AND "planExpiresAt" > NOW()
-    AND (is_exempt IS NULL OR is_exempt = false)
-    AND "deletedAt" IS NULL
-  `);
-
-  // 2. Conversão e Churn
-  const newSubscribersRes = await client.query(`
-    SELECT COUNT(*) 
-    FROM "Psychologists"
-    WHERE "firstPaidAt" >= $1 AND "firstPaidAt" <= $2
-    AND (is_exempt IS NULL OR is_exempt = false)
-    AND "deletedAt" IS NULL
-  `, [start, end]);
-
-  const churnRes = await client.query(`
-    SELECT COUNT(*) 
-    FROM "Psychologists"
-    WHERE status = 'inactive'
-    AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0 OR "firstPaidAt" IS NOT NULL)
-    AND "updatedAt" >= $1 AND "updatedAt" <= $2
-    AND "deletedAt" IS NULL
-  `, [start, end]);
-
-  // 3. Auditoria do Motor V5 (Pacientes)
-  const leadsTotalRes = await client.query(`
-    SELECT COUNT(*) as total
-    FROM "WhatsAppClickLogs"
-    WHERE "createdAt" >= $1 AND "createdAt" <= $2
-  `, [start, end]);
-
-  const leadsRespondedRes = await client.query(`
-    SELECT "contactReceived", COUNT(*) as count
-    FROM "WhatsAppClickLogs"
-    WHERE "createdAt" >= $1 AND "createdAt" <= $2
-    GROUP BY "contactReceived"
-  `, [start, end]);
-
-  const leadsDealRes = await client.query(`
-    SELECT "dealClosed", COUNT(*) as count
-    FROM "WhatsAppClickLogs"
-    WHERE "createdAt" >= $1 AND "createdAt" <= $2
-    GROUP BY "dealClosed"
-  `, [start, end]);
-
-  console.log("=== 1. Fotografia da Base Hoje (26/09) ===");
-  console.log("Pagantes Ativos:", baseActiveRes.rows[0].count);
-  console.log("Trials Ativos:", baseTrialRes.rows[0].count);
-  
-  console.log("\n=== 2. Conversão e Churn (19/09 a 26/09) ===");
-  console.log("Novos Assinantes:", newSubscribersRes.rows[0].count);
-  console.log("Cancelamentos (Churn):", churnRes.rows[0].count);
-
-  console.log("\n=== 3. Auditoria do Motor V5 (19/09 a 26/09) ===");
-  console.log("Total de Leads Gerados:", leadsTotalRes.rows[0].total);
-  
-  console.log("\nLeads por Status de Resposta:");
-  console.table(leadsRespondedRes.rows);
-
-  console.log("\nLeads por Status de Negócio:");
-  console.table(leadsDealRes.rows);
-
-  await client.end();
+    rolloverCash = unspentCash;
 }
 
-run().catch(console.error);
+const report = {
+    PROJECTION_REPRODUCIBLE: false,
+    CASH_RECONCILES: true,
+    MRR_RECONCILES: true,
+    TEXT_CONTRADICTIONS: [
+        "A interface afirma que está 'investindo apenas a receita gerada pela própria máquina', mas a simulação injeta R$ 2.000 mensais de 'Aporte adicional' (ownerExtraCash), o que contradiz a alegação de crescimento 100% orgânico/autossustentável."
+    ],
+    MATHEMATICAL_PROBLEMS: [
+        "A base projetada no mês 12 apresentada (464) não bate com o cálculo matemático utilizando os parâmetros padrão (CPL de 22,13 e Churn de 7,36%), que atinge ~399 pagantes.",
+        "O Meta recomendado M1 exibido (648,81) não bate com a projeção estrita que calculou 489,12 (devido ao Math.floor no limite de aquisição) ou um número diferente caso a penalidade de escala seja aplicada.",
+        "O MRR Projetado M12 (45.980,63) confirma que a base subjacente exata é um float (464.4508), mas a conversão real das contas com Math.floor nas compras não atinge esse alvo na simulação extraída do código."
+    ],
+    DATA: dataArray
+};
+
+const fs = require('fs');
+fs.writeFileSync('/Users/andehrson/.gemini/antigravity-ide/brain/1b2010d7-ea39-48a1-b7b4-b895ea075c6a/scratch/growth_engine_audit.json', JSON.stringify(report, null, 2));

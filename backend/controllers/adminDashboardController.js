@@ -677,19 +677,74 @@ exports.getFinancials = async (req, res) => {
                 }
             }
         });
-        const paidChurnRate = metrics.weightedChurnRate;
-        const prevPaidChurnRate = prevMetrics.weightedChurnRate;
-        const trialChurnCount = metrics.trialChurnCount;
-        const paidChurnCount = metrics.paidChurnCount;
+        const dateStart = start.toISOString();
+        const nextDayStr = end.toISOString();
+        const prevDateStart = prevStart.toISOString();
+        const prevNextDayStr = prevEnd.toISOString();
+
+        const cmoActiveQuery = `
+            SELECT COUNT(*) as active
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+            AND ("is_exempt" IS NULL OR "is_exempt" = false)
+            AND "planExpiresAt" > NOW()
+            AND "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+        `;
+        const [cmoActiveRes] = await db.sequelize.query(cmoActiveQuery, { type: db.sequelize.QueryTypes.SELECT });
+        const cmoTotalActive = parseInt(cmoActiveRes.active || 0);
+
+        const cmoPaidChurnQuery = `
+            SELECT COUNT(*) as churned
+            FROM "Psychologists"
+            WHERE status = 'inactive'
+            AND "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+            AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
+            AND "deletedAt" IS NULL
+        `;
+        const [cmoChurnRes] = await db.sequelize.query(cmoPaidChurnQuery, { replacements: { dateStart, nextDayStr }, type: db.sequelize.QueryTypes.SELECT });
+        const cmoPaidChurnCount = parseInt(cmoChurnRes.churned || 0);
+
+        const [cmoPrevChurnRes] = await db.sequelize.query(cmoPaidChurnQuery, { replacements: { dateStart: prevDateStart, nextDayStr: prevNextDayStr }, type: db.sequelize.QueryTypes.SELECT });
+        const cmoPrevPaidChurnCount = parseInt(cmoPrevChurnRes.churned || 0);
+
+        const paidChurnRate = (cmoTotalActive + cmoPaidChurnCount) > 0 ? (cmoPaidChurnCount / (cmoTotalActive + cmoPaidChurnCount)) * 100 : 0;
+        const prevPaidChurnRate = (cmoTotalActive + cmoPrevPaidChurnCount) > 0 ? (cmoPrevPaidChurnCount / (cmoTotalActive + cmoPrevPaidChurnCount)) * 100 : 0;
+        
+        const cmoTrialChurnQuery = `
+            SELECT COUNT(*) as churned
+            FROM "Psychologists"
+            WHERE ("subscriptionId" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
+            AND "planExpiresAt" <= NOW()
+            AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
+            AND "deletedAt" IS NULL
+        `;
+        const [cmoTrialChurnRes] = await db.sequelize.query(cmoTrialChurnQuery, { replacements: { dateStart, nextDayStr }, type: db.sequelize.QueryTypes.SELECT });
+        const trialChurnCount = parseInt(cmoTrialChurnRes.churned || 0);
+        
+        const [cmoPrevTrialChurnRes] = await db.sequelize.query(cmoTrialChurnQuery, { replacements: { dateStart: prevDateStart, nextDayStr: prevNextDayStr }, type: db.sequelize.QueryTypes.SELECT });
+        const prevTrialChurnCount = parseInt(cmoPrevTrialChurnRes.churned || 0);
+
+        const paidChurnCount = cmoPaidChurnCount;
         const inadimplentesCount = metrics.inadimplentesCount;
         const ltv = metrics.ltvObservado;
         const ltvNet = metrics.ltvObservadoLiquido;
         const prevLtv = prevMetrics.ltvObservado;
         const arpu = metrics.arpu;
 
+        const cmoNovosQuery = `
+            SELECT COUNT(*) as novos
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+            AND ("is_exempt" IS NULL OR "is_exempt" = false)
+            AND ("firstPaidAt" >= :dateStart AND "firstPaidAt" < :nextDayStr)
+        `;
+        const [cmoNovosRes] = await db.sequelize.query(cmoNovosQuery, { replacements: { dateStart, nextDayStr }, type: db.sequelize.QueryTypes.SELECT });
+        const cmoNovosCount = parseInt(cmoNovosRes.novos || 0);
+        metrics.novosCount = cmoNovosCount; // Override for insights and sparklines below
+
         // MRR Projections Linear Math
         const periodDays = Math.max(1, (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        const netMrrGrowth = (metrics.novosCount * arpu) - (paidChurnCount * arpu) - (inadimplentesCount * arpu);
+        const netMrrGrowth = (cmoNovosCount * arpu) - (paidChurnCount * arpu);
         const dailyMrrGrowth = netMrrGrowth / periodDays;
         
         const proj30 = Math.max(0, mrr + (dailyMrrGrowth * 30));
@@ -705,8 +760,8 @@ exports.getFinancials = async (req, res) => {
         const kpis = {
             mrr: { current: mrr, previous: prevMrr },
             paidChurnRate: { current: paidChurnRate, previous: prevPaidChurnRate },
-            trialChurnCount: { current: trialChurnCount, previous: prevMetrics.trialChurnCount },
-            paidChurnCount: { current: paidChurnCount, previous: prevMetrics.paidChurnCount },
+            trialChurnCount: { current: trialChurnCount, previous: prevTrialChurnCount },
+            paidChurnCount: { current: paidChurnCount, previous: cmoPrevPaidChurnCount },
             inadimplentesCount: { current: inadimplentesCount, previous: prevMetrics.inadimplentesCount },
             ltv: { current: ltv, net: ltvNet, previous: prevLtv, projected: metrics.ltvProjetado },
             arpu: { current: arpu, previous: prevMetrics.arpu },
@@ -793,7 +848,11 @@ exports.getFinancials = async (req, res) => {
             activePlans: activePlans.slice(0, 10), // Limit upcoming payments to 10
             sparklines: { newUsers: sparkPaidNewUsers, paidChurns: sparkPaidChurns, trialChurns: sparkTrialChurns, mrr: sparkMrr },
             insights,
-            planDistribution: activePsychologists.reduce((acc, p) => {
+            planDistribution: activePsychologists.filter(p => {
+                const isExempt = p.is_exempt;
+                const hasSubscription = !!p.subscriptionId || (p.subscription_payments_count && p.subscription_payments_count > 0);
+                return !isExempt && hasSubscription && (!p.planExpiresAt || p.planExpiresAt > new Date());
+            }).reduce((acc, p) => {
                 let pk = p.plano || 'Desconhecido';
                 if (pk !== 'Desconhecido') {
                     const lower = pk.toLowerCase();
