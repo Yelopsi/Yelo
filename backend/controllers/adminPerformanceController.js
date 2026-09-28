@@ -530,6 +530,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
             dealGhosted = 1;
             dealNo = 2;
             dealTalking = 0;
+            dealNoFeedback = 2;
             daysLeft = 2;
         } else {
             // DADOS REAIS
@@ -560,8 +561,9 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
             clicksCount = wppLogs.length > 0 ? wppLogs.length : clicksCount;
             dealYes = wppLogs.filter(l => l.dealClosed === 'yes' || l.dealClosed === 'started').length;
             dealGhosted = wppLogs.filter(l => l.dealClosed === 'ghosted').length;
-            dealNo = wppLogs.filter(l => l.dealClosed === 'no' || l.dealClosed === 'not_started').length;
+            dealNo = wppLogs.filter(l => l.dealClosed === 'no').length;
             dealTalking = wppLogs.filter(l => l.dealClosed === 'talking').length;
+            dealNoFeedback = wppLogs.filter(l => !l.dealClosed || l.dealClosed === 'not_started').length;
         }
 
         const prompt = `
@@ -570,6 +572,7 @@ Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split
 Situação atual: O período de testes gratuito (Trial) de 7 dias deste profissional expira hoje ou amanhã (restam ${daysLeft} dia(s)).
 
 Aja de forma humanizada, empática e consultiva. NÃO seja agressivamente vendedor e não use gírias.
+NÃO se apresente ("Aqui é o Anderson..." ou similar) pois o psicólogo já conversa com você e já sabe quem você é.
 
 [DADOS OBRIGATÓRIOS DO DESEMPENHO NO TRIAL]
 Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma clara:
@@ -582,18 +585,20 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
 - Em negociação: ${dealTalking}
 - Paciente "fantasma" (sumiu): ${dealGhosted}
 - Não fechou (achou caro ou desistiu): ${dealNo}
+- Contatos pendentes (Ainda sem feedback): ${dealNoFeedback}
 
 [INSTRUÇÕES DA COPY (MENSAGEM)]
 1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\n\n).
-2. Cumprimente pelo nome. Como restam ${daysLeft} dia(s) para o Trial expirar, seja SUAVE ao informar que este é o último dia do período gratuito (ou que o período gratuito está chegando ao fim nas próximas horas) e avise-o.
+2. Vá direto ao ponto (cumprimente com um 'Olá [Nome], tudo bem?' e avance). Como restam ${daysLeft} dia(s) para o Trial expirar, seja SUAVE ao informar que este é o último dia do período gratuito e avise-o.
 3. Apresente os resultados dele (Aparições, Visitas, Cliques e Fechamentos).
 4. Analise os resultados de fechamento de forma consultiva e parceira.
    - Se ele fechou pacientes, parabenize-o! É a maior prova de que vale a pena assinar.
+   - Se ele tem Contatos pendentes (Sem feedback), dê um forte incentivo para que ele chame esses contatos de volta! Reforce que se ele converter *apenas um* desses contatos pendentes já garante o pagamento da plataforma e o deixa com lucro.
    - Se não fechou ou teve fantasmas, use uma frase de conforto como "Apesar de não ter fechado com nenhum paciente dessa vez, isso é super normal no início para quem está ajustando o público."
    - Se não teve cliques, diga que ele está sendo visto, mas a bio ou foto precisam de ajustes para converter melhor.
-5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: Compare amigavelmente o valor da sessão dele (R$ ${psi.valor_sessao_numero || 'X'}) com a mensalidade da Yelo (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. (Ex: "Como a sua sessão é R$ 150,00, fechando apenas 1 sessão você já cobre todo o custo da plataforma e garante o seu lucro. É um investimento que se paga com um único atendimento"). NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".
+5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: Compare amigavelmente o valor da sessão dele (R$ ${psi.valor_sessao_numero || 'X'}) com a mensalidade da Yelo (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".
 6. Finalize perguntando de forma aberta se faz sentido para ele ativar a assinatura para não perder a página e os pacientes que já estão chegando. Instrua-o a reativar acessando a conta na Yelo, indo em "Ajustes" e depois em "Assinaturas e Planos".
-7. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto. Finalize diretamente após perguntar se faz sentido ativar a assinatura ou colocar "Se precisar de ajuda, estou por aqui!".
+7. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto. Finalize diretamente após a pergunta de assinatura.
 `;
 
         if (psiId === 99999 || !process.env.GEMINI_API_KEY) {
@@ -604,13 +609,16 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
             if (dealYes > 0) {
                 feedbackText = `Notei que você conseguiu fechar terapia com ${dealYes} sessão(ões)! 🎉`;
                 mathText = `essa sessão que você fechou já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
+            } else if (dealNoFeedback > 0) {
+                feedbackText = `Vi que você tem ${dealNoFeedback} paciente(s) que ainda não deu retorno de fechamento. Vale muito a pena dar aquele "oi, tudo bem?" neles, porque se fechar apenas 1 deles já cobre a plataforma e deixa você com lucro!`;
+                mathText = `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
             } else {
                 feedbackText = `Apesar de os pacientes não terem fechado negócio dessa vez, não desanime, isso é super normal nesse período de adaptação de público!`;
                 mathText = `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
             }
 
             return res.status(200).json({ 
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nVi que estamos no último dia (restam ${daysLeft} dia(s)) do seu período gratuito, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matchesCount} aparições nas buscas, ${viewsCount} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nVale muito a pena continuar colhendo os frutos do perfil ativo. Para não perdermos esse fluxo de pacientes nas próximas horas, basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos". Se precisar de ajuda, estou por aqui!`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem?\n\nVi que estamos no último dia (restam ${daysLeft} dia(s)) do seu período gratuito, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matchesCount} aparições nas buscas, ${viewsCount} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaz sentido para você ativar a assinatura para não perdermos esse fluxo de pacientes nas próximas horas? Basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos".`
             });
         }
 
