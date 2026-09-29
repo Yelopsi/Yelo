@@ -221,6 +221,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         const globalPaidQuery = `
             SELECT * FROM "Psychologists"
             WHERE "deletedAt" IS NULL
+            AND status = 'active'
             AND ("is_exempt" IS NULL OR "is_exempt" = false)
             AND "planExpiresAt" > NOW()
             AND "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
