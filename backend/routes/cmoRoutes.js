@@ -929,6 +929,27 @@ router.get('/dashboard', protect, admin, async (req, res) => {
 
         const demandEligibilityRate = renewableSubscriberBase > 0 ? (renewableDemandEligibleBase / renewableSubscriberBase) : 'MISSING_INPUT';
 
+        const pastBaseQuery = `
+            SELECT 
+                to_char(d, 'YYYY-MM') as month_label,
+                COUNT("Psychologists".id) as active_count
+            FROM generate_series(
+                date_trunc('month', CURRENT_DATE - interval '3 months'),
+                date_trunc('month', CURRENT_DATE - interval '1 month'),
+                '1 month'::interval
+            ) d
+            LEFT JOIN "Psychologists" ON 
+                "Psychologists"."createdAt" <= (d + interval '1 month' - interval '1 day') AND
+                "Psychologists"."deletedAt" IS NULL AND
+                "Psychologists"."plano" IS NOT NULL AND 
+                ("Psychologists"."subscriptionId" IS NOT NULL OR "Psychologists"."subscription_payments_count" > 0) AND
+                ("Psychologists"."planExpiresAt" > (d + interval '1 month' - interval '1 day'))
+            GROUP BY d
+            ORDER BY d ASC
+        `;
+        const pastBaseRes = await sequelize.query(pastBaseQuery, { type: sequelize.QueryTypes.SELECT }).catch(() => []);
+        const pastBaseHistory = pastBaseRes.map(r => parseInt(r.active_count || 0));
+
         res.json({
             success: true,
             efficiency: {
@@ -976,7 +997,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
 
                 google: { spend: actualGoogleSpendHistorical, cpl: histGoogleCpl },
                 platform: {
-                    b2b: { active: histMetaPagantes, trials: histMetaTrials, global_churn_rate: histGlobalChurnRate },
+                    b2b: { active: histMetaPagantes, trials: histMetaTrials, global_churn_rate: histGlobalChurnRate, past_base_history: pastBaseHistory },
                     b2c: { wpp_clicks: histWppClicks, total_deals: histGoogleDeals }
                 }
             },
