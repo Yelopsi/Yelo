@@ -1226,13 +1226,6 @@ function runGrowthSimulationMath(p) {
         let churnLoss = expectedChurn + appliedKnownChurn;
 
         currentBase = baseStart + newPaidActive + reliableOrganicPaidAdditions - churnLoss;
-        
-        // Re-ancorar a projeção para a realidade a partir de "Hoje", 
-        // ANTES de plotar no gráfico, para forçar as linhas verde e azul a se tocarem (igualar).
-        if (isHoje && p.realCurrentBase !== undefined) {
-            currentBase = p.realCurrentBase;
-        }
-
         const endOfMonthMRR = currentBase * p.arpu;
         
         const totalGoogleBudget = googleMaintenanceCost + actualTrialGoogleSpend;
@@ -1273,6 +1266,12 @@ function runGrowthSimulationMath(p) {
             baseAt12 = currentBase;
             metaBudgetAt12 = actualMetaSpend;
             googleBudgetAt12 = totalGoogleBudget;
+        }
+
+        // Re-ancorar a projeção para a realidade a partir de "Hoje", 
+        // para que Mês 1 em diante não herde a defasagem projetada do passado.
+        if (isHoje && p.realCurrentBase !== undefined) {
+            currentBase = p.realCurrentBase;
         }
     }
     
