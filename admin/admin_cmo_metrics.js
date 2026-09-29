@@ -632,7 +632,8 @@ function initGrowthSimulator(data) {
         const simResult = runGrowthSimulationMath({
             targetMonths, currentBase: startingRetroBase, arpu, demandEligibilityRate, contactsPerPaidPsiMonth, verifiedOrganicContacts, cplGoogle,
             reinvestRate, extraCash, rolloverCash, histMetaMonthlySpendAvg, cacMeta, trialConversionRate, monthlyChurn, newOrganicActive,
-            renewableSubscriberBase, knownScheduledChurn, retroMonths
+            renewableSubscriberBase, knownScheduledChurn, retroMonths,
+            realCurrentBase: data.platform.b2b.total_active
         });
 
         labels.push(...simResult.labels);
@@ -853,7 +854,7 @@ function initGrowthSimulator(data) {
         dataRealBase.push(data.platform.b2b.total_active);
         
         // Pad the rest of the array with nulls to match the length of projection
-        const totalSimulatedLength = targetMonths + retroMonths;
+        const totalSimulatedLength = targetMonths + 1 + retroMonths;
         while (dataRealBase.length < totalSimulatedLength) {
             dataRealBase.push(null);
         }
@@ -1155,21 +1156,31 @@ function runGrowthSimulationMath(p) {
     const dataRevenue = [];
     const dataCosts = [];
     const dataCashflow = [];
+    
     let currentBase = p.currentBase;
+    const retroMonths = p.retroMonths || 0;
+    const totalPoints = retroMonths + 1 + p.targetMonths;
+
+    // Ponto 0 (Início da simulação)
+    labels.push(retroMonths > 0 ? `-${retroMonths}M` : `Hoje`);
+    dataExpectedBase.push(Math.round(currentBase));
+    dataRevenue.push(currentBase * p.arpu);
+    dataCosts.push(null);
+    dataCashflow.push(null);
+
     let rolloverCash = p.rolloverCash;
     let actionMetaSpend = 0, actionGoogleMaintenance = 0, actionTrialGoogleSpend = 0;
     let actionUnspentCash = 0, actionCACPenalized = 0;
     let mrrAt12 = 0, baseAt12 = 0, metaBudgetAt12 = 0, googleBudgetAt12 = 0;
     let blendedAcquisitionCostM1 = 0, churnLossBaseM1 = 0, requiredReplacementPaidM1 = 0;
 
-    const retroMonths = p.retroMonths || 0;
-    const totalMonths = p.targetMonths + retroMonths;
-    const actualM1 = retroMonths + 1;
-
-    for (let m = 1; m <= totalMonths; m++) {
+    for (let step = 1; step < totalPoints; step++) {
         let baseStart = currentBase;
         const startingMrr = baseStart * p.arpu;
         
+        let isHoje = (retroMonths > 0) && (step === retroMonths);
+        let isM1 = (step === retroMonths + 1);
+
         const projectedDemandEligibleBase = baseStart * p.demandEligibilityRate;
         const totalContactDemand = projectedDemandEligibleBase * p.contactsPerPaidPsiMonth;
         const requiredGoogleContacts = Math.max(0, totalContactDemand - p.verifiedOrganicContacts);
@@ -1205,9 +1216,9 @@ function runGrowthSimulationMath(p) {
         
         rolloverCash = growthFund - actualGrowthSpend;
 
-        let baseUsedForChurn = (m === actualM1 && p.renewableSubscriberBase !== undefined) ? p.renewableSubscriberBase : baseStart;
+        let baseUsedForChurn = (isM1 && p.renewableSubscriberBase !== undefined) ? p.renewableSubscriberBase : baseStart;
         let expectedChurn = baseUsedForChurn * p.monthlyChurn;
-        let appliedKnownChurn = (m === actualM1) ? (p.knownScheduledChurn || 0) : 0;
+        let appliedKnownChurn = isM1 ? (p.knownScheduledChurn || 0) : 0;
         let reliableOrganicPaidAdditions = p.newOrganicActive || 0;
         
         // Required replacement to maintain base stable
@@ -1220,23 +1231,27 @@ function runGrowthSimulationMath(p) {
         const totalGoogleBudget = googleMaintenanceCost + actualTrialGoogleSpend;
 
         let labelStr = '';
-        if (m < actualM1) {
-            labelStr = `-${actualM1 - m}M`;
-        } else if (m === actualM1) {
-            labelStr = `Mês 1 (Hoje)`;
+        if (retroMonths > 0) {
+            if (step < retroMonths) {
+                labelStr = `-${retroMonths - step}M`;
+            } else if (step === retroMonths) {
+                labelStr = `Hoje`;
+            } else {
+                labelStr = `Mês ${step - retroMonths}`;
+            }
         } else {
-            labelStr = `Mês ${m - actualM1 + 1}`;
+            labelStr = `Mês ${step}`;
         }
         labels.push(labelStr);
 
-        dataExpectedBase.push(currentBase);
+        dataExpectedBase.push(Math.round(currentBase));
         dataRevenue.push(endOfMonthMRR);
         
         const totalCosts = actualMetaSpend + totalGoogleBudget;
         dataCosts.push(totalCosts);
         dataCashflow.push(startingMrr - totalCosts);
         
-        if (m === actualM1) {
+        if (isM1) {
             actionMetaSpend = actualMetaSpend;
             actionGoogleMaintenance = googleMaintenanceCost;
             actionTrialGoogleSpend = actualTrialGoogleSpend;
@@ -1246,11 +1261,17 @@ function runGrowthSimulationMath(p) {
             churnLossBaseM1 = churnLoss;
             requiredReplacementPaidM1 = requiredReplacementPaid;
         }
-        if (m === totalMonths) {
+        if (step === totalPoints - 1) { // Mês 12
             mrrAt12 = currentBase * p.arpu;
             baseAt12 = currentBase;
             metaBudgetAt12 = actualMetaSpend;
             googleBudgetAt12 = totalGoogleBudget;
+        }
+
+        // Re-ancorar a projeção para a realidade a partir de "Hoje", 
+        // para que Mês 1 em diante não herde a defasagem projetada do passado.
+        if (isHoje && p.realCurrentBase !== undefined) {
+            currentBase = p.realCurrentBase;
         }
     }
     
