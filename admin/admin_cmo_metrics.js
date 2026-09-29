@@ -725,6 +725,12 @@ function initGrowthSimulator(data) {
                 .then(data => {
                     if (data.success && data.html) {
                         actionList.innerHTML = data.html;
+                        if (!data.canGenerateNew && btnAi) {
+                            btnAi.disabled = true;
+                            btnAi.style.background = '#ccc';
+                            btnAi.style.cursor = 'not-allowed';
+                            btnAi.innerText = 'Nova Análise liberada no Sábado';
+                        }
                     } else {
                         actionList.innerHTML = `<li>Nenhum diagnóstico salvo. Clique no botão acima para gerar.</li>`;
                     }
@@ -831,15 +837,19 @@ function initGrowthSimulator(data) {
                     .then(aiData => {
                         if (aiData.success && aiData.html) {
                             actionList.innerHTML = aiData.html;
+                            btnAi.disabled = true;
+                            btnAi.style.background = '#ccc';
+                            btnAi.style.cursor = 'not-allowed';
+                            btnAi.innerText = 'Nova Análise liberada no Sábado';
                         } else {
                             actionList.innerHTML = `<li>❌ Falha ao gerar diagnóstico com IA.</li>`;
+                            btnAi.disabled = false;
+                            btnAi.innerText = 'Gerar Novo Diagnóstico com IA ✨';
                         }
                     })
                     .catch(err => {
                         console.error('[CMO] Erro ao analisar ROI com IA:', err);
                         actionList.innerHTML = `<li>❌ Falha de conexão ao gerar diagnóstico.</li>`;
-                    })
-                    .finally(() => {
                         btnAi.disabled = false;
                         btnAi.innerText = 'Gerar Novo Diagnóstico com IA ✨';
                     });

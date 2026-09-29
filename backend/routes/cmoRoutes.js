@@ -1260,7 +1260,35 @@ router.get('/action-plan', protect, admin, async (req, res) => {
     try {
         const db = require('../models');
         const setting = await db.SystemSetting.findOne();
-        res.json({ success: true, html: setting ? setting.cmo_ai_action_plan : null });
+        
+        let html = setting ? setting.cmo_ai_action_plan : null;
+        let canGenerateNew = true;
+        let generatedAt = null;
+
+        if (html) {
+            const dateMatch = html.match(/<!-- DATE: (.*?) -->/);
+            if (dateMatch) {
+                generatedAt = new Date(dateMatch[1]);
+                
+                const d = new Date();
+                d.setHours(0, 0, 0, 0);
+                const day = d.getDay();
+                const diff = (day === 6) ? 0 : (day + 1); 
+                d.setDate(d.getDate() - diff);
+                const lastSaturday = d;
+                
+                if (generatedAt >= lastSaturday) {
+                    canGenerateNew = false;
+                }
+            } else {
+                // If there's an HTML but no date, allow generating a new one to start tracking
+                canGenerateNew = true; 
+            }
+            // Optional: clean up the comment from the HTML sent to client
+            html = html.replace(/<!-- DATE: .*? -->/, '');
+        }
+
+        res.json({ success: true, html, canGenerateNew });
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, error: 'Erro ao buscar plano' });
@@ -1353,7 +1381,7 @@ Não retorne Markdown (sem \`\`\`json). Apenas o JSON puro.`;
             ? "Complete os dados financeiros pendentes antes de definir um percentual de lucro."
             : "Avalie a margem para retirar.";
         
-        const analysis = `
+        const analysis = `<!-- DATE: ${new Date().toISOString()} -->
 <li><strong>Meta Ads (Aquisição):</strong> <br>🔍 <strong>Situação:</strong> ${aiData.metaContext} <br><br>💡 <strong>Ação:</strong> ${metaActionText}</li>
 <br>
 <li><strong>Google Ads (Google vs Meta Trials):</strong> <br>🔍 <strong>Situação:</strong> ${aiData.googleContext} <br><br>💡 <strong>Ação:</strong> ${googleActionText}</li>
@@ -1368,7 +1396,8 @@ Não retorne Markdown (sem \`\`\`json). Apenas o JSON puro.`;
             await db.SystemSetting.create({ cmo_ai_action_plan: analysis });
         }
 
-        res.json({ success: true, html: analysis });
+        // Return without the DATE comment to the frontend
+        res.json({ success: true, html: analysis.replace(/<!-- DATE: .*? -->/, '') });
     } catch (error) {
         console.error('[CMO] Erro ao analisar ROI com IA:', error);
         
