@@ -652,36 +652,74 @@ function initGrowthSimulator(data) {
         actionUnspentCash = simResult.actionUnspentCash;
         actionCACPenalized = simResult.actionCACPenalized;
 
-        // Update Cards com textos contextuais        // Update Cards com textos contextuais
-        const currentMrr = currentBase * arpu;
-        const mrrMultiple = (mrrAt12 / (currentMrr || 1)).toFixed(1);
-        const mrrGainMonthly = mrrAt12 - currentMrr;
-        document.getElementById('sim-res-mrr-12m').textContent = formatBRL(mrrAt12);
-        document.getElementById('sim-res-mrr-feedback').textContent =
-            `${mrrMultiple}x maior que hoje (${formatBRL(currentMrr)}/mês)`;
-        
-        const newSubs = Math.floor(baseAt12) - currentBase;
-        const avgPatientsPerPsi = contactsPerPaidPsiMonth || 2;
-        const totalPatientsServed = Math.floor(baseAt12) * avgPatientsPerPsi;
-        const subsEl = document.getElementById('sim-res-subs-12m');
-        subsEl.textContent = Math.floor(baseAt12);
-        // Subtitle do card-2 (parágrafo filho)
-        const card2Sub = document.querySelector('#sim-card-2 p:last-child');
-        if (card2Sub) card2Sub.textContent =
-            `+${newSubs} assinantes líquidos na base em 12 meses. Juntos receberão ~${totalPatientsServed.toLocaleString('pt-BR')} contatos de pacientes/mês.`;
-        
-        const metaDailyM1 = actionMetaSpend / 30;
-        document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(actionMetaSpend);
-        const card3Sub = document.querySelector('#sim-card-3 p:last-child');
-        if (card3Sub) card3Sub.textContent =
-            `≈ ${formatBRL(metaDailyM1)}/dia recomendados para Mês 1.`;
-        
-        const googlePctOfRevenue = mrrAt12 > 0 ? ((googleBudgetAt12 / mrrAt12) * 100).toFixed(0) : 0;
-        const googleDailyAt12 = googleBudgetAt12 / 30;
-        document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(googleBudgetAt12);
-        const card4Sub = document.querySelector('#sim-card-4 p:last-child');
-        if (card4Sub) card4Sub.textContent =
-            `Custo mensal projetado p/ Mês 12 (≈ ${formatBRL(googleDailyAt12)}/dia).`;
+        // Inject Slider se não existir
+        const cardsGrid = document.querySelector('.sim-cards-grid');
+        if (cardsGrid && !document.getElementById('sim-month-slider-container')) {
+            const sliderHTML = `
+                <div id="sim-month-slider-container" style="width: 100%; margin-bottom: 25px; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label style="font-size: 0.95rem; font-weight: 700; color: #475569;">Visualizando projeção do: <span id="sim-month-label" style="color: #7e22ce; font-weight: 900; background: #f3e8ff; padding: 4px 10px; border-radius: 12px; margin-left: 5px;">Mês 12</span></label>
+                    </div>
+                    <input type="range" id="sim-month-slider" min="1" max="12" value="12" style="width: 100%; accent-color: #7e22ce; cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; font-weight: 600;">
+                        <span>Mês 1</span>
+                        <span>Mês 12</span>
+                    </div>
+                </div>
+            `;
+            cardsGrid.insertAdjacentHTML('beforebegin', sliderHTML);
+        }
+
+        function updateCardsForMonth(m) {
+            const index = retroMonths + m;
+            const projectedMRR = simResult.dataRevenue[index];
+            const projectedBase = simResult.dataExpectedBase[index];
+            const projectedMeta = simResult.dataMetaBudget[index];
+            const projectedGoogle = simResult.dataGoogleBudget[index];
+
+            const currentMrr = currentBase * arpu;
+            const mrrMultiple = (projectedMRR / (currentMrr || 1)).toFixed(1);
+            
+            document.getElementById('sim-month-label').textContent = \`Mês \${m}\`;
+
+            // Card 1: MRR
+            document.querySelector('#sim-card-1 p:first-of-type').textContent = \`MRR Projetado (\${m}M)\`;
+            document.getElementById('sim-res-mrr-12m').textContent = formatBRL(projectedMRR);
+            document.getElementById('sim-res-mrr-feedback').textContent =
+                \`\${mrrMultiple}x maior que hoje (\${formatBRL(currentMrr)}/mês)\`;
+            
+            // Card 2: Base
+            const newSubs = Math.floor(projectedBase) - currentBase;
+            const avgPatientsPerPsi = contactsPerPaidPsiMonth || 2;
+            const totalPatientsServed = Math.floor(projectedBase) * avgPatientsPerPsi;
+            document.getElementById('sim-res-subs-12m').textContent = Math.floor(projectedBase);
+            const card2Sub = document.querySelector('#sim-card-2 p:last-child');
+            if (card2Sub) card2Sub.textContent =
+                \`+\${newSubs} assinantes líquidos na base em \${m} meses. Juntos receberão ~\${totalPatientsServed.toLocaleString('pt-BR')} contatos de pacientes/mês.\`;
+            
+            // Card 3: Meta
+            const metaDaily = projectedMeta / 30;
+            document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(projectedMeta);
+            const card3Sub = document.querySelector('#sim-card-3 p:last-child');
+            if (card3Sub) card3Sub.textContent =
+                \`≈ \${formatBRL(metaDaily)}/dia recomendados para Mês \${m}.\`;
+            
+            // Card 4: Google
+            const googleDaily = projectedGoogle / 30;
+            document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(projectedGoogle);
+            const card4Sub = document.querySelector('#sim-card-4 p:last-child');
+            if (card4Sub) card4Sub.textContent =
+                \`Custo mensal projetado p/ Mês \${m} (≈ \${formatBRL(googleDaily)}/dia).\`;
+        }
+
+        const slider = document.getElementById('sim-month-slider');
+        if (slider) {
+            slider.oninput = (e) => {
+                updateCardsForMonth(parseInt(e.target.value, 10));
+            };
+            // Initial call based on current slider value (preserves user selection across re-renders)
+            updateCardsForMonth(parseInt(slider.value, 10));
+        }
         
         const warningEl = document.getElementById('sim-res-warning');
         warningEl.style.display = 'block';
@@ -1167,6 +1205,8 @@ function runGrowthSimulationMath(p) {
     const dataRevenue = [];
     const dataCosts = [];
     const dataCashflow = [];
+    const dataMetaBudget = [];
+    const dataGoogleBudget = [];
     
     let currentBase = p.currentBase;
     const retroMonths = p.retroMonths || 0;
@@ -1178,6 +1218,8 @@ function runGrowthSimulationMath(p) {
     dataRevenue.push(currentBase * p.arpu);
     dataCosts.push(null);
     dataCashflow.push(null);
+    dataMetaBudget.push(null);
+    dataGoogleBudget.push(null);
 
     let rolloverCash = p.rolloverCash;
     let actionMetaSpend = 0, actionGoogleMaintenance = 0, actionTrialGoogleSpend = 0;
@@ -1261,6 +1303,8 @@ function runGrowthSimulationMath(p) {
         const totalCosts = actualMetaSpend + totalGoogleBudget;
         dataCosts.push(totalCosts);
         dataCashflow.push(startingMrr - totalCosts);
+        dataMetaBudget.push(actualMetaSpend);
+        dataGoogleBudget.push(totalGoogleBudget);
         
         if (isM1) {
             actionMetaSpend = actualMetaSpend;
@@ -1287,7 +1331,7 @@ function runGrowthSimulationMath(p) {
     }
     
     return {
-        labels, dataExpectedBase, dataRevenue, dataCosts, dataCashflow,
+        labels, dataExpectedBase, dataRevenue, dataCosts, dataCashflow, dataMetaBudget, dataGoogleBudget,
         mrrAt12, baseAt12, metaBudgetAt12, googleBudgetAt12,
         actionMetaSpend, actionGoogleMaintenance, actionTrialGoogleSpend, actionUnspentCash, actionCACPenalized,
         blendedAcquisitionCostM1, churnLossBaseM1, requiredReplacementPaidM1
