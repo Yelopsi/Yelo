@@ -465,6 +465,10 @@ function initGrowthSimulator(data) {
             runSimulation(data);
         });
     }
+    const inputCacDegradation = document.getElementById('sim-cac-degradation');
+    const inputCplDegradation = document.getElementById('sim-cpl-degradation');
+    if (inputCacDegradation) inputCacDegradation.addEventListener('input', () => runSimulation(data));
+    if (inputCplDegradation) inputCplDegradation.addEventListener('input', () => runSimulation(data));
 
     newBtnSave.addEventListener('click', () => {
         if (newBtnSave.textContent === 'Alterar Parâmetros') {
@@ -532,11 +536,15 @@ function initGrowthSimulator(data) {
         const inputReinvestRate = document.getElementById('sim-reinvest-rate');
         const inputExtraCash = document.getElementById('sim-extra-cash');
         const inputCuriosityGoal = document.getElementById('sim-curiosity-goal');
+        const inputCacDegradation = document.getElementById('sim-cac-degradation');
+        const inputCplDegradation = document.getElementById('sim-cpl-degradation');
         
         let reinvestRate = parseFloat(inputReinvestRate?.value) || 50;
         let extraCashStr = inputExtraCash?.value || '0';
         let extraCash = parseFloat(extraCashStr.replace(/\./g, '').replace(',', '.')) || 0;
         let curiosityGoal = parseInt(inputCuriosityGoal?.value) || null;
+        let cacDegradation = (parseFloat(inputCacDegradation?.value) || 0) / 100;
+        let cplDegradation = (parseFloat(inputCplDegradation?.value) || 0) / 100;
         
         // 1. BASE INICIAL VEM DA PRODUÇÃO ATUAL (Motor Final)
         // Ignora simTrackingStartSubs (25) e usa activePaidAccessBase (29)
@@ -633,7 +641,8 @@ function initGrowthSimulator(data) {
             targetMonths, currentBase: startingRetroBase, arpu, demandEligibilityRate, contactsPerPaidPsiMonth, verifiedOrganicContacts, cplGoogle,
             reinvestRate, extraCash, rolloverCash, histMetaMonthlySpendAvg, cacMeta, trialConversionRate, monthlyChurn, newOrganicActive,
             renewableSubscriberBase, knownScheduledChurn, retroMonths,
-            realCurrentBase: data.platform.b2b.total_active
+            realCurrentBase: data.platform.b2b.total_active,
+            pnl: data.platform?.pnl, cacDegradation, cplDegradation
         });
 
         labels.push(...simResult.labels);
@@ -676,6 +685,8 @@ function initGrowthSimulator(data) {
             const projectedBase = simResult.dataExpectedBase[index];
             const projectedMeta = simResult.dataMetaBudget[index];
             const projectedGoogle = simResult.dataGoogleBudget[index];
+            const LTV = simResult.dataLTV[index];
+            const payback = simResult.dataPayback[index];
 
             const currentMrr = currentBase * arpu;
             const mrrMultiple = (projectedMRR / (currentMrr || 1)).toFixed(1);
@@ -1207,6 +1218,8 @@ function runGrowthSimulationMath(p) {
     const dataCashflow = [];
     const dataMetaBudget = [];
     const dataGoogleBudget = [];
+    const dataLTV = [];
+    const dataPayback = [];
     
     let currentBase = p.currentBase;
     const retroMonths = p.retroMonths || 0;
@@ -1220,6 +1233,8 @@ function runGrowthSimulationMath(p) {
     dataCashflow.push(null);
     dataMetaBudget.push(null);
     dataGoogleBudget.push(null);
+    dataLTV.push(null);
+    dataPayback.push(null);
 
     let rolloverCash = p.rolloverCash;
     let actionMetaSpend = 0, actionGoogleMaintenance = 0, actionTrialGoogleSpend = 0;
@@ -1234,37 +1249,58 @@ function runGrowthSimulationMath(p) {
         let isHoje = (retroMonths > 0) && (step === retroMonths);
         let isM1 = (step === retroMonths + 1);
 
+        // MEDIA INFLATION
+        const currentCplGoogle = p.cplGoogle * Math.pow(1 + (p.cplDegradation || 0), step);
+        const currentCacMeta = p.cacMeta * Math.pow(1 + (p.cacDegradation || 0), step);
+
         const projectedDemandEligibleBase = baseStart * p.demandEligibilityRate;
         const totalContactDemand = projectedDemandEligibleBase * p.contactsPerPaidPsiMonth;
         const requiredGoogleContacts = Math.max(0, totalContactDemand - p.verifiedOrganicContacts);
-        const googleMaintenanceCost = requiredGoogleContacts * p.cplGoogle;
+        const googleMaintenanceCost = requiredGoogleContacts * currentCplGoogle;
         
-        const contributionAfterGoogle = Math.max(0, startingMrr - googleMaintenanceCost);
-        const growthFund = (contributionAfterGoogle * (p.reinvestRate / 100)) + p.extraCash + rolloverCash;
+        // PNL AND GROWTH FUND CALCULATION
+        const taxRate = p.pnl?.managerial?.GrossRevenue ? p.pnl.managerial.RevenueTaxes / p.pnl.managerial.GrossRevenue : 0.15;
+        const varCostRate = p.pnl?.managerial?.GrossRevenue ? p.pnl.managerial.OtherVariableOperatingCosts / p.pnl.managerial.GrossRevenue : 0.05;
+        const taxes = startingMrr * taxRate;
+        const varOPEX = startingMrr * varCostRate;
+        const fixedOPEX = p.pnl?.managerial?.FixedOPEX || 0;
+        
+        const operatingCashAvailable = Math.max(0, startingMrr - taxes - varOPEX - fixedOPEX - googleMaintenanceCost);
+        const contributionMarginPerPsi = (startingMrr - taxes - varOPEX - googleMaintenanceCost) / (baseStart || 1);
+        
+        const growthFund = (operatingCashAvailable * (p.reinvestRate / 100)) + p.extraCash + rolloverCash;
 
         const MINIMUM_SAFE_SPEND = 1000;
         const effectiveHistSpend = Math.max(p.histMetaMonthlySpendAvg || 0, MINIMUM_SAFE_SPEND);
 
         const metaHardCap = effectiveHistSpend * 3.5;
-        let projectedMetaBudget = growthFund * 0.80;
+        const maxMetaSpend = growthFund * 0.80; // Hard limit applied to Meta budget
         
-        const scaleFactor = Math.min(3.5, Math.max(1, projectedMetaBudget / effectiveHistSpend));
-        const metaCACPenalized = p.cacMeta * (1 + (Math.max(0, scaleFactor - 1) * 0.20));
+        const scaleFactor = Math.min(3.5, Math.max(1, maxMetaSpend / effectiveHistSpend));
+        const metaCACPenalized = currentCacMeta * (1 + (Math.max(0, scaleFactor - 1) * 0.20));
         
         const trialsPerPaid = 1 / p.trialConversionRate;
         const trialDurationFraction = 7 / 30;
         const trialContactDemand = p.contactsPerPaidPsiMonth * trialDurationFraction;
-        const avgGoogleCostPerTrial = trialContactDemand * p.cplGoogle;
+        const avgGoogleCostPerTrial = trialContactDemand * currentCplGoogle;
         
         const trialGoogleCostPerPaid = trialsPerPaid * avgGoogleCostPerTrial;
         const blendedAcquisitionCost = metaCACPenalized + trialGoogleCostPerPaid;
 
-        const maxPaidByCash = Math.floor(growthFund / blendedAcquisitionCost);
+        const maxPaidByCash = Math.floor(maxMetaSpend / metaCACPenalized); // Use maxMetaSpend as the constraint
         const maxPaidByMeta = Math.floor(metaHardCap / metaCACPenalized);
         const newPaidActive = Math.min(maxPaidByCash, maxPaidByMeta);
         
         const actualMetaSpend = newPaidActive * metaCACPenalized;
-        const actualTrialGoogleSpend = newPaidActive * trialGoogleCostPerPaid;
+        
+        // Custo de trial dos orgânicos
+        let reliableOrganicPaidAdditions = p.newOrganicActive || 0;
+        const organicTrialsCount = reliableOrganicPaidAdditions * trialsPerPaid;
+        const organicTrialCost = organicTrialsCount * avgGoogleCostPerTrial;
+        
+        const paidTrialGoogleSpend = newPaidActive * trialGoogleCostPerPaid;
+        const actualTrialGoogleSpend = paidTrialGoogleSpend + organicTrialCost;
+        
         const actualGrowthSpend = actualMetaSpend + actualTrialGoogleSpend;
         
         rolloverCash = growthFund - actualGrowthSpend;
@@ -1272,7 +1308,6 @@ function runGrowthSimulationMath(p) {
         let baseUsedForChurn = (isM1 && p.renewableSubscriberBase !== undefined) ? p.renewableSubscriberBase : baseStart;
         let expectedChurn = baseUsedForChurn * p.monthlyChurn;
         let appliedKnownChurn = isM1 ? (p.knownScheduledChurn || 0) : 0;
-        let reliableOrganicPaidAdditions = p.newOrganicActive || 0;
         
         // Required replacement to maintain base stable
         let requiredReplacementPaid = Math.max(0, expectedChurn + appliedKnownChurn - reliableOrganicPaidAdditions);
@@ -1302,9 +1337,15 @@ function runGrowthSimulationMath(p) {
         
         const totalCosts = actualMetaSpend + totalGoogleBudget;
         dataCosts.push(totalCosts);
-        dataCashflow.push(startingMrr - totalCosts);
+        dataCashflow.push(operatingCashAvailable - actualGrowthSpend);
         dataMetaBudget.push(actualMetaSpend);
         dataGoogleBudget.push(totalGoogleBudget);
+        
+        // LTV e Payback
+        const LTV = contributionMarginPerPsi > 0 ? contributionMarginPerPsi * (1 / p.monthlyChurn) : 0;
+        const payback = contributionMarginPerPsi > 0 ? blendedAcquisitionCost / contributionMarginPerPsi : 0;
+        dataLTV.push(LTV);
+        dataPayback.push(payback);
         
         if (isM1) {
             actionMetaSpend = actualMetaSpend;
@@ -1332,6 +1373,7 @@ function runGrowthSimulationMath(p) {
     
     return {
         labels, dataExpectedBase, dataRevenue, dataCosts, dataCashflow, dataMetaBudget, dataGoogleBudget,
+        dataLTV, dataPayback,
         mrrAt12, baseAt12, metaBudgetAt12, googleBudgetAt12,
         actionMetaSpend, actionGoogleMaintenance, actionTrialGoogleSpend, actionUnspentCash, actionCACPenalized,
         blendedAcquisitionCostM1, churnLossBaseM1, requiredReplacementPaidM1
