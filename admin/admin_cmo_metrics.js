@@ -1259,11 +1259,25 @@ function runGrowthSimulationMath(p) {
         const googleMaintenanceCost = requiredGoogleContacts * currentCplGoogle;
         
         // PNL AND GROWTH FUND CALCULATION
-        const taxRate = p.pnl?.managerial?.GrossRevenue ? p.pnl.managerial.RevenueTaxes / p.pnl.managerial.GrossRevenue : 0.15;
-        const varCostRate = p.pnl?.managerial?.GrossRevenue ? p.pnl.managerial.OtherVariableOperatingCosts / p.pnl.managerial.GrossRevenue : 0.05;
+        let taxRate = 0.15; // 15% default fallback
+        let varCostRate = 0.05; // 5% default fallback
+        let fixedOPEX = 0;
+        
+        if (p.pnl?.managerial) {
+            const m = p.pnl.managerial;
+            if (m.GrossRevenue > 0 && typeof m.RevenueTaxes === 'number') {
+                taxRate = m.RevenueTaxes / m.GrossRevenue;
+            }
+            if (m.GrossRevenue > 0 && typeof m.OtherVariableOperatingCosts === 'number') {
+                varCostRate = m.OtherVariableOperatingCosts / m.GrossRevenue;
+            }
+            if (typeof m.FixedOPEX === 'number') {
+                fixedOPEX = m.FixedOPEX;
+            }
+        }
+        
         const taxes = startingMrr * taxRate;
         const varOPEX = startingMrr * varCostRate;
-        const fixedOPEX = p.pnl?.managerial?.FixedOPEX || 0;
         
         const operatingCashAvailable = Math.max(0, startingMrr - taxes - varOPEX - fixedOPEX - googleMaintenanceCost);
         const contributionMarginPerPsi = (startingMrr - taxes - varOPEX - googleMaintenanceCost) / (baseStart || 1);
