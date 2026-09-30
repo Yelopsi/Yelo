@@ -1251,19 +1251,19 @@ function runGrowthSimulationMath(p) {
         const googleMaintenanceCost = requiredGoogleContacts * currentCplGoogle;
         
         // PNL AND GROWTH FUND CALCULATION
-        let taxRate = 0.15; // 15% default fallback
-        let varCostRate = 0.05; // 5% default fallback
-        let fixedOPEX = 0;
+        let taxRate = 0; // O usuário confirmou que não paga essas taxas fixamente
+        let varCostRate = 0; 
+        let fixedOPEX = 200; // Imposto + Servidor que o usuário declarou
         
         if (p.pnl?.managerial) {
             const m = p.pnl.managerial;
-            if (m.GrossRevenue > 0 && typeof m.RevenueTaxes === 'number') {
+            if (m.GrossRevenue > 0 && typeof m.RevenueTaxes === 'number' && m.RevenueTaxes > 0) {
                 taxRate = m.RevenueTaxes / m.GrossRevenue;
             }
-            if (m.GrossRevenue > 0 && typeof m.OtherVariableOperatingCosts === 'number') {
+            if (m.GrossRevenue > 0 && typeof m.OtherVariableOperatingCosts === 'number' && m.OtherVariableOperatingCosts > 0) {
                 varCostRate = m.OtherVariableOperatingCosts / m.GrossRevenue;
             }
-            if (typeof m.FixedOPEX === 'number') {
+            if (typeof m.FixedOPEX === 'number' && m.FixedOPEX > 0) {
                 fixedOPEX = m.FixedOPEX;
             }
         }
