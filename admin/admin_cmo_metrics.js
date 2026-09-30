@@ -775,12 +775,6 @@ function initGrowthSimulator(data) {
                 .then(data => {
                     if (data.success && data.html) {
                         actionList.innerHTML = data.html;
-                        if (!data.canGenerateNew && btnAi) {
-                            btnAi.disabled = true;
-                            btnAi.style.background = '#ccc';
-                            btnAi.style.cursor = 'not-allowed';
-                            btnAi.innerText = 'Nova Análise liberada no Sábado';
-                        }
                     } else {
                         actionList.innerHTML = `<li>Nenhum diagnóstico salvo. Clique no botão acima para gerar.</li>`;
                     }
@@ -887,10 +881,8 @@ function initGrowthSimulator(data) {
                     .then(aiData => {
                         if (aiData.success && aiData.html) {
                             actionList.innerHTML = aiData.html;
-                            btnAi.disabled = true;
-                            btnAi.style.background = '#ccc';
-                            btnAi.style.cursor = 'not-allowed';
-                            btnAi.innerText = 'Nova Análise liberada no Sábado';
+                            btnAi.disabled = false;
+                            btnAi.innerText = 'Gerar Novo Diagnóstico com IA ✨';
                         } else {
                             actionList.innerHTML = `<li>❌ Falha ao gerar diagnóstico com IA.</li>`;
                             btnAi.disabled = false;
