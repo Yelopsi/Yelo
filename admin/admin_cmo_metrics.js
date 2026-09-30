@@ -721,6 +721,16 @@ function initGrowthSimulator(data) {
             const card4Sub = document.querySelector('#sim-card-4 p:last-child');
             if (card4Sub) card4Sub.textContent =
                 `Custo mensal projetado p/ Mês ${m} (≈ ${formatBRL(googleDaily)}/dia).`;
+                
+            // Card 5 & 6: LTV e Payback
+            const projectedLTV = simResult.dataLTV[index] || 0;
+            const projectedPayback = simResult.dataPayback[index] || 0;
+            
+            const elLTV = document.getElementById('sim-res-ltv');
+            const elPayback = document.getElementById('sim-res-payback');
+            
+            if (elLTV) elLTV.textContent = projectedLTV > 0 ? formatBRL(projectedLTV) : '--';
+            if (elPayback) elPayback.textContent = projectedPayback > 0 ? projectedPayback.toFixed(1) : '--';
         }
 
         const slider = document.getElementById('sim-month-slider');
@@ -1311,13 +1321,11 @@ function runGrowthSimulationMath(p) {
         
         rolloverCash = growthFund - actualGrowthSpend;
 
-        let baseUsedForChurn = (isM1 && p.renewableSubscriberBase !== undefined) ? p.renewableSubscriberBase : baseStart;
-        let expectedChurn = baseUsedForChurn * p.monthlyChurn;
-        let appliedKnownChurn = isM1 ? (p.knownScheduledChurn || 0) : 0;
+        let expectedChurn = baseStart * p.monthlyChurn;
         
         // Required replacement to maintain base stable
-        let requiredReplacementPaid = Math.max(0, expectedChurn + appliedKnownChurn - reliableOrganicPaidAdditions);
-        let churnLoss = expectedChurn + appliedKnownChurn;
+        let requiredReplacementPaid = Math.max(0, expectedChurn - reliableOrganicPaidAdditions);
+        let churnLoss = expectedChurn;
 
         currentBase = baseStart + newPaidActive + reliableOrganicPaidAdditions - churnLoss;
         const endOfMonthMRR = currentBase * p.arpu;
