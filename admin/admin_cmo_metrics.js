@@ -680,13 +680,13 @@ function initGrowthSimulator(data) {
             const currentMrr = currentBase * arpu;
             const mrrMultiple = (projectedMRR / (currentMrr || 1)).toFixed(1);
             
-            document.getElementById('sim-month-label').textContent = \`Mês \${m}\`;
+            document.getElementById('sim-month-label').textContent = `Mês ${m}`;
 
             // Card 1: MRR
-            document.querySelector('#sim-card-1 p:first-of-type').textContent = \`MRR Projetado (\${m}M)\`;
+            document.querySelector('#sim-card-1 p:first-of-type').textContent = `MRR Projetado (${m}M)`;
             document.getElementById('sim-res-mrr-12m').textContent = formatBRL(projectedMRR);
             document.getElementById('sim-res-mrr-feedback').textContent =
-                \`\${mrrMultiple}x maior que hoje (\${formatBRL(currentMrr)}/mês)\`;
+                `${mrrMultiple}x maior que hoje (${formatBRL(currentMrr)}/mês)`;
             
             // Card 2: Base
             const newSubs = Math.floor(projectedBase) - currentBase;
@@ -695,21 +695,21 @@ function initGrowthSimulator(data) {
             document.getElementById('sim-res-subs-12m').textContent = Math.floor(projectedBase);
             const card2Sub = document.querySelector('#sim-card-2 p:last-child');
             if (card2Sub) card2Sub.textContent =
-                \`+\${newSubs} assinantes líquidos na base em \${m} meses. Juntos receberão ~\${totalPatientsServed.toLocaleString('pt-BR')} contatos de pacientes/mês.\`;
+                `+${newSubs} assinantes líquidos na base em ${m} meses. Juntos receberão ~${totalPatientsServed.toLocaleString('pt-BR')} contatos de pacientes/mês.`;
             
             // Card 3: Meta
             const metaDaily = projectedMeta / 30;
             document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(projectedMeta);
             const card3Sub = document.querySelector('#sim-card-3 p:last-child');
             if (card3Sub) card3Sub.textContent =
-                \`≈ \${formatBRL(metaDaily)}/dia recomendados para Mês \${m}.\`;
+                `≈ ${formatBRL(metaDaily)}/dia recomendados para Mês ${m}.`;
             
             // Card 4: Google
             const googleDaily = projectedGoogle / 30;
             document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(projectedGoogle);
             const card4Sub = document.querySelector('#sim-card-4 p:last-child');
             if (card4Sub) card4Sub.textContent =
-                \`Custo mensal projetado p/ Mês \${m} (≈ \${formatBRL(googleDaily)}/dia).\`;
+                `Custo mensal projetado p/ Mês ${m} (≈ ${formatBRL(googleDaily)}/dia).`;
         }
 
         const slider = document.getElementById('sim-month-slider');
