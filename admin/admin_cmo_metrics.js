@@ -716,7 +716,8 @@ function initGrowthSimulator(data) {
             const token = localStorage.getItem('token');
 
             // Load last plan on render
-            if (actionList.innerHTML.trim() === '') {
+            if (!actionList.dataset.loaded) {
+                actionList.dataset.loaded = "true";
                 actionList.innerHTML = `<li>⏳ Carregando último diagnóstico...</li>`;
                 fetch('/api/cmo/action-plan', {
                     headers: { 'Authorization': `Bearer ${token}` }
