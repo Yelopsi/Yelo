@@ -119,35 +119,35 @@
     <div class="kpi-card" style="border-top-color: #8b5cf6; margin-bottom: 30px;">
         <div style="display: flex; flex-wrap: wrap; gap: 30px; align-items: stretch; justify-content: space-between; padding: 30px; width: 100%; box-sizing: border-box;">
             
-            <div class="sim-left-col" style="flex: 1 1 250px; max-width: 320px; display: flex; flex-direction: column; justify-content: flex-start;">
+            <div class="sim-left-col" style="flex: 1 1 100%; max-width: 100%; display: flex; flex-direction: column; justify-content: flex-start;">
                 <h4 style="display: flex; align-items: center; justify-content: space-between; font-size: 1.1rem !important; color: #1e293b; margin: 0 0 20px 0;">
                     <span>Motor de Crescimento</span>
                 </h4>
 
-                <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; width: 100%;">
-                    <div style="width: 100%;">
-                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">% Reinvestimento da Sobra Operacional</label>
+                <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin-bottom: 20px; width: 100%;">
+                    <div style="flex: 1 1 200px;">
+                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">% Reinvestimento da Sobra</label>
                         <input type="number" id="sim-reinvest-rate" value="100" min="0" max="200" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; font-weight: 500; transition: border-color 0.2s;" />
                     </div>
-                    <div style="width: 100%;">
+                    <div style="flex: 1 1 200px;">
                         <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Aporte Adicional (R$/mês)</label>
                         <input type="text" id="sim-extra-cash" value="0,00" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; font-weight: 500; transition: border-color 0.2s;" />
                     </div>
-                    <div style="width: 100%;">
-                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Meta Curiosidade (Assinantes)</label>
+                    <div style="flex: 1 1 200px;">
+                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Meta (Assinantes)</label>
                         <input type="number" id="sim-curiosity-goal" value="" min="0" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; transition: border-color 0.2s;" placeholder="Opcional" />
                     </div>
-                    <div style="width: 100%; display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+                    <div style="flex: 1 1 200px; display: flex; align-items: center; gap: 8px; padding-bottom: 12px;">
                         <input type="checkbox" id="sim-include-organic" style="width: 16px; height: 16px; accent-color: #7e22ce; cursor: pointer;" />
                         <label for="sim-include-organic" style="font-size: 0.85rem; color: #475569; font-weight: 600; cursor: pointer; user-select: none;">Considerar Orgânico (Dados Reais)</label>
                     </div>
+                    
+                    <button id="btn-save-simulator" style="flex: 1 1 250px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.95rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); max-width: 350px;">Salvar Parâmetros</button>
                 </div>
-                
-                <button id="btn-save-simulator" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.95rem; transition: transform 0.2s, box-shadow 0.2s; align-self: center; width: 100%; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); max-width: 350px;">Salvar Parâmetros</button>
             </div>
             
             <!-- Resultados -->
-            <div class="sim-cards-grid" style="flex: 1 1 450px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border-left: 1px solid #e2e8f0; padding-left: 30px; gap: 20px;">
+            <div class="sim-cards-grid" style="flex: 1 1 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border-top: 1px solid #e2e8f0; padding-top: 30px; gap: 20px;">
                 
                 <div id="sim-card-1" class="premium-card card-mrr" title="Sua Receita Recorrente Mensal projetada daqui a 12 meses.">
                     <div>
