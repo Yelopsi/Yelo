@@ -137,13 +137,54 @@
                         <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Meta (Assinantes)</label>
                         <input type="number" id="sim-curiosity-goal" value="" min="0" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; transition: border-color 0.2s;" placeholder="Opcional" />
                     </div>
+                    <div style="flex: 1 1 100%; display: flex; flex-direction: column; gap: 10px; background: #fef2f2; padding: 15px; border-radius: 8px; border: 1px dashed #ef4444; margin-top: 5px; margin-bottom: 5px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="sim-meta-manual-mode" style="width: 16px; height: 16px; accent-color: #ef4444; cursor: pointer;" />
+                                <label for="sim-meta-manual-mode" style="font-size: 0.85rem; color: #7f1d1d; font-weight: 700; cursor: pointer; user-select: none;">Usar Cenário Manual Meta</label>
+                            </div>
+                            <span style="font-size: 0.75rem; color: #b91c1c; font-style: italic; font-weight: 500;">⚠️ Cenário manual — valores não observados</span>
+                        </div>
+                        <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 15px; align-items: flex-end; width: 100%;">
+                            <div style="flex: 1 1 200px;">
+                                <label style="display: block; font-size: 0.75rem; color: #991b1b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">CAC Meta do Cenário (R$)</label>
+                                <input type="number" id="sim-manual-cac-meta" value="" min="0" step="0.01" style="width: 100%; padding: 12px 14px; border: 1px solid #fca5a5; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #fff; color: #7f1d1d; transition: border-color 0.2s;" />
+                            </div>
+                            <div style="flex: 1 1 200px;">
+                                <label style="display: block; font-size: 0.75rem; color: #991b1b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Gasto Histórico Meta / mês (R$)</label>
+                                <input type="number" id="sim-manual-meta-hist-spend" value="" min="0" step="0.01" style="width: 100%; padding: 12px 14px; border: 1px solid #fca5a5; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #fff; color: #7f1d1d; transition: border-color 0.2s;" />
+                            </div>
+                        </div>
+                    </div>
+
                     <div style="flex: 1 1 150px;">
                         <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Meta Inflação (%)</label>
                         <input type="number" id="sim-cac-degradation" value="2" min="0" max="20" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; font-weight: 500; transition: border-color 0.2s;" />
                     </div>
+                    <div style="flex: 1 1 250px; background: #fdf4ff; padding: 12px; border-radius: 8px; border: 1px dashed #d946ef; display: flex; flex-direction: column; justify-content: center;">
+                        <label style="display: block; font-size: 0.75rem; color: #86198f; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Penalidade de Escala Meta (% por +1x)</label>
+                        <input type="number" id="sim-meta-scale-penalty" value="20" min="0" step="0.1" style="width: 100%; padding: 10px 12px; border: 1px solid #f0abfc; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #fff; color: #701a75; font-weight: 600; transition: border-color 0.2s;" />
+                        <span style="font-size: 0.7rem; color: #a21caf; margin-top: 6px; line-height: 1.3;">⚠️ A cada +1x de gasto sobre o histórico, aumenta o CAC nesta proporção. <b>Hipótese de sensibilidade, não dado observado.</b></span>
+                    </div>
                     <div style="flex: 1 1 150px;">
                         <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Google Inflação (%)</label>
                         <input type="number" id="sim-cpl-degradation" value="2" min="0" max="20" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; font-weight: 500; transition: border-color 0.2s;" />
+                    </div>
+                    <div style="flex: 1 1 150px;">
+                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Custos Fixos Mensais</label>
+                        <input type="number" id="sim-fixed-opex" value="" min="0" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; font-weight: 500; transition: border-color 0.2s;" placeholder="R$/mês" />
+                    </div>
+                    <div style="flex: 1 1 150px;">
+                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Imposto s/ Faturamento</label>
+                        <input type="number" id="sim-tax-rate" value="" min="0" max="100" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; font-weight: 500; transition: border-color 0.2s;" placeholder="%" />
+                    </div>
+                    <div style="flex: 1 1 150px;">
+                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Taxa Asaas / Gateway</label>
+                        <input type="number" id="sim-gateway-rate" value="" min="0" max="100" step="0.01" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; font-weight: 500; transition: border-color 0.2s;" placeholder="%" />
+                    </div>
+                    <div style="flex: 1 1 150px;">
+                        <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Outros Custos Variáveis</label>
+                        <input type="number" id="sim-var-cost-rate" value="" min="0" max="100" style="width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; box-sizing: border-box; background: #f8fafc; color: #334155; font-weight: 500; transition: border-color 0.2s;" placeholder="%" />
                     </div>
                     <div style="flex: 1 1 200px; display: flex; align-items: center; gap: 8px; padding-bottom: 12px;">
                         <input type="checkbox" id="sim-include-organic" style="width: 16px; height: 16px; accent-color: #7e22ce; cursor: pointer;" />
@@ -235,6 +276,19 @@
                         <p id="sim-res-payback" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
                     </div>
                     <p style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Meses de quebra-cabeça (Break-even).</p>
+                </div>
+                
+                <div id="sim-card-7" class="premium-card card-extrapolation" title="Compara o gasto Meta projetado neste mês com o gasto mensal histórico usado como referência. Multiplicadores altos representam maior extrapolação além dos dados observados, não necessariamente maior risco comprovado.">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                            <div style="background: #f1f5f9; padding: 8px; border-radius: 8px; color: #475569; display: flex;">
+                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            </div>
+                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Extrapolação Meta</p>
+                        </div>
+                        <p id="sim-res-extrapolation" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                    </div>
+                    <p id="sim-res-extrapolation-desc" style="font-size: 0.75rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Projetado: R$ 0 / mês · Histórico: R$ 0 / mês</p>
                 </div>
                 
             </div>

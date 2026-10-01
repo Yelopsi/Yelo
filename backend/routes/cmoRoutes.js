@@ -554,13 +554,25 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         const endOfPeriod = new Date(dateEnd + 'T23:59:59Z');
         const histDays = Math.max(1, Math.ceil(Math.abs(endOfPeriod - startOfTime) / (1000 * 60 * 60 * 24)));
         const histMonths = histDays / 30;
-        const histMetaMonthlySpendAvg = histMonths > 0 ? (histMetaSpendVal / histMonths) : 0;
         
-        const trueCac = totalConvertidos > 0 ? (histMetaSpendVal / totalConvertidos) : 150;
+        const isMetaApiErrorHist = histMetaCampaigns && histMetaCampaigns.length > 0 && (histMetaCampaigns[0].id === 'ERRO' || histMetaCampaigns[0].id === 'ERRO_API');
+        let histMetaMonthlySpendAvg;
+        if (isMetaApiErrorHist) {
+            histMetaMonthlySpendAvg = null;
+        } else {
+            histMetaMonthlySpendAvg = histMonths > 0 ? (histMetaSpendVal / histMonths) : 0;
+        }
+        
+        let trueCac;
+        if (isMetaApiErrorHist) {
+            trueCac = null;
+        } else {
+            trueCac = totalConvertidos > 0 ? (histMetaSpendVal / totalConvertidos) : 150;
+        }
 
         const histConversionRate = trueConversionRate;
         const histMetaCac = trueCac;
-        const histMetaPaybackMonths = histMetaCac > 0 ? (histMetaCac / arpu) : 0;
+        const histMetaPaybackMonths = (histMetaCac !== null && histMetaCac > 0) ? (histMetaCac / arpu) : 0;
         const histGlobalChurnRate = (totalActive + histGlobalChurned) > 0 ? (histGlobalChurned / (totalActive + histGlobalChurned)) : 0;
 
         const b2cHistQuery = `
@@ -823,6 +835,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
 
         // --- SIMULADOR MOTOR DE CRESCIMENTO (90 DIAS) ---
         let simMetaCac = null;
+        let simMetaCacType = 'OBSERVED';
         let simGoogleCpl = 40;
         let simTrialConv = null;
         let simChurn = null;
@@ -840,6 +853,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 googleAdsService.getCampaignInsights(dateStart90Str, dateEnd)
             ]);
 
+            const isMetaApiError90 = metaCampaigns90 && metaCampaigns90.length > 0 && (metaCampaigns90[0].id === 'ERRO' || metaCampaigns90[0].id === 'ERRO_API');
             const metaSpend90 = getTargetSpend(metaCampaigns90, '120251213168140531', false);
             
             // Correção: Gasto Google REAL de 90 dias lido do banco (ManualAdMetrics)
@@ -857,10 +871,20 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             const metaTrials90 = parseInt(metaMetrics90Res.trials || 0);
             const metaFailedTrials90 = parseInt(metaMetrics90Res.failed_trials || 0);
 
-            if (metaPagantes90 > 0) {
-                simMetaCac = metaSpend90 / metaPagantes90;
-            } else if (metaTrials90 > 0) {
-                simMetaCac = metaSpend90 / metaTrials90 * (1 / 0.15);
+            if (isMetaApiError90) {
+                simMetaCac = null;
+                simMetaCacType = 'MISSING_INPUT';
+            } else {
+                if (metaPagantes90 > 0) {
+                    simMetaCac = metaSpend90 / metaPagantes90;
+                } else if (metaTrials90 > 0) {
+                    simMetaCac = metaSpend90 / metaTrials90 * (1 / 0.15);
+                    simMetaCacType = 'PROXY'; // Because there are no pagantes, only trials
+                } else if (metaSpend90 === 0) {
+                    simMetaCac = 0; // True zero spend and zero acquisition
+                } else {
+                    simMetaCac = 0; // Spend > 0 but 0 trials/pagantes -> maybe 0 isn't best, but keeping original logic
+                }
             }
 
             const totalOportunidades90 = metaPagantes90 + metaTrials90 + metaFailedTrials90;
@@ -964,7 +988,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             prevEfficiency,
             
             simulator: {
-                cac: { value: simMetaCac, type: simMetaCac ? 'OBSERVED' : 'PROXY' },
+                cac: { value: simMetaCac, type: simMetaCacType },
                 cpl: { value: simGoogleCpl, type: 'OBSERVED' },
                 trialConv: { value: simTrialConv, type: simTrialConv ? 'OBSERVED' : 'MISSING_INPUT' },
                 churn: { value: simChurn, type: simChurnType },
@@ -994,7 +1018,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             },
             
             historical: {
-                meta: { spend: metaSpendHistorical.spend, monthly_spend_avg: histMetaMonthlySpendAvg, cac: histMetaCac, paybackMonths: histMetaPaybackMonths, churn_rate: histGlobalChurnRate, trial_conversion_rate: histConversionRate, state: null, stateDate: null },
+                meta: { spend: metaSpendHistorical.spend, monthly_spend_avg: { value: histMetaMonthlySpendAvg, type: isMetaApiErrorHist ? 'MISSING_INPUT' : 'OBSERVED' }, cac: histMetaCac, paybackMonths: histMetaPaybackMonths, churn_rate: histGlobalChurnRate, trial_conversion_rate: histConversionRate, state: null, stateDate: null },
 
                 google: { spend: actualGoogleSpendHistorical, cpl: histGoogleCpl },
                 platform: {
@@ -1303,7 +1327,8 @@ router.post('/generate-action-plan', protect, admin, async (req, res) => {
             targetMetaDaily, currentMetaDailyBudget, availableForAcquisition1, 
             targetGoogleDaily, currentDailyGoogle, baseDaily, trialsDaily,
             safeMarginStatus, safeDistributableMargin, safeDistributableAmount,
-            target30PercentStatus, gapTo30Percent
+            target30PercentStatus, gapTo30Percent,
+            metaDataSource, histMetaSpendEffective
         } = req.body;
         
         const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -1344,10 +1369,17 @@ router.post('/generate-action-plan', protect, admin, async (req, res) => {
         const metaActionText = formatActionText(currentMetaDailyBudget, targetMetaDaily, metaAction);
         const googleActionText = formatActionText(currentDailyGoogle, targetGoogleDaily, googleAction);
 
+        let metaScenarioContext = '';
+        if (metaDataSource === 'MANUAL_SCENARIO') {
+            metaScenarioContext = `
+ATENÇÃO: Os dados do Meta Ads enviados (CAC = ${cacAtual} e Gasto Histórico = ${histMetaSpendEffective}) são HIPÓTESES DE CENÁRIO configuradas manualmente pelo usuário para testar projeções, e NÃO devem ser tratados como métricas atuais ou desempenho observado da operação da Yelo. Identifique explicitamente no seu diagnóstico que são dados de cenário hipotético ou hipóteses escolhidas pelo usuário.`;
+        }
+
         const prompt = `Você é o Diretor de Crescimento (CMO) e Diretor Financeiro (CFO) da Yelo.
 Analise os dados e produza um contexto curto e natural, sem jargões corporativos robóticos, APENAS para explicar a situação atual das métricas abaixo.
 NÃO GERE AS AÇÕES (eu mesmo farei isso no sistema).
 Gere apenas o trecho de "Diagnóstico" ou "Situação".
+${metaScenarioContext}
 
 DADOS DO MOTOR:
 - Margem Distribuível Segura: Status: ${safeMarginStatus} | Estimativa Atual: ${safeDistributableMargin}% (${safeDistributableAmount})

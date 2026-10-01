@@ -373,6 +373,39 @@ function initGrowthSimulator(data) {
     const inputExtraCash = document.getElementById('sim-extra-cash');
     const inputCuriosityGoal = document.getElementById('sim-curiosity-goal');
 
+    const inputFixedOpex = document.getElementById('sim-fixed-opex');
+    const inputTaxRate = document.getElementById('sim-tax-rate');
+    const inputGatewayRate = document.getElementById('sim-gateway-rate');
+    const inputVarCostRate = document.getElementById('sim-var-cost-rate');
+
+    // Etapa 2B: Preenchimento automático apenas na carga inicial (Soberania do Usuário)
+    if (inputFixedOpex && !inputFixedOpex.hasAttribute('data-initialized')) {
+        inputFixedOpex.setAttribute('data-initialized', 'true');
+        
+        const m = data.platform?.pnl?.managerial;
+        if (m) {
+            if (typeof m.FixedOPEX === 'number' && m.FixedOPEX !== 'MISSING_INPUT' && !Number.isNaN(m.FixedOPEX)) {
+                inputFixedOpex.value = m.FixedOPEX;
+            }
+            
+            const rev = typeof m.ConfirmedGrossRevenue === 'number' ? m.ConfirmedGrossRevenue : (typeof m.GrossRevenue === 'number' ? m.GrossRevenue : 0);
+            
+            if (rev > 0) {
+                if (typeof m.RevenueTaxes === 'number' && m.RevenueTaxes !== 'MISSING_INPUT' && !Number.isNaN(m.RevenueTaxes)) {
+                    inputTaxRate.value = ((m.RevenueTaxes / rev) * 100).toFixed(2);
+                }
+                
+                if (typeof m.RealizedGatewayFees === 'number' && m.RealizedGatewayFees !== 'MISSING_INPUT' && !Number.isNaN(m.RealizedGatewayFees)) {
+                    inputGatewayRate.value = ((m.RealizedGatewayFees / rev) * 100).toFixed(2);
+                }
+                
+                if (typeof m.OtherVariableOperatingCosts === 'number' && m.OtherVariableOperatingCosts !== 'MISSING_INPUT' && !Number.isNaN(m.OtherVariableOperatingCosts)) {
+                    inputVarCostRate.value = ((m.OtherVariableOperatingCosts / rev) * 100).toFixed(2);
+                }
+            }
+        }
+    }
+
     const newBtnSave = btnSave.cloneNode(true);
     btnSave.parentNode.replaceChild(newBtnSave, btnSave);
 
@@ -469,6 +502,16 @@ function initGrowthSimulator(data) {
     const inputCplDegradation = document.getElementById('sim-cpl-degradation');
     if (inputCacDegradation) inputCacDegradation.addEventListener('input', () => runSimulation(data));
     if (inputCplDegradation) inputCplDegradation.addEventListener('input', () => runSimulation(data));
+    const inputMetaScalePenalty = document.getElementById('sim-meta-scale-penalty');
+    if (inputMetaScalePenalty) inputMetaScalePenalty.addEventListener('input', () => runSimulation(data));
+    
+    const inputSimMetaManualMode = document.getElementById('sim-meta-manual-mode');
+    const inputSimManualCacMeta = document.getElementById('sim-manual-cac-meta');
+    const inputSimManualMetaHistSpend = document.getElementById('sim-manual-meta-hist-spend');
+    
+    if (inputSimMetaManualMode) inputSimMetaManualMode.addEventListener('change', () => runSimulation(data));
+    if (inputSimManualCacMeta) inputSimManualCacMeta.addEventListener('input', () => runSimulation(data));
+    if (inputSimManualMetaHistSpend) inputSimManualMetaHistSpend.addEventListener('input', () => runSimulation(data));
 
     newBtnSave.addEventListener('click', () => {
         if (newBtnSave.textContent === 'Alterar Parâmetros') {
@@ -539,12 +582,34 @@ function initGrowthSimulator(data) {
         const inputCacDegradation = document.getElementById('sim-cac-degradation');
         const inputCplDegradation = document.getElementById('sim-cpl-degradation');
         
+        const inputFixedOpex = document.getElementById('sim-fixed-opex');
+        const inputTaxRate = document.getElementById('sim-tax-rate');
+        const inputGatewayRate = document.getElementById('sim-gateway-rate');
+        const inputVarCostRate = document.getElementById('sim-var-cost-rate');
+        
         let reinvestRate = parseFloat(inputReinvestRate?.value) || 50;
         let extraCashStr = inputExtraCash?.value || '0';
         let extraCash = parseFloat(extraCashStr.replace(/\./g, '').replace(',', '.')) || 0;
         let curiosityGoal = parseInt(inputCuriosityGoal?.value) || null;
         let cacDegradation = (parseFloat(inputCacDegradation?.value) || 0) / 100;
         let cplDegradation = (parseFloat(inputCplDegradation?.value) || 0) / 100;
+        
+        const inputMetaScalePenalty = document.getElementById('sim-meta-scale-penalty');
+        const metaScalePenaltyRaw = inputMetaScalePenalty?.value;
+        const metaScalePenaltyVal = metaScalePenaltyRaw && metaScalePenaltyRaw.trim() !== '' ? parseFloat(metaScalePenaltyRaw.replace(',', '.')) : NaN;
+        const metaScalePenalty = (!isNaN(metaScalePenaltyVal) && isFinite(metaScalePenaltyVal) && metaScalePenaltyVal >= 0) ? metaScalePenaltyVal / 100 : null;
+
+        const getNumericSimInput = (el, isPercentage) => {
+            if (!el || el.value.trim() === '') return null;
+            const val = parseFloat(el.value);
+            if (Number.isNaN(val)) return null;
+            return isPercentage ? val / 100 : val;
+        };
+
+        const fixedOPEX = getNumericSimInput(inputFixedOpex, false);
+        const taxRate = getNumericSimInput(inputTaxRate, true);
+        const gatewayRate = getNumericSimInput(inputGatewayRate, true);
+        const varCostRate = getNumericSimInput(inputVarCostRate, true);
         
         // 1. BASE INICIAL VEM DA PRODUÇÃO ATUAL (Motor Final)
         // Ignora simTrackingStartSubs (25) e usa activePaidAccessBase (29)
@@ -562,17 +627,65 @@ function initGrowthSimulator(data) {
         }
 
         const trialConversionRate = getSimValue(data.simulator?.trialConv);
-        const cacMeta = getSimValue(data.simulator?.cac);
+        const apiCacMeta = getSimValue(data.simulator?.cac);
         const cplGoogle = getSimValue(data.simulator?.cpl);
         const monthlyChurn = getSimValue(data.simulator?.churn);
+        const apiHistMetaMonthlySpend = getSimValue(data.historical?.meta?.monthly_spend_avg);
+
+        const isManualMode = document.getElementById('sim-meta-manual-mode')?.checked || false;
+        
+        const manualCacMetaRaw = document.getElementById('sim-manual-cac-meta')?.value;
+        const manualCacMetaVal = manualCacMetaRaw ? parseFloat(manualCacMetaRaw.replace(',', '.')) : NaN;
+        
+        const manualHistMetaSpendRaw = document.getElementById('sim-manual-meta-hist-spend')?.value;
+        const manualHistMetaSpendVal = manualHistMetaSpendRaw ? parseFloat(manualHistMetaSpendRaw.replace(',', '.')) : NaN;
+
+        const manualCacMeta = (!isNaN(manualCacMetaVal) && isFinite(manualCacMetaVal)) ? manualCacMetaVal : null;
+        const manualHistMetaSpend = (!isNaN(manualHistMetaSpendVal) && isFinite(manualHistMetaSpendVal)) ? manualHistMetaSpendVal : null;
+
+        let effectiveCacMeta = apiCacMeta;
+        let effectiveHistMetaSpend = apiHistMetaMonthlySpend;
+        let metaDataSource = 'API';
+
+        if (isManualMode) {
+            effectiveCacMeta = manualCacMeta;
+            effectiveHistMetaSpend = manualHistMetaSpend;
+            metaDataSource = 'MANUAL_SCENARIO';
+        }
         
         const arpu = data.platform?.b2b?.arpu || 99;
         const contactsPerPaidPsiMonth = data.simulator?.contactsPerPaidPsiMonth?.value;
         const contactsThresholdSource = data.simulator?.contactsPerPaidPsiMonth?.type || 'ASSUMED';
         
-        let isSimulationPossible = cacMeta !== null && trialConversionRate !== null && monthlyChurn !== null && cplGoogle !== null;
+        let demandEligibilityRate = data.simulator?.demandEligibilityRate;
+        if (demandEligibilityRate === 'MISSING_INPUT' || demandEligibilityRate === undefined || demandEligibilityRate === null) {
+            demandEligibilityRate = 0;
+        }
+
+        const hasMissingFinancials = fixedOPEX === null || taxRate === null || gatewayRate === null || varCostRate === null;
         
-        const histMetaMonthlySpendAvg = data.historical?.meta?.monthly_spend_avg || 3000;
+        let simBlockReason = null;
+        if (hasMissingFinancials) {
+            simBlockReason = 'MISSING_FINANCIALS';
+        } else if (metaScalePenalty === null) {
+            simBlockReason = 'INVALID_SCALE_PENALTY';
+        } else {
+            if (metaDataSource === 'MANUAL_SCENARIO') {
+                if (effectiveCacMeta === null || effectiveHistMetaSpend === null || effectiveCacMeta <= 0 || effectiveHistMetaSpend <= 0) {
+                    simBlockReason = 'INVALID_MANUAL_META';
+                } else if (trialConversionRate === null || monthlyChurn === null || cplGoogle === null || data.simulator?.demandEligibilityRate === 'MISSING_INPUT') {
+                    simBlockReason = 'MISSING_API';
+                }
+            } else {
+                if (effectiveCacMeta === null || trialConversionRate === null || monthlyChurn === null || cplGoogle === null || effectiveHistMetaSpend === null || data.simulator?.demandEligibilityRate === 'MISSING_INPUT') {
+                    simBlockReason = 'MISSING_API';
+                } else if (effectiveCacMeta === 0 || effectiveHistMetaSpend === 0) {
+                    simBlockReason = 'INSUFFICIENT_BASELINE';
+                }
+            }
+        }
+
+        let isSimulationPossible = simBlockReason === null;
         
         const includeOrganic = document.getElementById('sim-include-organic')?.checked || false;
         const verifiedOrganicContacts = (includeOrganic && data.platform?.b2c?.organic_wpp_clicks_90d) ? (data.platform.b2c.organic_wpp_clicks_90d / 3) : 0; 
@@ -603,20 +716,24 @@ function initGrowthSimulator(data) {
         let actionUnspentCash = 0;
         let actionCACPenalized = 0;
         
-        // PROJECTION PREMISES:
-        let demandEligibilityRate = data.simulator?.demandEligibilityRate;
-        if (demandEligibilityRate === 'MISSING_INPUT' || demandEligibilityRate === undefined || demandEligibilityRate === null) {
-            isSimulationPossible = false;
-            demandEligibilityRate = 0;
-        }
-        
         if (!isSimulationPossible) {
             const warningEl = document.getElementById('sim-res-warning');
             if (warningEl) {
                 warningEl.style.display = 'block';
                 warningEl.style.backgroundColor = '#fef2f2';
                 warningEl.style.color = '#991b1b';
-                warningEl.innerHTML = `⚠️ <b>Atenção:</b> O simulador requer dados reais de CAC, Trial e Churn para projetar. Os dados históricos atuais não são qualificados matematicamente (PROXY/UNKNOWN). O Motor está pausado até termos dados observados da coorte.`;
+                
+                if (simBlockReason === 'MISSING_FINANCIALS') {
+                    warningEl.innerHTML = `⚠️ <b>Atenção:</b> O simulador requer que todos os campos financeiros estejam preenchidos. Faltam dados financeiros necessários para calcular a distribuição de caixa.`;
+                } else if (simBlockReason === 'INSUFFICIENT_BASELINE') {
+                    warningEl.innerHTML = `⚠️ <b>Atenção:</b> Não há histórico de gastos ou aquisição (CAC) na Meta suficiente para projetar escala. O Motor precisa de um baseline maior que zero para calcular a curva de crescimento.`;
+                } else if (simBlockReason === 'INVALID_MANUAL_META') {
+                    warningEl.innerHTML = `⚠️ <b>Atenção:</b> Preencha CAC Meta e Gasto Histórico Meta com valores maiores que zero para executar o cenário manual.`;
+                } else if (simBlockReason === 'INVALID_SCALE_PENALTY') {
+                    warningEl.innerHTML = `⚠️ <b>Atenção:</b> Preencha a Penalidade de Escala Meta com um valor numérico válido maior ou igual a zero.`;
+                } else {
+                    warningEl.innerHTML = `⚠️ <b>Atenção:</b> O simulador requer dados reais de CAC, Trial e Churn para projetar. Os dados históricos atuais não são qualificados matematicamente (PROXY/UNKNOWN). O Motor está pausado até termos dados observados da coorte.`;
+                }
             }
             
             // Zerar os resultados do card
@@ -625,6 +742,10 @@ function initGrowthSimulator(data) {
                 document.getElementById('sim-res-subs-12m').textContent = '0';
                 document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(0);
                 document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(0);
+                if (document.getElementById('sim-res-extrapolation')) {
+                    document.getElementById('sim-res-extrapolation').textContent = '--';
+                    document.getElementById('sim-res-extrapolation-desc').textContent = 'Indisponível';
+                }
             }
             return;
         }
@@ -639,10 +760,11 @@ function initGrowthSimulator(data) {
 
         const simResult = runGrowthSimulationMath({
             targetMonths, currentBase: startingRetroBase, arpu, demandEligibilityRate, contactsPerPaidPsiMonth, verifiedOrganicContacts, cplGoogle,
-            reinvestRate, extraCash, rolloverCash, histMetaMonthlySpendAvg, cacMeta, trialConversionRate, monthlyChurn, newOrganicActive,
+            reinvestRate, extraCash, rolloverCash, histMetaMonthlySpendAvg: effectiveHistMetaSpend, cacMeta: effectiveCacMeta, trialConversionRate, monthlyChurn, newOrganicActive,
             renewableSubscriberBase, knownScheduledChurn, retroMonths,
             realCurrentBase: data.platform.b2b.total_active,
-            pnl: data.platform?.pnl, cacDegradation, cplDegradation
+            pnl: data.platform?.pnl, cacDegradation, cplDegradation,
+            fixedOPEX, taxRate, gatewayRate, varCostRate, metaScalePenalty
         });
 
         labels.push(...simResult.labels);
@@ -731,6 +853,22 @@ function initGrowthSimulator(data) {
             
             if (elLTV) elLTV.textContent = projectedLTV > 0 ? formatBRL(projectedLTV) : '--';
             if (elPayback) elPayback.textContent = projectedPayback > 0 ? projectedPayback.toFixed(1) : '--';
+
+            // Card 7: Extrapolação Meta
+            const projectedExtrapolation = simResult.dataMetaExtrapolationMultiple[index];
+            const elExtrap = document.getElementById('sim-res-extrapolation');
+            const elExtrapDesc = document.getElementById('sim-res-extrapolation-desc');
+            
+            if (elExtrap && elExtrapDesc) {
+                if (effectiveHistMetaSpend > 0 && projectedExtrapolation !== undefined && projectedExtrapolation !== null) {
+                    elExtrap.textContent = `${projectedExtrapolation.toFixed(2).replace('.', ',')}× histórico`;
+                    const histSourceLabel = metaDataSource === 'MANUAL_SCENARIO' ? 'Histórico do cenário manual' : 'Histórico';
+                    elExtrapDesc.textContent = `Projetado: ${formatBRL(projectedMeta)} / mês · ${histSourceLabel}: ${formatBRL(effectiveHistMetaSpend)} / mês`;
+                } else {
+                    elExtrap.textContent = 'Indisponível';
+                    elExtrapDesc.textContent = 'Sem baseline histórico válido para comparação.';
+                }
+            }
         }
 
         const slider = document.getElementById('sim-month-slider');
@@ -870,7 +1008,7 @@ function initGrowthSimulator(data) {
                             mrr12M: formatBRL(mrrAt12),
                             reinvestRate: reinvestRate,
                             extraCash: extraCash,
-                            cacAtual: formatBRL(cacMeta),
+                            cacAtual: formatBRL(effectiveCacMeta),
                             cacPenalizado: formatBRL(actionCACPenalized),
                             unspentCash: formatBRL(unspentCash),
                             targetMetaDaily: formatBRL(targetMetaDaily),
@@ -884,7 +1022,9 @@ function initGrowthSimulator(data) {
                             safeDistributableMargin: safeDistributableMargin !== null ? (safeDistributableMargin * 100).toFixed(1) : null,
                             safeDistributableAmount: safeDistributableAmount !== null ? formatBRL(safeDistributableAmount) : null,
                             target30PercentStatus: target30PercentStatus,
-                            gapTo30Percent: gapTo30Percent !== null ? formatBRL(gapTo30Percent) : null
+                            gapTo30Percent: gapTo30Percent !== null ? formatBRL(gapTo30Percent) : null,
+                            metaDataSource: metaDataSource,
+                            histMetaSpendEffective: formatBRL(effectiveHistMetaSpend)
                         })
                     })
                     .then(res => res.json())
@@ -1213,6 +1353,71 @@ async function loadTrafficMetrics(dateStart, dateEnd, token) {
 }
 
 function runGrowthSimulationMath(p) {
+    function calculatePaidAcquisition(availableGrowthFund, organicTrialCost, currentCacMeta, trialGoogleCostPerPaid, effectiveHistSpend, metaScalePenalty, trialConversionRate) {
+        const cashAvailableForPaidAcquisition = Math.max(0, availableGrowthFund - organicTrialCost);
+        
+        let newPaidActive = 0, actualMetaSpend = 0, paidTrialGoogleSpend = 0;
+        let metaCACPenalized = currentCacMeta;
+        let blendedAcquisitionCost = currentCacMeta + trialGoogleCostPerPaid;
+        let metaExtrapolationMultiple = 0;
+        let scaleFactor = 1;
+        let isConverged = true;
+
+        if (currentCacMeta > 0 && effectiveHistSpend > 0 && trialConversionRate > 0) {
+            let iteratedMetaCAC = currentCacMeta;
+            
+            for (let i = 1; i <= 50; i++) {
+                const iteratedBlendedCAC = iteratedMetaCAC + trialGoogleCostPerPaid;
+                const candidatePaidByCash = cashAvailableForPaidAcquisition / iteratedBlendedCAC;
+                const candidateMetaSpend = candidatePaidByCash * iteratedMetaCAC;
+                
+                scaleFactor = Math.max(1, candidateMetaSpend / effectiveHistSpend);
+                const newMetaCAC = currentCacMeta * (1 + (Math.max(0, scaleFactor - 1) * metaScalePenalty));
+                
+                if (Math.abs(newMetaCAC - iteratedMetaCAC) < 0.01) {
+                    iteratedMetaCAC = newMetaCAC;
+                    break;
+                }
+                iteratedMetaCAC = newMetaCAC;
+                
+                if (i === 50) {
+                    isConverged = false;
+                    iteratedMetaCAC = NaN;
+                }
+            }
+            
+            if (isNaN(iteratedMetaCAC)) {
+                newPaidActive = 0;
+                actualMetaSpend = 0;
+                paidTrialGoogleSpend = 0;
+            } else {
+                metaCACPenalized = iteratedMetaCAC;
+                blendedAcquisitionCost = metaCACPenalized + trialGoogleCostPerPaid;
+                
+                const maxPaidByCash = cashAvailableForPaidAcquisition / blendedAcquisitionCost;
+                
+                newPaidActive = maxPaidByCash;
+                actualMetaSpend = newPaidActive * metaCACPenalized;
+                paidTrialGoogleSpend = newPaidActive * trialGoogleCostPerPaid;
+                
+                if (effectiveHistSpend > 0) {
+                    metaExtrapolationMultiple = actualMetaSpend / effectiveHistSpend;
+                }
+            }
+        }
+
+        return {
+            newPaidActive,
+            metaCACPenalized,
+            blendedAcquisitionCost,
+            actualMetaSpend,
+            paidTrialGoogleSpend,
+            scaleFactor,
+            metaExtrapolationMultiple,
+            isConverged
+        };
+    }
+
     const labels = [];
     const dataExpectedBase = [];
     const dataRevenue = [];
@@ -1222,6 +1427,27 @@ function runGrowthSimulationMath(p) {
     const dataGoogleBudget = [];
     const dataLTV = [];
     const dataPayback = [];
+    const dataOperatingCashAvailable = [];
+    const dataCurrentMonthGrowthAllocation = [];
+    const dataRetainedOperatingCash = [];
+    const dataGrowthFund = [];
+    const dataRolloverCash = [];
+    const dataMetaExtrapolationMultiple = [];
+    const dataOrganicTrialCost = [];
+    const dataOrganicCostCoveredByGrowth = [];
+    const dataOrganicCostCoveredByRetained = [];
+    const dataUnfundedOrganicCost = [];
+    const dataProjectedOrganicPaidAdditions = [];
+    const dataOrganicFundingRatio = [];
+    const dataFundedOrganicPaidAdditions = [];
+    const dataFundedOrganicCost = [];
+    const dataReplacementGap = [];
+    const dataPaidReplacementShortfall = [];
+    const dataStabilityFundingRequired = [];
+    const dataStabilityFundingUsed = [];
+    const dataStabilityFundingDeficit = [];
+    const dataSafeProfit = [];
+    const dataReservedCash = [];
     
     let currentBase = p.currentBase;
     const retroMonths = p.retroMonths || 0;
@@ -1237,12 +1463,42 @@ function runGrowthSimulationMath(p) {
     dataGoogleBudget.push(null);
     dataLTV.push(null);
     dataPayback.push(null);
+    dataOperatingCashAvailable.push(null);
+    dataCurrentMonthGrowthAllocation.push(null);
+    dataRetainedOperatingCash.push(null);
+    dataGrowthFund.push(null);
+    dataRolloverCash.push(null);
+    dataMetaExtrapolationMultiple.push(null);
+    dataOrganicTrialCost.push(null);
+    dataOrganicCostCoveredByGrowth.push(null);
+    dataOrganicCostCoveredByRetained.push(null);
+    dataUnfundedOrganicCost.push(null);
+    dataProjectedOrganicPaidAdditions.push(null);
+    dataOrganicFundingRatio.push(null);
+    dataFundedOrganicPaidAdditions.push(null);
+    dataFundedOrganicCost.push(null);
+    dataReplacementGap.push(null);
+    dataPaidReplacementShortfall.push(null);
+    dataStabilityFundingRequired.push(null);
+    dataStabilityFundingUsed.push(null);
+    dataStabilityFundingDeficit.push(null);
+    dataSafeProfit.push(null);
+    dataReservedCash.push(null);
 
     let rolloverCash = p.rolloverCash;
     let actionMetaSpend = 0, actionGoogleMaintenance = 0, actionTrialGoogleSpend = 0;
     let actionUnspentCash = 0, actionCACPenalized = 0;
     let mrrAt12 = 0, baseAt12 = 0, metaBudgetAt12 = 0, googleBudgetAt12 = 0;
     let blendedAcquisitionCostM1 = 0, churnLossBaseM1 = 0, requiredReplacementPaidM1 = 0;
+    let metaExtrapolationMultipleM1 = 0;
+    let organicTrialCostM1 = 0, organicCostCoveredByGrowthM1 = 0;
+    let organicCostCoveredByRetainedM1 = 0, unfundedOrganicCostM1 = 0;
+    let projectedOrganicPaidAdditionsM1 = 0, organicFundingRatioM1 = 0;
+    let fundedOrganicPaidAdditionsM1 = 0, fundedOrganicCostM1 = 0;
+    let replacementGapM1 = 0, paidReplacementShortfallM1 = 0, stabilityFundingRequiredM1 = 0;
+    let stabilityFundingUsedM1 = 0, stabilityFundingDeficitM1 = 0, safeProfitM1 = 0;
+    let reservedCashM1 = 0;
+    let reservedCash = 0;
 
     for (let step = 1; step < totalPoints; step++) {
         let baseStart = currentBase;
@@ -1250,10 +1506,12 @@ function runGrowthSimulationMath(p) {
         
         let isHoje = (retroMonths > 0) && (step === retroMonths);
         let isM1 = (step === retroMonths + 1);
+        
+        let degradationStep = Math.max(0, step - (retroMonths + 1));
 
         // MEDIA INFLATION
-        const currentCplGoogle = p.cplGoogle * Math.pow(1 + (p.cplDegradation || 0), step);
-        const currentCacMeta = p.cacMeta * Math.pow(1 + (p.cacDegradation || 0), step);
+        const currentCplGoogle = p.cplGoogle * Math.pow(1 + (p.cplDegradation || 0), degradationStep);
+        const currentCacMeta = p.cacMeta * Math.pow(1 + (p.cacDegradation || 0), degradationStep);
 
         const projectedDemandEligibleBase = baseStart * p.demandEligibilityRate;
         const totalContactDemand = projectedDemandEligibleBase * p.contactsPerPaidPsiMonth;
@@ -1261,73 +1519,155 @@ function runGrowthSimulationMath(p) {
         const googleMaintenanceCost = requiredGoogleContacts * currentCplGoogle;
         
         // PNL AND GROWTH FUND CALCULATION
-        let taxRate = 0; // O usuário confirmou que não paga essas taxas fixamente
-        let varCostRate = 0; 
-        let fixedOPEX = 200; // Imposto + Servidor que o usuário declarou
+        // CUSTOS VÊM DIRETAMENTE DA UI/FRONTEND (SOBERANIA DO USUÁRIO)
+        const taxes = startingMrr * p.taxRate;
+        const gatewayFees = startingMrr * p.gatewayRate;
+        const varOPEX = startingMrr * p.varCostRate;
         
-        if (p.pnl?.managerial) {
-            const m = p.pnl.managerial;
-            if (m.GrossRevenue > 0 && typeof m.RevenueTaxes === 'number' && m.RevenueTaxes > 0) {
-                taxRate = m.RevenueTaxes / m.GrossRevenue;
-            }
-            if (m.GrossRevenue > 0 && typeof m.OtherVariableOperatingCosts === 'number' && m.OtherVariableOperatingCosts > 0) {
-                varCostRate = m.OtherVariableOperatingCosts / m.GrossRevenue;
-            }
-            if (typeof m.FixedOPEX === 'number' && m.FixedOPEX > 0) {
-                fixedOPEX = m.FixedOPEX;
-            }
-        }
+        const operatingCashAvailable = Math.max(0, startingMrr - taxes - gatewayFees - varOPEX - p.fixedOPEX - googleMaintenanceCost);
+        const contributionMarginPerPsi = (startingMrr - taxes - gatewayFees - varOPEX - googleMaintenanceCost) / (baseStart || 1);
         
-        const taxes = startingMrr * taxRate;
-        const varOPEX = startingMrr * varCostRate;
-        
-        const operatingCashAvailable = Math.max(0, startingMrr - taxes - varOPEX - fixedOPEX - googleMaintenanceCost);
-        const contributionMarginPerPsi = (startingMrr - taxes - varOPEX - googleMaintenanceCost) / (baseStart || 1);
-        
-        const growthFund = (operatingCashAvailable * (p.reinvestRate / 100)) + p.extraCash + rolloverCash;
+        const currentMonthGrowthAllocation = operatingCashAvailable * (p.reinvestRate / 100);
+        let retainedOperatingCash = operatingCashAvailable - currentMonthGrowthAllocation;
+        const growthFund = currentMonthGrowthAllocation + p.extraCash + rolloverCash;
 
-        const MINIMUM_SAFE_SPEND = 1000;
-        const effectiveHistSpend = Math.max(p.histMetaMonthlySpendAvg || 0, MINIMUM_SAFE_SPEND);
+        const effectiveHistSpend = p.histMetaMonthlySpendAvg || 0;
 
-        const metaHardCap = effectiveHistSpend * 3.5;
-        const maxMetaSpend = growthFund * 0.80; // Hard limit applied to Meta budget
-        
-        const scaleFactor = Math.min(3.5, Math.max(1, maxMetaSpend / effectiveHistSpend));
-        const metaCACPenalized = currentCacMeta * (1 + (Math.max(0, scaleFactor - 1) * 0.20));
-        
         const trialsPerPaid = 1 / p.trialConversionRate;
         const trialDurationFraction = 7 / 30;
         const trialContactDemand = p.contactsPerPaidPsiMonth * trialDurationFraction;
         const avgGoogleCostPerTrial = trialContactDemand * currentCplGoogle;
         
         const trialGoogleCostPerPaid = trialsPerPaid * avgGoogleCostPerTrial;
-        const blendedAcquisitionCost = metaCACPenalized + trialGoogleCostPerPaid;
 
-        const maxPaidByCash = Math.floor(maxMetaSpend / metaCACPenalized); // Use maxMetaSpend as the constraint
-        const maxPaidByMeta = Math.floor(metaHardCap / metaCACPenalized);
-        const newPaidActive = Math.min(maxPaidByCash, maxPaidByMeta);
-        
-        const actualMetaSpend = newPaidActive * metaCACPenalized;
-        
         // Custo de trial dos orgânicos
-        let reliableOrganicPaidAdditions = p.newOrganicActive || 0;
-        const organicTrialsCount = reliableOrganicPaidAdditions * trialsPerPaid;
+        let projectedOrganicPaidAdditions = p.newOrganicActive || 0;
+        const organicTrialsCount = projectedOrganicPaidAdditions * trialsPerPaid;
         const organicTrialCost = organicTrialsCount * avgGoogleCostPerTrial;
-        
-        const paidTrialGoogleSpend = newPaidActive * trialGoogleCostPerPaid;
-        const actualTrialGoogleSpend = paidTrialGoogleSpend + organicTrialCost;
-        
-        const actualGrowthSpend = actualMetaSpend + actualTrialGoogleSpend;
-        
-        rolloverCash = growthFund - actualGrowthSpend;
+
+        const organicCostCoveredByGrowth = Math.min(growthFund, organicTrialCost);
+        const organicCostDeficit = Math.max(0, organicTrialCost - growthFund);
+
+        const organicCostCoveredByRetained = Math.min(Math.max(0, retainedOperatingCash), organicCostDeficit);
+        let retainedOperatingCashAfterMandatoryOrganic = retainedOperatingCash - organicCostCoveredByRetained;
+
+        const unfundedOrganicCost = organicTrialCost - organicCostCoveredByGrowth - organicCostCoveredByRetained;
+        const fundedOrganicCost = organicCostCoveredByGrowth + organicCostCoveredByRetained;
+
+        let organicFundingRatio = organicTrialCost > 0 ? Math.min(1, Math.max(0, fundedOrganicCost / organicTrialCost)) : 1;
+        let fundedOrganicPaidAdditions = projectedOrganicPaidAdditions * organicFundingRatio;
 
         let expectedChurn = baseStart * p.monthlyChurn;
+        let replacementGap = Math.max(0, expectedChurn - fundedOrganicPaidAdditions);
         
+        let initialAcq = calculatePaidAcquisition(growthFund, organicTrialCost, currentCacMeta, trialGoogleCostPerPaid, effectiveHistSpend, p.metaScalePenalty, p.trialConversionRate);
+        
+        let paidReplacementShortfall = Math.max(0, replacementGap - initialAcq.newPaidActive);
+        
+        let additionalStabilityFundingRequired = 0;
+        let stabilityFundingDeficit = 0;
+        let stabilityFundingUsed = 0;
+        let finalAcq = initialAcq;
+        let safeProfit = 0;
+        
+        if (paidReplacementShortfall > 0) {
+            let upperBound = Math.max(1, growthFund, retainedOperatingCashAfterMandatoryOrganic);
+            let lowerBound = 0;
+            let expansionConverged = false;
+            
+            // Etapa de expansão
+            for (let iter = 0; iter < 50; iter++) {
+                let testAcq = calculatePaidAcquisition(growthFund + upperBound, organicTrialCost, currentCacMeta, trialGoogleCostPerPaid, effectiveHistSpend, p.metaScalePenalty, p.trialConversionRate);
+                
+                if (!testAcq.isConverged || !Number.isFinite(testAcq.actualMetaSpend) || !Number.isFinite(testAcq.metaCACPenalized)) {
+                    break;
+                }
+                
+                if (testAcq.newPaidActive >= replacementGap) {
+                    expansionConverged = true;
+                    break;
+                }
+                
+                lowerBound = upperBound;
+                upperBound *= 2;
+            }
+            
+            if (!expansionConverged) {
+                additionalStabilityFundingRequired = null; // UNRESOLVED
+            } else {
+                let low = lowerBound;
+                let high = upperBound;
+                let best = null;
+                
+                for (let iter = 0; iter < 100; iter++) {
+                    let mid = (low + high) / 2;
+                    let testAcq = calculatePaidAcquisition(growthFund + mid, organicTrialCost, currentCacMeta, trialGoogleCostPerPaid, effectiveHistSpend, p.metaScalePenalty, p.trialConversionRate);
+                    
+                    if (!testAcq.isConverged) {
+                        break;
+                    }
+                    
+                    if (testAcq.newPaidActive >= replacementGap) {
+                        best = mid;
+                        high = mid;
+                    } else {
+                        low = mid;
+                    }
+                    if (high - low < 0.01) break;
+                }
+                
+                if (best !== null) {
+                    additionalStabilityFundingRequired = best;
+                } else {
+                    additionalStabilityFundingRequired = null; // UNRESOLVED
+                }
+            }
+        }
+        
+        let newReserved = 0;
+        if (additionalStabilityFundingRequired === null && paidReplacementShortfall > 0) {
+            // UNRESOLVED status
+            stabilityFundingUsed = null;
+            safeProfit = 0;
+            stabilityFundingDeficit = null;
+            newReserved = Math.max(0, retainedOperatingCashAfterMandatoryOrganic);
+            reservedCash += newReserved;
+            // finalAcq permanece como initialAcq
+        } else {
+            stabilityFundingUsed = Math.min(additionalStabilityFundingRequired, Math.max(0, retainedOperatingCashAfterMandatoryOrganic));
+            
+            if (additionalStabilityFundingRequired > 0) {
+                finalAcq = calculatePaidAcquisition(growthFund + stabilityFundingUsed, organicTrialCost, currentCacMeta, trialGoogleCostPerPaid, effectiveHistSpend, p.metaScalePenalty, p.trialConversionRate);
+                if (additionalStabilityFundingRequired > retainedOperatingCashAfterMandatoryOrganic) {
+                    stabilityFundingDeficit = Math.max(0, additionalStabilityFundingRequired - Math.max(0, retainedOperatingCashAfterMandatoryOrganic));
+                }
+            }
+            
+            safeProfit = Math.max(0, retainedOperatingCashAfterMandatoryOrganic - stabilityFundingUsed);
+            if (stabilityFundingDeficit > 0) {
+                safeProfit = 0;
+            }
+        }
+        
+        let newPaidActive = finalAcq.newPaidActive;
+        let actualMetaSpend = finalAcq.actualMetaSpend;
+        let paidTrialGoogleSpend = finalAcq.paidTrialGoogleSpend;
+        let metaCACPenalized = finalAcq.metaCACPenalized;
+        let blendedAcquisitionCost = finalAcq.blendedAcquisitionCost;
+        let metaExtrapolationMultiple = finalAcq.metaExtrapolationMultiple;
+        
+        const actualGrowthSpendFromGrowthFund = actualMetaSpend + paidTrialGoogleSpend + organicCostCoveredByGrowth;
+        const finalGrowthFund = growthFund + stabilityFundingUsed;
+        
+        rolloverCash = Math.max(0, finalGrowthFund - actualGrowthSpendFromGrowthFund);
+        
+        const actualTrialGoogleSpend = paidTrialGoogleSpend + organicTrialCost;
+
         // Required replacement to maintain base stable
-        let requiredReplacementPaid = Math.max(0, expectedChurn - reliableOrganicPaidAdditions);
+        let requiredReplacementPaid = Math.max(0, expectedChurn - fundedOrganicPaidAdditions);
         let churnLoss = expectedChurn;
 
-        currentBase = baseStart + newPaidActive + reliableOrganicPaidAdditions - churnLoss;
+        currentBase = baseStart + newPaidActive + fundedOrganicPaidAdditions - churnLoss;
         const endOfMonthMRR = currentBase * p.arpu;
         
         const totalGoogleBudget = googleMaintenanceCost + actualTrialGoogleSpend;
@@ -1351,9 +1691,31 @@ function runGrowthSimulationMath(p) {
         
         const totalCosts = actualMetaSpend + totalGoogleBudget;
         dataCosts.push(totalCosts);
-        dataCashflow.push(operatingCashAvailable - actualGrowthSpend);
+        dataCashflow.push(retainedOperatingCashAfterMandatoryOrganic);
         dataMetaBudget.push(actualMetaSpend);
         dataGoogleBudget.push(totalGoogleBudget);
+        
+        dataOperatingCashAvailable.push(operatingCashAvailable);
+        dataCurrentMonthGrowthAllocation.push(currentMonthGrowthAllocation);
+        dataRetainedOperatingCash.push(retainedOperatingCashAfterMandatoryOrganic);
+        dataGrowthFund.push(growthFund);
+        dataRolloverCash.push(rolloverCash);
+        dataMetaExtrapolationMultiple.push(metaExtrapolationMultiple);
+        dataOrganicTrialCost.push(organicTrialCost);
+        dataOrganicCostCoveredByGrowth.push(organicCostCoveredByGrowth);
+        dataOrganicCostCoveredByRetained.push(organicCostCoveredByRetained);
+        dataUnfundedOrganicCost.push(unfundedOrganicCost);
+        dataProjectedOrganicPaidAdditions.push(projectedOrganicPaidAdditions);
+        dataOrganicFundingRatio.push(organicFundingRatio);
+        dataFundedOrganicPaidAdditions.push(fundedOrganicPaidAdditions);
+        dataFundedOrganicCost.push(fundedOrganicCost);
+        dataReplacementGap.push(replacementGap);
+        dataPaidReplacementShortfall.push(paidReplacementShortfall);
+        dataStabilityFundingRequired.push(additionalStabilityFundingRequired);
+        dataStabilityFundingUsed.push(stabilityFundingUsed);
+        dataStabilityFundingDeficit.push(stabilityFundingDeficit);
+        dataSafeProfit.push(safeProfit);
+        dataReservedCash.push(reservedCash);
         
         // LTV e Payback
         const LTV = contributionMarginPerPsi > 0 ? contributionMarginPerPsi * (1 / p.monthlyChurn) : 0;
@@ -1370,6 +1732,22 @@ function runGrowthSimulationMath(p) {
             blendedAcquisitionCostM1 = blendedAcquisitionCost;
             churnLossBaseM1 = churnLoss;
             requiredReplacementPaidM1 = requiredReplacementPaid;
+            metaExtrapolationMultipleM1 = metaExtrapolationMultiple;
+            organicTrialCostM1 = organicTrialCost;
+            organicCostCoveredByGrowthM1 = organicCostCoveredByGrowth;
+            organicCostCoveredByRetainedM1 = organicCostCoveredByRetained;
+            unfundedOrganicCostM1 = unfundedOrganicCost;
+            projectedOrganicPaidAdditionsM1 = projectedOrganicPaidAdditions;
+            organicFundingRatioM1 = organicFundingRatio;
+            fundedOrganicPaidAdditionsM1 = fundedOrganicPaidAdditions;
+            fundedOrganicCostM1 = fundedOrganicCost;
+            replacementGapM1 = replacementGap;
+            paidReplacementShortfallM1 = paidReplacementShortfall;
+            stabilityFundingRequiredM1 = additionalStabilityFundingRequired;
+            stabilityFundingUsedM1 = stabilityFundingUsed;
+            stabilityFundingDeficitM1 = stabilityFundingDeficit;
+            safeProfitM1 = safeProfit;
+            reservedCashM1 = reservedCash;
         }
         if (step === totalPoints - 1) { // Mês 12
             mrrAt12 = currentBase * p.arpu;
@@ -1390,7 +1768,14 @@ function runGrowthSimulationMath(p) {
         dataLTV, dataPayback,
         mrrAt12, baseAt12, metaBudgetAt12, googleBudgetAt12,
         actionMetaSpend, actionGoogleMaintenance, actionTrialGoogleSpend, actionUnspentCash, actionCACPenalized,
-        blendedAcquisitionCostM1, churnLossBaseM1, requiredReplacementPaidM1
+        blendedAcquisitionCostM1, churnLossBaseM1, requiredReplacementPaidM1, metaExtrapolationMultipleM1,
+        organicTrialCostM1, organicCostCoveredByGrowthM1, organicCostCoveredByRetainedM1, unfundedOrganicCostM1,
+        projectedOrganicPaidAdditionsM1, organicFundingRatioM1, fundedOrganicPaidAdditionsM1, fundedOrganicCostM1,
+        replacementGapM1, paidReplacementShortfallM1, stabilityFundingRequiredM1, stabilityFundingUsedM1, stabilityFundingDeficitM1, safeProfitM1, reservedCashM1,
+        dataOperatingCashAvailable, dataCurrentMonthGrowthAllocation, dataRetainedOperatingCash, dataGrowthFund, dataRolloverCash,
+        dataMetaExtrapolationMultiple, dataOrganicTrialCost, dataOrganicCostCoveredByGrowth, dataOrganicCostCoveredByRetained, dataUnfundedOrganicCost,
+        dataProjectedOrganicPaidAdditions, dataOrganicFundingRatio, dataFundedOrganicPaidAdditions, dataFundedOrganicCost,
+        dataReplacementGap, dataPaidReplacementShortfall, dataStabilityFundingRequired, dataStabilityFundingUsed, dataStabilityFundingDeficit, dataSafeProfit, dataReservedCash
     };
 }
 
