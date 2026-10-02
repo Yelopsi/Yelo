@@ -53,7 +53,11 @@ window.loadGrowthData = async function() {
 
             // 2. VENDAS
             document.getElementById('g-novos-pagantes-main').innerText = data.novosPagantes;
-            document.getElementById('g-trial-conv').innerText = data.trialConversionRate ? data.trialConversionRate.toFixed(1) + '%' : '0%';
+            let convText = data.trialConversionRate ? data.trialConversionRate.toFixed(1) + '%' : '0%';
+            if (data.trialConversionType === 'PROXY') {
+                convText += ` <span class="yelo-tooltip" style="font-size:0.8rem; font-weight:normal; margin-left:4px; color:#64748b;">ⓘ<span class="yelo-tooltip-content">Proxy (coorte madura 14d)</span></span>`;
+            }
+            document.getElementById('g-trial-conv').innerHTML = convText;
             document.getElementById('g-trials-ativos').innerText = data.trialsAtivos;
 
             // 3. VALOR (HEALTH RATE)

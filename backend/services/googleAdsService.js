@@ -2,11 +2,17 @@ const axios = require('axios');
 
 class GoogleAdsService {
     constructor() {
-        this.developerToken = process.env.GOOGLE_DEVELOPER_TOKEN || 'MOCK_DEV_TOKEN';
+        // Nível de acesso (Explorer/Basic) depende do GCP Project OAuth vinculado a estas credenciais.
+        // O developer-token é opcional na API moderna (set/2026).
+        this.developerToken = process.env.GOOGLE_DEVELOPER_TOKEN;
         this.clientId = process.env.GOOGLE_ADS_CLIENT_ID;
         this.clientSecret = process.env.GOOGLE_ADS_CLIENT_SECRET;
         this.refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
-        this.customerId = process.env.GOOGLE_CUSTOMER_ID || 'MOCK_CUSTOMER_ID';
+        this.customerId = process.env.GOOGLE_CUSTOMER_ID;
+    }
+
+    isConfigured() {
+        return !!(this.clientId && this.clientSecret && this.refreshToken && this.customerId);
     }
 
     async getAccessToken() {
@@ -29,9 +35,11 @@ class GoogleAdsService {
     async queryGoogleAds(query, accessToken) {
         const customerIdRaw = this.customerId.replace(/-/g, '');
         const headers = {
-            'Authorization': `Bearer ${accessToken}`,
-            'developer-token': this.developerToken
+            'Authorization': `Bearer ${accessToken}`
         };
+        if (this.developerToken) {
+            headers['developer-token'] = this.developerToken;
+        }
         if (process.env.GOOGLE_LOGIN_CUSTOMER_ID) {
             headers['login-customer-id'] = process.env.GOOGLE_LOGIN_CUSTOMER_ID.replace(/-/g, '');
         }
@@ -45,11 +53,19 @@ class GoogleAdsService {
     }
 
     async getAccountSpend(dateStart, dateEnd) {
-        if (this.developerToken === 'MOCK_DEV_TOKEN') return this.mockAccountSpend();
+        if (!this.isConfigured()) {
+            const err = new Error('GOOGLE_ADS_CONFIGURATION_MISSING');
+            err.code = 'GOOGLE_ADS_CONFIGURATION_MISSING';
+            throw err;
+        }
 
         try {
             const accessToken = await this.getAccessToken();
-            if (!accessToken) return { spend: 0, impressions: 0, clicks: 0, cpc: 0, error: 'Sem Access Token' };
+            if (!accessToken) {
+                const err = new Error('Sem Access Token');
+                err.code = 'GOOGLE_ADS_AUTH_FAILED';
+                throw err;
+            }
 
             const query = `
                 SELECT metrics.cost_micros, metrics.impressions, metrics.clicks 
@@ -74,7 +90,7 @@ class GoogleAdsService {
             console.log('\n========== CMO GOOGLE DEBUG CONFIG ==========');
             console.log('customerId:', this.customerId);
             console.log('loginCustomerId:', process.env.GOOGLE_LOGIN_CUSTOMER_ID || 'NÃO CONFIGURADO');
-            console.log('developerTokenConfigured:', this.developerToken !== 'MOCK_DEV_TOKEN');
+            console.log('developerTokenConfigured:', !!this.developerToken);
             console.log('=============================================\n');
 
             let errorObj = error.response?.data || error.message;
@@ -91,16 +107,26 @@ class GoogleAdsService {
                 cleanMsg = error.message;
             }
 
-            return { spend: 0, impressions: 0, clicks: 0, cpc: 0, error: `[ERRO GOOGLE] ${cleanMsg}` };
+            const err = new Error(`[ERRO GOOGLE] ${cleanMsg}`);
+            err.code = 'GOOGLE_ADS_API_ERROR';
+            throw err;
         }
     }
 
     async getCampaignInsights(dateStart, dateEnd) {
-        if (this.developerToken === 'MOCK_DEV_TOKEN') return this.mockCampaignInsights();
+        if (!this.isConfigured()) {
+            const err = new Error('GOOGLE_ADS_CONFIGURATION_MISSING');
+            err.code = 'GOOGLE_ADS_CONFIGURATION_MISSING';
+            throw err;
+        }
 
         try {
             const accessToken = await this.getAccessToken();
-            if (!accessToken) return [{ id: 'ERRO', campaign_name: '[ERRO GOOGLE] Sem Access Token', spend: 0 }];
+            if (!accessToken) {
+                const err = new Error('Sem Access Token');
+                err.code = 'GOOGLE_ADS_AUTH_FAILED';
+                throw err;
+            }
 
             const query = `
                 SELECT campaign.id, campaign.name, campaign_budget.amount_micros, metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.conversions 
@@ -135,7 +161,9 @@ class GoogleAdsService {
                 cleanMsg = error.message;
             }
 
-            return [{ id: 'ERRO_API', campaign_name: `[ERRO GOOGLE] ${cleanMsg}`, spend: 0 }];
+            const err = new Error(`[ERRO GOOGLE] ${cleanMsg}`);
+            err.code = 'GOOGLE_ADS_API_ERROR';
+            throw err;
         }
     }
 

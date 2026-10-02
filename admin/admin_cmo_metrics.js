@@ -300,7 +300,14 @@ function renderCMOMetrics(data) {
         setDbgHist('dbg-meta-payback',  data.prevDecisionEngineMeta?.paybackMonths || 0, data.decisionEngineMeta?.paybackMonths || 0, 'months', true);
         
         setDbgHist('dbg-meta-churn',    data.prevPlatform?.b2b?.meta_churn_rate || 0, data.platform.b2b?.meta_churn_rate || 0, 'percent', true);
-        setDbgHist('dbg-global-churn',  data.prevPlatform?.b2b?.global_churn_rate || 0, data.platform.b2b?.global_churn_rate || 0, 'percent', true);
+        if (data.simulator?.churn && data.simulator.churn.type === 'ASSUMED') {
+            const el = document.getElementById('dbg-global-churn');
+            if (el) {
+                el.innerHTML = `${(data.simulator.churn.value * 100).toFixed(2)}% <span style="font-size:0.75rem; color:#64748b; font-weight:normal; margin-left:8px;">· Hipótese conservadora</span>`;
+            }
+        } else {
+            setDbgHist('dbg-global-churn',  data.prevPlatform?.b2b?.global_churn_rate || 0, data.platform.b2b?.global_churn_rate || 0, 'percent', true);
+        }
         
         setDbgHist('dbg-google-spend',  data.prevAds?.google?.spend || 0, data.ads?.google?.spend || 0, 'currency', true);
         setDbgHist('dbg-google-clicks', data.prevPlatform?.b2c?.wpp_clicks || 0, data.platform.b2c?.wpp_clicks || 0, 'number', false);
@@ -616,6 +623,7 @@ function initGrowthSimulator(data) {
         const activePaidAccessBase = data.platform.b2b.total_active || 0;
         const renewableSubscriberBase = data.simulator?.renewableSubscriberBase || activePaidAccessBase;
         const knownScheduledChurn = data.simulator?.knownScheduledChurn || 0;
+        const baseEligibleForProjection = Math.max(0, activePaidAccessBase - knownScheduledChurn);
         
         function getSimValue(obj) {
             if (!obj) return null;
@@ -626,7 +634,8 @@ function initGrowthSimulator(data) {
             return v;
         }
 
-        const trialConversionRate = getSimValue(data.simulator?.trialConv);
+        const trialConversionObj = data.simulator?.trialConv;
+        const trialConversionRate = getSimValue(trialConversionObj);
         const apiCacMeta = getSimValue(data.simulator?.cac);
         const cplGoogle = getSimValue(data.simulator?.cpl);
         const monthlyChurn = getSimValue(data.simulator?.churn);
@@ -669,15 +678,19 @@ function initGrowthSimulator(data) {
             simBlockReason = 'MISSING_FINANCIALS';
         } else if (metaScalePenalty === null) {
             simBlockReason = 'INVALID_SCALE_PENALTY';
+        } else if (monthlyChurn !== null && (monthlyChurn < 0 || monthlyChurn >= 1)) {
+            simBlockReason = 'INVALID_INPUT';
+        } else if (contactsPerPaidPsiMonth !== null && (contactsPerPaidPsiMonth <= 0 || !isFinite(contactsPerPaidPsiMonth))) {
+            simBlockReason = 'INVALID_INPUT';
         } else {
             if (metaDataSource === 'MANUAL_SCENARIO') {
                 if (effectiveCacMeta === null || effectiveHistMetaSpend === null || effectiveCacMeta <= 0 || effectiveHistMetaSpend <= 0) {
                     simBlockReason = 'INVALID_MANUAL_META';
-                } else if (trialConversionRate === null || monthlyChurn === null || cplGoogle === null || data.simulator?.demandEligibilityRate === 'MISSING_INPUT') {
+                } else if (trialConversionRate === null || monthlyChurn === null || cplGoogle === null || data.simulator?.demandEligibilityRate === 'MISSING_INPUT' || contactsPerPaidPsiMonth === null) {
                     simBlockReason = 'MISSING_API';
                 }
             } else {
-                if (effectiveCacMeta === null || trialConversionRate === null || monthlyChurn === null || cplGoogle === null || effectiveHistMetaSpend === null || data.simulator?.demandEligibilityRate === 'MISSING_INPUT') {
+                if (effectiveCacMeta === null || trialConversionRate === null || monthlyChurn === null || cplGoogle === null || effectiveHistMetaSpend === null || data.simulator?.demandEligibilityRate === 'MISSING_INPUT' || contactsPerPaidPsiMonth === null) {
                     simBlockReason = 'MISSING_API';
                 } else if (effectiveCacMeta === 0 || effectiveHistMetaSpend === 0) {
                     simBlockReason = 'INSUFFICIENT_BASELINE';
@@ -688,7 +701,7 @@ function initGrowthSimulator(data) {
         let isSimulationPossible = simBlockReason === null;
         
         const includeOrganic = document.getElementById('sim-include-organic')?.checked || false;
-        const verifiedOrganicContacts = (includeOrganic && data.platform?.b2c?.organic_wpp_clicks_90d) ? (data.platform.b2c.organic_wpp_clicks_90d / 3) : 0; 
+        const verifiedOrganicContacts = (includeOrganic && data.simulator?.organicContacts?.value) ? data.simulator.organicContacts.value : 0; 
         const newOrganicActive = (includeOrganic && data.platform?.b2b?.organic_active) ? data.platform.b2b.organic_active : 0; 
 
         const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -701,7 +714,7 @@ function initGrowthSimulator(data) {
         const dataCashflow = [];
         const dataExpectedBase = [];
         
-        let currentBase = renewableSubscriberBase;
+        let currentBase = baseEligibleForProjection;
         let rolloverCash = 0;
         
         let mrrAt12 = 0;
@@ -828,7 +841,7 @@ function initGrowthSimulator(data) {
             document.getElementById('sim-res-subs-12m').textContent = Math.floor(projectedBase);
             const card2Sub = document.querySelector('#sim-card-2 p:last-child');
             if (card2Sub) card2Sub.textContent =
-                `+${newSubs} assinantes líquidos na base em ${m} meses. Juntos receberão ~${totalPatientsServed.toLocaleString('pt-BR')} contatos de pacientes/mês.`;
+                `+${newSubs} assinantes líquidos na base em ${m} meses. Meta agregada de demanda: ~${totalPatientsServed.toLocaleString('pt-BR')} cliques no WhatsApp/mês.`;
             
             // Card 3: Meta
             const metaDaily = projectedMeta / 30;
@@ -891,9 +904,9 @@ function initGrowthSimulator(data) {
             warningEl.style.backgroundColor = '#f0fdfa';
             warningEl.style.color = '#0f766e';
             if (extraCash > 0) {
-                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Hoje há ${activePaidAccessBase} profissionais com acesso pago, dos quais ${renewableSubscriberBase} fazem parte da base renovável usada nesta projeção. Em 12 meses, o Motor projeta essa base de ${currentBase} para ${Math.floor(baseAt12)} assinantes, considerando reinvestimento de ${reinvestRate}% da Sobra Operacional e aporte adicional de ${formatBRL(extraCash)} por mês.`;
+                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Hoje há ${activePaidAccessBase} profissionais com acesso pago, dos quais ${baseEligibleForProjection} fazem parte da base elegível para projeção de recorrência (exclui apenas cancelamentos agendados). Em 12 meses, o Motor projeta essa base de ${currentBase} para ${Math.floor(baseAt12)} assinantes, considerando reinvestimento de ${reinvestRate}% da Sobra Operacional e aporte adicional de ${formatBRL(extraCash)} por mês.`;
             } else {
-                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Hoje há ${activePaidAccessBase} profissionais com acesso pago, dos quais ${renewableSubscriberBase} fazem parte da base renovável usada nesta projeção. Em 12 meses, o Motor projeta essa base de ${currentBase} para ${Math.floor(baseAt12)} assinantes, considerando reinvestimento de ${reinvestRate}% da Sobra Operacional.`;
+                warningEl.innerHTML = `✅ <b>Motor Girando:</b> Hoje há ${activePaidAccessBase} profissionais com acesso pago, dos quais ${baseEligibleForProjection} fazem parte da base elegível para projeção de recorrência (exclui apenas cancelamentos agendados). Em 12 meses, o Motor projeta essa base de ${currentBase} para ${Math.floor(baseAt12)} assinantes, considerando reinvestimento de ${reinvestRate}% da Sobra Operacional.`;
             }
         }
 
@@ -1024,7 +1037,18 @@ function initGrowthSimulator(data) {
                             target30PercentStatus: target30PercentStatus,
                             gapTo30Percent: gapTo30Percent !== null ? formatBRL(gapTo30Percent) : null,
                             metaDataSource: metaDataSource,
-                            histMetaSpendEffective: formatBRL(effectiveHistMetaSpend)
+                            histMetaSpendEffective: formatBRL(effectiveHistMetaSpend),
+                            trialConvType: trialConversionObj ? trialConversionObj.type : 'MISSING_INPUT',
+                            trialConvSource: trialConversionObj ? trialConversionObj.source : null,
+                            trialConvValue: trialConversionRate,
+                            churnType: data.simulator?.churn ? data.simulator.churn.type : 'MISSING_INPUT',
+                            churnSource: data.simulator?.churn ? data.simulator.churn.source : null,
+                            churnValue: monthlyChurn,
+                            contactsType: data.simulator?.contactsPerPaidPsiMonth?.type,
+                            contactsValue: data.simulator?.contactsPerPaidPsiMonth?.value,
+                            organicType: data.simulator?.organicContacts?.type,
+                            organicSource: data.simulator?.organicContacts?.source,
+                            organicValue: data.simulator?.organicContacts?.value
                         })
                     })
                     .then(res => res.json())

@@ -37,20 +37,33 @@ router.get('/dashboard', protect, admin, async (req, res) => {
 
         // 2. Fetch de Ads Services (Atual, Anterior e Histórico via Campanhas Alvo)
         const getTargetSpend = (campaigns, targetNameOrId, isGoogle) => {
-            if (!campaigns || campaigns.length === 0 || campaigns[0].id === 'ERRO_API' || campaigns[0].id === 'ERRO') return 0;
-            const target = isGoogle 
-                ? campaigns.find(c => c.campaign_name === targetNameOrId)
-                : campaigns.find(c => (c.campaign_id || c.id) === targetNameOrId);
-            return target ? (target.spend || 0) : 0;
+            if (isGoogle) {
+                if (!campaigns || !campaigns.available || !campaigns.data) return 'MISSING_INPUT';
+                const target = campaigns.data.find(c => c.campaign_name === targetNameOrId);
+                return target ? (target.spend || 0) : 0;
+            } else {
+                if (!campaigns || campaigns.length === 0 || campaigns[0].id === 'ERRO_API' || campaigns[0].id === 'ERRO' || campaigns[0].id === 'ERRO_CONFIG') return 0;
+                const target = campaigns.find(c => (c.campaign_id || c.id) === targetNameOrId);
+                return target ? (target.spend || 0) : 0;
+            }
+        };
+
+        const fetchGoogleAds = async (dStart, dEnd) => {
+            try {
+                const data = await googleAdsService.getCampaignInsights(dStart, dEnd);
+                return { available: true, data };
+            } catch (err) {
+                return { available: false, errorCode: err.code || err.message, data: null };
+            }
         };
 
         const [metaCampaigns, googleCampaigns, prevMetaCampaigns, prevGoogleCampaigns, histMetaCampaigns, histGoogleCampaigns, metaBudgets] = await Promise.all([
             metaAdsService.getCampaignInsights(dateStart, dateEnd),
-            googleAdsService.getCampaignInsights(dateStart, dateEnd),
+            fetchGoogleAds(dateStart, dateEnd),
             metaAdsService.getCampaignInsights(prevDateStart, prevDateEnd),
-            googleAdsService.getCampaignInsights(prevDateStart, prevDateEnd),
+            fetchGoogleAds(prevDateStart, prevDateEnd),
             metaAdsService.getCampaignInsights('2026-05-01', dateEnd),
-            googleAdsService.getCampaignInsights('2026-05-01', dateEnd),
+            fetchGoogleAds('2026-05-01', dateEnd),
             metaAdsService.getCampaignBudgets()
         ]);
 
@@ -261,10 +274,12 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         let cashIn = 0;
         let arpu = 99;
         let pnlEngine = {};
-        // O valor 3 é uma premissa de negócio do Motor de Crescimento,
-        // e não uma métrica observada nem uma restauração literal da fórmula histórica
-        // (não use monthlyClicks / basePagantes como substituto desse target).
-        const AssumedTargetWhatsAppChatsPerPsi = 3;
+        // Meta agregada de capacidade de demanda usada para dimensionar o orçamento de Google por psicólogo elegível.
+        // NÃO significa: cada psicólogo receberá 3 contatos.
+        // NÃO significa: média histórica observada = 3.
+        // NÃO significa: promessa comercial de 3 contatos.
+        // Unidade: 3 RAW WhatsApp clicks / eligible paid psychologist / month
+        const AggregateDemandBudgetTarget = 3;
 
         // 4. Atribuição B2C (Google Ads -> Pacientes)
         const b2cQuery = `
@@ -296,14 +311,16 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         const googleCpl = googleWppClicks > 0 ? (actualGoogleSpend / googleWppClicks) : 0;
         const prevGoogleCpl = prevGoogleWppClicks > 0 ? (actualPrevGoogleSpend / prevGoogleWppClicks) : 0;
 
-        const b2cOrganic90dQuery = `
-            SELECT COUNT(*) as organic_wpp_clicks
+        const b2cOrganic30dQuery = `
+            SELECT 
+                SUM(CASE WHEN "utmSource" IN ('organico', 'Direto/Orgânico', 'whatsapp_bio', 'instagram_bio') THEN 1 ELSE 0 END) as organic_wpp_clicks,
+                SUM(CASE WHEN "utmSource" IS NULL OR "utmSource" = '' THEN 1 ELSE 0 END) as unattributed_wpp_clicks
             FROM "WhatsAppClickLogs"
-            WHERE "createdAt" >= NOW() - INTERVAL '90 days'
-            AND ("utmSource" IS NULL OR "utmSource" NOT IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads', 'google', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc'))
+            WHERE "createdAt" >= NOW() - INTERVAL '30 days'
         `;
-        const [organic90dRes] = await sequelize.query(b2cOrganic90dQuery, { type: sequelize.QueryTypes.SELECT });
-        const organicWppClicks90d = parseInt(organic90dRes.organic_wpp_clicks || 0);
+        const [organic30dRes] = await sequelize.query(b2cOrganic30dQuery, { type: sequelize.QueryTypes.SELECT });
+        const organicWppClicks30d = parseInt(organic30dRes.organic_wpp_clicks || 0);
+        const unattributedWppClicks30d = parseInt(organic30dRes.unattributed_wpp_clicks || 0);
 
         try {
             const settings = await db.SystemSetting.findOne() || {};
@@ -415,7 +432,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             const NetRevenue = RevenueTaxes !== 'MISSING_INPUT' ? (ConfirmedGrossRevenue - RevenueTaxes - RealizedGatewayFees) : 'MISSING_INPUT';
             
             // Lógica Google Maintenance vs Growth Restaurada
-            const RequiredWhatsAppChats = renewableDemandEligibleBase * AssumedTargetWhatsAppChatsPerPsi;
+            const RequiredWhatsAppChats = renewableDemandEligibleBase * AggregateDemandBudgetTarget;
             const PaidWhatsAppChatsRequired = Math.max(0, RequiredWhatsAppChats - 0);
             
             const observedGoogleCostPerWhatsAppChat = (googleWppClicks > 0) ? (actualGoogleSpend / googleWppClicks) : ((actualGoogleSpend > 0) ? 'MISSING_INPUT' : 0); 
@@ -547,7 +564,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         const histFailedTrials = parseInt(metaMetricsHistRes.failed_trials || 0);
         const totalConvertidos = histMetaPagantes + histMetaChurned;
         const totalOportunidades = totalConvertidos + histMetaTrials + histFailedTrials;
-        const trueConversionRate = totalOportunidades > 0 ? (totalConvertidos / totalOportunidades) : 0.15;
+        const trueConversionRate = totalOportunidades > 0 ? (totalConvertidos / totalOportunidades) : 0.1102;
 
         const histMetaSpendVal = metaSpendHistorical.spend;
         const startOfTime = new Date('2026-05-01T00:00:00Z');
@@ -850,7 +867,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
 
             const [metaCampaigns90, googleCampaigns90] = await Promise.all([
                 metaAdsService.getCampaignInsights(dateStart90Str, dateEnd),
-                googleAdsService.getCampaignInsights(dateStart90Str, dateEnd)
+                fetchGoogleAds(dateStart90Str, dateEnd)
             ]);
 
             const isMetaApiError90 = metaCampaigns90 && metaCampaigns90.length > 0 && (metaCampaigns90[0].id === 'ERRO' || metaCampaigns90[0].id === 'ERRO_API');
@@ -878,7 +895,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 if (metaPagantes90 > 0) {
                     simMetaCac = metaSpend90 / metaPagantes90;
                 } else if (metaTrials90 > 0) {
-                    simMetaCac = metaSpend90 / metaTrials90 * (1 / 0.15);
+                    simMetaCac = metaSpend90 / metaTrials90 * (1 / 0.1102);
                     simMetaCacType = 'PROXY'; // Because there are no pagantes, only trials
                 } else if (metaSpend90 === 0) {
                     simMetaCac = 0; // True zero spend and zero acquisition
@@ -887,10 +904,11 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 }
             }
 
-            const totalOportunidades90 = metaPagantes90 + metaTrials90 + metaFailedTrials90;
-            if (totalOportunidades90 > 0) {
-                simTrialConv = metaPagantes90 / totalOportunidades90;
-            }
+            // The 7d trial cohort is not mature yet. 
+            // Fallback to strict conversion from mature 14d cohorts (11.02%)
+            simTrialConv = 0.1102;
+            let simTrialConvType = 'PROXY';
+            let simTrialConvSource = 'STRICT_14D_MATURE_COHORT_PROXY';
 
             const globalChurn90dQuery = `
                 SELECT COUNT(*) as churned
@@ -909,26 +927,23 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             
             const activePaidQuery = `
               SELECT 
-                SUM(CASE WHEN ("cancelAtPeriodEnd" = true) THEN 1 ELSE 0 END) as scheduled_churn
+                SUM(CASE WHEN (p."cancelAtPeriodEnd" = true) THEN 1 ELSE 0 END) as scheduled_churn
               FROM "Psychologists" p
-              LEFT JOIN "Subscriptions" s ON p."subscriptionId" = s.id
               WHERE p."deletedAt" IS NULL
+              AND p.status = 'active'
+              AND (p."is_exempt" IS NULL OR p."is_exempt" = false)
               AND p."planExpiresAt" > NOW()
-              AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+              AND p."plano" IS NOT NULL AND (p."subscriptionId" IS NOT NULL OR p."subscription_payments_count" > 0)
             `;
             const [activePaidRes] = await sequelize.query(activePaidQuery, { type: sequelize.QueryTypes.SELECT });
             knownScheduledChurn = parseInt(activePaidRes.scheduled_churn || 0);
 
-            if ((totalActive + churned90d) > 0) {
-                // churnRate90d represents a cumulative 90-day churn.
-                // The engine expects monthlyChurn, so we convert it:
-                const monthlyChurnEq = 1 - Math.pow(1 - churnRate90d, 1 / 3);
-                simChurn = monthlyChurnEq;
-                simChurnType = 'PROXY'; // Preserved as PROXY because it relies on heuristic status updates rather than contractual logs
-            } else {
-                simChurn = null;
-                simChurnType = 'PROXY'; // Preserved original proxy fallback classification if no data
-            }
+            // Churn recorrente observado ainda é praticamente 0% por imaturidade da base.
+            // A fórmula antiga (inativos / (ativos + inativos)) não representa bem a exposição real.
+            // Assumimos 8,15% como hipótese conservadora temporária para o simulador.
+            simChurn = 0.0815;
+            simChurnType = 'ASSUMED';
+            let simChurnSource = 'CONSERVATIVE_EARLY_STAGE_CHURN_ASSUMPTION';
 
 
             const b2cQuery90 = `
@@ -990,14 +1005,15 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             simulator: {
                 cac: { value: simMetaCac, type: simMetaCacType },
                 cpl: { value: simGoogleCpl, type: 'OBSERVED' },
-                trialConv: { value: simTrialConv, type: simTrialConv ? 'OBSERVED' : 'MISSING_INPUT' },
-                churn: { value: simChurn, type: simChurnType },
+                trialConv: { value: simTrialConv, type: simTrialConvType, source: simTrialConvSource },
+                churn: { value: simChurn, type: simChurnType, source: simChurnSource },
                 knownScheduledChurn,
                 renewableSubscriberBase,
                 renewableDemandEligibleBase,
                 demandEligiblePaidBase,
                 demandEligibilityRate,
-                contactsPerPaidPsiMonth: { value: AssumedTargetWhatsAppChatsPerPsi, type: 'ASSUMED' }
+                contactsPerPaidPsiMonth: { value: AggregateDemandBudgetTarget, type: 'CONFIG', source: 'AGGREGATE_DEMAND_BUDGET_TARGET' },
+                organicContacts: { value: organicWppClicks30d, type: 'OBSERVED', source: 'ORGANIC_CONFIRMED_WPP_CLICKS_30D' }
             },
 
             period: { dateStart, dateEnd, prevDateStart, prevDateEnd },
@@ -1006,8 +1022,12 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 meta: { ...metaSpend, spend: metaSpend.spend, cac: metaCac, marginalCac: metaMarginalCac },
                 google: { ...googleSpend, spend: actualGoogleSpend, cpl: googleCpl, marginalCpl: googleMarginalCpl }
             },
-            campaigns: { meta: metaCampaigns, google: googleCampaigns },
-            prevCampaigns: { meta: prevMetaCampaigns, google: prevGoogleCampaigns },
+            googleAdsStatus: {
+                available: googleCampaigns.available,
+                errorCode: googleCampaigns.errorCode || null
+            },
+            campaigns: { meta: metaCampaigns, google: googleCampaigns.data || [] },
+            prevCampaigns: { meta: prevMetaCampaigns, google: prevGoogleCampaigns.data || [] },
             prevPlatform: {
                 b2b: { active: prevMetaPagantes, trials: prevMetaTrials, meta_churn_rate: prevMetaChurnRate, global_churn_rate: prevGlobalChurnRate },
                 b2c: { wpp_clicks: prevGoogleWppClicks, total_deals: prevGoogleDeals }
@@ -1029,7 +1049,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             platform: {
                 pnl: pnlEngine,
                 b2b: { arpu: arpu, active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive, total_trials: totalTrials, organic_active: organicPagantes, organic_trials: organicTrials, total_new_active: totalNewPagantes, total_new_trials: totalNewTrials, clicks_vs_churn: { active: clicksChurnActive, inactive: clicksChurnInactive }, cashIn, renewableMRR },
-                b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals, organic_wpp_clicks_90d: organicWppClicks90d }
+                b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals, organic_wpp_clicks_30d: organicWppClicks30d, unattributed_wpp_clicks_30d: unattributedWppClicks30d }
             },
             decisionEngineMeta,
             prevDecisionEngineMeta: { paybackMonths: prevMetaPaybackMonths },
@@ -1328,7 +1348,11 @@ router.post('/generate-action-plan', protect, admin, async (req, res) => {
             targetGoogleDaily, currentDailyGoogle, baseDaily, trialsDaily,
             safeMarginStatus, safeDistributableMargin, safeDistributableAmount,
             target30PercentStatus, gapTo30Percent,
-            metaDataSource, histMetaSpendEffective
+            metaDataSource, histMetaSpendEffective,
+            trialConvType, trialConvSource, trialConvValue,
+            churnType, churnSource, churnValue,
+            contactsType, contactsValue,
+            organicType, organicSource, organicValue
         } = req.body;
         
         const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -1374,12 +1398,36 @@ router.post('/generate-action-plan', protect, admin, async (req, res) => {
             metaScenarioContext = `
 ATENÇÃO: Os dados do Meta Ads enviados (CAC = ${cacAtual} e Gasto Histórico = ${histMetaSpendEffective}) são HIPÓTESES DE CENÁRIO configuradas manualmente pelo usuário para testar projeções, e NÃO devem ser tratados como métricas atuais ou desempenho observado da operação da Yelo. Identifique explicitamente no seu diagnóstico que são dados de cenário hipotético ou hipóteses escolhidas pelo usuário.`;
         }
+        
+        let trialContext = '';
+        if (trialConvType === 'PROXY') {
+            trialContext = `ATENÇÃO: O cenário usa ${(trialConvValue * 100).toFixed(2)}% como proxy baseado nas coortes maduras de trial de 14 dias; ainda não há dados maduros suficientes do trial atual de 7 dias.`;
+        }
+        
+        let churnContext = '';
+        if (churnType === 'ASSUMED') {
+            churnContext = `ATENÇÃO: O cenário usa churn mensal de ${(churnValue * 100).toFixed(2)}% como hipótese conservadora temporária porque a base recorrente da Yelo ainda não possui maturidade suficiente para estimar churn observado confiável. NÃO diga: "Seu churn atual é ${(churnValue * 100).toFixed(2)}%."`;
+        }
+
+        let contactsContext = '';
+        if (contactsType === 'CONFIG') {
+            contactsContext = `ATENÇÃO: O Motor usa uma meta agregada configurada de ${contactsValue} cliques WhatsApp por psicólogo elegível/mês para dimensionar a necessidade total de Google. Isso não garante distribuição individual uniforme. NÃO diga: "Cada psicólogo precisa receber exatamente ${contactsValue} pacientes."`;
+        }
+
+        let organicContext = '';
+        if (organicType === 'OBSERVED' && organicSource === 'ORGANIC_CONFIRMED_WPP_CLICKS_30D') {
+            organicContext = `Foram observados ${organicValue} cliques orgânicos confirmados nos últimos 30 dias.`;
+        }
 
         const prompt = `Você é o Diretor de Crescimento (CMO) e Diretor Financeiro (CFO) da Yelo.
 Analise os dados e produza um contexto curto e natural, sem jargões corporativos robóticos, APENAS para explicar a situação atual das métricas abaixo.
 NÃO GERE AS AÇÕES (eu mesmo farei isso no sistema).
 Gere apenas o trecho de "Diagnóstico" ou "Situação".
 ${metaScenarioContext}
+${trialContext}
+${churnContext}
+${contactsContext}
+${organicContext}
 
 DADOS DO MOTOR:
 - Margem Distribuível Segura: Status: ${safeMarginStatus} | Estimativa Atual: ${safeDistributableMargin}% (${safeDistributableAmount})

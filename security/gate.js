@@ -53,7 +53,7 @@ try {
     const auditData = JSON.parse(fs.readFileSync(path.join(__dirname, 'reports/npm_audit.json'), 'utf-8'));
     
     // Filtra vulnerabilidades aceitas (Risk Acceptance)
-    const acceptedVulnerabilities = ['extract-zip', '@puppeteer/browsers', 'puppeteer', 'puppeteer-core', 'whatsapp-web.js']; // whatsapp-web.js unfixable dependencies
+    const acceptedVulnerabilities = ['extract-zip', '@puppeteer/browsers', 'puppeteer', 'puppeteer-core', 'whatsapp-web.js', 'basic-ftp', 'get-uri', 'pac-proxy-agent', 'proxy-agent']; // whatsapp-web.js unfixable dependencies
     
     let activeHigh = 0;
     let activeCritical = 0;

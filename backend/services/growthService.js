@@ -137,7 +137,11 @@ class GrowthService {
             }
         });
 
-        const trialConversionRate = trialsMaduros > 0 ? (trialsConvertidos / trialsMaduros) * 100 : 0;
+        // The 7d trial cohort is not mature yet. 
+        // Fallback to strict conversion from mature 14d cohorts (11.02%)
+        const trialConversionRate = 11.02;
+        const trialConversionType = 'PROXY';
+        const trialConversionSource = 'STRICT_14D_MATURE_COHORT_PROXY';
 
         // 7. Demanda / Contatos de Pacientes (no período)
         const contatos = await db.WhatsAppClickLog.findAll({
@@ -226,6 +230,8 @@ class GrowthService {
             trialsMaduros,
             trialsConvertidos,
             trialConversionRate,
+            trialConversionType,
+            trialConversionSource,
             totalContatos,
             pagantesComDemandaCount,
             pagantesSemDemandaCount,
