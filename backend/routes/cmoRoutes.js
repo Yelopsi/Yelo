@@ -857,6 +857,9 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         let simTrialConv = null;
         let simChurn = null;
         let simChurnType = 'ASSUMED';
+        let simTrialConvType = 'OBSERVED';
+        let simTrialConvSource = null;
+        let simChurnSource = null;
         let knownScheduledChurn = 0;
 
         try {
@@ -907,8 +910,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             // The 7d trial cohort is not mature yet. 
             // Fallback to strict conversion from mature 14d cohorts (11.02%)
             simTrialConv = 0.1102;
-            let simTrialConvType = 'PROXY';
-            let simTrialConvSource = 'STRICT_14D_MATURE_COHORT_PROXY';
+            simTrialConvType = 'PROXY';
+            simTrialConvSource = 'STRICT_14D_MATURE_COHORT_PROXY';
 
             const globalChurn90dQuery = `
                 SELECT COUNT(*) as churned
@@ -943,7 +946,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             // Assumimos 8,15% como hipótese conservadora temporária para o simulador.
             simChurn = 0.0815;
             simChurnType = 'ASSUMED';
-            let simChurnSource = 'CONSERVATIVE_EARLY_STAGE_CHURN_ASSUMPTION';
+            simChurnSource = 'CONSERVATIVE_EARLY_STAGE_CHURN_ASSUMPTION';
 
 
             const b2cQuery90 = `
