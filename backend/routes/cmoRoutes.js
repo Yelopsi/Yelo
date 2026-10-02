@@ -53,7 +53,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 const data = await googleAdsService.getCampaignInsights(dStart, dEnd);
                 return { available: true, data };
             } catch (err) {
-                return { available: false, errorCode: err.code || err.message, data: null };
+                return { available: false, errorCode: err.message, data: null };
             }
         };
 
