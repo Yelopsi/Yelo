@@ -242,8 +242,20 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         const globalPaidRes = await sequelize.query(globalPaidQuery, { type: sequelize.QueryTypes.SELECT });
         
         const paidAccessBase = globalPaidRes.length;
-        const demandEligiblePaidBase = globalPaidRes.filter(p => matchService.isEligibleForMatch(p)).length;
         const totalActive = paidAccessBase;
+        
+        // Derive forward operational and semantic bases natively from reconciled globalPaidRes
+        const operationalForwardArray = globalPaidRes.filter(p => p.cancelAtPeriodEnd !== true);
+        const operationalForwardBase = operationalForwardArray.length;
+        
+        const mechanicallyRenewableBase = operationalForwardArray.filter(p => p.subscriptionId !== null).length;
+        const manualLegacyBase = operationalForwardArray.filter(p => p.subscriptionId === null).length;
+        
+        const forwardDemandEligibleBase = operationalForwardArray.filter(p => matchService.isEligibleForMatch(p)).length;
+        const demandEligiblePaidBase = globalPaidRes.filter(p => matchService.isEligibleForMatch(p)).length;
+        
+        const futureDemandEligibilityRate = operationalForwardBase > 0 ? (forwardDemandEligibleBase / operationalForwardBase) : 0;
+
 
         const globalTrialsQuery = `
             SELECT COUNT(*) as total_trials
@@ -268,8 +280,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         const metaMarginalCac = deltaMetaPagantes > 0 ? (deltaMetaSpend / deltaMetaPagantes) : 0;
 
         // Cálculo Dinâmico Real: Renewable Subscriber Base, MRR e Cash-In
-        let renewableSubscriberBase = 0;
-        let renewableDemandEligibleBase = 0;
+        let renewableSubscriberBase = mechanicallyRenewableBase; // Mantido por backward compatibility
+        let renewableDemandEligibleBase = forwardDemandEligibleBase; // Mantido por backward compatibility
         let renewableMRR = 0;
         let cashIn = 0;
         let arpu = 99;
@@ -307,9 +319,37 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         const prevGoogleDeals = parseInt(prevGoogleMetricsRes.total_deals || 0);
         const lostDeals = parseInt(googleMetricsRes.total_lost || 0);
         const pendingDeals = parseInt(googleMetricsRes.total_pending || 0);
+        
+        let googleCpl = null;
+        let googleCplType = 'OBSERVED';
+        if (actualGoogleSpend === 'MISSING_INPUT') {
+            googleCpl = 'MISSING_INPUT';
+            googleCplType = 'MISSING_INPUT';
+        } else if (actualGoogleSpend > 0 && googleWppClicks > 0) {
+            googleCpl = actualGoogleSpend / googleWppClicks;
+        } else if (actualGoogleSpend > 0 && googleWppClicks === 0) {
+            googleCpl = 'INVALID_INPUT';
+            googleCplType = 'SPEND_WITH_ZERO_CLICKS';
+        } else if (actualGoogleSpend === 0 && googleWppClicks > 0) {
+            googleCpl = 'INVALID_INPUT';
+            googleCplType = 'CLICKS_WITH_ZERO_SPEND';
+        } else if (actualGoogleSpend === 0 && googleWppClicks === 0) {
+            googleCpl = null;
+            googleCplType = 'INSUFFICIENT_DATA';
+        }
 
-        const googleCpl = googleWppClicks > 0 ? (actualGoogleSpend / googleWppClicks) : 0;
-        const prevGoogleCpl = prevGoogleWppClicks > 0 ? (actualPrevGoogleSpend / prevGoogleWppClicks) : 0;
+        let prevGoogleCpl = null;
+        if (actualPrevGoogleSpend === 'MISSING_INPUT') {
+            prevGoogleCpl = 'MISSING_INPUT';
+        } else if (actualPrevGoogleSpend > 0 && prevGoogleWppClicks > 0) {
+            prevGoogleCpl = actualPrevGoogleSpend / prevGoogleWppClicks;
+        } else if (actualPrevGoogleSpend > 0 && prevGoogleWppClicks === 0) {
+            prevGoogleCpl = 'INVALID_INPUT';
+        } else if (actualPrevGoogleSpend === 0 && prevGoogleWppClicks > 0) {
+            prevGoogleCpl = 'INVALID_INPUT';
+        } else if (actualPrevGoogleSpend === 0 && prevGoogleWppClicks === 0) {
+            prevGoogleCpl = null;
+        }
 
         const b2cOrganic30dQuery = `
             SELECT 
@@ -328,32 +368,17 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             const priceClinico = settings.price_Clínico > 0 ? settings.price_Clínico : 159.00;
             const priceReference = settings.price_sol > 0 ? settings.price_sol : 259.00;
 
-            const resRenewables = await sequelize.query(`
-                SELECT p.*, s.status as sub_status, s.plan, p."cancelAtPeriodEnd" as p_cancel
-                FROM "Psychologists" p
-                LEFT JOIN "Subscriptions" s ON p."subscriptionId" = s.id
-                WHERE p."deletedAt" IS NULL
-                AND p."planExpiresAt" > NOW()
-                AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
-                AND (p.is_exempt IS NULL OR p.is_exempt = false)
-            `, { type: sequelize.QueryTypes.SELECT });
-
-            for (const r of resRenewables) {
-                if (r.sub_status === 'ACTIVE' && r.p_cancel !== true) {
-                    renewableSubscriberBase++;
-                    if (r.plan === 'ESSENTIAL' || r.plan === 'Essencial') renewableMRR += Number(priceEssencial);
-                    else if (r.plan === 'CLINICAL' || r.plan === 'Clínico') renewableMRR += Number(priceClinico);
-                    else if (r.plan === 'REFERENCE' || r.plan === 'Sol' || r.plan === 'SOL') renewableMRR += Number(priceReference);
+            // Calcular o MRR sobre a população Operational Forward
+            for (const r of operationalForwardArray) {
+                if (r.subscriptionId !== null) {
+                    if (r.plano === 'ESSENTIAL' || r.plano === 'Essencial') renewableMRR += Number(priceEssencial);
+                    else if (r.plano === 'CLINICAL' || r.plano === 'Clínico') renewableMRR += Number(priceClinico);
+                    else if (r.plano === 'REFERENCE' || r.plano === 'Sol' || r.plano === 'SOL') renewableMRR += Number(priceReference);
                     else renewableMRR += Number(priceEssencial);
-
-                    // Check if this renewable user is demand eligible
-                    if (matchService.isEligibleForMatch(r)) {
-                        renewableDemandEligibleBase++;
-                    }
                 }
             }
 
-            if (renewableSubscriberBase > 0) arpu = renewableMRR / renewableSubscriberBase;
+            if (mechanicallyRenewableBase > 0) arpu = renewableMRR / mechanicallyRenewableBase;
 
             
             // --- LEDGER FINANCIAL METRICS ---
@@ -377,6 +402,42 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             // Não usar cashIn = ConfirmedGrossRevenue. A UI legada pode usar o GatewayNetCash para caixa ou ConfirmedGrossRevenue para faturamento
             // Como o nome é "cashIn", deve refletir CAIXA.
             cashIn = GatewayNetCash; 
+            
+            // --- DYNAMIC PROJECTED GATEWAY RATE (ALL TIME) ---
+            const pairedCreditedStats = await sequelize.query(`
+                SELECT 
+                    SUM("grossAmount") as "totalGross",
+                    SUM("feeAmount") as "totalFee",
+                    COUNT(*) as "sampleCount"
+                FROM "PaymentFinancialEvents"
+                WHERE "eventType" = 'PAYMENT_CREDITED'
+                  AND "grossAmount" > 0
+                  AND "feeAmount" >= 0
+                  AND "netCashAmount" IS NOT NULL
+                  AND ABS("grossAmount" - "netCashAmount" - "feeAmount") < 0.05
+            `, { type: sequelize.QueryTypes.SELECT });
+
+            const pStats = pairedCreditedStats[0];
+            const sampleCount = pStats.sampleCount ? parseInt(pStats.sampleCount) : 0;
+            const pairedGross = pStats.totalGross ? parseFloat(pStats.totalGross) : 0;
+            const pairedFee = pStats.totalFee ? parseFloat(pStats.totalFee) : 0;
+            
+            let projectedGatewayRateValue = 'MISSING_INPUT';
+            if (sampleCount > 0 && pairedGross > 0) {
+                projectedGatewayRateValue = pairedFee / pairedGross; // FRACTION (e.g. 0.027140...)
+            }
+
+            const projectedGatewayRate = {
+                value: projectedGatewayRateValue,
+                type: "DERIVED_FROM_OBSERVED",
+                source: "PAIRED_CREDITED_EFFECTIVE_RATE",
+                prospectiveClassification: "CURRENT_OBSERVED_PAYMENT_MIX_CARRY_FORWARD_ASSUMPTION",
+                sampleCount: sampleCount,
+                grossAmount: pairedGross,
+                feeAmount: pairedFee,
+                unit: "FRACTION",
+                window: "ALL_TIME"
+            };
             
             // --- YELO MONTHLY FINANCE SNAPSHOT ---
             const monthStr = dateStart.substring(0, 7);
@@ -476,7 +537,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     OwnerExtraCash,
                     TotalGrowthBudget,
                     MetaGrowthSpend,
-                    AllocatedGoogleGrowthSpend
+                    AllocatedGoogleGrowthSpend,
+                    projectedGatewayRate
                 },
                 cashflow: {
                     GatewayNetCash,
@@ -661,13 +723,20 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         // 6. Motor de Decisão (Google/B2C)
         let decisionEngineGoogle = {
             action: 'RECOLHENDO DADOS ⏳', confidence: 0, target: 8, // Target CPL B2C (Custo por Lead/Clique WPP)
-            scaleCapacity: 'BAIXA', trend: googleCpl - prevGoogleCpl, warning: null, recommendation: 'Aguarde mais volume de cliques.'
+            scaleCapacity: 'BAIXA', trend: (typeof googleCpl === 'number' && typeof prevGoogleCpl === 'number') ? googleCpl - prevGoogleCpl : null, warning: null, recommendation: 'Aguarde mais volume de cliques.'
         };
         if (wppClicks < 10) {
             decisionEngineGoogle.warning = `Amostra pequena (${wppClicks} cliques WPP). O custo por lead pode variar muito.`;
         }
 
-        if (actualGoogleSpend > 0) {
+        if (actualGoogleSpend === 'MISSING_INPUT') {
+            decisionEngineGoogle.warning = 'Gastos do Google Ads não puderam ser lidos.';
+        } else if (actualGoogleSpend > 0 && googleWppClicks === 0) {
+            decisionEngineGoogle.action = 'PAUSAR / INVESTIGAR 🚨';
+            decisionEngineGoogle.confidence = 90;
+            decisionEngineGoogle.scaleCapacity = 'ZERO';
+            decisionEngineGoogle.recommendation = 'Gasto no Google sem gerar nenhum contato WPP. Reveja as palavras-chave ou a landing page.';
+        } else if (typeof googleCpl === 'number') {
             const isCplHealthy = googleCpl <= decisionEngineGoogle.target;
             const isMarginalDangerous = googleMarginalCpl > (decisionEngineGoogle.target * 1.5);
 
@@ -680,14 +749,9 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 decisionEngineGoogle.action = 'TETO DE EFICIÊNCIA ⚖️';
                 decisionEngineGoogle.confidence = 80;
                 decisionEngineGoogle.scaleCapacity = 'LIMITADA';
-                decisionEngineGoogle.warning = decisionEngineGoogle.warning || 'O custo marginal do lead (R$ ' + googleMarginalCpl.toFixed(2) + ') está subindo rápido.';
+                decisionEngineGoogle.warning = decisionEngineGoogle.warning || 'O custo marginal do lead (R$ ' + (typeof googleMarginalCpl === 'number' ? googleMarginalCpl.toFixed(2) : '?') + ') está subindo rápido.';
                 decisionEngineGoogle.recommendation = 'Mantenha o orçamento do Google. O aumento recente trouxe contatos mais caros.';
-            } else if (wppClicks === 0 && actualGoogleSpend > 50) {
-                decisionEngineGoogle.action = 'PAUSAR / INVESTIGAR 🚨';
-                decisionEngineGoogle.confidence = 90;
-                decisionEngineGoogle.scaleCapacity = 'ZERO';
-                decisionEngineGoogle.recommendation = 'Gasto no Google sem gerar nenhum contato WPP. Reveja as palavras-chave ou a landing page.';
-            } else if (!isCplHealthy && actualGoogleSpend > 0) {
+            } else if (!isCplHealthy) {
                 decisionEngineGoogle.action = 'OTIMIZAR / REDUZIR 📉';
                 decisionEngineGoogle.confidence = 85;
                 decisionEngineGoogle.scaleCapacity = 'BAIXA';
@@ -850,10 +914,13 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             console.error('[CMO Metrics] Erro calculando Eficiência Comercial:', effError);
         }
 
-        // --- SIMULADOR MOTOR DE CRESCIMENTO (90 DIAS) ---
+        // --- SIMULADOR MOTOR DE CRESCIMENTO ---
         let simMetaCac = null;
         let simMetaCacType = 'OBSERVED';
-        let simGoogleCpl = 40;
+        
+        // Google Baseline Config
+        const baselineGoogleWindowDays = 30;
+        let simGoogleCpl = null;
         let simTrialConv = null;
         let simChurn = null;
         let simChurnType = 'ASSUMED';
@@ -861,6 +928,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         let simTrialConvSource = null;
         let simChurnSource = null;
         let knownScheduledChurn = 0;
+        let simGoogleCplType = 'OBSERVED';
+        let simGoogleCplSource = 'GOOGLE_ADS_API_B2C_SPEND_INTERNAL_RAW_WPP_CLICKS';
 
         try {
             const dateEnd90 = new Date(dateEnd + 'T23:59:59.999Z');
@@ -868,19 +937,20 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             dateStart90.setDate(dateStart90.getDate() - 90);
             const dateStart90Str = dateStart90.toISOString().split('T')[0];
 
-            const [metaCampaigns90, googleCampaigns90] = await Promise.all([
+            const dateStartBaseline = new Date(dateEnd90);
+            dateStartBaseline.setDate(dateStartBaseline.getDate() - baselineGoogleWindowDays);
+            const dateStartBaselineStr = dateStartBaseline.toISOString().split('T')[0];
+
+            const [metaCampaigns90, googleCampaignsBaseline] = await Promise.all([
                 metaAdsService.getCampaignInsights(dateStart90Str, dateEnd),
-                fetchGoogleAds(dateStart90Str, dateEnd)
+                fetchGoogleAds(dateStartBaselineStr, dateEnd)
             ]);
 
             const isMetaApiError90 = metaCampaigns90 && metaCampaigns90.length > 0 && (metaCampaigns90[0].id === 'ERRO' || metaCampaigns90[0].id === 'ERRO_API');
             const metaSpend90 = getTargetSpend(metaCampaigns90, '120251213168140531', false);
             
-            // Correção: Gasto Google REAL de 90 dias lido do banco (ManualAdMetrics)
-            const googleManual90 = await db.ManualAdMetric.findAll({
-                where: { platform: 'google', dateEnd: { [Op.gte]: dateStart90Str } }
-            });
-            const googleSpend90 = googleManual90.reduce((acc, curr) => acc + parseFloat(curr.spend), 0);
+            // Correção: Gasto Google REAL de 30 dias lido via API
+            const googleSpendBaseline = getTargetSpend(googleCampaignsBaseline, 'Yelo MVP - Busca SP', true);
 
 
             const [metaMetrics90Res] = await sequelize.query(b2bQuery, {
@@ -949,22 +1019,33 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             simChurnSource = 'CONSERVATIVE_EARLY_STAGE_CHURN_ASSUMPTION';
 
 
-            const b2cQuery90 = `
+            const b2cQueryBaseline = `
                 SELECT 
                     COUNT(*) as wpp_clicks,
                     SUM(CASE WHEN "utmSource" IN ('google', 'google_ads', 'gads', 'googleads', 'g_ads', 'cpc') THEN 1 ELSE 0 END) as google_wpp_clicks
                 FROM "WhatsAppClickLogs"
                 WHERE "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
             `;
-            const [googleMetrics90Res] = await sequelize.query(b2cQuery90, {
-                replacements: { dateStart: dateStart90Str, nextDayStr }, type: sequelize.QueryTypes.SELECT
+            const [googleMetricsBaselineRes] = await sequelize.query(b2cQueryBaseline, {
+                replacements: { dateStart: dateStartBaselineStr, nextDayStr }, type: sequelize.QueryTypes.SELECT
             });
-            const googleWppClicks90 = parseInt(googleMetrics90Res.google_wpp_clicks || 0);
+            const googleWppClicksBaseline = parseInt(googleMetricsBaselineRes.google_wpp_clicks || 0);
             
-            if (googleWppClicks90 > 0) {
-                simGoogleCpl = googleSpend90 / googleWppClicks90;
-            } else if (googleSpend90 > 0) {
-                simGoogleCpl = googleSpend90 / 1;
+            if (googleSpendBaseline === 'MISSING_INPUT') {
+                simGoogleCpl = null;
+                simGoogleCplType = 'MISSING_INPUT';
+                simGoogleCplSource = 'GOOGLE_ADS_API';
+            } else if (googleSpendBaseline > 0 && googleWppClicksBaseline > 0) {
+                simGoogleCpl = googleSpendBaseline / googleWppClicksBaseline;
+            } else if (googleSpendBaseline > 0 && googleWppClicksBaseline === 0) {
+                simGoogleCpl = null;
+                simGoogleCplType = 'SPEND_WITH_ZERO_CLICKS';
+            } else if (googleSpendBaseline === 0 && googleWppClicksBaseline > 0) {
+                simGoogleCpl = null;
+                simGoogleCplType = 'CLICKS_WITH_ZERO_SPEND';
+            } else if (googleSpendBaseline === 0 && googleWppClicksBaseline === 0) {
+                simGoogleCpl = null;
+                simGoogleCplType = 'INSUFFICIENT_DATA';
             }
         } catch (simError) {
             console.error('[CMO Metrics] Erro calculando Simulador 90d:', simError);
@@ -1007,14 +1088,31 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             
             simulator: {
                 cac: { value: simMetaCac, type: simMetaCacType },
-                cpl: { value: simGoogleCpl, type: 'OBSERVED' },
+                cpl: { value: simGoogleCpl, type: simGoogleCplType, source: simGoogleCplSource, windowDays: baselineGoogleWindowDays },
                 trialConv: { value: simTrialConv, type: simTrialConvType, source: simTrialConvSource },
                 churn: { value: simChurn, type: simChurnType, source: simChurnSource },
                 knownScheduledChurn,
+                
+                // M1 Snapshot & Forward Bases
+                currentPaidAccessBase: totalActive,
+                operationalForwardBase,
+                
+                mechanicallyRenewableBase: { value: mechanicallyRenewableBase, type: 'OBSERVED', source: 'RECONCILED_MECHANICALLY_RENEWABLE_BASE' },
+                manualLegacyBase: { value: manualLegacyBase, type: 'OBSERVED', source: 'UNCONFIRMED_LEGACY_RENEWAL_RUNOFF' },
+                
+                // Demand Bases
+                demandEligiblePaidBase,
+                futureDemandEligibilityRate: { value: futureDemandEligibilityRate, type: 'OBSERVED', source: 'FORWARD_DEMAND_ELIGIBILITY_RATE' },
+                
+                // Policies
+                revenueM1Policy: { type: 'CONFIG', source: 'CONSERVATIVE_FORWARD_REVENUE_POLICY' },
+                demandM1Policy: { type: 'CONFIG', source: 'CASH_CONSERVATIVE_POLICY' },
+
+                // Backward compatibility aliases
                 renewableSubscriberBase,
                 renewableDemandEligibleBase,
-                demandEligiblePaidBase,
-                demandEligibilityRate,
+                demandEligibilityRate: futureDemandEligibilityRate,
+                
                 contactsPerPaidPsiMonth: { value: AggregateDemandBudgetTarget, type: 'CONFIG', source: 'AGGREGATE_DEMAND_BUDGET_TARGET' },
                 organicContacts: { value: organicWppClicks30d, type: 'OBSERVED', source: 'ORGANIC_CONFIRMED_WPP_CLICKS_30D' }
             },
@@ -1023,7 +1121,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             globalInsight: globalInsight,
             ads: {
                 meta: { ...metaSpend, spend: metaSpend.spend, cac: metaCac, marginalCac: metaMarginalCac },
-                google: { ...googleSpend, spend: actualGoogleSpend, cpl: googleCpl, marginalCpl: googleMarginalCpl }
+                google: { ...googleSpend, spend: actualGoogleSpend, cpl: { value: googleCpl, type: googleCplType }, marginalCpl: googleMarginalCpl }
             },
             googleAdsStatus: {
                 available: googleCampaigns.available,

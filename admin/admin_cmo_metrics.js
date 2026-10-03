@@ -402,8 +402,8 @@ function initGrowthSimulator(data) {
                     inputTaxRate.value = ((m.RevenueTaxes / rev) * 100).toFixed(2);
                 }
                 
-                if (typeof m.RealizedGatewayFees === 'number' && m.RealizedGatewayFees !== 'MISSING_INPUT' && !Number.isNaN(m.RealizedGatewayFees)) {
-                    inputGatewayRate.value = ((m.RealizedGatewayFees / rev) * 100).toFixed(2);
+                if (m.projectedGatewayRate && typeof m.projectedGatewayRate.value === 'number' && m.projectedGatewayRate.value !== 'MISSING_INPUT' && !Number.isNaN(m.projectedGatewayRate.value)) {
+                    inputGatewayRate.value = (m.projectedGatewayRate.value * 100).toFixed(4);
                 }
                 
                 if (typeof m.OtherVariableOperatingCosts === 'number' && m.OtherVariableOperatingCosts !== 'MISSING_INPUT' && !Number.isNaN(m.OtherVariableOperatingCosts)) {
@@ -619,11 +619,16 @@ function initGrowthSimulator(data) {
         const varCostRate = getNumericSimInput(inputVarCostRate, true);
         
         // 1. BASE INICIAL VEM DA PRODUÇÃO ATUAL (Motor Final)
-        // Ignora simTrackingStartSubs (25) e usa activePaidAccessBase (29)
-        const activePaidAccessBase = data.platform.b2b.total_active || 0;
-        const renewableSubscriberBase = data.simulator?.renewableSubscriberBase || activePaidAccessBase;
+        const currentPaidAccessBase = data.simulator?.currentPaidAccessBase || data.platform.b2b.total_active || 0;
+        const operationalForwardBase = data.simulator?.operationalForwardBase || Math.max(0, currentPaidAccessBase - (data.simulator?.knownScheduledChurn || 0));
+        const mechanicallyRenewableBase = data.simulator?.mechanicallyRenewableBase?.value || operationalForwardBase;
+        const manualLegacyBase = data.simulator?.manualLegacyBase?.value || 0;
+        
+        const demandEligiblePaidBase = data.simulator?.demandEligiblePaidBase || 0;
+        const futureDemandEligibilityRate = data.simulator?.futureDemandEligibilityRate?.value || 0;
+        
         const knownScheduledChurn = data.simulator?.knownScheduledChurn || 0;
-        const baseEligibleForProjection = Math.max(0, activePaidAccessBase - knownScheduledChurn);
+        const baseEligibleForProjection = operationalForwardBase;
         
         function getSimValue(obj) {
             if (!obj) return null;
@@ -662,11 +667,12 @@ function initGrowthSimulator(data) {
             metaDataSource = 'MANUAL_SCENARIO';
         }
         
+        const activePaidAccessBase = data.platform?.b2b?.total_active || 0;
         const arpu = data.platform?.b2b?.arpu || 99;
         const contactsPerPaidPsiMonth = data.simulator?.contactsPerPaidPsiMonth?.value;
         const contactsThresholdSource = data.simulator?.contactsPerPaidPsiMonth?.type || 'ASSUMED';
         
-        let demandEligibilityRate = data.simulator?.demandEligibilityRate;
+        let demandEligibilityRate = data.simulator?.demandEligibilityRate; // Backward compat
         if (demandEligibilityRate === 'MISSING_INPUT' || demandEligibilityRate === undefined || demandEligibilityRate === null) {
             demandEligibilityRate = 0;
         }
@@ -704,7 +710,7 @@ function initGrowthSimulator(data) {
         const verifiedOrganicContacts = (includeOrganic && data.simulator?.organicContacts?.value) ? data.simulator.organicContacts.value : 0; 
         const newOrganicActive = (includeOrganic && data.platform?.b2b?.organic_active) ? data.platform.b2b.organic_active : 0; 
 
-        const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+        window.formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
         // Snowball Projection (Motor Final validado)
         const targetMonths = 12;
@@ -731,6 +737,11 @@ function initGrowthSimulator(data) {
         
         if (!isSimulationPossible) {
             const warningEl = document.getElementById('sim-res-warning');
+            const actionPlanContainer = document.getElementById('sim-action-plan');
+            const founderDecisionContainer = document.getElementById('founder-decision-container');
+
+            if (founderDecisionContainer) founderDecisionContainer.style.display = 'none';
+
             if (warningEl) {
                 warningEl.style.display = 'block';
                 warningEl.style.backgroundColor = '#fef2f2';
@@ -772,10 +783,10 @@ function initGrowthSimulator(data) {
         }
 
         const simResult = runGrowthSimulationMath({
-            targetMonths, currentBase: startingRetroBase, arpu, demandEligibilityRate, contactsPerPaidPsiMonth, verifiedOrganicContacts, cplGoogle,
+            targetMonths, currentBase: startingRetroBase, arpu, demandEligibilityRate, futureDemandEligibilityRate, demandEligiblePaidBase, contactsPerPaidPsiMonth, verifiedOrganicContacts, cplGoogle,
             reinvestRate, extraCash, rolloverCash, histMetaMonthlySpendAvg: effectiveHistMetaSpend, cacMeta: effectiveCacMeta, trialConversionRate, monthlyChurn, newOrganicActive,
-            renewableSubscriberBase, knownScheduledChurn, retroMonths,
-            realCurrentBase: data.platform.b2b.total_active,
+            mechanicallyRenewableBase, manualLegacyBase, knownScheduledChurn, retroMonths,
+            realCurrentBase: currentPaidAccessBase, operationalForwardBase,
             pnl: data.platform?.pnl, cacDegradation, cplDegradation,
             fixedOPEX, taxRate, gatewayRate, varCostRate, metaScalePenalty
         });
@@ -909,6 +920,10 @@ function initGrowthSimulator(data) {
                 warningEl.innerHTML = `✅ <b>Motor Girando:</b> Hoje há ${activePaidAccessBase} profissionais com acesso pago, dos quais ${baseEligibleForProjection} fazem parte da base elegível para projeção de recorrência (exclui apenas cancelamentos agendados). Em 12 meses, o Motor projeta essa base de ${currentBase} para ${Math.floor(baseAt12)} assinantes, considerando reinvestimento de ${reinvestRate}% da Sobra Operacional.`;
             }
         }
+
+        // FOUNDER DECISION UI INJECTION
+        const p = { retroMonths, extraCash };
+        buildFounderDecisionModel(simResult, p, activePaidAccessBase);
 
         // Action Plan
         const actionPlanContainer = document.getElementById('sim-action-plan');
@@ -1472,6 +1487,7 @@ function runGrowthSimulationMath(p) {
     const dataStabilityFundingDeficit = [];
     const dataSafeProfit = [];
     const dataReservedCash = [];
+    const auditDiagnostics = [null]; // 0-indexed matches months
     
     let currentBase = p.currentBase;
     const retroMonths = p.retroMonths || 0;
@@ -1479,8 +1495,8 @@ function runGrowthSimulationMath(p) {
 
     // Ponto 0 (Início da simulação)
     labels.push(retroMonths > 0 ? `-${retroMonths}M` : `Hoje`);
-    dataExpectedBase.push(Math.round(currentBase));
-    dataRevenue.push(currentBase * p.arpu);
+    dataExpectedBase.push(Math.round(p.realCurrentBase ?? currentBase)); // Display "Hoje" usa realCurrentBase (30)
+    dataRevenue.push(p.mechanicallyRenewableBase * p.arpu || currentBase * p.arpu); // Conservative M0 Revenue
     dataCosts.push(null);
     dataCashflow.push(null);
     dataMetaBudget.push(null);
@@ -1522,14 +1538,26 @@ function runGrowthSimulationMath(p) {
     let replacementGapM1 = 0, paidReplacementShortfallM1 = 0, stabilityFundingRequiredM1 = 0;
     let stabilityFundingUsedM1 = 0, stabilityFundingDeficitM1 = 0, safeProfitM1 = 0;
     let reservedCashM1 = 0;
+    let initialRolloverCashM1 = 0;
+    let finalRolloverCashM1 = 0;
+    let exactBaseEndM1 = 0;
     let reservedCash = 0;
 
     for (let step = 1; step < totalPoints; step++) {
-        let baseStart = currentBase;
-        const startingMrr = baseStart * p.arpu;
-        
         let isHoje = (retroMonths > 0) && (step === retroMonths);
         let isM1 = (step === retroMonths + 1);
+
+        let baseStart = currentBase;
+        
+        if (isM1) {
+            initialRolloverCashM1 = rolloverCash;
+        }
+
+        let revenueBase = baseStart;
+        if (isM1) {
+            revenueBase = p.mechanicallyRenewableBase ?? baseStart;
+        }
+        const startingMrr = revenueBase * p.arpu;
         
         let degradationStep = Math.max(0, step - (retroMonths + 1));
 
@@ -1537,7 +1565,13 @@ function runGrowthSimulationMath(p) {
         const currentCplGoogle = p.cplGoogle * Math.pow(1 + (p.cplDegradation || 0), degradationStep);
         const currentCacMeta = p.cacMeta * Math.pow(1 + (p.cacDegradation || 0), degradationStep);
 
-        const projectedDemandEligibleBase = baseStart * p.demandEligibilityRate;
+        let projectedDemandEligibleBase = 0;
+        if (isM1) {
+            projectedDemandEligibleBase = p.demandEligiblePaidBase ?? baseStart;
+        } else {
+            projectedDemandEligibleBase = baseStart * (p.futureDemandEligibilityRate || p.demandEligibilityRate || 0);
+        }
+        
         const totalContactDemand = projectedDemandEligibleBase * p.contactsPerPaidPsiMonth;
         const requiredGoogleContacts = Math.max(0, totalContactDemand - p.verifiedOrganicContacts);
         const googleMaintenanceCost = requiredGoogleContacts * currentCplGoogle;
@@ -1581,8 +1615,19 @@ function runGrowthSimulationMath(p) {
         let organicFundingRatio = organicTrialCost > 0 ? Math.min(1, Math.max(0, fundedOrganicCost / organicTrialCost)) : 1;
         let fundedOrganicPaidAdditions = projectedOrganicPaidAdditions * organicFundingRatio;
 
-        let expectedChurn = baseStart * p.monthlyChurn;
-        let replacementGap = Math.max(0, expectedChurn - fundedOrganicPaidAdditions);
+        let genericChurnBase = baseStart;
+        if (isM1) {
+            genericChurnBase = p.mechanicallyRenewableBase ?? baseStart;
+        }
+        let expectedGenericChurn = genericChurnBase * p.monthlyChurn;
+        
+        let manualLegacyRunoff = 0;
+        if (isM1) {
+            manualLegacyRunoff = p.manualLegacyBase || 0;
+        }
+        
+        let grossReplacementNeed = expectedGenericChurn + manualLegacyRunoff;
+        let replacementGap = Math.max(0, grossReplacementNeed - fundedOrganicPaidAdditions);
         
         let initialAcq = calculatePaidAcquisition(growthFund, organicTrialCost, currentCacMeta, trialGoogleCostPerPaid, effectiveHistSpend, p.metaScalePenalty, p.trialConversionRate);
         
@@ -1688,8 +1733,8 @@ function runGrowthSimulationMath(p) {
         const actualTrialGoogleSpend = paidTrialGoogleSpend + organicTrialCost;
 
         // Required replacement to maintain base stable
-        let requiredReplacementPaid = Math.max(0, expectedChurn - fundedOrganicPaidAdditions);
-        let churnLoss = expectedChurn;
+        let requiredReplacementPaid = Math.max(0, grossReplacementNeed - fundedOrganicPaidAdditions);
+        let churnLoss = grossReplacementNeed; // Total projected base erosion
 
         currentBase = baseStart + newPaidActive + fundedOrganicPaidAdditions - churnLoss;
         const endOfMonthMRR = currentBase * p.arpu;
@@ -1709,6 +1754,25 @@ function runGrowthSimulationMath(p) {
             labelStr = `Mês ${step}`;
         }
         labels.push(labelStr);
+
+        auditDiagnostics.push({
+            month: step,
+            baseStart,
+            revenueBase,
+            startingMrr,
+            genericChurnBase,
+            expectedGenericChurn,
+            manualLegacyRunoff,
+            grossReplacementNeed,
+            projectedDemandEligibleBase,
+            totalContactDemand,
+            googleMaintenanceCost,
+            taxes,
+            gatewayFees,
+            varOPEX,
+            operatingCashAvailable,
+            actualPaidAcquisitions: newPaidActive
+        });
 
         dataExpectedBase.push(Math.round(currentBase));
         dataRevenue.push(endOfMonthMRR);
@@ -1772,6 +1836,8 @@ function runGrowthSimulationMath(p) {
             stabilityFundingDeficitM1 = stabilityFundingDeficit;
             safeProfitM1 = safeProfit;
             reservedCashM1 = reservedCash;
+            finalRolloverCashM1 = rolloverCash;
+            exactBaseEndM1 = currentBase;
         }
         if (step === totalPoints - 1) { // Mês 12
             mrrAt12 = currentBase * p.arpu;
@@ -1782,8 +1848,8 @@ function runGrowthSimulationMath(p) {
 
         // Re-ancorar a projeção para a realidade a partir de "Hoje", 
         // para que Mês 1 em diante não herde a defasagem projetada do passado.
-        if (isHoje && p.realCurrentBase !== undefined) {
-            currentBase = p.realCurrentBase;
+        if (isHoje && p.operationalForwardBase != null) {
+            currentBase = p.operationalForwardBase;
         }
     }
     
@@ -1795,11 +1861,12 @@ function runGrowthSimulationMath(p) {
         blendedAcquisitionCostM1, churnLossBaseM1, requiredReplacementPaidM1, metaExtrapolationMultipleM1,
         organicTrialCostM1, organicCostCoveredByGrowthM1, organicCostCoveredByRetainedM1, unfundedOrganicCostM1,
         projectedOrganicPaidAdditionsM1, organicFundingRatioM1, fundedOrganicPaidAdditionsM1, fundedOrganicCostM1,
-        replacementGapM1, paidReplacementShortfallM1, stabilityFundingRequiredM1, stabilityFundingUsedM1, stabilityFundingDeficitM1, safeProfitM1, reservedCashM1,
+        replacementGapM1, paidReplacementShortfallM1, stabilityFundingRequiredM1, stabilityFundingUsedM1, stabilityFundingDeficitM1, safeProfitM1, reservedCashM1, initialRolloverCashM1, finalRolloverCashM1, exactBaseEndM1,
         dataOperatingCashAvailable, dataCurrentMonthGrowthAllocation, dataRetainedOperatingCash, dataGrowthFund, dataRolloverCash,
         dataMetaExtrapolationMultiple, dataOrganicTrialCost, dataOrganicCostCoveredByGrowth, dataOrganicCostCoveredByRetained, dataUnfundedOrganicCost,
         dataProjectedOrganicPaidAdditions, dataOrganicFundingRatio, dataFundedOrganicPaidAdditions, dataFundedOrganicCost,
-        dataReplacementGap, dataPaidReplacementShortfall, dataStabilityFundingRequired, dataStabilityFundingUsed, dataStabilityFundingDeficit, dataSafeProfit, dataReservedCash
+        dataReplacementGap, dataPaidReplacementShortfall, dataStabilityFundingRequired, dataStabilityFundingUsed, dataStabilityFundingDeficit, dataSafeProfit, dataReservedCash,
+        auditDiagnostics: auditDiagnostics
     };
 }
 
@@ -1807,6 +1874,285 @@ if (typeof module !== 'undefined') {
     module.exports = { runGrowthSimulationMath };
 }
 
+
+function buildFounderDecisionModel(simResult, p, activePaidAccessBase) {
+    const retroMonths = p.retroMonths || 0;
+    const m1Diag = simResult.auditDiagnostics.find(a => a && a.month === (retroMonths + 1));
+    if (!m1Diag) return;
+
+    const opCash = m1Diag.operatingCashAvailable || 0;
+    const extraCash = p.extraCash || 0;
+    const initRollover = simResult.initialRolloverCashM1 || 0;
+
+    const totalSources = opCash + extraCash + initRollover;
+
+    const organicFunding = (simResult.organicCostCoveredByGrowthM1 || 0) + (simResult.organicCostCoveredByRetainedM1 || 0);
+    const metaSpend = simResult.actionMetaSpend || 0;
+    const trialSpend = simResult.actionTrialGoogleSpend || 0;
+    const acquisitionDestination = organicFunding + metaSpend + trialSpend;
+
+    const finalRollover = simResult.finalRolloverCashM1 || 0;
+    const reserved = simResult.reservedCashM1 || 0;
+    const retainedDestination = finalRollover + reserved;
+
+    const safeProfit = simResult.safeProfitM1 || 0;
+
+    const totalDestinations = acquisitionDestination + retainedDestination + safeProfit;
+
+    const delta = Math.abs(totalSources - totalDestinations);
+    if (!Number.isFinite(totalSources) || !Number.isFinite(totalDestinations)) {
+        return;
+    }
+
+    let container = document.getElementById('founder-decision-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'founder-decision-container';
+        container.style.marginTop = '20px';
+        container.style.padding = '20px';
+        container.style.backgroundColor = '#fff';
+        container.style.border = '1px solid #e2e8f0';
+        container.style.borderRadius = '8px';
+        container.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+
+        const warningEl = document.getElementById('sim-res-warning');
+        if (warningEl) {
+            warningEl.parentNode.insertBefore(container, warningEl.nextSibling);
+        }
+    }
+    
+    container.style.display = 'block';
+
+    if (delta > 0.01) {
+        container.innerHTML = `<div style="color: #991b1b; background: #fef2f2; padding: 15px; border-radius: 6px;">
+            ⚠️ Não foi possível reconciliar a distribuição do caixa deste cenário (Delta: ${formatBRL(delta)}).
+        </div>`;
+        return;
+    }
+
+    const stabilityFundingUsed = simResult.stabilityFundingUsedM1 || 0;
+    const stabilityFundingDeficit = simResult.stabilityFundingDeficitM1 || 0;
+    const unresolved = simResult.stabilityFundingRequiredM1 === null;
+
+    const exactBaseEnd = simResult.exactBaseEndM1 || 0;
+    const stabilityTarget = m1Diag.baseStart;
+
+    let baseStatus = 'AT_TARGET';
+    if (unresolved) {
+        baseStatus = 'UNRESOLVED';
+    } else if (exactBaseEnd < stabilityTarget - 0.001) {
+        baseStatus = 'BELOW_TARGET';
+    } else if (exactBaseEnd > stabilityTarget + 0.001) {
+        baseStatus = 'ABOVE_TARGET';
+    }
+
+    let profitStatus = 'NO_SAFE_PROFIT';
+    if (unresolved) {
+        profitStatus = 'UNRESOLVED';
+    } else if (safeProfit > 0) {
+        profitStatus = 'SAFE_PROFIT_AVAILABLE';
+    }
+
+    let execMessage = '';
+    let sevColor = '#475569';
+    let sevBg = '#f8fafc';
+
+    if (unresolved) {
+        execMessage = "O Motor não conseguiu encontrar uma alocação segura para preservar a base nas premissas atuais. O caixa permanece retido até que o cenário seja ajustado.";
+        sevColor = '#991b1b'; sevBg = '#fef2f2';
+    } else if (baseStatus === 'BELOW_TARGET' && profitStatus === 'NO_SAFE_PROFIT') {
+        execMessage = "Nas premissas atuais, todo o caixa disponível é consumido pela aquisição e ainda existe um déficit de financiamento de " + formatBRL(stabilityFundingDeficit) + " para atingir a meta de estabilidade. Esse déficit não significa necessariamente um aporte recomendado: ele também pode ser reduzido por melhora de CPL/CAC, churn ou aquisição orgânica.";
+        sevColor = '#9a3412'; sevBg = '#fff7ed';
+    } else if (baseStatus === 'AT_TARGET' && profitStatus === 'NO_SAFE_PROFIT') {
+        execMessage = "Nas premissas atuais, o caixa disponível é suficiente para preservar a base operacional, mas não há lucro seguro disponível neste ciclo.";
+        sevColor = '#475569'; sevBg = '#f8fafc';
+    } else if (baseStatus === 'AT_TARGET' && profitStatus === 'SAFE_PROFIT_AVAILABLE') {
+        execMessage = "Nas premissas atuais, a base operacional é preservada e há " + formatBRL(safeProfit) + " de lucro seguro disponível neste ciclo.";
+        sevColor = '#166534'; sevBg = '#f0fdf4';
+    } else if (baseStatus === 'ABOVE_TARGET' && profitStatus === 'NO_SAFE_PROFIT') {
+        execMessage = "Nas premissas atuais, a base operacional cresce, mas todo o caixa permanece comprometido com aquisição e operação.";
+        sevColor = '#475569'; sevBg = '#f8fafc';
+    } else if (baseStatus === 'ABOVE_TARGET' && profitStatus === 'SAFE_PROFIT_AVAILABLE') {
+        execMessage = "Nas premissas atuais, a base operacional cresce e há " + formatBRL(safeProfit) + " de lucro seguro disponível neste ciclo.";
+        sevColor = '#166534'; sevBg = '#f0fdf4';
+    }
+
+    const replacementPaidAcquisitions = Math.min(m1Diag.actualPaidAcquisitions, m1Diag.grossReplacementNeed);
+    const growthPaidAcquisitions = Math.max(0, m1Diag.actualPaidAcquisitions - m1Diag.grossReplacementNeed);
+
+    let sourcesHtml = `
+        <div style="font-size: 0.9rem; margin-bottom: 5px; display: flex; justify-content: space-between;">
+            <span style="color: #64748b;">Caixa disponível para alocação</span>
+            <strong style="color: #334155; font-size: 1.1rem;">${formatBRL(totalSources)}</strong>
+        </div>
+    `;
+    if (extraCash > 0 || initRollover > 0) {
+        sourcesHtml += `
+        <div style="margin-left: 10px; border-left: 2px solid #e2e8f0; padding-left: 10px; font-size: 0.8rem; color: #64748b;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <span>Gerado pela operação</span><span>${formatBRL(opCash)}</span>
+            </div>
+            ${extraCash > 0 ? `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <span>Aporte adicional</span><span>${formatBRL(extraCash)}</span>
+            </div>` : ''}
+            ${initRollover > 0 ? `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <span>Saldo do ciclo anterior</span><span>${formatBRL(initRollover)}</span>
+            </div>` : ''}
+        </div>
+        `;
+    }
+
+    let destinationsHtml = `
+        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <span style="font-weight: 600; color: #334155; display:flex; align-items:center; gap:5px;" title="Gasto efetivo consolidado com Meta, Google Trials e Orgânico Obrigatório.">
+                    Investimento em aquisição <span style="font-size:0.75rem; background:#e2e8f0; padding:1px 5px; border-radius:10px; color:#475569; cursor:help;">?</span>
+                </span>
+                <strong style="color: #0f172a;">${formatBRL(acquisitionDestination)}</strong>
+            </div>
+    `;
+    if (stabilityFundingUsed > 0 || stabilityFundingDeficit > 0) {
+        destinationsHtml += `
+            <div style="margin-left: 15px; border-left: 2px solid #cbd5e1; padding-left: 10px; margin-top: 5px; font-size: 0.8rem; color: #64748b;">
+                ${stabilityFundingUsed > 0 ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #b45309;" title="Parcela do caixa que originalmente seria retida, mas foi automaticamente redirecionada para tentar bater a meta de reposição da base.">
+                    <span>↳ Redirecionado para proteção</span>
+                    <span>${formatBRL(stabilityFundingUsed)}</span>
+                </div>` : ''}
+                ${stabilityFundingDeficit > 0 ? `
+                <div style="display: flex; justify-content: space-between; color: #991b1b; font-weight:600;" title="Nas premissas atuais, faltam capacidade de financiamento para atingir a meta de estabilidade.">
+                    <span>↳ Déficit de financiamento</span>
+                    <span>${formatBRL(stabilityFundingDeficit)}</span>
+                </div>` : ''}
+            </div>
+        `;
+    }
+    destinationsHtml += `</div>`;
+
+    destinationsHtml += `
+        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: #334155; display:flex; align-items:center; gap:5px;" title="Budget que não pôde ser investido sem perder eficiência de CAC ou caixa travado por paralisação do Motor.">
+                    Retido na empresa <span style="font-size:0.75rem; background:#e2e8f0; padding:1px 5px; border-radius:10px; color:#475569; cursor:help;">?</span>
+                </span>
+                <strong style="color: #0f172a;">${formatBRL(retainedDestination)}</strong>
+            </div>
+            ${retainedDestination > 0 ? `
+            <div style="margin-left: 15px; border-left: 2px solid #cbd5e1; padding-left: 10px; margin-top: 5px; font-size: 0.8rem; color: #64748b;">
+                ${finalRollover > 0 ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>Saldo para o próximo ciclo</span>
+                    <span>${formatBRL(finalRollover)}</span>
+                </div>` : ''}
+                ${reserved > 0 ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>Reserva de segurança</span>
+                    <span>${formatBRL(reserved)}</span>
+                </div>` : ''}
+            </div>` : ''}
+        </div>
+    `;
+
+    destinationsHtml += `
+        <div style="background: ${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#f0fdf4' : '#f8fafc'}; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid ${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#bbf7d0' : 'transparent'};">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: ${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#166534' : '#334155'}; display:flex; align-items:center; gap:5px;" title="O lucro que você pode retirar neste ciclo sem colocar a base operacional em risco. Garantia restrita ao atual mês de projeção.">
+                    Lucro seguro <span style="font-size:0.75rem; background:${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#dcfce7' : '#e2e8f0'}; padding:1px 5px; border-radius:10px; color:${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#166534' : '#475569'}; cursor:help;">?</span>
+                </span>
+                <strong style="color: ${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#166534' : '#0f172a'};">${formatBRL(safeProfit)}</strong>
+            </div>
+        </div>
+    `;
+
+    let baseColor = baseStatus === 'BELOW_TARGET' ? '#b45309' : (baseStatus === 'UNRESOLVED' ? '#991b1b' : '#334155');
+    let baseBg = baseStatus === 'BELOW_TARGET' ? '#fffbeb' : (baseStatus === 'UNRESOLVED' ? '#fef2f2' : '#f8fafc');
+
+    const baseHtml = `
+        <div style="background: ${baseBg}; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+            <div style="margin-bottom: 10px; font-weight: 600; color: #0f172a;">Saúde da Base Operacional</div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #475569; margin-bottom: 5px;">
+                <span>Acessos pagos hoje</span>
+                <strong>${Math.floor(activePaidAccessBase)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #475569; margin-bottom: 5px;">
+                <span>Base operacional projetada</span>
+                <strong style="color: ${baseColor}">${Math.floor(stabilityTarget)} &rarr; ${exactBaseEnd.toFixed(2).replace('.',',')}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #475569; margin-bottom: 5px;">
+                <span>Meta de estabilidade</span>
+                <strong>${Math.floor(stabilityTarget)}</strong>
+            </div>
+            
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 0.8rem; color: #64748b;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                    <span>Reposição estimada:</span>
+                    <span>${replacementPaidAcquisitions.toFixed(1).replace('.',',')} novos pagantes</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Expansão líquida:</span>
+                    <span>${growthPaidAcquisitions.toFixed(1).replace('.',',')} novos pagantes</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const preAllocationHtml = `
+        <details style="font-size: 0.8rem; color: #64748b; background: #f8fafc; padding: 10px; border-radius: 6px; cursor: pointer;">
+            <summary style="font-weight: 600; color: #475569; outline: none;">Como este caixa foi formado</summary>
+            <div style="margin-top: 10px; cursor: default;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                    <span>MRR Contratual Base</span><span>${formatBRL(m1Diag.startingMrr)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                    <span>(-) Impostos</span><span>${formatBRL(m1Diag.taxes)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                    <span>(-) Gateway</span><span>${formatBRL(m1Diag.gatewayFees)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                    <span>(-) Custos Variáveis</span><span>${formatBRL(m1Diag.varOPEX)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                    <span>(-) OPEX Fixo</span><span>${formatBRL(p.fixedOPEX || 0)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                    <span>(-) Manutenção da demanda</span><span>${formatBRL(m1Diag.googleMaintenanceCost)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-weight: 600; color: #334155; margin-top: 5px; padding-top: 5px; border-top: 1px solid #e2e8f0;">
+                    <span>Caixa Gerado pela Operação</span><span>${formatBRL(opCash)}</span>
+                </div>
+            </div>
+        </details>
+    `;
+
+    container.innerHTML = `
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+            <svg width="20" height="20" fill="none" stroke="#7e22ce" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            Decisão para o próximo ciclo
+        </h3>
+        
+        <div style="background: ${sevBg}; color: ${sevColor}; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5; border-left: 4px solid ${sevColor};">
+            ${execMessage}
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                ${sourcesHtml}
+                <div style="margin: 15px 0; display: flex; align-items: center; color: #94a3b8; font-size: 0.8rem; font-weight: 600; gap: 10px;">
+                    <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+                    Distribuído em
+                    <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+                </div>
+                ${destinationsHtml}
+            </div>
+
+            ${baseHtml}
+            ${preAllocationHtml}
+        </div>
+    `;
+}
 
 // --- SNAPSHOT FUNCTIONS ---
 async function fetchMonthlyFinance(monthYear, managerialData = {}) {
