@@ -1947,69 +1947,85 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
         scenarioMsg = "A base tende a crescer nas premissas atuais.";
     }
 
-    const historicalMetaMonthly = p.histMetaMonthlySpendAvg || 0;
-    const historicalMetaDaily = historicalMetaMonthly / 30.44;
-    const theoreticalMetaMonthly = simResult.actionMetaSpend || 0;
-    const extrapolationMultiple = theoreticalMetaMonthly / (historicalMetaMonthly || 1);
+    let daysInPeriod = 30.44;
+    if (data.period && data.period.dateStart && data.period.dateEnd) {
+        const ds = new Date(data.period.dateStart);
+        const de = new Date(data.period.dateEnd);
+        if (!isNaN(ds) && !isNaN(de)) {
+            daysInPeriod = Math.max(1, (de - ds) / (1000 * 60 * 60 * 24));
+        }
+    }
 
-    let executableMetaMonthly = theoreticalMetaMonthly;
+    const metaConfiguredDailyBudget = parseFloat(data.ads?.meta?.configuredDailyBudget || 0);
+    const metaRecentSpendTotal = (typeof data.ads?.meta?.spend === 'object' ? data.ads.meta.spend.value : data.ads?.meta?.spend) || 0;
+    const metaRecentDailySpend = metaRecentSpendTotal / daysInPeriod;
+
+    const metaCurrentMonthlyContext = metaConfiguredDailyBudget > 0 ? (metaConfiguredDailyBudget * 30.44) : (metaRecentSpendTotal > 0 ? (metaRecentDailySpend * 30.44) : (p.histMetaMonthlySpendAvg || 0));
+
+    const theoreticalMetaMonthly = simResult.actionMetaSpend || 0;
+    const extrapolationMultiple = theoreticalMetaMonthly / (metaCurrentMonthlyContext || 1);
+
+    let metaRecommendedMonthlyBudget = theoreticalMetaMonthly;
     let nextStepScaleStatus = 'HOLD';
     let nextStepMessage = '';
 
     if (extrapolationMultiple <= 1.5) {
-        executableMetaMonthly = theoreticalMetaMonthly;
+        metaRecommendedMonthlyBudget = theoreticalMetaMonthly;
         nextStepScaleStatus = 'SCALE';
-        nextStepMessage = 'Escala próxima do histórico.';
+        nextStepMessage = 'Escala próxima do orçamento/gasto atual.';
     } else if (extrapolationMultiple > 1.5 && extrapolationMultiple <= 3) {
-        executableMetaMonthly = historicalMetaMonthly * 1.25;
+        metaRecommendedMonthlyBudget = metaCurrentMonthlyContext * 1.25;
         nextStepScaleStatus = 'SCALE';
-        nextStepMessage = 'Escala acima do histórico; avance gradualmente.';
+        nextStepMessage = 'Escala acima do atual; avance gradualmente.';
     } else if (extrapolationMultiple > 3 && extrapolationMultiple <= 10) {
-        executableMetaMonthly = historicalMetaMonthly * 1.25;
+        metaRecommendedMonthlyBudget = metaCurrentMonthlyContext * 1.25;
         nextStepScaleStatus = 'SCALE';
         nextStepMessage = 'Escala elevada; valide novos degraus e públicos.';
     } else {
-        executableMetaMonthly = historicalMetaMonthly * 1.25;
+        metaRecommendedMonthlyBudget = metaCurrentMonthlyContext * 1.25;
         nextStepScaleStatus = 'HOLD';
         nextStepMessage = 'Potencial econômico muito acima da capacidade já observada. Não aplicar o orçamento integral na audiência atual. Expanda e valide a aquisição por etapas.';
     }
 
-    if (historicalMetaMonthly === 0 && theoreticalMetaMonthly > 0) {
-        executableMetaMonthly = Math.min(theoreticalMetaMonthly, 1500); // R$ 50/day start
-    } else if (executableMetaMonthly < historicalMetaMonthly) {
-        executableMetaMonthly = historicalMetaMonthly;
+    if (metaCurrentMonthlyContext === 0 && theoreticalMetaMonthly > 0) {
+        metaRecommendedMonthlyBudget = Math.min(theoreticalMetaMonthly, 1500); // R$ 50/day start
+    } else if (metaRecommendedMonthlyBudget < metaCurrentMonthlyContext) {
+        metaRecommendedMonthlyBudget = metaCurrentMonthlyContext;
     }
 
-    const executableMetaDaily = executableMetaMonthly / 30.44;
+    const metaRecommendedDailyBudget = metaRecommendedMonthlyBudget / 30.44;
 
     let actionRecommendation = 'MANTER';
-    if (executableMetaMonthly > historicalMetaMonthly * 1.05) actionRecommendation = 'AUMENTAR';
-    else if (executableMetaMonthly < historicalMetaMonthly * 0.95) actionRecommendation = 'REDUZIR';
+    if (metaRecommendedMonthlyBudget > metaCurrentMonthlyContext * 1.05) actionRecommendation = 'AUMENTAR';
+    else if (metaRecommendedMonthlyBudget < metaCurrentMonthlyContext * 0.95) actionRecommendation = 'REDUZIR';
 
     const safeProfitTarget = 3000;
     const safeProfitGap = Math.max(0, safeProfitTarget - safeProfit);
 
     let metaExecHtml = '';
-    if (theoreticalMetaMonthly > 0 || historicalMetaMonthly > 0) {
+    if (theoreticalMetaMonthly > 0 || metaCurrentMonthlyContext > 0) {
         metaExecHtml = `
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-top: 20px;">
-                <h4 style="margin: 0 0 10px 0; color: #0f172a; font-size: 1.05rem;">META AGORA</h4>
+                <h4 style="margin: 0 0 10px 0; color: #0f172a; font-size: 1.05rem;">META ADS</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem; color: #475569;">
                     <div>
-                        <strong>Orçamento atual:</strong><br>
-                        ${formatBRL(historicalMetaDaily)}/dia<br>
-                        <span style="font-size:0.8rem">≈ ${formatBRL(historicalMetaMonthly)}/mês</span>
+                        <strong>Orçamento configurado hoje:</strong><br>
+                        ${metaConfiguredDailyBudget > 0 ? formatBRL(metaConfiguredDailyBudget) + '/dia' : '<i>Não detectado na API</i>'}<br>
+                        ${metaConfiguredDailyBudget > 0 ? `<span style="font-size:0.8rem">≈ ${formatBRL(metaConfiguredDailyBudget * 30.44)}/mês</span>` : ''}
+                        <br><br>
+                        <strong>Ritmo recente de gasto:</strong><br>
+                        ${formatBRL(metaRecentDailySpend)}/dia
                     </div>
                     <div>
                         <strong>Potencial econômico:</strong><br>
                         <span style="color:#7e22ce; font-weight:600;">${formatBRL(theoreticalMetaMonthly)}/mês</span>
                     </div>
                     <div style="grid-column: 1 / -1; background: #fff; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin-top: 5px;">
-                        <strong style="color: #0f172a;">Próximo orçamento executável:</strong><br>
-                        <span style="font-size: 1.3rem; color: #0f172a; font-weight: 800;">${formatBRL(executableMetaDaily)}/dia</span>
-                        <span style="font-size:0.85rem">≈ ${formatBRL(executableMetaMonthly)}/mês</span>
+                        <strong style="color: #0f172a;">Próximo orçamento recomendado:</strong><br>
+                        <span style="font-size: 1.3rem; color: #0f172a; font-weight: 800;">${formatBRL(metaRecommendedDailyBudget)}/dia</span>
+                        <span style="font-size:0.85rem">≈ ${formatBRL(metaRecommendedMonthlyBudget)}/mês</span>
                         <br><br>
-                        <strong>Ação:</strong> <span style="font-weight: 800; color: ${actionRecommendation === 'AUMENTAR' ? '#059669' : (actionRecommendation === 'REDUZIR' ? '#dc2626' : '#b45309')}">${actionRecommendation}</span><br>
+                        <strong>AÇÃO:</strong> <span style="font-weight: 800; color: ${actionRecommendation === 'AUMENTAR' ? '#059669' : (actionRecommendation === 'REDUZIR' ? '#dc2626' : '#b45309')}">${actionRecommendation}</span><br>
                         <strong>Motivo:</strong> ${nextStepMessage} Extrapolação de ${(extrapolationMultiple).toFixed(1)}x.
                     </div>
                 </div>
@@ -2058,17 +2074,20 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
         </div>
     `;
 
-    const currentGoogleSpend = (typeof data.ads?.google?.spend === 'object' ? data.ads.google.spend.value : data.ads?.google?.spend) || 0;
-    const currentGoogleDaily = currentGoogleSpend / 30.44;
+    const googleConfiguredDailyBudget = parseFloat(data.ads?.google?.configuredDailyBudget || 0);
+    const googleRecentSpendTotal = (typeof data.ads?.google?.spend === 'object' ? data.ads.google.spend.value : data.ads?.google?.spend) || 0;
+    const googleRecentDailySpend = googleRecentSpendTotal / daysInPeriod;
 
     const googleMaintenance = simResult.actionGoogleMaintenance || 0;
     const googleGrowth = simResult.actionTrialGoogleSpend || 0;
-    const recommendedGoogleTotal = googleMaintenance + googleGrowth;
-    const recommendedGoogleDaily = recommendedGoogleTotal / 30.44;
+    const googleRecommendedTotalMonthly = googleMaintenance + googleGrowth;
+    const googleRecommendedDailyBudget = googleRecommendedTotalMonthly / 30.44;
+
+    const googleCurrentMonthlyContext = googleConfiguredDailyBudget > 0 ? (googleConfiguredDailyBudget * 30.44) : (googleRecentDailySpend * 30.44);
 
     let googleActionRecommendation = 'MANTER';
-    if (recommendedGoogleTotal > currentGoogleSpend * 1.05) googleActionRecommendation = 'AUMENTAR';
-    else if (recommendedGoogleTotal < currentGoogleSpend * 0.95) googleActionRecommendation = 'REDUZIR';
+    if (googleRecommendedTotalMonthly > googleCurrentMonthlyContext * 1.05) googleActionRecommendation = 'AUMENTAR';
+    else if (googleRecommendedTotalMonthly < googleCurrentMonthlyContext * 0.95) googleActionRecommendation = 'REDUZIR';
 
     const currentCplObj = data.ads?.google?.cpl;
     const currentCpl = (typeof currentCplObj === 'object' ? currentCplObj.value : currentCplObj) || 0;
@@ -2084,27 +2103,30 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
     }
 
     let googleExecHtml = '';
-    if (recommendedGoogleTotal > 0 || currentGoogleSpend > 0) {
+    if (googleRecommendedTotalMonthly > 0 || googleRecentSpendTotal > 0) {
         googleExecHtml = `
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-top: 15px;">
                 <h4 style="margin: 0 0 10px 0; color: #0f172a; font-size: 1.05rem;">GOOGLE ADS</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem; color: #475569;">
                     <div>
-                        <strong>Hoje:</strong><br>
-                        ${formatBRL(currentGoogleDaily)}/dia<br>
-                        <span style="font-size:0.8rem">≈ ${formatBRL(currentGoogleSpend)}/mês</span>
+                        <strong>Orçamento configurado hoje:</strong><br>
+                        ${googleConfiguredDailyBudget > 0 ? formatBRL(googleConfiguredDailyBudget) + '/dia' : '<i>Não detectado na API</i>'}<br>
+                        ${googleConfiguredDailyBudget > 0 ? `<span style="font-size:0.8rem">≈ ${formatBRL(googleConfiguredDailyBudget * 30.44)}/mês</span>` : ''}
+                        <br><br>
+                        <strong>Ritmo recente de gasto:</strong><br>
+                        ${formatBRL(googleRecentDailySpend)}/dia
                     </div>
                     <div>
-                        <strong>Recomendado:</strong><br>
-                        <span style="color:#7e22ce; font-weight:600;">${formatBRL(recommendedGoogleDaily)}/dia</span><br>
-                        <span style="font-size:0.8rem">≈ ${formatBRL(recommendedGoogleTotal)}/mês</span>
+                        <strong>Necessidade total calculada:</strong><br>
+                        <span style="color:#7e22ce; font-weight:600;">${formatBRL(googleRecommendedDailyBudget)}/dia</span><br>
+                        <span style="font-size:0.8rem">≈ ${formatBRL(googleRecommendedTotalMonthly)}/mês</span>
                     </div>
                     <div style="grid-column: 1 / -1; background: #fff; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin-top: 5px;">
-                        <strong style="color: #0f172a;">Composição Operacional:</strong><br>
+                        <strong style="color: #0f172a;">Composição Operacional Recomendada:</strong><br>
                         <span style="font-size: 0.95rem;">Manutenção da base (recorrente): <strong>${formatBRL(googleMaintenance)}/mês</strong></span><br>
                         <span style="font-size: 0.95rem;">Crescimento B2C (novos pacientes): <strong>${formatBRL(googleGrowth)}/mês</strong></span>
                         <br><br>
-                        <strong>Ação:</strong> <span style="font-weight: 800; color: ${googleActionRecommendation === 'AUMENTAR' ? '#059669' : (googleActionRecommendation === 'REDUZIR' ? '#dc2626' : '#b45309')}">${googleActionRecommendation}</span><br>
+                        <strong>AÇÃO:</strong> <span style="font-weight: 800; color: ${googleActionRecommendation === 'AUMENTAR' ? '#059669' : (googleActionRecommendation === 'REDUZIR' ? '#dc2626' : '#b45309')}">${googleActionRecommendation}</span><br>
                         <strong>Motivo:</strong> ${googleReason}
                     </div>
                 </div>
