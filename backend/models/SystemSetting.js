@@ -77,6 +77,18 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    cmo_sim_fixed_opex: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0
+    },
+    cmo_sim_tax_rate: {
+      type: DataTypes.DECIMAL(5, 4),
+      defaultValue: 0
+    },
+    cmo_sim_other_var_rate: {
+      type: DataTypes.DECIMAL(5, 4),
+      defaultValue: 0
+    },
     tax_variable_rate: {
       type: DataTypes.DECIMAL(5, 4),
       allowNull: true,

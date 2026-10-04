@@ -1055,6 +1055,24 @@ function initGrowthSimulator(data) {
 
         // FOUNDER DECISION UI INJECTION
         const p = { retroMonths, extraCash };
+        console.group('[CMO DEBUG] Founder call site');
+
+        console.log('runSimulation context:', {
+            dataType: typeof data,
+            simResultExists: !!simResult,
+            pExists: !!p,
+            activePaidAccessBase
+        });
+
+        console.log(
+            'data top-level keys:',
+            typeof data !== 'undefined' && data
+                ? Object.keys(data)
+                : null
+        );
+
+        console.groupEnd();
+
         buildFounderDecisionModel(simResult, p, activePaidAccessBase);
 
         // LLM Action Plan removido a pedido do usuário, Founder Decision é a única fonte executiva.
@@ -1847,6 +1865,31 @@ if (typeof module !== 'undefined') {
 
 
 function buildFounderDecisionModel(simResult, p, activePaidAccessBase) {
+    console.group('[CMO DEBUG] buildFounderDecisionModel');
+
+    console.log('arguments received:', {
+        simResultDefined: typeof simResult !== 'undefined',
+        pDefined: typeof p !== 'undefined',
+        activePaidAccessBaseDefined: typeof activePaidAccessBase !== 'undefined',
+        dataType: typeof data
+    });
+
+    console.log('simResult keys:',
+        simResult && typeof simResult === 'object'
+            ? Object.keys(simResult)
+            : simResult
+    );
+
+    console.log('p keys:',
+        p && typeof p === 'object'
+            ? Object.keys(p)
+            : p
+    );
+
+    console.log('activePaidAccessBase:', activePaidAccessBase);
+
+    console.groupEnd();
+
     const retroMonths = p.retroMonths || 0;
     const m1Diag = simResult.auditDiagnostics.find(a => a && a.month === (retroMonths + 1));
     if (!m1Diag) return;
