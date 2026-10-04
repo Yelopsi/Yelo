@@ -1947,19 +1947,104 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
         scenarioMsg = "A base tende a crescer nas premissas atuais.";
     }
 
-    let actionText = `Neste cenário, você tem <strong>${formatBRL(totalSources)}</strong> disponíveis para alocação neste ciclo.`;
-    actionText += `<br><br>Faça o seguinte:<br>`;
+    const historicalMetaMonthly = p.histMetaMonthlySpendAvg || 0;
+    const historicalMetaDaily = historicalMetaMonthly / 30;
+    const theoreticalMetaMonthly = simResult.actionMetaSpend || 0;
+    const extrapolationMultiple = theoreticalMetaMonthly / (historicalMetaMonthly || 1);
+
+    let executableMetaMonthly = theoreticalMetaMonthly;
+    let nextStepScaleStatus = 'HOLD';
+    let nextStepMessage = '';
+
+    if (extrapolationMultiple <= 1.5) {
+        executableMetaMonthly = theoreticalMetaMonthly;
+        nextStepScaleStatus = 'SCALE';
+        nextStepMessage = 'Escala próxima do histórico.';
+    } else if (extrapolationMultiple > 1.5 && extrapolationMultiple <= 3) {
+        executableMetaMonthly = historicalMetaMonthly * 1.25;
+        nextStepScaleStatus = 'SCALE';
+        nextStepMessage = 'Escala acima do histórico; avance gradualmente.';
+    } else if (extrapolationMultiple > 3 && extrapolationMultiple <= 10) {
+        executableMetaMonthly = historicalMetaMonthly * 1.25;
+        nextStepScaleStatus = 'SCALE';
+        nextStepMessage = 'Escala elevada; valide novos degraus e públicos.';
+    } else {
+        executableMetaMonthly = historicalMetaMonthly * 1.25;
+        nextStepScaleStatus = 'HOLD';
+        nextStepMessage = 'Potencial econômico muito acima da capacidade já observada. Não aplicar o orçamento integral na audiência atual. Expanda e valide a aquisição por etapas.';
+    }
+
+    if (historicalMetaMonthly === 0 && theoreticalMetaMonthly > 0) {
+        executableMetaMonthly = Math.min(theoreticalMetaMonthly, 1500); // R$ 50/day start
+    } else if (executableMetaMonthly < historicalMetaMonthly) {
+        executableMetaMonthly = historicalMetaMonthly;
+    }
+
+    const executableMetaDaily = executableMetaMonthly / 30;
+
+    let actionRecommendation = 'MANTER';
+    if (executableMetaMonthly > historicalMetaMonthly * 1.05) actionRecommendation = 'AUMENTAR';
+    else if (executableMetaMonthly < historicalMetaMonthly * 0.95) actionRecommendation = 'REDUZIR';
+
+    const safeProfitTarget = 3000;
+    const safeProfitGap = Math.max(0, safeProfitTarget - safeProfit);
+
+    let metaExecHtml = '';
+    if (theoreticalMetaMonthly > 0 || historicalMetaMonthly > 0) {
+        metaExecHtml = `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-top: 20px;">
+                <h4 style="margin: 0 0 10px 0; color: #0f172a; font-size: 1.05rem;">META AGORA</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem; color: #475569;">
+                    <div>
+                        <strong>Orçamento atual:</strong><br>
+                        ${formatBRL(historicalMetaDaily)}/dia<br>
+                        <span style="font-size:0.8rem">≈ ${formatBRL(historicalMetaMonthly)}/mês</span>
+                    </div>
+                    <div>
+                        <strong>Potencial econômico:</strong><br>
+                        <span style="color:#7e22ce; font-weight:600;">${formatBRL(theoreticalMetaMonthly)}/mês</span>
+                    </div>
+                    <div style="grid-column: 1 / -1; background: #fff; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin-top: 5px;">
+                        <strong style="color: #0f172a;">Próximo orçamento executável:</strong><br>
+                        <span style="font-size: 1.3rem; color: #0f172a; font-weight: 800;">${formatBRL(executableMetaDaily)}/dia</span>
+                        <span style="font-size:0.85rem">≈ ${formatBRL(executableMetaMonthly)}/mês</span>
+                        <br><br>
+                        <strong>Ação:</strong> <span style="font-weight: 800; color: ${actionRecommendation === 'AUMENTAR' ? '#059669' : (actionRecommendation === 'REDUZIR' ? '#dc2626' : '#b45309')}">${actionRecommendation}</span><br>
+                        <strong>Motivo:</strong> ${nextStepMessage} Extrapolação de ${(extrapolationMultiple).toFixed(1)}x.<br>
+                        <strong>Público:</strong> Escala atual baseada principalmente em público estreito + Lookalike 1%.<br>
+                        <strong>Próximo experimento de audiência:</strong> Lookalike 2–3% ou broad, conforme experimentos ainda não realizados.<br>
+                        <em><small style="color:#94a3b8; display:block; margin-top:8px;">Verifique se a origem e uso da lista atendem às políticas da Meta e à base legal aplicável antes de utilizá-la como audiência.</small></em>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    let safeProfitHtml = `
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 15px; margin-top: 15px;">
+            <h4 style="margin: 0 0 5px 0; color: #166534; font-size: 1.05rem;">🎯 Objetivo de Retirada (Safe Profit)</h4>
+            <div style="font-size: 0.9rem; color: #15803d; line-height: 1.5;">
+                Safe Profit atual: <strong>${formatBRL(safeProfit)}</strong><br>
+                Meta: <strong>${formatBRL(safeProfitTarget)}</strong><br>
+                Gap: <strong>${formatBRL(safeProfitGap)}</strong>
+                ${safeProfitGap > 0 ? '<br><br><em>Continue priorizando o crescimento da base até atingir o volume necessário para retirar este valor com segurança.</em>' : '<br><br><em>Parabéns! A base atual já suporta sua meta de retirada sem risco à operação.</em>'}
+            </div>
+        </div>
+    `;
+
+    let actionText = `Neste cenário, do ponto de vista teórico, o motor alocaria <strong>${formatBRL(totalSources)}</strong> neste ciclo.`;
+    actionText += `<br><br>Distribuição Teórica de Longo Prazo:<br>`;
     actionText += `<ul style="margin-top: 10px; padding-left: 20px;">`;
-    actionText += `<li>mantenha <strong>${formatBRL(acquisitionDestination)}</strong> destinados à aquisição;</li>`;
-    if (metaSpend > 0) actionText += `<li>desse valor, <strong>${formatBRL(metaSpend)}</strong> vão para Meta Ads;</li>`;
-    if (trialSpend > 0) actionText += `<li><strong>${formatBRL(trialSpend)}</strong> vão para aquisição via Google;</li>`;
-    if (organicFunding > 0) actionText += `<li><strong>${formatBRL(organicFunding)}</strong> são cobertos pelo crescimento orgânico;</li>`;
-    actionText += `<li>mantenha <strong>${formatBRL(retainedDestination)}</strong> dentro da empresa;</li>`;
+    actionText += `<li><strong>${formatBRL(acquisitionDestination)}</strong> capacidade de aquisição total;</li>`;
+    if (metaSpend > 0) actionText += `<li>desse valor, <strong>${formatBRL(metaSpend)}</strong> seria o teto para Meta Ads;</li>`;
+    if (trialSpend > 0) actionText += `<li><strong>${formatBRL(trialSpend)}</strong> para aquisição via Google;</li>`;
+    if (organicFunding > 0) actionText += `<li><strong>${formatBRL(organicFunding)}</strong> cobertos pelo crescimento orgânico;</li>`;
+    actionText += `<li><strong>${formatBRL(retainedDestination)}</strong> retidos no negócio.</li>`;
 
     if (safeProfit > 0) {
-        actionText += `<li>você pode retirar até <strong>${formatBRL(safeProfit)}</strong> neste ciclo sem comprometer a meta de estabilidade nas premissas atuais do modelo.</li>`;
+        actionText += `<li>teoricamente, o modelo permitiria retirar até <strong>${formatBRL(safeProfit)}</strong> sem comprometer a meta de estabilidade.</li>`;
     } else {
-        actionText += `<li>neste cenário, não retire caixa como lucro. O valor disponível está comprometido com aquisição, retenção ou proteção da base.</li>`;
+        actionText += `<li>neste cenário, não retire caixa como lucro. Todo o valor disponível está comprometido com aquisição, retenção ou proteção da base.</li>`;
     }
     actionText += `</ul>`;
 
@@ -2030,6 +2115,8 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
 
         <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 1rem; color: #334155; line-height: 1.6; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             ${actionText}
+            ${metaExecHtml}
+            ${safeProfitHtml}
             ${preAllocationHtml}
         </div>
     `;
