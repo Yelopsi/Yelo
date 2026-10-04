@@ -20,8 +20,8 @@ async function loadCMOMetrics() {
         dateStart = `${year}-${month}-01`;
         dateEnd = `${year}-${month}-${String(endDay).padStart(2, '0')}`;
     }
-    
-    
+
+
 
     const btn = document.querySelector('button[onclick="loadCMOMetrics()"]');
     const originalBtnHTML = btn ? btn.innerHTML : '';
@@ -60,7 +60,7 @@ async function loadCMOMetrics() {
         }
 
         const data = await response.json();
-        
+
         if (data.success) {
             renderCMOMetrics(data);
             loadTrafficMetrics(dateStart, dateEnd, token);
@@ -117,7 +117,7 @@ function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = fa
 
     let comparisonType = '';
     let pct = 0;
-    
+
     if (historicalValue === null || historicalValue === undefined || historicalValue === 'N/A' || isNaN(historicalValue) || isNaN(currentValue)) {
         comparisonType = 'INCOMPLETE';
     } else if (historicalValue === 0 && currentValue > 0) {
@@ -158,7 +158,7 @@ function renderCMOMetrics(data) {
     const formatCurrency = (val) => `R$ ${(val || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
 
     // 1. Atualizar KPIs (B2B e B2C)
-    
+
     // Popula Cards da Inteligência Algorítmica (Funil B2B)
     if (data.platform) {
         // B2B (Meta) KPIs
@@ -176,7 +176,7 @@ function renderCMOMetrics(data) {
         // Eficiência Comercial B2C KPIs
         if (data.efficiency) {
             const parseFloatOrNA = (val) => val === 'N/A' || !val ? 'N/A' : parseFloat(val);
-            
+
             const currGlobal = parseFloatOrNA(data.efficiency.globalEffort);
             const prevGlobal = parseFloatOrNA(data.prevEfficiency?.globalEffort);
             setKpiValueAndTrend('cmo-global-effort', currGlobal, prevGlobal, true, 'decimal');
@@ -200,7 +200,7 @@ function renderCMOMetrics(data) {
                 setKpiValueAndTrend('cmo-ttv-median', currTtv, prevTtv, true, 'days');
                 document.getElementById('cmo-ttv-sub').textContent = `Média: ${data.efficiency.ttvData.mean} dias · amostra: ${data.efficiency.ttvData.sample} profissionais (PROXY)`;
             }
-            
+
             // Channel Efficiency (Ads / Org)
             const elCh = document.getElementById('cmo-channel-efficiency');
             if (elCh) {
@@ -208,7 +208,7 @@ function renderCMOMetrics(data) {
                 const prevAds = parseFloatOrNA(data.prevEfficiency?.adsEffort);
                 const currOrg = parseFloatOrNA(data.efficiency.orgEffort);
                 const prevOrg = parseFloatOrNA(data.prevEfficiency?.orgEffort);
-                
+
                 const calcPct = (c, p) => {
                     if (typeof c === 'number' && typeof p === 'number') {
                         if (p > 0) return ((c - p) / p) * 100;
@@ -216,7 +216,7 @@ function renderCMOMetrics(data) {
                     }
                     return null;
                 };
-                
+
                 const getArrow = (pct) => {
                     if (pct === null) return '';
                     if (pct > 0) return ` <span style="color:#ef4444;font-size:0.85rem">↑${Math.abs(pct).toFixed(1)}%</span>`;
@@ -231,8 +231,8 @@ function renderCMOMetrics(data) {
         }
 
         // Cards de Transparência (seção inferior)
-        const setDbgHist = (id, rawHist, rawMonth, formatType, inverseGood = false) => { 
-            const el = document.getElementById(id); 
+        const setDbgHist = (id, rawHist, rawMonth, formatType, inverseGood = false) => {
+            const el = document.getElementById(id);
             if (!el) return;
 
             let histVal = rawHist;
@@ -261,7 +261,7 @@ function renderCMOMetrics(data) {
 
             let color = '#64748b';
             let arrow = '';
-            
+
             if (pct > 0) {
                 arrow = '↑';
                 color = inverseGood ? '#ef4444' : '#10b981';
@@ -298,7 +298,7 @@ function renderCMOMetrics(data) {
         setDbgHist('dbg-meta-pagantes', data.prevPlatform?.b2b?.active || 0, data.platform.b2b?.active || 0, 'number', false);
         setDbgHist('dbg-meta-cac',      data.prevAds?.meta?.cac || 0, data.ads?.meta?.cac || 0, 'currency', true);
         setDbgHist('dbg-meta-payback',  data.prevDecisionEngineMeta?.paybackMonths || 0, data.decisionEngineMeta?.paybackMonths || 0, 'months', true);
-        
+
         setDbgHist('dbg-meta-churn',    data.prevPlatform?.b2b?.meta_churn_rate || 0, data.platform.b2b?.meta_churn_rate || 0, 'percent', true);
         if (data.simulator?.churn && data.simulator.churn.type === 'ASSUMED') {
             const el = document.getElementById('dbg-global-churn');
@@ -308,11 +308,11 @@ function renderCMOMetrics(data) {
         } else {
             setDbgHist('dbg-global-churn',  data.prevPlatform?.b2b?.global_churn_rate || 0, data.platform.b2b?.global_churn_rate || 0, 'percent', true);
         }
-        
+
         setDbgHist('dbg-google-spend',  data.prevAds?.google?.spend || 0, data.ads?.google?.spend || 0, 'currency', true);
         setDbgHist('dbg-google-clicks', data.prevPlatform?.b2c?.wpp_clicks || 0, data.platform.b2c?.wpp_clicks || 0, 'number', false);
         setDbgHist('dbg-google-deals',  data.prevPlatform?.b2c?.total_deals || 0, data.platform.b2c?.total_deals || 0, 'number', false);
-        setDbgHist('dbg-google-cpl',    data.prevAds?.google?.cpl || 0, data.ads?.google?.cpl || 0, 'currency', true);
+        setDbgHist('dbg-google-cpl',    (data.prevAds?.google?.cpl?.value || data.prevAds?.google?.cpl || 0), (data.ads?.google?.cpl?.value || data.ads?.google?.cpl || 0), 'currency', true);
     }
 
 
@@ -333,7 +333,7 @@ function renderCMOMetrics(data) {
             const prevConversions = prevC.conversions || 0;
             const prevCpc = prevClicks > 0 ? (prevSpend / prevClicks) : 0;
             const prevCostPerConv = prevConversions > 0 ? (prevSpend / prevConversions) : 0;
-            
+
             setKpiValueAndTrend('cmo-meta-impressions-metric', c.impressions || 0, prevC.impressions || 0, false, 'number');
             setKpiValueAndTrend('cmo-meta-clicks-metric', clicks, prevClicks, false, 'number');
             setKpiValueAndTrend('cmo-meta-conversions-metric', conversions, prevConversions, false, 'number');
@@ -358,7 +358,7 @@ function renderCMOMetrics(data) {
             const prevConversions = prevC.conversions || 0;
             const prevCpc = prevClicks > 0 ? (prevSpend / prevClicks) : 0;
             const prevCostPerConv = prevConversions > 0 ? (prevSpend / prevConversions) : 0;
-            
+
             setKpiValueAndTrend('cmo-google-impressions-metric', c.impressions || 0, prevC.impressions || 0, false, 'number');
             setKpiValueAndTrend('cmo-google-clicks-metric', clicks, prevClicks, false, 'number');
             setKpiValueAndTrend('cmo-google-conversions-metric', conversions, prevConversions, false, 'number');
@@ -385,30 +385,124 @@ function initGrowthSimulator(data) {
     const inputGatewayRate = document.getElementById('sim-gateway-rate');
     const inputVarCostRate = document.getElementById('sim-var-cost-rate');
 
+
+    const formatBRLCurrency = (value) => {
+        if (value === null || value === undefined || value === '') return '';
+        let v = String(value).replace(/\D/g, "");
+        if (!v) return "R$ 0,00";
+        v = (parseInt(v, 10) / 100).toFixed(2);
+        v = v.replace(".", ",");
+        v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        return "R$ " + v;
+    };
+    const parseBRLCurrency = (value) => {
+        if (value === null || value === undefined || value === '') return NaN;
+        let v = String(value).replace(/\D/g, "");
+        if (!v) return 0;
+        return parseInt(v, 10) / 100;
+    };
+
+    const formatBRPercent = (value) => {
+        if (value === null || value === undefined || value === '') return '';
+        let v = String(value).replace(/\D/g, "");
+        if (!v) return "0,00%";
+        v = (parseInt(v, 10) / 100).toFixed(2);
+        v = v.replace(".", ",");
+        v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        return v + "%";
+    };
+    const parseBRPercent = (value) => {
+        if (value === null || value === undefined || value === '') return NaN;
+        let v = String(value).replace(/\D/g, "");
+        if (!v) return 0;
+        return parseInt(v, 10) / 100;
+    };
+
+    const formatBRInteger = (value) => {
+        if (value === null || value === undefined || value === '') return '';
+        let v = String(value).replace(/\D/g, "");
+        if (!v) return "";
+        v = parseInt(v, 10).toString();
+        v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        return v;
+    };
+    const parseBRInteger = (value) => {
+        if (value === null || value === undefined || value === '') return NaN;
+        let v = String(value).replace(/\D/g, "");
+        if (!v) return 0;
+        return parseInt(v, 10);
+    };
+
+    const applyMask = (el, formatter) => {
+        if (!el) return;
+        el.type = 'text';
+        el.addEventListener('input', (e) => {
+            let cursorPosition = e.target.selectionStart;
+            let oldLength = e.target.value.length;
+            e.target.value = formatter(e.target.value);
+            let diff = e.target.value.length - oldLength;
+            cursorPosition += diff;
+            try { e.target.setSelectionRange(cursorPosition, cursorPosition); } catch(err) {}
+            if (typeof runSimulation === 'function' && typeof data !== 'undefined') runSimulation(data);
+        });
+        if (el.value && !el.hasAttribute('data-mask-init')) {
+            el.setAttribute('data-mask-init', 'true');
+            let initVal = parseFloat(el.value);
+            if (!isNaN(initVal)) {
+                if (formatter === formatBRPercent || formatter === formatBRLCurrency) {
+                    el.value = formatter((initVal * 100).toFixed(0));
+                } else {
+                    el.value = formatter(initVal.toFixed(0));
+                }
+            }
+        }
+    };
+
+
+    const inputCacDegradation = document.getElementById('sim-cac-degradation');
+    const inputCplDegradation = document.getElementById('sim-cpl-degradation');
+    const inputMetaScalePenalty = document.getElementById('sim-meta-scale-penalty');
+    const inputSimManualCacMeta = document.getElementById('sim-manual-cac-meta');
+    const inputSimManualMetaHistSpend = document.getElementById('sim-manual-meta-hist-spend');
+    const inputSimMetaManualMode = document.getElementById('sim-meta-manual-mode');
+
+    applyMask(inputReinvestRate, formatBRPercent);
+    applyMask(inputExtraCash, formatBRLCurrency);
+    applyMask(inputCuriosityGoal, formatBRInteger);
+    applyMask(inputFixedOpex, formatBRLCurrency);
+    applyMask(inputTaxRate, formatBRPercent);
+    applyMask(inputGatewayRate, formatBRPercent);
+    applyMask(inputVarCostRate, formatBRPercent);
+    applyMask(inputCacDegradation, formatBRPercent);
+    applyMask(inputCplDegradation, formatBRPercent);
+    applyMask(inputMetaScalePenalty, formatBRPercent);
+    applyMask(inputSimManualCacMeta, formatBRLCurrency);
+    applyMask(inputSimManualMetaHistSpend, formatBRLCurrency);
+
+
     // Etapa 2B: Preenchimento automático apenas na carga inicial (Soberania do Usuário)
-    if (inputFixedOpex && !inputFixedOpex.hasAttribute('data-initialized')) {
-        inputFixedOpex.setAttribute('data-initialized', 'true');
-        
+    if (inputGatewayRate && !inputGatewayRate.hasAttribute('data-initialized')) {
+        inputGatewayRate.setAttribute('data-initialized', 'true');
+
         const m = data.platform?.pnl?.managerial;
         if (m) {
-            if (typeof m.FixedOPEX === 'number' && m.FixedOPEX !== 'MISSING_INPUT' && !Number.isNaN(m.FixedOPEX)) {
-                inputFixedOpex.value = m.FixedOPEX;
+            if (m.projectedGatewayRate && typeof m.projectedGatewayRate.value === 'number' && m.projectedGatewayRate.value !== 'MISSING_INPUT' && !Number.isNaN(m.projectedGatewayRate.value)) {
+                inputGatewayRate.value = formatBRPercent((m.projectedGatewayRate.value * 10000).toFixed(0));
             }
-            
-            const rev = typeof m.ConfirmedGrossRevenue === 'number' ? m.ConfirmedGrossRevenue : (typeof m.GrossRevenue === 'number' ? m.GrossRevenue : 0);
-            
-            if (rev > 0) {
-                if (typeof m.RevenueTaxes === 'number' && m.RevenueTaxes !== 'MISSING_INPUT' && !Number.isNaN(m.RevenueTaxes)) {
-                    inputTaxRate.value = ((m.RevenueTaxes / rev) * 100).toFixed(2);
-                }
-                
-                if (m.projectedGatewayRate && typeof m.projectedGatewayRate.value === 'number' && m.projectedGatewayRate.value !== 'MISSING_INPUT' && !Number.isNaN(m.projectedGatewayRate.value)) {
-                    inputGatewayRate.value = (m.projectedGatewayRate.value * 100).toFixed(4);
-                }
-                
-                if (typeof m.OtherVariableOperatingCosts === 'number' && m.OtherVariableOperatingCosts !== 'MISSING_INPUT' && !Number.isNaN(m.OtherVariableOperatingCosts)) {
-                    inputVarCostRate.value = ((m.OtherVariableOperatingCosts / rev) * 100).toFixed(2);
-                }
+        }
+        const inputManualCacMeta = document.getElementById('sim-manual-cac-meta');
+        const inputManualMetaHistSpend = document.getElementById('sim-manual-meta-hist-spend');
+
+        if (inputManualCacMeta && !inputManualCacMeta.hasAttribute('data-initialized')) {
+            inputManualCacMeta.setAttribute('data-initialized', 'true');
+            if (data.historical?.meta?.cac) {
+                inputManualCacMeta.value = formatBRLCurrency((data.historical.meta.cac * 100).toFixed(0));
+            }
+        }
+        if (inputManualMetaHistSpend && !inputManualMetaHistSpend.hasAttribute('data-initialized')) {
+            inputManualMetaHistSpend.setAttribute('data-initialized', 'true');
+            if (data.historical?.meta?.monthly_spend_avg?.value) {
+                inputManualMetaHistSpend.value = formatBRLCurrency((data.historical.meta.monthly_spend_avg.value * 100).toFixed(0));
             }
         }
     }
@@ -427,6 +521,20 @@ function initGrowthSimulator(data) {
         if (inputReinvestRate) inputReinvestRate.disabled = true;
         if (inputExtraCash) inputExtraCash.disabled = true;
         if (inputCuriosityGoal) inputCuriosityGoal.disabled = true;
+        if (inputCacDegradation) inputCacDegradation.disabled = true;
+        if (inputCplDegradation) inputCplDegradation.disabled = true;
+        if (inputMetaScalePenalty) inputMetaScalePenalty.disabled = true;
+        if (inputSimMetaManualMode) inputSimMetaManualMode.disabled = true;
+        if (inputSimManualCacMeta) inputSimManualCacMeta.disabled = true;
+        if (inputSimManualMetaHistSpend) inputSimManualMetaHistSpend.disabled = true;
+        const simIncludeOrganic = document.getElementById('sim-include-organic');
+        if (simIncludeOrganic) simIncludeOrganic.disabled = true;
+
+        if (inputFixedOpex) inputFixedOpex.disabled = true;
+        if (inputTaxRate) inputTaxRate.disabled = true;
+        if (inputGatewayRate) inputGatewayRate.disabled = true;
+        if (inputVarCostRate) inputVarCostRate.disabled = true;
+
         newBtnSave.textContent = 'Alterar Parâmetros';
         newBtnSave.style.background = '#f59e0b';
     };
@@ -435,6 +543,26 @@ function initGrowthSimulator(data) {
         if (inputReinvestRate) inputReinvestRate.disabled = false;
         if (inputExtraCash) inputExtraCash.disabled = false;
         if (inputCuriosityGoal) inputCuriosityGoal.disabled = false;
+        if (inputCacDegradation) inputCacDegradation.disabled = false;
+        if (inputCplDegradation) inputCplDegradation.disabled = false;
+        if (inputMetaScalePenalty) inputMetaScalePenalty.disabled = false;
+        if (inputSimMetaManualMode) inputSimMetaManualMode.disabled = false;
+        const simIncludeOrganic = document.getElementById('sim-include-organic');
+        if (simIncludeOrganic) simIncludeOrganic.disabled = false;
+
+        if (inputFixedOpex) inputFixedOpex.disabled = false;
+        if (inputTaxRate) inputTaxRate.disabled = false;
+        if (inputGatewayRate) inputGatewayRate.disabled = true; // Gateway remains automatic
+        if (inputVarCostRate) inputVarCostRate.disabled = false;
+
+        if (inputSimMetaManualMode && inputSimMetaManualMode.checked) {
+            if (inputSimManualCacMeta) inputSimManualCacMeta.disabled = false;
+            if (inputSimManualMetaHistSpend) inputSimManualMetaHistSpend.disabled = false;
+        } else {
+            if (inputSimManualCacMeta) inputSimManualCacMeta.disabled = true;
+            if (inputSimManualMetaHistSpend) inputSimManualMetaHistSpend.disabled = true;
+        }
+
         newBtnSave.textContent = 'Salvar Parâmetros';
         newBtnSave.style.background = '#10b981';
     };
@@ -465,81 +593,80 @@ function initGrowthSimulator(data) {
                 const saved = await resp.json();
                 if (saved.success) {
                     if (inputReinvestRate && saved.reinvestRate !== undefined) {
-                        inputReinvestRate.value = saved.reinvestRate;
-                        inputReinvestRate.setAttribute('value', saved.reinvestRate);
+                        inputReinvestRate.value = formatBRPercent((saved.reinvestRate * 100).toFixed(0)); inputReinvestRate.setAttribute('value', inputReinvestRate.value);
                     }
                     if (inputExtraCash && saved.extraCash !== undefined) {
-                        let v = (parseFloat(saved.extraCash) || 0).toFixed(2);
-                        v = v.replace(".", ",");
-                        v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
-                        inputExtraCash.value = v;
-                        inputExtraCash.setAttribute('value', v);
+                        inputExtraCash.value = formatBRLCurrency(((parseFloat(saved.extraCash) || 0) * 100).toFixed(0));
+                        inputExtraCash.setAttribute('value', inputExtraCash.value);
                     }
                     if (inputCuriosityGoal && saved.curiosityGoal !== undefined && saved.curiosityGoal !== null) {
-                        inputCuriosityGoal.value = saved.curiosityGoal;
-                        inputCuriosityGoal.setAttribute('value', saved.curiosityGoal);
+                        inputCuriosityGoal.value = formatBRInteger(saved.curiosityGoal); inputCuriosityGoal.setAttribute('value', inputCuriosityGoal.value);
+                    }
+                    if (inputFixedOpex && saved.fixedOpex !== undefined) {
+                        inputFixedOpex.value = formatBRLCurrency(((parseFloat(saved.fixedOpex) || 0) * 100).toFixed(0)); inputFixedOpex.setAttribute('value', inputFixedOpex.value);
+                    }
+                    if (inputTaxRate && saved.taxRate !== undefined) {
+                        inputTaxRate.value = formatBRPercent(((parseFloat(saved.taxRate) || 0) * 100).toFixed(0)); inputTaxRate.setAttribute('value', inputTaxRate.value);
+                    }
+                    if (inputVarCostRate && saved.otherVarRate !== undefined) {
+                        inputVarCostRate.value = formatBRPercent(((parseFloat(saved.otherVarRate) || 0) * 100).toFixed(0)); inputVarCostRate.setAttribute('value', inputVarCostRate.value);
                     }
                     simTrackingStartDate = saved.startDate;
                     simTrackingStartSubs = saved.startSubs;
-                    
-                    // Só bloqueia se já tivermos um setup rodando
-                    if (simTrackingStartDate) {
-                        blockSimulatorInputs();
-                    }
                 }
             }
         } catch (e) { /* silencioso */ }
 
+        // Estado inicial = SAVED (todos bloqueados)
+        blockSimulatorInputs();
+
         runSimulation(data);
     };
     // Listeners
-    if (inputReinvestRate) inputReinvestRate.addEventListener('input', () => runSimulation(data));
-    if (inputCuriosityGoal) inputCuriosityGoal.addEventListener('input', () => runSimulation(data));
-    if (inputExtraCash) {
-        inputExtraCash.addEventListener('input', function(e) {
-            let v = e.target.value.replace(/\D/g, "");
-            v = (v / 100).toFixed(2) + "";
-            v = v.replace(".", ",");
-            v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
-            e.target.value = v;
+
+
+
+
+
+    if (inputSimMetaManualMode) {
+        inputSimMetaManualMode.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            if (newBtnSave.textContent === 'Salvar Parâmetros') {
+                if (inputSimManualCacMeta) inputSimManualCacMeta.disabled = !isChecked;
+                if (inputSimManualMetaHistSpend) inputSimManualMetaHistSpend.disabled = !isChecked;
+            }
             runSimulation(data);
         });
     }
-    const inputCacDegradation = document.getElementById('sim-cac-degradation');
-    const inputCplDegradation = document.getElementById('sim-cpl-degradation');
-    if (inputCacDegradation) inputCacDegradation.addEventListener('input', () => runSimulation(data));
-    if (inputCplDegradation) inputCplDegradation.addEventListener('input', () => runSimulation(data));
-    const inputMetaScalePenalty = document.getElementById('sim-meta-scale-penalty');
-    if (inputMetaScalePenalty) inputMetaScalePenalty.addEventListener('input', () => runSimulation(data));
-    
-    const inputSimMetaManualMode = document.getElementById('sim-meta-manual-mode');
-    const inputSimManualCacMeta = document.getElementById('sim-manual-cac-meta');
-    const inputSimManualMetaHistSpend = document.getElementById('sim-manual-meta-hist-spend');
-    
-    if (inputSimMetaManualMode) inputSimMetaManualMode.addEventListener('change', () => runSimulation(data));
-    if (inputSimManualCacMeta) inputSimManualCacMeta.addEventListener('input', () => runSimulation(data));
-    if (inputSimManualMetaHistSpend) inputSimManualMetaHistSpend.addEventListener('input', () => runSimulation(data));
+
 
     newBtnSave.addEventListener('click', () => {
         if (newBtnSave.textContent === 'Alterar Parâmetros') {
-            if (modal) {
-                modal.style.display = 'flex';
-                void modal.offsetWidth; // trigger reflow
-                modal.style.opacity = '1';
-            } else {
-                unblockSimulatorInputs();
-            }
+            unblockSimulatorInputs();
             return;
         }
 
         newBtnSave.textContent = 'Salvando...';
         newBtnSave.style.opacity = '0.7';
+
+        const reinvestParsed = parseBRPercent(inputReinvestRate?.value);
+        const reinvestRate = Number.isFinite(reinvestParsed) ? reinvestParsed : 100;
+
+        const extraCashParsed = parseBRLCurrency(inputExtraCash?.value);
+        const extraCash = Number.isFinite(extraCashParsed) ? extraCashParsed : 0;
+
+        const curiosityParsed = parseBRInteger(inputCuriosityGoal?.value);
+        const curiosityGoal = Number.isFinite(curiosityParsed) ? curiosityParsed : null;
+
+        const fixedOpexParsed = parseBRLCurrency(inputFixedOpex?.value);
+        const fixedOpex = Number.isFinite(fixedOpexParsed) ? fixedOpexParsed : 0;
         
-        const reinvestRate = parseFloat(inputReinvestRate?.value) || 100;
-        const extraCashStr = inputExtraCash?.value || '0';
-        const extraCash = parseFloat(extraCashStr.replace(/\./g, '').replace(',', '.')) || 0;
-        const curiosityGoal = parseInt(inputCuriosityGoal?.value) || null;
+        const taxRateParsed = parseBRPercent(inputTaxRate?.value);
+        const taxRate = Number.isFinite(taxRateParsed) ? (taxRateParsed / 100) : 0;
         
+        const varCostRateParsed = parseBRPercent(inputVarCostRate?.value);
+        const otherVarRate = Number.isFinite(varCostRateParsed) ? (varCostRateParsed / 100) : 0;
+
         // Sempre que salva os parâmetros, reseta o tracker para a base de hoje
         const resetTracking = true;
         const startSubs = data.platform.b2b.total_active || 0;
@@ -547,10 +674,13 @@ function initGrowthSimulator(data) {
         fetch('/api/cmo/simulator-settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ 
-                reinvestRate, 
+            body: JSON.stringify({
+                reinvestRate,
                 extraCash,
                 curiosityGoal,
+                fixedOpex,
+                taxRate,
+                otherVarRate,
                 resetTracking,
                 startSubs
             })
@@ -586,29 +716,36 @@ function initGrowthSimulator(data) {
         const inputReinvestRate = document.getElementById('sim-reinvest-rate');
         const inputExtraCash = document.getElementById('sim-extra-cash');
         const inputCuriosityGoal = document.getElementById('sim-curiosity-goal');
-        const inputCacDegradation = document.getElementById('sim-cac-degradation');
-        const inputCplDegradation = document.getElementById('sim-cpl-degradation');
-        
+
+
+
         const inputFixedOpex = document.getElementById('sim-fixed-opex');
         const inputTaxRate = document.getElementById('sim-tax-rate');
         const inputGatewayRate = document.getElementById('sim-gateway-rate');
         const inputVarCostRate = document.getElementById('sim-var-cost-rate');
-        
-        let reinvestRate = parseFloat(inputReinvestRate?.value) || 50;
-        let extraCashStr = inputExtraCash?.value || '0';
-        let extraCash = parseFloat(extraCashStr.replace(/\./g, '').replace(',', '.')) || 0;
-        let curiosityGoal = parseInt(inputCuriosityGoal?.value) || null;
-        let cacDegradation = (parseFloat(inputCacDegradation?.value) || 0) / 100;
-        let cplDegradation = (parseFloat(inputCplDegradation?.value) || 0) / 100;
-        
-        const inputMetaScalePenalty = document.getElementById('sim-meta-scale-penalty');
-        const metaScalePenaltyRaw = inputMetaScalePenalty?.value;
-        const metaScalePenaltyVal = metaScalePenaltyRaw && metaScalePenaltyRaw.trim() !== '' ? parseFloat(metaScalePenaltyRaw.replace(',', '.')) : NaN;
-        const metaScalePenalty = (!isNaN(metaScalePenaltyVal) && isFinite(metaScalePenaltyVal) && metaScalePenaltyVal >= 0) ? metaScalePenaltyVal / 100 : null;
+
+        const reinvestParsed = parseBRPercent(inputReinvestRate?.value);
+        let reinvestRate = Number.isFinite(reinvestParsed) ? reinvestParsed : 50;
+
+        const extraCashParsed = parseBRLCurrency(inputExtraCash?.value);
+        let extraCash = Number.isFinite(extraCashParsed) ? extraCashParsed : 0;
+
+        const curiosityParsed = parseBRInteger(inputCuriosityGoal?.value);
+        let curiosityGoal = Number.isFinite(curiosityParsed) ? curiosityParsed : null;
+        let cacDegradation = (parseBRPercent(inputCacDegradation?.value) || 0) / 100;
+        let cplDegradation = (parseBRPercent(inputCplDegradation?.value) || 0) / 100;
+
+
+        const metaScalePenalty = parseBRPercent(inputMetaScalePenalty?.value) >= 0 ? parseBRPercent(inputMetaScalePenalty?.value) / 100 : null;
 
         const getNumericSimInput = (el, isPercentage) => {
             if (!el || el.value.trim() === '') return null;
-            const val = parseFloat(el.value);
+            let val;
+            if (isPercentage) {
+                val = parseBRPercent(el.value);
+            } else {
+                val = parseBRLCurrency(el.value);
+            }
             if (Number.isNaN(val)) return null;
             return isPercentage ? val / 100 : val;
         };
@@ -617,19 +754,19 @@ function initGrowthSimulator(data) {
         const taxRate = getNumericSimInput(inputTaxRate, true);
         const gatewayRate = getNumericSimInput(inputGatewayRate, true);
         const varCostRate = getNumericSimInput(inputVarCostRate, true);
-        
+
         // 1. BASE INICIAL VEM DA PRODUÇÃO ATUAL (Motor Final)
         const currentPaidAccessBase = data.simulator?.currentPaidAccessBase || data.platform.b2b.total_active || 0;
         const operationalForwardBase = data.simulator?.operationalForwardBase || Math.max(0, currentPaidAccessBase - (data.simulator?.knownScheduledChurn || 0));
         const mechanicallyRenewableBase = data.simulator?.mechanicallyRenewableBase?.value || operationalForwardBase;
         const manualLegacyBase = data.simulator?.manualLegacyBase?.value || 0;
-        
+
         const demandEligiblePaidBase = data.simulator?.demandEligiblePaidBase || 0;
         const futureDemandEligibilityRate = data.simulator?.futureDemandEligibilityRate?.value || 0;
-        
+
         const knownScheduledChurn = data.simulator?.knownScheduledChurn || 0;
         const baseEligibleForProjection = operationalForwardBase;
-        
+
         function getSimValue(obj) {
             if (!obj) return null;
             if (typeof obj !== 'object') return null;
@@ -647,15 +784,8 @@ function initGrowthSimulator(data) {
         const apiHistMetaMonthlySpend = getSimValue(data.historical?.meta?.monthly_spend_avg);
 
         const isManualMode = document.getElementById('sim-meta-manual-mode')?.checked || false;
-        
-        const manualCacMetaRaw = document.getElementById('sim-manual-cac-meta')?.value;
-        const manualCacMetaVal = manualCacMetaRaw ? parseFloat(manualCacMetaRaw.replace(',', '.')) : NaN;
-        
-        const manualHistMetaSpendRaw = document.getElementById('sim-manual-meta-hist-spend')?.value;
-        const manualHistMetaSpendVal = manualHistMetaSpendRaw ? parseFloat(manualHistMetaSpendRaw.replace(',', '.')) : NaN;
 
-        const manualCacMeta = (!isNaN(manualCacMetaVal) && isFinite(manualCacMetaVal)) ? manualCacMetaVal : null;
-        const manualHistMetaSpend = (!isNaN(manualHistMetaSpendVal) && isFinite(manualHistMetaSpendVal)) ? manualHistMetaSpendVal : null;
+        const manualCacMetaRaw = document.getElementById('sim-manual-cac-meta')?.value; const manualCacMeta = manualCacMetaRaw ? parseBRLCurrency(manualCacMetaRaw) : null; const manualHistMetaSpendRaw = document.getElementById('sim-manual-meta-hist-spend')?.value; const manualHistMetaSpend = manualHistMetaSpendRaw ? parseBRLCurrency(manualHistMetaSpendRaw) : null;
 
         let effectiveCacMeta = apiCacMeta;
         let effectiveHistMetaSpend = apiHistMetaMonthlySpend;
@@ -666,19 +796,19 @@ function initGrowthSimulator(data) {
             effectiveHistMetaSpend = manualHistMetaSpend;
             metaDataSource = 'MANUAL_SCENARIO';
         }
-        
+
         const activePaidAccessBase = data.platform?.b2b?.total_active || 0;
         const arpu = data.platform?.b2b?.arpu || 99;
         const contactsPerPaidPsiMonth = data.simulator?.contactsPerPaidPsiMonth?.value;
         const contactsThresholdSource = data.simulator?.contactsPerPaidPsiMonth?.type || 'ASSUMED';
-        
+
         let demandEligibilityRate = data.simulator?.demandEligibilityRate; // Backward compat
         if (demandEligibilityRate === 'MISSING_INPUT' || demandEligibilityRate === undefined || demandEligibilityRate === null) {
             demandEligibilityRate = 0;
         }
 
-        const hasMissingFinancials = fixedOPEX === null || taxRate === null || gatewayRate === null || varCostRate === null;
-        
+        const hasMissingFinancials = gatewayRate === null;
+
         let simBlockReason = null;
         if (hasMissingFinancials) {
             simBlockReason = 'MISSING_FINANCIALS';
@@ -705,10 +835,10 @@ function initGrowthSimulator(data) {
         }
 
         let isSimulationPossible = simBlockReason === null;
-        
+
         const includeOrganic = document.getElementById('sim-include-organic')?.checked || false;
-        const verifiedOrganicContacts = (includeOrganic && data.simulator?.organicContacts?.value) ? data.simulator.organicContacts.value : 0; 
-        const newOrganicActive = (includeOrganic && data.platform?.b2b?.organic_active) ? data.platform.b2b.organic_active : 0; 
+        const verifiedOrganicContacts = (includeOrganic && data.simulator?.organicContacts?.value) ? data.simulator.organicContacts.value : 0;
+        const newOrganicActive = (includeOrganic && data.platform?.b2b?.organic_active) ? data.platform.b2b.organic_active : 0;
 
         window.formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
@@ -719,22 +849,22 @@ function initGrowthSimulator(data) {
         const dataCosts = [];
         const dataCashflow = [];
         const dataExpectedBase = [];
-        
+
         let currentBase = baseEligibleForProjection;
         let rolloverCash = 0;
-        
+
         let mrrAt12 = 0;
         let baseAt12 = 0;
         let metaBudgetAt12 = 0;
         let googleBudgetAt12 = 0;
-        
+
         // M1 values for Action Plan
         let actionMetaSpend = 0;
         let actionGoogleMaintenance = 0;
         let actionTrialGoogleSpend = 0;
         let actionUnspentCash = 0;
         let actionCACPenalized = 0;
-        
+
         if (!isSimulationPossible) {
             const warningEl = document.getElementById('sim-res-warning');
             const actionPlanContainer = document.getElementById('sim-action-plan');
@@ -746,7 +876,7 @@ function initGrowthSimulator(data) {
                 warningEl.style.display = 'block';
                 warningEl.style.backgroundColor = '#fef2f2';
                 warningEl.style.color = '#991b1b';
-                
+
                 if (simBlockReason === 'MISSING_FINANCIALS') {
                     warningEl.innerHTML = `⚠️ <b>Atenção:</b> O simulador requer que todos os campos financeiros estejam preenchidos. Faltam dados financeiros necessários para calcular a distribuição de caixa.`;
                 } else if (simBlockReason === 'INSUFFICIENT_BASELINE') {
@@ -759,7 +889,7 @@ function initGrowthSimulator(data) {
                     warningEl.innerHTML = `⚠️ <b>Atenção:</b> O simulador requer dados reais de CAC, Trial e Churn para projetar. Os dados históricos atuais não são qualificados matematicamente (PROXY/UNKNOWN). O Motor está pausado até termos dados observados da coorte.`;
                 }
             }
-            
+
             // Zerar os resultados do card
             if (document.getElementById('sim-res-mrr-12m')) {
                 document.getElementById('sim-res-mrr-12m').textContent = formatBRL(0);
@@ -776,7 +906,7 @@ function initGrowthSimulator(data) {
 
         const pastHistory = data.historical?.platform?.b2b?.past_base_history || [];
         const retroMonths = pastHistory.length;
-        
+
         let startingRetroBase = currentBase;
         if (retroMonths > 0) {
             startingRetroBase = pastHistory[0];
@@ -796,7 +926,9 @@ function initGrowthSimulator(data) {
         dataRevenue.push(...simResult.dataRevenue);
         dataCosts.push(...simResult.dataCosts);
         dataCashflow.push(...simResult.dataCashflow);
-        
+
+        // Gráfico é renderizado na parte inferior do arquivo (onde inclui o Real Base)
+
         mrrAt12 = simResult.mrrAt12;
         baseAt12 = simResult.baseAt12;
         metaBudgetAt12 = simResult.metaBudgetAt12;
@@ -836,7 +968,7 @@ function initGrowthSimulator(data) {
 
             const currentMrr = currentBase * arpu;
             const mrrMultiple = (projectedMRR / (currentMrr || 1)).toFixed(1);
-            
+
             document.getElementById('sim-month-label').textContent = `Mês ${m}`;
 
             // Card 1: MRR
@@ -844,7 +976,7 @@ function initGrowthSimulator(data) {
             document.getElementById('sim-res-mrr-12m').textContent = formatBRL(projectedMRR);
             document.getElementById('sim-res-mrr-feedback').textContent =
                 `${mrrMultiple}x maior que hoje (${formatBRL(currentMrr)}/mês)`;
-            
+
             // Card 2: Base
             const newSubs = Math.floor(projectedBase) - currentBase;
             const avgPatientsPerPsi = contactsPerPaidPsiMonth || 2;
@@ -853,28 +985,28 @@ function initGrowthSimulator(data) {
             const card2Sub = document.querySelector('#sim-card-2 p:last-child');
             if (card2Sub) card2Sub.textContent =
                 `+${newSubs} assinantes líquidos na base em ${m} meses. Meta agregada de demanda: ~${totalPatientsServed.toLocaleString('pt-BR')} cliques no WhatsApp/mês.`;
-            
+
             // Card 3: Meta
             const metaDaily = projectedMeta / 30;
             document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(projectedMeta);
             const card3Sub = document.querySelector('#sim-card-3 p:last-child');
             if (card3Sub) card3Sub.textContent =
                 `≈ ${formatBRL(metaDaily)}/dia recomendados para Mês ${m}.`;
-            
+
             // Card 4: Google
             const googleDaily = projectedGoogle / 30;
             document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(projectedGoogle);
             const card4Sub = document.querySelector('#sim-card-4 p:last-child');
             if (card4Sub) card4Sub.textContent =
                 `Custo mensal projetado p/ Mês ${m} (≈ ${formatBRL(googleDaily)}/dia).`;
-                
+
             // Card 5 & 6: LTV e Payback
             const projectedLTV = simResult.dataLTV[index] || 0;
             const projectedPayback = simResult.dataPayback[index] || 0;
-            
+
             const elLTV = document.getElementById('sim-res-ltv');
             const elPayback = document.getElementById('sim-res-payback');
-            
+
             if (elLTV) elLTV.textContent = projectedLTV > 0 ? formatBRL(projectedLTV) : '--';
             if (elPayback) elPayback.textContent = projectedPayback > 0 ? projectedPayback.toFixed(1) : '--';
 
@@ -882,7 +1014,7 @@ function initGrowthSimulator(data) {
             const projectedExtrapolation = simResult.dataMetaExtrapolationMultiple[index];
             const elExtrap = document.getElementById('sim-res-extrapolation');
             const elExtrapDesc = document.getElementById('sim-res-extrapolation-desc');
-            
+
             if (elExtrap && elExtrapDesc) {
                 if (effectiveHistMetaSpend > 0 && projectedExtrapolation !== undefined && projectedExtrapolation !== null) {
                     elExtrap.textContent = `${projectedExtrapolation.toFixed(2).replace('.', ',')}× histórico`;
@@ -903,7 +1035,7 @@ function initGrowthSimulator(data) {
             // Initial call based on current slider value (preserves user selection across re-renders)
             updateCardsForMonth(parseInt(slider.value, 10));
         }
-        
+
         const warningEl = document.getElementById('sim-res-warning');
         warningEl.style.display = 'block';
 
@@ -925,175 +1057,14 @@ function initGrowthSimulator(data) {
         const p = { retroMonths, extraCash };
         buildFounderDecisionModel(simResult, p, activePaidAccessBase);
 
-        // Action Plan
-        const actionPlanContainer = document.getElementById('sim-action-plan');
-        const actionList = document.getElementById('sim-action-list');
-        if (actionPlanContainer && actionList) {
-            actionPlanContainer.style.display = 'block';
-            
-            // Check if title needs a button
-            const h5 = actionPlanContainer.querySelector('h5');
-            if (h5 && !document.getElementById('btn-generate-ai')) {
-                h5.innerHTML += ` <button id="btn-generate-ai" style="margin-left:auto; background:#7e22ce; color:#fff; border:none; padding:6px 12px; border-radius:15px; font-size:0.8rem; cursor:pointer; font-weight:bold;">Gerar Novo Diagnóstico com IA ✨</button>`;
-            }
-            
-            const btnAi = document.getElementById('btn-generate-ai');
-            const token = localStorage.getItem('token');
-
-            // Load last plan on render
-            if (!actionList.dataset.loaded) {
-                actionList.dataset.loaded = "true";
-                actionList.innerHTML = `<li>⏳ Carregando último diagnóstico...</li>`;
-                fetch('/api/cmo/action-plan', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success && data.html) {
-                        actionList.innerHTML = data.html;
-                    } else {
-                        actionList.innerHTML = `<li>Nenhum diagnóstico salvo. Clique no botão acima para gerar.</li>`;
-                    }
-                }).catch(() => actionList.innerHTML = `<li>Erro ao carregar o plano.</li>`);
-            }
-
-            if (btnAi) {
-                btnAi.onclick = () => {
-                    btnAi.disabled = true;
-                    btnAi.innerText = 'Processando...';
-                    actionList.innerHTML = `<li>⏳ <strong>A IA está analisando os dados do motor...</strong> Isso pode levar alguns segundos.</li>`;
-                    
-                    const currentMetaDailyBudget = data.ads?.meta?.configuredDailyBudget || 0;
-                    const currentDailyGoogle = data.ads?.google?.configuredDailyBudget || 0;
-                    const unspentCash = actionUnspentCash;
-                    const targetMetaDaily = actionMetaSpend / 30;
-                    const googleBudgetM1 = actionGoogleMaintenance + actionTrialGoogleSpend;
-                    const targetGoogleDaily = googleBudgetM1 / 30;
-                    const baseDaily = actionGoogleMaintenance / 30;
-                    const trialsDaily = actionTrialGoogleSpend / 30;
-                    const availableForAcquisition1 = actionMetaSpend + actionTrialGoogleSpend + actionUnspentCash;
-
-                    // MARGEM DISTRIBUÍVEL SEGURA
-                    const pnl = data.platform?.pnl;
-                    let safeMarginStatus = 'OK';
-                    let safeDistributableMargin = null;
-                    let safeDistributableAmount = null;
-                    let target30PercentStatus = 'MISSING_INPUT';
-                    let gapTo30Percent = null;
-                    
-                    const taxStatus = pnl?.managerial?.RevenueTaxes !== undefined ? 'OK' : 'MISSING_INPUT';
-                    const opexStatus = pnl?.PROFIT_CERTIFICATION_BLOCKED ? 'MISSING_INPUT' : 'OK';
-                    const cashBalanceStatus = pnl?.cashflow?.currentCashBalance === 'MISSING_INPUT' ? 'MISSING_INPUT' : 'OK';
-                    
-                    // Cash reserve is currently a missing concept in the input, thus it is missing.
-                    const requiredCashReserveContribution = 'MISSING_INPUT';
-                    
-                    if (!pnl || taxStatus === 'MISSING_INPUT' || opexStatus === 'MISSING_INPUT' || cashBalanceStatus === 'MISSING_INPUT' || requiredCashReserveContribution === 'MISSING_INPUT') {
-                        safeMarginStatus = 'MISSING_INPUT';
-                    } else {
-                        const netRevenue = pnl.managerial?.NetRevenue;
-                        const fixedOPEX = pnl.managerial?.FixedOPEX;
-                        const otherVarCosts = pnl.managerial?.OtherVariableOperatingCosts;
-                        
-                        if (netRevenue === undefined || netRevenue === null || fixedOPEX === undefined || fixedOPEX === null || otherVarCosts === undefined || otherVarCosts === null) {
-                            safeMarginStatus = 'MISSING_INPUT';
-                        } else {
-                            // Google Maintenance from M1
-                            const googleMaint = actionGoogleMaintenance;
-                            
-                            // Minimum growth budget to sustain churn (MODELLED)
-                            const minimumGrowthBudget = simResult.requiredReplacementPaidM1 * simResult.blendedAcquisitionCostM1;
-                            
-                            const safeDistributableProfit = Math.max(0, netRevenue - fixedOPEX - otherVarCosts - googleMaint - minimumGrowthBudget - requiredCashReserveContribution);
-                            
-                            if (netRevenue > 0) {
-                                safeDistributableMargin = safeDistributableProfit / netRevenue;
-                                safeDistributableAmount = safeDistributableProfit;
-                                
-                                const maxCostEnvelopeFor30 = netRevenue * 0.70;
-                                const currentTotalSustainingCosts = fixedOPEX + otherVarCosts + googleMaint + minimumGrowthBudget + requiredCashReserveContribution;
-                                
-                                if (currentTotalSustainingCosts <= maxCostEnvelopeFor30) {
-                                    target30PercentStatus = 'FEASIBLE';
-                                } else {
-                                    target30PercentStatus = 'NOT_YET_FEASIBLE';
-                                    gapTo30Percent = currentTotalSustainingCosts - maxCostEnvelopeFor30;
-                                }
-                            } else {
-                                safeMarginStatus = 'MISSING_INPUT';
-                            }
-                        }
-                    }
-
-                    fetch('/api/cmo/generate-action-plan', {
-                        method: 'POST',
-                        headers: { 
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json' 
-                        },
-                        body: JSON.stringify({
-                            mrrAtual: formatBRL(currentBase * arpu),
-                            mrr12M: formatBRL(mrrAt12),
-                            reinvestRate: reinvestRate,
-                            extraCash: extraCash,
-                            cacAtual: formatBRL(effectiveCacMeta),
-                            cacPenalizado: formatBRL(actionCACPenalized),
-                            unspentCash: formatBRL(unspentCash),
-                            targetMetaDaily: formatBRL(targetMetaDaily),
-                            currentMetaDailyBudget: formatBRL(currentMetaDailyBudget),
-                            availableForAcquisition1: formatBRL(availableForAcquisition1),
-                            targetGoogleDaily: formatBRL(targetGoogleDaily),
-                            currentDailyGoogle: formatBRL(currentDailyGoogle),
-                            baseDaily: formatBRL(baseDaily),
-                            trialsDaily: formatBRL(trialsDaily),
-                            safeMarginStatus: safeMarginStatus,
-                            safeDistributableMargin: safeDistributableMargin !== null ? (safeDistributableMargin * 100).toFixed(1) : null,
-                            safeDistributableAmount: safeDistributableAmount !== null ? formatBRL(safeDistributableAmount) : null,
-                            target30PercentStatus: target30PercentStatus,
-                            gapTo30Percent: gapTo30Percent !== null ? formatBRL(gapTo30Percent) : null,
-                            metaDataSource: metaDataSource,
-                            histMetaSpendEffective: formatBRL(effectiveHistMetaSpend),
-                            trialConvType: trialConversionObj ? trialConversionObj.type : 'MISSING_INPUT',
-                            trialConvSource: trialConversionObj ? trialConversionObj.source : null,
-                            trialConvValue: trialConversionRate,
-                            churnType: data.simulator?.churn ? data.simulator.churn.type : 'MISSING_INPUT',
-                            churnSource: data.simulator?.churn ? data.simulator.churn.source : null,
-                            churnValue: monthlyChurn,
-                            contactsType: data.simulator?.contactsPerPaidPsiMonth?.type,
-                            contactsValue: data.simulator?.contactsPerPaidPsiMonth?.value,
-                            organicType: data.simulator?.organicContacts?.type,
-                            organicSource: data.simulator?.organicContacts?.source,
-                            organicValue: data.simulator?.organicContacts?.value
-                        })
-                    })
-                    .then(res => res.json())
-                    .then(aiData => {
-                        if (aiData.success && aiData.html) {
-                            actionList.innerHTML = aiData.html;
-                            btnAi.disabled = false;
-                            btnAi.innerText = 'Gerar Novo Diagnóstico com IA ✨';
-                        } else {
-                            actionList.innerHTML = `<li>❌ Falha ao gerar diagnóstico com IA.</li>`;
-                            btnAi.disabled = false;
-                            btnAi.innerText = 'Gerar Novo Diagnóstico com IA ✨';
-                        }
-                    })
-                    .catch(err => {
-                        console.error('[CMO] Erro ao analisar ROI com IA:', err);
-                        actionList.innerHTML = `<li>❌ Falha de conexão ao gerar diagnóstico.</li>`;
-                        btnAi.disabled = false;
-                        btnAi.innerText = 'Gerar Novo Diagnóstico com IA ✨';
-                    });
-                };
-            }
-        }
+        // LLM Action Plan removido a pedido do usuário, Founder Decision é a única fonte executiva.
 
         // Real Data tracking (If a start date is set)
         const dataRealBase = [];
-        
+
         pastHistory.forEach(val => dataRealBase.push(val));
         dataRealBase.push(data.platform.b2b.total_active);
-        
+
         // Pad the rest of the array with nulls to match the length of projection
         const totalSimulatedLength = targetMonths + 1 + retroMonths;
         while (dataRealBase.length < totalSimulatedLength) {
@@ -1105,7 +1076,7 @@ function initGrowthSimulator(data) {
         const ctxChart = document.getElementById('simTimelineChart');
         if (timelineContainer && ctxChart) {
             timelineContainer.style.display = 'block';
-            
+
             const datasets = [
                 {
                     label: 'Base Projetada (Esperada)',
@@ -1137,7 +1108,7 @@ function initGrowthSimulator(data) {
                     yAxisID: 'y'
                 }
             ];
-            
+
             if (curiosityGoal) {
                 const goalData = Array(12).fill(curiosityGoal);
                 datasets.push({
@@ -1156,7 +1127,7 @@ function initGrowthSimulator(data) {
             if (window.simTimelineChartInstance) {
                 window.simTimelineChartInstance.destroy();
             }
-            
+
             window.simTimelineChartInstance = new Chart(ctxChart, {
                 type: 'line',
                 data: {
@@ -1173,8 +1144,8 @@ function initGrowthSimulator(data) {
                     },
                     scales: {
                         x: { grid: { display: false } },
-                        y: { 
-                            beginAtZero: true, 
+                        y: {
+                            beginAtZero: true,
                             grid: { borderDash: [2, 4], color: '#f1f5f9' }
                         }
                     },
@@ -1206,7 +1177,7 @@ function initGrowthSimulator(data) {
                 if (!chart || !chart.chartArea || !chart.scales.x) return;
 
                 const rect = ctxChart.getBoundingClientRect();
-                
+
                 // FATOR DE ESCALA
                 const scaleX = chart.canvas.clientWidth / rect.width;
                 const scaleY = chart.canvas.clientHeight / rect.height;
@@ -1225,7 +1196,7 @@ function initGrowthSimulator(data) {
 
                 const xScale = chart.scales.x;
                 const labelsCount = chart.data.labels.length;
-                
+
                 const positions = [];
                 for (let i = 0; i < labelsCount; i++) {
                     positions.push(xScale.getPixelForValue(i));
@@ -1291,24 +1262,24 @@ function initGrowthSimulator(data) {
 function initCMOMonthSelector() {
     const selector = document.getElementById('cmo-month-selector');
     if (!selector) return;
-    
+
     const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-    
+
     const now = new Date();
     let currentYear = now.getFullYear();
     let currentMonth = now.getMonth();
-    
+
     let html = '';
     for (let i = 0; i < 12; i++) {
         const monthName = months[currentMonth];
         const year = currentYear;
-        
+
         const start = `${year}-${String(currentMonth + 1).padStart(2, '0')}-01`;
         const endDay = new Date(year, currentMonth + 1, 0).getDate();
         const end = `${year}-${String(currentMonth + 1).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
-        
+
         html += `<option value="${start}|${end}">${monthName} ${year}</option>`;
-        
+
         currentMonth--;
         if (currentMonth < 0) {
             currentMonth = 11;
@@ -1316,7 +1287,7 @@ function initCMOMonthSelector() {
         }
     }
     selector.innerHTML = html;
-    
+
     const [start, end] = selector.value.split('|');
     document.getElementById('cmo-date-start').value = start;
     document.getElementById('cmo-date-end').value = end;
@@ -1325,11 +1296,11 @@ function initCMOMonthSelector() {
 function updateCMOMonth() {
     const selector = document.getElementById('cmo-month-selector');
     if (!selector) return;
-    
+
     const [start, end] = selector.value.split('|');
     document.getElementById('cmo-date-start').value = start;
     document.getElementById('cmo-date-end').value = end;
-    
+
     loadCMOMetrics();
 }
 
@@ -1347,7 +1318,7 @@ async function loadTrafficMetrics(dateStart, dateEnd, token) {
                 'Authorization': `Bearer ${token}`
             }
         });
-        
+
         if (!response.ok) return;
 
         const data = await response.json();
@@ -1360,7 +1331,7 @@ async function loadTrafficMetrics(dateStart, dateEnd, token) {
                 if (Math.abs(diff) < 0.1) return '';
                 let isPositive = diff > 0;
                 if (isReversed) isPositive = !isPositive;
-                
+
                 const color = isPositive ? '#10b981' : '#ef4444';
                 const icon = diff > 0 ? '▲' : '▼';
                 return `<span style="font-size: 0.8rem; font-weight: bold; margin-left: 8px; color: ${color};">${icon} ${Math.abs(diff).toFixed(1).replace('.', ',')}%</span>`;
@@ -1371,10 +1342,10 @@ async function loadTrafficMetrics(dateStart, dateEnd, token) {
                 document.getElementById('cmo-ga4-sessions').innerHTML = ga4.sessions.toLocaleString('pt-BR') + (prevGa4 ? formatTrend(ga4.sessions, prevGa4.sessions) : '');
                 document.getElementById('cmo-ga4-users').textContent = ga4.users.toLocaleString('pt-BR');
                 document.getElementById('cmo-ga4-pageviews').textContent = ga4.pageviews.toLocaleString('pt-BR');
-                
+
                 const engagementRate = ga4.sessions > 0 ? (1 - ga4.bounceRate) * 100 : 0;
                 const prevEngagementRate = prevGa4 && prevGa4.sessions > 0 ? (1 - prevGa4.bounceRate) * 100 : 0;
-                
+
                 document.getElementById('cmo-ga4-engagement').innerHTML = engagementRate.toFixed(1).replace('.', ',') + '%' + (prevGa4 ? formatTrend(engagementRate, prevEngagementRate) : '');
             }
 
@@ -1394,7 +1365,7 @@ async function loadTrafficMetrics(dateStart, dateEnd, token) {
 function runGrowthSimulationMath(p) {
     function calculatePaidAcquisition(availableGrowthFund, organicTrialCost, currentCacMeta, trialGoogleCostPerPaid, effectiveHistSpend, metaScalePenalty, trialConversionRate) {
         const cashAvailableForPaidAcquisition = Math.max(0, availableGrowthFund - organicTrialCost);
-        
+
         let newPaidActive = 0, actualMetaSpend = 0, paidTrialGoogleSpend = 0;
         let metaCACPenalized = currentCacMeta;
         let blendedAcquisitionCost = currentCacMeta + trialGoogleCostPerPaid;
@@ -1404,27 +1375,27 @@ function runGrowthSimulationMath(p) {
 
         if (currentCacMeta > 0 && effectiveHistSpend > 0 && trialConversionRate > 0) {
             let iteratedMetaCAC = currentCacMeta;
-            
+
             for (let i = 1; i <= 50; i++) {
                 const iteratedBlendedCAC = iteratedMetaCAC + trialGoogleCostPerPaid;
                 const candidatePaidByCash = cashAvailableForPaidAcquisition / iteratedBlendedCAC;
                 const candidateMetaSpend = candidatePaidByCash * iteratedMetaCAC;
-                
+
                 scaleFactor = Math.max(1, candidateMetaSpend / effectiveHistSpend);
                 const newMetaCAC = currentCacMeta * (1 + (Math.max(0, scaleFactor - 1) * metaScalePenalty));
-                
+
                 if (Math.abs(newMetaCAC - iteratedMetaCAC) < 0.01) {
                     iteratedMetaCAC = newMetaCAC;
                     break;
                 }
                 iteratedMetaCAC = newMetaCAC;
-                
+
                 if (i === 50) {
                     isConverged = false;
                     iteratedMetaCAC = NaN;
                 }
             }
-            
+
             if (isNaN(iteratedMetaCAC)) {
                 newPaidActive = 0;
                 actualMetaSpend = 0;
@@ -1432,13 +1403,13 @@ function runGrowthSimulationMath(p) {
             } else {
                 metaCACPenalized = iteratedMetaCAC;
                 blendedAcquisitionCost = metaCACPenalized + trialGoogleCostPerPaid;
-                
+
                 const maxPaidByCash = cashAvailableForPaidAcquisition / blendedAcquisitionCost;
-                
+
                 newPaidActive = maxPaidByCash;
                 actualMetaSpend = newPaidActive * metaCACPenalized;
                 paidTrialGoogleSpend = newPaidActive * trialGoogleCostPerPaid;
-                
+
                 if (effectiveHistSpend > 0) {
                     metaExtrapolationMultiple = actualMetaSpend / effectiveHistSpend;
                 }
@@ -1488,7 +1459,7 @@ function runGrowthSimulationMath(p) {
     const dataSafeProfit = [];
     const dataReservedCash = [];
     const auditDiagnostics = [null]; // 0-indexed matches months
-    
+
     let currentBase = p.currentBase;
     const retroMonths = p.retroMonths || 0;
     const totalPoints = retroMonths + 1 + p.targetMonths;
@@ -1548,7 +1519,7 @@ function runGrowthSimulationMath(p) {
         let isM1 = (step === retroMonths + 1);
 
         let baseStart = currentBase;
-        
+
         if (isM1) {
             initialRolloverCashM1 = rolloverCash;
         }
@@ -1558,7 +1529,7 @@ function runGrowthSimulationMath(p) {
             revenueBase = p.mechanicallyRenewableBase ?? baseStart;
         }
         const startingMrr = revenueBase * p.arpu;
-        
+
         let degradationStep = Math.max(0, step - (retroMonths + 1));
 
         // MEDIA INFLATION
@@ -1571,20 +1542,20 @@ function runGrowthSimulationMath(p) {
         } else {
             projectedDemandEligibleBase = baseStart * (p.futureDemandEligibilityRate || p.demandEligibilityRate || 0);
         }
-        
+
         const totalContactDemand = projectedDemandEligibleBase * p.contactsPerPaidPsiMonth;
         const requiredGoogleContacts = Math.max(0, totalContactDemand - p.verifiedOrganicContacts);
         const googleMaintenanceCost = requiredGoogleContacts * currentCplGoogle;
-        
+
         // PNL AND GROWTH FUND CALCULATION
         // CUSTOS VÊM DIRETAMENTE DA UI/FRONTEND (SOBERANIA DO USUÁRIO)
         const taxes = startingMrr * p.taxRate;
         const gatewayFees = startingMrr * p.gatewayRate;
         const varOPEX = startingMrr * p.varCostRate;
-        
+
         const operatingCashAvailable = Math.max(0, startingMrr - taxes - gatewayFees - varOPEX - p.fixedOPEX - googleMaintenanceCost);
         const contributionMarginPerPsi = (startingMrr - taxes - gatewayFees - varOPEX - googleMaintenanceCost) / (baseStart || 1);
-        
+
         const currentMonthGrowthAllocation = operatingCashAvailable * (p.reinvestRate / 100);
         let retainedOperatingCash = operatingCashAvailable - currentMonthGrowthAllocation;
         const growthFund = currentMonthGrowthAllocation + p.extraCash + rolloverCash;
@@ -1595,7 +1566,7 @@ function runGrowthSimulationMath(p) {
         const trialDurationFraction = 7 / 30;
         const trialContactDemand = p.contactsPerPaidPsiMonth * trialDurationFraction;
         const avgGoogleCostPerTrial = trialContactDemand * currentCplGoogle;
-        
+
         const trialGoogleCostPerPaid = trialsPerPaid * avgGoogleCostPerTrial;
 
         // Custo de trial dos orgânicos
@@ -1620,62 +1591,62 @@ function runGrowthSimulationMath(p) {
             genericChurnBase = p.mechanicallyRenewableBase ?? baseStart;
         }
         let expectedGenericChurn = genericChurnBase * p.monthlyChurn;
-        
+
         let manualLegacyRunoff = 0;
         if (isM1) {
             manualLegacyRunoff = p.manualLegacyBase || 0;
         }
-        
+
         let grossReplacementNeed = expectedGenericChurn + manualLegacyRunoff;
         let replacementGap = Math.max(0, grossReplacementNeed - fundedOrganicPaidAdditions);
-        
+
         let initialAcq = calculatePaidAcquisition(growthFund, organicTrialCost, currentCacMeta, trialGoogleCostPerPaid, effectiveHistSpend, p.metaScalePenalty, p.trialConversionRate);
-        
+
         let paidReplacementShortfall = Math.max(0, replacementGap - initialAcq.newPaidActive);
-        
+
         let additionalStabilityFundingRequired = 0;
         let stabilityFundingDeficit = 0;
         let stabilityFundingUsed = 0;
         let finalAcq = initialAcq;
         let safeProfit = 0;
-        
+
         if (paidReplacementShortfall > 0) {
             let upperBound = Math.max(1, growthFund, retainedOperatingCashAfterMandatoryOrganic);
             let lowerBound = 0;
             let expansionConverged = false;
-            
+
             // Etapa de expansão
             for (let iter = 0; iter < 50; iter++) {
                 let testAcq = calculatePaidAcquisition(growthFund + upperBound, organicTrialCost, currentCacMeta, trialGoogleCostPerPaid, effectiveHistSpend, p.metaScalePenalty, p.trialConversionRate);
-                
+
                 if (!testAcq.isConverged || !Number.isFinite(testAcq.actualMetaSpend) || !Number.isFinite(testAcq.metaCACPenalized)) {
                     break;
                 }
-                
+
                 if (testAcq.newPaidActive >= replacementGap) {
                     expansionConverged = true;
                     break;
                 }
-                
+
                 lowerBound = upperBound;
                 upperBound *= 2;
             }
-            
+
             if (!expansionConverged) {
                 additionalStabilityFundingRequired = null; // UNRESOLVED
             } else {
                 let low = lowerBound;
                 let high = upperBound;
                 let best = null;
-                
+
                 for (let iter = 0; iter < 100; iter++) {
                     let mid = (low + high) / 2;
                     let testAcq = calculatePaidAcquisition(growthFund + mid, organicTrialCost, currentCacMeta, trialGoogleCostPerPaid, effectiveHistSpend, p.metaScalePenalty, p.trialConversionRate);
-                    
+
                     if (!testAcq.isConverged) {
                         break;
                     }
-                    
+
                     if (testAcq.newPaidActive >= replacementGap) {
                         best = mid;
                         high = mid;
@@ -1684,7 +1655,7 @@ function runGrowthSimulationMath(p) {
                     }
                     if (high - low < 0.01) break;
                 }
-                
+
                 if (best !== null) {
                     additionalStabilityFundingRequired = best;
                 } else {
@@ -1692,7 +1663,7 @@ function runGrowthSimulationMath(p) {
                 }
             }
         }
-        
+
         let newReserved = 0;
         if (additionalStabilityFundingRequired === null && paidReplacementShortfall > 0) {
             // UNRESOLVED status
@@ -1704,32 +1675,32 @@ function runGrowthSimulationMath(p) {
             // finalAcq permanece como initialAcq
         } else {
             stabilityFundingUsed = Math.min(additionalStabilityFundingRequired, Math.max(0, retainedOperatingCashAfterMandatoryOrganic));
-            
+
             if (additionalStabilityFundingRequired > 0) {
                 finalAcq = calculatePaidAcquisition(growthFund + stabilityFundingUsed, organicTrialCost, currentCacMeta, trialGoogleCostPerPaid, effectiveHistSpend, p.metaScalePenalty, p.trialConversionRate);
                 if (additionalStabilityFundingRequired > retainedOperatingCashAfterMandatoryOrganic) {
                     stabilityFundingDeficit = Math.max(0, additionalStabilityFundingRequired - Math.max(0, retainedOperatingCashAfterMandatoryOrganic));
                 }
             }
-            
+
             safeProfit = Math.max(0, retainedOperatingCashAfterMandatoryOrganic - stabilityFundingUsed);
             if (stabilityFundingDeficit > 0) {
                 safeProfit = 0;
             }
         }
-        
+
         let newPaidActive = finalAcq.newPaidActive;
         let actualMetaSpend = finalAcq.actualMetaSpend;
         let paidTrialGoogleSpend = finalAcq.paidTrialGoogleSpend;
         let metaCACPenalized = finalAcq.metaCACPenalized;
         let blendedAcquisitionCost = finalAcq.blendedAcquisitionCost;
         let metaExtrapolationMultiple = finalAcq.metaExtrapolationMultiple;
-        
+
         const actualGrowthSpendFromGrowthFund = actualMetaSpend + paidTrialGoogleSpend + organicCostCoveredByGrowth;
         const finalGrowthFund = growthFund + stabilityFundingUsed;
-        
+
         rolloverCash = Math.max(0, finalGrowthFund - actualGrowthSpendFromGrowthFund);
-        
+
         const actualTrialGoogleSpend = paidTrialGoogleSpend + organicTrialCost;
 
         // Required replacement to maintain base stable
@@ -1738,7 +1709,7 @@ function runGrowthSimulationMath(p) {
 
         currentBase = baseStart + newPaidActive + fundedOrganicPaidAdditions - churnLoss;
         const endOfMonthMRR = currentBase * p.arpu;
-        
+
         const totalGoogleBudget = googleMaintenanceCost + actualTrialGoogleSpend;
 
         let labelStr = '';
@@ -1776,13 +1747,13 @@ function runGrowthSimulationMath(p) {
 
         dataExpectedBase.push(Math.round(currentBase));
         dataRevenue.push(endOfMonthMRR);
-        
+
         const totalCosts = actualMetaSpend + totalGoogleBudget;
         dataCosts.push(totalCosts);
         dataCashflow.push(retainedOperatingCashAfterMandatoryOrganic);
         dataMetaBudget.push(actualMetaSpend);
         dataGoogleBudget.push(totalGoogleBudget);
-        
+
         dataOperatingCashAvailable.push(operatingCashAvailable);
         dataCurrentMonthGrowthAllocation.push(currentMonthGrowthAllocation);
         dataRetainedOperatingCash.push(retainedOperatingCashAfterMandatoryOrganic);
@@ -1804,13 +1775,13 @@ function runGrowthSimulationMath(p) {
         dataStabilityFundingDeficit.push(stabilityFundingDeficit);
         dataSafeProfit.push(safeProfit);
         dataReservedCash.push(reservedCash);
-        
+
         // LTV e Payback
         const LTV = contributionMarginPerPsi > 0 ? contributionMarginPerPsi * (1 / p.monthlyChurn) : 0;
         const payback = contributionMarginPerPsi > 0 ? blendedAcquisitionCost / contributionMarginPerPsi : 0;
         dataLTV.push(LTV);
         dataPayback.push(payback);
-        
+
         if (isM1) {
             actionMetaSpend = actualMetaSpend;
             actionGoogleMaintenance = googleMaintenanceCost;
@@ -1846,13 +1817,13 @@ function runGrowthSimulationMath(p) {
             googleBudgetAt12 = totalGoogleBudget;
         }
 
-        // Re-ancorar a projeção para a realidade a partir de "Hoje", 
+        // Re-ancorar a projeção para a realidade a partir de "Hoje",
         // para que Mês 1 em diante não herde a defasagem projetada do passado.
         if (isHoje && p.operationalForwardBase != null) {
             currentBase = p.operationalForwardBase;
         }
     }
-    
+
     return {
         labels, dataExpectedBase, dataRevenue, dataCosts, dataCashflow, dataMetaBudget, dataGoogleBudget,
         dataLTV, dataPayback,
@@ -1915,12 +1886,17 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase) {
         container.style.borderRadius = '8px';
         container.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
 
-        const warningEl = document.getElementById('sim-res-warning');
-        if (warningEl) {
-            warningEl.parentNode.insertBefore(container, warningEl.nextSibling);
+        const placeholder = document.getElementById('founder-decision-placeholder');
+        if (placeholder) {
+            placeholder.appendChild(container);
+        } else {
+            const warningEl = document.getElementById('sim-res-warning');
+            if (warningEl) {
+                warningEl.parentNode.insertBefore(container, warningEl.nextSibling);
+            }
         }
     }
-    
+
     container.style.display = 'block';
 
     if (delta > 0.01) {
@@ -1953,175 +1929,81 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase) {
         profitStatus = 'SAFE_PROFIT_AVAILABLE';
     }
 
-    let execMessage = '';
-    let sevColor = '#475569';
-    let sevBg = '#f8fafc';
-
+    let scenarioMsg = "";
     if (unresolved) {
-        execMessage = "O Motor não conseguiu encontrar uma alocação segura para preservar a base nas premissas atuais. O caixa permanece retido até que o cenário seja ajustado.";
-        sevColor = '#991b1b'; sevBg = '#fef2f2';
-    } else if (baseStatus === 'BELOW_TARGET' && profitStatus === 'NO_SAFE_PROFIT') {
-        execMessage = "Nas premissas atuais, todo o caixa disponível é consumido pela aquisição e ainda existe um déficit de financiamento de " + formatBRL(stabilityFundingDeficit) + " para atingir a meta de estabilidade. Esse déficit não significa necessariamente um aporte recomendado: ele também pode ser reduzido por melhora de CPL/CAC, churn ou aquisição orgânica.";
-        sevColor = '#9a3412'; sevBg = '#fff7ed';
-    } else if (baseStatus === 'AT_TARGET' && profitStatus === 'NO_SAFE_PROFIT') {
-        execMessage = "Nas premissas atuais, o caixa disponível é suficiente para preservar a base operacional, mas não há lucro seguro disponível neste ciclo.";
-        sevColor = '#475569'; sevBg = '#f8fafc';
-    } else if (baseStatus === 'AT_TARGET' && profitStatus === 'SAFE_PROFIT_AVAILABLE') {
-        execMessage = "Nas premissas atuais, a base operacional é preservada e há " + formatBRL(safeProfit) + " de lucro seguro disponível neste ciclo.";
-        sevColor = '#166534'; sevBg = '#f0fdf4';
-    } else if (baseStatus === 'ABOVE_TARGET' && profitStatus === 'NO_SAFE_PROFIT') {
-        execMessage = "Nas premissas atuais, a base operacional cresce, mas todo o caixa permanece comprometido com aquisição e operação.";
-        sevColor = '#475569'; sevBg = '#f8fafc';
-    } else if (baseStatus === 'ABOVE_TARGET' && profitStatus === 'SAFE_PROFIT_AVAILABLE') {
-        execMessage = "Nas premissas atuais, a base operacional cresce e há " + formatBRL(safeProfit) + " de lucro seguro disponível neste ciclo.";
-        sevColor = '#166534'; sevBg = '#f0fdf4';
+        scenarioMsg = "Não foi possível encontrar uma alocação segura.";
+    } else if (baseStatus === 'BELOW_TARGET') {
+        scenarioMsg = "A base tende a encolher nas premissas atuais.";
+    } else if (baseStatus === 'AT_TARGET') {
+        scenarioMsg = "A base tende a permanecer estável.";
+    } else {
+        scenarioMsg = "A base tende a crescer nas premissas atuais.";
     }
 
-    const replacementPaidAcquisitions = Math.min(m1Diag.actualPaidAcquisitions, m1Diag.grossReplacementNeed);
-    const growthPaidAcquisitions = Math.max(0, m1Diag.actualPaidAcquisitions - m1Diag.grossReplacementNeed);
+    let actionText = `Neste cenário, você tem <strong>${formatBRL(totalSources)}</strong> disponíveis para alocação neste ciclo.`;
+    actionText += `<br><br>Faça o seguinte:<br>`;
+    actionText += `<ul style="margin-top: 10px; padding-left: 20px;">`;
+    actionText += `<li>mantenha <strong>${formatBRL(acquisitionDestination)}</strong> destinados à aquisição;</li>`;
+    if (metaSpend > 0) actionText += `<li>desse valor, <strong>${formatBRL(metaSpend)}</strong> vão para Meta Ads;</li>`;
+    if (trialSpend > 0) actionText += `<li><strong>${formatBRL(trialSpend)}</strong> vão para aquisição via Google;</li>`;
+    if (organicFunding > 0) actionText += `<li><strong>${formatBRL(organicFunding)}</strong> são cobertos pelo crescimento orgânico;</li>`;
+    actionText += `<li>mantenha <strong>${formatBRL(retainedDestination)}</strong> dentro da empresa;</li>`;
 
-    let sourcesHtml = `
-        <div style="font-size: 0.9rem; margin-bottom: 5px; display: flex; justify-content: space-between;">
-            <span style="color: #64748b;">Caixa disponível para alocação</span>
-            <strong style="color: #334155; font-size: 1.1rem;">${formatBRL(totalSources)}</strong>
-        </div>
-    `;
-    if (extraCash > 0 || initRollover > 0) {
-        sourcesHtml += `
-        <div style="margin-left: 10px; border-left: 2px solid #e2e8f0; padding-left: 10px; font-size: 0.8rem; color: #64748b;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                <span>Gerado pela operação</span><span>${formatBRL(opCash)}</span>
-            </div>
-            ${extraCash > 0 ? `
-            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                <span>Aporte adicional</span><span>${formatBRL(extraCash)}</span>
-            </div>` : ''}
-            ${initRollover > 0 ? `
-            <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                <span>Saldo do ciclo anterior</span><span>${formatBRL(initRollover)}</span>
-            </div>` : ''}
-        </div>
-        `;
+    if (safeProfit > 0) {
+        actionText += `<li>você pode retirar até <strong>${formatBRL(safeProfit)}</strong> neste ciclo sem comprometer a meta de estabilidade nas premissas atuais do modelo.</li>`;
+    } else {
+        actionText += `<li>neste cenário, não retire caixa como lucro. O valor disponível está comprometido com aquisição, retenção ou proteção da base.</li>`;
+    }
+    actionText += `</ul>`;
+
+    actionText += `<br>Com essa distribuição, a base operacional projetada vai de <strong>${Math.floor(stabilityTarget)}</strong> para <strong>${exactBaseEnd.toFixed(2).replace('.', ',')}</strong> profissionais no próximo ciclo.`;
+
+    if (stabilityFundingDeficit > 0) {
+        actionText += `<br><br><span style="color: #991b1b; font-weight: 600;">Mesmo usando o caixa disponível dessa forma, o cenário fica ${formatBRL(stabilityFundingDeficit)} abaixo da capacidade de financiamento necessária para preservar a base.</span><br>Antes de aportar dinheiro adicional, avalie reduzir CAC/CPL, churn ou aumentar aquisição orgânica.`;
     }
 
-    let destinationsHtml = `
-        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                <span style="font-weight: 600; color: #334155; display:flex; align-items:center; gap:5px;" title="Gasto efetivo consolidado com Meta, Google Trials e Orgânico Obrigatório.">
-                    Investimento em aquisição <span style="font-size:0.75rem; background:#e2e8f0; padding:1px 5px; border-radius:10px; color:#475569; cursor:help;">?</span>
-                </span>
-                <strong style="color: #0f172a;">${formatBRL(acquisitionDestination)}</strong>
-            </div>
-    `;
-    if (stabilityFundingUsed > 0 || stabilityFundingDeficit > 0) {
-        destinationsHtml += `
-            <div style="margin-left: 15px; border-left: 2px solid #cbd5e1; padding-left: 10px; margin-top: 5px; font-size: 0.8rem; color: #64748b;">
-                ${stabilityFundingUsed > 0 ? `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #b45309;" title="Parcela do caixa que originalmente seria retida, mas foi automaticamente redirecionada para tentar bater a meta de reposição da base.">
-                    <span>↳ Redirecionado para proteção</span>
-                    <span>${formatBRL(stabilityFundingUsed)}</span>
-                </div>` : ''}
-                ${stabilityFundingDeficit > 0 ? `
-                <div style="display: flex; justify-content: space-between; color: #991b1b; font-weight:600;" title="Nas premissas atuais, faltam capacidade de financiamento para atingir a meta de estabilidade.">
-                    <span>↳ Déficit de financiamento</span>
-                    <span>${formatBRL(stabilityFundingDeficit)}</span>
-                </div>` : ''}
+    let uncertaintyHtml = '';
+    const hasProxyTrial = data.simulator?.trialConv?.type === 'PROXY';
+    const hasAssumedChurn = data.simulator?.churn?.type === 'ASSUMED';
+    const hasProxyCac = data.simulator?.cac?.type === 'PROXY';
+
+    if (hasProxyTrial || hasAssumedChurn || hasProxyCac) {
+        const listProxy = [];
+        if (hasProxyTrial) listProxy.push("Trial = PROXY");
+        if (hasAssumedChurn) listProxy.push("Churn = ASSUMED");
+        if (hasProxyCac) listProxy.push("CAC = PROXY");
+
+        uncertaintyHtml = `
+            <div style="background: #fffbeb; color: #b45309; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 0.85rem; border-left: 4px solid #f59e0b;">
+                <strong>Esta projeção usa algumas premissas estimadas.</strong> Use os valores como orientação de cenário, não como garantia. (${listProxy.join(', ')})
             </div>
         `;
     }
-    destinationsHtml += `</div>`;
-
-    destinationsHtml += `
-        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 600; color: #334155; display:flex; align-items:center; gap:5px;" title="Budget que não pôde ser investido sem perder eficiência de CAC ou caixa travado por paralisação do Motor.">
-                    Retido na empresa <span style="font-size:0.75rem; background:#e2e8f0; padding:1px 5px; border-radius:10px; color:#475569; cursor:help;">?</span>
-                </span>
-                <strong style="color: #0f172a;">${formatBRL(retainedDestination)}</strong>
-            </div>
-            ${retainedDestination > 0 ? `
-            <div style="margin-left: 15px; border-left: 2px solid #cbd5e1; padding-left: 10px; margin-top: 5px; font-size: 0.8rem; color: #64748b;">
-                ${finalRollover > 0 ? `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>Saldo para o próximo ciclo</span>
-                    <span>${formatBRL(finalRollover)}</span>
-                </div>` : ''}
-                ${reserved > 0 ? `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>Reserva de segurança</span>
-                    <span>${formatBRL(reserved)}</span>
-                </div>` : ''}
-            </div>` : ''}
-        </div>
-    `;
-
-    destinationsHtml += `
-        <div style="background: ${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#f0fdf4' : '#f8fafc'}; padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid ${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#bbf7d0' : 'transparent'};">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 600; color: ${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#166534' : '#334155'}; display:flex; align-items:center; gap:5px;" title="O lucro que você pode retirar neste ciclo sem colocar a base operacional em risco. Garantia restrita ao atual mês de projeção.">
-                    Lucro seguro <span style="font-size:0.75rem; background:${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#dcfce7' : '#e2e8f0'}; padding:1px 5px; border-radius:10px; color:${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#166534' : '#475569'}; cursor:help;">?</span>
-                </span>
-                <strong style="color: ${profitStatus === 'SAFE_PROFIT_AVAILABLE' ? '#166534' : '#0f172a'};">${formatBRL(safeProfit)}</strong>
-            </div>
-        </div>
-    `;
-
-    let baseColor = baseStatus === 'BELOW_TARGET' ? '#b45309' : (baseStatus === 'UNRESOLVED' ? '#991b1b' : '#334155');
-    let baseBg = baseStatus === 'BELOW_TARGET' ? '#fffbeb' : (baseStatus === 'UNRESOLVED' ? '#fef2f2' : '#f8fafc');
-
-    const baseHtml = `
-        <div style="background: ${baseBg}; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-            <div style="margin-bottom: 10px; font-weight: 600; color: #0f172a;">Saúde da Base Operacional</div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #475569; margin-bottom: 5px;">
-                <span>Acessos pagos hoje</span>
-                <strong>${Math.floor(activePaidAccessBase)}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #475569; margin-bottom: 5px;">
-                <span>Base operacional projetada</span>
-                <strong style="color: ${baseColor}">${Math.floor(stabilityTarget)} &rarr; ${exactBaseEnd.toFixed(2).replace('.',',')}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #475569; margin-bottom: 5px;">
-                <span>Meta de estabilidade</span>
-                <strong>${Math.floor(stabilityTarget)}</strong>
-            </div>
-            
-            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 0.8rem; color: #64748b;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                    <span>Reposição estimada:</span>
-                    <span>${replacementPaidAcquisitions.toFixed(1).replace('.',',')} novos pagantes</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span>Expansão líquida:</span>
-                    <span>${growthPaidAcquisitions.toFixed(1).replace('.',',')} novos pagantes</span>
-                </div>
-            </div>
-        </div>
-    `;
 
     const preAllocationHtml = `
-        <details style="font-size: 0.8rem; color: #64748b; background: #f8fafc; padding: 10px; border-radius: 6px; cursor: pointer;">
-            <summary style="font-weight: 600; color: #475569; outline: none;">Como este caixa foi formado</summary>
-            <div style="margin-top: 10px; cursor: default;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                    <span>MRR Contratual Base</span><span>${formatBRL(m1Diag.startingMrr)}</span>
+        <details style="font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 12px; border-radius: 6px; cursor: pointer; border: 1px solid #e2e8f0; margin-top: 15px;">
+            <summary style="font-weight: 600; color: #475569; outline: none;">Antes de distribuir o caixa</summary>
+            <div style="margin-top: 10px; cursor: default; display: flex; flex-direction: column; gap: 5px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Receita contratual</span><span>${formatBRL(m1Diag.startingMrr)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <div style="display: flex; justify-content: space-between;">
                     <span>(-) Impostos</span><span>${formatBRL(m1Diag.taxes)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <div style="display: flex; justify-content: space-between;">
                     <span>(-) Gateway</span><span>${formatBRL(m1Diag.gatewayFees)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <div style="display: flex; justify-content: space-between;">
                     <span>(-) Custos Variáveis</span><span>${formatBRL(m1Diag.varOPEX)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                    <span>(-) OPEX Fixo</span><span>${formatBRL(p.fixedOPEX || 0)}</span>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>(-) Custos fixos</span><span>${formatBRL(p.fixedOPEX || 0)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                <div style="display: flex; justify-content: space-between;">
                     <span>(-) Manutenção da demanda</span><span>${formatBRL(m1Diag.googleMaintenanceCost)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-weight: 600; color: #334155; margin-top: 5px; padding-top: 5px; border-top: 1px solid #e2e8f0;">
-                    <span>Caixa Gerado pela Operação</span><span>${formatBRL(opCash)}</span>
+                <div style="display: flex; justify-content: space-between; font-weight: 700; color: #0f172a; margin-top: 5px; padding-top: 5px; border-top: 1px solid #e2e8f0;">
+                    <span>Caixa disponível (Total)</span><span>${formatBRL(totalSources)}</span>
                 </div>
             </div>
         </details>
@@ -2130,25 +2012,17 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase) {
     container.innerHTML = `
         <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
             <svg width="20" height="20" fill="none" stroke="#7e22ce" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            Decisão para o próximo ciclo
+            O que fazer agora
         </h3>
-        
-        <div style="background: ${sevBg}; color: ${sevColor}; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5; border-left: 4px solid ${sevColor};">
-            ${execMessage}
+
+        <div style="margin-bottom: 15px; font-weight: 600; color: #475569; font-size: 1.05rem;">
+            ${scenarioMsg}
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 15px;">
-            <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                ${sourcesHtml}
-                <div style="margin: 15px 0; display: flex; align-items: center; color: #94a3b8; font-size: 0.8rem; font-weight: 600; gap: 10px;">
-                    <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
-                    Distribuído em
-                    <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
-                </div>
-                ${destinationsHtml}
-            </div>
+        ${uncertaintyHtml}
 
-            ${baseHtml}
+        <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 1rem; color: #334155; line-height: 1.6; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            ${actionText}
             ${preAllocationHtml}
         </div>
     `;
@@ -2162,17 +2036,17 @@ async function fetchMonthlyFinance(monthYear, managerialData = {}) {
         const data = await res.json();
         const snap = data.snapshot;
         const def = data.defaults;
-        
+
         document.getElementById('mf-closing-cash').value = snap && snap.closingCashBalance !== null ? snap.closingCashBalance : '';
         document.getElementById('mf-opex-complete').value = snap ? (snap.opexIsComplete ? 'true' : 'false') : 'false';
         document.getElementById('mf-tax-var').value = snap && snap.appliedTaxVariableRate !== null ? snap.appliedTaxVariableRate : (def.tax_variable_rate !== null ? def.tax_variable_rate : '');
         document.getElementById('mf-tax-fix').value = snap && snap.appliedTaxFixedMonthly !== null ? snap.appliedTaxFixedMonthly : (def.tax_fixed_monthly !== null ? def.tax_fixed_monthly : '');
         document.getElementById('mf-reserve').value = snap && snap.appliedRequiredCashReserve !== null ? snap.appliedRequiredCashReserve : (def.required_cash_reserve !== null ? def.required_cash_reserve : '');
-        
+
         const isClosed = snap && snap.isClosed;
         const inputs = ['mf-closing-cash', 'mf-opex-complete', 'mf-tax-var', 'mf-tax-fix', 'mf-reserve'];
         inputs.forEach(id => document.getElementById(id).disabled = isClosed);
-        
+
         document.getElementById('mf-closed-badge').style.display = isClosed ? 'block' : 'none';
 
         if(managerialData && managerialData.ConfirmedGrossRevenue !== undefined) {

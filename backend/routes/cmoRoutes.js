@@ -526,6 +526,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     NetRevenue,
                     FixedOPEX,
                     OtherVariableOperatingCosts,
+                    tax_variable_rate,
                     AllocatedGoogleMaintenanceSpend,
                     OperatingCashBeforeReserve,
                     RequiredCashReserve: required_cash_reserve,
@@ -965,15 +966,14 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 simMetaCac = null;
                 simMetaCacType = 'MISSING_INPUT';
             } else {
-                if (metaPagantes90 > 0) {
+                if (metaPagantes90 > 0 && metaSpend90 > 0) {
                     simMetaCac = metaSpend90 / metaPagantes90;
-                } else if (metaTrials90 > 0) {
+                } else if (metaTrials90 > 0 && metaSpend90 > 0) {
                     simMetaCac = metaSpend90 / metaTrials90 * (1 / 0.1102);
                     simMetaCacType = 'PROXY'; // Because there are no pagantes, only trials
-                } else if (metaSpend90 === 0) {
-                    simMetaCac = 0; // True zero spend and zero acquisition
                 } else {
-                    simMetaCac = 0; // Spend > 0 but 0 trials/pagantes -> maybe 0 isn't best, but keeping original logic
+                    simMetaCac = histMetaCac; // Fallback to all-time historical CAC
+                    simMetaCacType = 'PROXY';
                 }
             }
 
@@ -1304,6 +1304,9 @@ router.get('/simulator-settings', protect, admin, async (req, res) => {
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_extra_cash DECIMAL(10,2) DEFAULT 0;`);
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_curiosity_goal INTEGER;`);
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_ai_action_plan TEXT;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_fixed_opex DECIMAL(10,2) DEFAULT 0;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_tax_rate DECIMAL(5,4) DEFAULT 0;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_other_var_rate DECIMAL(5,4) DEFAULT 0;`);
         } catch (e) {
             console.error('Raw ALTER TABLE skip in GET:', e.message);
         }
@@ -1311,7 +1314,7 @@ router.get('/simulator-settings', protect, admin, async (req, res) => {
         let settings = null;
         try {
             settings = await db.SystemSetting.findOne({
-                attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months', 'cmo_sim_mode', 'cmo_sim_max_budget', 'cmo_sim_start_date', 'cmo_sim_start_subs', 'cmo_sim_reinvest_rate', 'cmo_sim_extra_cash', 'cmo_sim_curiosity_goal']
+                attributes: ['id', 'cmo_sim_target_subs', 'cmo_sim_target_months', 'cmo_sim_mode', 'cmo_sim_max_budget', 'cmo_sim_start_date', 'cmo_sim_start_subs', 'cmo_sim_reinvest_rate', 'cmo_sim_extra_cash', 'cmo_sim_curiosity_goal', 'cmo_sim_fixed_opex', 'cmo_sim_tax_rate', 'cmo_sim_other_var_rate']
             });
         } catch (e) {
             console.error('findOne failed in GET, returning defaults:', e.message);
@@ -1327,7 +1330,10 @@ router.get('/simulator-settings', protect, admin, async (req, res) => {
             startSubs: settings?.cmo_sim_start_subs ?? null,
             reinvestRate: settings?.cmo_sim_reinvest_rate ?? 100,
             extraCash: settings?.cmo_sim_extra_cash ?? 0,
-            curiosityGoal: settings?.cmo_sim_curiosity_goal ?? null
+            curiosityGoal: settings?.cmo_sim_curiosity_goal ?? null,
+            fixedOpex: settings?.cmo_sim_fixed_opex ?? 0,
+            taxRate: settings?.cmo_sim_tax_rate ?? 0,
+            otherVarRate: settings?.cmo_sim_other_var_rate ?? 0
         });
     } catch (error) {
         console.error('[CMO] Erro ao carregar simulator settings:', error);
@@ -1339,7 +1345,7 @@ router.get('/simulator-settings', protect, admin, async (req, res) => {
 router.post('/simulator-settings', protect, admin, async (req, res) => {
     try {
         const db = require('../models');
-        const { targetSubs, targetMonths, simMode, maxBudget, startSubs, reinvestRate, extraCash, curiosityGoal } = req.body;
+        const { targetSubs, targetMonths, simMode, maxBudget, startSubs, reinvestRate, extraCash, curiosityGoal, fixedOpex, taxRate, otherVarRate } = req.body;
         
         try {
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_mode VARCHAR(255) DEFAULT 'acelerador';`);
@@ -1350,6 +1356,9 @@ router.post('/simulator-settings', protect, admin, async (req, res) => {
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_extra_cash DECIMAL(10,2) DEFAULT 0;`);
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_curiosity_goal INTEGER;`);
             await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_ai_action_plan TEXT;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_fixed_opex DECIMAL(10,2) DEFAULT 0;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_tax_rate DECIMAL(5,4) DEFAULT 0;`);
+            await db.sequelize.query(`ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS cmo_sim_other_var_rate DECIMAL(5,4) DEFAULT 0;`);
         } catch (e) {
             console.error('Raw ALTER TABLE skip in POST:', e.message);
         }
@@ -1372,7 +1381,10 @@ router.post('/simulator-settings', protect, admin, async (req, res) => {
                 cmo_sim_start_subs: startSubs !== undefined ? parseInt(startSubs) : null,
                 cmo_sim_reinvest_rate: reinvestRate !== undefined ? parseInt(reinvestRate) : 100,
                 cmo_sim_extra_cash: extraCash !== undefined ? parseFloat(extraCash) : 0,
-                cmo_sim_curiosity_goal: curiosityGoal ? parseInt(curiosityGoal) : null
+                cmo_sim_curiosity_goal: curiosityGoal ? parseInt(curiosityGoal) : null,
+                cmo_sim_fixed_opex: fixedOpex !== undefined ? parseFloat(fixedOpex) : 0,
+                cmo_sim_tax_rate: taxRate !== undefined ? parseFloat(taxRate) : 0,
+                cmo_sim_other_var_rate: otherVarRate !== undefined ? parseFloat(otherVarRate) : 0
             });
         } else {
             if (targetSubs !== undefined) settings.cmo_sim_target_subs = parseInt(targetSubs);
@@ -1389,6 +1401,9 @@ router.post('/simulator-settings', protect, admin, async (req, res) => {
             if (reinvestRate !== undefined) settings.cmo_sim_reinvest_rate = parseInt(reinvestRate);
             if (extraCash !== undefined) settings.cmo_sim_extra_cash = parseFloat(extraCash);
             settings.cmo_sim_curiosity_goal = (curiosityGoal !== undefined && curiosityGoal !== null && curiosityGoal !== '') ? parseInt(curiosityGoal) : null;
+            if (fixedOpex !== undefined) settings.cmo_sim_fixed_opex = parseFloat(fixedOpex);
+            if (taxRate !== undefined) settings.cmo_sim_tax_rate = parseFloat(taxRate);
+            if (otherVarRate !== undefined) settings.cmo_sim_other_var_rate = parseFloat(otherVarRate);
             
             await settings.save();
         }
