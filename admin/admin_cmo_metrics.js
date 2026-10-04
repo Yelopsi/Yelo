@@ -1948,7 +1948,7 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
     }
 
     const historicalMetaMonthly = p.histMetaMonthlySpendAvg || 0;
-    const historicalMetaDaily = historicalMetaMonthly / 30;
+    const historicalMetaDaily = historicalMetaMonthly / 30.44;
     const theoreticalMetaMonthly = simResult.actionMetaSpend || 0;
     const extrapolationMultiple = theoreticalMetaMonthly / (historicalMetaMonthly || 1);
 
@@ -1980,7 +1980,7 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
         executableMetaMonthly = historicalMetaMonthly;
     }
 
-    const executableMetaDaily = executableMetaMonthly / 30;
+    const executableMetaDaily = executableMetaMonthly / 30.44;
 
     let actionRecommendation = 'MANTER';
     if (executableMetaMonthly > historicalMetaMonthly * 1.05) actionRecommendation = 'AUMENTAR';
@@ -2010,10 +2010,102 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
                         <span style="font-size:0.85rem">≈ ${formatBRL(executableMetaMonthly)}/mês</span>
                         <br><br>
                         <strong>Ação:</strong> <span style="font-weight: 800; color: ${actionRecommendation === 'AUMENTAR' ? '#059669' : (actionRecommendation === 'REDUZIR' ? '#dc2626' : '#b45309')}">${actionRecommendation}</span><br>
-                        <strong>Motivo:</strong> ${nextStepMessage} Extrapolação de ${(extrapolationMultiple).toFixed(1)}x.<br>
-                        <strong>Público:</strong> Escala atual baseada principalmente em público estreito + Lookalike 1%.<br>
-                        <strong>Próximo experimento de audiência:</strong> Lookalike 2–3% ou broad, conforme experimentos ainda não realizados.<br>
-                        <em><small style="color:#94a3b8; display:block; margin-top:8px;">Verifique se a origem e uso da lista atendem às políticas da Meta e à base legal aplicável antes de utilizá-la como audiência.</small></em>
+                        <strong>Motivo:</strong> ${nextStepMessage} Extrapolação de ${(extrapolationMultiple).toFixed(1)}x.
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    const currentCacObj = data.ads?.meta?.cac;
+    const currentCac = (typeof currentCacObj === 'object' ? currentCacObj.value : currentCacObj) || 0;
+    const prevCacObj = data.prevAds?.meta?.cac;
+    const prevCac = (typeof prevCacObj === 'object' ? prevCacObj.value : prevCacObj) || 0;
+
+    let audienceStatus = 'MANTER';
+    let audienceAction = 'Continue no Lookalike 1% como público principal.';
+    let audienceReason = 'Os indicadores ainda não mostram saturação suficiente para justificar expansão.';
+
+    const cacDeteriorated = (currentCac > prevCac * 1.25) && (prevCac > 0);
+    const scaleElevated = extrapolationMultiple > 3;
+
+    if (scaleElevated && cacDeteriorated) {
+        audienceStatus = 'SATURANDO';
+        audienceAction = 'Abra um teste com Lookalike 2–3% mantendo o 1% como controle.';
+        audienceReason = `CAC aumentou >25% (R$ ${formatBRL(prevCac)} → R$ ${formatBRL(currentCac)}) e a necessidade de escala está elevada (${extrapolationMultiple.toFixed(1)}x).`;
+    } else if (scaleElevated) {
+        audienceStatus = 'TESTAR EXPANSÃO';
+        audienceAction = 'Abra um teste com Lookalike 2–3%.';
+        audienceReason = `A recomendação do motor implica escala elevada (${extrapolationMultiple.toFixed(1)}x). Antecipe a saturação validando uma audiência mais ampla.`;
+    } else if (cacDeteriorated) {
+        audienceStatus = 'SATURANDO';
+        audienceAction = 'Abra um teste com Lookalike 2–3% mantendo o 1% como controle.';
+        audienceReason = `CAC aumentou >25% (R$ ${formatBRL(prevCac)} → R$ ${formatBRL(currentCac)}). Valide novas audiências para contornar a fadiga do 1%.`;
+    }
+
+    let audienceHtml = `
+        <div style="background: #fdf4ff; border: 1px solid #f0abfc; border-radius: 8px; padding: 15px; margin-top: 15px;">
+            <h4 style="margin: 0 0 10px 0; color: #86198f; font-size: 1.05rem;">🎯 AUDIÊNCIA META</h4>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 8px; font-size: 0.9rem; color: #4a044e;">
+                <div><strong>Lookalike atual:</strong> 1%</div>
+                <div><strong>Status:</strong> <span style="font-weight: 700;">${audienceStatus}</span></div>
+                <div style="background: #fff; border: 1px solid #e879f9; padding: 15px; border-radius: 6px; margin-top: 5px;">
+                    <strong>Ação:</strong> ${audienceAction}<br><br>
+                    <strong>Motivo:</strong> ${audienceReason}<br><br>
+                    <em><small style="color: #94a3b8;">Sinais baseados em: CAC histórico vs atual e Necessidade de Escala. (Métricas como CTR e Frequency não disponíveis no payload)</small></em>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const currentGoogleSpend = (typeof data.ads?.google?.spend === 'object' ? data.ads.google.spend.value : data.ads?.google?.spend) || 0;
+    const currentGoogleDaily = currentGoogleSpend / 30.44;
+
+    const googleMaintenance = simResult.actionGoogleMaintenance || 0;
+    const googleGrowth = simResult.actionTrialGoogleSpend || 0;
+    const recommendedGoogleTotal = googleMaintenance + googleGrowth;
+    const recommendedGoogleDaily = recommendedGoogleTotal / 30.44;
+
+    let googleActionRecommendation = 'MANTER';
+    if (recommendedGoogleTotal > currentGoogleSpend * 1.05) googleActionRecommendation = 'AUMENTAR';
+    else if (recommendedGoogleTotal < currentGoogleSpend * 0.95) googleActionRecommendation = 'REDUZIR';
+
+    const currentCplObj = data.ads?.google?.cpl;
+    const currentCpl = (typeof currentCplObj === 'object' ? currentCplObj.value : currentCplObj) || 0;
+    const prevCplObj = data.prevAds?.google?.cpl;
+    const prevCpl = (typeof prevCplObj === 'object' ? prevCplObj.value : prevCplObj) || 0;
+
+    let googleReason = `A base projetada exige ${formatBRL(googleMaintenance)}/mês em manutenção.`;
+    if (googleGrowth > 0) {
+        googleReason = `A base projetada exige ${formatBRL(googleMaintenance)}/mês em manutenção e aloca ${formatBRL(googleGrowth)}/mês para crescimento B2C.`;
+    }
+    if (currentCpl > prevCpl * 1.2 && prevCpl > 0) {
+        googleReason += ` Atenção: CPL subiu >20% (de ${formatBRL(prevCpl)} para ${formatBRL(currentCpl)}).`;
+    }
+
+    let googleExecHtml = '';
+    if (recommendedGoogleTotal > 0 || currentGoogleSpend > 0) {
+        googleExecHtml = `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-top: 15px;">
+                <h4 style="margin: 0 0 10px 0; color: #0f172a; font-size: 1.05rem;">GOOGLE ADS</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem; color: #475569;">
+                    <div>
+                        <strong>Hoje:</strong><br>
+                        ${formatBRL(currentGoogleDaily)}/dia<br>
+                        <span style="font-size:0.8rem">≈ ${formatBRL(currentGoogleSpend)}/mês</span>
+                    </div>
+                    <div>
+                        <strong>Recomendado:</strong><br>
+                        <span style="color:#7e22ce; font-weight:600;">${formatBRL(recommendedGoogleDaily)}/dia</span><br>
+                        <span style="font-size:0.8rem">≈ ${formatBRL(recommendedGoogleTotal)}/mês</span>
+                    </div>
+                    <div style="grid-column: 1 / -1; background: #fff; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin-top: 5px;">
+                        <strong style="color: #0f172a;">Composição Operacional:</strong><br>
+                        <span style="font-size: 0.95rem;">Manutenção da base (recorrente): <strong>${formatBRL(googleMaintenance)}/mês</strong></span><br>
+                        <span style="font-size: 0.95rem;">Crescimento B2C (novos pacientes): <strong>${formatBRL(googleGrowth)}/mês</strong></span>
+                        <br><br>
+                        <strong>Ação:</strong> <span style="font-weight: 800; color: ${googleActionRecommendation === 'AUMENTAR' ? '#059669' : (googleActionRecommendation === 'REDUZIR' ? '#dc2626' : '#b45309')}">${googleActionRecommendation}</span><br>
+                        <strong>Motivo:</strong> ${googleReason}
                     </div>
                 </div>
             </div>
@@ -2116,6 +2208,8 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
         <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 1rem; color: #334155; line-height: 1.6; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             ${actionText}
             ${metaExecHtml}
+            ${audienceHtml}
+            ${googleExecHtml}
             ${safeProfitHtml}
             ${preAllocationHtml}
         </div>
