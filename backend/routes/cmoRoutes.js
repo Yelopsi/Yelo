@@ -931,9 +931,13 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         let knownScheduledChurn = 0;
         let simGoogleCplType = 'OBSERVED';
         let simGoogleCplSource = 'GOOGLE_ADS_API_B2C_SPEND_INTERNAL_RAW_WPP_CLICKS';
+        let simOrganicActive = 0;
 
         try {
-            const dateEnd90 = new Date(dateEnd + 'T23:59:59.999Z');
+            const dateEnd90 = new Date();
+            const liveNextDayStr = new Date(dateEnd90.getTime() + 86400000).toISOString().split('T')[0];
+            const liveDateEndStr = dateEnd90.toISOString().split('T')[0];
+
             const dateStart90 = new Date(dateEnd90);
             dateStart90.setDate(dateStart90.getDate() - 90);
             const dateStart90Str = dateStart90.toISOString().split('T')[0];
@@ -943,8 +947,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             const dateStartBaselineStr = dateStartBaseline.toISOString().split('T')[0];
 
             const [metaCampaigns90, googleCampaignsBaseline] = await Promise.all([
-                metaAdsService.getCampaignInsights(dateStart90Str, dateEnd),
-                fetchGoogleAds(dateStartBaselineStr, dateEnd)
+                metaAdsService.getCampaignInsights(dateStart90Str, liveDateEndStr),
+                fetchGoogleAds(dateStartBaselineStr, liveDateEndStr)
             ]);
 
             const isMetaApiError90 = metaCampaigns90 && metaCampaigns90.length > 0 && (metaCampaigns90[0].id === 'ERRO' || metaCampaigns90[0].id === 'ERRO_API');
@@ -955,12 +959,19 @@ router.get('/dashboard', protect, admin, async (req, res) => {
 
 
             const [metaMetrics90Res] = await sequelize.query(b2bQuery, {
-                replacements: { dateStart: dateStart90Str, nextDayStr }, type: sequelize.QueryTypes.SELECT
+                replacements: { dateStart: dateStart90Str, nextDayStr: liveNextDayStr }, type: sequelize.QueryTypes.SELECT
             });
 
             const metaPagantes90 = parseInt(metaMetrics90Res.pagantes || 0);
             const metaTrials90 = parseInt(metaMetrics90Res.trials || 0);
             const metaFailedTrials90 = parseInt(metaMetrics90Res.failed_trials || 0);
+
+            const [globalB2B90dRes] = await sequelize.query(globalB2BQuery, {
+                replacements: { dateStart: dateStart90Str, nextDayStr: liveNextDayStr }, type: sequelize.QueryTypes.SELECT
+            });
+            const totalNewPagantes90d = parseInt(globalB2B90dRes.total_new_pagantes || 0);
+            const organicPagantes90d = Math.max(0, totalNewPagantes90d - metaPagantes90);
+            simOrganicActive = Math.round(organicPagantes90d / 3);
 
             if (isMetaApiError90) {
                 simMetaCac = null;
@@ -992,7 +1003,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 AND "deletedAt" IS NULL
             `;
             const [globalChurn90dRes] = await sequelize.query(globalChurn90dQuery, {
-                replacements: { dateStart: dateStart90Str, nextDayStr }, type: sequelize.QueryTypes.SELECT
+                replacements: { dateStart: dateStart90Str, nextDayStr: liveNextDayStr }, type: sequelize.QueryTypes.SELECT
             });
             const churned90d = parseInt(globalChurn90dRes.churned || 0);
             
@@ -1027,7 +1038,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 WHERE "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
             `;
             const [googleMetricsBaselineRes] = await sequelize.query(b2cQueryBaseline, {
-                replacements: { dateStart: dateStartBaselineStr, nextDayStr }, type: sequelize.QueryTypes.SELECT
+                replacements: { dateStart: dateStartBaselineStr, nextDayStr: liveNextDayStr }, type: sequelize.QueryTypes.SELECT
             });
             const googleWppClicksBaseline = parseInt(googleMetricsBaselineRes.google_wpp_clicks || 0);
             
@@ -1114,7 +1125,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 demandEligibilityRate: futureDemandEligibilityRate,
                 
                 contactsPerPaidPsiMonth: { value: AggregateDemandBudgetTarget, type: 'CONFIG', source: 'AGGREGATE_DEMAND_BUDGET_TARGET' },
-                organicContacts: { value: organicWppClicks30d, type: 'OBSERVED', source: 'ORGANIC_CONFIRMED_WPP_CLICKS_30D' }
+                organicContacts: { value: organicWppClicks30d, type: 'OBSERVED', source: 'ORGANIC_CONFIRMED_WPP_CLICKS_30D' },
+                organicActive: { value: simOrganicActive, type: 'OBSERVED', source: 'ORGANIC_ACTIVE_ROLLING_90D_AVG' }
             },
 
             period: { dateStart, dateEnd, prevDateStart, prevDateEnd },

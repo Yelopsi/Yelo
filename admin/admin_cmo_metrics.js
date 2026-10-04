@@ -844,7 +844,7 @@ function initGrowthSimulator(data) {
 
         const includeOrganic = document.getElementById('sim-include-organic')?.checked || false;
         const verifiedOrganicContacts = (includeOrganic && data.simulator?.organicContacts?.value) ? data.simulator.organicContacts.value : 0;
-        const newOrganicActive = (includeOrganic && data.platform?.b2b?.organic_active) ? data.platform.b2b.organic_active : 0;
+        const newOrganicActive = (includeOrganic && data.simulator?.organicActive?.value) ? data.simulator.organicActive.value : 0;
 
         window.formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
