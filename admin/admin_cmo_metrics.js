@@ -86,6 +86,9 @@ function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = fa
     const el = document.getElementById(id);
     if (!el) return;
 
+    currentValue = typeof currentValue === 'object' && currentValue !== null && currentValue.value !== undefined ? currentValue.value : currentValue;
+    historicalValue = typeof historicalValue === 'object' && historicalValue !== null && historicalValue.value !== undefined ? historicalValue.value : historicalValue;
+
     let formattedCurrent = currentValue;
     if (typeof currentValue === 'number') {
         if (formatType === 'currency') formattedCurrent = `R$ ${(currentValue || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -234,6 +237,9 @@ function renderCMOMetrics(data) {
         const setDbgHist = (id, rawHist, rawMonth, formatType, inverseGood = false) => {
             const el = document.getElementById(id);
             if (!el) return;
+
+            rawHist = typeof rawHist === 'object' && rawHist !== null && rawHist.value !== undefined ? rawHist.value : rawHist;
+            rawMonth = typeof rawMonth === 'object' && rawMonth !== null && rawMonth.value !== undefined ? rawMonth.value : rawMonth;
 
             let histVal = rawHist;
             let monthVal = rawMonth;
@@ -912,14 +918,16 @@ function initGrowthSimulator(data) {
             startingRetroBase = pastHistory[0];
         }
 
-        const simResult = runGrowthSimulationMath({
+        const motorParams = {
             targetMonths, currentBase: startingRetroBase, arpu, demandEligibilityRate, futureDemandEligibilityRate, demandEligiblePaidBase, contactsPerPaidPsiMonth, verifiedOrganicContacts, cplGoogle,
             reinvestRate, extraCash, rolloverCash, histMetaMonthlySpendAvg: effectiveHistMetaSpend, cacMeta: effectiveCacMeta, trialConversionRate, monthlyChurn, newOrganicActive,
             mechanicallyRenewableBase, manualLegacyBase, knownScheduledChurn, retroMonths,
             realCurrentBase: currentPaidAccessBase, operationalForwardBase,
             pnl: data.platform?.pnl, cacDegradation, cplDegradation,
             fixedOPEX, taxRate, gatewayRate, varCostRate, metaScalePenalty
-        });
+        };
+
+        const simResult = runGrowthSimulationMath(motorParams);
 
         labels.push(...simResult.labels);
         dataExpectedBase.push(...simResult.dataExpectedBase);
@@ -1054,26 +1062,7 @@ function initGrowthSimulator(data) {
         }
 
         // FOUNDER DECISION UI INJECTION
-        const p = { retroMonths, extraCash };
-        console.group('[CMO DEBUG] Founder call site');
-
-        console.log('runSimulation context:', {
-            dataType: typeof data,
-            simResultExists: !!simResult,
-            pExists: !!p,
-            activePaidAccessBase
-        });
-
-        console.log(
-            'data top-level keys:',
-            typeof data !== 'undefined' && data
-                ? Object.keys(data)
-                : null
-        );
-
-        console.groupEnd();
-
-        buildFounderDecisionModel(simResult, p, activePaidAccessBase);
+        buildFounderDecisionModel(simResult, motorParams, activePaidAccessBase, data);
 
         // LLM Action Plan removido a pedido do usuário, Founder Decision é a única fonte executiva.
 
@@ -1864,32 +1853,7 @@ if (typeof module !== 'undefined') {
 }
 
 
-function buildFounderDecisionModel(simResult, p, activePaidAccessBase) {
-    console.group('[CMO DEBUG] buildFounderDecisionModel');
-
-    console.log('arguments received:', {
-        simResultDefined: typeof simResult !== 'undefined',
-        pDefined: typeof p !== 'undefined',
-        activePaidAccessBaseDefined: typeof activePaidAccessBase !== 'undefined',
-        dataType: typeof data
-    });
-
-    console.log('simResult keys:',
-        simResult && typeof simResult === 'object'
-            ? Object.keys(simResult)
-            : simResult
-    );
-
-    console.log('p keys:',
-        p && typeof p === 'object'
-            ? Object.keys(p)
-            : p
-    );
-
-    console.log('activePaidAccessBase:', activePaidAccessBase);
-
-    console.groupEnd();
-
+function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
     const retroMonths = p.retroMonths || 0;
     const m1Diag = simResult.auditDiagnostics.find(a => a && a.month === (retroMonths + 1));
     if (!m1Diag) return;
