@@ -155,7 +155,7 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
     }
 };
 
-// --- L3: FAIRNESS (FAIR SHARE V5) ---
+// --- L3: FAIRNESS (MATCH V6 CAPPING) ---
 const applyFairness = (scoredCandidates, fairShare) => {
     return scoredCandidates.map((c) => {
         try {
@@ -173,29 +173,35 @@ const applyFairness = (scoredCandidates, fairShare) => {
             // Identificação precisa do perfil (Trial vs Pagante)
             const isVip = c.is_exempt === true || String(c.is_exempt).toLowerCase() === 'true';
             const hasSub = !!(c.subscriptionId) || (c.subscription_payments_count > 0);
-            const isPaid = isVip || hasSub;
-            const isTrial = !isPaid && c.status === 'active';
+            const isPaid = isVip || hasSub || (c.status === 'active' && !c.planExpiresAt); 
+            const isTrial = c.status === 'trial' && !isPaid;
 
-            // --- BÔNUS DE FOME (Cota Justa) E FIRST BLOOD ---
-            const conversoes = c.conversoes14d || 0;
-            const leads = c.leads14d || 0;
+            const conversoes = c.conversoes30d || 0;
+            const leads = c.leads30d || 0;
 
-            if (isTrial && leads === 0) {
-                finalScore += 100; // First Blood: Super boost para entregar o 1º paciente rápido no trial
-            } else if (conversoes === 0) {
-                finalScore += 50; // Maior bônus padrão para quem não fechou ninguém
-            } else if (conversoes < fairShare) {
-                finalScore += 25; // Bônus médio para quem ainda não bateu a cota
-            }
+            let isCapped = false; // FLAG PARA O CAPPED FALLBACK DA VAGA 1
 
-            // --- PENALIDADE DE DESPERDÍCIO (Bad Sales) E COTA MÁXIMA DE TRIAL ---
+            // --- NOVO SISTEMA DE CAPPING (MATCH V6) ---
             if (isTrial) {
-                if (leads >= 3) {
-                    finalScore *= 0.20; // Cota atingida: Penalidade de -80% para ceder espaço aos pagantes/novos
+                if (leads >= 1 || conversoes >= 1) {
+                    // Atingiu a cota de 1 clique do Trial de 7 dias (ou teve a sorte de fechar).
+                    finalScore *= 0.10; 
+                    isCapped = true;
+                } else {
+                    // Trial zerado ganha boost para ter a chance rápida de receber 1 clique
+                    finalScore += 50; 
                 }
             } else if (isPaid) {
-                if (leads >= 7 && conversoes === 0) {
-                    finalScore *= 0.60; // Penalidade severa (-40%) no score final (Regra normal de Bad Sales)
+                if (leads >= 3 || conversoes >= 1) {
+                    // Atingiu a cota mensal de cliques (3) ou fechou 1 paciente.
+                    finalScore *= 0.30; 
+                    isCapped = true;
+                } else if (leads === 0) {
+                    // Assinante esfomeado (0 cliques no mês). Ganha o bônus máximo.
+                    finalScore += 100;
+                } else {
+                    // Boost intermediário para quem tem 1 ou 2 cliques e ainda não fechou
+                    finalScore += 25; 
                 }
             }
 
@@ -217,7 +223,7 @@ const applyFairness = (scoredCandidates, fairShare) => {
 
             if (isNaN(finalScore) || finalScore < 0) finalScore = c.rawMatchScore || 1;
 
-            return { ...c, finalScore };
+            return { ...c, finalScore, isCapped };
         } catch(e) {
             console.error("🔥 [MATCH ENGINE] Erro no applyFairness:", e.message);
             return { ...c, finalScore: c.rawMatchScore || 1 };
@@ -270,35 +276,35 @@ exports.calculateMatches = async (preferences = {}) => {
             };
         }
 
-        // --- MATCH V5: FAIRNESS POR CONVERSÕES REAIS ---
-        const fourteenDaysAgo = new Date();
-        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+        // --- MATCH V6: FAIRNESS POR LEADS VÁLIDOS E CAPPING ---
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
-        debugLog.push(`[${Date.now() - startTime}ms] 📊 Carregando CRM e calculando Cota Justa...`);
-        const logs14d = await db.sequelize.query(`
-            SELECT "psychologistId", "dealClosed", COUNT(*) as count 
+        debugLog.push(`[${Date.now() - startTime}ms] 📊 Carregando CRM e calculando Leads Válidos (30 dias)...`);
+        const logs30d = await db.sequelize.query(`
+            SELECT 
+                "psychologistId", 
+                SUM(CASE WHEN "dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as conversoes,
+                COUNT(*) - SUM(CASE WHEN "contactReceived" = false OR "dealClosed" IN ('no_contact', 'ghosted', 'wpp_issue') THEN 1 ELSE 0 END) as valid_leads
             FROM "WhatsAppClickLogs" 
-            WHERE "createdAt" >= :fourteenDaysAgo 
-            GROUP BY "psychologistId", "dealClosed"
-        `, { replacements: { fourteenDaysAgo }, type: db.sequelize.QueryTypes.SELECT });
+            WHERE "createdAt" >= :thirtyDaysAgo 
+            GROUP BY "psychologistId"
+        `, { replacements: { thirtyDaysAgo: thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT });
         
-        let totalConversoes14d = 0;
         const psyStats = {};
+        let totalConversoes = 0;
         
-        logs14d.forEach(log => {
+        logs30d.forEach(log => {
             const pid = log.psychologistId;
-            const count = parseInt(log.count, 10);
-            if (!psyStats[pid]) psyStats[pid] = { leads: 0, conversoes: 0 };
+            const conversoes = parseInt(log.conversoes || 0, 10);
+            const validLeads = parseInt(log.valid_leads || 0, 10);
             
-            psyStats[pid].leads += count;
-            if (log.dealClosed === 'closed') {
-                psyStats[pid].conversoes += count;
-                totalConversoes14d += count;
-            }
+            psyStats[pid] = { leads: validLeads, conversoes: conversoes };
+            totalConversoes += conversoes;
         });
 
         const fairShare = allEligiblePsychologists.length > 0 
-            ? Math.max(1, Math.ceil(totalConversoes14d / allEligiblePsychologists.length))
+            ? Math.max(1, Math.ceil(totalConversoes / allEligiblePsychologists.length))
             : 1;
 
         debugLog.push(`[${Date.now() - startTime}ms] 🎯 Cota Justa (Fair Share) de Conversões / mês: ${fairShare}`);
@@ -312,12 +318,12 @@ exports.calculateMatches = async (preferences = {}) => {
             
             const stats = psyStats[psyJSON.id] || { leads: 0, conversoes: 0 };
             
-            debugLog.push(`   - ID: ${psyJSON.id} | Score Clínico: ${rawMatchScore.toFixed(2)} | Leads 14d: ${stats.leads} | Fechados 14d: ${stats.conversoes}`);
+            debugLog.push(`   - ID: ${psyJSON.id} | Score Clínico: ${rawMatchScore.toFixed(2)} | Leads 30d: ${stats.leads} | Fechados 30d: ${stats.conversoes}`);
             
             return { 
                 ...psyJSON, 
-                leads14d: stats.leads,
-                conversoes14d: stats.conversoes,
+                leads30d: stats.leads,
+                conversoes30d: stats.conversoes,
                 rawMatchScore, 
                 matchDetails: [...new Set(explainability.positives)],
                 explainability 
@@ -339,6 +345,15 @@ exports.calculateMatches = async (preferences = {}) => {
         if (eligibleForSlots.length === 0) {
             debugLog.push(`   ⚠️ Ninguém passou no corte (>=50). Flexibilizando para os melhores disponíveis.`);
             eligibleForSlots = [...scored];
+        }
+
+        // --- PROTEÇÃO DE VAGAS: OCULTA OS CAPPADOS SE HOUVER OPÇÕES SUFICIENTES ---
+        const nonCappedEligible = eligibleForSlots.filter(c => !c.isCapped);
+        if (nonCappedEligible.length >= 3) {
+            debugLog.push(`   🛡️ Encontrados ${nonCappedEligible.length} candidatos NÃO cappados. Profissionais que estouraram a cota foram ocultados desta rodada.`);
+            eligibleForSlots = nonCappedEligible;
+        } else if (nonCappedEligible.length > 0) {
+            debugLog.push(`   ⚠️ Apenas ${nonCappedEligible.length} não-cappados. Mantendo a base inteira para garantir preenchimento das 3 vagas.`);
         }
 
         const results = [];
