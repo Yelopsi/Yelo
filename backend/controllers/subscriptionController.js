@@ -217,22 +217,14 @@ exports.cancelSubscription = async (req, res) => {
                 return res.json({ message: 'Assinatura cancelada com sucesso.' });
             }
 
-            // Se está ativo, cancelamos a renovação mas mantemos o acesso até o planExpiresAt atual
-            // O Asaas precisa saber quando a assinatura acaba. Passamos a data atual de expiração se existir.
-            if (psychologist.planExpiresAt) {
-                const endDateStr = new Date(psychologist.planExpiresAt).toISOString().split('T')[0];
-                await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                    body: JSON.stringify({ endDate: endDateStr })
-                });
-            } else {
-                // Fallback, deleta no Asaas se não tiver data
-                await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}`, {
-                    method: 'DELETE',
-                    headers: { 'access_token': ASAAS_API_KEY }
-                });
-            }
+            // Se está ativo, cancelamos a renovação mas mantemos o acesso até o planExpiresAt atual.
+            // Como o Asaas não suporta atualizar o endDate de uma assinatura existente via PUT, 
+            // precisamos DELETAR a assinatura imediatamente no Asaas para evitar futuras cobranças.
+            // O acesso local será mantido pela plataforma até a data de planExpiresAt.
+            await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+                method: 'DELETE',
+                headers: { 'access_token': ASAAS_API_KEY }
+            });
 
             // 2. ATUALIZA O BANCO LOCAL
             // NÃO atualizamos o planExpiresAt baseado no Asaas, pois o Asaas joga a data muito pra frente
