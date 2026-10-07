@@ -268,6 +268,7 @@
         <button class="crm-pill content-tab-btn" data-target="tab-conversoes" onclick="switchFunilTab(this)">🤝 Conversões (PLG)</button>
         <button class="crm-pill content-tab-btn" data-target="tab-ranking" onclick="switchFunilTab(this)">🏆 Ranking de Psis</button>
         <button class="crm-pill content-tab-btn" data-target="tab-auditoria" onclick="switchFunilTab(this)">🔎 Auditoria (Período)</button>
+        <button class="crm-pill content-tab-btn" data-target="tab-v6-impact" onclick="switchFunilTab(this)">⚖️ Monitor de Justiça V6</button>
     </div>
 
     <!-- ABA 1: FUNIL END-TO-END -->
@@ -552,6 +553,45 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+    <!-- ABA 6: MONITOR DE JUSTIÇA V6 -->
+    <div id="tab-v6-impact" class="analytics-tab-content" style="display: none;">
+        <div style="margin-bottom: 15px; margin-top: 20px;">
+            <h3 class="crm-section-title" style="margin-bottom: 5px; display:flex; align-items:center; gap:10px;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="color:#0ea5e9"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/><path d="m9 12 2 2 4-4"/></svg>
+                Monitor de Justiça (Efeito V6 Match)
+            </h3>
+            <p style="margin: 0; font-size: 0.85rem; color: #64748b; padding-left: 34px;" id="v6-impact-subtitle">Comparando N dias antes vs N dias depois do deploy do V6.</p>
+        </div>
+        <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 15px;" id="v6-impact-kpis">
+            <div class="kpi-card" style="border-top-color: #0ea5e9;" title="Total de contatos válidos processados na janela de análise.">
+                <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Leads Processados</div>
+                <h4 id="v6-total-leads" style="font-size: 1.8rem; color: #1e293b; margin: 0; font-weight: 800;">-</h4>
+            </div>
+            <div class="kpi-card" style="border-top-color: #f43f5e;" title="Total de psicólogos que não receberam nenhum lead na janela.">
+                <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Psicólogos "Zerados"</div>
+                <h4 id="v6-starving" style="font-size: 1.8rem; color: #1e293b; margin: 0; font-weight: 800;">-</h4>
+            </div>
+            <div class="kpi-card" style="border-top-color: #10b981;" title="Percentual do total de leads que foi para os Top 5 profissionais.">
+                <div style="font-size: 0.75rem; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Concentração (Top 5)</div>
+                <h4 id="v6-concentration" style="font-size: 1.8rem; color: #1e293b; margin: 0; font-weight: 800;">-</h4>
+            </div>
+        </div>
+        <div style="margin-bottom: 40px; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <thead style="background: #f8fafc; color: #475569; border-bottom: 1px solid #e2e8f0; text-align: left;">
+                    <tr>
+                        <th style="padding: 10px 15px;">Psicólogo(a)</th>
+                        <th style="padding: 10px 15px; text-align: center;">Leads ANTES</th>
+                        <th style="padding: 10px 15px; text-align: center;">Leads DEPOIS</th>
+                        <th style="padding: 10px 15px; text-align: center;">Variação</th>
+                    </tr>
+                </thead>
+                <tbody id="v6-impact-table-body">
+                    <tr><td colspan="4" style="padding: 15px; text-align: center; color: #94a3b8;">Carregando análise do Motor V6...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 

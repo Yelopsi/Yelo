@@ -68,7 +68,10 @@ window.initializePage = function() {
             targetTab.style.display = 'block';
         }
         
-        // IMPORTANTE: Mova as funções carregarRankingPsis() e carregarConversoesPLG() que estavam no admin_crm_analytics.js para cá, para popular as tabelas
+        if (targetId === 'tab-v6-impact') {
+            const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
+            loadV6Impact(token);
+        }
     };
 
     async function carregarDadosFunil() {
@@ -1120,4 +1123,52 @@ window.initializePage = function() {
 
     // Executa assim que a view injetada carregar
     carregarDadosFunil();
+
+    window.loadV6Impact = async function(token) {
+        try {
+            const response = await fetch('/api/cmo/v6-impact', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            if (!data.success) return;
+
+            document.getElementById('v6-impact-subtitle').textContent = `Comparando últimos ${data.days} dias vs ${data.days} dias antes do deploy.`;
+
+            // KPIs
+            document.getElementById('v6-total-leads').innerHTML = `${data.stats.totalLeadsAfter} <span style="font-size: 0.85rem; color: #64748b; font-weight: normal; margin-left: 8px;">(Antes: ${data.stats.totalLeadsBefore})</span>`;
+            document.getElementById('v6-starving').innerHTML = `${data.stats.starvingAfter} <span style="font-size: 0.85rem; color: #64748b; font-weight: normal; margin-left: 8px;">(Antes: ${data.stats.starvingBefore})</span>`;
+            
+            let concDiff = data.stats.concentrationAfter - data.stats.concentrationBefore;
+            let concColor = concDiff > 0 ? '#ef4444' : (concDiff < 0 ? '#10b981' : '#64748b');
+            let concArrow = concDiff > 0 ? '↑' : (concDiff < 0 ? '↓' : '−');
+            let concHtml = `<span style="font-size: 0.85rem; font-weight: bold; color: ${concColor}; background-color: ${concColor}1a; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-left: 8px;">${concArrow} ${Math.abs(concDiff).toFixed(1)}%</span>`;
+            document.getElementById('v6-concentration').innerHTML = `${data.stats.concentrationAfter}% ${concHtml}`;
+
+            // Tabela
+            const tbody = document.getElementById('v6-impact-table-body');
+            tbody.innerHTML = '';
+            
+            if (data.tableData && data.tableData.length > 0) {
+                data.tableData.forEach(row => {
+                    let varColor = row.variation > 0 ? '#10b981' : (row.variation < 0 ? '#ef4444' : '#64748b');
+                    let varText = row.variation > 0 ? `+${row.variation}` : row.variation;
+                    
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid #f1f5f9';
+                    tr.innerHTML = `
+                        <td style="padding: 10px 15px; font-weight: 500; color: #334155;">${row.nome}</td>
+                        <td style="padding: 10px 15px; text-align: center; color: #64748b;">${row.leadsBefore}</td>
+                        <td style="padding: 10px 15px; text-align: center; font-weight: bold; color: #0f172a;">${row.leadsAfter}</td>
+                        <td style="padding: 10px 15px; text-align: center; color: ${varColor}; font-weight: bold;">${varText}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" style="padding: 15px; text-align: center; color: #94a3b8;">Nenhum dado encontrado para o período.</td></tr>';
+            }
+        } catch (e) {
+            console.error("Erro ao carregar Impacto V6:", e);
+        }
+    }
 };

@@ -1708,4 +1708,104 @@ router.post('/monthly-finance', protect, admin, async (req, res) => {
     }
 });
 
+// Rota para analisar impacto do Motor V6
+router.get('/v6-impact', protect, admin, async (req, res) => {
+    try {
+        const v6DeployDate = new Date('2026-10-06T21:40:00.000Z');
+        const now = new Date();
+        const daysSinceDeploy = Math.max(1, Math.floor((now - v6DeployDate) / (1000 * 60 * 60 * 24)));
+        
+        const beforeStartDate = new Date(v6DeployDate);
+        beforeStartDate.setDate(beforeStartDate.getDate() - daysSinceDeploy);
+
+        const psys = await db.Psychologist.findAll({
+            where: {
+                status: ['active', 'trial'],
+                deletedAt: null
+            },
+            attributes: ['id', 'nome', 'status']
+        });
+
+        const stats = {
+            before: { totalLeads: 0, starvingCount: 0, leadsPerPsy: [] },
+            after: { totalLeads: 0, starvingCount: 0, leadsPerPsy: [] }
+        };
+
+        const getLeadsInPeriod = async (startDate, endDate) => {
+            const logs = await db.sequelize.query(`
+                SELECT 
+                    "psychologistId", 
+                    COUNT(*) as total_clicks,
+                    SUM(CASE WHEN "contactReceived" = false OR "dealClosed" IN ('no_contact', 'ghosted', 'wpp_issue') THEN 1 ELSE 0 END) as invalid_clicks
+                FROM "WhatsAppClickLogs" 
+                WHERE "createdAt" >= :startDate AND "createdAt" < :endDate
+                GROUP BY "psychologistId"
+            `, { replacements: { startDate, endDate }, type: db.sequelize.QueryTypes.SELECT });
+
+            const map = {};
+            logs.forEach(l => {
+                map[l.psychologistId] = parseInt(l.total_clicks) - parseInt(l.invalid_clicks || 0);
+            });
+            return map;
+        };
+
+        const leadsBefore = await getLeadsInPeriod(beforeStartDate, v6DeployDate);
+        const leadsAfter = await getLeadsInPeriod(v6DeployDate, now);
+
+        let tableData = [];
+
+        psys.forEach(p => {
+            const lb = leadsBefore[p.id] || 0;
+            const la = leadsAfter[p.id] || 0;
+
+            stats.before.totalLeads += lb;
+            stats.after.totalLeads += la;
+
+            if (lb === 0) stats.before.starvingCount++;
+            if (la === 0) stats.after.starvingCount++;
+
+            stats.before.leadsPerPsy.push({ name: p.nome, leads: lb });
+            stats.after.leadsPerPsy.push({ name: p.nome, leads: la });
+
+            if (lb > 0 || la > 0) {
+                tableData.push({
+                    id: p.id,
+                    nome: p.nome.substring(0, 20),
+                    leadsBefore: lb,
+                    leadsAfter: la,
+                    variation: la - lb
+                });
+            }
+        });
+
+        tableData.sort((a, b) => b.leadsAfter - a.leadsAfter);
+
+        const top5Before = stats.before.leadsPerPsy.sort((a, b) => b.leads - a.leads).slice(0, 5).reduce((acc, curr) => acc + curr.leads, 0);
+        const top5After = stats.after.leadsPerPsy.sort((a, b) => b.leads - a.leads).slice(0, 5).reduce((acc, curr) => acc + curr.leads, 0);
+
+        const beforeConcentration = stats.before.totalLeads > 0 ? ((top5Before / stats.before.totalLeads) * 100).toFixed(1) : 0;
+        const afterConcentration = stats.after.totalLeads > 0 ? ((top5After / stats.after.totalLeads) * 100).toFixed(1) : 0;
+
+        res.json({
+            success: true,
+            days: daysSinceDeploy,
+            beforeStartDate: beforeStartDate.toISOString().split('T')[0],
+            v6DeployDate: v6DeployDate.toISOString().split('T')[0],
+            now: now.toISOString().split('T')[0],
+            stats: {
+                totalLeadsBefore: stats.before.totalLeads,
+                totalLeadsAfter: stats.after.totalLeads,
+                starvingBefore: stats.before.starvingCount,
+                starvingAfter: stats.after.starvingCount,
+                concentrationBefore: parseFloat(beforeConcentration),
+                concentrationAfter: parseFloat(afterConcentration)
+            },
+            tableData
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 module.exports = router;
