@@ -170,11 +170,11 @@ const applyFairness = (scoredCandidates, fairShare) => {
 
             let finalScore = c.rawMatchScore;
 
-            // Identificação precisa do perfil (Trial vs Pagante)
+            // Identificação precisa do perfil (Trial vs Pagante) alinhada com o KPI do sistema
             const isVip = c.is_exempt === true || String(c.is_exempt).toLowerCase() === 'true';
             const hasSub = !!(c.subscriptionId) || (c.subscription_payments_count > 0);
-            const isPaid = isVip || hasSub || (c.status === 'active' && !c.planExpiresAt); 
-            const isTrial = c.status === 'trial' && !isPaid;
+            const isPaid = isVip || hasSub; 
+            const isTrial = !isPaid && (c.planExpiresAt && new Date(c.planExpiresAt) > new Date());
 
             const conversoes = c.conversoes30d || 0;
             const leads = c.leads30d || 0;
