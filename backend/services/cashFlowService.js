@@ -68,8 +68,8 @@ class CashFlowService {
 
             const allPayments = Object.values(mergedPayments);
 
-            // Agrupar por mês
             const cashFlowByMonth = {};
+            const weeklyData = {};
 
             allPayments.forEach(payment => {
                 // Prioriza a data de pagamento
@@ -77,15 +77,20 @@ class CashFlowService {
                 if (!dateObj) return;
 
                 let monthYear = '';
+                let day = 1;
                 
                 // Se for string no formato YYYY-MM-DD ou ISO, pega os primeiros 7 caracteres diretamente para evitar bug de fuso horário
                 if (typeof dateObj === 'string' && dateObj.length >= 7) {
                     monthYear = dateObj.substring(0, 7);
+                    if (dateObj.length >= 10) {
+                        day = parseInt(dateObj.substring(8, 10), 10);
+                    }
                 } else if (dateObj instanceof Date) {
                     // Se for objeto Date, converte para string local (considerando fuso) ou padroniza YYYY-MM
                     const year = dateObj.getFullYear();
                     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
                     monthYear = `${year}-${month}`;
+                    day = dateObj.getDate();
                 } else {
                     return; // Formato inválido
                 }
@@ -99,6 +104,10 @@ class CashFlowService {
                     };
                 }
 
+                if (!weeklyData[monthYear]) {
+                    weeklyData[monthYear] = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+                }
+
                 // Converter os valores que podem vir como string do banco
                 const grossVal = parseFloat(payment.value) || 0;
                 const netVal = grossVal - 1.99; // Estimativa de taxa Asaas
@@ -106,12 +115,17 @@ class CashFlowService {
                 cashFlowByMonth[monthYear].grossValue += grossVal;
                 cashFlowByMonth[monthYear].netValue += netVal > 0 ? netVal : grossVal;
                 cashFlowByMonth[monthYear].count += 1;
+
+                const weekNum = Math.min(Math.ceil(day / 7), 5); // 1 a 5
+                if (weekNum >= 1 && weekNum <= 5) {
+                    weeklyData[monthYear][weekNum] += 1;
+                }
             });
 
             // Converter para array e ordenar (mais recente primeiro)
             const result = Object.values(cashFlowByMonth).sort((a, b) => b.monthYear.localeCompare(a.monthYear));
 
-            return result;
+            return { monthly: result, weekly: weeklyData };
         } catch (error) {
             console.error("Erro no buildCashFlowData:", error);
             throw error;

@@ -896,6 +896,10 @@ window.loadPaymentsEvolutionChart = async function() {
         
         if (!result.success || !result.labels || !result.data) return;
 
+        // Limita para exibir apenas os últimos 3 meses
+        const labels = result.labels.slice(-3);
+        const data = result.data.slice(-3);
+
         const ctx = document.getElementById('paymentsEvolutionChart');
         if (!ctx) return;
 
@@ -910,10 +914,10 @@ window.loadPaymentsEvolutionChart = async function() {
         window.paymentsEvolutionChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: result.labels,
+                labels: labels,
                 datasets: [{
                     label: 'Mensalidades Pagas',
-                    data: result.data,
+                    data: data,
                     borderColor: '#8b5cf6',
                     backgroundColor: gradient,
                     borderWidth: 3,

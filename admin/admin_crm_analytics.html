@@ -474,6 +474,19 @@
                 </div>
             </div>
         </div>
+        <div style="margin-top: 30px; padding: 0; overflow: hidden; background: white; border-radius: 12px; border: 1px solid var(--saas-border); box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+            <div style="padding: 20px 25px; border-bottom: 1px solid var(--cinza-borda);">
+                <h3 style="margin: 0; color: var(--verde-escuro); display: flex; align-items: center; gap: 8px; font-family: var(--font-titulos);">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"></path></svg>
+                    Comparativo Semanal (Transações)
+                </h3>
+                <p style="margin: 5px 0 0 0; color: var(--cinza-texto); font-size: 0.85rem;">Volume de pagamentos recebidos por semana, comparando o mês atual com o mês anterior.</p>
+            </div>
+            <div style="padding: 25px;">
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="weeklyPaymentsChart"></canvas>
+                </div>
+            </div>
         </div>
 
     </div>

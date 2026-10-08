@@ -431,6 +431,64 @@ window.initializePage = function() {
                 tbody.appendChild(tr);
             });
             
+            // Plotar Gráfico Semanal (Mês atual vs Mês anterior)
+            const weeklyCtx = document.getElementById('weeklyPaymentsChart');
+            if (weeklyCtx && data.weeklyCashFlow) {
+                // Obter os 2 meses mais recentes (lembrando que cashFlow está ordenado do mais recente pro mais antigo)
+                if (cashFlow.length >= 2) {
+                    const currentMonthStr = cashFlow[0].monthYear; // ex: "2026-10"
+                    const previousMonthStr = cashFlow[1].monthYear; // ex: "2026-09"
+                    
+                    const currentData = data.weeklyCashFlow[currentMonthStr] || { 1:0, 2:0, 3:0, 4:0, 5:0 };
+                    const previousData = data.weeklyCashFlow[previousMonthStr] || { 1:0, 2:0, 3:0, 4:0, 5:0 };
+                    
+                    const [cYear, cMonth] = currentMonthStr.split('-');
+                    const [pYear, pMonth] = previousMonthStr.split('-');
+                    
+                    if (window.weeklyPaymentsChartInstance) {
+                        window.weeklyPaymentsChartInstance.destroy();
+                    }
+                    
+                    window.weeklyPaymentsChartInstance = new Chart(weeklyCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4', 'Semana 5'],
+                            datasets: [
+                                {
+                                    label: `Mês Atual (${cMonth}/${cYear})`,
+                                    data: [currentData[1], currentData[2], currentData[3], currentData[4], currentData[5]],
+                                    backgroundColor: '#10b981',
+                                    borderRadius: 4,
+                                    barPercentage: 0.6,
+                                    categoryPercentage: 0.8
+                                },
+                                {
+                                    label: `Mês Anterior (${pMonth}/${pYear})`,
+                                    data: [previousData[1], previousData[2], previousData[3], previousData[4], previousData[5]],
+                                    backgroundColor: '#94a3b8',
+                                    borderRadius: 4,
+                                    barPercentage: 0.6,
+                                    categoryPercentage: 0.8
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter', size: 12 } } },
+                                tooltip: { titleFont: { family: 'Inter' }, bodyFont: { family: 'Inter' } }
+                            },
+                            scales: {
+                                x: { grid: { display: false } },
+                                y: { grid: { color: '#f1f5f9' }, border: { display: false }, beginAtZero: true, ticks: { stepSize: 1 } }
+                            }
+                        }
+                    });
+                }
+            }
+            
         } catch (error) {
             console.error(error);
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 30px; color: #ef4444;">Erro ao carregar os dados do Asaas.</td></tr>';

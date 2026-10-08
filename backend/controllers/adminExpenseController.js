@@ -101,7 +101,7 @@ exports.getCashFlow = async (req, res) => {
     try {
         const cashFlowService = require('../services/cashFlowService');
         const result = await cashFlowService.buildCashFlowData();
-        res.json({ cashFlow: result });
+        res.json({ cashFlow: result.monthly, weeklyCashFlow: result.weekly });
     } catch (error) {
         console.error("Erro ao buscar fluxo de caixa:", error);
         res.status(500).json({ error: "Erro interno ao buscar fluxo de caixa." });
