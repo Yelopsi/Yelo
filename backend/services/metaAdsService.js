@@ -5,6 +5,18 @@ class MetaAdsService {
         this.accessToken = process.env.META_ACCESS_TOKEN || 'MOCK_META_TOKEN';
         this.adAccountId = process.env.META_AD_ACCOUNT_ID || 'MOCK_ACCOUNT_ID';
         this.graphApiUrl = 'https://graph.facebook.com/v19.0';
+        this.cache = new Map();
+        this.cacheTTL = 30 * 60 * 1000; // 30 minutos
+    }
+
+    _getCache(key) {
+        const item = this.cache.get(key);
+        if (item && item.expiry > Date.now()) return item.value;
+        return null;
+    }
+
+    _setCache(key, value) {
+        this.cache.set(key, { value, expiry: Date.now() + this.cacheTTL });
     }
 
     /**
@@ -16,6 +28,10 @@ class MetaAdsService {
                 return this.mockAccountSpend();
             }
 
+            const cacheKey = `accountSpend_${dateStart}_${dateEnd}`;
+            const cached = this._getCache(cacheKey);
+            if (cached) return cached;
+
             const response = await axios.get(`${this.graphApiUrl}/act_${this.adAccountId}/insights`, {
                 params: {
                     access_token: this.accessToken,
@@ -26,13 +42,16 @@ class MetaAdsService {
 
             if (response.data && response.data.data && response.data.data.length > 0) {
                 const data = response.data.data[0];
-                return {
+                const result = {
                     spend: parseFloat(data.spend) || 0,
                     impressions: parseInt(data.impressions) || 0,
                     clicks: parseInt(data.clicks) || 0,
                     cpc: parseFloat(data.cpc) || 0
                 };
+                this._setCache(cacheKey, result);
+                return result;
             }
+            this._setCache(cacheKey, { spend: 0, impressions: 0, clicks: 0, cpc: 0 });
             return { spend: 0, impressions: 0, clicks: 0, cpc: 0 };
         } catch (error) {
             const errorMsg = error.response?.data?.error?.message || error.message;
@@ -50,6 +69,10 @@ class MetaAdsService {
                 return this.mockCampaignInsights();
             }
 
+            const cacheKey = `campaignInsights_${dateStart}_${dateEnd}`;
+            const cached = this._getCache(cacheKey);
+            if (cached) return cached;
+
             const response = await axios.get(`${this.graphApiUrl}/act_${this.adAccountId}/insights`, {
                 params: {
                     access_token: this.accessToken,
@@ -59,7 +82,7 @@ class MetaAdsService {
                 }
             });
 
-            return (response.data.data || []).map(c => {
+            const result = (response.data.data || []).map(c => {
                 let conversions = 0;
                 if (c.actions) {
                     // Soma as ações de conversão relevantes (leads e cadastros)
@@ -76,6 +99,8 @@ class MetaAdsService {
                     conversions
                 };
             });
+            this._setCache(cacheKey, result);
+            return result;
         } catch (error) {
             const errorMsg = error.response?.data?.error?.message || error.message;
             console.error('[MetaAdsService] Erro ao buscar campanhas:', errorMsg);
@@ -89,6 +114,10 @@ class MetaAdsService {
                 return [{ campaign_id: '120251213168140531', daily_budget: 35.00 }];
             }
 
+            const cacheKey = `campaignBudgets`;
+            const cached = this._getCache(cacheKey);
+            if (cached) return cached;
+
             const [campRes, adsetRes] = await Promise.all([
                 axios.get(`${this.graphApiUrl}/act_${this.adAccountId}/campaigns`, {
                     params: { access_token: this.accessToken, fields: 'id,daily_budget' }
@@ -101,7 +130,7 @@ class MetaAdsService {
             const campaigns = campRes.data?.data || [];
             const adsets = adsetRes.data?.data || [];
 
-            return campaigns.map(c => {
+            const result = campaigns.map(c => {
                 let daily_budget = 0;
                 if (c.daily_budget) {
                     daily_budget = parseInt(c.daily_budget) / 100;
@@ -111,6 +140,8 @@ class MetaAdsService {
                 }
                 return { campaign_id: c.id, daily_budget };
             });
+            this._setCache(cacheKey, result);
+            return result;
         } catch (error) {
             console.error('[MetaAdsService] Erro ao buscar budgets:', error.message);
             return [];

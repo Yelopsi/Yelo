@@ -9,6 +9,19 @@ class GoogleAdsService {
         this.clientSecret = process.env.GOOGLE_ADS_CLIENT_SECRET;
         this.refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
         this.customerId = process.env.GOOGLE_CUSTOMER_ID;
+        
+        this.cache = new Map();
+        this.cacheTTL = 30 * 60 * 1000; // 30 minutos
+    }
+
+    _getCache(key) {
+        const item = this.cache.get(key);
+        if (item && item.expiry > Date.now()) return item.value;
+        return null;
+    }
+
+    _setCache(key, value) {
+        this.cache.set(key, { value, expiry: Date.now() + this.cacheTTL });
     }
 
     isConfigured() {
@@ -60,6 +73,10 @@ class GoogleAdsService {
         }
 
         try {
+            const cacheKey = `googleSpend_${dateStart}_${dateEnd}`;
+            const cached = this._getCache(cacheKey);
+            if (cached) return cached;
+
             const accessToken = await this.getAccessToken();
             if (!accessToken) {
                 const err = new Error('Sem Access Token');
@@ -80,12 +97,14 @@ class GoogleAdsService {
             const spend = (metrics.costMicros || 0) / 1000000;
             const clicks = metrics.clicks || 0;
             
-            return {
+            const cachedResult = {
                 spend: spend,
                 impressions: metrics.impressions || 0,
                 clicks: clicks,
                 cpc: clicks > 0 ? (spend / clicks) : 0
             };
+            this._setCache(cacheKey, cachedResult);
+            return cachedResult;
         } catch (error) {
             console.log('\n========== CMO GOOGLE DEBUG CONFIG ==========');
             console.log('customerId:', this.customerId);
@@ -121,6 +140,10 @@ class GoogleAdsService {
         }
 
         try {
+            const cacheKey = `googleCampaignInsights_${dateStart}_${dateEnd}`;
+            const cached = this._getCache(cacheKey);
+            if (cached) return cached;
+
             const accessToken = await this.getAccessToken();
             if (!accessToken) {
                 const err = new Error('Sem Access Token');
@@ -138,7 +161,7 @@ class GoogleAdsService {
             const result = await this.queryGoogleAds(query, accessToken);
             if (!result.results) return [];
 
-            return result.results.map(row => ({
+            const resultMapped = result.results.map(row => ({
                 id: row.campaign.id,
                 campaign_name: row.campaign.name,
                 spend: (row.metrics.costMicros || 0) / 1000000,
@@ -147,6 +170,8 @@ class GoogleAdsService {
                 clicks: row.metrics.clicks || 0,
                 conversions: row.metrics.conversions || 0
             }));
+            this._setCache(cacheKey, resultMapped);
+            return resultMapped;
         } catch (error) {
             let errorObj = error.response?.data || error.message;
             let cleanMsg = "Erro desconhecido";

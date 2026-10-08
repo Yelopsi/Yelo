@@ -102,6 +102,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND "planExpiresAt" > NOW()
                     AND ("is_exempt" IS NULL OR "is_exempt" = false)
+                    AND "firstPaidAt" >= :dateStart AND "firstPaidAt" < :nextDayStr
                 ) as pagantes,
                 COUNT(*) FILTER (
                     WHERE ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
@@ -109,18 +110,20 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     AND "planExpiresAt" > NOW()
                     AND ("fotoUrl" IS NOT NULL AND "fotoUrl" NOT LIKE '%placehold.co%')
                     AND ("bio" IS NOT NULL AND LENGTH("bio") >= 10)
+                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
                 ) as trials,
                 COUNT(*) FILTER (
                     WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND ("planExpiresAt" <= NOW() OR "status" = 'inactive')
+                    AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
                 ) as churned,
                 COUNT(*) FILTER (
                     WHERE ("firstPaidAt" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
                     AND "planExpiresAt" <= NOW()
+                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
                 ) as failed_trials
             FROM "Psychologists"
-            WHERE "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
-            AND "deletedAt" IS NULL
+            WHERE "deletedAt" IS NULL
             AND (
                 utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
                 OR first_utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
@@ -147,6 +150,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     AND "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND "planExpiresAt" > NOW()
                     AND (is_exempt IS NULL OR is_exempt = false)
+                    AND "firstPaidAt" >= :dateStart AND "firstPaidAt" < :nextDayStr
                 ) as total_new_pagantes,
                 COUNT(*) FILTER (
                     WHERE status IN ('pending', 'active')
@@ -154,10 +158,10 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     AND (is_exempt IS NULL OR is_exempt = false)
                     AND "planExpiresAt" > NOW()
                     AND ("fotoUrl" IS NOT NULL OR ("bio" IS NOT NULL AND "bio" != ''))
+                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
                 ) as total_new_trials
             FROM "Psychologists"
-            WHERE "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
-            AND "deletedAt" IS NULL
+            WHERE "deletedAt" IS NULL
         `;
         const [globalB2BRes] = await sequelize.query(globalB2BQuery, {
             replacements: { dateStart, nextDayStr }, type: sequelize.QueryTypes.SELECT
