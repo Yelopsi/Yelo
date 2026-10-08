@@ -1272,6 +1272,12 @@ exports.getPendingActions = async (req, res) => {
                 ctr: 0
             });
         }
+        // Ordena da mais antiga para a mais recente (Data de Inscrição / createdAt)
+        pendingList.sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0).getTime();
+            const dateB = new Date(b.createdAt || 0).getTime();
+            return dateA - dateB;
+        });
 
         res.status(200).json(pendingList);
     } catch (error) {
