@@ -1026,12 +1026,24 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             const [activePaidRes] = await sequelize.query(activePaidQuery, { type: sequelize.QueryTypes.SELECT });
             knownScheduledChurn = parseInt(activePaidRes.scheduled_churn || 0);
 
-            // Churn recorrente observado ainda é praticamente 0% por imaturidade da base.
-            // A fórmula antiga (inativos / (ativos + inativos)) não representa bem a exposição real.
-            // Assumimos 8,15% como hipótese conservadora temporária para o simulador.
-            simChurn = 0.0815;
-            simChurnType = 'ASSUMED';
-            simChurnSource = 'CONSERVATIVE_EARLY_STAGE_CHURN_ASSUMPTION';
+            // Churn recorrente observado. Usaremos a fórmula real se a base tiver maturidade/volume,
+            // caso contrário mantemos a trava conservadora.
+            const autoTransitionThreshold = 100; // 100 ativos é um marco seguro
+            
+            if (totalActive >= autoTransitionThreshold) {
+                // A partir de 100 ativos, assumimos o churn real dos últimos 90 dias anualizado/mensalizado,
+                // ou simplesmente a taxa dos últimos 90 dias como uma boa proxy.
+                // Como 90 dias é um trimestre, a taxa trimestral dividida por 3 dá uma ideia de churn mensal.
+                const monthlyObservedChurn = churnRate90d / 3;
+                simChurn = monthlyObservedChurn > 0 ? monthlyObservedChurn : 0.05; // mínimo de 5% pra evitar infinito
+                simChurnType = 'OBSERVED';
+                simChurnSource = 'AUTO_OBSERVED_CHURN_RATE';
+            } else {
+                // Hipótese conservadora de 8,15% para bases pequenas (projeta um LTV de aprox. 12 meses)
+                simChurn = 0.0815;
+                simChurnType = 'ASSUMED';
+                simChurnSource = 'CONSERVATIVE_EARLY_STAGE_CHURN_ASSUMPTION';
+            }
 
 
             const b2cQueryBaseline = `
