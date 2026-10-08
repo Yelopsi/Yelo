@@ -485,6 +485,7 @@ window.initializePage = function () {
             const currentMonthName = new Date().toLocaleString('pt-BR', { month: 'long' });
             
             let X = 0, Y = 0, VALOR = '150,00';
+            let asaasReasonText = 'O banco acabou recusando a transação no seu cartão de crédito (geralmente é só limite do mês virando ou bloqueio preventivo do banco para assinaturas).';
             try {
                 const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
                 const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/full-details`, {
@@ -503,19 +504,38 @@ window.initializePage = function () {
                     }
                     const psy = data.psychologist || data;
                     if(psy.valorSessao) VALOR = parseFloat(psy.valorSessao).toFixed(2).replace('.', ',');
+                    if (data.asaasFailedReason) {
+                        const billingMode = data.asaasFailedBillingType === 'PIX' ? 'o pagamento via Pix' : 'a transação no seu cartão de crédito';
+                        asaasReasonText = `O sistema acabou não conseguindo processar ${billingMode}. O motivo reportado foi: *"${data.asaasFailedReason}"*.`;
+                        isVoluntaryChurn = false;
+                    }
                 }
             } catch(e) { console.error('Erro ao buscar stats para churn', e); }
 
             let performanceBlock = '';
-            if (Y > 0) {
-                performanceBlock = `Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e fiquei super feliz! Vi que só neste mês você recebeu ${X} contatos e conseguiu fechar com ${Y} paciente(s) novo(s). 🚀\n\nEu recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. O banco acabou recusando a transação no seu cartão de crédito (geralmente é só limite do mês virando ou bloqueio preventivo do banco para assinaturas).\n\nComo a gente sabe que só com os pacientes novos que você fechou agora em ${currentMonthName} (a R$ ${VALOR} a sessão) a plataforma já se pagou com muita sobra, não quero que o seu perfil saia do ar e você perca o embalo de novos agendamentos que estamos construindo.`;
-            } else if (X > 0) {
-                performanceBlock = `Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e vi que você recebeu ${X} contato(s) de paciente(s)! O fluxo está começando a ganhar tração. 🚀\n\nNo entanto, recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. O banco acabou recusando a transação no seu cartão de crédito (geralmente é só limite do mês virando ou bloqueio preventivo do banco para assinaturas).\n\nNão quero que o seu perfil saia do ar e você perca os potenciais pacientes que já estão visitando e clicando no seu perfil. A constância é o segredo para fechar novos pacientes.`;
-            } else {
-                performanceBlock = `Estou acompanhando sua jornada na plataforma e vi que o seu perfil está pronto para decolar! 🌱\n\nNo entanto, recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. O banco acabou recusando a transação no seu cartão de crédito (geralmente é limite do mês virando ou bloqueio preventivo).\n\nComo o algoritmo de distribuição da plataforma está aprendendo sobre o seu perfil, não quero que você saia do ar agora e perca o histórico que já estamos construindo.`;
-            }
+            const contatoStr = X === 1 ? 'contato' : 'contatos';
+            const pacienteStr = Y === 1 ? 'paciente novo' : 'pacientes novos';
+            const pacientePotencialStr = X === 1 ? 'contato de paciente' : 'contatos de pacientes';
 
-            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo.\n\nEstou passando para te dar um toque rápido sobre a sua assinatura. ${performanceBlock}\n\nPara regularizar e manter seu consultório virtual ativo recebendo pacientes, é só acessar a sua conta na Yelo, ir na aba "Ajustes" > "Assinaturas e Planos" e atualizar o seu cartão.\n\nSe precisar de alguma ajuda ou tiver qualquer dificuldade no painel, me dá um alô aqui. Um abraço! 🌿`;
+            if (isVoluntaryChurn) {
+                if (Y > 0) {
+                    performanceBlock = `Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e fiquei super feliz! Vi que só neste mês você recebeu ${X} ${contatoStr} e conseguiu fechar com ${Y} ${pacienteStr}. 🚀\n\nNo entanto, vi aqui no sistema que você optou por cancelar a sua assinatura e o seu plano não foi renovado.\n\nComo a gente sabe que só com os pacientes novos que você fechou agora em ${currentMonthName} (a R$ ${VALOR} a sessão) a plataforma já se pagou com muita sobra, queria entender o que motivou o seu cancelamento. Foi alguma dificuldade técnica ou algo em que possamos melhorar?`;
+                } else if (X > 0) {
+                    performanceBlock = `Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e vi que você recebeu ${X} ${pacientePotencialStr}! O fluxo está começando a ganhar tração. 🚀\n\nNo entanto, vi aqui no sistema que você optou por cancelar a sua assinatura e o seu plano não foi renovado.\n\nComo você já estava começando a receber potenciais pacientes, queria entender o que motivou o seu cancelamento. Acha que os contatos não estavam no perfil ideal ou teve alguma dificuldade técnica?`;
+                } else {
+                    performanceBlock = `Dei uma olhada no seu perfil e vi que ele tem muito potencial para atrair pacientes na plataforma! 🌱\n\nNo entanto, notei que você optou por cancelar a sua assinatura e o seu plano não foi renovado.\n\nQueria entender o que motivou a sua decisão. Faltou algum suporte nosso para te ajudar nas otimizações iniciais do perfil ou teve alguma outra dificuldade? Seu feedback é super importante pra gente!`;
+                }
+                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo.\n\n${performanceBlock}\n\nFico no aguardo. Um abraço! 🌿`;
+            } else {
+                if (Y > 0) {
+                    performanceBlock = `Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e fiquei super feliz! Vi que só neste mês você recebeu ${X} ${contatoStr} e conseguiu fechar com ${Y} ${pacienteStr}. 🚀\n\nEu recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. ${asaasReasonText}\n\nComo a gente sabe que só com os pacientes novos que você fechou agora em ${currentMonthName} (a R$ ${VALOR} a sessão) a plataforma já se pagou com muita sobra, não quero que o seu perfil saia do ar e você perca o embalo de novos agendamentos que estamos construindo.`;
+                } else if (X > 0) {
+                    performanceBlock = `Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e vi que você recebeu ${X} ${pacientePotencialStr}! O fluxo está começando a ganhar tração. 🚀\n\nNo entanto, recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. ${asaasReasonText}\n\nNão quero que o seu perfil saia do ar e você perca os potenciais pacientes que já estão visitando e clicando no seu perfil. A constância é o segredo para fechar novos pacientes.`;
+                } else {
+                    performanceBlock = `Dei uma olhada no seu perfil e vi que ele tem muito potencial para atrair pacientes na plataforma! 🌱\n\nNo entanto, recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. ${asaasReasonText}\n\nComo o algoritmo de distribuição da plataforma está aprendendo sobre o seu perfil, não quero que você saia do ar agora e perca o histórico que já estamos construindo.`;
+                }
+                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo.\n\nEstou passando para te dar um toque rápido sobre a sua assinatura. ${performanceBlock}\n\nPara regularizar e manter seu consultório virtual ativo recebendo pacientes, é só acessar a sua conta na Yelo, ir na aba "Ajustes" > "Assinaturas e Planos" e atualizar o seu cartão ou emitir um novo Pix.\n\nSe precisar de alguma ajuda ou tiver qualquer dificuldade no painel, me dá um alô aqui. Um abraço! 🌿`;
+            }
 } else if (actionType === 'churn') {
             try {
                 if (window.showToast) window.showToast('Gerando copy de resgate com IA... Aguarde.', 'info');
