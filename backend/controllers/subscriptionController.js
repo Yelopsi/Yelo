@@ -124,115 +124,25 @@ exports.cancelSubscription = async (req, res) => {
              return res.json({ message: 'Assinatura cancelada localmente (Não encontrada no provedor).' });
         }
 
-        // 2. Verifica regra de 7 dias (Direito de Arrependimento - Art 49 CDC)
-        // Protege a Yelo legalmente estornando assinaturas feitas há menos de 7 dias.
-        let isEligibleForRefund = false;
-        if (subData.dateCreated) {
-            const subDate = new Date(subData.dateCreated);
-            const diffDays = (new Date() - subDate) / (1000 * 60 * 60 * 24);
-            if (diffDays <= 7) {
-                isEligibleForRefund = true;
-            }
-        }
+        // 2. ATUALIZA O ASAAS
+        // Como o Asaas não suporta atualizar o endDate de uma assinatura existente via PUT para cancelar a renovação, 
+        // precisamos DELETAR a assinatura imediatamente no Asaas para evitar futuras cobranças.
+        // O acesso local será mantido pela plataforma até a data de planExpiresAt.
+        await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+            method: 'DELETE',
+            headers: { 'access_token': ASAAS_API_KEY }
+        });
 
-        if (isEligibleForRefund) {
-            // A. Busca pagamentos confirmados para estornar
-            const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}/payments`, {
-                headers: { 'access_token': ASAAS_API_KEY }
-            });
-            const paymentsText = await paymentsRes.text();
-            const paymentsData = paymentsText ? JSON.parse(paymentsText) : {};
-            
-            if (paymentsData.data) {
-                for (const payment of paymentsData.data) {
-                    if (['CONFIRMED', 'RECEIVED'].includes(payment.status)) {
-                        // Estorna o pagamento
-                        await fetch(`${ASAAS_API_URL}/payments/${payment.id}/refund`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                            body: JSON.stringify({ value: payment.value, description: "Cancelamento no prazo de 7 dias (Arrependimento)" })
-                        });
-                    }
-                }
-            }
+        // 3. ATUALIZA O BANCO LOCAL
+        // NÃO atualizamos o planExpiresAt baseado no Asaas, pois o Asaas joga a data muito pra frente
+        // O planExpiresAt local já reflete exatamente o que o psicólogo pagou.
+        // O usuário continuará ativo ('status' ativo e 'planExpiresAt' no futuro).
+        await psychologist.update({ cancelAtPeriodEnd: true });
 
-            // B. Cancela a assinatura imediatamente (DELETE)
-            await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}`, {
-                method: 'DELETE',
-                headers: { 'access_token': ASAAS_API_KEY }
-            });
+        // Envia E-mail de Cancelamento (opcional, já que a renovação foi cancelada)
+        sendSubscriptionCancelledEmail(psychologist).catch(e => {});
 
-            // C. Atualiza Banco Local (Revoga acesso premium, mas restaura trial se aplicável)
-            const currentBadges = psychologist.badges || {};
-            if (currentBadges.pioneiro) {
-                delete currentBadges.pioneiro;
-            }
-
-            const accountCreatedAt = new Date(psychologist.createdAt);
-            const trialEndDate = new Date(accountCreatedAt);
-            trialEndDate.setDate(trialEndDate.getDate() + 7);
-
-            if (trialEndDate > new Date()) {
-                // Se a conta tem menos de 7 dias, devolve o plano "Essencial" (Trial)
-                await psychologist.update({
-                    status: 'active',
-                    plano: 'Essencial',
-                    planExpiresAt: trialEndDate,
-                    cancelAtPeriodEnd: false,
-                    subscriptionId: null,
-                    badges: currentBadges
-                });
-            } else {
-                // Se já passou do trial, corta o acesso na hora
-                await psychologist.update({
-                    status: 'inactive',
-                    plano: null,
-                    planExpiresAt: new Date(),
-                    cancelAtPeriodEnd: false,
-                    subscriptionId: null,
-                    badges: currentBadges
-                });
-            }
-
-            // D. Envia E-mail de Cancelamento
-            // [OTIMIZAÇÃO] Não espera o envio do e-mail para responder ao usuário (ganha ~2s)
-            sendSubscriptionCancelledEmail(psychologist).catch(e => {});
-
-            return res.json({ message: 'Assinatura cancelada e valor estornado.' });
-
-        } else {
-            // --- CENÁRIO B: CANCELAMENTO AGENDADO (> 7 DIAS) ---
-            
-            // Se o usuário já está inativo, ele não tem período restante. Excluímos direto.
-            if (psychologist.status === 'inactive') {
-                await fetch(`${ASAAS_API_URL}/subscriptions/${subData.id}`, {
-                    method: 'DELETE',
-                    headers: { 'access_token': ASAAS_API_KEY }
-                });
-                
-                await psychologist.update({
-                    cancelAtPeriodEnd: false,
-                    subscriptionId: null
-                });
-                return res.json({ message: 'Assinatura cancelada com sucesso.' });
-            }
-
-            // Se está ativo, cancelamos a renovação mas mantemos o acesso até o planExpiresAt atual.
-            // Como o Asaas não suporta atualizar o endDate de uma assinatura existente via PUT, 
-            // precisamos DELETAR a assinatura imediatamente no Asaas para evitar futuras cobranças.
-            // O acesso local será mantido pela plataforma até a data de planExpiresAt.
-            await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
-                method: 'DELETE',
-                headers: { 'access_token': ASAAS_API_KEY }
-            });
-
-            // 2. ATUALIZA O BANCO LOCAL
-            // NÃO atualizamos o planExpiresAt baseado no Asaas, pois o Asaas joga a data muito pra frente
-            // O planExpiresAt local já reflete exatamente o que o psicólogo pagou.
-            await psychologist.update({ cancelAtPeriodEnd: true });
-
-            res.json({ message: 'Renovação automática cancelada. Seu acesso continua até o fim do período.' });
-        }
+        res.json({ message: 'Renovação automática cancelada. Seu acesso continua até o fim do período já pago.' });
 
     } catch (error) {
         res.status(500).json({ error: 'Erro interno.' });
