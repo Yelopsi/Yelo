@@ -556,28 +556,21 @@ class PaymentStateService {
 
             const currentPayments = (lockedPsi.subscription_payments_count || 0) + 1;
             
-            // Calcula nova validade baseada no dueDate da fatura que acabou de ser paga
-            let novaValidade;
-            if (payment.dueDate) {
-                const parts = payment.dueDate.split('-'); 
-                novaValidade = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T23:59:59.999-03:00`);
-            } else {
-                // Fallback de segurança caso dueDate não venha no payload
-                novaValidade = (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > new Date()) 
-                    ? new Date(lockedPsi.planExpiresAt) 
-                    : new Date();
+            // Sempre estende a validade em 1 mês a partir do vencimento atual (se estiver ativo) 
+            // ou a partir de HOJE (se estava bloqueado/vencido). 
+            // Isso previne que o usuário burle o sistema pagando faturas futuras e deixando as velhas abertas.
+            let baseDate = new Date();
+            if (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > baseDate) {
+                baseDate = new Date(lockedPsi.planExpiresAt);
             }
+            
+            let novaValidade = new Date(baseDate.getTime());
 
             // Adiciona 1 mês de forma segura (previne bug do Javascript de pular meses curtos ex: 31 Jan -> 03 Mar)
             const targetMonth = novaValidade.getMonth() + 1;
             novaValidade.setMonth(targetMonth);
             if (novaValidade.getMonth() !== targetMonth % 12) {
                 novaValidade.setDate(0); // Recua para o último dia do mês correto
-            }
-
-            if (lockedPsi.planExpiresAt && novaValidade < new Date(lockedPsi.planExpiresAt)) {
-                console.log(`[ASAAS] Evitando regressão de validade. Mantendo a atual (${lockedPsi.planExpiresAt}) que é maior que a calculada (${novaValidade}).`);
-                novaValidade = lockedPsi.planExpiresAt;
             }
 
             const updatePayload = {
