@@ -1113,11 +1113,22 @@ function initGrowthSimulator(data) {
                     fill: false,
                     tension: 0.4,
                     yAxisID: 'y'
+                },
+                {
+                    label: 'Meta Alvo (200 Psis)',
+                    type: 'line',
+                    data: Array(labels.length).fill(200),
+                    borderColor: '#f43f5e',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false,
+                    yAxisID: 'y'
                 }
             ];
 
             if (curiosityGoal) {
-                const goalData = Array(12).fill(curiosityGoal);
+                const goalData = Array(labels.length).fill(curiosityGoal);
                 datasets.push({
                     label: 'Meta Curiosidade',
                     type: 'line',
@@ -1144,7 +1155,7 @@ function initGrowthSimulator(data) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    events: [],
+                    events: ['click'], // Permite clicar na legenda para ocultar linhas
                     interaction: {
                         mode: 'index',
                         intersect: false,

@@ -23,24 +23,66 @@ const simulateBlogLikes = async () => {
 
         console.log(`Encontrados ${posts.length} posts no total.`);
 
-        // Sorteia aproximadamente 30% dos posts para ganharem likes hoje
-        // Assim parece orgânico, não é todo dia que todo post ganha like.
+        const totalPosts = posts.length;
+        const totalLikesExistentes = posts.reduce((sum, p) => sum + Number(p.curtidas || 0), 0);
+        const mediaCurtidas = totalPosts > 0 ? totalLikesExistentes / totalPosts : 0;
+
+        console.log(`📊 Média atual de curtidas por post: ${Math.round(mediaCurtidas)}`);
+
+        // Ajuste da chance base conforme o volume total de posts
+        // Isso evita que milhares de likes sejam distribuídos por dia se o blog crescer muito
+        let chanceBase = 0.3;
+        if (totalPosts > 50) chanceBase = 0.15;
+        if (totalPosts > 100) chanceBase = 0.05;
+
         let likesDistribuidos = 0;
         let postsImpactados = 0;
 
         for (const post of posts) {
-            // Chance de 30% do post ganhar likes hoje
-            if (Math.random() <= 0.3) {
-                // Sorteia de 1 a 5 curtidas
-                const likesGanhos = Math.floor(Math.random() * 5) + 1;
+            let chanceDoPost = chanceBase;
+            let minLikes = 10;
+            let maxLikes = 30;
+
+            // 1. Ajuste baseado na Quantidade Total de Posts
+            if (totalPosts < 20) {
+                minLikes = 15; maxLikes = 40; // Blog pequeno, aquece mais rápido
+            } else if (totalPosts > 100) {
+                minLikes = 3; maxLikes = 15;  // Blog grande, likes mais diluídos
+            }
+
+            // 2. Ajuste baseado na Média de Curtidas do Blog (Efeito Viral vs Post Frio)
+            const postCurtidas = Number(post.curtidas || 0);
+            
+            if (postCurtidas === 0) {
+                // 3. Boost para posts recém-publicados (0 curtidas): tira do zero mais rápido
+                chanceDoPost = Math.max(chanceBase, 0.4); // Pelo menos 40% de chance de engajamento inicial
+                minLikes = 5;
+                maxLikes = 15;
+            } else if (mediaCurtidas > 0) {
+                if (postCurtidas > mediaCurtidas * 1.5) {
+                    // Post viral (muito acima da média): atrai mais engajamento (efeito manada)
+                    chanceDoPost *= 1.5;
+                    minLikes = Math.floor(minLikes * 1.5);
+                    maxLikes = Math.floor(maxLikes * 1.5);
+                } else if (postCurtidas < mediaCurtidas * 0.5) {
+                    // Post frio (muito abaixo da média): ganha likes mais devagar
+                    chanceDoPost *= 0.7;
+                    minLikes = Math.max(1, Math.floor(minLikes * 0.5));
+                    maxLikes = Math.max(2, Math.floor(maxLikes * 0.5));
+                }
+            }
+
+            chanceDoPost = Math.min(chanceDoPost, 1); // Teto de 100%
+
+            if (Math.random() <= chanceDoPost) {
+                const likesGanhos = Math.floor(Math.random() * (maxLikes - minLikes + 1)) + minLikes;
                 
-                // Atualiza o banco de dados
                 await post.increment('curtidas', { by: likesGanhos });
                 
                 likesDistribuidos += likesGanhos;
                 postsImpactados++;
                 
-                console.log(`   ➜ Post ID ${post.id} (${post.titulo.substring(0, 20)}...) ganhou +${likesGanhos} likes.`);
+                console.log(`   ➜ Post ID ${post.id} (${post.titulo.substring(0, 20)}...) ganhou +${likesGanhos} likes. (Chance: ${(chanceDoPost*100).toFixed(1)}%)`);
             }
         }
 
