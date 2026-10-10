@@ -1078,6 +1078,24 @@ function initGrowthSimulator(data) {
             dataRealBase.push(null);
         }
 
+        // Build Caminho Ideal array (Alvo 200 em 12 meses)
+        const idealPathData = [];
+        let currentIdealBase = activePaidAccessBase || 36;
+        const targetIdeal = 200;
+        const churnIdeal = 0.05;
+        const factorIdeal = Math.pow(1 - churnIdeal, 12);
+        const sumFactorIdeal = (1 - factorIdeal) / churnIdeal;
+        const salesPerMonthIdeal = (targetIdeal - (currentIdealBase * factorIdeal)) / sumFactorIdeal;
+        
+        for (let i = 0; i < retroMonths; i++) {
+            idealPathData.push(null);
+        }
+        idealPathData.push(currentIdealBase);
+        for (let i = 1; i <= targetMonths; i++) {
+            currentIdealBase = (currentIdealBase * (1 - churnIdeal)) + salesPerMonthIdeal;
+            idealPathData.push(Math.round(currentIdealBase));
+        }
+
         // Update Chart
         const timelineContainer = document.getElementById('sim-timeline-container');
         const ctxChart = document.getElementById('simTimelineChart');
@@ -1115,9 +1133,9 @@ function initGrowthSimulator(data) {
                     yAxisID: 'y'
                 },
                 {
-                    label: 'Meta Alvo (200 Psis)',
+                    label: 'Caminho Ideal (Alvo 200)',
                     type: 'line',
-                    data: Array(labels.length).fill(200),
+                    data: idealPathData,
                     borderColor: '#f43f5e',
                     borderWidth: 2,
                     borderDash: [5, 5],
