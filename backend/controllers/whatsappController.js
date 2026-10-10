@@ -51,14 +51,11 @@ exports.getWhatsAppLink = async (req, res) => {
         const guestName = req.query.guest_name || 'um paciente';
         const searchId = req.query.searchId || null;
 
-        // 5. Lógica de Sorteio 50/50 do Teste A/B
+        // 5. Mensagem padrão (Vencedora do Teste A/B: Variante A)
         const primeiroNome = psi.nome.split(' ')[0];
         const numeroLimpo = psi.telefone.replace(/\D/g, '');
-        const isVariantA = Math.random() > 0.5;
-        const variantId = isVariantA ? 'A' : 'B';
-        const mensagem = isVariantA
-            ? `Olá, ${primeiroNome}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento.`
-            : `Olá, ${primeiroNome}! Encontrei seu perfil na Yelo e gostaria de saber se você tem horários disponíveis para novos pacientes.`;
+        const variantId = 'A';
+        const mensagem = `Olá, ${primeiroNome}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento.`;
 
         // 6. Salva o log completo no banco (fonte única de verdade)
         await db.WhatsAppClickLog.create({

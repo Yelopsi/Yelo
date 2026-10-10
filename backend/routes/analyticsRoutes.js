@@ -63,48 +63,6 @@ router.post('/tracking/uso-feature', verifyTokenLocal, async (req, res) => {
 router.get('/admin/analytics/funnel', verifyTokenLocal, adminDashboardController.getFunnelAnalytics);
 router.get('/admin/analytics/visibility', verifyTokenLocal, adminVisibilityController.getVisibilityMetrics);
 
-router.get('/admin/analytics/whatsapp-ab', verifyTokenLocal, async (req, res) => {
-    try {
-        if (req.userDecoded.role !== 'admin' && req.userDecoded.type !== 'admin') {
-            return res.status(403).json({ error: 'Acesso negado' });
-        }
-
-        // Retorna métricas completas de funil por variante:
-        // cliques → feedback recebido → contato efetivo → negócio fechado
-        const results = await db.sequelize.query(`
-            SELECT 
-                ab_variant,
-                COUNT(*) as total_cliques,
-                COUNT(CASE WHEN "feedbackGiven" = true THEN 1 END) as feedbacks_recebidos,
-                COUNT(CASE WHEN "contactReceived" = true THEN 1 END) as contato_recebido,
-                COUNT(CASE WHEN "dealClosed" IN ('yes','started') THEN 1 END) as negocio_fechado,
-                COUNT(CASE WHEN "dealClosed" = 'talking' THEN 1 END) as em_negociacao
-            FROM "WhatsAppClickLogs"
-            WHERE ab_variant IS NOT NULL
-            GROUP BY ab_variant
-            ORDER BY ab_variant
-        `, { type: db.sequelize.QueryTypes.SELECT });
-
-        const empty = { cliques: 0, feedbacks: 0, contatoRecebido: 0, negocioFechado: 0, emNegociacao: 0 };
-        const data = { A: { ...empty }, B: { ...empty } };
-
-        results.forEach(r => {
-            const key = r.ab_variant === 'A' ? 'A' : 'B';
-            data[key] = {
-                cliques: parseInt(r.total_cliques) || 0,
-                feedbacks: parseInt(r.feedbacks_recebidos) || 0,
-                contatoRecebido: parseInt(r.contato_recebido) || 0,
-                negocioFechado: parseInt(r.negocio_fechado) || 0,
-                emNegociacao: parseInt(r.em_negociacao) || 0,
-            };
-        });
-
-        res.json(data);
-    } catch (error) {
-        console.error("Erro no analytics do A/B:", error);
-        res.status(500).json({ error: 'Erro interno' });
-    }
-});
 
 
 router.get('/admin/analytics/visits', verifyTokenLocal, async (req, res) => {
