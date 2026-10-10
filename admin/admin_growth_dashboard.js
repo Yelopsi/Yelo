@@ -896,9 +896,9 @@ window.loadPaymentsEvolutionChart = async function() {
         
         if (!result.success || !result.labels || !result.data) return;
 
-        // Limita para exibir apenas os últimos 3 meses
-        const labels = result.labels.slice(-3);
-        const data = result.data.slice(-3);
+        // Limita para exibir apenas os últimos 6 meses
+        const labels = result.labels.slice(-6);
+        const data = result.data.slice(-6);
 
         const ctx = document.getElementById('paymentsEvolutionChart');
         if (!ctx) return;
