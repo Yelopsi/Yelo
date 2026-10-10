@@ -1123,6 +1123,13 @@ exports.getWhatsappFeedbacks = async (req, res) => {
                 [Op.gte]: start,
                 [Op.lte]: end
             };
+        } else {
+            // Otimização: Por padrão, carrega apenas os últimos 30 dias para poupar banda do servidor
+            const trintaDiasAtras = new Date();
+            trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+            whereClause.createdAt = {
+                [Op.gte]: trintaDiasAtras.toISOString()
+            };
         }
 
         // Busca todos os logs de cliques, ordenando pelos mais recentes
