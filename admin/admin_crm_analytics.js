@@ -449,26 +449,43 @@ window.initializePage = function() {
                         window.weeklyPaymentsChartInstance.destroy();
                     }
                     
+                    const gradient = weeklyCtx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+                    gradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)');
+                    gradient.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
+                    
                     window.weeklyPaymentsChartInstance = new Chart(weeklyCtx, {
-                        type: 'bar',
+                        type: 'line',
                         data: {
                             labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4', 'Semana 5'],
                             datasets: [
                                 {
                                     label: `Mês Atual (${cMonth}/${cYear})`,
                                     data: [currentData[1], currentData[2], currentData[3], currentData[4], currentData[5]],
-                                    backgroundColor: '#10b981',
-                                    borderRadius: 4,
-                                    barPercentage: 0.6,
-                                    categoryPercentage: 0.8
+                                    borderColor: '#8b5cf6',
+                                    backgroundColor: gradient,
+                                    borderWidth: 3,
+                                    pointBackgroundColor: '#ffffff',
+                                    pointBorderColor: '#8b5cf6',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6,
+                                    fill: true,
+                                    tension: 0.4
                                 },
                                 {
                                     label: `Mês Anterior (${pMonth}/${pYear})`,
                                     data: [previousData[1], previousData[2], previousData[3], previousData[4], previousData[5]],
-                                    backgroundColor: '#94a3b8',
-                                    borderRadius: 4,
-                                    barPercentage: 0.6,
-                                    categoryPercentage: 0.8
+                                    borderColor: '#94a3b8',
+                                    backgroundColor: 'transparent',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                    pointBackgroundColor: '#ffffff',
+                                    pointBorderColor: '#94a3b8',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6,
+                                    fill: false,
+                                    tension: 0.4
                                 }
                             ]
                         },
@@ -476,9 +493,15 @@ window.initializePage = function() {
                             responsive: true,
                             maintainAspectRatio: false,
                             interaction: { mode: 'index', intersect: false },
+                            layout: { padding: { left: 12, right: 12 } },
                             plugins: {
                                 legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter', size: 12 } } },
-                                tooltip: { titleFont: { family: 'Inter' }, bodyFont: { family: 'Inter' } }
+                                tooltip: { 
+                                    backgroundColor: '#1f2937',
+                                    padding: 12,
+                                    titleFont: { size: 13, family: 'Inter' },
+                                    bodyFont: { size: 14, family: 'Inter', weight: 'bold' }
+                                }
                             },
                             scales: {
                                 x: { grid: { display: false } },
