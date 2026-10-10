@@ -570,7 +570,7 @@ exports.getPaymentsEvolution = async (req, res) => {
         // Formatar para retorno (Garantir meses sequenciais)
         // Mapear "2026-05" -> count
         const evolutionMap = {};
-        cashFlowData.forEach(r => {
+        cashFlowData.monthly.forEach(r => {
             evolutionMap[r.monthYear] = parseInt(r.count, 10);
         });
         
