@@ -25,8 +25,17 @@ router.use((req, res, next) => {
 // Servir arquivos estáticos da pasta /public na raiz do site (ex: /css/style.css)
 router.use(express.static(path.join(__dirname, '../../public')));
 
+// Opções estáticas para o painel /admin (sempre fresco para evitar dados e telas desatualizadas em celulares)
+const adminStaticOptions = {
+    setHeaders: (res) => {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
+};
+
 // Servir arquivos estáticos da pasta /admin na rota /admin
-router.use('/admin', express.static(path.join(__dirname, '../../admin')));
+router.use('/admin', express.static(path.join(__dirname, '../../admin'), adminStaticOptions));
 
 // --- FERRAMENTAS INTERNAS (EQUIPE YELO) ---
 router.get('/admin/gerador-email', verifyTokenLocal, (req, res) => {
@@ -39,6 +48,9 @@ router.get('/admin/gerador-email', verifyTokenLocal, (req, res) => {
 
 // --- RENDERIZAÇÃO DO PAINEL ADMIN ---
 router.get(['/admin', '/admin/'], (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.join(__dirname, '../../admin/admin.html'));
 });
 

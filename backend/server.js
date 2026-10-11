@@ -171,7 +171,7 @@ const staticOptions = {
         if (pathStr.endsWith('.html') || pathStr.endsWith('.htm')) {
             res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
         } else if (pathStr.match(/\.(js|css)$/)) {
-            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            res.setHeader('Cache-Control', 'public, no-cache, must-revalidate');
         } else if (pathStr.match(/\.(png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot|apk|pdf)$/)) {
             res.setHeader('Cache-Control', 'public, max-age=2592000');
         }

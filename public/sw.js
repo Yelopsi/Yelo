@@ -1,31 +1,21 @@
-const CACHE_NAME = 'Yelo-cache-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/script.js',
-  '/header.html',
-  '/footer.html',
-  '/login.html',
-  '/sobre.html',
-  '/faq.html',
-  '/profissionais.html',
-  '/contato.html',
-  '/assets/logos/logo_duplo_branco.png',
-  '/assets/images/favicon.png?v=2'
-];
-
-// Evento de Instalação: Salva os arquivos principais em cache
+// Service Worker com estratégia Network-First e Web Push Notifications
 self.addEventListener('install', event => {
+  self.skipWaiting();
+});
+
+// Evento de Ativação: Limpa caches legados de versões anteriores imediatamente
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.keys().then(keys => Promise.all(
+      keys.map(key => caches.delete(key))
+    )).then(() => self.clients.claim())
   );
 });
 
-// Evento de Fetch: Responde com o cache se disponível, senão busca na rede
+// Evento de Fetch: Network-First (busca na rede primeiro; só recorre ao cache se estiver sem internet)
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
 
