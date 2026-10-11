@@ -43,7 +43,7 @@ const testWebhookRedTeam = async () => {
         
         // Limpeza
         await db.WebhookInbox.destroy({ where: {} }); // Limpa a tabela de inbox de teste
-        await psi.destroy();
+        await psi.destroy({ force: true });
 
         if (inboxes.length > 1) {
             console.log('   ⚠️ ALERTA: Múltiplos webhooks idênticos foram salvos no banco. A idempotência deve estar no Worker de processamento e não na recepção.');

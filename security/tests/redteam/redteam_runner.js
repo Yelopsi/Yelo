@@ -65,7 +65,7 @@ const testPaymentRaceConditions = async () => {
 
         // Limpeza dos dados sintéticos
         await db.SubscriptionIntent.destroy({ where: { psychologistId: psi.id } });
-        await psi.destroy();
+        await psi.destroy({ force: true });
 
     } catch (e) {
         console.error('   ❌ FALHA DO RED TEAM TEST:', e.message);
@@ -113,8 +113,8 @@ const testBOLA = async () => {
 
         // Cleanup
         await post.destroy();
-        await psiA.destroy();
-        await psiB.destroy();
+        await psiA.destroy({ force: true });
+        await psiB.destroy({ force: true });
     } catch (e) {
          console.error('   ❌ FALHA DO RED TEAM TEST:', e.message);
     }

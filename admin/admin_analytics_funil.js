@@ -26,17 +26,102 @@ window.initializePage = function() {
         endInput.value = formatDateLocal(today);
     }
 
-    // Dicionário amigável para traduzir as "chaves" do questionário
+    // Dicionário com a pergunta exata e o rótulo de cada etapa do questionario.js
     const stepNames = {
-        'intro': 'Página Inicial (Introdução)',
-        'motivo': 'Motivo da Busca',
-        'abordagem': 'Estilo de Terapia',
-        'publico': 'Perfil/Público Alvo',
-        'valor': 'Faixa de Preço',
-        'identidade': 'Preferência de Profissional',
-        'nome': 'Preenchimento do Nome',
-        'contato': 'Preenchimento do Contato (Fim)'
+        'idade': {
+            label: 'Faixa Etária',
+            question: 'Para começarmos, qual a sua faixa etária?'
+        },
+        'responsavel_menor': {
+            label: 'Responsável Legal',
+            question: 'Você é o responsável legal por este paciente?'
+        },
+        'pref_genero_prof': {
+            label: 'Preferência de Gênero',
+            question: 'Você tem preferência pelo gênero do(a) profissional?'
+        },
+        'temas': {
+            label: 'Motivo da Busca (Temas)',
+            question: 'O que te motivou a procurar terapia agora?'
+        },
+        'abordagem_ideal': {
+            label: 'Estilo de Terapia (Abordagem)',
+            question: 'Como o terapeuta poderia te ajudar melhor? (Estilo de condução da sessão)'
+        },
+        'caracteristicas_prof': {
+            label: 'Características do Profissional',
+            question: 'Existem características importantes para você no profissional?'
+        },
+        'faixa_valor': {
+            label: 'Faixa de Investimento / Preço',
+            question: 'Qual a faixa de valor que você pode investir por sessão?'
+        },
+        'modalidade_atendimento': {
+            label: 'Modalidade de Atendimento',
+            question: 'Como você prefere ser atendido(a)? (Online ou Presencial)'
+        },
+        'cep': {
+            label: 'Localização (CEP)',
+            question: 'Qual o seu CEP?'
+        },
+        'final': {
+            label: 'Geração de Resultados (Final)',
+            question: 'Tudo pronto! Analisando respostas e gerando recomendações'
+        },
+        // Etapas legadas para manter compatibilidade com histórico de logs antigos
+        'nome': {
+            label: 'Preenchimento do Nome',
+            question: 'Qual é o seu nome? (Etapa legada - removida do questionário)',
+            isLegacy: true
+        },
+        'contato': {
+            label: 'Preenchimento do Contato',
+            question: 'Contato final (Etapa legada)',
+            isLegacy: true
+        },
+        'intro': {
+            label: 'Página Inicial (Introdução)',
+            question: 'Introdução do questionário',
+            isLegacy: true
+        },
+        'motivo': {
+            label: 'Motivo da Busca',
+            question: 'O que te traz aqui? (Etapa legada)',
+            isLegacy: true
+        },
+        'abordagem': {
+            label: 'Estilo de Terapia',
+            question: 'Abordagem clínica (Etapa legada)',
+            isLegacy: true
+        },
+        'publico': {
+            label: 'Perfil / Público Alvo',
+            question: 'Perfil do paciente (Etapa legada)',
+            isLegacy: true
+        },
+        'valor': {
+            label: 'Faixa de Preço',
+            question: 'Faixa de valor (Etapa legada)',
+            isLegacy: true
+        },
+        'identidade': {
+            label: 'Preferência de Profissional',
+            question: 'Identidade (Etapa legada)',
+            isLegacy: true
+        }
     };
+
+    function getStepInfo(stepId) {
+        if (stepNames[stepId]) {
+            return stepNames[stepId];
+        }
+        const formatted = stepId ? (stepId.charAt(0).toUpperCase() + stepId.slice(1)).replace(/_/g, ' ') : 'Saída Imediata';
+        return {
+            label: formatted,
+            question: formatted,
+            isLegacy: false
+        };
+    }
 
     // --- CORREÇÃO: TOOLTIPS NO MOBILE ---
     // Dispositivos touch não lidam bem com o pseudo-elemento :hover.
@@ -269,13 +354,15 @@ window.initializePage = function() {
             const kpiTxDesistenciaGlobal = document.getElementById('kpi-tx-desistencia-global');
             
             if (data.iniciaram > 0) {
-                const abandonosCount = Math.max(0, data.iniciaram - data.completaram);
+                const desqualificadosCount = parseInt(data.desqualificados || 0, 10);
+                const abandonosCount = Math.max(0, data.iniciaram - data.completaram - desqualificadosCount);
                 const taxaDesistenciaPct = ((abandonosCount / data.iniciaram) * 100).toFixed(1);
                 const desistenciaColor = taxaDesistenciaPct <= 30 ? '#10b981' : '#dc2626';
                 
                 let prevTaxaDesistenciaPct = null;
                 if (data.prevIniciaram > 0) {
-                    const prevAbandonosCount = Math.max(0, data.prevIniciaram - data.prevCompletaram);
+                    const prevDesqCount = parseInt(data.prevDesqualificados || 0, 10);
+                    const prevAbandonosCount = Math.max(0, data.prevIniciaram - data.prevCompletaram - prevDesqCount);
                     prevTaxaDesistenciaPct = ((prevAbandonosCount / data.prevIniciaram) * 100).toFixed(1);
                 }
                 
@@ -302,19 +389,51 @@ window.initializePage = function() {
             if(containerAbandonos) {
                 containerAbandonos.innerHTML = '';
                 if (data.abandonos && data.abandonos.length > 0) {
-                    const maxAbandono = Math.max(...data.abandonos.map(a => parseInt(a.count)));
+                    const totalPerdasMapeadas = data.abandonos.reduce((acc, a) => acc + parseInt(a.count, 10), 0);
+                    const maxAbandono = Math.max(...data.abandonos.map(a => parseInt(a.count, 10)));
+                    
                     data.abandonos.forEach(item => {
-                        const pct = ((item.count / maxAbandono) * 100).toFixed(0);
-                        const labelName = stepNames[item.step] || (item.step ? (item.step.charAt(0).toUpperCase() + item.step.slice(1)).replace(/_/g, ' ') : 'Saída Imediata');
+                        const count = parseInt(item.count, 10);
+                        const pctBar = ((count / maxAbandono) * 100).toFixed(0);
+                        const pctShare = totalPerdasMapeadas > 0 ? ((count / totalPerdasMapeadas) * 100).toFixed(1) : 0;
+                        const stepInfo = getStepInfo(item.step);
+                        
+                        // Classificação de Benchmark e Severidade
+                        let statusBadge = '';
+                        let barColor = '#10b981'; // Verde padrão (saudável)
+                        
+                        if (stepInfo.isLegacy) {
+                            statusBadge = `<span style="font-size: 0.72rem; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 20px; font-weight: 600;">⚪ Etapa Antiga (Resolvido)</span>`;
+                            barColor = '#94a3b8';
+                        } else if (pctShare >= 20) {
+                            statusBadge = `<span style="font-size: 0.72rem; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; padding: 2px 8px; border-radius: 20px; font-weight: 700;">🔴 Gargalo Alto</span>`;
+                            barColor = '#E63946';
+                        } else if (pctShare >= 12) {
+                            statusBadge = `<span style="font-size: 0.72rem; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 20px; font-weight: 700;">🟡 Atenção</span>`;
+                            barColor = '#f59e0b';
+                        } else {
+                            statusBadge = `<span style="font-size: 0.72rem; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 20px; font-weight: 600;">🟢 Normal / Esperado</span>`;
+                            barColor = '#10b981';
+                        }
                         
                         containerAbandonos.innerHTML += `
-                            <div>
-                                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; color: #444;">
-                                    <span>${labelName}</span>
-                                    <span style="color: #E63946;">${item.count} perdas</span>
+                            <div style="background: #ffffff; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 12px;">
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                            <span style="font-size: 0.95rem; font-weight: 700; color: #1e293b;">${stepInfo.label}</span>
+                                            ${statusBadge}
+                                        </div>
+                                        <div style="font-size: 0.82rem; color: #64748b; font-style: italic; margin-top: 3px; line-height: 1.35;">
+                                            "${stepInfo.question}"
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right; flex-shrink: 0;">
+                                        <span style="color: #1e293b; font-weight: 700; font-size: 0.95rem; display: block;">${count} perdas <span style="font-size: 0.8rem; font-weight: 500; color: #64748b;">(${pctShare}%)</span></span>
+                                    </div>
                                 </div>
-                                <div style="width: 100%; background-color: #f1f3f5; border-radius: 10px; height: 12px; overflow: hidden;">
-                                    <div style="width: ${pct}%; background-color: #E63946; height: 100%; border-radius: 10px;"></div>
+                                <div style="width: 100%; background-color: #f1f5f9; border-radius: 10px; height: 8px; overflow: hidden; margin-top: 8px;">
+                                    <div style="width: ${pctBar}%; background-color: ${barColor}; height: 100%; border-radius: 10px; transition: width 0.4s ease;"></div>
                                 </div>
                             </div>
                         `;
@@ -382,7 +501,8 @@ window.initializePage = function() {
                 // Mid Funnel Insight (Início -> Fim Questionário)
                 const tFim = data.iniciaram > 0 ? (data.completaram / data.iniciaram) : 0;
                 if (tFim < 0.65) {
-                    const worstStep = (data.abandonos && data.abandonos[0]) ? (stepNames[data.abandonos[0].step] || data.abandonos[0].step) : 'no meio do formulário';
+                    const worstStepInfo = (data.abandonos && data.abandonos[0]) ? getStepInfo(data.abandonos[0].step) : null;
+                    const worstStep = worstStepInfo ? `${worstStepInfo.label} ("${worstStepInfo.question}")` : 'no meio do formulário';
                     insightsHtml += `<div class="insight-item"><div class="insight-icon">📉</div><div class="insight-text"><h5>Atrito no Questionário (${(tFim * 100).toFixed(1)}%)</h5><p>Sua meta é manter acima de 65%. Muitas pessoas abandonam em: <strong>${worstStep}</strong>. Avalie se as perguntas estão muito complexas ou se exigem muito esforço.</p></div></div>`;
                 }
 
@@ -461,7 +581,7 @@ window.initializePage = function() {
             
             if (exportData.abandonos && exportData.abandonos.length > 0) {
                 exportData.abandonos.forEach(a => {
-                    const stepName = stepNames[a.step] || a.step || 'Sessão Perdida';
+                    const stepName = getStepInfo(a.step).label;
                     csvContent += `Abandono - ${stepName};${a.count}\n`;
                 });
             } else {
