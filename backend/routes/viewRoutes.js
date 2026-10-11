@@ -37,6 +37,9 @@ const adminStaticOptions = {
 // Servir arquivos estáticos da pasta /admin na rota /admin
 router.use('/admin', express.static(path.join(__dirname, '../../admin'), adminStaticOptions));
 
+// Servir arquivos estáticos do painel /psi com regras frescas (no-cache)
+router.use('/psi', express.static(path.join(__dirname, '../../public/psi'), adminStaticOptions));
+
 // --- FERRAMENTAS INTERNAS (EQUIPE YELO) ---
 router.get('/admin/gerador-email', verifyTokenLocal, (req, res) => {
     if (req.userDecoded && (req.userDecoded.role === 'admin' || req.userDecoded.type === 'admin')) {

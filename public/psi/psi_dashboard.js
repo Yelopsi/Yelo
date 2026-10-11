@@ -645,9 +645,9 @@ document.addEventListener('DOMContentLoaded', function () {
             updateSidebarBadge('psi_caixa_de_entrada.html', false);
         }
 
-        // FIX: Garante que o arquivo seja buscado da raiz da pasta /psi/
+        // FIX: Garante que o arquivo seja buscado da raiz da pasta /psi/ com cache-busting dinâmico
         const fetchUrl = url.startsWith('/') ? url : `/psi/${url}`;
-        fetch(fetchUrl).then(r => r.ok ? r.text() : Promise.reject(url))
+        fetch(fetchUrl + '?v=' + new Date().getTime()).then(r => r.ok ? r.text() : Promise.reject(url))
             .then(html => {
                 mainContent.innerHTML = html;
 

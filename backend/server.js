@@ -168,7 +168,11 @@ const backendPublic = path.join(__dirname, 'public');
 const staticOptions = {
     extensions: ['html'],
     setHeaders: (res, pathStr) => {
-        if (pathStr.endsWith('.html') || pathStr.endsWith('.htm')) {
+        if (pathStr.includes('/psi/') || pathStr.includes('/admin/')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        } else if (pathStr.endsWith('.html') || pathStr.endsWith('.htm')) {
             res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
         } else if (pathStr.match(/\.(js|css)$/)) {
             res.setHeader('Cache-Control', 'public, no-cache, must-revalidate');
