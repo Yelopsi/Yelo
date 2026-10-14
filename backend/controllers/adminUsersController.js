@@ -824,7 +824,7 @@ exports.getPendingActions = async (req, res) => {
                 telefone: { [Op.ne]: null, [Op.not]: '' },
                 [Op.or]: [
                     { is_exempt: true },
-                    { planExpiresAt: { [Op.gte]: startOfToday } }
+                    { planExpiresAt: { [Op.gt]: now } }
                 ]
             },
             attributes: ['id', 'nome', 'telefone', 'createdAt', 'fotoUrl', 'bio']
@@ -843,20 +843,40 @@ exports.getPendingActions = async (req, res) => {
             attributes: ['id', 'nome', 'telefone', 'createdAt']
         });
         incompleteCandidates.forEach(p => pendingList.push({ ...p.toJSON(), actionType: 'incomplete', reason: 'Perfil incompleto há mais de 24h' }));
-        // 3. Falha de Conversão (>= 2 cliques sem fechar)
+
+        // 3. Falha de Conversão (quando o psicólogo não fechar dois contatos seguidos)
         if (db.WhatsAppClickLog) {
-            const lostClicks = await db.WhatsAppClickLog.findAll({
-                where: { feedbackGiven: true, dealClosed: { [Op.notIn]: ['yes'] } },
-                attributes: ['psychologistId']
+            const allAnsweredClicks = await db.WhatsAppClickLog.findAll({
+                where: { feedbackGiven: true },
+                order: [['psychologistId', 'ASC'], ['createdAt', 'DESC']],
+                attributes: ['psychologistId', 'dealClosed', 'createdAt']
             });
-            
-            const lostCounts = {};
-            lostClicks.forEach(c => {
-                lostCounts[c.psychologistId] = (lostCounts[c.psychologistId] || 0) + 1;
+
+            const groupedByPsi = {};
+            allAnsweredClicks.forEach(c => {
+                if (!groupedByPsi[c.psychologistId]) groupedByPsi[c.psychologistId] = [];
+                groupedByPsi[c.psychologistId].push(c);
             });
-            
-            const conversionFailureIds = Object.keys(lostCounts).filter(id => lostCounts[id] >= 2);
-            
+
+            const conversionFailureIds = [];
+            const failureDataMap = {};
+
+            Object.keys(groupedByPsi).forEach(psiId => {
+                const logs = groupedByPsi[psiId];
+                if (logs.length >= 2) {
+                    const first = logs[0];
+                    const second = logs[1];
+                    const isNotClosed = (status) => status && !['yes', 'started', 'talking'].includes(status);
+                    if (isNotClosed(first.dealClosed) && isNotClosed(second.dealClosed)) {
+                        conversionFailureIds.push(psiId);
+                        failureDataMap[psiId] = {
+                            latestFailureDate: first.createdAt,
+                            consecutiveCount: 2
+                        };
+                    }
+                }
+            });
+
             if (conversionFailureIds.length > 0) {
                 const cfCandidates = await db.Psychologist.findAll({
                     where: {
@@ -866,26 +886,35 @@ exports.getPendingActions = async (req, res) => {
                         status: 'active',
                         [Op.or]: [
                             { is_exempt: true },
-                            { planExpiresAt: { [Op.gte]: startOfToday } }
+                            { planExpiresAt: { [Op.gt]: now } }
                         ]
                     },
                     attributes: ['id', 'nome', 'telefone', 'aiOptimizationHistory']
                 });
                 
-                const fifteenDaysAgo = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
-                
                 cfCandidates.forEach(p => {
-                    let recentlySent = false;
+                    const failInfo = failureDataMap[p.id];
+                    let alreadySentForTheseClicks = false;
+                    let totalPreviousSent = 0;
                     if (p.aiOptimizationHistory && Array.isArray(p.aiOptimizationHistory)) {
-                        recentlySent = p.aiOptimizationHistory.some(h => 
-                            h.action === 'conversion_failure' && new Date(h.sentAt) > fifteenDaysAgo
+                        totalPreviousSent = p.aiOptimizationHistory.filter(h => h.action === 'conversion_failure').length;
+                        alreadySentForTheseClicks = p.aiOptimizationHistory.some(h => 
+                            h.action === 'conversion_failure' && new Date(h.sentAt) >= new Date(failInfo.latestFailureDate)
                         );
                     }
                     
-                    if (!recentlySent) {
+                    if (!alreadySentForTheseClicks) {
                         const pObj = p.toJSON();
                         delete pObj.aiOptimizationHistory;
-                        pendingList.push({ ...pObj, actionType: 'conversion_failure', reason: `Teve ${lostCounts[p.id]} contatos recentes e não fechou` });
+                        const reasonText = totalPreviousSent > 0 
+                            ? `Não fechou 2 contatos seguidos (Reincidência: ${totalPreviousSent} já enviada(s))`
+                            : `Não fechou 2 contatos seguidos recentemente`;
+                        pendingList.push({ 
+                            ...pObj, 
+                            actionType: 'conversion_failure', 
+                            reason: reasonText,
+                            metrics: { hasBeenSentBefore: totalPreviousSent > 0, totalPreviousSent }
+                        });
                     }
                 });
             }
@@ -924,7 +953,7 @@ exports.getPendingActions = async (req, res) => {
                         status: 'active',
                         [Op.or]: [
                             { is_exempt: true },
-                            { planExpiresAt: { [Op.gte]: startOfToday } }
+                            { planExpiresAt: { [Op.gt]: now } }
                         ]
                     },
                     attributes: ['id', 'nome', 'telefone']
@@ -970,17 +999,16 @@ exports.getPendingActions = async (req, res) => {
             }
         }
 
-        // 5. Expirando Trial (Ativos, Trial, expirando em <= 1 dia e >= -2 dias, admin_billing_sent_at NULA)
-        const expirationUpperBound = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
-        const expirationLowerBound = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+        // 5. Expirando Trial (Ativos em Trial, expirando entre agora e 48h no futuro)
+        const expirationUpperBound = new Date(now.getTime() + 48 * 60 * 60 * 1000);
         
         const expiringCandidates = await db.Psychologist.findAll({
             where: {
                 status: 'active',
                 subscriptionId: null,
                 planExpiresAt: {
-                    [Op.lte]: expirationUpperBound,
-                    [Op.gte]: expirationLowerBound
+                    [Op.gt]: now, // Garante que o perfil AINDA está ativo
+                    [Op.lte]: expirationUpperBound
                 },
                 admin_billing_sent_at: null,
                 deletedAt: null,
@@ -1035,128 +1063,32 @@ exports.getPendingActions = async (req, res) => {
                 if (profView) views = parseInt(profView.count, 10);
                 const clicks = (p.whatsapp_clicks || 0) + logs.length;
                 
-                // dias restantes
-                const diffTime = new Date(p.planExpiresAt) - now;
-                const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const expDate = new Date(p.planExpiresAt);
+                const diffHours = (expDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+                const options = { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' };
+                const todayStr = now.toLocaleDateString('pt-BR', options);
+                const expDateStr = expDate.toLocaleDateString('pt-BR', options);
+                const isToday = expDateStr === todayStr || diffHours <= 16;
+                const reasonTiming = isToday ? 'Trial expira nas próximas horas' : 'Trial expira amanhã';
 
                 pendingList.push({
                     ...p.toJSON(),
                     actionType: 'expiring_trial',
-                    reason: 'Trial expira em ' + daysLeft + ' dia(s)',
+                    reason: reasonTiming,
                     metrics: {
                         appearances,
                         views,
                         clicks,
                         dealClosed,
                         closedDealsCount,
-                        daysLeft
+                        isToday,
+                        diffHours
                     }
                 });
             });
         }
 
-        // 6. Pix Vencido (Atraso 1 Dia) - Playbook expired_pix_fomo
-        const yesterdayUpperBound = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        const yesterdayLowerBound = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-        
-        const expiredPixCandidates = await db.Psychologist.findAll({
-            where: {
-                status: 'inactive', // Ao vencer, o cron passa para inactive
-                planExpiresAt: {
-                    [Op.lte]: yesterdayUpperBound,
-                    [Op.gte]: yesterdayLowerBound
-                },
-                deletedAt: null,
-                telefone: { [Op.ne]: null, [Op.not]: '' }
-            },
-            include: [{
-                model: db.Payment,
-                as: 'payments',
-                where: {
-                    billingType: 'PIX',
-                    status: { [Op.in]: ['OVERDUE', 'PENDING'] }
-                },
-                required: true // Só traz quem tem um pagamento PIX pendente/vencido
-            }],
-            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks', 'abordagens_tecnicas', 'aiOptimizationHistory']
-        });
-
-        if (expiredPixCandidates.length > 0) {
-            const expPixIds = expiredPixCandidates.map(c => c.id);
-            const wppLogsExpPix = await db.WhatsAppClickLog.findAll({
-                where: { psychologistId: { [Op.in]: expPixIds } },
-                attributes: ['psychologistId', 'dealClosed']
-            });
-            
-            const matchEventsExpPixCount = await db.sequelize.query(`
-                SELECT "psychologistId", COUNT(*) as count 
-                FROM "MatchEvents" 
-                WHERE "psychologistId" IN (:expPixIds) 
-                GROUP BY "psychologistId"
-            `, { replacements: { expPixIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
-                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
-                FROM "MatchEvents" 
-                WHERE "PsychologistId" IN (:expPixIds) 
-                GROUP BY "PsychologistId"
-            `, { replacements: { expPixIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
-            
-            const profileViewsExpPixCount = await db.sequelize.query(`
-                SELECT "psychologistId", COUNT(*) as count 
-                FROM "ProfileAppearanceLogs" 
-                WHERE "psychologistId" IN (:expPixIds) 
-                GROUP BY "psychologistId"
-            `, { replacements: { expPixIds }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`
-                SELECT "PsychologistId" as "psychologistId", COUNT(*) as count 
-                FROM "ProfileAppearanceLogs" 
-                WHERE "PsychologistId" IN (:expPixIds) 
-                GROUP BY "PsychologistId"
-            `, { replacements: { expPixIds }, type: db.sequelize.QueryTypes.SELECT })).catch(() => []);
-
-            expiredPixCandidates.forEach(p => {
-                let alreadySent = false;
-                if (p.aiOptimizationHistory && Array.isArray(p.aiOptimizationHistory)) {
-                    alreadySent = p.aiOptimizationHistory.some(h => h.action === 'expired_pix_fomo');
-                }
-                if (alreadySent) return;
-
-                const logs = wppLogsExpPix.filter(l => l.psychologistId === p.id);
-                
-                const startedTherapyCount = logs.filter(l => l.dealClosed === 'yes').length;
-                const negotiatingCount = logs.filter(l => l.dealClosed === 'talking').length;
-                const noReplyCount = logs.filter(l => l.dealClosed !== 'yes' && l.dealClosed !== 'talking').length;
-                
-                const dealClosed = (startedTherapyCount + negotiatingCount) > 0;
-                const closedDealsCount = startedTherapyCount + negotiatingCount;
-                
-                const matchEv = matchEventsExpPixCount.find(m => m.psychologistId == p.id);
-                const profView = profileViewsExpPixCount.find(m => m.psychologistId == p.id);
-                
-                let appearances = p.profile_appearances || 0;
-                let views = 0;
-                if (matchEv) appearances += parseInt(matchEv.count, 10);
-                if (profView) views = parseInt(profView.count, 10);
-                const clicks = (p.whatsapp_clicks || 0) + logs.length;
-
-                pendingList.push({
-                    ...p.toJSON(),
-                    actionType: 'expired_pix_fomo',
-                    reason: 'PIX Vencido há 1 dia',
-                    metrics: {
-                        appearances,
-                        views,
-                        clicks,
-                        dealClosed,
-                        closedDealsCount,
-                        startedTherapyCount,
-                        negotiatingCount,
-                        noReplyCount,
-                        approach: p.abordagens_tecnicas || 'Psicologia'
-                    }
-                });
-            });
-        }
-
-        // 6. Consultor IA (Performance Baixa)
+        // 6. Consultor IA (Performance Baixa de perfis ativos)
         try {
             const perfController = require('./adminPerformanceController');
             if (perfController && perfController.getLowPerformanceData) {
@@ -1166,10 +1098,10 @@ exports.getPendingActions = async (req, res) => {
                         // Omitir se não tiver WhatsApp
                         if (!p.telefone || String(p.telefone).trim() === '') return;
                         
-                        // Omitir se estiver expirado ou inativo (apenas ativos/trials)
+                        // Omitir se não for ativo com plano válido
                         if (p.status !== 'active') return;
                         const pExpiresAt = p.planExpiresAt ? new Date(p.planExpiresAt) : null;
-                        if (!p.is_exempt && (!pExpiresAt || pExpiresAt < startOfToday)) return;
+                        if (!p.is_exempt && (!pExpiresAt || pExpiresAt <= now)) return;
                         
                         // Omitir se já foi contatado pela IA alguma vez (limite de 1 vez por psicólogo)
                         if (p.aiOptimizationHistory && Array.isArray(p.aiOptimizationHistory)) {
@@ -1189,35 +1121,7 @@ exports.getPendingActions = async (req, res) => {
             console.error('Erro ao buscar Consultor IA em getPendingActions:', e);
         }
 
-        // 7. Churn de Pagantes (Assinatura não renovada ou cancelada)
-        // Regra: ativo ou inativo, JÁ TEVE assinatura (subscriptionId NOT NULL),
-        // planExpiresAt expirou antes de hoje, e msg_paid_churn_sent_at é NULL.
-        const paidChurnCandidates = await db.Psychologist.findAll({
-            where: {
-                status: { [Op.in]: ['active', 'inactive'] },
-                [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }],
-                planExpiresAt: { [Op.lt]: startOfToday },
-                msg_paid_churn_sent_at: null,
-                deletedAt: null,
-                telefone: { [Op.ne]: null, [Op.not]: '' }
-            },
-            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'status']
-        });
-
-        paidChurnCandidates.forEach(p => {
-            pendingList.push({
-                id: p.id,
-                nome: p.nome,
-                telefone: p.telefone,
-                status: p.status,
-                plano: p.plano,
-                planExpiresAt: p.planExpiresAt,
-                actionType: 'paid_churn',
-                reason: 'Churn de Pagante (Assinatura não renovada)'
-            });
-        });
-
-        // 8. Negociação prolongada (dealClosed === 'talking' > 7 dias, adminWppReminderCount < 2)
+        // 7. Negociação prolongada (dealClosed === 'talking' > 7 dias, adminWppReminderCount < 2)
         if (db.WhatsAppClickLog) {
             const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             const negotiationLogs = await db.WhatsAppClickLog.findAll({
@@ -1250,7 +1154,7 @@ exports.getPendingActions = async (req, res) => {
                         status: 'active',
                         [Op.or]: [
                             { is_exempt: true },
-                            { planExpiresAt: { [Op.gte]: startOfToday } }
+                            { planExpiresAt: { [Op.gt]: now } }
                         ]
                     },
                     attributes: ['id', 'nome', 'telefone']

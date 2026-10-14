@@ -8,6 +8,7 @@ const adminLeadController = require('./adminLeadController');
 const adminUsersController = require('./adminUsersController');
 const adminMessagesController = require('./adminMessagesController');
 const { GoogleGenerativeAI } = require('@google/generative-ai'); // IA da Equipe de Growth
+const { formatForWhatsApp } = require('../utils/whatsappFormatter');
 
 const generateAdminToken = (id) => {
     return jwt.sign({ id, type: 'admin' }, process.env.JWT_SECRET, {
@@ -1068,6 +1069,14 @@ A mensagem deve apresentar obrigatoriamente o remetente como:
 
 O nome do psicólogo analisado é independente do nome do remetente. Nunca confundir os dois.
 
+## REGRA SOBRE TEMPO DE INSCRIÇÃO
+NUNCA cite datas de calendário, números de dias ou o dia específico de inscrição/cadastro (ex: NUNCA diga "desde o dia 10", "desde 15/03", "desde o dia X").
+Em vez disso, use SEMPRE frases naturais e contextuais como:
+- "desde o seu cadastro"
+- "desde a ativação do seu perfil"
+- "desde que você preencheu o seu perfil"
+- "nestes primeiros passos na plataforma"
+
 Sua função é analisar os primeiros sinais de desempenho e as informações do perfil de um psicólogo dentro da plataforma Yelo para gerar uma mensagem personalizada de boas-vindas e orientação para WhatsApp.
 
 Você NÃO deve apenas elogiar o profissional ou apresentar funcionalidades da plataforma.
@@ -1837,8 +1846,13 @@ A mensagem será enviada pelo WhatsApp.
 Portanto:
 
 * UTILIZE EMOJIS ao longo da mensagem (cerca de 3 a 5 emojis no total) para dar um tom humano, amigável e conversacional típico de WhatsApp, garantindo a presença do coração verde 💚 na saudação ou no encerramento;
-* utilize *itálico* para destacar pontos importantes;
-* NÃO utilize **negrito**;
+* COMPATIBILIDADE NATIVA COM WHATSAPP (MUITO IMPORTANTE):
+  - Negrito: use APENAS asterisco simples (*assim*). NUNCA use duplo asterisco (**assim**).
+  - Itálico: use APENAS underline simples (_assim_).
+  - NUNCA use títulos de seção como "# 1. Boas-vindas" ou "## Diagnóstico" na mensagem final. O texto deve ser contínuo e conversacional.
+  - NUNCA use listas markdown com asterisco (* item) no começo de linhas; use bullets (• item).
+  - NUNCA use links em formato markdown [Texto](URL); coloque a URL limpa diretamente no texto.
+  - NUNCA coloque espaços colados dentro dos asteriscos (escreva *palavra*, e NUNCA * palavra *).
 * escreva parágrafos curtos;
 * facilite a leitura no celular;
 * não utilize títulos excessivamente longos;
@@ -2058,7 +2072,7 @@ Nunca apresente ferramentas apenas porque elas estão disponíveis.
 # 23. DOSSIÊ DE DADOS DO PSICÓLOGO
 Nome: ${psi.nome}
 Gênero/Identidade: ${psi.genero_identidade || 'Não informado'}
-Data de Cadastro: ${dataCadastro}
+Momento na plataforma: Recém-cadastrado (perfil preenchido recentemente, dando os primeiros passos)
 Status Financeiro: ${statusPagamento}
 Biografria: ${psi.bio && psi.bio.length > 10 ? psi.bio : 'Não preenchida ou muito curta'}
 Preço Configurado: ${valorConsulta}
@@ -2093,7 +2107,7 @@ Se houver histórico acima:
         console.log(promptGrowth.substring(promptGrowth.length - 1000));
         
         const result = await model.generateContent(promptGrowth);
-        const analysis = result.response.text();
+        const analysis = formatForWhatsApp(result.response.text());
 
         res.json({ message: analysis });
     } catch (error) {
@@ -2110,44 +2124,65 @@ exports.generateAiConversionFailure = async (req, res) => {
         });
         if (!psi) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
         
+        const historyArray = Array.isArray(psi.aiOptimizationHistory) ? psi.aiOptimizationHistory : [];
+        const prevFailures = historyArray.filter(h => h.action === 'conversion_failure');
+        const hasBeenSentBefore = prevFailures.length > 0;
+
         let historyText = "Sem histórico de orientações anteriores.";
-        if (psi.aiOptimizationHistory && Array.isArray(psi.aiOptimizationHistory) && psi.aiOptimizationHistory.length > 0) {
-            historyText = psi.aiOptimizationHistory.map((h, i) => {
+        if (historyArray.length > 0) {
+            historyText = historyArray.map((h, i) => {
                 const dateStr = h.sentAt ? new Date(h.sentAt).toLocaleDateString('pt-BR') : 'Data desconhecida';
                 return `[Interação ${i+1}] Data: ${dateStr} | Mensagem enviada: "${h.contentSnippet}"`;
             }).join('\n\n');
         }
 
+        const guidanceBlock = hasBeenSentBefore ? `
+[SITUAÇÃO DE REINCIDÊNCIA - JÁ FOI ENVIADA ORIENTAÇÃO SOBRE CONVERSÃO ANTERIORMENTE]
+Esta NÃO é a primeira vez que você orienta este psicólogo sobre conversão. Ele teve outros 2 contatos seguidos recentemente que também não fecharam.
+Portanto, MUDE A MENSAGEM:
+- NÃO repita a mensagem inicial e NÃO apresente o "Manual de Conversão" como novidade.
+- Reconheça com carinho e parceria que novos contatos chegaram recentemente, mas ainda não converteram em sessões iniciadas.
+- Pergunte diretamente se ele conseguiu consultar as estratégias do Manual de Conversão que você indicou antes e como tem sido a receptividade dos pacientes.
+- Pergunte se o obstáculo principal tem sido o valor da consulta, o tempo de resposta ou se os pacientes simplesmente param de responder.
+- Ofereça uma ajuda rápida e prática: "Se quiser, podemos analisar juntos o que aconteceu no último contato para destravar seus agendamentos!"
+` : `
+[PRIMEIRA ORIENTAÇÃO DE CONVERSÃO]
+Esta é a primeira vez que você orienta este psicólogo sobre conversão de contatos.
+- Comece de forma empática observando que o perfil dele está gerando interesse e atraindo pessoas (o que é ótimo), mas que os últimos contatos não chegaram a fechar.
+- Sugira acolher e alinhar expectativas logo no primeiro contato.
+- Aconselhe OBRIGATORIAMENTE o uso da ferramenta "Manual de Conversão" (que fica em Clínica > Manual de Conversão) para ajudar com roteiros práticos de fechamento e não deixar o paciente no vácuo.
+`;
+
         const prompt = `
 Você é um representante de CS da plataforma Yelo.
-Sua missão é ajudar o psicólogo(a) ${psi.nome} a converter contatos de WhatsApp em pacientes.
-Contexto: O psicólogo está gerando cliques no WhatsApp (recebendo interessados), mas informou pelo CRM que essas pessoas "não responderam mais" ou "não fecharam".
-Esse é um problema clássico de Fundo de Funil (atendimento, preço, abordagem inicial).
+Sua missão é ajudar o psicólogo(a) ${psi.nome.split(' ')[0]} a converter contatos de WhatsApp em pacientes.
+Contexto: O psicólogo está gerando cliques no WhatsApp (recebendo interessados), mas informou pelo CRM que essas pessoas "não responderam mais" ou "não fecharam" (não fechou dois contatos seguidos).
+Esse é um problema de Fundo de Funil (atendimento, preço, abordagem inicial).
 
 Dados do Perfil:
-Bio: ${psi.bio}
-Valor da Sessão: R$ ${psi.valor_sessao_numero}
+Bio: ${psi.bio || 'Não preenchida'}
+Valor da Sessão: R$ ${psi.valor_sessao_numero || 'A combinar'}
 Temas: ${psi.temas_atuacao ? psi.temas_atuacao.join(', ') : 'Nenhum'}
 
 Histórico de Mensagens Recentes:
 ${historyText}
 
+${guidanceBlock}
+
 INSTRUÇÕES PARA A MENSAGEM:
-1. Comece com uma saudação amigável e empática (use "Eu sou o Anderson, da Yelo" e emojis leves como 💚).
-2. Não fale em tom de cobrança. Fale como um parceiro que notou que o perfil está "atraindo pessoas", o que é ótimo, mas que precisamos ajustar a etapa final.
+1. Comece com uma saudação amigável e empática (use "Olá, ${psi.nome.split(' ')[0]}! Tudo bem?"). NUNCA use apresentações como "Aqui é o Anderson" ou "Sou o Anderson da Yelo", pois o psicólogo já conversa com você.
+2. Não fale em tom de cobrança. Fale como um parceiro que está acompanhando de perto os resultados.
 3. Se a Bio for curta ou genérica, sugira alinhamento de expectativas nela. Se o preço for alto, questione como ele apresenta o valor na conversa.
-4. RECOMENDAÇÃO DE FERRAMENTA: Aconselhe OBRIGATORIAMENTE o uso da ferramenta "Manual de Conversão" (que fica em Clínica > Manual de Conversão) para ajudar com roteiros de abordagem e como não deixar o paciente no vácuo.
-5. Se o histórico já mostrar que falamos disso, cobre sutilmente se ele conseguiu ler o manual ou aplicar as dicas.
-6. A mensagem será enviada por WhatsApp (use negrito *assim* e itálico _assim_).
-7. Seja direto, prático e humano. Não crie um texto imenso. Mantenha em até 4 parágrafos pequenos.
-8. IMPORTANTE: Retorne APENAS o texto da mensagem. NÃO inclua nenhum comentário, aviso ou pré-texto informando que a mensagem foi gerada por IA (ex: "Aqui está a mensagem", "Essa mensagem foi gerada...").
+4. A mensagem será enviada por WhatsApp (use APENAS negrito nativo *assim* e itálico nativo _assim_). NUNCA use duplo asterisco (**assim**), nunca use títulos markdown (#), nunca use listas com asterisco (* item) e não coloque espaços colados aos asteriscos.
+5. Seja direto, prático e humano. Mantenha em até 3 ou 4 parágrafos pequenos e escaneáveis.
+6. IMPORTANTE: Retorne APENAS o texto da mensagem. NÃO inclua nenhum comentário, aviso ou pré-texto informando que a mensagem foi gerada por IA (ex: "Aqui está a mensagem", "Essa mensagem foi gerada...").
 `;
 
         const { GoogleGenerativeAI } = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
         const result = await model.generateContent(prompt);
-        const text = result.response.text();
+        const text = formatForWhatsApp(result.response.text());
 
         res.json({ whatsappCopy: text });
     } catch (error) {

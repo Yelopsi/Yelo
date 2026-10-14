@@ -1,5 +1,6 @@
 const db = require('../models');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { formatForWhatsApp } = require('../utils/whatsappFormatter');
 
 async function getStandardMetrics(psiId, psi) {
     const numericId = parseInt(psiId, 10);
@@ -23,13 +24,21 @@ exports.getLowPerformanceData = async () => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    // Fetch active psychologists created more than 7 days ago
+    // Fetch active psychologists created more than 7 days ago (pagantes ou isentos ainda ativos)
     const activePsis = await db.Psychologist.findAll({
         where: { 
             status: 'active', 
             deletedAt: null,
             createdAt: { [Op.lt]: sevenDaysAgo },
-            [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }]
+            [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }],
+            [Op.and]: [
+                {
+                    [Op.or]: [
+                        { is_exempt: true },
+                        { planExpiresAt: { [Op.gt]: new Date() } }
+                    ]
+                }
+            ]
         },
         attributes: ['id', 'nome', 'telefone', 'fotoUrl', 'slug', 'status', 'is_exempt', 'planExpiresAt', 'plano', 'createdAt', 'aiOptimizationHistory']
     });
@@ -236,12 +245,12 @@ REGRAS DA CONSULTORIA (SEJA HIPER-PERSONALIZADO E DIRETO):
    - SE "Há feedbacks pendentes (sem resposta)?" for SIM: adicione uma solicitação amigável e parceira pedindo para ele nos avisar o status dos atendimentos. OBRIGATÓRIO: Forneça SEMPRE o link rápido para ele responder sem precisar acessar a plataforma (${magicLink}). Exemplo: "Vi que você recebeu contatos no WhatsApp recentemente! Para que nosso algoritmo continue impulsionando seu perfil nas buscas, por favor nos atualize sobre o status desses atendimentos através deste link rápido (não precisa nem fazer login na plataforma): ${magicLink}". NUNCA peça para ele acessar ou logar na plataforma para dar feedback se temos o link rápido!
 
 ESTRUTURA OBRIGATÓRIA E TOM DE VOZ:
-7. Inicie com um gatilho de parceria EXATAMENTE com esta estrutura, trocando apenas o nome: "Olá, [Nome]. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance nos últimos 7 dias e trouxe alguns pontos para potencializarmos seus resultados: você teve ${matchesCount} aparições em resultados de matches, ${viewsCount} visitas no perfil e ${clicksCount} cliques no WhatsApp."
+7. Inicie com um gatilho de parceria direto e amigável, SEM apresentação formal (como "Aqui é o Anderson"), pois o psicólogo já conhece você: "Olá, [Nome]! Tudo bem? Fiz uma análise detalhada da sua performance nos últimos dias e trouxe alguns pontos para potencializarmos seus resultados: você teve ${matchesCount} aparições em resultados de matches, ${viewsCount} visitas no perfil e ${clicksCount} cliques no WhatsApp."
 8. Aja de forma EXTREMAMENTE EMPÁTICA, PARCEIRA e HUMANIZADA. Você está lá para ajudá-lo a ganhar dinheiro, mostre que o sucesso dele é o nosso sucesso. ZERO GÍRIAS.
 9. Após a introdução do passo 7, justifique onde está o gargalo dele (ex: "O nosso gargalo hoje está na conversão da visita para o contato...").
 10. Finalize com um gatilho de comprometimento: "Esses pequenos ajustes costumam destravar a agenda de muitos profissionais por aqui. Qualquer dúvida sobre como aplicar isso, é só me chamar. Estamos juntos nessa jornada para encher a sua clínica! 🌿"
 
-Retorne SOMENTE um JSON com a seguinte estrutura (não use marcações markdown como \`\`\`json, apenas o objeto):
+Retorne SOMENTE um JSON com a seguinte estrutura (não use blocos markdown de código, apenas o objeto JSON puro):
 {
   "diagnosis": "Um resumo de 1 linha apenas para o admin ler sobre qual é o problema principal",
   "whatsappCopy": "O texto completo pronto para ser copiado pro whatsapp"
@@ -252,7 +261,7 @@ Retorne SOMENTE um JSON com a seguinte estrutura (não use marcações markdown 
             console.warn("⚠️ MOCK: Utilizando texto gerado localmente para o Diagnóstico IA.");
             const mockResponse = {
                 diagnosis: "Baixa taxa de cliques no WhatsApp (0) e há feedbacks pendentes de pacientes que entraram em contato antes. A bio está muito curta e precisa de avaliação social.",
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}. Como vai? Aqui é o Anderson, da equipe de Sucesso da Yelo. Fiz uma análise detalhada da sua performance e decidi te trazer alguns pontos super estratégicos para te ajudar a destravar mais pacientes.\n\nA plataforma entregou uma excelente visibilidade para o seu perfil nos últimos dias: você teve *${matchesCount} aparições nos resultados de matches* e *${viewsCount} pacientes visitaram a sua página*. No entanto, não registramos *nenhum clique* recente no seu WhatsApp.\n\nIsso mostra um gargalo na sua vitrine, mas super simples de corrigir! Recomendo focarmos em duas ações:\n\n1. *Acesse o "Manual de Conversão":* Vi que você já tem cliques antigos, mas a nossa plataforma tem um manual focado em como não perder pacientes que chegam no WhatsApp. Ele fica lá no seu Hub de Evolução!\n\n2. *Construa Prova Social:* Peça avaliações no seu perfil usando o seu link (https://www.yelopsi.com.br/${psi.slug}?review=true). A opinião de outras pessoas é o maior gatilho para destravar o agendamento de quem está em dúvida.\n\n⚠️ Ah, um ponto importante: notei que você tem contatos recentes e ainda há *${unansweredLogs.length} paciente(s)* sem status de fechamento informado. Para que nosso algoritmo continue impulsionando seu perfil nas buscas, por favor nos atualize sobre o status desses atendimentos através deste link rápido (não precisa nem fazer login na plataforma): ${magicLink}\n\nQualquer dúvida sobre como aplicar tudo isso, é só me chamar. Estamos juntos! 🌿`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Fiz uma análise detalhada da sua performance e decidi te trazer alguns pontos super estratégicos para te ajudar a destravar mais pacientes.\n\nA plataforma entregou uma excelente visibilidade para o seu perfil nos últimos dias: você teve *${matchesCount} aparições nos resultados de matches* e *${viewsCount} pacientes visitaram a sua página*. No entanto, não registramos *nenhum clique* recente no seu WhatsApp.\n\nIsso mostra um gargalo na sua vitrine, mas super simples de corrigir! Recomendo focarmos em duas ações:\n\n1. *Acesse o "Manual de Conversão":* Vi que você já tem cliques antigos, mas a nossa plataforma tem um manual focado em como não perder pacientes que chegam no WhatsApp. Ele fica lá no seu Hub de Evolução!\n\n2. *Construa Prova Social:* Peça avaliações no seu perfil usando o seu link (https://www.yelopsi.com.br/${psi.slug}?review=true). A opinião de outras pessoas é o maior gatilho para destravar o agendamento de quem está em dúvida.\n\n⚠️ Ah, um ponto importante: notei que você tem contatos recentes e ainda há *${unansweredLogs.length} paciente(s)* sem status de fechamento informado. Para que nosso algoritmo continue impulsionando seu perfil nas buscas, por favor nos atualize sobre o status desses atendimentos através deste link rápido (não precisa nem fazer login na plataforma): ${magicLink}\n\nQualquer dúvida sobre como aplicar tudo isso, é só me chamar. Estamos juntos! 🌿`
             };
             return res.status(200).json({ 
                 diagnosis: mockResponse.diagnosis,
@@ -271,6 +280,7 @@ Retorne SOMENTE um JSON com a seguinte estrutura (não use marcações markdown 
 
         const responseText = result.response.text();
         const aiData = JSON.parse(responseText);
+        aiData.whatsappCopy = formatForWhatsApp(aiData.whatsappCopy);
 
         // Salvar histórico no banco apenas se não for mock
         const updatedHistory = [...history, {
@@ -501,10 +511,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do texto para lembrá-l
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        let text = response.text();
-        
-        // Remove blocos markdown de resposta crua, caso a IA ainda retorne
-        text = text.replace(/```(?:html|json)?\n?/g, '').replace(/```/g, '').trim();
+        let text = formatForWhatsApp(response.text());
 
         res.json({ whatsappCopy: text });
     } catch (e) {
@@ -566,6 +573,18 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
             dealNoFeedback = wppLogs.filter(l => !l.dealClosed || l.dealClosed === 'not_started').length;
         }
 
+        const nowTime = new Date();
+        const expDate = psi.planExpiresAt ? new Date(psi.planExpiresAt) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const diffHours = (expDate.getTime() - nowTime.getTime()) / (1000 * 60 * 60);
+
+        const options = { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' };
+        const todayStr = nowTime.toLocaleDateString('pt-BR', options);
+        const expDateStr = expDate.toLocaleDateString('pt-BR', options);
+
+        const isToday = expDateStr === todayStr || diffHours <= 16;
+        const expiryPhrase = isToday ? 'expira nas próximas horas' : 'expirará amanhã';
+        const timingClosing = isToday ? 'nas próximas horas' : 'amanhã';
+
         const hasValorSessao = psi.valor_sessao_numero && psi.valor_sessao_numero > 0;
         const instrucaoFinanceira = hasValorSessao
             ? `Compare amigavelmente o valor da sessão dele (R$ ${psi.valor_sessao_numero}) com a mensalidade da Yelo (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".`
@@ -574,7 +593,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
         const prompt = `
 Atue como Anderson, gerente de Customer Success da Yelo. 
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}.
-Situação atual: O período de testes gratuito (Trial) de 7 dias deste profissional expira hoje ou amanhã (restam ${daysLeft} dia(s)).
+Situação atual: O período de testes gratuito (Trial) de 7 dias deste profissional ${isToday ? 'expira HOJE, nas próximas horas' : 'expirará AMANHÃ'}.
 
 Aja de forma humanizada, empática e consultiva. NÃO seja agressivamente vendedor e não use gírias.
 NÃO se apresente ("Aqui é o Anderson..." ou similar) pois o psicólogo já conversa com você e já sabe quem você é.
@@ -593,8 +612,12 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
 - Contatos pendentes (Ainda sem feedback): ${dealNoFeedback}
 
 [INSTRUÇÕES DA COPY (MENSAGEM)]
-1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\n\n).
-2. Vá direto ao ponto (cumprimente com um 'Olá [Nome], tudo bem?' e avance). Como restam ${daysLeft} dia(s) para o Trial expirar, seja SUAVE ao informar que este é o último dia do período gratuito e avise-o.
+1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\\n\\n).
+2. Vá direto ao ponto (cumprimente com um 'Olá [Nome], tudo bem?' e avance). Informe com precisão sobre o momento do encerramento do teste:
+   ${isToday 
+     ? '- Como o período expira hoje/em breve, mencione que o período gratuito "expira nas próximas horas" ou "está encerrando nas próximas horas".' 
+     : '- Como o período expira amanhã, mencione que o período gratuito "expirará amanhã".'}
+   NUNCA use "restam X dias" ou "último dia (restam X dias)". Seja direto usando a referência temporal indicada.
 3. Apresente os resultados dele (Aparições, Visitas, Cliques e Fechamentos).
 4. Analise os resultados de fechamento de forma consultiva e parceira.
    - Se ele fechou pacientes, parabenize-o! É a maior prova de que vale a pena assinar.
@@ -628,7 +651,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
             }
 
             return res.status(200).json({ 
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem?\n\nVi que estamos no último dia (restam ${daysLeft} dia(s)) do seu período gratuito, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matchesCount} aparições nos resultados de matches, ${viewsCount} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. ${fraseSessaoMock}, ${mathText}\n\nFaz sentido para você ativar a assinatura para não perdermos esse fluxo de pacientes nas próximas horas? Basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos".`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem?\n\nVi que o seu período gratuito na Yelo ${expiryPhrase}, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matchesCount} aparições nos resultados de matches, ${viewsCount} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. ${fraseSessaoMock}, ${mathText}\n\nFaz sentido para você ativar a assinatura para não perdermos esse fluxo de pacientes ${timingClosing}? Basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos".`
             });
         }
 
@@ -643,8 +666,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
         });
         
         const result = await model.generateContent(prompt);
-        let whatsappCopy = result.response.text();
-        whatsappCopy = whatsappCopy.replace(/^```whatsapp\s*/i, '').replace(/^```\s*/, '').replace(/```$/, '').trim();
+        let whatsappCopy = formatForWhatsApp(result.response.text());
 
         res.status(200).json({ whatsappCopy });
     } catch (e) {

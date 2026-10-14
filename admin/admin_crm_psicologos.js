@@ -413,6 +413,30 @@ window.initializePage = function () {
         }
     }
 
+    function formatForWhatsApp(text) {
+        if (!text || typeof text !== 'string') return '';
+        return text
+            .replace(/\r\n/g, '\n')
+            .replace(/\r/g, '\n')
+            .replace(/^```[a-zA-Z]*\n?/gm, '')
+            .replace(/```$/gm, '')
+            .replace(/^["'“”](.*)["'“”]$/s, '$1')
+            .replace(/^[-*_]{3,}\s*$/gm, '')
+            .replace(/^#{1,6}\s*(.+)$/gm, '*$1*')
+            .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '$1: $2')
+            .replace(/\*\*([^*\n]+?)\*\*/g, '*$1*')
+            .replace(/__([^_\n]+?)__/g, '_$1_')
+            .replace(/^[\*\-]\s+/gm, '• ')
+            .replace(/\*[ \t]+([^*\n]+?)[ \t]+\*/g, '*$1*')
+            .replace(/\*[ \t]+([^*\n]+?)\*/g, '*$1*')
+            .replace(/\*([^*\n]+?)[ \t]+\*/g, '*$1*')
+            .replace(/_[ \t]+([^_\n]+?)[ \t]+_/g, '_$1_')
+            .replace(/_[ \t]+([^_\n]+?)_/g, '_$1_')
+            .replace(/_([^_\n]+?)[ \t]+_/g, '_$1_')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    }
+
     window.sendWhatsAppAction = async function (id, phone, name, actionType, patientName = '', feedbackToken = '', metricsStr = '{}') {
         if (!phone || phone === 'null') {
             window.showToast('Profissional sem telefone cadastrado.', 'error');
@@ -594,7 +618,7 @@ window.initializePage = function () {
             }
 
             if (isFirst) {
-                msg = `Olá, ${firstName}. Como vai?\n\nAqui quem fala é o Anderson, da Yelo.\nPrecisamos da sua ajuda com um retorno rápido.\n\n${introText} em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nResponder agora:\n👉 ${linkFeedback} \n\nObrigado! 🌿`;
+                msg = `Olá, ${firstName}! Tudo bem?\n\n${introText} em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
             } else {
                 let introTextRecorrente = '';
                 if (pendingCount > 1) {
@@ -607,7 +631,7 @@ window.initializePage = function () {
                     }
                 }
                 
-                msg = `Olá, ${firstName}! Tudo bem?\n\nO seu perfil continua gerando resultados na Yelo! ✨\nPercebemos que ${introTextRecorrente} entrar em contato com você recentemente.\n\nPara mantermos o seu perfil forte e continuarmos te indicando no nosso ranking, precisamos apenas da sua confirmação rápida. Acesse o link abaixo e nos conte:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto!\n\nResponder agora:\n👉 ${linkFeedback} \n\nMuito obrigado pela parceria! 🌿`;
+                msg = `Olá, ${firstName}! Tudo bem?\n\nO seu perfil continua gerando resultados na Yelo! ✨\nPercebemos que ${introTextRecorrente} entrar em contato com você recentemente.\n\nPara mantermos o seu perfil forte e continuarmos te indicando no nosso ranking, precisamos apenas da sua confirmação rápida. Acesse o link abaixo e nos conte:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto!\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nMuito obrigado pela parceria! 🌿`;
             }
         } else if (actionType === 'low_performance') {
             try {
@@ -650,15 +674,25 @@ window.initializePage = function () {
         } else if (actionType === 'negotiation') {
             const metrics = metricsStr && metricsStr !== '{}' ? JSON.parse(decodeURIComponent(metricsStr)) : {};
             const dataNeg = metrics.dataNeg || 'alguns dias';
-            msg = `Olá, ${firstName}. Como vai?\n\nPreciso da sua ajuda com um retorno rápido.\n\nVocê estava em negociação com ${patientName} desde ${dataNeg}:\n\n• Conseguiram conversar novamente?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nPara responder, acesse sua conta na Yelo e vá até a opção *Evolução* > *Histórico de Contatos* e mude o status "⏳ Em negociação".\n\nObrigado! 🌿`;
+            msg = `Olá, ${firstName}. Como vai?\n\nPreciso da sua ajuda com um retorno rápido.\n\nVocê estava em negociação com ${patientName} desde ${dataNeg}:\n\n• Conseguiram conversar novamente?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nPara responder, acesse sua conta na Yelo e vá até a opção *Evolução > Histórico de Contatos* e mude o status "⏳ Em negociação".\n\nObrigado! 🌿`;
         }
-        const linkDesktop = `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
-        const linkMobile = `whatsapp://send?phone=55${cleanPhone}&text=${encodeURIComponent(msg)}`;
-        const isMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 800;
+
+        // Formata e sanitiza para o parser nativo do WhatsApp não perder a formatação
+        msg = formatForWhatsApp(msg);
+
+        // Garante formato 55DDD999999999 sem duplicar o DDI 55
+        let fullPhone = cleanPhone;
+        if (fullPhone.length === 10 || fullPhone.length === 11) {
+            fullPhone = '55' + fullPhone;
+        }
+
+        // Universal link oficial: abre direto no app nativo no mobile (iOS/Android) sem perder quebras de linha e formatação
+        const whatsappUrl = `https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodeURIComponent(msg)}`;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
-            window.location.href = linkMobile;
+            window.location.href = whatsappUrl;
         } else {
-            window.open(linkDesktop, '_blank');
+            window.open(whatsappUrl, '_blank');
         }
 
         // Marcar como enviado no banco
