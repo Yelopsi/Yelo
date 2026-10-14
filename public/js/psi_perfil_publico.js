@@ -693,7 +693,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const response = await fetch(`${API_BASE_URL}/api/reviews`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+                        },
+                        credentials: 'include',
                         body: JSON.stringify({ psychologistId, rating: parseInt(rating), comment })
                     });
                     if (response.ok) {
@@ -730,40 +734,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 showModernModal('🔒', 'Identificação Necessária', 'Para garantir autenticidade e evitar perfis falsos, confirme sua identidade com o Google.', null, null, 'Cancelar', '<div id="google-btn-container" style="display:flex; justify-content:center; margin-bottom: 20px; min-height: 44px;"></div>');
         
-                const script = document.createElement('script');
-                script.src = 'https://accounts.google.com/gsi/client';
-                script.async = true;
-                script.defer = true;
-                script.onload = () => {
+                const setupGoogleButton = () => {
+                    const btnContainer = document.getElementById('google-btn-container');
+                    if (!btnContainer || typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
+
                     try {
                         google.accounts.id.initialize({
                             client_id: '283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com',
                             callback: async (response) => {
                                 try {
-                                    const authRes = await fetch(`${API_BASE_URL}/api/patients/google`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: response.credential, isReviewValidation: true }) });
+                                    if (btnContainer) {
+                                        btnContainer.innerHTML = '<span style="color:#1B4332; font-weight:600; font-size:0.95rem;">Validando identidade...</span>';
+                                    }
+                                    const authRes = await fetch(`${API_BASE_URL}/api/patients/google`, { 
+                                        method: 'POST', 
+                                        headers: { 'Content-Type': 'application/json' }, 
+                                        credentials: 'include',
+                                        body: JSON.stringify({ token: response.credential, isReviewValidation: true }) 
+                                    });
                                     
-                                    if (authRes.ok) {
-                                        const authData = await authRes.json();
-                                        // localStorage removido por segurança (LGPD-2)
-                                        
+                                    const authData = await authRes.json().catch(() => ({}));
+
+                                    if (authRes.ok && authData.token) {
                                         const modernOverlay = document.getElementById('modern-modal-overlay') || document.querySelector('div[style*="z-index:999999"]') || document.querySelector('div[style*="z-index: 999999"]');
                                         if (modernOverlay) modernOverlay.remove();
                                         
                                         enviarAvaliacao(authData.token);
                                     } else { 
-                                        const errorText = await authRes.text();
-                                        showToast("Falha na autenticação.", "error"); 
+                                        console.error('[Google Auth Error]:', authRes.status, authData);
+                                        showToast(authData.error || "Falha na autenticação.", "error"); 
+                                        if (btnContainer) {
+                                            btnContainer.innerHTML = '';
+                                            google.accounts.id.renderButton(btnContainer, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
+                                        }
                                     }
                                 } catch (error) { 
+                                    console.error('[Google Auth Connection Error]:', error);
                                     showToast("Erro ao conectar com o Google.", "error"); 
+                                    if (btnContainer) {
+                                        btnContainer.innerHTML = '';
+                                        google.accounts.id.renderButton(btnContainer, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
+                                    }
                                 }
                             }
                         });
-                        google.accounts.id.renderButton(document.getElementById('google-btn-container'), { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
+                        google.accounts.id.renderButton(btnContainer, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
                     } catch (e) {
+                        console.error('[Google GSI Error]:', e);
                     }
                 };
-                document.head.appendChild(script);
+
+                if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                    setupGoogleButton();
+                } else {
+                    let script = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
+                    if (!script) {
+                        script = document.createElement('script');
+                        script.src = 'https://accounts.google.com/gsi/client';
+                        script.async = true;
+                        script.defer = true;
+                        document.head.appendChild(script);
+                    }
+                    script.onload = () => setupGoogleButton();
+                }
                 return;
             }
             enviarAvaliacao(token);

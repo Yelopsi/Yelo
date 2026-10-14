@@ -16,17 +16,42 @@ const generateToken = (id, type) => {
     });
 };
 
+const { OAuth2Client } = require('google-auth-library');
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com';
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
+
 // Função Auxiliar: Verifica Token do Google
-exports.verifyGoogleToken = (token) => {
+exports.verifyGoogleToken = async (token) => {
+    if (!token) throw new Error('Token do Google não fornecido.');
+
+    // 1. Tenta verificação local criptográfica com google-auth-library (rápido, sem rate limit de IP)
+    try {
+        const ticket = await googleClient.verifyIdToken({
+            idToken: token,
+            audience: GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        if (payload && payload.email) {
+            return payload;
+        }
+    } catch (libError) {
+        console.warn('[Google Auth] verifyIdToken local falhou, tentando fallback tokeninfo:', libError.message);
+    }
+
+    // 2. Fallback para tokeninfo HTTP (caso o token seja de outro formato ou certs locais precisem de refresh)
     return new Promise((resolve, reject) => {
-        https.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`, (resp) => {
+        https.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(token)}`, (resp) => {
             let data = '';
             resp.on('data', (chunk) => data += chunk);
             resp.on('end', () => {
                 if (resp.statusCode === 200) {
-                    resolve(JSON.parse(data));
+                    try {
+                        resolve(JSON.parse(data));
+                    } catch (e) {
+                        reject(new Error('Resposta inválida do Google tokeninfo'));
+                    }
                 } else {
-                    reject(new Error('Token do Google inválido'));
+                    reject(new Error('Token do Google inválido ou expirado'));
                 }
             });
         }).on('error', (err) => reject(err));

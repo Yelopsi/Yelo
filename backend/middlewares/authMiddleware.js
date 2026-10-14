@@ -35,8 +35,11 @@ const protect = async (req, res, next) => {
         }
     }
 
-    // 1. A ÚNICA fonte da verdade é o Cookie (HttpOnly - Proteção LGPD-2 / XSS)
-    const token = req.cookies && req.cookies.token ? req.cookies.token : null;
+    // 1. Fonte primária: Cookie HttpOnly (Proteção LGPD-2 / XSS), com fallback para Header Authorization (Bearer)
+    let token = req.cookies && req.cookies.token ? req.cookies.token : null;
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
 
     if (token) {
         try {

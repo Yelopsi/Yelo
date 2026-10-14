@@ -266,19 +266,11 @@ exports.googleLogin = async (req, res) => {
         const { token, isReviewValidation } = req.body;
         if (!token) return res.status(400).json({ error: 'Token do Google obrigatório.' });
 
-        // 1. Verifica o token diretamente com o Google (Segurança)
-        const googleUser = await new Promise((resolve, reject) => {
-            https.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`, (resp) => {
-                let data = '';
-                resp.on('data', (chunk) => data += chunk);
-                resp.on('end', () => {
-                    if (resp.statusCode === 200) resolve(JSON.parse(data));
-                    else reject(new Error('Token do Google inválido'));
-                });
-            }).on('error', (err) => reject(err));
-        });
-
+        const { verifyGoogleToken } = require('./authController');
+        const googleUser = await verifyGoogleToken(token);
         const { email, name, sub: googleId } = googleUser;
+
+        const nome = name || googleUser.given_name || (email ? email.split('@')[0] : 'Usuário');
 
         // [RESTRIÇÃO] Verifica se é Psicólogo antes de criar paciente
         const existingPsychologist = await db.Psychologist.findOne({ 
@@ -299,6 +291,11 @@ exports.googleLogin = async (req, res) => {
             if (patient.deletedAt) {
                 await patient.restore();
             }
+            if (googleId) {
+                await db.sequelize.query(`UPDATE "Patients" SET "googleId" = :googleId WHERE id = :id`, { 
+                    replacements: { googleId, id: patient.id } 
+                }).catch(() => {});
+            }
         } else {
             // 3. Se não existe, CRIA um novo paciente
             // Gera uma senha aleatória forte pois o usuário vai logar via Google
@@ -308,7 +305,7 @@ exports.googleLogin = async (req, res) => {
             const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0';
 
             patient = await db.Patient.create({
-                nome: name,
+                nome: nome,
                 email: email,
                 senha: hashedPassword,
                 ip_registro: ip,
@@ -316,11 +313,19 @@ exports.googleLogin = async (req, res) => {
                 marketing_aceito: false
             });
 
-            await db.SystemLog.create({
-                level: 'info',
-                message: `Novo Paciente via Google: ${email}`,
-                meta: { patientId: patient.id, googleId }
-            });
+            if (googleId) {
+                await db.sequelize.query(`UPDATE "Patients" SET "googleId" = :googleId WHERE id = :id`, { 
+                    replacements: { googleId, id: patient.id } 
+                }).catch(() => {});
+            }
+
+            if (db.SystemLog) {
+                db.SystemLog.create({
+                    level: 'info',
+                    message: `Novo Paciente via Google: ${email}`,
+                    meta: { patientId: patient.id, googleId }
+                }).catch(() => {});
+            }
 
             // [EMAIL] Envia boas-vindas APENAS se NÃO for uma validação simples de review
             if (!isReviewValidation) {
@@ -349,7 +354,8 @@ exports.googleLogin = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(401).json({ error: 'Falha na autenticação com Google.' });
+        console.error('[Google Login Patient Error]:', error);
+        res.status(401).json({ error: error.message || 'Falha na autenticação com Google.' });
     }
 };
 

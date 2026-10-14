@@ -262,11 +262,13 @@ const initProfilePage = async () => {
                                 const authRes = await fetch(`${BASE_URL}/api/patients/google`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'include',
                                     body: JSON.stringify({ token: response.credential, isReviewValidation: true })
                                 });
                                 
-                                if (authRes.ok) {
-                                    const authData = await authRes.json();
+                                const authData = await authRes.json().catch(() => ({}));
+
+                                if (authRes.ok && authData.token) {
                                     // localStorage removido por segurança (LGPD-2)
                                     localStorage.setItem('Yelo_user_type', 'patient');
                                     localStorage.setItem('Yelo_user_name', authData.nome);
@@ -276,7 +278,7 @@ const initProfilePage = async () => {
                                     
                                     enviarAvaliacao(authData.token);
                                 } else {
-                                    showToast("Falha na autenticação com o Google.", "error");
+                                    showToast(authData.error || "Falha na autenticação com o Google.", "error");
                                     if (containerBtn) {
                                         containerBtn.innerHTML = '';
                                         google.accounts.id.renderButton(containerBtn, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
