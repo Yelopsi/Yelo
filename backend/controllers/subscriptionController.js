@@ -104,7 +104,8 @@ exports.cancelSubscription = async (req, res) => {
              // Se chegou aqui, o usuário quer cancelar. Se não temos ID para o Asaas,
              // cancelamos localmente para não prender o usuário.
              await psychologist.update({
-                cancelAtPeriodEnd: true
+                cancelAtPeriodEnd: true,
+                canceledAt: new Date()
              });
              return res.status(200).json({ message: 'Assinatura cancelada localmente (Vínculo de pagamento não encontrado).' });
         }
@@ -119,7 +120,8 @@ exports.cancelSubscription = async (req, res) => {
         if (!subData.id) {
              // Se não achou no Asaas, assume cancelamento manual local e limpa tudo
              await psychologist.update({ 
-                  cancelAtPeriodEnd: true
+                  cancelAtPeriodEnd: true,
+                  canceledAt: new Date()
               });
              return res.json({ message: 'Assinatura cancelada localmente (Não encontrada no provedor).' });
         }
@@ -137,7 +139,7 @@ exports.cancelSubscription = async (req, res) => {
         // NÃO atualizamos o planExpiresAt baseado no Asaas, pois o Asaas joga a data muito pra frente
         // O planExpiresAt local já reflete exatamente o que o psicólogo pagou.
         // O usuário continuará ativo ('status' ativo e 'planExpiresAt' no futuro).
-        await psychologist.update({ cancelAtPeriodEnd: true });
+        await psychologist.update({ cancelAtPeriodEnd: true, canceledAt: new Date() });
 
         // Envia E-mail de Cancelamento (opcional, já que a renovação foi cancelada)
         sendSubscriptionCancelledEmail(psychologist).catch(e => {});
@@ -185,7 +187,7 @@ exports.reactivateSubscription = async (req, res) => {
         }
 
         // 2. Atualiza banco local
-        await psychologist.update({ cancelAtPeriodEnd: false });
+        await psychologist.update({ cancelAtPeriodEnd: false, canceledAt: null });
 
         res.json({ message: 'Assinatura reativada com sucesso! A cobrança automática voltará a ocorrer.' });
 

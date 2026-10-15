@@ -363,8 +363,10 @@ exports.getAllPsychologists = async (req, res) => {
             } else if (status === 'churn_month') {
                 const now = new Date();
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
                 whereClause.is_exempt = { [Op.or]: [null, false] };
                 if (!whereClause[Op.and]) whereClause[Op.and] = [];
+                // 1. Deve ter realizado ao menos 1 pagamento
                 whereClause[Op.and].push({
                     [Op.or]: [
                         { subscription_payments_count: { [Op.gt]: 0 } },
@@ -372,16 +374,27 @@ exports.getAllPsychologists = async (req, res) => {
                         db.Sequelize.literal(`EXISTS (SELECT 1 FROM "Payments" p WHERE p."psychologistId" = "Psychologist"."id" AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'))`)
                     ]
                 });
+                // 2. Não está ativo com renovação válida no futuro
                 whereClause[Op.and].push({
                     [Op.or]: [
-                        { canceledAt: { [Op.gte]: startOfMonth } },
-                        {
-                            status: 'inactive',
-                            updatedAt: { [Op.gte]: startOfMonth }
-                        },
-                        {
-                            planExpiresAt: { [Op.between]: [startOfMonth, now] }
-                        }
+                        { status: 'inactive' },
+                        { cancelAtPeriodEnd: true },
+                        { planExpiresAt: { [Op.lte]: now } }
+                    ]
+                });
+                // 3. O término da assinatura/churn ocorreu no mês atual
+                whereClause[Op.and].push({
+                    [Op.or]: [
+                        { canceledAt: { [Op.between]: [startOfMonth, now] } },
+                        { planExpiresAt: { [Op.between]: [startOfMonth, endOfMonth] } },
+                        db.Sequelize.literal(`EXISTS (
+                            SELECT 1 FROM "Payments" p 
+                            WHERE p."psychologistId" = "Psychologist"."id" 
+                              AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
+                            GROUP BY p."psychologistId"
+                            HAVING (MAX(p."paymentDate") + INTERVAL '30 days') >= '${startOfMonth.toISOString()}' 
+                               AND (MAX(p."paymentDate") + INTERVAL '30 days') <= '${now.toISOString()}'
+                        )`)
                     ]
                 });
             } else if (status === 'pending_expiring_trial') {
@@ -468,7 +481,36 @@ exports.getAllPsychologists = async (req, res) => {
                 COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0) AND "planExpiresAt" > NOW()) as active_trial,
                 COUNT(*) FILTER (WHERE status = 'pending') as pending,
                 COUNT(*) FILTER (WHERE status = 'inactive' OR ("status" = 'active' AND "planExpiresAt" < NOW())) as inactive,
-                COUNT(*) FILTER (WHERE (is_exempt IS NULL OR is_exempt = false) AND ("subscription_payments_count" > 0 OR "firstPaidAt" IS NOT NULL OR EXISTS (SELECT 1 FROM "Payments" p WHERE p."psychologistId" = "Psychologists"."id" AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'))) AND ("canceledAt" >= DATE_TRUNC('month', NOW()) OR (status = 'inactive' AND "updatedAt" >= DATE_TRUNC('month', NOW())) OR ("planExpiresAt" >= DATE_TRUNC('month', NOW()) AND "planExpiresAt" <= NOW()))) as churn_month,
+                COUNT(*) FILTER (WHERE 
+                    (is_exempt IS NULL OR is_exempt = false)
+                    AND (
+                        "subscription_payments_count" > 0 
+                        OR "firstPaidAt" IS NOT NULL 
+                        OR EXISTS (SELECT 1 FROM "Payments" p WHERE p."psychologistId" = "Psychologists"."id" AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'))
+                    )
+                    AND (
+                        status = 'inactive' 
+                        OR "cancelAtPeriodEnd" = true 
+                        OR ("planExpiresAt" IS NOT NULL AND "planExpiresAt" <= NOW())
+                    )
+                    AND (
+                        ("canceledAt" IS NOT NULL AND "canceledAt" >= DATE_TRUNC('month', NOW()))
+                        OR
+                        ("planExpiresAt" IS NOT NULL AND "planExpiresAt" >= DATE_TRUNC('month', NOW()) AND "planExpiresAt" < DATE_TRUNC('month', NOW()) + INTERVAL '1 month')
+                        OR
+                        (
+                            "planExpiresAt" IS NULL 
+                            AND EXISTS (
+                                SELECT 1 FROM "Payments" p 
+                                WHERE p."psychologistId" = "Psychologists"."id" 
+                                  AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
+                                GROUP BY p."psychologistId"
+                                HAVING (MAX(p."paymentDate") + INTERVAL '30 days') >= DATE_TRUNC('month', NOW())
+                                   AND (MAX(p."paymentDate") + INTERVAL '30 days') <= NOW()
+                            )
+                        )
+                    )
+                ) as churn_month,
                 COUNT(*) FILTER (WHERE is_exempt = true) as vip,
                 COUNT(*) FILTER (WHERE (status = 'active' OR status = 'pending') AND ("isProfileAnalyzed" IS NULL OR "isProfileAnalyzed" = false)) as fila_cs,
                 COUNT(*) FILTER (WHERE utm_source = 'whatsapp') as utm_whatsapp,
