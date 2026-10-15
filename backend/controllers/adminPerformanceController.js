@@ -349,6 +349,43 @@ exports.generateAiChurnMessage = async (req, res) => {
             dealTalking = wppLogs.filter(l => l.dealClosed === 'talking').length;
         }
 
+        const hasClicks = clicksCount > 0;
+        const hasConversions = dealYes > 0;
+
+        let metricsBlockPrompt = '';
+        let feedbackInstruction = '';
+
+        if (hasClicks) {
+            metricsBlockPrompt = `
+[DADOS OBRIGATÓRIOS DO DESEMPENHO NO TRIAL]
+Você DEVE citar esses indicadores no corpo do seu texto:
+1. Aparições nos resultados de matches: ${matchesCount}
+2. Visitas na Página (Views): ${viewsCount}
+3. Contatos/Cliques no WhatsApp: ${clicksCount}
+`;
+            if (hasConversions) {
+                feedbackInstruction = `Se ele fechou pacientes (${dealYes}), parabenize-o! É o maior argumento de que a plataforma funciona.`;
+            } else {
+                feedbackInstruction = `Ele recebeu ${clicksCount} contato(s) no WhatsApp, mas ainda não fechou. NUNCA diga "0 conversões" ou "nenhum fechamento". Em vez disso, diga que o fluxo já começou a tracionar e que com pequenos ajustes na conversa/abordagem as conversões acontecem, bastando 1 sessão para a plataforma se pagar.`;
+            }
+        } else {
+            metricsBlockPrompt = `
+[DADOS DO DESEMPENHO NO TRIAL - ATENÇÃO: 0 CLIQUES]
+Você DEVE citar APENAS os indicadores positivos de visibilidade:
+1. Aparições nos resultados de matches: ${matchesCount}
+2. Visitas na Página (Views): ${viewsCount}
+
+REGRA CRÍTICA PARA 0 CLIQUES:
+O psicólogo teve ${matchesCount} aparições e ${viewsCount} visitas, mas ainda 0 cliques no WhatsApp.
+NUNCA, sob hipótese alguma, escreva "Cliques: 0", "0 cliques" ou "0 pacientes te chamaram" - isso é extremamente desanimador e destrói a conversão para assinatura!
+Em vez disso:
+- Destaque o volume de pessoas que já viram o perfil dele nas buscas e visitaram a página.
+- Diga que o algoritmo estava aprendendo o perfil dele e gerando tração inicial de buscas e visitas. O próximo passo natural é a conversão dessas visitas em conversas no WhatsApp.
+- Diga que juntos podem revisar a apresentação/foto para destravar os primeiros contatos no WhatsApp.
+`;
+            feedbackInstruction = `Como não houve cliques ainda, foque exclusivamente em valorizar as buscas e visitas, sem mencionar falta de fechamento ou conversões.`;
+        }
+
         const prompt = `
 Atue como Anderson, gerente de Customer Success da plataforma de saúde mental Yelo. 
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}, cujo período de testes (Trial) de 7 dias expirou recentemente (Churn).
@@ -356,13 +393,9 @@ O objetivo da mensagem é convencer o profissional a reativar sua assinatura (qu
 
 Aja de forma humanizada, direta, e TOTALMENTE PROFISSIONAL. NÃO use NENHUMA gíria (como "dar um tchan", "dar um grito", etc.).
 
-[DADOS OBRIGATÓRIOS DO DESEMPENHO NO TRIAL]
-Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma clara:
-1. Aparições nos resultados de matches: ${matchesCount}
-2. Visitas na Página (Views): ${viewsCount}
-3. Cliques no WhatsApp: ${clicksCount}
+${metricsBlockPrompt}
 
-[FEEDBACKS E RESULTADOS (SE HOUVER CLIQUES)]
+[FEEDBACKS E RESULTADOS]
 - Fechou negócio (Agendou): ${dealYes}
 - Em negociação: ${dealTalking}
 - Paciente "fantasma" (sumiu): ${dealGhosted}
@@ -373,55 +406,71 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
 - A mensalidade da Yelo custa R$ 99,00.
 
 [INSTRUÇÕES DA COPY (MENSAGEM)]
-1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\n\n).
+1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\\n\\n).
 2. Cumprimente o psicólogo pelo nome e se apresente. Comece em um tom acolhedor e agradeça por ele ter testado a plataforma.
 3. Seja SUAVE ao informar que o Trial de 7 dias expirou. Exemplo: "O seu período gratuito encerrou, mas eu estava analisando as suas métricas e os resultados foram super interessantes..."
-4. Apresente os resultados dele (os 3 indicadores numéricos são obrigatórios: Aparições, Visitas e Cliques).
+4. Apresente os resultados dele conforme indicado nas instruções de métricas acima.
 5. Analise os resultados de fechamento de forma consultiva e empática:
-   - Se ele fechou pacientes, parabenize-o! É o maior argumento de que a plataforma funciona.
-   - Se não fechou ou teve fantasmas, use uma frase de conforto como "Apesar de não ter fechado com nenhum paciente dessa vez, isso é super normal no início para quem está ajustando o público."
-   - Se ele não teve cliques, diga que os pacientes estão encontrando ele nas buscas e visitando a página (se aplicável), e que juntos podem ajustar o perfil para melhorar a conversão.
+   ${feedbackInstruction}
 6. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE, mas faça de forma amigável e parceira: cite explicitamente o valor que ele cobra por sessão (R$ ${psi.valor_sessao_numero || 'X'}) e compare com a mensalidade (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. (Ex: "Como a sua sessão é R$ 150,00, fechando apenas 1 sessão você já cobre todo o custo da plataforma e garante o seu lucro. É um investimento que se paga com um único atendimento"). NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".
 7. Finalize de forma super acolhedora perguntando se faz sentido para ele manter o perfil ativo. Se sim, instrua-o a reativar acessando a conta na Yelo, indo na opção "Ajustes" e depois "Assinaturas e Planos".
 8. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto (como "Um abraço, Anderson - CS & Growth Yelo", "Equipe Yelo", etc.). Finalize diretamente após perguntar se faz sentido reativar ou dar as instruções para ativar o plano.
 `;
 
-        if (psiId === 99999 || !process.env.GEMINI_API_KEY) {
-            console.warn("⚠️ MOCK: Utilizando texto gerado localmente.");
+        let whatsappCopy = '';
+        if (psiId !== 99999 && process.env.GEMINI_API_KEY) {
+            try {
+                const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+                const model = genAI.getGenerativeModel({ 
+                    model: "gemini-3.1-flash-lite", 
+                    systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 800
+                    }
+                });
+                
+                const result = await model.generateContent(prompt);
+                const rawText = result.response.text();
+                if (rawText && rawText.trim().length > 10) {
+                    whatsappCopy = formatForWhatsApp(rawText.replace(/^```whatsapp\s*/i, '').replace(/^```\s*/, '').replace(/```$/, '').trim());
+                }
+            } catch (aiErr) {
+                console.warn('⚠️ [AI Churn] Falha no Gemini (ativando fallback consultivo):', aiErr.message);
+            }
+        }
+
+        if (!whatsappCopy) {
+            let metricsText = "";
             let feedbackText = "";
             let mathText = "";
 
-            if (dealYes > 0) {
-                feedbackText = `E notei pelo seu feedback que você já conseguiu fechar ${dealYes} sessão(ões)! 🎉`;
-                mathText = `essa sessão que você fechou já paga o investimento da plataforma do mês todo e ainda sobra lucro.`;
+            if (hasClicks) {
+                const contatoStr = clicksCount === 1 ? '1 contato no WhatsApp' : `${clicksCount} contatos no WhatsApp`;
+                metricsText = `Durante os testes, o seu perfil obteve *${matchesCount} aparições* nos resultados de matches, *${viewsCount} visualizações* na sua página e gerou *${contatoStr}*.`;
+                
+                if (dealYes > 0) {
+                    feedbackText = `E notei pelo seu feedback que você já conseguiu fechar ${dealYes} sessão(ões)! 🎉`;
+                    mathText = `essa sessão que você fechou já paga o investimento da plataforma do mês todo e ainda sobra lucro.`;
+                } else {
+                    feedbackText = `O fluxo de contatos já estava começando a ganhar tração! Com a continuidade do perfil no ar e pequenos ajustes na conversa, os fechamentos acontecem naturalmente.`;
+                    mathText = `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
+                }
             } else {
-                feedbackText = `Apesar de os pacientes não terem fechado negócio dessa vez, não desanime, isso é super normal nesse período de adaptação de público!`;
+                metricsText = `Durante os testes, o seu perfil obteve *${matchesCount} aparições* nos resultados de buscas e *${viewsCount} visualizações* diretas na sua página!`;
+                feedbackText = `O seu perfil já começou a ganhar relevância nas buscas e visitas de potenciais pacientes. O próximo passo natural é a chegada dos primeiros contatos no WhatsApp. Posso te ajudar a dar uma revisada rápida na bio e na apresentação para destravarmos esses contatos!`;
                 mathText = `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
             }
 
-            return res.status(200).json({ 
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nPassei para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito acabou encerrando, mas eu estava analisando as suas métricas e os resultados foram bem legais.\n\nDurante os testes, o seu perfil obteve ${matchesCount} aparições nos resultados de matches, ${viewsCount} visualizações na sua página e gerou ${clicksCount} cliques no WhatsApp. ${feedbackText}\n\nPensando pelo seu lado financeiro, a assinatura da Yelo é apenas R$ 99,00 mensais. Como a sua sessão é de R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaria sentido para você reativar a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, clicar em "Ajustes" e depois ir em "Assinaturas e Planos". Qualquer dúvida, estou por aqui!`
-            });
+            whatsappCopy = formatForWhatsApp(
+                `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nPassei para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito acabou encerrando, mas eu estava analisando as suas métricas e os resultados foram bem legais.\n\n${metricsText} ${feedbackText}\n\nPensando pelo seu lado financeiro, a assinatura da Yelo é apenas R$ 99,00 mensais. Como a sua sessão é de R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaria sentido para você reativar a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, clicar em "Ajustes" e depois ir em "Assinaturas e Planos". Qualquer dúvida, estou por aqui!`
+            );
         }
 
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-3.1-flash-lite", 
-            systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 800
-            }
-        });
-        
-        const result = await model.generateContent(prompt);
-        let whatsappCopy = result.response.text();
-        whatsappCopy = whatsappCopy.replace(/^```whatsapp\s*/i, '').replace(/^```\s*/, '').replace(/```$/, '').trim();
-
-        res.status(200).json({ whatsappCopy });
+        return res.status(200).json({ whatsappCopy });
     } catch (e) {
         console.error('Erro generateAiChurnMessage:', e);
-        res.status(500).json({ error: 'Erro interno no servidor de IA.' });
+        res.status(500).json({ error: 'Erro interno ao processar mensagem.' });
     }
 };
 
@@ -463,6 +512,26 @@ exports.generateAiPaidChurnMessage = async (req, res) => {
             clicksCount = wppLogs.length > 0 ? wppLogs.length : clicksCount;
         }
 
+        const hasClicks = clicksCount > 0;
+        let metricsBlockPrompt = '';
+        if (hasClicks) {
+            metricsBlockPrompt = `
+[DADOS HISTÓRICOS DE DESEMPENHO]
+Você DEVE citar esses três indicadores no corpo do texto para lembrá-lo do valor que a plataforma já gerou:
+1. Total de Aparições nos resultados de matches: ${matchesCount}
+2. Total de Visitas na Página (Views): ${viewsCount}
+3. Total de Cliques no WhatsApp: ${clicksCount}
+`;
+        } else {
+            metricsBlockPrompt = `
+[DADOS HISTÓRICOS DE DESEMPENHO - 0 CLIQUES]
+Você DEVE citar APENAS os indicadores de visibilidade:
+1. Total de Aparições nos resultados de matches: ${matchesCount}
+2. Total de Visitas na Página (Views): ${viewsCount}
+NUNCA escreva "0 cliques" ou "Cliques: 0". Valorize o histórico de buscas e visitas para gerar ancoragem de relevância.
+`;
+        }
+
         const prompt = `
 Atue como Anderson, gerente de Customer Success da plataforma de saúde mental Yelo. 
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}. 
@@ -471,11 +540,7 @@ O objetivo da mensagem é entender o que houve e convencê-lo a reativar a assin
 
 Aja de forma humanizada, parceira, e TOTALMENTE PROFISSIONAL. NÃO use NENHUMA gíria.
 
-[DADOS HISTÓRICOS DE DESEMPENHO]
-Você DEVE SEMPRE citar esses três indicadores no corpo do texto para lembrá-lo do valor que a plataforma já gerou:
-1. Total de Aparições nos resultados de matches: ${matchesCount}
-2. Total de Visitas na Página (Views): ${viewsCount}
-3. Total de Cliques no WhatsApp: ${clicksCount}
+${metricsBlockPrompt}
 
 [ANÁLISE FINANCEIRA]
 - O psicólogo cobra R$ ${psi.valor_sessao_numero ? psi.valor_sessao_numero : '(Valor não preenchido)'} por sessão.
@@ -484,8 +549,8 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do texto para lembrá-l
 [INSTRUÇÕES DA COPY (MENSAGEM)]
 1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_).
 2. Cumprimente pelo nome. Comece dizendo que você notou que a assinatura dele na Yelo expirou e o perfil acabou saindo do ar, e pergunte se houve algum problema com o cartão ou se foi uma decisão de pausa.
-3. Apresente os resultados históricos dele (Aparições, Visitas e Cliques) para gerar ancoragem de valor. Mostre que o perfil dele já tem relevância e que recomeçar depois pode ser mais lento.
-4. Seja empático. Se ele teve bons cliques no passado, lembre-o de que o perfil dele atrai pacientes. Se o problema for conversão, ofereça ajuda: 'Se o volume de fechamentos não estava como você gostaria, eu posso revisar seu perfil junto com você para melhorarmos isso!'
+3. Apresente os resultados históricos dele para gerar ancoragem de valor. Mostre que o perfil dele já tem relevância e que recomeçar depois pode ser mais lento.
+4. Seja empático. Se ele teve cliques no passado, lembre-o de que o perfil dele atrai pacientes. Se o problema for conversão, ofereça ajuda: 'Se o volume de fechamentos não estava como você gostaria, eu posso revisar seu perfil junto com você para melhorarmos isso!'
 5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: cite o valor que ele cobra por sessão e compare com a mensalidade (R$ 99,00). Mostre que manter o perfil ativo é um investimento muito baixo comparado ao retorno. (Ex: 'Lembrando que como a sua sessão é R$ 150,00, manter seu perfil no ar custa menos do que 1 única sessão fechada no mês inteiro').
 6. Finalize deixando a porta aberta. Pergunte como você pode ajudá-lo hoje a reativar o perfil, ou informe para acessar "Ajustes > Assinaturas e Planos" no app.
 7. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto.
@@ -493,8 +558,12 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do texto para lembrá-l
 
         if (psiId === 99999 || !process.env.GEMINI_API_KEY) {
             console.warn("⚠️ MOCK: Utilizando texto gerado localmente para Paid Churn.");
+            const metricsText = hasClicks
+                ? `Ao todo, você já apareceu em *${matchesCount} buscas*, teve *${viewsCount} visitas* e recebeu *${clicksCount} cliques* no WhatsApp.`
+                : `Ao todo, você já apareceu em *${matchesCount} buscas* e teve *${viewsCount} visitas* na sua página.`;
+
             return res.json({
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson, da Yelo.\n\nNotei aqui no sistema que a sua assinatura expirou nos últimos dias e, por conta disso, seu perfil acabou sendo ocultado das buscas dos pacientes. Houve algum problema com a renovação do cartão ou você decidiu dar uma pausa?\n\nFui dar uma olhada no seu histórico e vi que seu perfil construiu uma relevância bem legal com a gente! Ao todo, você já apareceu em *${matchesCount} buscas*, teve *${viewsCount} visitas* e recebeu *${clicksCount} cliques* no WhatsApp.\n\nComo a sua sessão particular é de R$ ${psi.valor_sessao_numero || '150,00'}, queria te lembrar que manter a sua assinatura na Yelo (R$ 99,00) acaba custando menos do que 1 única sessão fechada no mês todo.\n\nSe o motivo da pausa foi não estar conseguindo converter esses contatos, me avisa! Posso revisar o seu perfil com você.\n\nFaz sentido para você reativarmos o seu perfil hoje e não perder esse fluxo?`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson, da Yelo.\n\nNotei aqui no sistema que a sua assinatura expirou nos últimos dias e, por conta disso, seu perfil acabou sendo ocultado das buscas dos pacientes. Houve algum problema com a renovação do cartão ou você decidiu dar uma pausa?\n\nFui dar uma olhada no seu histórico e vi que seu perfil construiu uma relevância bem legal com a gente! ${metricsText}\n\nComo a sua sessão particular é de R$ ${psi.valor_sessao_numero || '150,00'}, queria te lembrar que manter a sua assinatura na Yelo (R$ 99,00) acaba custando menos do que 1 única sessão fechada no mês todo.\n\nSe o motivo da pausa foi não estar conseguindo converter esses contatos, me avisa! Posso revisar o seu perfil com você.\n\nFaz sentido para você reativarmos o seu perfil hoje e não perder esse fluxo?`
             });
         }
 
@@ -525,7 +594,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
         const { id } = req.params;
         const psiId = parseInt(id, 10);
 
-        let psi, matchesCount, viewsCount, clicksCount, dealYes, dealGhosted, dealNo, dealTalking, daysLeft;
+        let psi, matchesCount, viewsCount, clicksCount, dealYes, dealGhosted, dealNo, dealTalking, dealNoFeedback, daysLeft;
 
         if (psiId === 99999) {
             // MOCK LOCAL (APENAS DADOS)
@@ -590,6 +659,44 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
             ? `Compare amigavelmente o valor da sessão dele (R$ ${psi.valor_sessao_numero}) com a mensalidade da Yelo (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".`
             : `Lembre-o amigavelmente que a assinatura da Yelo é apenas R$ 99 mensais. Como o valor da sessão dele é "a combinar", argumente que fechar com apenas 1 paciente (que fará em média de 2 a 4 sessões no mês) já garante o pagamento da plataforma do mês todo e ainda o deixa com lucro! USE livremente a expressão "fechar 1 paciente" neste cenário.`;
 
+        const hasClicks = clicksCount > 0;
+        const hasConversions = dealYes > 0;
+
+        let performanceSection = '';
+        let resultAnalysisGuideline = '';
+
+        if (hasClicks) {
+            performanceSection = `
+[DADOS OBRIGATÓRIOS DO DESEMPENHO NO TRIAL]
+1. Aparições nos resultados de matches: ${matchesCount}
+2. Visitas na Página (Views): ${viewsCount}
+3. Contatos recebidos no WhatsApp: ${clicksCount}
+`;
+            if (hasConversions) {
+                resultAnalysisGuideline = `- O profissional já conseguiu agendar/fechar com ${dealYes} paciente(s)! Parabenize-o calorosamente e mostre que isso já comprova o retorno da plataforma.`;
+            } else if (dealNoFeedback > 0) {
+                resultAnalysisGuideline = `- Ele recebeu ${clicksCount} contato(s) no WhatsApp, e ${dealNoFeedback} ainda estão pendentes/sem feedback. NUNCA diga "0 conversões" ou "você não fechou nada". Dê um forte incentivo para que ele chame esses contatos de volta! Reforce que fechar *apenas um* já garante o pagamento da plataforma e o deixa com lucro. EM SEGUIDA, adicione a instrução: "Caso já tenha conversado com eles, atualize a situação na opção *Evolução > Histórico de Contatos* para que o nosso algoritmo te entregue sempre os melhores pacientes."`;
+            } else {
+                resultAnalysisGuideline = `- Ele recebeu ${clicksCount} contato(s) no WhatsApp, mas ainda não houve fechamentos. NUNCA diga "0 conversões" ou "nenhum fechamento" (isso é desanimador). Use um tom de parceria construtiva: mostre que o fluxo já começou a tracionar e que essas primeiras conversas são essenciais para ajustar a abordagem e o público, e que manter a página ativa garante a continuidade desses contatos.`;
+            }
+        } else {
+            // 0 CLIQUES NO WHATSAPP
+            performanceSection = `
+[DADOS DO DESEMPENHO NO TRIAL - ATENÇÃO: 0 CLIQUES]
+1. Aparições nos resultados de matches: ${matchesCount}
+2. Visitas na Página (Views): ${viewsCount}
+
+REGRA CRÍTICA PARA 0 CLIQUES:
+O psicólogo teve ${matchesCount} aparições e ${viewsCount} visitas, mas ainda 0 cliques no WhatsApp.
+NUNCA, em hipótese alguma, escreva "Cliques no WhatsApp: 0", "0 cliques" ou "0 pacientes te chamaram" - isso é extremamente desanimador e destrói a conversão para assinatura!
+Em vez disso:
+- Apresente no texto APENAS os indicadores positivos de visibilidade: as aparições nas buscas (${matchesCount}) e as visitas na página (${viewsCount}).
+- Explique de forma consultiva e positiva que nesses primeiros 7 dias o perfil dele já foi bastante encontrado e visitado, e que o algoritmo de distribuição da plataforma estava aprendendo o perfil dele. O próximo passo natural é a conversão dessas visitas em conversas no WhatsApp.
+- Diga que com pequenos ajustes na apresentação/foto e dando continuidade com a assinatura, os primeiros contatos no WhatsApp começam a chegar.
+`;
+            resultAnalysisGuideline = `- Como ele não teve cliques ainda, foque exclusivamente em valorizar as buscas e visitas que ele já conquistou, sem falar em falta de fechamento ou conversões.`;
+        }
+
         const prompt = `
 Atue como Anderson, gerente de Customer Success da Yelo. 
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}.
@@ -598,11 +705,7 @@ Situação atual: O período de testes gratuito (Trial) de 7 dias deste profissi
 Aja de forma humanizada, empática e consultiva. NÃO seja agressivamente vendedor e não use gírias.
 NÃO se apresente ("Aqui é o Anderson..." ou similar) pois o psicólogo já conversa com você e já sabe quem você é.
 
-[DADOS OBRIGATÓRIOS DO DESEMPENHO NO TRIAL]
-Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma clara:
-1. Aparições nos resultados de matches: ${matchesCount}
-2. Visitas na Página (Views): ${viewsCount}
-3. Cliques no WhatsApp: ${clicksCount}
+${performanceSection}
 
 [FEEDBACKS E RESULTADOS (SE HOUVER CLIQUES)]
 - Fechou negócio (Agendou): ${dealYes}
@@ -618,19 +721,40 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
      ? '- Como o período expira hoje/em breve, mencione que o período gratuito "expira nas próximas horas" ou "está encerrando nas próximas horas".' 
      : '- Como o período expira amanhã, mencione que o período gratuito "expirará amanhã".'}
    NUNCA use "restam X dias" ou "último dia (restam X dias)". Seja direto usando a referência temporal indicada.
-3. Apresente os resultados dele (Aparições, Visitas, Cliques e Fechamentos).
-4. Analise os resultados de fechamento de forma consultiva e parceira.
-   - Se ele fechou pacientes, parabenize-o! É a maior prova de que vale a pena assinar.
-   - Se ele tem Contatos pendentes (Sem feedback), dê um forte incentivo para que ele chame esses contatos de volta! Reforce que se ele converter *apenas um* desses contatos já garante o pagamento da plataforma e o deixa com lucro. EM SEGUIDA, adicione obrigatoriamente a instrução: "Caso já tenha conversado com eles, atualize a situação na opção *Evolução > Histórico de Contatos* para que o nosso algoritmo te entregue sempre os melhores pacientes."
-   - Se não fechou ou teve fantasmas, use uma frase de conforto como "Apesar de não ter fechado com nenhum paciente dessa vez, isso é super normal no início para quem está ajustando o público."
-   - Se não teve cliques, diga que ele está sendo visto, mas a bio ou foto precisam de ajustes para converter melhor.
+3. Apresente os resultados dele conforme indicado na seção de dados acima (se teve 0 cliques, apresente apenas aparições e visitas).
+4. Analise os resultados de forma consultiva e parceira:
+   ${resultAnalysisGuideline}
 5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: ${instrucaoFinanceira}
 6. Finalize perguntando de forma aberta se faz sentido para ele ativar a assinatura para não perder a página e os pacientes que já estão chegando. Instrua-o a reativar acessando a conta na Yelo, indo em "Ajustes" e depois em "Assinaturas e Planos".
 7. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto. Finalize diretamente após a pergunta de assinatura.
 `;
 
-        if (psiId === 99999 || !process.env.GEMINI_API_KEY) {
-            console.warn("⚠️ MOCK: Utilizando texto gerado localmente para Trial Expirando.");
+        let whatsappCopy = '';
+        if (psiId !== 99999 && process.env.GEMINI_API_KEY) {
+            try {
+                const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+                const model = genAI.getGenerativeModel({ 
+                    model: "gemini-3.1-flash-lite", 
+                    systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 800
+                    }
+                });
+                
+                const result = await model.generateContent(prompt);
+                const responseText = result.response.text();
+                if (responseText && responseText.trim().length > 10) {
+                    whatsappCopy = formatForWhatsApp(responseText);
+                }
+            } catch (aiErr) {
+                console.warn('⚠️ [AI Trial Expirando] Falha no Gemini (ativando fallback consultivo):', aiErr.message);
+            }
+        }
+
+        // Se a IA não gerou, deu erro ou é mock, usa o gerador consultivo determinístico de alta conversão
+        if (!whatsappCopy) {
+            let metricsText = "";
             let feedbackText = "";
             let mathText = "";
 
@@ -639,38 +763,35 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
                 ? `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.` 
                 : `fechar com apenas 1 paciente (que costuma fazer de 2 a 4 sessões no mês) já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro!`;
 
-            if (dealYes > 0) {
-                feedbackText = `Notei que você conseguiu fechar terapia com ${dealYes} sessão(ões)! 🎉`;
-                mathText = hasValorSessao ? `essa sessão que você fechou já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.` : `essa sessão que você fechou já garante o pagamento da plataforma do mês todo!`;
-            } else if (dealNoFeedback > 0) {
-                feedbackText = `Vi que você tem ${dealNoFeedback} paciente(s) que ainda não deu retorno de fechamento. Vale muito a pena dar aquele "oi, tudo bem?" neles, porque se fechar apenas 1 deles já cobre a plataforma e deixa você com lucro! Caso já tenha conversado com eles, atualize a situação na opção *Evolução > Histórico de Contatos* para que o nosso algoritmo te entregue sempre os melhores pacientes.`;
-                mathText = defaultMathText;
+            if (hasClicks) {
+                const contatoStr = clicksCount === 1 ? '1 paciente te chamou no WhatsApp' : `${clicksCount} pacientes te chamaram no WhatsApp`;
+                metricsText = `Seu perfil obteve *${matchesCount} aparições* nos resultados de matches, *${viewsCount} visitas* na página e *${contatoStr}*.`;
+
+                if (dealYes > 0) {
+                    feedbackText = `Notei que você conseguiu fechar terapia com ${dealYes} sessão(ões)! 🎉 Isso é a maior prova de que a plataforma já se pagou com sobra.`;
+                    mathText = hasValorSessao ? `essa sessão que você fechou já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.` : `essa sessão que você fechou já garante o pagamento da plataforma do mês todo!`;
+                } else if (dealNoFeedback > 0) {
+                    feedbackText = `Vi que você tem ${dealNoFeedback} paciente(s) que ainda não deu retorno de fechamento. Vale muito a pena dar aquele "oi, tudo bem?" neles, porque se fechar apenas 1 deles já cobre a plataforma e deixa você com lucro! Caso já tenha conversado com eles, atualize a situação na opção *Evolução > Histórico de Contatos* para que o nosso algoritmo te entregue sempre os melhores pacientes.`;
+                    mathText = defaultMathText;
+                } else {
+                    feedbackText = `O fluxo de contatos já está ganhando tração! Mesmo que essas primeiras conversas ainda estejam em andamento ou não tenham agendado de imediato, isso é super comum no início enquanto o público se alinha com a sua abordagem.`;
+                    mathText = defaultMathText;
+                }
             } else {
-                feedbackText = `Apesar de os pacientes não terem fechado negócio dessa vez, não desanime, isso é super normal nesse período de adaptação de público!`;
+                // 0 CLIQUES
+                metricsText = `Seu perfil já obteve *${matchesCount} aparições* nas buscas da plataforma e *${viewsCount} visitas* diretas na sua página!`;
+                feedbackText = `Como o algoritmo de distribuição da plataforma leva alguns dias para calibrar o seu público ideal e o seu perfil já está ganhando tração de visualizações, o próximo passo natural é a chegada dos primeiros contatos no WhatsApp. Com pequenos ajustes na sua apresentação e mantendo a página ativa, os agendamentos começam a acontecer.`;
                 mathText = defaultMathText;
             }
 
-            return res.status(200).json({ 
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem?\n\nVi que o seu período gratuito na Yelo ${expiryPhrase}, então vim dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\nSeu perfil obteve ${matchesCount} aparições nos resultados de matches, ${viewsCount} visitas na página e ${clicksCount} pacientes te chamaram no WhatsApp. ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. ${fraseSessaoMock}, ${mathText}\n\nFaz sentido para você ativar a assinatura para não perdermos esse fluxo de pacientes ${timingClosing}? Basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos".`
-            });
+            whatsappCopy = formatForWhatsApp(
+                `Olá, ${psi.nome.split(' ')[0]}! Tudo bem?\n\nVi que o seu período gratuito na Yelo ${expiryPhrase}, então passei para dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\n${metricsText} ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. ${fraseSessaoMock}, ${mathText}\n\nFaz sentido para você ativar a assinatura para não perdermos esse fluxo de pacientes ${timingClosing}? Basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos".`
+            );
         }
 
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-3.1-flash-lite", 
-            systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 800
-            }
-        });
-        
-        const result = await model.generateContent(prompt);
-        let whatsappCopy = formatForWhatsApp(result.response.text());
-
-        res.status(200).json({ whatsappCopy });
+        return res.status(200).json({ whatsappCopy });
     } catch (e) {
         console.error('Erro generateAiExpiringTrialMessage:', e);
-        res.status(500).json({ error: 'Erro interno no servidor de IA.' });
+        res.status(500).json({ error: 'Erro interno ao processar mensagem.' });
     }
 };

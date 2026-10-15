@@ -38,7 +38,10 @@ const protect = async (req, res, next) => {
     // 1. Fonte primária: Cookie HttpOnly (Proteção LGPD-2 / XSS), com fallback para Header Authorization (Bearer)
     let token = req.cookies && req.cookies.token ? req.cookies.token : null;
     if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-        token = req.headers.authorization.split(' ')[1];
+        const candidateToken = req.headers.authorization.split(' ')[1];
+        if (candidateToken && candidateToken !== 'cookie_auth_active' && candidateToken !== 'null' && candidateToken !== 'undefined') {
+            token = candidateToken;
+        }
     }
 
     if (token) {

@@ -320,7 +320,12 @@ window.initializePage = function () {
             return;
         }
 
+        window.__pendingActionsMap = window.__pendingActionsMap || new Map();
+
         data.forEach(item => {
+            const actionKey = `${item.id}_${item.actionType}`;
+            window.__pendingActionsMap.set(actionKey, item);
+
             const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : '-';
             let actionBadge = '';
 
@@ -366,7 +371,7 @@ window.initializePage = function () {
                     <span style="font-size: 0.8rem; color: #64748b;">${item.plano || '-'}</span>
                 </td>
                 <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
-                    <button class="btn-tabela" onclick="window.sendWhatsAppAction('${item.id}', '${item.telefone}', '${item.nome}', '${item.actionType}', '${item.patientName || ''}', '${item.feedbackToken || ''}', '${encodeURIComponent(JSON.stringify(item.metrics || {}))}')" style="background: ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? '#7c3aed' : '#25D366'}; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? 'rgba(124,58,237,0.3)' : 'rgba(37,211,102,0.3)'};">
+                    <button class="btn-tabela" onclick="window.sendPendingAction('${item.id}', '${item.actionType}')" style="background: ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? '#7c3aed' : '#25D366'}; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? 'rgba(124,58,237,0.3)' : 'rgba(37,211,102,0.3)'};">
                         ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Analisar' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> Enviar'}
                     </button>
                     <button class="btn-tabela" onclick="window.dismissAction('${item.id}', '${item.actionType}')" style="background: transparent; color: #94a3b8; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 50px; cursor: pointer; display: inline-flex; align-items: center; margin-left: 5px;" title="Ignorar esta ação">
@@ -377,6 +382,24 @@ window.initializePage = function () {
             tableBody.appendChild(row);
         });
     }
+
+    window.sendPendingAction = function (id, actionType) {
+        const actionKey = `${id}_${actionType}`;
+        const item = window.__pendingActionsMap?.get(actionKey);
+        if (!item) {
+            console.error('Ação pendente não encontrada:', actionKey);
+            return;
+        }
+        window.sendWhatsAppAction(
+            item.id,
+            item.telefone,
+            item.nome,
+            item.actionType,
+            item.patientName || '',
+            item.feedbackToken || '',
+            encodeURIComponent(JSON.stringify(item.metrics || {}))
+        );
+    };
 
     window.dismissAction = function(id, actionType) {
         if (window.openConfirmationModal) {
@@ -564,16 +587,17 @@ window.initializePage = function () {
 } else if (actionType === 'churn') {
             try {
                 if (window.showToast) window.showToast('Gerando copy de resgate com IA... Aguarde.', 'info');
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
                 const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-churn-message`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
+                    credentials: 'include'
                 });
                 const data = await resAi.json();
                 if (data.whatsappCopy) {
                     msg = data.whatsappCopy;
                 } else {
-                    if (window.showToast) window.showToast("Erro ao gerar copy de resgate", "error");
+                    if (window.showToast) window.showToast(data.error || "Erro ao gerar copy de resgate", "error");
                     return;
                 }
             } catch (e) {
@@ -583,16 +607,17 @@ window.initializePage = function () {
         } else if (actionType === 'expiring_trial') {
             try {
                 if (window.showToast) window.showToast('Gerando mensagem consultiva com IA... Aguarde.', 'info');
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
                 const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-expiring-trial-message`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
+                    credentials: 'include'
                 });
                 const data = await resAi.json();
                 if (data.whatsappCopy) {
                     msg = data.whatsappCopy;
                 } else {
-                    if (window.showToast) window.showToast("Erro ao gerar copy consultiva", "error");
+                    if (window.showToast) window.showToast(data.error || "Erro ao gerar copy consultiva", "error");
                     return;
                 }
             } catch (e) {
@@ -637,16 +662,17 @@ window.initializePage = function () {
         } else if (actionType === 'low_performance') {
             try {
                 if (window.showToast) window.showToast('Gerando consultoria com IA... Aguarde.', 'info');
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
                 const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-diagnosis`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
+                    credentials: 'include'
                 });
                 const data = await resAi.json();
                 if (data.whatsappCopy) {
                     msg = data.whatsappCopy;
                 } else {
-                    if (window.showToast) window.showToast("Erro ao gerar consultoria", "error");
+                    if (window.showToast) window.showToast(data.error || "Erro ao gerar consultoria", "error");
                     return;
                 }
             } catch (e) {
@@ -656,16 +682,17 @@ window.initializePage = function () {
         } else if (actionType === 'conversion_failure') {
             try {
                 if (window.showToast) window.showToast('Analisando perfil para fundo de funil... Aguarde.', 'info');
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
                 const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-conversion-failure`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
+                    credentials: 'include'
                 });
                 const data = await resAi.json();
                 if (data.whatsappCopy) {
                     msg = data.whatsappCopy;
                 } else {
-                    if (window.showToast) window.showToast("Erro ao gerar consultoria", "error");
+                    if (window.showToast) window.showToast(data.error || "Erro ao gerar consultoria", "error");
                     return;
                 }
             } catch (e) {
@@ -690,31 +717,34 @@ window.initializePage = function () {
         // Universal link oficial: abre direto no app nativo no mobile (iOS/Android) sem perder quebras de linha e formatação
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodeURIComponent(msg)}`;
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-            window.location.href = whatsappUrl;
-        } else {
-            window.open(whatsappUrl, '_blank');
-        }
 
-        // Marcar como enviado no banco
+        // Marcar como enviado no banco ANTES de redirecionar para o WhatsApp (evita que a requisição seja cancelada pelo descarregamento no mobile)
         try {
+            const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
             const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/action-sent`, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    'Authorization': `Bearer ${tokenAdmin}`,
                     'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify({ actionType, messageContent: msg })
             });
             if (res.ok) {
                 if (window.showToast) window.showToast('Ação registrada com sucesso!', 'success');
                 const statusInput = document.getElementById('crm-status-psi');
                 if (statusInput && statusInput.value === 'pending_actions') {
-                    setTimeout(() => fetchAndRenderPsis(window.currentCrmPage || 1), 500); // Recarrega a lista e remove o item
+                    setTimeout(() => fetchAndRenderPsis(window.currentCrmPage || 1), 600);
                 }
             }
         } catch (e) {
             console.error('Erro ao marcar ação como enviada:', e);
+        }
+
+        if (isMobile) {
+            window.location.href = whatsappUrl;
+        } else {
+            window.open(whatsappUrl, '_blank');
         }
     };
 
@@ -792,13 +822,16 @@ window.initializePage = function () {
                 if (psy.utm_content) utmBadge += `<br><span style="font-size: 0.7rem; color: #94a3b8; font-style: italic; display: inline-block;">${psy.utm_content}</span>`;
             }
 
+            const safeTitleName = (psy.nome || '').replace(/"/g, '&quot;');
+            const safeDeleteName = (psy.nome || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td data-label="Profissional">
                     <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
                         ${psy.fotoUrl ? `<img src="${psy.fotoUrl}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0;">` : `<div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f5f3ff; color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; flex-shrink:0;">${psy.nome.charAt(0).toUpperCase()}</div>`}
                         <div style="display: flex; flex-direction: column; max-width: calc(100% - 42px);">
-                            <strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; line-height: 1.3;" onclick="window.openCSDrawer('${psy.id}')" id="name-psy-${psy.id}" title="${psy.nome}">${psy.nome}${copyBadge}${pendingBadge}</strong>
+                            <strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; line-height: 1.3;" onclick="window.openCSDrawer('${psy.id}')" id="name-psy-${psy.id}" title="${safeTitleName}">${psy.nome}${copyBadge}${pendingBadge}</strong>
                             <span style="font-size: 0.75rem; color: #666; white-space: normal; word-break: break-word; margin-top: 2px;" title="${psy.email}">${psy.email}</span>
                         </div>
                     </div>
@@ -825,7 +858,7 @@ window.initializePage = function () {
                     <button class="btn-tabela" onclick="window.openCSDrawer('${psy.id}')" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 50px; font-weight: 600;">
                         Visão 360
                     </button>
-                    ${isDeleted ? '' : `<button class="btn-tabela btn-tabela-perigo" onclick="window.forceDeletePsy('${psy.id}', '${psy.nome}')" style="margin-left: 5px; display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 50px; font-weight: 600;" title="Excluir"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Excluir</button>`}
+                    ${isDeleted ? '' : `<button class="btn-tabela btn-tabela-perigo" onclick="window.forceDeletePsy('${psy.id}', '${safeDeleteName}')" style="margin-left: 5px; display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 50px; font-weight: 600;" title="Excluir"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Excluir</button>`}
                 </td>
             `;
             tableBody.appendChild(row);
