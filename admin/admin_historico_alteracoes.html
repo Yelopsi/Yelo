@@ -374,37 +374,45 @@
     .modal-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(15, 23, 42, 0.65);
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.7);
         backdrop-filter: blur(5px);
         -webkit-backdrop-filter: blur(5px);
-        z-index: 100000;
+        z-index: 2147483640 !important;
         display: none;
         align-items: center;
         justify-content: center;
         padding: 24px;
         overscroll-behavior: contain;
-        touch-action: pan-y;
         opacity: 0;
+        pointer-events: none;
         transition: opacity 0.2s ease-out;
     }
-    .modal-overlay.active {
-        display: flex;
-        opacity: 1;
+    .modal-overlay.active,
+    .modal-overlay.is-visible {
+        display: flex !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        visibility: visible !important;
     }
 
     .modal-content-card {
         background: #fff;
         width: 100%;
         max-width: 780px;
-        height: 86vh; /* Altura explícita para o flex container */
-        max-height: 86vh;
+        height: 85vh;
+        max-height: 85vh;
         border-radius: 20px;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
         position: relative;
         display: flex;
         flex-direction: column;
-        overflow: hidden; /* Mantém cabeçalho e rodapé fixos */
+        overflow: hidden;
         overscroll-behavior: contain;
+        pointer-events: auto !important;
         animation: modalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -420,14 +428,15 @@
     }
 
     .modal-header-fixed {
-        padding: 22px 28px;
+        padding: 20px 28px;
         border-bottom: 1px solid #f1f5f9;
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         background: #f8fafc;
         flex: 0 0 auto;
-        z-index: 2;
+        z-index: 10;
+        pointer-events: auto !important;
     }
 
     .modal-scrollable-body {
@@ -435,11 +444,13 @@
         display: flex;
         flex-direction: column;
         gap: 22px;
-        overflow-y: scroll !important; /* Força scrollbar independente ativa */
+        overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
-        flex: 1 1 0% !important; /* Base 0 força o cálculo do scroll em flex column */
-        min-height: 0 !important; /* Essencial para flex child poder scrollar */
-        overscroll-behavior: contain !important; /* Impede vazamento para o fundo */
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overscroll-behavior: contain !important;
+        touch-action: pan-y !important;
+        pointer-events: auto !important;
     }
 
     .modal-footer-fixed {
@@ -449,7 +460,8 @@
         justify-content: flex-end;
         background: #f8fafc;
         flex: 0 0 auto;
-        z-index: 2;
+        z-index: 10;
+        pointer-events: auto !important;
     }
 
     .bottom-sheet-drag-handle {
@@ -467,8 +479,9 @@
     @media (max-width: 768px) {
         .modal-overlay {
             padding: 0 !important;
-            align-items: flex-end !important; /* Fixado no rodapé */
+            align-items: flex-end !important;
             background: rgba(15, 23, 42, 0.75);
+            z-index: 2147483640 !important;
         }
 
         .modal-content-card {
@@ -476,9 +489,10 @@
             width: 100% !important;
             max-height: 88vh !important;
             height: 88vh !important;
-            border-radius: 24px 24px 0 0 !important; /* Formato Bottom Sheet */
+            border-radius: 24px 24px 0 0 !important;
             animation: bottomSheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
             margin: 0 !important;
+            pointer-events: auto !important;
         }
 
         .bottom-sheet-drag-handle {
@@ -491,9 +505,11 @@
 
         .modal-scrollable-body {
             padding: 18px 20px 30px 20px !important;
-            flex: 1 1 0% !important;
+            flex: 1 1 auto !important;
             min-height: 0 !important;
-            overflow-y: scroll !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            pointer-events: auto !important;
         }
 
         .modal-footer-fixed {

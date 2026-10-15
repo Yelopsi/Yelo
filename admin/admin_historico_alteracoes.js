@@ -193,28 +193,30 @@
         `).join('');
     }
 
-    function moveModalsToBody() {
-        const detailModal = document.getElementById('change-detail-modal');
-        if (detailModal && detailModal.parentElement !== document.body) {
-            document.body.appendChild(detailModal);
-        }
-        const newChangeModal = document.getElementById('new-change-modal');
-        if (newChangeModal && newChangeModal.parentElement !== document.body) {
-            document.body.appendChild(newChangeModal);
-        }
+    function ensureModalsInBody() {
+        ['change-detail-modal', 'new-change-modal'].forEach(id => {
+            const all = document.querySelectorAll(`#${id}`);
+            if (all.length > 1) {
+                // Keep the last instance (newly rendered) and remove older stale instances from body
+                for (let i = 0; i < all.length - 1; i++) {
+                    all[i].remove();
+                }
+            }
+            const modal = document.getElementById(id);
+            if (modal && modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+        });
     }
 
     function lockBodyScroll() {
-        // 1. Trava o container real de scroll do painel administrativo
         const dashboardMain = document.querySelector('.dashboard-main');
         if (dashboardMain) {
-            dashboardMain.dataset.prevOverflow = dashboardMain.style.overflow;
+            dashboardMain.dataset.prevOverflow = dashboardMain.style.overflow || '';
             dashboardMain.style.setProperty('overflow', 'hidden', 'important');
         }
-
-        // 2. Trava o body e o html
+        document.body.dataset.prevOverflow = document.body.style.overflow || '';
         document.body.style.setProperty('overflow', 'hidden', 'important');
-        document.body.style.setProperty('touch-action', 'none', 'important');
         document.documentElement.style.setProperty('overflow', 'hidden', 'important');
     }
 
@@ -227,8 +229,11 @@
                 dashboardMain.style.removeProperty('overflow');
             }
         }
-        document.body.style.removeProperty('overflow');
-        document.body.style.removeProperty('touch-action');
+        if (document.body.dataset.prevOverflow) {
+            document.body.style.overflow = document.body.dataset.prevOverflow;
+        } else {
+            document.body.style.removeProperty('overflow');
+        }
         document.documentElement.style.removeProperty('overflow');
     }
 
@@ -236,7 +241,7 @@
         const item = allChanges.find(c => c.id === changeId);
         if (!item) return;
 
-        moveModalsToBody();
+        ensureModalsInBody();
         const modal = document.getElementById('change-detail-modal');
         if (!modal) return;
 
@@ -328,17 +333,19 @@
         const scrollArea = document.getElementById('modal-scrollable-area');
         if (scrollArea) scrollArea.scrollTop = 0;
 
-        // Trava de scroll no background e exibe
+        // Trava de scroll no background e exibe com pointer-events garantido
         lockBodyScroll();
-        modal.classList.add('active');
+        modal.classList.add('active', 'is-visible');
         modal.style.display = 'flex';
+        modal.style.pointerEvents = 'auto';
     };
 
     function closeModal() {
         const modal = document.getElementById('change-detail-modal');
         if (modal) {
-            modal.classList.remove('active');
+            modal.classList.remove('active', 'is-visible');
             modal.style.display = 'none';
+            modal.style.pointerEvents = 'none';
         }
         unlockBodyScroll();
     }
@@ -346,8 +353,9 @@
     function closeNewChangeModal() {
         const newModal = document.getElementById('new-change-modal');
         if (newModal) {
-            newModal.classList.remove('active');
+            newModal.classList.remove('active', 'is-visible');
             newModal.style.display = 'none';
+            newModal.style.pointerEvents = 'none';
         }
         unlockBodyScroll();
     }
@@ -398,40 +406,44 @@
                 }
             });
         }
-
-        // Impede que o scroll no overlay role o fundo
-        modalEl.addEventListener('wheel', (e) => {
-            const scrollable = modalEl.querySelector('.modal-scrollable-body');
-            if (scrollable && scrollable.contains(e.target)) {
-                e.stopPropagation(); // Permite rolagem do conteúdo interno
-            } else {
-                e.preventDefault(); // Impede rolagem se estiver fora do corpo
-            }
-        }, { passive: false });
-
-        modalEl.addEventListener('touchmove', (e) => {
-            const scrollable = modalEl.querySelector('.modal-scrollable-body');
-            if (scrollable && scrollable.contains(e.target)) {
-                e.stopPropagation();
-            } else {
-                e.preventDefault();
-            }
-        }, { passive: false });
     }
 
     // Inicialização dos Event Listeners
     function setupEventListeners() {
-        // Fechar modal de detalhes
-        const btnClose = document.getElementById('btn-close-modal');
-        const btnCloseFooter = document.getElementById('btn-modal-close-footer');
-        if (btnClose) btnClose.addEventListener('click', closeModal);
-        if (btnCloseFooter) btnCloseFooter.addEventListener('click', closeModal);
+        // Delegação global no documento para fechamento infalível de modais
+        document.addEventListener('click', (e) => {
+            // Fechar modal de detalhes
+            if (e.target.closest('#btn-close-modal') || e.target.closest('#btn-modal-close-footer')) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeModal();
+                return;
+            }
+
+            // Fechar modal de novo registro
+            if (e.target.closest('#btn-close-new-modal') || e.target.closest('#btn-cancel-new-change')) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeNewChangeModal();
+                return;
+            }
+
+            // Clique no backdrop transparente/escuro (fora do card)
+            const detailModal = document.getElementById('change-detail-modal');
+            if (detailModal && (e.target === detailModal)) {
+                closeModal();
+                return;
+            }
+
+            const newModal = document.getElementById('new-change-modal');
+            if (newModal && (e.target === newModal)) {
+                closeNewChangeModal();
+                return;
+            }
+        });
 
         const modalOverlay = document.getElementById('change-detail-modal');
         if (modalOverlay) {
-            modalOverlay.addEventListener('click', (e) => {
-                if (e.target === modalOverlay) closeModal();
-            });
             setupSwipeDownToClose(modalOverlay, '#detail-card-container', closeModal);
         }
 
@@ -501,10 +513,11 @@
 
         if (btnOpenNew && newModal) {
             btnOpenNew.addEventListener('click', () => {
-                moveModalsToBody();
+                ensureModalsInBody();
                 lockBodyScroll();
-                newModal.classList.add('active');
+                newModal.classList.add('active', 'is-visible');
                 newModal.style.display = 'flex';
+                newModal.style.pointerEvents = 'auto';
             });
         }
         if (btnCloseNew && newModal) {
@@ -514,9 +527,6 @@
             btnCancelNew.addEventListener('click', closeNewChangeModal);
         }
         if (newModal) {
-            newModal.addEventListener('click', (e) => {
-                if (e.target === newModal) closeNewChangeModal();
-            });
             setupSwipeDownToClose(newModal, '.modal-content-card', closeNewChangeModal);
         }
 
@@ -560,7 +570,7 @@
                     const result = await res.json();
 
                     if (window.showToast) window.showToast('Alteração registrada com sucesso!', 'success');
-                    newModal.style.display = 'none';
+                    closeNewChangeModal();
                     formNew.reset();
                     await fetchChangelog();
                 } catch (err) {
@@ -579,7 +589,7 @@
     window.fetchChangelog = fetchChangelog;
 
     // Executa
-    moveModalsToBody();
+    ensureModalsInBody();
     setupEventListeners();
     fetchChangelog();
 })();
