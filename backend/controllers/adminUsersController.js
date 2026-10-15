@@ -360,6 +360,19 @@ exports.getAllPsychologists = async (req, res) => {
                     ]
                 };
 
+            } else if (status === 'churn_month') {
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                if (!whereClause[Op.and]) whereClause[Op.and] = [];
+                whereClause[Op.and].push({
+                    [Op.or]: [
+                        { canceledAt: { [Op.gte]: startOfMonth } },
+                        {
+                            status: 'inactive',
+                            updatedAt: { [Op.gte]: startOfMonth }
+                        }
+                    ]
+                });
             } else if (status === 'pending_expiring_trial') {
                 const now = new Date();
                 const expirationUpperBound = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
@@ -444,6 +457,7 @@ exports.getAllPsychologists = async (req, res) => {
                 COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0) AND "planExpiresAt" > NOW()) as active_trial,
                 COUNT(*) FILTER (WHERE status = 'pending') as pending,
                 COUNT(*) FILTER (WHERE status = 'inactive' OR ("status" = 'active' AND "planExpiresAt" < NOW())) as inactive,
+                COUNT(*) FILTER (WHERE ("canceledAt" >= DATE_TRUNC('month', NOW()) OR (status = 'inactive' AND "updatedAt" >= DATE_TRUNC('month', NOW())))) as churn_month,
                 COUNT(*) FILTER (WHERE is_exempt = true) as vip,
                 COUNT(*) FILTER (WHERE (status = 'active' OR status = 'pending') AND ("isProfileAnalyzed" IS NULL OR "isProfileAnalyzed" = false)) as fila_cs,
                 COUNT(*) FILTER (WHERE utm_source = 'whatsapp') as utm_whatsapp,
@@ -502,6 +516,7 @@ exports.getAllPsychologists = async (req, res) => {
             totalPages,
             currentPage: page,
             totalCount: count,
+            totalItems: count,
             kpis: kpisObj
         });
     } catch (error) {

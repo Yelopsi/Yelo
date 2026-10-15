@@ -282,6 +282,7 @@ window.initializePage = function () {
                 setText('kpi-total-psis', kpis.total);
                 setText('kpi-pagantes-psis', kpis.active_paying || 0);
                 setText('kpi-trial-psis', kpis.active_trial || 0);
+                setText('kpi-churn-month-psis', kpis.churn_month || 0);
                 setText('kpi-pendentes-psis', kpis.pending);
                 setText('kpi-inativos-psis', kpis.inactive);
                 setText('kpi-whatsapp-psis', kpis.utm_whatsapp || 0);
