@@ -206,7 +206,7 @@ exports.createPreference = async (req, res) => {
                 customerIdAsaas = newCustomer.id;
             }
 
-            // --- CONFIGURAÇÃO AUTOMÁTICA DE NOTIFICAÇÕES (Somente SMS) ---
+            // --- CONFIGURAÇÃO AUTOMÁTICA DE NOTIFICAÇÕES (E-mail e SMS) ---
             try {
                 const notifRes = await fetch(`${ASAAS_API_URL}/customers/${customerIdAsaas}/notifications`, {
                     headers: { 'access_token': ASAAS_API_KEY }
@@ -215,8 +215,8 @@ exports.createPreference = async (req, res) => {
                 if (notifData && notifData.data && notifData.data.length > 0) {
                     const notificationsToUpdate = notifData.data.map(n => ({
                         id: n.id,
-                        emailEnabledForCustomer: false, // Yelo assume os e-mails
-                        smsEnabledForCustomer: true     // Asaas assume os SMS
+                        emailEnabledForCustomer: true, // Notificações automáticas por e-mail no Asaas quando necessário
+                        smsEnabledForCustomer: true    // Notificações automáticas por SMS no Asaas quando necessário
                     }));
                     
                     await fetch(`${ASAAS_API_URL}/notifications/batch`, {
