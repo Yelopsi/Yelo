@@ -193,22 +193,50 @@
         `).join('');
     }
 
+    function moveModalsToBody() {
+        const detailModal = document.getElementById('change-detail-modal');
+        if (detailModal && detailModal.parentElement !== document.body) {
+            document.body.appendChild(detailModal);
+        }
+        const newChangeModal = document.getElementById('new-change-modal');
+        if (newChangeModal && newChangeModal.parentElement !== document.body) {
+            document.body.appendChild(newChangeModal);
+        }
+    }
+
     function lockBodyScroll() {
-        document.body.style.overflow = 'hidden';
-        document.body.style.touchAction = 'none';
-        document.documentElement.style.overflow = 'hidden';
+        // 1. Trava o container real de scroll do painel administrativo
+        const dashboardMain = document.querySelector('.dashboard-main');
+        if (dashboardMain) {
+            dashboardMain.dataset.prevOverflow = dashboardMain.style.overflow;
+            dashboardMain.style.setProperty('overflow', 'hidden', 'important');
+        }
+
+        // 2. Trava o body e o html
+        document.body.style.setProperty('overflow', 'hidden', 'important');
+        document.body.style.setProperty('touch-action', 'none', 'important');
+        document.documentElement.style.setProperty('overflow', 'hidden', 'important');
     }
 
     function unlockBodyScroll() {
-        document.body.style.overflow = '';
-        document.body.style.touchAction = '';
-        document.documentElement.style.overflow = '';
+        const dashboardMain = document.querySelector('.dashboard-main');
+        if (dashboardMain) {
+            if (dashboardMain.dataset.prevOverflow) {
+                dashboardMain.style.overflow = dashboardMain.dataset.prevOverflow;
+            } else {
+                dashboardMain.style.removeProperty('overflow');
+            }
+        }
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('touch-action');
+        document.documentElement.style.removeProperty('overflow');
     }
 
     window.openChangeDetail = function(changeId) {
         const item = allChanges.find(c => c.id === changeId);
         if (!item) return;
 
+        moveModalsToBody();
         const modal = document.getElementById('change-detail-modal');
         if (!modal) return;
 
@@ -334,7 +362,8 @@
         let currentY = 0;
         let isDragging = false;
 
-        const handle = card.querySelector('.bottom-sheet-drag-handle') || card.querySelector('.modal-header-fixed');
+        // O gesto de puxar para baixo fica restrito EXCLUSIVAMENTE à barra de arraste do topo
+        const handle = card.querySelector('.bottom-sheet-drag-handle');
 
         if (handle) {
             handle.addEventListener('touchstart', (e) => {
@@ -358,12 +387,12 @@
                 isDragging = false;
                 const diff = currentY - startY;
                 card.style.transition = 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
-                if (diff > 90) { // Se arrastou mais de 90px para baixo, fecha
+                if (diff > 75) { // Se arrastou mais de 75px para baixo, fecha
                     card.style.transform = 'translateY(100%)';
                     setTimeout(() => {
                         card.style.transform = '';
                         closeFn();
-                    }, 220);
+                    }, 200);
                 } else {
                     card.style.transform = 'translateY(0)';
                 }
@@ -373,14 +402,18 @@
         // Impede que o scroll no overlay role o fundo
         modalEl.addEventListener('wheel', (e) => {
             const scrollable = modalEl.querySelector('.modal-scrollable-body');
-            if (scrollable && !scrollable.contains(e.target)) {
-                e.preventDefault();
+            if (scrollable && scrollable.contains(e.target)) {
+                e.stopPropagation(); // Permite rolagem do conteúdo interno
+            } else {
+                e.preventDefault(); // Impede rolagem se estiver fora do corpo
             }
         }, { passive: false });
 
         modalEl.addEventListener('touchmove', (e) => {
             const scrollable = modalEl.querySelector('.modal-scrollable-body');
-            if (scrollable && !scrollable.contains(e.target)) {
+            if (scrollable && scrollable.contains(e.target)) {
+                e.stopPropagation();
+            } else {
                 e.preventDefault();
             }
         }, { passive: false });
@@ -468,6 +501,7 @@
 
         if (btnOpenNew && newModal) {
             btnOpenNew.addEventListener('click', () => {
+                moveModalsToBody();
                 lockBodyScroll();
                 newModal.classList.add('active');
                 newModal.style.display = 'flex';
@@ -545,6 +579,7 @@
     window.fetchChangelog = fetchChangelog;
 
     // Executa
+    moveModalsToBody();
     setupEventListeners();
     fetchChangelog();
 })();

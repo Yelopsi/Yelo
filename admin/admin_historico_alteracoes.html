@@ -396,14 +396,14 @@
         background: #fff;
         width: 100%;
         max-width: 780px;
-        height: auto;
+        height: 86vh; /* Altura explícita para o flex container */
         max-height: 86vh;
         border-radius: 20px;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
         position: relative;
         display: flex;
         flex-direction: column;
-        overflow: hidden; /* Garante que só o corpo central role */
+        overflow: hidden; /* Mantém cabeçalho e rodapé fixos */
         overscroll-behavior: contain;
         animation: modalScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
@@ -426,7 +426,8 @@
         justify-content: space-between;
         align-items: flex-start;
         background: #f8fafc;
-        flex-shrink: 0;
+        flex: 0 0 auto;
+        z-index: 2;
     }
 
     .modal-scrollable-body {
@@ -434,10 +435,11 @@
         display: flex;
         flex-direction: column;
         gap: 22px;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch;
-        flex: 1 1 auto;
-        overscroll-behavior: contain !important; /* Trava estritamente para não rolar o background */
+        overflow-y: scroll !important; /* Força scrollbar independente ativa */
+        -webkit-overflow-scrolling: touch !important;
+        flex: 1 1 0% !important; /* Base 0 força o cálculo do scroll em flex column */
+        min-height: 0 !important; /* Essencial para flex child poder scrollar */
+        overscroll-behavior: contain !important; /* Impede vazamento para o fundo */
     }
 
     .modal-footer-fixed {
@@ -446,7 +448,8 @@
         display: flex;
         justify-content: flex-end;
         background: #f8fafc;
-        flex-shrink: 0;
+        flex: 0 0 auto;
+        z-index: 2;
     }
 
     .bottom-sheet-drag-handle {
@@ -457,6 +460,7 @@
         border-radius: 10px;
         margin: 10px auto 4px auto;
         flex-shrink: 0;
+        cursor: grab;
     }
 
     /* --- COMPORTAMENTO BOTTOM SHEET NO MOBILE (<= 768px) --- */
@@ -486,7 +490,10 @@
         }
 
         .modal-scrollable-body {
-            padding: 18px 20px !important;
+            padding: 18px 20px 30px 20px !important;
+            flex: 1 1 0% !important;
+            min-height: 0 !important;
+            overflow-y: scroll !important;
         }
 
         .modal-footer-fixed {
