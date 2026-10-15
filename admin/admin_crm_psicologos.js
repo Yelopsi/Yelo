@@ -68,7 +68,7 @@ window.initializePage = function () {
 
     document.querySelectorAll('.crm-pill').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            window.filterByKpi(e.target.dataset.filter);
+            window.filterByKpi(e.currentTarget.dataset.filter);
         });
     });
 

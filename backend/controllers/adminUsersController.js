@@ -363,13 +363,24 @@ exports.getAllPsychologists = async (req, res) => {
             } else if (status === 'churn_month') {
                 const now = new Date();
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                whereClause.is_exempt = { [Op.or]: [null, false] };
                 if (!whereClause[Op.and]) whereClause[Op.and] = [];
+                whereClause[Op.and].push({
+                    [Op.or]: [
+                        { subscription_payments_count: { [Op.gt]: 0 } },
+                        { firstPaidAt: { [Op.ne]: null } },
+                        db.Sequelize.literal(`EXISTS (SELECT 1 FROM "Payments" p WHERE p."psychologistId" = "Psychologist"."id" AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'))`)
+                    ]
+                });
                 whereClause[Op.and].push({
                     [Op.or]: [
                         { canceledAt: { [Op.gte]: startOfMonth } },
                         {
                             status: 'inactive',
                             updatedAt: { [Op.gte]: startOfMonth }
+                        },
+                        {
+                            planExpiresAt: { [Op.between]: [startOfMonth, now] }
                         }
                     ]
                 });
@@ -457,7 +468,7 @@ exports.getAllPsychologists = async (req, res) => {
                 COUNT(*) FILTER (WHERE status = 'active' AND (is_exempt IS NULL OR is_exempt = false) AND "subscriptionId" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0) AND "planExpiresAt" > NOW()) as active_trial,
                 COUNT(*) FILTER (WHERE status = 'pending') as pending,
                 COUNT(*) FILTER (WHERE status = 'inactive' OR ("status" = 'active' AND "planExpiresAt" < NOW())) as inactive,
-                COUNT(*) FILTER (WHERE ("canceledAt" >= DATE_TRUNC('month', NOW()) OR (status = 'inactive' AND "updatedAt" >= DATE_TRUNC('month', NOW())))) as churn_month,
+                COUNT(*) FILTER (WHERE (is_exempt IS NULL OR is_exempt = false) AND ("subscription_payments_count" > 0 OR "firstPaidAt" IS NOT NULL OR EXISTS (SELECT 1 FROM "Payments" p WHERE p."psychologistId" = "Psychologists"."id" AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'))) AND ("canceledAt" >= DATE_TRUNC('month', NOW()) OR (status = 'inactive' AND "updatedAt" >= DATE_TRUNC('month', NOW())) OR ("planExpiresAt" >= DATE_TRUNC('month', NOW()) AND "planExpiresAt" <= NOW()))) as churn_month,
                 COUNT(*) FILTER (WHERE is_exempt = true) as vip,
                 COUNT(*) FILTER (WHERE (status = 'active' OR status = 'pending') AND ("isProfileAnalyzed" IS NULL OR "isProfileAnalyzed" = false)) as fila_cs,
                 COUNT(*) FILTER (WHERE utm_source = 'whatsapp') as utm_whatsapp,
