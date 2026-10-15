@@ -117,6 +117,10 @@ router.get('/exit-surveys', adminController.getExitSurveys);
 // Rota para buscar os logs do sistema
 router.get('/logs', adminDashboardController.getSystemLogs);
 
+// Rotas do Histórico de Alterações do Sistema (Changelog)
+router.get('/system-changelog', adminController.getSystemChangelog);
+router.post('/system-changelog', adminController.addSystemChangelogEntry);
+
 // Rota para dados de gráficos
 router.get('/charts/new-users', adminDashboardController.getNewUsersPerMonth);
 router.get('/charts/clicks-growth', adminDashboardController.getClicksGrowthChart);

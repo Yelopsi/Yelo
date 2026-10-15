@@ -2190,3 +2190,100 @@ INSTRUÇÕES PARA A MENSAGEM:
         res.status(500).json({ error: 'Erro ao gerar mensagem de falha de conversão.' });
     }
 };
+
+// ----------------------------------------------------------------------
+// Rota: GET /api/admin/system-changelog
+// Descrição: Retorna o histórico estruturado de alterações do sistema e commits recentes.
+// ----------------------------------------------------------------------
+exports.getSystemChangelog = async (req, res) => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const { execSync } = require('child_process');
+
+        const changelogPath = path.resolve(__dirname, '../data/system_changelog.json');
+        let changes = [];
+        if (fs.existsSync(changelogPath)) {
+            try {
+                changes = JSON.parse(fs.readFileSync(changelogPath, 'utf8'));
+            } catch (parseErr) {
+                console.error("Erro ao ler system_changelog.json:", parseErr);
+            }
+        }
+
+        // Tentar obter os últimos commits do Git para contexto dinâmico
+        let recentCommits = [];
+        try {
+            const rawGitLog = execSync('git log -n 15 --pretty=format:"%h||%an||%ad||%s" --date=iso', {
+                encoding: 'utf8',
+                timeout: 3000
+            });
+            recentCommits = rawGitLog.split('\n').filter(Boolean).map(line => {
+                const [hash, author, date, message] = line.split('||');
+                return { hash, author, date, message };
+            });
+        } catch (gitErr) {
+            // Em ambiente container sem git bin, prossegue sem travar
+        }
+
+        res.json({
+            success: true,
+            changes,
+            recentCommits
+        });
+    } catch (err) {
+        console.error("Erro ao obter changelog do sistema:", err);
+        res.status(500).json({ error: 'Erro ao obter histórico de alterações do sistema.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/admin/system-changelog
+// Descrição: Registra uma nova alteração no histórico do sistema.
+// ----------------------------------------------------------------------
+exports.addSystemChangelogEntry = async (req, res) => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const { title, category, summary, description, rationale, before, after, metricsToCompare } = req.body;
+
+        if (!title || !category || !summary) {
+            return res.status(400).json({ error: 'Título, categoria e resumo são obrigatórios.' });
+        }
+
+        const changelogPath = path.resolve(__dirname, '../data/system_changelog.json');
+        let changes = [];
+        if (fs.existsSync(changelogPath)) {
+            try {
+                changes = JSON.parse(fs.readFileSync(changelogPath, 'utf8'));
+            } catch (e) {}
+        }
+
+        const newEntry = {
+            id: `change-${Date.now()}`,
+            date: new Date().toISOString(),
+            commit: req.body.commit || 'manual',
+            author: req.admin?.nome || 'Admin',
+            title,
+            category,
+            badgeColor: req.body.badgeColor || '#3b82f6',
+            status: 'Em Produção',
+            summary,
+            description: description || summary,
+            rationale: rationale || '',
+            before: before || {},
+            after: after || {},
+            metricsToCompare: metricsToCompare || [],
+            filesChanged: req.body.filesChanged || []
+        };
+
+        changes.unshift(newEntry);
+        fs.writeFileSync(changelogPath, JSON.stringify(changes, null, 2), 'utf8');
+
+        res.status(201).json({ success: true, entry: newEntry });
+    } catch (err) {
+        console.error("Erro ao cadastrar alteração no sistema:", err);
+        res.status(500).json({ error: 'Erro ao registrar nova alteração.' });
+    }
+};
+

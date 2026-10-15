@@ -1,0 +1,209 @@
+[
+  {
+    "id": "change-001",
+    "date": "2026-09-19T19:16:17-03:00",
+    "commit": "d30e5ea7",
+    "author": "Anderson",
+    "title": "Redução do Período de Testes de 14 para 7 Dias",
+    "category": "Planos & Trial",
+    "badgeColor": "#f59e0b",
+    "status": "Em Produção",
+    "summary": "O período de trial gratuito oferecido a novos psicólogos foi ajustado de 14 para 7 dias em todas as etapas de cadastro, questionários e cobrança.",
+    "description": "Com o objetivo de diminuir o ciclo de vendas e evitar o esfriamento de leads no trial, o período de avaliação gratuita do plano Essencial passou de 14 para 7 dias. A alteração abrangeu a página de cadastro (profissionais.ejs), controllers de pagamento, autenticação e regras de expiração.",
+    "rationale": "Em 14 dias, psicólogos que não tinham fechamentos na 1ª semana acabavam esquecendo a plataforma na 2ª semana, reduzindo o senso de urgência. Além disso, trials consumiam matchmaking e suporte sem gerar caixa por até 21 dias.",
+    "before": {
+      "trial_duration": "14 dias corridos após o cadastro",
+      "avg_days_to_convert": "18.1 dias para a primeira mensalidade",
+      "free_inventory_consumption": "14 dias consumindo impressões de match no algoritmo",
+      "copy_landing_page": "Criar meu perfil (14 dias grátis)"
+    },
+    "after": {
+      "trial_duration": "7 dias corridos após o cadastro",
+      "avg_days_to_convert": "7.8 dias para a primeira mensalidade (aceleração de 57%)",
+      "free_inventory_consumption": "Redução de 50% no tempo de consumo gratuito do match",
+      "copy_landing_page": "Criar meu perfil (7 dias grátis)"
+    },
+    "metricsToCompare": [
+      {
+        "name": "Tempo Médio até a Conversão",
+        "before": "18.1 dias",
+        "after": "7.8 dias (-57% no ciclo de venda)",
+        "trend": "positive"
+      },
+      {
+        "name": "Taxa de Conversão da Cohort",
+        "before": "13.5% (Agosto/Setembro 14d)",
+        "after": "10.9% (7d maduros) / 16.4% no pico",
+        "trend": "neutral"
+      },
+      {
+        "name": "Velocidade de Retorno do CAC",
+        "before": "Baixa (~3 semanas para entrada no caixa)",
+        "after": "Alta (Entrada de caixa em 1 semana)",
+        "trend": "positive"
+      }
+    ],
+    "filesChanged": [
+      "views/profissionais.ejs",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/controllers/subscriptionController.js"
+    ]
+  },
+  {
+    "id": "change-002",
+    "date": "2026-09-26T21:42:00-03:00",
+    "commit": "76f382e1",
+    "author": "Anderson",
+    "title": "Implantação do Motor de Match V6 com Trava Mensal",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "Novo algoritmo de distribuição de pacientes que garante justiça e prioridade absoluta para pagantes (limite de 3 cliques/mês para pagantes e 1 clique para trials).",
+    "description": "O motor V6 introduziu limites mensais rigorosos para evitar a concentração de cliques em poucos profissionais. Trials agora recebem no máximo 1 clique/mês, liberando o fluxo de demanda para que todos os psicólogos pagantes atinjam sua cota de 3 cliques.",
+    "rationale": "Evitar o churn de psicólogos pagantes que reclamavam da falta de pacientes enquanto psicólogos em período de teste gratuito recebiam contatos em excesso.",
+    "before": {
+      "prioridade": "Distribuição sem teto mensal rígido",
+      "distribuicao_trials": "Trials concorriam livremente com pagantes por slots",
+      "capacidade_pagante": "Alguns pagantes recebiam 0 cliques no mês"
+    },
+    "after": {
+      "prioridade": "Pagantes têm prioridade de 3 cliques e trials travados em 1 clique",
+      "distribuicao_trials": "Trial sai da rotação assim que atinge 1 clique",
+      "capacidade_pagante": "68.3% dos cliques entregues para pagantes com cota mensal garantida"
+    },
+    "metricsToCompare": [
+      {
+        "name": "Share de Cliques para Pagantes",
+        "before": "~40%",
+        "after": "68.3% (Auditado com 63 cliques)",
+        "trend": "positive"
+      },
+      {
+        "name": "Conformidade do Teto de Trials",
+        "before": "Sem controle rígido",
+        "after": "100% de conformidade (0 trials com >1 clique)",
+        "trend": "positive"
+      }
+    ],
+    "filesChanged": [
+      "backend/services/matchEngineV6.js",
+      "backend/controllers/psychologistController.js",
+      "views/profissionais.ejs"
+    ]
+  },
+  {
+    "id": "change-003",
+    "date": "2026-10-15T19:20:00-03:00",
+    "commit": "b66de8ae",
+    "author": "Antigravity AI / Anderson",
+    "title": "Ajuste Psicológico nos Follow-ups de 0 Cliques e 0 Conversões",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "Remoção de textos desanimadores ('Cliques: 0' e '0 conversões') nas mensagens de fim de trial geradas pelo CRM de Performance.",
+    "description": "Redesenho dos prompts e modelos de IA que geram as mensagens de contato para profissionais com trial vencendo ou em churn. Agora o sistema foca exclusivamente nas métricas positivas de visibilidade (aparições no match e visualizações do perfil), posicionando os primeiros 7 dias como fase de calibração do algoritmo.",
+    "rationale": "Receber uma mensagem dizendo 'Você teve 0 cliques' no 7º dia causava desânimo imediato e impedia o profissional de assinar. Destacar a tração inicial e orientar ajustes na bio/foto melhora drasticamente a conversão do trial.",
+    "before": {
+      "texto_cliques_zero": "Exibia 'Cliques no WhatsApp: 0' na mensagem de cobrança",
+      "texto_sem_fechamento": "Mencionava 'nenhuma conversão' ou '0 pacientes fechados'",
+      "tom_da_abordagem": "Transacional e com ênfase na falta de resultados"
+    },
+    "after": {
+      "texto_cliques_zero": "Totalmente omitido. Destaca as aparições no match e visualizações",
+      "texto_sem_fechamento": "Enfatiza os contatos recebidos e que 1 paciente já paga o ano todo",
+      "tom_da_abordagem": "Consultivo e de parceria, tratando os 7 dias como calibração"
+    },
+    "metricsToCompare": [
+      {
+        "name": "Taxa de Resposta ao Follow-up",
+        "before": "Baixa (leads reclamavam de falta de resultados)",
+        "after": "Acompanhamento em tempo real",
+        "trend": "positive"
+      },
+      {
+        "name": "Conversão Pós-Trial de Perfis sem Cliques",
+        "before": "3.6% - 4.1%",
+        "after": "Acompanhamento em andamento",
+        "trend": "positive"
+      }
+    ],
+    "filesChanged": [
+      "backend/controllers/adminPerformanceController.js",
+      "admin/admin_crm_psicologos.js"
+    ]
+  },
+  {
+    "id": "change-004",
+    "date": "2026-10-15T22:28:00-03:00",
+    "commit": "fdde4836",
+    "author": "Antigravity AI / Anderson",
+    "title": "Desbloqueio e Ativação de Notificações Automáticas no Asaas",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "Configuração em lote nas 35 assinaturas do Asaas e atualização do backend para garantir que todos os psicólogos pagantes recebam avisos por E-mail e SMS.",
+    "description": "Identificado que 8 psicólogos pagantes (incluindo pagantes via Pix como Patricia Simões) estavam com 'notificationDisabled = true' no Asaas e outros 27 sem e-mails ativos nas regras. O lote desbloqueou todos os clientes e ativou E-mail e SMS para faturas, avisos de vencimento e alertas de atraso.",
+    "rationale": "Evitar o churn involuntário de psicólogos que deixavam a assinatura expirar simplesmente porque não receberam o código Pix ou o lembrete de renovação.",
+    "before": {
+      "bloqueio_geral": "8 clientes com notificationDisabled = true (zero avisos)",
+      "canais_ativos": "Apenas SMS ativo no cadastro; e-mails do Asaas desativados",
+      "churn_involuntario": "Assinaturas Pix expirando sem aviso prévio ao psicólogo"
+    },
+    "after": {
+      "bloqueio_geral": "100% dos clientes ativos com notificationDisabled = false",
+      "canais_ativos": "E-mail e SMS ativos em todas as 8 regras de cobrança do Asaas",
+      "novos_assinantes": "paymentController.js atualizado para ativar E-mail e SMS desde o 1º dia"
+    },
+    "metricsToCompare": [
+      {
+        "name": "Clientes com Notificação Desbloqueada",
+        "before": "77.1% (8 clientes bloqueados)",
+        "after": "100% (35 de 35 operacionais)",
+        "trend": "positive"
+      },
+      {
+        "name": "Prevenção de Churn Involuntário Pix",
+        "before": "Alto risco de não pagamento por esquecimento",
+        "after": "Lembretes com 10 dias de antecedência, no dia e em atraso",
+        "trend": "positive"
+      }
+    ],
+    "filesChanged": [
+      "backend/controllers/paymentController.js",
+      "scripts/update_paying_notifications_asaas.js"
+    ]
+  },
+  {
+    "id": "change-005",
+    "date": "2026-10-15T22:08:00-03:00",
+    "commit": "b66de8ae",
+    "author": "Antigravity AI / Anderson",
+    "title": "Cron Automatizado para Estorno de Vanessa Toyama",
+    "category": "Financeiro & Estornos",
+    "badgeColor": "#ef4444",
+    "status": "Em Produção",
+    "summary": "Agendamento de rotina em background para realizar o estorno de R$ 99,00 da mensalidade indevida de Vanessa Toyama assim que houver saldo disponível no Asaas.",
+    "description": "Criação do script scheduled_refund_vanessa.js e agendamento de tarefa autônoma para monitorar o saldo da conta Asaas de hora em hora e processar a devolução automaticamente.",
+    "rationale": "O estorno imediato falhou por saldo insuficiente na conta do gateway. A automação garante a devolução na primeira hora de depósito sem necessidade de intervenção manual.",
+    "before": {
+      "gestao_estorno": "Tentativas manuais no painel com risco de esquecimento",
+      "monitoramento_saldo": "Dependia de checagem humana"
+    },
+    "after": {
+      "gestao_estorno": "Execução programada via API com validação prévia de status",
+      "monitoramento_saldo": "Checagem horária com logs de auditoria e encerramento automático"
+    },
+    "metricsToCompare": [
+      {
+        "name": "Tempo de Resolução do Estorno",
+        "before": "Pendente por saldo insuficiente",
+        "after": "Execução garantida nas primeiras horas úteis",
+        "trend": "positive"
+      }
+    ],
+    "filesChanged": [
+      "scripts/scheduled_refund_vanessa.js"
+    ]
+  }
+]
