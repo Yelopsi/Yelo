@@ -193,6 +193,18 @@
         `).join('');
     }
 
+    function lockBodyScroll() {
+        document.body.style.overflow = 'hidden';
+        document.body.style.touchAction = 'none';
+        document.documentElement.style.overflow = 'hidden';
+    }
+
+    function unlockBodyScroll() {
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+        document.documentElement.style.overflow = '';
+    }
+
     window.openChangeDetail = function(changeId) {
         const item = allChanges.find(c => c.id === changeId);
         if (!item) return;
@@ -284,12 +296,94 @@
             filesList.innerHTML = `<span style="color: #94a3b8; font-size: 0.82rem;">Nenhum arquivo especificado.</span>`;
         }
 
+        // Reseta scroll interno para o topo
+        const scrollArea = document.getElementById('modal-scrollable-area');
+        if (scrollArea) scrollArea.scrollTop = 0;
+
+        // Trava de scroll no background e exibe
+        lockBodyScroll();
+        modal.classList.add('active');
         modal.style.display = 'flex';
     };
 
     function closeModal() {
         const modal = document.getElementById('change-detail-modal');
-        if (modal) modal.style.display = 'none';
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+        }
+        unlockBodyScroll();
+    }
+
+    function closeNewChangeModal() {
+        const newModal = document.getElementById('new-change-modal');
+        if (newModal) {
+            newModal.classList.remove('active');
+            newModal.style.display = 'none';
+        }
+        unlockBodyScroll();
+    }
+
+    // Configuração de Swipe Down para fechar o Bottom Sheet no Mobile
+    function setupSwipeDownToClose(modalEl, cardSelector, closeFn) {
+        if (!modalEl) return;
+        const card = modalEl.querySelector(cardSelector);
+        if (!card) return;
+
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+
+        const handle = card.querySelector('.bottom-sheet-drag-handle') || card.querySelector('.modal-header-fixed');
+
+        if (handle) {
+            handle.addEventListener('touchstart', (e) => {
+                if (window.innerWidth > 768) return; // Apenas no mobile
+                startY = e.touches[0].clientY;
+                isDragging = true;
+                card.style.transition = 'none';
+            }, { passive: true });
+
+            handle.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+                if (diff > 0) { // Só move para baixo
+                    card.style.transform = `translateY(${diff}px)`;
+                }
+            }, { passive: true });
+
+            handle.addEventListener('touchend', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                const diff = currentY - startY;
+                card.style.transition = 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
+                if (diff > 90) { // Se arrastou mais de 90px para baixo, fecha
+                    card.style.transform = 'translateY(100%)';
+                    setTimeout(() => {
+                        card.style.transform = '';
+                        closeFn();
+                    }, 220);
+                } else {
+                    card.style.transform = 'translateY(0)';
+                }
+            });
+        }
+
+        // Impede que o scroll no overlay role o fundo
+        modalEl.addEventListener('wheel', (e) => {
+            const scrollable = modalEl.querySelector('.modal-scrollable-body');
+            if (scrollable && !scrollable.contains(e.target)) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        modalEl.addEventListener('touchmove', (e) => {
+            const scrollable = modalEl.querySelector('.modal-scrollable-body');
+            if (scrollable && !scrollable.contains(e.target)) {
+                e.preventDefault();
+            }
+        }, { passive: false });
     }
 
     // Inicialização dos Event Listeners
@@ -305,7 +399,16 @@
             modalOverlay.addEventListener('click', (e) => {
                 if (e.target === modalOverlay) closeModal();
             });
+            setupSwipeDownToClose(modalOverlay, '#detail-card-container', closeModal);
         }
+
+        // Fechar com tecla ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeNewChangeModal();
+            }
+        });
 
         // Filtro por categorias
         const catButtons = document.querySelectorAll('.cat-pill');
@@ -364,18 +467,23 @@
         const formNew = document.getElementById('form-new-change');
 
         if (btnOpenNew && newModal) {
-            btnOpenNew.addEventListener('click', () => newModal.style.display = 'flex');
+            btnOpenNew.addEventListener('click', () => {
+                lockBodyScroll();
+                newModal.classList.add('active');
+                newModal.style.display = 'flex';
+            });
         }
         if (btnCloseNew && newModal) {
-            btnCloseNew.addEventListener('click', () => newModal.style.display = 'none');
+            btnCloseNew.addEventListener('click', closeNewChangeModal);
         }
         if (btnCancelNew && newModal) {
-            btnCancelNew.addEventListener('click', () => newModal.style.display = 'none');
+            btnCancelNew.addEventListener('click', closeNewChangeModal);
         }
         if (newModal) {
             newModal.addEventListener('click', (e) => {
-                if (e.target === newModal) newModal.style.display = 'none';
+                if (e.target === newModal) closeNewChangeModal();
             });
+            setupSwipeDownToClose(newModal, '.modal-content-card', closeNewChangeModal);
         }
 
         if (formNew) {
