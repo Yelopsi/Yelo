@@ -2194,46 +2194,54 @@ INSTRUÇÕES PARA A MENSAGEM:
 // ----------------------------------------------------------------------
 // Rota: GET /api/admin/system-changelog
 // Descrição: Retorna o histórico estruturado de alterações do sistema e commits recentes.
+// Economia de Banda: Suporta HTTP ETag / 304 Not Modified e cache em memória.
 // ----------------------------------------------------------------------
 exports.getSystemChangelog = async (req, res) => {
     try {
-        const fs = require('fs');
-        const path = require('path');
-        const { execSync } = require('child_process');
+        const { getChangelogETag, getCachedOrFreshChangelog, syncGitToChangelog } = require('../services/changelogSyncService');
 
-        const changelogPath = path.resolve(__dirname, '../data/system_changelog.json');
-        let changes = [];
-        if (fs.existsSync(changelogPath)) {
-            try {
-                changes = JSON.parse(fs.readFileSync(changelogPath, 'utf8'));
-            } catch (parseErr) {
-                console.error("Erro ao ler system_changelog.json:", parseErr);
+        // Auto-sincronização throttled (15 min) para não consumir CPU nem I/O contínuo
+        try {
+            syncGitToChangelog({ maxCommits: 20, force: false });
+        } catch (syncErr) {}
+
+        // Validação de ETag: se o conteúdo não mudou, retorna 304 (0 bytes de transferência de payload!)
+        const etag = getChangelogETag();
+        if (etag) {
+            res.setHeader('ETag', etag);
+            res.setHeader('Cache-Control', 'private, no-cache, must-revalidate');
+            if (req.headers['if-none-match'] === etag) {
+                return res.status(304).end();
             }
         }
 
-        // Tentar obter os últimos commits do Git para contexto dinâmico
-        let recentCommits = [];
-        try {
-            const rawGitLog = execSync('git log -n 15 --pretty=format:"%h||%an||%ad||%s" --date=iso', {
-                encoding: 'utf8',
-                timeout: 3000
-            });
-            recentCommits = rawGitLog.split('\n').filter(Boolean).map(line => {
-                const [hash, author, date, message] = line.split('||');
-                return { hash, author, date, message };
-            });
-        } catch (gitErr) {
-            // Em ambiente container sem git bin, prossegue sem travar
-        }
-
-        res.json({
-            success: true,
-            changes,
-            recentCommits
-        });
+        const data = getCachedOrFreshChangelog();
+        res.json(data);
     } catch (err) {
         console.error("Erro ao obter changelog do sistema:", err);
         res.status(500).json({ error: 'Erro ao obter histórico de alterações do sistema.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/admin/system-changelog/sync
+// Descrição: Força a sincronização dos commits do repositório com o changelog.
+// ----------------------------------------------------------------------
+exports.syncSystemChangelogWithGit = async (req, res) => {
+    try {
+        const { syncGitToChangelog } = require('../services/changelogSyncService');
+        const result = syncGitToChangelog({ maxCommits: 50 });
+        res.json({
+            success: true,
+            addedCount: result.addedCount,
+            totalChanges: result.totalChanges,
+            message: result.addedCount > 0 
+                ? `${result.addedCount} novas alterações sincronizadas com o Git.` 
+                : 'Changelog já sincronizado com os últimos commits.'
+        });
+    } catch (err) {
+        console.error("Erro ao sincronizar changelog com o git:", err);
+        res.status(500).json({ error: 'Erro ao sincronizar alterações com o git.' });
     }
 };
 

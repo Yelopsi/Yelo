@@ -120,6 +120,7 @@ router.get('/logs', adminDashboardController.getSystemLogs);
 // Rotas do Histórico de Alterações do Sistema (Changelog)
 router.get('/system-changelog', adminController.getSystemChangelog);
 router.post('/system-changelog', adminController.addSystemChangelogEntry);
+router.post('/system-changelog/sync', adminController.syncSystemChangelogWithGit);
 
 // Rota para dados de gráficos
 router.get('/charts/new-users', adminDashboardController.getNewUsersPerMonth);

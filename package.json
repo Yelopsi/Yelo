@@ -13,6 +13,7 @@
     "security:gate": "node security/gate.js",
     "postinstall": "cd backend && npm install && cd .. && npx puppeteer browsers install chrome && npm run security:gate",
     "lint": "eslint .",
+    "changelog:sync": "node scripts/sync_git_to_changelog.js",
     "investigate-psychologist": "node scripts/investigate_psychologist_charge.js"
   },
   "keywords": [

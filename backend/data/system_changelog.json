@@ -1,139 +1,5 @@
 [
   {
-    "id": "change-001",
-    "date": "2026-09-19T19:16:17-03:00",
-    "commit": "d30e5ea7",
-    "author": "Anderson",
-    "title": "Redução do Período de Testes de 14 para 7 Dias",
-    "category": "Planos & Trial",
-    "badgeColor": "#f59e0b",
-    "status": "Em Produção",
-    "summary": "O período de trial gratuito oferecido a novos psicólogos foi ajustado de 14 para 7 dias em todas as etapas de cadastro, questionários e cobrança.",
-    "description": "Com o objetivo de diminuir o ciclo de vendas e evitar o esfriamento de leads no trial, o período de avaliação gratuita do plano Essencial passou de 14 para 7 dias. A alteração abrangeu a página de cadastro (profissionais.ejs), controllers de pagamento, autenticação e regras de expiração.",
-    "rationale": "Em 14 dias, psicólogos que não tinham fechamentos na 1ª semana acabavam esquecendo a plataforma na 2ª semana, reduzindo o senso de urgência. Além disso, trials consumiam matchmaking e suporte sem gerar caixa por até 21 dias.",
-    "before": {
-      "trial_duration": "14 dias corridos após o cadastro",
-      "avg_days_to_convert": "18.1 dias para a primeira mensalidade",
-      "free_inventory_consumption": "14 dias consumindo impressões de match no algoritmo",
-      "copy_landing_page": "Criar meu perfil (14 dias grátis)"
-    },
-    "after": {
-      "trial_duration": "7 dias corridos após o cadastro",
-      "avg_days_to_convert": "7.8 dias para a primeira mensalidade (aceleração de 57%)",
-      "free_inventory_consumption": "Redução de 50% no tempo de consumo gratuito do match",
-      "copy_landing_page": "Criar meu perfil (7 dias grátis)"
-    },
-    "metricsToCompare": [
-      {
-        "name": "Tempo Médio até a Conversão",
-        "before": "18.1 dias",
-        "after": "7.8 dias (-57% no ciclo de venda)",
-        "trend": "positive"
-      },
-      {
-        "name": "Taxa de Conversão da Cohort",
-        "before": "13.5% (Agosto/Setembro 14d)",
-        "after": "10.9% (7d maduros) / 16.4% no pico",
-        "trend": "neutral"
-      },
-      {
-        "name": "Velocidade de Retorno do CAC",
-        "before": "Baixa (~3 semanas para entrada no caixa)",
-        "after": "Alta (Entrada de caixa em 1 semana)",
-        "trend": "positive"
-      }
-    ],
-    "filesChanged": [
-      "views/profissionais.ejs",
-      "backend/controllers/paymentController.js",
-      "backend/controllers/psychologistController.js",
-      "backend/controllers/subscriptionController.js"
-    ]
-  },
-  {
-    "id": "change-002",
-    "date": "2026-09-26T21:42:00-03:00",
-    "commit": "76f382e1",
-    "author": "Anderson",
-    "title": "Implantação do Motor de Match V6 com Trava Mensal",
-    "category": "Motor de Match",
-    "badgeColor": "#3b82f6",
-    "status": "Em Produção",
-    "summary": "Novo algoritmo de distribuição de pacientes que garante justiça e prioridade absoluta para pagantes (limite de 3 cliques/mês para pagantes e 1 clique para trials).",
-    "description": "O motor V6 introduziu limites mensais rigorosos para evitar a concentração de cliques em poucos profissionais. Trials agora recebem no máximo 1 clique/mês, liberando o fluxo de demanda para que todos os psicólogos pagantes atinjam sua cota de 3 cliques.",
-    "rationale": "Evitar o churn de psicólogos pagantes que reclamavam da falta de pacientes enquanto psicólogos em período de teste gratuito recebiam contatos em excesso.",
-    "before": {
-      "prioridade": "Distribuição sem teto mensal rígido",
-      "distribuicao_trials": "Trials concorriam livremente com pagantes por slots",
-      "capacidade_pagante": "Alguns pagantes recebiam 0 cliques no mês"
-    },
-    "after": {
-      "prioridade": "Pagantes têm prioridade de 3 cliques e trials travados em 1 clique",
-      "distribuicao_trials": "Trial sai da rotação assim que atinge 1 clique",
-      "capacidade_pagante": "68.3% dos cliques entregues para pagantes com cota mensal garantida"
-    },
-    "metricsToCompare": [
-      {
-        "name": "Share de Cliques para Pagantes",
-        "before": "~40%",
-        "after": "68.3% (Auditado com 63 cliques)",
-        "trend": "positive"
-      },
-      {
-        "name": "Conformidade do Teto de Trials",
-        "before": "Sem controle rígido",
-        "after": "100% de conformidade (0 trials com >1 clique)",
-        "trend": "positive"
-      }
-    ],
-    "filesChanged": [
-      "backend/services/matchEngineV6.js",
-      "backend/controllers/psychologistController.js",
-      "views/profissionais.ejs"
-    ]
-  },
-  {
-    "id": "change-003",
-    "date": "2026-10-15T19:20:00-03:00",
-    "commit": "b66de8ae",
-    "author": "Antigravity AI / Anderson",
-    "title": "Ajuste Psicológico nos Follow-ups de 0 Cliques e 0 Conversões",
-    "category": "CRM & Mensageria",
-    "badgeColor": "#8b5cf6",
-    "status": "Em Produção",
-    "summary": "Remoção de textos desanimadores ('Cliques: 0' e '0 conversões') nas mensagens de fim de trial geradas pelo CRM de Performance.",
-    "description": "Redesenho dos prompts e modelos de IA que geram as mensagens de contato para profissionais com trial vencendo ou em churn. Agora o sistema foca exclusivamente nas métricas positivas de visibilidade (aparições no match e visualizações do perfil), posicionando os primeiros 7 dias como fase de calibração do algoritmo.",
-    "rationale": "Receber uma mensagem dizendo 'Você teve 0 cliques' no 7º dia causava desânimo imediato e impedia o profissional de assinar. Destacar a tração inicial e orientar ajustes na bio/foto melhora drasticamente a conversão do trial.",
-    "before": {
-      "texto_cliques_zero": "Exibia 'Cliques no WhatsApp: 0' na mensagem de cobrança",
-      "texto_sem_fechamento": "Mencionava 'nenhuma conversão' ou '0 pacientes fechados'",
-      "tom_da_abordagem": "Transacional e com ênfase na falta de resultados"
-    },
-    "after": {
-      "texto_cliques_zero": "Totalmente omitido. Destaca as aparições no match e visualizações",
-      "texto_sem_fechamento": "Enfatiza os contatos recebidos e que 1 paciente já paga o ano todo",
-      "tom_da_abordagem": "Consultivo e de parceria, tratando os 7 dias como calibração"
-    },
-    "metricsToCompare": [
-      {
-        "name": "Taxa de Resposta ao Follow-up",
-        "before": "Baixa (leads reclamavam de falta de resultados)",
-        "after": "Acompanhamento em tempo real",
-        "trend": "positive"
-      },
-      {
-        "name": "Conversão Pós-Trial de Perfis sem Cliques",
-        "before": "3.6% - 4.1%",
-        "after": "Acompanhamento em andamento",
-        "trend": "positive"
-      }
-    ],
-    "filesChanged": [
-      "backend/controllers/adminPerformanceController.js",
-      "admin/admin_crm_psicologos.js"
-    ]
-  },
-  {
     "id": "change-004",
     "date": "2026-10-15T22:28:00-03:00",
     "commit": "fdde4836",
@@ -204,6 +70,1310 @@
     ],
     "filesChanged": [
       "scripts/scheduled_refund_vanessa.js"
+    ]
+  },
+  {
+    "id": "change-git-a6fc28aa",
+    "date": "2026-10-15T23:44:09.000Z",
+    "commit": "a6fc28aa",
+    "author": "Anderson",
+    "title": "Correção: Corrigir pointer-events, scroll e fechamento dos modais de historico (admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir pointer-events, scroll e fechamento dos modais de historico",
+    "description": "Commit registrado no repositório: \"fix(admin): corrigir pointer-events, scroll e fechamento dos modais de historico\". Arquivos modificados: admin/admin_historico_alteracoes.html, admin/admin_historico_alteracoes.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a6fc28aa"
+    },
+    "after": {
+      "nova_versao": "corrigir pointer-events, scroll e fechamento dos modais de historico"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_historico_alteracoes.html",
+      "admin/admin_historico_alteracoes.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-73a25c28",
+    "date": "2026-10-15T23:18:17.000Z",
+    "commit": "73a25c28",
+    "author": "Anderson",
+    "title": "Correção: Lock .dashboard-main scroll and ensure flexbox internal scrolling in modal (admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "lock .dashboard-main scroll and ensure flexbox internal scrolling in modal",
+    "description": "Commit registrado no repositório: \"fix(admin): lock .dashboard-main scroll and ensure flexbox internal scrolling in modal\". Arquivos modificados: admin/admin_historico_alteracoes.html, admin/admin_historico_alteracoes.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #73a25c28"
+    },
+    "after": {
+      "nova_versao": "lock .dashboard-main scroll and ensure flexbox internal scrolling in modal"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_historico_alteracoes.html",
+      "admin/admin_historico_alteracoes.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-239f3d3f",
+    "date": "2026-10-15T23:07:06.000Z",
+    "commit": "239f3d3f",
+    "author": "Anderson",
+    "title": "Correção: Resolve modal scroll propagation with body lock and implement mobile bottom sheet with swipe-to-close (admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "resolve modal scroll propagation with body lock and implement mobile bottom sheet with swipe-to-close",
+    "description": "Commit registrado no repositório: \"fix(admin): resolve modal scroll propagation with body lock and implement mobile bottom sheet with swipe-to-close\". Arquivos modificados: admin/admin_historico_alteracoes.html, admin/admin_historico_alteracoes.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #239f3d3f"
+    },
+    "after": {
+      "nova_versao": "resolve modal scroll propagation with body lock and implement mobile bottom sheet with swipe-to-close"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_historico_alteracoes.html",
+      "admin/admin_historico_alteracoes.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-2288df9f",
+    "date": "2026-10-15T22:56:40.000Z",
+    "commit": "2288df9f",
+    "author": "Anderson",
+    "title": "Novo: Add system changelog and change tracking page with before/after drawer and metrics (admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "add system changelog and change tracking page with before/after drawer and metrics",
+    "description": "Commit registrado no repositório: \"feat(admin): add system changelog and change tracking page with before/after drawer and metrics\". Arquivos modificados: admin/admin.html, admin/admin_configuracoes_hub.html, admin/admin_historico_alteracoes.html, admin/admin_historico_alteracoes.js, backend/controllers/adminController.js (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2288df9f"
+    },
+    "after": {
+      "nova_versao": "add system changelog and change tracking page with before/after drawer and metrics"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin.html",
+      "admin/admin_configuracoes_hub.html",
+      "admin/admin_historico_alteracoes.html",
+      "admin/admin_historico_alteracoes.js",
+      "backend/controllers/adminController.js",
+      "backend/data/system_changelog.json",
+      "backend/routes/adminRoutes.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-f6e76fb6",
+    "date": "2026-10-15T22:23:48.000Z",
+    "commit": "f6e76fb6",
+    "author": "Anderson",
+    "title": "Manutenção: Update gate report timestamp (security)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "update gate report timestamp",
+    "description": "Commit registrado no repositório: \"chore(security): update gate report timestamp\". Arquivos modificados: security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #f6e76fb6"
+    },
+    "after": {
+      "nova_versao": "update gate report timestamp"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-003",
+    "date": "2026-10-15T19:20:00-03:00",
+    "commit": "b66de8ae",
+    "author": "Antigravity AI / Anderson",
+    "title": "Ajuste Psicológico nos Follow-ups de 0 Cliques e 0 Conversões",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "Remoção de textos desanimadores ('Cliques: 0' e '0 conversões') nas mensagens de fim de trial geradas pelo CRM de Performance.",
+    "description": "Redesenho dos prompts e modelos de IA que geram as mensagens de contato para profissionais com trial vencendo ou em churn. Agora o sistema foca exclusivamente nas métricas positivas de visibilidade (aparições no match e visualizações do perfil), posicionando os primeiros 7 dias como fase de calibração do algoritmo.",
+    "rationale": "Receber uma mensagem dizendo 'Você teve 0 cliques' no 7º dia causava desânimo imediato e impedia o profissional de assinar. Destacar a tração inicial e orientar ajustes na bio/foto melhora drasticamente a conversão do trial.",
+    "before": {
+      "texto_cliques_zero": "Exibia 'Cliques no WhatsApp: 0' na mensagem de cobrança",
+      "texto_sem_fechamento": "Mencionava 'nenhuma conversão' ou '0 pacientes fechados'",
+      "tom_da_abordagem": "Transacional e com ênfase na falta de resultados"
+    },
+    "after": {
+      "texto_cliques_zero": "Totalmente omitido. Destaca as aparições no match e visualizações",
+      "texto_sem_fechamento": "Enfatiza os contatos recebidos e que 1 paciente já paga o ano todo",
+      "tom_da_abordagem": "Consultivo e de parceria, tratando os 7 dias como calibração"
+    },
+    "metricsToCompare": [
+      {
+        "name": "Taxa de Resposta ao Follow-up",
+        "before": "Baixa (leads reclamavam de falta de resultados)",
+        "after": "Acompanhamento em tempo real",
+        "trend": "positive"
+      },
+      {
+        "name": "Conversão Pós-Trial de Perfis sem Cliques",
+        "before": "3.6% - 4.1%",
+        "after": "Acompanhamento em andamento",
+        "trend": "positive"
+      }
+    ],
+    "filesChanged": [
+      "backend/controllers/adminPerformanceController.js",
+      "admin/admin_crm_psicologos.js"
+    ]
+  },
+  {
+    "id": "change-git-782cc72e",
+    "date": "2026-10-15T02:43:28.000Z",
+    "commit": "782cc72e",
+    "author": "Anderson",
+    "title": "Correção: Excluir churns antigos baseados em updatedAt e usar data real de expiracao/cancelamento (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "excluir churns antigos baseados em updatedAt e usar data real de expiracao/cancelamento",
+    "description": "Commit registrado no repositório: \"fix(crm): excluir churns antigos baseados em updatedAt e usar data real de expiracao/cancelamento\". Arquivos modificados: backend/controllers/adminUsersController.js, backend/controllers/subscriptionController.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #782cc72e"
+    },
+    "after": {
+      "nova_versao": "excluir churns antigos baseados em updatedAt e usar data real de expiracao/cancelamento"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/adminUsersController.js",
+      "backend/controllers/subscriptionController.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-605b326b",
+    "date": "2026-10-15T01:42:10.000Z",
+    "commit": "605b326b",
+    "author": "Anderson",
+    "title": "Correção: Filtrar apenas churn de psicologos pagantes no mes atual (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "filtrar apenas churn de psicologos pagantes no mes atual",
+    "description": "Commit registrado no repositório: \"fix(crm): filtrar apenas churn de psicologos pagantes no mes atual\". Arquivos modificados: admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, backend/controllers/adminUsersController.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #605b326b"
+    },
+    "after": {
+      "nova_versao": "filtrar apenas churn de psicologos pagantes no mes atual"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "backend/controllers/adminUsersController.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-5c52ce99",
+    "date": "2026-10-15T01:23:49.000Z",
+    "commit": "5c52ce99",
+    "author": "Anderson",
+    "title": "Novo: Adiciona card e filtro de psicologos com churn no mes atual (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "adiciona card e filtro de psicologos com churn no mes atual",
+    "description": "Commit registrado no repositório: \"feat(crm): adiciona card e filtro de psicologos com churn no mes atual\". Arquivos modificados: admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, backend/controllers/adminUsersController.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5c52ce99"
+    },
+    "after": {
+      "nova_versao": "adiciona card e filtro de psicologos com churn no mes atual"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "backend/controllers/adminUsersController.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-3ea4a8e0",
+    "date": "2026-10-14T22:53:59.000Z",
+    "commit": "3ea4a8e0",
+    "author": "Anderson",
+    "title": "Correção: Resolve google token verification rate-limit and review submission error (auth)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "resolve google token verification rate-limit and review submission error",
+    "description": "Commit registrado no repositório: \"fix(auth): resolve google token verification rate-limit and review submission error\". Arquivos modificados: backend/controllers/authController.js, backend/controllers/patientController.js, backend/middlewares/authMiddleware.js, public/js/perfil_psicologo.js, public/js/psi_perfil_publico.js (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #3ea4a8e0"
+    },
+    "after": {
+      "nova_versao": "resolve google token verification rate-limit and review submission error"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/authController.js",
+      "backend/controllers/patientController.js",
+      "backend/middlewares/authMiddleware.js",
+      "public/js/perfil_psicologo.js",
+      "public/js/psi_perfil_publico.js",
+      "security/reports/gate_report.json",
+      "security/reports/npm_audit.json",
+      "views/psi_perfil_publico.ejs"
+    ]
+  },
+  {
+    "id": "change-git-b976e5c6",
+    "date": "2026-10-14T00:18:38.000Z",
+    "commit": "b976e5c6",
+    "author": "Anderson",
+    "title": "Novo: Aprimora filtros e templates de follow-up e sanitiza formatacao do whatsapp (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "aprimora filtros e templates de follow-up e sanitiza formatacao do whatsapp",
+    "description": "Commit registrado no repositório: \"feat(crm): aprimora filtros e templates de follow-up e sanitiza formatacao do whatsapp\". Arquivos modificados: admin/admin_analytics_funil.js, admin/admin_crm_psicologos.js, backend/controllers/adminController.js, backend/controllers/adminPerformanceController.js, backend/controllers/adminUsersController.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #b976e5c6"
+    },
+    "after": {
+      "nova_versao": "aprimora filtros e templates de follow-up e sanitiza formatacao do whatsapp"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.js",
+      "admin/admin_crm_psicologos.js",
+      "backend/controllers/adminController.js",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/controllers/adminUsersController.js",
+      "backend/utils/whatsappFormatter.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-a5790a23",
+    "date": "2026-10-11T17:18:24.000Z",
+    "commit": "a5790a23",
+    "author": "Anderson",
+    "title": "Correção: Cache-busting v3 e no-store no painel do psicologo",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "cache-busting v3 e no-store no painel do psicologo",
+    "description": "Commit registrado no repositório: \"fix(psi): cache-busting v3 e no-store no painel do psicologo\". Arquivos modificados: backend/routes/viewRoutes.js, backend/server.js, public/psi/psi_dashboard.html, public/psi/psi_dashboard.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a5790a23"
+    },
+    "after": {
+      "nova_versao": "cache-busting v3 e no-store no painel do psicologo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/routes/viewRoutes.js",
+      "backend/server.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-1eb05dad",
+    "date": "2026-10-11T16:53:10.000Z",
+    "commit": "1eb05dad",
+    "author": "Anderson",
+    "title": "Correção: Invalidacao automatica de cache mobile no admin e assets publicos",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "invalidacao automatica de cache mobile no admin e assets publicos",
+    "description": "Commit registrado no repositório: \"fix(cache): invalidacao automatica de cache mobile no admin e assets publicos\". Arquivos modificados: backend/routes/viewRoutes.js, backend/server.js, public/sw.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1eb05dad"
+    },
+    "after": {
+      "nova_versao": "invalidacao automatica de cache mobile no admin e assets publicos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/routes/viewRoutes.js",
+      "backend/server.js",
+      "public/sw.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-8ca0efd2",
+    "date": "2026-10-11T16:39:35.000Z",
+    "commit": "8ca0efd2",
+    "author": "Anderson",
+    "title": "Novo: Mapeia perguntas exatas, badges de benchmark e previne poluicao de testes (analytics)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "mapeia perguntas exatas, badges de benchmark e previne poluicao de testes",
+    "description": "Commit registrado no repositório: \"feat(analytics): mapeia perguntas exatas, badges de benchmark e previne poluicao de testes\". Arquivos modificados: admin/admin_analytics_funil.js, security/reports/gate_report.json, security/reports/npm_audit.json, security/tests/redteam/redteam_runner.js, security/tests/redteam/webhook_race.test.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8ca0efd2"
+    },
+    "after": {
+      "nova_versao": "mapeia perguntas exatas, badges de benchmark e previne poluicao de testes"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.js",
+      "security/reports/gate_report.json",
+      "security/reports/npm_audit.json",
+      "security/tests/redteam/redteam_runner.js",
+      "security/tests/redteam/webhook_race.test.js"
+    ]
+  },
+  {
+    "id": "change-git-244efefd",
+    "date": "2026-10-10T22:21:17.000Z",
+    "commit": "244efefd",
+    "author": "Anderson",
+    "title": "Otimização: Otimiza query do admin para retornar apenas ultimos 30 dias de log do whatsapp por padrao",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "otimiza query do admin para retornar apenas ultimos 30 dias de log do whatsapp por padrao",
+    "description": "Commit registrado no repositório: \"perf: otimiza query do admin para retornar apenas ultimos 30 dias de log do whatsapp por padrao\". Arquivos modificados: backend/controllers/adminDashboardController.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #244efefd"
+    },
+    "after": {
+      "nova_versao": "otimiza query do admin para retornar apenas ultimos 30 dias de log do whatsapp por padrao"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/adminDashboardController.js"
+    ]
+  },
+  {
+    "id": "change-git-60c1a591",
+    "date": "2026-10-10T21:57:21.000Z",
+    "commit": "60c1a591",
+    "author": "Anderson",
+    "title": "Refatoração: Encerra teste A/B do whatsapp e fixa Variante A como padrao",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "encerra teste A/B do whatsapp e fixa Variante A como padrao",
+    "description": "Commit registrado no repositório: \"refactor: encerra teste A/B do whatsapp e fixa Variante A como padrao\". Arquivos modificados: admin/admin_crm_hub.html, admin/admin_teste_ab.html, admin/admin_teste_ab.js, backend/controllers/adminAnalyticsController.js, backend/controllers/whatsappController.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #60c1a591"
+    },
+    "after": {
+      "nova_versao": "encerra teste A/B do whatsapp e fixa Variante A como padrao"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_hub.html",
+      "admin/admin_teste_ab.html",
+      "admin/admin_teste_ab.js",
+      "backend/controllers/adminAnalyticsController.js",
+      "backend/controllers/whatsappController.js",
+      "backend/routes/adminRoutes.js",
+      "backend/routes/analyticsRoutes.js"
+    ]
+  },
+  {
+    "id": "change-git-ad25251c",
+    "date": "2026-10-10T21:46:00.000Z",
+    "commit": "ad25251c",
+    "author": "Anderson",
+    "title": "Novo: Substitui meta reta por curva do Caminho Ideal no grafico CMO",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "substitui meta reta por curva do Caminho Ideal no grafico CMO",
+    "description": "Commit registrado no repositório: \"feat: substitui meta reta por curva do Caminho Ideal no grafico CMO\". Arquivos modificados: admin/admin_cmo_metrics.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ad25251c"
+    },
+    "after": {
+      "nova_versao": "substitui meta reta por curva do Caminho Ideal no grafico CMO"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js"
+    ]
+  },
+  {
+    "id": "change-git-8461d448",
+    "date": "2026-10-10T21:23:37.000Z",
+    "commit": "8461d448",
+    "author": "Anderson",
+    "title": "Novo: Atualiza algoritmo de likes para orgânico e adiciona meta no gráfico",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "atualiza algoritmo de likes para orgânico e adiciona meta no gráfico",
+    "description": "Commit registrado no repositório: \"feat: atualiza algoritmo de likes para orgânico e adiciona meta no gráfico\". Arquivos modificados: admin/admin_cmo_metrics.js, backend/jobs/blogLikesMonitor.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8461d448"
+    },
+    "after": {
+      "nova_versao": "atualiza algoritmo de likes para orgânico e adiciona meta no gráfico"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "backend/jobs/blogLikesMonitor.js"
+    ]
+  },
+  {
+    "id": "change-git-40674dd0",
+    "date": "2026-10-10T00:19:42.000Z",
+    "commit": "40674dd0",
+    "author": "Anderson",
+    "title": "Interface: Refactor weekly payments chart to line graph matching evolution style (admin)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "refactor weekly payments chart to line graph matching evolution style",
+    "description": "Commit registrado no repositório: \"style(admin): refactor weekly payments chart to line graph matching evolution style\". Arquivos modificados: admin/admin_crm_analytics.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #40674dd0"
+    },
+    "after": {
+      "nova_versao": "refactor weekly payments chart to line graph matching evolution style"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_analytics.js"
+    ]
+  },
+  {
+    "id": "change-git-5b165782",
+    "date": "2026-10-10T00:12:39.000Z",
+    "commit": "5b165782",
+    "author": "Anderson",
+    "title": "Novo: Expand payments evolution chart to show 6 months (admin)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "expand payments evolution chart to show 6 months",
+    "description": "Commit registrado no repositório: \"feat(admin): expand payments evolution chart to show 6 months\". Arquivos modificados: admin/admin_growth_dashboard.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5b165782"
+    },
+    "after": {
+      "nova_versao": "expand payments evolution chart to show 6 months"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_growth_dashboard.js"
+    ]
+  },
+  {
+    "id": "change-git-29f4012c",
+    "date": "2026-10-10T00:11:29.000Z",
+    "commit": "29f4012c",
+    "author": "Anderson",
+    "title": "Interface: Hide vlibras completely on mobile devices (frontend)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "hide vlibras completely on mobile devices",
+    "description": "Commit registrado no repositório: \"style(frontend): hide vlibras completely on mobile devices\". Arquivos modificados: views/partials/footer.ejs.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #29f4012c"
+    },
+    "after": {
+      "nova_versao": "hide vlibras completely on mobile devices"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "views/partials/footer.ejs"
+    ]
+  },
+  {
+    "id": "change-git-40ca7379",
+    "date": "2026-10-10T00:08:19.000Z",
+    "commit": "40ca7379",
+    "author": "Anderson",
+    "title": "Interface: Match weekly payments chart to growth dashboard design (admin)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "match weekly payments chart to growth dashboard design",
+    "description": "Commit registrado no repositório: \"style(admin): match weekly payments chart to growth dashboard design\". Arquivos modificados: admin/admin_crm_analytics.html.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #40ca7379"
+    },
+    "after": {
+      "nova_versao": "match weekly payments chart to growth dashboard design"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_analytics.html"
+    ]
+  },
+  {
+    "id": "change-git-cbbe158d",
+    "date": "2026-10-10T00:05:59.000Z",
+    "commit": "cbbe158d",
+    "author": "Anderson",
+    "title": "Correção: Correctly reference cashFlowData.monthly in payments evolution (admin)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "correctly reference cashFlowData.monthly in payments evolution",
+    "description": "Commit registrado no repositório: \"fix(admin): correctly reference cashFlowData.monthly in payments evolution\". Arquivos modificados: backend/controllers/adminGrowthController.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #cbbe158d"
+    },
+    "after": {
+      "nova_versao": "correctly reference cashFlowData.monthly in payments evolution"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/adminGrowthController.js"
+    ]
+  },
+  {
+    "id": "change-git-88262e89",
+    "date": "2026-10-09T23:41:54.000Z",
+    "commit": "88262e89",
+    "author": "Anderson",
+    "title": "Correção: Calculate plan validity based on payment date instead of invoice due date (billing)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "calculate plan validity based on payment date instead of invoice due date",
+    "description": "Commit registrado no repositório: \"fix(billing): calculate plan validity based on payment date instead of invoice due date\". Arquivos modificados: backend/services/paymentStateService.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #88262e89"
+    },
+    "after": {
+      "nova_versao": "calculate plan validity based on payment date instead of invoice due date"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/services/paymentStateService.js"
+    ]
+  },
+  {
+    "id": "change-git-2499532b",
+    "date": "2026-10-09T23:25:27.000Z",
+    "commit": "2499532b",
+    "author": "Anderson",
+    "title": "Correção: Remove automated 7-day CDC refund on cancellation, always keep plan active until period end (subscription)",
+    "category": "Planos & Trial",
+    "badgeColor": "#f59e0b",
+    "status": "Em Produção",
+    "summary": "remove automated 7-day CDC refund on cancellation, always keep plan active until period end",
+    "description": "Commit registrado no repositório: \"fix(subscription): remove automated 7-day CDC refund on cancellation, always keep plan active until period end\". Arquivos modificados: backend/controllers/subscriptionController.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2499532b"
+    },
+    "after": {
+      "nova_versao": "remove automated 7-day CDC refund on cancellation, always keep plan active until period end"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/subscriptionController.js"
+    ]
+  },
+  {
+    "id": "change-git-836d2c62",
+    "date": "2026-10-08T23:29:14.000Z",
+    "commit": "836d2c62",
+    "author": "Anderson",
+    "title": "Interface: Update weekly payments chart container to match sim timeline aesthetics",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "update weekly payments chart container to match sim timeline aesthetics",
+    "description": "Commit registrado no repositório: \"style: update weekly payments chart container to match sim timeline aesthetics\". Arquivos modificados: admin/admin_crm_analytics.html.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #836d2c62"
+    },
+    "after": {
+      "nova_versao": "update weekly payments chart container to match sim timeline aesthetics"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_analytics.html"
+    ]
+  },
+  {
+    "id": "change-git-bb57ff62",
+    "date": "2026-10-08T23:18:47.000Z",
+    "commit": "bb57ff62",
+    "author": "Anderson",
+    "title": "Correção: Align isTrial and isPaid capping logic with system KPIs (match)",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "align isTrial and isPaid capping logic with system KPIs",
+    "description": "Commit registrado no repositório: \"fix(match): align isTrial and isPaid capping logic with system KPIs\". Arquivos modificados: backend/services/matchService.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #bb57ff62"
+    },
+    "after": {
+      "nova_versao": "align isTrial and isPaid capping logic with system KPIs"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/services/matchService.js"
+    ]
+  },
+  {
+    "id": "change-git-c0926d9d",
+    "date": "2026-10-08T22:21:23.000Z",
+    "commit": "c0926d9d",
+    "author": "Anderson",
+    "title": "Novo: Add weekly payments comparative chart and limit growth chart to 3 months (analytics)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "add weekly payments comparative chart and limit growth chart to 3 months",
+    "description": "Commit registrado no repositório: \"feat(analytics): add weekly payments comparative chart and limit growth chart to 3 months\". Arquivos modificados: admin/admin_crm_analytics.html, admin/admin_crm_analytics.js, admin/admin_growth_dashboard.js, backend/controllers/adminExpenseController.js, backend/services/cashFlowService.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #c0926d9d"
+    },
+    "after": {
+      "nova_versao": "add weekly payments comparative chart and limit growth chart to 3 months"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_analytics.html",
+      "admin/admin_crm_analytics.js",
+      "admin/admin_growth_dashboard.js",
+      "backend/controllers/adminExpenseController.js",
+      "backend/services/cashFlowService.js"
+    ]
+  },
+  {
+    "id": "change-git-7c6a4577",
+    "date": "2026-10-08T01:11:57.000Z",
+    "commit": "7c6a4577",
+    "author": "Anderson",
+    "title": "Novo: Personalize CS churn messages with real Asaas failure reason and handle voluntary cancellations (crm)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "personalize CS churn messages with real Asaas failure reason and handle voluntary cancellations",
+    "description": "Commit registrado no repositório: \"feat(crm): personalize CS churn messages with real Asaas failure reason and handle voluntary cancellations\". Arquivos modificados: admin/admin_crm_psicologos.js, admin/admin_cs_drawer.js, backend/controllers/adminUsersController.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #7c6a4577"
+    },
+    "after": {
+      "nova_versao": "personalize CS churn messages with real Asaas failure reason and handle voluntary cancellations"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.js",
+      "admin/admin_cs_drawer.js",
+      "backend/controllers/adminUsersController.js"
+    ]
+  },
+  {
+    "id": "change-git-ba8c3bf0",
+    "date": "2026-10-08T00:56:08.000Z",
+    "commit": "ba8c3bf0",
+    "author": "Anderson",
+    "title": "Correção: Sort pending actions by oldest creation date first (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "sort pending actions by oldest creation date first",
+    "description": "Commit registrado no repositório: \"fix(crm): sort pending actions by oldest creation date first\". Arquivos modificados: backend/controllers/adminUsersController.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ba8c3bf0"
+    },
+    "after": {
+      "nova_versao": "sort pending actions by oldest creation date first"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/adminUsersController.js"
+    ]
+  },
+  {
+    "id": "change-git-47dc7ee4",
+    "date": "2026-10-08T00:50:53.000Z",
+    "commit": "47dc7ee4",
+    "author": "Anderson",
+    "title": "Novo: Auto transition to real observed churn when active base reaches 100 (cmo)",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "auto transition to real observed churn when active base reaches 100",
+    "description": "Commit registrado no repositório: \"feat(cmo): auto transition to real observed churn when active base reaches 100\". Arquivos modificados: backend/routes/cmoRoutes.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #47dc7ee4"
+    },
+    "after": {
+      "nova_versao": "auto transition to real observed churn when active base reaches 100"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/routes/cmoRoutes.js"
+    ]
+  },
+  {
+    "id": "change-git-4e097f56",
+    "date": "2026-10-08T00:40:37.000Z",
+    "commit": "4e097f56",
+    "author": "Anderson",
+    "title": "Correção: Optimize dashboard latency with caching and correct cohort metric logic (cmo)",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "optimize dashboard latency with caching and correct cohort metric logic",
+    "description": "Commit registrado no repositório: \"fix(cmo): optimize dashboard latency with caching and correct cohort metric logic\". Arquivos modificados: backend/routes/cmoRoutes.js, backend/services/googleAdsService.js, backend/services/metaAdsService.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4e097f56"
+    },
+    "after": {
+      "nova_versao": "optimize dashboard latency with caching and correct cohort metric logic"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/routes/cmoRoutes.js",
+      "backend/services/googleAdsService.js",
+      "backend/services/metaAdsService.js"
+    ]
+  },
+  {
+    "id": "change-git-a0826e9a",
+    "date": "2026-10-07T22:36:22.000Z",
+    "commit": "a0826e9a",
+    "author": "Anderson",
+    "title": "Correção: Resolve Asaas subscription cancellation bug by issuing DELETE instead of PUT endDate",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "resolve Asaas subscription cancellation bug by issuing DELETE instead of PUT endDate",
+    "description": "Commit registrado no repositório: \"fix: resolve Asaas subscription cancellation bug by issuing DELETE instead of PUT endDate\". Arquivos modificados: backend/controllers/subscriptionController.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a0826e9a"
+    },
+    "after": {
+      "nova_versao": "resolve Asaas subscription cancellation bug by issuing DELETE instead of PUT endDate"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/subscriptionController.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-cd921549",
+    "date": "2026-10-07T01:01:22.000Z",
+    "commit": "cd921549",
+    "author": "Anderson",
+    "title": "Novo: V6 Match Engine and Fairness Impact Dashboard",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "V6 Match Engine and Fairness Impact Dashboard",
+    "description": "Commit registrado no repositório: \"feat: V6 Match Engine and Fairness Impact Dashboard\". Arquivos modificados: admin/admin_analytics_funil.html, admin/admin_analytics_funil.js, admin/admin_cmo_metrics.html, backend/routes/cmoRoutes.js, backend/scripts/compare_v6_match.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #cd921549"
+    },
+    "after": {
+      "nova_versao": "V6 Match Engine and Fairness Impact Dashboard"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.html",
+      "admin/admin_analytics_funil.js",
+      "admin/admin_cmo_metrics.html",
+      "backend/routes/cmoRoutes.js",
+      "backend/scripts/compare_v6_match.js",
+      "security/reports/gate_report.json",
+      "security/reports/npm_audit.json"
+    ]
+  },
+  {
+    "id": "change-git-fb635b35",
+    "date": "2026-10-07T00:42:30.000Z",
+    "commit": "fb635b35",
+    "author": "Anderson",
+    "title": "Correção: Resolve critical proxy-addr vulnerability",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "Resolve critical proxy-addr vulnerability",
+    "description": "Commit registrado no repositório: \"fix: Resolve critical proxy-addr vulnerability\". Arquivos modificados: package-lock.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #fb635b35"
+    },
+    "after": {
+      "nova_versao": "Resolve critical proxy-addr vulnerability"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "package-lock.json"
+    ]
+  },
+  {
+    "id": "change-git-c5ccc58f",
+    "date": "2026-10-04T14:14:43.000Z",
+    "commit": "c5ccc58f",
+    "author": "Anderson",
+    "title": "Correção: Anchor simulation inputs to live data, detach from historical selected month (cmo)",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "anchor simulation inputs to live data, detach from historical selected month",
+    "description": "Commit registrado no repositório: \"fix(cmo): anchor simulation inputs to live data, detach from historical selected month\". Arquivos modificados: admin/admin_cmo_metrics.html, admin/admin_cmo_metrics.js, backend/routes/cmoRoutes.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #c5ccc58f"
+    },
+    "after": {
+      "nova_versao": "anchor simulation inputs to live data, detach from historical selected month"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.html",
+      "admin/admin_cmo_metrics.js",
+      "backend/routes/cmoRoutes.js"
+    ]
+  },
+  {
+    "id": "change-git-0c347ab1",
+    "date": "2026-10-04T01:58:26.000Z",
+    "commit": "0c347ab1",
+    "author": "Anderson",
+    "title": "Novo: Separate budget from spend pace for Meta and Google (cmo)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "separate budget from spend pace for Meta and Google",
+    "description": "Commit registrado no repositório: \"feat(cmo): separate budget from spend pace for Meta and Google\". Arquivos modificados: admin/admin_cmo_metrics.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #0c347ab1"
+    },
+    "after": {
+      "nova_versao": "separate budget from spend pace for Meta and Google"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-e7fcfab1",
+    "date": "2026-10-04T01:45:56.000Z",
+    "commit": "e7fcfab1",
+    "author": "Anderson",
+    "title": "Novo: Add Google Ads and Audience strategy blocks (cmo)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "add Google Ads and Audience strategy blocks",
+    "description": "Commit registrado no repositório: \"feat(cmo): add Google Ads and Audience strategy blocks\". Arquivos modificados: admin/admin_cmo_metrics.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #e7fcfab1"
+    },
+    "after": {
+      "nova_versao": "add Google Ads and Audience strategy blocks"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-733f4f64",
+    "date": "2026-10-04T01:21:08.000Z",
+    "commit": "733f4f64",
+    "author": "Anderson",
+    "title": "Novo: Separate theoretical allocation from executable scale limits (cmo)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "separate theoretical allocation from executable scale limits",
+    "description": "Commit registrado no repositório: \"feat(cmo): separate theoretical allocation from executable scale limits\". Arquivos modificados: admin/admin_cmo_metrics.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #733f4f64"
+    },
+    "after": {
+      "nova_versao": "separate theoretical allocation from executable scale limits"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-b3505c4f",
+    "date": "2026-10-04T01:06:34.000Z",
+    "commit": "b3505c4f",
+    "author": "Anderson",
+    "title": "Correção: Resolve Founder Decision model rendering and CPL object cast (cmo)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "resolve Founder Decision model rendering and CPL object cast",
+    "description": "Commit registrado no repositório: \"fix(cmo): resolve Founder Decision model rendering and CPL object cast\". Arquivos modificados: admin/admin_cmo_metrics.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #b3505c4f"
+    },
+    "after": {
+      "nova_versao": "resolve Founder Decision model rendering and CPL object cast"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-08353db1",
+    "date": "2026-10-04T00:56:13.000Z",
+    "commit": "08353db1",
+    "author": "Anderson",
+    "title": "Manutenção: Add debug to buildFounderDecisionModel",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "add debug to buildFounderDecisionModel",
+    "description": "Commit registrado no repositório: \"chore: add debug to buildFounderDecisionModel\". Arquivos modificados: admin/admin_cmo_metrics.js, backend/models/SystemSetting.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #08353db1"
+    },
+    "after": {
+      "nova_versao": "add debug to buildFounderDecisionModel"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "backend/models/SystemSetting.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-a6b305a3",
+    "date": "2026-10-04T00:48:44.000Z",
+    "commit": "a6b305a3",
+    "author": "Anderson",
+    "title": "Refatoração: Manual inputs for CMO simulator financial configs",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "manual inputs for CMO simulator financial configs",
+    "description": "Commit registrado no repositório: \"refactor: manual inputs for CMO simulator financial configs\". Arquivos modificados: admin/admin_cmo_metrics.html, admin/admin_cmo_metrics.js, backend/routes/cmoRoutes.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a6b305a3"
+    },
+    "after": {
+      "nova_versao": "manual inputs for CMO simulator financial configs"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.html",
+      "admin/admin_cmo_metrics.js",
+      "backend/routes/cmoRoutes.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-9f8e580b",
+    "date": "2026-10-03T18:40:47.000Z",
+    "commit": "9f8e580b",
+    "author": "Anderson",
+    "title": "Novo: Remove Meta Ads auto start/pause logic",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "Remove Meta Ads auto start/pause logic",
+    "description": "Commit registrado no repositório: \"Remove Meta Ads auto start/pause logic\". Arquivos modificados: backend/cron/metaAdsCron.js, backend/jobs/cronScheduler.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9f8e580b"
+    },
+    "after": {
+      "nova_versao": "Remove Meta Ads auto start/pause logic"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/cron/metaAdsCron.js",
+      "backend/jobs/cronScheduler.js"
+    ]
+  },
+  {
+    "id": "change-git-301c14f6",
+    "date": "2026-10-03T18:30:45.000Z",
+    "commit": "301c14f6",
+    "author": "Anderson",
+    "title": "Novo: Fix CMO Metrics issues (Issue 25I)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "Fix CMO Metrics issues (Issue 25I)",
+    "description": "Commit registrado no repositório: \"Fix CMO Metrics issues (Issue 25I)\". Arquivos modificados: admin/admin_cmo_metrics.html, admin/admin_cmo_metrics.js, backend/routes/cmoRoutes.js, security/reports/gate_report.json, security/reports/npm_audit.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #301c14f6"
+    },
+    "after": {
+      "nova_versao": "Fix CMO Metrics issues (Issue 25I)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.html",
+      "admin/admin_cmo_metrics.js",
+      "backend/routes/cmoRoutes.js",
+      "security/reports/gate_report.json",
+      "security/reports/npm_audit.json"
+    ]
+  },
+  {
+    "id": "change-git-06846156",
+    "date": "2026-10-02T00:48:27.000Z",
+    "commit": "06846156",
+    "author": "Anderson",
+    "title": "Correção: Expose exact google ads error message",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "expose exact google ads error message",
+    "description": "Commit registrado no repositório: \"fix: expose exact google ads error message\". Arquivos modificados: backend/routes/cmoRoutes.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #06846156"
+    },
+    "after": {
+      "nova_versao": "expose exact google ads error message"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/routes/cmoRoutes.js"
+    ]
+  },
+  {
+    "id": "change-git-3cc5bb5e",
+    "date": "2026-10-02T00:35:34.000Z",
+    "commit": "3cc5bb5e",
+    "author": "Anderson",
+    "title": "Correção: Reference error simTrialConvType scope",
+    "category": "Planos & Trial",
+    "badgeColor": "#f59e0b",
+    "status": "Em Produção",
+    "summary": "reference error simTrialConvType scope",
+    "description": "Commit registrado no repositório: \"fix: reference error simTrialConvType scope\". Arquivos modificados: backend/routes/cmoRoutes.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #3cc5bb5e"
+    },
+    "after": {
+      "nova_versao": "reference error simTrialConvType scope"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/routes/cmoRoutes.js"
+    ]
+  },
+  {
+    "id": "change-git-6553a21d",
+    "date": "2026-10-02T00:29:32.000Z",
+    "commit": "6553a21d",
+    "author": "Anderson",
+    "title": "Correção: Access googleCampaigns as object",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "access googleCampaigns as object",
+    "description": "Commit registrado no repositório: \"fix: access googleCampaigns as object\". Arquivos modificados: backend/routes/cmoRoutes.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #6553a21d"
+    },
+    "after": {
+      "nova_versao": "access googleCampaigns as object"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/routes/cmoRoutes.js"
+    ]
+  },
+  {
+    "id": "change-git-ae93ff62",
+    "date": "2026-10-02T00:20:44.000Z",
+    "commit": "ae93ff62",
+    "author": "Anderson",
+    "title": "Correção: Update gate risk exceptions and google ads handling",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "update gate risk exceptions and google ads handling",
+    "description": "Commit registrado no repositório: \"fix: update gate risk exceptions and google ads handling\". Arquivos modificados: admin/admin_cmo_metrics.js, admin/admin_growth_dashboard.js, backend/package-lock.json, backend/routes/cmoRoutes.js, backend/services/googleAdsService.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ae93ff62"
+    },
+    "after": {
+      "nova_versao": "update gate risk exceptions and google ads handling"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "admin/admin_growth_dashboard.js",
+      "backend/package-lock.json",
+      "backend/routes/cmoRoutes.js",
+      "backend/services/googleAdsService.js",
+      "backend/services/growthService.js",
+      "security/gate.js"
+    ]
+  },
+  {
+    "id": "change-002",
+    "date": "2026-09-26T21:42:00-03:00",
+    "commit": "76f382e1",
+    "author": "Anderson",
+    "title": "Implantação do Motor de Match V6 com Trava Mensal",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "Novo algoritmo de distribuição de pacientes que garante justiça e prioridade absoluta para pagantes (limite de 3 cliques/mês para pagantes e 1 clique para trials).",
+    "description": "O motor V6 introduziu limites mensais rigorosos para evitar a concentração de cliques em poucos profissionais. Trials agora recebem no máximo 1 clique/mês, liberando o fluxo de demanda para que todos os psicólogos pagantes atinjam sua cota de 3 cliques.",
+    "rationale": "Evitar o churn de psicólogos pagantes que reclamavam da falta de pacientes enquanto psicólogos em período de teste gratuito recebiam contatos em excesso.",
+    "before": {
+      "prioridade": "Distribuição sem teto mensal rígido",
+      "distribuicao_trials": "Trials concorriam livremente com pagantes por slots",
+      "capacidade_pagante": "Alguns pagantes recebiam 0 cliques no mês"
+    },
+    "after": {
+      "prioridade": "Pagantes têm prioridade de 3 cliques e trials travados em 1 clique",
+      "distribuicao_trials": "Trial sai da rotação assim que atinge 1 clique",
+      "capacidade_pagante": "68.3% dos cliques entregues para pagantes com cota mensal garantida"
+    },
+    "metricsToCompare": [
+      {
+        "name": "Share de Cliques para Pagantes",
+        "before": "~40%",
+        "after": "68.3% (Auditado com 63 cliques)",
+        "trend": "positive"
+      },
+      {
+        "name": "Conformidade do Teto de Trials",
+        "before": "Sem controle rígido",
+        "after": "100% de conformidade (0 trials com >1 clique)",
+        "trend": "positive"
+      }
+    ],
+    "filesChanged": [
+      "backend/services/matchEngineV6.js",
+      "backend/controllers/psychologistController.js",
+      "views/profissionais.ejs"
+    ]
+  },
+  {
+    "id": "change-001",
+    "date": "2026-09-19T19:16:17-03:00",
+    "commit": "d30e5ea7",
+    "author": "Anderson",
+    "title": "Redução do Período de Testes de 14 para 7 Dias",
+    "category": "Planos & Trial",
+    "badgeColor": "#f59e0b",
+    "status": "Em Produção",
+    "summary": "O período de trial gratuito oferecido a novos psicólogos foi ajustado de 14 para 7 dias em todas as etapas de cadastro, questionários e cobrança.",
+    "description": "Com o objetivo de diminuir o ciclo de vendas e evitar o esfriamento de leads no trial, o período de avaliação gratuita do plano Essencial passou de 14 para 7 dias. A alteração abrangeu a página de cadastro (profissionais.ejs), controllers de pagamento, autenticação e regras de expiração.",
+    "rationale": "Em 14 dias, psicólogos que não tinham fechamentos na 1ª semana acabavam esquecendo a plataforma na 2ª semana, reduzindo o senso de urgência. Além disso, trials consumiam matchmaking e suporte sem gerar caixa por até 21 dias.",
+    "before": {
+      "trial_duration": "14 dias corridos após o cadastro",
+      "avg_days_to_convert": "18.1 dias para a primeira mensalidade",
+      "free_inventory_consumption": "14 dias consumindo impressões de match no algoritmo",
+      "copy_landing_page": "Criar meu perfil (14 dias grátis)"
+    },
+    "after": {
+      "trial_duration": "7 dias corridos após o cadastro",
+      "avg_days_to_convert": "7.8 dias para a primeira mensalidade (aceleração de 57%)",
+      "free_inventory_consumption": "Redução de 50% no tempo de consumo gratuito do match",
+      "copy_landing_page": "Criar meu perfil (7 dias grátis)"
+    },
+    "metricsToCompare": [
+      {
+        "name": "Tempo Médio até a Conversão",
+        "before": "18.1 dias",
+        "after": "7.8 dias (-57% no ciclo de venda)",
+        "trend": "positive"
+      },
+      {
+        "name": "Taxa de Conversão da Cohort",
+        "before": "13.5% (Agosto/Setembro 14d)",
+        "after": "10.9% (7d maduros) / 16.4% no pico",
+        "trend": "neutral"
+      },
+      {
+        "name": "Velocidade de Retorno do CAC",
+        "before": "Baixa (~3 semanas para entrada no caixa)",
+        "after": "Alta (Entrada de caixa em 1 semana)",
+        "trend": "positive"
+      }
+    ],
+    "filesChanged": [
+      "views/profissionais.ejs",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/controllers/subscriptionController.js"
     ]
   }
 ]

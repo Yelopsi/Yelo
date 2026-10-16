@@ -3,19 +3,28 @@
     <div class="main-header" style="padding: 24px 28px; margin-bottom: 24px; background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); border-radius: 16px; color: #fff; box-shadow: 0 10px 25px -5px rgba(27, 67, 50, 0.25);">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
             <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
                     <span style="background: rgba(255, 238, 140, 0.2); color: #FFEE8C; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid rgba(255, 238, 140, 0.3);">
                         🚀 Product & Tech Changelog
+                    </span>
+                    <span style="background: rgba(16, 185, 129, 0.2); color: #a7f3d0; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 5px;">
+                        <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                        Auto-sync Git Ativo
                     </span>
                     <span style="color: rgba(255,255,255,0.7); font-size: 0.85rem;" id="changelog-last-sync">Sincronizado</span>
                 </div>
                 <h1 style="font-size: 1.85rem; font-weight: 800; color: #fff; margin: 0; letter-spacing: -0.02em;">Histórico de Alterações do Sistema</h1>
                 <p style="color: rgba(255, 255, 255, 0.85); margin-top: 6px; font-size: 0.95rem; max-width: 650px;">
-                    Registro de todas as modificações técnicas, regras de negócio e testes A/B para acompanhamento de impacto e comparação com os resultados atuais.
+                    Registro contínuo e automático de todas as modificações técnicas, regras de negócio e commits da plataforma com comparativo de impacto.
                 </p>
             </div>
             
-            <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <button id="btn-sync-git-changelog" class="btn-secondary-action" style="background: rgba(255,255,255,0.18); color: #fff; font-weight: 700; border: 1px solid rgba(255,255,255,0.35); padding: 11px 18px; border-radius: 50px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.88rem; transition: all 0.2s; backdrop-filter: blur(4px);">
+                    <svg id="icon-sync-git" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    <span id="text-sync-git">Sincronizar Git</span>
+                </button>
+
                 <button id="btn-open-new-change-modal" class="btn-primary-action" style="background: #FFEE8C; color: #1B4332; font-weight: 700; border: none; padding: 12px 20px; border-radius: 50px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     <span>Registrar Alteração</span>
@@ -83,6 +92,10 @@
                 <button class="cat-pill" data-cat="Motor de Match">Motor de Match</button>
                 <button class="cat-pill" data-cat="CRM & Mensageria">CRM & Mensageria</button>
                 <button class="cat-pill" data-cat="Billing & Asaas">Billing & Asaas</button>
+                <button class="cat-pill" data-cat="Admin & Plataforma">Admin & Plataforma</button>
+                <button class="cat-pill" data-cat="Segurança & Infra">Segurança & Infra</button>
+                <button class="cat-pill" data-cat="Performance & Cache">Performance & Cache</button>
+                <button class="cat-pill" data-cat="Analytics & Métricas">Analytics & Métricas</button>
             </div>
 
             <!-- Campo de Busca -->
@@ -95,6 +108,31 @@
 
     <!-- ÁREA DE CONTEÚDO PRINCIPAL (TIMELINE DAS ALTERAÇÕES) -->
     <div id="tab-cataloged-content">
+        <!-- BARRA SUPERIOR DE PAGINAÇÃO E SELEÇÃO DE ITENS POR PÁGINA -->
+        <div class="changelog-pagination-toolbar" id="cataloged-pagination-toolbar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; padding: 12px 20px; background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+            <div style="font-size: 0.88rem; color: #4b5563; display: flex; align-items: center; gap: 6px;">
+                <span>Mostrando</span>
+                <strong id="pagination-info-range" style="color: #1B4332; font-weight: 800;">0 - 0</strong>
+                <span>de</span>
+                <strong id="pagination-info-total" style="color: #1B4332; font-weight: 800;">0</strong>
+                <span>alterações encontradas</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label for="select-per-page" style="font-size: 0.85rem; color: #6b7280; font-weight: 600;">Exibir por página:</label>
+                <div style="position: relative;">
+                    <select id="select-per-page" style="padding: 7px 32px 7px 14px; border-radius: 8px; border: 1.5px solid #d1d5db; background: #f9fafb; color: #1B4332; font-weight: 700; font-size: 0.85rem; cursor: pointer; outline: none; transition: border-color 0.2s; appearance: none; -webkit-appearance: none;">
+                        <option value="10" selected>10 alterações</option>
+                        <option value="25">25 alterações</option>
+                        <option value="50">50 alterações</option>
+                        <option value="100">100 alterações</option>
+                        <option value="all">Todas as alterações</option>
+                    </select>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            </div>
+        </div>
+
         <div id="changelog-loading" style="text-align: center; padding: 40px; color: #6b7280;">
             <div class="loader-spinner" style="width: 36px; height: 36px; border: 3px solid #e5e7eb; border-top-color: #1B4332; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;"></div>
             <p style="font-weight: 600;">Carregando histórico de alterações...</p>
@@ -109,10 +147,39 @@
             <h3 style="color: #374151; margin: 10px 0 4px;">Nenhuma alteração encontrada</h3>
             <p style="color: #6b7280; font-size: 0.9rem;">Tente ajustar o termo de busca ou trocar a categoria selecionada.</p>
         </div>
+
+        <!-- CONTROLES INFERIORES DE PAGINAÇÃO -->
+        <div id="changelog-pagination-bottom" class="pagination-container" style="display: none; justify-content: center; align-items: center; gap: 8px; margin-top: 28px; margin-bottom: 24px; flex-wrap: wrap;">
+            <!-- Botões de página injetados dinamicamente via JS -->
+        </div>
     </div>
 
     <!-- ÁREA DE COMMITS GIT -->
     <div id="tab-git-content" style="display: none;">
+        <!-- BARRA SUPERIOR DE PAGINAÇÃO DE COMMITS -->
+        <div class="changelog-pagination-toolbar" id="git-pagination-toolbar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; padding: 12px 20px; background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+            <div style="font-size: 0.88rem; color: #4b5563; display: flex; align-items: center; gap: 6px;">
+                <span>Mostrando</span>
+                <strong id="git-pagination-info-range" style="color: #1B4332; font-weight: 800;">0 - 0</strong>
+                <span>de</span>
+                <strong id="git-pagination-info-total" style="color: #1B4332; font-weight: 800;">0</strong>
+                <span>commits registrados</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label for="git-select-per-page" style="font-size: 0.85rem; color: #6b7280; font-weight: 600;">Exibir por página:</label>
+                <div style="position: relative;">
+                    <select id="git-select-per-page" style="padding: 7px 32px 7px 14px; border-radius: 8px; border: 1.5px solid #d1d5db; background: #f9fafb; color: #1B4332; font-weight: 700; font-size: 0.85rem; cursor: pointer; outline: none; transition: border-color 0.2s; appearance: none; -webkit-appearance: none;">
+                        <option value="10" selected>10 commits</option>
+                        <option value="25">25 commits</option>
+                        <option value="50">50 commits</option>
+                        <option value="all">Todos os commits</option>
+                    </select>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1B4332" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            </div>
+        </div>
+
         <div class="git-commits-card" style="background: #fff; border-radius: 14px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             <div style="padding: 16px 20px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="margin: 0; font-size: 1rem; color: #374151; font-weight: 700;">Últimos Deploys / Commits do Repositório</h3>
@@ -121,6 +188,11 @@
             <div id="git-commits-list">
                 <!-- Lista de commits via JS -->
             </div>
+        </div>
+
+        <!-- CONTROLES INFERIORES DE PAGINAÇÃO GIT -->
+        <div id="git-pagination-bottom" class="pagination-container" style="display: none; justify-content: center; align-items: center; gap: 8px; margin-top: 24px; margin-bottom: 24px; flex-wrap: wrap;">
+            <!-- Botões de página injetados via JS -->
         </div>
     </div>
 </div>
@@ -368,6 +440,67 @@
     }
     .git-commit-row:last-child {
         border-bottom: none;
+    }
+
+    /* --- ESTILOS DE PAGINAÇÃO PREMIUM --- */
+    .pagination-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        user-select: none;
+    }
+    .page-btn {
+        min-width: 38px;
+        height: 38px;
+        padding: 0 12px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #374151;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .page-btn:hover:not(:disabled) {
+        border-color: #1B4332;
+        color: #1B4332;
+        background: #f8fafc;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+    }
+    .page-btn.active {
+        background: #1B4332 !important;
+        color: #FFEE8C !important;
+        border-color: #1B4332 !important;
+        font-weight: 800 !important;
+        box-shadow: 0 4px 12px rgba(27, 67, 50, 0.25) !important;
+    }
+    .page-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        background: #f9fafb;
+        border-color: #e5e7eb;
+        color: #9ca3af;
+        transform: none;
+        box-shadow: none;
+    }
+    .page-ellipsis {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 38px;
+        color: #9ca3af;
+        font-weight: 700;
+        font-size: 0.9rem;
     }
 
     /* --- SISTEMA DE MODAL & BOTTOM SHEET (COM TRAVA DE SCROLL) --- */
