@@ -170,7 +170,7 @@
         .kpi-grid {
             display: flex !important;
             flex-wrap: nowrap !important;
-            gap: 12px;
+            gap: 8px !important;
             overflow: visible; /* Permite que o tooltip vaze para cima e evita scrollbar */
         }
         .kpi-card {
@@ -179,23 +179,36 @@
         }
     }
     .kpi-card {
-        padding: 15px 12px !important;
+        padding: 10px 8px !important;
         position: relative;
         transition: border-color 0.3s ease;
     }
     .kpi-card h4 {
-        font-size: 0.8rem !important;
-        line-height: 1.2;
-        min-height: 28px;
+        font-size: 0.76rem !important;
+        line-height: 1.15;
+        min-height: 26px;
+        margin: 0 0 2px 0 !important;
+        white-space: normal;
+        word-break: break-word;
     }
     .kpi-card .kpi-numero {
-        font-size: 2.2rem !important; /* Diminuído de 4rem para evitar expansão do card */
+        font-size: 2.2rem !important; /* Mantido exatamente o tamanho dos números */
         font-weight: 700;
-        margin: 8px 0 !important;
+        margin: 2px 0 4px 0 !important;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
         transition: color 0.3s ease;
     }
     .kpi-card .kpi-delta {
-        font-size: 0.75rem !important;
+        font-size: 0.7rem !important;
+    }
+
+    /* Tooltips nos cards das pontas para não cortarem na lateral */
+    @media (min-width: 769px) {
+        .kpi-card:first-child .info-tooltip::after { left: 0; transform: translateY(5px); }
+        .kpi-card:first-child .info-tooltip:hover::after { transform: translateY(0); }
+        .kpi-card:last-child .info-tooltip::after { left: auto; right: 0; transform: translateY(5px); }
+        .kpi-card:last-child .info-tooltip:hover::after { transform: translateY(0); }
     }
 
     /* FIX: Garante que o tooltip não fique escondido atrás de outros cards do grid */
@@ -378,23 +391,23 @@
         <h4 style="margin: 0 0 10px 0; color: #1e293b; font-size: 1rem; font-weight: 600;">Topo de Funil & Qualidade dos Dados</h4>
         <div class="kpi-grid" style="margin-bottom: 20px;">
             <div class="kpi-card" style="border-top-color: #3498db;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Cliques no WhatsApp <span class="info-tooltip" data-tooltip="Total BRUTO de cliques. Se 1 paciente chamar 3 psicólogos, gera 3 cliques aqui.">i</span></h4>
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Cliques no WhatsApp <span class="info-tooltip" data-tooltip="Total BRUTO de cliques. Se 1 paciente chamar 3 psicólogos, gera 3 cliques aqui.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-total-feedbacks" style="color: #3498db;">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: #f43f5e;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Falhas de Conexão <span class="info-tooltip" data-tooltip="Pacientes Fantasmas: Quantidade de vezes que o paciente clicou mas nunca mandou a primeira mensagem (Fricção da Plataforma).">i</span></h4>
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Falhas de Conexão <span class="info-tooltip" data-tooltip="Pacientes Fantasmas: Quantidade de vezes que o paciente clicou mas nunca mandou a primeira mensagem (Fricção da Plataforma).">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-fantasmas" style="color: #f43f5e;">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: var(--verde-sucesso);">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Contatos Realizados <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo confirmou que a mensagem do paciente realmente chegou no WhatsApp dele.">i</span></h4>
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Contatos Realizados <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo confirmou que a mensagem do paciente realmente chegou no WhatsApp dele.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-recebidas" style="color: var(--verde-sucesso);">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: #f59e0b;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Resposta (Psi) <span class="info-tooltip" data-tooltip="Porcentagem de psicólogos que responderam à nossa pesquisa de feedback perguntando se o lead fechou negócio.">i</span></h4>
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Taxa de Resposta (Psi) <span class="info-tooltip" data-tooltip="Porcentagem de psicólogos que responderam à nossa pesquisa de feedback perguntando se o lead fechou negócio.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-tx-resposta" style="color: #f59e0b;">0%</p>
             </div>
             <div class="kpi-card" style="border-top-color: #64748b;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Não Resposta <span class="info-tooltip" data-tooltip="Porcentagem de interações onde os psicólogos ignoraram/fecharam o popup sem nos dar o feedback.">i</span></h4>
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Taxa de Não Resposta <span class="info-tooltip" data-tooltip="Porcentagem de interações onde os psicólogos ignoraram/fecharam o popup sem nos dar o feedback.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-tx-nao-resposta" style="color: #64748b;">0%</p>
             </div>
         </div>
@@ -403,23 +416,27 @@
         <h4 style="margin: 0 0 10px 0; color: #1e293b; font-size: 1rem; font-weight: 600;">Performance de Vendas</h4>
         <div class="kpi-grid">
             <div class="kpi-card" style="border-top-color: #eab308;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Em Negociação <span class="info-tooltip" data-tooltip="Pacientes que o psicólogo marcou como ainda conversando/negociando.">i</span></h4>
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Em Negociação <span class="info-tooltip" data-tooltip="Pacientes que o psicólogo marcou como ainda conversando/negociando.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-negociacao" style="color: #eab308;">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: #16a34a;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Negócios Fechados <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo confirmou que o lead se tornou um paciente pagante na vida real.">i</span></h4>
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Negócios Fechados <span class="info-tooltip" data-tooltip="Quantidade de vezes que o psicólogo confirmou que o lead se tornou um paciente pagante na vida real.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-fechados" style="color: #16a34a;">0</p>
             </div>
             <div class="kpi-card" style="border-top-color: #ef4444;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Negócios Perdidos <span class="info-tooltip" data-tooltip="Pacientes que enviaram mensagem mas desistiram ou deram vácuo no orçamento.">i</span></h4>
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Negócios Perdidos <span class="info-tooltip" data-tooltip="Pacientes que enviaram mensagem mas desistiram ou deram vácuo no orçamento.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-perdidos" style="color: #ef4444;">0</p>
             </div>
+            <div class="kpi-card" style="border-top-color: #3b82f6;">
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Troca de Mensagens <span class="info-tooltip" data-tooltip="Dos pacientes que clicaram no WhatsApp e deram retorno, qual a porcentagem em que a mensagem realmente chegou e conversaram (Contato Realizado).">i</span></h4>
+                <p class="kpi-numero" id="kpi-wpp-tx-contato" style="color: #3b82f6;">0%</p>
+            </div>
             <div class="kpi-card" style="border-top-color: #8b5cf6;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Fechamento <span class="info-tooltip" data-tooltip="Dos pacientes que REALMENTE mandaram mensagem (Contatos Realizados), qual a porcentagem que se tornou paciente pagante.">i</span></h4>
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Iniciou Terapia <span class="info-tooltip" data-tooltip="Dos pacientes que REALMENTE mandaram mensagem (Contatos Realizados), qual a porcentagem em que o psicólogo confirmou que iniciou a terapia (Taxa de Fechamento).">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-tx-fechamento" style="color: #8b5cf6;">0%</p>
             </div>
             <div class="kpi-card" style="border-top-color: #eab308;">
-                <h4 style="display: flex; align-items: center; gap: 8px;">Taxa de Não Fechamento <span class="info-tooltip" data-tooltip="Porcentagem de leads que entraram em contato mas NÃO se tornaram pagantes.">i</span></h4>
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Taxa de Não Fechamento <span class="info-tooltip" data-tooltip="Porcentagem de leads que entraram em contato mas NÃO se tornaram pagantes.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-tx-nao-fechamento" style="color: #eab308;">0%</p>
             </div>
         </div>

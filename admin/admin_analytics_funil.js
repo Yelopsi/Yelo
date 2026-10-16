@@ -974,6 +974,8 @@ window.initializePage = function() {
         const perdidos = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'ghosted' || f.dealClosed === 'not_started' || f.dealClosed === 'not_started_price' || f.dealClosed === 'not_started_schedule' || f.dealClosed === 'not_started_other')).length;
         
         const fantasmas = feedbacks.filter(f => f.feedbackGiven && !f.contactReceived).length;
+        const totalValidados = recebidas + fantasmas;
+        const taxaContato = totalValidados > 0 ? ((recebidas / totalValidados) * 100).toFixed(1) : 0;
         const taxaFechamento = recebidas > 0 ? ((fechados / recebidas) * 100).toFixed(1) : 0;
         const taxaNaoFechamento = recebidas > 0 ? ((perdidos / recebidas) * 100).toFixed(1) : 0;
 
@@ -986,6 +988,7 @@ window.initializePage = function() {
 
         const elWppTx = document.getElementById('kpi-wpp-tx-resposta');
         const elWppTxNaoResp = document.getElementById('kpi-wpp-tx-nao-resposta');
+        const elWppTxContato = document.getElementById('kpi-wpp-tx-contato');
         const elWppTxFec = document.getElementById('kpi-wpp-tx-fechamento');
         const elWppTxNaoFec = document.getElementById('kpi-wpp-tx-nao-fechamento');
 
@@ -998,6 +1001,7 @@ window.initializePage = function() {
 
         if (elWppTx) elWppTx.innerText = taxaResposta + '%';
         if (elWppTxNaoResp) elWppTxNaoResp.innerText = taxaNaoResposta + '%';
+        if (elWppTxContato) elWppTxContato.innerText = taxaContato + '%';
         if (elWppTxFec) elWppTxFec.innerText = taxaFechamento + '%';
         if (elWppTxNaoFec) elWppTxNaoFec.innerText = taxaNaoFechamento + '%';
 
