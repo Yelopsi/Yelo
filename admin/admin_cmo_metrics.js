@@ -980,7 +980,8 @@ function initGrowthSimulator(data) {
             document.getElementById('sim-month-label').textContent = `Mês ${m}`;
 
             // Card 1: MRR
-            document.querySelector('#sim-card-1 p:first-of-type').textContent = `MRR Projetado (${m}M)`;
+            const card1Title = document.getElementById('sim-card-1-title');
+            if (card1Title) card1Title.textContent = `MRR Projetado (${m}M)`;
             document.getElementById('sim-res-mrr-12m').textContent = formatBRL(projectedMRR);
             document.getElementById('sim-res-mrr-feedback').textContent =
                 `${mrrMultiple}x maior que hoje (${formatBRL(currentMrr)}/mês)`;
@@ -989,28 +990,43 @@ function initGrowthSimulator(data) {
             const newSubs = Math.floor(projectedBase) - currentBase;
             const avgPatientsPerPsi = contactsPerPaidPsiMonth || 2;
             const totalPatientsServed = Math.floor(projectedBase) * avgPatientsPerPsi;
+            const card2Title = document.getElementById('sim-card-2-title');
+            if (card2Title) card2Title.textContent = `Base Projetada (${m}M)`;
             document.getElementById('sim-res-subs-12m').textContent = Math.floor(projectedBase);
-            const card2Sub = document.querySelector('#sim-card-2 p:last-child');
-            if (card2Sub) card2Sub.textContent =
-                `+${newSubs} assinantes líquidos na base em ${m} meses. Meta agregada de demanda: ~${totalPatientsServed.toLocaleString('pt-BR')} cliques no WhatsApp/mês.`;
+            const card2Sub = document.getElementById('sim-res-subs-feedback');
+            if (card2Sub) {
+                card2Sub.textContent = `+${newSubs} assinantes líquidos na base em ${m} meses. Meta agregada de demanda: ~${totalPatientsServed.toLocaleString('pt-BR')} cliques no WhatsApp/mês.`;
+            }
 
             // Card 3: Meta
             const metaDaily = projectedMeta / 30;
+            const card3Title = document.getElementById('sim-card-3-title');
+            if (card3Title) card3Title.textContent = `Meta Ads (${m}M)`;
             document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(projectedMeta);
-            const card3Sub = document.querySelector('#sim-card-3 p:last-child');
-            if (card3Sub) card3Sub.textContent =
-                `≈ ${formatBRL(metaDaily)}/dia recomendados para Mês ${m}.`;
+            const card3Sub = document.getElementById('sim-res-meta-feedback');
+            if (card3Sub) {
+                card3Sub.textContent = `≈ ${formatBRL(metaDaily)}/dia recomendados para Mês ${m}.`;
+            }
 
             // Card 4: Google
             const googleDaily = projectedGoogle / 30;
+            const card4Title = document.getElementById('sim-card-4-title');
+            if (card4Title) card4Title.textContent = `Custo Google (${m}M)`;
             document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(projectedGoogle);
-            const card4Sub = document.querySelector('#sim-card-4 p:last-child');
-            if (card4Sub) card4Sub.textContent =
-                `Custo mensal projetado p/ Mês ${m} (≈ ${formatBRL(googleDaily)}/dia).`;
+            const card4Sub = document.getElementById('sim-res-google-feedback');
+            if (card4Sub) {
+                card4Sub.textContent = `Custo mensal projetado p/ Mês ${m} (≈ ${formatBRL(googleDaily)}/dia).`;
+            }
 
             // Card 5 & 6: LTV e Payback
             const projectedLTV = simResult.dataLTV[index] || 0;
             const projectedPayback = simResult.dataPayback[index] || 0;
+
+            const card5Title = document.getElementById('sim-card-5-title');
+            if (card5Title) card5Title.textContent = `LTV Contribuição (M${m})`;
+
+            const card6Title = document.getElementById('sim-card-6-title');
+            if (card6Title) card6Title.textContent = `CAC Payback (M${m})`;
 
             const elLTV = document.getElementById('sim-res-ltv');
             const elPayback = document.getElementById('sim-res-payback');

@@ -120,7 +120,7 @@
             border: 1px solid #f1f5f9;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -134,11 +134,103 @@
             content: '';
             position: absolute;
             top: 0; left: 0; width: 4px; height: 100%;
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
         }
         .card-mrr::before { background: #3b82f6; }
         .card-base::before { background: #8b5cf6; }
         .card-meta::before { background: #10b981; }
         .card-google::before { background: #f59e0b; }
+
+        /* Tooltip Premium */
+        .info-tooltip {
+            position: relative;
+            cursor: help;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            font-weight: 700;
+            font-family: monospace;
+            line-height: 1;
+            text-transform: none;
+            user-select: none;
+        }
+        .info-tooltip:hover {
+            color: #4338ca;
+            border-color: #6366f1;
+            background-color: #e0e7ff;
+        }
+        .info-tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            background-color: #0f172a;
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            width: max-content;
+            max-width: 250px;
+            text-align: left;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            z-index: 99999;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            font-weight: 500;
+            line-height: 1.45;
+            white-space: normal;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+        .info-tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: calc(100% + 2px);
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            border: 6px solid transparent;
+            border-top-color: #0f172a;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 99999;
+        }
+        .info-tooltip:hover::after, .info-tooltip:hover::before {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        #sim-card-6 .info-tooltip::after,
+        #sim-card-7 .info-tooltip::after {
+            left: auto;
+            right: 0;
+            transform: translateY(4px);
+        }
+        #sim-card-6 .info-tooltip::before,
+        #sim-card-7 .info-tooltip::before {
+            left: auto;
+            right: 4px;
+            transform: translateY(4px);
+        }
+        #sim-card-6 .info-tooltip:hover::after,
+        #sim-card-6 .info-tooltip:hover::before,
+        #sim-card-7 .info-tooltip:hover::after,
+        #sim-card-7 .info-tooltip:hover::before {
+            transform: translateY(0);
+        }
     </style>
 
     <div class="kpi-card" style="border-top-color: #8b5cf6; margin-bottom: 30px;">
@@ -223,13 +315,17 @@
 
             <div class="sim-cards-grid" style="flex: 1 1 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border-top: 1px solid #e2e8f0; padding-top: 30px; gap: 20px;">
 
-                <div id="sim-card-1" class="premium-card card-mrr" title="Sua Receita Recorrente Mensal projetada daqui a 12 meses.">
+                <!-- CARD 1: MRR -->
+                <div id="sim-card-1" class="premium-card card-mrr">
                     <div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                            <div style="background: #eff6ff; padding: 8px; border-radius: 8px; color: #3b82f6; display: flex;">
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="background: #eff6ff; padding: 8px; border-radius: 8px; color: #3b82f6; display: flex;">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <p id="sim-card-1-title" style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">MRR Projetado (12M)</p>
                             </div>
-                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">MRR Projetado (12M)</p>
+                            <span class="info-tooltip" data-tooltip="Receita Recorrente Mensal estimada no mês selecionado. É calculada multiplicando o total de psicólogos pagantes ativos pelo valor da assinatura (ARPU).">i</span>
                         </div>
                         <p id="sim-res-mrr-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
                     </div>
@@ -238,78 +334,102 @@
                     </div>
                 </div>
 
-                <div id="sim-card-2" class="premium-card card-base" title="Total de Psicólogos ativos na base daqui a 12 meses.">
+                <!-- CARD 2: BASE -->
+                <div id="sim-card-2" class="premium-card card-base">
                     <div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                            <div style="background: #f5f3ff; padding: 8px; border-radius: 8px; color: #8b5cf6; display: flex;">
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="background: #f5f3ff; padding: 8px; border-radius: 8px; color: #8b5cf6; display: flex;">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                </div>
+                                <p id="sim-card-2-title" style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Base Projetada (12M)</p>
                             </div>
-                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Base Projetada (12M)</p>
+                            <span class="info-tooltip" data-tooltip="Total de psicólogos pagantes ativos previstos na plataforma ao final do mês, somando novas aquisições e descontando o churn (cancelamentos) estimado.">i</span>
                         </div>
                         <p id="sim-res-subs-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
                     </div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Psicólogos assinantes na plataforma.</p>
+                    <p id="sim-res-subs-feedback" style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Psicólogos assinantes na plataforma.</p>
                 </div>
 
-                <div id="sim-card-3" class="premium-card card-meta" title="Verba mensal dedicada à aquisição de novos trials na Meta.">
+                <!-- CARD 3: META ADS -->
+                <div id="sim-card-3" class="premium-card card-meta">
                     <div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                            <div style="background: #ecfdf5; padding: 8px; border-radius: 8px; color: #10b981; display: flex;">
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="background: #ecfdf5; padding: 8px; border-radius: 8px; color: #10b981; display: flex;">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                </div>
+                                <p id="sim-card-3-title" style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Meta Ads Recomendado (12M)</p>
                             </div>
-                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Meta Recomendado (M1)</p>
+                            <span class="info-tooltip" data-tooltip="Verba mensal sugerida no Meta Ads (Instagram/Facebook) para adquirir os novos psicólogos previstos no plano, já considerando a escala e a taxa de conversão de trial.">i</span>
                         </div>
                         <p id="sim-res-meta-budget-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
                     </div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Meta Ads recomendado — Mês 1.</p>
+                    <p id="sim-res-meta-feedback" style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Meta Ads recomendado — Mês 12.</p>
                 </div>
 
-                <div id="sim-card-4" class="premium-card card-google" title="Custo estimado no Google Ads para reter e alimentar a base de psicólogos com pacientes.">
+                <!-- CARD 4: GOOGLE ADS -->
+                <div id="sim-card-4" class="premium-card card-google">
                     <div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                            <div style="background: #fffbeb; padding: 8px; border-radius: 8px; color: #f59e0b; display: flex;">
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="background: #fffbeb; padding: 8px; border-radius: 8px; color: #f59e0b; display: flex;">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
+                                <p id="sim-card-4-title" style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Custo Google (12M)</p>
                             </div>
-                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Custo Google (12M)</p>
+                            <span class="info-tooltip" data-tooltip="Investimento total projetado no Google Ads (Busca de Pacientes) para garantir o volume de contatos no WhatsApp prometido aos assinantes da base e sustentar a retenção.">i</span>
                         </div>
                         <p id="sim-res-google-budget-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
                     </div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Custo projetado de sustentação da base.</p>
+                    <p id="sim-res-google-feedback" style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Custo projetado de sustentação da base.</p>
                 </div>
 
-                <div id="sim-card-5" class="premium-card" style="border-top-color: #ec4899;" title="Life-time Value real por assinante, já descontando manutenção e impostos.">
+                <!-- CARD 5: LTV CONTRIBUIÇÃO -->
+                <div id="sim-card-5" class="premium-card" style="border-top-color: #ec4899;">
                     <div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                            <div style="background: #fdf2f8; padding: 8px; border-radius: 8px; color: #ec4899; display: flex;">
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="background: #fdf2f8; padding: 8px; border-radius: 8px; color: #ec4899; display: flex;">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <p id="sim-card-5-title" style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">LTV Contribuição (M1)</p>
                             </div>
-                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">LTV Contribuição (M1)</p>
+                            <span class="info-tooltip" data-tooltip="Lifetime Value Real por Psicólogo: lucro líquido acumulado que um psicólogo deixa durante todo o seu ciclo de vida na Yelo, já descontando impostos, taxa do Asaas e o custo dos pacientes no Google.">i</span>
                         </div>
                         <p id="sim-res-ltv" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
                     </div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Lucro LTV real por psi (já s/ OPEX).</p>
+                    <p id="sim-card-5-sub" style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Lucro LTV real por psi (já s/ OPEX e Google).</p>
                 </div>
 
-                <div id="sim-card-6" class="premium-card" style="border-top-color: #6366f1;" title="Quantos meses o psicólogo precisa ficar assinando apenas para pagar seu Custo Combinado de Aquisição.">
+                <!-- CARD 6: CAC PAYBACK -->
+                <div id="sim-card-6" class="premium-card" style="border-top-color: #6366f1;">
                     <div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                            <div style="background: #e0e7ff; padding: 8px; border-radius: 8px; color: #6366f1; display: flex;">
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="background: #e0e7ff; padding: 8px; border-radius: 8px; color: #6366f1; display: flex;">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <p id="sim-card-6-title" style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">CAC Payback (M1)</p>
                             </div>
-                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">CAC Payback (M1)</p>
+                            <span class="info-tooltip" data-tooltip="Meses para recuperar o investimento (Break-even). Indica quantos meses de mensalidade são necessários para pagar o Custo Combinado de Aquisição (Meta Ads + Google Ads consumido nos trials).">i</span>
                         </div>
                         <p id="sim-res-payback" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
                     </div>
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Meses de quebra-cabeça (Break-even).</p>
+                    <p id="sim-card-6-sub" style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Meses para retorno do investimento (Break-even).</p>
                 </div>
 
-                <div id="sim-card-7" class="premium-card card-extrapolation" title="Compara o gasto Meta projetado neste mês com o gasto mensal histórico usado como referência. Multiplicadores altos representam maior extrapolação além dos dados observados, não necessariamente maior risco comprovado.">
+                <!-- CARD 7: EXTRAPOLAÇÃO META -->
+                <div id="sim-card-7" class="premium-card card-extrapolation">
                     <div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                            <div style="background: #f1f5f9; padding: 8px; border-radius: 8px; color: #475569; display: flex;">
-                                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="background: #f1f5f9; padding: 8px; border-radius: 8px; color: #475569; display: flex;">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                </div>
+                                <p id="sim-card-7-title" style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Extrapolação Meta</p>
                             </div>
-                            <p style="font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Extrapolação Meta</p>
+                            <span class="info-tooltip" data-tooltip="Mede quantas vezes o gasto projetado no Meta Ads supera o histórico real executado. Múltiplos altos alertam para incerteza na capacidade de escalar o público sem encarecer o CAC.">i</span>
                         </div>
                         <p id="sim-res-extrapolation" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
                     </div>
