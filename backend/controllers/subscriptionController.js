@@ -2,9 +2,13 @@ const db = require('../models');
 const bcrypt = require('bcryptjs');
 const { sendSubscriptionCancelledEmail } = require('../services/emailService');
 
-// Configurações do Asaas
-let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
-ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, ''); // Remove barra final e espaços
+let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
+if (process.env.ASAAS_API_KEY && process.env.ASAAS_API_KEY.includes('prod_')) {
+    ASAAS_API_URL = 'https://api.asaas.com/v3';
+} else if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+    ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+}
+ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
 
 // ----------------------------------------------------------------------
@@ -138,8 +142,8 @@ exports.cancelSubscription = async (req, res) => {
         // 3. ATUALIZA O BANCO LOCAL
         // NÃO atualizamos o planExpiresAt baseado no Asaas, pois o Asaas joga a data muito pra frente
         // O planExpiresAt local já reflete exatamente o que o psicólogo pagou.
-        // O usuário continuará ativo ('status' ativo e 'planExpiresAt' no futuro).
         await psychologist.update({ cancelAtPeriodEnd: true, canceledAt: new Date() });
+        await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: subId } }).catch(() => {});
 
         // Envia E-mail de Cancelamento (opcional, já que a renovação foi cancelada)
         sendSubscriptionCancelledEmail(psychologist).catch(e => {});

@@ -30,11 +30,18 @@ class PaymentStateService {
         await this.updateFinancialState(event, asaasPayment);
     }
 
-    static async fetchRealPayment(paymentId) {
-        let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
-        if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
-            ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+    static getAsaasApiUrl() {
+        let url = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
+        if (process.env.ASAAS_API_KEY && process.env.ASAAS_API_KEY.includes('prod_')) {
+            url = 'https://api.asaas.com/v3';
+        } else if (url.includes('sandbox.asaas.com') && !url.includes('/api')) {
+            url = url.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
         }
+        return url.trim().replace(/\/+$/, '');
+    }
+
+    static async fetchRealPayment(paymentId) {
+        const ASAAS_API_URL = this.getAsaasApiUrl();
 
         const asaasRes = await fetch(`${ASAAS_API_URL}/payments/${paymentId}`, {
             headers: {
@@ -554,23 +561,39 @@ class PaymentStateService {
                 return;
             }
 
-            const currentPayments = (lockedPsi.subscription_payments_count || 0) + 1;
+            // Contagem idempotente e exata de pagamentos confirmados
+            const confirmedPaymentsCount = await db.Payment.count({
+                where: {
+                    psychologistId: lockedPsi.id,
+                    status: { [db.Sequelize.Op.in]: ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'] }
+                },
+                transaction: t
+            });
+            const currentPayments = Math.max(confirmedPaymentsCount, 1);
             
-            // Sempre estende a validade em 1 mês a partir do vencimento atual (se estiver ativo) 
-            // ou a partir de HOJE (se estava bloqueado/vencido). 
-            // Isso previne que o usuário burle o sistema pagando faturas futuras e deixando as velhas abertas.
-            let baseDate = new Date();
-            if (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > baseDate) {
-                baseDate = new Date(lockedPsi.planExpiresAt);
+            // Cada fatura do Asaas corresponde a um ciclo de cobrança.
+            // O pagamento cobre até 1 mês após o dueDate (ou paymentDate se dueDate ausente).
+            const payDueDateStr = payment.dueDate || payment.paymentDate || payment.clientPaymentDate;
+            const payDueDate = payDueDateStr ? new Date(payDueDateStr + (String(payDueDateStr).includes('T') ? '' : 'T12:00:00Z')) : new Date();
+            
+            let cycleExpiry = new Date(payDueDate.getTime());
+            const targetMonth = cycleExpiry.getMonth() + 1;
+            cycleExpiry.setMonth(targetMonth);
+            if (cycleExpiry.getMonth() !== targetMonth % 12) {
+                cycleExpiry.setDate(0); // Recua para o último dia do mês correto
             }
-            
-            let novaValidade = new Date(baseDate.getTime());
 
-            // Adiciona 1 mês de forma segura (previne bug do Javascript de pular meses curtos ex: 31 Jan -> 03 Mar)
-            const targetMonth = novaValidade.getMonth() + 1;
-            novaValidade.setMonth(targetMonth);
-            if (novaValidade.getMonth() !== targetMonth % 12) {
-                novaValidade.setDate(0); // Recua para o último dia do mês correto
+            // Garante no mínimo 30 dias a partir da data em que o pagamento foi realizado/confirmado
+            const minExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            if (cycleExpiry < minExpiry) {
+                cycleExpiry = minExpiry;
+            }
+
+            // IDEMPOTÊNCIA: Se o psicólogo já tem validade igual ou superior a esta fatura,
+            // NÃO incrementamos outro mês (evita que webhooks repetidos ou fluxo síncrono + assíncrono pulem meses)
+            let novaValidade = cycleExpiry;
+            if (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > cycleExpiry) {
+                novaValidade = new Date(lockedPsi.planExpiresAt);
             }
 
             const updatePayload = {
@@ -599,6 +622,17 @@ class PaymentStateService {
             }
 
             await lockedPsi.update(updatePayload, { transaction: t });
+
+            if (payment.subscription) {
+                await db.Subscription.update({
+                    status: 'ACTIVE',
+                    currentPeriodStart: payDueDate,
+                    currentPeriodEnd: novaValidade
+                }, {
+                    where: { id: payment.subscription },
+                    transaction: t
+                }).catch(() => {});
+            }
 
             if (db.SystemLog) {
                 await db.SystemLog.create({
@@ -660,12 +694,18 @@ class PaymentStateService {
                     status: 'inactive',
                     planExpiresAt: now
                 }, { transaction: t });
+                if (payment.subscription) {
+                    await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: payment.subscription }, transaction: t }).catch(() => {});
+                }
             } else {
                 // Para OVERDUE, DELETED, REFUSED, só inativamos se não tiver plano válido vigente
                 if (!hasValidPlan) {
                     await lockedPsi.update({
                         status: 'inactive'
                     }, { transaction: t });
+                    if (payment.subscription && ['PAYMENT_DELETED', 'PAYMENT_OVERDUE'].includes(eventType)) {
+                        await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: payment.subscription }, transaction: t }).catch(() => {});
+                    }
                 } else {
                     console.log(`[ASAAS] Evento ${eventType} ignorado para inativação: psicólogo ${psi.email} ainda tem plano válido até ${lockedPsi.planExpiresAt}`);
                 }

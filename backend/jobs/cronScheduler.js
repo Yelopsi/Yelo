@@ -6,10 +6,13 @@ const { Op } = require('sequelize');
 async function runIntegrityAudit() {
     console.log('🛡️ [CRON AUDIT] Executando auditoria de integridade da base de dados e Asaas...');
     try {
-        let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
-        if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+        let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
+        if (process.env.ASAAS_API_KEY && process.env.ASAAS_API_KEY.includes('prod_')) {
+            ASAAS_API_URL = 'https://api.asaas.com/v3';
+        } else if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
             ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
         }
+        ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
 
         // 1. Revoga is_exempt se a pessoa já for pagante
         await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false WHERE "subscriptionId" IS NOT NULL AND "is_exempt" = true;`);
@@ -42,56 +45,70 @@ async function runIntegrityAudit() {
             let reason = '';
 
             if (!psi.subscriptionId) {
-                // Sem assinatura no banco -> bloqueia direto na virada
+                // Período de testes (Trial) encerrado sem assinatura contratada
                 shouldBlock = true;
-                reason = 'Sem assinatura no sistema';
+                reason = 'Período de testes (Trial) encerrado sem assinatura';
             } else {
                 // Tem assinatura -> Consulta Ativa no Asaas
                 try {
-                    const pRes = await fetch(`${ASAAS_API_URL}/payments?subscription=${psi.subscriptionId}`, { 
-                        headers: { 'access_token': process.env.ASAAS_API_KEY } 
+                    // Primeiro checa a assinatura em si
+                    const subRes = await fetch(`${ASAAS_API_URL}/subscriptions/${psi.subscriptionId}`, {
+                        headers: { 'access_token': process.env.ASAAS_API_KEY }
                     });
-                    
-                    if (pRes.ok) {
-                        const pData = await pRes.json();
-                        const payments = pData.data || [];
-                        
-                        const hasOverdue = payments.some(p => p.status === 'OVERDUE');
-                        
-                        if (hasOverdue) {
+
+                    if (subRes.ok) {
+                        const subData = await subRes.json();
+                        if (subData.status === 'INACTIVE' || subData.deleted) {
                             shouldBlock = true;
-                            reason = 'Pagamento em atraso (OVERDUE) no Asaas';
+                            reason = 'Assinatura inativa ou cancelada no Asaas';
+                        }
+                    }
 
-                            const overduePayment = payments.find(p => p.status === 'OVERDUE');
-                            if (overduePayment && overduePayment.dueDate) {
-                                const dueDate = new Date(overduePayment.dueDate);
-                                const diffTime = now.getTime() - dueDate.getTime();
-                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (!shouldBlock) {
+                        const pRes = await fetch(`${ASAAS_API_URL}/payments?subscription=${psi.subscriptionId}`, { 
+                            headers: { 'access_token': process.env.ASAAS_API_KEY } 
+                        });
+                        
+                        if (pRes.ok) {
+                            const pData = await pRes.json();
+                            const payments = pData.data || [];
+                            
+                            const hasOverdue = payments.some(p => p.status === 'OVERDUE');
+                            
+                            if (hasOverdue) {
+                                shouldBlock = true;
+                                reason = 'Pagamento em atraso (OVERDUE) no Asaas';
 
-                                if (diffDays > 5) {
-                                    try {
-                                        const fetch = require('node-fetch');
-                                        await fetch(`${ASAAS_API_URL}/subscriptions/${psi.subscriptionId}`, {
-                                            method: 'DELETE',
-                                            headers: { 'access_token': process.env.ASAAS_API_KEY }
-                                        });
-                                        console.log(`[ASAAS] Assinatura ${psi.subscriptionId} CANCELADA. Motivo: Fatura vencida há mais de 5 dias (${diffDays} dias).`);
-                                    } catch (err) {
-                                        console.error(`[ASAAS] Falha ao cancelar assinatura ${psi.subscriptionId} após limite de tolerância:`, err.message);
+                                const overduePayment = payments.find(p => p.status === 'OVERDUE');
+                                if (overduePayment && overduePayment.dueDate) {
+                                    const dueDate = new Date(overduePayment.dueDate);
+                                    const diffTime = now.getTime() - dueDate.getTime();
+                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                                    if (diffDays > 5) {
+                                        try {
+                                            await fetch(`${ASAAS_API_URL}/subscriptions/${psi.subscriptionId}`, {
+                                                method: 'DELETE',
+                                                headers: { 'access_token': process.env.ASAAS_API_KEY }
+                                            });
+                                            console.log(`[ASAAS] Assinatura ${psi.subscriptionId} CANCELADA. Motivo: Fatura vencida há mais de 5 dias (${diffDays} dias).`);
+                                        } catch (err) {
+                                            console.error(`[ASAAS] Falha ao cancelar assinatura ${psi.subscriptionId} após limite de tolerância:`, err.message);
+                                        }
                                     }
+                                }
+                            } else {
+                                // Não tem pagamento em atraso (ex: boleto aguardando, cartão agendado)
+                                // Só bloqueia se já passou da tolerância de 3 dias do Yelo
+                                const expDate = psi.planExpiresAt ? new Date(psi.planExpiresAt) : null;
+                                if (!expDate || expDate < fallbackDate) {
+                                    shouldBlock = true;
+                                    reason = 'Limite de tolerância de 3 dias estourado';
                                 }
                             }
                         } else {
-                            // Não tem pagamento em atraso (ex: boleto aguardando, cartão agendado)
-                            // Só bloqueia se já passou da tolerância de 3 dias do Yelo
-                            const expDate = psi.planExpiresAt ? new Date(psi.planExpiresAt) : null;
-                            if (!expDate || expDate < fallbackDate) {
-                                shouldBlock = true;
-                                reason = 'Limite de tolerância de 3 dias estourado';
-                            }
+                            console.error(`[CRON AUDIT] Erro ao consultar Asaas para pagamentos da assinatura ${psi.subscriptionId}. Mantendo ativo por segurança.`);
                         }
-                    } else {
-                        console.error(`[CRON AUDIT] Erro ao consultar Asaas para assinatura ${psi.subscriptionId}. Mantendo ativo por segurança.`);
                     }
                 } catch (err) {
                     console.error(`[CRON AUDIT] Falha na request Asaas para ${psi.subscriptionId}:`, err.message);
@@ -101,6 +118,9 @@ async function runIntegrityAudit() {
             if (shouldBlock) {
                 console.log(`❌ [CRON AUDIT] Bloqueando psicólogo ID ${psi.id} (${psi.nome}). Motivo: ${reason}`);
                 await psi.update({ status: 'inactive' });
+                if (psi.subscriptionId) {
+                    await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: psi.subscriptionId } }).catch(() => {});
+                }
             }
         }
         
@@ -392,4 +412,4 @@ const startCronJobs = () => {
     }, 60000); 
 };
 
-module.exports = { startCronJobs };
+module.exports = { startCronJobs, runIntegrityAudit };

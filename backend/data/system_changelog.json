@@ -1,5 +1,121 @@
 [
   {
+    "id": "change-audit-billing-20261016",
+    "date": "2026-10-16T20:30:00.000Z",
+    "commit": "pending",
+    "author": "Anderson",
+    "title": "Correção: Auditoria forense do faturamento Asaas, blindagem de renovação e retificação da base de ativos",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "Auditoria 100% precisa da base no Render e Asaas: inativação de inadimplentes e trials expirados, correção do bug de vencimento duplicado e blindagem idempotente para futuros assinantes.",
+    "description": "Retificação completa da base de psicólogos: inativação de Adriana da Conceição (fatura Pix overdue e assinatura inativa no Asaas), inativação de 8 profissionais com trial de 7 dias vencido, e correção das validades dos 6 assinantes com incremento duplo para novembro. No código, o cálculo de expiração em processPaymentSuccess foi tornado estritamente idempotente (ancorado ao dueDate da fatura), a contagem de faturas foi alinhada aos pagamentos reais, a tabela Subscriptions sincronizada e o fallback de URL do Asaas direcionado automaticamente para produção.",
+    "rationale": "Garantir integridade financeira absoluta no banco online, eliminando achismos e impedindo que webhooks duplicados empurrem o vencimento para meses futuros ou mantenham usuários inadimplentes ativos.",
+    "before": {
+      "estado_anterior": "75 ativos no banco (1 inadimplente com repasse indevido de validade, 8 trials vencidos como ativos e 6 pagantes com validade pulando para dezembro devido a duplo incremento no webhook)."
+    },
+    "after": {
+      "nova_versao": "66 ativos auditados (4 VIPs, 34 pagantes com vencimentos sincronizados com o Asaas em nov/2026 e 28 trials legítimos dentro dos 7 dias). processPaymentSuccess e cancelSubscription blindados com idempotência."
+    },
+    "metricsToCompare": [
+      {
+        "name": "Ativos Auditados",
+        "before": "75 (com distorções)",
+        "after": "66 (100% conformes)"
+      },
+      {
+        "name": "Trials Expirados Ativos",
+        "before": "8 pendentes",
+        "after": "0 (inativados)"
+      },
+      {
+        "name": "Idempotência de Webhook",
+        "before": "Soma cega de +1 mês",
+        "after": "Ancorada ao ciclo da fatura"
+      }
+    ],
+    "filesChanged": [
+      "backend/services/paymentStateService.js",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/subscriptionController.js",
+      "backend/jobs/cronScheduler.js",
+      ".env"
+    ]
+  },
+  {
+    "id": "change-git-859f93ca",
+    "date": "2026-10-16T10:31:42.000Z",
+    "commit": "859f93ca",
+    "author": "Anderson",
+    "title": "Novo: Tooltips explicativos nos KPIs do simulador, correcao de IDs e ajuste no texto de CAC payback (cmo)",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "tooltips explicativos nos KPIs do simulador, correcao de IDs e ajuste no texto de CAC payback",
+    "description": "Commit registrado no repositório: \"feat(cmo): tooltips explicativos nos KPIs do simulador, correcao de IDs e ajuste no texto de CAC payback\". Arquivos modificados: admin/admin_cmo_metrics.html, admin/admin_cmo_metrics.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #859f93ca"
+    },
+    "after": {
+      "nova_versao": "tooltips explicativos nos KPIs do simulador, correcao de IDs e ajuste no texto de CAC payback"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.html",
+      "admin/admin_cmo_metrics.js"
+    ]
+  },
+  {
+    "id": "change-git-f512de3f",
+    "date": "2026-10-16T10:10:39.000Z",
+    "commit": "f512de3f",
+    "author": "Anderson",
+    "title": "Novo: Add Troca de Mensagens KPI, clarify Iniciou Terapia and compact card spacing without line wrap (analytics)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "add Troca de Mensagens KPI, clarify Iniciou Terapia and compact card spacing without line wrap",
+    "description": "Commit registrado no repositório: \"feat(analytics): add Troca de Mensagens KPI, clarify Iniciou Terapia and compact card spacing without line wrap\". Arquivos modificados: admin/admin_analytics_funil.html, admin/admin_analytics_funil.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #f512de3f"
+    },
+    "after": {
+      "nova_versao": "add Troca de Mensagens KPI, clarify Iniciou Terapia and compact card spacing without line wrap"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.html",
+      "admin/admin_analytics_funil.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-513e0d9d",
+    "date": "2026-10-16T10:00:32.000Z",
+    "commit": "513e0d9d",
+    "author": "Anderson",
+    "title": "Manutenção: Sync gate report and changelog for release 594282b0 (security)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sync gate report and changelog for release 594282b0",
+    "description": "Commit registrado no repositório: \"chore(security): sync gate report and changelog for release 594282b0\". Arquivos modificados: backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #513e0d9d"
+    },
+    "after": {
+      "nova_versao": "sync gate report and changelog for release 594282b0"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-594282b0",
     "date": "2026-10-16T10:00:14.000Z",
     "commit": "594282b0",

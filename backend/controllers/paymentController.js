@@ -5,14 +5,13 @@ const gamificationService = require('../services/gamificationService');
 
 // Configurações do Asaas
 // Limpeza robusta da URL (remove espaços e barras finais)
-let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
-ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, ''); 
-
-// --- AUTO-FIX: URL DO SANDBOX ---
-// Se o usuário configurou 'sandbox.asaas.com/v3' (sem /api), corrigimos automaticamente
-if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
+if (process.env.ASAAS_API_KEY && process.env.ASAAS_API_KEY.includes('prod_')) {
+    ASAAS_API_URL = 'https://api.asaas.com/v3';
+} else if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
     ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
 }
+ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
 
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
 
