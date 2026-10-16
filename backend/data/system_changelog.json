@@ -1,5 +1,30 @@
 [
   {
+    "id": "change-git-594282b0",
+    "date": "2026-10-16T10:00:14.000Z",
+    "commit": "594282b0",
+    "author": "Anderson",
+    "title": "Manutenção: Remove scheduled refund script for vanessa toyama after successful execution (billing)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "remove scheduled refund script for vanessa toyama after successful execution",
+    "description": "Commit registrado no repositório: \"chore(billing): remove scheduled refund script for vanessa toyama after successful execution\". Arquivos modificados: backend/data/system_changelog.json, scripts/scheduled_refund_vanessa.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #594282b0"
+    },
+    "after": {
+      "nova_versao": "remove scheduled refund script for vanessa toyama after successful execution"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "scripts/scheduled_refund_vanessa.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-63691ad9",
     "date": "2026-10-16T09:41:32.000Z",
     "commit": "63691ad9",
