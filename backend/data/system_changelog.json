@@ -1,5 +1,36 @@
 [
   {
+    "id": "change-git-63691ad9",
+    "date": "2026-10-16T09:41:32.000Z",
+    "commit": "63691ad9",
+    "author": "Anderson",
+    "title": "Novo: Implement paginated changelog (10/25/50/100/all), automated git sync and bandwidth optimization (ETag 304 & sessionStorage) (admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "implement paginated changelog (10/25/50/100/all), automated git sync and bandwidth optimization (ETag 304 & sessionStorage)",
+    "description": "Commit registrado no repositório: \"feat(admin): implement paginated changelog (10/25/50/100/all), automated git sync and bandwidth optimization (ETag 304 & sessionStorage)\". Arquivos modificados: admin/admin_historico_alteracoes.html, admin/admin_historico_alteracoes.js, backend/controllers/adminController.js, backend/data/system_changelog.json, backend/routes/adminRoutes.js (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #63691ad9"
+    },
+    "after": {
+      "nova_versao": "implement paginated changelog (10/25/50/100/all), automated git sync and bandwidth optimization (ETag 304 & sessionStorage)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_historico_alteracoes.html",
+      "admin/admin_historico_alteracoes.js",
+      "backend/controllers/adminController.js",
+      "backend/data/system_changelog.json",
+      "backend/routes/adminRoutes.js",
+      "backend/services/changelogSyncService.js",
+      "package.json",
+      "scripts/sync_git_to_changelog.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-004",
     "date": "2026-10-15T22:28:00-03:00",
     "commit": "fdde4836",
