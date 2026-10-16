@@ -1,5 +1,33 @@
 [
   {
+    "id": "change-git-2a9e8586",
+    "date": "2026-10-16T23:47:24.000Z",
+    "commit": "2a9e8586",
+    "author": "Anderson",
+    "title": "Correção: Blindar ciclo de faturamento Asaas, corrigir validade de dezembro e inativar inadimplentes e trials expirados (billing)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "blindar ciclo de faturamento Asaas, corrigir validade de dezembro e inativar inadimplentes e trials expirados",
+    "description": "Commit registrado no repositório: \"fix(billing): blindar ciclo de faturamento Asaas, corrigir validade de dezembro e inativar inadimplentes e trials expirados\". Arquivos modificados: backend/controllers/paymentController.js, backend/controllers/subscriptionController.js, backend/data/system_changelog.json, backend/jobs/cronScheduler.js, backend/services/paymentStateService.js (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2a9e8586"
+    },
+    "after": {
+      "nova_versao": "blindar ciclo de faturamento Asaas, corrigir validade de dezembro e inativar inadimplentes e trials expirados"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/paymentController.js",
+      "backend/controllers/subscriptionController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/cronScheduler.js",
+      "backend/services/paymentStateService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-audit-billing-20261016",
     "date": "2026-10-16T20:30:00.000Z",
     "commit": "pending",
