@@ -1,5 +1,40 @@
 [
   {
+    "id": "change-git-90ccf58e",
+    "date": "2026-10-17T02:12:36.000Z",
+    "commit": "90ccf58e",
+    "author": "Anderson",
+    "title": "Novo: Bloquear zoom acidental, pincamento e auto-zoom em inputs para sensacao de app nativo (mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "bloquear zoom acidental, pincamento e auto-zoom em inputs para sensacao de app nativo",
+    "description": "Commit registrado no repositório: \"feat(mobile): bloquear zoom acidental, pincamento e auto-zoom em inputs para sensacao de app nativo\". Arquivos modificados: admin/admin.css, admin/admin.html, admin/admin.js, admin/admin_distribuicao.html, admin/mensagens.html (+8 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #90ccf58e"
+    },
+    "after": {
+      "nova_versao": "bloquear zoom acidental, pincamento e auto-zoom em inputs para sensacao de app nativo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin.css",
+      "admin/admin.html",
+      "admin/admin.js",
+      "admin/admin_distribuicao.html",
+      "admin/mensagens.html",
+      "cadastro/psi-cadastro.html",
+      "profile.html",
+      "public/css/02-base.css",
+      "public/js/script.js",
+      "security/reports/gate_report.json",
+      "views/404.ejs",
+      "views/convite.ejs",
+      "views/partials/head.ejs"
+    ]
+  },
+  {
     "id": "change-git-29d13df8",
     "date": "2026-10-17T01:58:27.000Z",
     "commit": "29d13df8",
