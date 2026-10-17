@@ -116,3 +116,39 @@ body.pagina-dashboard, .chat-layout, .inbox-container {
 @keyframes spinner-border {
     to { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   PREVENÇÃO GLOBAL DE AUTO-ZOOM EM INPUTS NO MOBILE (IOS SAFARI & ANDROID)
+   Garante fonte mínima de 16px para evitar que a tela salte ao focar em qualquer campo.
+   ========================================================================== */
+@media screen and (max-width: 992px) {
+    input, 
+    select, 
+    textarea,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="search"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    .form-control,
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    .input-campo,
+    .flatpickr-input,
+    .ts-control,
+    .ts-control input,
+    .comment-input-capsule,
+    #forum-search-input,
+    .prompt-fake-input,
+    .chat-input,
+    .search-input {
+        font-size: 16px !important;
+    }
+}
+

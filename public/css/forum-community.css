@@ -252,6 +252,21 @@
    ========================================================================== */
 @keyframes highlightCommentFade {
     0%, 30% { background-color: rgba(255, 238, 140, 0.8); box-shadow: 0 0 0 4px rgba(255, 238, 140, 0.8); }
-    100% { background-color: transparent; box-shadow: 0 0 0 0 transparent; }
-}
 .highlight-comment-anim { animation: highlightCommentFade 3.5s ease-out forwards; border-radius: 12px; }
+
+/* ==========================================================================
+   PREVENÇÃO GLOBAL DE AUTO-ZOOM EM INPUTS NO MOBILE (COMUNIDADE & FÓRUM)
+   Garante fonte mínima de 16px para evitar que a tela salte ao focar em qualquer campo.
+   ========================================================================== */
+@media screen and (max-width: 992px) {
+    #forum-search-input,
+    .comment-input-capsule,
+    .prompt-fake-input,
+    .modal-body textarea,
+    .input-prefix-group input,
+    input, 
+    select, 
+    textarea {
+        font-size: 16px !important;
+    }
+}

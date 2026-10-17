@@ -46,8 +46,30 @@ html {
 }
 
 /* Previne zoom automático do Safari iOS ao focar em inputs no mobile (sensação de app nativo) */
-@media screen and (max-width: 768px) {
-    input, select, textarea {
+@media screen and (max-width: 992px) {
+    input, 
+    select, 
+    textarea,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="search"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    input.flatpickr-input,
+    input.form-control.input[readonly],
+    .form-control,
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    .input-campo,
+    .app-input,
+    .chat-input,
+    .search-input {
         font-size: 16px !important;
     }
 }

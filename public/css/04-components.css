@@ -244,6 +244,23 @@
 .forum-post-card.pinned { background-color: #fffbeb; border-left: 4px solid var(--cor-Yelo); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
 .forum-post-card .pinned-icon { display: inline-block; margin-right: 8px; transform: rotate(-15deg); font-size: 1.1rem; vertical-align: middle; }
 
-/* --- AVALIAÇÃO (FORMS) --- */
 #review-form textarea { width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: var(--font-alternativa); font-weight: 500; font-size: 15px; min-height: 100px; }
 #review-form button[type="submit"] { width: auto; display: inline-block; }
+
+/* ==========================================================================
+   PREVENÇÃO GLOBAL DE AUTO-ZOOM EM INPUTS NO MOBILE (COMPONENTES)
+   Garante fonte mínima de 16px para evitar que a tela salte ao focar em qualquer campo.
+   ========================================================================== */
+@media screen and (max-width: 992px) {
+    input, 
+    select, 
+    textarea,
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    #review-form textarea,
+    .form-control,
+    .input-campo {
+        font-size: 16px !important;
+    }
+}

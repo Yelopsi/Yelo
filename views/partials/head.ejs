@@ -30,6 +30,9 @@
       if(window.fbq && window.fbq.callMethod) { window.fbq.apply(window, arguments); } 
       else { window._fbqQueue = window._fbqQueue || []; window._fbqQueue.push(arguments); }
   }
+  // Previne zoom por pinçamento de dedos no iOS Safari (sensação de app nativo)
+  document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
+  document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
 </script>
 
 <script nonce="<%= nonce %>" src="/js/consent-manager.js"></script>
