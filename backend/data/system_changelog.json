@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-c60f9bac",
+    "date": "2026-10-17T14:08:13.000Z",
+    "commit": "c60f9bac",
+    "author": "Anderson",
+    "title": "Correção: Refinar copy de pacientes anonimos e modernizar layout da pagina de feedback",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "refinar copy de pacientes anonimos e modernizar layout da pagina de feedback",
+    "description": "Commit registrado no repositório: \"fix(feedback): refinar copy de pacientes anonimos e modernizar layout da pagina de feedback\". Arquivos modificados: backend/data/system_changelog.json, public/magic-feedback.html, public/psi/psi_dashboard.html, public/psi/psi_dashboard.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #c60f9bac"
+    },
+    "after": {
+      "nova_versao": "refinar copy de pacientes anonimos e modernizar layout da pagina de feedback"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "public/magic-feedback.html",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-d5a7c117",
     "date": "2026-10-17T13:32:41.000Z",
     "commit": "d5a7c117",

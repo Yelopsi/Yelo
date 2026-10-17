@@ -324,61 +324,277 @@
             to { transform: translateY(0); opacity: 1; } 
         }
 
-        /* Responsividade Mobile Fluida */
+        /* Drag Handle e Spacer (Desktop Ocultos) */
+        .drag-handle-area {
+            display: none;
+        }
+        .bottom-sheet-spacer {
+            display: none;
+        }
+
+        /* Responsividade Mobile - Bottom Sheet / Bottom Wall Modal */
         @media (max-width: 768px) {
-            body.pagina-questionario {
-                padding: 24px 16px 40px !important;
-                align-items: flex-start;
+            html, body {
+                width: 100%;
+                height: 100%;
                 min-height: 100dvh;
+                margin: 0;
+                padding: 0 !important;
+                overflow: hidden !important;
+                position: fixed;
+                top: 0;
+                left: 0;
+            }
+
+            body.pagina-questionario {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                align-items: center !important;
+                padding: 0 !important;
+                height: 100dvh !important;
+                min-height: 100dvh !important;
+                position: relative !important;
+                overflow: hidden !important;
             }
 
             .questionario-container {
-                max-width: 100%;
-                margin-top: 6px;
+                position: relative !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 100dvh !important;
+                min-height: 100dvh !important;
+                display: flex !important;
+                flex-direction: column !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
             }
 
             .logo-container {
-                margin-bottom: 20px !important;
+                margin: calc(12px + env(safe-area-inset-top)) auto 4px !important;
+                text-align: center;
+                flex-shrink: 0;
+                z-index: 20;
             }
 
             .logo-container img {
-                width: 120px !important;
+                width: 100px !important;
+                height: auto;
+            }
+
+            .header-section {
+                padding: 0 20px !important;
+                margin-bottom: 6px !important;
+                text-align: center;
+                flex-shrink: 0;
+                z-index: 20;
             }
 
             .header-title {
-                font-size: 1.55rem;
+                font-size: 1.35rem !important;
+                margin: 0 0 2px 0 !important;
+                letter-spacing: -0.02em;
             }
 
             .header-subtitle {
-                font-size: 0.88rem;
-                padding: 0 4px;
+                font-size: 0.82rem !important;
+                line-height: 1.35 !important;
+                padding: 0 !important;
+                max-width: 320px !important;
+                margin: 0 auto !important;
+                color: rgba(255, 255, 255, 0.88) !important;
             }
 
-            .pending-patient-card, .feedback-slide {
-                border-radius: 22px;
-                padding: 22px 18px;
+            .feedback-counter-pill {
+                margin-top: 6px !important;
+                padding: 3px 12px !important;
+                font-size: 0.74rem !important;
+            }
+
+            #step-loading {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 0 !important;
+            }
+
+            #step-list {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            #pending-wpp-list {
+                width: 100%;
+                position: static;
+            }
+
+            /* --- BOTTOM WALL / BOTTOM SHEET MODAL --- */
+            .pending-patient-card,
+            .feedback-slide {
+                position: fixed !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                background: #ffffff !important;
+                border-radius: 28px 28px 0 0 !important;
+                padding: 0 20px calc(20px + env(safe-area-inset-bottom)) 20px !important;
+                box-sizing: border-box !important;
+                max-height: calc(100dvh - 142px) !important;
+                min-height: 48dvh;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                box-shadow: 0 -12px 35px rgba(0, 0, 0, 0.35), 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+                border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                border-bottom: none !important;
+                z-index: 100 !important;
+                animation: bottomSheetSlideUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+                display: none;
+                flex-direction: column;
+            }
+
+            .pending-patient-card.active,
+            .feedback-slide.active {
+                display: flex !important;
+            }
+
+            @keyframes bottomSheetSlideUp {
+                from {
+                    transform: translateY(100%);
+                    opacity: 0.8;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            .drag-handle-area {
+                display: flex !important;
+                position: sticky;
+                top: 0;
+                margin: 0 -20px 8px -20px;
+                height: 32px;
+                min-height: 32px;
+                background-color: #ffffff;
+                border-radius: 28px 28px 0 0;
+                align-items: center;
+                justify-content: center;
+                z-index: 30;
+                cursor: grab;
+                touch-action: pan-y;
+            }
+
+            .drag-handle-pill {
+                width: 38px;
+                height: 5px;
+                background-color: #CBD5E1;
+                border-radius: 999px;
+            }
+
+            .bottom-sheet-spacer {
+                display: block !important;
+                height: calc(16px + env(safe-area-inset-bottom));
+                width: 100%;
+                flex-shrink: 0;
             }
 
             .patient-card-header {
-                flex-wrap: wrap;
-                gap: 10px;
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                gap: 10px !important;
+                margin-bottom: 12px !important;
+                padding-bottom: 12px !important;
+            }
+
+            .patient-avatar-badge {
+                width: 38px !important;
+                height: 38px !important;
+                border-radius: 12px !important;
+                flex-shrink: 0 !important;
+            }
+
+            .patient-avatar-badge svg {
+                width: 20px !important;
+                height: 20px !important;
+            }
+
+            .patient-name {
+                font-size: 1.05rem !important;
+                line-height: 1.25 !important;
+            }
+
+            .patient-subtext {
+                font-size: 0.76rem !important;
             }
 
             .patient-date-badge {
-                margin-left: auto;
+                font-size: 0.74rem !important;
+                padding: 4px 10px !important;
+                margin-left: auto !important;
+                flex-shrink: 0 !important;
+            }
+
+            .patient-context-pill {
+                padding: 9px 12px !important;
+                font-size: 0.82rem !important;
+                margin-bottom: 14px !important;
+                border-radius: 12px !important;
+                gap: 8px !important;
+                line-height: 1.4 !important;
+            }
+
+            .context-icon {
+                font-size: 1.15rem !important;
+            }
+
+            .step-question-title {
+                font-size: 1.02rem !important;
+                margin-bottom: 12px !important;
+                font-weight: 700 !important;
             }
 
             .option-card {
-                padding: 13px 15px;
-                margin-bottom: 10px;
+                padding: 13px 15px !important;
+                margin-bottom: 9px !important;
+                border-radius: 14px !important;
+                gap: 12px !important;
+                min-height: 56px !important;
+                border-width: 1.5px !important;
             }
 
             .option-card:hover {
-                transform: none; /* Previne 'pulo' no touch mobile */
+                transform: none !important;
             }
 
             .option-card:active {
-                transform: scale(0.98);
+                transform: scale(0.985) !important;
+                background: #E8F3EF !important;
+            }
+
+            .emoji-icon {
+                font-size: 1.45rem !important;
+            }
+
+            .option-title {
+                font-size: 0.94rem !important;
+            }
+
+            .option-subtitle {
+                font-size: 0.78rem !important;
+            }
+
+            .back-btn {
+                font-size: 0.84rem !important;
+                padding: 6px 12px !important;
             }
         }
     </style>
@@ -400,10 +616,12 @@
 
         <!-- Passo de Erro / Link Inválido -->
         <div id="step-error" class="feedback-slide" style="text-align: center;">
+            <div class="drag-handle-area"><div class="drag-handle-pill"></div></div>
             <div style="font-size: 3.5rem; margin-bottom: 12px;">👀</div>
             <h2 style="color: var(--verde-escuro); margin: 0 0 10px 0; font-weight: 700; font-size: 1.5rem; font-family: 'Inter', sans-serif !important;">Ops!</h2>
             <p id="error-message" style="color: var(--cinza-texto); line-height: 1.55; margin-bottom: 20px; font-size: 0.95rem;">Este link é inválido ou todos os feedbacks já foram respondidos.</p>
             <button onclick="closeOrRedirect()" style="background: var(--verde-escuro); color: white; border: none; padding: 14px 28px; border-radius: 50px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s;">Ir para o Início</button>
+            <div class="bottom-sheet-spacer"></div>
         </div>
 
         <!-- Passo da Lista Unificada -->
@@ -422,10 +640,12 @@
             
             <!-- Mensagem de Sucesso (Todos respondidos) -->
             <div id="pending-wpp-done-msg" class="feedback-slide" style="text-align: center;">
+                <div class="drag-handle-area"><div class="drag-handle-pill"></div></div>
                 <div style="width: 60px; height: 60px; background: #10B981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 16px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.28);">✓</div>
                 <h3 style="color: var(--verde-escuro); margin: 0 0 10px 0; font-weight: 700; font-size: 1.5rem; font-family: 'Inter', sans-serif !important;">Tudo atualizado! 🎉</h3>
                 <p style="color: var(--cinza-texto); margin: 0 0 25px 0; line-height: 1.55; font-size: 0.95rem;">Muito obrigado pela sua colaboração! Suas respostas ajudam o algoritmo da Yelo a direcionar novos pacientes ideais para você.</p>
                 <button onclick="closeOrRedirect()" style="background: var(--verde-escuro); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: 600; font-size: 0.98rem; cursor: pointer; width: 100%; transition: background 0.2s; box-shadow: 0 4px 14px rgba(27, 67, 50, 0.25);">Concluir</button>
+                <div class="bottom-sheet-spacer"></div>
             </div>
         </div>
     </main>
@@ -560,6 +780,7 @@
 
                 return `
                     <div class="pending-patient-card" id="pending-item-${item.id}">
+                        <div class="drag-handle-area"><div class="drag-handle-pill"></div></div>
                         
                         <!-- Top Header do Card -->
                         <div class="patient-card-header">
@@ -688,6 +909,7 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="bottom-sheet-spacer"></div>
                     </div>
                 `;
             }).join('');
@@ -744,11 +966,13 @@
             itemDiv.style.opacity = '1';
             itemDiv.style.transform = 'scale(1)';
             itemDiv.innerHTML = `
+                <div class="drag-handle-area"><div class="drag-handle-pill"></div></div>
                 <div style="text-align:center; padding: 35px 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: slideUp 0.3s ease;">
                     <div style="width: 52px; height: 52px; background: #10B981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 14px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);">✓</div>
                     <strong style="color: var(--verde-escuro); font-size: 1.2rem; margin-bottom: 6px; font-family: 'Inter', sans-serif !important;">Feedback registrado!</strong>
                     <span style="font-size: 0.92rem; color: var(--cinza-texto); line-height: 1.5; max-width: 380px;">${thanksMsg}</span>
-                </div>`;
+                </div>
+                <div class="bottom-sheet-spacer"></div>`;
             
             answeredCount++;
             
@@ -773,6 +997,46 @@
                 window.location.href = 'https://www.yelopsi.com.br';
             }, 300);
         };
+
+        // Interação Touch Suave no Bottom Sheet
+        (function setupBottomSheetTouch() {
+            let startY = 0;
+            let isDragging = false;
+            let activeSheet = null;
+
+            document.addEventListener('touchstart', (e) => {
+                const handle = e.target.closest('.drag-handle-area');
+                if (!handle) return;
+                activeSheet = handle.closest('.feedback-slide, .pending-patient-card');
+                if (!activeSheet) return;
+
+                isDragging = true;
+                startY = e.touches[0].clientY;
+                activeSheet.style.transition = 'none';
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!isDragging || !activeSheet) return;
+                const currentY = e.touches[0].clientY;
+                const deltaY = currentY - startY;
+
+                if (deltaY > 0) {
+                    const downwardElastic = deltaY * 0.5;
+                    activeSheet.style.transform = `translateY(${downwardElastic}px)`;
+                } else if (deltaY < 0) {
+                    const upwardElastic = Math.max(-25, deltaY * 0.2);
+                    activeSheet.style.transform = `translateY(${upwardElastic}px)`;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', () => {
+                if (!isDragging || !activeSheet) return;
+                isDragging = false;
+                activeSheet.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+                activeSheet.style.transform = 'translateY(0)';
+                activeSheet = null;
+            });
+        })();
 
         // Inicia
         init();
