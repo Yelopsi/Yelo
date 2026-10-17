@@ -160,9 +160,6 @@
     </div>
 </div>
 
-<!-- OVERLAY / BACKDROP PARA FECHAR AO CLICAR FORA (DESKTOP E MOBILE) -->
-<div id="vlibras-mobile-backdrop" onclick="fecharVLibras(event)" ontouchend="fecharVLibras(event)" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.38); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); z-index: 2147483640; -webkit-tap-highlight-color: transparent;"></div>
-
 <!-- BOTÃO FIXO DE FECHAR VLIBRAS (GARANTIA DE ACESSIBILIDADE E SAÍDA) -->
 <button id="vlibras-close-btn" type="button" onclick="fecharVLibras(event)" ontouchend="fecharVLibras(event)" aria-label="Fechar VLibras" style="display: none; position: fixed; top: calc(14px + env(safe-area-inset-top, 24px)); right: 16px; z-index: 2147483648; background: #ffffff; color: #1B4332; border: 2px solid #1B4332; border-radius: 50px; padding: 9px 18px; font-weight: 700; font-size: 0.88rem; box-shadow: 0 8px 30px rgba(0,0,0,0.32); cursor: pointer; align-items: center; gap: 7px; font-family: 'Lato', sans-serif; -webkit-tap-highlight-color: transparent;">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -205,11 +202,9 @@
             }
         } catch(err){}
 
-        // 4. Ocultar botão customizado e backdrop
+        // 4. Ocultar botão customizado de saída
         const closeBtn = document.getElementById('vlibras-close-btn');
         if (closeBtn) closeBtn.style.display = 'none';
-        const backdrop = document.getElementById('vlibras-mobile-backdrop');
-        if (backdrop) backdrop.style.display = 'none';
         document.body.style.overflow = '';
     }
 
@@ -230,14 +225,12 @@
             const appRoot = document.getElementById('vlibras-app-root');
             const wrapper = document.querySelector('[vw-plugin-wrapper]');
             const closeBtn = document.getElementById('vlibras-close-btn');
-            const backdrop = document.getElementById('vlibras-mobile-backdrop');
 
             const isAppActive = appRoot && appRoot.getAttribute('data-active') === 'true';
             const isWrapperActive = wrapper && (wrapper.classList.contains('active') || wrapper.style.display === 'block' || wrapper.clientHeight > 50);
 
             if (isAppActive || isWrapperActive) {
                 if (closeBtn) closeBtn.style.display = 'inline-flex';
-                if (backdrop) backdrop.style.display = 'block';
 
                 // Garante que o cabeçalho e todos os ícones funcionem no iOS Safari
                 if (appRoot && appRoot.shadowRoot) {
@@ -404,33 +397,6 @@
                     setTimeout(verificarEstadoVLibras, 1000);
                 }
             }, { passive: true });
-        });
-
-        // Fechar ao clicar fora (fallback direto no document para toques fora)
-        ['click', 'touchend'].forEach(evtName => {
-            document.addEventListener(evtName, (e) => {
-                const appRoot = document.getElementById('vlibras-app-root');
-                const isAppActive = appRoot && appRoot.getAttribute('data-active') === 'true';
-                const closeBtn = document.getElementById('vlibras-close-btn');
-                const isBtnVisible = closeBtn && closeBtn.style.display === 'inline-flex';
-
-                if (!isAppActive && !isBtnVisible) return;
-
-                const path = e.composedPath ? e.composedPath() : [];
-                const isInsideWidget = path.some(el => {
-                    if (!el) return false;
-                    if (el.id === 'vlibras-close-btn' || el.id === 'vlibras-mobile-backdrop') return true;
-                    if (el.id === 'vlibras-access-wrapper' || el.id === 'vlibras-access' || el.id === 'vlibras-button') return true;
-                    if (el.id === 'vlibras-app-root') {
-                        return true;
-                    }
-                    return false;
-                });
-
-                if (!isInsideWidget) {
-                    fecharVLibras(e);
-                }
-            }, { passive: false });
         });
 
         document.addEventListener('keydown', (e) => {
