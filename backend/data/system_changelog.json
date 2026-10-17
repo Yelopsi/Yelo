@@ -1,5 +1,35 @@
 [
   {
+    "id": "change-git-af9c1e70",
+    "date": "2026-10-17T13:01:21.000Z",
+    "commit": "af9c1e70",
+    "author": "Anderson",
+    "title": "Correção: Corrigir vazamento de scroll e deslocamento do viewport no Chrome iOS e Safari (mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir vazamento de scroll e deslocamento do viewport no Chrome iOS e Safari",
+    "description": "Commit registrado no repositório: \"fix(mobile): corrigir vazamento de scroll e deslocamento do viewport no Chrome iOS e Safari\". Arquivos modificados: backend/data/system_changelog.json, public/css/02-base.css, public/css/psi_dashboard.css, public/psi/psi_dashboard.html, public/psi/psi_dashboard.js (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #af9c1e70"
+    },
+    "after": {
+      "nova_versao": "corrigir vazamento de scroll e deslocamento do viewport no Chrome iOS e Safari"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "public/css/02-base.css",
+      "public/css/psi_dashboard.css",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "public/psi/psi_dashboard_gestures.js",
+      "public/style.css",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-9ae4f711",
     "date": "2026-10-17T12:51:31.000Z",
     "commit": "9ae4f711",

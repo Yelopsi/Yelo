@@ -592,6 +592,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Garante que o header mobile reapareça caso tenha sido oculto por alguma tela full-screen (como posts do fórum)
         const mHeader = document.querySelector('.mobile-header');
         if (mHeader) mHeader.style.display = '';
+        const dMainPad = document.querySelector('.dashboard-main');
+        if (dMainPad && window.innerWidth <= 992) {
+            dMainPad.style.paddingTop = '';
+            dMainPad.style.paddingLeft = '';
+            dMainPad.style.paddingRight = '';
+        }
 
         let activeLink = document.querySelector(`.sidebar-nav a[data-page="${url}"]`);
         let activeBottomLink = document.querySelector(`.bottom-nav-item[data-target-page="${url}"]`);

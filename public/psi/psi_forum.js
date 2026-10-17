@@ -253,7 +253,11 @@
             if (mHeader) mHeader.style.display = 'none';
 
             const dashboardMain = document.querySelector('.dashboard-main');
-            if (dashboardMain && window.innerWidth <= 992) dashboardMain.style.setProperty('padding-top', '0px', 'important');
+            if (dashboardMain && window.innerWidth <= 992) {
+                dashboardMain.style.setProperty('padding-top', '0px', 'important');
+                dashboardMain.style.setProperty('padding-left', '0px', 'important');
+                dashboardMain.style.setProperty('padding-right', '0px', 'important');
+            }
 
             try {
                 const postRes = await apiFetch(`${API_BASE_URL}/api/forum/posts/${postId}`);
@@ -294,7 +298,11 @@
                     const mHeader = document.querySelector('.mobile-header');
                     if (mHeader) mHeader.style.display = '';
                     const dashboardMain = document.querySelector('.dashboard-main');
-                    if (dashboardMain && window.innerWidth <= 992) dashboardMain.style.paddingTop = ''; 
+                    if (dashboardMain && window.innerWidth <= 992) {
+                        dashboardMain.style.paddingTop = ''; 
+                        dashboardMain.style.paddingLeft = ''; 
+                        dashboardMain.style.paddingRight = ''; 
+                    }
                 };
 
                 const supportBtn = postEl.querySelector('.support-btn');
