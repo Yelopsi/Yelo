@@ -62,41 +62,46 @@
             autoResize();
         }
 
-        function renderInlineAuthorBadges(badges, level) {
+        function renderInlineAuthorBadges(badges) {
             let badgesData = badges;
             if (typeof badges === 'string') {
                 try { badgesData = JSON.parse(badges); } catch(e) { badgesData = {}; }
             }
 
-            if (!badgesData && !level) return '';
+            if (!badgesData || typeof badgesData !== 'object') return '';
 
             let badgesHtml = '';
-            let levelHtml = '';
-            
-            const levelMap = { 'nivel_iniciante': 'Iniciante', 'nivel_verificado': 'Verificado', 'nivel_ativo': 'Ativo', 'nivel_especialista': 'Especialista', 'nivel_mentor': 'Mentor' };
-            if (level && levelMap[level] && level !== 'nivel_iniciante') {
-                levelHtml = `<span class="author-level-badge">${levelMap[level]}</span>`;
-            }
 
             const badgeIconMap = {
-                autentico: { icon: '<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: text-bottom;"><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.79-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.758 2.746 1.9 3.42-.047.19-.074.385-.074.58 0 2.21 1.71 4.002 3.918 4.002.47 0 .92-.086 1.336-.25.52 1.335 1.828 2.25 3.337 2.25s2.816-.915 3.337-2.25c.416.164.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.195-.027-.39-.074-.58 1.14-.675 1.9-1.96 1.9-3.42z" fill="#1B4332"/><path d="M16.97 8.47a1.5 1.5 0 0 1 0 2.12l-6.5 6.5a1.5 1.5 0 0 1-2.12 0l-3.5-3.5a1.5 1.5 0 1 1 2.12-2.12l2.44 2.44 5.44-5.44a1.5 1.5 0 0 1 2.12 0z" fill="white"/></svg>', title: 'Autêntico' },
-                semeador:  { icon: '🌱', title: 'Semeador' },
-                voz_ativa: { icon: '💬', title: 'Voz Ativa' },
-                pioneiro:  { icon: '🏅', title: 'Pioneiro' }
+                autentico: {
+                    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;"><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.79-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.758 2.746 1.9 3.42-.047.19-.074.385-.074.58 0 2.21 1.71 4.002 3.918 4.002.47 0 .92-.086 1.336-.25.52 1.335 1.828 2.25 3.337 2.25s2.816-.915 3.337-2.25c.416.164.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.195-.027-.39-.074-.58 1.14-.675 1.9-1.96 1.9-3.42z" fill="#1B4332"/><path d="M16.97 8.47a1.5 1.5 0 0 1 0 2.12l-6.5 6.5a1.5 1.5 0 0 1-2.12 0l-3.5-3.5a1.5 1.5 0 1 1 2.12-2.12l2.44 2.44 5.44-5.44a1.5 1.5 0 0 1 2.12 0z" fill="white"/></svg>',
+                    title: 'Autêntico'
+                },
+                semeador: {
+                    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M12 22v-9"/><path d="M12 13a5 5 0 0 0-5-5c0 4 2 6 5 6Z"/><path d="M12 10a5 5 0 0 1 5-5c0 4-2 6-5 6Z"/></svg>',
+                    title: 'Semeador'
+                },
+                voz_ativa: {
+                    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+                    title: 'Voz Ativa'
+                },
+                pioneiro: {
+                    icon: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>',
+                    title: 'Pioneiro'
+                }
             };
 
             const badgeOrder = ['autentico', 'semeador', 'voz_ativa', 'pioneiro'];
-            if (badgesData) {
-                badgeOrder.forEach(key => {
-                    const badgeValue = badgesData[key];
-                    if (badgeValue) {
-                        let title = badgeIconMap[key].title;
-                        if (typeof badgeValue === 'string') title += ` (${badgeValue.charAt(0).toUpperCase() + badgeValue.slice(1)})`;
-                        badgesHtml += `<span class="author-badge-icon" title="${title}">${badgeIconMap[key].icon}</span>`;
-                    }
-                });
-            }
-            return `${badgesHtml} ${levelHtml}`;
+            badgeOrder.forEach(key => {
+                const badgeValue = badgesData[key];
+                if (badgeValue && badgeIconMap[key]) {
+                    let title = badgeIconMap[key].title;
+                    if (typeof badgeValue === 'string') title += ` (${badgeValue.charAt(0).toUpperCase() + badgeValue.slice(1)})`;
+                    badgesHtml += `<span class="author-badge-icon mini-badge" data-badge="${key}" title="${title}">${badgeIconMap[key].icon}</span>`;
+                }
+            });
+
+            return badgesHtml.trim();
         }
 
         const sanitizeHTML = (str) => { const temp = document.createElement('div'); temp.textContent = str; return temp.innerHTML; };
@@ -173,13 +178,15 @@
             const card = postCardTemplate.content.cloneNode(true).firstElementChild;
             card.dataset.postId = post.id;
 
+            const pinnedPill = card.querySelector('.post-pinned-pill');
             if (post.isPinned) {
                 card.classList.add('pinned');
-                const titleEl = card.querySelector('.post-title');
-                if (titleEl) titleEl.innerHTML = `<span class="pinned-icon" title="Fixado">📌</span> ${post.title}`;
+                if (pinnedPill) pinnedPill.classList.remove('hidden');
             } else {
-                card.querySelector('.post-title').textContent = post.title;
+                card.classList.remove('pinned');
+                if (pinnedPill) pinnedPill.classList.add('hidden');
             }
+            card.querySelector('.post-title').textContent = post.title;
 
             card.querySelector('.post-category').textContent = post.category;
             const mobileCat = card.querySelector('.post-category-mobile');
@@ -195,12 +202,16 @@
             if (post.isAnonymous) card.querySelector('.post-author').style.fontStyle = 'italic';
 
             const badgesContainer = card.querySelector('.author-badges');
-            if (badgesContainer) badgesContainer.innerHTML = renderInlineAuthorBadges(post.authorBadges, post.authorLevel);
+            if (badgesContainer) badgesContainer.innerHTML = renderInlineAuthorBadges(post.authorBadges);
 
             card.querySelector('.post-time').textContent = `há ${timeSince(post.createdAt)}`;
             card.querySelector('.post-snippet').textContent = post.content.substring(0, 120) + '...';
             card.querySelector('.post-votes-count').textContent = post.votes || 0;
-            card.querySelector('.post-comments-count').textContent = `💬 ${post.commentCount || 0} Comentários`;
+            const commentsCountEl = card.querySelector('.post-comments-count');
+            if (commentsCountEl) {
+                const count = post.commentCount || 0;
+                commentsCountEl.textContent = `${count} ${count === 1 ? 'comentário' : 'comentários'}`;
+            }
 
             card.addEventListener('click', (e) => {
                 if (!e.target.closest('.support-btn') && !e.target.closest('.report-btn')) loadFullPost(post.id);
@@ -264,8 +275,14 @@
                     : `<a href="/${post.authorSlug}" target="_blank" class="author-link" title="Ver perfil público">${post.authorName}</a>`;
                 postEl.querySelector('.full-post-author').innerHTML = authorHtml;
                 
+                const pinnedPill = postEl.querySelector('.post-pinned-pill');
+                if (pinnedPill) {
+                    if (post.isPinned) pinnedPill.classList.remove('hidden');
+                    else pinnedPill.classList.add('hidden');
+                }
+
                 const badgesContainer = postEl.querySelector('.author-badges-full');
-                if (badgesContainer) badgesContainer.innerHTML = renderInlineAuthorBadges(post.authorBadges, post.authorLevel);
+                if (badgesContainer) badgesContainer.innerHTML = renderInlineAuthorBadges(post.authorBadges);
 
                 postEl.querySelector('.full-post-content').innerHTML = window.formatTextContent(post.content);
                 postEl.querySelector('.post-votes-count').textContent = post.votes;
@@ -471,7 +488,7 @@
             if (comment.isAnonymous) commentEl.querySelector('.comment-author').style.fontStyle = 'italic';
             
             const badgesContainer = commentEl.querySelector('.author-badges');
-            if (badgesContainer) badgesContainer.innerHTML = renderInlineAuthorBadges(comment.authorBadges, comment.authorLevel);
+            if (badgesContainer) badgesContainer.innerHTML = renderInlineAuthorBadges(comment.authorBadges);
 
             commentEl.querySelector('.comment-time').textContent = `há ${timeSince(comment.createdAt)}`;
             commentEl.querySelector('.comment-body').innerHTML = window.formatTextContent(comment.content);

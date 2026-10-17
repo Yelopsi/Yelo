@@ -245,14 +245,15 @@
 .reddit-style-card.pinned {
     background-color: #f0fdf4 !important;
     border: 1px solid #bbf7d0 !important;
-    box-shadow: 0 4px 15px rgba(27,67,50,0.05) !important;
+    border-left: 3.5px solid #16a34a !important;
+    box-shadow: 0 3px 12px rgba(22, 163, 74, 0.05) !important;
 }
 .forum-post-card.pinned:hover,
 .reddit-style-card.pinned:hover {
     border-color: #86efac !important;
-    box-shadow: 0 6px 20px rgba(27,67,50,0.08) !important;
+    border-left-color: #15803d !important;
+    box-shadow: 0 6px 20px rgba(22, 163, 74, 0.09) !important;
 }
-.forum-post-card .pinned-icon { display: inline-block; margin-right: 8px; transform: rotate(-15deg); font-size: 1.1rem; vertical-align: middle; }
 
 #review-form textarea { width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: var(--font-alternativa); font-weight: 500; font-size: 15px; min-height: 100px; }
 #review-form button[type="submit"] { width: auto; display: inline-block; }
