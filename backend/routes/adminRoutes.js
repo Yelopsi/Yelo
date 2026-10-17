@@ -11,6 +11,7 @@ const reviewController = require('../controllers/reviewController');
 const qnaController = require('../controllers/qnaController'); // Importa o controlador de Q&A
 const settingsController = require('../controllers/settingsController');
 const adminPerformanceController = require('../controllers/adminPerformanceController');
+const adminCopilotController = require('../controllers/adminCopilotController');
 const { protect, admin } = require('../middlewares/authMiddleware'); // Corrigido para importar ambos
 const { uploadProfilePhoto, magicBytesValidator } = require('../middlewares/upload'); // Importa o Multer unificado
 const { adminLimiter } = require('../middlewares/rateLimiters');
@@ -121,6 +122,12 @@ router.get('/logs', adminDashboardController.getSystemLogs);
 router.get('/system-changelog', adminController.getSystemChangelog);
 router.post('/system-changelog', adminController.addSystemChangelogEntry);
 router.post('/system-changelog/sync', adminController.syncSystemChangelogWithGit);
+
+// Rotas do Copilot de Atendimento WhatsApp AI
+router.post('/copilot/identify', adminCopilotController.identifyFromChat);
+router.post('/copilot/respond', adminCopilotController.generateResponse);
+router.get('/copilot/history', adminCopilotController.getHistory);
+router.get('/copilot/search-psychologists', adminCopilotController.searchPsychologists);
 
 // Rota para dados de gráficos
 router.get('/charts/new-users', adminDashboardController.getNewUsersPerMonth);

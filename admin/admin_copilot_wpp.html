@@ -1,0 +1,202 @@
+<!-- admin/admin_copilot_wpp.html -->
+<div class="copilot-container" style="max-width: 1400px; margin: 0 auto; padding-bottom: 60px;">
+    
+    <!-- CABEÇALHO DA PÁGINA -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <button onclick="window.navigateToPage('admin_crm_hub.html')" style="background: #fff; border: 1px solid #e2e8f0; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #475569; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </button>
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                    <span style="background: #dcfce7; color: #166534; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Inteligência AI Yelo</span>
+                    <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; color: #10b981; font-weight: 600;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                        Detector Automático Ativo
+                    </span>
+                </div>
+                <h1 style="font-size: 1.75rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.02em;">Copilot de Atendimento WhatsApp 💬</h1>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="btn-limpar-tudo" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 10px 18px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Limpar Tela
+            </button>
+        </div>
+    </div>
+
+    <!-- GRID PRINCIPAL (2 COLUNAS) -->
+    <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: start;">
+        
+        <!-- COLUNA DA ESQUERDA: ENTRADA E RESPOSTA -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- CARD DE ENTRADA DO CHAT -->
+            <div style="background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <label for="copilot-input-chat" style="font-size: 0.95rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                        <span>📋 Conversa Copiada do WhatsApp</span>
+                    </label>
+                    <span style="font-size: 0.78rem; color: #64748b;">Cole o texto com data/hora e nome</span>
+                </div>
+
+                <div style="position: relative;">
+                    <textarea id="copilot-input-chat" rows="8" placeholder="Cole aqui a conversa copiada diretamente do WhatsApp (Ctrl + V)...
+
+Exemplo:
+[08/10/26, 12:31:42] ~Psicólogo Fred Monte: Boa tarde, estou tendo curtidas em alguns artigos meus
+[08/10/26, 12:31:50] ~Psicólogo Fred Monte: uns mais, outros menos" style="width: 100%; box-sizing: border-box; padding: 16px; border: 1.5px solid #cbd5e1; border-radius: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 0.9rem; line-height: 1.5; color: #1e293b; resize: vertical; outline: none; transition: border-color 0.2s; background: #fafafa;"></textarea>
+                </div>
+
+                <!-- BANNER DE IDENTIFICAÇÃO EM TEMPO REAL -->
+                <div id="identificacao-banner" style="margin-top: 14px; padding: 12px 16px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="identificacao-icone" style="font-size: 1.2rem;">🔍</span>
+                        <div>
+                            <div style="font-size: 0.85rem; font-weight: 700; color: #1e293b;" id="identificacao-texto">Cole uma conversa para identificar o psicólogo automaticamente</div>
+                            <div style="font-size: 0.75rem; color: #64748b;" id="identificacao-subtexto">O sistema analisa o cabeçalho do WhatsApp e busca no banco do Render</div>
+                        </div>
+                    </div>
+                    <button id="btn-trocar-psi-manual" style="background: transparent; border: 1px solid #cbd5e1; color: #475569; padding: 5px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; display: none;">Alterar Profissional</button>
+                </div>
+
+                <!-- CAMPO MANUAL DE BUSCA (OCULTO POR PADRÃO) -->
+                <div id="manual-search-box" style="display: none; margin-top: 12px; padding: 12px; background: #fff; border: 1px dashed #cbd5e1; border-radius: 10px;">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="manual-psi-query" placeholder="Buscar por nome, e-mail ou telefone..." style="flex: 1; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.88rem; outline: none;">
+                        <button id="btn-manual-search-exec" style="background: #1B4332; color: #FFEE8C; border: none; padding: 9px 16px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">Buscar</button>
+                    </div>
+                    <div id="manual-search-results" style="margin-top: 8px; max-height: 180px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- SELETOR DE TOM E BOTÃO DE GERAÇÃO -->
+                <div style="margin-top: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: #475569;">Tom de Voz:</span>
+                        <div class="tone-buttons" style="display: flex; gap: 6px;">
+                            <button type="button" class="tone-btn active" data-tone="natural" style="background: #1B4332; color: #FFEE8C; border: 1px solid #1B4332; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">🌿 Natural / Colega</button>
+                            <button type="button" class="tone-btn" data-tone="comercial" style="background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">💼 Comercial / ROI</button>
+                            <button type="button" class="tone-btn" data-tone="tecnico" style="background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; padding: 7px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">⚙️ Técnico / Suporte</button>
+                        </div>
+                    </div>
+
+                    <button id="btn-gerar-resposta" style="background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); color: #FFEE8C; font-weight: 800; border: none; padding: 12px 24px; border-radius: 10px; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s; box-shadow: 0 4px 14px rgba(27,67,50,0.25);">
+                        <span>⚡ Gerar Resposta com IA</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CARD DE RESPOSTA GERADA (EXIBIDO APÓS GERAR) -->
+            <div id="card-resposta-gerada" style="display: none; background: #fff; border-radius: 16px; border: 1.5px solid #25d366; padding: 22px; box-shadow: 0 4px 20px rgba(37, 211, 102, 0.12);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="background: #25d366; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">Pronta para WhatsApp</span>
+                        <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Sugestão Personalizada:</span>
+                    </div>
+                    <button id="btn-copiar-resposta" style="background: #25d366; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 800; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(37,211,102,0.3);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span id="text-copiar-btn">Copiar Resposta</span>
+                    </button>
+                </div>
+
+                <div id="box-resposta-texto" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px; font-size: 0.95rem; line-height: 1.6; color: #0f172a; white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;"></div>
+                
+                <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #64748b;">
+                    <span>Formatação nativa de negrito (*assim*) preservada para envio direto no WhatsApp.</span>
+                    <button id="btn-regenerar-variacao" style="background: none; border: none; color: #166534; font-weight: 700; cursor: pointer; text-decoration: underline;">Gerar outra opção</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLUNA DA DIREITA: DOSSIÊ 360º DO PSICÓLOGO -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- CARD DO DOSSIÊ 360º -->
+            <div id="card-dossie" style="background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <span>👤 Dossiê 360º do Psicólogo</span>
+                    </h3>
+                    <span id="dossie-status-pill" style="display: none; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase;"></span>
+                </div>
+
+                <!-- ESTADO VAZIO / ESPERANDO IDENTIFICAÇÃO -->
+                <div id="dossie-empty-state" style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                    <div style="font-size: 2.5rem; margin-bottom: 12px;">📇</div>
+                    <div style="font-weight: 700; color: #64748b; font-size: 0.95rem;">Nenhum profissional carregado</div>
+                    <p style="font-size: 0.82rem; margin-top: 6px; line-height: 1.4;">Assim que você colar uma mensagem do WhatsApp ou fizer uma busca, o perfil completo e as métricas reais aparecerão aqui.</p>
+                </div>
+
+                <!-- CONTEÚDO DO DOSSIÊ (CARREGADO APÓS IDENTIFICAÇÃO) -->
+                <div id="dossie-content" style="display: none;">
+                    <!-- Perfil Cabeçalho -->
+                    <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+                        <img id="dossie-foto" src="/assets/images/apple-touch-icon.png" style="width: 58px; height: 58px; border-radius: 50%; object-fit: cover; border: 2px solid #e2e8f0;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <h4 id="dossie-nome" style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">-</h4>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;" id="dossie-crp-local">-</div>
+                            <a id="dossie-link-perfil" href="#" target="_blank" style="font-size: 0.78rem; color: #2563eb; font-weight: 600; text-decoration: none; display: inline-block; margin-top: 4px;">Ver Perfil Público ↗</a>
+                        </div>
+                    </div>
+
+                    <!-- MINI METRIC CARDS -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px;">
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                            <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Aparições no Match</div>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: #1B4332; margin-top: 4px;" id="dossie-aparicoes">0</div>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                            <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Cliques no WhatsApp</div>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: #16a34a; margin-top: 4px;" id="dossie-cliques">0</div>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                            <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Fechamentos Reais</div>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: #3b82f6; margin-top: 4px;" id="dossie-fechamentos">0</div>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                            <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Valor da Sessão</div>
+                            <div style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-top: 4px;" id="dossie-valor">R$ 0</div>
+                        </div>
+                    </div>
+
+                    <!-- DETALHES CLÍNICOS E CONTEÚDO -->
+                    <div style="font-size: 0.85rem; color: #334155; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 14px;">
+                        <div>
+                            <span style="font-weight: 700; color: #0f172a;">Plano & Validade:</span>
+                            <span id="dossie-plano-validade" style="color: #64748b; margin-left: 4px;">-</span>
+                        </div>
+                        <div>
+                            <span style="font-weight: 700; color: #0f172a;">Abordagem:</span>
+                            <span id="dossie-abordagem" style="color: #64748b; margin-left: 4px;">-</span>
+                        </div>
+                        <div>
+                            <span style="font-weight: 700; color: #0f172a;">Artigos no Blog:</span>
+                            <span id="dossie-artigos-info" style="color: #64748b; margin-left: 4px;">0 artigos publicados</span>
+                        </div>
+                        <div id="dossie-bio-box" style="background: #f8fafc; border-left: 3px solid #1B4332; padding: 10px 12px; border-radius: 0 8px 8px 0; font-size: 0.8rem; line-height: 1.4; color: #475569; max-height: 90px; overflow-y: auto;">
+                            <!-- Bio snippet -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTÓRICO RECENTE DE INTERAÇÕES COM ESTE OU OUTROS PROFISSIONAIS -->
+            <div style="background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h3 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin: 0;">🕒 Histórico de Atendimentos Salvo</h3>
+                    <span style="font-size: 0.75rem; color: #94a3b8;" id="history-count">0 registros</span>
+                </div>
+                <div id="copilot-history-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto;">
+                    <div style="text-align: center; color: #94a3b8; font-size: 0.82rem; padding: 20px;">Carregando histórico...</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
