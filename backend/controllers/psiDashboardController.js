@@ -94,7 +94,20 @@ exports.getStats = async (req, res) => {
         const myCompletion = (psychologist?.badges && psychologist.badges.autentico) ? 10 : 5;
         
         let myAvgRating = 0;
+        let reviewCount = 0;
         try {
+            if (db.Review) {
+                reviewCount = await db.Review.count({
+                    where: {
+                        psychologistId,
+                        [db.Sequelize.Op.or]: [
+                            { status: { [db.Sequelize.Op.ne]: 'rejected' } },
+                            { status: null }
+                        ]
+                    }
+                }).catch(async () => await db.Review.count({ where: { psychologistId } }).catch(() => 0));
+                reviewCount = parseInt(reviewCount || 0, 10);
+            }
             const myReviews = await db.Review.findAll({ where: { psychologistId }, attributes: [[db.sequelize.fn('AVG', db.sequelize.col('rating')), 'avgRating']] });
             myAvgRating = parseFloat(myReviews[0]?.dataValues.avgRating || 0);
         } catch(e) {}
@@ -147,7 +160,8 @@ exports.getStats = async (req, res) => {
             profileViewsMatch, profileViewsDirect, whatsappMatch, whatsappDirect,
             lastInteractions: { blog: lastPostDate, forum: lastForumDate, comment: lastCommentDate },
             gamificationProgress: { blogPostCount, forumActivityCount: forumPostCount + forumCommentCount, answerCount, semeador: blogPostCount, vozAtiva: forumPostCount + forumCommentCount, conselheiro: answerCount },
-            blogPostCount, forumActivityCount: forumPostCount + forumCommentCount, answerCount, blogLikes, forumPosts: forumPostCount, forumComments: forumCommentCount
+            blogPostCount, forumActivityCount: forumPostCount + forumCommentCount, answerCount, blogLikes, forumPosts: forumPostCount, forumComments: forumCommentCount,
+            reviewCount
         });
     } catch (error) {
         res.json({ whatsappClicks: 0, profileViews: 0, matchImpressions: 0, favoritesCount: 0, topDemands: [], funnelRates: { choiceRate: 'N/A', profileConversion: 'N/A', finalConversion: 'N/A' } });

@@ -355,15 +355,32 @@
                     });
 
                     // 2. DICAS DE MARKETING / CONVERSÃO (Sempre exibidas como Lâmpada 💡)
-                    const reviewCount = psychologistData.reviewCount || stats.reviewCount || 0;
+                    const activePsi = (typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null) || psychologistData || {};
+                    const reviewCount = (typeof activePsi.reviewCount === 'number') 
+                        ? activePsi.reviewCount 
+                        : ((typeof stats.reviewCount === 'number') ? stats.reviewCount : 0);
+                    const psiSlug = activePsi.slug || activePsi.customSlug || activePsi.id || '';
+                    const reviewShareUrl = psiSlug ? `https://www.yelopsi.com.br/${psiSlug}/?review=true` : `https://www.yelopsi.com.br/?review=true`;
                     
                     if (reviewCount === 0) {
-                        // Prioridade máxima de dica manual: Prova Social
+                        // Prioridade máxima de dica manual: Prova Social para quem ainda não tem
                         stepsToRender.push({ 
                             title: 'Você ainda não tem avaliações! Peça para pacientes antigos deixarem um depoimento no seu perfil público.', 
                             impact: 'Prova Social', 
                             completed: false, 
                             url: '#', 
+                            shareUrl: reviewShareUrl,
+                            isTip: true,
+                            isReviewRequest: true
+                        });
+                    } else if (reviewCount < 5) {
+                        // Psicólogo já possui avaliações: reconhece o número e incentiva expansão da prova social
+                        stepsToRender.push({ 
+                            title: `Você já tem ${reviewCount} ${reviewCount === 1 ? 'avaliação' : 'avaliações'}! Peça para mais pacientes deixarem um depoimento no seu perfil público.`, 
+                            impact: 'Prova Social', 
+                            completed: false, 
+                            url: '#', 
+                            shareUrl: reviewShareUrl,
                             isTip: true,
                             isReviewRequest: true
                         });
@@ -418,7 +435,7 @@
                         : `<div class="action-checkbox">${step.completed ? '✓' : ''}</div>`;
 
                     const html = `
-                        <a href="javascript:void(0);" data-target-url="${step.url}" ${step.isMarketingAI ? 'data-is-marketing-ai="true"' : ''} ${step.isReviewRequest ? 'data-is-review-request="true"' : ''} class="modern-action-item ${step.completed ? 'completed' : ''} ${step.isTip ? 'tip-item' : ''}">
+                        <a href="javascript:void(0);" data-target-url="${step.url}" ${step.isMarketingAI ? 'data-is-marketing-ai="true"' : ''} ${step.isReviewRequest ? 'data-is-review-request="true"' : ''} ${step.shareUrl ? `data-share-url="${step.shareUrl}"` : ''} class="modern-action-item ${step.completed ? 'completed' : ''} ${step.isTip ? 'tip-item' : ''}">
                             ${checkboxHtml}
                             <div class="action-content">
                                 <h4 class="action-title" style="${extraStyles}">${step.title}</h4>
@@ -440,21 +457,50 @@
 
                         if (item.dataset.isReviewRequest === 'true') {
                             e.preventDefault();
-                            const psiSlug = window.psychologistData?.customSlug || window.psychologistData?.id || '';
-                            const publicLink = `https://www.yelopsi.com.br/${psiSlug}?review=true`;
+                            const currentPsi = (typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null) || psychologistData || {};
+                            const currentSlug = currentPsi.slug || currentPsi.customSlug || currentPsi.id || '';
+                            const publicLink = item.dataset.shareUrl || (currentSlug ? `https://www.yelopsi.com.br/${currentSlug}/?review=true` : `https://www.yelopsi.com.br/?review=true`);
                             
-                            navigator.clipboard.writeText(publicLink).then(() => {
+                            const copyAction = (navigator.clipboard && window.isSecureContext)
+                                ? navigator.clipboard.writeText(publicLink)
+                                : new Promise((resolve, reject) => {
+                                    try {
+                                        const textArea = document.createElement('textarea');
+                                        textArea.value = publicLink;
+                                        textArea.style.position = 'fixed';
+                                        textArea.style.left = '-999999px';
+                                        textArea.style.top = '-999999px';
+                                        document.body.appendChild(textArea);
+                                        textArea.focus();
+                                        textArea.select();
+                                        const successful = document.execCommand('copy');
+                                        document.body.removeChild(textArea);
+                                        successful ? resolve() : reject(new Error('copy command failed'));
+                                    } catch (err) {
+                                        reject(err);
+                                    }
+                                });
+
+                            copyAction.then(() => {
                                 const titleEl = item.querySelector('.action-title');
-                                const originalText = titleEl.textContent;
-                                const originalColor = titleEl.style.color;
-                                titleEl.textContent = '✅ Link copiado com sucesso! Envie aos pacientes.';
-                                titleEl.style.color = '#10b981';
-                                setTimeout(() => {
-                                    titleEl.textContent = originalText;
-                                    titleEl.style.color = originalColor;
-                                }, 3000);
+                                const originalText = titleEl ? titleEl.textContent : '';
+                                const originalColor = titleEl ? titleEl.style.color : '';
+                                if (titleEl) {
+                                    titleEl.textContent = '✅ Link copiado com sucesso! Envie aos pacientes.';
+                                    titleEl.style.color = '#10b981';
+                                    setTimeout(() => {
+                                        titleEl.textContent = originalText;
+                                        titleEl.style.color = originalColor;
+                                    }, 3000);
+                                }
+                                if (typeof showToast === 'function') {
+                                    showToast('Link de avaliação copiado para a área de transferência!');
+                                }
                             }).catch(err => {
                                 console.error('Falha ao copiar:', err);
+                                if (typeof showToast === 'function') {
+                                    showToast('Erro ao copiar o link.', 'error');
+                                }
                             });
                             return;
                         }

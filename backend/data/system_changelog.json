@@ -1,5 +1,37 @@
 [
   {
+    "id": "change-git-4c87c268",
+    "date": "2026-10-17T13:19:25.000Z",
+    "commit": "4c87c268",
+    "author": "Anderson",
+    "title": "Novo: Implementar barra glassmorphism nativa de ponta a ponta e tipografia editorial de alta legibilidade no post (forum)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "implementar barra glassmorphism nativa de ponta a ponta e tipografia editorial de alta legibilidade no post",
+    "description": "Commit registrado no repositório: \"feat(forum): implementar barra glassmorphism nativa de ponta a ponta e tipografia editorial de alta legibilidade no post\". Arquivos modificados: backend/data/system_changelog.json, forum-community.css, public/css/forum-community.css, public/css/psi_dashboard.css, public/psi/psi_dashboard.html (+5 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4c87c268"
+    },
+    "after": {
+      "nova_versao": "implementar barra glassmorphism nativa de ponta a ponta e tipografia editorial de alta legibilidade no post"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "forum-community.css",
+      "public/css/forum-community.css",
+      "public/css/psi_dashboard.css",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "public/psi/psi_forum.html",
+      "public/psi/psi_forum.js",
+      "public/style.css",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-af9c1e70",
     "date": "2026-10-17T13:01:21.000Z",
     "commit": "af9c1e70",

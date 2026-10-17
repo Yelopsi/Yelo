@@ -40,7 +40,7 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         }
 
         // --- CORREÇÃO V2: Busca contagens com Fallback Duplo do ORM ---
-        let blogPostCount = 0, forumPostCount = 0, forumCommentCount = 0, answerCount = 0;
+        let blogPostCount = 0, forumPostCount = 0, forumCommentCount = 0, answerCount = 0, reviewCount = 0;
         
         if (db.Post) blogPostCount = await db.Post.count({ where: { psychologistId } }).catch(async () => await db.Post.count({ where: { psychologist_id: psychologistId } }).catch(() => 0));
         
@@ -49,6 +49,18 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         if (db.ForumComment) forumCommentCount = await db.ForumComment.count({ where: { PsychologistId: psychologistId } }).catch(async () => await db.ForumComment.count({ where: { psychologistId } }).catch(() => 0));
         
         if (db.Answer) answerCount = await db.Answer.count({ where: { psychologistId } }).catch(() => 0);
+
+        if (db.Review) {
+            reviewCount = await db.Review.count({
+                where: {
+                    psychologistId,
+                    [db.Sequelize.Op.or]: [
+                        { status: { [db.Sequelize.Op.ne]: 'rejected' } },
+                        { status: null }
+                    ]
+                }
+            }).catch(async () => await db.Review.count({ where: { psychologistId } }).catch(() => 0));
+        }
 
         // --- NOVO: VERIFICA AVALIAÇÃO DA PLATAFORMA ---
         const platformReviewCountResult = await db.sequelize.query(
@@ -109,6 +121,7 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             blogPostCount, // Para Semeador
             forumActivityCount: forumPostCount + forumCommentCount, // Para Voz Ativa
             answerCount, // Para Conselheiro
+            reviewCount,
             // Fallbacks de segurança para garantir que o front leia a chave certa
             semeador: blogPostCount,
             vozAtiva: forumPostCount + forumCommentCount,
@@ -119,6 +132,7 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         responseData.blogPostCount = blogPostCount;
         responseData.forumActivityCount = forumPostCount + forumCommentCount;
         responseData.answerCount = answerCount;
+        responseData.reviewCount = reviewCount;
         
         res.status(200).json(responseData);
 
