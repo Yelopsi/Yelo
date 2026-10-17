@@ -241,7 +241,7 @@
 
                 const phase2Steps = [
                     { title: hasForumActivity ? 'Primeira participação no fórum' : 'Responder a uma dúvida na comunidade', impact: 'Maior Visibilidade', completed: hasForumActivity, url: 'psi_forum.html' },
-                    { title: hasArticle ? 'Primeiro artigo publicado' : 'Publicar seu primeiro artigo', impact: 'Autoridade', completed: hasArticle, url: 'psi_blog.html' }
+                    { title: hasArticle ? 'Primeiro post publicado' : 'Publicar seu primeiro post', impact: 'Autoridade', completed: hasArticle, url: 'psi_blog.html' }
                 ];
 
                 const isPhase1Completed = phase1Steps.every(s => s.completed);

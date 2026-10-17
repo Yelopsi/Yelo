@@ -106,7 +106,7 @@
                 const div = document.createElement('div');
                 div.className = 'sugestao-item';
                 div.textContent = `✍️ ${temaNome}`;
-                div.title = `Clique para usar "${temaNome}" como inspiração ou título do seu novo artigo`;
+                div.title = `Clique para usar "${temaNome}" como inspiração ou título do seu novo post`;
                 
                 div.onclick = () => {
                     limparFormulario();
@@ -116,7 +116,7 @@
                         inputTitulo.dispatchEvent(new Event('input', { bubbles: true }));
                     }
                     const formTituloAcao = document.getElementById('form-titulo-acao');
-                    if (formTituloAcao) formTituloAcao.textContent = "Novo Artigo";
+                    if (formTituloAcao) formTituloAcao.textContent = "Novo Post";
                     toggleView(true);
                 };
                 container.appendChild(div);
@@ -162,7 +162,7 @@
             const blogId = document.getElementById('blog-id').value;
             if (blogId) limparFormulario();
             const formTitle = document.getElementById('form-titulo-acao');
-            if (formTitle) formTitle.textContent = "Novo Artigo";
+            if (formTitle) formTitle.textContent = "Novo Post";
             toggleView(true);
         });
 
@@ -211,7 +211,7 @@
                     else loadMoreBtn.style.display = 'none';
                 }
             } catch (error) {
-                if (!append) containerLista.innerHTML = `<div style="text-align:center; padding:30px; color:#d32f2f; background:#fff0f0; border-radius:8px;"><p><strong>Não foi possível carregar seus artigos.</strong></p><p style="font-size:0.8rem;">Tente recarregar a página.</p></div>`;
+                if (!append) containerLista.innerHTML = `<div style="text-align:center; padding:30px; color:#d32f2f; background:#fff0f0; border-radius:8px;"><p><strong>Não foi possível carregar seus posts.</strong></p><p style="font-size:0.8rem;">Tente recarregar a página.</p></div>`;
             } finally {
                 if (loadMoreBtn) { loadMoreBtn.textContent = 'Mostrar mais'; loadMoreBtn.disabled = false; }
             }
@@ -223,9 +223,9 @@
                 containerLista.innerHTML = `
                     <div style="text-align:center; padding:50px 20px; color:#666; background:#f9f9f9; border-radius:12px;">
                         <p style="font-size:3rem; margin-bottom:10px;">📝</p>
-                        <h3 style="color:#1B4332;">Você ainda não tem artigos.</h3>
-                        <p>Escrever é a melhor forma de demonstrar autoridade.</p>
-                        <p>Clique em <strong>+ Escrever Novo</strong> acima para começar!</p>
+                        <h3 style="color:#1B4332;">Você ainda não tem posts publicados.</h3>
+                        <p>Compartilhar ideias e reflexões ajuda visitantes a conhecerem como você pensa e trabalha.</p>
+                        <p>Clique em <strong>+ Escrever Novo Post</strong> acima para começar!</p>
                     </div>`;
                 return;
             }
@@ -234,7 +234,7 @@
             posts.forEach(post => {
                 const div = document.createElement('div');
                 div.className = 'artigo-item';
-                div.title = "Clique para ver o artigo público";
+                div.title = "Clique para ver o post público";
                 
                 const dataStr = post.created_at || post.createdAt || new Date();
                 const dataF = new Date(dataStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -259,8 +259,8 @@
                 div.querySelector('.btn-editar').onclick = () => carregarParaEdicao(post);
                 div.querySelector('.btn-excluir').onclick = () => {
                     window.abrirModalConfirmacaoPersonalizado(
-                        'Excluir Artigo',
-                        `Tem certeza que deseja apagar o artigo "<strong>${post.titulo}</strong>"?<br>Essa ação não pode ser desfeita.`,
+                        'Excluir Post',
+                        `Tem certeza que deseja apagar o post "<strong>${post.titulo}</strong>"?<br>Essa ação não pode ser desfeita.`,
                         () => deletarArtigo(post.id)
                     );
                 };
@@ -278,15 +278,15 @@
                 const res = await window.apiFetch(`${API_BASE_URL}/api/psychologists/me/posts/${id}`, { method: 'DELETE' });
                 if(res.ok) {
                     const data = await res.json();
-                    if (data.pointsDeducted) window.showToast(`Artigo excluído. Você perdeu ${data.pointsDeducted} XP.`, 'info');
-                    else window.showToast('Artigo excluído com sucesso.', 'success');
+                    if (data.pointsDeducted) window.showToast(`Post excluído. Você perdeu ${data.pointsDeducted} XP.`, 'info');
+                    else window.showToast('Post excluído com sucesso.', 'success');
                     carregarArtigos();
                 } else throw new Error("Falha ao excluir");
-            } catch (e) { window.showToast('Erro ao excluir artigo.', 'error'); }
+            } catch (e) { window.showToast('Erro ao excluir post.', 'error'); }
         }
 
         function carregarParaEdicao(post) {
-            document.getElementById('form-titulo-acao').textContent = "Editar Artigo";
+            document.getElementById('form-titulo-acao').textContent = "Editar Post";
             document.getElementById('blog-id').value = post.id;
             document.getElementById('blog-titulo').value = post.titulo;
             if (quill && post.conteudo) quill.clipboard.dangerouslyPasteHTML(post.conteudo);
@@ -310,7 +310,7 @@
             document.getElementById('editor-container').innerHTML = '';
             quill = new Quill('#editor-container', {
                 theme: 'snow',
-                placeholder: 'Comece a escrever seu artigo aqui...',
+                placeholder: 'Comece a escrever seu post aqui...',
                 modules: { toolbar: [ [{ 'header': [2, 3, false] }], ['bold', 'italic', 'underline', 'strike'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], ['link'], ['clean'] ] }
             });
         }
@@ -360,7 +360,7 @@
                 }
                 
                 const res = await window.apiFetch(url, { method: method, body: formData });
-                if(res.ok) { window.showToast(id ? 'Artigo atualizado!' : 'Artigo publicado!', 'success'); limparFormulario(); toggleView(false); carregarArtigos(); }
+                if(res.ok) { window.showToast(id ? 'Post atualizado!' : 'Post publicado!', 'success'); limparFormulario(); toggleView(false); carregarArtigos(); }
                 else throw new Error((await res.json()).error || "Erro ao salvar.");
             } catch (error) { window.showToast('Não foi possível salvar: ' + error.message, 'error'); } 
             finally { btn.innerHTML = originalText; btn.disabled = false; }
