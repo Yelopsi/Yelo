@@ -660,6 +660,67 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
     stroke: #e63946;
 }
 
+/* Badge de Comentário Fixado (Pinned) */
+.comment-pinned-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #1B4332;
+    background: rgba(27, 67, 50, 0.08);
+    border: 1px solid rgba(27, 67, 50, 0.16);
+    border-radius: 12px;
+    padding: 3px 10px;
+    margin-bottom: 8px;
+    width: fit-content;
+    letter-spacing: 0.2px;
+}
+.comment-pinned-badge svg {
+    stroke: #1B4332;
+    flex-shrink: 0;
+}
+.comment-pinned-badge.hidden {
+    display: none !important;
+}
+
+/* Card de Comentário Fixado com Destaque Elegante */
+.yt-comment.pinned-comment {
+    background: linear-gradient(to right, rgba(27, 67, 50, 0.04), transparent);
+    border-left: 3px solid #1B4332;
+    padding-left: 12px;
+    border-radius: 8px;
+}
+
+/* Botão de Fixar Comentário (Ação Admin) */
+.comment-pin-btn {
+    color: #555;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+}
+.comment-pin-btn:hover {
+    color: #1B4332;
+    background: rgba(27, 67, 50, 0.08);
+}
+.comment-pin-btn.is-pinned {
+    color: #1B4332;
+    background: rgba(27, 67, 50, 0.1);
+    font-weight: 700;
+}
+.comment-pin-btn.is-pinned svg {
+    fill: #1B4332;
+    stroke: #1B4332;
+}
+.comment-pin-btn.hidden {
+    display: none !important;
+}
+
 /* Estilo Pílula para o Input de Comentário/Resposta */
 .comment-input-capsule {
     border-radius: 25px !important;

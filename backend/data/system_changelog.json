@@ -1,5 +1,29 @@
 [
   {
+    "id": "change-git-6b92708d",
+    "date": "2026-10-17T02:39:08.000Z",
+    "commit": "6b92708d",
+    "author": "Anderson",
+    "title": "Sincronizar changelog e relatorio do release gate",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar changelog e relatorio do release gate",
+    "description": "Commit registrado no repositório: \"docs(changelog): sincronizar changelog e relatorio do release gate\". Arquivos modificados: backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #6b92708d"
+    },
+    "after": {
+      "nova_versao": "sincronizar changelog e relatorio do release gate"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-acb13a7c",
     "date": "2026-10-17T02:38:49.000Z",
     "commit": "acb13a7c",

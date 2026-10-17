@@ -476,6 +476,16 @@
             commentEl.querySelector('.comment-time').textContent = `há ${timeSince(comment.createdAt)}`;
             commentEl.querySelector('.comment-body').innerHTML = window.formatTextContent(comment.content);
             
+            // Destaque visual de comentário fixado pelo Administrador
+            const pinnedBadge = commentEl.querySelector('.comment-pinned-badge');
+            if (comment.isPinned) {
+                commentEl.classList.add('pinned-comment');
+                if (pinnedBadge) pinnedBadge.classList.remove('hidden');
+            } else {
+                commentEl.classList.remove('pinned-comment');
+                if (pinnedBadge) pinnedBadge.classList.add('hidden');
+            }
+
             const likeBtn = commentEl.querySelector('.comment-like-btn');
             const likesCount = commentEl.querySelector('.comment-likes-count');
             const replyBtn = commentEl.querySelector('.comment-reply-btn');
@@ -531,6 +541,62 @@
                     } finally {
                         aiReplyBtn.disabled = false;
                         aiReplyBtn.innerHTML = originalText;
+                    }
+                };
+            }
+
+            // --- AÇÃO EXCLUSIVA DO ADMINISTRADOR: FIXAR COMENTÁRIO NO TOPO ---
+            const pinBtn = commentEl.querySelector('.comment-pin-btn');
+            const isUserAdmin = adminPsiData && (
+                adminPsiData.isAdmin === true || 
+                adminPsiData.email === 'pix@yelopsi.com.br' || 
+                adminPsiData.email === 'pix@yeloposi.com.br'
+            );
+
+            if (pinBtn && isUserAdmin) {
+                pinBtn.classList.remove('hidden');
+                const pinBtnText = pinBtn.querySelector('.pin-btn-text');
+                if (comment.isPinned) {
+                    pinBtn.classList.add('is-pinned');
+                    pinBtn.title = 'Desafixar comentário';
+                    if (pinBtnText) pinBtnText.textContent = 'Desafixar';
+                } else {
+                    pinBtn.classList.remove('is-pinned');
+                    pinBtn.title = 'Fixar comentário no topo';
+                    if (pinBtnText) pinBtnText.textContent = 'Fixar';
+                }
+
+                pinBtn.onclick = async () => {
+                    pinBtn.disabled = true;
+                    try {
+                        const targetState = !comment.isPinned;
+                        const res = await apiFetch(`${API_BASE_URL}/api/forum/comments/${comment.id}/pin`, {
+                            method: 'PUT',
+                            body: JSON.stringify({ isPinned: targetState })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (typeof showToast === 'function') {
+                                showToast(data.message || (targetState ? 'Comentário fixado no topo!' : 'Comentário desafixado.'), 'sucesso');
+                            }
+                            // Recarrega lista de comentários para reordenar instantaneamente
+                            if (currentPostId) {
+                                currentCommentsPage = 1;
+                                fetchAndRenderComments(currentPostId, 1, false);
+                            }
+                        } else {
+                            const errData = await res.json().catch(() => ({}));
+                            if (typeof showToast === 'function') {
+                                showToast(errData.error || 'Erro ao fixar/desafixar comentário.', 'erro');
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Erro ao alternar fixação de comentário:', err);
+                        if (typeof showToast === 'function') {
+                            showToast('Erro ao alternar fixação do comentário.', 'erro');
+                        }
+                    } finally {
+                        pinBtn.disabled = false;
                     }
                 };
             }

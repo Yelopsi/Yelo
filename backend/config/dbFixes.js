@@ -186,6 +186,7 @@ const applyDatabaseFixes = async (db, sequelize) => {
             `ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`,
             `ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "isPinned" BOOLEAN DEFAULT FALSE;`,
             `ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active';`,
+            `ALTER TABLE "ForumComments" ADD COLUMN IF NOT EXISTS "isPinned" BOOLEAN DEFAULT FALSE;`,
             `ALTER TABLE "SystemLogs" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;`,
             `ALTER TABLE "WaitingLists" ALTER COLUMN "crp" DROP NOT NULL;`,
             `CREATE TABLE IF NOT EXISTS "Expenses" ( "id" SERIAL PRIMARY KEY, "description" VARCHAR(255), "value" FLOAT, "date" DATE, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,

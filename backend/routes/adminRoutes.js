@@ -224,6 +224,8 @@ router.get('/forum/reports', adminCommunityController.getForumReports);
 router.put('/forum/moderate', adminCommunityController.moderateForumContent);
 // Rota para fixar/desfixar um post do fórum (NOVO)
 router.put('/forum/posts/:id/pin', adminCommunityController.pinForumPost);
+// Rota para fixar/desfixar um comentário do fórum (NOVO)
+router.put('/forum/comments/:id/pin', adminCommunityController.pinForumComment);
 // Rota para listar todos os posts do fórum para o admin (NOVO)
 router.get('/forum/posts', adminCommunityController.getAllForumPosts);
 

@@ -203,6 +203,7 @@ exports.getComments = async (req, res) => {
                 { model: Psychologist, attributes: ['nome', 'fotoUrl', 'badges', 'authority_level', 'slug', 'status', 'planExpiresAt', 'is_exempt'], required: false }
             ],
             order: [
+                [db.Sequelize.literal('COALESCE("ForumComment"."isPinned", false)'), 'DESC'],
                 ['likes', 'DESC'],
                 ['createdAt', 'DESC']
             ],
@@ -268,8 +269,9 @@ exports.getComments = async (req, res) => {
             // Processa as respostas recursivamente
             let processedReplies = directReplies.map(r => processComment(r));
             
-            // Ordena respostas por likes e data (mais recentes primeiro)
+            // Ordena respostas por fixação, likes e data (mais recentes primeiro)
             processedReplies.sort((a, b) => {
+                if (b.isPinned !== a.isPinned) return (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0);
                 if (b.likes !== a.likes) return b.likes - a.likes;
                 return new Date(b.createdAt) - new Date(a.createdAt);
             });
@@ -279,6 +281,7 @@ exports.getComments = async (req, res) => {
                 content: commentObj.content,
                 createdAt: commentObj.createdAt,
                 isAnonymous: commentObj.isAnonymous,
+                isPinned: Boolean(commentObj.isPinned),
                 authorName: authorName,
                 authorPhoto: authorPhoto,
                 authorBadges: authorBadges,
@@ -757,3 +760,55 @@ Retorne SOMENTE a resposta, sem aspas e sem enrolação.`;
         res.status(500).json({ error: 'Erro interno ao gerar comentário.' });
     }
 };
+
+/**
+ * Rota: PUT /api/forum/comments/:id/pin
+ * Descrição: Fixa ou desafixa um comentário de um post no fórum.
+ * Acesso exclusivo: Administrador ou pix@yelopsi.com.br
+ */
+exports.togglePinComment = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const psychologist = await Psychologist.findByPk(userId);
+        
+        if (!psychologist) {
+            return res.status(403).json({ error: 'Acesso negado. Usuário não encontrado.' });
+        }
+
+        const isAuthorized = psychologist.isAdmin || psychologist.email === 'pix@yelopsi.com.br' || psychologist.email === 'pix@yeloposi.com.br';
+        if (!isAuthorized) {
+            return res.status(403).json({ error: 'Acesso negado. Apenas o administrador pode fixar comentários.' });
+        }
+
+        const comment = await ForumComment.findByPk(req.params.id); // BOLA-Safe: ação administrativa restrita
+        if (!comment) {
+            return res.status(404).json({ error: 'Comentário não encontrado.' });
+        }
+
+        const targetPinned = req.body && typeof req.body.isPinned === 'boolean'
+            ? req.body.isPinned
+            : !comment.isPinned;
+
+        if (targetPinned) {
+            // Ao fixar um comentário, desfixa qualquer outro comentário do mesmo post para manter o destaque único
+            await ForumComment.update(
+                { isPinned: false },
+                { where: { ForumPostId: comment.ForumPostId, isPinned: true } }
+            );
+        }
+
+        await comment.update({ isPinned: targetPinned });
+
+        const message = targetPinned ? 'Comentário fixado no topo com sucesso!' : 'Comentário desfixado com sucesso!';
+        res.json({
+            message,
+            isPinned: targetPinned,
+            commentId: comment.id,
+            postId: comment.ForumPostId
+        });
+    } catch (error) {
+        console.error('Erro ao fixar/desafixar comentário do fórum:', error);
+        res.status(500).json({ error: 'Erro interno ao processar a solicitação.' });
+    }
+};
+

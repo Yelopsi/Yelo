@@ -95,6 +95,40 @@ exports.pinForumPost = async (req, res) => {
 };
 
 /**
+ * Rota: PUT /api/admin/forum/comments/:id/pin
+ * Descrição: Fixa ou desfixa um comentário no fórum.
+ */
+exports.pinForumComment = async (req, res) => {
+    const { id } = req.params;
+    const { isPinned } = req.body;
+
+    if (typeof isPinned !== 'boolean') {
+        return res.status(400).json({ error: 'Parâmetro "isPinned" (booleano) é obrigatório.' });
+    }
+
+    try {
+        const comment = await db.ForumComment.findByPk(id);
+        if (!comment) return res.status(404).json({ error: 'Comentário não encontrado.' });
+
+        if (isPinned) {
+            // Desfixa qualquer outro comentário do mesmo post
+            await db.ForumComment.update(
+                { isPinned: false },
+                { where: { ForumPostId: comment.ForumPostId, isPinned: true } }
+            );
+        }
+
+        await comment.update({ isPinned });
+        const message = isPinned ? 'Comentário fixado com sucesso!' : 'Comentário desfixado com sucesso!';
+        res.json({ message, isPinned: comment.isPinned });
+    } catch (error) {
+        console.error("Erro ao fixar/desfixar comentário do fórum:", error);
+        res.status(500).json({ error: "Erro interno ao processar a solicitação." });
+    }
+};
+
+
+/**
  * Rota: GET /api/admin/forum/posts (NOVA)
  * Descrição: Busca todos os posts do fórum para moderação.
  */

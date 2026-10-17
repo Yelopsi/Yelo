@@ -28,6 +28,10 @@ module.exports = (sequelize, DataTypes) => {
       parentId: {
           type: DataTypes.INTEGER,
           allowNull: true // Nulo para comentários de nível superior
+      },
+      isPinned: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false
       }
   }, {
     sequelize,

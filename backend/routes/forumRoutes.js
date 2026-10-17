@@ -17,6 +17,7 @@ router.post('/posts/:id/vote', forumController.toggleVote);
 router.post('/report', forumController.reportContent);
 router.delete('/posts/:id', forumController.deletePost); // Nova rota de exclusão
 router.delete('/comments/:id', forumController.deleteComment); // Rota para excluir comentários
+router.put('/comments/:id/pin', forumController.togglePinComment); // Rota para fixar/desafixar comentário (Admin)
 router.post('/comments/:id/vote', forumController.toggleCommentVote); // <-- NOVA ROTA
 router.post('/ai/generate-comment', forumController.generateAiComment); // Rota para gerar comentario com IA
 
