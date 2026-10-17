@@ -684,12 +684,27 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
     display: none !important;
 }
 
+/* Card de Post Fixado no Feed (Verde Menta) */
+.forum-post-card.pinned,
+.reddit-style-card.pinned {
+    background-color: #f0fdf4 !important;
+    border: 1px solid #bbf7d0 !important;
+    box-shadow: 0 4px 15px rgba(27,67,50,0.05) !important;
+}
+.forum-post-card.pinned:hover,
+.reddit-style-card.pinned:hover {
+    border-color: #86efac !important;
+    box-shadow: 0 6px 20px rgba(27,67,50,0.08) !important;
+}
+
 /* Card de Comentário Fixado com Destaque Elegante */
 .yt-comment.pinned-comment {
-    background: linear-gradient(to right, rgba(27, 67, 50, 0.04), transparent);
-    border-left: 3px solid #1B4332;
+    background: #f0fdf4 !important;
+    border: 1px solid #bbf7d0 !important;
+    border-left: 3px solid #16a34a !important;
     padding-left: 12px;
     border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(27,67,50,0.04);
 }
 
 /* Botão de Fixar Comentário (Ação Admin) */

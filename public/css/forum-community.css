@@ -112,6 +112,18 @@
 /* Estética Reddit App-like */
 .reddit-style-card { background: #fff; border: 1px solid #edeff1; border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: border-color 0.2s; display: flex; flex-direction: column; }
 .reddit-style-card:hover { border-color: #878a8c; }
+.reddit-style-card.pinned,
+.forum-post-card.pinned {
+    background-color: #f0fdf4 !important;
+    border: 1px solid #bbf7d0 !important;
+    box-shadow: 0 4px 15px rgba(27,67,50,0.05) !important;
+}
+.reddit-style-card.pinned:hover,
+.forum-post-card.pinned:hover {
+    border-color: #86efac !important;
+    box-shadow: 0 6px 20px rgba(27,67,50,0.08) !important;
+}
+.pinned-icon { display: inline-block; margin-right: 8px; transform: rotate(-15deg); font-size: 1.1rem; vertical-align: middle; }
 .reddit-card-header { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #787c7e; margin-bottom: 8px; flex-wrap: wrap; }
 .post-author-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
 .post-category { font-weight: 700; color: var(--verde-escuro); }
