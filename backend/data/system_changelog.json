@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-01e2f16a",
+    "date": "2026-10-17T11:52:23.000Z",
+    "commit": "01e2f16a",
+    "author": "Anderson",
+    "title": "Interface: Alterar cor do card de post fixado para verde menta (#f0fdf4 / #bbf7d0) (forum)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "alterar cor do card de post fixado para verde menta (#f0fdf4 / #bbf7d0)",
+    "description": "Commit registrado no repositório: \"style(forum): alterar cor do card de post fixado para verde menta (#f0fdf4 / #bbf7d0)\". Arquivos modificados: public/css/04-components.css, public/css/forum-community.css, public/css/psi_dashboard.css, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #01e2f16a"
+    },
+    "after": {
+      "nova_versao": "alterar cor do card de post fixado para verde menta (#f0fdf4 / #bbf7d0)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "public/css/04-components.css",
+      "public/css/forum-community.css",
+      "public/css/psi_dashboard.css",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-09176434",
     "date": "2026-10-17T11:45:22.000Z",
     "commit": "09176434",
