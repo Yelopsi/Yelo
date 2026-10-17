@@ -18,6 +18,7 @@ html {
     overflow-x: clip;
     width: 100%;
     box-sizing: border-box;
+    touch-action: pan-x pan-y;
 }
 
 body {
@@ -35,6 +36,14 @@ body {
     overflow-x: clip;
     width: 100%;
     line-height: 1.6;
+    touch-action: pan-x pan-y;
+}
+
+/* Previne zoom automático do Safari iOS ao focar em inputs no mobile (sensação de app nativo) */
+@media screen and (max-width: 768px) {
+    input, select, textarea {
+        font-size: 16px !important;
+    }
 }
 
 /* Garantir que o container principal fique acima do ruído (base do HTML/Body) */

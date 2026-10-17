@@ -1,4 +1,12 @@
 
+// Previne gestos de pinçamento e zoom de toque no iOS Safari (sensação de app nativo)
+document.addEventListener('gesturestart', function(e) {
+    e.preventDefault();
+}, { passive: false });
+document.addEventListener('gesturechange', function(e) {
+    e.preventDefault();
+}, { passive: false });
+
 // --- FUNÇÃO DE INICIALIZAÇÃO DO MENU (Global) ---
 function initMobileMenu() {
     const menuBtn = document.querySelector('.menu-hamburguer');

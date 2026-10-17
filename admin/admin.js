@@ -1,3 +1,11 @@
+// Previne gestos de pinçamento e zoom de toque no iOS Safari (sensação de app nativo)
+document.addEventListener('gesturestart', function(e) {
+    e.preventDefault();
+}, { passive: false });
+document.addEventListener('gesturechange', function(e) {
+    e.preventDefault();
+}, { passive: false });
+
 document.addEventListener('DOMContentLoaded', function() {
     const mainContent = document.getElementById('main-content');
     

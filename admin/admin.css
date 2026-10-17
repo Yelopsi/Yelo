@@ -24,6 +24,7 @@
 /* --- Reset Básico e Padrões --- */
 html {
     background-color: #f0f2f5;
+    touch-action: pan-x pan-y;
 }
 
 body.pagina-dashboard {
@@ -38,9 +39,17 @@ body.pagina-dashboard {
     background-attachment: fixed !important;
     background-repeat: repeat !important;
     overflow: hidden !important; /* FIX: Trava o scroll no body, passando a responsabilidade para .dashboard-main */
+    touch-action: pan-x pan-y;
 }
 html {
     height: 100%; /* Garante que o html ocupe 100% da altura do viewport */
+}
+
+/* Previne zoom automático do Safari iOS ao focar em inputs no mobile (sensação de app nativo) */
+@media screen and (max-width: 768px) {
+    input, select, textarea {
+        font-size: 16px !important;
+    }
 }
 
 /* Campos de Data Arredondados (Pílula) para todo o Admin */
