@@ -3,336 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Feedback de Encaminhamento - Yelo</title>
-    <script>
-        document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
-        document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
-    </script>
+    <title>Feedback de Encaminhamento • Yelo</title>
     
-    <!-- Fonts and Yelo Styles -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/01-variables.css">
-    <link rel="stylesheet" href="/style.css">
+    <!-- Fonts and Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Fallbacks em caso de falha no carregamento dos CSS originais */
         :root {
             --verde-escuro: #1B4332;
-            --verde-claro: #2D6A4F;
+            --verde-medio: #2D6A4F;
+            --verde-claro: #40916C;
+            --verde-suave: #E8F5EE;
+            --verde-border: #D1E7DD;
+            --cinza-texto: #64748B;
+            --cinza-escuro: #1E293B;
+            --cinza-fundo: #F8FAFC;
+            --cinza-borda: #E2E8F0;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100dvh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body.pagina-questionario {
-            background-color: var(--verde-escuro);
+            background: radial-gradient(circle at 50% 10%, #255841 0%, #163a2c 60%, #0d241b 100%);
             min-height: 100dvh;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0;
-            padding: 20px;
-            font-family: 'Inter', -apple-system, sans-serif;
-            -webkit-font-smoothing: antialiased;
+            padding: 40px 20px;
+            color: var(--cinza-escuro);
         }
         
         .questionario-container {
             width: 100%;
-            max-width: 540px;
+            max-width: 520px;
             margin: 0 auto;
             position: relative;
             z-index: 10;
         }
+
+        /* Logo */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 28px;
+            position: relative;
+        }
+        .logo-container img {
+            width: 135px;
+            height: auto;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25));
+        }
+
+        /* Header Info */
+        .header-section {
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 24px;
+            animation: slideUp 0.4s ease;
+        }
+        .header-title {
+            font-size: 1.85rem;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif !important;
+        }
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.88);
+            margin: 0 auto;
+            line-height: 1.55;
+            font-size: 0.95rem;
+            max-width: 460px;
+            font-weight: 400;
+        }
+        .feedback-counter-pill {
+            margin-top: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            letter-spacing: 0.02em;
+        }
         
-        .feedback-slide {
+        /* Cards */
+        .feedback-slide, .pending-patient-card {
             display: none;
-            background: white;
+            background: #ffffff;
             border-radius: 24px;
-            padding: 35px 30px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 30px 26px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3), 0 2px 10px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
             width: 100%;
             box-sizing: border-box;
-            text-align: center;
+            text-align: left;
         }
-        .feedback-slide.active {
+        .feedback-slide.active, .pending-patient-card.active {
             display: block;
         }
 
-        /* Card de Paciente Pendente */
-        .pending-patient-card {
-            display: none;
-            background: white;
-            border-radius: 24px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        /* Top Header do Card de Paciente */
+        .patient-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--cinza-borda);
         }
-        .pending-patient-card.active {
+        .patient-avatar-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: var(--verde-suave);
+            color: var(--verde-escuro);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: inset 0 0 0 1px rgba(27, 67, 50, 0.12);
+        }
+        .patient-title-group {
+            flex: 1;
+            min-width: 0;
+            text-align: left;
+        }
+        .patient-name {
+            margin: 0;
+            color: var(--verde-escuro);
+            font-size: 1.15rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif !important;
+            letter-spacing: -0.02em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .patient-subtext {
             display: block;
+            font-size: 0.8rem;
+            color: var(--cinza-texto);
+            margin-top: 2px;
+            font-weight: 500;
+        }
+        .patient-date-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: var(--cinza-escuro);
+            font-weight: 600;
+            background: var(--cinza-fundo);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--cinza-borda);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #10B981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+        }
+
+        /* Context Box */
+        .patient-context-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #F0FDF4;
+            border: 1px solid #DCFCE7;
+            border-radius: 14px;
+            padding: 11px 14px;
+            margin-bottom: 20px;
+            font-size: 0.86rem;
+            color: #166534;
+            line-height: 1.45;
+            text-align: left;
+        }
+        .context-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        /* Pergunta */
+        .step-question-title {
+            margin: 0 0 16px 0;
+            font-size: 1.08rem;
+            color: var(--cinza-escuro);
+            font-weight: 700;
+            font-family: 'Inter', sans-serif !important;
+            text-align: left;
+            letter-spacing: -0.01em;
         }
         
-        /* Radio Cards (Opções) */
+        /* Radio Cards (Opções Modernas) */
         .option-card {
-            background: #F8FAFC;
-            border: 2px solid #E2E8F0;
+            background: #FFFFFF;
+            border: 1.5px solid var(--cinza-borda);
             border-radius: 16px;
-            padding: 16px 20px;
+            padding: 14px 18px;
             margin-bottom: 12px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             align-items: center;
             gap: 14px;
-            color: var(--verde-escuro);
-            font-weight: 600;
-            text-align: left;
             width: 100%;
-            font-size: 1rem;
+            box-sizing: border-box;
+            text-align: left;
+            text-decoration: none;
+            color: inherit;
+            outline: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         }
-        .option-card:hover, .option-card:active {
-            border-color: var(--verde-claro);
-            background: #E8F3EF;
+        .option-card:hover {
+            border-color: var(--verde-medio);
+            background: #F4F9F6;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(45, 106, 79, 0.1);
+            box-shadow: 0 6px 18px rgba(45, 106, 79, 0.12);
+        }
+        .option-card:active {
+            transform: scale(0.985);
+            background: #E8F3EF;
         }
         .emoji-icon {
-            font-size: 1.5rem;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+            font-size: 1.6rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
+            flex-shrink: 0;
+        }
+        .option-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .option-title {
+            color: var(--verde-escuro);
+            font-weight: 700;
+            font-size: 0.98rem;
+            line-height: 1.3;
+            font-family: 'Inter', sans-serif !important;
+        }
+        .option-subtitle {
+            color: var(--cinza-texto);
+            font-size: 0.81rem;
+            font-weight: 500;
+            line-height: 1.3;
+        }
+        .option-chevron {
+            color: #94A3B8;
+            font-size: 1.15rem;
+            font-weight: 700;
+            transition: transform 0.2s, color 0.2s;
+            flex-shrink: 0;
+        }
+        .option-card:hover .option-chevron {
+            color: var(--verde-medio);
+            transform: translateX(3px);
         }
         
-        /* Utilities */
+        /* Botão de Voltar */
         .back-btn {
             background: none;
             border: none;
-            color: #64748B;
-            font-size: 0.9rem;
+            color: var(--cinza-texto);
+            font-size: 0.88rem;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 15px;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            text-decoration: none;
-            padding: 10px;
-            transition: color 0.2s;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 20px;
+            transition: all 0.2s ease;
         }
-        .back-btn:hover { color: var(--verde-escuro); }
+        .back-btn:hover {
+            color: var(--verde-escuro);
+            background: #F1F5F9;
+        }
 
+        /* Spinner / Loading */
         .loader {
             border: 4px solid rgba(255,255,255,0.2);
-            border-top: 4px solid white;
+            border-top: 4px solid #ffffff;
             border-radius: 50%;
-            width: 45px;
-            height: 45px;
+            width: 46px;
+            height: 46px;
             animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
             margin: 0 auto 20px;
         }
         
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes slideUp { 
-            from { transform: translateY(20px); opacity: 0; } 
+            from { transform: translateY(16px); opacity: 0; } 
             to { transform: translateY(0); opacity: 1; } 
         }
 
-        /* Ajustes Mobile (Bottom Sheet Nativo) */
+        /* Responsividade Mobile Fluida */
         @media (max-width: 768px) {
-
-            html,
-            body {
-                width: 100%;
-                height: 100%;
-                margin: 0;
-                padding: 0 !important;
-                overflow: hidden;
-            }
-
             body.pagina-questionario {
+                padding: 24px 16px 40px !important;
+                align-items: flex-start;
                 min-height: 100dvh;
-                height: 100dvh;
-                display: block !important;
-                padding: 0 !important;
-                position: relative;
-                overflow: hidden;
             }
 
             .questionario-container {
-                position: relative !important;
-                width: 100% !important;
-                max-width: none !important;
-                height: 100dvh !important;
-                min-height: 100dvh !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                z-index: 10;
+                max-width: 100%;
+                margin-top: 6px;
             }
 
             .logo-container {
-                position: fixed !important;
-                top: 40px !important;
-                left: 50% !important;
-                transform: translateX(-50%) !important;
-                margin: 0 !important;
-                z-index: 20;
+                margin-bottom: 20px !important;
             }
 
             .logo-container img {
                 width: 120px !important;
             }
 
-            #step-list > div:first-child {
-                position: fixed !important;
-                top: 115px;
-                left: 24px;
-                right: 24px;
-                width: auto;
-                margin: 0 !important;
-                z-index: 15;
+            .header-title {
+                font-size: 1.55rem;
             }
 
-            #pending-wpp-list {
-                position: static;
-                width: 100%;
+            .header-subtitle {
+                font-size: 0.88rem;
+                padding: 0 4px;
             }
 
-            /*
-            * BOTTOM SHEET
-            */
-            .pending-patient-card,
-            .feedback-slide {
-                position: fixed !important;
-
-                left: 0 !important;
-                right: 0 !important;
-                bottom: 0 !important;
-
-                width: 100% !important;
-                max-width: none !important;
-
-                margin: 0 !important;
-
-                background: #fff;
-
-                border-radius: 30px 30px 0 0 !important;
-
-                padding: 0 24px 0 24px !important;
-
-                box-sizing: border-box;
-
-                max-height: 90dvh;
-
-                overflow-y: auto;
-                overflow-x: hidden;
-
-                -webkit-overflow-scrolling: touch;
-
-                box-shadow:
-                    0 -8px 30px rgba(0, 0, 0, 0.16),
-                    0 -2px 8px rgba(0, 0, 0, 0.06) !important;
-
-                z-index: 30;
-
-                animation: bottomSheetUp
-                    0.35s
-                    cubic-bezier(0.16, 1, 0.3, 1);
+            .pending-patient-card, .feedback-slide {
+                border-radius: 22px;
+                padding: 22px 18px;
             }
 
-            .pending-patient-card.active,
-            .feedback-slide.active {
-                display: block;
+            .patient-card-header {
+                flex-wrap: wrap;
+                gap: 10px;
             }
 
-            /*
-            * SPACER DE RODAPÉ (Corrige bug do Chrome que engole padding-bottom no scroll)
-            */
-            .pending-patient-card::after,
-            .feedback-slide::after {
-                content: "";
-                display: block;
-                width: 100%;
-                height: calc(60px + env(safe-area-inset-bottom));
-                flex-shrink: 0;
-            }
-
-            /*
-            * HANDLE FIXO NO TOPO
-            */
-            .drag-handle-area {
-                position: sticky;
-                top: 0;
-                margin: 0 -24px;
-                height: 38px;
-                background-color: #fff;
-                border-radius: 30px 30px 0 0;
-                cursor: grab;
-                z-index: 50;
-            }
-
-            .drag-handle-area::before {
-                content: "";
-                position: absolute;
-                top: 15px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 40px;
-                height: 5px;
-                background-color: #E2E8F0;
-                border-radius: 10px;
+            .patient-date-badge {
+                margin-left: auto;
             }
 
             .option-card {
-                width: 100% !important;
-                box-sizing: border-box;
-
-                min-height: 52px;
-
-                padding: 14px 16px !important;
-
+                padding: 13px 15px;
                 margin-bottom: 10px;
-
-                border-radius: 14px;
-
-                font-size: 0.95rem;
             }
 
-            /*
-            * Evita comportamento de hover de desktop
-            * em dispositivos touch.
-            */
             .option-card:hover {
-                transform: none;
-                box-shadow: none;
+                transform: none; /* Previne 'pulo' no touch mobile */
             }
 
             .option-card:active {
                 transform: scale(0.98);
-            }
-
-            .back-btn {
-                margin-top: 8px;
-                margin-bottom: 0;
-            }
-
-            #pending-wpp-done-msg {
-                z-index: 40;
-            }
-
-
-            @keyframes bottomSheetUp {
-                from {
-                    transform: translateY(100%);
-                    opacity: 0;
-                }
-
-                to {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-            }
-        }
-
-        @media (max-width: 768px) and (max-height: 700px) {
-            .pending-patient-card,
-            .feedback-slide {
-                max-height: 78dvh;
             }
         }
     </style>
@@ -342,31 +388,31 @@
     <main class="questionario-container">
         
         <!-- Logo Branca Centralizada -->
-        <div class="logo-container" style="text-align: center; margin-bottom: 35px; position: relative;">
-            <img src="/assets/logos/logo-branca.png" alt="Yelo" style="width: 140px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));" onerror="this.style.display='none'">
+        <div class="logo-container">
+            <img src="/assets/logos/logo-branca.png" alt="Yelo" onerror="this.style.display='none'">
         </div>
 
         <!-- Passo de Loading -->
-        <div id="step-loading" style="text-align: center; color: white; display: flex; flex-direction: column; align-items: center;">
+        <div id="step-loading" style="text-align: center; color: white; display: flex; flex-direction: column; align-items: center; padding: 40px 0;">
             <div class="loader"></div>
-            <p style="font-size: 1.1rem; font-weight: 500; opacity: 0.9;">Carregando ambiente seguro...</p>
+            <p style="font-size: 1.05rem; font-weight: 500; opacity: 0.95; letter-spacing: -0.01em;">Carregando ambiente seguro...</p>
         </div>
 
         <!-- Passo de Erro / Link Inválido -->
-        <div id="step-error" class="feedback-slide">
-            <div class="drag-handle-area"></div>
-            <div style="font-size: 3.5rem; margin-bottom: 15px;">👀</div>
-            <h2 style="color: var(--verde-escuro); margin: 0 0 10px 0; font-weight: 700;">Ops!</h2>
-            <p id="error-message" style="color: #64748B; line-height: 1.5; margin-bottom: 0;">Este link é inválido ou o feedback já foi preenchido.</p>
+        <div id="step-error" class="feedback-slide" style="text-align: center;">
+            <div style="font-size: 3.5rem; margin-bottom: 12px;">👀</div>
+            <h2 style="color: var(--verde-escuro); margin: 0 0 10px 0; font-weight: 700; font-size: 1.5rem; font-family: 'Inter', sans-serif !important;">Ops!</h2>
+            <p id="error-message" style="color: var(--cinza-texto); line-height: 1.55; margin-bottom: 20px; font-size: 0.95rem;">Este link é inválido ou todos os feedbacks já foram respondidos.</p>
+            <button onclick="closeOrRedirect()" style="background: var(--verde-escuro); color: white; border: none; padding: 14px 28px; border-radius: 50px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s;">Ir para o Início</button>
         </div>
 
         <!-- Passo da Lista Unificada -->
         <div id="step-list" style="display: none;">
-            <div style="text-align: center; color: white; margin-bottom: 20px; animation: slideUp 0.4s ease;">
-                <h2 style="font-size: 1.8rem; margin: 0 0 10px 0; font-weight: 700; letter-spacing: -0.5px; color: white;">Olá, <span id="psi-name-header">Psi</span>!</h2>
-                <p style="opacity: 0.9; margin: 0; line-height: 1.5; font-size: 0.95rem;">Precisamos da sua ajuda para atualizar o status dos pacientes abaixo. Leva só alguns segundos e ajuda a melhorar suas indicações.</p>
-                <div id="feedback-counter" style="margin-top: 15px; display: inline-block; background: rgba(255,255,255,0.1); padding: 6px 16px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.2);">
-                    Paciente 1 de 1
+            <div class="header-section">
+                <h2 class="header-title">Olá, <span id="psi-name-header">Psi</span>! 👋</h2>
+                <p class="header-subtitle">Precisamos da sua ajuda para confirmar o status dos contatos abaixo. Leva menos de 30 segundos e ajuda a melhorar suas indicações.</p>
+                <div id="feedback-counter" class="feedback-counter-pill">
+                    Contato 1 de 1
                 </div>
             </div>
             
@@ -375,12 +421,11 @@
             </div>
             
             <!-- Mensagem de Sucesso (Todos respondidos) -->
-            <div id="pending-wpp-done-msg" class="feedback-slide">
-                <div class="drag-handle-area"></div>
-                <div style="font-size: 3.5rem; margin-bottom: 15px;">🎉</div>
-                <h3 style="color: var(--verde-escuro); margin: 0 0 10px 0; font-weight: 700;">Tudo atualizado!</h3>
-                <p style="color: #64748B; margin: 0 0 25px 0; line-height: 1.5;">Obrigado por nos ajudar a construir uma Yelo cada vez melhor.</p>
-                <button onclick="closeOrRedirect()" style="background: var(--verde-escuro); color: white; border: none; padding: 16px 30px; border-radius: 50px; font-weight: 600; font-size: 1rem; cursor: pointer; width: 100%; transition: background 0.2s;">Fechar Janela</button>
+            <div id="pending-wpp-done-msg" class="feedback-slide" style="text-align: center;">
+                <div style="width: 60px; height: 60px; background: #10B981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 16px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.28);">✓</div>
+                <h3 style="color: var(--verde-escuro); margin: 0 0 10px 0; font-weight: 700; font-size: 1.5rem; font-family: 'Inter', sans-serif !important;">Tudo atualizado! 🎉</h3>
+                <p style="color: var(--cinza-texto); margin: 0 0 25px 0; line-height: 1.55; font-size: 0.95rem;">Muito obrigado pela sua colaboração! Suas respostas ajudam o algoritmo da Yelo a direcionar novos pacientes ideais para você.</p>
+                <button onclick="closeOrRedirect()" style="background: var(--verde-escuro); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: 600; font-size: 0.98rem; cursor: pointer; width: 100%; transition: background 0.2s; box-shadow: 0 4px 14px rgba(27, 67, 50, 0.25);">Concluir</button>
             </div>
         </div>
     </main>
@@ -444,7 +489,12 @@
         
         function updateCounter() {
             if (currentCardIndex < totalPending) {
-                document.getElementById('feedback-counter').innerText = `Paciente ${currentCardIndex + 1} de ${totalPending}`;
+                const counterEl = document.getElementById('feedback-counter');
+                if (totalPending > 1) {
+                    counterEl.innerText = `Contato ${currentCardIndex + 1} de ${totalPending}`;
+                } else {
+                    counterEl.innerText = `1 contato pendente`;
+                }
             }
         }
         
@@ -452,83 +502,192 @@
             document.querySelectorAll('.pending-patient-card').forEach(el => el.classList.remove('active'));
             if (currentCardIndex < totalPending) {
                 const currentId = pendingItems[currentCardIndex].id;
-                document.getElementById(`pending-item-${currentId}`).classList.add('active');
+                const card = document.getElementById(`pending-item-${currentId}`);
+                if (card) card.classList.add('active');
             }
+        }
+
+        function formatPatientInfo(item, index, total) {
+            const rawName = item.guestName ? item.guestName.trim() : '';
+            const isGeneric = !rawName || 
+                rawName.toLowerCase() === 'um paciente' || 
+                rawName.toLowerCase() === 'visitante' || 
+                rawName.toLowerCase() === 'paciente' ||
+                rawName.toLowerCase() === 'null' ||
+                rawName.toLowerCase() === 'undefined';
+
+            const name = (!isGeneric) 
+                ? rawName 
+                : (total > 1 ? `Paciente Encaminhado #${index + 1}` : `Paciente Encaminhado`);
+
+            const dateObj = new Date(item.createdAt);
+            let dateFormatted = '';
+            let datePillText = '';
+            
+            if (!isNaN(dateObj.getTime())) {
+                const now = new Date();
+                const isToday = dateObj.toDateString() === now.toDateString();
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const isYesterday = dateObj.toDateString() === yesterday.toDateString();
+                
+                const timeFormatted = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                
+                if (isToday) {
+                    dateFormatted = `Hoje às ${timeFormatted}`;
+                    datePillText = `hoje às ${timeFormatted}`;
+                } else if (isYesterday) {
+                    dateFormatted = `Ontem às ${timeFormatted}`;
+                    datePillText = `ontem às ${timeFormatted}`;
+                } else {
+                    const fullDateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                    dateFormatted = `${fullDateStr} às ${timeFormatted}`;
+                    datePillText = `em ${dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })} às ${timeFormatted}`;
+                }
+            } else {
+                dateFormatted = 'Data recente';
+                datePillText = 'recentemente';
+            }
+
+            return { name, dateFormatted, datePillText, isGeneric };
         }
 
         function renderPendingList(pending) {
             const listContainer = document.getElementById('pending-wpp-list');
             listContainer.innerHTML = pending.map((item, index) => {
-                let gName = item.guestName || 'um paciente';
-                if (gName === 'Visitante') gName = 'um paciente';
-                const dStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
+                const info = formatPatientInfo(item, index, pending.length);
                 const itemToken = item.feedbackToken || token; 
-                
-                // Delayzinho de animação na entrada pra ficar elegante
-                const animDelay = index * 0.1;
 
                 return `
                     <div class="pending-patient-card" id="pending-item-${item.id}">
-                        <div class="drag-handle-area"></div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; border-bottom: 1px solid #F1F5F9; padding-bottom: 15px;">
-                            <h4 style="margin: 0; color: var(--verde-escuro); font-size: 1.2rem; font-weight: 700;">${gName}</h4>
-                            <span style="font-size: 0.8rem; color: #64748B; font-weight: 600; background: #F8FAFC; padding: 4px 10px; border-radius: 20px; border: 1px solid #E2E8F0;">${dStr}</span>
+                        
+                        <!-- Top Header do Card -->
+                        <div class="patient-card-header">
+                            <div class="patient-avatar-badge">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </div>
+                            <div class="patient-title-group">
+                                <h4 class="patient-name">${info.name}</h4>
+                                <span class="patient-subtext">Encaminhado via perfil Yelo</span>
+                            </div>
+                            <div class="patient-date-badge">
+                                <span class="live-dot"></span>
+                                ${info.dateFormatted}
+                            </div>
+                        </div>
+
+                        <!-- Context Hint Pill -->
+                        <div class="patient-context-pill">
+                            <span class="context-icon">📱</span>
+                            <span>Este paciente clicou para conversar com você no WhatsApp <strong>${info.datePillText}</strong>.</span>
                         </div>
                         
                         <!-- STEP 1 -->
                         <div id="step1-${item.id}">
-                            <p style="margin: 0 0 20px 0; font-size: 1.05rem; color: #334155; font-weight: 600;">O paciente entrou em contato?</p>
+                            <p class="step-question-title">Ele chegou a te mandar mensagem?</p>
                             
                             <button class="option-card" onclick="goToStep2Wpp('${item.id}', true)">
-                                <span class="emoji-icon">💬</span> Sim, conversamos
+                                <span class="emoji-icon">💬</span>
+                                <div class="option-content">
+                                    <span class="option-title">Sim, conversamos</span>
+                                    <span class="option-subtitle">O paciente fez contato pelo WhatsApp</span>
+                                </div>
+                                <span class="option-chevron">→</span>
                             </button>
                             <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', false, 'no_contact')">
-                                <span class="emoji-icon">⏳</span> Ainda não
+                                <span class="emoji-icon">⏳</span>
+                                <div class="option-content">
+                                    <span class="option-title">Ainda não</span>
+                                    <span class="option-subtitle">Não recebi mensagem desse paciente</span>
+                                </div>
+                                <span class="option-chevron">→</span>
                             </button>
                         </div>
 
                         <!-- STEP 2A -->
                         <div id="step2a-${item.id}" style="display: none; animation: slideUp 0.3s ease;">
-                            <p style="margin: 0 0 20px 0; font-size: 1.05rem; color: #334155; font-weight: 600;">Como está esse atendimento?</p>
+                            <p class="step-question-title">Como está esse atendimento?</p>
                             
                             <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'started')">
-                                <span class="emoji-icon">✅</span> Já iniciou a terapia
+                                <span class="emoji-icon">✅</span>
+                                <div class="option-content">
+                                    <span class="option-title">Já iniciou a terapia</span>
+                                    <span class="option-subtitle">Primeira sessão realizada ou agendada</span>
+                                </div>
+                                <span class="option-chevron">→</span>
                             </button>
                             <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'talking')">
-                                <span class="emoji-icon">🤝</span> Estamos negociando
+                                <span class="emoji-icon">🤝</span>
+                                <div class="option-content">
+                                    <span class="option-title">Estamos negociando</span>
+                                    <span class="option-subtitle">Alinhando valores ou combinando horários</span>
+                                </div>
+                                <span class="option-chevron">→</span>
                             </button>
                             <button class="option-card" onclick="goToStep3Wpp('${item.id}')">
-                                <span class="emoji-icon">❌</span> Decidiu não iniciar
+                                <span class="emoji-icon">❌</span>
+                                <div class="option-content">
+                                    <span class="option-title">Decidiu não iniciar</span>
+                                    <span class="option-subtitle">Conversamos, mas não fechou o atendimento</span>
+                                </div>
+                                <span class="option-chevron">→</span>
                             </button>
                             <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'ghosted')">
-                                <span class="emoji-icon">👻</span> Parou de responder
+                                <span class="emoji-icon">👻</span>
+                                <div class="option-content">
+                                    <span class="option-title">Parou de responder</span>
+                                    <span class="option-subtitle">Enviou mensagem mas não respondeu mais</span>
+                                </div>
+                                <span class="option-chevron">→</span>
                             </button>
 
-                            <div style="text-align: center;">
-                                <button class="back-btn" onclick="backToStep1Wpp('${item.id}')">← Voltar</button>
+                            <div style="text-align: center; margin-top: 10px;">
+                                <button class="back-btn" onclick="backToStep1Wpp('${item.id}')">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                    Voltar à pergunta anterior
+                                </button>
                             </div>
                         </div>
 
                         <!-- STEP 3 (MOTIVOS DE PERDA) -->
                         <div id="step3-${item.id}" style="display: none; animation: slideUp 0.3s ease;">
-                            <p style="margin: 0 0 20px 0; font-size: 1.05rem; color: #334155; font-weight: 600;">Qual foi o motivo principal?</p>
+                            <p class="step-question-title">Qual foi o motivo principal?</p>
                             
                             <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'not_started_price')">
-                                <span class="emoji-icon">💰</span> Preço incompatível
+                                <span class="emoji-icon">💰</span>
+                                <div class="option-content">
+                                    <span class="option-title">Preço incompatível</span>
+                                    <span class="option-subtitle">Valor da sessão acima do orçamento do paciente</span>
+                                </div>
+                                <span class="option-chevron">→</span>
                             </button>
                             <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'not_started_schedule')">
-                                <span class="emoji-icon">⏰</span> Horário incompatível
+                                <span class="emoji-icon">⏰</span>
+                                <div class="option-content">
+                                    <span class="option-title">Horário incompatível</span>
+                                    <span class="option-subtitle">Sem disponibilidade de agenda em comum</span>
+                                </div>
+                                <span class="option-chevron">→</span>
                             </button>
                             <button class="option-card" onclick="submitListFeedback('${item.id}', '${itemToken}', true, 'not_started_other')">
-                                <span class="emoji-icon">🤷‍♂️</span> Outro motivo
+                                <span class="emoji-icon">🤷‍♂️</span>
+                                <div class="option-content">
+                                    <span class="option-title">Outro motivo</span>
+                                    <span class="option-subtitle">Abordagem, preferência por presencial, etc.</span>
+                                </div>
+                                <span class="option-chevron">→</span>
                             </button>
 
-                            <div style="text-align: center;">
-                                <button class="back-btn" onclick="backToStep2Wpp('${item.id}')">← Voltar</button>
+                            <div style="text-align: center; margin-top: 10px;">
+                                <button class="back-btn" onclick="backToStep2Wpp('${item.id}')">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                    Voltar
+                                </button>
                             </div>
                         </div>
-
-                        <!-- O STEP 2B foi removido conforme solicitação -->
                     </div>
                 `;
             }).join('');
@@ -559,16 +718,17 @@
 
         window.submitListFeedback = async (id, itemToken, contact_received, deal_closed) => {
             const itemDiv = document.getElementById(`pending-item-${id}`);
+            if (!itemDiv) return;
             
             // Estado de carregamento suave
             itemDiv.style.opacity = '0.6';
             itemDiv.style.pointerEvents = 'none';
-            itemDiv.style.transform = 'scale(0.98)';
-            itemDiv.style.transition = 'all 0.3s ease';
+            itemDiv.style.transform = 'scale(0.985)';
+            itemDiv.style.transition = 'all 0.25s ease';
             
             const thanksMsg = contact_received 
                 ? 'Essas informações ajudam a Yelo a conectar você com os pacientes certos.'
-                : 'Vamos monitorar e usar este dado para melhorar a plataforma.';
+                : 'Vamos monitorar e usar este dado para calibrar a plataforma.';
 
             try {
                 await fetch(`${API_BASE_URL}/api/public/feedback/${itemToken}`, {
@@ -577,17 +737,17 @@
                     body: JSON.stringify({ contact_received, deal_closed })
                 });
             } catch(e) {
-                console.error('Erro ao enviar', e);
+                console.error('Erro ao enviar feedback:', e);
             }
 
-            // Sucesso Visual
+            // Sucesso Visual no Card
             itemDiv.style.opacity = '1';
             itemDiv.style.transform = 'scale(1)';
             itemDiv.innerHTML = `
-                <div style="text-align:center; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; animation: slideUp 0.3s ease;">
-                    <div style="width: 50px; height: 50px; background: #10b981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 15px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);">✓</div>
-                    <strong style="color: var(--verde-escuro); font-size: 1.15rem; margin-bottom: 8px;">Feedback enviado!</strong>
-                    <span style="font-size: 0.95rem; color: #64748B; line-height: 1.5;">${thanksMsg}</span>
+                <div style="text-align:center; padding: 35px 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: slideUp 0.3s ease;">
+                    <div style="width: 52px; height: 52px; background: #10B981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 14px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);">✓</div>
+                    <strong style="color: var(--verde-escuro); font-size: 1.2rem; margin-bottom: 6px; font-family: 'Inter', sans-serif !important;">Feedback registrado!</strong>
+                    <span style="font-size: 0.92rem; color: var(--cinza-texto); line-height: 1.5; max-width: 380px;">${thanksMsg}</span>
                 </div>`;
             
             answeredCount++;
@@ -599,108 +759,18 @@
                     showCurrentCard();
                 } else {
                     document.getElementById('pending-wpp-list').style.display = 'none';
-                    document.getElementById('step-list').querySelector('div:first-child').style.display = 'none';
+                    const headerEl = document.querySelector('.header-section');
+                    if (headerEl) headerEl.style.display = 'none';
                     document.getElementById('pending-wpp-done-msg').classList.add('active');
                 }
-            }, 1000); // Dá um tempo maior (1 segundo) para o usuário ler a mensagem de sucesso antes de sumir
+            }, 1000);
         };
-
-        // --- Lógica de Arrastar (Drag) o Bottom Sheet ---
-        let startY = 0;
-        let startHeight = 0;
-        let isDragging = false;
-        let currentSheet = null;
-        let maxAllowedHeight = 0;
-
-        document.addEventListener('touchstart', (e) => {
-            const handle = e.target.closest('.drag-handle-area');
-            if (!handle) return;
-            
-            currentSheet = handle.closest('.feedback-slide, .pending-patient-card');
-            if (!currentSheet) return;
-
-            isDragging = true;
-            startY = e.touches[0].clientY;
-            
-            // Pega a altura atual (apenas salva na memória, não trava ainda)
-            startHeight = currentSheet.getBoundingClientRect().height;
-            
-            // Permite que o modal cresça até 95% da tela, sem ser travado pelo texto do fundo
-            maxAllowedHeight = window.innerHeight * 0.95;
-        }, { passive: true });
-
-        document.addEventListener('touchmove', (e) => {
-            if (!isDragging || !currentSheet) return;
-            
-            const currentY = e.touches[0].clientY;
-            const deltaY = startY - currentY; // Positivo = arrastar para CIMA
-            
-            // Se foi apenas um toque sem arrastar muito, ignora para não congelar o layout
-            if (Math.abs(deltaY) < 5 && !currentSheet.style.height) return;
-
-            // Se for o primeiro movimento válido de arrastar, trava a altura atual para iniciar a animação fluida
-            if (!currentSheet.style.height) {
-                currentSheet.style.height = `${startHeight}px`;
-                currentSheet.style.transition = 'none';
-                currentSheet.style.maxHeight = '100dvh';
-            }
-
-            // Impede o scroll nativo (da página ou das alternativas) enquanto estiver arrastando a alça
-            e.preventDefault();
-            
-            let newHeight = startHeight + deltaY;
-            
-            const minHeight = window.innerHeight * 0.40;
-            
-            // Se puxar pra baixo além do mínimo ou pra cima além do máximo, cria uma "resistência" (borracha)
-            if (newHeight < minHeight) {
-                newHeight = minHeight - (minHeight - newHeight) * 0.2;
-            }
-            if (newHeight > maxAllowedHeight) {
-                newHeight = maxAllowedHeight + (newHeight - maxAllowedHeight) * 0.2;
-            }
-            
-            // Altera diretamente o HEIGHT para o card "esticar" visualmente (fica mais soft e real)
-            currentSheet.style.height = `${newHeight}px`;
-        }, { passive: false });
-
-        document.addEventListener('touchend', () => {
-            if (!isDragging || !currentSheet) return;
-            isDragging = false;
-            
-            // Se o usuário apenas tocou (sem arrastar de verdade), não faça nada
-            if (!currentSheet.style.height) {
-                currentSheet = null;
-                return;
-            }
-            
-            const currentHeight = currentSheet.getBoundingClientRect().height;
-            const minHeight = window.innerHeight * 0.40;
-            
-            let finalHeight = currentHeight;
-            if (currentHeight > maxAllowedHeight) {
-                finalHeight = maxAllowedHeight;
-            } else if (currentHeight < minHeight) {
-                finalHeight = minHeight;
-            }
-            
-            // O SEGREDO DO SUCESSO: Ao soltar, removemos o "height" engessado e aplicamos o novo tamanho no "max-height".
-            // Assim o card volta a abraçar o conteúdo perfeitamente, sem sobrar espaço em branco no fundo!
-            currentSheet.style.transition = 'max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-            currentSheet.style.height = ''; 
-            currentSheet.style.maxHeight = `${finalHeight}px`;
-            
-            currentSheet = null;
-        });
 
         // Função para Fechar Janela (com fallback seguro para mobile)
         window.closeOrRedirect = function() {
-            // Tenta fechar a aba (funciona apenas se foi aberta via window.open ou _blank em alguns navegadores)
             window.close();
-            // Fallback: Se o navegador bloquear o fechamento (muito comum em Safari Mobile/Chrome), 
-            // redireciona o usuário para o site da Yelo.
             setTimeout(() => {
-                window.location.href = 'https://yelopsi.com.br';
+                window.location.href = 'https://www.yelopsi.com.br';
             }, 300);
         };
 

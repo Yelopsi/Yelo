@@ -846,13 +846,19 @@ document.addEventListener('DOMContentLoaded', function () {
                             modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 100000; animation: fadeIn 0.3s ease; backdrop-filter: blur(12px);';
 
                             const pendingListHtml = data.pending.map((item, index) => {
-                                let gName = item.guestName || 'um paciente';
-                                if (gName === 'Visitante') gName = 'um paciente';
+                                const rawName = item.guestName ? item.guestName.trim() : '';
+                                const isGenericName = !rawName || 
+                                    rawName.toLowerCase() === 'um paciente' || 
+                                    rawName.toLowerCase() === 'visitante' || 
+                                    rawName.toLowerCase() === 'paciente';
+                                const gName = isGenericName 
+                                    ? (data.pending.length > 1 ? `Paciente Encaminhado #${index + 1}` : 'Paciente Encaminhado') 
+                                    : rawName;
                                 const dStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
                                 return `
                                     <div class="pending-item" id="pending-item-${item.id}" style="border: 1px solid #eaeaea; padding: 18px; border-radius: 14px; margin-bottom: 15px; text-align: left; background: #fafafa;">
                                         <div style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center;">
-                                            <h4 style="margin: 0; color: var(--verde-escuro); font-size: 1.05rem;">Paciente: ${gName}</h4>
+                                            <h4 style="margin: 0; color: var(--verde-escuro); font-size: 1.05rem;">${gName}</h4>
                                             <span style="font-size: 0.8rem; color: #888;">${dStr}</span>
                                         </div>
                                         
@@ -1066,9 +1072,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                                 <p style="color:#555; margin-top:5px; font-size:1.05rem;">Você tem contatos em negociação há alguns dias. Conseguiram iniciar a terapia?</p>
                                             </div>
                                             <div id="pending-neg-list" style="max-height: 50vh; overflow-y: auto; margin-bottom: 20px;">
-                                                ${dataNeg.pending.map(item => `
+                                                ${dataNeg.pending.map(item => {
+                                                    const rawNegName = item.guestName ? item.guestName.trim() : '';
+                                                    const isGenericNeg = !rawNegName || rawNegName.toLowerCase() === 'um paciente' || rawNegName.toLowerCase() === 'visitante';
+                                                    const negDisplayName = isGenericNeg ? 'Paciente Encaminhado' : rawNegName;
+                                                    return `
                                                     <div id="neg-item-${item.id}" style="background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee;">
-                                                        <div style="font-weight: bold; color: #333; margin-bottom: 5px; font-size: 1.1rem;">👤 ${item.guestName}</div>
+                                                        <div style="font-weight: bold; color: #333; margin-bottom: 5px; font-size: 1.1rem;">👤 ${negDisplayName}</div>
                                                         <div style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">Em negociação desde ${new Date(item.updatedAt).toLocaleDateString('pt-BR')}</div>
                                                         <div style="display:flex; flex-direction:column; gap:8px;" id="neg-btns-${item.id}">
                                                             <button onclick="window.submitNegotiationFeedback('${item.id}', true, 'started')" class="btn-list-opt" style="background:transparent; border:1px solid #ddd; padding:10px; border-radius:50px; text-align:left; cursor:pointer; color:#333;">✅ Já iniciou a terapia</button>
@@ -1084,7 +1094,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                                             <button onclick="window.hideNegStep3('${item.id}')" style="background:transparent; border:none; color:#888; text-align:center; padding:5px; cursor:pointer; font-size:0.85rem;">⬅ Voltar</button>
                                                         </div>
                                                     </div>
-                                                `).join('')}
+                                                `;
+                                                }).join('')}
                                             </div>
                                             <div id="pending-neg-done-msg" style="display:none; text-align:center; padding:30px; font-size:1.2rem; color:var(--verde-escuro); font-weight:bold;">
                                                 🎉 Status atualizado! Muito obrigado.

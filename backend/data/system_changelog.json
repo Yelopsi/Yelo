@@ -1,5 +1,33 @@
 [
   {
+    "id": "change-git-d5a7c117",
+    "date": "2026-10-17T13:32:41.000Z",
+    "commit": "d5a7c117",
+    "author": "Anderson",
+    "title": "Correção: Consultar avaliacoes reais e corrigir link com slug do psicologo (dashboard)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "consultar avaliacoes reais e corrigir link com slug do psicologo",
+    "description": "Commit registrado no repositório: \"fix(dashboard): consultar avaliacoes reais e corrigir link com slug do psicologo\". Arquivos modificados: backend/controllers/psiDashboardController.js, backend/controllers/psychologistController.js, backend/data/system_changelog.json, public/psi/psi_dashboard.html, public/psi/psi_visao_geral.js (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #d5a7c117"
+    },
+    "after": {
+      "nova_versao": "consultar avaliacoes reais e corrigir link com slug do psicologo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/psiDashboardController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/data/system_changelog.json",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_visao_geral.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-4c87c268",
     "date": "2026-10-17T13:19:25.000Z",
     "commit": "4c87c268",
