@@ -160,14 +160,70 @@
         <div class="vw-plugin-top-wrapper"></div>
     </div>
 </div>
+
+<!-- BOTÃO FIXO DE FECHAR VLIBRAS (GARANTIA DE ACESSIBILIDADE E SAÍDA) -->
+<button id="vlibras-close-btn" type="button" onclick="fecharVLibras()" aria-label="Fechar VLibras" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 2147483647; background: #ffffff; color: #1B4332; border: 2px solid #1B4332; border-radius: 50px; padding: 10px 20px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 8px 30px rgba(0,0,0,0.3); cursor: pointer; align-items: center; gap: 8px; font-family: 'Lato', sans-serif;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    Fechar Libras
+</button>
+
 <script nonce="<%= nonce %>" src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
 <script nonce="<%= nonce %>">
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (!isMobile) {
-        new window.VLibras.Widget('https://vlibras.gov.br/app');
+    function fecharVLibras() {
+        const pluginWrapper = document.querySelector('[vw-plugin-wrapper]');
+        if (pluginWrapper) {
+            pluginWrapper.classList.remove('active');
+            pluginWrapper.style.display = 'none';
+            const internalClose = pluginWrapper.querySelector('.vp-close, [vp-close], .vw-plugin-top-wrapper-close, [aria-label="Fechar"]');
+            if (internalClose) {
+                try { internalClose.click(); } catch(e){}
+            }
+        }
+        const closeBtn = document.getElementById('vlibras-close-btn');
+        if (closeBtn) closeBtn.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function initVLibras() {
+        try {
+            if (window.VLibras && window.VLibras.Widget) {
+                new window.VLibras.Widget('https://vlibras.gov.br/app');
+            }
+        } catch(e) {
+            console.warn('[VLibras] Falha ao inicializar widget:', e.message);
+        }
+
+        const checkOpenState = () => {
+            const wrapper = document.querySelector('[vw-plugin-wrapper]');
+            const closeBtn = document.getElementById('vlibras-close-btn');
+            if (wrapper && (wrapper.classList.contains('active') || wrapper.style.display === 'block' || wrapper.clientHeight > 50)) {
+                if (closeBtn) closeBtn.style.display = 'inline-flex';
+            } else {
+                if (closeBtn) closeBtn.style.display = 'none';
+            }
+        };
+
+        const wrapper = document.querySelector('[vw-plugin-wrapper]');
+        if (wrapper) {
+            const observer = new MutationObserver(checkOpenState);
+            observer.observe(wrapper, { attributes: true, attributeFilter: ['class', 'style'] });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (e.target && (e.target.closest('#vlibras-button') || e.target.closest('[vw-access-button]'))) {
+                setTimeout(checkOpenState, 400);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') fecharVLibras();
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initVLibras);
     } else {
-        const vwElement = document.querySelector('[vw]');
-        if (vwElement) vwElement.style.display = 'none';
+        initVLibras();
     }
 </script>
 
