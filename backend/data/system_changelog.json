@@ -1,5 +1,33 @@
 [
   {
+    "id": "change-git-1d1bcb20",
+    "date": "2026-10-17T15:37:03.000Z",
+    "commit": "1d1bcb20",
+    "author": "Anderson",
+    "title": "Correção: Corrigir identificação por token e nome desacentuado, fallbacks de IA e exibição de valor (copilot)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir identificação por token e nome desacentuado, fallbacks de IA e exibição de valor",
+    "description": "Commit registrado no repositório: \"fix(copilot): corrigir identificação por token e nome desacentuado, fallbacks de IA e exibição de valor\". Arquivos modificados: admin/admin_copilot_wpp.html, admin/admin_copilot_wpp.js, backend/controllers/adminCopilotController.js, backend/data/system_changelog.json, backend/services/adminCopilotService.js (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1d1bcb20"
+    },
+    "after": {
+      "nova_versao": "corrigir identificação por token e nome desacentuado, fallbacks de IA e exibição de valor"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_copilot_wpp.html",
+      "admin/admin_copilot_wpp.js",
+      "backend/controllers/adminCopilotController.js",
+      "backend/data/system_changelog.json",
+      "backend/services/adminCopilotService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-c4aa345b",
     "date": "2026-10-17T14:59:31.000Z",
     "commit": "c4aa345b",

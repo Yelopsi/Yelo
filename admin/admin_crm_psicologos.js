@@ -27,11 +27,38 @@ window.initializePage = function () {
 
             if (founderRes.ok) {
                 const data = await founderRes.json();
-                // Retenção (100% - Churn Pago)
+                const metrics = data.metrics || {};
+
+                // 1. Retenção Pós-Trial (% que se mantiveram pagantes após o trial)
                 const retentionEl = document.getElementById('crm-retention');
                 if (retentionEl) {
-                    const retentionPct = Math.max(0, 100 - (data.metrics.churnRate * 100)).toFixed(1);
-                    retentionEl.innerText = `${retentionPct}%`;
+                    const postTrialPct = (metrics.postTrialRetentionRate !== undefined)
+                        ? (metrics.postTrialRetentionRate * 100).toFixed(1)
+                        : Math.max(0, 100 - (metrics.churnRate * 100)).toFixed(1);
+                    retentionEl.innerText = `${postTrialPct}%`;
+                }
+
+                // 2. Renovação de Mensalidade (% que renovaram a mensalidade)
+                const renewalEl = document.getElementById('crm-renewal-rate');
+                if (renewalEl) {
+                    const renewalPct = (metrics.renewalRate !== undefined)
+                        ? (metrics.renewalRate * 100).toFixed(1)
+                        : '0.0';
+                    renewalEl.innerText = `${renewalPct}%`;
+                }
+
+                // Tooltips com detalhamento de contagem
+                const postTrialTooltip = document.getElementById('tooltip-post-trial');
+                if (postTrialTooltip && metrics.payingUsers !== undefined) {
+                    const totalEver = (metrics.payingUsers || 0) + (metrics.churnedUsers || 0);
+                    if (totalEver > 0) {
+                        postTrialTooltip.setAttribute('data-tooltip', `${metrics.payingUsers} de ${totalEver} psicólogos (${((metrics.payingUsers / totalEver) * 100).toFixed(1)}%) continuam pagantes ativos após o trial.`);
+                    }
+                }
+
+                const renewalTooltip = document.getElementById('tooltip-renewal');
+                if (renewalTooltip && metrics.renewedUsers !== undefined && metrics.eligibleForRenewal !== undefined) {
+                    renewalTooltip.setAttribute('data-tooltip', `${metrics.renewedUsers} de ${metrics.eligibleForRenewal} psicólogos elegíveis (${((metrics.renewedUsers / metrics.eligibleForRenewal) * 100).toFixed(1)}%) renovaram para o 2º mês ou mais.`);
                 }
             }
 

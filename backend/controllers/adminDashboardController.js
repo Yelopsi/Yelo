@@ -1406,6 +1406,37 @@ exports.getFounderMetrics = async (req, res) => {
         const totalStart = payingUsers + churnedUsers;
         const churnRate = totalStart > 0 ? (churnedUsers / totalStart) : 0;
 
+        // 4. RETENÇÃO PÓS-TRIAL E RENOVAÇÃO DE MENSALIDADE
+        // Retenção Pós-Trial: dos que assinaram após o trial, quantos continuam pagantes ativos (não cancelaram)
+        const postTrialRetentionRate = totalStart > 0 ? (payingUsers / totalStart) : 0;
+
+        // Renovação de Mensalidade: dos psicólogos que completaram pelo menos 1 ciclo mensal (>= 30 dias de assinatura ou já renovaram), quantos renovaram para o 2º mês ou mais
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const renewedUsers = await db.Psychologist.count({
+            where: {
+                is_exempt: false,
+                subscription_payments_count: { [Op.gte]: 2 }
+            }
+        });
+
+        const eligibleForRenewal = await db.Psychologist.count({
+            where: {
+                is_exempt: false,
+                [Op.or]: [
+                    { subscription_payments_count: { [Op.gte]: 2 } },
+                    {
+                        subscription_payments_count: { [Op.gte]: 1 },
+                        [Op.or]: [
+                            { subscribedAt: { [Op.lte]: thirtyDaysAgo } },
+                            { createdAt: { [Op.lte]: thirtyDaysAgo } }
+                        ]
+                    }
+                ]
+            }
+        });
+
+        const renewalRate = eligibleForRenewal > 0 ? (renewedUsers / eligibleForRenewal) : (totalStart > 0 ? (renewedUsers / totalStart) : 0);
+
         // 5. FUNIL
         const visitors = await db.sequelize.query('SELECT COUNT(*) as count FROM "SiteVisits"', { type: db.sequelize.QueryTypes.SELECT }).then(res => res[0].count).catch(() => 0);
         
@@ -1502,9 +1533,14 @@ exports.getFounderMetrics = async (req, res) => {
             metrics: {
                 currentMRR,
                 payingUsers,
+                churnedUsers,
                 activeTrialsCount,
                 conversionRate,
                 churnRate,
+                postTrialRetentionRate,
+                renewedUsers,
+                eligibleForRenewal,
+                renewalRate,
                 projectedMRR
             },
             trialPipeline,
