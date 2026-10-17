@@ -285,7 +285,7 @@
                 align-items: center;
                 justify-content: space-between;
                 gap: 8px;
-                z-index: 9998;
+                z-index: 99999 !important;
                 box-shadow: 0 10px 25px -4px rgba(27,67,50,0.16), 0 2px 6px rgba(0,0,0,0.04);
                 transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
                 animation: ctaSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -548,54 +548,54 @@
 
     </div>
 
-    <!-- BARRA FIXA MOBILE DE CONVERSÃO (PÍLULA FLUTUANTE COM BOTÃO FECHAR) -->
-    <div class="sticky-mobile-blog-cta" id="sticky-mobile-blog-cta">
-        <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
-            <span style="display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #dcfce7; color: #166534; flex-shrink: 0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            </span>
-            <div style="line-height: 1.15; min-width: 0;">
-                <span style="font-weight: 800; display: block; color: #166534; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;">Precisa de apoio?</span>
-                <span style="color: #1B4332; font-size: 0.76rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">Converse com um psicólogo</span>
-            </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-            <a href="/questionario?utm_source=blog_sticky_mobile&utm_medium=bottom_bar&utm_campaign=<%= post.slug || post.id %>">
-                Fazer Match
-            </a>
-            <button type="button" class="btn-close-sticky-cta" onclick="fecharStickyBlogCta(event)" aria-label="Fechar">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-    </div>
-
-    <script nonce="<%= nonce %>">
-        function fecharStickyBlogCta(e) {
-            if (e) { e.preventDefault(); e.stopPropagation(); }
-            const el = document.getElementById('sticky-mobile-blog-cta');
-            if (el) {
-                el.style.opacity = '0';
-                el.style.transform = 'translate(-50%, 20px) scale(0.95)';
-                setTimeout(() => el.style.display = 'none', 300);
-            }
-            try { sessionStorage.setItem('closed_blog_sticky_cta', '1'); } catch(err){}
-        }
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                if (sessionStorage.getItem('closed_blog_sticky_cta') === '1') {
-                    const el = document.getElementById('sticky-mobile-blog-cta');
-                    if (el) el.style.display = 'none';
-                }
-            } catch(err){}
-        });
-    </script>
-
 </main>
 
 <%- include('partials/footer') %>
+
+<!-- BARRA FIXA MOBILE DE CONVERSÃO (PÍLULA FLUTUANTE FORA DO MAIN / APÓS RODAPÉ) -->
+<div class="sticky-mobile-blog-cta" id="sticky-mobile-blog-cta">
+    <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+        <span style="display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #dcfce7; color: #166534; flex-shrink: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </span>
+        <div style="line-height: 1.15; min-width: 0;">
+            <span style="font-weight: 800; display: block; color: #166534; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;">Precisa de apoio?</span>
+            <span style="color: #1B4332; font-size: 0.76rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">Converse com um psicólogo</span>
+        </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+        <a href="/questionario?utm_source=blog_sticky_mobile&utm_medium=bottom_bar&utm_campaign=<%= post.slug || post.id %>">
+            Fazer Match
+        </a>
+        <button type="button" class="btn-close-sticky-cta" onclick="fecharStickyBlogCta(event)" aria-label="Fechar">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<script nonce="<%= nonce %>">
+    function fecharStickyBlogCta(e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        const el = document.getElementById('sticky-mobile-blog-cta');
+        if (el) {
+            el.style.opacity = '0';
+            el.style.transform = 'translate(-50%, 20px) scale(0.95)';
+            setTimeout(() => el.style.display = 'none', 300);
+        }
+        try { sessionStorage.setItem('closed_blog_sticky_cta', '1'); } catch(err){}
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            if (sessionStorage.getItem('closed_blog_sticky_cta') === '1') {
+                const el = document.getElementById('sticky-mobile-blog-cta');
+                if (el) el.style.display = 'none';
+            }
+        } catch(err){}
+    });
+</script>
 
 </body>
 </html>

@@ -148,7 +148,6 @@
 
     @media (max-width: 768px) {
         .rodape-ilustracao { display: none !important; }
-        #vlibras-access, [vw], .enabled { display: none !important; }
     }
 </style>
 
@@ -161,26 +160,56 @@
     </div>
 </div>
 
+<!-- OVERLAY / BACKDROP PARA FECHAR AO CLICAR FORA (DESKTOP E MOBILE) -->
+<div id="vlibras-mobile-backdrop" onclick="fecharVLibras(event)" ontouchend="fecharVLibras(event)" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.38); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); z-index: 2147483640; -webkit-tap-highlight-color: transparent;"></div>
+
 <!-- BOTÃO FIXO DE FECHAR VLIBRAS (GARANTIA DE ACESSIBILIDADE E SAÍDA) -->
-<button id="vlibras-close-btn" type="button" onclick="fecharVLibras()" aria-label="Fechar VLibras" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 2147483647; background: #ffffff; color: #1B4332; border: 2px solid #1B4332; border-radius: 50px; padding: 10px 20px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 8px 30px rgba(0,0,0,0.3); cursor: pointer; align-items: center; gap: 8px; font-family: 'Lato', sans-serif;">
+<button id="vlibras-close-btn" type="button" onclick="fecharVLibras(event)" ontouchend="fecharVLibras(event)" aria-label="Fechar VLibras" style="display: none; position: fixed; top: calc(14px + env(safe-area-inset-top, 24px)); right: 16px; z-index: 2147483648; background: #ffffff; color: #1B4332; border: 2px solid #1B4332; border-radius: 50px; padding: 9px 18px; font-weight: 700; font-size: 0.88rem; box-shadow: 0 8px 30px rgba(0,0,0,0.32); cursor: pointer; align-items: center; gap: 7px; font-family: 'Lato', sans-serif; -webkit-tap-highlight-color: transparent;">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-    Fechar Libras
+    Fechar
 </button>
 
 <script nonce="<%= nonce %>" src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
 <script nonce="<%= nonce %>">
-    function fecharVLibras() {
+    function fecharVLibras(e) {
+        if (e) {
+            try { e.preventDefault(); e.stopPropagation(); } catch(err){}
+        }
+        // 1. VLibras Moderno (v7+): #vlibras-app-root
+        const appRoot = document.getElementById('vlibras-app-root');
+        if (appRoot) {
+            appRoot.setAttribute('data-active', 'false');
+            appRoot.dataset.active = 'false';
+            if (appRoot.shadowRoot) {
+                const internalClose = appRoot.shadowRoot.querySelector('button[aria-label="Fechar"], [aria-label="Fechar"], .vp-close, [vp-close]');
+                if (internalClose) {
+                    try { internalClose.click(); } catch(err){}
+                }
+            }
+        }
+        // 2. VLibras Legado: [vw-plugin-wrapper]
         const pluginWrapper = document.querySelector('[vw-plugin-wrapper]');
         if (pluginWrapper) {
             pluginWrapper.classList.remove('active');
             pluginWrapper.style.display = 'none';
             const internalClose = pluginWrapper.querySelector('.vp-close, [vp-close], .vw-plugin-top-wrapper-close, [aria-label="Fechar"]');
             if (internalClose) {
-                try { internalClose.click(); } catch(e){}
+                try { internalClose.click(); } catch(err){}
             }
         }
+        // 3. Atualizar persistência do widget
+        try {
+            const stored = localStorage.getItem('@vlibras-widget');
+            if (stored && stored.includes('"isOpen":true')) {
+                localStorage.setItem('@vlibras-widget', stored.replace('"isOpen":true', '"isOpen":false'));
+            }
+        } catch(err){}
+
+        // 4. Ocultar botão customizado e backdrop
         const closeBtn = document.getElementById('vlibras-close-btn');
         if (closeBtn) closeBtn.style.display = 'none';
+        const backdrop = document.getElementById('vlibras-mobile-backdrop');
+        if (backdrop) backdrop.style.display = 'none';
         document.body.style.overflow = '';
     }
 
@@ -193,26 +222,106 @@
             console.warn('[VLibras] Falha ao inicializar widget:', e.message);
         }
 
-        const checkOpenState = () => {
+        const verificarEstadoVLibras = () => {
+            const appRoot = document.getElementById('vlibras-app-root');
             const wrapper = document.querySelector('[vw-plugin-wrapper]');
             const closeBtn = document.getElementById('vlibras-close-btn');
-            if (wrapper && (wrapper.classList.contains('active') || wrapper.style.display === 'block' || wrapper.clientHeight > 50)) {
+            const backdrop = document.getElementById('vlibras-mobile-backdrop');
+
+            const isAppActive = appRoot && appRoot.getAttribute('data-active') === 'true';
+            const isWrapperActive = wrapper && (wrapper.classList.contains('active') || wrapper.style.display === 'block' || wrapper.clientHeight > 50);
+
+            if (isAppActive || isWrapperActive) {
                 if (closeBtn) closeBtn.style.display = 'inline-flex';
+                if (backdrop) backdrop.style.display = 'block';
+
+                // Garante que o cabeçalho interno do VLibras não fique sob a Dynamic Island / Notch no iOS
+                if (appRoot && appRoot.shadowRoot) {
+                    try {
+                        if (!appRoot.shadowRoot.getElementById('vlibras-safe-area-style')) {
+                            const st = document.createElement('style');
+                            st.id = 'vlibras-safe-area-style';
+                            st.textContent = `
+                                @media (max-width: 768px) {
+                                    :host, #header-actions, .bg-primary {
+                                        padding-top: max(env(safe-area-inset-top, 24px), 16px) !important;
+                                    }
+                                }
+                            `;
+                            appRoot.shadowRoot.appendChild(st);
+                        }
+                    } catch(err){}
+                }
             } else {
                 if (closeBtn) closeBtn.style.display = 'none';
+                if (backdrop) backdrop.style.display = 'none';
             }
         };
 
-        const wrapper = document.querySelector('[vw-plugin-wrapper]');
-        if (wrapper) {
-            const observer = new MutationObserver(checkOpenState);
-            observer.observe(wrapper, { attributes: true, attributeFilter: ['class', 'style'] });
+        // Observa criação e mudanças no #vlibras-app-root
+        const bodyObserver = new MutationObserver(() => {
+            verificarEstadoVLibras();
+            const appRoot = document.getElementById('vlibras-app-root');
+            if (appRoot && !appRoot._observed) {
+                appRoot._observed = true;
+                const attrObserver = new MutationObserver(verificarEstadoVLibras);
+                attrObserver.observe(appRoot, { attributes: true, attributeFilter: ['data-active', 'style', 'class'] });
+            }
+        });
+        bodyObserver.observe(document.body, { childList: true, subtree: false });
+
+        const appRoot = document.getElementById('vlibras-app-root');
+        if (appRoot) {
+            appRoot._observed = true;
+            const attrObserver = new MutationObserver(verificarEstadoVLibras);
+            attrObserver.observe(appRoot, { attributes: true, attributeFilter: ['data-active', 'style', 'class'] });
         }
 
-        document.addEventListener('click', (e) => {
-            if (e.target && (e.target.closest('#vlibras-button') || e.target.closest('[vw-access-button]'))) {
-                setTimeout(checkOpenState, 400);
-            }
+        // Observa também o wrapper legado
+        const wrapper = document.querySelector('[vw-plugin-wrapper]');
+        if (wrapper) {
+            const obsWrapper = new MutationObserver(verificarEstadoVLibras);
+            obsWrapper.observe(wrapper, { attributes: true, attributeFilter: ['class', 'style'] });
+        }
+
+        // Detecta clique e toque no botão do VLibras (suporta shadow DOM via composedPath)
+        ['click', 'touchend'].forEach(evtName => {
+            document.addEventListener(evtName, (e) => {
+                const path = e.composedPath ? e.composedPath() : [];
+                const isAccessBtn = path.some(el => el && (el.id === 'vlibras-button' || el.id === 'vlibras-access' || el.id === 'vlibras-access-wrapper' || (el.hasAttribute && el.hasAttribute('vw-access-button'))));
+                if (isAccessBtn) {
+                    setTimeout(verificarEstadoVLibras, 80);
+                    setTimeout(verificarEstadoVLibras, 400);
+                    setTimeout(verificarEstadoVLibras, 1000);
+                }
+            }, { passive: true });
+        });
+
+        // Fechar ao clicar fora (fallback direto no document para toques fora)
+        ['click', 'touchend'].forEach(evtName => {
+            document.addEventListener(evtName, (e) => {
+                const appRoot = document.getElementById('vlibras-app-root');
+                const isAppActive = appRoot && appRoot.getAttribute('data-active') === 'true';
+                const closeBtn = document.getElementById('vlibras-close-btn');
+                const isBtnVisible = closeBtn && closeBtn.style.display === 'inline-flex';
+
+                if (!isAppActive && !isBtnVisible) return;
+
+                const path = e.composedPath ? e.composedPath() : [];
+                const isInsideWidget = path.some(el => {
+                    if (!el) return false;
+                    if (el.id === 'vlibras-close-btn' || el.id === 'vlibras-mobile-backdrop') return true;
+                    if (el.id === 'vlibras-access-wrapper' || el.id === 'vlibras-access' || el.id === 'vlibras-button') return true;
+                    if (el.id === 'vlibras-app-root') {
+                        return true;
+                    }
+                    return false;
+                });
+
+                if (!isInsideWidget) {
+                    fecharVLibras(e);
+                }
+            }, { passive: false });
         });
 
         document.addEventListener('keydown', (e) => {
