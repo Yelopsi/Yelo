@@ -78,69 +78,102 @@ class AdminCopilotService {
     }
 
     /**
-     * Localiza o psicólogo no banco de dados com tolerância a apelidos e buscas parciais
+     * Localiza o psicólogo no banco de dados com tolerância a apelidos, buscas parciais,
+     * suporte a tokens do WhatsAppClickLogs (magic-feedback) e insensibilidade a acentos.
      */
     static async findPsychologist(cleanName, rawChat) {
         if (!cleanName && !rawChat) return null;
 
-        // 1. Busca por nome extraído
-        if (cleanName) {
-            const words = cleanName.split(/\s+/).filter(w => w.length >= 2);
-            if (words.length > 0) {
-                // Busca direta com ILIKE
-                const [matches] = await db.sequelize.query(`
-                    SELECT id, nome, email, telefone, status, plano, "planExpiresAt", "whatsapp_clicks", "profile_appearances", "slug", "fotoUrl", "crp"
-                    FROM "Psychologists"
-                    WHERE nome ILIKE :query
-                    ORDER BY id DESC
-                    LIMIT 3;
-                `, { replacements: { query: `%${words.join('%')}%` } });
-
-                if (matches && matches.length > 0) return matches[0];
-
-                // Busca expandida com nicknames comuns (ex: Fred -> Frederico)
-                const expandedWords = words.map(w => NICKNAMES[w.toLowerCase()] || w);
-                const [expandedMatches] = await db.sequelize.query(`
-                    SELECT id, nome, email, telefone, status, plano, "planExpiresAt", "whatsapp_clicks", "profile_appearances", "slug", "fotoUrl", "crp"
-                    FROM "Psychologists"
-                    WHERE nome ILIKE :query
-                    ORDER BY id DESC
-                    LIMIT 3;
-                `, { replacements: { query: `%${expandedWords.join('%')}%` } });
-
-                if (expandedMatches && expandedMatches.length > 0) return expandedMatches[0];
-
-                // Busca pelo primeiro nome + inicial se houver
-                if (words.length >= 1) {
-                    const firstName = NICKNAMES[words[0].toLowerCase()] || words[0];
-                    const [firstMatches] = await db.sequelize.query(`
-                        SELECT id, nome, email, telefone, status, plano, "planExpiresAt", "whatsapp_clicks", "profile_appearances", "slug", "fotoUrl", "crp"
-                        FROM "Psychologists"
-                        WHERE nome ILIKE :query
-                        ORDER BY id DESC
+        // 1. Extração por token de feedback no chat (ex: magic-feedback?token=uuid) - 100% determinístico
+        if (rawChat) {
+            const tokenMatch = rawChat.match(/(?:token=|\/magic-feedback\?token=)([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+            if (tokenMatch) {
+                const token = tokenMatch[1];
+                try {
+                    const [clickRows] = await db.sequelize.query(`
+                        SELECT p.id, p.nome, p.email, p.telefone, p.status, p.plano, p."planExpiresAt", p."whatsapp_clicks", p."profile_appearances", p."slug", p."fotoUrl", p."crp"
+                        FROM "WhatsAppClickLogs" w
+                        JOIN "Psychologists" p ON p.id = w."psychologistId"
+                        WHERE w."feedbackToken" = :token
                         LIMIT 1;
-                    `, { replacements: { query: `${firstName}%` } });
+                    `, { replacements: { token } });
 
-                    if (firstMatches && firstMatches.length > 0) return firstMatches[0];
+                    if (clickRows && clickRows.length > 0) return clickRows[0];
+                } catch (tokErr) {
+                    console.warn("[AdminCopilotService] Erro ao buscar por token:", tokErr.message);
                 }
             }
         }
 
-        // 2. Tenta extrair telefone do chat
+        // 2. Extração por telefone detectado no chat
         if (rawChat) {
             const phoneMatch = rawChat.match(/(?:\+?55\s?)?(?:\(?\d{2}\)?\s?)?(?:9\d{4}[-\s]?\d{4}|\d{4}[-\s]?\d{4})/);
             if (phoneMatch) {
                 const digits = phoneMatch[0].replace(/\D/g, '');
                 if (digits.length >= 8) {
-                    const [phoneMatches] = await db.sequelize.query(`
+                    try {
+                        const [phoneMatches] = await db.sequelize.query(`
+                            SELECT id, nome, email, telefone, status, plano, "planExpiresAt", "whatsapp_clicks", "profile_appearances", "slug", "fotoUrl", "crp"
+                            FROM "Psychologists"
+                            WHERE telefone LIKE :query
+                            ORDER BY (CASE WHEN status = 'active' THEN 1 ELSE 0 END) DESC, id DESC
+                            LIMIT 1;
+                        `, { replacements: { query: `%${digits.slice(-8)}%` } });
+
+                        if (phoneMatches && phoneMatches.length > 0) return phoneMatches[0];
+                    } catch (phoneErr) {
+                        console.warn("[AdminCopilotService] Erro ao buscar por telefone:", phoneErr.message);
+                    }
+                }
+            }
+        }
+
+        // 3. Busca por nome com desacentuação nativa e tolerância a apelidos
+        if (cleanName) {
+            const norm = cleanName
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, ' ')
+                .trim();
+
+            const stopWords = new Set(['de', 'da', 'do', 'dos', 'das', 'e', 'psi', 'dr', 'dra']);
+            const rawWords = norm.split(/\s+/).filter(w => w.length >= 2 && !stopWords.has(w));
+            const words = rawWords.map(w => NICKNAMES[w] || w);
+
+            // Função translate no PostgreSQL para desacentuar a coluna nome sem requerer extensões
+            const normCol = "translate(lower(nome), 'áàâãäéèêëíìîïóòôõöúùûüçñ', 'aaaaaeeeeiiiiooooouuuucn')";
+
+            try {
+                if (words.length >= 2) {
+                    // Todos os termos principais devem existir no nome do profissional
+                    const whereClauses = words.map((_, i) => `${normCol} LIKE :w${i}`).join(' AND ');
+                    const replacements = {};
+                    words.forEach((w, i) => { replacements[`w${i}`] = `%${w}%`; });
+
+                    const [rows] = await db.sequelize.query(`
                         SELECT id, nome, email, telefone, status, plano, "planExpiresAt", "whatsapp_clicks", "profile_appearances", "slug", "fotoUrl", "crp"
                         FROM "Psychologists"
-                        WHERE telefone LIKE :query
+                        WHERE ${whereClauses}
+                        ORDER BY (CASE WHEN status = 'active' THEN 1 ELSE 0 END) DESC, id DESC
                         LIMIT 1;
-                    `, { replacements: { query: `%${digits.slice(-8)}%` } });
+                    `, { replacements });
 
-                    if (phoneMatches && phoneMatches.length > 0) return phoneMatches[0];
+                    if (rows && rows.length > 0) return rows[0];
+                } else if (words.length === 1) {
+                    // Termo único (ex: 'Thamiris' ou 'Frederico')
+                    const [rows] = await db.sequelize.query(`
+                        SELECT id, nome, email, telefone, status, plano, "planExpiresAt", "whatsapp_clicks", "profile_appearances", "slug", "fotoUrl", "crp"
+                        FROM "Psychologists"
+                        WHERE ${normCol} LIKE :w
+                        ORDER BY (CASE WHEN status = 'active' THEN 1 ELSE 0 END) DESC, id DESC
+                        LIMIT 1;
+                    `, { replacements: { w: `%${words[0]}%` } });
+
+                    if (rows && rows.length > 0) return rows[0];
                 }
+            } catch (nameErr) {
+                console.warn("[AdminCopilotService] Erro ao buscar por nome desacentuado:", nameErr.message);
             }
         }
 
@@ -167,16 +200,19 @@ class AdminCopilotService {
         if (!psis || psis.length === 0) return null;
         const psi = psis[0];
 
-        // 1. Leads e Fechamentos do WhatsApp
+        // 1. Leads e Fechamentos do WhatsApp (dealClosed é varchar no Postgres)
         const [wppStats] = await db.sequelize.query(`
             SELECT 
                 COUNT(*) as total_clicks,
-                COUNT(*) FILTER (WHERE "dealClosed" = true) as deals_closed,
+                COUNT(*) FILTER (WHERE "dealClosed" IN ('yes', 'started', 'true')) as deals_closed,
                 COUNT(*) FILTER (WHERE status = 'negotiating') as in_negotiation,
                 COUNT(*) FILTER (WHERE "contactReceived" = true) as contacts_received
             FROM "WhatsAppClickLogs"
             WHERE "psychologistId" = :id;
-        `, { replacements: { id: psychologistId } }).catch(() => [[{ total_clicks: 0, deals_closed: 0, in_negotiation: 0 }]]);
+        `, { replacements: { id: psychologistId } }).catch(err => {
+            console.warn("[AdminCopilotService] Erro wppStats:", err.message);
+            return [[{ total_clicks: 0, deals_closed: 0, in_negotiation: 0, contacts_received: 0 }]];
+        });
 
         // 2. Artigos / Posts publicados no blog
         const [topPosts] = await db.sequelize.query(`
@@ -223,15 +259,22 @@ class AdminCopilotService {
         if (!apiKey) throw new Error("GEMINI_API_KEY não configurada no servidor.");
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+        const CANDIDATE_MODELS = [
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite"
+        ];
 
         let contextBlock = "Nenhum psicólogo específico identificado automaticamente no banco de dados.";
         let pastContext = "";
 
         if (dossier && dossier.profile) {
             const p = dossier.profile;
-            const s = dossier.stats;
-            const posts = dossier.posts;
+            const s = dossier.stats || {};
+            const posts = dossier.posts || { total: 0, top: [] };
+
+            const valorFormatado = (p.valor_sessao_numero && Number(p.valor_sessao_numero) > 0)
+                ? `R$ ${p.valor_sessao_numero}`
+                : (p.tipo_cobranca === 'mensal' && p.valor_mensal_numero ? `R$ ${p.valor_mensal_numero}/mês` : 'A combinar (sem valor fixo cadastrado)');
 
             contextBlock = `
 DOSSIÊ REAL DO PSICÓLOGO NO BANCO DE DADOS DA YELO:
@@ -239,8 +282,8 @@ DOSSIÊ REAL DO PSICÓLOGO NO BANCO DE DADOS DA YELO:
 - Situação do Plano: ${p.plano || 'Essencial'} (${p.status})
 - Data de Validade/Renovação: ${p.planExpiresAt ? new Date(p.planExpiresAt).toLocaleDateString('pt-BR') : 'Sem data'}
 - Mensalidades já pagas: ${p.subscription_payments_count || 0}
-- Valor Cobrado por Sessão: R$ ${p.valor_sessao_numero || 'Não informado'} (Mensal: R$ ${p.valor_mensal_numero || 'N/A'})
-- Modalidade: ${p.modalidade || 'Online'} | Cidade: ${p.cidade || ''} - ${p.estado || ''}
+- Valor Cobrado: ${valorFormatado}
+- Modalidade: ${Array.isArray(p.modalidade) ? p.modalidade.join(', ') : (p.modalidade || 'Online')} | Cidade: ${p.cidade || ''} - ${p.estado || ''}
 - Abordagens/Especialidades: ${Array.isArray(p.abordagens_tecnicas) ? p.abordagens_tecnicas.join(', ') : (p.abordagens_tecnicas || 'Geral')}
 - Métricas na Plataforma:
   * Aparições nas buscas (Match): ${p.profile_appearances || 0}
@@ -284,7 +327,7 @@ DIRETRIZ DE TOM (${toneInstruction}):
 5. CONHECIMENTO ESSENCIAL DA YELO:
    - A Yelo NÃO cobra comissão sobre sessões (100% do valor da consulta vai para o psicólogo).
    - Plano Essencial é R$ 99,00 fixo por mês. Sem fidelidade (cancela quando quiser).
-   - A matemática do consultório: com 2 sessões a R$ 50 o custo do mês está pago. O paciente semanal gera R$ 200/mês e o restante é lucro líquido do profissional.
+   - A matemática do consultório: com 2 sessões o custo do mês está pago. O paciente semanal gera retorno recorrente e o restante é lucro líquido do profissional.
    - O algoritmo V6 entrega pacientes qualificados respeitando tetos para que todos os pagantes recebam fluxo.
 6. FORMATAÇÃO RÍGIDA DE WHATSAPP:
    - Use APENAS negrito nativo com um asterisco *assim* e itálico nativo _assim_.
@@ -303,10 +346,26 @@ ${pastedChat}
 
 Gere a resposta exata e pronta para o Anderson copiar e enviar no WhatsApp:`;
 
-        const result = await model.generateContent(prompt);
-        let text = result.response.text();
-        text = formatForWhatsApp(text);
+        let text = null;
+        let lastErr = null;
 
+        for (const modelName of CANDIDATE_MODELS) {
+            try {
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent(prompt);
+                text = result.response.text();
+                if (text) break;
+            } catch (err) {
+                console.warn(`[AdminCopilotService] Falha no modelo ${modelName}:`, err.message);
+                lastErr = err;
+            }
+        }
+
+        if (!text) {
+            throw new Error(`Falha ao gerar resposta via IA: ${lastErr?.message || 'Serviço de IA temporariamente indisponível'}`);
+        }
+
+        text = formatForWhatsApp(text);
         return text;
     }
 }

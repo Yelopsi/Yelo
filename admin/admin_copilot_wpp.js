@@ -4,6 +4,16 @@
     let currentTone = 'natural';
     let identifyTimeout = null;
 
+    function formatValorSessao(valor, mensal, tipo) {
+        if (valor !== null && valor !== undefined && Number(valor) > 0) {
+            return `R$ ${valor}`;
+        }
+        if (tipo === 'mensal' && mensal !== null && mensal !== undefined && Number(mensal) > 0) {
+            return `R$ ${mensal}/mês`;
+        }
+        return 'A combinar';
+    }
+
     function getAuthHeaders() {
         const token = localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin');
         const headers = { 'Content-Type': 'application/json' };
@@ -18,6 +28,7 @@
 
     function setupEventListeners() {
         const chatInput = document.getElementById('copilot-input-chat');
+        const statsEl = document.getElementById('chat-input-stats');
         const btnGerar = document.getElementById('btn-gerar-resposta');
         const btnCopiar = document.getElementById('btn-copiar-resposta');
         const btnLimpar = document.getElementById('btn-limpar-tudo');
@@ -26,6 +37,23 @@
         const manualQuery = document.getElementById('manual-psi-query');
         const btnRegenerar = document.getElementById('btn-regenerar-variacao');
         const btnMiniVerDossie = document.getElementById('btn-mini-ver-dossie');
+
+        function updateInputView() {
+            if (!chatInput) return;
+            chatInput.style.height = 'auto';
+            const newHeight = Math.max(chatInput.scrollHeight, 140);
+            chatInput.style.height = newHeight + 'px';
+
+            if (statsEl) {
+                const val = chatInput.value;
+                if (!val.trim()) {
+                    statsEl.textContent = 'Cole o texto do chat';
+                } else {
+                    const lines = val.split('\n').filter(l => l.trim().length > 0).length;
+                    statsEl.textContent = `${lines} mensagens • ${val.length} caracteres`;
+                }
+            }
+        }
 
         // Navegação por abas no Mobile
         document.querySelectorAll('.copilot-tab-btn').forEach(btn => {
@@ -45,14 +73,18 @@
         // Detecção automática em tempo real ao colar ou digitar
         if (chatInput) {
             chatInput.addEventListener('input', () => {
+                updateInputView();
                 clearTimeout(identifyTimeout);
                 identifyTimeout = setTimeout(() => {
                     handleAutoIdentify();
-                }, 400);
+                }, 350);
             });
 
             chatInput.addEventListener('paste', () => {
-                setTimeout(handleAutoIdentify, 100);
+                setTimeout(() => {
+                    updateInputView();
+                    handleAutoIdentify();
+                }, 60);
             });
         }
 
@@ -155,7 +187,8 @@
 
                 if (bannerIcone) bannerIcone.textContent = "🟢";
                 if (bannerTexto) bannerTexto.innerHTML = `Identificado: <strong>${data.dossier.profile.nome}</strong> (ID ${data.dossier.profile.id})`;
-                if (bannerSubtexto) bannerSubtexto.textContent = `Plano ${data.dossier.profile.plano || 'Essencial'} • Sessão R$ ${data.dossier.profile.valor_sessao_numero || '0'} • ${data.dossier.profile.whatsapp_clicks || 0} cliques Wpp`;
+                const valStr = formatValorSessao(data.dossier.profile.valor_sessao_numero, data.dossier.profile.valor_mensal_numero, data.dossier.profile.tipo_cobranca);
+                if (bannerSubtexto) bannerSubtexto.textContent = `Plano ${data.dossier.profile.plano || 'Essencial'} • Sessão: ${valStr} • ${data.dossier.profile.whatsapp_clicks || 0} cliques Wpp`;
                 if (btnTrocar) btnTrocar.style.display = "inline-block";
             } else if (data.cleanName) {
                 if (bannerIcone) bannerIcone.textContent = "⚠️";
@@ -277,7 +310,13 @@
         document.getElementById('dossie-aparicoes').textContent = p.profile_appearances || 0;
         document.getElementById('dossie-cliques').textContent = p.whatsapp_clicks || s.total_clicks || 0;
         document.getElementById('dossie-fechamentos').textContent = s.deals_closed || 0;
-        document.getElementById('dossie-valor').textContent = `R$ ${p.valor_sessao_numero || 0}`;
+        
+        const valStr = formatValorSessao(p.valor_sessao_numero, p.valor_mensal_numero, p.tipo_cobranca);
+        const valorEl = document.getElementById('dossie-valor');
+        if (valorEl) {
+            valorEl.textContent = valStr;
+            valorEl.style.fontSize = valStr === 'A combinar' ? '0.95rem' : '1.15rem';
+        }
 
         // Detalhes
         const valData = p.planExpiresAt ? new Date(p.planExpiresAt).toLocaleDateString('pt-BR') : 'Sem data';
@@ -306,7 +345,7 @@
         if (miniFoto && p.fotoUrl) miniFoto.src = p.fotoUrl;
         if (miniChips) {
             const statusLabel = (p.subscriptionId || p.subscription_payments_count > 0) ? 'Pagante' : 'Trial';
-            miniChips.textContent = `${statusLabel} • ${p.whatsapp_clicks || s.total_clicks || 0} cliques • R$ ${p.valor_sessao_numero || 0}`;
+            miniChips.textContent = `${statusLabel} • ${p.whatsapp_clicks || s.total_clicks || 0} cliques • ${valStr}`;
         }
         if (mobileDossierPill) mobileDossierPill.style.display = 'inline-block';
     }
@@ -356,12 +395,17 @@
                     const identifyData = identifyRes ? await identifyRes.json().catch(() => null) : null;
                     if (identifyData?.dossier) {
                         renderDossier(identifyData.dossier);
+                        const valStr = formatValorSessao(
+                            identifyData.dossier.profile.valor_sessao_numero,
+                            identifyData.dossier.profile.valor_mensal_numero,
+                            identifyData.dossier.profile.tipo_cobranca
+                        );
                         const bannerTexto = document.getElementById('identificacao-texto');
                         const bannerSubtexto = document.getElementById('identificacao-subtexto');
                         const bannerIcone = document.getElementById('identificacao-icone');
                         if (bannerIcone) bannerIcone.textContent = "🟢";
                         if (bannerTexto) bannerTexto.innerHTML = `Selecionado: <strong>${identifyData.dossier.profile.nome}</strong> (ID ${identifyData.dossier.profile.id})`;
-                        if (bannerSubtexto) bannerSubtexto.textContent = `Plano ${identifyData.dossier.profile.plano || 'Essencial'} • Sessão R$ ${identifyData.dossier.profile.valor_sessao_numero || '0'} • ${identifyData.dossier.profile.whatsapp_clicks || 0} cliques Wpp`;
+                        if (bannerSubtexto) bannerSubtexto.textContent = `Plano ${identifyData.dossier.profile.plano || 'Essencial'} • Sessão: ${valStr} • ${identifyData.dossier.profile.whatsapp_clicks || 0} cliques Wpp`;
                     }
                 });
             });
@@ -394,7 +438,12 @@
 
     function handleClearAll() {
         const chatInput = document.getElementById('copilot-input-chat');
-        if (chatInput) chatInput.value = '';
+        if (chatInput) {
+            chatInput.value = '';
+            chatInput.style.height = '140px';
+        }
+        const statsEl = document.getElementById('chat-input-stats');
+        if (statsEl) statsEl.textContent = 'Cole o texto do chat';
         currentPsychologistId = null;
 
         const cardResposta = document.getElementById('card-resposta-gerada');

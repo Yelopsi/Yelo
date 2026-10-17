@@ -151,13 +151,24 @@ exports.searchPsychologists = async (req, res) => {
         const query = (req.query.q || '').trim();
         if (!query || query.length < 2) return res.json({ psychologists: [] });
 
+        const normQ = query
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+
+        const digits = query.replace(/\D/g, '');
+        const normCol = "translate(lower(nome), 'áàâãäéèêëíìîïóòôõöúùûüçñ', 'aaaaaeeeeiiiiooooouuuucn')";
+
         const [rows] = await db.sequelize.query(`
             SELECT id, nome, email, telefone, plano, status, "fotoUrl", "crp"
             FROM "Psychologists"
-            WHERE nome ILIKE :q OR email ILIKE :q OR telefone LIKE :q
-            ORDER BY status = 'active' DESC, id DESC
+            WHERE ${normCol} LIKE :normQ 
+               OR email ILIKE :q 
+               ${digits.length >= 4 ? 'OR telefone LIKE :digits' : ''}
+            ORDER BY (CASE WHEN status = 'active' THEN 1 ELSE 0 END) DESC, id DESC
             LIMIT 10;
-        `, { replacements: { q: `%${query}%` } });
+        `, { replacements: { normQ: `%${normQ}%`, q: `%${query}%`, digits: `%${digits}%` } });
 
         res.json({ psychologists: rows || [] });
     } catch (err) {
