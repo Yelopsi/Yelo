@@ -25,6 +25,22 @@
         const btnManualSearch = document.getElementById('btn-manual-search-exec');
         const manualQuery = document.getElementById('manual-psi-query');
         const btnRegenerar = document.getElementById('btn-regenerar-variacao');
+        const btnMiniVerDossie = document.getElementById('btn-mini-ver-dossie');
+
+        // Navegação por abas no Mobile
+        document.querySelectorAll('.copilot-tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const target = this.getAttribute('data-tab-target');
+                if (target) switchMobileTab(target);
+            });
+        });
+
+        // Botão para ver dossiê completo a partir do mini card do mobile
+        if (btnMiniVerDossie) {
+            btnMiniVerDossie.addEventListener('click', () => {
+                switchMobileTab('tab-dossie');
+            });
+        }
 
         // Detecção automática em tempo real ao colar ou digitar
         if (chatInput) {
@@ -45,14 +61,8 @@
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.tone-btn').forEach(b => {
                     b.classList.remove('active');
-                    b.style.background = '#f8fafc';
-                    b.style.color = '#475569';
-                    b.style.borderColor = '#cbd5e1';
                 });
                 this.classList.add('active');
-                this.style.background = '#1B4332';
-                this.style.color = '#FFEE8C';
-                this.style.borderColor = '#1B4332';
                 currentTone = this.getAttribute('data-tone') || 'natural';
             });
         });
@@ -97,6 +107,27 @@
         }
     }
 
+    function switchMobileTab(targetId) {
+        document.querySelectorAll('.copilot-tab-btn').forEach(btn => {
+            if (btn.getAttribute('data-tab-target') === targetId) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        const viewChat = document.getElementById('view-tab-chat');
+        const viewDossie = document.getElementById('card-dossie');
+        const viewHistorico = document.getElementById('view-tab-historico');
+
+        if (viewChat) viewChat.classList.toggle('active-tab', targetId === 'tab-chat');
+        if (viewDossie) viewDossie.classList.toggle('active-tab', targetId === 'tab-dossie');
+        if (viewHistorico) viewHistorico.classList.toggle('active-tab', targetId === 'tab-historico');
+
+        // Scroll suave para o topo do conteúdo
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     async function handleAutoIdentify() {
         const text = document.getElementById('copilot-input-chat')?.value.trim();
         if (!text || text.length < 10) return;
@@ -128,13 +159,13 @@
                 if (btnTrocar) btnTrocar.style.display = "inline-block";
             } else if (data.cleanName) {
                 if (bannerIcone) bannerIcone.textContent = "⚠️";
-                if (bannerTexto) bannerTexto.innerHTML = `Detectado nome <strong>"${data.cleanName}"</strong>, mas não consta na base de psicólogos.`;
+                if (bannerTexto) bannerTexto.innerHTML = `Detectado nome <strong>"${data.cleanName}"</strong>, mas não consta na base.`;
                 if (bannerSubtexto) bannerSubtexto.textContent = "A IA responderá considerando o contexto geral da Yelo.";
                 if (btnTrocar) btnTrocar.style.display = "inline-block";
             } else {
                 if (bannerIcone) bannerIcone.textContent = "ℹ️";
-                if (bannerTexto) bannerTexto.textContent = "Nenhum nome de psicólogo detectado no cabeçalho do WhatsApp.";
-                if (bannerSubtexto) bannerSubtexto.textContent = "Você pode buscar manualmente pelo botão 'Alterar Profissional' se desejar.";
+                if (bannerTexto) bannerTexto.textContent = "Nenhum nome de psicólogo detectado no cabeçalho.";
+                if (bannerSubtexto) bannerSubtexto.textContent = "Você pode buscar manualmente pelo botão 'Alterar' se desejar.";
                 if (btnTrocar) btnTrocar.style.display = "inline-block";
             }
         } catch (err) {
@@ -178,7 +209,8 @@
             if (boxTexto) boxTexto.textContent = data.aiResponse;
             if (cardResposta) {
                 cardResposta.style.display = 'block';
-                cardResposta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                // Garante que o usuário veja a resposta no mobile e desktop
+                cardResposta.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
             if (data.detectedPsychologist && !currentPsychologistId) {
@@ -261,6 +293,22 @@
         if (bioBox) {
             bioBox.textContent = p.bio ? `"${p.bio.replace(/<[^>]*>?/gm, '').substring(0, 180)}..."` : 'Sem bio cadastrada.';
         }
+
+        // Atualiza Mini Profile Banner no Mobile
+        const miniBanner = document.getElementById('mini-profile-banner');
+        const miniNome = document.getElementById('mini-dossie-nome');
+        const miniChips = document.getElementById('mini-dossie-chips');
+        const miniFoto = document.getElementById('mini-dossie-foto');
+        const mobileDossierPill = document.getElementById('mobile-dossier-pill');
+
+        if (miniBanner) miniBanner.classList.add('visible');
+        if (miniNome) miniNome.textContent = p.nome;
+        if (miniFoto && p.fotoUrl) miniFoto.src = p.fotoUrl;
+        if (miniChips) {
+            const statusLabel = (p.subscriptionId || p.subscription_payments_count > 0) ? 'Pagante' : 'Trial';
+            miniChips.textContent = `${statusLabel} • ${p.whatsapp_clicks || s.total_clicks || 0} cliques • R$ ${p.valor_sessao_numero || 0}`;
+        }
+        if (mobileDossierPill) mobileDossierPill.style.display = 'inline-block';
     }
 
     async function handleManualSearch() {
@@ -366,14 +414,22 @@
         const btnTrocar = document.getElementById('btn-trocar-psi-manual');
 
         if (bannerIcone) bannerIcone.textContent = "🔍";
-        if (bannerTexto) bannerTexto.textContent = "Cole uma conversa para identificar o psicólogo automaticamente";
-        if (bannerSubtexto) bannerSubtexto.textContent = "O sistema analisa o cabeçalho do WhatsApp e busca no banco do Render";
+        if (bannerTexto) bannerTexto.textContent = "Cole a conversa para identificar o psicólogo";
+        if (bannerSubtexto) bannerSubtexto.textContent = "Detecta o cabeçalho e busca no Render em tempo real";
         if (btnTrocar) btnTrocar.style.display = "none";
+
+        const miniBanner = document.getElementById('mini-profile-banner');
+        if (miniBanner) miniBanner.classList.remove('visible');
+        const mobileDossierPill = document.getElementById('mobile-dossier-pill');
+        if (mobileDossierPill) mobileDossierPill.style.display = 'none';
+
+        switchMobileTab('tab-chat');
     }
 
     async function loadHistory() {
         const listEl = document.getElementById('copilot-history-list');
         const countEl = document.getElementById('history-count');
+        const mobileBadge = document.getElementById('mobile-history-badge');
         if (!listEl) return;
 
         try {
@@ -385,21 +441,22 @@
             const items = data.conversations || [];
 
             if (countEl) countEl.textContent = `${items.length} registros`;
+            if (mobileBadge) mobileBadge.textContent = items.length;
 
             if (items.length === 0) {
-                listEl.innerHTML = `<div style="text-align: center; color: #94a3b8; font-size: 0.82rem; padding: 20px;">Nenhum atendimento salvo ainda.</div>`;
+                listEl.innerHTML = `<div style="text-align: center; color: #94a3b8; font-size: 0.8rem; padding: 20px;">Nenhum atendimento salvo ainda.</div>`;
                 return;
             }
 
             listEl.innerHTML = items.map(c => {
                 const dateStr = new Date(c.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
                 return `
-                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; cursor: pointer; transition: all 0.15s;" onclick="window.previewPastCopilot('${encodeURIComponent(c.aiResponse || '')}')">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: all 0.15s;" onclick="window.previewPastCopilot('${encodeURIComponent(c.aiResponse || '')}')">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                            <strong style="font-size: 0.85rem; color: #0f172a;">${c.psi_nome || c.detectedName || 'Atendimento'}</strong>
+                            <strong style="font-size: 0.84rem; color: #0f172a;">${c.psi_nome || c.detectedName || 'Atendimento'}</strong>
                             <span style="font-size: 0.7rem; color: #94a3b8;">${dateStr}</span>
                         </div>
-                        <div style="font-size: 0.78rem; color: #64748b; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                        <div style="font-size: 0.76rem; color: #64748b; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                             ${c.aiResponse ? c.aiResponse.substring(0, 140) + '...' : ''}
                         </div>
                     </div>
@@ -413,6 +470,7 @@
                 if (boxTexto) boxTexto.textContent = text;
                 if (cardResposta) {
                     cardResposta.style.display = 'block';
+                    switchMobileTab('tab-chat');
                     cardResposta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
             };
