@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-9ae4f711",
+    "date": "2026-10-17T12:51:31.000Z",
+    "commit": "9ae4f711",
+    "author": "Anderson",
+    "title": "Correção: Corrigir fechamento de keyframes e sincronizar estilos do forum (css)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir fechamento de keyframes e sincronizar estilos do forum",
+    "description": "Commit registrado no repositório: \"fix(css): corrigir fechamento de keyframes e sincronizar estilos do forum\". Arquivos modificados: backend/data/system_changelog.json, forum-community.css, public/css/forum-community.css, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9ae4f711"
+    },
+    "after": {
+      "nova_versao": "corrigir fechamento de keyframes e sincronizar estilos do forum"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "forum-community.css",
+      "public/css/forum-community.css",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-67383f14",
     "date": "2026-10-17T12:47:15.000Z",
     "commit": "67383f14",

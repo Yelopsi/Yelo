@@ -1,5 +1,5 @@
 @import url('01-variables.css');
-@import url('forum-community.css?v=7.0');
+@import url('forum-community.css?v=7.1');
 @import url('components/financeiro.css');
 @import url('components/inbox.css');
 @import url('components/perfil.css');
@@ -264,12 +264,45 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
    8. RESPONSIVIDADE MOBILE
    ========================================================================== */
 @media (max-width: 992px) {
+    /* FIX DEFINITIVO: Trava a janela do navegador em (0,0) no mobile para impedir vazamento para cima no Chrome iOS / Safari */
+    html {
+        height: 100% !important;
+        height: 100dvh !important;
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+        top: 0 !important;
+        left: 0 !important;
+    }
+
+    body.pagina-dashboard {
+        zoom: 1 !important;
+        height: 100% !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        min-height: 100dvh !important;
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+    }
+
+    #dashboard-container, .dashboard-container {
+        height: 100% !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+        width: 100% !important;
+    }
+
     /* --- BACKDROP (FUNDO ESCURO PARA FOCO) --- */
     .sidebar-backdrop {
         position: fixed;
         top: 0; left: 0;
-        width: 100%; height: calc(100vh / 0.88);
-        height: calc(100dvh / 0.88);
+        width: 100%; height: 100dvh !important;
         background-color: rgba(27, 67, 50, 0.5); /* Verde escuro com transparência */
         backdrop-filter: blur(2px);
         z-index: 99999; /* ACIMA do chat (99990) */
@@ -285,19 +318,23 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 
     /* --- SIDEBAR (MENU LATERAL) --- */
     .dashboard-sidebar {
-    width: 200px; background-color: var(--verde-escuro); color: white; display: flex; flex-direction: column; padding: 25px; box-shadow: 5px 0px 15px rgba(0,0,0,0.1); z-index: 10;
-    background-image: var(--ruido-claro) !important;
-    background-attachment: fixed !important;
-    background-repeat: repeat !important;
-    display: none !important; /* Oculta totalmente no mobile para dar lugar à Bottom Nav */
+        width: 200px; background-color: var(--verde-escuro); color: white; display: flex; flex-direction: column; padding: 25px; box-shadow: 5px 0px 15px rgba(0,0,0,0.1); z-index: 10;
+        background-image: var(--ruido-claro) !important;
+        background-attachment: fixed !important;
+        background-repeat: repeat !important;
+        display: none !important; /* Oculta totalmente no mobile para dar lugar à Bottom Nav */
     }
 
     /* --- CONTEÚDO PRINCIPAL --- */
     /* Ajuste de padding para não ficar escondido atrás da bottom nav */
     .dashboard-main { 
-        width: 100%; 
+        width: 100% !important; 
+        height: 100% !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
         /* Padding inferior dinâmico para garantir que o conteúdo tenha o mesmo 'respiro' acima da bottom nav em todas as páginas */
-        padding: calc(var(--mobile-header-h, 70px) + 20px) 10px calc(var(--mobile-bottom-h, 80px) + 35px + env(safe-area-inset-bottom)) 10px !important;
+        padding: calc(var(--mobile-header-h, 64px) + 20px) 10px calc(var(--mobile-bottom-h, 70px) + 35px + env(safe-area-inset-bottom)) 10px !important;
         margin-left: 0 !important; /* Remove a margem no mobile */
     }
 

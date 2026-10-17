@@ -78,11 +78,13 @@ window.setupPullToRefresh = function() {
             ptrEl.classList.add('ptr-refreshing');
             ptrEl.style.transform = `translateY(${threshold / 1.5}px)`; // Trava girando
             // Executa a atualização da página usando a SPA
-            const currentPage = localStorage.getItem('yelo_last_psi_page') || 'psi_visao_geral.html';
+            const currentPage = sessionStorage.getItem('yelo_last_psi_page') || localStorage.getItem('yelo_last_psi_page') || 'psi_visao_geral.html';
             if (typeof window.loadPage === 'function') window.loadPage(currentPage);
+            if (window.innerWidth <= 992) window.scrollTo(0, 0);
             setTimeout(() => { ptrEl.style.transform = 'translateY(-150%)'; ptrEl.classList.remove('ptr-refreshing'); }, 300);
         } else {
             ptrEl.style.transform = 'translateY(-150%)'; // Cancela e sobe
+            if (window.innerWidth <= 992) window.scrollTo(0, 0);
         }
     });
 };

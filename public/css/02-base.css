@@ -41,6 +41,9 @@ body {
 
 /* Previne zoom automático do Safari iOS ao focar em inputs no mobile (sensação de app nativo) */
 @media screen and (max-width: 992px) {
+    body {
+        zoom: 1 !important;
+    }
     input, 
     select, 
     textarea,

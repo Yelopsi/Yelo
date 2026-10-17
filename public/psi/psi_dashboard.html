@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Dashboard do Psicólogo</title>
     
-    <link rel="stylesheet" href="/css/01-variables.css?v=7.0">
-    <link rel="stylesheet" href="/style.css?v=7.0">
-    <link rel="stylesheet" href="/css/psi_dashboard.css?v=7.0"> 
+    <link rel="stylesheet" href="/css/01-variables.css?v=7.1">
+    <link rel="stylesheet" href="/style.css?v=7.1">
+    <link rel="stylesheet" href="/css/psi_dashboard.css?v=7.1"> 
     
     <script src="https://unpkg.com/imask"></script>
     <!-- BIBLIOTECA DE CONFETES (PLG) -->
@@ -28,6 +28,32 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <link rel="icon" href="/assets/images/favicon.png" type="image/png">
     <script>
+        // FIX CRÍTICO: Previne restauração indevida de scroll e vazamento de tela no Chrome iOS / Safari
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+        function lockWindowScroll() {
+            if (window.innerWidth <= 992) {
+                if (window.scrollY !== 0 || window.scrollX !== 0) {
+                    window.scrollTo(0, 0);
+                }
+                if (document.documentElement && document.documentElement.scrollTop !== 0) {
+                    document.documentElement.scrollTop = 0;
+                }
+                if (document.body && document.body.scrollTop !== 0) {
+                    document.body.scrollTop = 0;
+                }
+            }
+        }
+        lockWindowScroll();
+        window.addEventListener('pageshow', lockWindowScroll);
+        window.addEventListener('DOMContentLoaded', lockWindowScroll);
+        window.addEventListener('load', lockWindowScroll);
+        window.addEventListener('orientationchange', lockWindowScroll);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', lockWindowScroll);
+            window.visualViewport.addEventListener('scroll', lockWindowScroll);
+        }
         // Previne zoom por pinçamento de dedos no iOS Safari (sensação de app nativo)
         document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
         document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
@@ -534,18 +560,18 @@
         pageKeys.forEach(k => localStorage.removeItem(k));
         if (window.location.hash) window.location.hash = '';
     </script>
-    <script src="/psi/psi_dashboard_gestures.js?v=7.0"></script>
-    <script src="/psi/psi_dashboard_gamification.js?v=7.0"></script>
-    <script src="/psi/psi_dashboard_notif.js?v=7.0"></script>
-    <script src="/psi/psi_dashboard_feedback.js?v=7.0"></script>
-    <script src="/psi/psi_sidebar.js?v=7.0"></script>
-    <script src="/psi/psi_dashboard.js?v=7.0"></script>
-    <script src="/psi/psi_blog.js?v=7.0"></script>
-    <script src="/psi/psi_forum.js?v=7.0"></script>
-    <script src="/psi/psi_meu_perfil.js?v=7.0"></script>
-    <script src="/psi/psi_assinatura.js?v=7.0"></script>
-    <script src="/psi/psi_visao_geral.js?v=7.0"></script>
-    <script src="/psi/psi_comunidade.js?v=7.0"></script>
+    <script src="/psi/psi_dashboard_gestures.js?v=7.1"></script>
+    <script src="/psi/psi_dashboard_gamification.js?v=7.1"></script>
+    <script src="/psi/psi_dashboard_notif.js?v=7.1"></script>
+    <script src="/psi/psi_dashboard_feedback.js?v=7.1"></script>
+    <script src="/psi/psi_sidebar.js?v=7.1"></script>
+    <script src="/psi/psi_dashboard.js?v=7.1"></script>
+    <script src="/psi/psi_blog.js?v=7.1"></script>
+    <script src="/psi/psi_forum.js?v=7.1"></script>
+    <script src="/psi/psi_meu_perfil.js?v=7.1"></script>
+    <script src="/psi/psi_assinatura.js?v=7.1"></script>
+    <script src="/psi/psi_visao_geral.js?v=7.1"></script>
+    <script src="/psi/psi_comunidade.js?v=7.1"></script>
     
     <script>
         // Script para controlar o menu mobile (Sanduíche)
@@ -729,7 +755,7 @@
             }
         });
 
-        // --- FIX: CÁLCULO DINÂMICO DE ALTURA (SAFARI iOS) ---
+        // --- FIX: CÁLCULO DINÂMICO DE ALTURA (SAFARI iOS & CHROME iOS) ---
         function setMobileLayoutVars() {
             // Apenas executa se estiver em resolução mobile/tablet
             if (window.innerWidth > 992) return;
@@ -737,8 +763,9 @@
             const header = document.querySelector('.mobile-header');
             const bottomNav = document.querySelector('.mobile-bottom-nav');
             
-            const headerHeight = header ? header.offsetHeight : 0;
-            const bottomHeight = bottomNav ? bottomNav.offsetHeight : 0;
+            // Garante valores mínimos seguros caso o elemento ainda esteja renderizando
+            const headerHeight = (header && header.offsetHeight > 40) ? header.offsetHeight : 62;
+            const bottomHeight = (bottomNav && bottomNav.offsetHeight > 40) ? bottomNav.offsetHeight : 70;
 
             document.documentElement.style.setProperty('--mobile-header-h', `${headerHeight}px`);
             document.documentElement.style.setProperty('--mobile-bottom-h', `${bottomHeight}px`);

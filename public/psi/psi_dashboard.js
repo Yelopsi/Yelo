@@ -651,6 +651,15 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(html => {
                 mainContent.innerHTML = html;
 
+                // FIX: Reseta o scroll do container e da janela
+                const dMain = document.querySelector('.dashboard-main');
+                if (dMain) dMain.scrollTop = 0;
+                if (window.innerWidth <= 992) {
+                    window.scrollTo(0, 0);
+                    if (document.documentElement) document.documentElement.scrollTop = 0;
+                    if (document.body) document.body.scrollTop = 0;
+                }
+
                 // --- VERIFICAÇÃO DE BLOQUEIO ---
                 verificarBloqueioGeral(url);
                 verificarLembreteInteracao();
