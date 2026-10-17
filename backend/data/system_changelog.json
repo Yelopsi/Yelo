@@ -1,5 +1,216 @@
 [
   {
+    "id": "change-git-0df4ac14",
+    "date": "2026-10-17T20:05:52.000Z",
+    "commit": "0df4ac14",
+    "author": "Anderson",
+    "title": "Refatoração: Trocar termo 'artigos' por 'posts' e aprimorar chamada de incentivo (blog)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "trocar termo 'artigos' por 'posts' e aprimorar chamada de incentivo",
+    "description": "Commit registrado no repositório: \"refactor(blog): trocar termo 'artigos' por 'posts' e aprimorar chamada de incentivo\". Arquivos modificados: public/psi/psi_blog.html, public/psi/psi_blog.js, public/psi/psi_evolucao_hub.html, public/psi/psi_visao_geral.html, public/psi/psi_visao_geral.js (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #0df4ac14"
+    },
+    "after": {
+      "nova_versao": "trocar termo 'artigos' por 'posts' e aprimorar chamada de incentivo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "public/psi/psi_blog.html",
+      "public/psi/psi_blog.js",
+      "public/psi/psi_evolucao_hub.html",
+      "public/psi/psi_visao_geral.html",
+      "public/psi/psi_visao_geral.js",
+      "security/reports/gate_report.json",
+      "views/blog.ejs",
+      "views/psi_perfil_publico.ejs"
+    ]
+  },
+  {
+    "id": "change-git-8de5eeb9",
+    "date": "2026-10-17T19:59:33.000Z",
+    "commit": "8de5eeb9",
+    "author": "Anderson",
+    "title": "Correção: Corrigir carregamento de temas em alta no widget de artigos (psi_blog)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir carregamento de temas em alta no widget de artigos",
+    "description": "Commit registrado no repositório: \"fix(psi_blog): corrigir carregamento de temas em alta no widget de artigos\". Arquivos modificados: backend/controllers/adminController.js, backend/controllers/psiDashboardController.js, public/psi/psi_blog.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8de5eeb9"
+    },
+    "after": {
+      "nova_versao": "corrigir carregamento de temas em alta no widget de artigos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/adminController.js",
+      "backend/controllers/psiDashboardController.js",
+      "public/psi/psi_blog.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-94480b81",
+    "date": "2026-10-17T19:47:22.000Z",
+    "commit": "94480b81",
+    "author": "Anderson",
+    "title": "Correção: Remover fechamento ao clicar fora para permitir traducao de texto pelo avatar (vlibras)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "remover fechamento ao clicar fora para permitir traducao de texto pelo avatar",
+    "description": "Commit registrado no repositório: \"fix(vlibras): remover fechamento ao clicar fora para permitir traducao de texto pelo avatar\". Arquivos modificados: security/reports/gate_report.json, views/partials/footer.ejs.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #94480b81"
+    },
+    "after": {
+      "nova_versao": "remover fechamento ao clicar fora para permitir traducao de texto pelo avatar"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "security/reports/gate_report.json",
+      "views/partials/footer.ejs"
+    ]
+  },
+  {
+    "id": "change-git-2dce39cf",
+    "date": "2026-10-17T19:43:11.000Z",
+    "commit": "2dce39cf",
+    "author": "Anderson",
+    "title": "Correção: Restaurar icones e botoes do widget no iOS Safari via mascaras vetoriais SVG e CDN direto (vlibras)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "restaurar icones e botoes do widget no iOS Safari via mascaras vetoriais SVG e CDN direto",
+    "description": "Commit registrado no repositório: \"fix(vlibras): restaurar icones e botoes do widget no iOS Safari via mascaras vetoriais SVG e CDN direto\". Arquivos modificados: security/reports/gate_report.json, views/partials/footer.ejs.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2dce39cf"
+    },
+    "after": {
+      "nova_versao": "restaurar icones e botoes do widget no iOS Safari via mascaras vetoriais SVG e CDN direto"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "security/reports/gate_report.json",
+      "views/partials/footer.ejs"
+    ]
+  },
+  {
+    "id": "change-git-27fd6127",
+    "date": "2026-10-17T19:17:18.000Z",
+    "commit": "27fd6127",
+    "author": "Anderson",
+    "title": "Correção: Garantir visibilidade da barra fixa sobre o rodape e corrigir botao fechar e clique fora no VLibras (mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "garantir visibilidade da barra fixa sobre o rodape e corrigir botao fechar e clique fora no VLibras",
+    "description": "Commit registrado no repositório: \"fix(mobile): garantir visibilidade da barra fixa sobre o rodape e corrigir botao fechar e clique fora no VLibras\". Arquivos modificados: security/reports/gate_report.json, views/partials/footer.ejs, views/post_completo.ejs.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #27fd6127"
+    },
+    "after": {
+      "nova_versao": "garantir visibilidade da barra fixa sobre o rodape e corrigir botao fechar e clique fora no VLibras"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "security/reports/gate_report.json",
+      "views/partials/footer.ejs",
+      "views/post_completo.ejs"
+    ]
+  },
+  {
+    "id": "change-git-da70ea84",
+    "date": "2026-10-17T18:56:06.000Z",
+    "commit": "da70ea84",
+    "author": "Anderson",
+    "title": "Interface: Refinar sticky cta em formato pilula com animacao e botao fechar, e adicionar botao de saida do VLibras (mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "refinar sticky cta em formato pilula com animacao e botao fechar, e adicionar botao de saida do VLibras",
+    "description": "Commit registrado no repositório: \"style(mobile): refinar sticky cta em formato pilula com animacao e botao fechar, e adicionar botao de saida do VLibras\". Arquivos modificados: security/reports/gate_report.json, views/partials/footer.ejs, views/post_completo.ejs.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #da70ea84"
+    },
+    "after": {
+      "nova_versao": "refinar sticky cta em formato pilula com animacao e botao fechar, e adicionar botao de saida do VLibras"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "security/reports/gate_report.json",
+      "views/partials/footer.ejs",
+      "views/post_completo.ejs"
+    ]
+  },
+  {
+    "id": "change-git-c61f7b47",
+    "date": "2026-10-17T18:33:52.000Z",
+    "commit": "c61f7b47",
+    "author": "Anderson",
+    "title": "Interface: Ajustar cor verde menta no card de match, evitar quebra de linha no botao e posicionar sticky cta acima da bottom nav (blog)",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "ajustar cor verde menta no card de match, evitar quebra de linha no botao e posicionar sticky cta acima da bottom nav",
+    "description": "Commit registrado no repositório: \"style(blog): ajustar cor verde menta no card de match, evitar quebra de linha no botao e posicionar sticky cta acima da bottom nav\". Arquivos modificados: views/post_completo.ejs.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #c61f7b47"
+    },
+    "after": {
+      "nova_versao": "ajustar cor verde menta no card de match, evitar quebra de linha no botao e posicionar sticky cta acima da bottom nav"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "views/post_completo.ejs"
+    ]
+  },
+  {
+    "id": "change-git-53c9e74c",
+    "date": "2026-10-17T18:00:42.000Z",
+    "commit": "53c9e74c",
+    "author": "Anderson",
+    "title": "Novo: Implementar titulos otimizados para busca por IA, CTAs de conversao no blog e schema QAPage (seo)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "implementar titulos otimizados para busca por IA, CTAs de conversao no blog e schema QAPage",
+    "description": "Commit registrado no repositório: \"feat(seo): implementar titulos otimizados para busca por IA, CTAs de conversao no blog e schema QAPage\". Arquivos modificados: admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, backend/config/dbFixes.js, backend/controllers/adminDashboardController.js, backend/controllers/blogController.js (+7 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #53c9e74c"
+    },
+    "after": {
+      "nova_versao": "implementar titulos otimizados para busca por IA, CTAs de conversao no blog e schema QAPage"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "backend/config/dbFixes.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/controllers/blogController.js",
+      "backend/data/system_changelog.json",
+      "backend/models/Post.js",
+      "backend/services/seoService.js",
+      "scripts/backfill_blog_seo_titles.js",
+      "security/reports/gate_report.json",
+      "views/pergunta_unica.ejs",
+      "views/post_completo.ejs"
+    ]
+  },
+  {
     "id": "change-git-b88a7365",
     "date": "2026-10-17T16:32:33.000Z",
     "commit": "b88a7365",
