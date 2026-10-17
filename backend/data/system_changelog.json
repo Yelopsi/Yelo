@@ -1,5 +1,30 @@
 [
   {
+    "id": "change-git-29d13df8",
+    "date": "2026-10-17T01:58:27.000Z",
+    "commit": "29d13df8",
+    "author": "Anderson",
+    "title": "Novo: Otimizar UX mobile do Copilot WhatsApp com abas segmentadas e controles responsivos (ui)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "otimizar UX mobile do Copilot WhatsApp com abas segmentadas e controles responsivos",
+    "description": "Commit registrado no repositório: \"feat(ui): otimizar UX mobile do Copilot WhatsApp com abas segmentadas e controles responsivos\". Arquivos modificados: admin/admin_copilot_wpp.html, admin/admin_copilot_wpp.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #29d13df8"
+    },
+    "after": {
+      "nova_versao": "otimizar UX mobile do Copilot WhatsApp com abas segmentadas e controles responsivos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_copilot_wpp.html",
+      "admin/admin_copilot_wpp.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-c57dad34",
     "date": "2026-10-17T00:30:38.000Z",
     "commit": "c57dad34",
