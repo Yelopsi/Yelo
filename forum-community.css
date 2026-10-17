@@ -415,6 +415,8 @@
    ========================================================================== */
 @keyframes highlightCommentFade {
     0%, 30% { background-color: rgba(255, 238, 140, 0.8); box-shadow: 0 0 0 4px rgba(255, 238, 140, 0.8); }
+    100% { background-color: transparent; box-shadow: none; }
+}
 .highlight-comment-anim { animation: highlightCommentFade 3.5s ease-out forwards; border-radius: 12px; }
 
 /* ==========================================================================

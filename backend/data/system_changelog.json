@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-67383f14",
+    "date": "2026-10-17T12:47:15.000Z",
+    "commit": "67383f14",
+    "author": "Anderson",
+    "title": "Correção: Quebrar cache de scripts/estilos no mobile e adicionar responsividade completa aos cards e comentarios do forum",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "quebrar cache de scripts/estilos no mobile e adicionar responsividade completa aos cards e comentarios do forum",
+    "description": "Commit registrado no repositório: \"fix(mobile): quebrar cache de scripts/estilos no mobile e adicionar responsividade completa aos cards e comentarios do forum\". Arquivos modificados: backend/data/system_changelog.json, forum-community.css, public/css/forum-community.css, public/css/psi_dashboard.css, public/psi/psi_dashboard.html (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #67383f14"
+    },
+    "after": {
+      "nova_versao": "quebrar cache de scripts/estilos no mobile e adicionar responsividade completa aos cards e comentarios do forum"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "forum-community.css",
+      "public/css/forum-community.css",
+      "public/css/psi_dashboard.css",
+      "public/psi/psi_dashboard.html",
+      "public/style.css",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-forum-mobile-cache-bust",
     "date": "2026-10-17T12:45:00.000Z",
     "commit": "HEAD",
