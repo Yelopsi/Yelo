@@ -1,5 +1,38 @@
 [
   {
+    "id": "change-git-acb13a7c",
+    "date": "2026-10-17T02:38:49.000Z",
+    "commit": "acb13a7c",
+    "author": "Anderson",
+    "title": "Novo: Estender prevencao de zoom e gestos para ferramentas e paginas publicas (mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "estender prevencao de zoom e gestos para ferramentas e paginas publicas",
+    "description": "Commit registrado no repositório: \"feat(mobile): estender prevencao de zoom e gestos para ferramentas e paginas publicas\". Arquivos modificados: public/calculadora-psi.html, public/feedback.html, public/ferramentas.html, public/gerador-bio.html, public/magic-feedback.html (+6 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #acb13a7c"
+    },
+    "after": {
+      "nova_versao": "estender prevencao de zoom e gestos para ferramentas e paginas publicas"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "public/calculadora-psi.html",
+      "public/feedback.html",
+      "public/ferramentas.html",
+      "public/gerador-bio.html",
+      "public/magic-feedback.html",
+      "public/psi/psi_excluir_conta.html",
+      "public/psi_questionario.html",
+      "public/roda-da-vida.html",
+      "public/sem_crp.html",
+      "public/teste-terapia.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-0158768f",
     "date": "2026-10-17T02:33:23.000Z",
     "commit": "0158768f",
