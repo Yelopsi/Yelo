@@ -1,5 +1,61 @@
 [
   {
+    "id": "change-git-forum-mobile-cache-bust",
+    "date": "2026-10-17T12:45:00.000Z",
+    "commit": "HEAD",
+    "author": "Anderson",
+    "title": "Mobile: Quebra de cache para scripts/estilos e responsividade completa aos cards e comentários do fórum",
+    "category": "Mobile & Fórum",
+    "badgeColor": "#0284c7",
+    "status": "Em Produção",
+    "summary": "quebra de cache para scripts/estilos e responsividade completa aos cards e comentários do fórum no mobile",
+    "description": "Atualização das tags de versão (?v=7.0) para psi_forum.js, psi_dashboard.css, style.css e subimports, forçando navegadores móveis (Safari iOS e Chrome Android) a descarregar caches antigos e carregar os novos componentes com badges mini monocromáticas, sem 'Ativo' e com card fixado em verde menta. Adicionados ajustes responsivos específicos para telas de smartphones.",
+    "rationale": "Garantir que todas as alterações visuais de ponta entregues no desktop se reflitam instantaneamente nos dispositivos móveis sem retenção de cache antigo.",
+    "before": {
+      "estado_anterior": "Versões com hash estático v=6.0 presas no cache de smartphones, e sem media queries dedicadas aos cards compactos"
+    },
+    "after": {
+      "nova_versao": "Cache-busting v=7.0 ativo e regras responsivas sob medida para feed, cards e comentários no mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "public/psi/psi_dashboard.html",
+      "public/css/psi_dashboard.css",
+      "public/css/forum-community.css",
+      "public/style.css"
+    ]
+  },
+  {
+    "id": "change-git-715bbf34",
+    "date": "2026-10-17T12:20:29.000Z",
+    "commit": "715bbf34",
+    "author": "Anderson",
+    "title": "Novo: Simplificar badges em formato mini monocromatico, remover texto ativo e refinar card fixado estilo Reddit (forum)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "simplificar badges em formato mini monocromatico, remover texto ativo e refinar card fixado estilo Reddit",
+    "description": "Commit registrado no repositório: \"feat(forum): simplificar badges em formato mini monocromatico, remover texto ativo e refinar card fixado estilo Reddit\". Arquivos modificados: backend/data/system_changelog.json, forum-community.css, public/css/04-components.css, public/css/forum-community.css, public/css/psi_dashboard.css (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #715bbf34"
+    },
+    "after": {
+      "nova_versao": "simplificar badges em formato mini monocromatico, remover texto ativo e refinar card fixado estilo Reddit"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "forum-community.css",
+      "public/css/04-components.css",
+      "public/css/forum-community.css",
+      "public/css/psi_dashboard.css",
+      "public/psi/psi_forum.html",
+      "public/psi/psi_forum.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-forum-badges-polish",
     "date": "2026-10-17T12:20:00.000Z",
     "commit": "HEAD",

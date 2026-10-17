@@ -1,5 +1,5 @@
 @import url('01-variables.css');
-@import url('forum-community.css');
+@import url('forum-community.css?v=7.0');
 @import url('components/financeiro.css');
 @import url('components/inbox.css');
 @import url('components/perfil.css');
@@ -817,6 +817,34 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 .forum-layout-adjust { margin-top: 20px; }
 @media (max-width: 992px) {
     .forum-layout-adjust { margin-top: 0 !important; }
+    
+    .yt-comment {
+        margin-bottom: 14px !important;
+    }
+    .yt-avatar {
+        width: 26px !important;
+        height: 26px !important;
+    }
+    .yt-comment-content-wrapper {
+        margin-left: 32px !important;
+    }
+    .yt-text {
+        font-size: 14px !important;
+        line-height: 1.55 !important;
+    }
+    .yt-username {
+        font-size: 13px !important;
+    }
+    .yt-time {
+        font-size: 11.5px !important;
+    }
+    .yt-action-btn {
+        font-size: 11.5px !important;
+        padding: 3px 6px !important;
+    }
+    .yt-comment.pinned-comment {
+        padding: 10px 10px 8px 10px !important;
+    }
 }
 
 /* ==========================================================================
