@@ -981,14 +981,21 @@ exports.analyzeProfile = async (req, res) => {
         // 2.1. Busca Tendências de Mercado (O que os pacientes estão buscando)
         const [topDemands] = await db.sequelize.query(`
             SELECT value as tema, COUNT(*) as count 
-            FROM "DemandSearches", jsonb_array_elements_text("searchParams"->'temas') as value 
-            WHERE status = 'completed' AND "createdAt" >= NOW() - INTERVAL '30 days' 
-            AND jsonb_typeof("searchParams"->'temas') = 'array' 
+            FROM (
+                SELECT jsonb_array_elements_text("searchParams"->'temas') as value 
+                FROM "DemandSearches" 
+                WHERE "searchParams"->'temas' IS NOT NULL AND jsonb_typeof("searchParams"->'temas') = 'array'
+                UNION ALL
+                SELECT "searchParams"->>'temas' as value 
+                FROM "DemandSearches" 
+                WHERE "searchParams"->'temas' IS NOT NULL AND jsonb_typeof("searchParams"->'temas') = 'string'
+            ) sub
+            WHERE value IS NOT NULL AND value != '' AND value NOT ILIKE 'Outro%'
             GROUP BY value 
             ORDER BY count DESC 
             LIMIT 5;
         `).catch(() => [[]]);
-        const topDemandsText = topDemands.length > 0 ? topDemands.map(d => `- ${d.tema}`).join('\n') : 'Sem dados recentes de busca.';
+        const topDemandsText = topDemands && topDemands.length > 0 ? topDemands.map(d => `- ${d.tema}`).join('\n') : 'Sem dados recentes de busca.';
 
         // 3. Formatação do Preço
         let valorConsulta = "A combinar";

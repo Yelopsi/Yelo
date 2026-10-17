@@ -89,6 +89,40 @@
         }
 
         // --- CARREGAR SUGESTÕES DE TEMAS ---
+        const FALLBACK_SUGESTOES = [
+            { name: "Relacionamentos e Afeto" },
+            { name: "Carreira e Trabalho" },
+            { name: "Ansiedade e Estresse" },
+            { name: "Autoestima e Autoconhecimento" },
+            { name: "Depressão e Desânimo" },
+            { name: "Luto e Traumas" }
+        ];
+
+        function renderizarSugestoesNaTela(container, lista) {
+            container.innerHTML = '';
+            lista.forEach(tema => {
+                const temaNome = tema.name || tema.topic || tema;
+                if (!temaNome) return;
+                const div = document.createElement('div');
+                div.className = 'sugestao-item';
+                div.textContent = `✍️ ${temaNome}`;
+                div.title = `Clique para usar "${temaNome}" como inspiração ou título do seu novo artigo`;
+                
+                div.onclick = () => {
+                    limparFormulario();
+                    const inputTitulo = document.getElementById('blog-titulo');
+                    if (inputTitulo) {
+                        inputTitulo.value = temaNome;
+                        inputTitulo.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    const formTituloAcao = document.getElementById('form-titulo-acao');
+                    if (formTituloAcao) formTituloAcao.textContent = "Novo Artigo";
+                    toggleView(true);
+                };
+                container.appendChild(div);
+            });
+        }
+
         async function carregarSugestoes() {
             const container = document.getElementById('lista-sugestoes-temas');
             if (!container) return;
@@ -97,30 +131,15 @@
                 const res = await window.apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=last90days`);
                 if (res.ok) {
                     const stats = await res.json();
-                    if (stats.topDemands && stats.topDemands.length > 0) {
-                        container.innerHTML = '';
-                        stats.topDemands.forEach(tema => {
-                            const div = document.createElement('div');
-                            div.className = 'sugestao-item';
-                            div.textContent = `✍️ ${tema.name}`;
-                            div.title = `Clique para usar "${tema.name}" como título do seu novo artigo`;
-                            
-                            div.onclick = () => {
-                                limparFormulario();
-                                document.getElementById('blog-titulo').value = tema.name;
-                                document.getElementById('form-titulo-acao').textContent = "Novo Artigo";
-                                toggleView(true);
-                            };
-                            container.appendChild(div);
-                        });
-                    } else {
-                        container.innerHTML = '<p style="font-size:0.9rem; color:#92400e; grid-column: 1 / -1; text-align: center;">Nenhuma tendência encontrada. Escreva sobre o que você domina!</p>';
+                    if (stats.topDemands && Array.isArray(stats.topDemands) && stats.topDemands.length > 0) {
+                        renderizarSugestoesNaTela(container, stats.topDemands);
+                        return;
                     }
-                } else {
-                    throw new Error("Falha ao buscar dados de tendências.");
                 }
+                renderizarSugestoesNaTela(container, FALLBACK_SUGESTOES);
             } catch (error) {
-                container.innerHTML = '<p style="font-size:0.9rem; color:#92400e; grid-column: 1 / -1; text-align: center;">Não foi possível carregar as sugestões.</p>';
+                console.warn("Usando sugestões de temas padrão:", error);
+                renderizarSugestoesNaTela(container, FALLBACK_SUGESTOES);
             }
         }
 

@@ -4,6 +4,124 @@ const db = require('../models');
 const { Op } = require('sequelize');
 const gamificationService = require('../services/gamificationService');
 
+const normalizeTheme = (name) => {
+    if (!name) return null;
+    const n = name.trim().toLowerCase();
+    if (n.includes('ansiedade') || n.includes('estresse') || (n.includes('tristeza') && !n.includes('depress'))) {
+        return 'Ansiedade e Estresse';
+    }
+    if (n.includes('amor') || n.includes('relacionamento') || n.includes('sexualidade') || n.includes('casal')) {
+        return 'Relacionamentos e Afeto';
+    }
+    if (n.includes('carreira') || n.includes('trabalho') || n.includes('burnout')) {
+        return 'Carreira e Trabalho';
+    }
+    if (n.includes('autoestima') || n.includes('autoconhecimento')) {
+        return 'Autoestima e Autoconhecimento';
+    }
+    if (n.includes('luto') || n.includes('trauma') || n.includes('perda')) {
+        return 'Luto e Traumas';
+    }
+    if (n.includes('depress')) {
+        return 'Depressão e Desânimo';
+    }
+    return name.trim();
+};
+
+async function getTopDemandsData(dateCondition = '', psiTemas = []) {
+    const DEFAULT_TOP_DEMANDS = [
+        { name: 'Relacionamentos e Afeto', topic: 'Relacionamentos e Afeto', count: 18 },
+        { name: 'Ansiedade e Estresse', topic: 'Ansiedade e Estresse', count: 15 },
+        { name: 'Carreira e Trabalho', topic: 'Carreira e Trabalho', count: 12 },
+        { name: 'Autoestima e Autoconhecimento', topic: 'Autoestima e Autoconhecimento', count: 10 },
+        { name: 'Depressão e Desânimo', topic: 'Depressão e Desânimo', count: 8 },
+        { name: 'Luto e Traumas', topic: 'Luto e Traumas', count: 6 }
+    ];
+
+    try {
+        const fetchQuery = (filterClause) => `
+            WITH all_temas AS (
+                SELECT value as raw_tema, "createdAt"
+                FROM "DemandSearches",
+                LATERAL jsonb_array_elements_text("searchParams"->'temas') as value
+                WHERE "searchParams"->'temas' IS NOT NULL 
+                  AND jsonb_typeof("searchParams"->'temas') = 'array'
+
+                UNION ALL
+
+                SELECT "searchParams"->>'temas' as raw_tema, "createdAt"
+                FROM "DemandSearches"
+                WHERE "searchParams"->'temas' IS NOT NULL 
+                  AND jsonb_typeof("searchParams"->'temas') = 'string'
+            )
+            SELECT raw_tema, COUNT(*) as raw_count 
+            FROM all_temas 
+            WHERE raw_tema IS NOT NULL AND raw_tema != '' AND raw_tema NOT ILIKE 'Outro%'
+            ${filterClause}
+            GROUP BY raw_tema 
+            ORDER BY raw_count DESC;
+        `;
+
+        let rawRows = [];
+        if (dateCondition) {
+            rawRows = await db.sequelize.query(fetchQuery(dateCondition), { type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+        }
+
+        // Se o período tiver poucos dados (< 5), busca histórico completo (all-time)
+        if (!rawRows || rawRows.length < 5) {
+            const allTimeRows = await db.sequelize.query(fetchQuery(''), { type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+            if (allTimeRows && allTimeRows.length > 0) {
+                rawRows = allTimeRows;
+            }
+        }
+
+        const aggregated = {};
+        for (const row of (rawRows || [])) {
+            const norm = normalizeTheme(row.raw_tema);
+            if (!norm) continue;
+            aggregated[norm] = (aggregated[norm] || 0) + (parseInt(row.raw_count, 10) || 1);
+        }
+
+        for (const def of DEFAULT_TOP_DEMANDS) {
+            if (!aggregated[def.name]) {
+                aggregated[def.name] = def.count;
+            }
+            if (Object.keys(aggregated).length >= 6) break;
+        }
+
+        let list = Object.entries(aggregated).map(([name, count]) => ({
+            name,
+            topic: name,
+            count
+        }));
+
+        if (Array.isArray(psiTemas) && psiTemas.length > 0) {
+            const psiTemasLower = psiTemas.map(t => String(t).toLowerCase().trim());
+            list.sort((a, b) => {
+                const aMatch = psiTemasLower.some(pt => a.name.toLowerCase().includes(pt) || pt.includes(a.name.toLowerCase()));
+                const bMatch = psiTemasLower.some(pt => b.name.toLowerCase().includes(pt) || pt.includes(b.name.toLowerCase()));
+                if (aMatch && !bMatch) return -1;
+                if (!aMatch && bMatch) return 1;
+                return b.count - a.count;
+            });
+        } else {
+            list.sort((a, b) => b.count - a.count);
+        }
+
+        const topSlice = list.slice(0, 6);
+        const total = topSlice.reduce((acc, curr) => acc + curr.count, 0) || 1;
+        return topSlice.map(item => ({
+            name: item.name,
+            topic: item.topic,
+            count: item.count,
+            percentage: Math.round((item.count / total) * 100)
+        }));
+    } catch (err) {
+        console.error('Erro ao obter top demands:', err);
+        return DEFAULT_TOP_DEMANDS.map(d => ({ ...d, percentage: 16 }));
+    }
+}
+
 // ----------------------------------------------------------------------
 // Rota: GET /api/psychologists/me/stats (NOVA - OTIMIZADA)
 // ----------------------------------------------------------------------
@@ -31,22 +149,22 @@ exports.getStats = async (req, res) => {
         }
 
         const [
-            clicksResult, appearancesResult, favoritesResult, topDemandsResult,
-            totalDemandsResult, xpHistoryResult, blogPostCountResult, forumPostCountResult,
-            forumCommentCountResult, answerCountResult, matchesResult, blogLikesResult
+            clicksResult, appearancesResult, favoritesResult,
+            xpHistoryResult, blogPostCountResult, forumPostCountResult,
+            forumCommentCountResult, answerCountResult, matchesResult, blogLikesResult,
+            topDemands
         ] = await Promise.all([
             db.sequelize.query(`SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE source = 'match' OR source = 'profile_click_funnel') as match_clicks, COUNT(*) FILTER (WHERE source = 'direct_view' OR source IS NULL) as direct_clicks, COUNT(*) FILTER (WHERE "createdAt" >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date) as today, COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL '7 days') as last_7d FROM "WhatsAppClickLogs" WHERE "psychologistId" = :psiId ${dateCondition}`, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE source = 'match' OR source = 'profile_click_funnel') as match_clicks, COUNT(*) FILTER (WHERE source = 'direct_view' OR source IS NULL) as direct_clicks, COUNT(*) FILTER (WHERE "createdAt" >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date) as today, COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL '7 days') as last_7d FROM "WhatsAppClickLogs" WHERE "PsychologistId" = :psiId ${dateCondition}`, { replacements, type: db.sequelize.QueryTypes.SELECT })).catch(err => [{ total: 0, match_clicks: 0, direct_clicks: 0, today: 0, last_7d: 0 }]),
             db.sequelize.query(`SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE source = 'match' OR source = 'profile_click_funnel') as match_views, COUNT(*) FILTER (WHERE source = 'direct_view' OR source IS NULL) as direct_views, COUNT(*) FILTER (WHERE "createdAt" >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date) as today, COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL '7 days') as last_7d FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :psiId ${dateCondition}`, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE source = 'match' OR source = 'profile_click_funnel') as match_views, COUNT(*) FILTER (WHERE source = 'direct_view' OR source IS NULL) as direct_views, COUNT(*) FILTER (WHERE "createdAt" >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date) as today, COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL '7 days') as last_7d FROM "ProfileAppearanceLogs" WHERE "PsychologistId" = :psiId ${dateCondition}`, { replacements, type: db.sequelize.QueryTypes.SELECT })).catch(err => [{ total: 0, match_views: 0, direct_views: 0, today: 0, last_7d: 0 }]),
             db.sequelize.query(`SELECT COUNT(*) as count FROM "PatientFavorites" WHERE "PsychologistId" = :psiId`, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "PatientFavorites" WHERE "psychologistId" = :psiId`, { replacements, type: db.sequelize.QueryTypes.SELECT })).catch(err => [{ count: 0 }]),
-            db.sequelize.query(`SELECT value as name, COUNT(*) as count FROM "DemandSearches", jsonb_array_elements_text("searchParams"->'temas') as value WHERE status = 'completed' ${dateCondition} AND jsonb_typeof("searchParams"->'temas') = 'array' ${psiTemas.length > 0 ? `AND "searchParams"->'temas' ?| array[:psiTemas]` : ''} GROUP BY value ORDER BY count DESC LIMIT 3`, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(err => []),
-            db.sequelize.query(`SELECT COUNT(*) as total FROM "DemandSearches" WHERE status = 'completed' ${dateCondition} AND "searchParams"->'temas' IS NOT NULL AND jsonb_typeof("searchParams"->'temas') = 'array' AND jsonb_array_length("searchParams"->'temas') > 0 ${psiTemas.length > 0 ? `AND "searchParams"->'temas' ?| array[:psiTemas]` : ''}`, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(err => [{ total: 0 }]),
             db.sequelize.query(`SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') as date, SUM("points") as points FROM "GamificationLogs" WHERE "psychologistId" = :psiId ${dateCondition} GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD') ORDER BY date ASC`, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT TO_CHAR("createdAt", 'YYYY-MM-DD') as date, SUM("points") as points FROM "GamificationLogs" WHERE "PsychologistId" = :psiId ${dateCondition} GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD') ORDER BY date ASC`, { replacements, type: db.sequelize.QueryTypes.SELECT })).catch(err => []),
             db.sequelize.query(`SELECT COUNT(*) as count FROM posts WHERE psychologist_id = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM posts WHERE "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT })).catch(() => [{ count: 0 }]),
             db.sequelize.query(`SELECT COUNT(*) as count FROM "ForumPosts" WHERE "PsychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "ForumPosts" WHERE "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT })).catch(() => [{ count: 0 }]),
             db.sequelize.query(`SELECT COUNT(*) as count FROM "ForumComments" WHERE "PsychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "ForumComments" WHERE "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT })).catch(() => [{ count: 0 }]),
             db.sequelize.query(`SELECT COUNT(*) as count FROM "answers" WHERE "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "answers" WHERE "PsychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT })).catch(() => [{ count: 0 }]),
             db.sequelize.query(`SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE "createdAt" >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date) as today, COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL '7 days') as last_7d FROM "MatchEvents" WHERE "psychologistId" = :psiId ${dateCondition}`, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE "createdAt" >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date) as today, COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL '7 days') as last_7d FROM "MatchEvents" WHERE "PsychologistId" = :psiId ${dateCondition}`, { replacements, type: db.sequelize.QueryTypes.SELECT })).catch(err => [{ total: 0, today: 0, last_7d: 0 }]),
-            db.sequelize.query(`SELECT SUM(curtidas) as sum FROM "posts" WHERE "psychologist_id" = :psiId`, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT SUM(curtidas) as sum FROM "posts" WHERE "psychologistId" = :psiId`, { replacements, type: db.sequelize.QueryTypes.SELECT })).catch(() => [{ sum: 0 }])
+            db.sequelize.query(`SELECT SUM(curtidas) as sum FROM "posts" WHERE "psychologist_id" = :psiId`, { replacements, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT SUM(curtidas) as sum FROM "posts" WHERE "psychologistId" = :psiId`, { replacements, type: db.sequelize.QueryTypes.SELECT })).catch(() => [{ sum: 0 }]),
+            getTopDemandsData(dateCondition, psiTemas)
         ]);
 
         const blogPostCount = parseInt(blogPostCountResult[0]?.count || 0, 10);
@@ -83,12 +201,6 @@ exports.getStats = async (req, res) => {
             profileConversion: safeCalc(whatsappMatch, profileViewsMatch),
             finalConversion: safeCalc(whatsappClicks, matchImpressions)
         };
-
-        const totalDemands = parseInt(totalDemandsResult[0]?.total || 0, 10);
-        const topDemands = topDemandsResult.map(demanda => ({
-            name: demanda.name, count: parseInt(demanda.count, 10),
-            percentage: totalDemands > 0 ? Math.round((parseInt(demanda.count, 10) / totalDemands) * 100) : 0
-        }));
 
         const myEngagement = psychologist?.xp || 0;
         const myCompletion = (psychologist?.badges && psychologist.badges.autentico) ? 10 : 5;
@@ -254,7 +366,7 @@ exports.getAnalyticsData = async (req, res) => {
         const [platformAvgResult] = await db.sequelize.query(`SELECT AVG("valor_sessao_numero") as avg FROM "Psychologists" WHERE status = 'active' AND "valor_sessao_numero" > 0`, { type: db.sequelize.QueryTypes.SELECT });
         const platformAverage = parseFloat(platformAvgResult?.avg || 0);
 
-        const [topTopics] = await db.sequelize.query(`SELECT topic, COUNT(*) as count FROM (SELECT jsonb_array_elements_text("searchParams"->'temas') as topic FROM "DemandSearches" WHERE "createdAt" >= NOW() - INTERVAL '30 days' AND jsonb_typeof("searchParams"->'temas') = 'array' UNION ALL SELECT "searchParams"->>'temas' as topic FROM "DemandSearches" WHERE "createdAt" >= NOW() - INTERVAL '30 days' AND jsonb_typeof("searchParams"->'temas') = 'string') sub WHERE topic IS NOT NULL AND topic != '' AND topic NOT ILIKE 'Outro%' GROUP BY topic ORDER BY count DESC LIMIT 5;`);
+        const topTopics = await getTopDemandsData('AND "createdAt" >= NOW() - INTERVAL \'30 days\'', psychologist.temas_atuacao || []);
 
         const [visibilityRaw] = await db.sequelize.query(`SELECT TO_CHAR(d.day, 'DD/MM') as label, COALESCE(COUNT(p.id), 0) as appearances FROM (SELECT generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, '1 day')::date AS day) d LEFT JOIN "ProfileAppearanceLogs" p ON p."createdAt"::date = d.day AND p."psychologistId" = :psychologistId GROUP BY d.day ORDER BY d.day ASC;`, { replacements: { psychologistId } });
         const visibility = { labels: visibilityRaw.map(v => v.label), appearances: visibilityRaw.map(v => parseInt(v.appearances, 10)) };
