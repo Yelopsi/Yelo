@@ -1,5 +1,36 @@
 [
   {
+    "id": "change-git-0158768f",
+    "date": "2026-10-17T02:33:23.000Z",
+    "commit": "0158768f",
+    "author": "Anderson",
+    "title": "Novo: Estender prevencao de zoom em inputs para todas as paginas da plataforma (mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "estender prevencao de zoom em inputs para todas as paginas da plataforma",
+    "description": "Commit registrado no repositório: \"feat(mobile): estender prevencao de zoom em inputs para todas as paginas da plataforma\". Arquivos modificados: admin/admin.css, public/css/02-base.css, public/css/04-components.css, public/css/forum-community.css, public/css/psi_dashboard.css (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #0158768f"
+    },
+    "after": {
+      "nova_versao": "estender prevencao de zoom em inputs para todas as paginas da plataforma"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin.css",
+      "public/css/02-base.css",
+      "public/css/04-components.css",
+      "public/css/forum-community.css",
+      "public/css/psi_dashboard.css",
+      "public/psi/psi_dashboard.html",
+      "public/style.css",
+      "security/reports/gate_report.json",
+      "views/partials/head.ejs"
+    ]
+  },
+  {
     "id": "change-git-90ccf58e",
     "date": "2026-10-17T02:12:36.000Z",
     "commit": "90ccf58e",
