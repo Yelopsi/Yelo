@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-b88a7365",
+    "date": "2026-10-17T16:32:33.000Z",
+    "commit": "b88a7365",
+    "author": "Anderson",
+    "title": "Novo: Dividir KPI de retenção em Pós-Trial e Renovação de Mensalidade (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "dividir KPI de retenção em Pós-Trial e Renovação de Mensalidade",
+    "description": "Commit registrado no repositório: \"feat(crm): dividir KPI de retenção em Pós-Trial e Renovação de Mensalidade\". Arquivos modificados: admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, backend/controllers/adminDashboardController.js, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #b88a7365"
+    },
+    "after": {
+      "nova_versao": "dividir KPI de retenção em Pós-Trial e Renovação de Mensalidade"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-1d1bcb20",
     "date": "2026-10-17T15:37:03.000Z",
     "commit": "1d1bcb20",

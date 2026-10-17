@@ -140,6 +140,7 @@ module.exports = {
                 try {
                     await Post.update(
                         { 
+                            seo_title: seoData.seo_title,
                             meta_description: seoData.meta_description,
                             tags: JSON.stringify(seoData.tags)
                         },
@@ -220,6 +221,7 @@ module.exports = {
                 try {
                     await Post.update(
                         { 
+                            seo_title: seoData.seo_title,
                             meta_description: seoData.meta_description,
                             tags: JSON.stringify(seoData.tags)
                         },

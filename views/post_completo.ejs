@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <title><%= post.titulo %> | Blog Yelo</title>
-    
     <!-- VARIÁVEIS DE SEO -->
     <% 
       const rawFallback = (post.conteudo || '').replace(/<[^>]*>?/g, ' ').replace(/\s+/g, ' ').trim();
       const descSnippet = (post.meta_description ? post.meta_description : (rawFallback.substring(0, 155) + '...')).replace(/[\r\n]+/g, ' '); 
       const currentUrl = `https://www.yelopsi.com.br/blog/post/${post.slug || post.id}`;
       const autorNome = post.autor ? post.autor.nome : 'Equipe Yelo';
+      const seoTitle = (post.seo_title && post.seo_title.trim()) ? post.seo_title.trim() : post.titulo;
       let imageUrl = post.imagem_url || 'https://www.yelopsi.com.br/assets/images/apple-touch-icon.png';
       if (imageUrl.includes('cloudinary.com') && imageUrl.includes('/upload/')) {
           imageUrl = imageUrl.replace('/upload/', '/upload/w_256,h_256,c_fill,q_auto/');
@@ -21,7 +20,7 @@
           "@type": "WebPage",
           "@id": currentUrl
         },
-        "headline": post.titulo,
+        "headline": seoTitle,
         "description": descSnippet,
         "image": imageUrl,
         "author": {
@@ -40,6 +39,7 @@
         "dateModified": new Date(post.updatedAt || post.updated_at || post.createdAt || post.created_at).toISOString()
       };
     %>
+    <title><%= seoTitle %> | Blog Yelo</title>
     
     <!-- PROTEÇÃO CONTRA CONTEÚDO DUPLICADO -->
     <link rel="canonical" href="<%= currentUrl %>">
@@ -48,7 +48,7 @@
     
     <!-- OPEN GRAPH (WhatsApp, Facebook, LinkedIn) -->
     <meta property="og:type" content="article">
-    <meta property="og:title" content="<%= post.titulo %> | Blog Yelo">
+    <meta property="og:title" content="<%= seoTitle %> | Blog Yelo">
     <meta property="og:description" content="<%= descSnippet %>">
     <meta property="og:url" content="<%= currentUrl %>">
     <meta property="og:image" content="<%= imageUrl %>">
@@ -265,6 +265,44 @@
             }
             .titulo-principal { font-size: 2.2rem; }
         }
+
+        /* --- STICKY BAR MOBILE DE CONVERSÃO --- */
+        @media (max-width: 768px) {
+            .sticky-mobile-blog-cta {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%);
+                padding: 12px 18px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                z-index: 999;
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+                border-top: 1px solid rgba(255,255,255,0.15);
+            }
+            .sticky-mobile-blog-cta a {
+                background: #ffffff;
+                color: #1B4332;
+                padding: 9px 18px;
+                border-radius: 50px;
+                font-weight: 700;
+                text-decoration: none;
+                font-size: 0.85rem;
+                flex-shrink: 0;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            body {
+                padding-bottom: 60px;
+            }
+        }
+        @media (min-width: 769px) {
+            .sticky-mobile-blog-cta {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -328,7 +366,30 @@
             </div>
             <% } } %>
 
-            <div style="margin: 40px 0; padding: 20px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+            <!-- BOX DE CONVERSÃO / MATCH (MUITO VISÍVEL NO MOBILE E DESKTOP) -->
+            <div class="box-cta-artigo" style="background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%); color: white; padding: 35px 28px; border-radius: 16px; margin: 40px 0 30px 0; box-shadow: 0 10px 30px rgba(27,67,50,0.15); text-align: center; position: relative; overflow: hidden;">
+                <div style="position: absolute; right: -20px; bottom: -20px; width: 140px; height: 140px; background: rgba(255,255,255,0.04); border-radius: 50%; pointer-events: none;"></div>
+                <div style="position: relative; z-index: 1;">
+                    <span style="background: rgba(255,255,255,0.15); color: #86efac; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 12px;">Cuidado com a sua Saúde Mental</span>
+                    <h3 style="font-family: 'Fraunces', serif; font-size: 1.65rem; color: #ffffff; margin: 0 0 10px 0; line-height: 1.25;">Identificou-se com este tema e gostaria de conversar?</h3>
+                    <p style="color: rgba(255,255,255,0.85); font-size: 1rem; max-width: 620px; margin: 0 auto 24px auto; line-height: 1.6;">
+                        Na Yelo, conectamos você a psicólogos verificados e acolhedores, especialistas nas suas necessidades, prontos para atendimento online com total sigilo.
+                    </p>
+                    <div style="display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                        <a href="/questionario?utm_source=blog_cta&utm_medium=post_bottom&utm_campaign=<%= post.slug || post.id %>" style="display: inline-flex; align-items: center; gap: 8px; background: #ffffff; color: #1B4332; font-weight: 700; padding: 14px 28px; border-radius: 50px; text-decoration: none; font-size: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.2s;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            Fazer Match com um Psicólogo
+                        </a>
+                        <% if (post.autor && post.autor.slug) { %>
+                        <a href="/<%= post.autor.slug %>?utm_source=blog_cta&utm_medium=post_author" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.12); color: #ffffff; border: 1px solid rgba(255,255,255,0.3); font-weight: 600; padding: 13px 22px; border-radius: 50px; text-decoration: none; font-size: 0.95rem;">
+                            Ver perfil de <%= post.autor.nome ? post.autor.nome.split(' ')[0] : 'Especialista' %>
+                        </a>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin: 30px 0 40px 0; padding: 20px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
                 
                 <button onclick="darLikeInterno('<%= post.id %>')" id="btn-like-interno" style="background: none; border: 1px solid #ddd; padding: 8px 24px; border-radius: 50px; cursor: pointer; display: flex; align-items: center; gap: 10px; color: #555; transition: all 0.2s;">
                     <svg id="icon-heart-interno" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -445,10 +506,21 @@
             <div style="background: #E0F2F1; padding: 25px; border-radius: 12px; margin-top: 40px; text-align: center;">
                 <h4 style="color: #1B4332; font-family: 'Fraunces', serif; margin-top: 0;">Precisa conversar?</h4>
                 <p style="font-size: 0.9rem; color: #555;">Nossos profissionais estão prontos para te ouvir.</p>
-                <a href="/questionario.html" style="display: inline-block; background: #1B4332; color: #fff; padding: 8px 20px; border-radius: 20px; text-decoration: none; font-size: 0.85rem; margin-top: 10px;">Encontrar Psicólogo</a>
+                <a href="/questionario?utm_source=blog_sidebar&utm_medium=post_sidebar" style="display: inline-block; background: #1B4332; color: #fff; padding: 10px 22px; border-radius: 20px; text-decoration: none; font-size: 0.88rem; font-weight: 700; margin-top: 10px;">Encontrar Psicólogo</a>
             </div>
         </aside>
 
+    </div>
+
+    <!-- BARRA FIXA MOBILE DE CONVERSÃO -->
+    <div class="sticky-mobile-blog-cta">
+        <div>
+            <span style="font-weight: 700; display: block; color: #86efac; font-size: 0.75rem; text-transform: uppercase;">Precisa de apoio?</span>
+            <span style="color: #ffffff; font-size: 0.85rem;">Converse com um psicólogo</span>
+        </div>
+        <a href="/questionario?utm_source=blog_sticky_mobile&utm_medium=bottom_bar&utm_campaign=<%= post.slug || post.id %>">
+            Fazer Match
+        </a>
     </div>
 
 </main>

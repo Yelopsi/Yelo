@@ -14,11 +14,11 @@ exports.generateSEO = async (postContent, postTitle) => {
         const genAI = getGenAI();
         if (!genAI) {
             console.error("❌ [SEO Service] CHAVE DO GEMINI NÃO ENCONTRADA NO .env!");
-            return { meta_description: '', tags: [] };
+            return { seo_title: postTitle, meta_description: '', tags: [] };
         }
 
         if (!postContent || postContent.length < 50) {
-            return { meta_description: '', tags: [] };
+            return { seo_title: postTitle, meta_description: '', tags: [] };
         }
 
         // Limita o texto para não gastar muitos tokens (os primeiros 3000 caracteres dão contexto suficiente)
@@ -40,12 +40,15 @@ exports.generateSEO = async (postContent, postTitle) => {
 
         // Constrói o comando (prompt)
         const prompt = `
-Você é um especialista em SEO para a área da saúde e psicologia.
-Sua tarefa é analisar o artigo de um psicólogo e retornar um JSON estrito contendo:
-1. "meta_description": Um texto persuasivo de até 155 caracteres focado na dor do paciente e na intenção de busca.
-2. "tags": Um array com 5 palavras-chave de cauda longa (long-tail keywords) mais relevantes para ranquear o artigo no Google.
+Você é um especialista em SEO para a área da saúde mental e psicologia clínica.
+Sua tarefa é analisar o artigo escrito por um psicólogo e retornar um JSON estrito contendo:
+1. "seo_title": Um título altamente magnético e otimizado para o Google (máximo 60 caracteres).
+   - Deve traduzir o tema do artigo para a dor, dúvida ou intenção de busca exata que uma pessoa em sofrimento digita no Google (ex: "Como Lidar com Crises de Ansiedade?", "Sinais de Relacionamento Tóxico", "Quando Fazer Terapia?").
+   - Não inclua no final "| Yelo" ou "- Blog", pois o sistema já adiciona isso automaticamente.
+2. "meta_description": Um texto persuasivo de até 155 caracteres focado na dor do paciente e na intenção de clique na busca do Google.
+3. "tags": Um array com 5 palavras-chave de cauda longa (long-tail keywords) mais relevantes para ranquear o artigo no Google.
 
-Título do Artigo: ${postTitle}
+Título Original do Psicólogo: ${postTitle}
 
 Conteúdo:
 ${truncatedContent}
@@ -66,12 +69,13 @@ ${truncatedContent}
         const parsedResponse = JSON.parse(jsonMatch[0]);
         
         return {
+            seo_title: parsedResponse.seo_title || postTitle,
             meta_description: parsedResponse.meta_description || '',
             tags: parsedResponse.tags || []
         };
     } catch (error) {
         console.error("❌ [SEO Service] Erro detalhado:", error.message);
-        return { meta_description: '', tags: [] };
+        return { seo_title: postTitle, meta_description: '', tags: [] };
     }
 };
 

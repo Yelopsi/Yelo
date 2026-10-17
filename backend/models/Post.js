@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TEXT,
             allowNull: true
         },
+        seo_title: {
+            type: DataTypes.STRING(255),
+            allowNull: true
+        },
         slug: {
             type: DataTypes.STRING,
             unique: true

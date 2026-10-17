@@ -1406,36 +1406,188 @@ exports.getFounderMetrics = async (req, res) => {
         const totalStart = payingUsers + churnedUsers;
         const churnRate = totalStart > 0 ? (churnedUsers / totalStart) : 0;
 
-        // 4. RETENÇÃO PÓS-TRIAL E RENOVAÇÃO DE MENSALIDADE
-        // Retenção Pós-Trial: dos que assinaram após o trial, quantos continuam pagantes ativos (não cancelaram)
-        const postTrialRetentionRate = totalStart > 0 ? (payingUsers / totalStart) : 0;
+        // 4. INDICADORES DE 30 DIAS E COMPARATIVO COM MÊS ANTERIOR (30 DIAS ANTERIORES)
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+        const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
-        // Renovação de Mensalidade: dos psicólogos que completaram pelo menos 1 ciclo mensal (>= 30 dias de assinatura ou já renovaram), quantos renovaram para o 2º mês ou mais
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        const renewedUsers = await db.Psychologist.count({
+        // --- 4.1 ATIVAÇÃO (Últimos 30 dias vs 30 dias anteriores) ---
+        const actTotal30d = await db.Psychologist.count({
             where: {
-                is_exempt: false,
-                subscription_payments_count: { [Op.gte]: 2 }
+                deletedAt: null,
+                isAdmin: { [Op.or]: [false, null] },
+                createdAt: { [Op.between]: [thirtyDaysAgo, now] }
             }
         });
+        const actActive30d = await db.Psychologist.count({
+            where: {
+                deletedAt: null,
+                isAdmin: { [Op.or]: [false, null] },
+                createdAt: { [Op.between]: [thirtyDaysAgo, now] },
+                [Op.or]: [
+                    { status: 'active' },
+                    { is_exempt: true },
+                    { subscriptionId: { [Op.ne]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } },
+                    { [Op.and]: [{ fotoUrl: { [Op.ne]: null } }, { bio: { [Op.ne]: null } }] }
+                ]
+            }
+        });
+        const activationRate30d = actTotal30d > 0 ? (actActive30d / actTotal30d) : 0;
 
-        const eligibleForRenewal = await db.Psychologist.count({
+        const actTotalPrev = await db.Psychologist.count({
+            where: {
+                deletedAt: null,
+                isAdmin: { [Op.or]: [false, null] },
+                createdAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] }
+            }
+        });
+        const actActivePrev = await db.Psychologist.count({
+            where: {
+                deletedAt: null,
+                isAdmin: { [Op.or]: [false, null] },
+                createdAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] },
+                [Op.or]: [
+                    { status: 'active' },
+                    { is_exempt: true },
+                    { subscriptionId: { [Op.ne]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } },
+                    { [Op.and]: [{ fotoUrl: { [Op.ne]: null } }, { bio: { [Op.ne]: null } }] }
+                ]
+            }
+        });
+        const activationRatePrev = actTotalPrev > 0 ? (actActivePrev / actTotalPrev) : 0;
+        const activationDiff = activationRate30d - activationRatePrev;
+
+        // --- 4.2 RETENÇÃO PÓS-TRIAL (Últimos 30 dias vs 30 dias anteriores) ---
+        // Pagantes ativos hoje vs cancelamentos nos últimos 30 dias
+        const churn30d = await db.Psychologist.count({
             where: {
                 is_exempt: false,
+                deletedAt: null,
                 [Op.or]: [
-                    { subscription_payments_count: { [Op.gte]: 2 } },
-                    {
-                        subscription_payments_count: { [Op.gte]: 1 },
-                        [Op.or]: [
-                            { subscribedAt: { [Op.lte]: thirtyDaysAgo } },
-                            { createdAt: { [Op.lte]: thirtyDaysAgo } }
-                        ]
-                    }
+                    { subscribedAt: { [Op.not]: null } },
+                    { subscriptionId: { [Op.ne]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } }
+                ],
+                [Op.or]: [
+                    { canceledAt: { [Op.between]: [thirtyDaysAgo, now] } },
+                    { status: 'inactive', updatedAt: { [Op.between]: [thirtyDaysAgo, now] } }
+                ]
+            }
+        });
+        const totalBase30d = payingUsers + churn30d;
+        const postTrialRetentionRate30d = totalBase30d > 0 ? (payingUsers / totalBase30d) : 0;
+
+        const churnPrev = await db.Psychologist.count({
+            where: {
+                is_exempt: false,
+                deletedAt: null,
+                [Op.or]: [
+                    { subscribedAt: { [Op.not]: null } },
+                    { subscriptionId: { [Op.ne]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } }
+                ],
+                [Op.or]: [
+                    { canceledAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } },
+                    { status: 'inactive', updatedAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } }
+                ]
+            }
+        });
+        const payingPrev = payingUsers + churn30d;
+        const totalBasePrev = payingPrev + churnPrev;
+        const postTrialRetentionRatePrev = totalBasePrev > 0 ? (payingPrev / totalBasePrev) : 0;
+        const postTrialDiff = postTrialRetentionRate30d - postTrialRetentionRatePrev;
+
+        // --- 4.3 RENOVAÇÃO DE MENSALIDADE (Últimos 30 dias vs 30 dias anteriores) ---
+        let eligibleRenewal30d = await db.Psychologist.count({
+            where: {
+                is_exempt: false,
+                deletedAt: null,
+                subscription_payments_count: { [Op.gte]: 1 },
+                [Op.or]: [
+                    { subscribedAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } },
+                    { createdAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } }
+                ]
+            }
+        });
+        let renewed30d = await db.Psychologist.count({
+            where: {
+                is_exempt: false,
+                deletedAt: null,
+                subscription_payments_count: { [Op.gte]: 2 },
+                [Op.or]: [
+                    { subscribedAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } },
+                    { createdAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } }
                 ]
             }
         });
 
-        const renewalRate = eligibleForRenewal > 0 ? (renewedUsers / eligibleForRenewal) : (totalStart > 0 ? (renewedUsers / totalStart) : 0);
+        try {
+            const paymentsRenewed30d = await db.sequelize.query(`
+                SELECT COUNT(DISTINCT "psychologistId") as count 
+                FROM "Payments" 
+                WHERE status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
+                  AND "paymentDate" BETWEEN :thirtyDaysAgo AND :now
+                  AND "psychologistId" IN (
+                      SELECT "psychologistId" FROM "Payments" 
+                      WHERE status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
+                        AND "paymentDate" < :thirtyDaysAgo
+                  )
+            `, { replacements: { thirtyDaysAgo, now }, type: db.sequelize.QueryTypes.SELECT }).then(r => parseInt(r[0]?.count || 0)).catch(() => 0);
+            
+            if (paymentsRenewed30d > renewed30d) {
+                renewed30d = paymentsRenewed30d;
+                if (eligibleRenewal30d < renewed30d) eligibleRenewal30d = renewed30d;
+            }
+        } catch(e) {}
+
+        const renewalRate30d = eligibleRenewal30d > 0 ? (renewed30d / eligibleRenewal30d) : 0;
+
+        let eligibleRenewalPrev = await db.Psychologist.count({
+            where: {
+                is_exempt: false,
+                deletedAt: null,
+                subscription_payments_count: { [Op.gte]: 1 },
+                [Op.or]: [
+                    { subscribedAt: { [Op.between]: [ninetyDaysAgo, sixtyDaysAgo] } },
+                    { createdAt: { [Op.between]: [ninetyDaysAgo, sixtyDaysAgo] } }
+                ]
+            }
+        });
+        let renewedPrev = await db.Psychologist.count({
+            where: {
+                is_exempt: false,
+                deletedAt: null,
+                subscription_payments_count: { [Op.gte]: 2 },
+                [Op.or]: [
+                    { subscribedAt: { [Op.between]: [ninetyDaysAgo, sixtyDaysAgo] } },
+                    { createdAt: { [Op.between]: [ninetyDaysAgo, sixtyDaysAgo] } }
+                ]
+            }
+        });
+
+        try {
+            const paymentsRenewedPrev = await db.sequelize.query(`
+                SELECT COUNT(DISTINCT "psychologistId") as count 
+                FROM "Payments" 
+                WHERE status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
+                  AND "paymentDate" BETWEEN :sixtyDaysAgo AND :thirtyDaysAgo
+                  AND "psychologistId" IN (
+                      SELECT "psychologistId" FROM "Payments" 
+                      WHERE status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
+                        AND "paymentDate" < :sixtyDaysAgo
+                  )
+            `, { replacements: { sixtyDaysAgo, thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).then(r => parseInt(r[0]?.count || 0)).catch(() => 0);
+            
+            if (paymentsRenewedPrev > renewedPrev) {
+                renewedPrev = paymentsRenewedPrev;
+                if (eligibleRenewalPrev < renewedPrev) eligibleRenewalPrev = renewedPrev;
+            }
+        } catch(e) {}
+
+        const renewalRatePrev = eligibleRenewalPrev > 0 ? (renewedPrev / eligibleRenewalPrev) : 0;
+        const renewalDiff = renewalRate30d - renewalRatePrev;
 
         // 5. FUNIL
         const visitors = await db.sequelize.query('SELECT COUNT(*) as count FROM "SiteVisits"', { type: db.sequelize.QueryTypes.SELECT }).then(res => res[0].count).catch(() => 0);
@@ -1537,11 +1689,31 @@ exports.getFounderMetrics = async (req, res) => {
                 activeTrialsCount,
                 conversionRate,
                 churnRate,
-                postTrialRetentionRate,
-                renewedUsers,
-                eligibleForRenewal,
-                renewalRate,
-                projectedMRR
+                projectedMRR,
+
+                // Ativação 30d
+                activationRate: activationRate30d,
+                activationTotal: actTotal30d,
+                activationActive: actActive30d,
+                prevActivationRate: activationRatePrev,
+                activationDiff,
+
+                // Pós-Trial 30d
+                postTrialRetentionRate: postTrialRetentionRate30d,
+                postTrialPaying: payingUsers,
+                postTrialTotal: totalBase30d,
+                prevPostTrialRetentionRate: postTrialRetentionRatePrev,
+                postTrialDiff,
+
+                // Renovação 30d
+                renewalRate: renewalRate30d,
+                renewedUsers: renewed30d,
+                eligibleForRenewal: eligibleRenewal30d,
+                prevRenewalRate: renewalRatePrev,
+                renewalDiff,
+
+                // Fallback histórico
+                historicalPostTrialRetentionRate: totalStart > 0 ? (payingUsers / totalStart) : 0
             },
             trialPipeline,
             funnel,

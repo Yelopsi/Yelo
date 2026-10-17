@@ -17,7 +17,43 @@ window.initializePage = function () {
     const drawerContent = drawerOverlay ? drawerOverlay.querySelector('.drawer-content') : null;
     const drawerHeader = drawerOverlay ? drawerOverlay.querySelector('.drawer-header-mobile') : null;
 
-    // Fetch Advanced KPIs for Header (MRR, Activation, Retention)
+    // Renderiza a setinha e badge de comparação com o mês anterior
+    function renderMetricDiff(el, diff, prevRate) {
+        if (!el) return;
+        if (diff === undefined || diff === null || isNaN(diff)) {
+            el.innerHTML = '';
+            return;
+        }
+
+        const diffPct = (diff * 100).toFixed(1);
+        const numDiff = parseFloat(diffPct);
+        const prevPct = prevRate !== undefined && !isNaN(prevRate) ? (prevRate * 100).toFixed(1) : null;
+        const prevText = prevPct !== null ? ` (mês ant: ${prevPct}%)` : '';
+
+        if (numDiff > 0) {
+            el.innerHTML = `
+                <span style="background: rgba(52, 211, 153, 0.15); color: #34d399; padding: 2px 6px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;" title="Melhorou ${diffPct}% em relação aos 30 dias anteriores${prevText}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    +${diffPct}%
+                </span>
+            `;
+        } else if (numDiff < 0) {
+            el.innerHTML = `
+                <span style="background: rgba(248, 113, 113, 0.15); color: #f87171; padding: 2px 6px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;" title="Piorou ${Math.abs(numDiff)}% em relação aos 30 dias anteriores${prevText}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    ${diffPct}%
+                </span>
+            `;
+        } else {
+            el.innerHTML = `
+                <span style="background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.7); padding: 2px 6px; border-radius: 6px; font-weight: 500; display: inline-flex; align-items: center; gap: 3px;" title="Estável em relação aos 30 dias anteriores${prevText}">
+                    <span style="font-weight: bold; line-height: 1;">=</span> 0.0%
+                </span>
+            `;
+        }
+    }
+
+    // Fetch Advanced KPIs for Header (MRR, Activation, Retention) nos últimos 30 dias com comparativo
     async function loadAdvancedKpis() {
         try {
             const [founderRes, statsRes] = await Promise.all([
@@ -29,36 +65,52 @@ window.initializePage = function () {
                 const data = await founderRes.json();
                 const metrics = data.metrics || {};
 
-                // 1. Retenção Pós-Trial (% que se mantiveram pagantes após o trial)
+                // 1. Ativação (30 dias vs 30 dias anteriores)
+                const activationEl = document.getElementById('crm-activation');
+                const activationDiffEl = document.getElementById('crm-activation-diff');
+                const activationTooltip = document.getElementById('tooltip-activation');
+                if (activationEl && metrics.activationRate !== undefined) {
+                    const actPct = (metrics.activationRate * 100).toFixed(1);
+                    activationEl.innerText = `${actPct}%`;
+                    renderMetricDiff(activationDiffEl, metrics.activationDiff, metrics.prevActivationRate);
+                    if (activationTooltip && metrics.activationTotal !== undefined) {
+                        const prevPct = (metrics.prevActivationRate !== undefined) ? (metrics.prevActivationRate * 100).toFixed(1) : '0.0';
+                        activationTooltip.setAttribute('data-tooltip', `${metrics.activationActive || 0} de ${metrics.activationTotal || 0} psicólogos cadastrados nos últimos 30 dias (${actPct}%) ativaram o perfil. Mês anterior: ${prevPct}%.`);
+                    }
+                }
+
+                // 2. Retenção Pós-Trial (30 dias vs 30 dias anteriores)
                 const retentionEl = document.getElementById('crm-retention');
+                const retentionDiffEl = document.getElementById('crm-retention-diff');
+                const postTrialTooltip = document.getElementById('tooltip-post-trial');
                 if (retentionEl) {
                     const postTrialPct = (metrics.postTrialRetentionRate !== undefined)
                         ? (metrics.postTrialRetentionRate * 100).toFixed(1)
-                        : Math.max(0, 100 - (metrics.churnRate * 100)).toFixed(1);
+                        : '0.0';
                     retentionEl.innerText = `${postTrialPct}%`;
+                    renderMetricDiff(retentionDiffEl, metrics.postTrialDiff, metrics.prevPostTrialRetentionRate);
+                    if (postTrialTooltip) {
+                        const totalBase = metrics.postTrialTotal !== undefined ? metrics.postTrialTotal : ((metrics.payingUsers || 0) + (metrics.churnedUsers || 0));
+                        const paying = metrics.postTrialPaying !== undefined ? metrics.postTrialPaying : (metrics.payingUsers || 0);
+                        const prevPct = (metrics.prevPostTrialRetentionRate !== undefined) ? (metrics.prevPostTrialRetentionRate * 100).toFixed(1) : '--';
+                        postTrialTooltip.setAttribute('data-tooltip', `${paying} de ${totalBase} psicólogos (${postTrialPct}%) continuam pagantes ativos após o trial nos últimos 30 dias. Mês anterior: ${prevPct}%.`);
+                    }
                 }
 
-                // 2. Renovação de Mensalidade (% que renovaram a mensalidade)
+                // 3. Renovação de Mensalidade (30 dias vs 30 dias anteriores)
                 const renewalEl = document.getElementById('crm-renewal-rate');
+                const renewalDiffEl = document.getElementById('crm-renewal-diff');
+                const renewalTooltip = document.getElementById('tooltip-renewal');
                 if (renewalEl) {
                     const renewalPct = (metrics.renewalRate !== undefined)
                         ? (metrics.renewalRate * 100).toFixed(1)
                         : '0.0';
                     renewalEl.innerText = `${renewalPct}%`;
-                }
-
-                // Tooltips com detalhamento de contagem
-                const postTrialTooltip = document.getElementById('tooltip-post-trial');
-                if (postTrialTooltip && metrics.payingUsers !== undefined) {
-                    const totalEver = (metrics.payingUsers || 0) + (metrics.churnedUsers || 0);
-                    if (totalEver > 0) {
-                        postTrialTooltip.setAttribute('data-tooltip', `${metrics.payingUsers} de ${totalEver} psicólogos (${((metrics.payingUsers / totalEver) * 100).toFixed(1)}%) continuam pagantes ativos após o trial.`);
+                    renderMetricDiff(renewalDiffEl, metrics.renewalDiff, metrics.prevRenewalRate);
+                    if (renewalTooltip && metrics.eligibleForRenewal !== undefined) {
+                        const prevPct = (metrics.prevRenewalRate !== undefined) ? (metrics.prevRenewalRate * 100).toFixed(1) : '--';
+                        renewalTooltip.setAttribute('data-tooltip', `${metrics.renewedUsers || 0} de ${metrics.eligibleForRenewal || 0} psicólogos elegíveis (${renewalPct}%) renovaram nos últimos 30 dias. Mês anterior: ${prevPct}%.`);
                     }
-                }
-
-                const renewalTooltip = document.getElementById('tooltip-renewal');
-                if (renewalTooltip && metrics.renewedUsers !== undefined && metrics.eligibleForRenewal !== undefined) {
-                    renewalTooltip.setAttribute('data-tooltip', `${metrics.renewedUsers} de ${metrics.eligibleForRenewal} psicólogos elegíveis (${((metrics.renewedUsers / metrics.eligibleForRenewal) * 100).toFixed(1)}%) renovaram para o 2º mês ou mais.`);
                 }
             }
 
@@ -319,12 +371,14 @@ window.initializePage = function () {
                 setText('kpi-outros-psis', kpis.utm_outros || 0);
                 setText('kpi-alerta-pendentes', kpis.pending || 0);
 
-                // Ativação: (Ativos / Totais) * 100
+                // Ativação: só sobrescreve se houver filtro customizado de data ativo no CRM
                 const activationEl = document.getElementById('crm-activation');
-                if (activationEl && kpis.total > 0) {
+                if ((startDate || endDate) && activationEl && kpis.total > 0) {
                     const ativos = (parseInt(kpis.active_paying) || 0) + (parseInt(kpis.active_trial) || 0) + (parseInt(kpis.vip) || 0);
                     const actPct = ((ativos / kpis.total) * 100).toFixed(1);
                     activationEl.innerText = `${actPct}%`;
+                    const diffEl = document.getElementById('crm-activation-diff');
+                    if (diffEl) diffEl.innerHTML = `<span style="color: rgba(255,255,255,0.6); font-size: 0.72rem;">período filtrado</span>`;
                 }
             }
 
