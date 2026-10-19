@@ -1,5 +1,33 @@
 [
   {
+    "id": "change-git-76635b9c",
+    "date": "2026-10-19T02:59:07.000Z",
+    "commit": "76635b9c",
+    "author": "Anderson",
+    "title": "Novo: Aprimorar card de regras no mobile e adicionar proibicao de concorrentes da Yelo (forum)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "aprimorar card de regras no mobile e adicionar proibicao de concorrentes da Yelo",
+    "description": "Commit registrado no repositório: \"feat(forum): aprimorar card de regras no mobile e adicionar proibicao de concorrentes da Yelo\". Arquivos modificados: backend/data/system_changelog.json, forum-community.css, mobile/src/app/(tabs)/forum.tsx, public/css/forum-community.css, public/psi/psi_forum.html (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #76635b9c"
+    },
+    "after": {
+      "nova_versao": "aprimorar card de regras no mobile e adicionar proibicao de concorrentes da Yelo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "forum-community.css",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "public/css/forum-community.css",
+      "public/psi/psi_forum.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-93232971",
     "date": "2026-10-19T02:52:43.000Z",
     "commit": "93232971",
