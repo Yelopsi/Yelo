@@ -209,6 +209,7 @@ window.initializePage = function() {
                     <div class="mod-topic-cell">
                         <div class="mod-topic-title-row">
                             ${isPinned ? '<span class="mod-pinned-badge">📌 Fixado</span>' : ''}
+                            <span class="mod-category-pill">${post.category || 'Geral'}</span>
                             <span class="mod-topic-title" onclick="window.openPreviewModal(${post.id})">${post.title || 'Sem título'}</span>
                         </div>
                         <div class="mod-topic-excerpt">${excerpt}</div>
@@ -222,9 +223,6 @@ window.initializePage = function() {
                             <span class="mod-author-meta">${post.authorEmail || (post.isAnonymous ? 'Anônimo' : 'Psicólogo')}</span>
                         </div>
                     </div>
-                </td>
-                <td>
-                    <span class="mod-category-pill">${post.category || 'Geral'}</span>
                 </td>
                 <td>
                     <div class="mod-engagement-cell">

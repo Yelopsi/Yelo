@@ -71,9 +71,9 @@
         </div>
     </div>
 
-    <!-- TOOLBAR & FILTERS -->
+    <!-- TOOLBAR & FILTERS (FORMATO DE PÍLULA) -->
     <div class="mod-toolbar">
-        <!-- TABS DE STATUS -->
+        <!-- TABS DE STATUS EM PÍLULA -->
         <div class="mod-status-pills">
             <button class="mod-pill-btn active" data-status="active" onclick="window.setForumStatusFilter('active')">
                 <span>Ativos</span>
@@ -89,22 +89,22 @@
             </button>
         </div>
 
-        <!-- SEARCH E CATEGORIA -->
+        <!-- SEARCH E CATEGORIA EM FORMATO DE PÍLULA -->
         <div class="mod-filter-controls">
-            <!-- BUSCA COM ÍCONE -->
+            <!-- BUSCA EM PÍLULA -->
             <div class="mod-search-wrapper">
                 <svg class="mod-search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 <input type="text" id="input-search-forum" placeholder="Buscar por título, autor ou trecho..." oninput="window.debounceForumSearch(this.value)">
                 <button type="button" id="btn-clear-search" class="mod-search-clear" onclick="window.clearForumSearch()" style="display: none;">✕</button>
             </div>
 
-            <!-- SELECT DE CATEGORIA -->
+            <!-- SELECT DE CATEGORIA EM PÍLULA -->
             <div class="mod-select-wrapper">
                 <select id="select-category-filter" onchange="window.setForumCategoryFilter(this.value)">
                     <option value="all">Todas as Categorias</option>
                     <option value="Indicações e Encaminhamentos">Indicações e Encaminhamentos</option>
-                    <option value="Dúvidas Clínicas & Teóricas">Dúvidas Clínicas & Teóricas</option>
-                    <option value="Carreira & Gestão">Carreira & Gestão</option>
+                    <option value="Dúvidas Clínicas &amp; Teóricas">Dúvidas Clínicas &amp; Teóricas</option>
+                    <option value="Carreira &amp; Gestão">Carreira &amp; Gestão</option>
                     <option value="Materiais e Recursos">Materiais e Recursos</option>
                     <option value="Geral">Geral</option>
                 </select>
@@ -112,19 +112,18 @@
         </div>
     </div>
 
-    <!-- MAIN TABLE CONTAINER -->
+    <!-- MAIN TABLE CONTAINER (SEM A COLUNA CATEGORIA PARA DAR MAIS ESPAÇO) -->
     <div class="mod-table-card">
         <div class="mod-table-responsive">
             <table class="mod-table" id="tabela-moderacao-forum">
                 <thead>
                     <tr>
-                        <th style="width: 38%;">Tópico & Resumo</th>
-                        <th style="width: 17%;">Autor</th>
-                        <th style="width: 14%;">Categoria</th>
-                        <th style="width: 10%;">Engajamento</th>
-                        <th style="width: 10%;">Data</th>
+                        <th style="width: 44%;">Tópico &amp; Resumo</th>
+                        <th style="width: 18%;">Autor</th>
+                        <th style="width: 11%;">Engajamento</th>
+                        <th style="width: 11%;">Data</th>
                         <th style="width: 9%;">Status</th>
-                        <th style="width: 120px; text-align: right;">Ações</th>
+                        <th style="width: 200px; text-align: right;">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="lista-posts-forum">
@@ -213,12 +212,12 @@
 
 </div>
 
-<!-- ESTILOS COMPLETOS E OTIMIZADOS PARA DESKTOP -->
+<!-- ESTILOS COMPLETOS COM ELEMENTOS EM PÍLULA E UX MOBILE REFINADA -->
 <style>
     .moderacao-forum-page {
         display: flex;
         flex-direction: column;
-        gap: 24px;
+        gap: 22px;
         padding-bottom: 60px;
     }
 
@@ -278,13 +277,13 @@
         flex-wrap: wrap;
     }
 
-    /* BOTÕES */
+    /* BOTÕES EM FORMATO DE PÍLULA */
     .btn-mod-primario {
         background: #1B4332;
         color: #ffffff;
         border: none;
-        padding: 10px 18px;
-        border-radius: 10px;
+        padding: 10px 22px;
+        border-radius: 50px; /* Pílula */
         font-weight: 600;
         font-size: 0.9rem;
         cursor: pointer;
@@ -292,7 +291,7 @@
         align-items: center;
         gap: 8px;
         transition: all 0.2s ease;
-        box-shadow: 0 2px 6px rgba(27, 67, 50, 0.15);
+        box-shadow: 0 2px 8px rgba(27, 67, 50, 0.18);
     }
 
     .btn-mod-primario:hover {
@@ -305,8 +304,8 @@
         background: #ffffff;
         color: #1e293b;
         border: 1px solid #cbd5e1;
-        padding: 9px 16px;
-        border-radius: 10px;
+        padding: 9px 20px;
+        border-radius: 50px; /* Pílula */
         font-weight: 600;
         font-size: 0.9rem;
         cursor: pointer;
@@ -333,7 +332,7 @@
     .mod-kpi-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 14px;
+        border-radius: 16px;
         padding: 18px 20px;
         display: flex;
         align-items: center;
@@ -359,7 +358,7 @@
     .mod-kpi-icon {
         width: 48px;
         height: 48px;
-        border-radius: 12px;
+        border-radius: 50%; /* Pílula/Circular */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -379,8 +378,8 @@
     }
 
     .mod-kpi-label {
-        font-size: 0.8rem;
-        font-weight: 600;
+        font-size: 0.78rem;
+        font-weight: 700;
         color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.04em;
@@ -405,17 +404,17 @@
     .mod-text-danger { color: #b91c1c !important; font-weight: 600; }
     .mod-text-amber { color: #b45309 !important; font-weight: 600; }
 
-    /* TOOLBAR & CONTROLS */
+    /* TOOLBAR & CONTROLS EM FORMATO DE PÍLULA */
     .mod-toolbar {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 16px;
         background: #ffffff;
-        padding: 14px 18px;
-        border-radius: 14px;
+        padding: 14px 20px;
+        border-radius: 20px;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
         flex-wrap: wrap;
     }
 
@@ -424,15 +423,15 @@
         align-items: center;
         gap: 8px;
         background: #f1f5f9;
-        padding: 4px;
-        border-radius: 10px;
+        padding: 5px;
+        border-radius: 50px; /* Pílula externa */
     }
 
     .mod-pill-btn {
         background: transparent;
         border: none;
-        padding: 7px 16px;
-        border-radius: 8px;
+        padding: 8px 18px;
+        border-radius: 50px; /* Pílula interna */
         font-size: 0.88rem;
         font-weight: 600;
         color: #64748b;
@@ -450,15 +449,15 @@
     .mod-pill-btn.active {
         background: #ffffff;
         color: #1B4332;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     .mod-pill-badge {
         background: #e2e8f0;
         color: #475569;
         font-size: 0.75rem;
-        padding: 2px 7px;
-        border-radius: 12px;
+        padding: 2px 8px;
+        border-radius: 50px; /* Pílula */
         font-weight: 700;
         line-height: 1;
     }
@@ -478,10 +477,11 @@
         align-items: center;
         gap: 12px;
         flex: 1;
-        max-width: 580px;
+        max-width: 600px;
         justify-content: flex-end;
     }
 
+    /* CAMPO DE BUSCA EM PÍLULA */
     .mod-search-wrapper {
         position: relative;
         flex: 1;
@@ -490,7 +490,7 @@
 
     .mod-search-icon {
         position: absolute;
-        left: 12px;
+        left: 14px;
         top: 50%;
         transform: translateY(-50%);
         color: #94a3b8;
@@ -499,9 +499,9 @@
 
     .mod-search-wrapper input {
         width: 100%;
-        padding: 9px 34px 9px 36px;
+        padding: 10px 36px 10px 38px;
         border: 1px solid #cbd5e1;
-        border-radius: 10px;
+        border-radius: 50px; /* Pílula */
         font-size: 0.88rem;
         color: #0f172a;
         background: #ffffff;
@@ -517,7 +517,7 @@
 
     .mod-search-clear {
         position: absolute;
-        right: 10px;
+        right: 12px;
         top: 50%;
         transform: translateY(-50%);
         background: none;
@@ -534,13 +534,18 @@
         background: #f1f5f9;
     }
 
+    /* SELECT DE CATEGORIA EM PÍLULA */
+    .mod-select-wrapper {
+        position: relative;
+    }
+
     .mod-select-wrapper select {
-        padding: 9px 32px 9px 12px;
+        padding: 10px 36px 10px 16px;
         border: 1px solid #cbd5e1;
-        border-radius: 10px;
+        border-radius: 50px; /* Pílula */
         font-size: 0.88rem;
         color: #334155;
-        background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 12px center;
+        background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 14px center;
         appearance: none;
         -webkit-appearance: none;
         cursor: pointer;
@@ -550,13 +555,14 @@
     .mod-select-wrapper select:focus {
         outline: none;
         border-color: #1B4332;
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.12);
     }
 
     /* TABLE CARD */
     .mod-table-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 16px;
+        border-radius: 18px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
         overflow: hidden;
     }
@@ -575,7 +581,7 @@
 
     .mod-table th {
         background: #f8fafc;
-        padding: 14px 16px;
+        padding: 14px 18px;
         font-size: 0.75rem;
         font-weight: 700;
         color: #475569;
@@ -586,7 +592,7 @@
     }
 
     .mod-table td {
-        padding: 16px;
+        padding: 18px;
         border-bottom: 1px solid #f1f5f9;
         font-size: 0.88rem;
         vertical-align: middle;
@@ -609,8 +615,7 @@
     .mod-topic-cell {
         display: flex;
         flex-direction: column;
-        gap: 4px;
-        max-width: 480px;
+        gap: 6px;
     }
 
     .mod-topic-title-row {
@@ -621,7 +626,7 @@
     }
 
     .mod-topic-title {
-        font-size: 0.95rem;
+        font-size: 0.98rem;
         font-weight: 700;
         color: #0f172a;
         cursor: pointer;
@@ -639,18 +644,30 @@
         color: #b45309;
         border: 1px solid #fde68a;
         font-size: 0.72rem;
-        padding: 2px 8px;
-        border-radius: 6px;
+        padding: 2px 10px;
+        border-radius: 50px; /* Pílula */
         font-weight: 700;
         display: inline-flex;
         align-items: center;
         gap: 4px;
     }
 
+    .mod-category-pill {
+        background: #e0f2fe;
+        color: #0369a1;
+        font-size: 0.74rem;
+        font-weight: 700;
+        padding: 2px 10px;
+        border-radius: 50px; /* Pílula */
+        display: inline-block;
+        white-space: nowrap;
+        border: 1px solid #bae6fd;
+    }
+
     .mod-topic-excerpt {
-        font-size: 0.82rem;
+        font-size: 0.83rem;
         color: #64748b;
-        line-height: 1.4;
+        line-height: 1.45;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -665,13 +682,13 @@
     }
 
     .mod-author-avatar {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%; /* Pílula / Circular */
         background: #e2e8f0;
         color: #1B4332;
         font-weight: 700;
-        font-size: 0.8rem;
+        font-size: 0.82rem;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -700,18 +717,6 @@
         color: #94a3b8;
     }
 
-    /* CATEGORIA */
-    .mod-category-pill {
-        background: #e0f2fe;
-        color: #0369a1;
-        font-size: 0.75rem;
-        font-weight: 600;
-        padding: 4px 10px;
-        border-radius: 50px;
-        display: inline-block;
-        white-space: nowrap;
-    }
-
     /* ENGAJAMENTO */
     .mod-engagement-cell {
         display: flex;
@@ -732,8 +737,8 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 4px 10px;
-        border-radius: 20px;
+        padding: 5px 12px;
+        border-radius: 50px; /* Pílula */
         font-size: 0.78rem;
         font-weight: 600;
         white-space: nowrap;
@@ -773,20 +778,21 @@
         background: #d97706;
     }
 
-    /* BOTÕES DE AÇÃO NA TABELA */
+    /* BOTÕES DE AÇÃO NA TABELA - FORMATO DE PÍLULA */
     .mod-actions-cell {
         display: flex;
         align-items: center;
         justify-content: flex-end;
         gap: 6px;
+        flex-wrap: wrap;
     }
 
     .btn-act {
         background: #ffffff;
         border: 1px solid #e2e8f0;
         color: #475569;
-        padding: 7px 11px;
-        border-radius: 8px;
+        padding: 6px 14px;
+        border-radius: 50px; /* Formato de Pílula */
         font-size: 0.8rem;
         font-weight: 600;
         cursor: pointer;
@@ -805,42 +811,43 @@
 
     .btn-act-preview {
         color: #0284c7;
-        border-color: #e0f2fe;
+        border-color: #bae6fd;
         background: #f0f9ff;
     }
 
     .btn-act-preview:hover {
         background: #e0f2fe;
-        border-color: #bae6fd;
+        border-color: #7dd3fc;
         color: #0369a1;
     }
 
     .btn-act-hide {
         color: #d97706;
-        border-color: #fef3c7;
+        border-color: #fde68a;
         background: #fffbeb;
     }
 
     .btn-act-hide:hover {
         background: #fef3c7;
-        border-color: #fde68a;
+        border-color: #fcd34d;
         color: #b45309;
     }
 
     .btn-act-restore {
         color: #15803d;
-        border-color: #dcfce7;
+        border-color: #bbf7d0;
         background: #f0fdf4;
     }
 
     .btn-act-restore:hover {
         background: #dcfce7;
-        border-color: #bbf7d0;
+        border-color: #86efac;
         color: #166534;
     }
 
     .btn-act-pin {
         color: #b45309;
+        border-color: #fde68a;
     }
 
     .btn-act-pin.is-pinned {
@@ -905,14 +912,14 @@
         margin: 0 0 16px 0;
     }
 
-    /* MODAL PREVIEW */
+    /* MODAL PREVIEW EM FORMATO MODERNO */
     .mod-modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(15, 23, 42, 0.6);
+        background: rgba(15, 23, 42, 0.65);
         backdrop-filter: blur(4px);
         z-index: 99999;
         display: flex;
@@ -927,7 +934,7 @@
         width: 100%;
         max-width: 760px;
         max-height: 90vh;
-        border-radius: 18px;
+        border-radius: 24px;
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
         display: flex;
         flex-direction: column;
@@ -960,9 +967,10 @@
         font-weight: 700;
         color: #0369a1;
         background: #e0f2fe;
-        padding: 3px 10px;
-        border-radius: 20px;
+        padding: 4px 12px;
+        border-radius: 50px; /* Pílula */
         align-self: flex-start;
+        border: 1px solid #bae6fd;
     }
 
     .mod-modal-title {
@@ -974,18 +982,22 @@
     }
 
     .mod-modal-close {
-        background: none;
+        background: #f1f5f9;
         border: none;
-        font-size: 1.3rem;
-        color: #94a3b8;
+        font-size: 1.1rem;
+        color: #64748b;
         cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 8px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         transition: all 0.15s;
     }
 
     .mod-modal-close:hover {
-        background: #f1f5f9;
+        background: #e2e8f0;
         color: #0f172a;
     }
 
@@ -1002,8 +1014,8 @@
         align-items: center;
         gap: 14px;
         background: #f8fafc;
-        padding: 12px 16px;
-        border-radius: 12px;
+        padding: 14px 18px;
+        border-radius: 16px;
         border: 1px solid #e2e8f0;
     }
 
@@ -1060,7 +1072,7 @@
         color: #1e293b;
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
+        border-radius: 16px;
         padding: 16px 18px;
         white-space: pre-wrap;
     }
@@ -1075,8 +1087,8 @@
         align-items: center;
         gap: 6px;
         background: #f1f5f9;
-        padding: 6px 12px;
-        border-radius: 8px;
+        padding: 6px 14px;
+        border-radius: 50px; /* Pílula */
         font-size: 0.82rem;
         font-weight: 600;
         color: #475569;
@@ -1099,8 +1111,8 @@
     .mod-comment-card {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 12px 14px;
+        border-radius: 14px;
+        padding: 14px 16px;
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -1153,40 +1165,278 @@
         flex-wrap: wrap;
     }
 
-    /* RESPONSIVIDADE DESKTOP vs MOBILE */
+    /* ==========================================================================
+       UX MOBILE REFINADA (RESPONSIVIDADE COMPLETA PARA TABLETS E SMARTPHONES)
+       ========================================================================== */
     @media (max-width: 1024px) {
         .mod-kpi-grid {
             grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
         }
 
         .mod-toolbar {
             flex-direction: column;
             align-items: stretch;
+            gap: 14px;
         }
 
         .mod-filter-controls {
             max-width: 100%;
-        }
-
-        .mod-table th:nth-child(3),
-        .mod-table td:nth-child(3),
-        .mod-table th:nth-child(4),
-        .mod-table td:nth-child(4) {
-            display: none;
-        }
-    }
-
-    @media (max-width: 640px) {
-        .mod-kpi-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .mod-filter-controls {
-            flex-direction: column;
+            justify-content: stretch;
         }
 
         .mod-search-wrapper {
             max-width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .moderacao-forum-page {
+            gap: 16px;
+        }
+
+        .mod-top-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 14px;
+        }
+
+        .mod-title {
+            font-size: 1.45rem;
+        }
+
+        .mod-subtitle {
+            font-size: 0.88rem;
+        }
+
+        .mod-header-actions {
+            width: 100%;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-mod-primario,
+        .btn-mod-outline {
+            flex: 1;
+            justify-content: center;
+            padding: 11px 16px;
+            font-size: 0.88rem;
+        }
+
+        .mod-kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .mod-kpi-card {
+            padding: 14px 12px;
+            gap: 10px;
+            border-radius: 14px;
+        }
+
+        .mod-kpi-icon {
+            width: 38px;
+            height: 38px;
+        }
+
+        .mod-kpi-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .mod-kpi-label {
+            font-size: 0.72rem;
+        }
+
+        .mod-kpi-value {
+            font-size: 1.35rem;
+        }
+
+        .mod-kpi-sub {
+            display: none; /* Simplifica visual no celular */
+        }
+
+        /* TOOLBAR MOBILE EM PÍLULA */
+        .mod-toolbar {
+            padding: 12px;
+            border-radius: 16px;
+        }
+
+        .mod-status-pills {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .mod-pill-btn {
+            flex: 1;
+            justify-content: center;
+            padding: 8px 10px;
+            font-size: 0.82rem;
+            gap: 6px;
+        }
+
+        .mod-pill-badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+        }
+
+        .mod-filter-controls {
+            flex-direction: column;
+            width: 100%;
+            gap: 10px;
+        }
+
+        .mod-search-wrapper,
+        .mod-select-wrapper {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .mod-search-wrapper input,
+        .mod-select-wrapper select {
+            width: 100%;
+            height: 42px;
+            font-size: 0.88rem;
+        }
+
+        /* TRANSFORMAÇÃO DA TABELA EM CARDS MODERNOS NO MOBILE */
+        .mod-table-card {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            overflow: visible;
+        }
+
+        .mod-table-responsive {
+            overflow: visible;
+        }
+
+        .mod-table {
+            display: block;
+            width: 100%;
+        }
+
+        .mod-table thead {
+            display: none; /* Oculta cabeçalho da tabela */
+        }
+
+        .mod-table tbody {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+        }
+
+        .mod-table tbody tr {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .mod-table tbody tr.row-hidden {
+            border-color: #fecaca;
+            background: #fffafa;
+        }
+
+        .mod-table td {
+            display: block;
+            padding: 0 !important;
+            border: none !important;
+            width: 100% !important;
+        }
+
+        .mod-topic-cell {
+            max-width: 100%;
+        }
+
+        .mod-topic-title {
+            font-size: 1.05rem;
+        }
+
+        .mod-topic-excerpt {
+            font-size: 0.85rem;
+            -webkit-line-clamp: 3;
+            color: #475569;
+        }
+
+        /* Detalhes de autor e data no mobile */
+        .mod-author-cell {
+            padding: 6px 0;
+            border-top: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .mod-engagement-cell {
+            flex-direction: row;
+            justify-content: flex-start;
+            gap: 16px;
+            padding: 4px 0;
+        }
+
+        /* Ações no mobile - botões em pílula com toque agradável */
+        .mod-actions-cell {
+            justify-content: flex-start;
+            gap: 8px;
+            padding-top: 10px;
+            border-top: 1px solid #f1f5f9;
+            flex-wrap: wrap;
+        }
+
+        .btn-act {
+            flex: 1 1 calc(50% - 8px);
+            justify-content: center;
+            padding: 9px 12px;
+            font-size: 0.82rem;
+            border-radius: 50px; /* Pílula no mobile */
+        }
+
+        /* MODAL RESPONSIVO NO CELULAR */
+        .mod-modal-overlay {
+            padding: 0;
+            align-items: flex-end;
+        }
+
+        .mod-modal-dialog {
+            max-width: 100%;
+            border-radius: 24px 24px 0 0;
+            max-height: 92vh;
+        }
+
+        .mod-modal-header {
+            padding: 18px 20px;
+        }
+
+        .mod-modal-body {
+            padding: 18px 20px;
+            gap: 16px;
+        }
+
+        .mod-modal-footer {
+            padding: 14px 20px;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mod-footer-left {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .mod-footer-left .btn-act,
+        .mod-modal-footer .btn-mod-outline {
+            width: 100%;
+            justify-content: center;
+            padding: 11px;
         }
     }
 </style>
