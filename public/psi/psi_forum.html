@@ -4,6 +4,156 @@
             padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
         }
     }
+
+    /* CARD DE REGRAS DA COMUNIDADE (DESKTOP & MOBILE RESPONSIVO) */
+    .forum-guidelines-box {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(27, 67, 50, 0.04);
+        margin-bottom: 25px;
+        padding: 22px 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 18px;
+        transition: all 0.2s ease;
+    }
+    .guidelines-header-mobile {
+        display: none;
+    }
+    .guidelines-icon-box {
+        width: 44px;
+        height: 44px;
+        background: #ffffff;
+        color: #16a34a;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid #dcfce7;
+    }
+    .guidelines-content {
+        flex-grow: 1;
+        min-width: 0;
+    }
+    .guidelines-title-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+    .guidelines-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1B4332;
+        font-family: var(--font-titulos, sans-serif);
+    }
+    .guidelines-badge {
+        background: #dcfce7;
+        color: #15803d;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 2px 10px;
+        border-radius: 50px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        border: 1px solid #bbf7d0;
+    }
+    .guidelines-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .guidelines-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-size: 0.88rem;
+        color: #334155;
+        line-height: 1.45;
+    }
+    .guidelines-list li strong {
+        color: #1B4332;
+    }
+    .guideline-dot {
+        color: #16a34a;
+        font-weight: 800;
+        font-size: 1.1rem;
+        line-height: 1.2;
+        flex-shrink: 0;
+    }
+    .guidelines-list li.guideline-alert {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        padding: 7px 12px;
+        border-radius: 12px;
+        margin: 2px 0;
+    }
+    .guidelines-list li.guideline-alert strong {
+        color: #92400e;
+    }
+    .guidelines-list li.guideline-alert .guideline-dot {
+        color: #d97706;
+    }
+
+    @media (max-width: 768px) {
+        .forum-guidelines-box {
+            flex-direction: column;
+            padding: 16px;
+            gap: 12px;
+            border-radius: 18px;
+            margin-bottom: 20px;
+        }
+        .guidelines-icon-box {
+            display: none;
+        }
+        .guidelines-header-mobile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+        .guidelines-icon-mobile {
+            width: 36px;
+            height: 36px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #dcfce7;
+        }
+        .guidelines-title-row {
+            display: none;
+        }
+        .guidelines-title-mobile {
+            font-size: 0.98rem;
+            font-weight: 800;
+            color: #1B4332;
+        }
+        .guidelines-list {
+            gap: 9px;
+        }
+        .guidelines-list li {
+            font-size: 0.83rem;
+            line-height: 1.4;
+            gap: 6px;
+        }
+        .guidelines-list li.guideline-alert {
+            padding: 7px 10px;
+            border-radius: 10px;
+        }
+    }
 </style>
 
 <!-- Container principal do Fórum -->
@@ -18,16 +168,44 @@
             </div>
         </div>
 
-        <!-- AVISO DE REGRAS DA COMUNIDADE -->
-        <div class="forum-guidelines-box" style="border-radius: 20px; box-shadow: 0 4px 15px rgba(27,67,50,0.05); margin-bottom: 30px; padding: 25px; border-left: none; background: #f0fdf4; border: 1px solid #bbf7d0; display: flex; align-items: flex-start; gap: 15px;">
-            <div class="guidelines-icon" style="width: 45px; height: 45px; background: #fff; color: #16a34a; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin: 0;">⚖️</div>
-            <div class="guidelines-content" style="flex-grow: 1;">
-                <strong style="font-size: 1.1rem; color: #1B4332; display: block; margin-bottom: 8px;">Regras da Comunidade:</strong>
-                <ul style="margin: 8px 0 0 20px; padding: 0; font-size: 0.9rem; color: #555;">
-                    <li><strong>Respeito acima de tudo:</strong> Debates são bem-vindos, ataques pessoais não serão tolerados.</li>
-                    <li><strong>Sigilo profissional é inegociável:</strong> Ao discutir casos, sempre anonimize todos os dados que possam identificar um paciente.</li>
-                    <li><strong>Conteúdo construtivo:</strong> Evite autopromoção direta. O foco é a troca de conhecimento e suporte mútuo.</li>
-                    <li><strong>Direitos Humanos:</strong> Discursos de ódio, discriminação ou que violem os direitos humanos resultarão em banimento.</li>
+        <!-- AVISO DE REGRAS DA COMUNIDADE (OTIMIZADO MOBILE & DESKTOP) -->
+        <div class="forum-guidelines-box">
+            <div class="guidelines-icon-box">⚖️</div>
+            
+            <div class="guidelines-header-mobile">
+                <div class="guidelines-icon-mobile">⚖️</div>
+                <div>
+                    <strong class="guidelines-title-mobile">Regras da Comunidade</strong>
+                    <span class="guidelines-badge" style="margin-left: 6px;">Diretrizes</span>
+                </div>
+            </div>
+
+            <div class="guidelines-content">
+                <div class="guidelines-title-row">
+                    <strong class="guidelines-title">Regras da Comunidade</strong>
+                    <span class="guidelines-badge">Diretrizes de Convivência</span>
+                </div>
+                <ul class="guidelines-list">
+                    <li>
+                        <span class="guideline-dot">•</span>
+                        <div><strong>Respeito acima de tudo:</strong> Debates são bem-vindos; ataques pessoais, ofensas e desrespeito não serão tolerados.</div>
+                    </li>
+                    <li>
+                        <span class="guideline-dot">•</span>
+                        <div><strong>Sigilo profissional é inegociável:</strong> Ao discutir casos clínicos, sempre anonimize completamente qualquer dado que possa identificar um paciente.</div>
+                    </li>
+                    <li>
+                        <span class="guideline-dot">•</span>
+                        <div><strong>Conteúdo construtivo:</strong> Evite autopromoção direta e spam. O foco é a troca mútua de conhecimento técnico e suporte profissional.</div>
+                    </li>
+                    <li class="guideline-alert">
+                        <span class="guideline-dot">•</span>
+                        <div><strong>Sem divulgação de concorrentes:</strong> É expressamente proibida a promoção, divulgação, compartilhamento de links ou recomendação de plataformas, softwares e ferramentas concorrentes à Yelo.</div>
+                    </li>
+                    <li>
+                        <span class="guideline-dot">•</span>
+                        <div><strong>Direitos Humanos:</strong> Discursos de ódio, discriminação de qualquer natureza ou violações éticas resultarão em remoção imediata e banimento.</div>
+                    </li>
                 </ul>
             </div>
         </div>

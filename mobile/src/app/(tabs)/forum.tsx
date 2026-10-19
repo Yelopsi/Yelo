@@ -56,17 +56,60 @@ export default function ForumScreen() {
           </Text>
         </View>
 
-        {/* REGRAS */}
-        <View className="mx-6 mb-7 bg-[#f0fdf4] border border-[#bbf7d0] p-[20px] rounded-[20px] flex-row items-start shadow-[0_4px_15px_rgba(27,67,50,0.05)]">
-          <View className="bg-white w-[45px] h-[45px] rounded-[12px] items-center justify-center mr-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-            <Text className="text-[22px]">⚖️</Text>
+        {/* REGRAS DA COMUNIDADE (OTIMIZADO MOBILE) */}
+        <View className="mx-6 mb-7 bg-[#f0fdf4] border border-[#bbf7d0] p-4 rounded-[20px] shadow-[0_4px_15px_rgba(27,67,50,0.04)]">
+          {/* Header do Card */}
+          <View className="flex-row items-center justify-between pb-3 mb-3 border-b border-[#bbf7d0]/60">
+            <View className="flex-row items-center gap-2.5">
+              <View className="w-9 h-9 bg-white rounded-full items-center justify-center border border-[#dcfce7] shadow-sm">
+                <Text className="text-[17px]">⚖️</Text>
+              </View>
+              <View>
+                <Text className="font-sans font-bold text-[#1B4332] text-[15px] leading-tight">Regras da Comunidade</Text>
+                <Text className="font-sans text-[#15803d] text-[11px] font-medium">Diretrizes de convivência ética</Text>
+              </View>
+            </View>
+            <View className="bg-[#dcfce7] border border-[#bbf7d0] px-2.5 py-0.5 rounded-full">
+              <Text className="text-[#15803d] text-[10px] font-bold uppercase tracking-wider">Diretrizes</Text>
+            </View>
           </View>
-          <View className="flex-1">
-            <Text className="font-sans font-bold text-[#1B4332] text-[15px] mb-2">Regras da Comunidade:</Text>
-            <View className="flex-col gap-1.5 pl-1">
-              <Text className="font-sans text-[#555] text-[13px] leading-relaxed"><Text className="font-bold">Respeito acima de tudo:</Text> Debates são bem-vindos, ataques pessoais não.</Text>
-              <Text className="font-sans text-[#555] text-[13px] leading-relaxed"><Text className="font-bold">Sigilo profissional é inegociável:</Text> Anonimize todos os dados do paciente.</Text>
-              <Text className="font-sans text-[#555] text-[13px] leading-relaxed"><Text className="font-bold">Conteúdo construtivo:</Text> Evite autopromoção direta.</Text>
+
+          {/* Lista de Regras */}
+          <View className="gap-2.5">
+            <View className="flex-row items-start">
+              <Text className="text-[#16a34a] font-black text-[14px] mr-2 leading-none mt-0.5">•</Text>
+              <Text className="flex-1 font-sans text-[#334155] text-[12.5px] leading-relaxed">
+                <Text className="font-bold text-[#1B4332]">Respeito acima de tudo:</Text> Debates são bem-vindos; ataques pessoais não serão tolerados.
+              </Text>
+            </View>
+
+            <View className="flex-row items-start">
+              <Text className="text-[#16a34a] font-black text-[14px] mr-2 leading-none mt-0.5">•</Text>
+              <Text className="flex-1 font-sans text-[#334155] text-[12.5px] leading-relaxed">
+                <Text className="font-bold text-[#1B4332]">Sigilo inegociável:</Text> Ao discutir casos clínicos, sempre anonimize completamente dados dos pacientes.
+              </Text>
+            </View>
+
+            <View className="flex-row items-start">
+              <Text className="text-[#16a34a] font-black text-[14px] mr-2 leading-none mt-0.5">•</Text>
+              <Text className="flex-1 font-sans text-[#334155] text-[12.5px] leading-relaxed">
+                <Text className="font-bold text-[#1B4332]">Conteúdo construtivo:</Text> Evite autopromoção e spam. O foco é a troca mútua de conhecimento e apoio mútuo.
+              </Text>
+            </View>
+
+            {/* Regra de Proibição de Concorrentes em destaque */}
+            <View className="bg-[#fffbeb] border border-[#fde68a] p-2.5 rounded-[12px] flex-row items-start">
+              <Text className="text-[#d97706] font-black text-[14px] mr-2 leading-none mt-0.5">•</Text>
+              <Text className="flex-1 font-sans text-[#78350f] text-[12px] leading-relaxed">
+                <Text className="font-bold text-[#92400e]">Sem divulgação de concorrentes:</Text> É proibida a promoção, divulgação ou recomendação de plataformas e ferramentas concorrentes à Yelo.
+              </Text>
+            </View>
+
+            <View className="flex-row items-start">
+              <Text className="text-[#16a34a] font-black text-[14px] mr-2 leading-none mt-0.5">•</Text>
+              <Text className="flex-1 font-sans text-[#334155] text-[12.5px] leading-relaxed">
+                <Text className="font-bold text-[#1B4332]">Direitos Humanos:</Text> Discursos de ódio ou violações éticas resultarão em banimento.
+              </Text>
             </View>
           </View>
         </View>
