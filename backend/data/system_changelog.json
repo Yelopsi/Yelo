@@ -1,5 +1,42 @@
 [
   {
+    "id": "change-git-0a7e2989",
+    "date": "2026-10-19T22:30:50.000Z",
+    "commit": "0a7e2989",
+    "author": "Anderson",
+    "title": "Correção: Ajustar modal e botoes no mobile para evitar sobreposicao da bottom nav (moderacao-forum)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "ajustar modal e botoes no mobile para evitar sobreposicao da bottom nav",
+    "description": "Commit registrado no repositório: \"fix(moderacao-forum): ajustar modal e botoes no mobile para evitar sobreposicao da bottom nav\". Arquivos modificados: admin/admin.css, admin/admin.js, admin/admin_analytics_funil.html, admin/admin_analytics_funil.js, admin/admin_crm_psicologos.html (+10 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #0a7e2989"
+    },
+    "after": {
+      "nova_versao": "ajustar modal e botoes no mobile para evitar sobreposicao da bottom nav"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin.css",
+      "admin/admin.js",
+      "admin/admin_analytics_funil.html",
+      "admin/admin_analytics_funil.js",
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "admin/admin_moderacao_forum.html",
+      "admin/admin_moderacao_forum.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/data/system_changelog.json",
+      "backend/services/seoService.js",
+      "public/css/components/public_match_results.css",
+      "public/js/resultados.js",
+      "security/reports/gate_report.json",
+      "views/resultados.ejs"
+    ]
+  },
+  {
     "id": "change-git-5e93d113",
     "date": "2026-10-19T03:20:06.000Z",
     "commit": "5e93d113",

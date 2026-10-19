@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yelo • Novo Conceito Visual de E-mails para Psicólogos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png">
+    <style>
+        :root {
+            --verde-escuro: #1B4332;
+            --verde-medio: #2D6A4F;
+            --amarelo-yelo: #FFEE8C;
+            --off-white: #FAF8F5;
+            --creme-bg: #F4EFE6;
+            --cinza-texto: #4A5568;
+            --borda-suave: #E2DDD5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0F172A;
+            color: #F8FAFC;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* TOP CONTROL BAR */
+        .showcase-header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .showcase-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .showcase-logo-badge {
+            background: var(--verde-escuro);
+            color: var(--amarelo-yelo);
+            font-weight: 800;
+            font-size: 1.1rem;
+            padding: 6px 14px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(255, 238, 140, 0.3);
+        }
+
+        .showcase-title-wrap h1 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+
+        .showcase-title-wrap p {
+            font-size: 0.78rem;
+            color: #94A3B8;
+        }
+
+        /* CONTROLS */
+        .showcase-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            background: #1E293B;
+            padding: 4px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .pill-tab {
+            background: transparent;
+            border: none;
+            color: #94A3B8;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pill-tab:hover {
+            color: #FFFFFF;
+        }
+
+        .pill-tab.active {
+            background: var(--verde-escuro);
+            color: #FFFFFF;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 238, 140, 0.25);
+        }
+
+        .device-toggle-btn {
+            background: transparent;
+            border: none;
+            color: #94A3B8;
+            padding: 8px 14px;
+            border-radius: 50px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .device-toggle-btn.active {
+            background: #334155;
+            color: #FFFFFF;
+        }
+
+        /* MAIN STAGE */
+        .showcase-main {
+            flex: 1;
+            padding: 30px 20px 60px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .concept-banner {
+            max-width: 900px;
+            width: 100%;
+            background: linear-gradient(135deg, rgba(27, 67, 50, 0.35) 0%, rgba(15, 23, 42, 0.6) 100%);
+            border: 1px solid rgba(45, 106, 79, 0.4);
+            border-radius: 16px;
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .concept-banner-text strong {
+            color: var(--amarelo-yelo);
+            font-size: 0.95rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .concept-banner-text p {
+            color: #CBD5E1;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .concept-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .concept-chip {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            color: #E2E8F0;
+            font-weight: 500;
+        }
+
+        /* PREVIEW FRAME WRAPPER */
+        .stage-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .email-viewport-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 100%;
+            max-width: 660px;
+        }
+
+        .email-viewport-card.mobile-mode {
+            max-width: 390px;
+            border-radius: 36px;
+            border: 10px solid #1E293B;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7);
+        }
+
+        .comparison-col {
+            flex: 1;
+            max-width: 580px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .comparison-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+
+        .comparison-title.old {
+            color: #F87171;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .comparison-title.new {
+            color: #4ADE80;
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+        }
+
+        /* Iframe container */
+        .email-frame {
+            width: 100%;
+            border: none;
+            display: block;
+            min-height: 850px;
+            background: #FAF8F5;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <header class="showcase-header">
+        <div class="showcase-brand">
+            <div class="showcase-logo-badge">Yelo Psi</div>
+            <div class="showcase-title-wrap">
+                <h1>Novo Conceito Visual de E-mails</h1>
+                <p>Design moderno, elegante e editorial feito sob medida para psicólogos</p>
+            </div>
+        </div>
+
+        <div class="showcase-controls">
+            <!-- Modelo de E-mail -->
+            <div class="control-group">
+                <button class="pill-tab active" data-scenario="performance" onclick="switchScenario('performance')">
+                    📊 Desempenho Semanal
+                </button>
+                <button class="pill-tab" data-scenario="lead" onclick="switchScenario('lead')">
+                    💛 Novo Paciente
+                </button>
+                <button class="pill-tab" data-scenario="fatura" onclick="switchScenario('fatura')">
+                    💳 Fatura & PIX
+                </button>
+                <button class="pill-tab" data-scenario="boasvindas" onclick="switchScenario('boasvindas')">
+                    🎉 Boas-vindas
+                </button>
+            </div>
+
+            <!-- Visualização Desktop vs Mobile vs Comparação -->
+            <div class="control-group">
+                <button class="device-toggle-btn active" id="btn-desktop" onclick="setDeviceMode('desktop')">
+                    🖥️ Desktop
+                </button>
+                <button class="device-toggle-btn" id="btn-mobile" onclick="setDeviceMode('mobile')">
+                    📱 Mobile
+                </button>
+                <button class="device-toggle-btn" id="btn-compare" onclick="setDeviceMode('compare')">
+                    ⚖️ Comparar com o Antigo
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN BODY -->
+    <main class="showcase-main">
+        
+        <!-- BANNER DE RESUMO DA PROPOSTA -->
+        <div class="concept-banner">
+            <div class="concept-banner-text">
+                <strong>O que muda com essa nova proposta visual:</strong>
+                <p>Adeus ao cabeçalho verde pesado e aos blocos genéricos. Entra um design editorial contemporâneo (estilo Notion/Linear/Kinfolk), com fundo creme aconchegante (`#FAF8F5`), tipografia serifada humanista para títulos, cards de métricas em pílula, botões refinados e compatibilidade total com Gmail, Apple Mail e Outlook.</p>
+            </div>
+            <div class="concept-badges">
+                <span class="concept-chip">🎨 Paleta Nobre Yelo</span>
+                <span class="concept-chip">📱 100% Responsivo</span>
+                <span class="concept-chip">✨ Micro-cards de KPIs</span>
+                <span class="concept-chip">🛡️ Bulletproof HTML Tables</span>
+            </div>
+        </div>
+
+        <!-- STAGE -->
+        <div class="stage-container" id="stage-single">
+            <div class="email-viewport-card" id="main-viewport-card">
+                <iframe id="email-preview-frame" class="email-frame" title="Prévia do E-mail Moderno"></iframe>
+            </div>
+        </div>
+
+        <!-- COMPARISON STAGE (OCULTO POR PADRÃO) -->
+        <div class="stage-container" id="stage-compare" style="display: none;">
+            <div class="comparison-col">
+                <div class="comparison-title old">❌ Como é Hoje (Antigo / "Brega")</div>
+                <div class="email-viewport-card" style="max-width: 100%;">
+                    <iframe id="email-old-frame" class="email-frame" style="min-height: 750px;" title="Prévia do E-mail Antigo"></iframe>
+                </div>
+            </div>
+
+            <div class="comparison-col">
+                <div class="comparison-title new">✅ Nova Proposta Yelo (Elegante & Acolhedora)</div>
+                <div class="email-viewport-card" style="max-width: 100%;">
+                    <iframe id="email-new-compare-frame" class="email-frame" style="min-height: 750px;" title="Prévia do E-mail Novo"></iframe>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- SCRIPTS GERADORES DOS TEMPLATES DE EMAIL -->
+    <script>
+        // URLs base de logos
+        const LOGO_ESCURA = '/assets/logos/logo-escura.png';
+        const LOGO_BRANCA = '/assets/logos/logo-branca.png';
+
+        // =========================================================================
+        // NOVO TEMPLATE MASTER YELO (2026 PREMIUM DESIGN)
+        // =========================================================================
+        function buildModernEmail({ tagText, tagColor, title, preheader, bodyHtml, ctaText, ctaUrl, highlightBoxHtml, signatureRole }) {
+            return `<!DOCTYPE html>
+<html lang="pt-BR" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+    <base href="${window.location.origin}/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>${title}</title>
+    <!--[if mso]>
+    <style>
+        table {border-collapse:collapse;border-spacing:0;margin:0;}
+        div, td {padding:0;}
+        div {margin:0 !important;}
+    </style>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style>
+        /* RESET & BASE */
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+            background-color: #FAF8F5 !important;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+            -ms-interpolation-mode: bicubic;
+        }
+        /* ESTILOS TIPOGRÁFICOS */
+        .email-title {
+            font-family: Georgia, 'New Kansas', 'Times New Roman', serif !important;
+            color: #1B4332 !important;
+            font-size: 26px !important;
+            line-height: 1.3 !important;
+            font-weight: 700 !important;
+            margin: 0 0 16px 0 !important;
+            letter-spacing: -0.3px !important;
+        }
+        .email-p {
+            color: #4A5568 !important;
+            font-size: 15px !important;
+            line-height: 1.68 !important;
+            margin: 0 0 16px 0 !important;
+        }
+        .tag-pill {
+            display: inline-block;
+            background-color: #F0FDF4;
+            color: #166534;
+            border: 1px solid #BBF7D0;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+        .btn-yelo {
+            background-color: #1B4332 !important;
+            color: #FFFFFF !important;
+            text-decoration: none !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+            padding: 14px 34px !important;
+            border-radius: 50px !important;
+            display: inline-block !important;
+            box-shadow: 0 4px 14px rgba(27, 67, 50, 0.2) !important;
+            mso-padding-alt: 0;
+            text-align: center !important;
+        }
+        /* RESPONSIVIDADE MOBILE */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+                max-width: 100% !important;
+                border-radius: 0 !important;
+                border-left: none !important;
+                border-right: none !important;
+            }
+            .content-padding {
+                padding: 28px 20px !important;
+            }
+            .email-title {
+                font-size: 22px !important;
+            }
+            .kpi-col {
+                display: block !important;
+                width: 100% !important;
+                margin-bottom: 10px !important;
+            }
+            .btn-yelo {
+                display: block !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 14px 20px !important;
+            }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #FAF8F5;">
+
+    <!-- PREHEADER OCULTO PARA CLIENTES DE EMAIL -->
+    <div style="display: none; font-size: 1px; color: #FAF8F5; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+        ${preheader || title}
+    </div>
+
+    <!-- WRAPPER PRINCIPAL -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FAF8F5; table-layout: fixed;">
+        <tr>
+            <td align="center" style="padding: 40px 15px;">
+                
+                <!-- CONTAINER CENTRAL (MAX 600PX) -->
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; border: 1px solid #EAE5DC; box-shadow: 0 10px 30px rgba(27, 67, 50, 0.04);">
+                    
+                    <!-- LINHA DE TOPO COM GRADIENTE SUTIL YELO -->
+                    <tr>
+                        <td style="height: 5px; background: linear-gradient(90deg, #1B4332 0%, #2D6A4F 65%, #FFEE8C 100%); font-size: 0; line-height: 0;">&nbsp;</td>
+                    </tr>
+
+                    <!-- HEADER DA MARCA (CLEAN, ELEGANTE & COM RESPÍRO) -->
+                    <tr>
+                        <td align="center" style="padding: 32px 35px 20px 35px; border-bottom: 1px solid #F5F1EB;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="left">
+                                        <img src="${LOGO_ESCURA}" alt="Yelo" width="112" style="display: block; max-width: 112px; height: auto;" />
+                                    </td>
+                                    <td align="right">
+                                        <span style="font-size: 11px; font-weight: 600; color: #8C8275; letter-spacing: 0.5px; text-transform: uppercase;">Apoio Psicológico</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- CORPO PRINCIPAL -->
+                    <tr>
+                        <td class="content-padding" style="padding: 36px 36px 32px 36px;">
+                            
+                            <!-- TAG PÍLULA -->
+                            ${tagText ? `
+                            <div>
+                                <span class="tag-pill" style="background-color: ${tagColor || '#F0FDF4'}; color: #166534; border: 1px solid #BBF7D0;">
+                                    ${tagText}
+                                </span>
+                            </div>
+                            ` : ''}
+
+                            <!-- TÍTULO EDITORIAL -->
+                            <h1 class="email-title">${title}</h1>
+
+                            <!-- CONTEÚDO PRINCIPAL -->
+                            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                                ${bodyHtml}
+                            </div>
+
+                            <!-- CARD DE DESTAQUE OU KPI SE HOUVER -->
+                            ${highlightBoxHtml ? `
+                            <div style="margin: 28px 0 24px 0;">
+                                ${highlightBoxHtml}
+                            </div>
+                            ` : ''}
+
+                            <!-- BOTÃO CTA DE AÇÃO -->
+                            ${ctaText ? `
+                            <div style="margin: 32px 0 20px 0; text-align: center;">
+                                <!--[if mso]>
+                                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:48px;v-text-anchor:middle;width:240px;" arcsize="50%" stroke="f" fillcolor="#1B4332">
+                                <w:anchorlock/>
+                                <center style="color:#ffffff;font-family:sans-serif;font-size:15px;font-weight:bold;">${ctaText}</center>
+                                </v:roundrect>
+                                <![endif]-->
+                                <a href="${ctaUrl}" class="btn-yelo" style="background-color: #1B4332; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 15px; padding: 14px 34px; border-radius: 50px; display: inline-block;">
+                                    ${ctaText} &rarr;
+                                </a>
+                            </div>
+                            ` : ''}
+
+                            <!-- ASSINATURA HUMANIZADA -->
+                            <div style="margin-top: 36px; padding-top: 24px; border-top: 1px solid #F5F1EB;">
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td>
+                                            <p style="margin: 0; font-size: 14px; color: #1B4332; font-weight: 600;">Com carinho,</p>
+                                            <p style="margin: 2px 0 0 0; font-size: 13px; color: #718096;">${signatureRole || 'Equipe Yelo • Apoio ao Psicólogo'}</p>
+                                        </td>
+                                        <td align="right">
+                                            <span style="font-size: 20px;">💛</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER REFINADO & INSTITUCIONAL -->
+                    <tr>
+                        <td style="background-color: #FAF8F5; padding: 26px 36px; text-align: center; border-top: 1px solid #EAE5DC;">
+                            
+                            <!-- ATALHOS RÁPIDOS -->
+                            <p style="margin: 0 0 14px 0; font-size: 12px; color: #718096; font-weight: 500;">
+                                <a href="https://www.yelopsi.com.br/login" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Meu Consultório</a> &nbsp;&bull;&nbsp;
+                                <a href="https://www.yelopsi.com.br/psi/psi_dashboard?page=psi_forum.html" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Fórum de Psicólogos</a> &nbsp;&bull;&nbsp;
+                                <a href="https://www.yelopsi.com.br/ajuda" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Central de Ajuda</a>
+                            </p>
+
+                            <p style="margin: 0 0 8px 0; font-size: 12px; color: #A0AEC0; line-height: 1.5;">
+                                Você está recebendo esta mensagem porque é um psicólogo cadastrado na plataforma Yelo.
+                            </p>
+                            
+                            <p style="margin: 0; font-size: 11px; color: #CBD5E1;">
+                                &copy; ${new Date().getFullYear()} Yelo &bull; Apoio Psicológico e Saúde Mental. Todos os direitos reservados.
+                            </p>
+
+                        </td>
+                    </tr>
+
+                </table>
+                <!-- /CONTAINER CENTRAL -->
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>`;
+        }
+
+        // =========================================================================
+        // TEMPLATE ANTIGO PARA COMPARAÇÃO REALISTA
+        // =========================================================================
+        function buildOldEmail(title, content) {
+            return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <base href="${window.location.origin}/">
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f5f7; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        .wrapper { width: 100%; table-layout: fixed; background-color: #f4f5f7; padding: 40px 0; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.04); }
+        .header { background-color: #1B4332; padding: 35px 20px; text-align: center; }
+        .header img { max-width: 140px; }
+        .content { padding: 40px 35px; color: #333333; line-height: 1.6; font-size: 16px; }
+        .content h2 { color: #1B4332; margin-top: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+        .content p { margin: 16px 0; color: #4a5568; }
+        .footer { background-color: #f8f9fa; padding: 25px; text-align: center; color: #a0aec0; font-size: 13px; border-top: 1px solid #edf2f7; }
+        .btn { display: inline-block; padding: 14px 32px; background-color: #F59E0B; color: #ffffff !important; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 15px; margin-top: 10px; text-align: center; }
+        .btn-container { text-align: center; margin: 30px 0 10px 0; }
+        .highlight-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center; }
+        .highlight-code { font-family: monospace; font-size: 15px; color: #166534; word-break: break-all; margin-top: 10px; font-weight: bold; background: #fff; padding: 10px; border-radius: 4px; border: 1px dashed #86efac; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <img src="${LOGO_BRANCA}" alt="Yelo">
+            </div>
+            <div class="content">
+                <h2>${title}</h2>
+                ${content}
+            </div>
+            <div class="footer">
+                <p>Você está recebendo este e-mail porque está cadastrado na Yelo.</p>
+                <p>© ${new Date().getFullYear()} Yelo - Apoio Psicológico. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+        }
+
+        // =========================================================================
+        // CENÁRIOS DE E-MAILS
+        // =========================================================================
+        const SCENARIOS = {
+            performance: {
+                newConfig: {
+                    tagText: "● Relatório Semanal",
+                    tagColor: "#F0FDF4",
+                    title: "Veja como o seu perfil repercutiu nesta semana ✨",
+                    preheader: "14 matches inteligentes e 38 visualizações de pacientes nos últimos 7 dias.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dra. Mariana</strong>!</p>
+                        <p class="email-p">Acreditamos que a gestão do seu consultório deve ser transparente e leve. Reunimos as métricas de posicionamento da sua página nos últimos 7 dias na Yelo.</p>
+                        <p class="email-p">Mesmo quando o paciente não entra em contato imediatamente, seu nome esteve ativamente visível nas buscas qualificadas da nossa rede.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                            <tr>
+                                <td class="kpi-col" width="48%" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top;">
+                                    <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Matches Inteligentes</span>
+                                    <div style="font-size: 28px; font-weight: 800; color: #1B4332; margin: 6px 0 2px 0;">14</div>
+                                    <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.4;">Pacientes cujo perfil clínico combinou com sua abordagem.</p>
+                                </td>
+                                <td width="4%">&nbsp;</td>
+                                <td class="kpi-col" width="48%" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top;">
+                                    <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">👀 Visualizações</span>
+                                    <div style="font-size: 28px; font-weight: 800; color: #1B4332; margin: 6px 0 2px 0;">38</div>
+                                    <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.4;">Visitas completas à sua biografia, formação e horários.</p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="background-color: #FEF9EE; border: 1px solid #FDE68A; border-radius: 12px; padding: 14px 18px; margin-top: 12px;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td width="28" style="vertical-align: middle; font-size: 18px;">⭐</td>
+                                    <td style="vertical-align: middle; padding-left: 8px;">
+                                        <p style="margin: 0; font-size: 13px; color: #92400E; font-weight: 500;">
+                                            <strong>Tema em Alta:</strong> Seu consultório esteve em destaque em buscas por <em>Ansiedade, Burnout e Transições de Carreira</em>.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    `,
+                    ctaText: "Acessar Meu Hub de Evolução",
+                    ctaUrl: "https://www.yelopsi.com.br/login"
+                },
+                oldTitle: "📊 Veja o desempenho do seu perfil na Yelo nesta semana!",
+                oldBodyHtml: `
+                    <p>Olá, <strong>Mariana</strong>, tudo bem?</p>
+                    <p>Acreditamos que a gestão do seu consultório precisa ser transparente. Por isso, reunimos os dados de visibilidade do seu perfil na Yelo nos últimos 7 dias.</p>
+                    <p>Mesmo quando o WhatsApp não toca, a plataforma continua trabalhando para posicionar o seu nome para os pacientes certos.</p>
+                    <p><strong>Seus números desta semana:</strong></p>
+                    <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                        <p style="margin-top: 0; margin-bottom: 15px;">🎯 <strong>14 Matches Inteligentes:</strong> Vezes em que o algoritmo cruzou a dor de um paciente com a sua especialidade.</p>
+                        <p style="margin-top: 0; margin-bottom: 15px;">👀 <strong>38 Visualizações de Perfil:</strong> Pessoas que abriram a sua página para ler a sua biografia e formação.</p>
+                        <p style="margin-bottom: 0;">⭐ <strong>Destaque:</strong> Seu perfil esteve em alta nas buscas por Ansiedade.</p>
+                    </div>
+                    <div class="btn-container"><a href="#" class="btn">Acessar meu Hub de Evolução</a></div>
+                `
+            },
+
+            lead: {
+                newConfig: {
+                    tagText: "💛 Novo Paciente Interessado",
+                    tagColor: "#FEF3C7",
+                    title: "Um paciente iniciou contato com você 👋",
+                    preheader: "Contato iniciado pelo WhatsApp a partir do seu perfil na Yelo.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dr. Anderson</strong>!</p>
+                        <p class="email-p">Temos ótimas notícias para o seu consultório: um paciente acaba de clicar no seu botão de WhatsApp após ler o seu perfil na Yelo.</p>
+                        <p class="email-p">Isso indica que sua abordagem clínica e apresentação ressoaram fortemente com o momento de vida dessa pessoa.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px 22px;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td width="48" style="vertical-align: top;">
+                                        <div style="width: 44px; height: 44px; background-color: #E6F4EA; color: #1B4332; border-radius: 50%; font-size: 20px; text-align: center; line-height: 44px;">
+                                            💬
+                                        </div>
+                                    </td>
+                                    <td style="padding-left: 14px; vertical-align: top;">
+                                        <strong style="font-size: 15px; color: #1B4332; display: block; margin-bottom: 4px;">Atendimento em Andamento</strong>
+                                        <p style="margin: 0; font-size: 13px; color: #64748B; line-height: 1.5;">
+                                            Fique atento às notificações do seu WhatsApp. Assim que conversar com o paciente, você poderá atualizar o status desse atendimento no seu painel para refinarmos suas próximas indicações.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    `,
+                    ctaText: "Acessar Painel do Consultório",
+                    ctaUrl: "https://www.yelopsi.com.br/psi/psi_dashboard"
+                },
+                oldTitle: "🎉 Você recebeu seu primeiro contato!",
+                oldBodyHtml: `
+                    <p>Ótimas notícias, <strong>Anderson</strong>!</p>
+                    <p>Um paciente acabou de clicar no botão de WhatsApp no seu perfil da Yelo. Isso significa que sua apresentação está atraindo interessados. Acesse sua conta agora para acompanhar seus acessos e aproveitar ao máximo a plataforma.</p>
+                    <div class="btn-container"><a href="#" class="btn">Acessar meu Painel</a></div>
+                `
+            },
+
+            fatura: {
+                newConfig: {
+                    tagText: "● Fatura Disponível",
+                    tagColor: "#F1F5F9",
+                    title: "Sua fatura da Yelo está disponível 💳",
+                    preheader: "Fatura de R$ 99,00 disponível com pagamento simplificado via PIX ou Boleto.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dra. Camila</strong>!</p>
+                        <p class="email-p">A sua fatura mensal referente à assinatura do ecossistema Yelo já foi gerada e está pronta para pagamento seguro.</p>
+                        <p class="email-p">Mantendo sua assinatura em dia, seu perfil continua ativo nas buscas e com acesso completo ao Fórum exclusivo de psicólogos.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #FAF8F5; border: 1px solid #EAE5DC; border-radius: 16px; padding: 22px;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <span style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Valor da Mensalidade</span>
+                                        <div style="font-size: 32px; font-weight: 800; color: #1B4332; margin: 4px 0;">R$ 99,00</div>
+                                    </td>
+                                    <td align="right" style="vertical-align: middle;">
+                                        <span style="background-color: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px;">
+                                            Vence em 25/10/2026
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <div style="margin-top: 18px; padding-top: 16px; border-top: 1px dashed #CBD5E1;">
+                                <p style="margin: 0 0 8px 0; font-size: 12px; color: #475569; font-weight: 600;">Código PIX Copia e Cola:</p>
+                                <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 12px; color: #1B4332; word-break: break-all;">
+                                    00020126580014br.gov.bcb.pix0136123e4567-e89b-12d3-a456-426614174000520400005303986540599.005802BR5913YELO SAUDE6009SAO PAULO62070503***6304ABCD
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    ctaText: "Visualizar e Pagar Fatura",
+                    ctaUrl: "https://www.yelopsi.com.br/login"
+                },
+                oldTitle: "Sua nova fatura da Yelo está disponível",
+                oldBodyHtml: `
+                    <p>Olá, <strong>Camila</strong>! Tudo bem?</p>
+                    <p>A sua fatura referente ao uso da plataforma Yelo já foi gerada e está disponível para pagamento.</p>
+                    <div style="background-color: #f7fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>Valor:</strong> R$ 99,00</p>
+                        <p style="margin: 5px 0;"><strong>Vencimento:</strong> 25/10/2026</p>
+                    </div>
+                    <div class="btn-container"><a href="#" class="btn">Acessar Minha Fatura</a></div>
+                `
+            },
+
+            boasvindas: {
+                newConfig: {
+                    tagText: "🎉 Seja Muito Bem-vindo(a)",
+                    tagColor: "#F0FDF4",
+                    title: "Seu consultório na Yelo está pronto para nascer ✨",
+                    preheader: "Bem-vindo à comunidade de psicólogos mais humana e conectada do Brasil.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dra. Beatriz</strong>!</p>
+                        <p class="email-p">Estamos muito felizes em receber você no ecossistema Yelo Psi. Nosso compromisso é conectar a sua prática clínica a pacientes que realmente valorizam seu método e abordagem terapêutica.</p>
+                        <p class="email-p">Para que o nosso algoritmo de match inteligente comece a direcionar pacientes qualificados para a sua agenda, o primeiro passo é concluir o preenchimento do seu perfil profissional.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px;">
+                            <strong style="color: #1B4332; font-size: 14px; display: block; margin-bottom: 12px;">Próximos passos recomendados:</strong>
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td width="26" style="vertical-align: top; font-size: 14px;">1.</td>
+                                    <td style="font-size: 13px; color: #475569; padding-bottom: 8px;"><strong>Foto acolhedora:</strong> Perfis com fotos humanizadas recebem até 3.2x mais contatos.</td>
+                                </tr>
+                                <tr>
+                                    <td width="26" style="vertical-align: top; font-size: 14px;">2.</td>
+                                    <td style="font-size: 13px; color: #475569; padding-bottom: 8px;"><strong>Biografia clara:</strong> Destaque suas especialidades e como você conduz suas sessões.</td>
+                                </tr>
+                                <tr>
+                                    <td width="26" style="vertical-align: top; font-size: 14px;">3.</td>
+                                    <td style="font-size: 13px; color: #475569;"><strong>Conheça o Fórum:</strong> Interaja com outros profissionais em nossa sala de debates clínicos.</td>
+                                </tr>
+                            </table>
+                        </div>
+                    `,
+                    ctaText: "Configurar Meu Consultório",
+                    ctaUrl: "https://www.yelopsi.com.br/login"
+                },
+                oldTitle: "Bem-vindo(a) à Yelo Psi! 💛",
+                oldBodyHtml: `
+                    <p>Olá, <strong>Beatriz</strong>!</p>
+                    <p>Estamos muito felizes em ter você conosco. Sua conta está criada. Agora, configure seu perfil completo para começar a receber pacientes na plataforma.</p>
+                    <div class="btn-container"><a href="#" class="btn">Acessar meu Consultório</a></div>
+                `
+            }
+        };
+
+        let currentScenario = 'performance';
+        let currentMode = 'desktop';
+
+        function renderPreviews() {
+            const sc = SCENARIOS[currentScenario];
+            const modernHtml = buildModernEmail(sc.newConfig);
+            const oldHtml = buildOldEmail(sc.oldTitle, sc.oldBodyHtml);
+
+            function attachResize(iframe) {
+                iframe.onload = () => {
+                    setTimeout(() => {
+                        try {
+                            const h = iframe.contentWindow.document.body.scrollHeight;
+                            if (h > 600) iframe.style.height = (h + 30) + 'px';
+                        } catch(e) {}
+                    }, 50);
+                };
+            }
+
+            // Frame principal
+            const mainFrame = document.getElementById('email-preview-frame');
+            attachResize(mainFrame);
+            mainFrame.srcdoc = modernHtml;
+
+            // Frames de comparação
+            const oldFrame = document.getElementById('email-old-frame');
+            const newCompareFrame = document.getElementById('email-new-compare-frame');
+            if (oldFrame) {
+                attachResize(oldFrame);
+                oldFrame.srcdoc = oldHtml;
+            }
+            if (newCompareFrame) {
+                attachResize(newCompareFrame);
+                newCompareFrame.srcdoc = modernHtml;
+            }
+        }
+
+        function switchScenario(scenarioKey) {
+            currentScenario = scenarioKey;
+            document.querySelectorAll('.pill-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('data-scenario') === scenarioKey);
+            });
+            renderPreviews();
+        }
+
+        function setDeviceMode(mode) {
+            currentMode = mode;
+            const singleStage = document.getElementById('stage-single');
+            const compareStage = document.getElementById('stage-compare');
+            const mainCard = document.getElementById('main-viewport-card');
+
+            document.querySelectorAll('.device-toggle-btn').forEach(btn => btn.classList.remove('active'));
+
+            if (mode === 'desktop') {
+                document.getElementById('btn-desktop').classList.add('active');
+                singleStage.style.display = 'flex';
+                compareStage.style.display = 'none';
+                mainCard.classList.remove('mobile-mode');
+            } else if (mode === 'mobile') {
+                document.getElementById('btn-mobile').classList.add('active');
+                singleStage.style.display = 'flex';
+                compareStage.style.display = 'none';
+                mainCard.classList.add('mobile-mode');
+            } else if (mode === 'compare') {
+                document.getElementById('btn-compare').classList.add('active');
+                singleStage.style.display = 'none';
+                compareStage.style.display = 'flex';
+            }
+            renderPreviews();
+        }
+
+        // Inicialização
+        renderPreviews();
+    </script>
+</body>
+</html>

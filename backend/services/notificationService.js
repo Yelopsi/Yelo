@@ -1,6 +1,7 @@
 const db = require('../models');
 const { Op } = require('sequelize');
 const nodemailer = require('nodemailer');
+const { getBaseTemplate } = require('./emailService');
 require('dotenv').config({ path: '../.env' }); // Certificando-se que pega da raiz
 
 // Configuração do transporter
@@ -78,50 +79,36 @@ const notifyNewPost = async (post, type) => {
         for (const psi of activePsis) {
             const psiName = psi.nome.split(' ')[0] || 'Psicólogo(a)';
             
-            const htmlEmail = `
-                <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
-                    <div style="background-color: #1B4332; padding: 20px; text-align: center;">
-                        <img src="cid:logoYelo" alt="Yelo" style="height: 40px; margin-bottom: 10px;">
-                    </div>
-                    <div style="padding: 30px;">
-                        <h2 style="color: #1B4332; margin-top: 0;">Olá, ${psiName}!</h2>
-                        <p>Temos novidades fresquinhas na Yelo. Um novo conteúdo acabou de ser publicado e achamos que você vai gostar de conferir.</p>
-                        
-                        <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #F59E0B; margin: 20px 0;">
-                            <p style="margin: 0 0 5px 0;"><strong>📄 Tipo:</strong> ${type === 'blog' ? 'Post no Blog' : 'Tópico no Fórum'}</p>
-                            <p style="margin: 0;"><strong>📌 Título:</strong> ${post.titulo || post.title}</p>
-                        </div>
-                        
-                        <p>Para ler o conteúdo completo e interagir com outros profissionais, acesse agora mesmo.</p>
-                        
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="${link}" style="background-color: #1B4332; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block;">Acessar Conteúdo</a>
-                        </div>
-                        
-                        <p style="font-size: 14px; color: #777;">
-                            Um abraço,<br>
-                            <strong>Equipe Yelo</strong>
-                        </p>
-                    </div>
-                    <div style="background-color: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #888;">
-                        <p style="margin: 0;">Este é um e-mail automático enviado pela plataforma Yelo.</p>
-                        <p style="margin: 5px 0 0 0;">Se você não deseja mais receber essas notificações, ajuste as configurações no seu perfil.</p>
-                    </div>
+            const title = `Novo conteúdo na Comunidade Yelo Psi ✨`;
+            const contentTypeLabel = type === 'blog' ? '📄 Artigo Clínico' : '💬 Debate no Fórum';
+            const content = `
+                <p>Olá, <strong>${psiName}</strong>!</p>
+                <p>Temos novidades fresquinhas na nossa rede. Um novo conteúdo acabou de ser publicado na comunidade e achamos que você vai gostar de conferir:</p>
+                
+                <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 18px 20px; margin: 22px 0;">
+                    <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">${contentTypeLabel}</span>
+                    <h3 style="color: #1B4332; font-size: 17px; margin: 6px 0 0 0; font-weight: 700;">
+                        ${post.titulo || post.title}
+                    </h3>
+                </div>
+                
+                <p>Para ler a publicação completa e interagir com outros psicólogos, acesse agora pelo seu painel:</p>
+                
+                <div class="btn-container">
+                    <a href="${link}" class="btn">Acessar Conteúdo &rarr;</a>
                 </div>
             `;
+
+            const htmlEmail = getBaseTemplate(title, content, {
+                tagText: type === 'blog' ? '● Blog Yelo' : '● Fórum Yelo Psi',
+                preheader: `Novo conteúdo na Yelo: ${post.titulo || post.title}`
+            });
 
             const mailOptions = {
                 from: process.env.EMAIL_FROM || '"Yelo" <contato@yelopsi.com.br>',
                 to: psi.email,
                 subject: `Novo conteúdo para você na Yelo: ${post.titulo || post.title}`,
-                html: htmlEmail,
-                attachments: [
-                    {
-                        filename: 'logo-branca.png',
-                        path: '../public/assets/logos/logo-branca.png',
-                        cid: 'logoYelo' // same cid value as in the html img src
-                    }
-                ]
+                html: htmlEmail
             };
 
             // Disparo não-blocante (assíncrono em background por psicólogo)

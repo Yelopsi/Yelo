@@ -25,48 +25,227 @@ const transporter = nodemailer.createTransport({
 });
 
 // ============================================================================
-// O SEGREDO: TEMPLATE BASE ÚNICO (Evita a necessidade de arquivos .html)
+// O SEGREDO: TEMPLATE BASE MODERNO YELO (Design Editorial & Acolhedor 2026)
 // ============================================================================
-const getBaseTemplate = (title, content) => `
-<!DOCTYPE html>
-<html lang="pt-BR">
+const getBaseTemplate = (title, content, options = {}) => {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+    const tagText = options.tagText || '';
+    const preheader = options.preheader || title;
+    const year = new Date().getFullYear();
+
+    return `<!DOCTYPE html>
+<html lang="pt-BR" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>${title}</title>
+    <!--[if mso]>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f5f7; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        .wrapper { width: 100%; table-layout: fixed; background-color: #f4f5f7; padding: 40px 0; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.04); }
-        .header { background-color: #1B4332; padding: 35px 20px; text-align: center; }
-        .header img { max-width: 140px; }
-        .content { padding: 40px 35px; color: #333333; line-height: 1.6; font-size: 16px; }
-        .content h2 { color: #1B4332; margin-top: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
-        .content p { margin: 16px 0; color: #4a5568; }
-        .footer { background-color: #f8f9fa; padding: 25px; text-align: center; color: #a0aec0; font-size: 13px; border-top: 1px solid #edf2f7; }
-        .btn { display: inline-block; padding: 14px 32px; background-color: #F59E0B; color: #ffffff !important; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 15px; margin-top: 10px; text-align: center; }
-        .btn-container { text-align: center; margin: 30px 0 10px 0; }
-        .highlight-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center; }
-        .highlight-code { font-family: monospace; font-size: 15px; color: #166534; word-break: break-all; margin-top: 10px; font-weight: bold; background: #fff; padding: 10px; border-radius: 4px; border: 1px dashed #86efac; }
+        table {border-collapse:collapse;border-spacing:0;margin:0;}
+        div, td {padding:0;}
+        div {margin:0 !important;}
+    </style>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style>
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+            background-color: #FAF8F5 !important;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+            -ms-interpolation-mode: bicubic;
+        }
+        .email-title {
+            font-family: Georgia, 'New Kansas', 'Times New Roman', serif !important;
+            color: #1B4332 !important;
+            font-size: 25px !important;
+            line-height: 1.3 !important;
+            font-weight: 700 !important;
+            margin: 0 0 18px 0 !important;
+            letter-spacing: -0.3px !important;
+        }
+        .email-body p, .content p, p {
+            color: #4A5568 !important;
+            font-size: 15px !important;
+            line-height: 1.68 !important;
+            margin: 0 0 16px 0 !important;
+        }
+        .tag-pill {
+            display: inline-block;
+            background-color: #F0FDF4;
+            color: #166534;
+            border: 1px solid #BBF7D0;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        .btn, .btn-yelo {
+            display: inline-block !important;
+            padding: 14px 34px !important;
+            background-color: #1B4332 !important;
+            color: #FFFFFF !important;
+            text-decoration: none !important;
+            border-radius: 50px !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+            text-align: center !important;
+            box-shadow: 0 4px 14px rgba(27, 67, 50, 0.18) !important;
+            mso-padding-alt: 0;
+        }
+        .btn:hover, .btn-yelo:hover {
+            background-color: #2D6A4F !important;
+        }
+        .btn-container {
+            text-align: center;
+            margin: 28px 0 16px 0;
+        }
+        .highlight-box {
+            background-color: #F8FAF7;
+            border: 1px solid #E2EADF;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+        .highlight-code {
+            font-family: monospace;
+            font-size: 13px;
+            color: #1B4332;
+            word-break: break-all;
+            margin-top: 10px;
+            font-weight: bold;
+            background: #FFFFFF;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #CBD5E1;
+        }
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+                max-width: 100% !important;
+                border-radius: 0 !important;
+                border-left: none !important;
+                border-right: none !important;
+            }
+            .content-padding {
+                padding: 26px 18px !important;
+            }
+            .email-title {
+                font-size: 22px !important;
+            }
+            .btn, .btn-yelo {
+                display: block !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 14px 18px !important;
+            }
+        }
     </style>
 </head>
-<body>
-    <div class="wrapper">
-        <div class="container">
-            <div class="header">
-                <img src="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/assets/logos/logo-branca.png" alt="Yelo">
-            </div>
-            <div class="content">
-                <h2>${title}</h2>
-                ${content}
-            </div>
-            <div class="footer">
-                <p>Você está recebendo este e-mail porque está cadastrado na Yelo.</p>
-                <p>© ${new Date().getFullYear()} Yelo - Apoio Psicológico. Todos os direitos reservados.</p>
-            </div>
-        </div>
+<body style="margin: 0; padding: 0; background-color: #FAF8F5;">
+
+    <div style="display: none; font-size: 1px; color: #FAF8F5; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+        ${preheader}
     </div>
+
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FAF8F5; table-layout: fixed;">
+        <tr>
+            <td align="center" style="padding: 35px 12px;">
+                
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; border: 1px solid #EAE5DC; box-shadow: 0 10px 30px rgba(27, 67, 50, 0.04);">
+                    
+                    <tr>
+                        <td style="height: 5px; background: linear-gradient(90deg, #1B4332 0%, #2D6A4F 65%, #FFEE8C 100%); font-size: 0; line-height: 0;">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="padding: 30px 35px 18px 35px; border-bottom: 1px solid #F5F1EB;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="left">
+                                        <img src="${frontendUrl}/assets/logos/logo-escura.png" alt="Yelo" width="112" style="display: block; max-width: 112px; height: auto;" />
+                                    </td>
+                                    <td align="right">
+                                        <span style="font-size: 11px; font-weight: 600; color: #8C8275; letter-spacing: 0.5px; text-transform: uppercase;">Apoio Psicológico</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="content-padding" style="padding: 34px 35px 28px 35px;">
+                            ${tagText ? `<div><span class="tag-pill">${tagText}</span></div>` : ''}
+                            <h1 class="email-title">${title}</h1>
+                            <div class="email-body" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                                ${content}
+                            </div>
+
+                            <div style="margin-top: 32px; padding-top: 22px; border-top: 1px solid #F5F1EB;">
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td>
+                                            <p style="margin: 0; font-size: 14px; color: #1B4332; font-weight: 600;">Com carinho,</p>
+                                            <p style="margin: 2px 0 0 0; font-size: 13px; color: #718096;">Equipe Yelo • Apoio ao Psicólogo</p>
+                                        </td>
+                                        <td align="right">
+                                            <span style="font-size: 20px;">💛</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="background-color: #FAF8F5; padding: 24px 35px; text-align: center; border-top: 1px solid #EAE5DC;">
+                            <p style="margin: 0 0 12px 0; font-size: 12px; color: #718096; font-weight: 500;">
+                                <a href="${frontendUrl}/login" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Meu Consultório</a> &nbsp;&bull;&nbsp;
+                                <a href="${frontendUrl}/psi/psi_dashboard?page=psi_forum.html" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Fórum de Psicólogos</a> &nbsp;&bull;&nbsp;
+                                <a href="${frontendUrl}/ajuda" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Central de Ajuda</a>
+                            </p>
+                            <p style="margin: 0 0 6px 0; font-size: 12px; color: #A0AEC0; line-height: 1.5;">
+                                Você está recebendo este e-mail porque possui cadastro profissional na Yelo.
+                            </p>
+                            <p style="margin: 0; font-size: 11px; color: #CBD5E1;">
+                                &copy; ${year} Yelo &bull; Apoio Psicológico e Saúde Mental. Todos os direitos reservados.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+    </table>
 </body>
-</html>
-`;
+</html>`;
+};
 
 // Função genérica de envio
 const sendEmail = async (to, subject, html) => {
@@ -95,6 +274,7 @@ const sendEmail = async (to, subject, html) => {
 };
 
 exports.sendEmail = sendEmail;
+exports.getBaseTemplate = getBaseTemplate;
 
 exports.sendBillCreatedEmail = async (user, payment) => {
     const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
@@ -360,32 +540,46 @@ exports.sendFeedbackRequestEmail = async (user, guestName) => {
 };
 
 exports.sendWeeklyPerformanceEmail = async (user, matchesCount, profileViewsCount, topTheme) => {
-    const title = '📊 Veja o desempenho do seu perfil na Yelo nesta semana!';
+    const title = 'Veja como o seu perfil repercutiu nesta semana ✨';
     const destaqueText = topTheme 
-        ? `Seu perfil esteve em alta nas buscas por <strong>${topTheme}</strong>.` 
-        : `Seu perfil esteve em evidência na nossa rede de buscas.`;
+        ? `Seu consultório esteve em destaque em buscas por <strong>${topTheme}</strong>.` 
+        : `Seu consultório esteve em evidência nas buscas qualificadas da nossa rede.`;
 
     const content = `
         <p>Olá, <strong>${user.nome.split(' ')[0]}</strong>, tudo bem?</p>
-        <p>Acreditamos que a gestão do seu consultório precisa ser transparente. Por isso, reunimos os dados de visibilidade do seu perfil na Yelo nos últimos 7 dias.</p>
-        <p>Mesmo quando o WhatsApp não toca, a plataforma continua trabalhando para posicionar o seu nome para os pacientes certos.</p>
+        <p>Acreditamos que a gestão do seu consultório precisa ser transparente e leve. Por isso, reunimos os dados de posicionamento do seu perfil na Yelo nos últimos 7 dias.</p>
+        <p>Mesmo quando o WhatsApp não toca imediatamente, a plataforma continua trabalhando ativamente para conectar seu nome aos pacientes certos.</p>
         
-        <p><strong>Seus números desta semana:</strong></p>
-        
-        <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0;">
-            <p style="margin-top: 0; margin-bottom: 15px;">🎯 <strong>${matchesCount} Matches Inteligentes:</strong> Vezes em que o algoritmo cruzou a dor de um paciente com a sua especialidade.</p>
-            <p style="margin-top: 0; margin-bottom: 15px;">👀 <strong>${profileViewsCount} Visualizações de Perfil:</strong> Pessoas que abriram a sua página para ler a sua biografia e formação.</p>
-            <p style="margin-bottom: 0;">⭐ <strong>Destaque:</strong> ${destaqueText}</p>
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 22px 0 16px 0;">
+            <tr>
+                <td width="48%" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top;">
+                    <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Matches Inteligentes</span>
+                    <div style="font-size: 28px; font-weight: 800; color: #1B4332; margin: 6px 0 2px 0;">${matchesCount}</div>
+                    <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.4;">Pacientes cujo momento clínico combinou com sua especialidade.</p>
+                </td>
+                <td width="4%">&nbsp;</td>
+                <td width="48%" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top;">
+                    <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">👀 Visualizações</span>
+                    <div style="font-size: 28px; font-weight: 800; color: #1B4332; margin: 6px 0 2px 0;">${profileViewsCount}</div>
+                    <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.4;">Acessos completos à sua página profissional e horários.</p>
+                </td>
+            </tr>
+        </table>
+
+        <div style="background-color: #FEF9EE; border: 1px solid #FDE68A; border-radius: 12px; padding: 14px 18px; margin-bottom: 24px;">
+            <p style="margin: 0; font-size: 13px; color: #92400E; font-weight: 500;">
+                ⭐ <strong>Destaque da semana:</strong> ${destaqueText}
+            </p>
         </div>
 
-        <p><strong>O que fazer com esses números?</strong></p>
-        <p>Se você teve boas visualizações, mas poucos contatos, o paciente pode estar em dúvida. Para quebrar essa barreira, experimente responder a uma pergunta anônima no nosso Fórum. Isso constrói autoridade instantânea e deixa o seu perfil em evidência para toda a comunidade.</p>
+        <p style="font-weight: 600; color: #1B4332; margin-bottom: 8px;">Dica para impulsionar suas conexões:</p>
+        <p>Se você teve boas visualizações, responder a perguntas de pacientes ou colegas no Fórum constrói autoridade instantânea e deixa o seu perfil em evidência para toda a comunidade.</p>
         
-        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi/psi_dashboard?page=psi_forum.html" class="btn">Acessar meu Hub de Evolução</a></center>
-        
-        <p style="margin-top: 30px;">Um abraço,<br>Equipe Yelo</p>
+        <div class="btn-container">
+            <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi/psi_dashboard?page=psi_forum.html" class="btn">Acessar Meu Hub de Evolução &rarr;</a>
+        </div>
     `;
-    await sendEmail(user.email, title, getBaseTemplate(title, content));
+    await sendEmail(user.email, '📊 Veja o desempenho do seu perfil na Yelo nesta semana!', getBaseTemplate(title, content, { tagText: '● Relatório Semanal' }));
 };
 
 exports.sendQuestionAnsweredEmail = async (email, slug) => {
