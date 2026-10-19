@@ -97,11 +97,10 @@ export default function ForumScreen() {
               </Text>
             </View>
 
-            {/* Regra de Proibição de Concorrentes em destaque */}
-            <View className="bg-[#fffbeb] border border-[#fde68a] p-2.5 rounded-[12px] flex-row items-start">
-              <Text className="text-[#d97706] font-black text-[14px] mr-2 leading-none mt-0.5">•</Text>
-              <Text className="flex-1 font-sans text-[#78350f] text-[12px] leading-relaxed">
-                <Text className="font-bold text-[#92400e]">Sem divulgação de concorrentes:</Text> É proibida a promoção, divulgação ou recomendação de plataformas e ferramentas concorrentes à Yelo.
+            <View className="flex-row items-start">
+              <Text className="text-[#16a34a] font-black text-[14px] mr-2 leading-none mt-0.5">•</Text>
+              <Text className="flex-1 font-sans text-[#334155] text-[12.5px] leading-relaxed">
+                <Text className="font-bold text-[#1B4332]">Sem divulgação de concorrentes:</Text> É expressamente proibida a promoção, divulgação ou recomendação de plataformas e ferramentas concorrentes à Yelo.
               </Text>
             </View>
 

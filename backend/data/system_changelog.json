@@ -1,5 +1,29 @@
 [
   {
+    "id": "change-git-83e2c589",
+    "date": "2026-10-19T02:59:43.000Z",
+    "commit": "83e2c589",
+    "author": "Anderson",
+    "title": "Manutenção: Sincronizar changelog e relatorio do security gate",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar changelog e relatorio do security gate",
+    "description": "Commit registrado no repositório: \"chore(changelog): sincronizar changelog e relatorio do security gate\". Arquivos modificados: backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #83e2c589"
+    },
+    "after": {
+      "nova_versao": "sincronizar changelog e relatorio do security gate"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-76635b9c",
     "date": "2026-10-19T02:59:07.000Z",
     "commit": "76635b9c",
