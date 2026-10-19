@@ -898,9 +898,9 @@ window.initializePage = function () {
                 else if (psy.utm_source === 'instagram_bio') { badgeColor = '#ec4899'; bgBadge = '#fce7f3'; }
                 else if (psy.utm_source === 'google') { badgeColor = '#f59e0b'; bgBadge = '#fef3c7'; }
                 
-                utmBadge = `<span style="background: ${bgBadge}; color: ${badgeColor}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${psy.utm_source}</span>`;
-                if (psy.utm_medium) utmBadge += `<br><span style="font-size: 0.7rem; color: #64748b; margin-top: 2px; display: inline-block;">${psy.utm_medium}</span>`;
-                if (psy.utm_content) utmBadge += `<br><span style="font-size: 0.7rem; color: #94a3b8; font-style: italic; display: inline-block;">${psy.utm_content}</span>`;
+                utmBadge = `<span class="utm-pill-tag" style="background: ${bgBadge}; color: ${badgeColor};">${psy.utm_source}</span>`;
+                if (psy.utm_medium) utmBadge += `<br><span style="font-size: 0.72rem; color: #64748b; margin-top: 3px; display: inline-block;">${psy.utm_medium}</span>`;
+                if (psy.utm_content) utmBadge += `<br><span style="font-size: 0.72rem; color: #94a3b8; font-style: italic; display: inline-block;">${psy.utm_content}</span>`;
             }
 
             const safeTitleName = (psy.nome || '').replace(/"/g, '&quot;');
@@ -909,11 +909,11 @@ window.initializePage = function () {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td data-label="Profissional">
-                    <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
-                        ${psy.fotoUrl ? `<img src="${psy.fotoUrl}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0;">` : `<div style="width: 32px; height: 32px; border-radius: 50%; background-color: #f5f3ff; color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; flex-shrink:0;">${psy.nome.charAt(0).toUpperCase()}</div>`}
-                        <div style="display: flex; flex-direction: column; max-width: calc(100% - 42px);">
+                    <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                        ${psy.fotoUrl ? `<img src="${psy.fotoUrl}" class="avatar-img" style="width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; border: 1px solid #e2e8f0;">` : `<div class="avatar-placeholder" style="width: 38px; height: 38px; border-radius: 50%; background-color: #f0fdf4; color: #166534; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.88rem; flex-shrink:0; border: 1px solid #bbf7d0;">${psy.nome.charAt(0).toUpperCase()}</div>`}
+                        <div style="display: flex; flex-direction: column; max-width: calc(100% - 50px); min-width: 0;">
                             <strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; line-height: 1.3;" onclick="window.openCSDrawer('${psy.id}')" id="name-psy-${psy.id}" title="${safeTitleName}">${psy.nome}${copyBadge}${pendingBadge}</strong>
-                            <span style="font-size: 0.75rem; color: #666; white-space: normal; word-break: break-word; margin-top: 2px;" title="${psy.email}">${psy.email}</span>
+                            <span style="font-size: 0.75rem; color: #64748b; white-space: normal; word-break: break-word; margin-top: 2px;" title="${psy.email}">${psy.email}</span>
                         </div>
                     </div>
                 </td>
@@ -933,13 +933,14 @@ window.initializePage = function () {
                     ${utmBadge}
                 </td>
                 <td data-label="Data de Inscrição">
-                    <span style="color: #64748b; font-size: 0.9rem; font-weight: 500;">${dataInscricao}</span>
+                    <span style="color: #64748b; font-size: 0.88rem; font-weight: 500;">${dataInscricao}</span>
                 </td>
                 <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
-                    <button class="btn-tabela" onclick="window.openCSDrawer('${psy.id}')" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 50px; font-weight: 600;">
-                        Visão 360
+                    <button class="btn-tabela" onclick="window.openCSDrawer('${psy.id}')" title="Visão 360 do Profissional">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path></svg>
+                        <span>Visão 360</span>
                     </button>
-                    ${isDeleted ? '' : `<button class="btn-tabela btn-tabela-perigo" onclick="window.forceDeletePsy('${psy.id}', '${safeDeleteName}')" style="margin-left: 5px; display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 50px; font-weight: 600;" title="Excluir"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Excluir</button>`}
+                    ${isDeleted ? '' : `<button class="btn-tabela btn-tabela-perigo" onclick="window.forceDeletePsy('${psy.id}', '${safeDeleteName}')" style="margin-left: 6px;" title="Excluir Profissional"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> <span>Excluir</span></button>`}
                 </td>
             `;
             tableBody.appendChild(row);

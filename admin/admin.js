@@ -167,6 +167,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         mainContent.style.display = 'block';
 
+        // Garante que qualquer modal aberto ou overflow travado seja limpo ao trocar de página
+        document.body.classList.remove('mod-modal-open');
+        document.body.style.removeProperty('overflow');
+        const orphanedForumModal = document.querySelector('body > #modal-preview-post');
+        if (orphanedForumModal) orphanedForumModal.remove();
+        const bNav = document.querySelector('.mobile-bottom-nav');
+        if (bNav) {
+            bNav.classList.remove('nav-hidden');
+            bNav.style.removeProperty('display');
+        }
+
         const absolutePageUrl = `/admin/${pageUrl}`;
         mainContent.innerHTML = '<p style="text-align:center; padding: 40px;">Carregando...</p>';
 

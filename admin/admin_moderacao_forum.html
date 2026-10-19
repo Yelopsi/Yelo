@@ -915,18 +915,36 @@
     /* MODAL PREVIEW EM FORMATO MODERNO */
     .mod-modal-overlay {
         position: fixed;
+        inset: 0;
         top: 0;
         left: 0;
+        right: 0;
+        bottom: 0;
         width: 100%;
         height: 100%;
+        height: 100dvh;
         background: rgba(15, 23, 42, 0.65);
         backdrop-filter: blur(4px);
-        z-index: 99999;
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 150000 !important;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 20px;
         box-sizing: border-box;
+    }
+
+    /* Esconde a bottom nav mobile quando o modal do fórum estiver aberto */
+    body.mod-modal-open .mobile-bottom-nav,
+    body:has(#modal-preview-post:not([style*="display: none"])) .mobile-bottom-nav,
+    body:has(#modal-preview-post[style*="display: flex"]) .mobile-bottom-nav,
+    body:has(.mod-modal-overlay[style*="display: flex"]) .mobile-bottom-nav {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transform: translateY(150%) !important;
+        transition: transform 0.2s ease, opacity 0.2s ease !important;
     }
 
     .mod-modal-dialog {
@@ -948,6 +966,7 @@
     }
 
     .mod-modal-header {
+        flex-shrink: 0;
         padding: 22px 26px;
         border-bottom: 1px solid #f1f5f9;
         display: flex;
@@ -1002,8 +1021,11 @@
     }
 
     .mod-modal-body {
+        flex: 1 1 auto;
+        min-height: 0;
         padding: 24px 26px;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         display: flex;
         flex-direction: column;
         gap: 20px;
@@ -1149,6 +1171,7 @@
     }
 
     .mod-modal-footer {
+        flex-shrink: 0;
         padding: 16px 26px;
         border-top: 1px solid #f1f5f9;
         background: #fbfcfe;
@@ -1193,6 +1216,7 @@
     @media (max-width: 768px) {
         .moderacao-forum-page {
             gap: 16px;
+            padding-bottom: calc(100px + env(safe-area-inset-bottom, 20px)) !important;
         }
 
         .mod-top-header {
@@ -1398,45 +1422,73 @@
             border-radius: 50px; /* Pílula no mobile */
         }
 
-        /* MODAL RESPONSIVO NO CELULAR */
+        /* MODAL RESPONSIVO NO CELULAR (BOTTOM SHEET MODERNO) */
         .mod-modal-overlay {
-            padding: 0;
-            align-items: flex-end;
+            padding: 0 !important;
+            align-items: flex-end !important;
+            z-index: 150000 !important;
         }
 
         .mod-modal-dialog {
-            max-width: 100%;
-            border-radius: 24px 24px 0 0;
-            max-height: 92vh;
+            width: 100% !important;
+            max-width: 100% !important;
+            border-radius: 24px 24px 0 0 !important;
+            height: auto !important;
+            max-height: 85vh !important;
+            max-height: 85dvh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25) !important;
         }
 
         .mod-modal-header {
-            padding: 18px 20px;
+            flex-shrink: 0 !important;
+            padding: 16px 20px !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            background: #ffffff !important;
         }
 
         .mod-modal-body {
-            padding: 18px 20px;
-            gap: 16px;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: 18px 20px !important;
+            gap: 16px !important;
         }
 
         .mod-modal-footer {
-            padding: 14px 20px;
-            flex-direction: column;
-            gap: 10px;
+            flex-shrink: 0 !important;
+            padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 14px)) 18px !important;
+            background: #ffffff !important;
+            border-top: 1px solid #e2e8f0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05) !important;
+            position: relative !important;
+            z-index: 10 !important;
         }
 
         .mod-footer-left {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
         }
 
         .mod-footer-left .btn-act,
         .mod-modal-footer .btn-mod-outline {
-            width: 100%;
-            justify-content: center;
-            padding: 11px;
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 12px 16px !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            border-radius: 50px !important;
+            min-height: 42px !important;
+            box-sizing: border-box !important;
         }
     }
 </style>

@@ -820,3 +820,16 @@ button,
     .custom-modal-overlay { align-items: flex-end !important; padding: 0 !important; }
 }
 @keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* Esconde a bottom nav mobile quando qualquer modal de moderação ou overlay estiver aberto */
+body.mod-modal-open .mobile-bottom-nav,
+body:has(#modal-preview-post:not([style*="display: none"])) .mobile-bottom-nav,
+body:has(#modal-preview-post[style*="display: flex"]) .mobile-bottom-nav,
+body:has(.custom-modal-overlay[style*="display: flex"]) .mobile-bottom-nav,
+body:has(.mod-modal-overlay[style*="display: flex"]) .mobile-bottom-nav {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(150%) !important;
+}

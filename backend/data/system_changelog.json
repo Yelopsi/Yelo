@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-5e93d113",
+    "date": "2026-10-19T03:20:06.000Z",
+    "commit": "5e93d113",
+    "author": "Anderson",
+    "title": "Novo: Transformar tabelas de faturas e fluxo de caixa em cards modernos no mobile seguindo padrao do forum (analytics)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "transformar tabelas de faturas e fluxo de caixa em cards modernos no mobile seguindo padrao do forum",
+    "description": "Commit registrado no repositório: \"feat(analytics): transformar tabelas de faturas e fluxo de caixa em cards modernos no mobile seguindo padrao do forum\". Arquivos modificados: admin/admin_crm_analytics.html, admin/admin_crm_analytics.js, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5e93d113"
+    },
+    "after": {
+      "nova_versao": "transformar tabelas de faturas e fluxo de caixa em cards modernos no mobile seguindo padrao do forum"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_analytics.html",
+      "admin/admin_crm_analytics.js",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-5966d748",
     "date": "2026-10-19T03:08:30.000Z",
     "commit": "5966d748",

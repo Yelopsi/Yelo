@@ -11,7 +11,14 @@ window.initializePage = function() {
     const searchInput = document.getElementById('input-search-forum');
     const clearSearchBtn = document.getElementById('btn-clear-search');
     const categorySelect = document.getElementById('select-category-filter');
-    const previewModal = document.getElementById('modal-preview-post');
+    
+    // Limpa instância antiga órfã no body caso a página esteja sendo reinicializada
+    const oldBodyModal = document.querySelector('body > #modal-preview-post');
+    const newPageModal = document.querySelector('#main-content #modal-preview-post');
+    if (oldBodyModal && newPageModal && oldBodyModal !== newPageModal) {
+        oldBodyModal.remove();
+    }
+    let previewModal = document.getElementById('modal-preview-post');
 
     const token = localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin');
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
@@ -374,7 +381,22 @@ window.initializePage = function() {
      * Abre modal de preview com detalhes do post e comentários
      */
     window.openPreviewModal = async function(postId) {
+        if (!previewModal) previewModal = document.getElementById('modal-preview-post');
         if (!previewModal) return;
+
+        // Move modal para o body para escapar do contexto de empilhamento e zoom do painel
+        if (previewModal.parentElement !== document.body) {
+            document.body.appendChild(previewModal);
+        }
+
+        // Esconde a bottom nav mobile e bloqueia scroll de fundo
+        document.body.classList.add('mod-modal-open');
+        document.body.style.overflow = 'hidden';
+        const bottomNav = document.querySelector('.mobile-bottom-nav');
+        if (bottomNav) {
+            bottomNav.classList.add('nav-hidden');
+            bottomNav.style.setProperty('display', 'none', 'important');
+        }
 
         const titleEl = document.getElementById('preview-title');
         const catEl = document.getElementById('preview-category');
@@ -498,8 +520,18 @@ window.initializePage = function() {
      * Fecha modal de preview
      */
     window.closePreviewModal = function() {
+        if (!previewModal) previewModal = document.getElementById('modal-preview-post');
         if (previewModal) previewModal.style.display = 'none';
         state.currentPreviewPost = null;
+
+        // Restaura o body e reexibe a bottom nav mobile
+        document.body.classList.remove('mod-modal-open');
+        document.body.style.removeProperty('overflow');
+        const bottomNav = document.querySelector('.mobile-bottom-nav');
+        if (bottomNav) {
+            bottomNav.classList.remove('nav-hidden');
+            bottomNav.style.removeProperty('display');
+        }
     };
 
     // Fechar modal ao clicar fora
@@ -508,6 +540,18 @@ window.initializePage = function() {
             if (e.target === previewModal) window.closePreviewModal();
         };
     }
+
+    // Fechar modal ao pressionar ESC
+    const onEscapeKey = (e) => {
+        if (e.key === 'Escape') {
+            const modal = previewModal || document.getElementById('modal-preview-post');
+            if (modal && modal.style.display !== 'none') {
+                window.closePreviewModal();
+            }
+        }
+    };
+    document.removeEventListener('keydown', onEscapeKey);
+    document.addEventListener('keydown', onEscapeKey);
 
     /**
      * Filtra por status via pills ou KPI cards

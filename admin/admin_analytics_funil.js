@@ -835,7 +835,7 @@ window.initializePage = function() {
         const filtered = window.wppDataState.filteredFeedbacks;
         
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Nenhum contato encontrado para este filtro.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #666;">Nenhum contato encontrado para este filtro.</td></tr>';
             if (paginationControls) paginationControls.style.display = 'none';
             return;
         }
@@ -856,43 +856,49 @@ window.initializePage = function() {
 
         tbody.innerHTML = pageItems.map(f => {
             const dataClique = new Date(f.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-            let contato = '<span style="color:#888;">⏳ Aguardando psi</span>';
-            let fechou = '-';
-            let status = '<span class="status status-pendente" style="background: #f8f9fa; color: #6c757d; font-size: 0.75rem; border: 1px solid #dee2e6; padding: 4px 10px; border-radius: 20px;">Pendente</span>';
+            let contato = '<span class="status status-pendente" style="background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; font-size: 0.75rem;">⏳ Aguardando psi</span>';
+            let fechou = '<span style="color: #94a3b8; font-weight: 500;">-</span>';
+            let status = '<span class="status status-pendente" style="background: #f8fafc; color: #64748b; border: 1px solid #dee2e6; font-size: 0.75rem;">Pendente</span>';
             
             if (!f.feedbackGiven && f.adminWppReminderSentAt) {
                 const sentDate = new Date(f.adminWppReminderSentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-                status = `<span class="status status-pendente" title="Follow-up enviado pelo CRM" style="background: #fef08a; color: #854d0e; font-size: 0.75rem; border: 1px solid #fde047; padding: 4px 10px; border-radius: 20px;">Cobrado (${sentDate})</span>`;
+                status = `<span class="status status-pendente" title="Follow-up enviado pelo CRM" style="background: #fef08a; color: #854d0e; border: 1px solid #fde047; font-size: 0.75rem;">Cobrado (${sentDate})</span>`;
             }
             
             const safePsiId = f.psychologistId || (f.psychologist ? f.psychologist.id : '');
+            const psiNome = f.psychologist ? f.psychologist.nome : 'Psi Removido';
+            const psiInitial = psiNome.charAt(0).toUpperCase();
+            const psiEmail = f.psychologist ? (f.psychologist.email || '') : '';
+            const psiFoto = f.psychologist ? f.psychologist.fotoUrl : null;
+            const safePsiTitle = psiNome.replace(/"/g, '&quot;');
 
             if (f.feedbackGiven) {
-                status = '<span class="status status-ativo" style="background: #e0f2fe; color: #0369a1; font-size: 0.75rem; border: 1px solid #bae6fd; padding: 4px 10px; border-radius: 20px;">Respondido</span>';
+                status = '<span class="status status-ativo" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.75rem;">Respondido</span>';
                 if (f.contactReceived) {
-                    contato = '✅ Sim';
-                    if (f.dealClosed === 'yes' || f.dealClosed === 'started') fechou = '✅ <strong style="color:#16a34a">Iniciou</strong>';
-                    else if (f.dealClosed === 'talking') fechou = '🤝 <span style="color:#ca8a04">Em negociação</span>';
-                    else if (f.dealClosed === 'ghosted') fechou = '👻 <span style="color:#6b7280">Parou de responder</span>';
+                    contato = '<span class="status status-ativo" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 0.75rem;">✅ Sim</span>';
+                    if (f.dealClosed === 'yes' || f.dealClosed === 'started') fechou = '<span class="status status-ativo" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 0.75rem;">✅ Iniciou</span>';
+                    else if (f.dealClosed === 'talking') fechou = '<span class="status status-pendente" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.75rem;">🤝 Em negociação</span>';
+                    else if (f.dealClosed === 'ghosted') fechou = '<span class="status status-neutro" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-size: 0.75rem;">👻 Parou de responder</span>';
                     else if (f.dealClosed === 'no' || f.dealClosed === 'not_started' || (f.dealClosed && f.dealClosed.startsWith('not_started_'))) {
                         let subTitle = '';
-                        if (f.dealClosed === 'not_started_price') subTitle = '<div style="font-size: 0.75rem; color: #888; margin-top: 4px;">Motivo: Valor / Preço</div>';
-                        else if (f.dealClosed === 'not_started_schedule') subTitle = '<div style="font-size: 0.75rem; color: #888; margin-top: 4px;">Motivo: Horário / Agenda</div>';
-                        else if (f.dealClosed === 'not_started_other') subTitle = '<div style="font-size: 0.75rem; color: #888; margin-top: 4px;">Motivo: Outro</div>';
-                        fechou = `❌ <span style="color:#dc2626">Não iniciou</span>${subTitle}`;
+                        if (f.dealClosed === 'not_started_price') subTitle = '<div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Motivo: Valor / Preço</div>';
+                        else if (f.dealClosed === 'not_started_schedule') subTitle = '<div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Motivo: Horário / Agenda</div>';
+                        else if (f.dealClosed === 'not_started_other') subTitle = '<div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Motivo: Outro</div>';
+                        fechou = `<span class="status status-inativo" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; font-size: 0.75rem;">❌ Não iniciou</span>${subTitle}`;
                     }
-                    else if (f.dealClosed === 'no_contact' || f.dealClosed === 'wpp_issue' || f.dealClosed === 'unknown') fechou = '🤷‍♂️ <span style="color:#6b7280">Desconhecido</span>';
-                    else fechou = '❌ Não';
+                    else if (f.dealClosed === 'no_contact' || f.dealClosed === 'wpp_issue' || f.dealClosed === 'unknown') fechou = '<span class="status status-neutro" style="background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 0.75rem;">🤷‍♂️ Desconhecido</span>';
+                    else fechou = '<span class="status status-inativo" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; font-size: 0.75rem;">❌ Não</span>';
                 } else {
-                    contato = '❌ Não chegou';
-                    fechou = '-';
+                    contato = '<span class="status status-inativo" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; font-size: 0.75rem;">❌ Não chegou</span>';
+                    fechou = '<span style="color: #94a3b8;">-</span>';
                 }
+                status = `<div class="wpp-status-actions-cell">${status}</div>`;
             } else {
                 // Lógica dos botões: Responder Manualmente e Cobrança via WhatsApp
                 const baseUrl = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
                 const linkFeedback = f.feedbackToken ? `${baseUrl}/magic-feedback?token=${f.feedbackToken}` : `${baseUrl}/psi/dashboard`;
                 
-                const btnManual = `<a href="${linkFeedback}" target="_blank" style="display:inline-flex; align-items:center; justify-content:center; background:#3b82f6; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; text-decoration:none; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(59,130,246,0.3);" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Responder Manualmente pelo Profissional">
+                const btnManual = `<a href="${linkFeedback}" target="_blank" class="btn-icon-action btn-icon-blue" title="Responder Manualmente pelo Profissional">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 </a>`;
                 
@@ -907,19 +913,19 @@ window.initializePage = function() {
                     
                     if (count >= 2) {
                         // BLOQUEADO - Já foram enviados os 2 lembretes máximos
-                        const btnWpp = `<span style="display:inline-flex; align-items:center; justify-content:center; background:#9ca3af; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; cursor:default;" title="Lembretes esgotados (máximo de 2)">
+                        const btnWpp = `<span class="btn-icon-action btn-icon-disabled" title="Lembretes esgotados (máximo de 2)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
                         </span>`;
-                        status = `<div style="display:flex; align-items:center; justify-content:center;">${status}${btnManual}${btnWpp}</div>`;
+                        status = `<div class="wpp-status-actions-cell">${status}${btnManual}${btnWpp}</div>`;
                     } else {
                         const hoursSinceLastReminder = sentAtMs ? (nowMs - sentAtMs) / (1000 * 60 * 60) : 9999;
                         
                         if (hoursSinceLastReminder < 48) {
                             // BLOQUEADO - Já cobrado recentemente (menos de 48h)
-                            const btnWpp = `<span style="display:inline-flex; align-items:center; justify-content:center; background:#9ca3af; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; cursor:default;" title="Cobrança já enviada nas últimas 48h">
+                            const btnWpp = `<span class="btn-icon-action btn-icon-disabled" title="Cobrança já enviada nas últimas 48h">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                             </span>`;
-                            status = `<div style="display:flex; align-items:center; justify-content:center;">${status}${btnManual}${btnWpp}</div>`;
+                            status = `<div class="wpp-status-actions-cell">${status}${btnManual}${btnWpp}</div>`;
                         } else {
                             // LIBERADO - Pode cobrar
                             const phoneRaw = f.psychologist.telefone.replace(/\D/g, '');
@@ -936,23 +942,47 @@ window.initializePage = function() {
                             
                             const wppLink = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msgWpp)}`;
                             
-                            const btnWpp = `<a href="javascript:void(0)" onclick="window.markWppAsSent('${safePsiId}', '${wppLink}')" style="display:inline-flex; align-items:center; justify-content:center; background:#25D366; color:#fff; border-radius:50%; width:26px; height:26px; margin-left:8px; text-decoration:none; transition: transform 0.2s; box-shadow: 0 2px 4px rgba(37,211,102,0.3);" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Cobrar resposta via WhatsApp">
+                            const btnWpp = `<a href="javascript:void(0)" onclick="window.markWppAsSent('${safePsiId}', '${wppLink}')" class="btn-icon-action btn-icon-green" title="Cobrar resposta via WhatsApp">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                             </a>`;
-                            status = `<div style="display:flex; align-items:center; justify-content:center;">${status}${btnManual}${btnWpp}</div>`;
+                            status = `<div class="wpp-status-actions-cell">${status}${btnManual}${btnWpp}</div>`;
                         }
                     }
                 } else {
                     // Se não tiver 48h ainda ou não tiver whatsapp, apenas exibe o btnManual
-                    status = `<div style="display:flex; align-items:center; justify-content:center;">${status}${btnManual}</div>`;
+                    status = `<div class="wpp-status-actions-cell">${status}${btnManual}</div>`;
                 }
+            }
+
+            // Formatação de Origem (UTM)
+            let utmBadge = `<span style="color: #94a3b8; font-size: 0.8rem;">Orgânico/Direto</span>`;
+            if (f.utmSource) {
+                const src = f.utmSource.toLowerCase();
+                let badgeColor = '#64748b'; let bgBadge = '#f1f5f9';
+                if (src.includes('wpp') || src.includes('whatsapp')) { badgeColor = '#10b981'; bgBadge = '#d1fae5'; }
+                else if (src.includes('meta') || src.includes('facebook') || src.includes('cpc')) { badgeColor = '#2563eb'; bgBadge = '#dbeafe'; }
+                else if (src.includes('instagram')) { badgeColor = '#db2777'; bgBadge = '#fce7f3'; }
+                else if (src.includes('google')) { badgeColor = '#d97706'; bgBadge = '#fef3c7'; }
+                else if (src.includes('organico') || src.includes('organic')) { badgeColor = '#059669'; bgBadge = '#d1fae5'; }
+                
+                utmBadge = `<span class="utm-pill-tag" style="background: ${bgBadge}; color: ${badgeColor};">${f.utmSource}</span>`;
+                if (f.utmMedium) utmBadge += `<br><span style="font-size: 0.72rem; color: #64748b; margin-top: 2px; display: inline-block;">${f.utmMedium}</span>`;
+                if (f.utmCampaign) utmBadge += `<br><span style="font-size: 0.72rem; color: #94a3b8; font-style: italic; display: inline-block;">${f.utmCampaign}</span>`;
             }
             
             return `<tr>
-                <td data-label="Data do Clique" style="color: #666; font-size: 0.9rem;">${dataClique}</td>
-                <td data-label="Psicólogo"><strong style="color: var(--verde-escuro); cursor: pointer; text-decoration: underline;" onclick="window.openCSDrawer('${safePsiId}')">${f.psychologist ? f.psychologist.nome : 'Psi Removido'}</strong></td>
-                <td data-label="Paciente / Lead">${f.guestName || 'Visitante'}</td>
-                <td data-label="Origem (UTM)" style="color: #666; font-size: 0.85rem;">${f.utmSource || '-'}</td>
+                <td data-label="Data do Clique"><span style="color: #64748b; font-size: 0.88rem; font-weight: 500;">${dataClique}</span></td>
+                <td data-label="Psicólogo">
+                    <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                        ${psiFoto ? `<img src="${psiFoto}" class="avatar-img" style="width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0; border: 1px solid #e2e8f0;">` : `<div class="avatar-placeholder" style="width: 34px; height: 34px; border-radius: 50%; background-color: #f0fdf4; color: #166534; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.82rem; flex-shrink:0; border: 1px solid #bbf7d0;">${psiInitial}</div>`}
+                        <div style="display: flex; flex-direction: column; max-width: calc(100% - 44px); min-width: 0;">
+                            <strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; line-height: 1.3;" onclick="window.openCSDrawer('${safePsiId}')" title="${safePsiTitle}">${psiNome}</strong>
+                            ${psiEmail ? `<span style="font-size: 0.74rem; color: #64748b; white-space: normal; word-break: break-word; margin-top: 1px;" title="${psiEmail}">${psiEmail}</span>` : ''}
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Paciente / Lead"><span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">${f.guestName || 'Visitante'}</span></td>
+                <td data-label="Origem (UTM)">${utmBadge}</td>
                 <td data-label="Recebeu Mensagem?" style="text-align: center;">${contato}</td>
                 <td data-label="Fechou Negócio?" style="text-align: center;">${fechou}</td>
                 <td data-label="Status da Resposta" style="text-align: center;">${status}</td>

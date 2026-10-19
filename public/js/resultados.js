@@ -15,7 +15,38 @@ document.addEventListener('DOMContentLoaded', () => {
     let clickCount = 0;
     const MAX_CLICKS = 1; // Limite de 1 clique (trazendo mais 3 psicólogos no total, somando 6 na tela)
     
-    
+    // Helper para limpar e higienizar qualquer HTML/entidade e formatar o texto do card
+    function cleanCardText(rawText, maxLen = 0) {
+        if (!rawText || typeof rawText !== 'string') return '';
+        // 1. Substitui quebras e elementos de bloco por espaço para não colar palavras
+        let text = rawText
+            .replace(/<br\s*[\/]?>/gi, ' ')
+            .replace(/<\/(p|div|li|h[1-6]|tr)>/gi, ' ')
+            .replace(/<[^>]+>/g, ' ');
+
+        // 2. Decodifica entidades HTML com segurança via textarea temporária
+        try {
+            const temp = document.createElement('textarea');
+            temp.innerHTML = text;
+            text = temp.value;
+        } catch (e) {
+            text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+        }
+
+        // 3. Normaliza espaços múltiplos e caracteres invisíveis
+        text = text.replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
+
+        // 4. Remove aspas do início e fim caso já venham com aspas do modelo ou texto
+        text = text.replace(/^["'“”«»]+|["'“”«»]+$/g, '').trim();
+
+        // 5. Trunca suavemente na fronteira de palavras se maxLen for definido
+        if (maxLen > 0 && text.length > maxLen) {
+            text = text.substring(0, maxLen).replace(/\s+\S*$/, '') + '...';
+        }
+
+        return text;
+    }
+
     function createCard(profile) {
         console.log("Card Data:", profile);
         // NOVA LÓGICA: Usa os motivos gerados pela IA ou faz fallback para as antigas tags
@@ -283,14 +314,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     const displayReasons = (matchReasons.length > 0) ? matchReasons.slice(0, 1) : tags.slice(0, 1);
                     if (displayReasons && displayReasons.length > 0) {
-                        const r = displayReasons[0];
-                        reasonEl.textContent = r.charAt(0).toUpperCase() + r.slice(1);
+                        const cleanReason = cleanCardText(displayReasons[0], 80);
+                        if (cleanReason) {
+                            reasonEl.textContent = cleanReason.charAt(0).toUpperCase() + cleanReason.slice(1);
+                        }
                     }
                 }
 
                 const bioEl = document.getElementById(`bio-text-${profile.id}`);
                 if (bioEl) {
-                    bioEl.textContent = `"${profile.miniBio || profile.bio || ''}"`;
+                    const cleanMini = cleanCardText(profile.miniBio, 160);
+                    const cleanFull = cleanCardText(profile.bio, 220);
+                    const finalBio = cleanMini || cleanFull;
+                    if (finalBio) {
+                        bioEl.textContent = `"${finalBio}"`;
+                        bioEl.style.display = '-webkit-box';
+                    } else {
+                        bioEl.textContent = '';
+                        bioEl.style.display = 'none';
+                    }
                 }
             });
         }
