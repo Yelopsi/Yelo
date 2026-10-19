@@ -45,27 +45,131 @@ exports.getForumReports = async (req, res) => {
 
 /**
  * Rota: PUT /api/admin/forum/moderate
- * Descrição: Modera um conteúdo do fórum (mantém ou remove).
+ * Descrição: Modera um conteúdo do fórum (mantém, oculta ou exclui).
  */
 exports.moderateForumContent = async (req, res) => {
     const { contentType, contentId, action } = req.body;
 
-    if (!['post', 'comment'].includes(contentType) || !contentId || !['approve', 'remove'].includes(action)) {
+    const validActions = ['approve', 'restore', 'remove', 'hide', 'reject', 'delete'];
+    if (!['post', 'comment'].includes(contentType) || !contentId || !validActions.includes(action)) {
         return res.status(400).json({ error: 'Parâmetros inválidos.' });
     }
 
     try {
+        if (action === 'delete') {
+            if (contentType === 'post') {
+                const post = await db.ForumPost.findByPk(contentId);
+                if (!post) return res.status(404).json({ error: 'Post não encontrado.' });
+                if (db.ForumComment) await db.ForumComment.destroy({ where: { ForumPostId: contentId } });
+                if (db.ForumVote) await db.ForumVote.destroy({ where: { ForumPostId: contentId } });
+                if (db.ForumReport) await db.ForumReport.destroy({ where: { itemId: contentId, type: 'post' } });
+                await post.destroy();
+                return res.json({ message: 'Post excluído permanentemente com sucesso.' });
+            } else {
+                const comment = await db.ForumComment.findByPk(contentId);
+                if (!comment) return res.status(404).json({ error: 'Comentário não encontrado.' });
+                if (db.ForumCommentVote) await db.ForumCommentVote.destroy({ where: { ForumCommentId: contentId } });
+                if (db.ForumReport) await db.ForumReport.destroy({ where: { itemId: contentId, type: 'comment' } });
+                await comment.destroy();
+                return res.json({ message: 'Comentário excluído permanentemente com sucesso.' });
+            }
+        }
+
         const Model = contentType === 'post' ? db.ForumPost : db.ForumComment;
-        const newStatus = action === 'approve' ? 'approved_by_admin' : 'hidden_by_admin';
-        const message = action === 'approve' ? 'Conteúdo mantido com sucesso.' : 'Conteúdo removido com sucesso.';
+        const isApprove = action === 'approve' || action === 'restore';
+        const newStatus = isApprove ? 'approved_by_admin' : 'hidden_by_admin';
+        const message = isApprove ? 'Conteúdo restaurado e visível no fórum.' : 'Conteúdo ocultado do fórum com sucesso.';
 
         await Model.update({ status: newStatus }, { where: { id: contentId } });
         if (db.ForumReport) await db.ForumReport.update({ status: 'resolved' }, { where: { itemId: contentId, type: contentType } });
 
-        res.json({ message });
+        res.json({ message, status: newStatus });
     } catch (error) {
         console.error("Erro ao moderar conteúdo do fórum:", error);
         res.status(500).json({ error: error.message || "Erro interno ao moderar conteúdo." });
+    }
+};
+
+/**
+ * Rota: DELETE /api/admin/forum/posts/:id
+ * Descrição: Exclui permanentemente um post e suas dependências.
+ */
+exports.deleteForumPost = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const post = await db.ForumPost.findByPk(id);
+        if (!post) return res.status(404).json({ error: 'Post não encontrado.' });
+
+        if (db.ForumComment) await db.ForumComment.destroy({ where: { ForumPostId: id } });
+        if (db.ForumVote) await db.ForumVote.destroy({ where: { ForumPostId: id } });
+        if (db.ForumReport) await db.ForumReport.destroy({ where: { itemId: id, type: 'post' } });
+        await post.destroy();
+
+        res.json({ message: 'Post excluído permanentemente com sucesso.' });
+    } catch (error) {
+        console.error("Erro ao excluir post pelo admin:", error);
+        res.status(500).json({ error: error.message || "Erro ao excluir post." });
+    }
+};
+
+/**
+ * Rota: GET /api/admin/forum/posts/:id
+ * Descrição: Busca detalhes completos de um post e comentários para o preview admin.
+ */
+exports.getForumPostDetailsForAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const post = await db.ForumPost.findByPk(id, {
+            include: [
+                {
+                    model: db.Psychologist,
+                    attributes: ['id', 'nome', 'fotoUrl', 'email', 'crp', 'slug']
+                },
+                {
+                    model: db.ForumComment,
+                    include: [{
+                        model: db.Psychologist,
+                        attributes: ['id', 'nome', 'fotoUrl']
+                    }],
+                    required: false
+                }
+            ],
+            order: [
+                [{ model: db.ForumComment }, 'createdAt', 'ASC']
+            ]
+        });
+
+        if (!post) return res.status(404).json({ error: 'Post não encontrado.' });
+
+        res.json({
+            id: post.id,
+            title: post.title,
+            content: post.content,
+            category: post.category,
+            status: post.status || 'active',
+            isPinned: post.isPinned || false,
+            votes: post.votes || 0,
+            isAnonymous: post.isAnonymous || false,
+            createdAt: post.createdAt,
+            author: {
+                name: post.isAnonymous ? 'Anônimo' : (post.Psychologist?.nome || 'Usuário Removido'),
+                photo: post.isAnonymous ? null : (post.Psychologist?.fotoUrl || null),
+                email: post.isAnonymous ? null : (post.Psychologist?.email || null),
+                crp: post.isAnonymous ? null : (post.Psychologist?.crp || null)
+            },
+            comments: (post.ForumComments || []).map(c => ({
+                id: c.id,
+                content: c.content,
+                createdAt: c.createdAt,
+                likes: c.likes || 0,
+                isPinned: c.isPinned || false,
+                authorName: c.isAnonymous ? 'Anônimo' : (c.Psychologist?.nome || 'Usuário Removido'),
+                authorPhoto: c.isAnonymous ? null : (c.Psychologist?.fotoUrl || null)
+            }))
+        });
+    } catch (error) {
+        console.error("Erro ao buscar detalhes do post para admin:", error);
+        res.status(500).json({ error: 'Erro ao carregar detalhes do post.' });
     }
 };
 
@@ -130,36 +234,118 @@ exports.pinForumComment = async (req, res) => {
 
 /**
  * Rota: GET /api/admin/forum/posts (NOVA)
- * Descrição: Busca todos os posts do fórum para moderação.
+ * Descrição: Busca todos os posts do fórum para moderação com filtros avançados e métricas.
  */
 exports.getAllForumPosts = async (req, res) => {
     try {
-        const { page = 1, limit = 20 } = req.query;
-        const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+        const { page = 1, limit = 50, status = 'all', search, category } = req.query;
+        const parsedLimit = parseInt(limit, 10);
+        const parsedPage = parseInt(page, 10);
+        const offset = (parsedPage - 1) * parsedLimit;
+
+        const where = {};
+
+        // Filtro de status
+        if (status === 'active') {
+            where[db.Sequelize.Op.or] = [
+                { status: 'active' },
+                { status: 'approved_by_admin' },
+                { status: null }
+            ];
+        } else if (status === 'hidden') {
+            where.status = 'hidden_by_admin';
+        } else if (status === 'pending') {
+            where.status = 'pending_review';
+        }
+
+        // Filtro de busca (título ou conteúdo)
+        if (search && search.trim()) {
+            const searchTerm = `%${search.trim()}%`;
+            where[db.Sequelize.Op.and] = where[db.Sequelize.Op.and] || [];
+            where[db.Sequelize.Op.and].push({
+                [db.Sequelize.Op.or]: [
+                    { title: { [db.Sequelize.Op.iLike]: searchTerm } },
+                    { content: { [db.Sequelize.Op.iLike]: searchTerm } }
+                ]
+            });
+        }
+
+        // Filtro de categoria
+        if (category && category.trim() && category !== 'all') {
+            where.category = category.trim();
+        }
 
         const { count, rows } = await db.ForumPost.findAndCountAll({
+            where,
+            attributes: [
+                'id',
+                'title',
+                'content',
+                'category',
+                'isAnonymous',
+                'votes',
+                'status',
+                'isPinned',
+                'createdAt',
+                [
+                    db.Sequelize.literal(`(SELECT COUNT(*) FROM "ForumComments" WHERE "ForumComments"."ForumPostId" = "ForumPost"."id")`),
+                    'commentCount'
+                ]
+            ],
             include: [{
                 model: db.Psychologist,
-                attributes: ['nome'],
+                attributes: ['nome', 'fotoUrl', 'email'],
                 required: false
             }],
             order: [['isPinned', 'DESC'], ['createdAt', 'DESC']],
-            limit: parseInt(limit, 10),
+            limit: parsedLimit,
             offset: offset,
             distinct: true
         });
 
+        // Contadores agregados para os KPIs do topo
+        const [totalCount, activeCount, hiddenCount, pinnedCount] = await Promise.all([
+            db.ForumPost.count(),
+            db.ForumPost.count({
+                where: {
+                    [db.Sequelize.Op.or]: [
+                        { status: 'active' },
+                        { status: 'approved_by_admin' },
+                        { status: null }
+                    ]
+                }
+            }),
+            db.ForumPost.count({ where: { status: 'hidden_by_admin' } }),
+            db.ForumPost.count({ where: { isPinned: true } })
+        ]);
+
         const formattedPosts = rows.map(post => ({
             id: post.id,
             title: post.title,
+            content: post.content || '',
             authorName: post.isAnonymous ? 'Anônimo' : (post.Psychologist?.nome || 'Usuário Removido'),
+            authorPhoto: post.isAnonymous ? null : (post.Psychologist?.fotoUrl || null),
+            authorEmail: post.isAnonymous ? null : (post.Psychologist?.email || null),
             category: post.category,
             createdAt: post.createdAt,
             status: post.status || 'active',
-            isPinned: post.isPinned || false
+            isPinned: post.isPinned || false,
+            votes: post.votes || 0,
+            commentCount: parseInt(post.dataValues.commentCount, 10) || 0
         }));
 
-        res.json({ data: formattedPosts, totalPages: Math.ceil(count / parseInt(limit, 10)), currentPage: parseInt(page, 10) });
+        res.json({
+            data: formattedPosts,
+            totalPages: Math.ceil(count / parsedLimit),
+            currentPage: parsedPage,
+            totalPosts: count,
+            stats: {
+                total: totalCount,
+                active: activeCount,
+                hidden: hiddenCount,
+                pinned: pinnedCount
+            }
+        });
     } catch (error) {
         console.error("Erro ao buscar todos os posts do fórum para admin:", error);
         res.status(500).json({ error: 'Erro ao carregar posts.' });

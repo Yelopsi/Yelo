@@ -1,48 +1,1192 @@
-<div class="moderation-header">
-    <div>
-        <h2>Moderação do Fórum</h2>
-        <p>Aprove, edite ou remova tópicos da comunidade.</p>
+<!-- admin/admin_moderacao_forum.html -->
+<div class="moderacao-forum-page">
+
+    <!-- BREADCRUMB & HEADER -->
+    <div class="mod-top-header">
+        <div class="mod-header-left">
+            <div class="mod-breadcrumb">
+                <a href="#" onclick="if(window.loadPage) window.loadPage('admin_conteudo_hub.html'); return false;">Conteúdo</a>
+                <span class="mod-bc-separator">/</span>
+                <span>Moderação do Fórum</span>
+            </div>
+            <h1 class="mod-title">Moderação do Fórum</h1>
+            <p class="mod-subtitle">Supervisione tópicos, aprove publicações, oculte conteúdos fora das diretrizes ou exclua definitivamente.</p>
+        </div>
+        <div class="mod-header-actions">
+            <a href="/psi/comunidade" target="_blank" rel="noopener noreferrer" class="btn-mod-outline">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                <span>Abrir Fórum</span>
+            </a>
+            <button id="btn-refresh-posts" class="btn-mod-primario" onclick="if(window.carregarPostsDoForum) window.carregarPostsDoForum();">
+                <svg id="icon-refresh-spinner" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                <span>Atualizar</span>
+            </button>
+        </div>
     </div>
+
+    <!-- METRICS / KPI HERO CARDS -->
+    <div class="mod-kpi-grid">
+        <div class="mod-kpi-card" data-filter="all" onclick="window.setForumStatusFilter('all')" title="Clique para ver todos os posts">
+            <div class="mod-kpi-icon icon-blue">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <div class="mod-kpi-body">
+                <span class="mod-kpi-label">Total de Tópicos</span>
+                <span class="mod-kpi-value" id="kpi-total-posts">--</span>
+                <span class="mod-kpi-sub">Discussões na plataforma</span>
+            </div>
+        </div>
+
+        <div class="mod-kpi-card" data-filter="active" onclick="window.setForumStatusFilter('active')" title="Clique para filtrar ativos">
+            <div class="mod-kpi-icon icon-green">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+            <div class="mod-kpi-body">
+                <span class="mod-kpi-label">Tópicos Ativos</span>
+                <span class="mod-kpi-value" id="kpi-active-posts">--</span>
+                <span class="mod-kpi-sub mod-text-success">Visíveis na comunidade</span>
+            </div>
+        </div>
+
+        <div class="mod-kpi-card" data-filter="hidden" onclick="window.setForumStatusFilter('hidden')" title="Clique para filtrar ocultos">
+            <div class="mod-kpi-icon icon-rose">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+            </div>
+            <div class="mod-kpi-body">
+                <span class="mod-kpi-label">Tópicos Ocultos</span>
+                <span class="mod-kpi-value" id="kpi-hidden-posts">--</span>
+                <span class="mod-kpi-sub mod-text-danger">Removidos do feed</span>
+            </div>
+        </div>
+
+        <div class="mod-kpi-card" data-filter="pinned" onclick="window.setForumCategoryFilter('pinned')" title="Tópicos fixados em destaque">
+            <div class="mod-kpi-icon icon-amber">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
+            </div>
+            <div class="mod-kpi-body">
+                <span class="mod-kpi-label">Tópicos Fixados</span>
+                <span class="mod-kpi-value" id="kpi-pinned-posts">--</span>
+                <span class="mod-kpi-sub mod-text-amber">Em destaque no topo</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOOLBAR & FILTERS -->
+    <div class="mod-toolbar">
+        <!-- TABS DE STATUS -->
+        <div class="mod-status-pills">
+            <button class="mod-pill-btn active" data-status="active" onclick="window.setForumStatusFilter('active')">
+                <span>Ativos</span>
+                <span class="mod-pill-badge" id="pill-badge-active">0</span>
+            </button>
+            <button class="mod-pill-btn" data-status="hidden" onclick="window.setForumStatusFilter('hidden')">
+                <span>Ocultos</span>
+                <span class="mod-pill-badge badge-danger" id="pill-badge-hidden">0</span>
+            </button>
+            <button class="mod-pill-btn" data-status="all" onclick="window.setForumStatusFilter('all')">
+                <span>Todos</span>
+                <span class="mod-pill-badge" id="pill-badge-all">0</span>
+            </button>
+        </div>
+
+        <!-- SEARCH E CATEGORIA -->
+        <div class="mod-filter-controls">
+            <!-- BUSCA COM ÍCONE -->
+            <div class="mod-search-wrapper">
+                <svg class="mod-search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="input-search-forum" placeholder="Buscar por título, autor ou trecho..." oninput="window.debounceForumSearch(this.value)">
+                <button type="button" id="btn-clear-search" class="mod-search-clear" onclick="window.clearForumSearch()" style="display: none;">✕</button>
+            </div>
+
+            <!-- SELECT DE CATEGORIA -->
+            <div class="mod-select-wrapper">
+                <select id="select-category-filter" onchange="window.setForumCategoryFilter(this.value)">
+                    <option value="all">Todas as Categorias</option>
+                    <option value="Indicações e Encaminhamentos">Indicações e Encaminhamentos</option>
+                    <option value="Dúvidas Clínicas & Teóricas">Dúvidas Clínicas & Teóricas</option>
+                    <option value="Carreira & Gestão">Carreira & Gestão</option>
+                    <option value="Materiais e Recursos">Materiais e Recursos</option>
+                    <option value="Geral">Geral</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN TABLE CONTAINER -->
+    <div class="mod-table-card">
+        <div class="mod-table-responsive">
+            <table class="mod-table" id="tabela-moderacao-forum">
+                <thead>
+                    <tr>
+                        <th style="width: 38%;">Tópico & Resumo</th>
+                        <th style="width: 17%;">Autor</th>
+                        <th style="width: 14%;">Categoria</th>
+                        <th style="width: 10%;">Engajamento</th>
+                        <th style="width: 10%;">Data</th>
+                        <th style="width: 9%;">Status</th>
+                        <th style="width: 120px; text-align: right;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-posts-forum">
+                    <!-- Preenchido dinamicamente via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- LOADING STATE -->
+        <div id="loading-state-posts" class="mod-loading-state">
+            <div class="mod-spinner"></div>
+            <p>Carregando publicações do fórum...</p>
+        </div>
+
+        <!-- EMPTY STATE -->
+        <div id="empty-state-posts" class="mod-empty-state" style="display: none;">
+            <div class="mod-empty-icon">📂</div>
+            <h3 id="empty-state-title">Nenhuma discussão encontrada</h3>
+            <p id="empty-state-desc">Não foram encontrados tópicos com os filtros selecionados.</p>
+            <button class="btn-mod-outline" onclick="window.resetForumFilters()">Limpar Filtros</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE PREVIEW / DETALHES DO POST -->
+    <div id="modal-preview-post" class="mod-modal-overlay" style="display: none;">
+        <div class="mod-modal-dialog">
+            <div class="mod-modal-header">
+                <div class="mod-modal-title-group">
+                    <span class="mod-preview-tag" id="preview-category">Categoria</span>
+                    <h2 class="mod-modal-title" id="preview-title">Título do Tópico</h2>
+                </div>
+                <button type="button" class="mod-modal-close" onclick="window.closePreviewModal()">✕</button>
+            </div>
+
+            <div class="mod-modal-body">
+                <!-- INFO DO AUTOR -->
+                <div class="mod-preview-author-box">
+                    <div class="mod-author-avatar-lg" id="preview-author-avatar">AD</div>
+                    <div class="mod-author-details">
+                        <strong id="preview-author-name">Nome do Autor</strong>
+                        <div class="mod-author-meta">
+                            <span id="preview-author-crp" style="display: none;">CRP: --</span>
+                            <span id="preview-date">Publicado em --</span>
+                            <span id="preview-status-badge" class="status-pill status-pill-active">● Ativo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CORPO DO POST -->
+                <div class="mod-preview-content-box">
+                    <label class="mod-preview-section-title">Conteúdo da Mensagem</label>
+                    <div class="mod-preview-text" id="preview-content">
+                        Texto da mensagem...
+                    </div>
+                </div>
+
+                <!-- ESTATÍSTICAS -->
+                <div class="mod-preview-stats-bar">
+                    <div class="mod-stat-chip">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                        <span id="preview-votes-count">0 apoios</span>
+                    </div>
+                    <div class="mod-stat-chip">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        <span id="preview-comments-count">0 respostas</span>
+                    </div>
+                </div>
+
+                <!-- COMENTÁRIOS / RESPOSTAS -->
+                <div class="mod-preview-comments-section">
+                    <label class="mod-preview-section-title">Respostas da Comunidade (<span id="preview-comments-total">0</span>)</label>
+                    <div id="preview-comments-list" class="mod-comments-list">
+                        <p class="mod-no-comments">Nenhum comentário nesta discussão.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mod-modal-footer">
+                <div class="mod-footer-left" id="preview-quick-actions">
+                    <!-- Injetado dinamicamente via JS -->
+                </div>
+                <button type="button" class="btn-mod-outline" onclick="window.closePreviewModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
-<div class="dashboard-header-actions">
-    <button class="btn-primario btn-sm" onclick="carregarPostsDoForum()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-        Atualizar
-    </button>
-</div>
-
-<div class="tabela-container">
-    <div class="tabela-wrapper">
-        <table class="tabela-gerenciamento">
-            <thead>
-                <tr>
-                    <th>Título</th>
-                    <th>Autor</th>
-                    <th>Categoria</th>
-                    <th>Data</th>
-                    <th>Status</th>
-                    <th style="width: 280px;">Ações</th>
-                </tr>
-            </thead>
-            <tbody id="lista-posts-forum">
-                <!-- Preenchido via JS -->
-            </tbody>
-        </table>
-    </div>
-    <div id="empty-state-posts" style="text-align: center; padding: 40px; color: #888; display: none;">
-        <div style="font-size: 3rem; margin-bottom: 10px;">🧐</div>
-        <p>Nenhuma discussão encontrada no fórum.</p>
-    </div>
-</div>
-
+<!-- ESTILOS COMPLETOS E OTIMIZADOS PARA DESKTOP -->
 <style>
-    .badge-count {
-        background-color: #E63946;
-        color: white;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-weight: bold;
+    .moderacao-forum-page {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        padding-bottom: 60px;
+    }
+
+    /* HEADER */
+    .mod-top-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .mod-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 6px;
+    }
+
+    .mod-breadcrumb a {
+        color: #1B4332;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+
+    .mod-breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .mod-bc-separator {
+        color: #cbd5e1;
+    }
+
+    .mod-title {
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 6px 0;
+        letter-spacing: -0.02em;
+    }
+
+    .mod-subtitle {
+        font-size: 0.95rem;
+        color: #64748b;
+        margin: 0;
+        max-width: 720px;
+        line-height: 1.45;
+    }
+
+    .mod-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    /* BOTÕES */
+    .btn-mod-primario {
+        background: #1B4332;
+        color: #ffffff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 6px rgba(27, 67, 50, 0.15);
+    }
+
+    .btn-mod-primario:hover {
+        background: #2d6a4f;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(27, 67, 50, 0.25);
+    }
+
+    .btn-mod-outline {
+        background: #ffffff;
+        color: #1e293b;
+        border: 1px solid #cbd5e1;
+        padding: 9px 16px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-mod-outline:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #0f172a;
+    }
+
+    /* KPI HERO CARDS */
+    .mod-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+
+    .mod-kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    }
+
+    .mod-kpi-card:hover {
+        transform: translateY(-3px);
+        border-color: #cbd5e1;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .mod-kpi-card.active-kpi {
+        border-color: #1B4332;
+        background: #f0fdf4;
+        box-shadow: 0 0 0 2px rgba(27, 67, 50, 0.15);
+    }
+
+    .mod-kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .icon-blue { background: #eff6ff; color: #2563eb; }
+    .icon-green { background: #ecfdf5; color: #10b981; }
+    .icon-rose { background: #fff1f2; color: #e11d48; }
+    .icon-amber { background: #fffbeb; color: #d97706; }
+
+    .mod-kpi-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .mod-kpi-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .mod-kpi-value {
+        font-size: 1.65rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+
+    .mod-kpi-sub {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mod-text-success { color: #15803d !important; font-weight: 600; }
+    .mod-text-danger { color: #b91c1c !important; font-weight: 600; }
+    .mod-text-amber { color: #b45309 !important; font-weight: 600; }
+
+    /* TOOLBAR & CONTROLS */
+    .mod-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        background: #ffffff;
+        padding: 14px 18px;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        flex-wrap: wrap;
+    }
+
+    .mod-status-pills {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f1f5f9;
+        padding: 4px;
+        border-radius: 10px;
+    }
+
+    .mod-pill-btn {
+        background: transparent;
+        border: none;
+        padding: 7px 16px;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .mod-pill-btn:hover {
+        color: #0f172a;
+    }
+
+    .mod-pill-btn.active {
+        background: #ffffff;
+        color: #1B4332;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .mod-pill-badge {
+        background: #e2e8f0;
+        color: #475569;
+        font-size: 0.75rem;
+        padding: 2px 7px;
+        border-radius: 12px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .mod-pill-btn.active .mod-pill-badge {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .mod-pill-badge.badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .mod-filter-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+        max-width: 580px;
+        justify-content: flex-end;
+    }
+
+    .mod-search-wrapper {
+        position: relative;
+        flex: 1;
+        max-width: 360px;
+    }
+
+    .mod-search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        pointer-events: none;
+    }
+
+    .mod-search-wrapper input {
+        width: 100%;
+        padding: 9px 34px 9px 36px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        color: #0f172a;
+        background: #ffffff;
+        transition: all 0.2s;
+        box-sizing: border-box;
+    }
+
+    .mod-search-wrapper input:focus {
+        outline: none;
+        border-color: #1B4332;
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.12);
+    }
+
+    .mod-search-clear {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 2px 6px;
+        font-size: 0.85rem;
+        border-radius: 50%;
+    }
+
+    .mod-search-clear:hover {
+        color: #0f172a;
+        background: #f1f5f9;
+    }
+
+    .mod-select-wrapper select {
+        padding: 9px 32px 9px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        color: #334155;
+        background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 12px center;
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .mod-select-wrapper select:focus {
+        outline: none;
+        border-color: #1B4332;
+    }
+
+    /* TABLE CARD */
+    .mod-table-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .mod-table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .mod-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .mod-table th {
+        background: #f8fafc;
+        padding: 14px 16px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+
+    .mod-table td {
+        padding: 16px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.88rem;
+        vertical-align: middle;
+        transition: background-color 0.15s;
+    }
+
+    .mod-table tbody tr:hover td {
+        background-color: #fbfcfe;
+    }
+
+    .mod-table tbody tr.row-hidden td {
+        background-color: #fff9f9;
+    }
+
+    .mod-table tbody tr.row-hidden:hover td {
+        background-color: #fff1f2;
+    }
+
+    /* COLUNAS ESPECÍFICAS */
+    .mod-topic-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-width: 480px;
+    }
+
+    .mod-topic-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .mod-topic-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        cursor: pointer;
+        line-height: 1.35;
+        transition: color 0.15s;
+    }
+
+    .mod-topic-title:hover {
+        color: #1B4332;
+        text-decoration: underline;
+    }
+
+    .mod-pinned-badge {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+        font-size: 0.72rem;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .mod-topic-excerpt {
+        font-size: 0.82rem;
+        color: #64748b;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* AUTOR CELL */
+    .mod-author-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .mod-author-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        color: #1B4332;
+        font-weight: 700;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 1px solid #cbd5e1;
+    }
+
+    .mod-author-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .mod-author-name {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #1e293b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mod-author-meta {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    /* CATEGORIA */
+    .mod-category-pill {
+        background: #e0f2fe;
+        color: #0369a1;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 50px;
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+    /* ENGAJAMENTO */
+    .mod-engagement-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        font-size: 0.82rem;
+        color: #64748b;
+    }
+
+    .mod-eng-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* STATUS PILL */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-pill .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+
+    .status-pill-active {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .status-pill-active .dot {
+        background: #16a34a;
+        box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+    }
+
+    .status-pill-hidden {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .status-pill-hidden .dot {
+        background: #dc2626;
+    }
+
+    .status-pill-pending {
+        background: #fef3c7;
+        color: #b45309;
+    }
+
+    .status-pill-pending .dot {
+        background: #d97706;
+    }
+
+    /* BOTÕES DE AÇÃO NA TABELA */
+    .mod-actions-cell {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+
+    .btn-act {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        padding: 7px 11px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.18s ease;
+        white-space: nowrap;
+    }
+
+    .btn-act:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #0f172a;
+    }
+
+    .btn-act-preview {
+        color: #0284c7;
+        border-color: #e0f2fe;
+        background: #f0f9ff;
+    }
+
+    .btn-act-preview:hover {
+        background: #e0f2fe;
+        border-color: #bae6fd;
+        color: #0369a1;
+    }
+
+    .btn-act-hide {
+        color: #d97706;
+        border-color: #fef3c7;
+        background: #fffbeb;
+    }
+
+    .btn-act-hide:hover {
+        background: #fef3c7;
+        border-color: #fde68a;
+        color: #b45309;
+    }
+
+    .btn-act-restore {
+        color: #15803d;
+        border-color: #dcfce7;
+        background: #f0fdf4;
+    }
+
+    .btn-act-restore:hover {
+        background: #dcfce7;
+        border-color: #bbf7d0;
+        color: #166534;
+    }
+
+    .btn-act-pin {
+        color: #b45309;
+    }
+
+    .btn-act-pin.is-pinned {
+        background: #fef9c3;
+        color: #854d0e;
+        border-color: #fde047;
+    }
+
+    .btn-act-delete {
+        color: #ef4444;
+        border-color: #fee2e2;
+        background: #ffffff;
+    }
+
+    .btn-act-delete:hover {
+        background: #fee2e2;
+        border-color: #fca5a5;
+        color: #b91c1c;
+    }
+
+    /* LOADING & EMPTY STATES */
+    .mod-loading-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+    }
+
+    .mod-spinner {
+        width: 38px;
+        height: 38px;
+        border: 3px solid #e2e8f0;
+        border-top-color: #1B4332;
+        border-radius: 50%;
+        margin: 0 auto 16px auto;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .mod-empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+    }
+
+    .mod-empty-icon {
+        font-size: 3rem;
+        margin-bottom: 12px;
+    }
+
+    .mod-empty-state h3 {
+        font-size: 1.15rem;
+        color: #0f172a;
+        margin: 0 0 6px 0;
+    }
+
+    .mod-empty-state p {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin: 0 0 16px 0;
+    }
+
+    /* MODAL PREVIEW */
+    .mod-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .mod-modal-dialog {
+        background: #ffffff;
+        width: 100%;
+        max-width: 760px;
+        max-height: 90vh;
+        border-radius: 18px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: modFadeScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modFadeScale {
+        from { opacity: 0; transform: scale(0.96); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    .mod-modal-header {
+        padding: 22px 26px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .mod-modal-title-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .mod-preview-tag {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #0369a1;
+        background: #e0f2fe;
+        padding: 3px 10px;
+        border-radius: 20px;
+        align-self: flex-start;
+    }
+
+    .mod-modal-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .mod-modal-close {
+        background: none;
+        border: none;
+        font-size: 1.3rem;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 8px;
+        transition: all 0.15s;
+    }
+
+    .mod-modal-close:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .mod-modal-body {
+        padding: 24px 26px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .mod-preview-author-box {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: #f8fafc;
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .mod-author-avatar-lg {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #1B4332;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        object-fit: cover;
+    }
+
+    .mod-author-details {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .mod-author-details strong {
+        font-size: 0.98rem;
+        color: #0f172a;
+    }
+
+    .mod-author-details .mod-author-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .mod-preview-section-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #64748b;
+        letter-spacing: 0.05em;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .mod-preview-content-box {
+        background: #ffffff;
+    }
+
+    .mod-preview-text {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #1e293b;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px 18px;
+        white-space: pre-wrap;
+    }
+
+    .mod-preview-stats-bar {
+        display: flex;
+        gap: 12px;
+    }
+
+    .mod-stat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f1f5f9;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .mod-preview-comments-section {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .mod-comments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 8px;
+        max-height: 240px;
+        overflow-y: auto;
+    }
+
+    .mod-comment-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .mod-comment-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.82rem;
+    }
+
+    .mod-comment-author {
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .mod-comment-date {
+        color: #94a3b8;
+    }
+
+    .mod-comment-body {
+        font-size: 0.88rem;
+        color: #334155;
+        line-height: 1.45;
+        white-space: pre-wrap;
+    }
+
+    .mod-no-comments {
+        font-size: 0.88rem;
+        color: #94a3b8;
+        font-style: italic;
+        padding: 12px 0;
+    }
+
+    .mod-modal-footer {
+        padding: 16px 26px;
+        border-top: 1px solid #f1f5f9;
+        background: #fbfcfe;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .mod-footer-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* RESPONSIVIDADE DESKTOP vs MOBILE */
+    @media (max-width: 1024px) {
+        .mod-kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .mod-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .mod-filter-controls {
+            max-width: 100%;
+        }
+
+        .mod-table th:nth-child(3),
+        .mod-table td:nth-child(3),
+        .mod-table th:nth-child(4),
+        .mod-table td:nth-child(4) {
+            display: none;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .mod-kpi-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .mod-filter-controls {
+            flex-direction: column;
+        }
+
+        .mod-search-wrapper {
+            max-width: 100%;
+        }
     }
 </style>

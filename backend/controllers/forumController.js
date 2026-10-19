@@ -28,15 +28,26 @@ exports.getAllPosts = async (req, res) => {
             ];
         }
 
-        const where = {};
+        const where = {
+            [Op.and]: [
+                {
+                    [Op.or]: [
+                        { status: null },
+                        { status: { [Op.notIn]: ['hidden_by_admin', 'hidden', 'deleted'] } }
+                    ]
+                }
+            ]
+        };
         if (filter === 'meus_posts') {
             where.PsychologistId = psychologistId;
         }
         if (search) {
-            where[Op.or] = [
-                { title: { [Op.iLike]: `%${search}%` } },
-                { content: { [Op.iLike]: `%${search}%` } }
-            ];
+            where[Op.and].push({
+                [Op.or]: [
+                    { title: { [Op.iLike]: `%${search}%` } },
+                    { content: { [Op.iLike]: `%${search}%` } }
+                ]
+            });
         }
         if (category) {
             where.category = category;
@@ -147,6 +158,11 @@ exports.getPostDetails = async (req, res) => {
         });
         
         if (!post) return res.status(404).json({ error: 'Post não encontrado' });
+        
+        const isAdmin = req.user && (req.user.isAdmin === true || req.user.role === 'admin' || req.user.type === 'admin');
+        if ((post.status === 'hidden_by_admin' || post.status === 'deleted') && !isAdmin) {
+            return res.status(404).json({ error: 'Post não encontrado ou indisponível.' });
+        }
 
         const supported = await ForumVote.findOne({ 
             where: { ForumPostId: post.id, PsychologistId: req.user.id } 
@@ -521,7 +537,8 @@ exports.deletePost = async (req, res) => {
         const post = await ForumPost.findByPk(req.params.id);
         if (!post) return res.status(404).json({ error: 'Post não encontrado' });
         
-        if (post.PsychologistId !== req.user.id) {
+        const isAdmin = req.user && (req.user.isAdmin === true || req.user.role === 'admin' || req.user.type === 'admin');
+        if (post.PsychologistId !== req.user.id && !isAdmin) {
             return res.status(403).json({ error: 'Você não tem permissão para excluir este post.' });
         }
         

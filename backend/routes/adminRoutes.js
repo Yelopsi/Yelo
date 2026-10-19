@@ -228,6 +228,10 @@ router.put('/forum/posts/:id/pin', adminCommunityController.pinForumPost);
 router.put('/forum/comments/:id/pin', adminCommunityController.pinForumComment);
 // Rota para listar todos os posts do fórum para o admin (NOVO)
 router.get('/forum/posts', adminCommunityController.getAllForumPosts);
+// Rota para buscar detalhes completos de um post para admin (NOVO)
+router.get('/forum/posts/:id', adminCommunityController.getForumPostDetailsForAdmin);
+// Rota para excluir permanentemente um post do fórum pelo admin (NOVO)
+router.delete('/forum/posts/:id', adminCommunityController.deleteForumPost);
 
 // --- ROTAS DE PROSPECÇÃO DE LEADS (OUTBOUND) ---
 router.get('/leads', adminController.getLeads);
