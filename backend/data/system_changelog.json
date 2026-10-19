@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-8dbd9b29",
+    "date": "2026-10-19T22:50:49.000Z",
+    "commit": "8dbd9b29",
+    "author": "Anderson",
+    "title": "Novo: Implementar novo layout editorial e moderno de e-mails para psicologos da Yelo (email)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "implementar novo layout editorial e moderno de e-mails para psicologos da Yelo",
+    "description": "Commit registrado no repositório: \"feat(email): implementar novo layout editorial e moderno de e-mails para psicologos da Yelo\". Arquivos modificados: backend/data/system_changelog.json, backend/services/emailService.js, backend/services/notificationService.js, public/preview_emails.html, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8dbd9b29"
+    },
+    "after": {
+      "nova_versao": "implementar novo layout editorial e moderno de e-mails para psicologos da Yelo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "backend/services/emailService.js",
+      "backend/services/notificationService.js",
+      "public/preview_emails.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-0a7e2989",
     "date": "2026-10-19T22:30:50.000Z",
     "commit": "0a7e2989",
