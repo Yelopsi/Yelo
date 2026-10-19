@@ -1,5 +1,33 @@
 [
   {
+    "id": "change-git-5966d748",
+    "date": "2026-10-19T03:08:30.000Z",
+    "commit": "5966d748",
+    "author": "Anderson",
+    "title": "Interface: Uniformizar estilo do item de proibicao de concorrentes com os demais (forum)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "uniformizar estilo do item de proibicao de concorrentes com os demais",
+    "description": "Commit registrado no repositório: \"style(forum): uniformizar estilo do item de proibicao de concorrentes com os demais\". Arquivos modificados: backend/data/system_changelog.json, forum-community.css, mobile/src/app/(tabs)/forum.tsx, public/css/forum-community.css, public/psi/psi_forum.html (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5966d748"
+    },
+    "after": {
+      "nova_versao": "uniformizar estilo do item de proibicao de concorrentes com os demais"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "forum-community.css",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "public/css/forum-community.css",
+      "public/psi/psi_forum.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-83e2c589",
     "date": "2026-10-19T02:59:43.000Z",
     "commit": "83e2c589",

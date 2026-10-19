@@ -101,9 +101,20 @@
     .badge-pending { background: #fef3c7; color: #92400e; }
     .badge-cancelled { background: #f3f4f6; color: #374151; }
     
-    .btn-detail { background: transparent; border: none; color: var(--saas-muted); font-size: 0.8rem; font-weight: 500; cursor: pointer; opacity: 0; transition: all 0.2s; }
-    .saas-table tr:hover .btn-detail { opacity: 1; }
-    .btn-detail:hover { color: var(--saas-text); }
+    .btn-detail { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--verde-escuro); font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 50px; padding: 6px 14px; opacity: 0.9; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+    .saas-table tr:hover .btn-detail { opacity: 1; background: #dcfce7; border-color: #86efac; }
+    .btn-detail:hover { color: #15803d; background: #dcfce7; border-color: #86efac; }
+    
+    /* Cash Flow Table Desktop Styles */
+    .cash-flow-table { width: 100%; border-collapse: collapse; }
+    .cash-flow-row { border-bottom: 1px solid #e2e8f0; transition: background-color 0.2s; }
+    .cash-flow-row:hover { background-color: #fafafa; }
+    .cash-flow-row td { padding: 14px 20px; font-size: 0.85rem; vertical-align: middle; }
+    .cf-col-mes { font-weight: 600; color: #1e293b; }
+    .cf-col-transacoes { text-align: center; }
+    .cf-badge-transacoes { background: #f1f5f9; padding: 4px 10px; border-radius: 50px; font-size: 12px; color: #475569; display: inline-block; }
+    .cf-col-bruto { text-align: right; color: var(--cinza-texto); }
+    .cf-col-liquido { text-align: right; color: #10b981; font-weight: bold; }
     
     .urgency-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; }
     
@@ -128,31 +139,606 @@
         content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
         border: 4px solid transparent; border-top-color: #1B4332; margin-bottom: 0px; z-index: 10; opacity: 0; pointer-events: none; animation: fadeInTooltip 0.2s forwards;
     }
-    /* Native Mobile Card Layout for SaaS Tables */
+    /* =========================================================================
+       UX MOBILE PREMIUM (PADRÃO ADMIN MODERAÇÃO FÓRUM)
+       ========================================================================= */
     @media (max-width: 768px) {
-        .saas-table, .saas-table tbody, .saas-table tr, .saas-table td { display: block; width: 100%; box-sizing: border-box; }
-        .saas-table thead { display: none; }
-        
-        .saas-table tr { 
-            margin-bottom: 15px; border: 1px solid var(--saas-border); border-radius: 8px; 
-            background: #fff; position: relative; padding: 5px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        }
-        .saas-table td { 
-            border: none; border-bottom: 1px solid #f1f5f9; position: relative; 
-            padding: 12px 15px 12px 40%; text-align: right; min-height: 45px; 
-            display: flex; align-items: center; justify-content: flex-end;
-        }
-        .saas-table td:last-child { border-bottom: 0; }
-        
-        .saas-table td::before { 
-            content: attr(data-label); position: absolute; left: 15px; width: 35%; text-align: left; 
-            font-size: 0.75rem; font-weight: 700; color: var(--saas-muted); text-transform: uppercase;
+        .modern-dashboard-layout {
+            padding-bottom: 90px;
         }
 
-        .btn-detail { opacity: 1; color: var(--verde-escuro); background: #f0fdf4; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
-        .avatar { width: 24px; height: 24px; font-size: 0.65rem; margin-right: 8px; }
-        .user-cell { justify-content: flex-end; }
-        .status-badge { padding: 4px 8px; font-size: 0.7rem; white-space: nowrap; }
+        /* Top Header & Toolbar Mobile */
+        .saas-header {
+            margin: 12px 14px;
+            padding: 20px 16px;
+            border-radius: 16px;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 14px;
+        }
+        .saas-header h1 {
+            font-size: 1.45rem;
+        }
+        .saas-header p {
+            font-size: 0.85rem;
+        }
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            gap: 10px;
+        }
+        .btn-refresh {
+            border-radius: 50px;
+            padding: 8px 16px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .saas-toolbar {
+            padding: 0 14px;
+            gap: 8px;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 4px;
+        }
+        .saas-toolbar::-webkit-scrollbar {
+            display: none;
+        }
+        .toolbar-chip {
+            padding: 7px 15px;
+            font-size: 0.82rem;
+            border-radius: 50px;
+            flex-shrink: 0;
+        }
+
+        .content-tabs {
+            padding: 0 14px;
+            gap: 16px;
+            margin: 16px 0 20px 0;
+        }
+        .content-tab-btn {
+            font-size: 0.86rem;
+            padding: 8px 0;
+        }
+
+        /* KPI Grid Responsivo (2x2) */
+        .saas-kpi-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+            padding: 0 14px !important;
+            margin-bottom: 20px !important;
+        }
+        .saas-kpi-card {
+            padding: 14px 12px !important;
+            border-radius: 16px !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+        }
+        .kpi-header {
+            font-size: 0.76rem !important;
+            margin-bottom: 8px !important;
+            gap: 6px !important;
+        }
+        .kpi-icon {
+            width: 20px !important;
+            height: 20px !important;
+        }
+        .kpi-icon svg {
+            width: 12px !important;
+            height: 12px !important;
+        }
+        .kpi-value {
+            font-size: 1.35rem !important;
+            margin-bottom: 6px !important;
+        }
+        .kpi-meta {
+            font-size: 0.72rem !important;
+        }
+        .sparkline-container {
+            display: none; /* Simplifica o card mobile como no fórum */
+        }
+
+        .saas-section {
+            padding: 0 14px !important;
+            margin-bottom: 20px !important;
+        }
+        .saas-grid-2 {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 16px !important;
+        }
+
+        .plan-distribution {
+            padding: 16px !important;
+            border-radius: 16px !important;
+        }
+
+        /* =====================================================================
+           TRANSFORMAÇÃO DAS TABELAS EM CARDS MODERNOS (FÓRUM UX)
+           ===================================================================== */
+        /* Remove o contêiner cinza desktop e duplo encaixe */
+        .saas-table-card,
+        .cash-flow-card {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+            border-radius: 0 !important;
+        }
+        .saas-table-card-body,
+        .saas-table-wrap,
+        .cash-flow-wrapper,
+        .cash-flow-table-container,
+        .tabela-wrapper {
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            overflow: visible !important;
+            background: transparent !important;
+        }
+
+        .saas-table-header {
+            padding: 0 0 12px 0 !important;
+            border-bottom: none !important;
+            font-size: 1.12rem !important;
+            font-weight: 800 !important;
+            color: #1e293b !important;
+        }
+
+        .cash-flow-header {
+            padding: 0 0 12px 0 !important;
+            border-bottom: none !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+        }
+        .cash-flow-header h3 {
+            font-size: 1.12rem !important;
+        }
+        .btn-refresh-cashflow,
+        .cash-flow-header .btn-tabela {
+            width: 100% !important;
+            justify-content: center !important;
+            border-radius: 50px !important;
+            padding: 10px 16px !important;
+            font-size: 0.84rem !important;
+            font-weight: 700 !important;
+            color: #1e293b !important;
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
+        }
+
+        /* Tabelas e elementos flex card */
+        .saas-table,
+        .cash-flow-table,
+        .tabela-gerenciamento {
+            display: block !important;
+            width: 100% !important;
+            border: none !important;
+        }
+        .saas-table thead,
+        .cash-flow-table thead,
+        .tabela-gerenciamento thead {
+            display: none !important;
+        }
+        .saas-table tbody,
+        .cash-flow-table tbody,
+        .tabela-gerenciamento tbody {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 14px !important;
+            width: 100% !important;
+        }
+
+        /* -------------------------------------------------------------
+           CARD 1: FATURAS RECENTES (.saas-invoice-row)
+           ------------------------------------------------------------- */
+        .saas-invoice-row,
+        #faturas-recentes-body tr {
+            display: grid !important;
+            grid-template-columns: 1fr auto !important;
+            row-gap: 10px !important;
+            column-gap: 12px !important;
+            align-items: center !important;
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 18px !important;
+            padding: 16px !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            margin: 0 !important;
+        }
+
+        .saas-invoice-row td,
+        #faturas-recentes-body td {
+            display: block !important;
+            padding: 0 !important;
+            border: none !important;
+            min-height: unset !important;
+        }
+
+        /* Topo: Cliente (Avatar + Nome) */
+        .inv-col-cliente,
+        #faturas-recentes-body td[data-label="Cliente"] {
+            grid-column: 1 / 2 !important;
+            grid-row: 1 !important;
+            min-width: 0 !important;
+        }
+        .inv-col-cliente .user-cell,
+        #faturas-recentes-body td[data-label="Cliente"] .user-cell {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            font-weight: 700 !important;
+            color: #1e293b !important;
+            font-size: 0.92rem !important;
+            justify-content: flex-start !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+        .inv-col-cliente .avatar,
+        #faturas-recentes-body td[data-label="Cliente"] .avatar {
+            width: 36px !important;
+            height: 36px !important;
+            border-radius: 50% !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            background: #e0e7ff !important;
+            color: #4338ca !important;
+            border: 1px solid #c7d2fe !important;
+            margin-right: 0 !important;
+            flex-shrink: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Topo: Status em Pílula */
+        .inv-col-status,
+        #faturas-recentes-body td[data-label="Status"] {
+            grid-column: 2 / 3 !important;
+            grid-row: 1 !important;
+            justify-self: end !important;
+            text-align: right !important;
+        }
+        .status-badge {
+            border-radius: 50px !important;
+            padding: 4px 12px !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.02em !important;
+            white-space: nowrap !important;
+        }
+
+        /* Meio: Data e Valor */
+        .inv-col-data,
+        #faturas-recentes-body td[data-label="Data"] {
+            grid-column: 1 / 2 !important;
+            grid-row: 2 !important;
+            padding-top: 8px !important;
+            border-top: 1px solid #f1f5f9 !important;
+            font-size: 0.82rem !important;
+            color: #64748b !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            text-align: left !important;
+        }
+        .inv-col-data::before,
+        #faturas-recentes-body td[data-label="Data"]::before {
+            content: "Data: " !important;
+            font-weight: 700 !important;
+            color: #94a3b8 !important;
+            font-size: 0.72rem !important;
+            text-transform: uppercase !important;
+            position: static !important;
+            width: auto !important;
+        }
+
+        .inv-col-valor,
+        #faturas-recentes-body td[data-label="Valor"] {
+            grid-column: 2 / 3 !important;
+            grid-row: 2 !important;
+            justify-self: end !important;
+            padding-top: 8px !important;
+            border-top: 1px solid #f1f5f9 !important;
+            font-size: 1.05rem !important;
+            font-weight: 800 !important;
+            color: #1e293b !important;
+            text-align: right !important;
+        }
+        .inv-col-valor::before,
+        #faturas-recentes-body td[data-label="Valor"]::before {
+            display: none !important;
+        }
+
+        /* Base: Botão Detalhes em Pílula Full-Width */
+        .inv-col-acao,
+        #faturas-recentes-body td[data-label="Ação"] {
+            grid-column: 1 / -1 !important;
+            grid-row: 3 !important;
+            padding-top: 8px !important;
+            border-top: 1px solid #f1f5f9 !important;
+            width: 100% !important;
+        }
+        .inv-col-acao::before,
+        #faturas-recentes-body td[data-label="Ação"]::before {
+            display: none !important;
+        }
+        .btn-detail,
+        .inv-col-acao .btn-detail,
+        #faturas-recentes-body .btn-detail {
+            width: 100% !important;
+            border-radius: 50px !important;
+            padding: 10px 16px !important;
+            background: #f0fdf4 !important;
+            color: #15803d !important;
+            border: 1px solid #bbf7d0 !important;
+            font-size: 0.84rem !important;
+            font-weight: 700 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 6px !important;
+            cursor: pointer !important;
+            opacity: 1 !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
+            text-decoration: none !important;
+        }
+        .btn-detail:hover,
+        .inv-col-acao .btn-detail:hover {
+            background: #dcfce7 !important;
+            border-color: #86efac !important;
+        }
+
+        /* -------------------------------------------------------------
+           CARD 2: PRÓXIMOS PAGAMENTOS (.saas-plan-row)
+           ------------------------------------------------------------- */
+        .saas-plan-row,
+        #planos-ativos-body tr {
+            display: grid !important;
+            grid-template-columns: 1fr auto !important;
+            row-gap: 10px !important;
+            column-gap: 12px !important;
+            align-items: center !important;
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 18px !important;
+            padding: 16px !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            margin: 0 !important;
+        }
+        .saas-plan-row td,
+        #planos-ativos-body td {
+            display: block !important;
+            padding: 0 !important;
+            border: none !important;
+            min-height: unset !important;
+        }
+        .plan-col-cliente,
+        #planos-ativos-body td[data-label="Cliente"] {
+            grid-column: 1 / 2 !important;
+            grid-row: 1 !important;
+            min-width: 0 !important;
+        }
+        .plan-col-cliente .user-cell,
+        #planos-ativos-body td[data-label="Cliente"] .user-cell {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            font-weight: 700 !important;
+            color: #1e293b !important;
+            font-size: 0.92rem !important;
+            justify-content: flex-start !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+        .plan-col-cliente .avatar,
+        #planos-ativos-body td[data-label="Cliente"] .avatar {
+            width: 36px !important;
+            height: 36px !important;
+            border-radius: 50% !important;
+            font-size: 0.75rem !important;
+            font-weight: 700 !important;
+            background: #e0e7ff !important;
+            color: #4338ca !important;
+            border: 1px solid #c7d2fe !important;
+            margin-right: 0 !important;
+            flex-shrink: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .plan-col-plano,
+        #planos-ativos-body td[data-label="Plano"] {
+            grid-column: 2 / 3 !important;
+            grid-row: 1 !important;
+            justify-self: end !important;
+            text-align: right !important;
+        }
+        .plan-col-plano span,
+        #planos-ativos-body td[data-label="Plano"] span {
+            border-radius: 50px !important;
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            padding: 4px 12px !important;
+            font-size: 0.74rem !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
+            display: inline-block !important;
+        }
+        .plan-col-vencimento,
+        #planos-ativos-body td[data-label="Vencimento"] {
+            grid-column: 1 / -1 !important;
+            grid-row: 2 !important;
+            padding-top: 8px !important;
+            border-top: 1px solid #f1f5f9 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            font-size: 0.84rem !important;
+            color: #334155 !important;
+            font-weight: 600 !important;
+        }
+        .plan-col-vencimento::before,
+        #planos-ativos-body td[data-label="Vencimento"]::before {
+            content: "Vencimento" !important;
+            font-weight: 700 !important;
+            color: #94a3b8 !important;
+            font-size: 0.72rem !important;
+            text-transform: uppercase !important;
+            position: static !important;
+            width: auto !important;
+        }
+
+        /* -------------------------------------------------------------
+           CARD 3: HISTÓRICO DE RECEITA ASAAS (.cash-flow-row)
+           ------------------------------------------------------------- */
+        .cash-flow-row,
+        #cash-flow-table-body tr {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            row-gap: 12px !important;
+            column-gap: 12px !important;
+            align-items: center !important;
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 18px !important;
+            padding: 16px !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            margin: 0 !important;
+        }
+        .cash-flow-row td,
+        #cash-flow-table-body td {
+            display: block !important;
+            padding: 0 !important;
+            border: none !important;
+            min-height: unset !important;
+            white-space: normal !important;
+        }
+
+        /* Mês/Ano */
+        .cf-col-mes,
+        #cash-flow-table-body td[data-label="Mês/Ano"] {
+            grid-column: 1 / 2 !important;
+            grid-row: 1 !important;
+            font-size: 1.1rem !important;
+            font-weight: 800 !important;
+            color: #1e293b !important;
+            text-align: left !important;
+        }
+        .cf-col-mes::before,
+        #cash-flow-table-body td[data-label="Mês/Ano"]::before {
+            display: none !important;
+        }
+
+        /* Transações em Pílula */
+        .cf-col-transacoes,
+        #cash-flow-table-body td[data-label="Transações"] {
+            grid-column: 2 / 3 !important;
+            grid-row: 1 !important;
+            justify-self: end !important;
+            text-align: right !important;
+        }
+        .cf-col-transacoes::before,
+        #cash-flow-table-body td[data-label="Transações"]::before {
+            display: none !important;
+        }
+        .cf-badge-transacoes,
+        #cash-flow-table-body td[data-label="Transações"] span {
+            border-radius: 50px !important;
+            background: #f1f5f9 !important;
+            border: 1px solid #e2e8f0 !important;
+            padding: 4px 12px !important;
+            font-size: 0.76rem !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
+            display: inline-block !important;
+        }
+
+        /* Valor Bruto */
+        .cf-col-bruto,
+        #cash-flow-table-body td[data-label="Valor Bruto"] {
+            grid-column: 1 / 2 !important;
+            grid-row: 2 !important;
+            padding-top: 10px !important;
+            border-top: 1px solid #f1f5f9 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            text-align: left !important;
+            font-size: 0.95rem !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
+        }
+        .cf-col-bruto::before,
+        #cash-flow-table-body td[data-label="Valor Bruto"]::before {
+            content: "Valor Bruto" !important;
+            font-size: 0.7rem !important;
+            font-weight: 700 !important;
+            color: #94a3b8 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.03em !important;
+            margin-bottom: 2px !important;
+            position: static !important;
+            width: auto !important;
+            display: block !important;
+        }
+
+        /* Valor Líquido (Recebido) */
+        .cf-col-liquido,
+        #cash-flow-table-body td[data-label="Valor Líquido (Recebido)"] {
+            grid-column: 2 / 3 !important;
+            grid-row: 2 !important;
+            padding-top: 10px !important;
+            border-top: 1px solid #f1f5f9 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-end !important;
+            text-align: right !important;
+            font-size: 1.15rem !important;
+            font-weight: 800 !important;
+            color: #10b981 !important;
+        }
+        .cf-col-liquido::before,
+        #cash-flow-table-body td[data-label="Valor Líquido (Recebido)"]::before {
+            content: "Valor Líquido" !important;
+            font-size: 0.7rem !important;
+            font-weight: 700 !important;
+            color: #059669 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.03em !important;
+            margin-bottom: 2px !important;
+            position: static !important;
+            width: auto !important;
+            display: block !important;
+        }
+
+        /* Loading / Skeleton nos Cards */
+        .saas-table td[colspan],
+        .tabela-gerenciamento td[colspan],
+        .empty-state-cell {
+            grid-column: 1 / -1 !important;
+            width: 100% !important;
+            padding: 20px !important;
+            text-align: center !important;
+        }
+        .saas-table td[colspan]::before,
+        .tabela-gerenciamento td[colspan]::before {
+            display: none !important;
+        }
     }
 </style>
 
@@ -411,8 +997,8 @@
             <!-- 4. Faturas Recentes -->
             <div class="saas-table-card">
                 <div class="saas-table-header">Faturas Recentes</div>
-                <div style="padding: 15px 20px 20px 20px;">
-                    <div style="border: 1px solid var(--saas-border); border-radius: 8px; overflow-x: auto;">
+                <div class="saas-table-body-wrap" style="padding: 15px 20px 20px 20px;">
+                    <div class="saas-table-wrap" style="border: 1px solid var(--saas-border); border-radius: 8px; overflow-x: auto;">
                         <table class="saas-table">
                             <thead><tr><th>Cliente</th><th>Data</th><th>Valor</th><th>Status</th><th></th></tr></thead>
                             <tbody id="faturas-recentes-body">
@@ -426,8 +1012,8 @@
             <!-- 5. Próximos Pagamentos -->
             <div class="saas-table-card">
                 <div class="saas-table-header">Próximos Pagamentos</div>
-                <div style="padding: 15px 20px 20px 20px;">
-                    <div style="border: 1px solid var(--saas-border); border-radius: 8px; overflow-x: auto;">
+                <div class="saas-table-body-wrap" style="padding: 15px 20px 20px 20px;">
+                    <div class="saas-table-wrap" style="border: 1px solid var(--saas-border); border-radius: 8px; overflow-x: auto;">
                         <table class="saas-table">
                             <thead><tr><th>Cliente</th><th>Plano</th><th>Vencimento</th></tr></thead>
                             <tbody id="planos-ativos-body">
@@ -440,9 +1026,9 @@
         </div>
 
         <!-- 6. Histórico de Receita (Asaas) -->
-        <div class="saas-section">
-            <div style="padding: 0; overflow: hidden; background: white; border-radius: 12px; border: 1px solid var(--saas-border); box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
-            <div style="padding: 20px 25px; border-bottom: 1px solid var(--cinza-borda); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div class="saas-section" id="section-historico-receita">
+            <div class="cash-flow-card" style="padding: 0; overflow: hidden; background: white; border-radius: 12px; border: 1px solid var(--saas-border); box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+            <div class="cash-flow-header" style="padding: 20px 25px; border-bottom: 1px solid var(--cinza-borda); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h3 style="margin: 0; color: var(--verde-escuro); display: flex; align-items: center; gap: 8px; font-family: var(--font-titulos);">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
@@ -450,15 +1036,15 @@
                     </h3>
                     <p style="margin: 5px 0 0 0; color: var(--cinza-texto); font-size: 0.85rem;">Pagamentos recebidos e confirmados, mês a mês.</p>
                 </div>
-                <button onclick="carregarFluxoCaixa()" class="btn-tabela" style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: white;">
+                <button onclick="carregarFluxoCaixa()" class="btn-tabela btn-refresh-cashflow" style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: white;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v6h6"></path></svg>
                     Atualizar
                 </button>
             </div>
             
-            <div class="tabela-wrapper" style="padding: 15px 25px 25px 25px;">
-                <div style="border: 1px solid var(--saas-border); border-radius: 8px; overflow-x: auto;">
-                    <table class="tabela-gerenciamento" style="width: 100%; text-align: left; border-collapse: collapse;">
+            <div class="tabela-wrapper cash-flow-wrapper" style="padding: 15px 25px 25px 25px;">
+                <div class="cash-flow-table-container" style="border: 1px solid var(--saas-border); border-radius: 8px; overflow-x: auto;">
+                    <table class="tabela-gerenciamento cash-flow-table" style="width: 100%; text-align: left; border-collapse: collapse;">
                         <thead style="background: #f8fafc;">
                             <tr style="border-bottom: 1px solid #e2e8f0;">
                                 <th style="padding: 12px; color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Mês/Ano</th>

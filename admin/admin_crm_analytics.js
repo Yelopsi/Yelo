@@ -244,7 +244,7 @@ window.initializePage = function() {
         const tbody = document.getElementById('faturas-recentes-body');
         tbody.innerHTML = '';
         if (!invoices || invoices.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color:var(--saas-muted);">Nenhuma fatura recente.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-state-cell" style="text-align: center; color:var(--saas-muted); padding: 24px;">Nenhuma fatura recente.</td></tr>';
             return;
         }
         invoices.forEach(inv => {
@@ -253,12 +253,12 @@ window.initializePage = function() {
             if (inv.status === 'Atrasada') badgeClass = 'badge-overdue';
             if (inv.status === 'Pendente') badgeClass = 'badge-pending';
             
-            tbody.innerHTML += `<tr>
-                <td data-label="Cliente"><div class="user-cell"><div class="avatar">${getInitials(inv.psychologistName)}</div> ${inv.psychologistName}</div></td>
-                <td data-label="Data"><span style="color:var(--saas-muted);">${new Date(inv.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span></td>
-                <td data-label="Valor" style="font-weight: 500;">R$ ${inv.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td data-label="Status"><span class="status-badge ${badgeClass}">${inv.status}</span></td>
-                <td data-label="Ação"><button class="btn-detail" onclick="if('${inv.psiId}' && '${inv.psiId}' !== 'null') { window.openCSDrawer('${inv.psiId}') } else { alert('Cliente externo sem ID vinculado.'); }">Detalhes &rarr;</button></td>
+            tbody.innerHTML += `<tr class="saas-invoice-row">
+                <td data-label="Cliente" class="inv-col-cliente"><div class="user-cell"><div class="avatar">${getInitials(inv.psychologistName)}</div> <span class="client-name">${inv.psychologistName}</span></div></td>
+                <td data-label="Data" class="inv-col-data"><span class="inv-date">${new Date(inv.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</span></td>
+                <td data-label="Valor" class="inv-col-valor" style="font-weight: 600;">R$ ${inv.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td data-label="Status" class="inv-col-status"><span class="status-badge ${badgeClass}">${inv.status}</span></td>
+                <td data-label="Ação" class="inv-col-acao"><button class="btn-detail" onclick="if('${inv.psiId}' && '${inv.psiId}' !== 'null') { window.openCSDrawer('${inv.psiId}') } else { alert('Cliente externo sem ID vinculado.'); }">Detalhes &rarr;</button></td>
             </tr>`;
         });
     }
@@ -299,14 +299,14 @@ window.initializePage = function() {
         });
 
         if (activePlans.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color:var(--saas-muted);">Nenhum próximo pagamento mapeado.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" class="empty-state-cell" style="text-align: center; color:var(--saas-muted); padding: 24px;">Nenhum próximo pagamento mapeado.</td></tr>';
             return;
         }
         activePlans.forEach(plan => {
-            tbody.innerHTML += `<tr>
-                <td data-label="Cliente"><div class="user-cell" onclick="window.openCSDrawer('${plan.psychologistId}')" style="cursor: pointer; transition: color 0.2s; text-decoration: underline; text-underline-offset: 4px;" onmouseover="this.style.color='var(--saas-blue)'" onmouseout="this.style.color='inherit'"><div class="avatar">${getInitials(plan.psychologistName)}</div> ${plan.psychologistName}</div></td>
-                <td data-label="Plano"><span style="background: var(--saas-bg); border: 1px solid var(--saas-border); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; color: var(--saas-text);">${plan.planName}</span></td>
-                <td data-label="Vencimento">${getRelativeDateLabel(plan.nextBilling)}</td>
+            tbody.innerHTML += `<tr class="saas-plan-row">
+                <td data-label="Cliente" class="plan-col-cliente"><div class="user-cell" onclick="window.openCSDrawer('${plan.psychologistId}')" style="cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='var(--saas-blue)'" onmouseout="this.style.color='inherit'"><div class="avatar">${getInitials(plan.psychologistName)}</div> <span class="client-name">${plan.psychologistName}</span></div></td>
+                <td data-label="Plano" class="plan-col-plano"><span class="plan-badge">${plan.planName}</span></td>
+                <td data-label="Vencimento" class="plan-col-vencimento">${getRelativeDateLabel(plan.nextBilling)}</td>
             </tr>`;
         });
     }
@@ -416,17 +416,17 @@ window.initializePage = function() {
                 const [ano, mes] = item.monthYear.split('-');
                 const dataFormatada = `${mes}/${ano}`;
                 const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid #e2e8f0';
+                tr.className = 'cash-flow-row';
                 const brutoStr = item.grossValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 const liquidoStr = item.netValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 
                 tr.innerHTML = `
-                    <td data-label="Mês/Ano" style="padding: 12px; font-weight: 500; color: #1e293b;">${dataFormatada}</td>
-                    <td data-label="Transações" style="padding: 12px; text-align: center;">
-                        <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 50px; font-size: 12px; color: #475569;">${item.count} pagamentos</span>
+                    <td data-label="Mês/Ano" class="cf-col-mes">${dataFormatada}</td>
+                    <td data-label="Transações" class="cf-col-transacoes">
+                        <span class="cf-badge-transacoes">${item.count} pagamentos</span>
                     </td>
-                    <td data-label="Valor Bruto" style="padding: 12px; text-align: right; color: var(--cinza-texto);">${brutoStr}</td>
-                    <td data-label="Valor Líquido (Recebido)" style="padding: 12px; text-align: right; color: #10b981; font-weight: bold;">${liquidoStr}</td>
+                    <td data-label="Valor Bruto" class="cf-col-bruto">${brutoStr}</td>
+                    <td data-label="Valor Líquido (Recebido)" class="cf-col-liquido">${liquidoStr}</td>
                 `;
                 tbody.appendChild(tr);
             });
