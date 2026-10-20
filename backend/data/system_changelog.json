@@ -1,5 +1,57 @@
 [
   {
+    "id": "change-git-a29fd0bd",
+    "date": "2026-10-20T01:04:11.000Z",
+    "commit": "a29fd0bd",
+    "author": "Anderson",
+    "title": "Novo: Adicionar kpi de media de cliques, tendencias comparativas e corrigir colunas do crm (admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "adicionar kpi de media de cliques, tendencias comparativas e corrigir colunas do crm",
+    "description": "Commit registrado no repositório: \"feat(admin): adicionar kpi de media de cliques, tendencias comparativas e corrigir colunas do crm\". Arquivos modificados: admin/admin_analytics_funil.html, admin/admin_analytics_funil.js, admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, backend/controllers/adminDashboardController.js (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a29fd0bd"
+    },
+    "after": {
+      "nova_versao": "adicionar kpi de media de cliques, tendencias comparativas e corrigir colunas do crm"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.html",
+      "admin/admin_analytics_funil.js",
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/controllers/adminUsersController.js"
+    ]
+  },
+  {
+    "id": "change-git-dcbc574a",
+    "date": "2026-10-20T00:44:08.000Z",
+    "commit": "dcbc574a",
+    "author": "Anderson",
+    "title": "Manutenção: Atualizar relatorio de seguranca e changelog pos-deploy",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "atualizar relatorio de seguranca e changelog pos-deploy",
+    "description": "Commit registrado no repositório: \"chore: atualizar relatorio de seguranca e changelog pos-deploy\". Arquivos modificados: backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #dcbc574a"
+    },
+    "after": {
+      "nova_versao": "atualizar relatorio de seguranca e changelog pos-deploy"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-a2a9c404",
     "date": "2026-10-20T00:43:30.000Z",
     "commit": "a2a9c404",
