@@ -1,5 +1,61 @@
 [
   {
+    "id": "change-git-1c1ed9eb",
+    "date": "2026-10-20T00:42:56.000Z",
+    "commit": "1c1ed9eb",
+    "author": "Anderson",
+    "title": "Novo: Padronizar layout dos emails, rota de unsubscribe e links com target blank",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "padronizar layout dos emails, rota de unsubscribe e links com target blank",
+    "description": "Commit registrado no repositório: \"feat(email): padronizar layout dos emails, rota de unsubscribe e links com target blank\". Arquivos modificados: backend/controllers/forumController.js, backend/controllers/newsletterController.js, backend/routes/newsletterRoutes.js, backend/routes/viewRoutes.js, backend/server.js (+5 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1c1ed9eb"
+    },
+    "after": {
+      "nova_versao": "padronizar layout dos emails, rota de unsubscribe e links com target blank"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/forumController.js",
+      "backend/controllers/newsletterController.js",
+      "backend/routes/newsletterRoutes.js",
+      "backend/routes/viewRoutes.js",
+      "backend/server.js",
+      "backend/services/emailService.js",
+      "backend/services/notificationService.js",
+      "public/preview_emails.html",
+      "public/unsubscribe.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-86f65bcb",
+    "date": "2026-10-19T22:52:08.000Z",
+    "commit": "86f65bcb",
+    "author": "Anderson",
+    "title": "Manutenção: Atualizar relatorio do security gate e changelog",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "atualizar relatorio do security gate e changelog",
+    "description": "Commit registrado no repositório: \"chore: atualizar relatorio do security gate e changelog\". Arquivos modificados: backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #86f65bcb"
+    },
+    "after": {
+      "nova_versao": "atualizar relatorio do security gate e changelog"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-8dbd9b29",
     "date": "2026-10-19T22:50:49.000Z",
     "commit": "8dbd9b29",
