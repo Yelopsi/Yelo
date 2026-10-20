@@ -1,5 +1,29 @@
 [
   {
+    "id": "change-git-a2a9c404",
+    "date": "2026-10-20T00:43:30.000Z",
+    "commit": "a2a9c404",
+    "author": "Anderson",
+    "title": "Manutenção: Atualizar relatorio do security gate e changelog",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "atualizar relatorio do security gate e changelog",
+    "description": "Commit registrado no repositório: \"chore: atualizar relatorio do security gate e changelog\". Arquivos modificados: backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a2a9c404"
+    },
+    "after": {
+      "nova_versao": "atualizar relatorio do security gate e changelog"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-1c1ed9eb",
     "date": "2026-10-20T00:42:56.000Z",
     "commit": "1c1ed9eb",
