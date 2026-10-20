@@ -57,7 +57,10 @@ router.get(['/admin', '/admin/'], (req, res) => {
     res.sendFile(path.join(__dirname, '../../admin/admin.html'));
 });
 
-// Rota de uploads de profile removida: migrada inteiramente para Cloudinary.
+// Preferências de e-mail (Unsubscribe / Subscribe)
+router.get(['/unsubscribe', '/subscribe', '/preferencias-email'], (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/unsubscribe.html'));
+});
 
 // --- HOME ---
 router.get('/', async (req, res) => {

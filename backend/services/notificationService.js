@@ -95,7 +95,7 @@ const notifyNewPost = async (post, type) => {
                 <p>Para ler a publicação completa e interagir com outros psicólogos, acesse agora pelo seu painel:</p>
                 
                 <div class="btn-container">
-                    <a href="${link}" class="btn">Acessar Conteúdo &rarr;</a>
+                    <a href="${link}" target="_blank" rel="noopener noreferrer" class="btn" style="display: inline-block; padding: 14px 34px; background-color: #1B4332; color: #FFFFFF !important; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 15px;">Acessar Conteúdo &rarr;</a>
                 </div>
             `;
 

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preferências de E-mail • Yelo Psi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <link rel="icon" href="/assets/images/favicon.png" type="image/png">
+    <style>
+        :root {
+            --verde-escuro: #1B4332;
+            --verde-medio: #2D6A4F;
+            --verde-claro: #E8F5E9;
+            --amarelo-yelo: #FFEE8C;
+            --off-white: #FAF8F5;
+            --creme-card: #FFFFFF;
+            --cinza-texto: #4A5568;
+            --cinza-sub: #718096;
+            --borda-suave: #EAE5DC;
+            --vermelho-suave: #FEE2E2;
+            --vermelho-texto: #991B1B;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--off-white);
+            color: var(--cinza-texto);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+
+        .header-brand {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .logo-img {
+            max-width: 130px;
+            height: auto;
+            display: inline-block;
+        }
+
+        .card-container {
+            background: #FFFFFF;
+            max-width: 520px;
+            width: 100%;
+            border-radius: 24px;
+            border: 1px solid var(--borda-suave);
+            box-shadow: 0 15px 35px rgba(27, 67, 50, 0.05);
+            overflow: hidden;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .top-stripe {
+            height: 6px;
+            background: linear-gradient(90deg, #1B4332 0%, #2D6A4F 65%, #FFEE8C 100%);
+        }
+
+        .card-body {
+            padding: 36px 32px 32px 32px;
+        }
+
+        .badge-tag {
+            display: inline-block;
+            background-color: var(--verde-claro);
+            color: #166534;
+            border: 1px solid #BBF7D0;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        .page-title {
+            font-family: Georgia, 'Playfair Display', serif;
+            font-size: 24px;
+            color: var(--verde-escuro);
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 12px;
+        }
+
+        .page-desc {
+            font-size: 14.5px;
+            line-height: 1.6;
+            color: var(--cinza-sub);
+            margin-bottom: 22px;
+        }
+
+        .email-display-box {
+            background-color: #F8FAF7;
+            border: 1px solid #E2EADF;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .email-display-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #166534;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .email-display-val {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--verde-escuro);
+            word-break: break-all;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 50px;
+        }
+
+        .status-active {
+            background-color: #DCFCE7;
+            color: #166534;
+            border: 1px solid #86EFAC;
+        }
+
+        .status-unsubscribed {
+            background-color: var(--vermelho-suave);
+            color: var(--vermelho-texto);
+            border: 1px solid #FCA5A5;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--verde-escuro);
+            margin-bottom: 6px;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--borda-suave);
+            border-radius: 10px;
+            font-size: 14px;
+            color: #1B4332;
+            background: #FFFFFF;
+            transition: all 0.2s;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: var(--verde-medio);
+            box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+        }
+
+        .btn-action {
+            display: block;
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn-unsubscribe {
+            background-color: #FFF1F2;
+            color: #9F1239;
+            border: 1px solid #FECDD3;
+        }
+
+        .btn-unsubscribe:hover {
+            background-color: #FFE4E6;
+            color: #881337;
+        }
+
+        .btn-subscribe {
+            background-color: var(--verde-escuro);
+            color: #FFFFFF;
+        }
+
+        .btn-subscribe:hover {
+            background-color: var(--verde-medio);
+        }
+
+        .btn-toggle-mode {
+            background: transparent;
+            border: none;
+            color: var(--cinza-sub);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 16px;
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+
+        .btn-toggle-mode:hover {
+            color: var(--verde-escuro);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-top: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-success {
+            background-color: #F0FDF4;
+            border: 1px solid #BBF7D0;
+            color: #166534;
+        }
+
+        .feedback-error {
+            background-color: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #991B1B;
+        }
+
+        .footer-note {
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid #F5F1EB;
+            font-size: 12px;
+            color: #94A3B8;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .footer-note a {
+            color: var(--verde-escuro);
+            text-decoration: underline;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header-brand">
+        <a href="/">
+            <img src="/assets/logos/logo-escura.png" alt="Yelo" class="logo-img">
+        </a>
+    </header>
+
+    <main class="card-container">
+        <div class="top-stripe"></div>
+        <div class="card-body">
+            
+            <div id="badge-wrapper">
+                <span class="badge-tag" id="main-badge">🔔 Gerenciamento de Notificações</span>
+            </div>
+
+            <h1 class="page-title" id="card-title">Preferências de Inscrição</h1>
+            <p class="page-desc" id="card-desc">
+                Controle quais comunicações e relatórios você deseja receber da plataforma Yelo em seu e-mail.
+            </p>
+
+            <div class="email-display-box" id="email-box">
+                <div>
+                    <div class="email-display-label">E-mail Cadastrado</div>
+                    <div class="email-display-val" id="email-text">carregando...</div>
+                </div>
+                <div id="status-badge-wrap">
+                    <span class="status-pill status-active" id="status-pill">● Ativo</span>
+                </div>
+            </div>
+
+            <!-- Formulário se o e-mail não estiver na URL -->
+            <div class="input-group" id="manual-email-wrap" style="display: none;">
+                <label class="input-label" for="manual-email">Digite seu e-mail para gerenciar:</label>
+                <input type="email" id="manual-email" class="text-input" placeholder="seu-email@exemplo.com">
+            </div>
+
+            <!-- Botão Principal de Ação -->
+            <button class="btn-action btn-unsubscribe" id="btn-primary-action" onclick="handlePrimaryAction()">
+                Cancelar Inscrição (Unsubscribe)
+            </button>
+
+            <!-- Alternar entre Inscrever-se e Descadastrar -->
+            <button class="btn-toggle-mode" id="btn-toggle" onclick="toggleMode()">
+                Deseja se reinscrever? Clique para Inscrever-se (Subscribe)
+            </button>
+
+            <!-- Mensagem de Feedback -->
+            <div class="feedback-box" id="feedback-box"></div>
+
+            <!-- Nota de Rodapé -->
+            <div class="footer-note">
+                <p>Mesmo após o descadastro de newsletters e relatórios, você continuará recebendo avisos transacionais críticos da sua conta (como redefinição de senha e segurança).</p>
+                <p style="margin-top: 8px;">
+                    <a href="/login">Ir para Meu Consultório</a> &nbsp;&bull;&nbsp; 
+                    <a href="/ajuda">Central de Ajuda</a>
+                </p>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        let userEmail = (urlParams.get('email') || '').trim();
+        const pathName = window.location.pathname.toLowerCase();
+
+        // Modo atual: 'unsubscribe' ou 'subscribe'
+        let currentMode = (pathName.includes('subscribe') && !pathName.includes('unsubscribe')) ? 'subscribe' : 'unsubscribe';
+        
+        // Se a query explícita pedir action=subscribe
+        if (urlParams.get('action') === 'subscribe') currentMode = 'subscribe';
+        if (urlParams.get('action') === 'unsubscribe') currentMode = 'unsubscribe';
+
+        const emailTextEl = document.getElementById('email-text');
+        const manualEmailWrap = document.getElementById('manual-email-wrap');
+        const manualEmailInput = document.getElementById('manual-email');
+        const primaryBtn = document.getElementById('btn-primary-action');
+        const toggleBtn = document.getElementById('btn-toggle');
+        const cardTitle = document.getElementById('card-title');
+        const cardDesc = document.getElementById('card-desc');
+        const feedbackBox = document.getElementById('feedback-box');
+        const statusPill = document.getElementById('status-pill');
+
+        function updateUI() {
+            if (userEmail) {
+                emailTextEl.textContent = userEmail;
+                manualEmailWrap.style.display = 'none';
+            } else {
+                emailTextEl.textContent = 'Nenhum e-mail especificado';
+                manualEmailWrap.style.display = 'block';
+            }
+
+            feedbackBox.style.display = 'none';
+
+            if (currentMode === 'unsubscribe') {
+                cardTitle.textContent = 'Cancelar Inscrição de E-mails';
+                cardDesc.textContent = 'Você não receberá mais os relatórios semanais de desempenho, novidades e alertas gerais da Yelo neste e-mail.';
+                primaryBtn.className = 'btn-action btn-unsubscribe';
+                primaryBtn.textContent = 'Confirmar Descadastro (Unsubscribe)';
+                toggleBtn.textContent = 'Quer continuar recebendo? Clique para Inscrever-se (Subscribe)';
+            } else {
+                cardTitle.textContent = 'Inscrever-se na Yelo (Subscribe)';
+                cardDesc.textContent = 'Receba em primeira mão relatórios semanais do seu consultório, novidades da plataforma e dicas práticas de atração de pacientes.';
+                primaryBtn.className = 'btn-action btn-subscribe';
+                primaryBtn.textContent = 'Confirmar Inscrição (Subscribe)';
+                toggleBtn.textContent = 'Prefere parar de receber? Clique para Descadastrar (Unsubscribe)';
+            }
+        }
+
+        async function checkStatus() {
+            if (!userEmail) return;
+            try {
+                const res = await fetch(`/api/newsletter/status?email=${encodeURIComponent(userEmail)}`);
+                const data = await res.json();
+                if (data.success) {
+                    if (data.subscribed) {
+                        statusPill.className = 'status-pill status-active';
+                        statusPill.textContent = '● Inscrição Ativa';
+                    } else {
+                        statusPill.className = 'status-pill status-unsubscribed';
+                        statusPill.textContent = '● Descadastrado';
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function toggleMode() {
+            currentMode = (currentMode === 'unsubscribe') ? 'subscribe' : 'unsubscribe';
+            updateUI();
+        }
+
+        async function handlePrimaryAction() {
+            const emailToUse = userEmail || manualEmailInput.value.trim();
+            if (!emailToUse || !emailToUse.includes('@')) {
+                showFeedback('Por favor, informe um endereço de e-mail válido.', 'error');
+                return;
+            }
+
+            primaryBtn.disabled = true;
+            primaryBtn.textContent = 'Processando...';
+
+            const endpoint = currentMode === 'unsubscribe' ? '/api/newsletter/unsubscribe' : '/api/newsletter/subscribe';
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailToUse, origin: 'preferences_page' })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    showFeedback(data.message, 'success');
+                    userEmail = emailToUse;
+                    if (currentMode === 'unsubscribe') {
+                        statusPill.className = 'status-pill status-unsubscribed';
+                        statusPill.textContent = '● Descadastrado';
+                    } else {
+                        statusPill.className = 'status-pill status-active';
+                        statusPill.textContent = '● Inscrição Ativa';
+                    }
+                } else {
+                    showFeedback(data.message || 'Ocorreu um erro ao processar. Tente novamente.', 'error');
+                }
+            } catch (err) {
+                showFeedback('Erro de conexão com o servidor. Tente novamente mais tarde.', 'error');
+            } finally {
+                primaryBtn.disabled = false;
+                updateUI();
+            }
+        }
+
+        function showFeedback(msg, type) {
+            feedbackBox.textContent = msg;
+            feedbackBox.className = `feedback-box feedback-${type}`;
+            feedbackBox.style.display = 'block';
+        }
+
+        // Inicialização
+        updateUI();
+        if (userEmail) checkStatus();
+    </script>
+</body>
+</html>

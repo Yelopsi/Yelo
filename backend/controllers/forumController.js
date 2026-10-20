@@ -400,25 +400,9 @@ exports.createComment = async (req, res) => {
                     const targetUser = await db.Psychologist.findByPk(targetId);
 
                     if (targetUser && targetUser.email) {
-                        const postLink = `${frontendUrl}/psi/psi_dashboard.html?postId=${req.params.id}`;
-                        const emailHtml = `
-                            <div style="font-family: Arial, sans-serif; color: #374151; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
-                                <div style="text-align: center; margin-bottom: 20px;">
-                                    <h2 style="color: #1B4332; margin: 0;">${notifTitle} 💬</h2>
-                                </div>
-                                <p>Olá <strong>${targetUser.nome}</strong>,</p>
-                                <p><strong>${senderName}</strong> respondeu a você na comunidade da Yelo:</p>
-                                <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #1B4332; margin: 20px 0; border-radius: 4px; font-style: italic; color: #4b5563;">
-                                    "${content.substring(0, 150)}${content.length > 150 ? '...' : ''}"
-                                </div>
-                                <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
-                                    <a href="${postLink}" style="background-color: #1B4332; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 50px; font-weight: bold; display: inline-block;">Acessar Comunidade</a>
-                                </div>
-                            </div>
-                        `;
-                        if (emailService && emailService.sendEmail) {
-                            await emailService.sendEmail(targetUser.email, notifTitle, emailHtml).catch(e => console.error("Erro ao enviar email:", e));
-                            console.log(`[NOTIF DEBUG] E-mail de notificação enviado para: ${targetUser.email}`);
+                        if (emailService && emailService.sendForumReplyEmail) {
+                            await emailService.sendForumReplyEmail(targetUser, senderName, content, req.params.id).catch(e => console.error("Erro ao enviar email:", e));
+                            console.log(`[NOTIF DEBUG] E-mail de notificação editorial enviado para: ${targetUser.email}`);
                         }
                     }
                 } else {

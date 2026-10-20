@@ -30,8 +30,12 @@ const transporter = nodemailer.createTransport({
 const getBaseTemplate = (title, content, options = {}) => {
     const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
     const tagText = options.tagText || '';
+    const tagColor = options.tagColor || '#F0FDF4';
     const preheader = options.preheader || title;
     const year = new Date().getFullYear();
+    const toEmail = options.toEmail || '';
+    const unsubUrl = toEmail ? `${frontendUrl}/unsubscribe?email=${encodeURIComponent(toEmail)}` : `${frontendUrl}/unsubscribe`;
+    const subUrl = toEmail ? `${frontendUrl}/subscribe?email=${encodeURIComponent(toEmail)}` : `${frontendUrl}/subscribe`;
 
     return `<!DOCTYPE html>
 <html lang="pt-BR" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -58,7 +62,6 @@ const getBaseTemplate = (title, content, options = {}) => {
         html, body {
             margin: 0 !important;
             padding: 0 !important;
-            height: 100% !important;
             width: 100% !important;
             background-color: #FAF8F5 !important;
             -webkit-text-size-adjust: 100%;
@@ -144,19 +147,40 @@ const getBaseTemplate = (title, content, options = {}) => {
             border-radius: 8px;
             border: 1px solid #CBD5E1;
         }
+        .outer-cell {
+            padding: 28px 12px 28px 12px;
+        }
         @media only screen and (max-width: 600px) {
+            .outer-cell {
+                padding: 16px 8px 16px 8px !important;
+            }
             .email-container {
                 width: 100% !important;
                 max-width: 100% !important;
-                border-radius: 0 !important;
-                border-left: none !important;
-                border-right: none !important;
+                border-radius: 16px !important;
             }
             .content-padding {
-                padding: 26px 18px !important;
+                padding: 24px 16px !important;
             }
             .email-title {
                 font-size: 22px !important;
+            }
+            .kpi-table, .kpi-table tbody, .kpi-row {
+                display: block !important;
+                width: 100% !important;
+            }
+            .kpi-col {
+                display: block !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                margin-bottom: 12px !important;
+            }
+            .kpi-spacer {
+                display: none !important;
+                width: 0 !important;
+                height: 0 !important;
+                font-size: 0 !important;
+                line-height: 0 !important;
             }
             .btn, .btn-yelo {
                 display: block !important;
@@ -175,7 +199,7 @@ const getBaseTemplate = (title, content, options = {}) => {
 
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FAF8F5; table-layout: fixed;">
         <tr>
-            <td align="center" style="padding: 35px 12px;">
+            <td align="center" class="outer-cell">
                 
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; border: 1px solid #EAE5DC; box-shadow: 0 10px 30px rgba(27, 67, 50, 0.04);">
                     
@@ -200,7 +224,7 @@ const getBaseTemplate = (title, content, options = {}) => {
 
                     <tr>
                         <td class="content-padding" style="padding: 34px 35px 28px 35px;">
-                            ${tagText ? `<div><span class="tag-pill">${tagText}</span></div>` : ''}
+                            ${tagText ? `<div><span class="tag-pill" style="background-color: ${tagColor}; border-color: ${tagColor === '#FEF3C7' ? '#FDE68A' : '#BBF7D0'}; color: ${tagColor === '#FEF3C7' ? '#92400E' : '#166534'};">${tagText}</span></div>` : ''}
                             <h1 class="email-title">${title}</h1>
                             <div class="email-body" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
                                 ${content}
@@ -223,14 +247,20 @@ const getBaseTemplate = (title, content, options = {}) => {
                     </tr>
 
                     <tr>
-                        <td style="background-color: #FAF8F5; padding: 24px 35px; text-align: center; border-top: 1px solid #EAE5DC;">
+                        <td style="background-color: #FAF8F5; padding: 22px 28px; text-align: center; border-top: 1px solid #EAE5DC;">
                             <p style="margin: 0 0 12px 0; font-size: 12px; color: #718096; font-weight: 500;">
-                                <a href="${frontendUrl}/login" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Meu Consultório</a> &nbsp;&bull;&nbsp;
-                                <a href="${frontendUrl}/psi/psi_dashboard?page=psi_forum.html" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Fórum de Psicólogos</a> &nbsp;&bull;&nbsp;
-                                <a href="${frontendUrl}/ajuda" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Central de Ajuda</a>
+                                <a href="${frontendUrl}/login" target="_blank" rel="noopener noreferrer" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Meu Consultório</a> &nbsp;&bull;&nbsp;
+                                <a href="${frontendUrl}/psi/psi_dashboard?page=psi_forum.html" target="_blank" rel="noopener noreferrer" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Fórum de Psicólogos</a> &nbsp;&bull;&nbsp;
+                                <a href="${frontendUrl}/ajuda" target="_blank" rel="noopener noreferrer" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Central de Ajuda</a>
                             </p>
                             <p style="margin: 0 0 6px 0; font-size: 12px; color: #A0AEC0; line-height: 1.5;">
-                                Você está recebendo este e-mail porque possui cadastro profissional na Yelo.
+                                Você está recebendo este e-mail porque possui cadastro profissional na plataforma Yelo.
+                            </p>
+                            <p style="margin: 0 0 12px 0; font-size: 11px; color: #718096; line-height: 1.5;">
+                                Deseja pausar notificações ou cancelar o recebimento? 
+                                <a href="${unsubUrl}" target="_blank" rel="noopener noreferrer" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Cancelar inscrição (Unsubscribe)</a>
+                                &nbsp;&bull;&nbsp;
+                                <a href="${subUrl}" target="_blank" rel="noopener noreferrer" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Gerenciar Inscrição (Subscribe)</a>
                             </p>
                             <p style="margin: 0; font-size: 11px; color: #CBD5E1;">
                                 &copy; ${year} Yelo &bull; Apoio Psicológico e Saúde Mental. Todos os direitos reservados.
@@ -250,11 +280,17 @@ const getBaseTemplate = (title, content, options = {}) => {
 // Função genérica de envio
 const sendEmail = async (to, subject, html) => {
     try {
+        const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+        const unsubUrl = `${frontendUrl}/unsubscribe?email=${encodeURIComponent(to)}`;
         await transporter.sendMail({
-            from: process.env.EMAIL_FROM || '"Yelo Saúde Mental" <nao-responda@yelopsi.com.br>', 
+            from: process.env.EMAIL_FROM || '"Yelo Saúde Mental" <contato@yelopsi.com.br>', 
             to,
             subject,
-            html
+            html,
+            headers: {
+                'List-Unsubscribe': `<${unsubUrl}>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+            }
         });
         console.log(`📧 E-mail enviado para ${to}: ${subject}`);
     } catch (error) {
@@ -276,292 +312,631 @@ const sendEmail = async (to, subject, html) => {
 exports.sendEmail = sendEmail;
 exports.getBaseTemplate = getBaseTemplate;
 
-exports.sendBillCreatedEmail = async (user, payment) => {
-    const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
-    const vencimento = payment.dueDate.split('-').reverse().join('/');
-    const title = 'Sua nova fatura da Yelo está disponível';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
-    const content = `
-        <p>Olá, <strong>${psiName}</strong>! Tudo bem?</p>
-        <p>A sua fatura referente ao uso da plataforma Yelo já foi gerada e está disponível para pagamento.</p>
-        <div style="background-color: #f7fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
-            <p style="margin: 5px 0;"><strong>Valor:</strong> R$ ${valor}</p>
-            <p style="margin: 5px 0;"><strong>Vencimento:</strong> ${vencimento}</p>
+const emailCtaBtn = (url, label) => `
+        <div class="btn-container">
+            <a href="${url}" target="_blank" rel="noopener noreferrer" class="btn" style="display: inline-block; padding: 14px 34px; background-color: #1B4332; color: #FFFFFF !important; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 15px;">${label} &rarr;</a>
         </div>
-        <p>Para visualizar os detalhes ou realizar o pagamento, basta acessar o link seguro abaixo:</p>
-        <div class="btn-container"><a href="${payment.invoiceUrl}" class="btn">Acessar Minha Fatura</a></div>
-    `;
-    await sendEmail(user.email, 'Sua nova fatura da Yelo está disponível', getBaseTemplate(title, content));
-};
+`;
+exports.emailCtaBtn = emailCtaBtn;
 
-exports.sendDueDateWarningEmail = async (user, payment) => {
-    const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
-    const vencimento = payment.dueDate.split('-').reverse().join('/');
-    const title = 'Sua fatura da Yelo vence HOJE ⚠️';
+exports.sendBillCreatedEmail = async (user, payment) => {
+    const valor = parseFloat(payment.value || 99).toFixed(2).replace('.', ',');
+    const vencimento = payment.dueDate ? payment.dueDate.split('-').reverse().join('/') : 'Em aberto';
+    const title = 'Sua fatura da Yelo está disponível 💳';
     const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
-    const content = `
-        <p>Olá, <strong>${psiName}</strong>.</p>
-        <p>Este é um lembrete de que o vencimento da sua fatura de <strong>R$ ${valor}</strong> é HOJE.</p>
-        <p>Para facilitar o seu dia, você pode utilizar o link abaixo para efetuar o pagamento e manter seu perfil ativo:</p>
-        <div class="btn-container"><a href="${payment.invoiceUrl}" class="btn">Acessar Fatura</a></div>
-    `;
-    await sendEmail(user.email, 'Sua fatura da Yelo vence HOJE ⚠️', getBaseTemplate(title, content));
-};
-
-exports.sendDigitableLineEmail = async (user, payment) => {
-    let linha = payment.pixTransaction || payment.nossoNumero || "Acesse sua fatura para ver o código de pagamento";
-    const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
-    const title = 'Sua fatura da Yelo vence HOJE ⚠️';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const invoiceUrl = payment.invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
     
-    let highlightHtml = '';
-    if (payment.billingType === 'PIX' || payment.billingType === 'BOLETO') {
-        if (payment.billingType === 'PIX') {
-            try {
-                const fetch = require('node-fetch');
-                let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
-                ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
-                if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
-                    ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
-                }
-                const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
-                const qrRes = await fetch(`${ASAAS_API_URL}/payments/${payment.id}/pixQrCode`, { headers: { 'access_token': ASAAS_API_KEY } });
-                const qrData = await qrRes.json();
-                if (qrData.payload) linha = qrData.payload;
-            } catch(e) {}
-        }
-        
-        highlightHtml = `
-            <div class="highlight-box">
-                <p style="margin: 0; color: #166534; font-size: 14px;">Copie o código abaixo e cole no seu banco:</p>
-                <div class="highlight-code">${linha}</div>
+    let pixBlock = '';
+    const pixCode = payment.pixTransaction || payment.payload;
+    if (pixCode) {
+        pixBlock = `
+            <div style="margin-top: 18px; padding-top: 16px; border-top: 1px dashed #CBD5E1;">
+                <p style="margin: 0 0 8px 0; font-size: 12px; color: #475569; font-weight: 600;">Código PIX Copia e Cola:</p>
+                <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 12px; color: #1B4332; word-break: break-all;">
+                    ${pixCode}
+                </div>
             </div>
         `;
     }
 
     const content = `
-        <p>Olá, <strong>${psiName}</strong>.</p>
-        <p>Este é um lembrete amigável de que o vencimento da sua fatura de <strong>R$ ${valor}</strong> é <strong>HOJE</strong>.</p>
-        <p>Para facilitar o seu dia, você pode utilizar o link ou código abaixo para efetuar o pagamento e manter seu perfil ativo:</p>
-        ${highlightHtml}
-        <div class="btn-container"><a href="${payment.invoiceUrl}" class="btn">Pagar Agora</a></div>
+        <p>Olá, <strong>${psiName}</strong>!</p>
+        <p>A sua fatura mensal referente à assinatura do ecossistema Yelo já foi gerada e está pronta para pagamento seguro.</p>
+        <p>Mantendo sua assinatura em dia, seu perfil continua ativo nas buscas e com acesso completo ao Fórum exclusivo de psicólogos.</p>
+        
+        <div style="background-color: #FAF8F5; border: 1px solid #EAE5DC; border-radius: 16px; padding: 22px; margin: 24px 0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td>
+                        <span style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Valor da Mensalidade</span>
+                        <div style="font-size: 32px; font-weight: 800; color: #1B4332; margin: 4px 0;">R$ ${valor}</div>
+                    </td>
+                    <td align="right" style="vertical-align: middle;">
+                        <span style="background-color: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px; display: inline-block; white-space: nowrap;">
+                            Vence em ${vencimento}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+            ${pixBlock}
+        </div>
+
+        ${emailCtaBtn(invoiceUrl, 'Visualizar e Pagar Fatura')}
     `;
-    await sendEmail(user.email, 'Sua fatura da Yelo vence HOJE ⚠️', getBaseTemplate(title, content));
+    await sendEmail(user.email, '💳 Sua fatura da Yelo está disponível', getBaseTemplate(title, content, {
+        tagText: '● Fatura Disponível',
+        tagColor: '#F1F5F9',
+        toEmail: user.email
+    }));
+};
+
+exports.sendDueDateWarningEmail = async (user, payment) => {
+    const valor = parseFloat(payment.value || 99).toFixed(2).replace('.', ',');
+    const vencimento = payment.dueDate ? payment.dueDate.split('-').reverse().join('/') : 'Hoje';
+    const title = 'Sua fatura da Yelo vence hoje ⚠️';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const invoiceUrl = payment.invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
+
+    const content = `
+        <p>Olá, <strong>${psiName}</strong>!</p>
+        <p>Este é um lembrete amigável de que o vencimento da sua mensalidade referente à assinatura da Yelo é <strong>hoje</strong>.</p>
+        <p>Mantendo sua assinatura regular, seu consultório permanece em destaque nas buscas inteligentes e conectado a novos pacientes.</p>
+
+        <div style="background-color: #FAF8F5; border: 1px solid #EAE5DC; border-radius: 16px; padding: 22px; margin: 24px 0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td>
+                        <span style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Valor da Mensalidade</span>
+                        <div style="font-size: 32px; font-weight: 800; color: #1B4332; margin: 4px 0;">R$ ${valor}</div>
+                    </td>
+                    <td align="right" style="vertical-align: middle;">
+                        <span style="background-color: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px; display: inline-block; white-space: nowrap;">
+                            Vence Hoje (${vencimento})
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        ${emailCtaBtn(invoiceUrl, 'Visualizar e Pagar Fatura')}
+    `;
+    await sendEmail(user.email, '⚠️ Sua fatura da Yelo vence HOJE', getBaseTemplate(title, content, {
+        tagText: '● Vence Hoje',
+        tagColor: '#FEF3C7',
+        toEmail: user.email
+    }));
+};
+
+exports.sendDigitableLineEmail = async (user, payment) => {
+    let linha = payment.pixTransaction || payment.nossoNumero || "Acesse sua fatura para ver o código de pagamento";
+    const valor = parseFloat(payment.value || 99).toFixed(2).replace('.', ',');
+    const vencimento = payment.dueDate ? payment.dueDate.split('-').reverse().join('/') : 'Hoje';
+    const title = 'Código para pagamento da sua fatura Yelo 💳';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const invoiceUrl = payment.invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
+    
+    if (payment.billingType === 'PIX') {
+        try {
+            const fetch = require('node-fetch');
+            let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+            ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
+            if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+                ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+            }
+            const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+            const qrRes = await fetch(`${ASAAS_API_URL}/payments/${payment.id}/pixQrCode`, { headers: { 'access_token': ASAAS_API_KEY } });
+            const qrData = await qrRes.json();
+            if (qrData.payload) linha = qrData.payload;
+        } catch(e) {}
+    }
+
+    const isPix = payment.billingType === 'PIX';
+    const codeLabel = isPix ? 'Código PIX Copia e Cola' : 'Linha Digitável do Boleto';
+
+    const content = `
+        <p>Olá, <strong>${psiName}</strong>!</p>
+        <p>Para facilitar o seu dia a dia, preparamos o código direto para pagamento da sua fatura que vence <strong>hoje</strong>.</p>
+        
+        <div style="background-color: #FAF8F5; border: 1px solid #EAE5DC; border-radius: 16px; padding: 22px; margin: 24px 0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td>
+                        <span style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Valor a Pagar</span>
+                        <div style="font-size: 32px; font-weight: 800; color: #1B4332; margin: 4px 0;">R$ ${valor}</div>
+                    </td>
+                    <td align="right" style="vertical-align: middle;">
+                        <span style="background-color: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px; display: inline-block; white-space: nowrap;">
+                            Vence Hoje (${vencimento})
+                        </span>
+                    </td>
+                </tr>
+            </table>
+
+            <div style="margin-top: 18px; padding-top: 16px; border-top: 1px dashed #CBD5E1;">
+                <p style="margin: 0 0 8px 0; font-size: 12px; color: #475569; font-weight: 600;">${codeLabel}:</p>
+                <div class="highlight-code">
+                    ${linha}
+                </div>
+            </div>
+        </div>
+
+        <p style="font-size: 13px; color: #64748B; text-align: center;">Copie o código acima e cole diretamente no aplicativo do seu banco.</p>
+
+        ${emailCtaBtn(invoiceUrl, 'Abrir Fatura Completa')}
+    `;
+    await sendEmail(user.email, '💳 Código de Pagamento: Sua fatura Yelo vence hoje', getBaseTemplate(title, content, {
+        tagText: isPix ? '● PIX Vence Hoje' : '● Boleto Vence Hoje',
+        tagColor: '#FEF3C7',
+        toEmail: user.email
+    }));
 };
 
 exports.sendOverdueEmail = async (user, payment) => {
-    const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
-    const vencimento = payment.dueDate.split('-').reverse().join('/');
-    const title = 'Ação Necessária: Fatura Yelo em atraso';
+    const valor = parseFloat(payment.value || 99).toFixed(2).replace('.', ',');
+    const vencimento = payment.dueDate ? payment.dueDate.split('-').reverse().join('/') : 'Em atraso';
+    const title = 'Ação Necessária: Fatura Yelo em atraso ⚠️';
     const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const invoiceUrl = payment.invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
+
     const content = `
         <p>Olá, <strong>${psiName}</strong>.</p>
-        <p>Ainda não identificamos o pagamento da sua fatura de <strong>R$ ${valor}</strong>, que venceu no dia <strong>${vencimento}</strong>.</p>
-        <p>Para evitar a suspensão automática do seu perfil nas buscas da plataforma e garantir que você continue recebendo pacientes, por favor, regularize sua assinatura o quanto antes.</p>
-        <p style="font-size: 13px; color: #718096; margin-top: 15px;"><em>(Se a fatura PIX estiver expirada no link, o sistema gerará um novo código automaticamente ao acessar a tela de assinatura ou trocar a forma de pagamento).</em></p>
-        <div class="btn-container"><a href="${payment.invoiceUrl}" class="btn">Regularizar Assinatura</a></div>
+        <p>Ainda não identificamos a compensação da sua fatura mensal referente à assinatura do seu consultório na Yelo.</p>
+        
+        <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-radius: 16px; padding: 22px; margin: 24px 0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td>
+                        <span style="font-size: 12px; font-weight: 600; color: #991B1B; text-transform: uppercase; letter-spacing: 0.5px;">Fatura Pendente</span>
+                        <div style="font-size: 32px; font-weight: 800; color: #7F1D1D; margin: 4px 0;">R$ ${valor}</div>
+                    </td>
+                    <td align="right" style="vertical-align: middle;">
+                        <span style="background-color: #FEE2E2; color: #991B1B; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px; display: inline-block; white-space: nowrap;">
+                            Venceu em ${vencimento}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+            <p style="margin: 14px 0 0 0; font-size: 13px; color: #991B1B; line-height: 1.5;">
+                Para evitar a pausa temporária do seu perfil nas buscas públicas e garantir que você continue recebendo contatos de pacientes, por favor regularize sua assinatura pelo botão abaixo.
+            </p>
+        </div>
+
+        <p style="font-size: 13px; color: #64748B;"><em>(Se a cobrança PIX estiver expirada no link, o sistema gerará um novo código imediatamente ao acessar a tela de assinatura ou trocar a forma de pagamento).</em></p>
+
+        ${emailCtaBtn(invoiceUrl, 'Regularizar Assinatura Agora')}
     `;
-    await sendEmail(user.email, 'Ação Necessária: Fatura Yelo em atraso', getBaseTemplate(title, content));
+    await sendEmail(user.email, 'Ação Necessária: Fatura Yelo em atraso', getBaseTemplate(title, content, {
+        tagText: '● Regularização Pendente',
+        tagColor: '#FEF2F2',
+        toEmail: user.email
+    }));
 };
 
 exports.sendBillUpdatedEmail = async (user, payment) => {
-    const valor = parseFloat(payment.value).toFixed(2).replace('.', ',');
-    const vencimento = payment.dueDate.split('-').reverse().join('/');
-    const title = 'Atualização na sua fatura da Yelo';
+    const valor = parseFloat(payment.value || 99).toFixed(2).replace('.', ',');
+    const vencimento = payment.dueDate ? payment.dueDate.split('-').reverse().join('/') : 'Atualizado';
+    const title = 'Atualização na sua fatura da Yelo ✨';
     const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const invoiceUrl = payment.invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
+
     const content = `
         <p>Olá, <strong>${psiName}</strong>.</p>
-        <p>Informamos que houve uma atualização na sua fatura (nova data de vencimento ou reajuste de valor).</p>
-        <div style="background-color: #f7fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
-            <p style="margin: 5px 0;"><strong>Novo Valor:</strong> R$ ${valor}</p>
-            <p style="margin: 5px 0;"><strong>Novo Vencimento:</strong> ${vencimento}</p>
+        <p>Informamos que os dados da sua fatura foram atualizados no sistema (novo vencimento ou ajuste de valor).</p>
+        
+        <div style="background-color: #FAF8F5; border: 1px solid #EAE5DC; border-radius: 16px; padding: 22px; margin: 24px 0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td>
+                        <span style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Novo Valor</span>
+                        <div style="font-size: 32px; font-weight: 800; color: #1B4332; margin: 4px 0;">R$ ${valor}</div>
+                    </td>
+                    <td align="right" style="vertical-align: middle;">
+                        <span style="background-color: #F1F5F9; color: #334155; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px; display: inline-block; white-space: nowrap;">
+                            Novo Vencimento: ${vencimento}
+                        </span>
+                    </td>
+                </tr>
+            </table>
         </div>
-        <p>Acesse o link abaixo para conferir a fatura atualizada:</p>
-        <div class="btn-container"><a href="${payment.invoiceUrl}" class="btn">Ver Fatura Atualizada</a></div>
+
+        <p>Acesse o link seguro abaixo para conferir os detalhes e efetuar o pagamento atualizado:</p>
+
+        ${emailCtaBtn(invoiceUrl, 'Visualizar Fatura Atualizada')}
     `;
-    await sendEmail(user.email, 'Atualização na sua fatura da Yelo', getBaseTemplate(title, content));
+    await sendEmail(user.email, 'Atualização na sua fatura da Yelo', getBaseTemplate(title, content, {
+        tagText: '● Fatura Atualizada',
+        tagColor: '#F1F5F9',
+        toEmail: user.email
+    }));
 };
 
 exports.sendInvitationEmail = async (candidate, invitationLink) => {
-    const title = 'Seu convite chegou! 🎉';
+    const title = 'Uma vaga foi liberada para o seu consultório 🎉';
+    const candidateName = candidate.nome ? candidate.nome.split(' ')[0] : 'Profissional';
+
     const content = `
-        <p>Olá, <strong>${candidate.nome || 'Profissional'}</strong>!</p>
-        <p>Uma vaga foi liberada para você na plataforma Yelo. Clique no botão abaixo para concluir o seu cadastro e preparar seu consultório.</p>
-        <center><a href="${invitationLink}" class="btn">Concluir Cadastro</a></center>
+        <p>Olá, <strong>${candidateName}</strong>!</p>
+        <p>Temos uma excelente notícia para você: uma vaga foi aberta para a sua especialidade clínica no ecossistema da Yelo Psi.</p>
+        <p>Nossa plataforma conecta você a pacientes qualificados através de um algoritmo ético de afinidade terapêutica, além de dar acesso ao Fórum exclusivo de psicólogos.</p>
+        
+        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
+            <strong style="color: #1B4332; font-size: 14px; display: block; margin-bottom: 8px;">O que te espera na Yelo:</strong>
+            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">
+                • Perfil público otimizado com biografia, abordagem e horários.<br>
+                • Contatos diretos de pacientes sem comissões intermediárias.<br>
+                • Comunidade exclusiva de discussão e troca clínica.
+            </p>
+        </div>
+
+        <p>O seu link de acesso exclusivo é válido por 7 dias. Clique abaixo para concluir o seu cadastro:</p>
+
+        ${emailCtaBtn(invitationLink, 'Concluir Meu Cadastro')}
     `;
-    await sendEmail(candidate.email, 'Seu convite para a Yelo chegou!', getBaseTemplate(title, content));
+    await sendEmail(candidate.email, '🎉 Seu convite para a Yelo chegou!', getBaseTemplate(title, content, {
+        tagText: '🎉 Convite Exclusivo',
+        tagColor: '#F0FDF4',
+        toEmail: candidate.email
+    }));
 };
 
 exports.sendPaymentConfirmationEmail = async (user, planType, value) => {
-    const valor = parseFloat(value).toFixed(2).replace('.', ',');
+    const valor = parseFloat(value || 99).toFixed(2).replace('.', ',');
     const plano = planType || 'Ecossistema Yelo';
-    const title = 'Pagamento Confirmado! ✅';
+    const title = 'Pagamento Confirmado com Sucesso! ✅';
     const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const loginUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
+
     const content = `
-        <p>Olá, <strong>${psiName}</strong>!</p>
-        <p>Seu pagamento de <strong>R$ ${valor}</strong> foi processado e confirmado com sucesso.</p>
-        <p>Seu perfil continua ativo e visível na Yelo, pronto para conectar você a novos pacientes. Agradecemos por fazer parte da nossa comunidade!</p>
-        <div class="btn-container"><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Acessar Yelo</a></div>
+        <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
+        <p>Confirmamos o recebimento do pagamento da sua assinatura. Muito obrigado pela confiança e por fazer parte da comunidade Yelo.</p>
+        
+        <div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 16px; padding: 22px; margin: 24px 0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td>
+                        <span style="font-size: 12px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">Assinatura Ativa</span>
+                        <div style="font-size: 30px; font-weight: 800; color: #1B4332; margin: 4px 0;">R$ ${valor}</div>
+                        <p style="margin: 4px 0 0 0; font-size: 13px; color: #166534; font-weight: 600;">Plano ${plano}</p>
+                    </td>
+                    <td align="right" style="vertical-align: middle;">
+                        <span style="background-color: #DCFCE7; color: #15803D; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px; display: inline-block;">
+                            ● Perfil Ativo
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <p>O seu perfil segue 100% ativo e visível nas buscas de pacientes, e suas ferramentas de gestão de consultório estão liberadas.</p>
+
+        ${emailCtaBtn(loginUrl, 'Acessar Meu Consultório')}
     `;
-    await sendEmail(user.email, 'Pagamento Confirmado - Yelo', getBaseTemplate(title, content));
+    await sendEmail(user.email, '✅ Pagamento Confirmado - Yelo', getBaseTemplate(title, content, {
+        tagText: '✅ Assinatura Confirmada',
+        tagColor: '#F0FDF4',
+        toEmail: user.email
+    }));
 };
 
 exports.sendPaymentFailedEmail = async (user, invoiceUrl) => {
-    const link = invoiceUrl || ((process.env.FRONTEND_URL || 'https://www.yelopsi.com.br') + '/login');
-    const title = 'Ação Necessária: Falha no Pagamento';
+    const link = invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
+    const title = 'Ação Necessária: Falha no processamento da assinatura ⚠️';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+
     const content = `
-        <p>Olá, <strong>${user.nome}</strong>.</p>
-        <p>Infelizmente, houve uma falha ao processar o pagamento da sua assinatura. O seu perfil foi temporariamente pausado.</p>
-        <p>Por favor, acesse o link abaixo para atualizar sua forma de pagamento ou tentar novamente.</p>
-        <center><a href="${link}" class="btn">Tentar Novamente</a></center>
+        <p>Olá, <strong>${psiName}</strong>.</p>
+        <p>Houve uma falha ao tentar processar a cobrança da sua mensalidade no cartão de crédito cadastrado.</p>
+        
+        <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-radius: 16px; padding: 22px; margin: 24px 0;">
+            <p style="margin: 0; font-size: 14px; color: #991B1B; font-weight: 600;">
+                O que acontece agora?
+            </p>
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #7F1D1D; line-height: 1.5;">
+                Para que sua visibilidade para novos pacientes não seja interrompida, por favor acesse o link abaixo para atualizar os dados do cartão ou efetuar o pagamento via PIX.
+            </p>
+        </div>
+
+        ${emailCtaBtn(link, 'Atualizar Cartão ou Pagar')}
     `;
-    await sendEmail(user.email, 'Ação Necessária: Falha no Pagamento', getBaseTemplate(title, content));
+    await sendEmail(user.email, 'Ação Necessária: Falha no Pagamento da Assinatura', getBaseTemplate(title, content, {
+        tagText: '⚠️ Falha no Pagamento',
+        tagColor: '#FEF2F2',
+        toEmail: user.email
+    }));
 };
 
 exports.sendSubscriptionCancelledEmail = async (user) => {
-    const title = 'Assinatura Cancelada 😢';
+    const title = 'Sua assinatura foi pausada 💛';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const feedbackUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/feedback?psiId=${user.id}`;
+    const reactivateUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
+
     const content = `
-        <p>Olá, <strong>${user.nome}</strong>,</p>
-        <p>Sua assinatura foi cancelada com sucesso e seu perfil não aparecerá mais nas buscas. Se quiser voltar a expandir seus atendimentos, estamos de portas abertas.</p>
+        <p>Olá, <strong>${psiName}</strong>,</p>
+        <p>Confirmamos o cancelamento da renovação automática da sua assinatura. Seu perfil deixará de ser exibido nas buscas ao término do período vigente já pago.</p>
         
-        <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #f59e0b; border-radius: 4px; color: #4b5563; font-size: 0.95em; margin: 20px 0;">
-            <strong>Como foi sua experiência?</strong><br>
-            Sua opinião é fundamental para a evolução da Yelo. Leva menos de 1 minuto para nos contar o motivo da sua pausa:
-            <br><br>
-            <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/feedback?psiId=${user.id}" style="color: #b45309; font-weight: bold; text-decoration: underline;">👉 Deixar meu Feedback Rápido</a>
+        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
+            <strong style="color: #1B4332; font-size: 14px; display: block; margin-bottom: 6px;">Como foi sua experiência?</strong>
+            <p style="margin: 0 0 14px 0; font-size: 13px; color: #475569; line-height: 1.5;">
+                Sua percepção é muito valiosa para continuarmos aprimorando a Yelo para toda a comunidade. Leva menos de 1 minuto para nos contar o que podemos melhorar:
+            </p>
+            <a href="${feedbackUrl}" target="_blank" rel="noopener noreferrer" style="color: #166534; font-weight: 700; text-decoration: underline; font-size: 13px;">👉 Deixar meu Feedback Rápido</a>
         </div>
-        
-        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Reativar Assinatura</a></center>
+
+        <p>Se em qualquer momento você desejar voltar a expandir seus atendimentos conosco, nossas portas estarão sempre abertas.</p>
+
+        ${emailCtaBtn(reactivateUrl, 'Reativar Meu Consultório')}
     `;
-    await sendEmail(user.email, 'Assinatura Cancelada - Yelo', getBaseTemplate(title, content));
+    await sendEmail(user.email, 'Sua Assinatura na Yelo foi Cancelada', getBaseTemplate(title, content, {
+        tagText: '● Assinatura Pausada',
+        tagColor: '#F1F5F9',
+        toEmail: user.email
+    }));
 };
 
 exports.sendWelcomeEmail = async (user, type) => {
-    if (type === 'psychologist') {
-        const title = 'Bem-vindo(a) à Yelo Psi! 💛';
+    if (type === 'psychologist' || !type) {
+        const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+        const title = 'Seu consultório na Yelo está pronto para nascer ✨';
         const content = `
-            <p>Olá, <strong>${user.nome.split(' ')[0]}</strong>!</p>
-            <p>Estamos muito felizes em ter você conosco. Sua conta está criada. Agora, configure seu perfil completo para começar a receber pacientes na plataforma.</p>
-            <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Acessar meu Consultório</a></center>
+            <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
+            <p>Estamos muito felizes em receber você no ecossistema Yelo Psi. Nosso compromisso é conectar a sua prática clínica a pacientes que realmente valorizam seu método e abordagem terapêutica.</p>
+            <p>Para que o nosso algoritmo de match inteligente comece a direcionar pacientes qualificados para a sua agenda, o primeiro passo é concluir o preenchimento do seu perfil profissional.</p>
+            
+            <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                <strong style="color: #1B4332; font-size: 14px; display: block; margin-bottom: 12px;">Próximos passos recomendados:</strong>
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                        <td width="26" style="vertical-align: top; font-size: 14px;">1.</td>
+                        <td style="font-size: 13px; color: #475569; padding-bottom: 8px;"><strong>Foto acolhedora:</strong> Perfis com fotos humanizadas recebem até 3.2x mais contatos.</td>
+                    </tr>
+                    <tr>
+                        <td width="26" style="vertical-align: top; font-size: 14px;">2.</td>
+                        <td style="font-size: 13px; color: #475569; padding-bottom: 8px;"><strong>Biografia clara:</strong> Destaque suas especialidades e como você conduz suas sessões.</td>
+                    </tr>
+                    <tr>
+                        <td width="26" style="vertical-align: top; font-size: 14px;">3.</td>
+                        <td style="font-size: 13px; color: #475569;"><strong>Conheça o Fórum:</strong> Interaja com outros profissionais em nossa sala de debates clínicos.</td>
+                    </tr>
+                </table>
+            </div>
+
+            ${emailCtaBtn(`${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`, 'Configurar Meu Consultório')}
         `;
-        await sendEmail(user.email, title, getBaseTemplate(title, content));
+        await sendEmail(user.email, '🎉 Seja Muito Bem-vindo(a) à Yelo Psi!', getBaseTemplate(title, content, {
+            tagText: '🎉 Seja Muito Bem-vindo(a)',
+            tagColor: '#F0FDF4',
+            toEmail: user.email
+        }));
     } else {
-        const title = 'Bem-vindo(a) à Yelo! 💛';
+        const title = 'Boas-vindas à Yelo! 💛';
+        const patientName = user.nome ? user.nome.split(' ')[0] : '';
+        const questionarioUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/questionario`;
+
         const content = `
-            <p>Olá, <strong>${user.nome.split(' ')[0]}</strong>!</p>
-            <p>Criamos um espaço seguro e sigiloso para você. Acesse seu painel e responda ao questionário rápido para encontrarmos o psicólogo ideal para o seu momento.</p>
-            <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/questionario" class="btn">Encontrar meu Psicólogo</a></center>
+            <p>Olá, <strong>${patientName}</strong>!</p>
+            <p>Criamos a Yelo para ser um espaço seguro, acolhedor e humanizado na sua busca pelo profissional ideal.</p>
+            
+            <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                <strong style="color: #1B4332; font-size: 14px; display: block; margin-bottom: 8px;">Encontre o psicólogo certo para você:</strong>
+                <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">
+                    Nosso questionário rápido analisa suas preferências de abordagem, valores de consulta e formato de atendimento para conectar você a quem realmente entende seu momento de vida.
+                </p>
+            </div>
+
+            ${emailCtaBtn(questionarioUrl, 'Encontrar Meu Psicólogo')}
         `;
-        await sendEmail(user.email, title, getBaseTemplate(title, content));
+        await sendEmail(user.email, '💛 Boas-vindas à Yelo!', getBaseTemplate(title, content, {
+            tagText: '💛 Boas-vindas à Yelo',
+            tagColor: '#FEF3C7',
+            toEmail: user.email
+        }));
     }
 };
 
 exports.sendPasswordResetEmail = async (user, resetLink) => {
-    const title = 'Redefinição de Senha';
+    const title = 'Redefinição de Senha 🔒';
+    const userName = user.nome ? user.nome.split(' ')[0] : 'Usuário';
+
     const content = `
-        <p>Olá, <strong>${user.nome}</strong>!</p>
-        <p>Recebemos um pedido para redefinir a sua senha na Yelo. Se não foi você, ignore este e-mail.</p>
-        <p>Para criar uma nova senha, clique no botão abaixo:</p>
-        <center><a href="${resetLink}" class="btn">Redefinir Minha Senha</a></center>
+        <p>Olá, <strong>${userName}</strong>!</p>
+        <p>Recebemos uma solicitação para redefinir a senha de acesso da sua conta na plataforma Yelo.</p>
+        
+        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px; margin: 24px 0;">
+            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.5;">
+                Por motivos de segurança, este link é temporário. Se você não solicitou a redefinição, nenhuma ação é necessária e sua senha atual continuará válida.
+            </p>
+        </div>
+
+        ${emailCtaBtn(resetLink, 'Redefinir Minha Senha')}
     `;
-    await sendEmail(user.email, 'Redefinição de Senha - Yelo', getBaseTemplate(title, content));
+    await sendEmail(user.email, '🔒 Redefinição de Senha - Yelo', getBaseTemplate(title, content, {
+        tagText: '🔒 Segurança da Conta',
+        tagColor: '#F1F5F9',
+        toEmail: user.email
+    }));
 };
 
 exports.sendRemarketingEmail = async (user, step) => {
     let titulo = '';
     let msg = '';
+    let tagText = '● Consultório Yelo';
+    let tagColor = '#F0FDF4';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const loginUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
     
     if (step === 1) {
-        titulo = 'Seu perfil na Yelo está quase pronto! 🚀';
-        msg = 'Notamos que você se cadastrou, mas ainda não ativou sua assinatura. Finalize seu perfil agora para não perder pacientes que buscam exatamente por sua especialidade.';
+        titulo = 'Seu consultório na Yelo está quase pronto! 🚀';
+        tagText = '🚀 Ativação de Consultório';
+        tagColor = '#F0FDF4';
+        msg = 'Notamos que você realizou seu cadastro profissional, mas ainda não concluiu a ativação da sua assinatura. Pacientes realizam buscas terapêuticas em nossa plataforma todos os dias procurando por abordagens como a sua. Conclua seu perfil agora para não perder nenhuma conexão qualificada.';
     } else if (step === 2) {
         titulo = 'Por que escolher a Yelo? 💛';
-        msg = 'Com a Yelo, conectamos você a pacientes reais através da nossa inteligência de match. Investimos ativamente em anúncios para garantir que nossa comunidade de psicólogos tenha uma agenda saudável. Assine hoje e apareça nas buscas.';
+        tagText = '💛 Ecossistema Clínico';
+        tagColor = '#FEF3C7';
+        msg = 'Com a Yelo, conectamos sua abordagem terapêutica a pacientes reais através da nossa inteligência de match e de investimento contínuo em tráfego qualificado. Assine hoje mesmo e apareça nas buscas ativas do nosso ecossistema.';
     } else if (step === 3) {
-        titulo = 'Último lembrete: Faça parte da Yelo ⏰';
-        msg = 'Esta é uma ótima oportunidade para expandir seus atendimentos com uma plataforma feita com cuidado e ética. Ative sua assinatura agora e desfrute de todos os recursos da nossa comunidade.';
+        titulo = 'Última oportunidade: Faça parte da Yelo ⏰';
+        tagText = '⏰ Última Chamada';
+        tagColor = '#FEF3C7';
+        msg = 'Construímos um espaço com propósito e ética para acolher a sua prática clínica. Queremos muito ver seu perfil em destaque conectando você a novas histórias. Ative sua assinatura para desbloquear todos os recursos da comunidade.';
     } else if (step === 4) {
-        titulo = `Você tem ${user.whatsapp_clicks || 1} paciente(s) tentando falar com você! 💛`;
-        msg = `Notamos que o seu perfil atraiu interessados e você recebeu cliques no seu WhatsApp recentemente! Como seu período de teste terminou e sua assinatura está inativa, sua agenda pública foi bloqueada e os pacientes não conseguem mais entrar em contato. Ative sua assinatura Premium agora para desbloquear seu WhatsApp e voltar a receber novos pacientes sem limites.`;
+        const clicks = user.whatsapp_clicks || 1;
+        titulo = `Você tem ${clicks} paciente(s) aguardando contato! 💛`;
+        tagText = '💛 Pacientes Interessados';
+        tagColor = '#FEF3C7';
+        msg = `O seu perfil atraiu interessados e você recebeu ${clicks} clique(s) no seu WhatsApp recentemente! Como seu período de teste terminou e sua assinatura está inativa, sua agenda pública foi temporariamente pausada. Ative sua assinatura para desbloquear seu WhatsApp e voltar a receber novos pacientes sem limites.`;
     }
 
     const content = `
-        <p>Olá, <strong>${user.nome.split(' ')[0]}</strong>!</p>
+        <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
         <p>${msg}</p>
-        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Acessar Plataforma</a></center>
+
+        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px; margin: 24px 0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td width="36" style="vertical-align: top; font-size: 20px;">✨</td>
+                    <td style="padding-left: 10px; font-size: 13px; color: #475569; line-height: 1.5;">
+                        Acesso completo ao Fórum exclusivo, algoritmo de match inteligente e contatos diretos no seu WhatsApp sem intermediações.
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        ${emailCtaBtn(loginUrl, 'Ativar Meu Consultório')}
     `;
-    await sendEmail(user.email, titulo, getBaseTemplate(titulo, content));
+    await sendEmail(user.email, titulo, getBaseTemplate(titulo, content, {
+        tagText,
+        tagColor,
+        toEmail: user.email
+    }));
 };
 
 exports.sendFirstLeadEmail = async (user) => {
-    const title = '🎉 Você recebeu seu primeiro contato!';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const title = 'Um paciente iniciou contato com você 👋';
     const content = `
-        <p>Ótimas notícias, <strong>${user.nome.split(' ')[0]}</strong>!</p>
-        <p>Um paciente acabou de clicar no botão de WhatsApp no seu perfil da Yelo. Isso significa que sua apresentação está atraindo interessados. Acesse sua conta agora para acompanhar seus acessos e aproveitar ao máximo a plataforma.</p>
-        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login" class="btn">Acessar meu Painel</a></center>
+        <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
+        <p>Temos ótimas notícias para o seu consultório: um paciente acaba de clicar no seu botão de WhatsApp após ler o seu perfil na Yelo.</p>
+        <p>Isso indica que sua abordagem clínica e apresentação ressoaram fortemente com o momento de vida dessa pessoa.</p>
+        
+        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px 22px; margin: 24px 0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td width="48" style="vertical-align: top;">
+                        <div style="width: 44px; height: 44px; background-color: #E6F4EA; color: #1B4332; border-radius: 50%; font-size: 20px; text-align: center; line-height: 44px;">
+                            💬
+                        </div>
+                    </td>
+                    <td style="padding-left: 14px; vertical-align: top;">
+                        <strong style="font-size: 15px; color: #1B4332; display: block; margin-bottom: 4px;">Atendimento em Andamento</strong>
+                        <p style="margin: 0; font-size: 13px; color: #64748B; line-height: 1.5;">
+                            Fique atento às notificações do seu WhatsApp. Assim que conversar com o paciente, você poderá atualizar o status desse atendimento no seu painel para refinarmos suas próximas indicações.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        ${emailCtaBtn(`${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi/psi_dashboard`, 'Acessar Painel do Consultório')}
     `;
-    await sendEmail(user.email, title, getBaseTemplate(title, content));
+    await sendEmail(user.email, '💛 Novo Paciente Interessado: Um paciente iniciou contato com você 👋', getBaseTemplate(title, content, {
+        tagText: '💛 Novo Paciente Interessado',
+        tagColor: '#FEF3C7',
+        toEmail: user.email
+    }));
 };
-
-
 
 exports.sendEvaluationEmail = async (user) => {
     const title = 'Como foi sua experiência na Yelo? 💛';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const feedbackUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/feedback?psiId=${user.id}`;
+
     const content = `
-        <p>Olá, <strong>${user.nome.split(' ')[0]}</strong>!</p>
-        <p>Notamos que o seu período na Yelo chegou ao fim recentemente. Nosso maior objetivo é construir uma plataforma que realmente faça a diferença na prática clínica dos profissionais de psicologia, e a sua opinião é a peça mais importante para nós.</p>
-        <p>Gostaríamos muito de saber como foi a sua jornada conosco. O que funcionou bem? O que poderia ser melhor? Leva apenas um minutinho e nos ajuda a evoluir cada vez mais!</p>
-        <center>
-            <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/feedback?psiId=${user.id}" class="btn" style="background-color: #1B4332; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block; margin-bottom: 20px;">Avaliar a Plataforma</a>
-        </center>
-        <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #1B4332; border-radius: 4px; color: #4b5563; font-size: 0.95em;">
-            Seja para compartilhar um elogio, uma crítica construtiva ou uma sugestão de nova funcionalidade, nós estamos ouvindo.
+        <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
+        <p>Notamos que o seu período na Yelo chegou ao fim recentemente. Nosso maior objetivo é construir uma plataforma que realmente faça a diferença na prática clínica dos profissionais de psicologia, e a sua percepção é a parte mais valiosa dessa construção.</p>
+        
+        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
+            <strong style="color: #1B4332; font-size: 14px; display: block; margin-bottom: 6px;">Leva menos de 1 minuto:</strong>
+            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.5;">
+                O que funcionou bem na sua jornada? O que poderíamos aprimorar? Seja para compartilhar um elogio, uma crítica ou sugestão de recurso, nós estamos prontos para ouvir.
+            </p>
         </div>
-        <p>E lembre-se: as portas da nossa comunidade estarão sempre abertas para você.</p>
+
+        ${emailCtaBtn(feedbackUrl, 'Avaliar Minha Experiência')}
+
+        <p style="font-size: 13px; color: #718096; text-align: center;">E lembre-se: as portas da nossa comunidade estarão sempre abertas para você.</p>
     `;
-    await sendEmail(user.email, title, getBaseTemplate(title, content));
+    await sendEmail(user.email, '💛 Sua opinião é fundamental: Como foi sua experiência na Yelo?', getBaseTemplate(title, content, {
+        tagText: '💛 Sua Opinião Importa',
+        tagColor: '#FEF3C7',
+        toEmail: user.email
+    }));
 };
 
 exports.sendFeedbackRequestEmail = async (user, guestName) => {
-    const title = 'Acompanhe o andamento desse contato';
+    const title = 'Acompanhe a evolução desse contato 👋';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
     const patientText = (guestName === 'um paciente') 
-        ? '<strong>Um paciente</strong> demonstrou interesse' 
-        : `O paciente <strong>${guestName}</strong> demonstrou interesse`;
+        ? 'Um paciente' 
+        : `O paciente <strong>${guestName}</strong>`;
+    const dashboardUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi/psi_dashboard`;
 
     const content = `
-        <p>Olá, <strong>${user.nome}</strong>!</p>
-        <p>${patientText} no seu perfil e iniciou um contato pelo WhatsApp.</p>
-        <p>Agora, queremos saber como essa conexão evoluiu.</p>
-        <p>Sua resposta leva menos de 30 segundos e ajuda a Yelo a entender quais indicações estão gerando atendimentos, tornando as próximas recomendações cada vez mais precisas.</p>
-        <p>👉 Basta acessar seu painel e atualizar o status desse contato.</p>
-        <center><a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi/psi_dashboard" class="btn">Atualizar atendimento</a></center>
+        <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
+        <p>${patientText} iniciou contato com você pelo WhatsApp recentemente através da plataforma Yelo.</p>
+        
+        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px 22px; margin: 24px 0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td width="42" style="vertical-align: top;">
+                        <div style="width: 38px; height: 38px; background-color: #E6F4EA; color: #1B4332; border-radius: 50%; font-size: 18px; text-align: center; line-height: 38px;">
+                            💬
+                        </div>
+                    </td>
+                    <td style="padding-left: 12px; vertical-align: top;">
+                        <strong style="font-size: 14px; color: #1B4332; display: block; margin-bottom: 4px;">Atualização Rápida de Atendimento</strong>
+                        <p style="margin: 0; font-size: 13px; color: #64748B; line-height: 1.5;">
+                            Leva menos de 30 segundos: informar se esse contato evoluiu para consulta ajuda nosso algoritmo a refinar e direcionar indicações cada vez mais precisas.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        ${emailCtaBtn(dashboardUrl, 'Atualizar Status do Atendimento')}
     `;
-    await sendEmail(user.email, 'Um paciente demonstrou interesse no seu perfil 👋', getBaseTemplate(title, content));
+    await sendEmail(user.email, 'Um paciente demonstrou interesse no seu perfil 👋', getBaseTemplate(title, content, {
+        tagText: '💬 Contato de Paciente',
+        tagColor: '#FEF3C7',
+        toEmail: user.email
+    }));
 };
 
 exports.sendWeeklyPerformanceEmail = async (user, matchesCount, profileViewsCount, topTheme) => {
     const title = 'Veja como o seu perfil repercutiu nesta semana ✨';
+    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
     const destaqueText = topTheme 
         ? `Seu consultório esteve em destaque em buscas por <strong>${topTheme}</strong>.` 
         : `Seu consultório esteve em evidência nas buscas qualificadas da nossa rede.`;
 
     const content = `
-        <p>Olá, <strong>${user.nome.split(' ')[0]}</strong>, tudo bem?</p>
+        <p>Olá, <strong>${psiName}</strong>, tudo bem?</p>
         <p>Acreditamos que a gestão do seu consultório precisa ser transparente e leve. Por isso, reunimos os dados de posicionamento do seu perfil na Yelo nos últimos 7 dias.</p>
         <p>Mesmo quando o WhatsApp não toca imediatamente, a plataforma continua trabalhando ativamente para conectar seu nome aos pacientes certos.</p>
         
-        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 22px 0 16px 0;">
-            <tr>
-                <td width="48%" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="kpi-table" style="margin: 22px 0 16px 0;">
+            <tr class="kpi-row">
+                <td class="kpi-col" width="48%" valign="top" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top; box-sizing: border-box;">
                     <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Matches Inteligentes</span>
-                    <div style="font-size: 28px; font-weight: 800; color: #1B4332; margin: 6px 0 2px 0;">${matchesCount}</div>
-                    <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.4;">Pacientes cujo momento clínico combinou com sua especialidade.</p>
+                    <div style="font-size: 28px; font-weight: 800; color: #1B4332; margin: 6px 0 2px 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">${matchesCount}</div>
+                    <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.4;">Pacientes cujo momento clínico combinou com sua abordagem.</p>
                 </td>
-                <td width="4%">&nbsp;</td>
-                <td width="48%" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top;">
+                <td class="kpi-spacer" width="4%" style="width: 4%; font-size: 0; line-height: 0;">&nbsp;</td>
+                <td class="kpi-col" width="48%" valign="top" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top; box-sizing: border-box;">
                     <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">👀 Visualizações</span>
-                    <div style="font-size: 28px; font-weight: 800; color: #1B4332; margin: 6px 0 2px 0;">${profileViewsCount}</div>
-                    <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.4;">Acessos completos à sua página profissional e horários.</p>
+                    <div style="font-size: 28px; font-weight: 800; color: #1B4332; margin: 6px 0 2px 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">${profileViewsCount}</div>
+                    <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.4;">Visitas completas à sua biografia, formação e horários.</p>
                 </td>
             </tr>
         </table>
@@ -575,23 +950,76 @@ exports.sendWeeklyPerformanceEmail = async (user, matchesCount, profileViewsCoun
         <p style="font-weight: 600; color: #1B4332; margin-bottom: 8px;">Dica para impulsionar suas conexões:</p>
         <p>Se você teve boas visualizações, responder a perguntas de pacientes ou colegas no Fórum constrói autoridade instantânea e deixa o seu perfil em evidência para toda a comunidade.</p>
         
-        <div class="btn-container">
-            <a href="${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi/psi_dashboard?page=psi_forum.html" class="btn">Acessar Meu Hub de Evolução &rarr;</a>
-        </div>
+        ${emailCtaBtn(`${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi/psi_dashboard?page=psi_forum.html`, 'Acessar Meu Hub de Evolução')}
     `;
-    await sendEmail(user.email, '📊 Veja o desempenho do seu perfil na Yelo nesta semana!', getBaseTemplate(title, content, { tagText: '● Relatório Semanal' }));
+    await sendEmail(user.email, '📊 Veja o desempenho do seu perfil na Yelo nesta semana!', getBaseTemplate(title, content, { 
+        tagText: '● Relatório Semanal',
+        toEmail: user.email
+    }));
 };
 
 exports.sendQuestionAnsweredEmail = async (email, slug) => {
-    const title = "Sua dúvida foi respondida! 🎉";
+    const title = 'Sua dúvida na Yelo foi respondida! 🎉';
     const linkDaResposta = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/perguntas/${slug}`;
+
     const content = `
-        <p>Olá,</p>
-        <p>Um de nossos especialistas acabou de responder a sua pergunta na comunidade Yelo.</p>
-        <p>Você pode conferir a resposta completa e o perfil do profissional clicando no botão abaixo:</p>
-        <center><a href="${linkDaResposta}" class="btn">Ver a resposta</a></center>
-        <p style="margin-top: 30px;">Esperamos que isso te ajude. Obrigado por participar da nossa comunidade!</p>
-        <p>Com carinho,<br>Equipe Yelo</p>
+        <p>Olá!</p>
+        <p>Um dos profissionais de psicologia da rede Yelo acabou de responder à pergunta que você enviou em nossa comunidade pública.</p>
+        
+        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td width="42" style="vertical-align: top;">
+                        <div style="width: 38px; height: 38px; background-color: #FEF3C7; color: #92400E; border-radius: 50%; font-size: 18px; text-align: center; line-height: 38px;">
+                            💡
+                        </div>
+                    </td>
+                    <td style="padding-left: 12px; vertical-align: top;">
+                        <strong style="font-size: 14px; color: #1B4332; display: block; margin-bottom: 4px;">Orientação Profissional Disponível</strong>
+                        <p style="margin: 0; font-size: 13px; color: #64748B; line-height: 1.5;">
+                            Você pode conferir a resposta completa, reflexões do especialista e o perfil profissional de quem respondeu.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        ${emailCtaBtn(linkDaResposta, 'Ver Resposta Completa')}
     `;
-    await sendEmail(email, title, getBaseTemplate(title, content));
+    await sendEmail(email, '💡 Sua dúvida foi respondida na Comunidade Yelo!', getBaseTemplate(title, content, {
+        tagText: '💡 Dúvida Respondida',
+        tagColor: '#FEF3C7',
+        toEmail: email
+    }));
 };
+
+exports.sendForumReplyEmail = async (targetUser, senderName, commentContent, postId) => {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+    const postLink = `${frontendUrl}/psi/psi_dashboard?page=psi_forum.html&postId=${postId}`;
+    const title = 'Novo comentário na sua discussão ✨';
+    const snippet = commentContent && commentContent.length > 180 ? `${commentContent.substring(0, 180)}...` : (commentContent || '');
+    const psiName = targetUser.nome ? targetUser.nome.split(' ')[0] : 'Colega';
+
+    const content = `
+        <p>Olá, <strong>${psiName}</strong>!</p>
+        <p><strong>${senderName}</strong> respondeu a uma publicação sua no Fórum de Psicólogos da Yelo:</p>
+        
+        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px 22px; margin: 24px 0;">
+            <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">💬 Resposta da Comunidade</span>
+            <p style="margin: 10px 0 0 0; font-size: 14px; color: #1B4332; font-style: italic; line-height: 1.6;">
+                "${snippet}"
+            </p>
+        </div>
+
+        <p>Para ler a resposta na íntegra e continuar a discussão com os colegas, acesse agora pelo seu painel:</p>
+        
+        ${emailCtaBtn(postLink, 'Ver Discussão no Fórum')}
+    `;
+
+    await sendEmail(targetUser.email, `💬 ${senderName} respondeu no Fórum da Yelo`, getBaseTemplate(title, content, {
+        tagText: '● Fórum Yelo Psi',
+        tagColor: '#F0FDF4',
+        toEmail: targetUser.email
+    }));
+};
+

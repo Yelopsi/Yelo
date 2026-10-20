@@ -135,6 +135,9 @@ app.use(visitMiddleware);
 // Trazidas para cima para evitar conflito com cache de arquivos estáticos
 app.get('/questionario', (req, res) => res.render('questionario'));
 app.get('/psi_questionario', (req, res) => res.render('psi_questionario'));
+app.get(['/unsubscribe', '/subscribe', '/preferencias-email'], (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/unsubscribe.html'));
+});
 
 // SEO Middleware (X-Robots-Tag): Impede a indexação de URLs com parâmetro 'redirect'
 app.use((req, res, next) => {

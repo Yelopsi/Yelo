@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yelo • Novo Conceito Visual de E-mails para Psicólogos</title>
+    <title>Yelo • Hub de Validação Visual de E-mails 2026</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0F172A;
+            background: #0B1120;
             color: #F8FAFC;
             min-height: 100vh;
             display: flex;
@@ -36,8 +36,8 @@
 
         /* TOP CONTROL BAR */
         .showcase-header {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(14px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 16px 24px;
             display: flex;
@@ -60,7 +60,7 @@
             background: var(--verde-escuro);
             color: var(--amarelo-yelo);
             font-weight: 800;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             padding: 6px 14px;
             border-radius: 12px;
             letter-spacing: 0.5px;
@@ -89,35 +89,49 @@
         .control-group {
             background: #1E293B;
             padding: 4px;
-            border-radius: 50px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .pill-tab {
-            background: transparent;
-            border: none;
-            color: #94A3B8;
-            padding: 8px 16px;
-            border-radius: 50px;
-            font-size: 0.82rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
             gap: 6px;
         }
 
-        .pill-tab:hover {
+        .scenario-select {
+            background: #0F172A;
+            color: #F8FAFC;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            max-width: 380px;
+        }
+
+        .scenario-select:focus {
+            border-color: #4ADE80;
+        }
+
+        .category-pill {
+            background: transparent;
+            border: none;
+            color: #94A3B8;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .category-pill:hover {
             color: #FFFFFF;
         }
 
-        .pill-tab.active {
+        .category-pill.active {
             background: var(--verde-escuro);
             color: #FFFFFF;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 238, 140, 0.25);
         }
 
@@ -126,7 +140,7 @@
             border: none;
             color: #94A3B8;
             padding: 8px 14px;
-            border-radius: 50px;
+            border-radius: 8px;
             font-size: 0.82rem;
             font-weight: 600;
             cursor: pointer;
@@ -141,11 +155,11 @@
         /* MAIN STAGE */
         .showcase-main {
             flex: 1;
-            padding: 30px 20px 60px 20px;
+            padding: 24px 20px 60px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 25px;
+            gap: 20px;
         }
 
         .concept-banner {
@@ -154,7 +168,7 @@
             background: linear-gradient(135deg, rgba(27, 67, 50, 0.35) 0%, rgba(15, 23, 42, 0.6) 100%);
             border: 1px solid rgba(45, 106, 79, 0.4);
             border-radius: 16px;
-            padding: 18px 24px;
+            padding: 16px 22px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -171,8 +185,8 @@
 
         .concept-banner-text p {
             color: #CBD5E1;
-            font-size: 0.85rem;
-            line-height: 1.4;
+            font-size: 0.82rem;
+            line-height: 1.45;
         }
 
         .concept-badges {
@@ -184,11 +198,45 @@
         .concept-chip {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.12);
-            padding: 5px 12px;
+            padding: 4px 10px;
             border-radius: 50px;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             color: #E2E8F0;
             font-weight: 500;
+        }
+
+        /* STATUS BADGE DO EMAIL */
+        .email-meta-strip {
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1E293B;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 10px 18px;
+            font-size: 0.8rem;
+            color: #94A3B8;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .email-meta-strip strong {
+            color: #F8FAFC;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ADE80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 3px 10px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.74rem;
         }
 
         /* PREVIEW FRAME WRAPPER */
@@ -204,7 +252,7 @@
         .email-viewport-card {
             background: #FFFFFF;
             border-radius: 24px;
-            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
             overflow: hidden;
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             width: 100%;
@@ -248,13 +296,14 @@
             border: 1px solid rgba(34, 197, 94, 0.25);
         }
 
-        /* Iframe container */
         .email-frame {
             width: 100%;
             border: none;
             display: block;
-            min-height: 850px;
+            height: auto;
+            min-height: 200px;
             background: #FAF8F5;
+            transition: height 0.2s ease;
         }
     </style>
 </head>
@@ -265,26 +314,47 @@
         <div class="showcase-brand">
             <div class="showcase-logo-badge">Yelo Psi</div>
             <div class="showcase-title-wrap">
-                <h1>Novo Conceito Visual de E-mails</h1>
-                <p>Design moderno, elegante e editorial feito sob medida para psicólogos</p>
+                <h1>Hub de E-mails Yelo (Visual 2026)</h1>
+                <p>23 e-mails automatizados na linguagem editorial & acolhedora</p>
             </div>
         </div>
 
         <div class="showcase-controls">
-            <!-- Modelo de E-mail -->
+            <!-- Seletor de Categoria e Cenário -->
             <div class="control-group">
-                <button class="pill-tab active" data-scenario="performance" onclick="switchScenario('performance')">
-                    📊 Desempenho Semanal
-                </button>
-                <button class="pill-tab" data-scenario="lead" onclick="switchScenario('lead')">
-                    💛 Novo Paciente
-                </button>
-                <button class="pill-tab" data-scenario="fatura" onclick="switchScenario('fatura')">
-                    💳 Fatura & PIX
-                </button>
-                <button class="pill-tab" data-scenario="boasvindas" onclick="switchScenario('boasvindas')">
-                    🎉 Boas-vindas
-                </button>
+                <select id="scenario-selector" class="scenario-select" onchange="switchScenario(this.value)">
+                    <optgroup label="📊 Desempenho & Pacientes">
+                        <option value="performance" selected>1. Desempenho Semanal (Sexta 10h)</option>
+                        <option value="lead">2. Novo Paciente Interessado (1º Lead)</option>
+                        <option value="feedback_reminder">3. Lembrete de Feedback de Contato (24h)</option>
+                    </optgroup>
+                    <optgroup label="💳 Financeiro & Cobrança (Asaas)">
+                        <option value="fatura">4. Fatura & PIX Disponível</option>
+                        <option value="fatura_vence">5. Fatura Vence Hoje (Aviso)</option>
+                        <option value="digitable_line">6. Código PIX / Boleto no Vencimento</option>
+                        <option value="overdue">7. Fatura em Atraso (Alerta de Pausa)</option>
+                        <option value="fatura_atualizada">8. Fatura Atualizada</option>
+                        <option value="pagamento_confirmado">9. Pagamento Confirmado</option>
+                        <option value="falha_pagamento">10. Falha no Pagamento (Cartão)</option>
+                        <option value="cancelamento">11. Assinatura Cancelada / Pausada</option>
+                    </optgroup>
+                    <optgroup label="🚀 Onboarding & Remarketing">
+                        <option value="boasvindas_psi">12. Boas-vindas (Psicólogo)</option>
+                        <option value="boasvindas_paciente">13. Boas-vindas (Paciente)</option>
+                        <option value="convite">14. Convite Lista de Espera (Vaga)</option>
+                        <option value="remarketing_1">15. Remarketing 1 (24-48h)</option>
+                        <option value="remarketing_2">16. Remarketing 2 (3-4 dias)</option>
+                        <option value="remarketing_3">17. Remarketing 3 (7-8 dias)</option>
+                        <option value="remarketing_4">18. Remarketing 4 (Cliques no Trial)</option>
+                        <option value="avaliacao">19. Avaliação de Experiência (Expirados)</option>
+                    </optgroup>
+                    <optgroup label="💬 Comunidade & Conta">
+                        <option value="novo_post_forum">20. Novo Tópico no Fórum de Psicólogos</option>
+                        <option value="resposta_forum">21. Resposta / Menção no Fórum</option>
+                        <option value="duvida_respondida">22. Dúvida Respondida na Comunidade (Q&A)</option>
+                        <option value="redefinir_senha">23. Redefinição de Senha</option>
+                    </optgroup>
+                </select>
             </div>
 
             <!-- Visualização Desktop vs Mobile vs Comparação -->
@@ -296,7 +366,7 @@
                     📱 Mobile
                 </button>
                 <button class="device-toggle-btn" id="btn-compare" onclick="setDeviceMode('compare')">
-                    ⚖️ Comparar com o Antigo
+                    ⚖️ Comparar c/ Antigo
                 </button>
             </div>
         </div>
@@ -308,18 +378,30 @@
         <!-- BANNER DE RESUMO DA PROPOSTA -->
         <div class="concept-banner">
             <div class="concept-banner-text">
-                <strong>O que muda com essa nova proposta visual:</strong>
-                <p>Adeus ao cabeçalho verde pesado e aos blocos genéricos. Entra um design editorial contemporâneo (estilo Notion/Linear/Kinfolk), com fundo creme aconchegante (`#FAF8F5`), tipografia serifada humanista para títulos, cards de métricas em pílula, botões refinados e compatibilidade total com Gmail, Apple Mail e Outlook.</p>
+                <strong>Nova Linguagem Visual Editorial Yelo (100% Unificada):</strong>
+                <p>Todos os 23 e-mails automatizados compartilham agora o mesmo padrão: fundo creme editorial acolhedor (`#FAF8F5`), borda sutil com gradiente Yelo no topo, tipografia humanista Georgia/New Kansas para títulos, tag pills de status, cards de destaque `#F8FAF7`, botões em pílula com sombra suave e rodapé com links completos e gestão de inscrição (Unsubscribe/Subscribe).</p>
             </div>
             <div class="concept-badges">
                 <span class="concept-chip">🎨 Paleta Nobre Yelo</span>
                 <span class="concept-chip">📱 100% Responsivo</span>
-                <span class="concept-chip">✨ Micro-cards de KPIs</span>
-                <span class="concept-chip">🛡️ Bulletproof HTML Tables</span>
+                <span class="concept-chip">🛡️ Bulletproof Tables</span>
+                <span class="concept-chip">✨ 23 Modelos Padronizados</span>
             </div>
         </div>
 
-        <!-- STAGE -->
+        <!-- STRIP COM METADADOS DO EMAIL SELECIONADO -->
+        <div class="email-meta-strip">
+            <div>
+                <span>Assunto de Envio: </span>
+                <strong id="meta-subject">Carregando...</strong>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <span>Disparo: <strong id="meta-trigger">CRON / Evento</strong></span>
+                <span class="status-pill">✓ Layout 2026 Ativo</span>
+            </div>
+        </div>
+
+        <!-- STAGE ÚNICO (DESKTOP OU MOBILE) -->
         <div class="stage-container" id="stage-single">
             <div class="email-viewport-card" id="main-viewport-card">
                 <iframe id="email-preview-frame" class="email-frame" title="Prévia do E-mail Moderno"></iframe>
@@ -329,16 +411,16 @@
         <!-- COMPARISON STAGE (OCULTO POR PADRÃO) -->
         <div class="stage-container" id="stage-compare" style="display: none;">
             <div class="comparison-col">
-                <div class="comparison-title old">❌ Como é Hoje (Antigo / "Brega")</div>
+                <div class="comparison-title old">❌ Formato Antigo (Genérico / Sem Tag Pill)</div>
                 <div class="email-viewport-card" style="max-width: 100%;">
-                    <iframe id="email-old-frame" class="email-frame" style="min-height: 750px;" title="Prévia do E-mail Antigo"></iframe>
+                    <iframe id="email-old-frame" class="email-frame" title="Prévia do E-mail Antigo"></iframe>
                 </div>
             </div>
 
             <div class="comparison-col">
-                <div class="comparison-title new">✅ Nova Proposta Yelo (Elegante & Acolhedora)</div>
+                <div class="comparison-title new">✅ Novo Padrão Yelo (Editorial, Acolhedor & Responsivo)</div>
                 <div class="email-viewport-card" style="max-width: 100%;">
-                    <iframe id="email-new-compare-frame" class="email-frame" style="min-height: 750px;" title="Prévia do E-mail Novo"></iframe>
+                    <iframe id="email-new-compare-frame" class="email-frame" title="Prévia do E-mail Novo"></iframe>
                 </div>
             </div>
         </div>
@@ -347,71 +429,45 @@
 
     <!-- SCRIPTS GERADORES DOS TEMPLATES DE EMAIL -->
     <script>
-        // URLs base de logos
         const LOGO_ESCURA = '/assets/logos/logo-escura.png';
         const LOGO_BRANCA = '/assets/logos/logo-branca.png';
 
         // =========================================================================
-        // NOVO TEMPLATE MASTER YELO (2026 PREMIUM DESIGN)
+        // NOVO TEMPLATE MASTER YELO (2026 DESIGN EDITORIAL)
         // =========================================================================
-        function buildModernEmail({ tagText, tagColor, title, preheader, bodyHtml, ctaText, ctaUrl, highlightBoxHtml, signatureRole }) {
+        function buildModernEmail({ tagText, tagColor, title, preheader, bodyHtml, ctaText, ctaUrl, highlightBoxHtml, signatureRole, toEmail }) {
+            const unsub = toEmail ? `/unsubscribe?email=${encodeURIComponent(toEmail)}` : `/unsubscribe`;
+            const sub = toEmail ? `/subscribe?email=${encodeURIComponent(toEmail)}` : `/subscribe`;
+
             return `<!DOCTYPE html>
-<html lang="pt-BR" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="pt-BR" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <base href="${window.location.origin}/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>${title}</title>
-    <!--[if mso]>
     <style>
-        table {border-collapse:collapse;border-spacing:0;margin:0;}
-        div, td {padding:0;}
-        div {margin:0 !important;}
-    </style>
-    <noscript>
-        <xml>
-            <o:OfficeDocumentSettings>
-            <o:PixelsPerInch>96</o:PixelsPerInch>
-            </o:OfficeDocumentSettings>
-        </xml>
-    </noscript>
-    <![endif]-->
-    <style>
-        /* RESET & BASE */
         html, body {
             margin: 0 !important;
             padding: 0 !important;
-            height: 100% !important;
             width: 100% !important;
             background-color: #FAF8F5 !important;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
-        table, td {
-            mso-table-lspace: 0pt;
-            mso-table-rspace: 0pt;
-        }
-        img {
-            border: 0;
-            height: auto;
-            line-height: 100%;
-            outline: none;
-            text-decoration: none;
-            -ms-interpolation-mode: bicubic;
-        }
-        /* ESTILOS TIPOGRÁFICOS */
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
         .email-title {
             font-family: Georgia, 'New Kansas', 'Times New Roman', serif !important;
             color: #1B4332 !important;
-            font-size: 26px !important;
+            font-size: 25px !important;
             line-height: 1.3 !important;
             font-weight: 700 !important;
-            margin: 0 0 16px 0 !important;
+            margin: 0 0 18px 0 !important;
             letter-spacing: -0.3px !important;
         }
-        .email-p {
+        .email-p, p {
             color: #4A5568 !important;
             font-size: 15px !important;
             line-height: 1.68 !important;
@@ -419,82 +475,69 @@
         }
         .tag-pill {
             display: inline-block;
-            background-color: #F0FDF4;
-            color: #166534;
-            border: 1px solid #BBF7D0;
+            background-color: ${tagColor || '#F0FDF4'};
+            color: ${tagColor === '#FEF3C7' ? '#92400E' : (tagColor === '#FEF2F2' ? '#991B1B' : '#166534')};
+            border: 1px solid ${tagColor === '#FEF3C7' ? '#FDE68A' : (tagColor === '#FEF2F2' ? '#FECACA' : '#BBF7D0')};
             padding: 5px 14px;
             border-radius: 50px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.4px;
             text-transform: uppercase;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
         }
-        .btn-yelo {
+        .btn-yelo, .btn {
+            display: inline-block !important;
+            padding: 14px 34px !important;
             background-color: #1B4332 !important;
             color: #FFFFFF !important;
             text-decoration: none !important;
+            border-radius: 50px !important;
             font-weight: 600 !important;
             font-size: 15px !important;
-            padding: 14px 34px !important;
-            border-radius: 50px !important;
-            display: inline-block !important;
-            box-shadow: 0 4px 14px rgba(27, 67, 50, 0.2) !important;
-            mso-padding-alt: 0;
             text-align: center !important;
+            box-shadow: 0 4px 14px rgba(27, 67, 50, 0.18) !important;
         }
-        /* RESPONSIVIDADE MOBILE */
+        .highlight-code {
+            font-family: monospace;
+            font-size: 12px;
+            color: #1B4332;
+            word-break: break-all;
+            background: #FFFFFF;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #CBD5E1;
+            font-weight: bold;
+        }
+        .outer-cell {
+            padding: 28px 12px 28px 12px;
+        }
         @media only screen and (max-width: 600px) {
-            .email-container {
-                width: 100% !important;
-                max-width: 100% !important;
-                border-radius: 0 !important;
-                border-left: none !important;
-                border-right: none !important;
-            }
-            .content-padding {
-                padding: 28px 20px !important;
-            }
-            .email-title {
-                font-size: 22px !important;
-            }
-            .kpi-col {
-                display: block !important;
-                width: 100% !important;
-                margin-bottom: 10px !important;
-            }
-            .btn-yelo {
-                display: block !important;
-                width: 100% !important;
-                box-sizing: border-box !important;
-                padding: 14px 20px !important;
-            }
+            .outer-cell { padding: 16px 8px 16px 8px !important; }
+            .email-container { width: 100% !important; border-radius: 16px !important; }
+            .content-padding { padding: 24px 16px !important; }
+            .email-title { font-size: 22px !important; }
+            .kpi-table, .kpi-table tbody, .kpi-row { display: block !important; width: 100% !important; }
+            .kpi-col { display: block !important; width: 100% !important; box-sizing: border-box !important; margin-bottom: 12px !important; }
+            .kpi-spacer { display: none !important; }
+            .btn-yelo, .btn { display: block !important; width: 100% !important; box-sizing: border-box !important; padding: 14px 18px !important; }
         }
     </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: #FAF8F5;">
-
-    <!-- PREHEADER OCULTO PARA CLIENTES DE EMAIL -->
     <div style="display: none; font-size: 1px; color: #FAF8F5; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
         ${preheader || title}
     </div>
 
-    <!-- WRAPPER PRINCIPAL -->
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FAF8F5; table-layout: fixed;">
         <tr>
-            <td align="center" style="padding: 40px 15px;">
-                
-                <!-- CONTAINER CENTRAL (MAX 600PX) -->
+            <td align="center" class="outer-cell">
                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container" style="max-width: 600px; background-color: #FFFFFF; border-radius: 20px; overflow: hidden; border: 1px solid #EAE5DC; box-shadow: 0 10px 30px rgba(27, 67, 50, 0.04);">
-                    
-                    <!-- LINHA DE TOPO COM GRADIENTE SUTIL YELO -->
                     <tr>
                         <td style="height: 5px; background: linear-gradient(90deg, #1B4332 0%, #2D6A4F 65%, #FFEE8C 100%); font-size: 0; line-height: 0;">&nbsp;</td>
                     </tr>
-
-                    <!-- HEADER DA MARCA (CLEAN, ELEGANTE & COM RESPÍRO) -->
                     <tr>
-                        <td align="center" style="padding: 32px 35px 20px 35px; border-bottom: 1px solid #F5F1EB;">
+                        <td align="center" style="padding: 30px 35px 18px 35px; border-bottom: 1px solid #F5F1EB;">
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
                                     <td align="left">
@@ -507,104 +550,58 @@
                             </table>
                         </td>
                     </tr>
-
-                    <!-- CORPO PRINCIPAL -->
                     <tr>
-                        <td class="content-padding" style="padding: 36px 36px 32px 36px;">
-                            
-                            <!-- TAG PÍLULA -->
-                            ${tagText ? `
-                            <div>
-                                <span class="tag-pill" style="background-color: ${tagColor || '#F0FDF4'}; color: #166534; border: 1px solid #BBF7D0;">
-                                    ${tagText}
-                                </span>
-                            </div>
-                            ` : ''}
-
-                            <!-- TÍTULO EDITORIAL -->
+                        <td class="content-padding" style="padding: 34px 35px 28px 35px;">
+                            ${tagText ? `<div><span class="tag-pill">${tagText}</span></div>` : ''}
                             <h1 class="email-title">${title}</h1>
-
-                            <!-- CONTEÚDO PRINCIPAL -->
                             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
                                 ${bodyHtml}
                             </div>
-
-                            <!-- CARD DE DESTAQUE OU KPI SE HOUVER -->
-                            ${highlightBoxHtml ? `
-                            <div style="margin: 28px 0 24px 0;">
-                                ${highlightBoxHtml}
-                            </div>
-                            ` : ''}
-
-                            <!-- BOTÃO CTA DE AÇÃO -->
+                            ${highlightBoxHtml ? `${highlightBoxHtml}` : ''}
                             ${ctaText ? `
-                            <div style="margin: 32px 0 20px 0; text-align: center;">
-                                <!--[if mso]>
-                                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:48px;v-text-anchor:middle;width:240px;" arcsize="50%" stroke="f" fillcolor="#1B4332">
-                                <w:anchorlock/>
-                                <center style="color:#ffffff;font-family:sans-serif;font-size:15px;font-weight:bold;">${ctaText}</center>
-                                </v:roundrect>
-                                <![endif]-->
-                                <a href="${ctaUrl}" class="btn-yelo" style="background-color: #1B4332; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 15px; padding: 14px 34px; border-radius: 50px; display: inline-block;">
-                                    ${ctaText} &rarr;
-                                </a>
-                            </div>
-                            ` : ''}
-
-                            <!-- ASSINATURA HUMANIZADA -->
-                            <div style="margin-top: 36px; padding-top: 24px; border-top: 1px solid #F5F1EB;">
+                            <div style="text-align: center; margin: 28px 0 16px 0;">
+                                <a href="${ctaUrl}" target="_blank" rel="noopener noreferrer" class="btn-yelo">${ctaText} &rarr;</a>
+                            </div>` : ''}
+                            <div style="margin-top: 32px; padding-top: 22px; border-top: 1px solid #F5F1EB;">
                                 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                     <tr>
                                         <td>
                                             <p style="margin: 0; font-size: 14px; color: #1B4332; font-weight: 600;">Com carinho,</p>
                                             <p style="margin: 2px 0 0 0; font-size: 13px; color: #718096;">${signatureRole || 'Equipe Yelo • Apoio ao Psicólogo'}</p>
                                         </td>
-                                        <td align="right">
-                                            <span style="font-size: 20px;">💛</span>
-                                        </td>
+                                        <td align="right"><span style="font-size: 20px;">💛</span></td>
                                     </tr>
                                 </table>
                             </div>
-
                         </td>
                     </tr>
-
-                    <!-- FOOTER REFINADO & INSTITUCIONAL -->
                     <tr>
-                        <td style="background-color: #FAF8F5; padding: 26px 36px; text-align: center; border-top: 1px solid #EAE5DC;">
-                            
-                            <!-- ATALHOS RÁPIDOS -->
-                            <p style="margin: 0 0 14px 0; font-size: 12px; color: #718096; font-weight: 500;">
-                                <a href="https://www.yelopsi.com.br/login" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Meu Consultório</a> &nbsp;&bull;&nbsp;
-                                <a href="https://www.yelopsi.com.br/psi/psi_dashboard?page=psi_forum.html" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Fórum de Psicólogos</a> &nbsp;&bull;&nbsp;
-                                <a href="https://www.yelopsi.com.br/ajuda" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Central de Ajuda</a>
+                        <td style="background-color: #FAF8F5; padding: 22px 28px; text-align: center; border-top: 1px solid #EAE5DC;">
+                            <p style="margin: 0 0 12px 0; font-size: 12px; color: #718096; font-weight: 500;">
+                                <a href="/login" target="_blank" rel="noopener noreferrer" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Meu Consultório</a> &nbsp;&bull;&nbsp;
+                                <a href="/psi/psi_dashboard?page=psi_forum.html" target="_blank" rel="noopener noreferrer" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Fórum de Psicólogos</a> &nbsp;&bull;&nbsp;
+                                <a href="/ajuda" target="_blank" rel="noopener noreferrer" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Central de Ajuda</a>
                             </p>
-
-                            <p style="margin: 0 0 8px 0; font-size: 12px; color: #A0AEC0; line-height: 1.5;">
-                                Você está recebendo esta mensagem porque é um psicólogo cadastrado na plataforma Yelo.
+                            <p style="margin: 0 0 6px 0; font-size: 12px; color: #A0AEC0; line-height: 1.5;">
+                                Você está recebendo este e-mail profissional da plataforma Yelo.
                             </p>
-                            
+                            <p style="margin: 0 0 12px 0; font-size: 11px; color: #718096; line-height: 1.5;">
+                                Deseja pausar notificações? <a href="${unsub}" target="_blank" rel="noopener noreferrer" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Cancelar inscrição</a> &bull; <a href="${sub}" target="_blank" rel="noopener noreferrer" style="color: #1B4332; text-decoration: underline; font-weight: 600;">Gerenciar Inscrição</a>
+                            </p>
                             <p style="margin: 0; font-size: 11px; color: #CBD5E1;">
                                 &copy; ${new Date().getFullYear()} Yelo &bull; Apoio Psicológico e Saúde Mental. Todos os direitos reservados.
                             </p>
-
                         </td>
                     </tr>
-
                 </table>
-                <!-- /CONTAINER CENTRAL -->
-
             </td>
         </tr>
     </table>
-
 </body>
 </html>`;
         }
 
-        // =========================================================================
-        // TEMPLATE ANTIGO PARA COMPARAÇÃO REALISTA
-        // =========================================================================
+        // TEMPLATE ANTIGO GENÉRICO
         function buildOldEmail(title, content) {
             return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -612,35 +609,20 @@
     <base href="${window.location.origin}/">
     <meta charset="UTF-8">
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f5f7; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        .wrapper { width: 100%; table-layout: fixed; background-color: #f4f5f7; padding: 40px 0; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.04); }
-        .header { background-color: #1B4332; padding: 35px 20px; text-align: center; }
-        .header img { max-width: 140px; }
-        .content { padding: 40px 35px; color: #333333; line-height: 1.6; font-size: 16px; }
-        .content h2 { color: #1B4332; margin-top: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
-        .content p { margin: 16px 0; color: #4a5568; }
-        .footer { background-color: #f8f9fa; padding: 25px; text-align: center; color: #a0aec0; font-size: 13px; border-top: 1px solid #edf2f7; }
-        .btn { display: inline-block; padding: 14px 32px; background-color: #F59E0B; color: #ffffff !important; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 15px; margin-top: 10px; text-align: center; }
-        .btn-container { text-align: center; margin: 30px 0 10px 0; }
-        .highlight-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center; }
-        .highlight-code { font-family: monospace; font-size: 15px; color: #166534; word-break: break-all; margin-top: 10px; font-weight: bold; background: #fff; padding: 10px; border-radius: 4px; border: 1px dashed #86efac; }
+        body { font-family: Helvetica, Arial, sans-serif; background: #f4f5f7; margin: 0; padding: 20px; }
+        .box { max-width: 580px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #ddd; }
+        .hdr { background: #1B4332; padding: 25px; text-align: center; }
+        .hdr img { max-width: 120px; }
+        .bdy { padding: 30px; color: #333; line-height: 1.6; }
+        .btn { display: inline-block; padding: 12px 24px; background: #F59E0B; color: #fff !important; text-decoration: none; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="wrapper">
-        <div class="container">
-            <div class="header">
-                <img src="${LOGO_BRANCA}" alt="Yelo">
-            </div>
-            <div class="content">
-                <h2>${title}</h2>
-                ${content}
-            </div>
-            <div class="footer">
-                <p>Você está recebendo este e-mail porque está cadastrado na Yelo.</p>
-                <p>© ${new Date().getFullYear()} Yelo - Apoio Psicológico. Todos os direitos reservados.</p>
-            </div>
+    <div class="box">
+        <div class="hdr"><img src="${LOGO_BRANCA}" alt="Yelo"></div>
+        <div class="bdy">
+            <h2 style="color: #1B4332;">${title}</h2>
+            ${content}
         </div>
     </div>
 </body>
@@ -648,87 +630,72 @@
         }
 
         // =========================================================================
-        // CENÁRIOS DE E-MAILS
+        // BANCO DE DADOS DOS 23 CENÁRIOS
         // =========================================================================
         const SCENARIOS = {
             performance: {
+                subject: "📊 Veja o desempenho do seu perfil na Yelo nesta semana!",
+                trigger: "CRON Semanal (Toda Sexta-feira às 10h)",
                 newConfig: {
                     tagText: "● Relatório Semanal",
                     tagColor: "#F0FDF4",
                     title: "Veja como o seu perfil repercutiu nesta semana ✨",
                     preheader: "14 matches inteligentes e 38 visualizações de pacientes nos últimos 7 dias.",
                     bodyHtml: `
-                        <p class="email-p">Olá, <strong>Dra. Mariana</strong>!</p>
-                        <p class="email-p">Acreditamos que a gestão do seu consultório deve ser transparente e leve. Reunimos as métricas de posicionamento da sua página nos últimos 7 dias na Yelo.</p>
-                        <p class="email-p">Mesmo quando o paciente não entra em contato imediatamente, seu nome esteve ativamente visível nas buscas qualificadas da nossa rede.</p>
+                        <p class="email-p">Olá, <strong>Dra. Mariana</strong>, tudo bem?</p>
+                        <p class="email-p">Acreditamos que a gestão do seu consultório precisa ser transparente e leve. Por isso, reunimos os dados de posicionamento do seu perfil na Yelo nos últimos 7 dias.</p>
+                        <p class="email-p">Mesmo quando o WhatsApp não toca imediatamente, a plataforma continua trabalhando ativamente para conectar seu nome aos pacientes certos.</p>
                     `,
                     highlightBoxHtml: `
-                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                            <tr>
-                                <td class="kpi-col" width="48%" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top;">
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="kpi-table" style="margin: 22px 0 16px 0;">
+                            <tr class="kpi-row">
+                                <td class="kpi-col" width="48%" valign="top" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top; box-sizing: border-box;">
                                     <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">🎯 Matches Inteligentes</span>
                                     <div style="font-size: 28px; font-weight: 800; color: #1B4332; margin: 6px 0 2px 0;">14</div>
-                                    <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.4;">Pacientes cujo perfil clínico combinou com sua abordagem.</p>
+                                    <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.4;">Pacientes cujo momento clínico combinou com sua abordagem.</p>
                                 </td>
-                                <td width="4%">&nbsp;</td>
-                                <td class="kpi-col" width="48%" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top;">
+                                <td class="kpi-spacer" width="4%">&nbsp;</td>
+                                <td class="kpi-col" width="48%" valign="top" style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 16px 18px; vertical-align: top; box-sizing: border-box;">
                                     <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">👀 Visualizações</span>
                                     <div style="font-size: 28px; font-weight: 800; color: #1B4332; margin: 6px 0 2px 0;">38</div>
                                     <p style="margin: 0; font-size: 12px; color: #64748B; line-height: 1.4;">Visitas completas à sua biografia, formação e horários.</p>
                                 </td>
                             </tr>
                         </table>
-
-                        <div style="background-color: #FEF9EE; border: 1px solid #FDE68A; border-radius: 12px; padding: 14px 18px; margin-top: 12px;">
-                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                                <tr>
-                                    <td width="28" style="vertical-align: middle; font-size: 18px;">⭐</td>
-                                    <td style="vertical-align: middle; padding-left: 8px;">
-                                        <p style="margin: 0; font-size: 13px; color: #92400E; font-weight: 500;">
-                                            <strong>Tema em Alta:</strong> Seu consultório esteve em destaque em buscas por <em>Ansiedade, Burnout e Transições de Carreira</em>.
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
+                        <div style="background-color: #FEF9EE; border: 1px solid #FDE68A; border-radius: 12px; padding: 14px 18px; margin-bottom: 24px;">
+                            <p style="margin: 0; font-size: 13px; color: #92400E; font-weight: 500;">
+                                ⭐ <strong>Destaque da semana:</strong> Seu consultório esteve em destaque em buscas por <strong>Ansiedade e Transição de Carreira</strong>.
+                            </p>
                         </div>
+                        <p style="font-weight: 600; color: #1B4332; margin-bottom: 8px;">Dica para impulsionar suas conexões:</p>
+                        <p class="email-p">Responder a perguntas da comunidade no Fórum constrói autoridade instantânea e deixa o seu perfil em evidência para novos pacientes.</p>
                     `,
                     ctaText: "Acessar Meu Hub de Evolução",
-                    ctaUrl: "https://www.yelopsi.com.br/login"
+                    ctaUrl: "/psi/psi_dashboard?page=psi_forum.html"
                 },
                 oldTitle: "📊 Veja o desempenho do seu perfil na Yelo nesta semana!",
-                oldBodyHtml: `
-                    <p>Olá, <strong>Mariana</strong>, tudo bem?</p>
-                    <p>Acreditamos que a gestão do seu consultório precisa ser transparente. Por isso, reunimos os dados de visibilidade do seu perfil na Yelo nos últimos 7 dias.</p>
-                    <p>Mesmo quando o WhatsApp não toca, a plataforma continua trabalhando para posicionar o seu nome para os pacientes certos.</p>
-                    <p><strong>Seus números desta semana:</strong></p>
-                    <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 25px 0;">
-                        <p style="margin-top: 0; margin-bottom: 15px;">🎯 <strong>14 Matches Inteligentes:</strong> Vezes em que o algoritmo cruzou a dor de um paciente com a sua especialidade.</p>
-                        <p style="margin-top: 0; margin-bottom: 15px;">👀 <strong>38 Visualizações de Perfil:</strong> Pessoas que abriram a sua página para ler a sua biografia e formação.</p>
-                        <p style="margin-bottom: 0;">⭐ <strong>Destaque:</strong> Seu perfil esteve em alta nas buscas por Ansiedade.</p>
-                    </div>
-                    <div class="btn-container"><a href="#" class="btn">Acessar meu Hub de Evolução</a></div>
-                `
+                oldBodyHtml: "<p>Olá Mariana. Seus números: 14 matches e 38 views.</p><p><a href='#' class='btn'>Acessar</a></p>"
             },
 
             lead: {
+                subject: "💛 Novo Paciente Interessado: Um paciente iniciou contato com você 👋",
+                trigger: "Evento Instantâneo (Primeiro clique de WhatsApp)",
                 newConfig: {
                     tagText: "💛 Novo Paciente Interessado",
                     tagColor: "#FEF3C7",
                     title: "Um paciente iniciou contato com você 👋",
-                    preheader: "Contato iniciado pelo WhatsApp a partir do seu perfil na Yelo.",
+                    preheader: "Um paciente acaba de clicar no seu botão de WhatsApp após ler o seu perfil.",
                     bodyHtml: `
-                        <p class="email-p">Olá, <strong>Dr. Anderson</strong>!</p>
+                        <p class="email-p">Olá, <strong>Dr(a). Anderson</strong>!</p>
                         <p class="email-p">Temos ótimas notícias para o seu consultório: um paciente acaba de clicar no seu botão de WhatsApp após ler o seu perfil na Yelo.</p>
                         <p class="email-p">Isso indica que sua abordagem clínica e apresentação ressoaram fortemente com o momento de vida dessa pessoa.</p>
                     `,
                     highlightBoxHtml: `
-                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px 22px;">
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px 22px; margin: 24px 0;">
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
                                     <td width="48" style="vertical-align: top;">
-                                        <div style="width: 44px; height: 44px; background-color: #E6F4EA; color: #1B4332; border-radius: 50%; font-size: 20px; text-align: center; line-height: 44px;">
-                                            💬
-                                        </div>
+                                        <div style="width: 44px; height: 44px; background-color: #E6F4EA; color: #1B4332; border-radius: 50%; font-size: 20px; text-align: center; line-height: 44px;">💬</div>
                                     </td>
                                     <td style="padding-left: 14px; vertical-align: top;">
                                         <strong style="font-size: 15px; color: #1B4332; display: block; margin-bottom: 4px;">Atendimento em Andamento</strong>
@@ -741,29 +708,63 @@
                         </div>
                     `,
                     ctaText: "Acessar Painel do Consultório",
-                    ctaUrl: "https://www.yelopsi.com.br/psi/psi_dashboard"
+                    ctaUrl: "/psi/psi_dashboard"
                 },
                 oldTitle: "🎉 Você recebeu seu primeiro contato!",
-                oldBodyHtml: `
-                    <p>Ótimas notícias, <strong>Anderson</strong>!</p>
-                    <p>Um paciente acabou de clicar no botão de WhatsApp no seu perfil da Yelo. Isso significa que sua apresentação está atraindo interessados. Acesse sua conta agora para acompanhar seus acessos e aproveitar ao máximo a plataforma.</p>
-                    <div class="btn-container"><a href="#" class="btn">Acessar meu Painel</a></div>
-                `
+                oldBodyHtml: "<p>Um paciente clicou no seu WhatsApp na Yelo. Acesse seu painel agora.</p>"
+            },
+
+            feedback_reminder: {
+                subject: "Um paciente demonstrou interesse no seu perfil 👋",
+                trigger: "CRON Horário (24h após clique sem feedback preenchido)",
+                newConfig: {
+                    tagText: "💬 Contato de Paciente",
+                    tagColor: "#FEF3C7",
+                    title: "Acompanhe a evolução desse contato 👋",
+                    preheader: "Leva menos de 30 segundos: conte-nos se esse contato evoluiu para consulta.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dr(a). Camila</strong>!</p>
+                        <p class="email-p">O paciente <strong>Lucas</strong> iniciou contato com você pelo WhatsApp recentemente através da plataforma Yelo.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px 22px; margin: 24px 0;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td width="42" style="vertical-align: top;">
+                                        <div style="width: 38px; height: 38px; background-color: #E6F4EA; color: #1B4332; border-radius: 50%; font-size: 18px; text-align: center; line-height: 38px;">💬</div>
+                                    </td>
+                                    <td style="padding-left: 12px; vertical-align: top;">
+                                        <strong style="font-size: 14px; color: #1B4332; display: block; margin-bottom: 4px;">Atualização Rápida de Atendimento</strong>
+                                        <p style="margin: 0; font-size: 13px; color: #64748B; line-height: 1.5;">
+                                            Leva menos de 30 segundos: informar se esse contato evoluiu para consulta ajuda nosso algoritmo a refinar e direcionar indicações cada vez mais precisas.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    `,
+                    ctaText: "Atualizar Status do Atendimento",
+                    ctaUrl: "/psi/psi_dashboard"
+                },
+                oldTitle: "Acompanhe o andamento desse contato",
+                oldBodyHtml: "<p>O paciente demonstrou interesse no seu perfil. Atualize o atendimento.</p><center><a href='#' class='btn'>Atualizar</a></center>"
             },
 
             fatura: {
+                subject: "💳 Sua fatura da Yelo está disponível",
+                trigger: "Webhook Asaas (PAYMENT_CREATED Boleto/Pix)",
                 newConfig: {
                     tagText: "● Fatura Disponível",
                     tagColor: "#F1F5F9",
                     title: "Sua fatura da Yelo está disponível 💳",
-                    preheader: "Fatura de R$ 99,00 disponível com pagamento simplificado via PIX ou Boleto.",
+                    preheader: "Sua fatura de R$ 99,00 já foi gerada e está pronta para pagamento seguro.",
                     bodyHtml: `
-                        <p class="email-p">Olá, <strong>Dra. Camila</strong>!</p>
+                        <p class="email-p">Olá, <strong>Mariana</strong>!</p>
                         <p class="email-p">A sua fatura mensal referente à assinatura do ecossistema Yelo já foi gerada e está pronta para pagamento seguro.</p>
                         <p class="email-p">Mantendo sua assinatura em dia, seu perfil continua ativo nas buscas e com acesso completo ao Fórum exclusivo de psicólogos.</p>
                     `,
                     highlightBoxHtml: `
-                        <div style="background-color: #FAF8F5; border: 1px solid #EAE5DC; border-radius: 16px; padding: 22px;">
+                        <div style="background-color: #FAF8F5; border: 1px solid #EAE5DC; border-radius: 16px; padding: 22px; margin: 24px 0;">
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
                                     <td>
@@ -771,49 +772,288 @@
                                         <div style="font-size: 32px; font-weight: 800; color: #1B4332; margin: 4px 0;">R$ 99,00</div>
                                     </td>
                                     <td align="right" style="vertical-align: middle;">
-                                        <span style="background-color: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px;">
+                                        <span style="background-color: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px; display: inline-block; white-space: nowrap;">
                                             Vence em 25/10/2026
                                         </span>
                                     </td>
                                 </tr>
                             </table>
-
                             <div style="margin-top: 18px; padding-top: 16px; border-top: 1px dashed #CBD5E1;">
                                 <p style="margin: 0 0 8px 0; font-size: 12px; color: #475569; font-weight: 600;">Código PIX Copia e Cola:</p>
-                                <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 12px; color: #1B4332; word-break: break-all;">
+                                <div class="highlight-code">
                                     00020126580014br.gov.bcb.pix0136123e4567-e89b-12d3-a456-426614174000520400005303986540599.005802BR5913YELO SAUDE6009SAO PAULO62070503***6304ABCD
                                 </div>
                             </div>
                         </div>
                     `,
                     ctaText: "Visualizar e Pagar Fatura",
-                    ctaUrl: "https://www.yelopsi.com.br/login"
+                    ctaUrl: "/login"
                 },
-                oldTitle: "Sua nova fatura da Yelo está disponível",
-                oldBodyHtml: `
-                    <p>Olá, <strong>Camila</strong>! Tudo bem?</p>
-                    <p>A sua fatura referente ao uso da plataforma Yelo já foi gerada e está disponível para pagamento.</p>
-                    <div style="background-color: #f7fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
-                        <p style="margin: 5px 0;"><strong>Valor:</strong> R$ 99,00</p>
-                        <p style="margin: 5px 0;"><strong>Vencimento:</strong> 25/10/2026</p>
-                    </div>
-                    <div class="btn-container"><a href="#" class="btn">Acessar Minha Fatura</a></div>
-                `
+                oldTitle: "Sua fatura da Yelo está pronta",
+                oldBodyHtml: "<p>Valor: R$ 99,00. Vencimento: 25/10.</p><a href='#' class='btn'>Pagar</a>"
             },
 
-            boasvindas: {
+            fatura_vence: {
+                subject: "⚠️ Sua fatura da Yelo vence HOJE",
+                trigger: "Webhook Asaas (PAYMENT_DUEDATE_WARNING)",
+                newConfig: {
+                    tagText: "● Vence Hoje",
+                    tagColor: "#FEF3C7",
+                    title: "Sua fatura da Yelo vence hoje ⚠️",
+                    preheader: "Lembrete: sua fatura mensal vence hoje. Mantenha seu consultório ativo.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Mariana</strong>!</p>
+                        <p class="email-p">Este é um lembrete amigável de que o vencimento da sua mensalidade referente à assinatura da Yelo é <strong>hoje</strong>.</p>
+                        <p class="email-p">Mantendo sua assinatura regular, seu consultório permanece em destaque nas buscas inteligentes e conectado a novos pacientes.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #FAF8F5; border: 1px solid #EAE5DC; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <span style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Valor da Mensalidade</span>
+                                        <div style="font-size: 32px; font-weight: 800; color: #1B4332; margin: 4px 0;">R$ 99,00</div>
+                                    </td>
+                                    <td align="right" style="vertical-align: middle;">
+                                        <span style="background-color: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px; display: inline-block; white-space: nowrap;">
+                                            Vence Hoje (19/10/2026)
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    `,
+                    ctaText: "Visualizar e Pagar Fatura",
+                    ctaUrl: "/login"
+                },
+                oldTitle: "Sua fatura da Yelo vence HOJE ⚠️",
+                oldBodyHtml: "<p>Este é um lembrete de que o vencimento da sua fatura é HOJE.</p><a href='#' class='btn'>Acessar Fatura</a>"
+            },
+
+            digitable_line: {
+                subject: "💳 Código de Pagamento: Sua fatura Yelo vence hoje",
+                trigger: "Webhook Asaas (SEND_LINHA_DIGITAVEL)",
+                newConfig: {
+                    tagText: "● PIX Vence Hoje",
+                    tagColor: "#FEF3C7",
+                    title: "Código para pagamento da sua fatura Yelo 💳",
+                    preheader: "Copie e cole o código PIX para quitar sua fatura de hoje em segundos.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Mariana</strong>!</p>
+                        <p class="email-p">Para facilitar o seu dia a dia, preparamos o código direto para pagamento da sua fatura que vence <strong>hoje</strong>.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #FAF8F5; border: 1px solid #EAE5DC; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <span style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Valor a Pagar</span>
+                                        <div style="font-size: 32px; font-weight: 800; color: #1B4332; margin: 4px 0;">R$ 99,00</div>
+                                    </td>
+                                    <td align="right" style="vertical-align: middle;">
+                                        <span style="background-color: #FEF3C7; color: #92400E; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px; display: inline-block;">
+                                            Vence Hoje
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div style="margin-top: 18px; padding-top: 16px; border-top: 1px dashed #CBD5E1;">
+                                <p style="margin: 0 0 8px 0; font-size: 12px; color: #475569; font-weight: 600;">Código PIX Copia e Cola:</p>
+                                <div class="highlight-code">00020126580014br.gov.bcb.pix0136123e4567...</div>
+                            </div>
+                        </div>
+                    `,
+                    ctaText: "Abrir Fatura Completa",
+                    ctaUrl: "/login"
+                },
+                oldTitle: "Sua fatura da Yelo vence HOJE ⚠️",
+                oldBodyHtml: "<p>Copie o código e cole no seu banco.</p>"
+            },
+
+            overdue: {
+                subject: "Ação Necessária: Fatura Yelo em atraso",
+                trigger: "Webhook Asaas (PAYMENT_OVERDUE)",
+                newConfig: {
+                    tagText: "● Regularização Pendente",
+                    tagColor: "#FEF2F2",
+                    title: "Ação Necessária: Fatura Yelo em atraso ⚠️",
+                    preheader: "Regularize sua assinatura para manter seu consultório ativo nas buscas.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Mariana</strong>.</p>
+                        <p class="email-p">Ainda não identificamos a compensação da sua fatura mensal referente à assinatura do seu consultório na Yelo.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <span style="font-size: 12px; font-weight: 600; color: #991B1B; text-transform: uppercase; letter-spacing: 0.5px;">Fatura Pendente</span>
+                                        <div style="font-size: 32px; font-weight: 800; color: #7F1D1D; margin: 4px 0;">R$ 99,00</div>
+                                    </td>
+                                    <td align="right" style="vertical-align: middle;">
+                                        <span style="background-color: #FEE2E2; color: #991B1B; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px; display: inline-block;">
+                                            Venceu em 15/10/2026
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin: 14px 0 0 0; font-size: 13px; color: #991B1B; line-height: 1.5;">
+                                Para evitar a pausa temporária do seu perfil nas buscas públicas e garantir que você continue recebendo contatos de pacientes, regularize sua assinatura pelo botão abaixo.
+                            </p>
+                        </div>
+                    `,
+                    ctaText: "Regularizar Assinatura Agora",
+                    ctaUrl: "/login"
+                },
+                oldTitle: "Ação Necessária: Fatura Yelo em atraso",
+                oldBodyHtml: "<p>Ainda não identificamos o pagamento. Regularize para não perder pacientes.</p>"
+            },
+
+            fatura_atualizada: {
+                subject: "Atualização na sua fatura da Yelo",
+                trigger: "Webhook Asaas (PAYMENT_UPDATED)",
+                newConfig: {
+                    tagText: "● Fatura Atualizada",
+                    tagColor: "#F1F5F9",
+                    title: "Atualização na sua fatura da Yelo ✨",
+                    preheader: "Informamos que houve uma atualização na sua fatura com nova data de vencimento.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Mariana</strong>.</p>
+                        <p class="email-p">Informamos que os dados da sua fatura foram atualizados no sistema (novo vencimento ou ajuste de valor).</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #FAF8F5; border: 1px solid #EAE5DC; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <span style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Novo Valor</span>
+                                        <div style="font-size: 32px; font-weight: 800; color: #1B4332; margin: 4px 0;">R$ 99,00</div>
+                                    </td>
+                                    <td align="right" style="vertical-align: middle;">
+                                        <span style="background-color: #F1F5F9; color: #334155; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px;">
+                                            Novo Vencimento: 28/10/2026
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    `,
+                    ctaText: "Visualizar Fatura Atualizada",
+                    ctaUrl: "/login"
+                },
+                oldTitle: "Atualização na sua fatura da Yelo",
+                oldBodyHtml: "<p>Novo valor: R$ 99,00. Novo vencimento: 28/10.</p>"
+            },
+
+            pagamento_confirmado: {
+                subject: "✅ Pagamento Confirmado - Yelo",
+                trigger: "Webhook Asaas (PAYMENT_RECEIVED / CONFIRMED)",
+                newConfig: {
+                    tagText: "✅ Assinatura Confirmada",
+                    tagColor: "#F0FDF4",
+                    title: "Pagamento Confirmado com Sucesso! ✅",
+                    preheader: "Seu pagamento foi aprovado e seu consultório segue ativo nas buscas.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dr(a). Mariana</strong>!</p>
+                        <p class="email-p">Confirmamos o recebimento do pagamento da sua assinatura. Muito obrigado pela confiança e por fazer parte da comunidade Yelo.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <span style="font-size: 12px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">Assinatura Ativa</span>
+                                        <div style="font-size: 30px; font-weight: 800; color: #1B4332; margin: 4px 0;">R$ 99,00</div>
+                                        <p style="margin: 4px 0 0 0; font-size: 13px; color: #166534; font-weight: 600;">Plano Ecossistema Yelo</p>
+                                    </td>
+                                    <td align="right" style="vertical-align: middle;">
+                                        <span style="background-color: #DCFCE7; color: #15803D; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 50px;">
+                                            ● Perfil Ativo
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <p class="email-p">O seu perfil segue 100% ativo e visível nas buscas de pacientes, e suas ferramentas de gestão de consultório estão liberadas.</p>
+                    `,
+                    ctaText: "Acessar Meu Consultório",
+                    ctaUrl: "/login"
+                },
+                oldTitle: "Pagamento Confirmado! ✅",
+                oldBodyHtml: "<p>Seu pagamento de R$ 99,00 foi confirmado. Seu perfil continua ativo.</p>"
+            },
+
+            falha_pagamento: {
+                subject: "Ação Necessária: Falha no Pagamento da Assinatura",
+                trigger: "Webhook Asaas (PAYMENT_CREDIT_CARD_CAPTURE_REFUSED)",
+                newConfig: {
+                    tagText: "⚠️ Falha no Pagamento",
+                    tagColor: "#FEF2F2",
+                    title: "Ação Necessária: Falha no processamento da assinatura ⚠️",
+                    preheader: "Houve uma recusa na cobrança do cartão. Atualize sua forma de pagamento.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Mariana</strong>.</p>
+                        <p class="email-p">Houve uma falha ao tentar processar a cobrança da sua mensalidade no cartão de crédito cadastrado.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                            <p style="margin: 0; font-size: 14px; color: #991B1B; font-weight: 600;">O que acontece agora?</p>
+                            <p style="margin: 8px 0 0 0; font-size: 13px; color: #7F1D1D; line-height: 1.5;">
+                                Para que sua visibilidade para novos pacientes não seja interrompida, por favor acesse o link abaixo para atualizar os dados do cartão ou efetuar o pagamento via PIX.
+                            </p>
+                        </div>
+                    `,
+                    ctaText: "Atualizar Cartão ou Pagar",
+                    ctaUrl: "/login"
+                },
+                oldTitle: "Ação Necessária: Falha no Pagamento",
+                oldBodyHtml: "<p>Falha ao processar o pagamento. Atualize seus dados.</p>"
+            },
+
+            cancelamento: {
+                subject: "Sua Assinatura na Yelo foi Cancelada",
+                trigger: "Ação do Psicólogo (Cancelamento de Assinatura)",
+                newConfig: {
+                    tagText: "● Assinatura Pausada",
+                    tagColor: "#F1F5F9",
+                    title: "Sua assinatura foi pausada 💛",
+                    preheader: "Confirmamos o cancelamento da renovação da sua assinatura.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Mariana</strong>,</p>
+                        <p class="email-p">Confirmamos o cancelamento da renovação automática da sua assinatura. Seu perfil deixará de ser exibido nas buscas ao término do período vigente já pago.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                            <strong style="color: #1B4332; font-size: 14px; display: block; margin-bottom: 6px;">Como foi sua experiência?</strong>
+                            <p style="margin: 0 0 14px 0; font-size: 13px; color: #475569; line-height: 1.5;">
+                                Sua percepção é muito valiosa para continuarmos aprimorando a Yelo para toda a comunidade. Leva menos de 1 minuto para nos contar o que podemos melhorar:
+                            </p>
+                            <a href="/feedback" target="_blank" rel="noopener noreferrer" style="color: #166534; font-weight: 700; text-decoration: underline; font-size: 13px;">👉 Deixar meu Feedback Rápido</a>
+                        </div>
+                        <p class="email-p">Se em qualquer momento você desejar voltar a expandir seus atendimentos conosco, nossas portas estarão sempre abertas.</p>
+                    `,
+                    ctaText: "Reativar Meu Consultório",
+                    ctaUrl: "/login"
+                },
+                oldTitle: "Assinatura Cancelada 😢",
+                oldBodyHtml: "<p>Sua assinatura foi cancelada com sucesso.</p>"
+            },
+
+            boasvindas_psi: {
+                subject: "🎉 Seja Muito Bem-vindo(a) à Yelo Psi!",
+                trigger: "Evento Instantâneo (Novo cadastro de psicólogo)",
                 newConfig: {
                     tagText: "🎉 Seja Muito Bem-vindo(a)",
                     tagColor: "#F0FDF4",
                     title: "Seu consultório na Yelo está pronto para nascer ✨",
-                    preheader: "Bem-vindo à comunidade de psicólogos mais humana e conectada do Brasil.",
+                    preheader: "Dicas essenciais para configurar seu perfil e conectar seu método clínico aos pacientes certos.",
                     bodyHtml: `
-                        <p class="email-p">Olá, <strong>Dra. Beatriz</strong>!</p>
+                        <p class="email-p">Olá, <strong>Dr(a). Beatriz</strong>!</p>
                         <p class="email-p">Estamos muito felizes em receber você no ecossistema Yelo Psi. Nosso compromisso é conectar a sua prática clínica a pacientes que realmente valorizam seu método e abordagem terapêutica.</p>
                         <p class="email-p">Para que o nosso algoritmo de match inteligente comece a direcionar pacientes qualificados para a sua agenda, o primeiro passo é concluir o preenchimento do seu perfil profissional.</p>
                     `,
                     highlightBoxHtml: `
-                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px;">
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
                             <strong style="color: #1B4332; font-size: 14px; display: block; margin-bottom: 12px;">Próximos passos recomendados:</strong>
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
@@ -832,42 +1072,376 @@
                         </div>
                     `,
                     ctaText: "Configurar Meu Consultório",
-                    ctaUrl: "https://www.yelopsi.com.br/login"
+                    ctaUrl: "/login"
                 },
-                oldTitle: "Bem-vindo(a) à Yelo Psi! 💛",
-                oldBodyHtml: `
-                    <p>Olá, <strong>Beatriz</strong>!</p>
-                    <p>Estamos muito felizes em ter você conosco. Sua conta está criada. Agora, configure seu perfil completo para começar a receber pacientes na plataforma.</p>
-                    <div class="btn-container"><a href="#" class="btn">Acessar meu Consultório</a></div>
-                `
+                oldTitle: "Bem-vindo(a) à Yelo Psi!",
+                oldBodyHtml: "<p>Sua conta está criada. Configure seu perfil.</p>"
+            },
+
+            boasvindas_paciente: {
+                subject: "💛 Boas-vindas à Yelo!",
+                trigger: "Evento Instantâneo (Novo cadastro de paciente)",
+                newConfig: {
+                    tagText: "💛 Boas-vindas à Yelo",
+                    tagColor: "#FEF3C7",
+                    title: "Boas-vindas à Yelo! 💛",
+                    preheader: "Criamos a Yelo para ser um espaço seguro e acolhedor na sua busca pelo profissional ideal.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Lucas</strong>!</p>
+                        <p class="email-p">Criamos a Yelo para ser um espaço seguro, acolhedor e humanizado na sua busca pelo profissional ideal.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                            <strong style="color: #1B4332; font-size: 14px; display: block; margin-bottom: 8px;">Encontre o psicólogo certo para você:</strong>
+                            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">
+                                Nosso questionário rápido analisa suas preferências de abordagem, valores de consulta e formato de atendimento para conectar você a quem realmente entende seu momento de vida.
+                            </p>
+                        </div>
+                    `,
+                    ctaText: "Encontrar Meu Psicólogo",
+                    ctaUrl: "/questionario"
+                },
+                oldTitle: "Bem-vindo(a) à Yelo!",
+                oldBodyHtml: "<p>Acesse o questionário para encontrar o psicólogo ideal.</p>"
+            },
+
+            convite: {
+                subject: "🎉 Seu convite para a Yelo chegou!",
+                trigger: "CRON Demanda / Ação Admin (Lista de Espera)",
+                newConfig: {
+                    tagText: "🎉 Convite Exclusivo",
+                    tagColor: "#F0FDF4",
+                    title: "Uma vaga foi liberada para o seu consultório 🎉",
+                    preheader: "Uma vaga foi aberta para a sua especialidade clínica no ecossistema da Yelo Psi.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dra. Juliana</strong>!</p>
+                        <p class="email-p">Temos uma excelente notícia para você: uma vaga foi aberta para a sua especialidade clínica no ecossistema da Yelo Psi.</p>
+                        <p class="email-p">Nossa plataforma conecta você a pacientes qualificados através de um algoritmo ético de afinidade terapêutica, além de dar acesso ao Fórum exclusivo de psicólogos.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                            <strong style="color: #1B4332; font-size: 14px; display: block; margin-bottom: 8px;">O que te espera na Yelo:</strong>
+                            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.6;">
+                                • Perfil público otimizado com biografia, abordagem e horários.<br>
+                                • Contatos diretos de pacientes sem comissões intermediárias.<br>
+                                • Comunidade exclusiva de discussão e troca clínica.
+                            </p>
+                        </div>
+                    `,
+                    ctaText: "Concluir Meu Cadastro",
+                    ctaUrl: "/psi-registro"
+                },
+                oldTitle: "Seu convite para a Yelo chegou! 🎉",
+                oldBodyHtml: "<p>Uma vaga foi liberada para você. Conclua seu cadastro.</p>"
+            },
+
+            remarketing_1: {
+                subject: "Seu consultório na Yelo está quase pronto! 🚀",
+                trigger: "CRON Remarketing (Diário às 10h - 24h a 48h)",
+                newConfig: {
+                    tagText: "🚀 Ativação de Consultório",
+                    tagColor: "#F0FDF4",
+                    title: "Seu consultório na Yelo está quase pronto! 🚀",
+                    preheader: "Conclua sua ativação para começar a receber indicações de pacientes.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dr(a). Fernanda</strong>!</p>
+                        <p class="email-p">Notamos que você realizou seu cadastro profissional, mas ainda não concluiu a ativação da sua assinatura. Pacientes realizam buscas terapêuticas em nossa plataforma todos os dias procurando por abordagens como a sua. Conclua seu perfil agora para não perder nenhuma conexão qualificada.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px; margin: 24px 0;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td width="36" style="vertical-align: top; font-size: 20px;">✨</td>
+                                    <td style="padding-left: 10px; font-size: 13px; color: #475569; line-height: 1.5;">
+                                        Acesso completo ao Fórum exclusivo, algoritmo de match inteligente e contatos diretos no seu WhatsApp sem intermediações.
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    `,
+                    ctaText: "Ativar Meu Consultório",
+                    ctaUrl: "/login"
+                },
+                oldTitle: "Seu perfil na Yelo está quase pronto! 🚀",
+                oldBodyHtml: "<p>Notamos que você não ativou sua assinatura. Finalize seu perfil.</p>"
+            },
+
+            remarketing_2: {
+                subject: "Por que escolher a Yelo? 💛",
+                trigger: "CRON Remarketing (Diário às 10h - 3 a 4 dias)",
+                newConfig: {
+                    tagText: "💛 Ecossistema Clínico",
+                    tagColor: "#FEF3C7",
+                    title: "Por que escolher a Yelo? 💛",
+                    preheader: "Conectamos sua abordagem terapêutica a pacientes reais com inteligência e ética.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dr(a). Fernanda</strong>!</p>
+                        <p class="email-p">Com a Yelo, conectamos sua abordagem terapêutica a pacientes reais através da nossa inteligência de match e de investimento contínuo em tráfego qualificado. Assine hoje mesmo e apareça nas buscas ativas do nosso ecossistema.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px; margin: 24px 0;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td width="36" style="vertical-align: top; font-size: 20px;">🎯</td>
+                                    <td style="padding-left: 10px; font-size: 13px; color: #475569; line-height: 1.5;">
+                                        A Yelo investe ativamente em anúncios no Google e Meta para garantir uma comunidade sustentável e com agenda saudável para os profissionais.
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    `,
+                    ctaText: "Ativar Meu Consultório",
+                    ctaUrl: "/login"
+                },
+                oldTitle: "Por que escolher a Yelo? 💛",
+                oldBodyHtml: "<p>Com a Yelo, conectamos você a pacientes reais.</p>"
+            },
+
+            remarketing_3: {
+                subject: "Última oportunidade: Faça parte da Yelo ⏰",
+                trigger: "CRON Remarketing (Diário às 10h - 7 a 8 dias)",
+                newConfig: {
+                    tagText: "⏰ Última Chamada",
+                    tagColor: "#FEF3C7",
+                    title: "Última oportunidade: Faça parte da Yelo ⏰",
+                    preheader: "Esta é uma ótima oportunidade para expandir seus atendimentos sem intermediários.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dr(a). Fernanda</strong>!</p>
+                        <p class="email-p">Construímos um espaço com propósito e ética para acolher a sua prática clínica. Queremos muito ver seu perfil em destaque conectando você a novas histórias. Ative sua assinatura para desbloquear todos os recursos da comunidade.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px; margin: 24px 0;">
+                            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.5;">
+                                Sem comissões por sessão realizada. Na Yelo, você define seu preço e recebe 100% dos honorários diretamente do paciente.
+                            </p>
+                        </div>
+                    `,
+                    ctaText: "Ativar Meu Consultório",
+                    ctaUrl: "/login"
+                },
+                oldTitle: "Último lembrete: Faça parte da Yelo ⏰",
+                oldBodyHtml: "<p>Esta é uma ótima oportunidade para expandir seus atendimentos.</p>"
+            },
+
+            remarketing_4: {
+                subject: "Você tem 3 paciente(s) aguardando contato! 💛",
+                trigger: "CRON Remarketing (Diário às 10h - Fim do Trial com cliques)",
+                newConfig: {
+                    tagText: "💛 Pacientes Interessados",
+                    tagColor: "#FEF3C7",
+                    title: "Você tem 3 paciente(s) aguardando contato! 💛",
+                    preheader: "Seu período de teste terminou e sua agenda pública foi bloqueada.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dr(a). Fernanda</strong>!</p>
+                        <p class="email-p">O seu perfil atraiu interessados e você recebeu <strong>3 clique(s)</strong> no seu WhatsApp recentemente! Como seu período de teste terminou e sua assinatura está inativa, sua agenda pública foi temporariamente pausada. Ative sua assinatura para desbloquear seu WhatsApp e voltar a receber novos pacientes sem limites.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #FEF9EE; border: 1px solid #FDE68A; border-radius: 14px; padding: 18px 20px; margin: 24px 0;">
+                            <p style="margin: 0; font-size: 13px; color: #92400E; font-weight: 600;">
+                                🔒 Desbloqueie sua agenda pública para voltar a receber novos contatos imediatamente.
+                            </p>
+                        </div>
+                    `,
+                    ctaText: "Ativar Meu Consultório",
+                    ctaUrl: "/login"
+                },
+                oldTitle: "Você tem pacientes tentando falar com você!",
+                oldBodyHtml: "<p>Seu perfil atraiu interessados. Ative sua assinatura Premium.</p>"
+            },
+
+            avaliacao: {
+                subject: "💛 Sua opinião é fundamental: Como foi sua experiência na Yelo?",
+                trigger: "CRON Avaliação (Diário às 11h - 7 dias pós-expirado)",
+                newConfig: {
+                    tagText: "💛 Sua Opinião Importa",
+                    tagColor: "#FEF3C7",
+                    title: "Como foi sua experiência na Yelo? 💛",
+                    preheader: "Leva menos de 1 minuto e nos ajuda a evoluir a plataforma para toda a classe clínica.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Dr(a). Patricia</strong>!</p>
+                        <p class="email-p">Notamos que o seu período na plataforma chegou ao fim recentemente. Nosso maior compromisso é construir ferramentas que realmente façam a diferença no dia a dia da psicologia clínica, e a sua percepção é a parte mais valiosa dessa construção.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                            <strong style="color: #1B4332; font-size: 14px; display: block; margin-bottom: 6px;">Leva menos de 1 minuto:</strong>
+                            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.5;">
+                                O que funcionou bem na sua jornada? O que poderíamos aprimorar? Seja para compartilhar um elogio, uma crítica ou sugestão de recurso, nós estamos prontos para ouvir.
+                            </p>
+                        </div>
+                    `,
+                    ctaText: "Avaliar Minha Experiência",
+                    ctaUrl: "/feedback"
+                },
+                oldTitle: "Como foi sua experiência na Yelo? 💛",
+                oldBodyHtml: "<p>Notamos que seu período chegou ao fim. Avalie a plataforma.</p><center><a href='#' class='btn'>Avaliar</a></center>"
+            },
+
+            novo_post_forum: {
+                subject: "Novo conteúdo para você na Yelo: Desafios do Manejo Clínico em Casos de Luto",
+                trigger: "Evento Instantâneo (Novo tópico criado no Fórum)",
+                newConfig: {
+                    tagText: "● Fórum Yelo Psi",
+                    tagColor: "#F0FDF4",
+                    title: "Novo conteúdo na Comunidade Yelo Psi ✨",
+                    preheader: "Novo debate no Fórum: Desafios do Manejo Clínico em Casos de Luto",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Mariana</strong>!</p>
+                        <p class="email-p">Temos novidades fresquinhas na nossa rede. Um novo conteúdo acabou de ser publicado na comunidade e achamos que você vai gostar de conferir:</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 14px; padding: 18px 20px; margin: 22px 0;">
+                            <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">💬 Debate no Fórum</span>
+                            <h3 style="color: #1B4332; font-size: 17px; margin: 6px 0 0 0; font-weight: 700;">
+                                Desafios do Manejo Clínico em Casos de Luto
+                            </h3>
+                        </div>
+                    `,
+                    ctaText: "Acessar Conteúdo",
+                    ctaUrl: "/psi/psi_dashboard?page=psi_forum.html"
+                },
+                oldTitle: "Novo tópico no fórum",
+                oldBodyHtml: "<p>Um novo post foi criado no fórum.</p>"
+            },
+
+            resposta_forum: {
+                subject: "💬 Anderson respondeu no Fórum da Yelo",
+                trigger: "Evento Instantâneo (Comentário ou resposta no Fórum)",
+                newConfig: {
+                    tagText: "● Fórum Yelo Psi",
+                    tagColor: "#F0FDF4",
+                    title: "Novo comentário na sua discussão ✨",
+                    preheader: "Anderson respondeu a uma publicação sua no Fórum de Psicólogos da Yelo.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Mariana</strong>!</p>
+                        <p class="email-p"><strong>Anderson</strong> respondeu a uma publicação sua no Fórum de Psicólogos da Yelo:</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px 22px; margin: 24px 0;">
+                            <span style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">💬 Resposta da Comunidade</span>
+                            <p style="margin: 10px 0 0 0; font-size: 14px; color: #1B4332; font-style: italic; line-height: 1.6;">
+                                "Excelente reflexão! No meu consultório, costumo utilizar a abordagem fenomenológica para acolher a dor sem pressa de enquadrá-la..."
+                            </p>
+                        </div>
+                    `,
+                    ctaText: "Ver Discussão no Fórum",
+                    ctaUrl: "/psi/psi_dashboard?page=psi_forum.html"
+                },
+                oldTitle: "Anderson respondeu ao seu tópico 💬",
+                oldBodyHtml: "<div style='border:1px solid #ccc; padding:15px;'>Anderson respondeu a você: 'Excelente reflexão...'</div>"
+            },
+
+            duvida_respondida: {
+                subject: "💡 Sua dúvida foi respondida na Comunidade Yelo!",
+                trigger: "Evento Instantâneo (Psicólogo responde dúvida de paciente no Q&A)",
+                newConfig: {
+                    tagText: "💡 Dúvida Respondida",
+                    tagColor: "#FEF3C7",
+                    title: "Sua dúvida na Yelo foi respondida! 🎉",
+                    preheader: "Um dos profissionais de psicologia da rede Yelo respondeu à sua dúvida.",
+                    bodyHtml: `
+                        <p class="email-p">Olá!</p>
+                        <p class="email-p">Um dos profissionais de psicologia da rede Yelo acabou de responder à pergunta que você enviou em nossa comunidade pública.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td width="42" style="vertical-align: top;">
+                                        <div style="width: 38px; height: 38px; background-color: #FEF3C7; color: #92400E; border-radius: 50%; font-size: 18px; text-align: center; line-height: 38px;">💡</div>
+                                    </td>
+                                    <td style="padding-left: 12px; vertical-align: top;">
+                                        <strong style="font-size: 14px; color: #1B4332; display: block; margin-bottom: 4px;">Orientação Profissional Disponível</strong>
+                                        <p style="margin: 0; font-size: 13px; color: #64748B; line-height: 1.5;">
+                                            Você pode conferir a resposta completa, reflexões do especialista e o perfil profissional de quem respondeu.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    `,
+                    ctaText: "Ver Resposta Completa",
+                    ctaUrl: "/comunidade"
+                },
+                oldTitle: "Sua dúvida foi respondida! 🎉",
+                oldBodyHtml: "<p>Um de nossos especialistas respondeu sua pergunta. Clique para ver.</p>"
+            },
+
+            redefinir_senha: {
+                subject: "🔒 Redefinição de Senha - Yelo",
+                trigger: "Evento Instantâneo (Solicitação Esqueci Minha Senha)",
+                newConfig: {
+                    tagText: "🔒 Segurança da Conta",
+                    tagColor: "#F1F5F9",
+                    title: "Redefinição de Senha 🔒",
+                    preheader: "Recebemos uma solicitação para redefinir sua senha de acesso na Yelo.",
+                    bodyHtml: `
+                        <p class="email-p">Olá, <strong>Mariana</strong>!</p>
+                        <p class="email-p">Recebemos uma solicitação para redefinir a senha de acesso da sua conta na plataforma Yelo.</p>
+                    `,
+                    highlightBoxHtml: `
+                        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px; margin: 24px 0;">
+                            <p style="margin: 0; font-size: 13px; color: #475569; line-height: 1.5;">
+                                Por motivos de segurança, este link é temporário. Se você não solicitou a redefinição, nenhuma ação é necessária e sua senha atual continuará válida.
+                            </p>
+                        </div>
+                    `,
+                    ctaText: "Redefinir Minha Senha",
+                    ctaUrl: "/redefinir-senha"
+                },
+                oldTitle: "Redefinição de Senha",
+                oldBodyHtml: "<p>Clique no botão para criar uma nova senha.</p><center><a href='#' class='btn'>Redefinir</a></center>"
             }
         };
 
         let currentScenario = 'performance';
         let currentMode = 'desktop';
 
+        function resizeIframe(iframe) {
+            if (!iframe) return;
+            try {
+                const win = iframe.contentWindow;
+                const doc = win ? win.document : iframe.contentDocument;
+                if (!doc || !doc.body) return;
+
+                // Temporarily reduce height so scrollHeight collapses to natural content height
+                iframe.style.height = '40px';
+
+                const table = doc.querySelector('table');
+                let targetH = 0;
+                if (table) {
+                    targetH = Math.max(table.offsetHeight, table.scrollHeight);
+                } else {
+                    targetH = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
+                }
+
+                if (targetH > 40) {
+                    iframe.style.height = (targetH + 4) + 'px';
+                }
+            } catch(e) {}
+        }
+
+        function attachResize(iframe) {
+            if (!iframe) return;
+            iframe.onload = () => {
+                setTimeout(() => resizeIframe(iframe), 50);
+                setTimeout(() => resizeIframe(iframe), 250);
+            };
+        }
+
         function renderPreviews() {
             const sc = SCENARIOS[currentScenario];
+            if (!sc) return;
+
+            document.getElementById('meta-subject').textContent = sc.subject;
+            document.getElementById('meta-trigger').textContent = sc.trigger;
+
             const modernHtml = buildModernEmail(sc.newConfig);
             const oldHtml = buildOldEmail(sc.oldTitle, sc.oldBodyHtml);
 
-            function attachResize(iframe) {
-                iframe.onload = () => {
-                    setTimeout(() => {
-                        try {
-                            const h = iframe.contentWindow.document.body.scrollHeight;
-                            if (h > 600) iframe.style.height = (h + 30) + 'px';
-                        } catch(e) {}
-                    }, 50);
-                };
-            }
-
-            // Frame principal
             const mainFrame = document.getElementById('email-preview-frame');
             attachResize(mainFrame);
             mainFrame.srcdoc = modernHtml;
 
-            // Frames de comparação
             const oldFrame = document.getElementById('email-old-frame');
             const newCompareFrame = document.getElementById('email-new-compare-frame');
             if (oldFrame) {
@@ -882,9 +1456,10 @@
 
         function switchScenario(scenarioKey) {
             currentScenario = scenarioKey;
-            document.querySelectorAll('.pill-tab').forEach(tab => {
-                tab.classList.toggle('active', tab.getAttribute('data-scenario') === scenarioKey);
-            });
+            const selectEl = document.getElementById('scenario-selector');
+            if (selectEl.value !== scenarioKey) {
+                selectEl.value = scenarioKey;
+            }
             renderPreviews();
         }
 
@@ -912,7 +1487,20 @@
                 compareStage.style.display = 'flex';
             }
             renderPreviews();
+
+            // Re-measure after mobile transition completes (320ms)
+            setTimeout(() => {
+                resizeIframe(document.getElementById('email-preview-frame'));
+                resizeIframe(document.getElementById('email-old-frame'));
+                resizeIframe(document.getElementById('email-new-compare-frame'));
+            }, 350);
         }
+
+        window.addEventListener('resize', () => {
+            resizeIframe(document.getElementById('email-preview-frame'));
+            resizeIframe(document.getElementById('email-old-frame'));
+            resizeIframe(document.getElementById('email-new-compare-frame'));
+        });
 
         // Inicialização
         renderPreviews();
