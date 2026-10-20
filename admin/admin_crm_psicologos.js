@@ -3,6 +3,7 @@ window.initializePage = function () {
     const token = localStorage.getItem('Yelo_token');
 
     const tableBody = document.getElementById('crm-psis-body');
+    const tableHead = document.getElementById('crm-table-head') || document.querySelector('.tabela-gerenciamento thead');
     const searchInput = document.getElementById('crm-search-psi');
     const statusInput = document.getElementById('crm-status-psi');
 
@@ -192,10 +193,46 @@ window.initializePage = function () {
     // --- SORTING LOGIC ---
     let currentSortColumn = '';
     let currentSortOrder = 'asc';
+    let currentTableMode = 'standard';
 
-    document.querySelectorAll('th.sortable').forEach(th => {
-        th.addEventListener('click', () => {
+    function updateTableHeaders(mode) {
+        if (currentTableMode === mode && tableHead && tableHead.innerHTML.trim() !== '') return;
+        currentTableMode = mode;
+        if (!tableHead) return;
+
+        if (mode === 'pending_actions') {
+            tableHead.innerHTML = `
+                <tr>
+                    <th style="min-width: 180px;">Profissional</th>
+                    <th>Status da Ação</th>
+                    <th>Motivo do Contato</th>
+                    <th>Data / Previsão</th>
+                    <th>Plano</th>
+                    <th style="text-align: right; min-width: 140px;">Ações CS</th>
+                </tr>
+            `;
+        } else {
+            tableHead.innerHTML = `
+                <tr>
+                    <th class="sortable" data-sort="nome" style="cursor: pointer; user-select: none;" title="Clique para ordenar">Profissional <span class="sort-icon" style="font-size: 0.8rem; color: #94a3b8; margin-left: 5px;">${currentSortColumn === 'nome' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}</span></th>
+                    <th class="sortable" data-sort="status" style="cursor: pointer; user-select: none;" title="Clique para ordenar">Status / Plano <span class="sort-icon" style="font-size: 0.8rem; color: #94a3b8; margin-left: 5px;">${currentSortColumn === 'status' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}</span></th>
+                    <th class="sortable" data-sort="score" style="cursor: pointer; user-select: none;" title="Clique para ordenar">Força do Perfil <span class="sort-icon" style="font-size: 0.8rem; color: #94a3b8; margin-left: 5px;">${currentSortColumn === 'score' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}</span></th>
+                    <th class="sortable" data-sort="utm_source" style="cursor: pointer; user-select: none;" title="Clique para ordenar">Origem (UTM) <span class="sort-icon" style="font-size: 0.8rem; color: #94a3b8; margin-left: 5px;">${currentSortColumn === 'utm_source' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}</span></th>
+                    <th class="sortable" data-sort="createdAt" style="cursor: pointer; user-select: none;" title="Clique para ordenar">Data de Inscrição <span class="sort-icon" style="font-size: 0.8rem; color: #94a3b8; margin-left: 5px;">${currentSortColumn === 'createdAt' ? (currentSortOrder === 'asc' ? ' ↑' : ' ↓') : ''}</span></th>
+                    <th style="text-align: right; min-width: 140px;">Ações CS</th>
+                </tr>
+            `;
+        }
+    }
+
+    if (tableHead) {
+        tableHead.addEventListener('click', (e) => {
+            const th = e.target.closest('th.sortable');
+            if (!th) return;
+
             const column = th.dataset.sort;
+            if (!column) return;
+
             if (currentSortColumn === column) {
                 currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
             } else {
@@ -204,7 +241,7 @@ window.initializePage = function () {
             }
 
             // Update icons
-            document.querySelectorAll('th.sortable .sort-icon').forEach(icon => icon.textContent = '');
+            tableHead.querySelectorAll('th.sortable .sort-icon').forEach(icon => icon.textContent = '');
             const icon = th.querySelector('.sort-icon');
             if (icon) icon.textContent = currentSortOrder === 'asc' ? ' ↑' : ' ↓';
 
@@ -237,7 +274,7 @@ window.initializePage = function () {
 
             renderTable(psisDataCache);
         });
-    });
+    }
 
     // Lógica de Swipe Down APENAS NO CABEÇALHO (Para não travar o scroll do conteúdo)
     let startY = 0;
@@ -395,6 +432,7 @@ window.initializePage = function () {
     }
 
     function renderPendingActionsTable(data) {
+        updateTableHeaders('pending_actions');
         tableBody.innerHTML = '';
         if (data.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhuma ação pendente! 🎉</td></tr>`;
@@ -407,9 +445,14 @@ window.initializePage = function () {
             const actionKey = `${item.id}_${item.actionType}`;
             window.__pendingActionsMap.set(actionKey, item);
 
-            const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : '-';
-            let actionBadge = '';
+            let dateStr = '-';
+            if (item.actionType === 'expiring_trial' && item.planExpiresAt) {
+                dateStr = new Date(item.planExpiresAt).toLocaleDateString('pt-BR');
+            } else if (item.createdAt) {
+                dateStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
+            }
 
+            let actionBadge = '';
             if (item.actionType === 'analysis') actionBadge = '<span class="status status-active">Análise Pronta</span>';
             else if (item.actionType === 'incomplete') actionBadge = '<span class="status status-pending">Perfil Incompleto</span>';
             else if (item.actionType === 'churn') actionBadge = '<span class="status status-cancelada">Churn Trial</span>';
@@ -429,6 +472,8 @@ window.initializePage = function () {
                 }
             }
 
+            const planoLabel = item.plano ? (item.plano.charAt(0).toUpperCase() + item.plano.slice(1).toLowerCase()) : '-';
+
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td data-label="Profissional">
@@ -439,17 +484,17 @@ window.initializePage = function () {
                         </div>
                     </div>
                 </td>
-                <td data-label="Status">
+                <td data-label="Status da Ação">
                     ${actionBadge}
                 </td>
-                <td data-label="Motivo">
+                <td data-label="Motivo do Contato">
                     <span style="font-size: 0.85rem; color: #475569; font-weight: 500;">${item.reason}</span>
                 </td>
-                <td data-label="Data">
+                <td data-label="Data / Previsão">
                     <span style="color: #64748b; font-size: 0.9rem;">${dateStr}</span>
                 </td>
-                <td data-label="Extra">
-                    <span style="font-size: 0.8rem; color: #64748b;">${item.plano || '-'}</span>
+                <td data-label="Plano">
+                    <span style="font-size: 0.8rem; color: #64748b; font-weight: 500;">${planoLabel}</span>
                 </td>
                 <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
                     <button class="btn-tabela" onclick="window.sendPendingAction('${item.id}', '${item.actionType}')" style="background: ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? '#7c3aed' : '#25D366'}; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? 'rgba(124,58,237,0.3)' : 'rgba(37,211,102,0.3)'};">
@@ -830,6 +875,7 @@ window.initializePage = function () {
     };
 
     function renderTable(psis) {
+        updateTableHeaders('standard');
         tableBody.innerHTML = '';
         if (psis.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--cinza-texto);">Nenhum profissional encontrado.</td></tr>`;

@@ -1082,7 +1082,7 @@ exports.getPendingActions = async (req, res) => {
                 deletedAt: null,
                 telefone: { [Op.ne]: null, [Op.not]: '' }
             },
-            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks']
+            attributes: ['id', 'nome', 'telefone', 'planExpiresAt', 'plano', 'profile_appearances', 'whatsapp_clicks', 'createdAt']
         });
 
         if (expiringCandidates.length > 0) {

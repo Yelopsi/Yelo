@@ -1112,25 +1112,27 @@ exports.getWhatsappFeedbacks = async (req, res) => {
         const db = require('../models');
         
         const { Op } = require('sequelize');
-        const { startDate, endDate } = req.query;
+        const { startDate, endDate, includeComparison } = req.query;
 
-        const whereClause = {};
+        let start, end;
         if (startDate && endDate) {
             // Aplica o fuso horário correto (Brasília)
-            const start = new Date(`${startDate}T00:00:00-03:00`).toISOString();
-            const end = new Date(`${endDate}T23:59:59-03:00`).toISOString();
-            whereClause.createdAt = {
-                [Op.gte]: start,
-                [Op.lte]: end
-            };
+            start = new Date(`${startDate}T00:00:00-03:00`);
+            end = new Date(`${endDate}T23:59:59.999-03:00`);
         } else {
             // Otimização: Por padrão, carrega apenas os últimos 30 dias para poupar banda do servidor
-            const trintaDiasAtras = new Date();
-            trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
-            whereClause.createdAt = {
-                [Op.gte]: trintaDiasAtras.toISOString()
-            };
+            end = new Date();
+            start = new Date();
+            start.setDate(start.getDate() - 30);
+            start.setHours(0, 0, 0, 0);
         }
+
+        const whereClause = {
+            createdAt: {
+                [Op.gte]: start.toISOString(),
+                [Op.lte]: end.toISOString()
+            }
+        };
 
         // Busca todos os logs de cliques, ordenando pelos mais recentes
         const feedbacks = await db.WhatsAppClickLog.findAll({
@@ -1153,6 +1155,29 @@ exports.getWhatsappFeedbacks = async (req, res) => {
             }
         }
         
+        if (includeComparison === 'true') {
+            const msDiff = end.getTime() - start.getTime();
+            const prevStart = new Date(start.getTime() - msDiff);
+            const prevEnd = new Date(start.getTime() - 1);
+            const days = Math.max(1, Math.round(msDiff / (1000 * 60 * 60 * 24)));
+
+            const prevFeedbacks = await db.WhatsAppClickLog.findAll({
+                where: {
+                    createdAt: {
+                        [Op.gte]: prevStart.toISOString(),
+                        [Op.lte]: prevEnd.toISOString()
+                    }
+                },
+                attributes: ['id', 'feedbackGiven', 'contactReceived', 'dealClosed', 'createdAt']
+            });
+
+            return res.status(200).json({
+                feedbacks,
+                prevFeedbacks,
+                days
+            });
+        }
+
         res.status(200).json(feedbacks);
     } catch (error) {
         console.error('Erro ao buscar feedbacks do WhatsApp (Admin):', error);

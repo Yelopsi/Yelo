@@ -7,6 +7,33 @@ window.initializePage = function() {
     window.auditoriaData = null;
     let currentRankingSort = { column: 'posicao', direction: 'asc' }; // Estado da ordenação
 
+    // Renderiza a setinha e porcentagem de tendência em relação ao período anterior (aumentando, diminuindo ou mantendo)
+    const renderTrend = (current, previous, inverted = false) => {
+        const cur = parseFloat(current) || 0;
+        const prev = parseFloat(previous);
+        if (isNaN(prev)) return '';
+
+        if (prev === 0 && cur === 0) {
+            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="Sem alteração no período anterior">▬ 0.0%</span>`;
+        }
+        if (prev === 0 && cur > 0) {
+            const color = inverted ? '#ef4444' : '#10b981';
+            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="Novo em relação ao período anterior">▲ Novo</span>`;
+        }
+
+        const delta = ((cur - prev) / prev) * 100;
+        if (Math.abs(delta) < 0.05) {
+            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="Mantendo em relação ao período anterior">▬ 0.0%</span>`;
+        }
+
+        let isGood = delta > 0;
+        if (inverted) isGood = !isGood;
+        const color = isGood ? '#10b981' : '#ef4444';
+        const icon = delta > 0 ? '▲' : '▼';
+        const sign = delta > 0 ? '+' : '';
+        return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="${delta > 0 ? 'Aumentou' : 'Diminuiu'} ${Math.abs(delta).toFixed(1)}% em relação ao período anterior">${icon} ${sign}${delta.toFixed(1)}%</span>`;
+    };
+
     // Inicializa as datas de filtro (últimos 30 dias por padrão)
     const startInput = document.getElementById('funil-start');
     const endInput = document.getElementById('funil-end');
@@ -181,18 +208,32 @@ window.initializePage = function() {
 
             const [res, resWpp, resRanking] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/admin/analytics/funnel?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-                fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                fetch(`${API_BASE_URL}/api/admin/whatsapp-feedbacks?${queryParams.toString()}&includeComparison=true`, { headers: { 'Authorization': `Bearer ${token}` } }),
                 fetch(`${API_BASE_URL}/api/admin/analytics/ranking?${queryParams.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() => null)
             ]);
 
             if (!res.ok) throw new Error("Falha ao buscar dados de funil");
             const data = await res.json();
-            const dataWpp = resWpp.ok ? await resWpp.json() : [];
+            
+            let dataWpp = [];
+            let prevWpp = [];
+            let daysCount = 30;
+
+            if (resWpp.ok) {
+                const rawWpp = await resWpp.json();
+                if (rawWpp && typeof rawWpp === 'object' && !Array.isArray(rawWpp)) {
+                    dataWpp = rawWpp.feedbacks || [];
+                    prevWpp = rawWpp.prevFeedbacks || [];
+                    daysCount = rawWpp.days || 30;
+                } else if (Array.isArray(rawWpp)) {
+                    dataWpp = rawWpp;
+                }
+            }
             const dataRanking = (resRanking && resRanking.ok) ? await resRanking.json() : null;
 
             exportData = data; // Salva os dados globais para permitir a exportação no CSV
             
-            renderWppFeedbacks(dataWpp);
+            renderWppFeedbacks(dataWpp, prevWpp, daysCount);
             globalRankingData = dataRanking ? (Array.isArray(dataRanking) ? dataRanking : dataRanking.ranking) : null;
             
             if (globalRankingData) {
@@ -255,16 +296,7 @@ window.initializePage = function() {
                 }
             };
 
-            const renderTrend = (current, previous, inverted = false) => {
-                if (!previous || previous === 0) return '';
-                const delta = ((current - previous) / previous) * 100;
-                if (Math.abs(delta) < 0.1) return '';
-                let isGood = delta > 0;
-                if (inverted) isGood = !isGood;
-                const color = isGood ? '#10b981' : '#ef4444';
-                const icon = delta > 0 ? '▲' : '▼';
-                return `<span style="font-size: 0.8rem; font-weight: bold; margin-left: 8px; color: ${color};">${icon} ${Math.abs(delta).toFixed(1)}%</span>`;
-            };
+
 
             // --- 1. POPULA KPIs SUPERIORES ---
             const kpiVisitas = document.getElementById('kpi-visitas');
@@ -990,10 +1022,15 @@ window.initializePage = function() {
         }).join('');
     }
 
-    function renderWppFeedbacks(feedbacks) {
+    function renderWppFeedbacks(feedbacks, prevFeedbacks = [], daysCount = 30) {
         window.wppDataState.allFeedbacks = feedbacks;
         
+        const days = Math.max(1, parseInt(daysCount) || 30);
+
+        // --- DADOS ATUAIS ---
         const total = feedbacks.length;
+        const mediaDia = (total / days).toFixed(1);
+
         const respondidos = feedbacks.filter(f => f.feedbackGiven).length;
         const taxaResposta = total > 0 ? ((respondidos / total) * 100).toFixed(1) : 0;
         const taxaNaoResposta = total > 0 ? (100 - parseFloat(taxaResposta)).toFixed(1) : 0;
@@ -1009,31 +1046,56 @@ window.initializePage = function() {
         const taxaFechamento = recebidas > 0 ? ((fechados / recebidas) * 100).toFixed(1) : 0;
         const taxaNaoFechamento = recebidas > 0 ? ((perdidos / recebidas) * 100).toFixed(1) : 0;
 
-        const elWppTotal = document.getElementById('kpi-wpp-total-feedbacks');
-        const elWppRec = document.getElementById('kpi-wpp-recebidas');
-        const elWppFec = document.getElementById('kpi-wpp-fechados');
-        const elWppNeg = document.getElementById('kpi-wpp-negociacao');
-        const elWppPerd = document.getElementById('kpi-wpp-perdidos');
-        const elWppFant = document.getElementById('kpi-wpp-fantasmas');
+        // --- DADOS ANTERIORES (COMPARAÇÃO) ---
+        const hasPrev = Array.isArray(prevFeedbacks);
+        const prevTotal = hasPrev ? prevFeedbacks.length : null;
+        const prevMediaDia = hasPrev ? (prevTotal / days).toFixed(1) : null;
 
+        const prevRespondidos = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven).length : 0;
+        const prevTaxaResposta = (hasPrev && prevTotal > 0) ? ((prevRespondidos / prevTotal) * 100).toFixed(1) : (hasPrev ? 0 : null);
+        const prevTaxaNaoResposta = (hasPrev && prevTotal > 0) ? (100 - parseFloat(prevTaxaResposta)).toFixed(1) : (hasPrev ? 0 : null);
+
+        const prevRecebidas = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven && f.contactReceived).length : null;
+        const prevFechados = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'yes' || f.dealClosed === 'started')).length : null;
+        const prevNegociacao = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'talking').length : null;
+        const prevPerdidos = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'ghosted' || f.dealClosed === 'not_started' || f.dealClosed === 'not_started_price' || f.dealClosed === 'not_started_schedule' || f.dealClosed === 'not_started_other')).length : null;
+
+        const prevFantasmas = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven && !f.contactReceived).length : null;
+        const prevTotalValidados = (prevRecebidas || 0) + (prevFantasmas || 0);
+        const prevTaxaContato = (hasPrev && prevTotalValidados > 0) ? ((prevRecebidas / prevTotalValidados) * 100).toFixed(1) : (hasPrev ? 0 : null);
+        const prevTaxaFechamento = (hasPrev && prevRecebidas > 0) ? ((prevFechados / prevRecebidas) * 100).toFixed(1) : (hasPrev ? 0 : null);
+        const prevTaxaNaoFechamento = (hasPrev && prevRecebidas > 0) ? ((prevPerdidos / prevRecebidas) * 100).toFixed(1) : (hasPrev ? 0 : null);
+
+        // --- ELEMENTOS DOM ---
+        const elWppTotal = document.getElementById('kpi-wpp-total-feedbacks');
+        const elWppMediaDia = document.getElementById('kpi-wpp-media-dia');
+        const elWppFant = document.getElementById('kpi-wpp-fantasmas');
+        const elWppRec = document.getElementById('kpi-wpp-recebidas');
         const elWppTx = document.getElementById('kpi-wpp-tx-resposta');
         const elWppTxNaoResp = document.getElementById('kpi-wpp-tx-nao-resposta');
+
+        const elWppNeg = document.getElementById('kpi-wpp-negociacao');
+        const elWppFec = document.getElementById('kpi-wpp-fechados');
+        const elWppPerd = document.getElementById('kpi-wpp-perdidos');
         const elWppTxContato = document.getElementById('kpi-wpp-tx-contato');
         const elWppTxFec = document.getElementById('kpi-wpp-tx-fechamento');
         const elWppTxNaoFec = document.getElementById('kpi-wpp-tx-nao-fechamento');
 
-        if (elWppTotal) elWppTotal.innerText = total;
-        if (elWppRec) elWppRec.innerText = recebidas;
-        if (elWppFec) elWppFec.innerText = fechados;
-        if (elWppNeg) elWppNeg.innerText = negociacao;
-        if (elWppPerd) elWppPerd.innerText = perdidos;
-        if (elWppFant) elWppFant.innerText = fantasmas;
+        // Linha 1: Topo de Funil & Qualidade dos Dados
+        if (elWppTotal) elWppTotal.innerHTML = `${total.toLocaleString()}${renderTrend(total, prevTotal)}`;
+        if (elWppMediaDia) elWppMediaDia.innerHTML = `${mediaDia}${renderTrend(mediaDia, prevMediaDia)}`;
+        if (elWppFant) elWppFant.innerHTML = `${fantasmas.toLocaleString()}${renderTrend(fantasmas, prevFantasmas, true)}`;
+        if (elWppRec) elWppRec.innerHTML = `${recebidas.toLocaleString()}${renderTrend(recebidas, prevRecebidas)}`;
+        if (elWppTx) elWppTx.innerHTML = `${taxaResposta}%${renderTrend(taxaResposta, prevTaxaResposta)}`;
+        if (elWppTxNaoResp) elWppTxNaoResp.innerHTML = `${taxaNaoResposta}%${renderTrend(taxaNaoResposta, prevTaxaNaoResposta, true)}`;
 
-        if (elWppTx) elWppTx.innerText = taxaResposta + '%';
-        if (elWppTxNaoResp) elWppTxNaoResp.innerText = taxaNaoResposta + '%';
-        if (elWppTxContato) elWppTxContato.innerText = taxaContato + '%';
-        if (elWppTxFec) elWppTxFec.innerText = taxaFechamento + '%';
-        if (elWppTxNaoFec) elWppTxNaoFec.innerText = taxaNaoFechamento + '%';
+        // Linha 2: Fundo de Funil & Performance de Vendas
+        if (elWppNeg) elWppNeg.innerHTML = `${negociacao.toLocaleString()}${renderTrend(negociacao, prevNegociacao)}`;
+        if (elWppFec) elWppFec.innerHTML = `${fechados.toLocaleString()}${renderTrend(fechados, prevFechados)}`;
+        if (elWppPerd) elWppPerd.innerHTML = `${perdidos.toLocaleString()}${renderTrend(perdidos, prevPerdidos, true)}`;
+        if (elWppTxContato) elWppTxContato.innerHTML = `${taxaContato}%${renderTrend(taxaContato, prevTaxaContato)}`;
+        if (elWppTxFec) elWppTxFec.innerHTML = `${taxaFechamento}%${renderTrend(taxaFechamento, prevTaxaFechamento)}`;
+        if (elWppTxNaoFec) elWppTxNaoFec.innerHTML = `${taxaNaoFechamento}%${renderTrend(taxaNaoFechamento, prevTaxaNaoFechamento, true)}`;
 
         window.applyWppFilter(); // Já faz o filtro, paginação e renderização da tabela
     }
