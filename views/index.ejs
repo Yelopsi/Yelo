@@ -152,38 +152,177 @@
         .doodle-bg.left { top: 5%; left: -50px; width: 300px; transform: rotate(45deg); }
         .doodle-bg.right { bottom: 5%; right: -50px; width: 250px; transform: rotate(-45deg); }
         
-        /* --- SEÇÃO DEPOIMENTOS MODERNA --- */
-        .secao-depoimentos { padding: 40px 20px 100px 20px; background-color: #F8F3ED; position: relative; }
-        .header-depoimentos { text-align: center; margin-bottom: 4rem; }
+        /* --- SEÇÃO DEPOIMENTOS MODERNA (ALTO CONTRASTE) --- */
+        .secao-depoimentos { 
+            padding: 50px 20px 110px 20px; 
+            background-color: #F8F3ED; 
+            position: relative; 
+        }
+        .header-depoimentos { text-align: center; margin-bottom: 3.5rem; }
         
-        /* Badge de Nota */
-        .rating-badge { display: inline-flex; align-items: center; gap: 12px; background: #fdfaf6; padding: 10px 25px; border-radius: 50px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-top: 20px; border: 1px solid rgba(0,0,0,0.03); }
-        .rating-score { font-weight: 800; color: #1B4332; font-size: 1.2rem; }
-        .stars { color: #FFC107; letter-spacing: 2px; font-size: 1.1rem; }
-        .rating-count { color: #666; font-size: 0.9rem; font-weight: 500; }
+        /* Badge de Nota - Alto Contraste */
+        .rating-badge { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 14px; 
+            background: #ffffff; 
+            padding: 12px 28px; 
+            border-radius: 50px; 
+            box-shadow: 0 8px 24px rgba(27, 67, 50, 0.07); 
+            margin-top: 20px; 
+            border: 1.5px solid #EAE3D9; 
+        }
+        .rating-score { font-weight: 800; color: #1B4332; font-size: 1.25rem; }
+        .stars { color: #FFC107; letter-spacing: 2px; font-size: 1.15rem; }
+        .rating-count { color: #374151; font-size: 0.92rem; font-weight: 600; }
 
-        .grid-depoimentos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; }
+        .grid-depoimentos { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 2rem; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
         
+        /* Cards de Depoimento - Alto Contraste, Profundidade e Elegância Orgânica */
         .card-depoimento-organico { 
-            background: #F8F3ED; /* Creme */
-            padding: 2.5rem; 
-            border-radius: 24px 60px 24px 60px; /* Forma orgânica */
-            box-shadow: 0 10px 40px rgba(0,0,0,0.03); 
+            background: #ffffff; 
+            padding: 2.5rem 2.2rem; 
+            border-radius: 28px 16px 28px 16px; 
+            box-shadow: 0 12px 32px rgba(27, 67, 50, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03); 
             text-align: left; 
-            transition: transform 0.3s ease; 
-            border: 1px solid rgba(0,0,0,0.02); 
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+            border: 1.5px solid #EAE3D9; 
             display: flex; 
             flex-direction: column; 
+            position: relative;
+            overflow: hidden;
         }
-        .card-depoimento-organico:nth-child(2n) { background: #E6F4F1; border-radius: 60px 24px 60px 24px; } /* Verde suave */
-        .card-depoimento-organico:nth-child(3n) { background: #FFF8E1; border-radius: 24px 60px 24px 60px; } /* Amarelo suave */
-        .card-depoimento-organico:nth-child(4n) { background: #F0F4F8; border-radius: 60px 24px 60px 24px; } /* Azul suave */
+        .card-depoimento-organico:nth-child(2n) { 
+            border-radius: 16px 28px 16px 28px; 
+        }
 
-        .card-depoimento-organico:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.08); }
-        .card-depoimento-organico p { font-size: 1.05rem; line-height: 1.7; color: #444; font-style: italic; margin-bottom: 2rem; flex-grow: 1; }
+        /* Aspas decorativas clássicas no topo (marca d'água elegante) */
+        .card-depoimento-organico::before {
+            content: "“";
+            font-family: Georgia, serif;
+            font-size: 5rem;
+            line-height: 1;
+            position: absolute;
+            top: 0.6rem;
+            right: 1.6rem;
+            color: rgba(27, 67, 50, 0.09);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .card-depoimento-organico:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 24px 48px rgba(27, 67, 50, 0.14), 0 4px 12px rgba(0, 0, 0, 0.04); 
+            border-color: #1B4332; 
+        }
+
+        .estrelas-depoimento {
+            color: #FFC107;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            margin-bottom: 0.85rem;
+            display: inline-block;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Texto com Altíssimo Contraste e Conforto Visual (WCAG AAA) */
+        .card-depoimento-organico p { 
+            font-size: 1.05rem; 
+            line-height: 1.7; 
+            color: #162E24; 
+            font-weight: 500;
+            font-style: normal; 
+            margin-bottom: 2rem; 
+            flex-grow: 1; 
+            position: relative;
+            z-index: 1;
+        }
         
-        .autor-depoimento { display: flex; align-items: center; gap: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 20px; }
-        .avatar-depoimento { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #1B4332; font-size: 1.1rem; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .autor-depoimento { 
+            display: flex; 
+            align-items: center; 
+            gap: 14px; 
+            border-top: 1.5px solid #F0ECE4; 
+            padding-top: 18px; 
+            position: relative;
+            z-index: 1;
+        }
+
+        .avatar-depoimento { 
+            width: 48px; 
+            height: 48px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: 800; 
+            font-size: 1.15rem; 
+            background: #E8F5E9; 
+            color: #1B4332; 
+            border: 2px solid #C8E6C9; 
+            box-shadow: 0 2px 8px rgba(27, 67, 50, 0.08); 
+            flex-shrink: 0;
+        }
+
+        /* Variação harmônica e contrastante dos avatares para dinamismo visual */
+        .card-depoimento-organico:nth-child(2n) .avatar-depoimento { 
+            background: #E0F2FE; 
+            color: #0369A1; 
+            border-color: #BAE6FD; 
+        }
+        .card-depoimento-organico:nth-child(3n) .avatar-depoimento { 
+            background: #FEF3C7; 
+            color: #92400E; 
+            border-color: #FDE68A; 
+        }
+        .card-depoimento-organico:nth-child(4n) .avatar-depoimento { 
+            background: #F3E8FF; 
+            color: #6B21A8; 
+            border-color: #E9D5FF; 
+        }
+
+        .info-autor {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .nome-autor { 
+            font-weight: 700; 
+            color: #1B4332; 
+            font-size: 1rem; 
+            line-height: 1.2;
+        }
+
+        .status-autor { 
+            font-size: 0.78rem; 
+            color: #0F5132; 
+            font-weight: 600; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 5px; 
+        }
+
+        .status-autor::before {
+            content: "✓";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #198754;
+            color: #ffffff;
+            font-size: 9px;
+            font-weight: 900;
+        }
         
         /* --- SEÇÃO FAQ ORGÂNICA --- */
         .faq-secao { padding: 40px 20px 100px 20px; background-color: #ffffff; position: relative; }
@@ -290,6 +429,7 @@
                 flex: 0 0 85%;
                 scroll-snap-align: center;
                 min-width: 280px;
+                padding: 2rem 1.6rem;
             }
 
             .mobile-scroll-indicator {
@@ -743,6 +883,7 @@
                         (typeof depoimentos !== 'undefined' ? depoimentos : []).forEach((depo, index) => { 
                     %>
                     <div class="card-depoimento-organico">
+                        <div class="estrelas-depoimento" aria-label="Avaliação 5 estrelas">★★★★★</div>
                         <p>"<%= depo.texto %>"</p>
                         <div class="autor-depoimento">
                             <div class="avatar-depoimento"><%= depo.inicial %></div>

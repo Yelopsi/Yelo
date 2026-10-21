@@ -28,29 +28,49 @@ exports.createPreference = async (req, res) => {
         localPsychologist = await db.Psychologist.findByPk(psychologistId);
         if (!localPsychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
-        // --- TRAVA DE INADIMPLÊNCIA (Evita bypass de dívida) ---
+        // --- TRAVA DE INADIMPLÊNCIA / PERMISSÃO DE REASSINATURA ---
         const overduePayments = await db.Payment.findAll({
             where: { psychologistId, status: 'OVERDUE' }
         });
         
         if (overduePayments.length > 0) {
-            if (!localPsychologist.subscriptionId) {
-                // Perdão de dívida: Assinatura foi cancelada, cancela as faturas antigas e permite nova assinatura
+            // Verifica se o psicólogo ainda possui uma assinatura realmente ATIVA no gateway
+            let hasActiveOngoingSub = false;
+            if (localPsychologist.subscriptionId && localPsychologist.status === 'active' && !localPsychologist.cancelAtPeriodEnd) {
                 try {
-                    const fetch = require('node-fetch');
+                    const subCheckRes = await fetch(`${ASAAS_API_URL}/subscriptions/${localPsychologist.subscriptionId}`, {
+                        headers: { 'access_token': ASAAS_API_KEY }
+                    });
+                    if (subCheckRes.ok) {
+                        const subCheckData = await subCheckRes.json();
+                        if (subCheckData && subCheckData.status === 'ACTIVE' && !subCheckData.deleted) {
+                            hasActiveOngoingSub = true;
+                        }
+                    }
+                } catch (subErr) {
+                    console.error('[ASAAS] Erro ao verificar assinatura existente:', subErr);
+                }
+            }
+
+            if (!hasActiveOngoingSub) {
+                // Reassinatura limpa: O psicólogo estava inativo ou com renovação cancelada.
+                // Limpa as faturas atrasadas antigas no Asaas e no DB para permitir o retorno sem débitos fantasmas.
+                try {
                     for (const overdue of overduePayments) {
-                        console.log(`[ASAAS] Assinatura cancelada identificada. Perdoando fatura ${overdue.asaasPaymentId}`);
-                        await fetch(`${ASAAS_API_URL}/payments/${overdue.asaasPaymentId}`, {
+                        console.log(`[ASAAS] Reassinatura para psi ${psychologistId}. Cancelando fatura antiga ${overdue.id}`);
+                        await fetch(`${ASAAS_API_URL}/payments/${overdue.id}`, {
                             method: 'DELETE',
                             headers: { 'access_token': ASAAS_API_KEY }
-                        });
+                        }).catch(() => {});
                         await overdue.update({ status: 'CANCELED' });
                     }
                 } catch (err) {
-                    console.error('[ASAAS] Erro ao deletar faturas atrasadas:', err);
+                    console.error('[ASAAS] Erro ao cancelar faturas atrasadas antigas na reassinatura:', err);
                 }
             } else {
-                return res.status(403).json({ error: 'Você possui uma fatura em aberto. Por favor, acesse o painel financeiro para regularizar sua situação antes de realizar uma nova assinatura.' });
+                return res.status(403).json({ 
+                    error: 'Você possui uma fatura em aberto na sua assinatura atual. Por favor, acesse o painel financeiro para regularizar ou alterar a forma de pagamento antes de criar uma nova assinatura.' 
+                });
             }
         }
 
@@ -307,51 +327,66 @@ exports.createPreference = async (req, res) => {
         
         try {
             if (subId) {
-                // Tenta Deletar/Cancelar a antiga sem falhar o bloco todo
-                try {
-                    await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
-                        method: 'DELETE',
-                        headers: { 'access_token': ASAAS_API_KEY }
-                    });
-                } catch (asaasError) { /* ignora erro no cancelamento legado */ }
+                // Se o psicólogo estava inativo, com cancelamento agendado, ou a assinatura antiga foi encerrada,
+                // devemos criar uma NOVA assinatura limpa (POST /subscriptions).
+                // Caso contrário (psicólogo ativo com assinatura ativa no Asaas migrando de plano), atualizamos a existente.
+                let canUpdateExisting = false;
+                if (localPsychologist.status === 'active' && !localPsychologist.cancelAtPeriodEnd) {
+                    try {
+                        const checkRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+                            headers: { 'access_token': ASAAS_API_KEY }
+                        });
+                        if (checkRes.ok) {
+                            const checkText = await checkRes.text();
+                            const checkData = checkText ? JSON.parse(checkText) : null;
+                            if (checkData && checkData.status === 'ACTIVE' && !checkData.deleted) {
+                                canUpdateExisting = true;
+                            }
+                        }
+                    } catch (e) {}
+                }
 
-                subscriptionPayload.updatePendingPayments = true;
-                
-                let resUpdate = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                    body: JSON.stringify(subscriptionPayload)
-                });
-                let dataUpdate = await resUpdate.json();
-                
-                if (resUpdate.status === 404 || (resUpdate.status === 400 && dataUpdate.errors && dataUpdate.errors.some(e => e.code === 'invalid_action' || e.code === 'deleted'))) {
-                    subId = null; 
+                if (canUpdateExisting) {
+                    subscriptionPayload.updatePendingPayments = true;
+                    subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                        body: JSON.stringify(subscriptionPayload)
+                    });
+                    const resText = await subscriptionRes.text();
+                    subscriptionData = resText ? JSON.parse(resText) : {};
                 } else {
-                    subscriptionRes = resUpdate;
-                    subscriptionData = dataUpdate;
+                    // Reassinatura ou migração limpa: encerra resquício legado no Asaas se ainda existir e cria uma nova
+                    try {
+                        await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+                            method: 'DELETE',
+                            headers: { 'access_token': ASAAS_API_KEY }
+                        });
+                    } catch (e) {}
+                    subId = null;
                 }
             }
 
             if (!subId) {
-                let resCreate = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+                subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
                     body: JSON.stringify(subscriptionPayload)
                 });
-                subscriptionRes = resCreate;
-                subscriptionData = await resCreate.json();
+                const resText = await subscriptionRes.text();
+                subscriptionData = resText ? JSON.parse(resText) : {};
             }
 
             // Fallback para BOLETO se PIX falhar
-            if (billingType === 'PIX' && subscriptionRes.status === 400 && subscriptionData.errors && subscriptionData.errors[0].description.includes('forma de pagamento')) {
+            if (billingType === 'PIX' && subscriptionRes.status === 400 && subscriptionData.errors && subscriptionData.errors[0]?.description?.includes('forma de pagamento')) {
                 subscriptionPayload.billingType = 'BOLETO';
-                let resCreate = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+                subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
                     body: JSON.stringify(subscriptionPayload)
                 });
-                subscriptionRes = resCreate;
-                subscriptionData = await resCreate.json();
+                const fbText = await subscriptionRes.text();
+                subscriptionData = fbText ? JSON.parse(fbText) : {};
             }
 
         } catch (networkError) {
@@ -394,21 +429,32 @@ exports.createPreference = async (req, res) => {
             });
 
             // Calcula a expiração baseada no nextDueDate
-            // Se nextDueDate for hoje ou no passado (cobrança imediata), liberamos 30 dias de acesso
-            // Se nextDueDate for no futuro (ex: trial de 7 dias), o plano expira na data da primeira cobrança (que renovará)
             const parsedNextDueDate = new Date(nextDueDate + 'T12:00:00Z'); // Força meio-dia para evitar fuso
             const now = new Date();
             let newPlanExpiresAt = parsedNextDueDate;
             
-            if (parsedNextDueDate <= now) {
-                newPlanExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            // Para Cartão de Crédito, a cobrança é imediata e síncrona
+            if (billingType === 'CREDIT_CARD') {
+                if (parsedNextDueDate <= now) {
+                    newPlanExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                }
+            } else {
+                // Para PIX/Boleto: se já possui validade futura (ex: trial ativo), preserva
+                // Se for vencimento imediato (sem trial), só ganha 30 dias após pagar (via webhook/processPaymentSuccess)
+                if (parsedNextDueDate <= now) {
+                    newPlanExpiresAt = (localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > now)
+                        ? localPsychologist.planExpiresAt
+                        : now;
+                }
             }
 
             // Atualiza o Psychologist
             const updateData = {
                 subscriptionId: subscriptionData.id,
                 plano: planType,
-                planExpiresAt: newPlanExpiresAt
+                planExpiresAt: newPlanExpiresAt,
+                cancelAtPeriodEnd: false,
+                canceledAt: null
             };
             
             // Ativação Imediata para Cartão de Crédito (fluxo síncrono tem sucesso garantido aqui)
@@ -417,7 +463,6 @@ exports.createPreference = async (req, res) => {
                 updateData.is_exempt = false;
             }
 
-            
             await localPsychologist.update(updateData);
             
             // Sucesso Completo
@@ -434,14 +479,16 @@ exports.createPreference = async (req, res) => {
                 const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionData.id}/payments?status=PENDING`, {
                     headers: { 'access_token': ASAAS_API_KEY }
                 });
-                const paymentsData = await paymentsRes.json();
+                const paymentsText = await paymentsRes.text();
+                const paymentsData = paymentsText ? JSON.parse(paymentsText) : {};
                 
                 if (paymentsData.data && paymentsData.data.length > 0) {
                     const firstPayment = paymentsData.data[0];
                     const qrRes = await fetch(`${ASAAS_API_URL}/payments/${firstPayment.id}/pixQrCode`, {
                         headers: { 'access_token': ASAAS_API_KEY }
                     });
-                    const qrData = await qrRes.json();
+                    const qrText = await qrRes.text();
+                    const qrData = qrText ? JSON.parse(qrText) : {};
                     
                     return res.json({ 
                         success: true, 
@@ -490,27 +537,28 @@ exports.getPendingPix = async (req, res) => {
             return res.status(404).json({ error: 'Nenhuma assinatura encontrada.' });
         }
 
-        // Busca pagamentos PENDING ou OVERDUE no Asaas
-        let paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.subscriptionId}/payments?status=PENDING`, {
-            headers: { 'access_token': ASAAS_API_KEY }
-        });
-        let paymentsData = await paymentsRes.json();
-        
-        let pendingPayments = paymentsData.data || [];
-        
-        if (pendingPayments.length === 0) {
-            paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.subscriptionId}/payments?status=OVERDUE`, {
+        // Busca tanto faturas OVERDUE quanto PENDING no Asaas para priorizar a mais antiga
+        const [overdueRes, pendingRes] = await Promise.all([
+            fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.subscriptionId}/payments?status=OVERDUE`, {
                 headers: { 'access_token': ASAAS_API_KEY }
-            });
-            paymentsData = await paymentsRes.json();
-            pendingPayments = paymentsData.data || [];
-        }
+            }),
+            fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.subscriptionId}/payments?status=PENDING`, {
+                headers: { 'access_token': ASAAS_API_KEY }
+            })
+        ]);
+        const overdueData = await overdueRes.json().catch(() => ({ data: [] }));
+        const pendingData = await pendingRes.json().catch(() => ({ data: [] }));
+        
+        let pendingPayments = [
+            ...(overdueData.data || []),
+            ...(pendingData.data || [])
+        ];
 
         if (pendingPayments.length === 0) {
             return res.json({ pending: false });
         }
 
-        // Ordena pela mais antiga vencida
+        // Ordena da mais antiga para a mais recente (garante que faturas OVERDUE venham sempre antes de PENDING)
         pendingPayments.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
         const firstPayment = pendingPayments[0];
 
@@ -519,7 +567,8 @@ exports.getPendingPix = async (req, res) => {
             const qrRes = await fetch(`${ASAAS_API_URL}/payments/${firstPayment.id}/pixQrCode`, {
                 headers: { 'access_token': ASAAS_API_KEY }
             });
-            const qrData = await qrRes.json();
+            const qrText = await qrRes.text();
+            const qrData = qrText ? JSON.parse(qrText) : {};
             
             return res.json({ 
                 pending: true,
@@ -670,19 +719,32 @@ exports.updateSubscriptionMethod = async (req, res) => {
 
         // Retornos ao Client
         if (billingType === 'PIX') {
-            // Se mudou para PIX, tenta já retornar a fatura PIX aberta
+            // Se mudou para PIX, tenta já retornar a fatura PIX aberta (priorizando OVERDUE antes de PENDING)
             try {
-                const paymentsRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}/payments?status=PENDING`, {
-                    headers: { 'access_token': ASAAS_API_KEY }
-                });
-                const paymentsData = await paymentsRes.json();
+                const [overdueRes, pendingRes] = await Promise.all([
+                    fetch(`${ASAAS_API_URL}/subscriptions/${subId}/payments?status=OVERDUE`, {
+                        headers: { 'access_token': ASAAS_API_KEY }
+                    }),
+                    fetch(`${ASAAS_API_URL}/subscriptions/${subId}/payments?status=PENDING`, {
+                        headers: { 'access_token': ASAAS_API_KEY }
+                    })
+                ]);
+                const overdueData = await overdueRes.json().catch(() => ({ data: [] }));
+                const pendingData = await pendingRes.json().catch(() => ({ data: [] }));
                 
-                if (paymentsData.data && paymentsData.data.length > 0) {
-                    const firstPayment = paymentsData.data[0];
+                const openPayments = [
+                    ...(overdueData.data || []),
+                    ...(pendingData.data || [])
+                ];
+                openPayments.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+                if (openPayments.length > 0) {
+                    const firstPayment = openPayments[0];
                     const qrRes = await fetch(`${ASAAS_API_URL}/payments/${firstPayment.id}/pixQrCode`, {
                         headers: { 'access_token': ASAAS_API_KEY }
                     });
-                    const qrData = await qrRes.json();
+                    const qrText = await qrRes.text();
+                    const qrData = qrText ? JSON.parse(qrText) : {};
                     
                     return res.json({ 
                         success: true, 

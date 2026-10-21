@@ -109,6 +109,12 @@ class PaymentStateService {
         }
 
         if (user) {
+            // Se o usuário cancelou a renovação ou a assinatura, suprimimos avisos de vencimento e cobranças
+            if (user.cancelAtPeriodEnd || user.canceledAt) {
+                console.log(`[ASAAS] Supressão de e-mail ${event.event} para ${user.email} (cancelamento agendado/efetuado)`);
+                return;
+            }
+
             try {
                 switch (event.event) {
                     case 'PAYMENT_CREATED':
@@ -589,10 +595,68 @@ class PaymentStateService {
                 cycleExpiry = minExpiry;
             }
 
+            // Se houver fatura(s) anterior(es) OVERDUE para este psicólogo com vencimento anterior a esta fatura:
+            // Isso previne que o usuário burle ou pule meses gerados antecipadamente pelo Asaas
+            const olderOverduePayments = await db.Payment.findAll({
+                where: {
+                    psychologistId: lockedPsi.id,
+                    status: 'OVERDUE',
+                    dueDate: { [db.Sequelize.Op.lt]: payDueDateStr }
+                },
+                transaction: t
+            });
+
+            if (olderOverduePayments.length > 0) {
+                console.log(`[ASAAS] Identificadas ${olderOverduePayments.length} faturas OVERDUE anteriores para ${lockedPsi.email}. Regularizando ciclo...`);
+                const ASAAS_API_URL = PaymentStateService.getAsaasApiUrl();
+                const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+
+                for (const oldOverdue of olderOverduePayments) {
+                    try {
+                        await fetch(`${ASAAS_API_URL}/payments/${oldOverdue.id}`, {
+                            method: 'DELETE',
+                            headers: { 'access_token': ASAAS_API_KEY }
+                        });
+                    } catch (delErr) {
+                        console.error(`[ASAAS] Falha ao deletar fatura overdue ${oldOverdue.id} no Asaas:`, delErr);
+                    }
+                    await oldOverdue.update({ status: 'CANCELED' }, { transaction: t });
+                }
+
+                // O pagamento feito cobre o ciclo que estava em aberto
+                const sortedOverdue = olderOverduePayments.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+                const oldestDueDateStr = sortedOverdue[0].dueDate;
+                const oldestDueDate = new Date(oldestDueDateStr + (String(oldestDueDateStr).includes('T') ? '' : 'T12:00:00Z'));
+
+                let correctedExpiry = new Date(oldestDueDate.getTime());
+                const targetCorrectedMonth = correctedExpiry.getMonth() + 1;
+                correctedExpiry.setMonth(targetCorrectedMonth);
+                if (correctedExpiry.getMonth() !== targetCorrectedMonth % 12) {
+                    correctedExpiry.setDate(0);
+                }
+                if (correctedExpiry < minExpiry) {
+                    correctedExpiry = minExpiry;
+                }
+                cycleExpiry = correctedExpiry;
+
+                if (payment.subscription) {
+                    const nextDueDateStr = cycleExpiry.toISOString().split('T')[0];
+                    try {
+                        await fetch(`${ASAAS_API_URL}/subscriptions/${payment.subscription}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                            body: JSON.stringify({ nextDueDate: nextDueDateStr })
+                        });
+                    } catch (subErr) {
+                        console.error(`[ASAAS] Falha ao sincronizar nextDueDate da assinatura ${payment.subscription}:`, subErr);
+                    }
+                }
+            }
+
             // IDEMPOTÊNCIA: Se o psicólogo já tem validade igual ou superior a esta fatura,
             // NÃO incrementamos outro mês (evita que webhooks repetidos ou fluxo síncrono + assíncrono pulem meses)
             let novaValidade = cycleExpiry;
-            if (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > cycleExpiry) {
+            if (olderOverduePayments.length === 0 && lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > cycleExpiry) {
                 novaValidade = new Date(lockedPsi.planExpiresAt);
             }
 
@@ -601,7 +665,9 @@ class PaymentStateService {
                 planExpiresAt: novaValidade,
                 plano: planType,
                 subscriptionId: payment.subscription,
-                subscription_payments_count: currentPayments
+                subscription_payments_count: currentPayments,
+                cancelAtPeriodEnd: false,
+                canceledAt: null
             };
 
             if (!lockedPsi.subscribedAt) {

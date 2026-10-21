@@ -264,8 +264,8 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
    8. RESPONSIVIDADE MOBILE
    ========================================================================== */
 @media (max-width: 992px) {
-    /* FIX DEFINITIVO: Trava a janela do navegador em (0,0) no mobile para impedir vazamento para cima no Chrome iOS / Safari */
-    html {
+    /* FIX DEFINITIVO: Trava a janela do navegador em (0,0) no mobile apenas no dashboard logado para manter o scroll interno em .dashboard-main */
+    html:has(body.pagina-dashboard) {
         height: 100% !important;
         height: 100dvh !important;
         overflow: hidden !important;

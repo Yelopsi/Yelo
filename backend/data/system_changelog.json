@@ -1,5 +1,104 @@
 [
   {
+    "id": "change-fix-crm-followups-profile-scroll-20261021",
+    "date": "2026-10-21T20:35:00.000Z",
+    "commit": "pending",
+    "author": "Antigravity",
+    "title": "Melhorias de CRM Follow-ups e Correção de Scroll Mobile no Perfil Público (Android/Samsung)",
+    "category": "Melhorias & Correções",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "Cards de follow-up com quebra fluida de textos longos, botões com cores funcionais coerentes (IA vs WhatsApp), resiliência anti-500 na IA e correção definitiva do bloqueio de scroll no perfil público para aparelhos Android/Samsung.",
+    "description": "1. CRM: td[data-label='Motivo do Contato'] desacoplado no mobile em card com largura total (100%), botões categorizados com cores e ícones claros, e fallback seguro contra 500 em /analyze e /generate-ai-conversion-failure.\n2. Perfil Público: eliminação do bloqueio root no html no psi_dashboard.css, garantia de touch-action: pan-y e rolagem nativa para Samsung Internet / Chrome Mobile, restauração da cor verde oficial (#1B4332) no CTA e escala tipográfica correta (70%).",
+    "rationale": "Garantir usabilidade total do CRM para operadores de CS e assegurar navegação e conversão sem atrito em celulares Android/Samsung no perfil público.",
+    "before": {
+      "estado_anterior": "Cards de follow-up com texto espremido desalinhando colunas, rota /analyze quebrando com 500, e página de perfil público travando scroll no Android/Samsung Internet."
+    },
+    "after": {
+      "nova_versao": "Cards fluidos e responsivos, botões claros e organizados, fallback resiliente na IA sem 500, e perfil público com rolagem 100% nativa e CTA verde de destaque em qualquer aparelho."
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "backend/controllers/adminController.js",
+      "public/css/psi_dashboard.css",
+      "views/psi_perfil_publico.ejs"
+    ]
+  },
+  {
+    "id": "change-ui-testimonials-contrast-20261020",
+    "date": "2026-10-21T00:15:00.000Z",
+    "commit": "pending",
+    "author": "Antigravity",
+    "title": "Melhoria de UI/UX: Contraste WCAG AAA e Refinamento Visual dos Cards de Depoimento",
+    "category": "Design & UI/UX",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "Elevação de contraste dos cards de depoimentos da landing page com fundo branco puro (#fff), bordas estruturadas, tipografia de alta legibilidade (#162E24) e selo de paciente verificada.",
+    "description": "Ajuste na seção 'Histórias de quem já começou' em views/index.ejs para resolver contraste nulo contra o fundo da seção, refinando a apresentação dos depoimentos de pacientes.",
+    "rationale": "Garantir acessibilidade visual (WCAG AAA) e aumentar a credibilidade e impacto visual da prova social na página inicial.",
+    "before": {
+      "estado_anterior": "Cards com fundos pastéis e creme que se mesclavam ao fundo da seção, texto em cinza claro (#444) em itálico e baixa diferenciação de bordas/sombras."
+    },
+    "after": {
+      "nova_versao": "Cards em branco puro com bordas definidas, texto escuro em verde grafite (#162E24), estrelas douradas, badge de paciente verificada e elevação no hover."
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "views/index.ejs"
+    ]
+  },
+  {
+    "id": "change-fix-billing-lifecycles-20261020",
+    "date": "2026-10-20T23:25:00.000Z",
+    "commit": "pending",
+    "author": "Antigravity",
+    "title": "Correção & Blindagem: Sincronização dos 4 Ciclos Financeiros (Pagamento, Renovação, Cancelamento e Reassinatura)",
+    "category": "Financeiro & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "Blindagem completa das faturas Asaas/DB: priorização de faturas OVERDUE antes de PENDING, limpeza de faturas e cessação de cobranças ao cancelar renovação, e desbloqueio de reassinatura para inativos sem débitos fantasmas.",
+    "description": "Correção aplicada após casos de Tainá (pagamento do mês futuro com mês anterior overdue) e João Vitor (cobrança após cancelamento agendado). Ajustados endpoints getPendingPix, createPreference, updateSubscriptionMethod, cancelSubscription e processPaymentSuccess com supressão de notificações indevidas e idempotência estrita.",
+    "rationale": "Evitar inconsistências entre faturas antecipadas geradas pelo Asaas e faturas vencidas, garantir que cancelamentos cessem notificações por completo e permitir reassinatura limpa sem erros 404/403.",
+    "before": {
+      "estado_anterior": "getPendingPix buscava apenas faturas PENDING; cancelSubscription mantinha faturas abertas no Asaas gerando e-mails/SMS; createPreference bloqueava psicólogos inativos e tentava atualizar assinaturas deletadas gerando erro 404/500."
+    },
+    "after": {
+      "nova_versao": "getPendingPix e updateSubscriptionMethod buscam OVERDUE e PENDING com prioridade cronológica; cancelSubscription deleta faturas abertas no Asaas e cancela no DB; handleNotifications suprime e-mails para cancelados; createPreference cria novas assinaturas limpas para retorno de inativos."
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/paymentController.js",
+      "backend/controllers/subscriptionController.js",
+      "backend/services/paymentStateService.js"
+    ]
+  },
+  {
+    "id": "change-git-92088544",
+    "date": "2026-10-20T01:04:38.000Z",
+    "commit": "92088544",
+    "author": "Anderson",
+    "title": "Manutenção: Atualizar relatorio do security gate e changelog",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "atualizar relatorio do security gate e changelog",
+    "description": "Commit registrado no repositório: \"chore: atualizar relatorio do security gate e changelog\". Arquivos modificados: backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #92088544"
+    },
+    "after": {
+      "nova_versao": "atualizar relatorio do security gate e changelog"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-a29fd0bd",
     "date": "2026-10-20T01:04:11.000Z",
     "commit": "a29fd0bd",

@@ -5,8 +5,6 @@
     
     <!-- Garante que a origem seja enviada corretamente para o Google Sign-In -->
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <!-- Força a escala correta no mobile para evitar efeito de "zoom esticado" -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script nonce="<%= nonce %>" src="https://accounts.google.com/gsi/client" async defer></script>
 
     <!-- VARIÁVEIS DE SEO -->
@@ -85,6 +83,72 @@
     
     <link rel="stylesheet" href="/css/psi_dashboard.css">
     <style>
+        /* ==========================================================================
+           GARANTIA DE SCROLL NATIVO NO MOBILE (ANDROID, SAMSUNG INTERNET E IOS)
+           Mantém a escala compacta original (70%) e a liberdade total de rolagem.
+           ========================================================================== */
+        html {
+            font-size: 70% !important; /* Preserva a proporção e elegância dos textos e ícones */
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 100% !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior-y: auto !important;
+            touch-action: pan-y !important;
+        }
+
+        body.pagina-publica {
+            position: static !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: 100% !important;
+            max-height: none !important;
+            overflow-x: hidden !important;
+            overflow-y: visible !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior-y: auto !important;
+            touch-action: pan-y !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            zoom: 1 !important;
+        }
+
+        /* Cores do CTA Verde Oficial Yelo (#1B4332) */
+        .btn-principal, 
+        a.btn-principal, 
+        button.btn-principal,
+        .mobile-sticky-cta .btn-principal {
+            background-color: var(--verde-escuro, #1B4332) !important;
+            background: var(--verde-escuro, #1B4332) !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 50px !important;
+            font-weight: 700 !important;
+            text-decoration: none !important;
+            box-shadow: 0 4px 15px rgba(27, 67, 50, 0.2) !important;
+        }
+        .btn-principal svg,
+        .mobile-sticky-cta .btn-principal svg {
+            color: #ffffff !important;
+            stroke: #ffffff !important;
+        }
+        .btn-principal:hover,
+        .mobile-sticky-cta .btn-principal:hover {
+            background-color: #143326 !important;
+            color: #ffffff !important;
+        }
+
+        .btn-secundario {
+            background-color: transparent !important;
+            border: 2px solid var(--verde-escuro, #1B4332) !important;
+            color: var(--verde-escuro, #1B4332) !important;
+        }
+
         /* Contenção de quebras e Box Sizing seguro */
         .profile-page-main *, .profile-page-main *::before, .profile-page-main *::after {
             box-sizing: border-box;
@@ -111,19 +175,37 @@
             .mobile-only-badge { display: none !important; }
             .desktop-only-badge { display: inline-flex !important; }
         }
+
+        /* --- Ajustes Estruturais para Mobile / Tablets --- */
         @media (max-width: 992px) {
-            html, body {
-                overscroll-behavior-y: auto !important;
+            html {
+                font-size: 70% !important;
+                position: static !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: 100% !important;
+                max-height: none !important;
+                overflow-x: hidden !important;
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch !important;
-                touch-action: auto !important;
+                overscroll-behavior-y: auto !important;
+                touch-action: pan-y !important;
             }
-            body {
-                overflow-x: hidden !important;
+            body.pagina-publica {
+                position: static !important;
                 width: 100% !important;
                 max-width: 100% !important;
-                margin: 0;
-                padding: 0;
+                height: auto !important;
+                min-height: 100% !important;
+                max-height: none !important;
+                overflow-x: hidden !important;
+                overflow-y: visible !important;
+                -webkit-overflow-scrolling: touch !important;
+                overscroll-behavior-y: auto !important;
+                touch-action: pan-y !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                zoom: 1 !important;
             }
             .desktop-only-badge { display: none !important; }
             .mobile-only-badge { display: inline-flex !important; }
@@ -170,6 +252,7 @@
             overflow-x: auto;
             scroll-snap-type: x mandatory;
             -webkit-overflow-scrolling: touch;
+            touch-action: pan-x pan-y;
             width: 100%;
             box-sizing: border-box;
         }
@@ -655,7 +738,7 @@
 
         <style>
             .mobile-footer-spacer { height: 0px; display: block; width: 100%; }
-            @media (max-width: 768px) { .mobile-footer-spacer { height: 100px; } }
+            @media (max-width: 992px) { .mobile-footer-spacer { height: calc(160px + env(safe-area-inset-bottom, 20px)); } }
         </style>
         <div class="mobile-footer-spacer"></div>
     </main>

@@ -942,41 +942,46 @@ exports.analyzeProfile = async (req, res) => {
     try {
         const { id } = req.params;
         
-        // 1. Busca os dados super enriquecidos do psicólogo
+        // 1. Busca os dados super enriquecidos do psicólogo (paranoid: false para permitir analisar contas arquivadas)
         const psi = await db.Psychologist.findByPk(id, {
+            paranoid: false,
             attributes: [
                 'nome', 'bio', 'valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca', 
                 'temas_atuacao', 'abordagens_tecnicas', 'fotoUrl', 'authority_level', 'xp',
                 'profile_appearances', 'whatsapp_clicks', 'createdAt',
-                'planExpiresAt', 'subscriptionId', 'status', 'plano', 'is_exempt',
+                'planExpiresAt', 'subscriptionId', 'subscription_payments_count', 'status', 'plano', 'is_exempt',
                 'utm_source', 'genero_identidade', 'aiOptimizationHistory'
             ]
         });
 
         if (!psi) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
+        const safeNumericId = (!isNaN(parseInt(id, 10)) && parseInt(id, 10) > 0) ? parseInt(id, 10) : null;
+
         // 2. Busca métricas extras de engajamento
-        const reviewsCount = await db.Review.count({ where: { psychologistId: id, status: 'approved' } }).catch(() => 0);
-        const recentReviews = await db.Review.findAll({ 
-            where: { psychologistId: id, status: 'approved' },
+        const reviewsCount = safeNumericId ? await db.Review.count({ where: { psychologistId: safeNumericId, status: 'approved' } }).catch(() => 0) : 0;
+        const recentReviews = safeNumericId ? await db.Review.findAll({ 
+            where: { psychologistId: safeNumericId, status: 'approved' },
             attributes: ['rating', 'comment'],
             order: [['createdAt', 'DESC']],
             limit: 3
-        }).catch(() => []);
+        }).catch(() => []) : [];
 
         let postsCount = 0;
         let recentPosts = [];
-        if (db.Post) {
-            postsCount = await db.Post.count({ where: { psychologistId: id } }).catch(() => 0);
+        if (db.Post && safeNumericId) {
+            postsCount = await db.Post.count({ where: { psychologistId: safeNumericId } }).catch(() => 0);
             recentPosts = await db.Post.findAll({
-                where: { psychologistId: id },
+                where: { psychologistId: safeNumericId },
                 attributes: ['titulo', 'conteudo'],
                 order: [['createdAt', 'DESC']],
                 limit: 2
             }).catch(() => []);
         }
         let forumAnswersCount = 0;
-        if (db.ForumComment) forumAnswersCount = await db.ForumComment.count({ where: { PsychologistId: id } }).catch(() => 0);
+        if (db.ForumComment && safeNumericId) {
+            forumAnswersCount = await db.ForumComment.count({ where: { PsychologistId: safeNumericId } }).catch(() => 0);
+        }
 
         // 2.1. Busca Tendências de Mercado (O que os pacientes estão buscando)
         const [topDemands] = await db.sequelize.query(`
@@ -1010,7 +1015,7 @@ exports.analyzeProfile = async (req, res) => {
         const postsText = recentPosts.length > 0 ? recentPosts.map(p => `- Título: "${p.titulo}"\n  Trecho: "${p.conteudo ? p.conteudo.substring(0, 200).replace(/\n/g, ' ') : ''}..."`).join('\n\n') : 'Nenhum artigo publicado.';
 
         // 3.2. Formatação de Status Financeiro/Ciclo de Vida
-        const dataCadastro = new Date(psi.createdAt).toLocaleDateString('pt-BR');
+        const dataCadastro = psi.createdAt ? new Date(psi.createdAt).toLocaleDateString('pt-BR') : 'Data recente';
         let statusPagamento = 'Desconhecido';
         const hasSubscription = !!psi.subscriptionId || (psi.subscription_payments_count && psi.subscription_payments_count > 0) || (psi.plano && psi.plano !== 'Essencial');
         const isVip = psi.is_exempt;
@@ -1035,31 +1040,63 @@ exports.analyzeProfile = async (req, res) => {
         }
 
         if (!process.env.GEMINI_API_KEY) {
-            throw new Error("A chave GEMINI_API_KEY não foi encontrada no servidor. Adicione-a no arquivo .env!");
+            console.warn("⚠️ [analyzeProfile] GEMINI_API_KEY ausente. Utilizando fallback consultivo determinístico.");
         }
 
         const diasTrialText = diasParaExpirar !== null && diasParaExpirar > 0 ? diasParaExpirar : 'alguns';
 
         // 3.3. Busca de Métricas Reais do Banco de Dados (Padronizadas)
-        const numericId = parseInt(id, 10);
-        const [matchEventsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`, { replacements: { id: numericId } }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id`, { replacements: { id: numericId } })).catch(() => [[{count: 0}]]);
-        const matchAppearances = (parseInt(matchEventsRaw[0]?.count || 0, 10)) + (psi.profile_appearances || 0);
-
-        const [profileViewsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`, { replacements: { id: numericId } }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "PsychologistId" = :id`, { replacements: { id: numericId } })).catch(() => [[{count: 0}]]);
-        const profileViews = parseInt(profileViewsRaw[0]?.count || 0, 10);
-
+        let matchAppearances = psi.profile_appearances || 0;
+        let profileViews = 0;
         let whatsappClicks = 0;
-        if (db.WhatsAppClickLog) {
-            whatsappClicks = await db.WhatsAppClickLog.count({ where: { psychologistId: numericId } }).catch(() => 0);
+
+        if (safeNumericId) {
+            const [matchEventsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "psychologistId" = :id`, { replacements: { id: safeNumericId } }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "MatchEvents" WHERE "PsychologistId" = :id`, { replacements: { id: safeNumericId } })).catch(() => [[{count: 0}]]);
+            matchAppearances += parseInt(matchEventsRaw[0]?.count || 0, 10);
+
+            const [profileViewsRaw] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "psychologistId" = :id`, { replacements: { id: safeNumericId } }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "PsychologistId" = :id`, { replacements: { id: safeNumericId } })).catch(() => [[{count: 0}]]);
+            profileViews = parseInt(profileViewsRaw[0]?.count || 0, 10);
+
+            if (db.WhatsAppClickLog) {
+                whatsappClicks = await db.WhatsAppClickLog.count({ where: { psychologistId: safeNumericId } }).catch(() => 0);
+            }
         }
 
         let historyText = "Sem histórico de orientações anteriores.";
         if (psi.aiOptimizationHistory && Array.isArray(psi.aiOptimizationHistory) && psi.aiOptimizationHistory.length > 0) {
-            historyText = psi.aiOptimizationHistory.map((h, i) => {
-                const dateStr = h.sentAt ? new Date(h.sentAt).toLocaleDateString('pt-BR') : 'Data desconhecida';
-                return `[Interação ${i+1}] Data: ${dateStr} | Mensagem enviada anteriormente: "${h.contentSnippet}"`;
-            }).join('\n\n');
+            historyText = psi.aiOptimizationHistory
+                .filter(Boolean)
+                .map((h, i) => {
+                    const dateStr = h.sentAt ? new Date(h.sentAt).toLocaleDateString('pt-BR') : 'Data recente';
+                    return `[Interação ${i+1}] Data: ${dateStr} | Mensagem enviada anteriormente: "${h.contentSnippet || h.message || ''}"`;
+                }).join('\n\n');
         }
+
+        const safeFormatList = (val) => {
+            if (!val) return 'Nenhum';
+            if (Array.isArray(val)) {
+                const filtered = val.filter(Boolean);
+                return filtered.length > 0 ? filtered.join(', ') : 'Nenhum';
+            }
+            if (typeof val === 'string') {
+                const trimmed = val.trim();
+                if (!trimmed) return 'Nenhum';
+                if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        if (Array.isArray(parsed)) {
+                            const filtered = parsed.filter(Boolean);
+                            return filtered.length > 0 ? filtered.join(', ') : 'Nenhum';
+                        }
+                    } catch (_) {}
+                }
+                return trimmed;
+            }
+            return 'Nenhum';
+        };
+
+        const temasFormatados = safeFormatList(psi.temas_atuacao);
+        const abordagensFormatadas = safeFormatList(psi.abordagens_tecnicas);
 
         // 4. O SUPER PROMPT DA EQUIPE DE GROWTH
         const promptGrowth = `# ANÁLISE DE PERFIL E BOAS-VINDAS — YELO
@@ -2083,8 +2120,8 @@ Momento na plataforma: Recém-cadastrado (perfil preenchido recentemente, dando 
 Status Financeiro: ${statusPagamento}
 Biografria: ${psi.bio && psi.bio.length > 10 ? psi.bio : 'Não preenchida ou muito curta'}
 Preço Configurado: ${valorConsulta}
-Temas de Atuação: ${psi.temas_atuacao && psi.temas_atuacao.length > 0 ? psi.temas_atuacao.join(', ') : 'Nenhum'}
-Abordagens: ${psi.abordagens_tecnicas && psi.abordagens_tecnicas.length > 0 ? psi.abordagens_tecnicas.join(', ') : 'Nenhuma'}
+Temas de Atuação: ${temasFormatados}
+Abordagens: ${abordagensFormatadas}
 Aparições no Match (Recomendações): ${matchAppearances}
 Visualizações do Perfil (Tráfego): ${profileViews}
 Cliques no WhatsApp (Leads): ${whatsappClicks}
@@ -2107,19 +2144,71 @@ Se houver histórico acima:
 3. Avance na jornada do usuário com base nos dados atuais.
 `;
 
-        // 5. Chamada direta ao Gemini (Usando a versão que já funciona no seoService)
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
-        console.log("=============== PROMPT ===============");
-        console.log(promptGrowth.substring(promptGrowth.length - 1000));
-        
-        const result = await model.generateContent(promptGrowth);
-        const analysis = formatForWhatsApp(result.response.text());
+        // 5. Chamada ao Gemini com fallback de modelos e fallback determinístico
+        const CANDIDATE_MODELS = [
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+            "gemini-3.1-flash-lite",
+            "gemini-flash-lite-latest"
+        ];
+
+        let rawAnalysis = null;
+        if (process.env.GEMINI_API_KEY) {
+            try {
+                const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+                for (const modelName of CANDIDATE_MODELS) {
+                    try {
+                        const model = genAI.getGenerativeModel({ model: modelName });
+                        const result = await model.generateContent(promptGrowth);
+                        const text = result?.response?.text?.();
+                        if (text && text.trim().length > 20) {
+                            rawAnalysis = text;
+                            break;
+                        }
+                    } catch (modelErr) {
+                        console.warn(`⚠️ [analyzeProfile] Falha no modelo ${modelName}:`, modelErr.message);
+                    }
+                }
+            } catch (initAiErr) {
+                console.warn("⚠️ [analyzeProfile] Erro ao instanciar Gemini:", initAiErr.message);
+            }
+        }
+
+        if (!rawAnalysis) {
+            const firstName = (psi.nome || 'colega').split(' ')[0];
+            const hasGoodBio = !!(psi.bio && psi.bio.trim().length >= 80);
+            const hasPrice = valorConsulta !== 'A combinar';
+            const elogio = hasGoodBio
+                ? `Gostei bastante de como você estruturou a apresentação do seu perfil — já transmite acolhimento e clareza para quem visita a sua página.`
+                : `Que ótimo ver o seu perfil ativo na plataforma! Você já deu o passo principal para construir sua vitrine clínica por aqui.`;
+
+            let prioridadeBlock = '';
+            if (!hasGoodBio) {
+                prioridadeBlock = `Neste início, a nossa principal recomendação é enriquecer um pouco mais a sua biografia falando diretamente com a dor do paciente e detalhando como funciona o seu acolhimento.\n\n• Ferramenta: *Ajustes > Meu Perfil*\n• O que fazer: divida o texto em parágrafos curtos (a maioria dos pacientes lê pelo celular) e alinhe seus temas de atuação com o que você descreve na bio.`;
+            } else if (!hasPrice) {
+                prioridadeBlock = `Neste início, a nossa principal recomendação é configurar um valor de referência para a sessão. Perfis com valor visível costumam gerar mais segurança e cliques qualificados no WhatsApp.\n\n• Ferramenta: *Ajustes > Meu Perfil*\n• O que fazer: adicione o valor da sessão para reduzir a insegurança do paciente antes do primeiro contato.`;
+            } else if (reviewsCount === 0) {
+                prioridadeBlock = `Como a sua apresentação e valor já estão bem configurados, o próximo passo de maior impacto é conquistar suas primeiras avaliações de pacientes, que funcionam como prova social e aumentam muito a conversão.\n\n• Ferramenta: *Evolução > Solicitar Avaliações*\n• O que fazer: compartilhe seu link de avaliação com 2 ou 3 pacientes ou ex-pacientes de confiança.`;
+            } else {
+                prioridadeBlock = `Como o seu perfil já está muito bem completo, uma ótima forma de ampliar seu alcance orgânico é participar das discussões e conteúdos da plataforma.\n\n• Ferramenta: *Comunidade > Perguntas ou Blog*\n• O que fazer: responda dúvidas de pacientes ou publique um artigo curto sobre um dos seus temas de atuação.`;
+            }
+
+            rawAnalysis = `Olá, ${firstName}! Tudo bem?\n\nEu sou o Anderson, da Yelo. Pedi à nossa equipe de Growth para analisar o seu perfil agora que você está dando os primeiros passos na plataforma e trouxe algumas sugestões práticas para te ajudar a atrair pacientes. 🌿\n\n${elogio}\n\n${prioridadeBlock}\n\nNos próximos dias, vale acompanhar a evolução das suas aparições nas buscas e visualizações de perfil no seu painel. Qualquer dúvida, conte comigo por aqui! 🚀`;
+        }
+
+        const analysis = formatForWhatsApp(rawAnalysis);
 
         res.json({ message: analysis });
     } catch (error) {
         console.error("Erro em analyzeProfile:", error);
-        res.status(500).json({ error: error.message || 'Erro interno ao gerar análise.' });
+        // Fallback preventivo contra 500 para garantir que o Admin consiga enviar a mensagem
+        try {
+            const fallbackMsg = `Olá! Tudo bem?\n\nEu sou o Anderson, da Yelo. Pedi à nossa equipe de Growth para dar uma olhada no seu perfil e vi que você já está com a sua vitrine ativa por aqui. 🌿\n\nNeste início, o passo mais importante é garantir que a sua bio explique com clareza o seu acolhimento e que o valor da sessão esteja visível para reduzir dúvidas dos pacientes antes do primeiro contato.\n\nQualquer dúvida, conte comigo por aqui! 🚀`;
+            return res.json({ message: formatForWhatsApp(fallbackMsg), isFallback: true });
+        } catch (_) {
+            return res.status(500).json({ error: error.message || 'Erro interno ao gerar análise.' });
+        }
     }
 };
 
@@ -2127,19 +2216,20 @@ exports.generateAiConversionFailure = async (req, res) => {
     try {
         const { id } = req.params;
         const psi = await db.Psychologist.findByPk(id, {
+            paranoid: false,
             attributes: ['nome', 'bio', 'valor_sessao_numero', 'temas_atuacao', 'aiOptimizationHistory']
         });
         if (!psi) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
         
         const historyArray = Array.isArray(psi.aiOptimizationHistory) ? psi.aiOptimizationHistory : [];
-        const prevFailures = historyArray.filter(h => h.action === 'conversion_failure');
+        const prevFailures = historyArray.filter(h => h && h.action === 'conversion_failure');
         const hasBeenSentBefore = prevFailures.length > 0;
 
         let historyText = "Sem histórico de orientações anteriores.";
         if (historyArray.length > 0) {
             historyText = historyArray.map((h, i) => {
-                const dateStr = h.sentAt ? new Date(h.sentAt).toLocaleDateString('pt-BR') : 'Data desconhecida';
-                return `[Interação ${i+1}] Data: ${dateStr} | Mensagem enviada: "${h.contentSnippet}"`;
+                const dateStr = h && h.sentAt ? new Date(h.sentAt).toLocaleDateString('pt-BR') : 'Data desconhecida';
+                return `[Interação ${i+1}] Data: ${dateStr} | Mensagem enviada: "${(h && h.contentSnippet) || ''}"`;
             }).join('\n\n');
         }
 
@@ -2160,6 +2250,10 @@ Esta é a primeira vez que você orienta este psicólogo sobre conversão de con
 - Aconselhe OBRIGATORIAMENTE o uso da ferramenta "Manual de Conversão" (que fica em Clínica > Manual de Conversão) para ajudar com roteiros práticos de fechamento e não deixar o paciente no vácuo.
 `;
 
+        const temasStr = Array.isArray(psi.temas_atuacao) && psi.temas_atuacao.length > 0
+            ? psi.temas_atuacao.join(', ')
+            : (typeof psi.temas_atuacao === 'string' && psi.temas_atuacao.trim() ? psi.temas_atuacao : 'Nenhum');
+
         const prompt = `
 Você é um representante de CS da plataforma Yelo.
 Sua missão é ajudar o psicólogo(a) ${psi.nome.split(' ')[0]} a converter contatos de WhatsApp em pacientes.
@@ -2169,7 +2263,7 @@ Esse é um problema de Fundo de Funil (atendimento, preço, abordagem inicial).
 Dados do Perfil:
 Bio: ${psi.bio || 'Não preenchida'}
 Valor da Sessão: R$ ${psi.valor_sessao_numero || 'A combinar'}
-Temas: ${psi.temas_atuacao ? psi.temas_atuacao.join(', ') : 'Nenhum'}
+Temas: ${temasStr}
 
 Histórico de Mensagens Recentes:
 ${historyText}
@@ -2185,16 +2279,54 @@ INSTRUÇÕES PARA A MENSAGEM:
 6. IMPORTANTE: Retorne APENAS o texto da mensagem. NÃO inclua nenhum comentário, aviso ou pré-texto informando que a mensagem foi gerada por IA (ex: "Aqui está a mensagem", "Essa mensagem foi gerada...").
 `;
 
-        const { GoogleGenerativeAI } = require("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
-        const result = await model.generateContent(prompt);
-        const text = formatForWhatsApp(result.response.text());
+        const CANDIDATE_MODELS = [
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+            "gemini-3.1-flash-lite",
+            "gemini-flash-lite-latest"
+        ];
+
+        let rawText = null;
+        if (process.env.GEMINI_API_KEY) {
+            try {
+                const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+                for (const modelName of CANDIDATE_MODELS) {
+                    try {
+                        const model = genAI.getGenerativeModel({ model: modelName });
+                        const result = await model.generateContent(prompt);
+                        const candidateText = result?.response?.text?.();
+                        if (candidateText && candidateText.trim().length > 15) {
+                            rawText = candidateText;
+                            break;
+                        }
+                    } catch (modelErr) {
+                        console.warn(`⚠️ [generateAiConversionFailure] Falha no modelo ${modelName}:`, modelErr.message);
+                    }
+                }
+            } catch (initErr) {
+                console.warn(`⚠️ [generateAiConversionFailure] Erro ao instanciar Gemini:`, initErr.message);
+            }
+        }
+
+        if (!rawText) {
+            const firstName = (psi.nome || 'colega').split(' ')[0];
+            rawText = hasBeenSentBefore
+                ? `Olá, ${firstName}! Tudo bem?\n\nVi por aqui que novos contatos chegaram recentemente pelo seu perfil na Yelo, mas acabaram ainda não avançando para o agendamento.\n\nVocê chegou a testar as estratégias lá do *Manual de Conversão*? Queria entender com você: sente que o principal obstáculo tem sido o valor da sessão, o tempo até a resposta ou os pacientes param de responder depois da primeira mensagem?\n\nSe quiser, podemos analisar juntos como foi a última abordagem para destravar esses fechamentos! 🌿`
+                : `Olá, ${firstName}! Tudo bem?\n\nEstava acompanhando as métricas do seu perfil e é muito bom ver que a sua página está atraindo interesse e gerando cliques no WhatsApp! Notei, porém, que os últimos contatos acabaram não avançando para o agendamento.\n\nQuando o paciente clica no WhatsApp, os primeiros minutos de acolhimento e a forma de conduzir a conversa até o valor da sessão fazem toda a diferença. Recomendo dar uma olhada na ferramenta *Clínica > Manual de Conversão* lá no seu painel — preparamos roteiros práticos justamente para evitar que o paciente deixe no vácuo.\n\nQualquer dúvida ou se quiser trocar uma ideia sobre a abordagem inicial, estou por aqui! 🌿`;
+        }
+
+        const text = formatForWhatsApp(rawText);
 
         res.json({ whatsappCopy: text });
     } catch (error) {
         console.error("Erro em generateAiConversionFailure:", error);
-        res.status(500).json({ error: 'Erro ao gerar mensagem de falha de conversão.' });
+        try {
+            const fallbackCopy = `Olá! Tudo bem?\n\nNotei que novos contatos chegaram recentemente ao seu perfil na Yelo, mas ainda não avançaram para agendamento. Dê uma olhada no *Manual de Conversão* lá no seu painel para roteiros práticos de acolhimento inicial! Se precisar de ajuda, estou por aqui. 🌿`;
+            res.json({ whatsappCopy: formatForWhatsApp(fallbackCopy), isFallback: true });
+        } catch (_) {
+            res.status(500).json({ error: 'Erro ao gerar mensagem de falha de conversão.' });
+        }
     }
 };
 

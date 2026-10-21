@@ -517,9 +517,10 @@ window.gerarAnaliseCS = async function(psiId) {
     }
     
     try {
-        const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
+        const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
         const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${psiId}/analyze`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include'
         });
         const data = await res.json();
         if(data.message) {

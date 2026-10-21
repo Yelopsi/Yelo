@@ -463,24 +463,54 @@ window.initializePage = function () {
             else if (item.actionType === 'conversion_failure') actionBadge = '<span class="status" style="background:#fee2e2; color:#b91c1c;">Falha Conversão</span>';
             else if (item.actionType === 'negotiation') actionBadge = '<span class="status" style="background:#ffedd5; color:#c2410c;">Em Negociação</span>';
 
-            let nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${item.nome}</strong>`;
+            let nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; overflow-wrap: break-word; line-height: 1.35;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${item.nome}</strong>`;
             
             if (item.actionType === 'low_performance' && item.aiOptimizationHistory) {
                 const history = Array.isArray(item.aiOptimizationHistory) ? item.aiOptimizationHistory : [];
                 if (history.some(h => h.action === 'whatsapp_ai_diagnosis')) {
-                    nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${item.nome} <span class="badge-pending" title="Contato IA Realizado" style="margin-left: 5px; font-size: 0.8rem;">🤖📱</span></strong>`;
+                    nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; overflow-wrap: break-word; line-height: 1.35;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${item.nome} <span class="badge-pending" title="Contato IA Realizado" style="margin-left: 5px; font-size: 0.8rem;">🤖📱</span></strong>`;
                 }
             }
 
             const planoLabel = item.plano ? (item.plano.charAt(0).toUpperCase() + item.plano.slice(1).toLowerCase()) : '-';
+            const isAiAction = ['analysis', 'low_performance', 'conversion_failure', 'churn', 'expiring_trial'].includes(item.actionType);
+            const btnPrimaryClass = isAiAction ? 'btn-tabela btn-tabela-ia' : 'btn-tabela btn-tabela-wpp';
+
+            let btnPrimaryLabel = 'Enviar';
+            let btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>';
+
+            if (item.actionType === 'analysis') {
+                btnPrimaryLabel = 'Analisar (IA)';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
+            } else if (item.actionType === 'low_performance') {
+                btnPrimaryLabel = 'Diagnóstico (IA)';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
+            } else if (item.actionType === 'conversion_failure') {
+                btnPrimaryLabel = 'Analisar (IA)';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
+            } else if (item.actionType === 'churn') {
+                btnPrimaryLabel = 'Resgate (IA)';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
+            } else if (item.actionType === 'expiring_trial') {
+                btnPrimaryLabel = 'Consultoria (IA)';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
+            } else if (item.actionType === 'incomplete') {
+                btnPrimaryLabel = 'Lembrar Perfil';
+            } else if (item.actionType === 'billing_feedback') {
+                btnPrimaryLabel = 'Pedir Feedback';
+            } else if (item.actionType === 'paid_churn') {
+                btnPrimaryLabel = 'Recuperar';
+            } else {
+                btnPrimaryLabel = 'WhatsApp';
+            }
 
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td data-label="Profissional">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="display: flex; flex-direction: column;">
+                    <div style="display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0;">
+                        <div style="display: flex; flex-direction: column; min-width: 0; flex: 1;">
                             ${nameHtml}
-                            <span style="font-size: 0.75rem; color: #666;">${item.telefone || 'Sem telefone'}</span>
+                            <span style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">${item.telefone || 'Sem telefone'}</span>
                         </div>
                     </div>
                 </td>
@@ -488,20 +518,20 @@ window.initializePage = function () {
                     ${actionBadge}
                 </td>
                 <td data-label="Motivo do Contato">
-                    <span style="font-size: 0.85rem; color: #475569; font-weight: 500;">${item.reason}</span>
+                    <span class="motivo-contato-texto">${item.reason}</span>
                 </td>
                 <td data-label="Data / Previsão">
-                    <span style="color: #64748b; font-size: 0.9rem;">${dateStr}</span>
+                    <span style="color: #64748b; font-size: 0.88rem; font-weight: 500;">${dateStr}</span>
                 </td>
                 <td data-label="Plano">
-                    <span style="font-size: 0.8rem; color: #64748b; font-weight: 500;">${planoLabel}</span>
+                    <span style="font-size: 0.82rem; color: #64748b; font-weight: 500;">${planoLabel}</span>
                 </td>
                 <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
-                    <button class="btn-tabela" onclick="window.sendPendingAction('${item.id}', '${item.actionType}')" style="background: ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? '#7c3aed' : '#25D366'}; color: white; border: none; padding: 6px 12px; border-radius: 50px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 4px ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? 'rgba(124,58,237,0.3)' : 'rgba(37,211,102,0.3)'};">
-                        ${(item.actionType === 'low_performance' || item.actionType === 'conversion_failure') ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Analisar' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> Enviar'}
+                    <button class="${btnPrimaryClass}" onclick="window.sendPendingAction('${item.id}', '${item.actionType}')" title="${btnPrimaryLabel}">
+                        ${btnPrimaryIcon} <span>${btnPrimaryLabel}</span>
                     </button>
-                    <button class="btn-tabela" onclick="window.dismissAction('${item.id}', '${item.actionType}')" style="background: transparent; color: #94a3b8; border: 1px solid #cbd5e1; padding: 6px 10px; border-radius: 50px; cursor: pointer; display: inline-flex; align-items: center; margin-left: 5px;" title="Ignorar esta ação">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <button class="btn-tabela btn-tabela-dispensar" onclick="window.dismissAction('${item.id}', '${item.actionType}')" style="margin-left: 6px;" title="Ignorar esta ação">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> <span>Ignorar</span>
                     </button>
                 </td>
             `;
@@ -599,26 +629,30 @@ window.initializePage = function () {
 
         if (actionType === 'analysis') {
             try {
-                if (window.showToast) window.showToast('Gerando análise com IA... Aguarde.', 'info');
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                if (window.showToast) window.showToast('Gerando análise de perfil com IA... Aguarde.', 'info');
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
                 const resAnalise = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/analyze`, {
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                    headers: { 'Authorization': `Bearer ${tokenAdmin}` },
+                    credentials: 'include'
                 });
-                const data = await resAnalise.json();
-                if (data.message) {
-                    msg = data.message;
-                    await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/analyzed`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tokenAdmin}` },
-                        body: JSON.stringify({ isProfileAnalyzed: true })
-                    });
-                } else {
-                    if (window.showToast) window.showToast("Erro ao gerar análise", "error");
-                    return;
+                if (resAnalise.ok) {
+                    const data = await resAnalise.json();
+                    if (data && data.message) {
+                        msg = data.message;
+                        await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/analyzed`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tokenAdmin}` },
+                            credentials: 'include',
+                            body: JSON.stringify({ isProfileAnalyzed: true })
+                        }).catch(() => {});
+                    }
                 }
             } catch (e) {
-                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
-                return;
+                console.warn("Aviso ao buscar análise de perfil:", e);
+            }
+
+            if (!msg) {
+                msg = `Olá, ${firstName}! Tudo bem?\n\nEu sou o Anderson, da Yelo. Pedi à nossa equipe de Growth para dar uma olhada no seu perfil agora que você está dando os primeiros passos na plataforma e trouxe algumas sugestões práticas para te ajudar a atrair pacientes. 🌿\n\nQue ótimo ver o seu perfil ativo na plataforma! Você já deu o passo principal para construir sua vitrine clínica por aqui.\n\nNeste início, a nossa principal recomendação é enriquecer um pouco mais a sua biografia falando diretamente com a dor do paciente e detalhando como funciona o seu acolhimento.\n\n• Ferramenta: *Ajustes > Meu Perfil*\n• O que fazer: divida o texto em parágrafos curtos (a maioria dos pacientes lê pelo celular) e alinhe seus temas de atuação com o que você descreve na bio.\n\nNos próximos dias, vale acompanhar a evolução das suas aparições nas buscas e visualizações de perfil no seu painel. Qualquer dúvida, conte comigo por aqui! 🚀`;
             }
         } else if (actionType === 'incomplete') {
             msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 7 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas. Se precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
@@ -814,16 +848,18 @@ window.initializePage = function () {
                     headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
                     credentials: 'include'
                 });
-                const data = await resAi.json();
-                if (data.whatsappCopy) {
-                    msg = data.whatsappCopy;
-                } else {
-                    if (window.showToast) window.showToast(data.error || "Erro ao gerar consultoria", "error");
-                    return;
+                if (resAi.ok) {
+                    const data = await resAi.json();
+                    if (data && data.whatsappCopy) {
+                        msg = data.whatsappCopy;
+                    }
                 }
             } catch (e) {
-                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
-                return;
+                console.warn("Aviso ao buscar copy de conversão:", e);
+            }
+
+            if (!msg) {
+                msg = `Olá, ${firstName}! Tudo bem?\n\nEstava acompanhando as métricas do seu perfil na Yelo e é muito bom ver que a sua página está gerando interesse e atraindo cliques no WhatsApp! Notei, porém, que os últimos contatos acabaram ainda não avançando para o agendamento.\n\nQuando o paciente clica no WhatsApp, os primeiros minutos de acolhimento e a forma de conduzir a conversa até o valor da sessão fazem toda a diferença. Recomendo dar uma olhada na ferramenta *Clínica > Manual de Conversão* lá no seu painel — preparamos roteiros práticos justamente para evitar que o paciente deixe no vácuo.\n\nQualquer dúvida ou se quiser trocar uma ideia sobre a abordagem inicial, estou por aqui! 🌿`;
             }
         } else if (actionType === 'negotiation') {
             const metrics = metricsStr && metricsStr !== '{}' ? JSON.parse(decodeURIComponent(metricsStr)) : {};
