@@ -1,5 +1,41 @@
 [
   {
+    "id": "change-git-41cad921",
+    "date": "2026-10-21T23:43:56.000Z",
+    "commit": "41cad921",
+    "author": "Anderson",
+    "title": "Novo: Ajustar follow-ups do crm, corrigir scroll no android e preservar cta verde (crm/mobile)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "ajustar follow-ups do crm, corrigir scroll no android e preservar cta verde",
+    "description": "Commit registrado no repositório: \"feat(crm/mobile): ajustar follow-ups do crm, corrigir scroll no android e preservar cta verde\". Arquivos modificados: admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, admin/admin_cs_drawer.js, backend/controllers/adminController.js, backend/controllers/paymentController.js (+9 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #41cad921"
+    },
+    "after": {
+      "nova_versao": "ajustar follow-ups do crm, corrigir scroll no android e preservar cta verde"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "admin/admin_cs_drawer.js",
+      "backend/controllers/adminController.js",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/subscriptionController.js",
+      "backend/data/system_changelog.json",
+      "backend/services/paymentStateService.js",
+      "package-lock.json",
+      "public/css/psi_dashboard.css",
+      "security/reports/gate_report.json",
+      "security/reports/npm_audit.json",
+      "views/index.ejs",
+      "views/psi_perfil_publico.ejs"
+    ]
+  },
+  {
     "id": "change-fix-crm-followups-profile-scroll-20261021",
     "date": "2026-10-21T20:35:00.000Z",
     "commit": "pending",
