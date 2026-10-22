@@ -440,6 +440,7 @@ window.initializePage = function () {
         }
 
         window.__pendingActionsMap = window.__pendingActionsMap || new Map();
+        window.__pendingActionsList = Array.isArray(data) ? data : [];
 
         data.forEach(item => {
             const actionKey = `${item.id}_${item.actionType}`;
@@ -473,35 +474,46 @@ window.initializePage = function () {
             }
 
             const planoLabel = item.plano ? (item.plano.charAt(0).toUpperCase() + item.plano.slice(1).toLowerCase()) : '-';
-            const isAiAction = ['analysis', 'low_performance', 'conversion_failure', 'churn', 'expiring_trial'].includes(item.actionType);
-            const btnPrimaryClass = isAiAction ? 'btn-tabela btn-tabela-ia' : 'btn-tabela btn-tabela-wpp';
-
-            let btnPrimaryLabel = 'Enviar';
+            let btnPrimaryLabel = 'Contatar (WhatsApp)';
+            let btnPrimaryClass = 'btn-tabela btn-tabela-wpp';
             let btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>';
 
-            if (item.actionType === 'analysis') {
-                btnPrimaryLabel = 'Analisar (IA)';
+            if (item.actionType === 'conversion_failure') {
+                btnPrimaryLabel = 'Reverter Falha (IA)';
+                btnPrimaryClass = 'btn-tabela btn-tabela-conversion';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>';
+            } else if (item.actionType === 'analysis') {
+                btnPrimaryLabel = 'Enviar Análise (IA)';
+                btnPrimaryClass = 'btn-tabela btn-tabela-analysis';
                 btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
             } else if (item.actionType === 'low_performance') {
                 btnPrimaryLabel = 'Diagnóstico (IA)';
-                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
-            } else if (item.actionType === 'conversion_failure') {
-                btnPrimaryLabel = 'Analisar (IA)';
-                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
-            } else if (item.actionType === 'churn') {
-                btnPrimaryLabel = 'Resgate (IA)';
-                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
+                btnPrimaryClass = 'btn-tabela btn-tabela-lowperf';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
             } else if (item.actionType === 'expiring_trial') {
-                btnPrimaryLabel = 'Consultoria (IA)';
-                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
-            } else if (item.actionType === 'incomplete') {
-                btnPrimaryLabel = 'Lembrar Perfil';
-            } else if (item.actionType === 'billing_feedback') {
-                btnPrimaryLabel = 'Pedir Feedback';
+                btnPrimaryLabel = 'Converter Plano (IA)';
+                btnPrimaryClass = 'btn-tabela btn-tabela-trial';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+            } else if (item.actionType === 'churn') {
+                btnPrimaryLabel = 'Resgate Trial (IA)';
+                btnPrimaryClass = 'btn-tabela btn-tabela-churn';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line></svg>';
             } else if (item.actionType === 'paid_churn') {
-                btnPrimaryLabel = 'Recuperar';
-            } else {
-                btnPrimaryLabel = 'WhatsApp';
+                btnPrimaryLabel = 'Recuperar Assinante';
+                btnPrimaryClass = 'btn-tabela btn-tabela-paidchurn';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>';
+            } else if (item.actionType === 'billing_feedback') {
+                btnPrimaryLabel = 'Checar Contato';
+                btnPrimaryClass = 'btn-tabela btn-tabela-feedback';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+            } else if (item.actionType === 'incomplete') {
+                btnPrimaryLabel = 'Ativar Perfil';
+                btnPrimaryClass = 'btn-tabela btn-tabela-incomplete';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7.5" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>';
+            } else if (item.actionType === 'negotiation') {
+                btnPrimaryLabel = 'Acompanhar Negociação';
+                btnPrimaryClass = 'btn-tabela btn-tabela-negotiation';
+                btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>';
             }
 
             const row = document.createElement('tr');
@@ -527,7 +539,7 @@ window.initializePage = function () {
                     <span style="font-size: 0.82rem; color: #64748b; font-weight: 500;">${planoLabel}</span>
                 </td>
                 <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
-                    <button class="${btnPrimaryClass}" onclick="window.sendPendingAction('${item.id}', '${item.actionType}')" title="${btnPrimaryLabel}">
+                    <button class="${btnPrimaryClass}" onclick="window.sendPendingAction('${item.id}', '${item.actionType}', this)" title="${btnPrimaryLabel}">
                         ${btnPrimaryIcon} <span>${btnPrimaryLabel}</span>
                     </button>
                     <button class="btn-tabela btn-tabela-dispensar" onclick="window.dismissAction('${item.id}', '${item.actionType}')" style="margin-left: 6px;" title="Ignorar esta ação">
@@ -539,12 +551,17 @@ window.initializePage = function () {
         });
     }
 
-    window.sendPendingAction = function (id, actionType) {
+    window.sendPendingAction = function (id, actionType, btnElement) {
         const actionKey = `${id}_${actionType}`;
-        const item = window.__pendingActionsMap?.get(actionKey);
+        let item = window.__pendingActionsMap?.get(actionKey);
         if (!item) {
-            console.error('Ação pendente não encontrada:', actionKey);
-            return;
+            const list = window.__pendingActionsList || [];
+            item = list.find(a => String(a.id) === String(id) && a.actionType === actionType) || list.find(a => String(a.id) === String(id));
+        }
+        if (!item) {
+            const nameEl = document.getElementById(`name-psy-${id}`);
+            const name = nameEl ? nameEl.innerText.trim() : 'Colega';
+            item = { id, nome: name, telefone: null, actionType };
         }
         window.sendWhatsAppAction(
             item.id,
@@ -553,7 +570,8 @@ window.initializePage = function () {
             item.actionType,
             item.patientName || '',
             item.feedbackToken || '',
-            encodeURIComponent(JSON.stringify(item.metrics || {}))
+            encodeURIComponent(JSON.stringify(item.metrics || {})),
+            btnElement
         );
     };
 
@@ -606,7 +624,7 @@ window.initializePage = function () {
             .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '$1: $2')
             .replace(/\*\*([^*\n]+?)\*\*/g, '*$1*')
             .replace(/__([^_\n]+?)__/g, '_$1_')
-            .replace(/^[\*\-]\s+/gm, '• ')
+            .replace(/^[-]\s+/gm, '* ')
             .replace(/\*[ \t]+([^*\n]+?)[ \t]+\*/g, '*$1*')
             .replace(/\*[ \t]+([^*\n]+?)\*/g, '*$1*')
             .replace(/\*([^*\n]+?)[ \t]+\*/g, '*$1*')
@@ -617,24 +635,50 @@ window.initializePage = function () {
             .trim();
     }
 
-    window.sendWhatsAppAction = async function (id, phone, name, actionType, patientName = '', feedbackToken = '', metricsStr = '{}') {
-        if (!phone || phone === 'null') {
-            window.showToast('Profissional sem telefone cadastrado.', 'error');
-            return;
-        }
-        const cleanPhone = phone.replace(/\D/g, '');
-        const firstName = name.split(' ')[0];
-        const metrics = JSON.parse(decodeURIComponent(metricsStr));
-        let msg = '';
+    window.sendWhatsAppAction = async function (id, phone, name, actionType, patientName = '', feedbackToken = '', metricsStr = '{}', btnElement = null) {
+        if (btnElement && btnElement.disabled) return;
 
-        if (actionType === 'analysis') {
+        let originalHtml = '';
+        if (btnElement) {
+            originalHtml = btnElement.innerHTML;
+            btnElement.disabled = true;
+            btnElement.innerHTML = `<svg style="animation: spin 1s linear infinite; margin-right: 4px; vertical-align: middle;" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> <span>Gerando...</span>`;
+        }
+
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        let popupWindow = null;
+        let cleanPhone = (phone || '').toString().replace(/\D/g, '');
+
+        if (!cleanPhone) {
+            const manualPhone = prompt(`O profissional ${name || 'selecionado'} não possui telefone cadastrado.\n\nInforme o número do WhatsApp com DDD para abrir a conversa (ou clique em OK/Cancelar para apenas gerar e copiar o texto da mensagem):`, '');
+            if (manualPhone && manualPhone.trim()) {
+                cleanPhone = manualPhone.replace(/\D/g, '');
+            }
+        }
+
+        // Se tiver telefone e for desktop, abre uma aba em branco imediatamente durante o clique do usuário para o navegador nunca bloquear como popup
+        if (!isMobile && cleanPhone) {
             try {
-                if (window.showToast) window.showToast('Gerando análise de perfil com IA... Aguarde.', 'info');
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
-                const resAnalise = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/analyze`, {
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}` },
-                    credentials: 'include'
-                });
+                popupWindow = window.open('about:blank', '_blank');
+                if (popupWindow) {
+                    popupWindow.document.write('<title>Yelo CRM - Gerando...</title><body style="background:#0f172a;color:#f8fafc;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;"><div style="text-align:center;"><p style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">🌿 Gerando mensagem com IA...</p><p style="color:#94a3b8;font-size:0.9rem;">Abrindo WhatsApp em instantes...</p></div></body>');
+                }
+            } catch (_) {}
+        }
+
+        try {
+            const firstName = (name || 'Colega').split(' ')[0];
+            const metrics = metricsStr && metricsStr !== '{}' ? JSON.parse(decodeURIComponent(metricsStr)) : {};
+            let msg = '';
+
+            if (actionType === 'analysis') {
+                try {
+                    if (window.showToast) window.showToast('Gerando mensagem de boas-vindas / análise com IA... Aguarde.', 'info');
+                    const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
+                    const resAnalise = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/analyze`, {
+                        headers: { 'Authorization': `Bearer ${tokenAdmin}` },
+                        credentials: 'include'
+                    });
                 if (resAnalise.ok) {
                     const data = await resAnalise.json();
                     if (data && data.message) {
@@ -867,46 +911,73 @@ window.initializePage = function () {
             msg = `Olá, ${firstName}. Como vai?\n\nPreciso da sua ajuda com um retorno rápido.\n\nVocê estava em negociação com ${patientName} desde ${dataNeg}:\n\n• Conseguiram conversar novamente?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nPara responder, acesse sua conta na Yelo e vá até a opção *Evolução > Histórico de Contatos* e mude o status "⏳ Em negociação".\n\nObrigado! 🌿`;
         }
 
-        // Formata e sanitiza para o parser nativo do WhatsApp não perder a formatação
-        msg = formatForWhatsApp(msg);
+            // Formata e sanitiza para o parser nativo do WhatsApp não perder a formatação
+            msg = formatForWhatsApp(msg);
 
-        // Garante formato 55DDD999999999 sem duplicar o DDI 55
-        let fullPhone = cleanPhone;
-        if (fullPhone.length === 10 || fullPhone.length === 11) {
-            fullPhone = '55' + fullPhone;
-        }
+            // Se o psicólogo não possui telefone cadastrado e o admin não informou manualmente:
+            if (!cleanPhone) {
+                if (popupWindow) popupWindow.close();
+                try {
+                    await navigator.clipboard.writeText(msg);
+                    if (window.showToast) window.showToast('Mensagem gerada e copiada para a área de transferência! (Profissional sem telefone)', 'success');
+                    else alert('Mensagem gerada e copiada para a área de transferência!');
+                } catch (_) {
+                    prompt('Profissional sem telefone cadastrado. Copie o texto gerado abaixo:', msg);
+                }
+                return;
+            }
 
-        // Universal link oficial: abre direto no app nativo no mobile (iOS/Android) sem perder quebras de linha e formatação
-        const whatsappUrl = `https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodeURIComponent(msg)}`;
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            // Garante formato 55DDD999999999 sem duplicar o DDI 55
+            let fullPhone = cleanPhone;
+            if (fullPhone.length === 10 || fullPhone.length === 11) {
+                fullPhone = '55' + fullPhone;
+            }
 
-        // Marcar como enviado no banco ANTES de redirecionar para o WhatsApp (evita que a requisição seja cancelada pelo descarregamento no mobile)
-        try {
-            const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
-            const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/action-sent`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${tokenAdmin}`,
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify({ actionType, messageContent: msg })
-            });
-            if (res.ok) {
-                if (window.showToast) window.showToast('Ação registrada com sucesso!', 'success');
-                const statusInput = document.getElementById('crm-status-psi');
-                if (statusInput && statusInput.value === 'pending_actions') {
-                    setTimeout(() => fetchAndRenderPsis(window.currentCrmPage || 1), 600);
+            // Universal link oficial: abre direto no app nativo no mobile (iOS/Android) sem perder quebras de linha e formatação
+            const whatsappUrl = `https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodeURIComponent(msg)}`;
+
+            // Marcar como enviado no banco ANTES de redirecionar para o WhatsApp (evita que a requisição seja cancelada pelo descarregamento no mobile)
+            try {
+                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
+                const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/action-sent`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${tokenAdmin}`,
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ actionType, messageContent: msg })
+                });
+                if (res.ok) {
+                    if (window.showToast) window.showToast('Ação registrada com sucesso!', 'success');
+                    const statusInput = document.getElementById('crm-status-psi');
+                    if (statusInput && statusInput.value === 'pending_actions') {
+                        setTimeout(() => fetchAndRenderPsis(window.currentCrmPage || 1), 600);
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao marcar ação como enviada:', e);
+            }
+
+            if (popupWindow && !popupWindow.closed) {
+                popupWindow.location.href = whatsappUrl;
+            } else if (isMobile) {
+                window.location.href = whatsappUrl;
+            } else {
+                const win = window.open(whatsappUrl, '_blank');
+                if (!win) {
+                    window.location.href = whatsappUrl;
                 }
             }
-        } catch (e) {
-            console.error('Erro ao marcar ação como enviada:', e);
-        }
-
-        if (isMobile) {
-            window.location.href = whatsappUrl;
-        } else {
-            window.open(whatsappUrl, '_blank');
+        } catch (err) {
+            console.error('Erro em sendWhatsAppAction:', err);
+            if (popupWindow) popupWindow.close();
+            if (window.showToast) window.showToast('Erro ao processar mensagem: ' + (err.message || err), 'error');
+        } finally {
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.innerHTML = originalHtml;
+            }
         }
     };
 

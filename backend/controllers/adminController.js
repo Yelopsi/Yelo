@@ -2146,11 +2146,8 @@ Se houver histórico acima:
 
         // 5. Chamada ao Gemini com fallback de modelos e fallback determinístico
         const CANDIDATE_MODELS = [
-            "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            "gemini-3.1-flash-lite",
-            "gemini-flash-lite-latest"
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite"
         ];
 
         let rawAnalysis = null;
@@ -2159,8 +2156,16 @@ Se houver histórico acima:
                 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
                 for (const modelName of CANDIDATE_MODELS) {
                     try {
-                        const model = genAI.getGenerativeModel({ model: modelName });
-                        const result = await model.generateContent(promptGrowth);
+                        const model = genAI.getGenerativeModel({ 
+                            model: modelName,
+                            systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
+                            generationConfig: {
+                                temperature: 0.7,
+                                maxOutputTokens: 900
+                            }
+                        });
+                        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de 7s no modelo')), 7000));
+                        const result = await Promise.race([model.generateContent(promptGrowth), timeoutPromise]);
                         const text = result?.response?.text?.();
                         if (text && text.trim().length > 20) {
                             rawAnalysis = text;
@@ -2280,11 +2285,8 @@ INSTRUÇÕES PARA A MENSAGEM:
 `;
 
         const CANDIDATE_MODELS = [
-            "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            "gemini-3.1-flash-lite",
-            "gemini-flash-lite-latest"
+            "gemini-3.5-flash-lite",
+            "gemini-3.1-flash-lite"
         ];
 
         let rawText = null;
@@ -2293,8 +2295,16 @@ INSTRUÇÕES PARA A MENSAGEM:
                 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
                 for (const modelName of CANDIDATE_MODELS) {
                     try {
-                        const model = genAI.getGenerativeModel({ model: modelName });
-                        const result = await model.generateContent(prompt);
+                        const model = genAI.getGenerativeModel({ 
+                            model: modelName,
+                            systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
+                            generationConfig: {
+                                temperature: 0.7,
+                                maxOutputTokens: 800
+                            }
+                        });
+                        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de 7s no modelo')), 7000));
+                        const result = await Promise.race([model.generateContent(prompt), timeoutPromise]);
                         const candidateText = result?.response?.text?.();
                         if (candidateText && candidateText.trim().length > 15) {
                             rawText = candidateText;

@@ -271,7 +271,7 @@ Retorne SOMENTE um JSON com a seguinte estrutura (não use blocos markdown de c�
         }
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
         const result = await model.generateContent({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -409,7 +409,7 @@ ${metricsBlockPrompt}
 1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\\n\\n).
 2. Cumprimente o psicólogo pelo nome e se apresente. Comece em um tom acolhedor e agradeça por ele ter testado a plataforma.
 3. Seja SUAVE ao informar que o Trial de 7 dias expirou. Exemplo: "O seu período gratuito encerrou, mas eu estava analisando as suas métricas e os resultados foram super interessantes..."
-4. Apresente os resultados dele conforme indicado nas instruções de métricas acima.
+4. É OBRIGATÓRIO APRESENTAR AS MÉTRICAS EM TÓPICOS NATIVOS DO WHATSAPP com os números em negrito para evidenciar os números, iniciando cada linha com '* *' (ex: * *18 aparições* nos resultados de matches, * *2 visitas* na página, * *1 paciente te chamou no WhatsApp*). Se teve 0 cliques, apresente apenas as aparições e visitas.
 5. Analise os resultados de fechamento de forma consultiva e empática:
    ${feedbackInstruction}
 6. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE, mas faça de forma amigável e parceira: cite explicitamente o valor que ele cobra por sessão (R$ ${psi.valor_sessao_numero || 'X'}) e compare com a mensalidade (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. (Ex: "Como a sua sessão é R$ 150,00, fechando apenas 1 sessão você já cobre todo o custo da plataforma e garante o seu lucro. É um investimento que se paga com um único atendimento"). NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".
@@ -422,7 +422,7 @@ ${metricsBlockPrompt}
             try {
                 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
                 const model = genAI.getGenerativeModel({ 
-                    model: "gemini-3.1-flash-lite", 
+                    model: "gemini-3.5-flash-lite", 
                     systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
                     generationConfig: {
                         temperature: 0.7,
@@ -446,8 +446,8 @@ ${metricsBlockPrompt}
             let mathText = "";
 
             if (hasClicks) {
-                const contatoStr = clicksCount === 1 ? '1 contato no WhatsApp' : `${clicksCount} contatos no WhatsApp`;
-                metricsText = `Durante os testes, o seu perfil obteve *${matchesCount} aparições* nos resultados de matches, *${viewsCount} visualizações* na sua página e gerou *${contatoStr}*.`;
+                const contatoStr = clicksCount === 1 ? '1 paciente te chamou no WhatsApp' : `${clicksCount} pacientes te chamaram no WhatsApp`;
+                metricsText = `Durante os testes, o seu perfil obteve:\n\n* *${matchesCount} aparições* nos resultados de matches\n* *${viewsCount} visualizações* na sua página\n* *${contatoStr}*`;
                 
                 if (dealYes > 0) {
                     feedbackText = `E notei pelo seu feedback que você já conseguiu fechar ${dealYes} sessão(ões)! 🎉`;
@@ -457,13 +457,13 @@ ${metricsBlockPrompt}
                     mathText = `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
                 }
             } else {
-                metricsText = `Durante os testes, o seu perfil obteve *${matchesCount} aparições* nos resultados de buscas e *${viewsCount} visualizações* diretas na sua página!`;
+                metricsText = `Durante os testes, o seu perfil obteve:\n\n* *${matchesCount} aparições* nos resultados de buscas\n* *${viewsCount} visualizações* diretas na sua página`;
                 feedbackText = `O seu perfil já começou a ganhar relevância nas buscas e visitas de potenciais pacientes. O próximo passo natural é a chegada dos primeiros contatos no WhatsApp. Posso te ajudar a dar uma revisada rápida na bio e na apresentação para destravarmos esses contatos!`;
                 mathText = `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
             }
 
             whatsappCopy = formatForWhatsApp(
-                `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nPassei para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito acabou encerrando, mas eu estava analisando as suas métricas e os resultados foram bem legais.\n\n${metricsText} ${feedbackText}\n\nPensando pelo seu lado financeiro, a assinatura da Yelo é apenas R$ 99,00 mensais. Como a sua sessão é de R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaria sentido para você reativar a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, clicar em "Ajustes" e depois ir em "Assinaturas e Planos". Qualquer dúvida, estou por aqui!`
+                `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nPassei para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito acabou encerrando, mas eu estava analisando as suas métricas e os resultados foram bem legais.\n\n${metricsText}\n\n${feedbackText}\n\nPensando pelo seu lado financeiro, a assinatura da Yelo é apenas R$ 99,00 mensais. Como a sua sessão é de R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaria sentido para você reativar a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, clicar em "Ajustes" e depois ir em "Assinaturas e Planos". Qualquer dúvida, estou por aqui!`
             );
         }
 
@@ -570,7 +570,7 @@ ${metricsBlockPrompt}
         const { GoogleGenerativeAI } = require("@google/generative-ai");
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-3.1-flash-lite",
+            model: "gemini-3.5-flash-lite",
             systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
             generationConfig: {
                 temperature: 0.7,
@@ -721,7 +721,14 @@ ${performanceSection}
      ? '- Como o período expira hoje/em breve, mencione que o período gratuito "expira nas próximas horas" ou "está encerrando nas próximas horas".' 
      : '- Como o período expira amanhã, mencione que o período gratuito "expirará amanhã".'}
    NUNCA use "restam X dias" ou "último dia (restam X dias)". Seja direto usando a referência temporal indicada.
-3. Apresente os resultados dele conforme indicado na seção de dados acima (se teve 0 cliques, apresente apenas aparições e visitas).
+3. É OBRIGATÓRIO APRESENTAR AS MÉTRICAS EM TÓPICOS NATIVOS DO WHATSAPP com os números em negrito para evidenciar os números, exatamente neste formato:
+Seu perfil obteve:
+
+* *${matchesCount} aparições* nos resultados de matches
+* *${viewsCount} visitas* na página
+* *${clicksCount === 1 ? '1 paciente te chamou no WhatsApp' : `${clicksCount} pacientes te chamaram no WhatsApp`}*
+
+(Inicie cada linha com '* *' para que no WhatsApp apareça como tópicos e com os números em destaque em negrito. Se teve 0 cliques, apresente apenas as aparições e visitas, nunca mencione 0 cliques).
 4. Analise os resultados de forma consultiva e parceira:
    ${resultAnalysisGuideline}
 5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: ${instrucaoFinanceira}
@@ -734,7 +741,7 @@ ${performanceSection}
             try {
                 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
                 const model = genAI.getGenerativeModel({ 
-                    model: "gemini-3.1-flash-lite", 
+                    model: "gemini-3.5-flash-lite", 
                     systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
                     generationConfig: {
                         temperature: 0.7,
@@ -765,7 +772,7 @@ ${performanceSection}
 
             if (hasClicks) {
                 const contatoStr = clicksCount === 1 ? '1 paciente te chamou no WhatsApp' : `${clicksCount} pacientes te chamaram no WhatsApp`;
-                metricsText = `Seu perfil obteve *${matchesCount} aparições* nos resultados de matches, *${viewsCount} visitas* na página e *${contatoStr}*.`;
+                metricsText = `Seu perfil obteve:\n\n* *${matchesCount} aparições* nos resultados de matches\n* *${viewsCount} visitas* na página\n* *${contatoStr}*`;
 
                 if (dealYes > 0) {
                     feedbackText = `Notei que você conseguiu fechar terapia com ${dealYes} sessão(ões)! 🎉 Isso é a maior prova de que a plataforma já se pagou com sobra.`;
@@ -779,13 +786,13 @@ ${performanceSection}
                 }
             } else {
                 // 0 CLIQUES
-                metricsText = `Seu perfil já obteve *${matchesCount} aparições* nas buscas da plataforma e *${viewsCount} visitas* diretas na sua página!`;
+                metricsText = `Seu perfil obteve:\n\n* *${matchesCount} aparições* nas buscas da plataforma\n* *${viewsCount} visitas* diretas na página`;
                 feedbackText = `Como o algoritmo de distribuição da plataforma leva alguns dias para calibrar o seu público ideal e o seu perfil já está ganhando tração de visualizações, o próximo passo natural é a chegada dos primeiros contatos no WhatsApp. Com pequenos ajustes na sua apresentação e mantendo a página ativa, os agendamentos começam a acontecer.`;
                 mathText = defaultMathText;
             }
 
             whatsappCopy = formatForWhatsApp(
-                `Olá, ${psi.nome.split(' ')[0]}! Tudo bem?\n\nVi que o seu período gratuito na Yelo ${expiryPhrase}, então passei para dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\n${metricsText} ${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. ${fraseSessaoMock}, ${mathText}\n\nFaz sentido para você ativar a assinatura para não perdermos esse fluxo de pacientes ${timingClosing}? Basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos".`
+                `Olá, ${psi.nome.split(' ')[0]}! Tudo bem?\n\nVi que o seu período gratuito na Yelo ${expiryPhrase}, então passei para dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\n${metricsText}\n\n${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. ${fraseSessaoMock}, ${mathText}\n\nFaz sentido para você ativar a assinatura para não perdermos esse fluxo de pacientes ${timingClosing}? Basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos".`
             );
         }
 

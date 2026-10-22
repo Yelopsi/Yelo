@@ -222,17 +222,143 @@
         color: #0f172a !important;
         transform: translateY(-1px) !important;
     }
-    .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar) {
+    .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar):not(.btn-tabela-conversion):not(.btn-tabela-analysis):not(.btn-tabela-lowperf):not(.btn-tabela-trial):not(.btn-tabela-churn):not(.btn-tabela-paidchurn):not(.btn-tabela-feedback):not(.btn-tabela-incomplete):not(.btn-tabela-negotiation) {
         background: #f0fdf4 !important;
         border-color: #bbf7d0 !important;
         color: #166534 !important;
     }
-    .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar):hover {
+    .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar):not(.btn-tabela-conversion):not(.btn-tabela-analysis):not(.btn-tabela-lowperf):not(.btn-tabela-trial):not(.btn-tabela-churn):not(.btn-tabela-paidchurn):not(.btn-tabela-feedback):not(.btn-tabela-incomplete):not(.btn-tabela-negotiation):hover {
         background: #dcfce7 !important;
         border-color: #86efac !important;
         color: #14532d !important;
     }
-    /* Botão IA (Análise de Perfil / Diagnóstico / Resgate / Conversão) */
+    /* 1. Falha Conversão (Reverter Falha IA) - Crimson/Rose */
+    .btn-tabela.btn-tabela-conversion {
+        background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+        border: 1px solid #be123c !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(225, 29, 72, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-conversion:hover {
+        background: linear-gradient(135deg, #be123c 0%, #9f1239 100%) !important;
+        border-color: #9f1239 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(225, 29, 72, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    /* 2. Análise Pronta (Enviar Análise IA) - Azul Royal */
+    .btn-tabela.btn-tabela-analysis {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        border: 1px solid #1d4ed8 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-analysis:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+        border-color: #1e40af !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    /* 3. Diagnóstico IA / Baixo Desempenho - Roxo Violeta */
+    .btn-tabela.btn-tabela-lowperf {
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
+        border: 1px solid #6d28d9 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(124, 58, 237, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-lowperf:hover {
+        background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%) !important;
+        border-color: #5b21b6 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    /* 4. Trial Expirando (Converter Plano IA) - Âmbar Quente */
+    .btn-tabela.btn-tabela-trial {
+        background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+        border: 1px solid #b45309 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(217, 119, 6, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-trial:hover {
+        background: linear-gradient(135deg, #b45309 0%, #92400e 100%) !important;
+        border-color: #92400e !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    /* 5. Churn Trial (Resgate Trial IA) - Laranja Queimado */
+    .btn-tabela.btn-tabela-churn {
+        background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
+        border: 1px solid #c2410c !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(234, 88, 12, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-churn:hover {
+        background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%) !important;
+        border-color: #9a3412 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(234, 88, 12, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    /* 6. Churn Pago (Recuperar Assinante) - Vinho Carmim Escuro */
+    .btn-tabela.btn-tabela-paidchurn {
+        background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%) !important;
+        border: 1px solid #7f1d1d !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(153, 27, 27, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-paidchurn:hover {
+        background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%) !important;
+        border-color: #450a0a !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(153, 27, 27, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    /* 7. Feedback / Cobrança (Checar Contato) - Ciano Sky */
+    .btn-tabela.btn-tabela-feedback {
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+        border: 1px solid #0369a1 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-feedback:hover {
+        background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
+        border-color: #075985 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    /* 8. Perfil Incompleto (Ativar Perfil) - Verde Esmeralda */
+    .btn-tabela.btn-tabela-incomplete {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        border: 1px solid #047857 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-incomplete:hover {
+        background: linear-gradient(135deg, #047857 0%, #065f46 100%) !important;
+        border-color: #065f46 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    /* 9. Em Negociação (Acompanhar Negociação) - Índigo */
+    .btn-tabela.btn-tabela-negotiation {
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+        border: 1px solid #4338ca !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-negotiation:hover {
+        background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%) !important;
+        border-color: #3730a3 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    /* Botão IA Legado / Fallback */
     .btn-tabela.btn-tabela-ia {
         background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
         border: 1px solid #6d28d9 !important;
@@ -246,7 +372,7 @@
         box-shadow: 0 4px 12px rgba(124, 58, 237, 0.38) !important;
         transform: translateY(-1px) !important;
     }
-    /* Botão WhatsApp (Lembrar Perfil / Recuperar / Feedback / Contatar) */
+    /* Botão WhatsApp padrão (Lembrar Perfil / Recuperar / Feedback / Contatar) */
     .btn-tabela.btn-tabela-wpp {
         background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
         border: 1px solid #15803d !important;
@@ -260,20 +386,27 @@
         box-shadow: 0 4px 12px rgba(22, 163, 74, 0.38) !important;
         transform: translateY(-1px) !important;
     }
-    /* Botão Ignorar / Descartar Follow-up */
+    /* Botão Ignorar / Descartar Follow-up com contorno vermelho */
     .btn-tabela.btn-tabela-dispensar {
         background: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        color: #64748b !important;
+        border: 1.5px solid #ef4444 !important;
+        color: #ef4444 !important;
         padding: 7px 14px !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
+        box-shadow: 0 1px 3px rgba(239, 68, 68, 0.08) !important;
+        font-weight: 600 !important;
+    }
+    .btn-tabela.btn-tabela-dispensar svg {
+        stroke: #ef4444 !important;
     }
     .btn-tabela.btn-tabela-dispensar:hover {
         background: #fee2e2 !important;
-        border-color: #fca5a5 !important;
+        border-color: #dc2626 !important;
         color: #b91c1c !important;
-        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15) !important;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2) !important;
         transform: translateY(-1px) !important;
+    }
+    .btn-tabela.btn-tabela-dispensar:hover svg {
+        stroke: #b91c1c !important;
     }
     .btn-tabela-perigo {
         background: #ffffff !important;

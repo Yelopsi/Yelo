@@ -61,7 +61,7 @@ const validateAndSanitizeMatchPreferences = (prefs) => {
         caracteristicas_prof: sanitizeArray(prefs.caracteristicas_prof),
         idade: sanitizeString(prefs.idade),
         modalidade_atendimento: sanitizeString(prefs.modalidade_atendimento),
-        abordagem_ideal: sanitizeString(prefs.abordagem_ideal),
+        abordagem_ideal: sanitizeArray(prefs.abordagem_ideal),
         excludeIds: Array.isArray(prefs.excludeIds) ? prefs.excludeIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id)) : []
     };
 };

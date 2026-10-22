@@ -482,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const valPsi = "Psicanálise,Jungiana";
         const valPsiOnly = "Psicanálise";
         const valHum = "Humanista,Gestalt-terapia";
-        const valSis = "Sistêmica";
+        const valSis = "Sistêmica,Psicologia Histórico-Cultural";
         const valIndiferente = "Indiferente";
 
         if (categoria === "sintomas") {

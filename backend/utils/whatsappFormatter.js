@@ -40,8 +40,9 @@ function formatForWhatsApp(text) {
         .replace(/\*\*([^*\n]+?)\*\*/g, '*$1*')
         // Converte itálico duplo __texto__ em itálico WhatsApp _texto_
         .replace(/__([^_\n]+?)__/g, '_$1_')
-        // Substitui marcadores de lista com asterisco ou hífen por bullet redondo
-        .replace(/^[\*\-]\s+/gm, '• ')
+        // Normaliza marcadores de lista com hífen (- item) para asterisco (* item)
+        // preservando a sintaxe nativa de tópicos do WhatsApp (* item e * *negrito*)
+        .replace(/^[-]\s+/gm, '* ')
         // Corrige espaços inválidos dentro de asteriscos do WhatsApp (* texto * -> *texto*)
         // Usa apenas espaços horizontais [ \t] para jamais colapsar quebras de linha
         .replace(/\*[ \t]+([^*\n]+?)[ \t]+\*/g, '*$1*')
