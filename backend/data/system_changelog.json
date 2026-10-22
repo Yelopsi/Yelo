@@ -1,5 +1,29 @@
 [
   {
+    "id": "change-git-709ef077",
+    "date": "2026-10-22T01:14:05.000Z",
+    "commit": "709ef077",
+    "author": "Anderson",
+    "title": "Manutenção: Atualizar relatorio de seguranca e changelog pos-deploy",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "atualizar relatorio de seguranca e changelog pos-deploy",
+    "description": "Commit registrado no repositório: \"chore: atualizar relatorio de seguranca e changelog pos-deploy\". Arquivos modificados: backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #709ef077"
+    },
+    "after": {
+      "nova_versao": "atualizar relatorio de seguranca e changelog pos-deploy"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-3e6316fa",
     "date": "2026-10-22T01:13:36.000Z",
     "commit": "3e6316fa",
