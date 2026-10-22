@@ -340,11 +340,11 @@ window.initializePage = function() {
             // --- 2. RENDERIZA FUNIL VISUAL END-TO-END ---
             const maxFunnel = data.visitas > 0 ? data.visitas : 1; // Previne divisão por zero
             const funilHtml = [
-                { id: 'step-1', icon: '👁️', bg: '#e0f2fe', color: '#0284c7', label: '1. Acessaram o Site', value: data.visitas, parent: data.visitas, desc: 'Visualizações no Período' },
-                { id: 'step-2', icon: '🚀', bg: '#f3e8ff', color: '#7e22ce', label: '2. Iniciaram o Questionário', value: data.iniciaram, parent: data.visitas, desc: 'Clicaram em Começar' },
-                { id: 'step-3', icon: '📋', bg: '#fef3c7', color: '#d97706', label: '3. Finalizaram Questionário (Leads)', value: data.completaram, parent: data.iniciaram, desc: 'Chegaram aos Resultados' },
-                { id: 'step-4', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Visualizações de Perfis', value: data.profileViews, parent: data.completaram, desc: 'Acessos detalhados aos resultados' },
-                { id: 'step-5', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp (Pacientes)', value: data.whatsappUnique, parent: data.profileViews, desc: `Gerou ${data.whatsappClicks} clicks totais` }
+                { id: 'step-1', icon: '👁️', bg: '#e0f2fe', color: '#0284c7', label: '1. Acessaram o Site', value: data.visitas, prevValue: data.prevVisitas, parent: data.visitas, desc: 'Visualizações no Período' },
+                { id: 'step-2', icon: '🚀', bg: '#f3e8ff', color: '#7e22ce', label: '2. Iniciaram o Questionário', value: data.iniciaram, prevValue: data.prevIniciaram, parent: data.visitas, desc: 'Clicaram em Começar' },
+                { id: 'step-3', icon: '📋', bg: '#fef3c7', color: '#d97706', label: '3. Finalizaram Questionário (Leads)', value: data.completaram, prevValue: data.prevCompletaram, parent: data.iniciaram, desc: 'Chegaram aos Resultados' },
+                { id: 'step-4', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Visualizações de Perfis', value: data.profileViews, prevValue: data.prevProfileViews, parent: data.completaram, desc: 'Acessos detalhados aos resultados' },
+                { id: 'step-5', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp (Pacientes)', value: data.whatsappUnique, prevValue: data.prevWhatsappUnique, parent: data.profileViews, desc: `Gerou ${data.whatsappClicks} clicks totais` }
             ].map((step, i, arr) => {
                 const rateToParentRaw = step.parent > 0 ? (step.value / step.parent) : 0;
                 const rateToParentPct = (rateToParentRaw * 100).toFixed(1);
@@ -360,6 +360,7 @@ window.initializePage = function() {
                 else if (displayPct < 70) rateClass = 'rate-warn';
 
                 const rateHtml = i === 0 ? '' : `<span class="funnel-rate ${rateClass}">${displayPct}% da etapa anterior</span>`;
+                const trendHtml = renderTrend(step.value, step.prevValue);
 
                 return `
                     <div class="funnel-stage">
@@ -372,7 +373,10 @@ window.initializePage = function() {
                             </div>
                         </div>
                         <div class="funnel-metrics">
-                            <span class="funnel-count">${step.value.toLocaleString()}</span>
+                            <div style="display: flex; align-items: baseline; justify-content: flex-end;">
+                                <span class="funnel-count">${step.value.toLocaleString()}</span>
+                                ${trendHtml}
+                            </div>
                             ${rateHtml}
                         </div>
                     </div>
@@ -399,7 +403,8 @@ window.initializePage = function() {
                 }
                 
                 if (kpiTxDesistencia) {
-                    kpiTxDesistencia.textContent = `${taxaDesistenciaPct}%`;
+                    const trendTxDesistencia = prevTaxaDesistenciaPct !== null ? renderTrend(taxaDesistenciaPct, prevTaxaDesistenciaPct, true) : '';
+                    kpiTxDesistencia.innerHTML = `${taxaDesistenciaPct}%${trendTxDesistencia}`;
                     kpiTxDesistencia.style.color = desistenciaColor; 
                 }
                 if (kpiTxDesistenciaGlobal) {
@@ -424,11 +429,20 @@ window.initializePage = function() {
                     const totalPerdasMapeadas = data.abandonos.reduce((acc, a) => acc + parseInt(a.count, 10), 0);
                     const maxAbandono = Math.max(...data.abandonos.map(a => parseInt(a.count, 10)));
                     
+                    const prevAbandonosMap = {};
+                    if (data.prevAbandonos && Array.isArray(data.prevAbandonos)) {
+                        data.prevAbandonos.forEach(p => {
+                            prevAbandonosMap[p.step] = parseInt(p.count, 10);
+                        });
+                    }
+
                     data.abandonos.forEach(item => {
                         const count = parseInt(item.count, 10);
                         const pctBar = ((count / maxAbandono) * 100).toFixed(0);
                         const pctShare = totalPerdasMapeadas > 0 ? ((count / totalPerdasMapeadas) * 100).toFixed(1) : 0;
                         const stepInfo = getStepInfo(item.step);
+                        const prevCount = prevAbandonosMap[item.step] !== undefined ? prevAbandonosMap[item.step] : null;
+                        const trendLosses = prevCount !== null ? renderTrend(count, prevCount, true) : '';
                         
                         // Classificação de Benchmark e Severidade
                         let statusBadge = '';
@@ -461,7 +475,11 @@ window.initializePage = function() {
                                         </div>
                                     </div>
                                     <div style="text-align: right; flex-shrink: 0;">
-                                        <span style="color: #1e293b; font-weight: 700; font-size: 0.95rem; display: block;">${count} perdas <span style="font-size: 0.8rem; font-weight: 500; color: #64748b;">(${pctShare}%)</span></span>
+                                        <div style="display: flex; align-items: baseline; justify-content: flex-end;">
+                                            <span style="color: #1e293b; font-weight: 700; font-size: 0.95rem;">${count} perdas</span>
+                                            ${trendLosses}
+                                            <span style="font-size: 0.8rem; font-weight: 500; color: #64748b; margin-left: 5px;">(${pctShare}%)</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div style="width: 100%; background-color: #f1f5f9; border-radius: 10px; height: 8px; overflow: hidden; margin-top: 8px;">
@@ -480,12 +498,13 @@ window.initializePage = function() {
             if(containerOrigens) {
                 // Agrupa as origens inteligentemente
                 let canais = { 'Google Ads': 0, 'Meta/Insta Ads': 0, 'Orgânico/Direto': 0, 'Outros': 0 };
+                let prevCanais = { 'Google Ads': 0, 'Meta/Insta Ads': 0, 'Orgânico/Direto': 0, 'Outros': 0 };
                 let totalOrigens = 0;
                 
                 if (data.origens && data.origens.length > 0) {
                     data.origens.forEach(o => {
                         const src = (o.source || '').toLowerCase();
-                        const count = parseInt(o.count);
+                        const count = parseInt(o.count, 10);
                         totalOrigens += count;
                         
                         // Mapeamento Estrito para evitar falsos positivos de palavras nas UTMs
@@ -499,16 +518,38 @@ window.initializePage = function() {
                             canais['Outros'] += count;
                         }
                     });
+                }
 
+                if (data.prevOrigens && data.prevOrigens.length > 0) {
+                    data.prevOrigens.forEach(o => {
+                        const src = (o.source || '').toLowerCase();
+                        const count = parseInt(o.count, 10);
+                        if (src === 'google' || src === 'google_ads' || src === 'gads' || src === 'google ads') {
+                            prevCanais['Google Ads'] += count;
+                        } else if (src === 'fb' || src === 'facebook' || src === 'ig' || src === 'instagram' || src === 'meta' || src === 'fb_ads' || src === 'meta_ads') {
+                            prevCanais['Meta/Insta Ads'] += count;
+                        } else if (src === 'direto' || src === 'organico' || src === 'organic' || src === '') {
+                            prevCanais['Orgânico/Direto'] += count;
+                        } else {
+                            prevCanais['Outros'] += count;
+                        }
+                    });
+                }
+
+                if (totalOrigens > 0 || (data.prevOrigens && data.prevOrigens.length > 0)) {
                     containerOrigens.innerHTML = Object.entries(canais).sort((a,b) => b[1] - a[1]).map(([nome, count]) => {
-                        if (count === 0) return '';
-                        const pct = ((count / totalOrigens) * 100).toFixed(1);
+                        if (count === 0 && (!prevCanais[nome] || prevCanais[nome] === 0)) return '';
+                        const pct = totalOrigens > 0 ? ((count / totalOrigens) * 100).toFixed(1) : 0;
+                        const prevCount = prevCanais[nome] !== undefined ? prevCanais[nome] : null;
+                        const trendChannel = prevCount !== null ? renderTrend(count, prevCount) : '';
+
                         return `
                         <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #eee;">
                             <span style="font-weight: 600; color: #333;">${nome}</span>
-                            <div style="text-align: right;">
+                            <div style="text-align: right; display: flex; align-items: baseline; justify-content: flex-end;">
                                 <span style="font-size: 1.1rem; font-weight: bold; color: var(--verde-escuro);">${count}</span>
-                                <span style="font-size: 0.8rem; color: #888; margin-left: 5px;">(${pct}%)</span>
+                                ${trendChannel}
+                                <span style="font-size: 0.8rem; color: #888; margin-left: 6px;">(${pct}%)</span>
                             </div>
                         </div>`;
                     }).join('');

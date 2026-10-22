@@ -1050,11 +1050,14 @@ exports.getFunnelAnalytics = async (req, res) => {
         const prevVisitas = parseInt(prevVisitsResult[0]?.count || 0);
         const prevIniciaram = await db.DemandSearch.count({ where: { createdAt: { [Op.between]: [prevStart, prevEnd] } } }).catch(() => 0);
         const prevCompletaram = await db.DemandSearch.count({ where: { status: { [Op.in]: ['completed', 'matched'] }, createdAt: { [Op.between]: [prevStart, prevEnd] } } }).catch(() => 0);
+        const prevProfileViewsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "createdAt" BETWEEN :start AND :end AND "source" = 'profile_click_funnel'`, { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
+        const prevProfileViews = parseInt(prevProfileViewsResult[0]?.count || 0);
+        const prevWhatsappClicksResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
+        const prevWhatsappClicks = parseInt(prevWhatsappClicksResult[0]?.count || 0);
         const prevWhatsappUniqueResult = await db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE(CAST("searchId" AS VARCHAR), CAST("id" AS VARCHAR))) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const prevWhatsappUnique = parseInt(prevWhatsappUniqueResult[0]?.count || 0);
         const prevDesqualificadosResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "DemandSearches" WHERE "is_disqualified" = true AND "createdAt" BETWEEN :start AND :end`, { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
         const prevDesqualificados = parseInt(prevDesqualificadosResult[0]?.count || 0);
-
 
         const abandonos = await db.sequelize.query(
             `SELECT t.step, COUNT(*) as count 
@@ -1065,11 +1068,25 @@ exports.getFunnelAnalytics = async (req, res) => {
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
+        const prevAbandonos = await db.sequelize.query(
+            `SELECT t.step, COUNT(*) as count 
+             FROM "TrackingLogs" t
+             LEFT JOIN "DemandSearches" d ON t."searchId" = CAST(d.id AS VARCHAR) AND (d.status = 'completed' OR d.is_disqualified = true)
+             WHERE t."type" = 'questionario_dropoff' AND t."createdAt" BETWEEN :start AND :end AND d.id IS NULL
+             GROUP BY t.step ORDER BY count DESC`,
+            { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => []);
+
         // Busca origens a partir dos questionários preenchidos, em vez da tabela de pacientes
         const jsonColUtm = 'CAST("searchParams" AS JSONB)';
         const origens = await db.sequelize.query(
             `SELECT ${jsonColUtm}->>'utm_source' as source, COUNT(*) as count FROM "DemandSearches" WHERE "createdAt" BETWEEN :start AND :end AND ${jsonColUtm}->>'utm_source' IS NOT NULL AND ${jsonColUtm}->>'utm_source' != '' GROUP BY source ORDER BY count DESC`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => []);
+
+        const prevOrigens = await db.sequelize.query(
+            `SELECT ${jsonColUtm}->>'utm_source' as source, COUNT(*) as count FROM "DemandSearches" WHERE "createdAt" BETWEEN :start AND :end AND ${jsonColUtm}->>'utm_source' IS NOT NULL AND ${jsonColUtm}->>'utm_source' != '' GROUP BY source ORDER BY count DESC`,
+            { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
         // --- BLOCO DE INTELIGÊNCIA DE DEMANDA ---
@@ -1094,10 +1111,11 @@ exports.getFunnelAnalytics = async (req, res) => {
             visitas, prevVisitas, 
             iniciaram, prevIniciaram, 
             completaram, prevCompletaram, 
-            profileViews, 
-            whatsappClicks, 
+            profileViews, prevProfileViews,
+            whatsappClicks, prevWhatsappClicks,
             whatsappUnique, prevWhatsappUnique, 
-            abandonos, origens, 
+            abandonos, prevAbandonos, 
+            origens, prevOrigens, 
             desqualificados, prevDesqualificados, 
             inteligencia: { topTemas, faixaValor, modalidades } 
         });

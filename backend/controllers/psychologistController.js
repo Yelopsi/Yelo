@@ -62,12 +62,17 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             }).catch(async () => await db.Review.count({ where: { psychologistId } }).catch(() => 0));
         }
 
-        // --- NOVO: VERIFICA AVALIAÇÃO DA PLATAFORMA ---
-        const platformReviewCountResult = await db.sequelize.query(
-            `SELECT COUNT(*) as count FROM "PlatformReviews" WHERE "psychologistId" = :id`,
+        // --- VERIFICA AVALIAÇÃO DA PLATAFORMA (NPS) ---
+        const platformReviewsResult = await db.sequelize.query(
+            `SELECT rating, "createdAt" FROM "PlatformReviews" WHERE "psychologistId" = :id ORDER BY "createdAt" DESC LIMIT 1`,
             { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => [{ count: 0 }]);
-        const hasPlatformReview = parseInt(platformReviewCountResult[0]?.count || 0, 10) > 0;
+        ).catch(() => []);
+        
+        const lastPlatformReview = (platformReviewsResult && platformReviewsResult.length > 0) ? {
+            rating: parseInt(platformReviewsResult[0].rating, 10),
+            createdAt: platformReviewsResult[0].createdAt
+        } : null;
+        const hasPlatformReview = !!lastPlatformReview;
 
         // --- DADOS DE OPORTUNIDADE (INFLADOS PARA CONVERSÃO) ---
         const thirtyDaysAgo = new Date();
@@ -90,6 +95,7 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         // Monta o objeto de resposta
         const responseData = psychologist.toJSON();
         responseData.hasPlatformReview = hasPlatformReview;
+        responseData.lastPlatformReview = lastPlatformReview;
         
         // Verifica se vinculou google (raw query)
         const [rawRecord] = await db.sequelize.query(`SELECT "googleId" FROM "Psychologists" WHERE id = :id`, { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT });

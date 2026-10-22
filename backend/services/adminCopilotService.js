@@ -27,28 +27,63 @@ class AdminCopilotService {
     static parsePastedChat(rawChat) {
         if (!rawChat || typeof rawChat !== 'string') return { detectedSender: null, messages: [] };
 
-        const lines = rawChat.split('\n').map(l => l.trim()).filter(Boolean);
+        // Sanitiza caracteres invisíveis LTR/RTL e BOM do WhatsApp (muito comuns no mobile iOS/Android)
+        const cleanRaw = rawChat.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '');
+
+        const lines = cleanRaw.split('\n');
         const senders = new Set();
         const parsedMessages = [];
 
-        // Padrões comuns de export/cópia do WhatsApp:
+        // Padrões de export/cópia do WhatsApp no Brasil e internacional:
         // [16/09/26, 09:56:49] ~Psicóloga Thamiris Borges: ...
         // [16/09/2026 09:56:49] Anderson Costa: ...
+        // [16/09/2026, 9:56:49 AM] Psicóloga Thamiris: ...
         // 16/09/2026, 09:56 - ~Psicóloga Thamiris Borges: ...
-        const headerRegex = /^(?:\[\d{1,2}\/\d{1,2}\/\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?\]|\d{1,2}\/\d{1,2}\/\d{2,4},?\s+\d{1,2}:\d{2}\s+-)\s+(?:~|~\s*)?([^:]+):\s*(.*)$/i;
+        // 16/09/2026 09:56 - Psicóloga Thamiris: ...
+        // 16/09/2026 09:56:49: Psicóloga Thamiris: ...
+        const headerRegex = /^(?:\[(?:\d{1,4}[\/\.-]\d{1,2}[\/\.-]\d{2,4}),?\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?\]|(?:\d{1,4}[\/\.-]\d{1,2}[\/\.-]\d{2,4}),?\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?\s*(?:[-–—]|:))\s*(?:~|~\s*)?([^:]+):\s*(.*)$/i;
 
-        for (const line of lines) {
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) continue;
+
             const match = line.match(headerRegex);
             if (match) {
                 const sender = match[1].trim();
                 const content = match[2].trim();
                 senders.add(sender);
                 parsedMessages.push({ sender, content });
+            } else if (parsedMessages.length > 0) {
+                // Continuação de mensagem anterior de múltiplas linhas
+                parsedMessages[parsedMessages.length - 1].content += '\n' + line;
             }
         }
 
+        // Se nenhum padrão de data/hora deu match, tenta formato simples "Nome: Mensagem"
+        if (parsedMessages.length === 0 && lines.length > 0) {
+            const simpleRegex = /^([^:\n]{2,40}):\s*(.+)$/;
+            for (const rawLine of lines) {
+                const line = rawLine.trim();
+                if (!line) continue;
+                const m = line.match(simpleRegex);
+                if (m) {
+                    const sender = m[1].trim();
+                    const content = m[2].trim();
+                    senders.add(sender);
+                    parsedMessages.push({ sender, content });
+                } else if (parsedMessages.length > 0) {
+                    parsedMessages[parsedMessages.length - 1].content += '\n' + line;
+                }
+            }
+        }
+
+        // Se ainda não tiver mensagens identificadas, considera todo o texto como uma mensagem
+        if (parsedMessages.length === 0 && cleanRaw.trim()) {
+            parsedMessages.push({ sender: 'Desconhecido', content: cleanRaw.trim() });
+        }
+
         // Filtra para achar o contato que NÃO é o Anderson
-        const adminKeywords = ['anderson', 'anderson costa', 'você', 'voce', 'eu', 'suporte'];
+        const adminKeywords = ['anderson', 'anderson costa', 'você', 'voce', 'eu', 'suporte', 'yelo', 'atendimento'];
         let candidate = null;
 
         for (const s of senders) {
@@ -83,6 +118,7 @@ class AdminCopilotService {
      */
     static async findPsychologist(cleanName, rawChat) {
         if (!cleanName && !rawChat) return null;
+        const cleanRaw = rawChat ? rawChat.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '') : '';
 
         // 1. Extração por token de feedback no chat (ex: magic-feedback?token=uuid) - 100% determinístico
         if (rawChat) {

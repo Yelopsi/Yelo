@@ -116,7 +116,9 @@
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
         background: #fafafa;
         min-height: 140px;
-        overflow-y: hidden;
+        max-height: 380px;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
     #copilot-input-chat:focus {
@@ -337,10 +339,23 @@
             
             <!-- CARD DE ENTRADA DO CHAT -->
             <div class="copilot-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
                     <label for="copilot-input-chat" style="font-size: 0.92rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
                         <span>📋 Conversa do WhatsApp</span>
                     </label>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <button type="button" id="btn-colar-clipboard" style="background: #ecfdf5; color: #065f46; border: 1.5px solid #a7f3d0; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;" title="Colar direto da área de transferência do celular">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                            <span>Colar</span>
+                        </button>
+                        <label for="file-chat-import" style="background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; margin: 0; transition: all 0.2s;" title="Importar arquivo .txt exportado do WhatsApp">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                            <span>Arquivo .txt</span>
+                        </label>
+                        <input type="file" id="file-chat-import" accept=".txt,text/plain" style="display: none;">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 6px;">
                     <span id="chat-input-stats" style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Cole o texto do chat</span>
                 </div>
 
@@ -350,6 +365,12 @@
 Exemplo:
 [08/10/26, 12:31:42] ~Psicólogo Fred Monte: Boa tarde, estou tendo curtidas em alguns artigos meus
 [08/10/26, 12:31:50] ~Psicólogo Fred Monte: uns mais, outros menos"></textarea>
+                </div>
+
+                <!-- DICA MOBILE WHATSAPP -->
+                <div style="margin-top: 6px; font-size: 0.74rem; color: #64748b; line-height: 1.45; display: flex; align-items: flex-start; gap: 6px; background: #f8fafc; padding: 6px 10px; border-radius: 6px; border-left: 3px solid #10b981;">
+                    <span style="font-size: 0.85rem; flex-shrink: 0; line-height: 1.2;">💡</span>
+                    <span><strong>Dica no WhatsApp do celular:</strong> Para trazer todas as mensagens de uma vez sem perder nada, abra a conversa no WhatsApp > toque no nome/3 pontinhos > <em>Exportar conversa (sem mídia)</em> e use o botão <strong>Arquivo .txt</strong> acima.</span>
                 </div>
 
                 <!-- BANNER DE IDENTIFICAÇÃO EM TEMPO REAL -->

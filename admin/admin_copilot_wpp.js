@@ -41,8 +41,10 @@
         function updateInputView() {
             if (!chatInput) return;
             chatInput.style.height = 'auto';
-            const newHeight = Math.max(chatInput.scrollHeight, 140);
+            const scrollH = chatInput.scrollHeight;
+            const newHeight = Math.min(Math.max(scrollH, 140), 380);
             chatInput.style.height = newHeight + 'px';
+            chatInput.style.overflowY = 'auto';
 
             if (statsEl) {
                 const val = chatInput.value;
@@ -50,9 +52,66 @@
                     statsEl.textContent = 'Cole o texto do chat';
                 } else {
                     const lines = val.split('\n').filter(l => l.trim().length > 0).length;
-                    statsEl.textContent = `${lines} mensagens • ${val.length} caracteres`;
+                    statsEl.textContent = `${lines} ${lines === 1 ? 'mensagem' : 'mensagens'} • ${val.length} caracteres`;
                 }
             }
+        }
+
+        // Botão Colar direto da área de transferência (otimizado para mobile)
+        const btnColar = document.getElementById('btn-colar-clipboard');
+        if (btnColar) {
+            btnColar.addEventListener('click', async () => {
+                try {
+                    if (!navigator.clipboard || !navigator.clipboard.readText) {
+                        if (chatInput) chatInput.focus();
+                        alert("Toque e segure no campo de texto abaixo e selecione 'Colar'.");
+                        return;
+                    }
+                    const text = await navigator.clipboard.readText();
+                    if (!text || !text.trim()) {
+                        alert("A área de transferência está vazia ou não contém texto.");
+                        return;
+                    }
+                    const clean = text.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '');
+                    if (chatInput) {
+                        chatInput.value = clean;
+                        updateInputView();
+                        handleAutoIdentify();
+                    }
+                    const origHtml = btnColar.innerHTML;
+                    btnColar.innerHTML = '<span>✓ Colado!</span>';
+                    btnColar.style.background = '#d1fae5';
+                    setTimeout(() => {
+                        btnColar.innerHTML = origHtml;
+                        btnColar.style.background = '#ecfdf5';
+                    }, 1800);
+                } catch (err) {
+                    console.warn("Clipboard read error:", err);
+                    if (chatInput) chatInput.focus();
+                    alert("Acesso à área de transferência não autorizado pelo navegador. Toque e segure no campo de texto para colar.");
+                }
+            });
+        }
+
+        // Importação de arquivo .txt exportado do WhatsApp (sem mídia)
+        const fileImport = document.getElementById('file-chat-import');
+        if (fileImport) {
+            fileImport.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const content = evt.target.result || '';
+                    const clean = content.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '');
+                    if (chatInput) {
+                        chatInput.value = clean;
+                        updateInputView();
+                        handleAutoIdentify();
+                    }
+                    fileImport.value = '';
+                };
+                reader.readAsText(file);
+            });
         }
 
         // Navegação por abas no Mobile
@@ -82,9 +141,12 @@
 
             chatInput.addEventListener('paste', () => {
                 setTimeout(() => {
+                    if (chatInput.value) {
+                        chatInput.value = chatInput.value.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '');
+                    }
                     updateInputView();
                     handleAutoIdentify();
-                }, 60);
+                }, 50);
             });
         }
 

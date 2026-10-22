@@ -5,6 +5,8 @@ const { sendEvaluationEmail } = require('../services/emailService');
 const DIAS_APOS_EXPIRACAO = 7;
 
 async function checkAndSendEvaluationEmails() {
+    // Desativado a pedido: não enviar mais e-mails de avaliação pós-expiração
+    return;
     console.log('⏰ [CRON] Iniciando verificação de e-mails de avaliação (Expirados/Churn)...');
 
     try {

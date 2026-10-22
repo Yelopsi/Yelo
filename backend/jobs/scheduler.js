@@ -66,10 +66,10 @@ cron.schedule('0 8 * * *', () => {
  * Roda todos os dias às 11h da manhã.
  */
 cron.schedule('0 11 * * *', () => {
-    console.log('Executando tarefa agendada: checkAndSendEvaluationEmails');
-    checkAndSendEvaluationEmails();
+    // Tarefa 5 desativada: não enviar mais e-mail de avaliação pós-expiração
+    console.log('Tarefa agendada checkAndSendEvaluationEmails desativada.');
 }, {
-    scheduled: true,
+    scheduled: false,
     timezone: "America/Sao_Paulo"
 });
 
