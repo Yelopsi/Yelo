@@ -1,5 +1,60 @@
 [
   {
+    "id": "change-git-3e6316fa",
+    "date": "2026-10-22T01:13:36.000Z",
+    "commit": "3e6316fa",
+    "author": "Anderson",
+    "title": "Novo: Adicionar indicadores de tendencia no funil, melhorar copilot mobile e reavaliacao nps inteligente (crm/analytics)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "adicionar indicadores de tendencia no funil, melhorar copilot mobile e reavaliacao nps inteligente",
+    "description": "Commit registrado no repositório: \"feat(crm/analytics): adicionar indicadores de tendencia no funil, melhorar copilot mobile e reavaliacao nps inteligente\". Arquivos modificados: admin/admin_analytics_funil.js, admin/admin_copilot_wpp.html, admin/admin_copilot_wpp.js, backend/controllers/adminDashboardController.js, backend/controllers/psychologistController.js (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #3e6316fa"
+    },
+    "after": {
+      "nova_versao": "adicionar indicadores de tendencia no funil, melhorar copilot mobile e reavaliacao nps inteligente"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.js",
+      "admin/admin_copilot_wpp.html",
+      "admin/admin_copilot_wpp.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/jobs/evaluationMonitor.js",
+      "backend/jobs/scheduler.js",
+      "backend/services/adminCopilotService.js",
+      "public/psi/psi_dashboard_feedback.js"
+    ]
+  },
+  {
+    "id": "change-git-da86c102",
+    "date": "2026-10-22T00:36:25.000Z",
+    "commit": "da86c102",
+    "author": "Anderson",
+    "title": "Manutenção: Atualizar relatorio de seguranca e changelog pos-deploy",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "atualizar relatorio de seguranca e changelog pos-deploy",
+    "description": "Commit registrado no repositório: \"chore: atualizar relatorio de seguranca e changelog pos-deploy\". Arquivos modificados: backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #da86c102"
+    },
+    "after": {
+      "nova_versao": "atualizar relatorio de seguranca e changelog pos-deploy"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-caec5ac6",
     "date": "2026-10-22T00:35:47.000Z",
     "commit": "caec5ac6",
