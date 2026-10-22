@@ -1,5 +1,40 @@
 [
   {
+    "id": "change-git-caec5ac6",
+    "date": "2026-10-22T00:35:47.000Z",
+    "commit": "caec5ac6",
+    "author": "Anderson",
+    "title": "Novo: Evidenciar metricas em topicos whatsapp, otimizar gemini e incluir abordagem historico-cultural (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "evidenciar metricas em topicos whatsapp, otimizar gemini e incluir abordagem historico-cultural",
+    "description": "Commit registrado no repositório: \"feat(crm): evidenciar metricas em topicos whatsapp, otimizar gemini e incluir abordagem historico-cultural\". Arquivos modificados: admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, backend/controllers/adminController.js, backend/controllers/adminPerformanceController.js, backend/controllers/matchController.js (+8 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #caec5ac6"
+    },
+    "after": {
+      "nova_versao": "evidenciar metricas em topicos whatsapp, otimizar gemini e incluir abordagem historico-cultural"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "backend/controllers/adminController.js",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/controllers/matchController.js",
+      "backend/data/system_changelog.json",
+      "backend/utils/whatsappFormatter.js",
+      "cadastro/psi-cadastro.html",
+      "public/js/profissionais_config.js",
+      "public/js/questionario.js",
+      "public/psi/psi_meu_perfil.html",
+      "security/reports/gate_report.json",
+      "views/psi_perfil_publico.ejs"
+    ]
+  },
+  {
     "id": "change-git-fe228e76",
     "date": "2026-10-21T23:45:00.000Z",
     "commit": "fe228e76",
