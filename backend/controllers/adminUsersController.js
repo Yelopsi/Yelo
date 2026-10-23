@@ -238,7 +238,7 @@ exports.getPsychologistFullDetails = async (req, res) => {
         };
 
         // Tenta buscar o real motivo da falha no Asaas se houver uma assinatura
-        if (psychologist.subscriptionId && psychologist.status === 'active') {
+        if (psychologist.subscriptionId) {
             try {
                 const fetch = require('node-fetch');
                 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
@@ -1251,6 +1251,130 @@ exports.getPendingActions = async (req, res) => {
                     });
                 });
             }
+        }
+
+        // 8. Recall de Pagantes / Churn Pago (Falhas no Asaas, cartão recusado, PIX expirado ou cancelamento recente)
+        const thirtyDaysAgoForPaidChurn = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const fifteenDaysAgoForRecall = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+
+        const paidChurnCandidates = await db.Psychologist.findAll({
+            where: {
+                deletedAt: null,
+                telefone: { [Op.ne]: null, [Op.not]: '' },
+                is_exempt: { [Op.or]: [null, false] },
+                [Op.or]: [
+                    { subscription_payments_count: { [Op.gt]: 0 } },
+                    { firstPaidAt: { [Op.ne]: null } },
+                    db.Sequelize.literal(`EXISTS (SELECT 1 FROM "Payments" p WHERE p."psychologistId" = "Psychologist"."id" AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'))`)
+                ],
+                [Op.and]: [
+                    {
+                        [Op.or]: [
+                            { status: 'inactive' },
+                            { planExpiresAt: { [Op.lte]: now } }
+                        ]
+                    },
+                    {
+                        [Op.or]: [
+                            { canceledAt: { [Op.gte]: thirtyDaysAgoForPaidChurn } },
+                            { planExpiresAt: { [Op.between]: [thirtyDaysAgoForPaidChurn, now] } },
+                            db.Sequelize.literal(`EXISTS (
+                                SELECT 1 FROM "Payments" p 
+                                WHERE p."psychologistId" = "Psychologist"."id" 
+                                  AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
+                                GROUP BY p."psychologistId"
+                                HAVING (MAX(p."paymentDate") + INTERVAL '30 days') >= '${thirtyDaysAgoForPaidChurn.toISOString()}'
+                                   AND (MAX(p."paymentDate") + INTERVAL '30 days') <= '${now.toISOString()}'
+                            )`)
+                        ]
+                    },
+                    {
+                        [Op.or]: [
+                            { msg_paid_churn_sent_at: null },
+                            { msg_paid_churn_sent_at: { [Op.lte]: fifteenDaysAgoForRecall } }
+                        ]
+                    }
+                ]
+            },
+            attributes: ['id', 'nome', 'telefone', 'email', 'plano', 'status', 'planExpiresAt', 'canceledAt', 'cancelAtPeriodEnd', 'subscriptionId', 'firstPaidAt', 'subscription_payments_count', 'valor_sessao_numero', 'abordagens_tecnicas', 'whatsapp_clicks', 'profile_appearances', 'createdAt']
+        });
+
+        if (paidChurnCandidates.length > 0) {
+            const paidChurnIds = paidChurnCandidates.map(c => c.id);
+
+            const lastPayments = await db.Payment.findAll({
+                where: { psychologistId: { [Op.in]: paidChurnIds } },
+                order: [['dueDate', 'DESC']]
+            }).catch(() => []);
+
+            const paymentByPsi = {};
+            lastPayments.forEach(p => {
+                if (!paymentByPsi[p.psychologistId]) {
+                    paymentByPsi[p.psychologistId] = p;
+                }
+            });
+
+            const wppLogsPaidChurn = db.WhatsAppClickLog ? await db.WhatsAppClickLog.findAll({
+                where: { psychologistId: { [Op.in]: paidChurnIds } },
+                attributes: ['psychologistId', 'dealClosed', 'createdAt']
+            }).catch(() => []) : [];
+
+            paidChurnCandidates.forEach(p => {
+                const lastPay = paymentByPsi[p.id];
+                const logs = wppLogsPaidChurn.filter(l => l.psychologistId === p.id);
+                const totalContacts = Math.max(logs.length, p.whatsapp_clicks || 0);
+
+                // REQUISITO: Só disponibilizar recall para psicólogos com ao menos 2 contatos de pacientes
+                if (totalContacts < 2) {
+                    return;
+                }
+
+                const closedDeals = logs.filter(l => l.dealClosed === 'yes');
+                const dealClosedCount = closedDeals.length;
+
+                let churnSubType = 'expired_cycle';
+                let reasonText = 'Ciclo da assinatura finalizado';
+                let lastDueDateStr = '';
+
+                if (lastPay) {
+                    if (lastPay.dueDate) {
+                        lastDueDateStr = new Date(lastPay.dueDate).toLocaleDateString('pt-BR');
+                    }
+                    if (lastPay.status === 'OVERDUE' && lastPay.billingType === 'CREDIT_CARD') {
+                        churnSubType = 'card_declined';
+                        reasonText = `Cartão de crédito recusado (${lastDueDateStr || 'recente'})`;
+                    } else if (lastPay.status === 'OVERDUE' && lastPay.billingType === 'PIX') {
+                        churnSubType = 'pix_expired';
+                        reasonText = `PIX de renovação expirou sem pagamento (${lastDueDateStr || 'recente'})`;
+                    } else if (lastPay.status === 'REFUNDED' || p.canceledAt) {
+                        churnSubType = 'voluntary_refund';
+                        reasonText = 'Cancelamento voluntário / Estorno recente';
+                    } else {
+                        churnSubType = 'expired_cycle';
+                        reasonText = `Ciclo da assinatura encerrou em ${lastDueDateStr || 'recente'}`;
+                    }
+                } else if (p.canceledAt) {
+                    churnSubType = 'voluntary_refund';
+                    reasonText = 'Cancelamento voluntário recente';
+                }
+
+                pendingList.push({
+                    ...p.toJSON(),
+                    actionType: 'paid_churn',
+                    churnType: churnSubType,
+                    reason: reasonText,
+                    metrics: {
+                        churnType: churnSubType,
+                        lastBillingType: lastPay ? lastPay.billingType : 'CREDIT_CARD',
+                        lastDueDate: lastDueDateStr,
+                        lastValue: lastPay ? lastPay.value : '99.00',
+                        clicks: totalContacts,
+                        dealClosedCount,
+                        sessionPrice: p.valor_sessao_numero || '150,00',
+                        approach: (p.abordagens_tecnicas && p.abordagens_tecnicas[0]) || 'Psicologia Clínica'
+                    }
+                });
+            });
         }
 
         // MOCK PARA TESTE LOCAL

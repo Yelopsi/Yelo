@@ -735,58 +735,69 @@ window.initializePage = function () {
 
         } else if (actionType === 'paid_churn') {
             const currentMonthName = new Date().toLocaleString('pt-BR', { month: 'long' });
+            const m = metrics || {};
+            const churnType = m.churnType || 'expired_cycle';
             
-            let X = 0, Y = 0, VALOR = '150,00';
-            let asaasReasonText = 'O banco acabou recusando a transação no seu cartão de crédito (geralmente é só limite do mês virando ou bloqueio preventivo do banco para assinaturas).';
+            let X = m.clicks || 0, Y = m.dealClosedCount || 0, VALOR = m.sessionPrice ? String(m.sessionPrice).replace('.', ',') : '150,00';
+            let approach = m.approach || 'Psicologia Clínica';
+            
             try {
                 const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
                 const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/full-details`, {
                     headers: { 'Authorization': `Bearer ${tokenAdmin}` }
                 });
-                if(res.ok) {
+                if (res.ok) {
                     const data = await res.json();
-                    if(data.whatsappLogs) {
+                    if (data.whatsappLogs) {
                         const now = new Date();
                         const currentMonthLogs = data.whatsappLogs.filter(log => {
                             const logDate = new Date(log.createdAt);
                             return logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
                         });
-                        X = currentMonthLogs.length;
-                        Y = currentMonthLogs.filter(log => log.status === 'fechou' || log.dealClosed === 'yes').length;
+                        if (currentMonthLogs.length > 0) {
+                            X = currentMonthLogs.length;
+                            Y = currentMonthLogs.filter(log => log.status === 'fechou' || log.dealClosed === 'yes').length;
+                        }
                     }
                     const psy = data.psychologist || data;
-                    if(psy.valorSessao) VALOR = parseFloat(psy.valorSessao).toFixed(2).replace('.', ',');
-                    if (data.asaasFailedReason) {
-                        const billingMode = data.asaasFailedBillingType === 'PIX' ? 'o pagamento via Pix' : 'a transação no seu cartão de crédito';
-                        asaasReasonText = `O sistema acabou não conseguindo processar ${billingMode}. O motivo reportado foi: *"${data.asaasFailedReason}"*.`;
-                        isVoluntaryChurn = false;
-                    }
+                    if (psy.valorSessao) VALOR = parseFloat(psy.valorSessao).toFixed(2).replace('.', ',');
+                    if (psy.abordagens_tecnicas && psy.abordagens_tecnicas.length > 0) approach = psy.abordagens_tecnicas[0];
                 }
             } catch(e) { console.error('Erro ao buscar stats para churn', e); }
 
-            let performanceBlock = '';
-            const contatoStr = X === 1 ? 'contato' : 'contatos';
-            const pacienteStr = Y === 1 ? 'paciente novo' : 'pacientes novos';
-            const pacientePotencialStr = X === 1 ? 'contato de paciente' : 'contatos de pacientes';
+            // Trava de segurança: só disponibilizar para quem recebeu ao menos 2 contatos de pacientes
+            if (X < 2) {
+                if (window.showToast) window.showToast('Ação de recall disponível apenas para profissionais com ao menos 2 contatos de pacientes.', 'warning');
+                return;
+            }
 
-            if (isVoluntaryChurn) {
-                if (Y > 0) {
-                    performanceBlock = `Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e fiquei super feliz! Vi que só neste mês você recebeu ${X} ${contatoStr} e conseguiu fechar com ${Y} ${pacienteStr}. 🚀\n\nNo entanto, vi aqui no sistema que você optou por cancelar a sua assinatura e o seu plano não foi renovado.\n\nComo a gente sabe que só com os pacientes novos que você fechou agora em ${currentMonthName} (a R$ ${VALOR} a sessão) a plataforma já se pagou com muita sobra, queria entender o que motivou o seu cancelamento. Foi alguma dificuldade técnica ou algo em que possamos melhorar?`;
-                } else if (X > 0) {
-                    performanceBlock = `Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e vi que você recebeu ${X} ${pacientePotencialStr}! O fluxo está começando a ganhar tração. 🚀\n\nNo entanto, vi aqui no sistema que você optou por cancelar a sua assinatura e o seu plano não foi renovado.\n\nComo você já estava começando a receber potenciais pacientes, queria entender o que motivou o seu cancelamento. Acha que os contatos não estavam no perfil ideal ou teve alguma dificuldade técnica?`;
-                } else {
-                    performanceBlock = `Dei uma olhada no seu perfil e vi que ele tem muito potencial para atrair pacientes na plataforma! 🌱\n\nNo entanto, notei que você optou por cancelar a sua assinatura e o seu plano não foi renovado.\n\nQueria entender o que motivou a sua decisão. Faltou algum suporte nosso para te ajudar nas otimizações iniciais do perfil ou teve alguma outra dificuldade? Seu feedback é super importante pra gente!`;
-                }
-                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo.\n\n${performanceBlock}\n\nFico no aguardo. Um abraço! 🌿`;
+            const contatoStr = X === 1 ? 'contato de paciente' : 'contatos de pacientes';
+            const pacienteStr = Y === 1 ? 'paciente novo' : 'pacientes novos';
+
+            let perfSnippet = '';
+            if (Y > 0) {
+                perfSnippet = `Dei uma olhada nos seus resultados recentes e vi que você recebeu ${X} ${contatoStr} e fechou com ${Y} ${pacienteStr} pela Yelo (o que a R$ ${VALOR} por sessão já pagou a sua assinatura com muita folga!). 🚀`;
+            } else if (X > 0) {
+                perfSnippet = `Dei uma olhada nos seus números e vi que você já recebeu ${X} ${contatoStr} pelo WhatsApp. O seu perfil com foco em *${approach}* estava ganhando uma tração bem legal! 🚀`;
             } else {
-                if (Y > 0) {
-                    performanceBlock = `Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e fiquei super feliz! Vi que só neste mês você recebeu ${X} ${contatoStr} e conseguiu fechar com ${Y} ${pacienteStr}. 🚀\n\nEu recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. ${asaasReasonText}\n\nComo a gente sabe que só com os pacientes novos que você fechou agora em ${currentMonthName} (a R$ ${VALOR} a sessão) a plataforma já se pagou com muita sobra, não quero que o seu perfil saia do ar e você perca o embalo de novos agendamentos que estamos construindo.`;
-                } else if (X > 0) {
-                    performanceBlock = `Antes de mais nada, dei uma olhada nos seus resultados de ${currentMonthName} e vi que você recebeu ${X} ${pacientePotencialStr}! O fluxo está começando a ganhar tração. 🚀\n\nNo entanto, recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. ${asaasReasonText}\n\nNão quero que o seu perfil saia do ar e você perca os potenciais pacientes que já estão visitando e clicando no seu perfil. A constância é o segredo para fechar novos pacientes.`;
-                } else {
-                    performanceBlock = `Dei uma olhada no seu perfil e vi que ele tem muito potencial para atrair pacientes na plataforma! 🌱\n\nNo entanto, recebi um alerta do nosso sistema hoje informando que a renovação automática da sua assinatura não conseguiu ser processada. ${asaasReasonText}\n\nComo o algoritmo de distribuição da plataforma está aprendendo sobre o seu perfil, não quero que você saia do ar agora e perca o histórico que já estamos construindo.`;
-                }
-                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo.\n\nEstou passando para te dar um toque rápido sobre a sua assinatura. ${performanceBlock}\n\nPara regularizar e manter seu consultório virtual ativo recebendo pacientes, é só acessar a sua conta na Yelo, ir na aba "Ajustes" > "Assinaturas e Planos" e atualizar o seu cartão ou emitir um novo Pix.\n\nSe precisar de alguma ajuda ou tiver qualquer dificuldade no painel, me dá um alô aqui. Um abraço! 🌿`;
+                perfSnippet = `O seu perfil voltado para *${approach}* tem um diferencial excelente e o algoritmo da plataforma já estava começando a posicionar você melhor nas buscas! 🌱`;
+            }
+
+            // CENÁRIO 1: CARTÃO DE CRÉDITO RECUSADO NA RENOVAÇÃO
+            if (churnType === 'card_declined') {
+                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nEstou passando para te dar um toque rápido e super importante sobre a sua conta: o nosso sistema tentou renovar automaticamente a sua assinatura mensal, mas a operadora do seu cartão recusou a cobrança (geralmente é só limite do mês virando ou um bloqueio preventivo do banco para pagamentos recorrentes online).\n\nPor conta disso, o seu perfil entrou em pausa temporária para novos pacientes.\n\n${perfSnippet}\n\nNão quero de forma alguma que você saia do ar e perca o embalo de novos agendamentos que estamos construindo juntos.\n\nPara o seu perfil voltar ao ar imediatamente, é super simples: basta acessar sua conta na Yelo, ir na aba *"Ajustes" > "Assinaturas e Planos"* e atualizar o seu cartão ou emitir um Pix.\n\nSe preferir, posso te enviar a chave Pix direto por aqui também. Qualquer dúvida, estou à disposição! 🌿`;
+
+            // CENÁRIO 2: PIX DE RENOVAÇÃO EXPIRADO
+            } else if (churnType === 'pix_expired') {
+                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando rapidinho para te avisar que o código Pix de renovação da sua mensalidade da Yelo acabou vencendo e expirou no sistema.\n\nPor conta disso, o seu perfil entrou em pausa automática nas buscas de pacientes.\n\n${perfSnippet}\n\nComo não quero que você perca os pacientes que estão procurando atendimento na sua especialidade, quer que eu te envie um novo código Pix copia-e-cola direto por aqui para você reativar em 1 minuto?\n\n*(Dica: se preferir não ter que se preocupar com datas todo mês, você também pode cadastrar um cartão de crédito no seu painel em Ajustes > Assinaturas e Planos).*\n\nSigo à disposição por aqui! Um abraço. 🌿`;
+
+            // CENÁRIO 3: CANCELAMENTO VOLUNTÁRIO / ESTORNO
+            } else if (churnType === 'voluntary_refund') {
+                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nVi aqui no sistema que você optou por encerrar a sua assinatura e o seu plano foi desativado.\n\nQueria te mandar essa mensagem primeiro para agradecer pelo período em que estivemos juntos e, principalmente, para te ouvir com sinceridade. Como estamos sempre aprimorando a Yelo para os psicólogos clínicos, seu feedback é precioso pra gente:\n\n${perfSnippet}\n\nO que mais pesou na sua decisão de não continuar neste momento? Faltou algum suporte nosso, o retorno de pacientes foi diferente do esperado ou foi uma questão de momento pessoal/financeiro?\n\nFico super aberto para entender e, caso queira conversar, as portas da Yelo estarão sempre abertas para você. Um grande abraço! 🌱`;
+
+            // CENÁRIO 4: TÉRMINO DE CICLO GERAL
+            } else {
+                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando para te dar um toque sobre a sua assinatura da Yelo: o seu ciclo mensal chegou ao fim e o seu perfil entrou em pausa para novas buscas.\n\n${perfSnippet}\n\nPara não quebrar a consistência que o algoritmo já gerou para você e manter o seu consultório virtual ativo recebendo pacientes, basta renovar o plano.\n\nÉ bem prático: acesse seu painel na Yelo, vá em *"Ajustes" > "Assinaturas e Planos"* e escolha o pagamento via Cartão ou Pix.\n\nSe precisar de qualquer ajuda com o acesso, estou à disposição! 🌿`;
             }
 } else if (actionType === 'churn') {
             try {
