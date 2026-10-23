@@ -603,6 +603,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnClose && modal) {
             btnClose.onclick = () => { modal.style.display = 'none'; };
         }
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+        }
     }
 
     function showToast(message, type = 'success') {

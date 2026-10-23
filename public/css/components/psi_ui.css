@@ -44,10 +44,17 @@
     .custom-modal-box {
         margin-top: auto; border-radius: 24px 24px 0 0 !important;
         width: 100% !important; max-width: 100% !important;
-        animation: slideUpSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: slideUpSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
         padding-top: 30px !important; padding-bottom: calc(90px + env(safe-area-inset-bottom)) !important;
     }
-    .custom-modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+    .custom-modal-overlay {
+        height: 100% !important;
+        height: 100dvh !important;
+        bottom: 0 !important;
+        top: 0 !important;
+        align-items: flex-end !important;
+        padding: 0 !important;
+    }
 }
 @keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
 

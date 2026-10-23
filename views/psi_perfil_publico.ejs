@@ -149,6 +149,51 @@
             color: var(--verde-escuro, #1B4332) !important;
         }
 
+        /* ==========================================================================
+           MODAIS UNIVERSAIS NA PÁGINA PÚBLICA (FIX DEFINITIVO P/ SAMSUNG E ANDROID)
+           Garante que o modal de avaliação e outros abram com altura 100% da tela real,
+           neutralizando o zoom: 0.88 herdado de psi_dashboard.css.
+           ========================================================================== */
+        .custom-modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            background: rgba(0, 0, 0, 0.5) !important;
+            z-index: 200000 !important;
+            backdrop-filter: blur(3px) !important;
+            display: none;
+            justify-content: center !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+        .custom-modal-overlay[style*="display: flex"] {
+            display: flex !important;
+        }
+
+        .custom-modal-box {
+            background: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
+            max-height: 90vh;
+            max-height: 90dvh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            box-sizing: border-box;
+        }
+
         /* Contenção de quebras e Box Sizing seguro */
         .profile-page-main *, .profile-page-main *::before, .profile-page-main *::after {
             box-sizing: border-box;
@@ -237,9 +282,55 @@
             #all-reviews-list-container {
                 padding: 15px !important;
             }
+            /* --- Bottom Sheet Responsivo para Mobile & Samsung Android --- */
+            .custom-modal-overlay {
+                align-items: flex-end !important;
+                justify-content: center !important;
+                padding: 0 !important;
+                height: 100% !important;
+                height: 100dvh !important;
+                max-height: 100dvh !important;
+                bottom: 0 !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                overflow: hidden !important;
+            }
             .custom-modal-box {
-                width: 95% !important;
-                padding: 20px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: auto 0 0 0 !important;
+                border-radius: 24px 24px 0 0 !important;
+                max-height: 86dvh !important;
+                max-height: 86vh !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                overscroll-behavior-y: contain !important;
+                padding: 24px 20px calc(42px + env(safe-area-inset-bottom, 24px)) 20px !important;
+                box-sizing: border-box !important;
+                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25) !important;
+                animation: slideUpSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+            }
+            .sheet-drag-handle {
+                display: block !important;
+                width: 44px !important;
+                height: 5px !important;
+                background: #cbd5e1 !important;
+                border-radius: 3px !important;
+                margin: -8px auto 18px auto !important;
+            }
+            #modal-review textarea[name="comentario"] {
+                resize: none !important;
+                font-size: 15px !important;
+                min-height: 75px !important;
+            }
+            #modal-review button[type="submit"] {
+                min-height: 48px !important;
+                font-size: 1.05rem !important;
+                padding: 14px 24px !important;
+                margin-top: 15px !important;
+                margin-bottom: 5px !important;
+                touch-action: manipulation !important;
             }
             .conversion-card-wrapper {
                 position: static !important;
@@ -872,7 +963,7 @@
     </div>
 <!-- MODAL DE AVALIAÇÃO -->
     <div id="modal-review" class="custom-modal-overlay" style="display: none; z-index: 200000;">
-        <div class="custom-modal-box" style="width: 90%; max-width: 500px; padding: 30px; box-sizing: border-box;">
+        <div class="custom-modal-box">
             <div class="sheet-drag-handle"></div>
             <button type="button" class="modal-close-btn" id="btn-close-review-modal"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
             
@@ -890,7 +981,7 @@
                         <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="1 estrela">★</label>
                     </div>
                     <textarea name="comentario" placeholder="Escreva como foi sua experiência (opcional)" style="width: 100%; border: 1px solid #ddd; border-radius: 12px; padding: 15px; font-family: var(--font-principal); margin-top: 15px; resize: vertical; min-height: 80px; box-sizing: border-box;"></textarea>
-                    <button type="submit" style="margin: 15px auto 0 auto; display: block; width: 100%; background: var(--verde-escuro); color: white; border: none; padding: 14px 32px; border-radius: 50px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(27,67,50,0.1);">Avaliar Profissional</button>
+                    <button type="submit" id="btn-submit-review" class="btn btn-principal" style="margin: 15px auto 0 auto; display: block; width: 100%; background: var(--verde-escuro); color: white; border: none; padding: 14px 32px; border-radius: 50px; font-weight: bold; font-size: 1.05rem; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">Avaliar Profissional</button>
                 </form>
             </div>
         </div>
