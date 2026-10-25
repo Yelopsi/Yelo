@@ -209,7 +209,12 @@ const applyDatabaseFixes = async (db, sequelize) => {
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255);`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255);`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_medium" VARCHAR(255);`,
-            `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_campaign" VARCHAR(255);`
+            `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_campaign" VARCHAR(255);`,
+            `ALTER TABLE "ForumPosts" ADD COLUMN IF NOT EXISTS "redirectPostId" INTEGER;`,
+            `CREATE TABLE IF NOT EXISTS "AdminAdjustments" ( "id" SERIAL PRIMARY KEY, "title" TEXT NOT NULL, "target_page" VARCHAR(255) NOT NULL DEFAULT 'Geral', "file_path" VARCHAR(255), "category" VARCHAR(100) NOT NULL DEFAULT 'Melhoria', "environment" VARCHAR(50) NOT NULL DEFAULT 'geral', "device" VARCHAR(50) NOT NULL DEFAULT 'todos', "image_url" TEXT, "priority" VARCHAR(50) NOT NULL DEFAULT 'media', "status" VARCHAR(50) NOT NULL DEFAULT 'pendente', "notes" TEXT, "order" INTEGER DEFAULT 0, "completedAt" TIMESTAMP WITH TIME ZONE, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `ALTER TABLE "AdminAdjustments" ADD COLUMN IF NOT EXISTS "environment" VARCHAR(50) NOT NULL DEFAULT 'geral';`,
+            `ALTER TABLE "AdminAdjustments" ADD COLUMN IF NOT EXISTS "device" VARCHAR(50) NOT NULL DEFAULT 'todos';`,
+            `ALTER TABLE "AdminAdjustments" ADD COLUMN IF NOT EXISTS "image_url" TEXT;`
         ];
 
         for (const sql of schemaQueries) {

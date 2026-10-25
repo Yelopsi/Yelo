@@ -14,7 +14,7 @@ const protect = async (req, res, next) => {
         const referer = req.headers.referer;
         
         // Domínios estritamente permitidos
-        const allowedHosts = ['www.yelopsi.com.br', 'yelopsi.com.br', 'localhost'];
+        const allowedHosts = ['www.yelopsi.com.br', 'yelopsi.com.br', 'localhost', '127.0.0.1'];
         
         if (!origin && !referer) {
             console.warn(`⚠️ [CSRF BLOQUEADO] Requisição mutável sem Origin e sem Referer`);
@@ -25,7 +25,12 @@ const protect = async (req, res, next) => {
             const checkUrl = origin || referer;
             const parsedHost = new URL(checkUrl).hostname;
             
-            if (!allowedHosts.includes(parsedHost)) {
+            // Permite hosts oficiais, same-host direto e IPs de rede local (Wi-Fi para testes mobile: 192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+            const isLocalIp = /^192\.168\.\d+\.\d+$|^10\.\d+\.\d+\.\d+$|^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(parsedHost);
+            const isSameHost = parsedHost === req.hostname;
+            const isAllowed = allowedHosts.includes(parsedHost) || isSameHost || isLocalIp;
+
+            if (!isAllowed) {
                 console.warn(`⚠️ [CSRF BLOQUEADO] Host não permitido: ${parsedHost}`);
                 return res.status(403).json({ error: 'CSRF Blocked: Host mismatch' });
             }

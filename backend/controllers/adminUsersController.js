@@ -802,8 +802,17 @@ exports.deletePsychologist = async (req, res) => {
         const { id } = req.params;
         const psychologist = await db.Psychologist.findByPk(id);
         if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        
+        // Libera campos únicos (CRP, CPF, e-mail e slug) para não travar novos cadastros com os mesmos documentos
+        await psychologist.update({
+            crp: null,
+            cpf: null,
+            email: `${psychologist.email}__deleted__${psychologist.id}`,
+            slug: `${psychologist.slug || 'slug'}__deleted__${psychologist.id}`
+        });
+
         await psychologist.destroy();
-        res.status(200).json({ message: 'Psicólogo excluído com sucesso.' });
+        res.status(200).json({ message: 'Psicólogo excluído com sucesso e identificadores liberados.' });
     } catch (error) {
         console.error('Erro ao excluir psicólogo:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });

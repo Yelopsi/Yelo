@@ -12,6 +12,7 @@ const qnaController = require('../controllers/qnaController'); // Importa o cont
 const settingsController = require('../controllers/settingsController');
 const adminPerformanceController = require('../controllers/adminPerformanceController');
 const adminCopilotController = require('../controllers/adminCopilotController');
+const adminAdjustmentController = require('../controllers/adminAdjustmentController');
 const { protect, admin } = require('../middlewares/authMiddleware'); // Corrigido para importar ambos
 const { uploadProfilePhoto, magicBytesValidator } = require('../middlewares/upload'); // Importa o Multer unificado
 const { adminLimiter } = require('../middlewares/rateLimiters');
@@ -121,6 +122,10 @@ router.get('/logs', adminDashboardController.getSystemLogs);
 // Rotas do Histórico de Alterações do Sistema (Changelog)
 router.get('/system-changelog', adminController.getSystemChangelog);
 router.post('/system-changelog', adminController.addSystemChangelogEntry);
+router.put('/system-changelog/:id', adminController.updateSystemChangelogEntry);
+router.delete('/system-changelog/:id', adminController.deleteSystemChangelogEntry);
+router.post('/system-changelog/:id/toggle-psi', adminController.togglePsiChangelogVisibility);
+router.post('/system-changelog/:id/ai-suggest', adminController.generateAiChangelogPsiCopy);
 router.post('/system-changelog/sync', adminController.syncSystemChangelogWithGit);
 
 // Rotas do Copilot de Atendimento WhatsApp AI
@@ -128,6 +133,15 @@ router.post('/copilot/identify', adminCopilotController.identifyFromChat);
 router.post('/copilot/respond', adminCopilotController.generateResponse);
 router.get('/copilot/history', adminCopilotController.getHistory);
 router.get('/copilot/search-psychologists', adminCopilotController.searchPsychologists);
+
+// Rotas da Central de Ajustes & Backlog Inteligente (Notion Flow)
+router.get('/adjustments', adminAdjustmentController.getAdjustments);
+router.post('/adjustments', adminAdjustmentController.createAdjustment);
+router.post('/adjustments/upload-screenshot', uploadProfilePhoto.single('screenshot'), magicBytesValidator, adminAdjustmentController.uploadScreenshot);
+router.post('/adjustments/preview', adminAdjustmentController.previewCategorization);
+router.put('/adjustments/:id', adminAdjustmentController.updateAdjustment);
+router.patch('/adjustments/:id/status', adminAdjustmentController.toggleStatus);
+router.delete('/adjustments/:id', adminAdjustmentController.deleteAdjustment);
 
 // Rota para dados de gráficos
 router.get('/charts/new-users', adminDashboardController.getNewUsersPerMonth);

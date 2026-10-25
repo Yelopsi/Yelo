@@ -410,26 +410,186 @@ exports.getAnalyticsData = async (req, res) => {
     }
 };
 
+async function syncFridayEditionsToAvisos() {
+    try {
+        if (!db.Aviso) return;
+        const { getPsychologistGroupedEditions } = require('../services/changelogSyncService');
+        const editions = getPsychologistGroupedEditions();
+        if (!editions || editions.length === 0) return;
+
+        for (const edition of editions) {
+            const editionMarker = `data-weekly-edition="${edition.mondayKey || edition.fridayKey}"`;
+
+            const existingAviso = await db.Aviso.findOne({
+                where: {
+                    content: {
+                        [Op.or]: [
+                            { [Op.like]: `%${editionMarker}%` },
+                            { [Op.like]: `%data-friday-edition="${edition.mondayKey || edition.fridayKey}"%` }
+                        ]
+                    }
+                }
+            });
+
+            const categoriesText = edition.categories && edition.categories.length > 0 
+                ? edition.categories.join(', ') 
+                : 'Fórum, Perfil e Consultório';
+
+            const avisoTitle = `🚀 Compilado da Semana: ${edition.totalAdjustments} melhorias liberadas!`;
+            const avisoContent = `Olá, [nome]! Toda segunda-feira liberamos um compilado unificado com todas as melhorias e novos recursos da Yelo para o seu consultório.\n\nNesta edição (${edition.formattedDate}), entregamos ${edition.totalAdjustments} melhorias práticas nas áreas de ${categoriesText}.\n\n<button type="button" class="aviso-link-direto" data-page="psi_novidades.html" ${editionMarker} onclick="if(window.loadPage) window.loadPage('psi_novidades.html')" style="background: #1B4332; color: #FFEE8C; font-weight: 700; border: none; padding: 8px 20px; border-radius: 50px; cursor: pointer; font-size: 0.85rem; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(27,67,50,0.15);"><span>Ver Compilado da Semana</span> <span>➔</span></button>`;
+
+            if (!existingAviso) {
+                await db.Aviso.create({
+                    title: avisoTitle,
+                    content: avisoContent,
+                    author: 'Equipe Yelo',
+                    status: 'published',
+                    psychologistId: null,
+                    createdAt: edition.date || new Date()
+                });
+            } else {
+                if (existingAviso.title !== avisoTitle || existingAviso.content !== avisoContent) {
+                    await existingAviso.update({
+                        title: avisoTitle,
+                        content: avisoContent
+                    });
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Erro ao sincronizar edições semanais com avisos:', err);
+    }
+}
+
 exports.getAnnouncements = async (req, res) => {
     try {
         const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
         if (db.Aviso) await db.Aviso.sync();
         if (db.AvisoLido) await db.AvisoLido.sync();
 
+        // Sincroniza notificação da edição semanal de sexta-feira
+        await syncFridayEditionsToAvisos();
+
         const avisos = await db.Aviso.findAll({
-            where: { status: 'published', [Op.or]: [{ psychologistId: null }, { psychologistId: psychologistId }] },
+            where: {
+                status: 'published',
+                [Op.or]: [
+                    { psychologistId: null },
+                    ...(psychologistId ? [{ psychologistId: psychologistId }] : [])
+                ]
+            },
             order: [['createdAt', 'DESC']]
         });
         
-        const avisosLidos = await db.AvisoLido.findAll({ where: { psychologistId: psychologistId } });
+        const avisosLidos = psychologistId ? await db.AvisoLido.findAll({ where: { psychologistId: psychologistId } }) : [];
         const lidosIds = new Set(avisosLidos.map(l => l.avisoId));
 
-        const responseData = avisos.map(aviso => {
+        // Filtro defensivo: verificar se algum aviso aponta para tópico do fórum ou post de blog oculto/excluído
+        const forumPostIds = new Set();
+        const blogPostIds = new Set();
+
+        avisos.forEach(aviso => {
+            const content = aviso.content || '';
+            const forumMatch = content.match(/data-post-id="(\d+)"/) || content.match(/postId=(\d+)/);
+            if (forumMatch && forumMatch[1]) {
+                forumPostIds.add(parseInt(forumMatch[1], 10));
+            }
+            const blogMatch = content.match(/data-blog-id="(\d+)"/);
+            if (blogMatch && blogMatch[1]) {
+                blogPostIds.add(parseInt(blogMatch[1], 10));
+            }
+        });
+
+        const activeForumPostsMap = new Map();
+        if (forumPostIds.size > 0 && db.ForumPost) {
+            const posts = await db.ForumPost.findAll({
+                where: { id: Array.from(forumPostIds) },
+                attributes: ['id', 'status', 'PsychologistId']
+            });
+            posts.forEach(p => activeForumPostsMap.set(p.id, p));
+        }
+
+        const activeBlogPostsMap = new Map();
+        if (blogPostIds.size > 0 && db.Post) {
+            const bPosts = await db.Post.findAll({
+                where: { id: Array.from(blogPostIds) },
+                attributes: ['id', 'psychologistId']
+            });
+            bPosts.forEach(bp => activeBlogPostsMap.set(bp.id, bp));
+        }
+
+        const validAvisos = [];
+        const avisosToHide = [];
+
+        for (const aviso of avisos) {
+            const content = aviso.content || '';
+            const lowerTitle = (aviso.title || '').toLowerCase();
+
+            // 1. Tópico no Fórum
+            const forumMatch = content.match(/data-post-id="(\d+)"/) || content.match(/postId=(\d+)/);
+            if (forumMatch && forumMatch[1]) {
+                const pId = parseInt(forumMatch[1], 10);
+                const pPost = activeForumPostsMap.get(pId);
+                // Se o post não existe no banco ou foi ocultado/deletado pela moderação
+                if (!pPost || pPost.status === 'hidden_by_admin' || pPost.status === 'deleted' || pPost.status === 'hidden') {
+                    avisosToHide.push(aviso.id);
+                    continue;
+                }
+
+                // Se o aviso é sobre NOVO post no fórum e foi criado pelo próprio psicólogo autenticado, NÃO exibe para ele!
+                if (lowerTitle.includes('novo tópico') || lowerTitle.includes('novo post') || lowerTitle.includes('novo debate')) {
+                    if (psychologistId && pPost.PsychologistId === psychologistId) {
+                        continue;
+                    }
+                }
+            }
+
+            // 2. Artigo no Blog
+            const blogMatch = content.match(/data-blog-id="(\d+)"/);
+            if (blogMatch && blogMatch[1]) {
+                const bId = parseInt(blogMatch[1], 10);
+                const bPost = activeBlogPostsMap.get(bId);
+                if (!bPost || bPost.status === 'deleted' || bPost.status === 'inactive' || bPost.status === 'hidden') {
+                    avisosToHide.push(aviso.id);
+                    continue;
+                }
+
+                // Se o artigo foi criado pelo próprio psicólogo autenticado, NÃO exibe para ele!
+                if (lowerTitle.includes('novo artigo') || lowerTitle.includes('novo post')) {
+                    if (psychologistId && bPost.psychologistId === psychologistId) {
+                        continue;
+                    }
+                }
+            }
+
+            // 3. Fallback adicional via data-author-id no link do conteúdo
+            const authorMatch = content.match(/data-author-id="(\d+)"/);
+            if (authorMatch && authorMatch[1] && psychologistId && parseInt(authorMatch[1], 10) === psychologistId) {
+                if (lowerTitle.includes('novo tópico') || lowerTitle.includes('novo artigo')) {
+                    continue;
+                }
+            }
+
+            validAvisos.push(aviso);
+        }
+
+        // Sincroniza em segundo plano os avisos de posts ocultos/deletados para não aparecerem mais
+        if (avisosToHide.length > 0 && db.Aviso) {
+            db.Aviso.update(
+                { status: 'hidden_by_admin' },
+                { where: { id: avisosToHide } }
+            ).catch(err => console.error("Erro ao sincronizar avisos inativos:", err));
+        }
+
+        const responseData = validAvisos.map(aviso => {
             const avisoObj = aviso.toJSON ? aviso.toJSON() : aviso;
             return { ...avisoObj, read: lidosIds.has(avisoObj.id) };
         });
         res.status(200).json(responseData);
-    } catch (error) { res.status(500).json({ error: 'Erro interno no servidor.' }); }
+    } catch (error) {
+        console.error('Erro em getAnnouncements:', error);
+        res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
 };
 
 exports.markAnnouncementAsRead = async (req, res) => {

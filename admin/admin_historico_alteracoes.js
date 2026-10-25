@@ -276,10 +276,19 @@
         if (!timelineEl) return;
 
         let filtered = allChanges.filter(item => {
-            const matchesCat = currentFilter === 'all' || item.category === currentFilter;
+            let matchesCat = true;
+            if (currentFilter === 'pending-psi') {
+                matchesCat = !(item.publishedToPsi === true || item.publishedToPsi === 'true');
+            } else if (currentFilter === 'authorized-psi') {
+                matchesCat = (item.publishedToPsi === true || item.publishedToPsi === 'true');
+            } else if (currentFilter !== 'all') {
+                matchesCat = item.category === currentFilter;
+            }
+
             const q = searchQuery.toLowerCase().trim();
             const matchesSearch = !q || 
                 (item.title && item.title.toLowerCase().includes(q)) ||
+                (item.psiTitle && item.psiTitle.toLowerCase().includes(q)) ||
                 (item.summary && item.summary.toLowerCase().includes(q)) ||
                 (item.commit && item.commit.toLowerCase().includes(q)) ||
                 (item.category && item.category.toLowerCase().includes(q));
@@ -343,6 +352,8 @@
                 }
             }
 
+            const isPublished = item.publishedToPsi === true || item.publishedToPsi === 'true';
+
             return `
                 <div class="timeline-card" data-id="${item.id}" onclick="window.openChangeDetail('${item.id}')">
                     <div class="timeline-dot" style="border-color: ${badgeColor};"></div>
@@ -356,19 +367,46 @@
                                 ${item.status || 'Em Produção'}
                             </span>
                             ${item.commit ? `<span style="font-family: monospace; font-size: 0.75rem; background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 6px; border: 1px solid #e2e8f0;">#${item.commit}</span>` : ''}
+                            ${isPublished ? `
+                                <span style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 50px; display: inline-flex; align-items: center; gap: 4px;">
+                                    <span>✅</span> Autorizado (Sexta-feira)
+                                </span>
+                            ` : `
+                                <span style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 50px; display: inline-flex; align-items: center; gap: 4px;">
+                                    <span>⏳</span> Pendente de Autorização
+                                </span>
+                            `}
                         </div>
                         
-                        <div style="color: #6b7280; font-size: 0.82rem; font-weight: 500;">
-                            🕒 ${formattedDate}
+                        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+                            <div style="color: #6b7280; font-size: 0.82rem; font-weight: 500;">
+                                🕒 ${formattedDate}
+                            </div>
+
+                            <!-- BOTÕES DE AÇÃO: EDITAR TEXTO E AUTORIZAR/DESAUTORIZAR -->
+                            <div style="display: flex; gap: 6px; align-items: center;" onclick="event.stopPropagation();">
+                                <button class="btn-card-toggle-psi" onclick="window.togglePsiChangelog('${item.id}', this);" title="${isPublished ? 'Remover autorização' : 'Autorizar lançamento para a próxima sexta-feira'}" style="background: ${isPublished ? '#fff1f2' : '#f0fdf4'}; color: ${isPublished ? '#b91c1c' : '#15803d'}; border: 1px solid ${isPublished ? '#fecaca' : '#bbf7d0'}; border-radius: 20px; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; cursor: pointer; transition: all 0.2s;">
+                                    ${isPublished ? '✕ Desautorizar' : '🚀 Autorizar p/ Sexta'}
+                                </button>
+                                <button class="btn-card-edit" onclick="window.openEditChangeModal('${item.id}');" title="Editar texto e detalhes para psicólogos" style="background: #f8fafc; color: #1B4332; border: 1px solid #cbd5e1; border-radius: 20px; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;">
+                                    ✏️ Editar Texto
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <h3 style="font-size: 1.15rem; font-weight: 800; color: #111827; margin: 0 0 8px; line-height: 1.4;">
+                    <h3 style="font-size: 1.15rem; font-weight: 800; color: #111827; margin: 0 0 6px; line-height: 1.4;">
                         ${item.title}
                     </h3>
 
+                    ${item.psiTitle && item.psiTitle !== item.title ? `
+                        <div style="font-size: 0.88rem; font-weight: 700; color: #166534; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+                            <span>🌱 Título Psicólogo:</span> "${item.psiTitle}"
+                        </div>
+                    ` : ''}
+
                     <p style="color: #4b5563; font-size: 0.92rem; line-height: 1.5; margin: 0;">
-                        ${item.summary}
+                        ${item.psiSummary || item.summary}
                     </p>
 
                     ${quickCompareHtml}
@@ -453,7 +491,7 @@
     }
 
     function ensureModalsInBody() {
-        ['change-detail-modal', 'new-change-modal'].forEach(id => {
+        ['change-detail-modal', 'new-change-modal', 'edit-change-modal'].forEach(id => {
             const all = document.querySelectorAll(`#${id}`);
             if (all.length > 1) {
                 for (let i = 0; i < all.length - 1; i++) {
@@ -617,6 +655,125 @@
         }
         unlockBodyScroll();
     }
+
+    function closeEditChangeModal() {
+        const editModal = document.getElementById('edit-change-modal');
+        if (editModal) {
+            editModal.classList.remove('active', 'is-visible');
+            editModal.style.display = 'none';
+            editModal.style.pointerEvents = 'none';
+        }
+        unlockBodyScroll();
+    }
+
+    window.openEditChangeModal = function(changeId) {
+        const item = allChanges.find(c => String(c.id) === String(changeId));
+        if (!item) return;
+
+        ensureModalsInBody();
+        const modal = document.getElementById('edit-change-modal');
+        if (!modal) return;
+
+        document.getElementById('edit-change-id').value = item.id;
+        document.getElementById('edit-modal-commit-badge').textContent = item.commit ? `#${item.commit}` : 'Manual';
+        document.getElementById('edit-change-title').value = item.title || '';
+        document.getElementById('edit-change-category').value = item.category || 'Fórum & Comunidade';
+        document.getElementById('edit-change-badge-color').value = item.badgeColor || '#1B4332';
+        document.getElementById('edit-change-summary').value = item.summary || '';
+        document.getElementById('edit-change-rationale').value = item.rationale || '';
+
+        // Campos para o psicólogo
+        const isPublished = item.publishedToPsi === true || item.publishedToPsi === 'true';
+        document.getElementById('edit-change-published-to-psi').checked = isPublished;
+        document.getElementById('edit-change-psi-title').value = item.psiTitle || item.title || '';
+        document.getElementById('edit-change-psi-category').value = item.psiCategory || item.category || 'Novidades da Plataforma';
+        document.getElementById('edit-change-impact-badge').value = item.impactBadge || 'Novo Recurso ✨';
+        document.getElementById('edit-change-psi-summary').value = item.psiSummary || item.summary || '';
+
+        lockBodyScroll();
+        modal.classList.add('active', 'is-visible');
+        modal.style.display = 'flex';
+        modal.style.pointerEvents = 'auto';
+    };
+
+    window.togglePsiChangelog = async function(changeId, btnElement = null) {
+        if (btnElement && btnElement.disabled) return;
+        if (btnElement) {
+            btnElement.disabled = true;
+            btnElement.style.opacity = '0.5';
+            btnElement.style.pointerEvents = 'none';
+        }
+
+        try {
+            const token = localStorage.getItem('Yelo_token') || localStorage.getItem('token');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            };
+
+            let res = null;
+            let lastErr = null;
+
+            // Retentativa resiliente para 503 ou breves oscilações de rede
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    res = await fetch(`/api/admin/system-changelog/${changeId}/toggle-psi`, {
+                        method: 'POST',
+                        headers
+                    });
+
+                    if (res && res.status === 503 && attempt < 2) {
+                        await new Promise(r => setTimeout(r, 1000));
+                        continue;
+                    }
+                    if (res && res.ok) break;
+                } catch (netErr) {
+                    lastErr = netErr;
+                    if (attempt < 2) {
+                        await new Promise(r => setTimeout(r, 1000));
+                        continue;
+                    }
+                }
+            }
+
+            if (!res || !res.ok) {
+                const errMsg = res ? `Falha HTTP ${res.status}` : (lastErr ? lastErr.message : 'Falha na conexão com o servidor');
+                throw new Error(errMsg);
+            }
+
+            const data = await res.json();
+
+            // Atualiza localmente
+            const item = allChanges.find(c => String(c.id) === String(changeId));
+            if (item) {
+                item.publishedToPsi = data.publishedToPsi;
+                if (data.entry) {
+                    Object.assign(item, data.entry);
+                }
+            }
+
+            // Invalida cache de sessão
+            try { sessionStorage.removeItem('yelo_changelog_cache'); } catch(e) {}
+
+            renderTimeline();
+            if (window.showToast) {
+                window.showToast(data.message || 'Status atualizado com sucesso!', 'success');
+            }
+        } catch (err) {
+            console.error('Erro ao alternar visibilidade para psicólogos:', err);
+            if (window.showToast) {
+                window.showToast(`Erro: ${err.message}`, 'error');
+            } else {
+                alert(`Erro: ${err.message}`);
+            }
+        } finally {
+            if (btnElement) {
+                btnElement.disabled = false;
+                btnElement.style.opacity = '1';
+                btnElement.style.pointerEvents = 'auto';
+            }
+        }
+    };
 
     // Configuração de Swipe Down para fechar o Bottom Sheet no Mobile
     function setupSwipeDownToClose(modalEl, cardSelector, closeFn) {
@@ -888,6 +1045,169 @@
                     if (submitBtn) {
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'Salvar Registro';
+                    }
+                }
+            });
+        }
+
+        // Configuração do Modal de Edição
+        const editModal = document.getElementById('edit-change-modal');
+        const btnCloseEdit = document.getElementById('btn-close-edit-modal');
+        const btnCancelEdit = document.getElementById('btn-cancel-edit-change');
+        const formEdit = document.getElementById('form-edit-change');
+        const btnDelete = document.getElementById('btn-delete-change');
+        const btnAiGen = document.getElementById('btn-edit-ai-generate');
+
+        if (btnCloseEdit && editModal) btnCloseEdit.addEventListener('click', closeEditChangeModal);
+        if (btnCancelEdit && editModal) btnCancelEdit.addEventListener('click', closeEditChangeModal);
+        if (editModal) setupSwipeDownToClose(editModal, '.modal-content-card', closeEditChangeModal);
+
+        if (btnAiGen) {
+            btnAiGen.addEventListener('click', async () => {
+                const changeId = document.getElementById('edit-change-id').value;
+                const title = document.getElementById('edit-change-title').value;
+                const summary = document.getElementById('edit-change-summary').value;
+                const category = document.getElementById('edit-change-category').value;
+                const rationale = document.getElementById('edit-change-rationale').value;
+
+                btnAiGen.disabled = true;
+                const originalHtml = btnAiGen.innerHTML;
+                btnAiGen.innerHTML = '<span>⏳ Gerando...</span>';
+
+                try {
+                    const token = localStorage.getItem('Yelo_token') || localStorage.getItem('token');
+                    const res = await fetch(`/api/admin/system-changelog/${changeId}/ai-suggest`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': token ? `Bearer ${token}` : '',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ title, summary, category, rationale })
+                    });
+
+                    if (!res.ok) throw new Error('Falha ao gerar sugestão com IA');
+                    const data = await res.json();
+                    if (data.suggestion) {
+                        if (data.suggestion.psiTitle) document.getElementById('edit-change-psi-title').value = data.suggestion.psiTitle;
+                        if (data.suggestion.psiSummary) document.getElementById('edit-change-psi-summary').value = data.suggestion.psiSummary;
+                        if (data.suggestion.psiCategory) document.getElementById('edit-change-psi-category').value = data.suggestion.psiCategory;
+                        if (data.suggestion.impactBadge) document.getElementById('edit-change-impact-badge').value = data.suggestion.impactBadge;
+                        document.getElementById('edit-change-published-to-psi').checked = true;
+
+                        if (window.showToast) window.showToast('Texto para psicólogos gerado com IA!', 'success');
+                    }
+                } catch (err) {
+                    console.error('Erro na geração com IA:', err);
+                    alert('Não foi possível gerar com IA no momento. Tente preencher manualmente.');
+                } finally {
+                    btnAiGen.disabled = false;
+                    btnAiGen.innerHTML = originalHtml;
+                }
+            });
+        }
+
+        if (btnDelete) {
+            btnDelete.addEventListener('click', async () => {
+                const changeId = document.getElementById('edit-change-id').value;
+                if (!confirm('Tem certeza que deseja excluir esta alteração do sistema? Esta ação não pode ser desfeita.')) return;
+
+                btnDelete.disabled = true;
+                btnDelete.textContent = 'Excluindo...';
+
+                try {
+                    const token = localStorage.getItem('Yelo_token') || localStorage.getItem('token');
+                    const res = await fetch(`/api/admin/system-changelog/${changeId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': token ? `Bearer ${token}` : ''
+                        }
+                    });
+
+                    if (!res.ok) throw new Error('Falha ao excluir alteração');
+                    
+                    allChanges = allChanges.filter(c => String(c.id) !== String(changeId));
+                    try { sessionStorage.removeItem('yelo_changelog_cache'); } catch(e) {}
+
+                    closeEditChangeModal();
+                    renderCategoryPills();
+                    renderTimeline();
+                    if (window.showToast) window.showToast('Alteração excluída com sucesso!', 'success');
+                } catch (err) {
+                    console.error('Erro ao excluir:', err);
+                    alert(`Erro ao excluir: ${err.message}`);
+                } finally {
+                    btnDelete.disabled = false;
+                    btnDelete.textContent = '🗑️ Excluir';
+                }
+            });
+        }
+
+        if (formEdit) {
+            formEdit.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = document.getElementById('btn-submit-edit-change');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Salvando...';
+                }
+
+                const changeId = document.getElementById('edit-change-id').value;
+                const title = document.getElementById('edit-change-title').value;
+                const category = document.getElementById('edit-change-category').value;
+                const badgeColor = document.getElementById('edit-change-badge-color').value;
+                const summary = document.getElementById('edit-change-summary').value;
+                const rationale = document.getElementById('edit-change-rationale').value;
+                const publishedToPsi = document.getElementById('edit-change-published-to-psi').checked;
+                const psiTitle = document.getElementById('edit-change-psi-title').value;
+                const psiCategory = document.getElementById('edit-change-psi-category').value;
+                const impactBadge = document.getElementById('edit-change-impact-badge').value;
+                const psiSummary = document.getElementById('edit-change-psi-summary').value;
+
+                try {
+                    const token = localStorage.getItem('Yelo_token') || localStorage.getItem('token');
+                    const res = await fetch(`/api/admin/system-changelog/${changeId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': token ? `Bearer ${token}` : '',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            title,
+                            category,
+                            badgeColor,
+                            summary,
+                            rationale,
+                            publishedToPsi,
+                            psiTitle,
+                            psiCategory,
+                            impactBadge,
+                            psiSummary
+                        })
+                    });
+
+                    if (!res.ok) throw new Error('Falha ao atualizar alteração');
+                    const data = await res.json();
+
+                    // Atualiza no array local
+                    const index = allChanges.findIndex(c => String(c.id) === String(changeId));
+                    if (index !== -1 && data.entry) {
+                        allChanges[index] = data.entry;
+                    }
+
+                    try { sessionStorage.removeItem('yelo_changelog_cache'); } catch(e) {}
+
+                    closeEditChangeModal();
+                    renderCategoryPills();
+                    renderTimeline();
+
+                    if (window.showToast) window.showToast('Alteração salva com sucesso!', 'success');
+                } catch (err) {
+                    console.error('Erro ao atualizar alteração:', err);
+                    alert(`Erro ao atualizar: ${err.message}`);
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Salvar Alterações';
                     }
                 }
             });

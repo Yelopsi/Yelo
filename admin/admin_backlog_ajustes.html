@@ -1,0 +1,1476 @@
+<!-- admin/admin_backlog_ajustes.html -->
+<style>
+    /* ==========================================================================
+       CENTRAL DE AJUSTES & BACKLOG (NOTION-LIKE FLOW) COM PRINTS E CATEGORIZAÇÃO
+       ========================================================================== */
+    .backlog-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding-bottom: 70px;
+    }
+
+    /* Cabeçalho */
+    .backlog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .backlog-title {
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: #1B4332;
+        margin: 0;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+        font-family: var(--font-titulos, sans-serif);
+    }
+
+    /* KPI Cards */
+    .backlog-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+
+    .backlog-kpi-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 16px 20px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .backlog-kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+    }
+
+    .backlog-kpi-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    .backlog-kpi-val {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+
+    .backlog-kpi-label {
+        font-size: 0.74rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Caixa de Captura Rápida (Notion Input Bar) */
+    .notion-quick-capture {
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 20px 24px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.04);
+        margin-bottom: 28px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .notion-quick-capture:focus-within {
+        border-color: #10b981;
+        box-shadow: 0 12px 30px rgba(16,185,129,0.12);
+    }
+
+    .capture-input-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .capture-sparkle {
+        font-size: 1.4rem;
+        flex-shrink: 0;
+        animation: pulseSparkle 2.5s infinite;
+    }
+    @keyframes pulseSparkle {
+        0%, 100% { transform: scale(1); opacity: 0.9; }
+        50% { transform: scale(1.18); opacity: 1; }
+    }
+
+    .capture-text-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 1.05rem;
+        font-family: inherit;
+        color: #1e293b;
+        background: transparent;
+        width: 100%;
+    }
+    .capture-text-input::placeholder {
+        color: #94a3b8;
+    }
+
+    .btn-attach-print {
+        background: #f8fafc;
+        border: 1.5px solid #cbd5e1;
+        color: #475569;
+        padding: 9px 14px;
+        border-radius: 50px;
+        font-size: 0.84rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+    .btn-attach-print:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+        border-color: #94a3b8;
+    }
+    .btn-attach-print.has-file {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-color: #93c5fd;
+    }
+
+    .btn-capture-submit {
+        background: var(--verde-escuro, #1B4332);
+        color: #FFEE8C;
+        border: none;
+        padding: 10px 22px;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 800;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+    .btn-capture-submit:hover {
+        opacity: 0.92;
+        transform: translateY(-1px);
+    }
+    .btn-capture-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Attached Image Preview in Quick Capture */
+    .attached-print-strip {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        margin-top: 14px;
+        padding: 8px 14px;
+        background: #f8fafc;
+        border: 1.5px dashed #cbd5e1;
+        border-radius: 12px;
+        width: fit-content;
+    }
+    .attached-print-thumb {
+        width: 44px;
+        height: 44px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .attached-print-thumb:hover {
+        transform: scale(1.05);
+    }
+
+    /* Live Preview & Quick Pills */
+    .capture-pills-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px dashed #e2e8f0;
+    }
+
+    .pills-group-label {
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #94a3b8;
+        letter-spacing: 0.5px;
+    }
+
+    .pills-group {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+
+    .quick-pill {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.15s ease;
+    }
+    .quick-pill:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+    }
+    .quick-pill.active {
+        background: #1B4332;
+        color: #FFEE8C;
+        border-color: #1B4332;
+        box-shadow: 0 2px 6px rgba(27,67,50,0.2);
+    }
+
+    /* Special pill active states */
+    .quick-pill.env-admin.active { background: #6D28D9; color: #ffffff; border-color: #6D28D9; }
+    .quick-pill.env-psicologo.active { background: #15803D; color: #ffffff; border-color: #15803D; }
+    .quick-pill.env-paciente.active { background: #1D4ED8; color: #ffffff; border-color: #1D4ED8; }
+    .quick-pill.env-publico.active { background: #B45309; color: #ffffff; border-color: #B45309; }
+
+    .quick-pill.dev-mobile.active { background: #EA580C; color: #ffffff; border-color: #EA580C; }
+    .quick-pill.dev-desktop.active { background: #4338CA; color: #ffffff; border-color: #4338CA; }
+
+    .quick-pill-select {
+        background-color: #ffffff !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 9999px !important;
+        -webkit-border-radius: 9999px !important;
+        -moz-border-radius: 9999px !important;
+        padding: 6px 32px 6px 14px !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        color: #1e293b !important;
+        outline: none !important;
+        cursor: pointer !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 12px center !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
+        height: 36px !important;
+    }
+    .quick-pill-select:hover {
+        border-color: #94a3b8 !important;
+        background-color: #f8fafc !important;
+    }
+    .quick-pill-select:focus {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18) !important;
+    }
+    .quick-pill-select.is-selected {
+        border-color: #15803d !important;
+        background-color: #f0fdf4 !important;
+        color: #15803d !important;
+        box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.15) !important;
+    }
+
+    /* Barra de Controle (Visualização + Filtros em formato de Pílulas) */
+    .backlog-control-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+
+    .view-mode-tabs {
+        display: flex;
+        background: #f1f5f9;
+        padding: 4px;
+        border-radius: 9999px !important; /* Pílula arredondada */
+        -webkit-border-radius: 9999px !important;
+        gap: 4px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .view-tab-btn {
+        background: transparent;
+        border: none;
+        padding: 7px 16px;
+        border-radius: 9999px !important; /* Pílula arredondada */
+        -webkit-border-radius: 9999px !important;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    .view-tab-btn.active {
+        background: #ffffff;
+        color: #1B4332;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .backlog-filters {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .backlog-select {
+        background-color: #ffffff !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 9999px !important; /* Pílula arredondada */
+        -webkit-border-radius: 9999px !important;
+        -moz-border-radius: 9999px !important;
+        padding: 7px 32px 7px 16px !important;
+        font-size: 0.82rem !important;
+        color: #334155 !important;
+        font-weight: 700 !important;
+        outline: none !important;
+        cursor: pointer !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 12px center !important;
+        height: 38px !important;
+        line-height: normal !important;
+        box-sizing: border-box !important;
+    }
+    .backlog-select:hover {
+        border-color: #94a3b8 !important;
+        background-color: #f8fafc !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important;
+    }
+    .backlog-select:focus {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18) !important;
+        background-color: #ffffff !important;
+    }
+
+    .backlog-search {
+        background-color: #ffffff !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 9999px !important; /* Pílula arredondada */
+        -webkit-border-radius: 9999px !important;
+        -moz-border-radius: 9999px !important;
+        padding: 7px 16px 7px 36px !important;
+        font-size: 0.82rem !important;
+        color: #1e293b !important;
+        font-weight: 600 !important;
+        outline: none !important;
+        min-width: 190px !important;
+        height: 38px !important;
+        line-height: normal !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: left 13px center !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        box-sizing: border-box !important;
+    }
+    .backlog-search:hover {
+        border-color: #94a3b8 !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important;
+    }
+    .backlog-search:focus {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18) !important;
+    }
+
+    /* Container de Páginas Agrupadas (Notion Flow) */
+    .page-group-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .page-group-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.02);
+        overflow: hidden;
+        transition: box-shadow 0.2s;
+    }
+    .page-group-card:hover {
+        box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    }
+
+    .page-group-header {
+        padding: 16px 22px;
+        background: #fafaf9;
+        border-bottom: 1px solid #f0f0ee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        cursor: pointer;
+        user-select: none;
+    }
+    .page-group-header:hover {
+        background: #f5f5f4;
+    }
+
+    .page-group-title-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .page-chevron {
+        transition: transform 0.2s;
+        color: #64748b;
+    }
+    .page-group-card.collapsed .page-chevron {
+        transform: rotate(-90deg);
+    }
+    .page-group-card.collapsed .page-items-list {
+        display: none;
+    }
+
+    .page-name {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 0;
+    }
+
+    .page-file-badge {
+        font-family: monospace;
+        font-size: 0.72rem;
+        background: #f1f5f9;
+        color: #475569;
+        padding: 2.5px 10px;
+        border-radius: 9999px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .page-progress-pill {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 9999px;
+        background: #e2e8f0;
+        color: #475569;
+    }
+    .page-progress-pill.done {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .btn-copy-ai-prompt {
+        background: #ffffff;
+        border: 1px solid #c7d2fe;
+        color: #4338CA;
+        border-radius: 9999px;
+        padding: 5px 13px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    .btn-copy-ai-prompt:hover {
+        background: #eef2ff;
+        border-color: #818cf8;
+    }
+
+    /* Lista de Itens do Ajuste */
+    .page-items-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .adjustment-item-row {
+        padding: 14px 22px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: background 0.15s;
+    }
+    .adjustment-item-row:last-child {
+        border-bottom: none;
+    }
+    .adjustment-item-row:hover {
+        background: #fbfbfc;
+    }
+    .adjustment-item-row.is-completed {
+        background: #fafafa;
+        opacity: 0.75;
+    }
+
+    /* Checkbox Estilizado */
+    .adj-checkbox {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        border: 2px solid #cbd5e1;
+        cursor: pointer;
+        accent-color: #1B4332;
+        flex-shrink: 0;
+    }
+
+    .item-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .item-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 6px 0;
+        word-break: normal;
+        overflow-wrap: anywhere;
+        line-height: 1.4;
+    }
+    .adjustment-item-row.is-completed .item-title {
+        text-decoration: line-through;
+        color: #94a3b8;
+    }
+
+    .item-badges {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    /* Badges de Ambiente em Formato de Pílula */
+    .badge-env {
+        font-size: 0.69rem;
+        font-weight: 700;
+        padding: 2.5px 9px;
+        border-radius: 9999px !important;
+        -webkit-border-radius: 9999px !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1.25;
+        white-space: nowrap;
+    }
+    .env-admin { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+    .env-psicologo { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .env-paciente { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .env-publico { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .env-geral { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+    /* Badges de Dispositivo em Formato de Pílula */
+    .badge-dev {
+        font-size: 0.69rem;
+        font-weight: 700;
+        padding: 2.5px 9px;
+        border-radius: 9999px !important;
+        -webkit-border-radius: 9999px !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1.25;
+        white-space: nowrap;
+    }
+    .dev-mobile { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+    .dev-desktop { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+    .dev-todos { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+
+    /* Badges de Categoria em Formato de Pílula */
+    .badge-category {
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 2.5px 9px;
+        border-radius: 9999px !important;
+        -webkit-border-radius: 9999px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        display: inline-flex;
+        align-items: center;
+        line-height: 1.25;
+        white-space: nowrap;
+    }
+    .cat-design { background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; }
+    .cat-func { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .cat-bug { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .cat-copy { background: #fefce8; color: #a16207; border: 1px solid #fef08a; }
+    .cat-mobile { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .cat-geral { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+    /* Badges de Prioridade em Formato de Pílula */
+    .badge-priority {
+        font-size: 0.69rem;
+        font-weight: 700;
+        padding: 2.5px 8px;
+        border-radius: 9999px !important;
+        -webkit-border-radius: 9999px !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        line-height: 1.25;
+        white-space: nowrap;
+    }
+    .prio-alta { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .prio-media { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .prio-baixa { background: #e2e8f0; color: #475569; border: 1px solid #cbd5e1; }
+
+    /* Badge de Página Alvo em Pílula */
+    .badge-target-page {
+        font-size: 0.70rem;
+        font-weight: 800;
+        color: #4338ca;
+        background: #e0e7ff;
+        padding: 2.5px 9px;
+        border-radius: 9999px !important;
+        -webkit-border-radius: 9999px !important;
+        border: 1px solid #c7d2fe;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1.25;
+        white-space: nowrap;
+    }
+
+    /* Badge de Status em Andamento */
+    .badge-status-progress {
+        font-size: 0.69rem;
+        font-weight: 700;
+        background: #fef3c7;
+        color: #b45309;
+        border: 1px solid #fde68a;
+        padding: 2.5px 8px;
+        border-radius: 9999px !important;
+        -webkit-border-radius: 9999px !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        line-height: 1.25;
+        white-space: nowrap;
+    }
+
+    /* Print Thumbnail in Cards */
+    .item-print-thumb {
+        position: relative;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1.5px solid #cbd5e1;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .item-print-thumb:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-color: #3b82f6;
+    }
+    .item-print-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .print-thumb-badge {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.75);
+        color: #ffffff;
+        font-size: 0.55rem;
+        font-weight: 800;
+        text-align: center;
+        padding: 1px 0;
+    }
+
+    .item-right-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .action-icon-btn {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .action-icon-btn:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+        border-color: #cbd5e1;
+    }
+    .action-icon-btn.btn-delete:hover {
+        background: #fef2f2;
+        color: #dc2626;
+        border-color: #fecaca;
+    }
+
+    /* KANBAN VIEW */
+    .kanban-grid {
+        display: none;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        align-items: flex-start;
+    }
+
+    .kanban-column {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 400px;
+    }
+
+    .kanban-col-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+    .kanban-col-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #334155;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .kanban-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 12px 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .kanban-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+    }
+
+    .kanban-card-footer {
+        margin-top: 4px;
+        padding-top: 8px;
+        border-top: 1px dashed #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .kanban-footer-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    /* Status Select em Pílula (Kanban & Cards) */
+    .kanban-status-select {
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 9999px !important;
+        -webkit-border-radius: 9999px !important;
+        padding: 2.5px 22px 2.5px 9px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        height: 27px;
+        line-height: 25px;
+        color: #334155;
+        outline: none;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 7px center;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .kanban-status-select:hover {
+        border-color: #94a3b8;
+        background-color: #f8fafc;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+    }
+    .kanban-status-select:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.18);
+    }
+    .kanban-status-select.status-pendente {
+        background-color: #ffffff;
+        color: #475569;
+        border-color: #cbd5e1;
+    }
+    .kanban-status-select.status-em_andamento {
+        background-color: #fffbeb;
+        color: #b45309;
+        border-color: #fde68a;
+    }
+    .kanban-status-select.status-concluido {
+        background-color: #f0fdf4;
+        color: #15803d;
+        border-color: #bbf7d0;
+    }
+
+    /* Ajuste específico para o Kanban: discreto, elegante e não distoante */
+    .kanban-card .kanban-status-select {
+        height: 24px !important;
+        font-size: 0.69rem !important;
+        padding: 1px 20px 1px 8px !important;
+        border-radius: 9999px !important;
+        -webkit-border-radius: 9999px !important;
+        border: 1px solid #cbd5e1 !important;
+        background-position: right 6px center !important;
+        box-shadow: none !important;
+    }
+
+    /* Modais */
+    .modal-backdrop-backlog {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(4px);
+        z-index: 100000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+    }
+    .modal-box-backlog {
+        background: #ffffff;
+        border-radius: 20px;
+        max-width: 600px;
+        width: 100%;
+        padding: 26px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        animation: modalFadeIn 0.2s ease-out;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    /* Lightbox Modal */
+    .modal-lightbox-box {
+        background: #0f172a;
+        border-radius: 18px;
+        max-width: 92vw;
+        max-height: 90vh;
+        width: 1000px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    }
+
+    @media (max-width: 768px) {
+        .capture-input-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+        }
+        .capture-sparkle {
+            display: none !important;
+        }
+        /* Contorno e destaque claros no mobile para saber exatamente onde digitar */
+        .capture-text-input {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            background: #ffffff !important;
+            border: 2px solid #cbd5e1 !important;
+            border-radius: 14px !important;
+            padding: 12px 14px !important;
+            font-size: 0.95rem !important;
+            min-height: 80px !important;
+            line-height: 1.4 !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+            transition: all 0.2s ease !important;
+        }
+        .capture-text-input:focus {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18) !important;
+            background: #ffffff !important;
+        }
+        .capture-actions-wrapper {
+            display: flex !important;
+            gap: 8px !important;
+            width: 100% !important;
+        }
+        .btn-attach-print {
+            flex: 1 !important;
+            justify-content: center !important;
+            padding: 11px 14px !important;
+        }
+        .btn-capture-submit {
+            flex: 2 !important;
+            justify-content: center !important;
+            padding: 11px 18px !important;
+        }
+        /* Remove pills manuais de ambiente e dispositivo no mobile conforme solicitado */
+        .quick-pills-row-manual {
+            display: none !important;
+        }
+        .capture-pills-bar {
+            padding-top: 6px !important;
+            margin-top: 8px !important;
+        }
+        .backlog-control-bar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+        .backlog-filters {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            align-items: center !important;
+            width: 100% !important;
+        }
+        .backlog-select {
+            flex: 1 1 calc(50% - 6px) !important;
+            min-width: 135px !important;
+            border-radius: 9999px !important;
+            -webkit-border-radius: 9999px !important;
+            font-size: 0.8rem !important;
+            height: 38px !important;
+            padding: 6px 28px 6px 14px !important;
+        }
+        .backlog-search {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            border-radius: 9999px !important;
+            -webkit-border-radius: 9999px !important;
+            font-size: 0.8rem !important;
+            height: 38px !important;
+        }
+        .capture-target-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+        .capture-target-row select {
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+
+        /* Mobile: Ajusta o item da lista para não espremer o texto */
+        .adjustment-item-row {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            align-items: flex-start !important;
+            padding: 14px 14px !important;
+            gap: 10px !important;
+        }
+        .adj-checkbox {
+            order: 1 !important;
+            margin-top: 3px !important;
+            flex-shrink: 0 !important;
+        }
+        .item-print-thumb {
+            order: 2 !important;
+            flex-shrink: 0 !important;
+        }
+        .item-body {
+            order: 3 !important;
+            flex: 1 1 calc(100% - 44px) !important;
+            min-width: 0 !important;
+            max-width: calc(100% - 44px) !important;
+        }
+        .item-title {
+            font-size: 0.94rem !important;
+            line-height: 1.45 !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+            margin: 0 0 8px 0 !important;
+        }
+        .item-badges {
+            margin-top: 6px !important;
+        }
+        .item-right-actions {
+            order: 4 !important;
+            width: 100% !important;
+            display: flex !important;
+            justify-content: flex-end !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding-top: 10px !important;
+            margin-top: 6px !important;
+            border-top: 1px dashed #f1f5f9 !important;
+        }
+        .item-right-actions .kanban-status-select {
+            margin-right: auto !important;
+            font-size: 0.78rem !important;
+            height: 34px !important;
+        }
+    }
+</style>
+
+<div class="backlog-container">
+
+    <!-- CABEÇALHO -->
+    <div class="backlog-header">
+        <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="background: #e0e7ff; color: #4338CA; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 20px; text-transform: uppercase;">Fluxo Notion + Prints</span>
+                <span style="font-size: 0.75rem; color: #10b981; font-weight: 700;">● Auto-Categorização Ativa</span>
+            </div>
+            <h1 class="backlog-title">Central de Ajustes & Backlog 🎯</h1>
+            <p style="color: #64748b; font-size: 0.92rem; margin: 4px 0 0 0;">Anote demandas em linguagem natural ou anexe prints. O sistema organiza por página, ambiente e dispositivo para ajuste em lote.</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button id="btn-refresh-backlog" class="action-icon-btn" title="Atualizar dados" style="width: 42px; height: 42px; border-radius: 12px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="backlog-kpi-grid">
+        <div class="backlog-kpi-card">
+            <div class="backlog-kpi-icon" style="background: #eff6ff; color: #2563eb;">📌</div>
+            <div>
+                <div class="backlog-kpi-val" id="kpi-pending-count">0</div>
+                <div class="backlog-kpi-label">Pendentes</div>
+            </div>
+        </div>
+        <div class="backlog-kpi-card">
+            <div class="backlog-kpi-icon" style="background: #fdf4ff; color: #c026d3;">📁</div>
+            <div>
+                <div class="backlog-kpi-val" id="kpi-pages-count">0</div>
+                <div class="backlog-kpi-label">Páginas com Fila</div>
+            </div>
+        </div>
+        <div class="backlog-kpi-card">
+            <div class="backlog-kpi-icon" style="background: #fff7ed; color: #ea580c;">📱</div>
+            <div>
+                <div class="backlog-kpi-val" id="kpi-mobile-count">0</div>
+                <div class="backlog-kpi-label">Mobile (Celular)</div>
+            </div>
+        </div>
+        <div class="backlog-kpi-card">
+            <div class="backlog-kpi-icon" style="background: #fef2f2; color: #dc2626;">⚡</div>
+            <div>
+                <div class="backlog-kpi-val" id="kpi-high-count">0</div>
+                <div class="backlog-kpi-label">Prioridade Alta</div>
+            </div>
+        </div>
+        <div class="backlog-kpi-card">
+            <div class="backlog-kpi-icon" style="background: #f0fdf4; color: #16a34a;">✅</div>
+            <div>
+                <div class="backlog-kpi-val" id="kpi-completed-count">0</div>
+                <div class="backlog-kpi-label">Concluídos</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CAIXA DE CAPTURA RÁPIDA (NOTION INPUT COM PRINTS E PILLS) -->
+    <div class="notion-quick-capture">
+        <form id="form-quick-adjustment">
+            <input type="file" id="input-adjustment-image" accept="image/png, image/jpeg, image/webp" style="display: none;">
+            
+            <div class="capture-input-row" style="align-items: flex-start;">
+                <span class="capture-sparkle" style="margin-top: 4px;">✨</span>
+                <textarea id="input-adjustment-text" class="capture-text-input" rows="1" placeholder="O que você precisa ajustar? Digite um ajuste ou cole vários de uma vez (1 por linha)..." autocomplete="off" style="resize: none; min-height: 32px; max-height: 140px; overflow-y: auto; padding: 4px 0;"></textarea>
+                
+                <div class="capture-actions-wrapper" style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" class="btn-attach-print" id="btn-trigger-print" title="Anexar print ou colar com Cmd+V" style="margin-top: 2px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        <span id="btn-print-label">Print</span>
+                    </button>
+
+                    <button type="submit" class="btn-capture-submit" id="btn-submit-adjustment" style="margin-top: 2px;">
+                        <span>Salvar Ajuste</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Aviso dinâmico quando múltiplos ajustes são colados juntos -->
+            <div id="batch-lines-notice" style="display: none; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.78rem; font-weight: 700; color: #4338CA; background: #e0e7ff; padding: 4px 12px; border-radius: 20px; width: fit-content;">
+                <span>⚡</span>
+                <span id="batch-lines-count">3 ajustes detectados em lote</span>
+                <span style="font-weight: 500; color: #4f46e5;">(serão categorizados automaticamente em seus respectivos arquivos/páginas)</span>
+            </div>
+
+            <!-- Preview do print anexado -->
+            <div id="attached-print-preview" class="attached-print-strip">
+                <img id="attached-print-img" src="" alt="Thumbnail" class="attached-print-thumb" title="Clique para ampliar">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 0.82rem; font-weight: 700; color: #1e293b;">📸 Print anexado para explicação</div>
+                    <div id="attached-print-filename" style="font-size: 0.72rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px;"></div>
+                </div>
+                <button type="button" id="btn-remove-print" style="background: none; border: none; color: #ef4444; font-size: 1.25rem; cursor: pointer; padding: 4px;" title="Remover print">&times;</button>
+            </div>
+
+            <!-- Barra de Seletores / Categorização Rápida -->
+            <div class="capture-pills-bar">
+                <!-- Seletor de Onde será o Ajuste (Página / Módulo de Destino) -->
+                <div class="capture-target-row" style="display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 8px; flex-wrap: wrap;">
+                    <label for="quick-target-page-select" class="pills-group-label" style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer; color: #1e293b; font-size: 0.78rem;">
+                        <span>📍 Onde será o ajuste:</span>
+                    </label>
+                    <div style="position: relative; flex: 1; min-width: 260px; max-width: 440px;">
+                        <select id="quick-target-page-select" class="quick-pill-select" style="width: 100%;" title="Selecione onde será feito o ajuste ou deixe auto-detectar">
+                            <option value="auto">✨ Auto-detectar automaticamente pelo texto</option>
+                            <optgroup label="🧠 Dashboard Psicólogo">
+                                <option value="Visão Geral (Psicólogo)">Visão Geral (Psicólogo) — psi_dashboard.html</option>
+                                <option value="Fórum da Comunidade">Fórum da Comunidade — psi_forum.html</option>
+                                <option value="Gestão de Pacientes &amp; Prontuário">Pacientes &amp; Prontuário — psi_pacientes.html</option>
+                                <option value="Financeiro &amp; Honorários">Financeiro &amp; Honorários — psi_financeiro.html</option>
+                                <option value="Assinatura &amp; Planos (Stripe/VIP)">Assinatura &amp; Planos (Stripe/VIP) — psi_assinatura.html</option>
+                                <option value="Meu Perfil Psicólogo">Meu Perfil Psicólogo — psi_perfil_edit.html</option>
+                            </optgroup>
+                            <optgroup label="🛡️ Dashboard Admin">
+                                <option value="Visão Geral (Admin)">Visão Geral (Admin) — admin_visao_geral.html</option>
+                                <option value="CRM Psicólogos (Lista de Profissionais)">CRM Psicólogos — admin_crm_psicologos.html</option>
+                                <option value="CRM Hub / Funil de Pacientes">CRM Hub / Leads — admin_crm_hub.html</option>
+                                <option value="CRM Pacientes (Admin)">CRM Pacientes — admin_crm_pacientes.html</option>
+                                <option value="Copilot WhatsApp AI">Copilot WhatsApp AI — admin_copilot_wpp.html</option>
+                                <option value="Histórico de Alterações">Histórico de Alterações — admin_historico_alteracoes.html</option>
+                                <option value="Configurações Globais Admin">Configurações Globais Admin — admin_configuracoes.html</option>
+                            </optgroup>
+                            <optgroup label="👤 Portal do Paciente">
+                                <option value="Portal do Paciente">Portal do Paciente — patient_dashboard.ejs</option>
+                                <option value="Questionário de Match">Questionário de Match — questionario.ejs</option>
+                            </optgroup>
+                            <optgroup label="🌐 Pública / Fora do Acesso">
+                                <option value="Landing Page / Institucional">Landing Page / Inicial — index.html</option>
+                                <option value="Perfil Público do Psicólogo">Perfil Público do Psicólogo — psi_perfil_publico.ejs</option>
+                                <option value="Blog &amp; Gestão de Conteúdo">Blog &amp; Artigos — psi_blog.html</option>
+                            </optgroup>
+                            <optgroup label="⚙️ Geral">
+                                <option value="Geral">⚙️ Geral / A Definir</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <span id="quick-target-badge" style="display: none; font-size: 0.72rem; font-weight: 700; color: #15803D; background: #dcfce7; padding: 3px 10px; border-radius: 9999px; border: 1px solid #bbf7d0;"></span>
+                </div>
+
+                <!-- Contêiner de Pills Manuais (Ambiente e Dispositivo) - Escondido no Mobile -->
+                <div class="quick-pills-row-manual" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <!-- Ambiente -->
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="pills-group-label">Ambiente:</span>
+                        <div class="pills-group" id="pills-environment">
+                            <button type="button" class="quick-pill env-pill active" data-env="geral">⚙️ Geral</button>
+                            <button type="button" class="quick-pill env-pill env-admin" data-env="admin">🛡️ Admin</button>
+                            <button type="button" class="quick-pill env-pill env-psicologo" data-env="psicologo">🧠 Psicólogo</button>
+                            <button type="button" class="quick-pill env-pill env-paciente" data-env="paciente">👤 Paciente</button>
+                            <button type="button" class="quick-pill env-pill env-publico" data-env="publico">🌐 Pública/Fora</button>
+                        </div>
+                    </div>
+
+                    <!-- Dispositivo -->
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span class="pills-group-label">Dispositivo:</span>
+                        <div class="pills-group" id="pills-device">
+                            <button type="button" class="quick-pill dev-pill active" data-dev="todos">🔄 Responsivo</button>
+                            <button type="button" class="quick-pill dev-pill dev-mobile" data-dev="mobile">📱 Mobile</button>
+                            <button type="button" class="quick-pill dev-pill dev-desktop" data-dev="desktop">💻 Desktop</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- BARRA DE CONTROLE & VISUALIZAÇÃO -->
+    <div class="backlog-control-bar">
+        <div class="view-mode-tabs">
+            <button type="button" class="view-tab-btn active" data-view="grouped">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                <span>Por Página (Ordem Lógica)</span>
+            </button>
+            <button type="button" class="view-tab-btn" data-view="kanban">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+                <span>Quadro Kanban</span>
+            </button>
+            <button type="button" class="view-tab-btn" data-view="list">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                <span>Lista Geral</span>
+            </button>
+        </div>
+
+        <div class="backlog-filters">
+            <!-- Filtro de Ambiente -->
+            <select id="filter-environment-select" class="backlog-select" title="Filtrar por ambiente">
+                <option value="all">Todos os Ambientes</option>
+                <option value="admin">🛡️ Dashboard Admin</option>
+                <option value="psicologo">🧠 Dashboard Psicólogo</option>
+                <option value="paciente">👤 Portal do Paciente</option>
+                <option value="publico">🌐 Pública / Fora do Acesso</option>
+                <option value="geral">⚙️ Geral / Sistema</option>
+            </select>
+
+            <!-- Filtro de Dispositivo -->
+            <select id="filter-device-select" class="backlog-select" title="Filtrar por dispositivo">
+                <option value="all">Todos os Dispositivos</option>
+                <option value="mobile">📱 Mobile (iPhone / Android)</option>
+                <option value="desktop">💻 Desktop</option>
+                <option value="todos">🔄 Responsivo / Geral</option>
+            </select>
+
+            <select id="filter-page-select" class="backlog-select">
+                <option value="all">Todas as Páginas</option>
+            </select>
+
+            <select id="filter-status-select" class="backlog-select">
+                <option value="all" selected>Todos os Status (Ver Tudo)</option>
+                <option value="pendente">⏳ Apenas Pendentes</option>
+                <option value="em_andamento">🚀 Em Andamento</option>
+                <option value="concluido">✅ Apenas Concluídos</option>
+            </select>
+
+            <select id="filter-category-select" class="backlog-select">
+                <option value="all">Todas Categorias</option>
+                <option value="Design & UI">🎨 Design & UI</option>
+                <option value="Nova Funcionalidade">⚡ Nova Funcionalidade</option>
+                <option value="Bug & Correção">🐞 Bug & Correção</option>
+                <option value="Texto & Copy">📝 Texto & Copy</option>
+                <option value="Performance & Mobile">🚀 Performance & Mobile</option>
+            </select>
+
+            <input type="text" id="search-adjustments" class="backlog-search" placeholder="Buscar ajuste...">
+        </div>
+    </div>
+
+    <!-- ÁREA PRINCIPAL: VISÃO AGRUPADA POR PÁGINA (ORDEM LÓGICA) -->
+    <div id="view-grouped-container" class="page-group-container">
+        <div style="text-align: center; padding: 40px; color: #94a3b8;">
+            Carregando seus ajustes...
+        </div>
+    </div>
+
+    <!-- ÁREA KANBAN (QUADRO) -->
+    <div id="view-kanban-container" class="kanban-grid">
+        <div class="kanban-column" id="kanban-col-pendente">
+            <div class="kanban-col-header">
+                <h3 class="kanban-col-title"><span>⏳ A Fazer</span> <span class="page-progress-pill" id="kanban-badge-pendente">0</span></h3>
+            </div>
+            <div class="kanban-cards-wrapper" id="kanban-cards-pendente"></div>
+        </div>
+
+        <div class="kanban-column" id="kanban-col-em_andamento">
+            <div class="kanban-col-header">
+                <h3 class="kanban-col-title"><span>🚀 Em Andamento</span> <span class="page-progress-pill" id="kanban-badge-em_andamento">0</span></h3>
+            </div>
+            <div class="kanban-cards-wrapper" id="kanban-cards-em_andamento"></div>
+        </div>
+
+        <div class="kanban-column" id="kanban-col-concluido">
+            <div class="kanban-col-header">
+                <h3 class="kanban-col-title"><span>🎉 Concluído</span> <span class="page-progress-pill done" id="kanban-badge-concluido">0</span></h3>
+            </div>
+            <div class="kanban-cards-wrapper" id="kanban-cards-concluido"></div>
+        </div>
+    </div>
+
+    <!-- ÁREA LISTA GERAL -->
+    <div id="view-list-container" style="display: none; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden;">
+        <div id="flat-items-list" class="page-items-list"></div>
+    </div>
+
+</div>
+
+<!-- LIGHTBOX MODAL (VISUALIZAR PRINT EM ALTA RESOLUÇÃO) -->
+<div id="modal-lightbox-print" class="modal-backdrop-backlog">
+    <div class="modal-lightbox-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: #1e293b; color: white;">
+            <div id="lightbox-title" style="font-weight: 700; font-size: 0.95rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width: 70vw;">Print do Ajuste</div>
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <a id="lightbox-open-external" href="#" target="_blank" style="color: #38bdf8; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; gap: 4px; font-weight: 600;">
+                    <span>Abrir Imagem</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                </a>
+                <button type="button" id="btn-close-lightbox" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+        </div>
+        <div style="flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 16px; background: #020617; max-height: 75vh;">
+            <img id="lightbox-img" src="" alt="Print" style="max-width: 100%; max-height: 72vh; object-fit: contain; border-radius: 8px;">
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE EDIÇÃO AVANÇADA -->
+<div id="modal-edit-adjustment" class="modal-backdrop-backlog">
+    <div class="modal-box-backlog">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #1B4332;">Editar Ajuste</h3>
+            <button type="button" id="btn-close-edit-modal" style="background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer;">&times;</button>
+        </div>
+
+        <form id="form-edit-adjustment">
+            <input type="hidden" id="edit-adj-id">
+            <input type="hidden" id="edit-adj-image-url">
+            <input type="file" id="edit-adj-file-input" accept="image/*" style="display: none;">
+            
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Descrição do Ajuste</label>
+                <textarea id="edit-adj-title" rows="3" style="width: 100%; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-family: inherit; font-size: 0.92rem; box-sizing: border-box; outline: none;"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Página / Módulo Alvo</label>
+                    <input type="text" id="edit-adj-page" style="width: 100%; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.88rem; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Arquivo Relacionado</label>
+                    <input type="text" id="edit-adj-file" placeholder="ex: patient/patient_dashboard.ejs" style="width: 100%; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.88rem; font-family: monospace; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <!-- Ambiente e Dispositivo -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Ambiente / Contexto</label>
+                    <select id="edit-adj-environment" style="width: 100%; padding: 8px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.82rem;">
+                        <option value="admin">🛡️ Dashboard Admin</option>
+                        <option value="psicologo">🧠 Dashboard Psicólogo</option>
+                        <option value="paciente">👤 Portal do Paciente</option>
+                        <option value="publico">🌐 Pública / Fora do Acesso</option>
+                        <option value="geral">⚙️ Geral / Sistema</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Dispositivo / Plataforma</label>
+                    <select id="edit-adj-device" style="width: 100%; padding: 8px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.82rem;">
+                        <option value="todos">🔄 Responsivo / Todos</option>
+                        <option value="mobile">📱 Mobile (iPhone / Android)</option>
+                        <option value="desktop">💻 Desktop</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+                <div>
+                    <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Categoria</label>
+                    <select id="edit-adj-category" style="width: 100%; padding: 8px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.82rem;">
+                        <option value="Design & UI">🎨 Design & UI</option>
+                        <option value="Nova Funcionalidade">⚡ Nova Funcionalidade</option>
+                        <option value="Bug & Correção">🐞 Bug & Correção</option>
+                        <option value="Texto & Copy">📝 Texto & Copy</option>
+                        <option value="Performance & Mobile">🚀 Performance & Mobile</option>
+                        <option value="Melhoria">💡 Melhoria Geral</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Prioridade</label>
+                    <select id="edit-adj-priority" style="width: 100%; padding: 8px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.82rem;">
+                        <option value="alta">🔴 Alta</option>
+                        <option value="media">🟡 Média</option>
+                        <option value="baixa">🟢 Baixa</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Status</label>
+                    <select id="edit-adj-status" style="width: 100%; padding: 8px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.82rem;">
+                        <option value="pendente">⏳ Pendente</option>
+                        <option value="em_andamento">🚀 Em Andamento</option>
+                        <option value="concluido">✅ Concluído</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Print / Imagem Anexada -->
+            <div style="margin-bottom: 16px; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 6px;">📸 Print Explicativo</label>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div id="edit-adj-print-container" style="display: none; align-items: center; gap: 8px;">
+                        <img id="edit-adj-print-thumb" src="" alt="Print" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer;">
+                        <button type="button" id="btn-edit-remove-print" style="background: none; border: none; color: #ef4444; font-size: 0.8rem; font-weight: 700; cursor: pointer;">Remover</button>
+                    </div>
+                    <button type="button" id="btn-edit-upload-print" style="padding: 6px 14px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer;">
+                        <span>Substituir Print</span>
+                    </button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 6px;">Notas / Observações Técnicas (opcional)</label>
+                <textarea id="edit-adj-notes" rows="2" placeholder="Notas sobre onde alterar, regras específicas..." style="width: 100%; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 0.88rem; box-sizing: border-box;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" id="btn-cancel-edit" style="padding: 10px 18px; border: 1px solid #cbd5e1; background: #ffffff; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancelar</button>
+                <button type="submit" style="padding: 10px 22px; background: #1B4332; color: #ffffff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">Salvar Alterações</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO (ESTILO YELO) -->
+<div id="modal-confirm-delete-backlog" class="modal-backdrop-backlog" style="display: none;">
+    <div class="modal-box-backlog" style="max-width: 440px; text-align: center; padding: 28px 24px;">
+        <div style="width: 52px; height: 52px; border-radius: 9999px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 16px auto;">
+            🗑️
+        </div>
+        <h3 id="delete-modal-title" style="margin: 0 0 8px 0; font-size: 1.25rem; font-weight: 800; color: #1B4332;">Excluir Ajuste</h3>
+        <p style="margin: 0 0 16px 0; color: #64748b; font-size: 0.90rem; line-height: 1.45;">
+            Tem certeza que deseja excluir este item? Esta ação removerá o ajuste permanentemente do backlog.
+        </p>
+        <div id="delete-modal-item-preview" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; font-size: 0.84rem; color: #334155; font-weight: 600; margin-bottom: 22px; text-align: left; max-height: 80px; overflow-y: auto; word-break: break-word;">
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button type="button" id="btn-cancel-delete-backlog" style="flex: 1; padding: 10px 16px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; border-radius: 9999px; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.15s;">
+                Cancelar
+            </button>
+            <button type="button" id="btn-confirm-delete-backlog" style="flex: 1; padding: 10px 16px; border: none; background: #dc2626; color: #ffffff; border-radius: 9999px; font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);">
+                Excluir
+            </button>
+        </div>
+    </div>
+</div>
+

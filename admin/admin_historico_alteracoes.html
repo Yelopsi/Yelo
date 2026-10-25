@@ -88,6 +88,8 @@
             <!-- Filtros por Categoria -->
             <div class="category-pills" id="category-filter-group" style="display: flex; gap: 6px; flex-wrap: wrap;">
                 <button class="cat-pill active" data-cat="all">Todas</button>
+                <button class="cat-pill" data-cat="pending-psi" style="background: #fffbeb; color: #b45309; border: 1.5px solid #fde68a; font-weight: 700;">⏳ Pendentes</button>
+                <button class="cat-pill" data-cat="authorized-psi" style="background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0; font-weight: 700;">✅ Autorizadas (Sexta)</button>
                 <button class="cat-pill" data-cat="Planos & Trial">Planos & Trial</button>
                 <button class="cat-pill" data-cat="Motor de Match">Motor de Match</button>
                 <button class="cat-pill" data-cat="CRM & Mensageria">CRM & Mensageria</button>
@@ -354,6 +356,152 @@
             <div class="modal-footer-fixed" style="gap: 10px;">
                 <button type="button" id="btn-cancel-new-change" style="padding: 10px 18px; border-radius: 50px; border: 1px solid #cbd5e1; background: #fff; color: #475569; font-weight: 600; cursor: pointer;">Cancelar</button>
                 <button type="submit" id="btn-submit-new-change" style="padding: 10px 24px; border-radius: 50px; border: none; background: #1B4332; color: #FFEE8C; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(27,67,50,0.25);">Salvar Registro</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL DE EDIÇÃO DE ALTERAÇÃO & TEXTO PARA PSICÓLOGOS                      -->
+<!-- ========================================================================= -->
+<div id="edit-change-modal" class="modal-overlay">
+    <div class="modal-content-card">
+        <!-- Handle Mobile -->
+        <div class="bottom-sheet-drag-handle"></div>
+
+        <div class="modal-header-fixed">
+            <div style="flex-grow: 1;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <span id="edit-modal-commit-badge" style="font-family: monospace; font-size: 0.75rem; background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 6px; border: 1px solid #e2e8f0;">#commit</span>
+                    <span id="edit-modal-status-badge" style="background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 50px; font-size: 0.72rem; font-weight: 700;">Em Edição</span>
+                </div>
+                <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #1B4332;">Editar Alteração & Texto do Psicólogo</h3>
+            </div>
+            <button id="btn-close-edit-modal" aria-label="Fechar" style="background: #f1f5f9; border: none; font-size: 1.2rem; color: #64748b; cursor: pointer; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">✕</button>
+        </div>
+
+        <form id="form-edit-change" style="display: flex; flex-direction: column; height: 100%; overflow: hidden; margin: 0;">
+            <input type="hidden" id="edit-change-id">
+            
+            <div class="modal-scrollable-body">
+                
+                <!-- SEÇÃO 1: DADOS TÉCNICOS INTERNOS -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+                    <div style="font-size: 0.8rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+                        <span>⚙️</span> Dados Técnicos & Registro Interno
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #374151; margin-bottom: 4px;">Título Interno / Commit *</label>
+                        <input type="text" id="edit-change-title" required style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.88rem;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #374151; margin-bottom: 4px;">Categoria Interna *</label>
+                            <select id="edit-change-category" required style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.88rem;">
+                                <option value="Fórum & Comunidade">Fórum & Comunidade</option>
+                                <option value="Motor de Match">Motor de Match</option>
+                                <option value="CRM & Mensageria">CRM & Mensageria</option>
+                                <option value="Planos & Trial">Planos & Trial</option>
+                                <option value="Billing & Asaas">Billing & Asaas</option>
+                                <option value="Admin & Plataforma">Admin & Plataforma</option>
+                                <option value="Segurança & Infra">Segurança & Infra</option>
+                                <option value="Performance & Cache">Performance & Cache</option>
+                                <option value="Analytics & Métricas">Analytics & Métricas</option>
+                                <option value="Melhorias do Sistema">Melhorias do Sistema</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #374151; margin-bottom: 4px;">Cor da Tag</label>
+                            <input type="color" id="edit-change-badge-color" style="width: 100%; height: 38px; box-sizing: border-box; padding: 2px 6px; border: 1px solid #d1d5db; border-radius: 8px; cursor: pointer;">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #374151; margin-bottom: 4px;">Resumo Técnico *</label>
+                        <textarea id="edit-change-summary" rows="2" required style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.88rem; resize: vertical;"></textarea>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 2: PUBLICAÇÃO PARA PSICÓLOGOS (DESTAQUE) -->
+                <div style="background: linear-gradient(135deg, #f0fdf4 0%, #e6f7ec 100%); border: 1.5px solid #86efac; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.3rem;">🚀</span>
+                            <div>
+                                <strong style="color: #166534; font-size: 0.95rem; display: block;">Publicação para os Psicólogos (O que há de novo)</strong>
+                                <span style="color: #15803d; font-size: 0.8rem;">Personalize como essa melhoria é apresentada no painel do profissional.</span>
+                            </div>
+                        </div>
+
+                        <!-- Botão Mágico IA -->
+                        <button type="button" id="btn-edit-ai-generate" style="background: #1B4332; color: #FFEE8C; font-weight: 700; border: none; padding: 7px 16px; border-radius: 50px; cursor: pointer; font-size: 0.82rem; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(27,67,50,0.2);">
+                            <span>✨ Gerar com IA (Gemini)</span>
+                        </button>
+                    </div>
+
+                    <!-- Toggle de Visibilidade -->
+                    <div style="background: #fff; padding: 10px 14px; border-radius: 10px; border: 1px solid #bbf7d0; margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="edit-change-published-to-psi" style="width: 18px; height: 18px; cursor: pointer; accent-color: #166534;">
+                        <label for="edit-change-published-to-psi" style="font-size: 0.88rem; font-weight: 700; color: #166534; cursor: pointer;">
+                            Exibir esta alteração na página de Novidades dos Psicólogos
+                        </label>
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #166534; margin-bottom: 4px;">Título Amigável para o Psicólogo</label>
+                        <input type="text" id="edit-change-psi-title" placeholder="Ex: 🔍 Busca Rápida e Links Clicáveis no Fórum" style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1.5px solid #86efac; border-radius: 8px; font-size: 0.9rem; background: #fff;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #166534; margin-bottom: 4px;">Categoria para o Psicólogo</label>
+                            <select id="edit-change-psi-category" style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1.5px solid #86efac; border-radius: 8px; font-size: 0.88rem; background: #fff;">
+                                <option value="Fórum & Comunidade">Fórum & Comunidade</option>
+                                <option value="Match & Pacientes">Match & Pacientes</option>
+                                <option value="Consultório & Ferramentas">Consultório & Ferramentas</option>
+                                <option value="Novidades da Plataforma">Novidades da Plataforma</option>
+                                <option value="Usabilidade & Mobile">Usabilidade & Mobile</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #166534; margin-bottom: 4px;">Selo de Destaque / Impacto</label>
+                            <select id="edit-change-impact-badge" style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1.5px solid #86efac; border-radius: 8px; font-size: 0.88rem; background: #fff;">
+                                <option value="Sugestão da Comunidade 💡">Sugestão da Comunidade 💡</option>
+                                <option value="Novo Recurso ✨">Novo Recurso ✨</option>
+                                <option value="Melhoria de Usabilidade 🚀">Melhoria de Usabilidade 🚀</option>
+                                <option value="Otimização ⚡">Otimização ⚡</option>
+                                <option value="Segurança & Cuidado 🛡️">Segurança & Cuidado 🛡️</option>
+                                <option value="Novidade 🌱">Novidade 🌱</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #166534; margin-bottom: 4px;">Texto de Explicação Acolhedor (Benefício)</label>
+                        <textarea id="edit-change-psi-summary" rows="3" placeholder="Explique em 2 ou 3 frases claras e acolhedoras o que mudou e como isso apoia o trabalho do profissional..." style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #86efac; border-radius: 8px; font-size: 0.9rem; resize: vertical; background: #fff; line-height: 1.5;"></textarea>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 3: RACIONAL E ANTES VS DEPOIS -->
+                <div>
+                    <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #374151; margin-bottom: 4px;">Por que fizemos essa mudança? (Racional)</label>
+                    <textarea id="edit-change-rationale" rows="2" style="width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.88rem; resize: vertical;"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer-fixed" style="justify-content: space-between; gap: 10px;">
+                <button type="button" id="btn-delete-change" style="padding: 10px 18px; border-radius: 50px; border: 1px solid #fecaca; background: #fff1f2; color: #b91c1c; font-weight: 700; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                    <span>🗑️ Excluir</span>
+                </button>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" id="btn-cancel-edit-change" style="padding: 10px 18px; border-radius: 50px; border: 1px solid #cbd5e1; background: #fff; color: #475569; font-weight: 600; cursor: pointer; font-size: 0.88rem;">Cancelar</button>
+                    <button type="submit" id="btn-submit-edit-change" style="padding: 10px 24px; border-radius: 50px; border: none; background: #1B4332; color: #FFEE8C; font-weight: 700; cursor: pointer; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(27,67,50,0.25);">
+                        Salvar Alterações
+                    </button>
+                </div>
             </div>
         </form>
     </div>

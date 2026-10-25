@@ -1,0 +1,755 @@
+<!-- PÁGINA: MELHORIAS & NOVOS RECURSOS DA PLATAFORMA (VISÃO DO PSICÓLOGO) -->
+<div class="novidades-page-container fade-in-up">
+    
+    <!-- BOTÃO VOLTAR PARA AJUSTES -->
+    <div style="margin-bottom: 16px;">
+        <button onclick="if(window.loadPage) window.loadPage('psi_ajustes_hub.html')" class="btn-novidades-back" style="background: #ffffff; border: 1px solid #e5e7eb; padding: 8px 18px; border-radius: 50px; font-size: 0.88rem; font-weight: 700; color: #1B4332; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <span>Voltar para Ajustes</span>
+        </button>
+    </div>
+
+    <!-- CABEÇALHO HERO -->
+    <div class="main-header" style="background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); border-radius: 20px; padding: 28px 30px; margin-bottom: 24px; color: #fff; box-shadow: 0 10px 25px -5px rgba(27, 67, 50, 0.22); position: relative; overflow: hidden;">
+        <div style="position: absolute; right: -20px; top: -20px; font-size: 8rem; opacity: 0.08; pointer-events: none; user-select: none;">🚀</div>
+        
+        <div style="position: relative; z-index: 2;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+                <span class="novidades-badge-desktop-only" style="background: rgba(255, 238, 140, 0.22); color: #FFEE8C; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid rgba(255, 238, 140, 0.35); display: inline-flex; align-items: center; gap: 6px;">
+                    <span>✨</span> Central de Melhorias
+                </span>
+                <span class="novidades-badge-desktop-only" style="background: rgba(16, 185, 129, 0.2); color: #a7f3d0; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 5px;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                    Novos Recursos para Psicólogos
+                </span>
+                <span style="background: rgba(255, 255, 255, 0.16); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(255, 255, 255, 0.25); display: inline-flex; align-items: center; gap: 5px;">
+                    📅 Lançamentos toda Segunda-feira
+                </span>
+            </div>
+
+            <h1 style="margin: 0; font-family: var(--font-titulos); font-size: 2.1rem; color: #fff; letter-spacing: -0.02em;">
+                Melhorias da Plataforma 🚀
+            </h1>
+            <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 1.02rem; max-width: 680px; line-height: 1.55;">
+                Toda segunda-feira reunimos em um único post o compilado de melhorias práticas, novos recursos e ajustes lançados para apoiar a sua rotina e o crescimento do seu consultório.
+            </p>
+        </div>
+    </div>
+
+    <!-- BARRA DE FILTROS E BUSCA -->
+    <div class="novidades-filter-bar" style="background: #fff; border-radius: 16px; padding: 16px 20px; border: 1px solid #e5e7eb; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+        
+        <!-- Categorias Dinâmicas (apenas categorias com melhorias ativas) -->
+        <div class="novidades-cat-pills" id="novidades-cat-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="novidade-pill active" data-cat="all">Todas <span class="pill-count" id="count-all">...</span></button>
+        </div>
+
+        <!-- Busca Rápida -->
+        <div class="novidades-search-wrap" style="position: relative; min-width: 220px; flex-grow: 1; max-width: 320px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="novidades-search-input" placeholder="Buscar melhoria..." style="width: 100%; box-sizing: border-box; padding: 9px 14px 9px 36px; border-radius: 50px; border: 1px solid #d1d5db; font-size: 0.88rem; outline: none; transition: border-color 0.2s;">
+        </div>
+    </div>
+
+    <!-- CONTAINER DA TIMELINE -->
+    <div id="novidades-timeline-wrapper" class="novidades-timeline">
+        <!-- Injetado dinamicamente via JS -->
+        <div id="novidades-loading" style="text-align: center; padding: 50px 20px; color: #6b7280;">
+            <div class="loader-spinner" style="width: 36px; height: 36px; border: 3px solid #e5e7eb; border-top-color: #1B4332; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;"></div>
+            <p style="font-weight: 600; font-size: 0.95rem;">Carregando as melhorias mais recentes...</p>
+        </div>
+    </div>
+
+    <!-- ESTADO VAZIO -->
+    <div id="novidades-empty" style="display: none; text-align: center; padding: 60px 20px; background: #fff; border-radius: 16px; border: 1.5px dashed #d1d5db; margin-top: 10px;">
+        <span style="font-size: 2.8rem; display: block; margin-bottom: 10px;">🌿</span>
+        <h3 style="color: #1B4332; font-family: var(--font-titulos); margin: 0 0 6px;">Nenhuma melhoria encontrada nesta categoria</h3>
+        <p style="color: #6b7280; font-size: 0.92rem; margin: 0 auto 18px; max-width: 420px;">Selecione "Todas" para visualizar a lista completa de melhorias e novos recursos da Yelo.</p>
+        <button onclick="document.querySelector('.novidade-pill[data-cat=\'all\']').click()" style="background: #1B4332; color: #FFEE8C; font-weight: 700; border: none; padding: 10px 22px; border-radius: 50px; cursor: pointer; font-size: 0.88rem;">
+            Ver Todas as Melhorias
+        </button>
+    </div>
+
+    <!-- SEÇÃO DE ENGAJAMENTO E SUGESTÕES (COMMUNITY-LED) -->
+    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #e6f7ec 100%); border: 1.5px solid #bbf7d0; border-radius: 16px; padding: 24px 28px; margin-top: 36px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px;">
+        <div style="max-width: 600px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="font-size: 1.25rem;">💡</span>
+                <h3 style="margin: 0; color: #166534; font-size: 1.15rem; font-weight: 800;">Sentiu falta de algum recurso ou tem uma sugestão?</h3>
+            </div>
+            <p style="margin: 4px 0 0; color: #15803d; font-size: 0.92rem; line-height: 1.5;">
+                Nossa equipe analisa os pedidos dos profissionais semanalmente. Compartilhe sua visão com outros colegas no Fórum ou envie uma mensagem direta ao nosso suporte.
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button onclick="if(window.loadPage) window.loadPage('psi_forum.html')" style="background: #1B4332; color: #FFEE8C; font-weight: 700; border: none; padding: 10px 20px; border-radius: 50px; cursor: pointer; font-size: 0.88rem; box-shadow: 0 4px 10px rgba(27,67,50,0.15); display: flex; align-items: center; gap: 6px;">
+                <span>💬 Abrir Tópico no Fórum</span>
+            </button>
+            <button onclick="if(window.loadPage) window.loadPage('psi_caixa_de_entrada.html')" style="background: #fff; color: #166534; font-weight: 700; border: 1.5px solid #86efac; padding: 10px 18px; border-radius: 50px; cursor: pointer; font-size: 0.88rem;">
+                <span>🎧 Fale com a Yelo</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-novidades-back:hover {
+        background: #f9fafb !important;
+        border-color: #1B4332 !important;
+        transform: translateX(-2px);
+    }
+
+    .novidades-timeline {
+        --timeline-indent: 32px;
+        --timeline-line-x: 12px;
+        --timeline-dot-size: 15px;
+        position: relative;
+        padding-left: var(--timeline-indent);
+    }
+
+    .novidades-timeline::before {
+        content: '';
+        position: absolute;
+        left: var(--timeline-line-x);
+        top: 14px;
+        bottom: 14px;
+        width: 3px;
+        background: linear-gradient(180deg, #1B4332 0%, #a7f3d0 60%, #e2e8f0 100%);
+        border-radius: 4px;
+        transform: translateX(-50%);
+    }
+
+    .novidade-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 22px 26px;
+        margin-bottom: 22px;
+        position: relative;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s, border-color 0.25s;
+    }
+    .novidade-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px -5px rgba(27, 67, 50, 0.1);
+        border-color: #2D6A4F;
+    }
+
+    .novidade-dot {
+        position: absolute;
+        left: calc(var(--timeline-line-x) - var(--timeline-indent));
+        top: 24px;
+        width: var(--timeline-dot-size);
+        height: var(--timeline-dot-size);
+        border-radius: 50%;
+        background: #fff;
+        border: 3.5px solid #1B4332;
+        box-shadow: 0 0 0 4px rgba(27, 67, 50, 0.15);
+        transform: translateX(-50%);
+        z-index: 2;
+    }
+
+    .novidade-pill {
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #4b5563;
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .novidade-pill:hover {
+        border-color: #1B4332;
+        color: #1B4332;
+    }
+    .novidade-pill.active {
+        background: #1B4332;
+        color: #FFEE8C;
+        border-color: #1B4332;
+        font-weight: 700;
+    }
+    .novidade-pill .pill-count {
+        background: rgba(0,0,0,0.06);
+        padding: 1px 7px;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
+    .novidade-pill.active .pill-count {
+        background: rgba(255, 238, 140, 0.25);
+        color: #FFEE8C;
+    }
+
+    .novidade-cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        background: #f0fdf4;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .novidade-cta-btn:hover {
+        background: #1B4332;
+        color: #FFEE8C;
+        border-color: #1B4332;
+        transform: translateX(3px);
+    }
+
+    /* ESTILOS DO CARD DA EDIÇÃO SEMANAL */
+    .edition-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 24px 28px;
+        margin-bottom: 26px;
+        position: relative;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s, border-color 0.25s;
+    }
+    .edition-card:hover {
+        border-color: #2D6A4F;
+        box-shadow: 0 10px 25px -5px rgba(27, 67, 50, 0.08);
+    }
+
+    .edition-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-bottom: 14px;
+        border-bottom: 1.5px solid #f1f5f9;
+        margin-bottom: 16px;
+    }
+    .edition-badges-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .edition-friday-badge,
+    .edition-monday-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f0fdf4;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+    .edition-count-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        padding: 4px 10px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+    .edition-date-text {
+        color: #64748b;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+    .edition-title {
+        color: #0f172a;
+        font-family: var(--font-titulos);
+        font-size: 1.35rem;
+        font-weight: 800;
+        margin: 0 0 6px;
+        letter-spacing: -0.01em;
+    }
+    .edition-intro {
+        color: #64748b;
+        font-size: 0.94rem;
+        line-height: 1.55;
+        margin: 0 0 18px;
+    }
+
+    .edition-adjustments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .adjustment-subcard {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 16px 18px;
+        transition: all 0.2s ease;
+    }
+    .adjustment-subcard:hover {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+        transform: translateX(3px);
+    }
+    .subcard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .subcard-title {
+        color: #1e293b;
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0 0 6px;
+        line-height: 1.4;
+    }
+    .subcard-summary {
+        color: #475569;
+        font-size: 0.92rem;
+        line-height: 1.55;
+        margin: 0;
+    }
+
+    @media (max-width: 768px) {
+        .novidades-badge-desktop-only {
+            display: none !important;
+        }
+        .novidades-filter-bar {
+            padding: 12px 14px !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+        }
+        .novidades-cat-pills {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            gap: 8px !important;
+            padding: 2px 2px 8px 2px !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: none !important;
+            scroll-snap-type: x mandatory !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .novidades-cat-pills::-webkit-scrollbar {
+            display: none !important;
+        }
+        .novidade-pill {
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+            scroll-snap-align: start !important;
+            padding: 7px 14px !important;
+            font-size: 0.8rem !important;
+        }
+        .novidades-search-wrap {
+            max-width: 100% !important;
+            width: 100% !important;
+            min-width: 100% !important;
+        }
+        .novidades-timeline {
+            --timeline-indent: 26px;
+            --timeline-line-x: 10px;
+            --timeline-dot-size: 13px;
+        }
+        .novidade-dot {
+            top: 20px;
+            border-width: 3px;
+            box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.12);
+        }
+        .edition-card {
+            padding: 18px 16px;
+            margin-bottom: 20px;
+            border-radius: 14px;
+        }
+        .edition-title {
+            font-size: 1.2rem;
+        }
+        .adjustment-subcard {
+            padding: 14px 14px;
+        }
+        .subcard-title {
+            font-size: 0.98rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .novidades-timeline {
+            --timeline-indent: 22px;
+            --timeline-line-x: 8px;
+            --timeline-dot-size: 12px;
+        }
+        .novidade-dot {
+            top: 18px;
+            border-width: 2.5px;
+            box-shadow: 0 0 0 2.5px rgba(27, 67, 50, 0.12);
+        }
+        .edition-card {
+            padding: 15px 13px;
+            margin-bottom: 16px;
+        }
+    }
+</style>
+
+<script>
+(function() {
+    let allEditions = [];
+    let allUpdates = [];
+    let activeCategory = 'all';
+    let searchQuery = '';
+
+    function normalizeStr(str) {
+        return (str || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+    }
+
+    function formatDateFriendly(dateStr) {
+        if (!dateStr) return 'Lançamento recente';
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
+    function getThemeForCategory(category) {
+        const cat = normalizeStr(category);
+        if (cat.includes('forum') || cat.includes('comunidade')) {
+            return { bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' };
+        }
+        if (cat.includes('consultorio') || cat.includes('gestao') || cat.includes('crm')) {
+            return { bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe' };
+        }
+        if (cat.includes('perfil') || cat.includes('paciente')) {
+            return { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
+        }
+        return { bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' };
+    }
+
+    // Agrupamento de fallback caso o backend retorne lista plana (Edições de Segunda-feira)
+    function groupUpdatesIntoMondayEditions(updates) {
+        const editionsMap = new Map();
+        (updates || []).forEach(item => {
+            let baseDateStr = item.scheduledMonday || item.scheduledFriday || item.date;
+            let dateObj = new Date(baseDateStr);
+            if (isNaN(dateObj.getTime())) dateObj = new Date();
+
+            const dayOfWeek = dateObj.getDay(); // 0: Dom, 1: Seg, 2: Ter, 3: Qua, 4: Qui, 5: Sex, 6: Sab
+            // Determina a segunda-feira do ciclo semanal
+            let diffToMonday = 0;
+            if (dayOfWeek === 1) {
+                diffToMonday = 0; // Se hoje é segunda, o lote é hoje!
+            } else if (dayOfWeek === 0) {
+                diffToMonday = 1; // Domingo: amanhã é segunda
+            } else {
+                diffToMonday = 8 - dayOfWeek; // Terça a sábado: próxima segunda
+            }
+
+            const mondayDate = new Date(dateObj);
+            mondayDate.setDate(dateObj.getDate() + diffToMonday);
+            mondayDate.setHours(12, 0, 0, 0);
+
+            const mondayKey = mondayDate.toISOString().slice(0, 10);
+            if (!editionsMap.has(mondayKey)) {
+                editionsMap.set(mondayKey, {
+                    mondayKey,
+                    mondayDate: mondayDate.toISOString(),
+                    items: []
+                });
+            }
+            editionsMap.get(mondayKey).items.push(item);
+        });
+
+        return Array.from(editionsMap.values())
+            .sort((a, b) => new Date(b.mondayDate) - new Date(a.mondayDate))
+            .map(ed => {
+                const dateObj = new Date(ed.mondayDate);
+                const formattedDate = dateObj.toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                });
+                return {
+                    id: `edition-${ed.mondayKey}`,
+                    mondayKey: ed.mondayKey,
+                    fridayKey: ed.mondayKey, // Compatibilidade com marcadores
+                    date: ed.mondayDate,
+                    formattedDate: formattedDate,
+                    title: `Compilado de Ajustes da Semana 🚀`,
+                    subtitle: `Lançamentos de Segunda-feira • ${formattedDate}`,
+                    totalAdjustments: ed.items.length,
+                    categories: [...new Set(ed.items.map(i => i.category || 'Geral'))],
+                    items: ed.items
+                };
+            });
+    }
+
+    function renderCategoryPills() {
+        const pillGroup = document.getElementById('novidades-cat-group');
+        if (!pillGroup) return;
+
+        const categoriesMap = new Map();
+        allUpdates.forEach(u => {
+            const cat = u.category || 'Geral';
+            categoriesMap.set(cat, (categoriesMap.get(cat) || 0) + 1);
+        });
+
+        const catIcons = {
+            'Fórum & Comunidade': '💬',
+            'Perfil & Pacientes': '⭐',
+            'Consultório & Gestão': '💼',
+            'Novidades da Plataforma': '🌟'
+        };
+
+        let html = `
+            <button class="novidade-pill ${activeCategory === 'all' ? 'active' : ''}" data-cat="all">
+                Todas <span class="pill-count">${allUpdates.length}</span>
+            </button>
+        `;
+
+        categoriesMap.forEach((count, cat) => {
+            const icon = catIcons[cat] || '✨';
+            const isActive = activeCategory === cat ? 'active' : '';
+            html += `
+                <button class="novidade-pill ${isActive}" data-cat="${cat}">
+                    ${icon} ${cat} <span class="pill-count">${count}</span>
+                </button>
+            `;
+        });
+
+        pillGroup.innerHTML = html;
+
+        pillGroup.querySelectorAll('.novidade-pill').forEach(btn => {
+            btn.onclick = () => {
+                pillGroup.querySelectorAll('.novidade-pill').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeCategory = btn.getAttribute('data-cat');
+                renderUpdates();
+            };
+        });
+    }
+
+    function renderUpdates() {
+        const container = document.getElementById('novidades-timeline-wrapper');
+        const emptyEl = document.getElementById('novidades-empty');
+        const loadingEl = document.getElementById('novidades-loading');
+
+        if (loadingEl) loadingEl.style.display = 'none';
+
+        // Remove cards anteriores
+        container.querySelectorAll('.novidade-card').forEach(el => el.remove());
+
+        let visibleEditionsCount = 0;
+
+        allEditions.forEach((edition, edIdx) => {
+            // Filtra os itens desta sexta-feira de acordo com categoria e busca
+            const matchingItems = (edition.items || []).filter(item => {
+                const matchCat = (activeCategory === 'all') || (item.category === activeCategory);
+                const textToSearch = normalizeStr(`${item.title || ''} ${item.summary || ''} ${item.category || ''} ${item.impactBadge || ''}`);
+                const matchQuery = !searchQuery || textToSearch.includes(normalizeStr(searchQuery));
+                return matchCat && matchQuery;
+            });
+
+            if (matchingItems.length === 0) {
+                return; // Se nenhum item atende aos filtros, oculta a edição
+            }
+
+            visibleEditionsCount++;
+
+            // Card principal da Edição de Sexta-feira (UM POST SÓ)
+            const card = document.createElement('div');
+            card.className = 'novidade-card edition-card';
+
+            // Ponto cravado na linha da timeline
+            const dot = document.createElement('div');
+            dot.className = 'novidade-dot';
+            card.appendChild(dot);
+
+            // Cabeçalho da Edição
+            const header = document.createElement('div');
+            header.className = 'edition-header';
+
+            const badgesGroup = document.createElement('div');
+            badgesGroup.className = 'edition-badges-group';
+
+            const mondayBadge = document.createElement('span');
+            mondayBadge.className = 'edition-monday-badge';
+            mondayBadge.innerHTML = `<span>📅</span> <span>Lançamentos de Segunda-feira</span>`;
+            badgesGroup.appendChild(mondayBadge);
+
+            const countBadge = document.createElement('span');
+            countBadge.className = 'edition-count-badge';
+            const countText = activeCategory === 'all' && !searchQuery
+                ? `✨ ${matchingItems.length} melhorias entregues`
+                : `🎯 ${matchingItems.length} de ${edition.items.length} melhorias`;
+            countBadge.textContent = countText;
+            badgesGroup.appendChild(countBadge);
+
+            header.appendChild(badgesGroup);
+
+            const dateText = document.createElement('span');
+            dateText.className = 'edition-date-text';
+            dateText.textContent = edition.formattedDate || formatDateFriendly(edition.date);
+            header.appendChild(dateText);
+
+            card.appendChild(header);
+
+            // Título e Descrição da Edição
+            const titleEl = document.createElement('h2');
+            titleEl.className = 'edition-title';
+            titleEl.textContent = `Compilado de Ajustes da Semana 🚀`;
+            card.appendChild(titleEl);
+
+            const introEl = document.createElement('p');
+            introEl.className = 'edition-intro';
+            introEl.textContent = `Confira os aprimoramentos e novos recursos liberados nesta segunda-feira para apoiar o seu consultório e sua rotina na Yelo:`;
+            card.appendChild(introEl);
+
+            // Lista dos Ajustes Compilados da Semana
+            const listContainer = document.createElement('div');
+            listContainer.className = 'edition-adjustments-list';
+
+            matchingItems.forEach(item => {
+                const subcard = document.createElement('div');
+                subcard.className = 'adjustment-subcard';
+
+                // Topo do subcard: Categoria + Impacto
+                const subHeader = document.createElement('div');
+                subHeader.className = 'subcard-header';
+
+                const subBadges = document.createElement('div');
+                subBadges.style.display = 'flex';
+                subBadges.style.gap = '8px';
+                subBadges.style.alignItems = 'center';
+                subBadges.style.flexWrap = 'wrap';
+
+                const theme = getThemeForCategory(item.category || '');
+                const catBadge = document.createElement('span');
+                catBadge.style.cssText = `background: ${theme.bg}; color: ${theme.color}; border: 1px solid ${theme.border}; font-size: 0.74rem; font-weight: 700; padding: 2px 10px; border-radius: 50px;`;
+                catBadge.textContent = item.category || 'Melhoria da Plataforma';
+                subBadges.appendChild(catBadge);
+
+                if (item.impactBadge) {
+                    const impactBadge = document.createElement('span');
+                    impactBadge.style.cssText = `background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-size: 0.74rem; font-weight: 700; padding: 2px 10px; border-radius: 50px;`;
+                    impactBadge.textContent = item.impactBadge;
+                    subBadges.appendChild(impactBadge);
+                }
+
+                subHeader.appendChild(subBadges);
+                subcard.appendChild(subHeader);
+
+                // Título do ajuste
+                const subTitle = document.createElement('h4');
+                subTitle.className = 'subcard-title';
+                subTitle.textContent = item.title;
+                subcard.appendChild(subTitle);
+
+                // Resumo do ajuste
+                const subSummary = document.createElement('p');
+                subSummary.className = 'subcard-summary';
+                subSummary.textContent = item.summary;
+                subcard.appendChild(subSummary);
+
+                // Botão CTA (se houver)
+                if (item.ctaLink && item.ctaText) {
+                    const ctaBtn = document.createElement('button');
+                    ctaBtn.className = 'novidade-cta-btn';
+                    ctaBtn.innerHTML = `<span>${item.ctaText}</span>`;
+                    ctaBtn.onclick = (e) => {
+                        e.preventDefault();
+                        if (window.loadPage) window.loadPage(item.ctaLink);
+                    };
+                    subcard.appendChild(ctaBtn);
+                }
+
+                listContainer.appendChild(subcard);
+            });
+
+            card.appendChild(listContainer);
+            container.appendChild(card);
+        });
+
+        if (visibleEditionsCount === 0) {
+            if (emptyEl) emptyEl.style.display = 'block';
+        } else {
+            if (emptyEl) emptyEl.style.display = 'none';
+        }
+    }
+
+    async function fetchPlatformUpdates() {
+        try {
+            const token = localStorage.getItem('Yelo_token') || localStorage.getItem('token');
+            const res = await fetch('/api/psychologists/platform-updates', {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : '',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            allUpdates = data.updates || [];
+            allEditions = (data.editions && data.editions.length > 0)
+                ? data.editions
+                : groupUpdatesIntoMondayEditions(allUpdates);
+
+            renderCategoryPills();
+            renderUpdates();
+        } catch (e) {
+            console.warn('Erro ao buscar novidades da plataforma:', e);
+            const loadingEl = document.getElementById('novidades-loading');
+            if (loadingEl) {
+                loadingEl.innerHTML = '<p style="color:#ef4444; font-weight:600;">Não foi possível carregar as melhorias no momento.</p>';
+            }
+        }
+    }
+
+    function initEvents() {
+        const searchInput = document.getElementById('novidades-search-input');
+        if (searchInput) {
+            let debounceTimer;
+            searchInput.oninput = () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    searchQuery = searchInput.value.trim();
+                    renderUpdates();
+                }, 180);
+            };
+        }
+    }
+
+    window.inicializarNovidades = function() {
+        fetchPlatformUpdates();
+        initEvents();
+    };
+
+    window.inicializarNovidades();
+})();
+</script>

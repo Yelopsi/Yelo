@@ -654,11 +654,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     inicializarMinhaConta();
                 }
 
-                // SMART SCROLL PARA PÁGINAS CURTAS
-                const scrollableContent = document.querySelector('.dashboard-main');
+                // VISIBILIDADE DA BOTTOM NAV (SEMPRE ACESSÍVEL)
                 const bottomNav = document.querySelector('.mobile-bottom-nav');
-                if (scrollableContent && bottomNav && window.innerWidth <= 992) {
-                    setTimeout(() => { const isScrollable = scrollableContent.scrollHeight > scrollableContent.clientHeight; if (!isScrollable) setTimeout(() => bottomNav.classList.add('nav-hidden'), 2000); }, 150);
+                if (bottomNav && window.innerWidth <= 992) {
+                    bottomNav.classList.remove('nav-hidden');
                 }
 
             })

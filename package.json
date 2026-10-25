@@ -7,7 +7,7 @@
     "start": "cd backend && npx sequelize-cli db:migrate && cd .. && node backend/server.js",
     "prestart": "npm run security:gate",
     "prebuild": "npm run security:gate",
-    "dev": "NODE_ENV=development nodemon backend/server.js",
+    "dev": "NODE_ENV=development nodemon --ignore 'backend/data/*' --ignore 'backend/.data/*' backend/server.js",
     "test": "node testar-match.js",
     "deploy": "npm run security:gate && echo '✅ Verificações locais concluídas. Executando git push...' && git push origin main",
     "security:gate": "node security/gate.js",

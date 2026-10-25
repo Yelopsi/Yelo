@@ -823,10 +823,16 @@ button,
 
 /* Esconde a bottom nav mobile quando qualquer modal de moderação ou overlay estiver aberto */
 body.mod-modal-open .mobile-bottom-nav,
-body:has(#modal-preview-post:not([style*="display: none"])) .mobile-bottom-nav,
+body.modal-open .mobile-bottom-nav,
 body:has(#modal-preview-post[style*="display: flex"]) .mobile-bottom-nav,
+body:has(#modal-preview-post[style*="display: block"]) .mobile-bottom-nav,
+body:has(#modal-preview-post.active) .mobile-bottom-nav,
 body:has(.custom-modal-overlay[style*="display: flex"]) .mobile-bottom-nav,
-body:has(.mod-modal-overlay[style*="display: flex"]) .mobile-bottom-nav {
+body:has(.custom-modal-overlay[style*="display: block"]) .mobile-bottom-nav,
+body:has(.custom-modal-overlay.active) .mobile-bottom-nav,
+body:has(.mod-modal-overlay[style*="display: flex"]) .mobile-bottom-nav,
+body:has(.mod-modal-overlay[style*="display: block"]) .mobile-bottom-nav,
+body:has(.mod-modal-overlay.active) .mobile-bottom-nav {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;

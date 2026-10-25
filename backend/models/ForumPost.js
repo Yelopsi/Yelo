@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       ForumPost.belongsTo(models.Psychologist);
       ForumPost.hasMany(models.ForumComment);
       ForumPost.hasMany(models.ForumVote);
+      ForumPost.belongsTo(models.ForumPost, { as: 'redirectPost', foreignKey: 'redirectPostId' });
     }
   }
   ForumPost.init({
@@ -34,6 +35,10 @@ module.exports = (sequelize, DataTypes) => {
       status: {
           type: DataTypes.STRING,
           defaultValue: 'active' // e.g., 'active', 'hidden', 'archived'
+      },
+      redirectPostId: {
+          type: DataTypes.INTEGER,
+          allowNull: true
       }
   }, {
     sequelize,

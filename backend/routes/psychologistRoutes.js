@@ -26,6 +26,25 @@ router.get('/showcase', matchController.getShowcasePsychologists);
 router.get('/slug/:slug', matchController.getProfileBySlug);
 router.post('/match', matchLimiter, matchController.getAnonymousMatches); 
 router.get('/:id/reviews', matchController.getPsychologistReviews);
+router.get('/platform-updates', (req, res) => {
+    try {
+        const { getPsychologistGroupedEditions, getPsychologistChangelog, getChangelogETag } = require('../services/changelogSyncService');
+        const etag = getChangelogETag();
+        if (etag) {
+            res.setHeader('ETag', etag);
+            res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
+            if (req.headers['if-none-match'] === etag) {
+                return res.status(304).end();
+            }
+        }
+        const editions = getPsychologistGroupedEditions();
+        const updates = getPsychologistChangelog();
+        res.json({ success: true, editions, updates });
+    } catch (err) {
+        console.error("Erro ao carregar novidades da plataforma:", err);
+        res.status(500).json({ error: 'Erro ao carregar novidades.' });
+    }
+});
 
 // Rota para SOLICITAR o envio do e-mail de redefinição (PÚBLICA)
 router.post('/forgot-password', emailSpamLimiter, psiAuthController.requestPasswordReset);

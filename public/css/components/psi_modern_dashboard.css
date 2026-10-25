@@ -186,6 +186,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     margin-bottom: 24px;
 }
 
@@ -194,16 +195,22 @@
     font-family: var(--font-titulos);
     font-size: 1.4rem;
     color: var(--verde-escuro);
+    min-width: 0;
 }
 
 .checklist-progress-text {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 700;
     color: var(--verde-escuro);
     background: #f0fdf4;
     padding: 6px 14px;
     border-radius: 20px;
     border: 1px solid #bbf7d0;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .checklist-progress-track {

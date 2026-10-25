@@ -63,6 +63,18 @@ exports.moderateForumContent = async (req, res) => {
                 if (db.ForumComment) await db.ForumComment.destroy({ where: { ForumPostId: contentId } });
                 if (db.ForumVote) await db.ForumVote.destroy({ where: { ForumPostId: contentId } });
                 if (db.ForumReport) await db.ForumReport.destroy({ where: { itemId: contentId, type: 'post' } });
+                if (db.Aviso) {
+                    await db.Aviso.destroy({
+                        where: {
+                            content: {
+                                [db.Sequelize.Op.or]: [
+                                    { [db.Sequelize.Op.like]: `%data-post-id="${contentId}"%` },
+                                    { [db.Sequelize.Op.like]: `%postId=${contentId}%` }
+                                ]
+                            }
+                        }
+                    }).catch(err => console.error("Erro ao remover avisos do post excluído:", err));
+                }
                 await post.destroy();
                 return res.json({ message: 'Post excluído permanentemente com sucesso.' });
             } else {
@@ -82,6 +94,24 @@ exports.moderateForumContent = async (req, res) => {
 
         await Model.update({ status: newStatus }, { where: { id: contentId } });
         if (db.ForumReport) await db.ForumReport.update({ status: 'resolved' }, { where: { itemId: contentId, type: contentType } });
+
+        // Sincroniza visibilidade do Aviso vinculado no Dashboard dos psicólogos
+        if (contentType === 'post' && db.Aviso) {
+            const avisoStatus = isApprove ? 'published' : 'hidden_by_admin';
+            await db.Aviso.update(
+                { status: avisoStatus },
+                {
+                    where: {
+                        content: {
+                            [db.Sequelize.Op.or]: [
+                                { [db.Sequelize.Op.like]: `%data-post-id="${contentId}"%` },
+                                { [db.Sequelize.Op.like]: `%postId=${contentId}%` }
+                            ]
+                        }
+                    }
+                }
+            ).catch(err => console.error("Erro ao sincronizar status de avisos:", err));
+        }
 
         res.json({ message, status: newStatus });
     } catch (error) {
@@ -103,6 +133,18 @@ exports.deleteForumPost = async (req, res) => {
         if (db.ForumComment) await db.ForumComment.destroy({ where: { ForumPostId: id } });
         if (db.ForumVote) await db.ForumVote.destroy({ where: { ForumPostId: id } });
         if (db.ForumReport) await db.ForumReport.destroy({ where: { itemId: id, type: 'post' } });
+        if (db.Aviso) {
+            await db.Aviso.destroy({
+                where: {
+                    content: {
+                        [db.Sequelize.Op.or]: [
+                            { [db.Sequelize.Op.like]: `%data-post-id="${id}"%` },
+                            { [db.Sequelize.Op.like]: `%postId=${id}%` }
+                        ]
+                    }
+                }
+            }).catch(err => console.error("Erro ao remover avisos do post excluído:", err));
+        }
         await post.destroy();
 
         res.json({ message: 'Post excluído permanentemente com sucesso.' });

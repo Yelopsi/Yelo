@@ -103,6 +103,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: true,
       defaultValue: null
+    },
+    system_changelog_data: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null
     }
   });
 

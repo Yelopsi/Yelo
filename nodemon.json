@@ -1,0 +1,14 @@
+{
+  "watch": [
+    "backend"
+  ],
+  "ext": "js,mjs,cjs",
+  "ignore": [
+    "backend/data/*",
+    "security/reports/*",
+    "public/*",
+    "scratch/*",
+    "node_modules/*"
+  ],
+  "delay": 500
+}

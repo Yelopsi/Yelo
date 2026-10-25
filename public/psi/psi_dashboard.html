@@ -2,12 +2,12 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
     <title>Dashboard do Psicólogo</title>
     
     <link rel="stylesheet" href="/css/01-variables.css?v=7.2">
     <link rel="stylesheet" href="/style.css?v=7.2">
-    <link rel="stylesheet" href="/css/psi_dashboard.css?v=7.2"> 
+    <link rel="stylesheet" href="/css/psi_dashboard.css?v=9.6">
     
     <script src="https://unpkg.com/imask"></script>
     <!-- BIBLIOTECA DE CONFETES (PLG) -->
@@ -28,32 +28,16 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <link rel="icon" href="/assets/images/favicon.png" type="image/png">
     <script>
-        // FIX CRÍTICO: Previne restauração indevida de scroll e vazamento de tela no Chrome iOS / Safari
+        // Previne restauração indevida de scroll horizontal no Chrome iOS / Safari
         if ('scrollRestoration' in history) {
             history.scrollRestoration = 'manual';
         }
-        function lockWindowScroll() {
-            if (window.innerWidth <= 992) {
-                if (window.scrollY !== 0 || window.scrollX !== 0) {
-                    window.scrollTo(0, 0);
-                }
-                if (document.documentElement && document.documentElement.scrollTop !== 0) {
-                    document.documentElement.scrollTop = 0;
-                }
-                if (document.body && document.body.scrollTop !== 0) {
-                    document.body.scrollTop = 0;
-                }
+        function preventHorizontalOverflow() {
+            if (window.innerWidth <= 992 && window.scrollX !== 0) {
+                window.scrollTo(0, window.scrollY);
             }
         }
-        lockWindowScroll();
-        window.addEventListener('pageshow', lockWindowScroll);
-        window.addEventListener('DOMContentLoaded', lockWindowScroll);
-        window.addEventListener('load', lockWindowScroll);
-        window.addEventListener('orientationchange', lockWindowScroll);
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', lockWindowScroll);
-            window.visualViewport.addEventListener('scroll', lockWindowScroll);
-        }
+        window.addEventListener('orientationchange', preventHorizontalOverflow);
         // Previne zoom por pinçamento de dedos no iOS Safari (sensação de app nativo)
         document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
         document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
@@ -552,7 +536,7 @@
     <!-- SCRIPTS DA NOVA ARQUITETURA YELO -->
     <script src="/config.js"></script>
     <script src="/jobs/api.js"></script>
-    <script src="/jobs/ui-helpers.js"></script>
+    <script src="/jobs/ui-helpers.js?v=2.2"></script>
     <script src="/jobs/plg-events.js"></script>
     <script>
         // Força a página "Visão Geral" sempre que o Dashboard é recarregado (Acesso fresco ou F5)
@@ -565,9 +549,9 @@
     <script src="/psi/psi_dashboard_notif.js?v=7.2"></script>
     <script src="/psi/psi_dashboard_feedback.js?v=7.2"></script>
     <script src="/psi/psi_sidebar.js?v=7.2"></script>
-    <script src="/psi/psi_dashboard.js?v=7.3"></script>
+    <script src="/psi/psi_dashboard.js?v=7.6"></script>
     <script src="/psi/psi_blog.js?v=7.2"></script>
-    <script src="/psi/psi_forum.js?v=7.2"></script>
+    <script src="/psi/psi_forum.js?v=9.2"></script>
     <script src="/psi/psi_meu_perfil.js?v=7.2"></script>
     <script src="/psi/psi_assinatura.js?v=7.2"></script>
     <script src="/psi/psi_visao_geral.js?v=7.3"></script>

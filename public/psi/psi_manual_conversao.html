@@ -4,23 +4,31 @@
         padding: 20px;
         max-width: 1200px;
         margin: 0 auto;
+        box-sizing: border-box;
     }
 
     /* Top Navigation (Ecosystem) */
     .playbook-ecosystem-nav {
         display: flex;
-        gap: 15px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
         margin-bottom: 25px;
         flex-wrap: wrap;
+    }
+    .ecosystem-tools-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
     }
     .ecosystem-btn {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 10px 18px;
+        padding: 10px 20px;
         background: #fff;
         border: 1px solid #e2e8f0;
-        border-radius: 50px;
+        border-radius: 50px; /* Pílula */
         color: #475569;
         font-weight: 600;
         font-size: 0.9rem;
@@ -40,68 +48,59 @@
         box-shadow: none;
         color: var(--verde-escuro);
         padding-left: 0;
+        font-weight: 700;
     }
     .ecosystem-btn.back-btn:hover {
         background: transparent;
         opacity: 0.8;
+        transform: translateX(-3px);
+    }
+    .btn-text-desktop {
+        display: inline;
+    }
+    .btn-text-mobile {
+        display: none;
+    }
+    .tab-label-extra {
+        display: inline;
     }
 
-    /* Tabs */
+    /* Tabs em formato pílula */
     .playbook-tabs {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         background: #fff;
-        padding: 10px;
-        border-radius: 16px;
+        padding: 6px;
+        border-radius: 50px; /* Pílula externa */
         border: 1px solid #e5e7eb;
         margin-bottom: 30px;
         overflow-x: auto;
         box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-        
-        /* Mobile UX Improvements */
         -webkit-overflow-scrolling: touch;
         scroll-snap-type: x mandatory;
-        scrollbar-width: none; /* Firefox */
+        scrollbar-width: none;
     }
     .playbook-tabs::-webkit-scrollbar {
-        display: none; /* Chrome/Safari */
+        display: none;
     }
     .playbook-tab {
-        padding: 12px 24px;
-        border-radius: 12px;
+        padding: 10px 22px;
+        border-radius: 50px; /* Pílula */
         border: none;
         background: transparent;
         color: #64748b;
-        font-weight: 600;
-        font-size: 1rem;
+        font-weight: 700;
+        font-size: 0.95rem;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
         white-space: nowrap;
         scroll-snap-align: start;
         flex-shrink: 0;
     }
-    
-    @media (max-width: 768px) {
-        .playbook-tabs {
-            padding: 8px;
-            gap: 8px;
-            border-radius: 12px;
-            margin-left: -20px;
-            margin-right: -20px;
-            padding-left: 20px;
-            padding-right: 20px;
-            border-left: none;
-            border-right: none;
-        }
-        .playbook-tab {
-            font-size: 0.95rem;
-            padding: 10px 18px;
-        }
-    }
     .playbook-tab.active {
         background: var(--verde-escuro);
         color: #fff;
-        box-shadow: 0 4px 10px rgba(27, 67, 50, 0.2);
+        box-shadow: 0 4px 12px rgba(27, 67, 50, 0.25);
     }
     .playbook-tab:hover:not(.active) {
         background: #f1f5f9;
@@ -124,74 +123,235 @@
     /* Layout da Aba 1 (Templates) */
     .templates-grid {
         display: grid;
-        grid-template-columns: 300px 1fr;
+        grid-template-columns: 280px 1fr;
         gap: 25px;
-    }
-    @media (max-width: 900px) {
-        .templates-grid {
-            grid-template-columns: 1fr;
-        }
     }
 
     .scenarios-sidebar {
         background: #fff;
-        border-radius: 16px;
+        border-radius: 18px;
         border: 1px solid #e5e7eb;
         padding: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.02);
         max-height: 70vh;
         overflow-y: auto;
+        box-sizing: border-box;
     }
-    .scenario-item {
-        padding: 12px 15px;
-        border-radius: 10px;
+    /* Seletor de Cenários em Cascata (Dropdown Premium) */
+    .scenarios-cascade-wrapper {
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .scenario-cascade-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748B;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .scenario-cascade-selector {
+        position: relative;
+        width: 100%;
+    }
+    .scenario-cascade-trigger {
+        width: 100%;
+        padding: 12px 18px;
+        border-radius: 50px;
+        border: 1.5px solid #E2E8F0;
+        background: #FFFFFF;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
         cursor: pointer;
-        margin-bottom: 8px;
-        font-weight: 500;
-        color: #475569;
-        transition: all 0.2s;
-        border: 1px solid transparent;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        box-sizing: border-box;
+        font-family: inherit;
+        text-align: left;
     }
-    .scenario-item:hover {
-        background: #f8fafc;
+    .scenario-cascade-trigger:hover {
+        border-color: #CBD5E1;
+        background: #F8FAFC;
     }
-    .scenario-item.active {
-        background: #f0fdf4;
-        color: var(--verde-escuro);
-        border-color: #bbf7d0;
-        font-weight: 600;
+    .scenario-cascade-selector.is-open .scenario-cascade-trigger {
+        border-color: var(--verde-escuro, #1B4332);
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.12);
+        background: #FFFFFF;
+    }
+    .scenario-cascade-trigger-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        flex: 1;
+    }
+    .scenario-cascade-active-badge {
+        font-size: 1.2rem;
+        line-height: 1;
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #F1F5F9;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .scenario-cascade-active-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0F172A;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .scenario-cascade-arrow {
+        color: #64748B;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        flex-shrink: 0;
+    }
+    .scenario-cascade-selector.is-open .scenario-cascade-arrow {
+        transform: rotate(180deg);
+        color: var(--verde-escuro, #1B4332);
+    }
+    .scenario-cascade-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 18px;
+        box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.14), 0 4px 12px rgba(0, 0, 0, 0.05);
+        padding: 6px;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-8px);
+        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        max-height: 360px;
+        overflow-y: auto;
+    }
+    .scenario-cascade-selector.is-open .scenario-cascade-menu {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+    .scenario-cascade-option {
+        padding: 10px 14px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        background: transparent;
+        border: none;
+        width: 100%;
+        box-sizing: border-box;
+        text-align: left;
+        font-family: inherit;
+    }
+    .scenario-cascade-option:hover {
+        background: #F8FAFC;
+    }
+    .scenario-cascade-option.selected {
+        background: #F0FDF4;
+    }
+    .scenario-opt-icon {
+        font-size: 1.15rem;
+        line-height: 1;
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #F8FAFC;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .scenario-cascade-option.selected .scenario-opt-icon {
+        background: #DCFCE7;
+    }
+    .scenario-opt-info {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .scenario-opt-title {
+        font-size: 0.90rem;
+        font-weight: 700;
+        color: #1E293B;
+    }
+    .scenario-cascade-option.selected .scenario-opt-title {
+        color: #166534;
+    }
+    .scenario-opt-desc {
+        font-size: 0.76rem;
+        font-weight: 400;
+        color: #64748B;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .scenario-opt-check {
+        color: #16A34A;
+        opacity: 0;
+        transform: scale(0.6);
+        transition: all 0.18s ease;
+        flex-shrink: 0;
+    }
+    .scenario-cascade-option.selected .scenario-opt-check {
+        opacity: 1;
+        transform: scale(1);
     }
 
     .scenario-display {
         background: #fff;
-        border-radius: 16px;
+        border-radius: 18px;
         border: 1px solid #e5e7eb;
         padding: 30px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        box-sizing: border-box;
     }
     .scenario-title {
         font-family: var(--font-titulos);
         color: var(--verde-escuro);
         font-size: 1.6rem;
         margin-top: 0;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
     .scenario-advice {
         background: #fffbeb;
         border-left: 4px solid #f59e0b;
-        padding: 15px 20px;
+        padding: 16px 20px;
         border-radius: 0 12px 12px 0;
         color: #92400e;
         margin-bottom: 25px;
         font-size: 0.95rem;
-        line-height: 1.5;
+        line-height: 1.6;
+        text-align: justify;
+        text-justify: inter-word;
     }
 
     .copy-card {
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
+        border-radius: 16px;
         margin-bottom: 20px;
         overflow: hidden;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
     }
     .copy-card-header {
         background: #f8fafc;
@@ -206,12 +366,12 @@
         text-transform: uppercase;
         font-weight: 700;
         letter-spacing: 0.5px;
-        padding: 4px 10px;
-        border-radius: 20px;
+        padding: 5px 14px;
+        border-radius: 50px; /* Pílula */
     }
-    .badge-acolhedora { background: #fdf4ff; color: #a21caf; }
-    .badge-objetiva { background: #eff6ff; color: #1d4ed8; }
-    .badge-informal { background: #fef2f2; color: #b91c1c; }
+    .badge-acolhedora { background: #fdf4ff; color: #a21caf; border: 1px solid #f5d0fe; }
+    .badge-objetiva { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .badge-informal { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 
     .copy-card-body {
         padding: 20px;
@@ -219,24 +379,26 @@
     }
     .copy-text {
         color: #334155;
-        font-size: 1rem;
-        line-height: 1.6;
-        margin: 0 0 15px 0;
+        font-size: 0.98rem;
+        line-height: 1.65;
+        margin: 0 0 16px 0;
         font-style: italic;
+        text-align: justify;
+        text-justify: inter-word;
     }
     .btn-copy-cta {
         background: var(--verde-claro);
         color: #1B4332;
         border: none;
-        padding: 10px 20px;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: 0.95rem;
+        padding: 10px 22px;
+        border-radius: 50px; /* Pílula */
+        font-weight: 700;
+        font-size: 0.92rem;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
         box-shadow: 0 2px 8px rgba(37,211,102,0.2);
     }
     .btn-copy-cta:hover {
@@ -244,24 +406,26 @@
         transform: translateY(-2px);
     }
 
-    /* Layout da Aba 2 (AI Copilot) */
+    /* Layout da Aba 3 (AI Copilot) */
     .ai-assistant-container {
         background: #fff;
-        border-radius: 16px;
+        border-radius: 18px;
         border: 1px solid #e5e7eb;
         padding: 30px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        box-sizing: border-box;
     }
     .ai-textarea {
         width: 100%;
         min-height: 120px;
         padding: 15px;
-        border-radius: 12px;
-        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        border: 1.5px solid #e2e8f0;
         font-family: inherit;
-        font-size: 1rem;
+        font-size: 0.98rem;
         resize: vertical;
-        margin-bottom: 15px;
+        margin-bottom: 16px;
+        box-sizing: border-box;
         transition: border-color 0.2s;
     }
     .ai-textarea:focus {
@@ -272,16 +436,16 @@
         background: #7c3aed;
         color: #fff;
         border: none;
-        padding: 12px 24px;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: 1rem;
+        padding: 12px 28px;
+        border-radius: 50px; /* Pílula */
+        font-weight: 700;
+        font-size: 0.98rem;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         gap: 8px;
         transition: all 0.2s;
-        box-shadow: 0 4px 12px rgba(124,58,237,0.3);
+        box-shadow: 0 4px 12px rgba(124,58,237,0.25);
     }
     .btn-ai-generate:hover {
         background: #6d28d9;
@@ -295,31 +459,40 @@
         margin-top: 25px;
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 20px;
         display: none;
     }
 
-    /* Layout da Aba 3 (Mindset) */
+    /* Layout da Aba 1 (Mindset / Orientações) */
     .mindset-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 20px;
+        width: 100%;
+        box-sizing: border-box;
     }
     .mindset-card {
         background: #fff;
-        border-radius: 16px;
+        border-radius: 18px;
         padding: 25px;
         border: 1px solid #e5e7eb;
         box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        box-sizing: border-box;
     }
     .mindset-card h4 {
         margin-top: 0;
         color: var(--verde-escuro);
-        font-size: 1.2rem;
+        font-size: 1.18rem;
         display: flex;
         align-items: center;
         gap: 10px;
+        line-height: 1.4;
+    }
+    .mindset-card p,
+    .mindset-card div {
+        text-align: justify;
+        text-justify: inter-word;
     }
     .mindset-list {
         list-style: none;
@@ -333,27 +506,236 @@
         gap: 12px;
         align-items: flex-start;
         color: #475569;
-        line-height: 1.5;
+        line-height: 1.55;
+        text-align: justify;
+        text-justify: inter-word;
     }
     .mindset-list li:last-child {
         border-bottom: none;
     }
-    .icon-error { color: #ef4444; margin-top: 2px; }
-    .icon-check { color: #22c55e; margin-top: 2px; }
+    .icon-error { color: #ef4444; margin-top: 2px; flex-shrink: 0; }
+    .icon-check { color: #22c55e; margin-top: 2px; flex-shrink: 0; }
+
+    /* Alinhamento de textos explicativos com justificação */
+    .playbook-justified-text,
+    .main-header p,
+    .welcome-banner p,
+    .ai-assistant-container p,
+    #ai-result-text {
+        text-align: justify;
+        text-justify: inter-word;
+    }
+
+    /* ==========================================================================
+       RESPONSIVIDADE MOBILE REFINADA (Telas <= 768px)
+       ========================================================================== */
+    @media (max-width: 768px) {
+        .playbook-container {
+            padding: 12px 14px;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        .main-header {
+            padding: 22px 18px !important;
+            border-radius: 16px !important;
+            margin-bottom: 20px !important;
+        }
+        .main-header h1 {
+            font-size: 1.65rem !important;
+        }
+        .main-header p {
+            font-size: 0.94rem !important;
+            line-height: 1.55 !important;
+        }
+        .playbook-ecosystem-nav {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+            margin-bottom: 18px !important;
+            padding-bottom: 0 !important;
+            overflow: visible !important;
+        }
+        .ecosystem-btn.back-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            padding: 4px 0 !important;
+            color: var(--verde-escuro) !important;
+            font-size: 0.88rem !important;
+            font-weight: 700 !important;
+            width: fit-content !important;
+        }
+        .ecosystem-tools-group {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+            width: 100% !important;
+        }
+        .ecosystem-btn.tool-btn {
+            width: 100% !important;
+            justify-content: center !important;
+            padding: 10px 8px !important;
+            font-size: 0.82rem !important;
+            font-weight: 600 !important;
+            border-radius: 50px !important;
+            min-height: 44px !important;
+            box-sizing: border-box !important;
+            text-align: center !important;
+            background: #FFFFFF !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+        }
+        .btn-text-desktop {
+            display: none !important;
+        }
+        .btn-text-mobile {
+            display: inline !important;
+        }
+        .tab-label-extra {
+            display: none !important;
+        }
+        .playbook-tabs {
+            display: flex !important;
+            width: 100% !important;
+            padding: 4px !important;
+            gap: 4px !important;
+            border-radius: 50px !important;
+            background: #F1F5F9 !important;
+            border: 1px solid #E2E8F0 !important;
+            box-sizing: border-box !important;
+            margin-bottom: 20px !important;
+            overflow: visible !important;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.03) !important;
+        }
+        .playbook-tab {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            padding: 10px 4px !important;
+            border-radius: 50px !important;
+            font-size: 0.82rem !important;
+            font-weight: 700 !important;
+            justify-content: center !important;
+            text-align: center !important;
+            gap: 4px !important;
+            white-space: nowrap !important;
+            box-sizing: border-box !important;
+        }
+        .playbook-tab.active {
+            background: var(--verde-escuro) !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(27,67,50,0.25) !important;
+        }
+        .welcome-banner {
+            padding: 22px 18px !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 14px !important;
+            border-radius: 16px !important;
+            margin-bottom: 20px !important;
+        }
+        .welcome-banner .banner-icon {
+            font-size: 2.5rem !important;
+        }
+        .welcome-banner h3 {
+            font-size: 1.35rem !important;
+        }
+        .welcome-banner p {
+            font-size: 0.94rem !important;
+            line-height: 1.6 !important;
+        }
+        .mindset-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+        }
+        .mindset-card {
+            padding: 20px 16px !important;
+            border-radius: 16px !important;
+        }
+        .mindset-card h4 {
+            font-size: 1.1rem !important;
+        }
+        .templates-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+        }
+        .scenarios-sidebar {
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            margin-bottom: 8px !important;
+            max-height: none !important;
+            overflow: visible !important;
+        }
+        .scenarios-cascade-wrapper {
+            margin-bottom: 6px !important;
+        }
+        .scenario-cascade-trigger {
+            padding: 10px 16px !important;
+        }
+        .scenario-display {
+            padding: 20px 16px !important;
+            border-radius: 16px !important;
+        }
+        .scenario-title {
+            font-size: 1.35rem !important;
+        }
+        .scenario-advice {
+            padding: 14px 16px !important;
+            font-size: 0.92rem !important;
+            border-radius: 0 12px 12px 0 !important;
+            margin-bottom: 20px !important;
+        }
+        .copy-card {
+            border-radius: 14px !important;
+        }
+        .copy-card-header {
+            padding: 10px 14px !important;
+        }
+        .copy-card-body {
+            padding: 16px 14px !important;
+        }
+        .copy-text {
+            font-size: 0.94rem !important;
+        }
+        .btn-copy-cta {
+            width: 100% !important;
+            justify-content: center !important;
+            min-height: 44px !important;
+            border-radius: 50px !important;
+        }
+        .ai-assistant-container {
+            padding: 20px 16px !important;
+            border-radius: 16px !important;
+        }
+        .btn-ai-generate {
+            width: 100% !important;
+            justify-content: center !important;
+            min-height: 48px !important;
+            border-radius: 50px !important;
+        }
+    }
 </style>
 
 <div class="playbook-container fade-in-up">
     
     <div class="playbook-ecosystem-nav">
-        <a onclick="window.loadPage('psi_clinica_hub.html')" class="ecosystem-btn back-btn">
-            ← Voltar para Clínica
+        <a onclick="window.loadPage('psi_clinica_hub.html')" class="ecosystem-btn back-btn" role="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span>Voltar para Clínica</span>
         </a>
-        <a onclick="window.loadPage('psi_historico_contatos.html')" class="ecosystem-btn">
-            📊 Ver Meus Leads Recebidos
-        </a>
-        <a onclick="window.loadPage('psi_calculadora_honorarios.html')" class="ecosystem-btn">
-            🧮 Simular Honorários e Receita
-        </a>
+        <div class="ecosystem-tools-group">
+            <a onclick="window.loadPage('psi_historico_contatos.html')" class="ecosystem-btn tool-btn" role="button">
+                <span class="eco-icon">📊</span>
+                <span class="btn-text-desktop">Ver Meus Leads Recebidos</span>
+                <span class="btn-text-mobile">Meus Leads</span>
+            </a>
+            <a onclick="window.loadPage('psi_calculadora_honorarios.html')" class="ecosystem-btn tool-btn" role="button">
+                <span class="eco-icon">🧮</span>
+                <span class="btn-text-desktop">Simular Honorários e Receita</span>
+                <span class="btn-text-mobile">Calculadora</span>
+            </a>
+        </div>
     </div>
 
     <div class="main-header" style="border-radius: 16px; margin-bottom: 25px;">
@@ -364,26 +746,35 @@
     </div>
 
     <div class="playbook-tabs">
-        <button class="playbook-tab active" onclick="switchTab('mindset')">🧠 Orientações</button>
-        <button class="playbook-tab" onclick="switchTab('templates')">💬 Templates Prontos</button>
-        <button class="playbook-tab" onclick="switchTab('copilot')">✨ Copilot IA (Gerador)</button>
+        <button class="playbook-tab active" onclick="switchTab('mindset', this)">
+            <span class="tab-icon">🧠</span>
+            <span class="tab-label">Orientações</span>
+        </button>
+        <button class="playbook-tab" onclick="switchTab('templates', this)">
+            <span class="tab-icon">💬</span>
+            <span class="tab-label">Templates</span><span class="tab-label-extra"> Prontos</span>
+        </button>
+        <button class="playbook-tab" onclick="switchTab('copilot', this)">
+            <span class="tab-icon">✨</span>
+            <span class="tab-label">Copilot IA</span><span class="tab-label-extra"> (Gerador)</span>
+        </button>
     </div>
 
     <!-- ABA 1: ORIENTAÇÕES (AGORA É A PRIMEIRA) -->
     <div id="tab-mindset" class="playbook-content active">
         
-        <div style="background: linear-gradient(135deg, #1B4332 0%, #2d6a4f 100%); border-radius: 16px; padding: 35px; color: white; margin-bottom: 30px; box-shadow: 0 10px 25px rgba(27,67,50,0.15); display: flex; align-items: center; gap: 25px; flex-wrap: wrap;">
-            <div style="font-size: 3.5rem; line-height: 1;">🛋️</div>
-            <div style="flex: 1; min-width: 300px;">
+        <div class="welcome-banner" style="background: linear-gradient(135deg, #1B4332 0%, #2d6a4f 100%); border-radius: 18px; padding: 35px; color: white; margin-bottom: 30px; box-shadow: 0 10px 25px rgba(27,67,50,0.15); display: flex; align-items: center; gap: 25px; flex-wrap: wrap;">
+            <div class="banner-icon" style="font-size: 3.5rem; line-height: 1;">🛋️</div>
+            <div style="flex: 1; min-width: 0;">
                 <h3 style="margin: 0 0 10px 0; font-family: var(--font-titulos); font-size: 1.8rem; color: white;">Supervisão Clínica do Contato Inicial</h3>
-                <p style="margin: 0; font-size: 1.05rem; opacity: 0.9; line-height: 1.6; max-width: 800px;">
+                <p style="margin: 0; font-size: 1.05rem; opacity: 0.9; line-height: 1.6; max-width: 800px; text-align: justify; text-justify: inter-word;">
                     O vínculo terapêutico não começa na primeira sessão; ele começa na primeira mensagem trocada. Enxergue o WhatsApp como a ante-sala do seu consultório. 
                     Aqui, discutimos a postura ética e acolhedora necessária para transformar interessados em pacientes engajados, sem comprometer o rigor da sua prática.
                 </p>
             </div>
         </div>
 
-        <div class="mindset-grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
+        <div class="mindset-grid">
             
             <!-- Coluna 1 -->
             <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -453,9 +844,22 @@
         <div class="templates-grid">
             
             <div class="scenarios-sidebar">
-                <h4 style="margin: 0 0 15px 0; color: #64748b; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Escolha a Situação</h4>
-                <div id="scenarios-list">
-                    <!-- Gerado via JS -->
+                <div class="scenarios-cascade-wrapper">
+                    <div class="scenario-cascade-label">Escolha a Situação</div>
+                    <div class="scenario-cascade-selector" id="scenario-cascade-selector">
+                        <button type="button" class="scenario-cascade-trigger" id="scenario-cascade-trigger" aria-haspopup="listbox" aria-expanded="false" title="Clique para escolher a situação">
+                            <div class="scenario-cascade-trigger-content">
+                                <span class="scenario-cascade-active-badge" id="scenario-cascade-active-badge">👋</span>
+                                <span class="scenario-cascade-active-title" id="scenario-cascade-active-title">O Primeiro "Oi"</span>
+                            </div>
+                            <svg class="scenario-cascade-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <div class="scenario-cascade-menu" id="scenario-cascade-menu" role="listbox">
+                            <!-- Gerado via JS: Opções em cascata -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -512,11 +916,13 @@
 
 <script>
     // === DADOS DOS CENÁRIOS E TEMPLATES ===
-    const scenariosData = [
+    var scenariosData = [
         {
             id: 'quebra-gelo',
+            icon: '👋',
             title: '👋 O Primeiro "Oi"',
             shortLabel: 'O Primeiro "Oi"',
+            shortDesc: 'Primeiro contato do paciente vindo da Yelo',
             advice: 'Quando o paciente manda a primeira mensagem (geralmente gerada automaticamente pelo link da Yelo). O segredo aqui é acolhimento rápido e abertura para ouvir.',
             copies: [
                 {
@@ -538,8 +944,10 @@
         },
         {
             id: 'preco-direto',
+            icon: '💰',
             title: '💰 Perguntou o Preço Direto',
             shortLabel: 'Perguntou o Preço Direto',
+            shortDesc: 'Quando o paciente quer saber o valor de imediato',
             advice: 'Não esconda o preço, mas não mande apenas um número seco. Ancore o valor ao seu serviço e tente puxar a conversa para a dor do paciente.',
             copies: [
                 {
@@ -556,8 +964,10 @@
         },
         {
             id: 'pediu-desconto',
+            icon: '📉',
             title: '📉 Pediu Desconto / "Tá Caro"',
             shortLabel: 'Pediu Desconto',
+            shortDesc: 'Negociação financeira ou pedido de valor social',
             advice: 'Mantenha a postura. Se você não trabalha com valor social, seja polido e encerre as portas abertas. Se você trabalha com pacotes, essa é a hora de oferecer.',
             copies: [
                 {
@@ -574,8 +984,10 @@
         },
         {
             id: 'vou-pensar',
+            icon: '🤔',
             title: '🤔 Disse "Vou pensar"',
             shortLabel: 'Disse "Vou pensar"',
+            shortDesc: 'Paciente indeciso ou avaliando opções',
             advice: 'Não force a barra. Agradeça e deixe a porta aberta. A terapia é uma decisão que exige tempo para algumas pessoas.',
             copies: [
                 {
@@ -587,8 +999,10 @@
         },
         {
             id: 'follow-up-24h',
+            icon: '🛟',
             title: '🛟 Resgate (+24h de Vácuo)',
             shortLabel: 'Follow-up (+24h)',
+            shortDesc: 'Resgate amigável de contato sem resposta',
             advice: 'O paciente visualizou sua resposta e não falou mais nada. Mande APENAS UMA mensagem de resgate no dia seguinte.',
             copies: [
                 {
@@ -605,42 +1019,134 @@
         }
     ];
 
-    let currentScenarioId = 'quebra-gelo';
+    var currentScenarioId = 'quebra-gelo';
 
     // === LÓGICA DE ABAS ===
-    function switchTab(tabId) {
+    function switchTab(tabId, el) {
         document.querySelectorAll('.playbook-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.playbook-content').forEach(c => c.classList.remove('active'));
         
-        event.target.classList.add('active');
-        document.getElementById('tab-' + tabId).classList.add('active');
+        const targetBtn = el || (window.event && window.event.target ? window.event.target.closest('.playbook-tab') : null);
+        if (targetBtn) targetBtn.classList.add('active');
+        const content = document.getElementById('tab-' + tabId);
+        if (content) content.classList.add('active');
     }
 
-    // === LÓGICA DE TEMPLATES ===
-    function renderScenariosList() {
-        const listDiv = document.getElementById('scenarios-list');
-        listDiv.innerHTML = '';
+    // === SELETOR EM CASCATA DE CENÁRIOS ===
+    function renderCascadeOptions() {
+        const menu = document.getElementById('scenario-cascade-menu');
+        if (!menu) return;
+        menu.innerHTML = '';
+
         scenariosData.forEach(sc => {
-            const div = document.createElement('div');
-            div.className = `scenario-item ${sc.id === currentScenarioId ? 'active' : ''}`;
-            div.innerText = sc.shortLabel;
-            div.onclick = () => {
-                currentScenarioId = sc.id;
-                renderScenariosList();
-                renderActiveScenario();
+            const isSelected = sc.id === currentScenarioId;
+            const optBtn = document.createElement('button');
+            optBtn.type = 'button';
+            optBtn.className = `scenario-cascade-option ${isSelected ? 'selected' : ''}`;
+            optBtn.setAttribute('role', 'option');
+            optBtn.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+            optBtn.dataset.id = sc.id;
+
+            optBtn.innerHTML = `
+                <span class="scenario-opt-icon">${sc.icon || '💬'}</span>
+                <div class="scenario-opt-info">
+                    <span class="scenario-opt-title">${sc.shortLabel}</span>
+                    <span class="scenario-opt-desc">${sc.shortDesc || sc.title}</span>
+                </div>
+                <svg class="scenario-opt-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            `;
+
+            optBtn.onclick = (e) => {
+                e.stopPropagation();
+                selectScenario(sc.id);
             };
-            listDiv.appendChild(div);
+
+            menu.appendChild(optBtn);
         });
+
+        updateCascadeTrigger();
+    }
+
+    function updateCascadeTrigger() {
+        const sc = scenariosData.find(s => s.id === currentScenarioId);
+        if (!sc) return;
+
+        const badge = document.getElementById('scenario-cascade-active-badge');
+        const title = document.getElementById('scenario-cascade-active-title');
+        if (badge) badge.innerText = sc.icon || '💬';
+        if (title) title.innerText = sc.shortLabel || sc.title;
+
+        // Atualiza seleção visual nas opções
+        const menu = document.getElementById('scenario-cascade-menu');
+        if (menu) {
+            menu.querySelectorAll('.scenario-cascade-option').forEach(opt => {
+                const isSelected = opt.dataset.id === currentScenarioId;
+                opt.classList.toggle('selected', isSelected);
+                opt.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+            });
+        }
+    }
+
+    function selectScenario(scenarioId) {
+        currentScenarioId = scenarioId;
+        updateCascadeTrigger();
+        closeCascadeSelector();
+        renderActiveScenario();
+    }
+
+    function toggleCascadeSelector(e) {
+        if (e) e.stopPropagation();
+        const selector = document.getElementById('scenario-cascade-selector');
+        const trigger = document.getElementById('scenario-cascade-trigger');
+        if (!selector) return;
+
+        const isOpen = selector.classList.contains('is-open');
+        if (isOpen) {
+            closeCascadeSelector();
+        } else {
+            selector.classList.add('is-open');
+            if (trigger) trigger.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    function closeCascadeSelector() {
+        const selector = document.getElementById('scenario-cascade-selector');
+        const trigger = document.getElementById('scenario-cascade-trigger');
+        if (selector) selector.classList.remove('is-open');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    function setupCascadeEvents() {
+        const trigger = document.getElementById('scenario-cascade-trigger');
+        if (trigger) {
+            trigger.onclick = toggleCascadeSelector;
+        }
+
+        // Fecha ao clicar fora
+        document.removeEventListener('click', handleOutsideCascadeClick);
+        document.addEventListener('click', handleOutsideCascadeClick);
+    }
+
+    function handleOutsideCascadeClick(e) {
+        const selector = document.getElementById('scenario-cascade-selector');
+        if (selector && !selector.contains(e.target)) {
+            closeCascadeSelector();
+        }
     }
 
     function renderActiveScenario() {
         const sc = scenariosData.find(s => s.id === currentScenarioId);
         if(!sc) return;
 
-        document.getElementById('scenario-title').innerText = sc.title;
-        document.getElementById('scenario-advice').innerHTML = `<strong>Dica:</strong> ${sc.advice}`;
+        const titleEl = document.getElementById('scenario-title');
+        const adviceEl = document.getElementById('scenario-advice');
+        if (titleEl) titleEl.innerText = sc.title;
+        if (adviceEl) adviceEl.innerHTML = `<strong>Dica:</strong> ${sc.advice}`;
 
         const copiesDiv = document.getElementById('scenario-copies');
+        if (!copiesDiv) return;
         copiesDiv.innerHTML = '';
 
         sc.copies.forEach((copy, index) => {
@@ -738,7 +1244,13 @@
         });
     }
 
-    // Inicialização
-    renderScenariosList();
-    renderActiveScenario();
+    // Função de inicialização global
+    window.inicializarManualConversao = function() {
+        setupCascadeEvents();
+        renderCascadeOptions();
+        renderActiveScenario();
+    };
+
+    // Auto-inicialização imediata
+    window.inicializarManualConversao();
 </script>

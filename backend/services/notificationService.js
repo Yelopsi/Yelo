@@ -25,19 +25,21 @@ const notifyNewPost = async (post, type) => {
     try {
         console.log(`[NotificationService] Iniciando notificação de novo post no ${type}. ID: ${post.id}`);
 
+        const authorId = post.PsychologistId || post.psychologistId || post.authorId || null;
+
         // 1. Criar o Aviso no Dashboard (Aviso Global - psychologistId: null)
         const tituloAviso = type === 'blog' ? `Novo Artigo no Blog: ${post.titulo || post.title}` : `Novo Tópico no Fórum: ${post.titulo || post.title}`;
         let conteudoAviso = `Ei! Acabamos de publicar um conteúdo novo que pode te interessar. Vá dar uma olhada e interaja com a comunidade!`;
         
         if (type === 'blog') {
             const blogIdentifier = post.slug || post.id;
-            conteudoAviso += `<br><br><a href="/blog/post/${blogIdentifier}" target="_blank" class="aviso-link-direto" data-blog-id="${post.id}" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para ler o artigo</a>.`;
+            conteudoAviso += `<br><br><a href="/blog/post/${blogIdentifier}" target="_blank" class="aviso-link-direto" data-blog-id="${post.id}" data-author-id="${authorId || ''}" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para ler o artigo</a>.`;
         } else if (type === 'forum') {
-            conteudoAviso += `<br><br><a href="#" class="aviso-link-direto" data-post-id="${post.id}" onclick="window.loadPage('psi_forum.html?postId=${post.id}'); return false;" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar o tópico</a>.`;
+            conteudoAviso += `<br><br><a href="#" class="aviso-link-direto" data-post-id="${post.id}" data-author-id="${authorId || ''}" onclick="window.loadPage('psi_forum.html?postId=${post.id}'); return false;" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Clique aqui para acessar o tópico</a>.`;
         }
         
         if (db.Aviso) {
-            await db.Aviso.create({
+            const novoAviso = await db.Aviso.create({
                 title: tituloAviso,
                 content: conteudoAviso,
                 author: 'Equipe Yelo',
@@ -45,6 +47,13 @@ const notifyNewPost = async (post, type) => {
                 psychologistId: null // Aviso global
             });
             console.log(`[NotificationService] Aviso global criado com sucesso no dashboard.`);
+
+            // Marca previamente como lido para o autor
+            if (authorId && db.AvisoLido) {
+                await db.AvisoLido.findOrCreate({
+                    where: { avisoId: novoAviso.id, psychologistId: authorId }
+                }).catch(() => {});
+            }
         }
 
         // 2. Bloqueio de e-mail para Blog a pedido do usuário (redução de custos)
@@ -77,6 +86,11 @@ const notifyNewPost = async (post, type) => {
         }
         
         for (const psi of activePsis) {
+            // Não envia notificação de novo post para o próprio psicólogo que o publicou
+            if (authorId && psi.id === authorId) {
+                continue;
+            }
+
             const psiName = psi.nome.split(' ')[0] || 'Psicólogo(a)';
             
             const title = `Novo conteúdo na Comunidade Yelo Psi ✨`;

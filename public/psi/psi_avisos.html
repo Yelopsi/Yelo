@@ -13,11 +13,28 @@
     }
 </style>
 
+<!-- BANNER DE DESTAQUE PARA NOVIDADES -->
+<div style="background: linear-gradient(135deg, #f0fdf4 0%, #e6f7ec 100%); border: 1.5px solid #bbf7d0; border-radius: 14px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.5rem;">🚀</span>
+        <div>
+            <strong style="color: #166534; font-size: 0.95rem; display: block;">Compilado Semanal de Ajustes & Novidades</strong>
+            <span style="color: #15803d; font-size: 0.85rem;">Toda sexta-feira liberamos um compilado unificado com todos os novos recursos e melhorias da semana.</span>
+        </div>
+    </div>
+    <button onclick="if(window.loadPage) window.loadPage('psi_novidades.html')" style="background: #1B4332; color: #FFEE8C; font-weight: 700; border: none; padding: 8px 18px; border-radius: 50px; cursor: pointer; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(27,67,50,0.15); white-space: nowrap;">
+        Ver Compilado da Semana ➔
+    </button>
+</div>
+
 <div class="widget avisos-feed-widget">
-    <div class="avisos-filters">
+    <div class="avisos-filters" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
         <button class="aviso-filter-btn active" data-filter="all">Todos</button>
         <button class="aviso-filter-btn" data-filter="unread">Não lidos</button>
         <button class="aviso-filter-btn" data-filter="personal">Pessoais</button>
+        <button class="aviso-filter-btn" onclick="if(window.loadPage) window.loadPage('psi_novidades.html')" style="margin-left: auto; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 700;">
+            🚀 O que há de novo?
+        </button>
     </div>
     
     <div class="avisos-feed-actions-top" style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
@@ -80,14 +97,13 @@
                 item.classList.add('unread');
             }
 
-            // Define icon based on title keywords
             const lowerTitle = aviso.title.toLowerCase();
             if (lowerTitle.includes('instabilidade') || lowerTitle.includes('manutenção') || lowerTitle.includes('importante')) {
                 iconWrapper.innerHTML = '⚠️';
                 iconWrapper.style.backgroundColor = '#fffbeb';
                 iconWrapper.style.color = '#b45309';
-            } else if (lowerTitle.includes('novidade') || lowerTitle.includes('lançamento')) {
-                iconWrapper.innerHTML = '🎉';
+            } else if (lowerTitle.includes('novidade') || lowerTitle.includes('lançamento') || lowerTitle.includes('compilado') || lowerTitle.includes('ajustes') || lowerTitle.includes('melhorias')) {
+                iconWrapper.innerHTML = '🚀';
                 iconWrapper.style.backgroundColor = '#ecfdf5';
                 iconWrapper.style.color = '#047857';
             } else if (lowerTitle.includes('resposta') || lowerTitle.includes('comentário')) {
@@ -136,7 +152,10 @@
                     const linkDireto = tempDiv.querySelector('.aviso-link-direto');
                     
                     if (linkDireto) {
-                        if (linkDireto.dataset.postId && typeof window.loadPage === 'function') {
+                        if (linkDireto.dataset.page && typeof window.loadPage === 'function') {
+                            window.loadPage(linkDireto.dataset.page);
+                            return;
+                        } else if (linkDireto.dataset.postId && typeof window.loadPage === 'function') {
                             let targetUrl = `psi_forum.html?postId=${linkDireto.dataset.postId}`;
                             if (linkDireto.dataset.commentId) {
                                 targetUrl += `&commentId=${linkDireto.dataset.commentId}`;
@@ -145,6 +164,11 @@
                             return;
                         } else if (linkDireto.getAttribute('href') && linkDireto.getAttribute('href') !== '#') {
                             window.open(linkDireto.getAttribute('href'), '_blank');
+                            return;
+                        }
+                    } else if (aviso.title.toLowerCase().includes('compilado') || aviso.title.toLowerCase().includes('novidade')) {
+                        if (typeof window.loadPage === 'function') {
+                            window.loadPage('psi_novidades.html');
                             return;
                         }
                     } else if (aviso.title.toLowerCase().includes('novo artigo no blog')) {

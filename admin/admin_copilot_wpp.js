@@ -38,6 +38,10 @@
         const btnRegenerar = document.getElementById('btn-regenerar-variacao');
         const btnMiniVerDossie = document.getElementById('btn-mini-ver-dossie');
 
+        const btnColar = document.getElementById('btn-colar-clipboard');
+        const btnColarMais = document.getElementById('btn-colar-mais');
+        const btnColarFloating = document.getElementById('btn-colar-floating');
+
         function updateInputView() {
             if (!chatInput) return;
             chatInput.style.height = 'auto';
@@ -46,9 +50,18 @@
             chatInput.style.height = newHeight + 'px';
             chatInput.style.overflowY = 'auto';
 
+            const val = chatInput.value || '';
+            const hasText = val.trim().length > 0;
+
+            if (btnColarMais) {
+                btnColarMais.style.display = hasText ? 'inline-flex' : 'none';
+            }
+            if (btnColarFloating) {
+                btnColarFloating.style.display = !hasText ? 'inline-flex' : 'none';
+            }
+
             if (statsEl) {
-                const val = chatInput.value;
-                if (!val.trim()) {
+                if (!hasText) {
                     statsEl.textContent = 'Cole o texto do chat';
                 } else {
                     const lines = val.split('\n').filter(l => l.trim().length > 0).length;
@@ -57,41 +70,134 @@
             }
         }
 
-        // Botão Colar direto da área de transferência (otimizado para mobile)
-        const btnColar = document.getElementById('btn-colar-clipboard');
-        if (btnColar) {
-            btnColar.addEventListener('click', async () => {
+        function htmlToPlainText(html) {
+            if (!html) return '';
+            const temp = document.createElement('div');
+            const formatted = html
+                .replace(/<br\s*[\/]?>/gi, '\n')
+                .replace(/<\/p>/gi, '\n\n')
+                .replace(/<\/div>/gi, '\n')
+                .replace(/<\/tr>/gi, '\n')
+                .replace(/<\/li>/gi, '\n');
+            temp.innerHTML = formatted;
+            return (temp.innerText || temp.textContent || '').trim();
+        }
+
+        // Leitura resiliente de múltiplos itens da área de transferência (Safari iOS / iPhone 16)
+        async function readAllClipboardContent() {
+            let combinedText = '';
+
+            // 1. Tenta navigator.clipboard.read() - recupera TODOS os ClipboardItems (múltiplas mensagens copiadas no WhatsApp do iOS)
+            if (navigator.clipboard && typeof navigator.clipboard.read === 'function') {
                 try {
-                    if (!navigator.clipboard || !navigator.clipboard.readText) {
-                        if (chatInput) chatInput.focus();
-                        alert("Toque e segure no campo de texto abaixo e selecione 'Colar'.");
-                        return;
+                    const clipboardItems = await navigator.clipboard.read();
+                    if (clipboardItems && clipboardItems.length > 0) {
+                        const parts = [];
+                        for (const item of clipboardItems) {
+                            if (item.types.includes('text/plain')) {
+                                const blob = await item.getType('text/plain');
+                                const text = await blob.text();
+                                if (text && text.trim()) parts.push(text.trim());
+                            } else if (item.types.includes('text/html')) {
+                                const blob = await item.getType('text/html');
+                                const html = await blob.text();
+                                const text = htmlToPlainText(html);
+                                if (text && text.trim()) parts.push(text.trim());
+                            }
+                        }
+                        if (parts.length > 0) {
+                            combinedText = parts.join('\n\n');
+                        }
                     }
-                    const text = await navigator.clipboard.readText();
-                    if (!text || !text.trim()) {
-                        alert("A área de transferência está vazia ou não contém texto.");
-                        return;
+                } catch (readErr) {
+                    console.log('navigator.clipboard.read não disponível ou requer foco nativo:', readErr.message);
+                }
+            }
+
+            // 2. Se combinedText ainda estiver vazio, tenta readText() padrão
+            if (!combinedText && navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+                try {
+                    const txt = await navigator.clipboard.readText();
+                    if (txt && txt.trim()) combinedText = txt.trim();
+                } catch (readTextErr) {
+                    console.log('navigator.clipboard.readText restrito:', readTextErr.message);
+                }
+            }
+
+            if (!combinedText) {
+                return '';
+            }
+
+            // Remove caracteres invisíveis do WhatsApp (LTR/RTL marks)
+            return combinedText.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '');
+        }
+
+        async function handlePasteAction(isAppend = false) {
+            if (chatInput) chatInput.focus();
+
+            let text = '';
+            try {
+                text = await readAllClipboardContent();
+            } catch (err) {
+                console.log("Clipboard API não autorizada via script:", err);
+            }
+
+            // Se a API conseguiu ler diretamente (ex: HTTPS no Safari / Chrome / Mac):
+            if (text && text.trim()) {
+                if (chatInput) {
+                    if (isAppend && chatInput.value.trim().length > 0) {
+                        chatInput.value = chatInput.value.trim() + '\n\n' + text;
+                    } else {
+                        chatInput.value = text;
                     }
-                    const clean = text.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '');
-                    if (chatInput) {
-                        chatInput.value = clean;
+                    chatInput.scrollTop = 0;
+                    updateInputView();
+                    handleAutoIdentify();
+                }
+
+                const targetBtn = isAppend ? btnColarMais : (btnColar || btnColarFloating);
+                if (targetBtn) {
+                    const origHtml = targetBtn.innerHTML;
+                    targetBtn.innerHTML = `<span>✓ ${isAppend ? 'Adicionado!' : 'Colado!'}</span>`;
+                    setTimeout(() => {
+                        targetBtn.innerHTML = origHtml;
+                    }, 1800);
+                }
+
+                if (window.showToast) {
+                    window.showToast(isAppend ? 'Mensagens adicionadas com sucesso!' : 'Conversa colada com sucesso!', 'success');
+                }
+                return;
+            }
+
+            // Fallback para quando o navegador (ex: Safari no iPhone via HTTP local 192.168.0.x) bloqueia leitura por código:
+            // 1. Tenta comando de colar nativo caso o browser permita
+            try {
+                if (document.execCommand('paste')) {
+                    setTimeout(() => {
                         updateInputView();
                         handleAutoIdentify();
-                    }
-                    const origHtml = btnColar.innerHTML;
-                    btnColar.innerHTML = '<span>✓ Colado!</span>';
-                    btnColar.style.background = '#d1fae5';
-                    setTimeout(() => {
-                        btnColar.innerHTML = origHtml;
-                        btnColar.style.background = '#ecfdf5';
-                    }, 1800);
-                } catch (err) {
-                    console.warn("Clipboard read error:", err);
-                    if (chatInput) chatInput.focus();
-                    alert("Acesso à área de transferência não autorizado pelo navegador. Toque e segure no campo de texto para colar.");
+                    }, 50);
+                    return;
                 }
-            });
+            } catch (_) {}
+
+            // 2. Posiciona o cursor no final do campo para permitir colar com 1 toque
+            if (chatInput) {
+                const len = chatInput.value.length;
+                chatInput.focus();
+                chatInput.setSelectionRange(len, len);
+            }
+
+            // 3. Exibe aviso suave (toast) SEM alert() bloqueante
+            if (window.showToast) {
+                window.showToast('📋 Toque no campo e selecione "Colar" (ou toque em Colar acima do teclado).', 'info');
+            }
         }
+
+        if (btnColar) btnColar.addEventListener('click', () => handlePasteAction(false));
+        if (btnColarMais) btnColarMais.addEventListener('click', () => handlePasteAction(true));
+        if (btnColarFloating) btnColarFloating.addEventListener('click', () => handlePasteAction(false));
 
         // Importação de arquivo .txt exportado do WhatsApp (sem mídia)
         const fileImport = document.getElementById('file-chat-import');
@@ -105,6 +211,7 @@
                     const clean = content.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '');
                     if (chatInput) {
                         chatInput.value = clean;
+                        chatInput.scrollTop = 0;
                         updateInputView();
                         handleAutoIdentify();
                     }
@@ -139,11 +246,62 @@
                 }, 350);
             });
 
-            chatInput.addEventListener('paste', () => {
+            chatInput.addEventListener('paste', async (e) => {
+                let extracted = '';
+                try {
+                    if (e.clipboardData) {
+                        const plain = e.clipboardData.getData('text/plain') || '';
+                        const html = e.clipboardData.getData('text/html') || '';
+
+                        // 1. Se o WhatsApp colocou o conteúdo formatado em HTML (com quebras/mensagens completas)
+                        if (html && (html.includes('<br') || html.includes('</div>') || html.includes('</p>'))) {
+                            const fromHtml = htmlToPlainText(html);
+                            if (fromHtml && (fromHtml.length > plain.length + 10 || (fromHtml.includes('[') && !plain.includes('[')))) {
+                                extracted = fromHtml;
+                            }
+                        }
+
+                        // 2. Se houver múltiplos itens plain-text
+                        if (!extracted && e.clipboardData.items && e.clipboardData.items.length > 1) {
+                            const parts = [];
+                            for (let i = 0; i < e.clipboardData.items.length; i++) {
+                                const item = e.clipboardData.items[i];
+                                if (item.kind === 'string' && item.type === 'text/plain') {
+                                    await new Promise(resolve => {
+                                        item.getAsString(str => {
+                                            if (str && str.trim()) parts.push(str.trim());
+                                            resolve();
+                                        });
+                                    });
+                                }
+                            }
+                            if (parts.length > 1) {
+                                extracted = parts.join('\n\n');
+                            }
+                        }
+
+                        if (extracted && extracted !== plain) {
+                            e.preventDefault();
+                            const cur = chatInput.value || '';
+                            const start = chatInput.selectionStart || 0;
+                            const end = chatInput.selectionEnd || 0;
+                            const clean = extracted.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '');
+                            chatInput.value = cur.substring(0, start) + clean + cur.substring(end);
+                            chatInput.scrollTop = 0;
+                            updateInputView();
+                            handleAutoIdentify();
+                            return;
+                        }
+                    }
+                } catch (pasteErr) {
+                    console.warn('Erro ao processar paste nativo:', pasteErr);
+                }
+
                 setTimeout(() => {
                     if (chatInput.value) {
                         chatInput.value = chatInput.value.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '');
                     }
+                    chatInput.scrollTop = 0;
                     updateInputView();
                     handleAutoIdentify();
                 }, 50);

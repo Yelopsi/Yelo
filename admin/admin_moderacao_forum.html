@@ -936,9 +936,12 @@
 
     /* Esconde a bottom nav mobile quando o modal do fórum estiver aberto */
     body.mod-modal-open .mobile-bottom-nav,
-    body:has(#modal-preview-post:not([style*="display: none"])) .mobile-bottom-nav,
+    body.modal-open .mobile-bottom-nav,
     body:has(#modal-preview-post[style*="display: flex"]) .mobile-bottom-nav,
-    body:has(.mod-modal-overlay[style*="display: flex"]) .mobile-bottom-nav {
+    body:has(#modal-preview-post[style*="display: block"]) .mobile-bottom-nav,
+    body:has(#modal-preview-post.active) .mobile-bottom-nav,
+    body:has(.mod-modal-overlay[style*="display: flex"]) .mobile-bottom-nav,
+    body:has(.mod-modal-overlay.active) .mobile-bottom-nav {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;

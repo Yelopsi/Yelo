@@ -2408,11 +2408,11 @@ exports.addSystemChangelogEntry = async (req, res) => {
             return res.status(400).json({ error: 'Título, categoria e resumo são obrigatórios.' });
         }
 
-        const changelogPath = path.resolve(__dirname, '../data/system_changelog.json');
+        const { CHANGELOG_PATH, saveChangelogFile } = require('../services/changelogSyncService');
         let changes = [];
-        if (fs.existsSync(changelogPath)) {
+        if (fs.existsSync(CHANGELOG_PATH)) {
             try {
-                changes = JSON.parse(fs.readFileSync(changelogPath, 'utf8'));
+                changes = JSON.parse(fs.readFileSync(CHANGELOG_PATH, 'utf8'));
             } catch (e) {}
         }
 
@@ -2435,7 +2435,7 @@ exports.addSystemChangelogEntry = async (req, res) => {
         };
 
         changes.unshift(newEntry);
-        fs.writeFileSync(changelogPath, JSON.stringify(changes, null, 2), 'utf8');
+        saveChangelogFile(changes);
 
         res.status(201).json({ success: true, entry: newEntry });
     } catch (err) {
@@ -2443,4 +2443,100 @@ exports.addSystemChangelogEntry = async (req, res) => {
         res.status(500).json({ error: 'Erro ao registrar nova alteração.' });
     }
 };
+
+// ----------------------------------------------------------------------
+// Rota: PUT /api/admin/system-changelog/:id
+// Descrição: Altera os dados/textos de uma alteração existente.
+// ----------------------------------------------------------------------
+exports.updateSystemChangelogEntry = async (req, res) => {
+    try {
+        const { updateChangelogEntry } = require('../services/changelogSyncService');
+        const { id } = req.params;
+        const updated = updateChangelogEntry(id, req.body);
+        if (!updated) {
+            return res.status(404).json({ error: 'Item do histórico de alterações não encontrado.' });
+        }
+        res.json({ success: true, entry: updated, message: 'Alteração atualizada com sucesso!' });
+    } catch (err) {
+        console.error("Erro ao atualizar alteração no changelog:", err);
+        res.status(500).json({ error: 'Erro ao atualizar alteração do sistema.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: DELETE /api/admin/system-changelog/:id
+// Descrição: Remove uma alteração do histórico.
+// ----------------------------------------------------------------------
+exports.deleteSystemChangelogEntry = async (req, res) => {
+    try {
+        const { deleteChangelogEntry } = require('../services/changelogSyncService');
+        const { id } = req.params;
+        const deleted = deleteChangelogEntry(id);
+        if (!deleted) {
+            return res.status(404).json({ error: 'Item não encontrado para exclusão.' });
+        }
+        res.json({ success: true, message: 'Alteração removida com sucesso!' });
+    } catch (err) {
+        console.error("Erro ao excluir alteração do changelog:", err);
+        res.status(500).json({ error: 'Erro ao excluir alteração.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/admin/system-changelog/:id/toggle-psi
+// Descrição: Alterna a visibilidade da alteração para os psicólogos.
+// ----------------------------------------------------------------------
+exports.togglePsiChangelogVisibility = async (req, res) => {
+    try {
+        const { togglePsiVisibility } = require('../services/changelogSyncService');
+        const { id } = req.params;
+        const forceValue = req.body && typeof req.body.publishedToPsi === 'boolean' ? req.body.publishedToPsi : null;
+        const updated = togglePsiVisibility(id, forceValue);
+        if (!updated) {
+            return res.status(404).json({ error: 'Item não encontrado.' });
+        }
+        res.json({ 
+            success: true, 
+            publishedToPsi: updated.publishedToPsi,
+            entry: updated,
+            message: updated.publishedToPsi ? 'Item publicado para psicólogos!' : 'Item ocultado dos psicólogos.'
+        });
+    } catch (err) {
+        console.error("Erro ao alternar visibilidade para psicólogos:", err);
+        res.status(500).json({ error: 'Erro ao alternar visibilidade.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/admin/system-changelog/:id/ai-suggest
+// Descrição: Usa IA para gerar versão humanizada e acolhedora para psicólogos.
+// ----------------------------------------------------------------------
+exports.generateAiChangelogPsiCopy = async (req, res) => {
+    try {
+        const { generateAiPsiCopy, CHANGELOG_PATH } = require('../services/changelogSyncService');
+        const fs = require('fs');
+        const { id } = req.params;
+
+        let entry = req.body;
+        if (!entry || !entry.title) {
+            // Busca do arquivo se não veio no body
+            let changes = [];
+            if (fs.existsSync(CHANGELOG_PATH)) {
+                try { changes = JSON.parse(fs.readFileSync(CHANGELOG_PATH, 'utf8')); } catch (e) {}
+            }
+            entry = changes.find(c => String(c.id) === String(id));
+        }
+
+        if (!entry) {
+            return res.status(404).json({ error: 'Item não encontrado para gerar sugestão de IA.' });
+        }
+
+        const suggestion = await generateAiPsiCopy(entry);
+        res.json({ success: true, suggestion });
+    } catch (err) {
+        console.error("Erro ao gerar sugestão de IA para o changelog:", err);
+        res.status(500).json({ error: 'Erro ao gerar texto com IA.' });
+    }
+};
+
 

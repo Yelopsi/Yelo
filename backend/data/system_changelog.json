@@ -1,5 +1,172 @@
 [
   {
+    "id": "change-feat-public-profile-reviews",
+    "date": "2026-10-23T15:00:00.000Z",
+    "commit": "manual",
+    "author": "Equipe Yelo",
+    "title": "Novo Módulo de Avaliações e Depoimentos no Perfil Público",
+    "category": "Match & Pacientes",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "Pacientes agora podem deixar depoimentos e avaliações que aumentam a conversão do psicólogo.",
+    "description": "Implementação do botão de avaliação na página pública do profissional com modal interativo e nota de 1 a 5 estrelas.",
+    "rationale": "Aumentar a prova social e gerar mais agendamentos para os psicólogos cadastrados.",
+    "publishedToPsi": true,
+    "psiTitle": "⭐ Aprimoramentos nas Avaliações do Perfil Público",
+    "psiSummary": "Aprimoramos a experiência e a estabilidade do envio de avaliações e depoimentos no seu perfil público, garantindo funcionamento fluido e intuitivo para os pacientes em qualquer smartphone.",
+    "psiCategory": "Perfil & Pacientes",
+    "impactBadge": "Aprimoramento 🚀",
+    "ctaLink": "psi_ajustes_hub.html",
+    "ctaText": "Ver Perfil Público ➔",
+    "scheduledFriday": "2026-10-23T12:00:00.000Z",
+    "updatedAt": "2026-10-23T23:31:51.343Z",
+    "authorizedAt": "2026-10-23T23:31:51.343Z"
+  },
+  {
+    "id": "change-git-4987ef97",
+    "date": "2026-10-23T01:52:20.000Z",
+    "commit": "4987ef97",
+    "author": "Anderson",
+    "title": "Novo: Adicionar modulo de recall de churn pago com metricas e mensagens contextuais (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "adicionar modulo de recall de churn pago com metricas e mensagens contextuais",
+    "description": "Commit registrado no repositório: \"feat(crm): adicionar modulo de recall de churn pago com metricas e mensagens contextuais\". Arquivos modificados: admin/admin_crm_psicologos.js, backend/controllers/adminUsersController.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4987ef97"
+    },
+    "after": {
+      "nova_versao": "adicionar modulo de recall de churn pago com metricas e mensagens contextuais"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.js",
+      "backend/controllers/adminUsersController.js"
+    ],
+    "publishedToPsi": true,
+    "updatedAt": "2026-10-24T16:05:17.110Z",
+    "scheduledFriday": "2026-10-23T15:00:00.000Z",
+    "authorizedAt": "2026-10-24T16:05:17.110Z",
+    "psiTitle": "Ajustes de usabilidade no consultório",
+    "psiSummary": "Aprimoramentos práticos no acompanhamento de contatos e na organização da sua rotina clínica.",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Aprimoramento 🚀"
+  },
+  {
+    "id": "change-git-e3c6f92c",
+    "date": "2026-10-23T01:46:01.000Z",
+    "commit": "e3c6f92c",
+    "author": "Anderson",
+    "title": "Correção: Corrigir visibilidade do modal e botao de avaliar no perfil publico",
+    "category": "Performance & Cache",
+    "badgeColor": "#059669",
+    "status": "Em Produção",
+    "summary": "corrigir visibilidade do modal e botao de avaliar no perfil publico",
+    "description": "Commit registrado no repositório: \"fix(perfil): corrigir visibilidade do modal e botao de avaliar no perfil publico\". Arquivos modificados: public/css/components/psi_ui.css, public/js/psi_perfil_publico.js, views/psi_perfil_publico.ejs.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #e3c6f92c"
+    },
+    "after": {
+      "nova_versao": "corrigir visibilidade do modal e botao de avaliar no perfil publico"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "public/css/components/psi_ui.css",
+      "public/js/psi_perfil_publico.js",
+      "views/psi_perfil_publico.ejs"
+    ],
+    "publishedToPsi": true,
+    "updatedAt": "2026-10-23T23:36:56.021Z",
+    "scheduledFriday": "2026-10-23T15:00:00.000Z",
+    "authorizedAt": "2026-10-23T23:36:56.021Z",
+    "psiTitle": "Aprimoramentos nas avaliações do perfil",
+    "psiSummary": "Aprimoramos a experiência e a estabilidade do envio de avaliações e depoimentos no perfil público, garantindo funcionamento fluido e intuitivo para os pacientes em qualquer smartphone.",
+    "psiCategory": "Perfil & Pacientes",
+    "impactBadge": "Aprimoramento 🚀"
+  },
+  {
+    "id": "change-feat-crm-patient-history",
+    "date": "2026-10-22T19:00:00.000Z",
+    "commit": "manual",
+    "author": "Equipe Yelo",
+    "title": "Histórico de Contatos e Gestão de Pacientes no CRM",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "Métricas detalhadas de contatos recebidos, taxa de resposta e ações de acompanhamento.",
+    "description": "Centralização do histórico de contatos de pacientes via WhatsApp com detalhes de abordagem e registro de conversões.",
+    "rationale": "Ajudar o profissional a acompanhar sua taxa de fechamento de novos pacientes e realizar follow-ups organizados.",
+    "publishedToPsi": false,
+    "psiTitle": "👥 Histórico de Pacientes e Gestão de Contatos",
+    "psiSummary": "Acompanhe em um painel unificado todos os pacientes que iniciaram contato pelo WhatsApp, com histórico de datas e métricas para apoiar sua taxa de agendamento.",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Gestão Clínica 💼",
+    "ctaLink": "psi_pacientes.html",
+    "ctaText": "Ver Consultório & Pacientes ➔",
+    "scheduledFriday": "2026-10-23T12:00:00.000Z"
+  },
+  {
+    "id": "change-feat-forum-search-links",
+    "date": "2026-10-22T08:00:00.000Z",
+    "commit": "manual",
+    "author": "Equipe Yelo",
+    "title": "Busca Rápida e Links Clicáveis no Fórum da Comunidade",
+    "category": "Fórum & Comunidade",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "Agora você encontra tópicos mesmo digitando sem acentos e links colados se transformam em cards clicáveis.",
+    "description": "A pedido dos psicólogos da comunidade, otimizamos o sistema de buscas do fórum com suporte a termos sem acento, tags #ID e URLs diretas, além de transformar automaticamente menções e links de outros posts em cards clicáveis.",
+    "rationale": "Aumentar a interação entre profissionais e facilitar o compartilhamento de materiais e referências.",
+    "publishedToPsi": true,
+    "psiTitle": "💬 Cards Visuais e Links Clicáveis no Fórum",
+    "psiSummary": "Refinamos a exibição de links e citações no fórum: ao citar outro post ou compartilhar uma discussão, o conteúdo agora ganha prévia visual interativa de forma automática.",
+    "psiCategory": "Fórum & Comunidade",
+    "impactBadge": "Aprimoramento 🚀",
+    "before": {
+      "busca": "Exigia digitação com acentuação exata e links não eram clicáveis"
+    },
+    "after": {
+      "busca": "Busca dinâmica com ou sem acentos e links interativos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "public/psi/psi_forum.js",
+      "backend/controllers/forumController.js",
+      "public/psi/psi_dashboard.js"
+    ],
+    "updatedAt": "2026-10-22T11:14:27.569Z",
+    "ctaLink": "psi_forum.html",
+    "ctaText": "Acessar Fórum ➔",
+    "scheduledFriday": "2026-10-23T12:00:00.000Z"
+  },
+  {
+    "id": "change-git-3300a9cc",
+    "date": "2026-10-22T01:14:36.000Z",
+    "commit": "3300a9cc",
+    "author": "Anderson",
+    "title": "Manutenção: Sincronizar relatorio do gate pre-push",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar relatorio do gate pre-push",
+    "description": "Commit registrado no repositório: \"chore: sincronizar relatorio do gate pre-push\". Arquivos modificados: backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #3300a9cc"
+    },
+    "after": {
+      "nova_versao": "sincronizar relatorio do gate pre-push"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-709ef077",
     "date": "2026-10-22T01:14:05.000Z",
     "commit": "709ef077",
@@ -76,7 +243,15 @@
     "filesChanged": [
       "backend/data/system_changelog.json",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "publishedToPsi": true,
+    "updatedAt": "2026-10-23T23:32:25.139Z",
+    "scheduledFriday": "2026-10-23T15:00:00.000Z",
+    "authorizedAt": "2026-10-23T23:32:25.140Z",
+    "psiTitle": "Outros ajustes de usabilidade",
+    "psiSummary": "Ajustes contínuos de estabilidade, usabilidade e navegação para manter sua experiência impecável na Yelo.",
+    "psiCategory": "Novidades da Plataforma",
+    "impactBadge": "Melhoria Contínua 🌟"
   },
   {
     "id": "change-git-caec5ac6",
@@ -174,6 +349,70 @@
     ]
   },
   {
+    "id": "change-feat-forum-ai-ethics",
+    "date": "2026-10-21T23:30:00.000Z",
+    "commit": "manual",
+    "author": "Equipe Yelo",
+    "title": "Moderação Ética com Inteligência Artificial e Diretrizes Oficiais",
+    "category": "Fórum & Comunidade",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "Proteção ativa de sigilo profissional (CFP) e diretrizes de convivência comunitária com IA.",
+    "description": "Implementada moderação ética avançada com IA que orienta os profissionais em tempo real sobre anonimização completa de pacientes, diretrizes do CFP e urbanidade.",
+    "rationale": "Blindar a segurança jurídica dos psicólogos e manter um ambiente de alto nível científico e acolhedor.",
+    "publishedToPsi": true,
+    "psiTitle": "🤖 Orientador Ético com Inteligência Artificial",
+    "psiSummary": "Nova camada inteligente que orienta os psicólogos antes da publicação de discussões clínicas no fórum, assegurando total sigilo de casos e conformidade com as diretrizes do CFP.",
+    "psiCategory": "Fórum & Comunidade",
+    "impactBadge": "Inteligência Artificial 🧠",
+    "before": {
+      "moderacao": "Moderação manual reativa"
+    },
+    "after": {
+      "moderacao": "Aconselhamento ético em tempo real pré-publicação"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/forumController.js",
+      "public/psi/psi_forum.js"
+    ],
+    "ctaLink": "psi_forum.html",
+    "ctaText": "Acessar Fórum ➔",
+    "scheduledFriday": "2026-10-23T12:00:00.000Z"
+  },
+  {
+    "id": "change-feat-forum-duplicate-check",
+    "date": "2026-10-21T21:00:00.000Z",
+    "commit": "manual",
+    "author": "Equipe Yelo",
+    "title": "Sugestão Inteligente de Discussões Existentes no Fórum",
+    "category": "Fórum & Comunidade",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "Evita tópicos repetidos e direciona o psicólogo para discussões já ativas com respostas de colegas.",
+    "description": "Sistema de similaridade semântica e lematização em português que detecta temas similares em tempo real enquanto o profissional digita o título.",
+    "rationale": "Centralizar debates sobre o mesmo tema para que as dúvidas recebam respostas mais ricas e rápidas.",
+    "publishedToPsi": true,
+    "psiTitle": "💡 Sugestão Inteligente de Discussões Semelhantes",
+    "psiSummary": "Ao iniciar um novo tópico, a plataforma identifica em tempo real discussões parecidas já debatidas por colegas da comunidade para facilitar o compartilhamento de experiências.",
+    "psiCategory": "Fórum & Comunidade",
+    "impactBadge": "Usabilidade 🚀",
+    "before": {
+      "duplicatas": "Criação de múltiplos tópicos com a mesma dúvida"
+    },
+    "after": {
+      "duplicatas": "Sugestão inteligente de participação no tópico existente"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/forumController.js",
+      "public/psi/psi_forum.js"
+    ],
+    "ctaLink": "psi_forum.html",
+    "ctaText": "Acessar Fórum ➔",
+    "scheduledFriday": "2026-10-23T12:00:00.000Z"
+  },
+  {
     "id": "change-fix-crm-followups-profile-scroll-20261021",
     "date": "2026-10-21T20:35:00.000Z",
     "commit": "pending",
@@ -199,6 +438,26 @@
       "public/css/psi_dashboard.css",
       "views/psi_perfil_publico.ejs"
     ]
+  },
+  {
+    "id": "change-feat-billing-asaas-integration",
+    "date": "2026-10-21T14:00:00.000Z",
+    "commit": "manual",
+    "author": "Equipe Yelo",
+    "title": "Integração Financeira Transparente com Asaas e PIX Instantâneo",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "Assinatura simplificada com PIX e Cartão, histórico de faturas e comprovantes automáticos.",
+    "description": "Sincronização dos ciclos de pagamento, renovação protegida e recibos instantâneos com a infraestrutura Asaas.",
+    "rationale": "Garantir previsibilidade, transparência e autonomia para o psicólogo gerenciar seu plano a qualquer momento.",
+    "publishedToPsi": false,
+    "psiTitle": "💳 Pagamentos Automáticos, PIX e Gestão de Assinatura",
+    "psiSummary": "Tenha total autonomia para gerenciar seu plano na Yelo: suporte a PIX instantâneo e Cartão de Crédito, emissão automática de recibos fiscais e histórico detalhado de todas as mensalidades.",
+    "psiCategory": "Pagamentos & Planos",
+    "impactBadge": "Segurança Financeira 🔒",
+    "ctaLink": "psi_assinatura.html",
+    "ctaText": "Minha Assinatura"
   },
   {
     "id": "change-ui-testimonials-contrast-20261020",
@@ -247,6 +506,55 @@
       "backend/controllers/subscriptionController.js",
       "backend/services/paymentStateService.js"
     ]
+  },
+  {
+    "id": "change-feat-match-engine-v6",
+    "date": "2026-10-20T16:00:00.000Z",
+    "commit": "manual",
+    "author": "Equipe Yelo",
+    "title": "Aprimoramento no Motor de Distribuição de Pacientes",
+    "category": "Motor de Match",
+    "badgeColor": "#f59e0b",
+    "status": "Em Produção",
+    "summary": "Distribuição mais inteligente baseada em disponibilidade e especialidade.",
+    "description": "Refinamento do algoritmo de match para conectar pacientes a psicólogos com maior afinidade clínica e horários compatíveis.",
+    "rationale": "Maximizar a taxa de comparecimento às primeiras sessões e agendamentos bem-sucedidos.",
+    "publishedToPsi": false,
+    "psiTitle": "⚡ Melhorias na Distribuição e Match de Pacientes",
+    "psiSummary": "Aprimoramos o algoritmo de direcionamento para priorizar profissionais com horários disponíveis e alta compatibilidade com as queixas clínicas dos pacientes, aumentando a assertividade dos contatos recebidos.",
+    "psiCategory": "Match & Pacientes",
+    "impactBadge": "Otimização ⚡",
+    "before": {
+      "match": "Distribuição padrão por proximidade de filtros"
+    },
+    "after": {
+      "match": "Priorização ponderada por horário, abordagem e especialidade"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/matchController.js",
+      "backend/services/matchEngine.js"
+    ]
+  },
+  {
+    "id": "change-feat-security-ethics-shield",
+    "date": "2026-10-20T10:00:00.000Z",
+    "commit": "manual",
+    "author": "Equipe Yelo",
+    "title": "Blindagem de Segurança, Sigilo Profissional e Conformidade CFP",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "Camada de segurança criptográfica para proteção de dados clínicos e anonimização de pacientes.",
+    "description": "Implementação do Security Gate com validações contra BOLA/IDOR, proteção de sessão e filtros de sigilo em conformidade com o CFP.",
+    "rationale": "Assegurar que os psicólogos tenham a máxima tranquilidade jurídica e técnica no uso diário da plataforma.",
+    "publishedToPsi": false,
+    "psiTitle": "🛡️ Sigilo Clínico, Privacidade e Segurança Reforçada",
+    "psiSummary": "Sua privacidade e a dos seus pacientes são inegociáveis: implementamos um escudo de segurança contínuo com criptografia ponta a ponta e total conformidade com as diretrizes do CFP e da LGPD.",
+    "psiCategory": "Segurança & Sigilo",
+    "impactBadge": "Proteção Máxima 🛡️",
+    "ctaLink": "psi_ajustes_hub.html",
+    "ctaText": "Configurações"
   },
   {
     "id": "change-git-92088544",

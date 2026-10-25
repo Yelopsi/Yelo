@@ -28,49 +28,80 @@ window.setupPullToRefresh = function() {
     let startX_ptr = 0;
     let currentY = 0;
     let isPulling = false;
+    let hasMoved = false;
     const threshold = 70; // Distância mínima em pixels para acionar
 
+    const getScrollTop = () => {
+        return window.scrollY || document.documentElement.scrollTop || (mainContent ? mainContent.scrollTop : 0) || 0;
+    };
+
     mainContent.addEventListener('touchstart', (e) => {
-        // Só inicia o gesto se o usuário estiver exatamente no topo da página
-        if (mainContent.scrollTop <= 1) {
+        if (e.touches.length > 1) return;
+        
+        // Ignora toques em inputs, selects, botões, cards, links ou modais
+        const target = e.target;
+        if (target.closest('input, textarea, select, button, a, [contenteditable="true"], .forum-post-card, .prompt-fake-input, .modern-create-prompt, .tab-item, .modal-close-btn, .custom-modal-box, .custom-modal-overlay')) {
+            isPulling = false;
+            hasMoved = false;
+            return;
+        }
+
+        // Só inicia a medição se o usuário estiver rigorosamente no topo da página
+        if (getScrollTop() <= 1) {
             startY = e.touches[0].clientY;
             startX_ptr = e.touches[0].clientX;
-            currentY = startY; // Zera o valor fantasma do toque anterior
-            isPulling = true;
-            ptrEl.style.transition = 'none'; // Acompanha o dedo instantaneamente
+            currentY = startY;
+            isPulling = false; // NÃO assume pulling apenas por tocar na tela!
+            hasMoved = false;
+            ptrEl.style.transition = 'none';
             ptrEl.classList.remove('ptr-refreshing');
         }
     }, { passive: true });
 
     mainContent.addEventListener('touchmove', (e) => {
-        if (!isPulling) return;
+        if (startY === 0) return;
         
         currentY = e.touches[0].clientY;
         const currentX = e.touches[0].clientX;
         const pullDistance = currentY - startY;
         const pullDistanceX = Math.abs(currentX - startX_ptr);
 
+        // Só inicia o efeito de puxar se estiver no topo absoluto E arrastar intencionalmente para baixo
+        if (!isPulling && getScrollTop() <= 1 && pullDistance > 18 && pullDistance > pullDistanceX * 1.5) {
+            isPulling = true;
+            hasMoved = true;
+        }
+
+        if (!isPulling) return;
+
         // Cancela o PTR se o movimento for mais horizontal do que vertical
         if (pullDistanceX > Math.abs(pullDistance)) {
             isPulling = false;
+            hasMoved = false;
             ptrEl.style.transform = 'translateY(-150%)';
             return;
         }
 
-        if (pullDistance > 0 && mainContent.scrollTop <= 1) {
+        if (pullDistance > 0 && getScrollTop() <= 1) {
             if (e.cancelable) e.preventDefault(); // Impede bounce nativo
             const resistance = pullDistance * 0.45; // Física de borracha
             ptrEl.style.transform = `translateY(${Math.min(resistance, threshold + 20)}px)`;
             const svg = ptrEl.querySelector('svg');
             if (svg) svg.style.transform = `rotate(${pullDistance}deg)`;
         } else {
-            isPulling = false; // Aborta se rolar para cima
+            isPulling = false;
         }
     }, { passive: false });
 
     mainContent.addEventListener('touchend', () => {
-        if (!isPulling) return;
+        startY = 0;
+        if (!isPulling || !hasMoved) {
+            isPulling = false;
+            hasMoved = false;
+            return;
+        }
         isPulling = false;
+        hasMoved = false;
         ptrEl.style.transition = 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
         const pullDistance = currentY - startY;
 
@@ -80,11 +111,9 @@ window.setupPullToRefresh = function() {
             // Executa a atualização da página usando a SPA
             const currentPage = sessionStorage.getItem('yelo_last_psi_page') || localStorage.getItem('yelo_last_psi_page') || 'psi_visao_geral.html';
             if (typeof window.loadPage === 'function') window.loadPage(currentPage);
-            if (window.innerWidth <= 992) window.scrollTo(0, 0);
             setTimeout(() => { ptrEl.style.transform = 'translateY(-150%)'; ptrEl.classList.remove('ptr-refreshing'); }, 300);
         } else {
             ptrEl.style.transform = 'translateY(-150%)'; // Cancela e sobe
-            if (window.innerWidth <= 992) window.scrollTo(0, 0);
         }
     });
 };

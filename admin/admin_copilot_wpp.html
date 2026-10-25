@@ -343,12 +343,16 @@
                     <label for="copilot-input-chat" style="font-size: 0.92rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
                         <span>📋 Conversa do WhatsApp</span>
                     </label>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <button type="button" id="btn-colar-clipboard" style="background: #ecfdf5; color: #065f46; border: 1.5px solid #a7f3d0; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;" title="Colar direto da área de transferência do celular">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-                            <span>Colar</span>
+                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                        <button type="button" id="btn-colar-clipboard" style="background: #10b981; color: #ffffff; border: 1.5px solid #059669; padding: 7px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(16,185,129,0.25);" title="Colar todo o conteúdo da área de transferência (suporte a múltiplas mensagens no iPhone)">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                            <span>Colar Tudo</span>
                         </button>
-                        <label for="file-chat-import" style="background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; margin: 0; transition: all 0.2s;" title="Importar arquivo .txt exportado do WhatsApp">
+                        <button type="button" id="btn-colar-mais" style="display: none; background: #eff6ff; color: #1d4ed8; border: 1.5px solid #bfdbfe; padding: 7px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; align-items: center; gap: 5px; transition: all 0.2s;" title="Adicionar mais mensagens no final da conversa sem apagar o que já foi colado">
+                            <span style="font-size: 1rem; line-height: 1; font-weight: 800;">+</span>
+                            <span>Colar Mais</span>
+                        </button>
+                        <label for="file-chat-import" style="background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1; padding: 7px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; margin: 0; transition: all 0.2s;" title="Importar arquivo .txt exportado do WhatsApp">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
                             <span>Arquivo .txt</span>
                         </label>
@@ -360,17 +364,23 @@
                 </div>
 
                 <div style="position: relative;">
-                    <textarea id="copilot-input-chat" rows="6" placeholder="Cole aqui a conversa copiada diretamente do WhatsApp (Ctrl + V)...
+                    <textarea id="copilot-input-chat" rows="6" placeholder="Cole aqui a conversa copiada diretamente do WhatsApp (ou use o botão Colar Tudo acima)...
 
 Exemplo:
 [08/10/26, 12:31:42] ~Psicólogo Fred Monte: Boa tarde, estou tendo curtidas em alguns artigos meus
 [08/10/26, 12:31:50] ~Psicólogo Fred Monte: uns mais, outros menos"></textarea>
+                    
+                    <!-- BOTÃO FLUTUANTE DE COLAR NO MOBILE (QUANDO VAZIO) -->
+                    <button type="button" id="btn-colar-floating" style="position: absolute; right: 14px; bottom: 14px; background: #1B4332; color: #FFEE8C; border: none; padding: 9px 16px; border-radius: 50px; font-size: 0.84rem; font-weight: 800; cursor: pointer; display: none; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(27,67,50,0.3); z-index: 5;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                        <span>Colar Conversa</span>
+                    </button>
                 </div>
 
                 <!-- DICA MOBILE WHATSAPP -->
-                <div style="margin-top: 6px; font-size: 0.74rem; color: #64748b; line-height: 1.45; display: flex; align-items: flex-start; gap: 6px; background: #f8fafc; padding: 6px 10px; border-radius: 6px; border-left: 3px solid #10b981;">
+                <div style="margin-top: 8px; font-size: 0.74rem; color: #64748b; line-height: 1.45; display: flex; align-items: flex-start; gap: 6px; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border-left: 3px solid #10b981;">
                     <span style="font-size: 0.85rem; flex-shrink: 0; line-height: 1.2;">💡</span>
-                    <span><strong>Dica no WhatsApp do celular:</strong> Para trazer todas as mensagens de uma vez sem perder nada, abra a conversa no WhatsApp > toque no nome/3 pontinhos > <em>Exportar conversa (sem mídia)</em> e use o botão <strong>Arquivo .txt</strong> acima.</span>
+                    <span><strong>Dica no iPhone / Safari:</strong> No WhatsApp, copie a conversa e toque no botão <strong>Colar Tudo</strong> (ou toque no campo de texto e escolha <strong>"Colar"</strong>). Para colar mensagens adicionais sem apagar, use <strong>➕ Colar Mais</strong>, ou importe direto via <strong>Arquivo .txt</strong>.</span>
                 </div>
 
                 <!-- BANNER DE IDENTIFICAÇÃO EM TEMPO REAL -->

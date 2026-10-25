@@ -1,174 +1,46 @@
-<style>
-    @media (max-width: 991px) {
-        #forum-container {
-            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
-        }
-    }
-
-    /* CARD DE REGRAS DA COMUNIDADE (DESKTOP & MOBILE RESPONSIVO) */
-    .forum-guidelines-box {
-        background: #f0fdf4;
-        border: 1px solid #bbf7d0;
-        border-radius: 20px;
-        box-shadow: 0 4px 15px rgba(27, 67, 50, 0.04);
-        margin-bottom: 25px;
-        padding: 22px 24px;
-        display: flex;
-        align-items: flex-start;
-        gap: 18px;
-        transition: all 0.2s ease;
-    }
-    .guidelines-header-mobile {
-        display: none;
-    }
-    .guidelines-icon-box {
-        width: 44px;
-        height: 44px;
-        background: #ffffff;
-        color: #16a34a;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.4rem;
-        flex-shrink: 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        border: 1px solid #dcfce7;
-    }
-    .guidelines-content {
-        flex-grow: 1;
-        min-width: 0;
-    }
-    .guidelines-title-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 12px;
-        flex-wrap: wrap;
-    }
-    .guidelines-title {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: #1B4332;
-        font-family: var(--font-titulos, sans-serif);
-    }
-    .guidelines-badge {
-        background: #dcfce7;
-        color: #15803d;
-        font-size: 0.72rem;
-        font-weight: 700;
-        padding: 2px 10px;
-        border-radius: 50px;
-        letter-spacing: 0.02em;
-        text-transform: uppercase;
-        border: 1px solid #bbf7d0;
-    }
-    .guidelines-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .guidelines-list li {
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-        font-size: 0.88rem;
-        color: #334155;
-        line-height: 1.45;
-    }
-    .guidelines-list li strong {
-        color: #1B4332;
-    }
-    .guideline-dot {
-        color: #16a34a;
-        font-weight: 800;
-        font-size: 1.1rem;
-        line-height: 1.2;
-        flex-shrink: 0;
-    }
-
-    @media (max-width: 768px) {
-        .forum-guidelines-box {
-            flex-direction: column;
-            padding: 16px;
-            gap: 12px;
-            border-radius: 18px;
-            margin-bottom: 20px;
-        }
-        .guidelines-icon-box {
-            display: none;
-        }
-        .guidelines-header-mobile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-        }
-        .guidelines-icon-mobile {
-            width: 36px;
-            height: 36px;
-            background: #ffffff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid #dcfce7;
-        }
-        .guidelines-title-row {
-            display: none;
-        }
-        .guidelines-title-mobile {
-            font-size: 0.98rem;
-            font-weight: 800;
-            color: #1B4332;
-        }
-        .guidelines-list {
-            gap: 9px;
-        }
-        .guidelines-list li {
-            font-size: 0.83rem;
-            line-height: 1.4;
-            gap: 6px;
-        }
-    }
-</style>
-
-<!-- Container principal do Fórum -->
+<!-- Container principal do Fórum da Comunidade Clínica Yelo -->
 <div id="forum-container">
 
-    <!-- 1. TELA PRINCIPAL (FEED DE POSTS) -->
+    <!-- 1. TELA PRINCIPAL (FEED DE POSTS & COMUNIDADE) -->
     <div id="forum-feed-view">
-        <div class="main-header" style="border-radius: 16px;">
+
+        <!-- HERO HUB -->
+        <div class="main-header modern-forum-hero">
             <div class="header-content">
-                <h1 style="margin: 0; font-family: var(--font-titulos); font-size: 2.2rem; color: white;">Fórum da Comunidade 💬</h1>
-                <p style="margin: 5px 0 0 0; color: rgba(255,255,255,0.85); font-size: 1.1rem; max-width: 600px;">Troque experiências, discuta casos e fortaleça sua rede de apoio com outros profissionais.</p>
+                <div>
+                    <div class="hero-badge">
+                        <span>🌿</span>
+                        <span>Espaço Clínico & Ético</span>
+                    </div>
+                    <h1 class="hero-title">Fórum da Comunidade 💬</h1>
+                    <p class="hero-subtitle">Troque experiências, discuta casos e fortaleça sua rede de apoio com outros profissionais.</p>
+                </div>
             </div>
         </div>
 
-        <!-- AVISO DE REGRAS DA COMUNIDADE (OTIMIZADO MOBILE & DESKTOP) -->
-        <div class="forum-guidelines-box">
-            <div class="guidelines-icon-box">⚖️</div>
-            
-            <div class="guidelines-header-mobile">
-                <div class="guidelines-icon-mobile">⚖️</div>
-                <div>
-                    <strong class="guidelines-title-mobile">Regras da Comunidade</strong>
-                    <span class="guidelines-badge" style="margin-left: 6px;">Diretrizes</span>
-                </div>
-            </div>
-
+        <!-- CARD DE REGRAS DA COMUNIDADE (DESKTOP & MOBILE RESPONSIVO) -->
+        <div class="forum-guidelines-box modern-guidelines-accordion">
+            <div class="guidelines-icon-box">🛡️</div>
             <div class="guidelines-content">
-                <div class="guidelines-title-row">
-                    <strong class="guidelines-title">Regras da Comunidade</strong>
-                    <span class="guidelines-badge">Diretrizes de Convivência</span>
+                <div class="guidelines-header-mobile">
+                    <div class="guidelines-icon-mobile">🛡️</div>
+                    <div class="guidelines-mobile-meta">
+                        <div class="guidelines-title">Regras e Boas Práticas da Comunidade</div>
+                        <span class="guidelines-badge">Espaço Ético</span>
+                    </div>
+                    <button type="button" class="btn-toggle-guidelines-mobile" aria-label="Recolher ou expandir regras" title="Recolher ou expandir regras">
+                        <svg rpl="" class="reddit-thread-icon" fill="currentColor" height="16" icon-name="subtract-circle" viewBox="0 0 20 20" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M10 1a9 9 0 100 18 9 9 0 000-18Zm0 16.2a7.2 7.2 0 117.2-7.2 7.208 7.208 0 01-7.2 7.2ZM6 9.1h8v1.8H6Z"></path></svg>
+                    </button>
                 </div>
-                <ul class="guidelines-list">
+                <div class="guidelines-title-row">
+                    <span class="guidelines-title">Regras e Boas Práticas da Comunidade</span>
+                    <span class="guidelines-badge">Espaço Ético & Colaborativo</span>
+                    <button type="button" id="btn-toggle-guidelines">
+                        <span id="guidelines-toggle-text">Ocultar regras</span>
+                        <span id="guidelines-toggle-icon">▲</span>
+                    </button>
+                </div>
+                <ul class="guidelines-list" id="guidelines-list-el">
                     <li>
                         <span class="guideline-dot">•</span>
                         <div><strong>Respeito acima de tudo:</strong> Debates são bem-vindos; ataques pessoais, ofensas e desrespeito não serão tolerados.</div>
@@ -193,68 +65,208 @@
             </div>
         </div>
 
-        <div class="widget" style="border-radius: 24px; padding: 25px;">
-            <div class="forum-controls">
-                <div style="display: flex; gap: 15px; flex-grow: 1; max-width: 650px; flex-wrap: wrap;">
-                    <div class="forum-search-bar" style="flex-grow: 1; max-width: unset; min-width: 250px;">
-                        <input type="text" id="forum-search-input" placeholder="Buscar por título ou palavra-chave..." style="width: 100%; border-radius: 50px; padding: 14px 20px 14px 45px; border: 1px solid #e0e0e0; background-color: #f9fafb;">
+        <!-- GRID PRINCIPAL DE 2 COLUNAS DO FEED -->
+        <div class="forum-feed-layout">
+
+            <!-- COLUNA PRINCIPAL: COMPOSER, FILTROS E FEED DE DISCUSSÕES -->
+            <main class="forum-feed-main-col">
+
+                <!-- COMPOSER BAR RÁPIDO (CÁPSULA COM FOTO DO PSICÓLOGO) -->
+                <div id="modern-create-post-prompt" class="modern-create-prompt trigger-create-post" title="Clique para iniciar uma nova discussão">
+                    <img src="https://placehold.co/70x70/1B4332/FFFFFF?text=Psi" alt="Sua foto" class="prompt-avatar">
+                    <div class="prompt-fake-input">Compartilhe um caso para intervisão, dúvida ou insight clínico...</div>
+                    <button type="button" class="prompt-btn">Nova Discussão</button>
+                </div>
+
+                <!-- CONTROLE TOOLBAR DOCK (BUSCA, CATEGORIA E TABS) -->
+                <div class="widget modern-forum-card-widget">
+                    <div class="forum-controls">
+                        <div class="forum-controls-top-row">
+                            <div class="forum-search-group">
+                                <!-- Campo de Busca com Ícone Embutido -->
+                                <div class="forum-search-bar">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" id="forum-search-input" placeholder="Buscar por tema, palavra ou sintoma...">
+                                </div>
+
+                                <!-- Seletor de Categorias -->
+                                <div class="forum-category-filter">
+                                    <select id="forum-category-select">
+                                        <option value="">Todas as Categorias</option>
+                                        <option value="Discussão de Casos (Intervisão)">Discussão de Casos (Intervisão)</option>
+                                        <option value="Burocracia e Legislação (CRP/CFP)">Burocracia e Legislação (CRP/CFP)</option>
+                                        <option value="Indicações e Encaminhamentos">Indicações e Encaminhamentos</option>
+                                        <option value="Ferramentas e Referências">Ferramentas e Referências</option>
+                                        <option value="Marketing e Carreira">Marketing e Carreira</option>
+                                        <option value="Sala de Café (Off-topic)">Sala de Café (Off-topic)</option>
+                                    </select>
+                                    <span class="forum-category-arrow">▼</span>
+                                </div>
+                            </div>
+
+                            <!-- Tabs Estilizadas como Segmented Control -->
+                            <div class="forum-tabs">
+                                <span class="tab-item active" data-filter="recentes">⚡ Recentes</span>
+                                <span class="tab-item" data-filter="populares">🔥 Populares</span>
+                                <span class="tab-item" data-filter="meus_posts">👤 Meus Posts</span>
+                            </div>
+                        </div>
+
+                        <!-- Chips de Filtro Rápido (1 Clique) -->
+                        <div class="forum-quick-chips">
+                            <button type="button" class="forum-chip-btn" onclick="window.yeloSetForumCat('')">✨ Todas</button>
+                            <button type="button" class="forum-chip-btn" onclick="window.yeloSetForumCat('Discussão de Casos (Intervisão)')">🧠 Intervisão</button>
+                            <button type="button" class="forum-chip-btn" onclick="window.yeloSetForumCat('Burocracia e Legislação (CRP/CFP)')">⚖️ Legislação CRP</button>
+                            <button type="button" class="forum-chip-btn" onclick="window.yeloSetForumCat('Indicações e Encaminhamentos')">🤝 Indicações</button>
+                            <button type="button" class="forum-chip-btn" onclick="window.yeloSetForumCat('Ferramentas e Referências')">📚 Ferramentas</button>
+                            <button type="button" class="forum-chip-btn" onclick="window.yeloSetForumCat('Marketing e Carreira')">🚀 Carreira</button>
+                            <button type="button" class="forum-chip-btn" onclick="window.yeloSetForumCat('Sala de Café (Off-topic)')">☕ Café</button>
+                        </div>
                     </div>
-                    <div class="forum-category-filter" style="min-width: 200px; flex-grow: 1;">
-                        <select id="forum-category-select" style="width: 100%; border-radius: 50px; padding: 14px 20px; border: 1px solid #e0e0e0; background-color: #f9fafb; outline: none; font-family: var(--font-principal); color: #495057; cursor: pointer; height: 48px; box-sizing: border-box;">
-                            <option value="">Todas as Categorias</option>
-                            <option value="Discussão de Casos (Intervisão)">Discussão de Casos (Intervisão)</option>
-                            <option value="Burocracia e Legislação (CRP/CFP)">Burocracia e Legislação (CRP/CFP)</option>
-                            <option value="Indicações e Encaminhamentos">Indicações e Encaminhamentos</option>
-                            <option value="Ferramentas e Referências">Ferramentas e Referências</option>
-                            <option value="Marketing e Carreira">Marketing e Carreira</option>
-                            <option value="Sala de Café (Off-topic)">Sala de Café (Off-topic)</option>
-                        </select>
+
+                    <!-- Container onde os cards dos posts são renderizados dinamicamente -->
+                    <div id="forum-posts-container">
+                        <div class="loader-wrapper"><div class="loader-spinner"></div></div>
+                    </div>
+
+                    <!-- Botão Carregar Mais Posts -->
+                    <div class="forum-load-more-box">
+                        <button id="btn-load-more-posts" class="btn btn-pill-load-more hidden">Mostrar mais</button>
                     </div>
                 </div>
-                <div class="forum-tabs" style="display: flex; gap: 15px;">
-                    <span class="tab-item" data-filter="populares">Populares</span>
-                    <span class="tab-item active" data-filter="recentes">Recentes</span>
-                    <span class="tab-item" data-filter="meus_posts">Meus Posts</span>
+
+            </main>
+
+            <!-- COLUNA LATERAL: WIDGETS DE SUPORTE CLÍNICO & BOAS PRÁTICAS -->
+            <aside class="forum-feed-sidebar-col">
+
+                <!-- WIDGET 1: DICAS DE INTERVISÃO CLÍNICA -->
+                <div class="forum-sidebar-card">
+                    <div class="sidebar-card-header">
+                        <div class="sidebar-card-icon">🧠</div>
+                        <h4 class="sidebar-card-title">Dicas para Intervisão</h4>
+                    </div>
+                    <ul class="sidebar-tips-list">
+                        <li>
+                            <span class="sidebar-tip-dot">•</span>
+                            <div><strong>Descreva a demanda:</strong> Sintomas, queixa principal e histórico sem dados de identificação.</div>
+                        </li>
+                        <li>
+                            <span class="sidebar-tip-dot">•</span>
+                            <div><strong>Abordagem Teórica:</strong> Indique sua linha (TCC, Psicanálise, Humanismo) para direcionar as contribuições.</div>
+                        </li>
+                        <li>
+                            <span class="sidebar-tip-dot">•</span>
+                            <div><strong>Impasse Terapêutico:</strong> Destaque o ponto exato onde a intervenção precisa de clareza.</div>
+                        </li>
+                    </ul>
                 </div>
-            </div>
-            <!-- Container onde os cards dos posts serão renderizados -->
-            <div id="forum-posts-container">
-                <!-- Loader/Spinner -->
-                <div class="loader-wrapper"><div class="loader-spinner"></div></div>
-            </div>
-            <div style="text-align: center; margin-top: 20px;">
-                <button id="btn-load-more-posts" class="btn btn-secundario hidden">Mostrar mais</button>
-            </div>
+
+                <!-- WIDGET 2: SELOS DE RECONHECIMENTO -->
+                <div class="forum-sidebar-card">
+                    <div class="sidebar-card-header">
+                        <div class="sidebar-card-icon">🏅</div>
+                        <h4 class="sidebar-card-title">Selos de Reconhecimento</h4>
+                    </div>
+                    <div class="sidebar-badge-showcase">
+                        <div class="badge-showcase-item">
+                            <span class="badge-item-emoji">🌿</span>
+                            <div>
+                                <strong class="badge-item-name name-autentico">Autêntico</strong>
+                                <span class="badge-item-desc">Psicólogo verificado com conduta exemplar.</span>
+                            </div>
+                        </div>
+                        <div class="badge-showcase-item">
+                            <span class="badge-item-emoji">🌱</span>
+                            <div>
+                                <strong class="badge-item-name name-semeador">Semeador</strong>
+                                <span class="badge-item-desc">Cria discussões ricas de intervisão.</span>
+                            </div>
+                        </div>
+                        <div class="badge-showcase-item">
+                            <span class="badge-item-emoji">🎙️</span>
+                            <div>
+                                <strong class="badge-item-name name-voz-ativa">Voz Ativa</strong>
+                                <span class="badge-item-desc">Comenta e apoia ativamente os colegas.</span>
+                            </div>
+                        </div>
+                        <div class="badge-showcase-item">
+                            <span class="badge-item-emoji">🚀</span>
+                            <div>
+                                <strong class="badge-item-name name-pioneiro">Pioneiro</strong>
+                                <span class="badge-item-desc">Membro fundador da rede Yelo Psi.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WIDGET 3: ESPAÇO DE CUIDADO MÚTUO -->
+                <div class="forum-sidebar-card forum-sidebar-card-highlight">
+                    <div class="sidebar-card-header">
+                        <div class="sidebar-card-icon">☕</div>
+                        <h4 class="sidebar-card-title">Cuidado com Quem Cuida</h4>
+                    </div>
+                    <p class="sidebar-card-text">
+                        A prática clínica pode ser solitária. Este espaço foi construído para você encontrar acolhimento, escuta mútua e troca franca com pares éticos.
+                    </p>
+                </div>
+
+            </aside>
+
         </div>
+
     </div>
 
-    <!-- 2. TELA DE POST ÚNICO (Inicialmente oculta) -->
-    <div id="forum-post-view" class="hidden">
-        <!-- O conteúdo será gerado via JS -->
-    </div>
+    <!-- Botão Flutuante Mobile (FAB) para Criar Post -->
+    <button type="button" id="forum-mobile-fab" class="forum-mobile-fab trigger-create-post" title="Criar Nova Discussão">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>Nova Discussão</span>
+    </button>
+
+    <!-- 2. TELA DE POST ÚNICO (Renderizada dinamicamente com template) -->
+    <div id="forum-post-view" class="hidden"></div>
 
 </div>
 
 <!-- 4. MODAL PARA CRIAR NOVO POST (Inicialmente oculto) -->
 <div id="forum-create-modal" class="custom-modal-overlay" style="display: none;">
-    <div class="custom-modal-box" style="max-width: 600px; padding: 30px; box-sizing: border-box; overflow-x: hidden; max-height: 90vh; overflow-y: auto;">
+    <div class="custom-modal-box modal-box-create">
         <div class="sheet-drag-handle"></div>
-        <button type="button" class="modal-close-btn" id="forum-modal-close-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        <button type="button" class="modal-close-btn" id="forum-modal-close-btn" title="Fechar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
         
-        <div style="text-align: center; margin-bottom: 10px;">
-            <div style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #e0f2fe; border-radius: 50%; color: #0284c7; font-size: 1.2rem; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(2,132,199,0.1);">🗣️</div>
-            <h3 style="margin: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.4rem;">Nova Discussão</h3>
+        <div class="modal-intro-header">
+            <div class="modal-intro-icon">✍️</div>
+            <h3 class="modal-intro-title">Nova Discussão Clínica</h3>
+            <p class="modal-intro-subtitle">Compartilhe casos, dúvidas éticas ou reflexões com a comunidade.</p>
         </div>
         
         <form id="forum-create-form">
-            <div class="form-group" style="margin-bottom: 15px;">
-                <label for="post-title" style="color: #495057; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; display: block;">Título</label>
-                <input type="text" id="post-title" name="title" required maxlength="150" placeholder="Ex: Dúvida sobre atendimento online..." style="width: 100%; padding: 10px 14px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 0.95rem; background-color: #f9fafb; font-family: var(--font-principal);">
+            <div class="form-group modal-form-group">
+                <label for="post-title" class="modal-form-label">Título da Discussão</label>
+                <input type="text" id="post-title" name="title" required maxlength="150" placeholder="Ex: Intervisão: Dificuldade no manejo de transferência em TCC..." class="modal-form-input">
+                
+                <!-- CAIXA DE DISCUSSÕES PARECIDAS EM TEMPO REAL -->
+                <div id="forum-similar-topics-box" class="similar-topics-box" style="display: none;">
+                    <div class="similar-header">
+                        <span>🔍 Discussões parecidas já ativas na comunidade:</span>
+                    </div>
+                    <div id="similar-topics-list" class="similar-list"></div>
+                    <div class="similar-footer">
+                        <span class="similar-tip">💡 Veja se alguma já responde sua dúvida!</span>
+                        <button type="button" id="btn-dismiss-similar" class="similar-dismiss-btn">Continuar criando post ✕</button>
+                    </div>
+                </div>
             </div>
-            <div class="form-group" style="margin-bottom: 15px;">
-                <label for="post-category" style="color: #495057; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; display: block;">Categoria</label>
-                <select id="post-category" name="category" required>
-                    <option value="" disabled selected>Selecione um tema...</option>
+
+            <div class="form-group modal-form-group">
+                <label id="post-category-ts-label" for="post-category" class="modal-form-label">Categoria Temática</label>
+                <select id="post-category" name="category" required class="modal-form-select">
+                    <option value="" disabled selected>Selecione um tema para direcionar sua dúvida...</option>
                     <option value="Discussão de Casos (Intervisão)">Discussão de Casos (Intervisão)</option>
                     <option value="Burocracia e Legislação (CRP/CFP)">Burocracia e Legislação (CRP/CFP)</option>
                     <option value="Indicações e Encaminhamentos">Indicações e Encaminhamentos</option>
@@ -263,29 +275,95 @@
                     <option value="Sala de Café (Off-topic)">Sala de Café (Off-topic)</option>
                 </select>
             </div>
-            <div id="forum-disclaimer" class="forum-disclaimer-box hidden" style="border-radius: 10px; padding: 10px; background: #fffbeb; border: 1px solid #fde68a; color: #b45309; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 15px; font-size: 0.85rem;">
-                <div style="font-size: 1.2rem;">⚠️</div>
-                <div>
-                    <strong style="display: block; margin-bottom: 4px; color: #92400e;">Atenção ao Sigilo Profissional:</strong> 
-                    Lembre-se do Código de Ética. Nunca cite nomes, locais ou dados que possam identificar seus pacientes.
+
+            <!-- DISCLAIMER DE ÉTICA & SIGILO -->
+            <div id="forum-disclaimer" class="forum-disclaimer-box hidden">
+                <div class="disclaimer-icon">⚠️</div>
+                <div class="disclaimer-text">
+                    <strong>Atenção ao Sigilo Profissional (Art. 9º CFP):</strong> 
+                    Ao relatar casos ou dúvidas clínicas, nunca mencione nomes, locais, profissões específicas ou dados que possam identificar o paciente.
                 </div>
             </div>
-            <div class="form-group" style="margin-bottom: 15px;">
-                <label for="post-content" style="color: #495057; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; display: block;">Conteúdo</label>
-                <textarea id="post-content" name="content" rows="4" required placeholder="Descreva com mais detalhes..." style="width: 100%; padding: 10px 14px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 0.95rem; background-color: #f9fafb; font-family: var(--font-principal); resize: vertical; max-height: 25vh; overflow-y: auto;"></textarea>
+
+            <div class="form-group modal-form-group">
+                <label for="post-content" class="modal-form-label">Conteúdo & Detalhes</label>
+                <textarea id="post-content" name="content" rows="5" required placeholder="Descreva os detalhes da situação clínica, abordagem teórica e ponto onde precisa de intervisão..." class="modal-form-textarea"></textarea>
+                <div id="post-create-preview-slot" class="forum-preview-slot"></div>
             </div>
-            <div class="form-group-checkbox" style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="post-anonymous" name="isAnonymous" style="width: 18px; height: 18px; accent-color: #1B4332;">
-                <label for="post-anonymous" style="margin: 0; color: #495057; font-weight: 500; cursor: pointer;">Publicar como Anônimo</label>
+
+            <div class="form-group-checkbox modal-checkbox-box">
+                <input type="checkbox" id="post-anonymous" name="isAnonymous" class="modal-checkbox">
+                <label for="post-anonymous" class="modal-checkbox-label">Publicar como Anônimo (oculta seu nome e foto nesta discussão)</label>
             </div>
-            <div class="form-actions" style="justify-content: flex-end; margin-top: 20px; display: flex; align-items: center; width: 100%; gap: 10px;">
-                <button type="button" class="btn btn-secundario" id="cancel-forum-modal" style="padding: 10px 16px; border-radius: 50px; font-size: 0.95rem; min-width: 0; width: auto;">Cancelar</button>
-                <button type="submit" id="forum-submit-post-btn" class="btn btn-principal" style="padding: 10px 16px; border-radius: 50px; font-size: 0.95rem; box-shadow: 0 2px 8px rgba(27,67,50,0.2); min-width: 0; width: auto;">Publicar</button>
+
+            <div class="form-actions modal-form-actions">
+                <button type="button" class="btn btn-secundario" id="cancel-forum-modal">Cancelar</button>
+                <button type="submit" id="forum-submit-post-btn" class="btn btn-principal">Publicar Discussão</button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- 4.1. MODAL DE VINCULAÇÃO / REDIRECIONAMENTO DE TÓPICO -->
+<div id="forum-redirect-modal" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box modal-box-redirect">
+        <button type="button" class="modal-close-btn" id="forum-redirect-modal-close-btn">&times;</button>
+        <div class="modal-intro-header">
+            <div class="redirect-intro-icon">🔗</div>
+            <h3 class="redirect-intro-title">Vincular / Redirecionar Discussão</h3>
+            <p class="redirect-intro-subtitle">Una tópicos semelhantes para centralizar as respostas dos profissionais.</p>
+        </div>
+        <div class="form-group modal-form-group">
+            <label class="modal-form-label">Buscar tópico de destino</label>
+            <input type="text" id="redirect-search-input" placeholder="Digite o título ou palavra-chave..." class="redirect-search-input">
+        </div>
+        <div id="redirect-search-results" class="redirect-search-results"></div>
+        <div id="current-redirect-info" class="current-redirect-info"></div>
+        <div class="redirect-actions-row">
+            <button type="button" class="btn btn-secundario" id="btn-remove-redirect">Remover Vínculo</button>
+            <div class="redirect-actions-right">
+                <button type="button" class="btn btn-secundario" id="btn-cancel-redirect">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4.2. MODAL DE ALERTA DE DUPLICIDADE DA IA -->
+<div id="forum-ai-duplicate-modal" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box modal-box-ai">
+        <div class="ai-modal-icon">💡</div>
+        <h3 class="ai-modal-title">Essa discussão já existe na comunidade!</h3>
+        <p id="ai-duplicate-explanation"></p>
+        
+        <div id="ai-matched-post-card">
+            <div class="ai-matched-tag">💬 Discussão já ativa</div>
+            <div id="ai-matched-post-title"></div>
+            <span class="ai-matched-hint">Clique para ver as respostas dos outros psicólogos</span>
+        </div>
+        
+        <div class="ai-modal-actions">
+            <button type="button" class="btn btn-principal" id="btn-ai-go-to-topic">Ir para a discussão existente ➔</button>
+            <button type="button" class="btn btn-secundario" id="btn-ai-publish-anyway">Publicar como novo post mesmo assim</button>
+        </div>
+    </div>
+</div>
+
+<!-- 4.3. MODAL DE BLOQUEIO POR VIOLAÇÃO ÉTICA -->
+<div id="forum-ethics-blocked-modal" class="custom-modal-overlay" style="display: none;">
+    <div class="custom-modal-box modal-box-ethics">
+        <div class="ethics-modal-icon">🚫</div>
+        <h3 class="ethics-modal-title">Publicação Não Permitida</h3>
+        <div id="ethics-violation-badge">Diretrizes Éticas do CFP</div>
+        <p id="ethics-violation-reason"></p>
+        
+        <div id="ethics-violation-suggestion-box">
+            <div class="ethics-suggestion-title">💡 Como ajustar para poder publicar:</div>
+            <div id="ethics-violation-suggestion"></div>
+        </div>
+        
+        <button type="button" class="btn btn-principal" id="btn-ethics-understand">Entendi, vou ajustar meu texto ➔</button>
+    </div>
+</div>
 
 <!-- 5. TEMPLATES PARA RENDERIZAÇÃO DINÂMICA -->
 
@@ -293,7 +371,7 @@
 <template id="forum-post-card-template">
     <div class="forum-post-card reddit-style-card">
         <div class="reddit-card-header">
-            <span class="post-pinned-pill hidden" title="Fixado pelo Administrador">
+            <span class="post-pinned-pill hidden" title="Fixado pela Moderação">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
                 <span>Fixado</span>
             </span>
@@ -313,163 +391,253 @@
         </div>
         <div class="reddit-card-footer">
             <div class="reddit-action-bar">
-                <button class="support-btn reddit-pill" title="Apoiar">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                <button class="support-btn reddit-pill" title="Apoiar Discussão">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                     <span class="post-votes-count">0</span>
                 </button>
-                <div class="reddit-pill fake-comment-btn" title="Comentários">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                <div class="reddit-pill fake-comment-btn" title="Ver Respostas">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                     <span class="post-comments-count">0 comentários</span>
                 </div>
             </div>
             <div class="post-actions-right">
-                <button class="edit-btn hidden icon-btn-small" title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-pencil"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path><path d="M5 15l4 4"></path><path d="M3.5 16.5l4 4"></path></svg></button>
-                <button class="delete-btn hidden icon-btn-small" style="color:#d32f2f;" title="Excluir"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
-                <button class="report-btn icon-btn-small" title="Denunciar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></button>
+                <button class="edit-btn hidden icon-btn-small" title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path><path d="M5 15l4 4"></path><path d="M3.5 16.5l4 4"></path></svg></button>
+                <button class="delete-btn hidden icon-btn-small btn-delete-accent" title="Excluir"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
+                <button class="report-btn icon-btn-small" title="Denunciar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg></button>
             </div>
         </div>
     </div>
 </template>
 
-<!-- Template para a view de post completo -->
+<!-- Template para a view de post completo (LAYOUT MODERNO DE CARDS SEPARADOS) -->
 <template id="forum-full-post-template">
-    <div class="reddit-full-view">
-        <!-- Novo wrapper para o Layout de 2 Colunas -->
-        <div class="forum-two-column-layout" style="max-width: 1100px; margin: 0 auto; display: flex; gap: 30px; width: 100%; align-items: stretch; flex-wrap: wrap;">
+    <div class="modern-fullpost-container reddit-full-view">
+        
+        <!-- Coluna Principal: Barra Superior, Artigo da Discussão e Seção de Comentários -->
+        <div class="modern-fullpost-main forum-main-column">
             
-            <!-- Coluna Esquerda: Post Principal e Comentários -->
-            <div class="forum-main-column" style="flex: 1 1 100%; max-width: 740px; min-width: 0;">
-                <div class="forum-post-main">
-                <div class="reddit-app-header">
-                    <button id="forum-back-to-feed-btn" class="app-back-btn" title="Voltar ao Fórum">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <!-- Barra Superior: Trilha de Navegação (Breadcrumb) com Ações Rápidas (Estilo App Premium) -->
+            <div class="modern-fullpost-header-nav">
+                <nav class="forum-breadcrumb-nav" aria-label="Navegação do Fórum">
+                    <button type="button" class="breadcrumb-back-btn app-back-btn" id="forum-back-to-feed-btn" title="Voltar ao Feed do Fórum">
+                        <span class="back-icon-circle">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        </span>
+                        <span class="back-btn-text">Fórum</span>
                     </button>
-                    <span class="app-header-title">Discussão</span>
-                </div>
-                <div class="widget reddit-full-post-body">
-                    <div class="reddit-card-header" style="margin-bottom: 15px;">
-                        <span class="post-pinned-pill hidden" title="Fixado pelo Administrador">
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
-                            <span>Fixado</span>
-                        </span>
-                        <img class="full-post-avatar post-author-avatar" src="" alt="Avatar">
-                        <span class="full-post-category post-category"></span>
-                        <span class="meta-separator">•</span>
-                        <span class="author-wrapper">
-                            <span class="full-post-author post-author"></span>
-                            <span class="author-badges-full"></span>
-                        </span>
-                    </div>
-                    <h1 class="full-post-title post-title"></h1>
-                    <div class="full-post-content post-snippet"></div>
-                    
-                    <div class="reddit-card-footer post-footer" style="margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px;">
-                        <div class="reddit-action-bar">
-                            <button class="support-btn reddit-pill" title="Apoiar">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                                <span class="post-votes-count" style="font-size:1rem;">0</span>
-                            </button>
-                        </div>
-                        <div class="post-actions-right">
-                            <button class="edit-btn-full hidden icon-btn-small" title="Editar Post"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-pencil"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path><path d="M5 15l4 4"></path><path d="M3.5 16.5l4 4"></path></svg></button>
-                            <button class="delete-btn-full hidden icon-btn-small" style="color:#d32f2f;" title="Excluir Post"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
-                            <button class="report-btn icon-btn-small" title="Denunciar Post"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></button>
-                        </div>
-                    </div>
-
-                    <hr style="margin: 30px 0;">
-
-                    <div class="comment-section">
-                        <h3>Comentários</h3>
-                        <form id="comment-form">
-                            <div class="form-group">
-                                <textarea id="comment-content" class="comment-input-capsule" rows="1" placeholder="Adicionar um comentário..." required style="max-height: 25vh; overflow-y: auto;"></textarea>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div class="form-group-checkbox">
-                                    <input type="checkbox" id="comment-anonymous">
-                                    <label for="comment-anonymous">Comentar como Anônimo</label>
-                                </div>
-                                <div style="display: flex; gap: 10px; align-items: center;">
-                                    <button type="button" id="btn-generate-ai-comment" class="btn hidden" style="padding: 8px 18px; font-size: 0.9rem; min-width: 0; width: auto; border-radius: 50px; margin: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 2px 5px rgba(16,185,129,0.3); display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Gerar resposta engajadora com IA">✨ IA</button>
-                                    <button type="submit" class="btn btn-principal" style="padding: 8px 18px; font-size: 0.9rem; min-width: 0; width: auto; border-radius: 50px; margin: 0;">Comentar</button>
-                                </div>
-                            </div>
-                        </form>
-                        <div id="comment-thread" class="comment-thread">
-                            <!-- Comentários serão renderizados aqui -->
-                        </div>
-                        <div style="text-align: center; margin-top: 20px;">
-                            <button id="btn-load-more-comments" class="btn btn-secundario hidden">Mostrar mais comentários</button>
-                        </div>
-                    </div> <!-- Fim de comment-section -->
-                </div> <!-- Fim do widget reddit-full-post-body -->
-                </div> <!-- Fim de forum-post-main -->
-            </div> <!-- Fim da Coluna Esquerda -->
-            
-            <!-- Coluna Direita (Sidebar): Posts Relacionados -->
-            <div class="forum-sidebar-column" style="flex: 1 1 320px; min-width: 0; max-width: 100%; margin-bottom: 50px;">
-                <div style="position: sticky; top: 0; z-index: 10; padding: 25px; background-color: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 25px;">
-                        <div style="width: 32px; height: 32px; background: #e0f2fe; color: #0284c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem;">✨</div>
-                        <h3 style="font-size: 1.1rem; color: #334155; margin: 0; font-family: var(--font-titulos); font-weight: 700;">Continue Explorando</h3>
-                    </div>
-                    <div id="related-posts-container" style="display: flex; flex-direction: column; gap: 15px;"></div>
-                </div>
+                    <span class="breadcrumb-sep" aria-hidden="true">›</span>
+                    <span class="breadcrumb-current-cat full-post-category post-category"></span>
+                    <span class="app-header-title hidden" style="display:none;"></span>
+                </nav>
             </div>
 
-        </div> <!-- Fim do Wrapper 2 Colunas -->
+            <!-- Card 1: Artigo da Discussão Aberta -->
+            <article class="modern-fullpost-card">
+                <!-- Cabeçalho com Autor e Ações -->
+                <div class="modern-card-header full-post-author-row">
+                    <div class="author-info-group">
+                        <img class="modern-author-avatar full-post-avatar post-author-avatar" src="/img/default-avatar.png" alt="Avatar">
+                        <div class="author-meta-block">
+                            <div class="author-name-row">
+                                <span class="full-post-author post-author"></span>
+                                <span class="author-badges author-badges-full"></span>
+                                <span class="post-pinned-pill pinned-badge-chip hidden" title="Fixado pela Moderação">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
+                                    <span>Fixado</span>
+                                </span>
+                            </div>
+                            <span class="post-timestamp-text post-time"></span>
+                        </div>
+                    </div>
+
+                    <!-- Botões de Ação do Post (Ordem de Prioridade Lógica) -->
+                    <div class="post-actions-right">
+                        <!-- 1. Apoiar Discussão (Interação Primária) -->
+                        <button type="button" class="modern-pill-btn support-btn" title="Apoiar Discussão" aria-label="Apoiar discussão">
+                            <svg class="support-heart-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            <span class="post-votes-count">0</span>
+                            <span class="support-label">apoios</span>
+                        </button>
+                        <!-- 2. Compartilhar / Copiar Link (Distribuição) -->
+                        <button type="button" class="share-btn-full modern-icon-action-btn" title="Copiar link da discussão" aria-label="Compartilhar discussão">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                        </button>
+                        <!-- 3. Vincular / Redirecionar (Organização) -->
+                        <button type="button" class="redirect-btn-full modern-icon-action-btn hidden" title="Vincular / Redirecionar para outro tópico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></button>
+                        <!-- 4. Editar Discussão (Autor) -->
+                        <button type="button" class="edit-btn-full modern-icon-action-btn hidden" title="Editar Discussão"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path><path d="M5 15l4 4"></path><path d="M3.5 16.5l4 4"></path></svg></button>
+                        <!-- 5. Denunciar Discussão (Outros Usuários) -->
+                        <button type="button" class="report-btn modern-icon-action-btn" title="Denunciar Discussão" style="display: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg></button>
+                        <!-- 6. Excluir Discussão (Ação Destrutiva) -->
+                        <button type="button" class="delete-btn-full modern-icon-action-btn delete hidden" title="Excluir Post"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>
+                    </div>
+                </div>
+
+                <!-- BANNER DE REDIRECIONAMENTO OFICIAL -->
+                <div class="full-post-redirect-banner hidden"></div>
+
+                <!-- Título e Corpo -->
+                <h1 class="modern-fullpost-title full-post-title post-title"></h1>
+                <div class="modern-fullpost-body full-post-content post-snippet"></div>
+            </article>
+
+            <!-- Card 2: Seção de Comentários & Trocas -->
+            <section class="modern-comments-section comment-section">
+                <h3 class="comments-header-title">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    <span id="post-total-comments-label">Comentários e Trocas</span>
+                </h3>
+
+                <!-- Composer Moderno de Comentário -->
+                <form id="comment-form" class="modern-comment-composer">
+                    <div id="comment-content" class="composer-editable-area comment-input-capsule rich-mention-input" contenteditable="true" data-placeholder="Adicione sua visão clínica ou responda a esta dúvida..."></div>
+                    <div id="comment-preview-slot" class="forum-preview-slot" style="display: none;"></div>
+                    
+                    <div class="composer-toolbar">
+                        <label class="composer-checkbox-label" for="comment-anonymous">
+                            <input type="checkbox" id="comment-anonymous" class="comment-anon-checkbox">
+                            <span class="comment-anon-label">Comentar como Anônimo</span>
+                        </label>
+                        <div class="composer-actions-right">
+                            <button type="button" id="btn-generate-ai-comment" class="modern-pill-btn btn-ai-sparkle hidden" title="Sugerir rascunho de resposta fundamentada com IA">
+                                ✨ IA Sugestão
+                            </button>
+                            <button type="submit" class="composer-btn-send btn-principal btn-comment-submit" id="btn-submit-comment">
+                                Publicar Resposta
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Thread de Comentários -->
+                <div id="comment-thread" class="modern-comment-thread comment-thread"></div>
+                
+                <div class="forum-load-more-comments-box">
+                    <button id="btn-load-more-comments" class="btn btn-pill-load-more hidden">Mostrar mais comentários</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Sidebar Lateral: Destaques & Contexto Clínico -->
+        <aside class="modern-sidebar-panel forum-sidebar-column">
+            <!-- WIDGET 1: ESPAÇO SEGURO & CFP -->
+            <div class="sidebar-box">
+                <div class="sidebar-box-header">
+                    <span class="sidebar-box-icon">🛡️</span>
+                    <h4 class="sidebar-box-title">Espaço Seguro & CFP</h4>
+                </div>
+                <p class="sidebar-box-text">
+                    Lembre-se de preservar a confidencialidade e nunca expor dados identificáveis de pacientes.
+                </p>
+            </div>
+
+            <!-- WIDGET 2: DISCUSSÕES POPULARES -->
+            <div class="sidebar-box">
+                <div class="sidebar-box-header">
+                    <span class="sidebar-box-icon">🔥</span>
+                    <h4 class="sidebar-box-title">Discussões Populares</h4>
+                </div>
+                <div id="related-posts-container" class="modern-popular-posts-list"></div>
+            </div>
+
+            <!-- WIDGET 3: SUGESTÕES DE LEITURA -->
+            <div class="sidebar-box" id="sidebar-suggested-posts-box">
+                <div class="sidebar-box-header">
+                    <span class="sidebar-box-icon">💡</span>
+                    <h4 class="sidebar-box-title">Sugestões de Leitura</h4>
+                </div>
+                <div id="suggested-posts-container" class="modern-popular-posts-list"></div>
+            </div>
+        </aside>
+
     </div>
 </template>
 
 <!-- Template para um único comentário -->
 <template id="forum-comment-template">
-    <div class="comment-card yt-comment">
-        <div class="comment-pinned-badge hidden">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <div class="modern-comment-card comment-card yt-comment">
+        <!-- Pin badge se fixado pelo admin -->
+        <div class="comment-pinned-badge pinned-badge-chip hidden">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="17" x2="12" y2="22"></line>
                 <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path>
             </svg>
             <span>Fixado pelo Administrador</span>
         </div>
-        <div class="yt-comment-header">
-            <img class="comment-avatar yt-avatar" src="" alt="Avatar">
-            <div class="yt-comment-meta">
-                <strong class="comment-author yt-username"></strong>
-                <span class="author-badges"></span>
-                <span class="yt-meta-dot">·</span>
-                <span class="comment-time yt-time"></span>
+
+        <!-- Cabeçalho do comentário -->
+        <div class="modern-comment-header yt-comment-header">
+            <img class="modern-author-avatar comment-avatar yt-avatar" src="/img/default-avatar.png" alt="Avatar">
+            <div class="author-meta-block yt-comment-meta">
+                <div class="author-name-row comment-author-name">
+                    <strong class="comment-author yt-username"></strong>
+                    <span class="author-badges"></span>
+                </div>
+                <span class="comment-time-ago comment-time yt-time"></span>
             </div>
         </div>
+
+        <!-- Conteúdo do comentário -->
         <div class="yt-comment-content-wrapper">
             <div class="yt-comment-text-container">
-                <div class="comment-body yt-text"></div>
-                <button class="yt-read-more hidden">Ler mais</button>
+                <div class="modern-comment-text comment-body yt-text"></div>
+                <button type="button" class="yt-read-more hidden">Ler mais</button>
             </div>
-            <div class="comment-actions yt-actions">
-                <button class="comment-like-btn yt-action-btn" title="Curtir">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                    <span class="comment-likes-count yt-action-count">0</span>
+
+            <!-- Ações do comentário -->
+            <div class="modern-comment-actions comment-actions yt-actions">
+                <button type="button" class="comment-action-pill like-btn comment-like-btn yt-action-btn" title="Curtir Comentário">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    <span class="likes-count comment-likes-count yt-action-count">0</span>
                 </button>
-                <button class="comment-ai-reply-btn yt-action-btn hidden" title="Responder com IA" style="color: #10b981; font-weight: bold; padding: 2px 5px;">✨ IA</button>
-                <button class="comment-reply-btn yt-action-btn" title="Responder">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                <button type="button" class="comment-action-pill reply-btn comment-reply-btn yt-action-btn" title="Responder">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    <span>Responder</span>
                 </button>
-                <button class="comment-pin-btn yt-action-btn hidden" title="Fixar comentário no topo">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="17" x2="12" y2="22"></line>
-                        <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path>
-                    </svg>
+                <button type="button" class="comment-action-pill comment-pin-btn yt-action-btn hidden" title="Fixar comentário no topo">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path></svg>
                     <span class="pin-btn-text">Fixar</span>
                 </button>
-                <button class="report-btn yt-action-btn inline-report" title="Denunciar">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <button type="button" class="comment-action-pill comment-ai-reply-btn yt-action-btn hidden" title="Responder com IA">
+                    <span>✨ IA</span>
                 </button>
+                <div class="comment-secondary-actions">
+                    <button type="button" class="comment-action-pill report-btn yt-action-btn inline-report" title="Denunciar">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                    </button>
+                </div>
             </div>
         </div>
-        <div class="yt-replies-wrapper">
+
+        <!-- Sub-respostas / Tree -->
+        <div class="modern-replies-wrapper yt-replies-wrapper">
             <div class="yt-thread-line hidden"></div>
-            <div class="comment-replies-container yt-replies"></div>
+            <div class="modern-replies-branch comment-replies-container yt-replies"></div>
         </div>
     </div>
 </template>
+
+<script>
+    // Helper global para filtrar categorias rapidamente via chips da toolbar
+    window.yeloSetForumCat = function(categoryName) {
+        const catSelect = document.getElementById('forum-category-select');
+        if (catSelect) {
+            catSelect.value = categoryName;
+            catSelect.dispatchEvent(new Event('change'));
+        }
+        document.querySelectorAll('.forum-chip-btn').forEach(btn => {
+            const txt = btn.textContent;
+            const isMatch = (categoryName === '' && txt.includes('Todas')) ||
+                            (categoryName !== '' && (txt.includes(categoryName) || 
+                             (categoryName.includes('Intervisão') && txt.includes('Intervisão')) ||
+                             (categoryName.includes('Legislação') && txt.includes('Legislação')) ||
+                             (categoryName.includes('Indicações') && txt.includes('Indicações')) ||
+                             (categoryName.includes('Ferramentas') && txt.includes('Ferramentas')) ||
+                             (categoryName.includes('Carreira') && txt.includes('Carreira')) ||
+                             (categoryName.includes('Café') && txt.includes('Café'))
+                            ));
+            if (isMatch) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+    };
+</script>

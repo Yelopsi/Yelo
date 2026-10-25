@@ -157,10 +157,8 @@ document.addEventListener('DOMContentLoaded', function () {
             animation: pulse-green 2s infinite;
         }
 
-        /* BOTÕES MOSTRAR MAIS COMO LINKS ESTILO TEXTO */
-        #btn-load-more-articles,
-        #btn-load-more-posts,
-        #btn-load-more-comments {
+        /* BOTÕES MOSTRAR MAIS COMO LINKS ESTILO TEXTO (ARTIGOS) */
+        #btn-load-more-articles {
             background: transparent !important;
             border: none !important;
             color: #1B4332 !important;
@@ -172,9 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
             display: block;
             width: fit-content;
         }
-        #btn-load-more-articles:hover,
-        #btn-load-more-posts:hover,
-        #btn-load-more-comments:hover {
+        #btn-load-more-articles:hover {
             color: #2D6A4F !important;
             transform: none !important;
             background: transparent !important;
@@ -298,18 +294,76 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!text) return '';
         let formatted = text;
 
-        // Formatações (Ordem importa para não haver conflito de caracteres)
+        // Normaliza &amp; para & dentro de URLs para que os regexes funcionem mesmo com HTML pré-sanitizado
+        formatted = formatted.replace(/(https?:\/\/[^\s<]+|\/psi\/[^\s<]+|psi_[^\s<]+)/g, function(url) {
+            return url.replace(/&amp;/g, '&');
+        });
+
+        // Formatações Markdown padrão
         formatted = formatted.replace(/'''([\s\S]*?)'''/g, '<code style="background:#f4f4f4; padding:2px 6px; border-radius:4px; font-family:monospace; color:#333; font-size:0.9em;">$1</code>');
         formatted = formatted.replace(/__([\s\S]*?)__/g, '<u>$1</u>');
         formatted = formatted.replace(/\*([\s\S]*?)\*/g, '<strong>$1</strong>');
         formatted = formatted.replace(/_([\s\S]*?)_/g, '<em>$1</em>');
         formatted = formatted.replace(/~([\s\S]*?)~/g, '<del>$1</del>');
 
-        // Quebras de linha por último
+        // Helper para gerar o Mention Pill da Discussão do Fórum
+        const buildForumMentionPillHtml = (id) => {
+            const cached = (typeof window !== 'undefined' && window.forumSnippetsCache && window.forumSnippetsCache[id]) ? window.forumSnippetsCache[id] : null;
+            const hasRealTitle = cached && cached.title && !cached.notFound;
+            const title = hasRealTitle ? cached.title : `#${id}`;
+            const titleAttr = hasRealTitle ? `Abrir discussão #${id}: ${cached.title}` : `Abrir discussão #${id}`;
+            return `<a href="javascript:void(0)" onclick="window.yeloOpenForumPost(${id})" class="forum-mention-pill" data-post-id="${id}" title="${titleAttr}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> <span class="mention-pill-text mention-pill-${id}">${title}</span></a>`;
+        };
+
+        // 1. URLs de tópicos do fórum (ex: http://localhost:3001/psi/psi_dashboard.html?tab=forum&post=502)
+        const forumUrlRegex = /(?:https?:\/\/[^\s<]+)?(?:\/psi\/|psi_|\/forum\/|\/posts\/|\.html|\?tab=forum)[^\s<]*(?:[?&#]|&amp;)(?:postId|post)=(\d+)[^\s<]*/gi;
+        formatted = formatted.replace(forumUrlRegex, function(match, id) {
+            return buildForumMentionPillHtml(id);
+        });
+
+        // 2. Rotas diretas de posts (ex: /posts/502 ou /api/forum/posts/502 ou /forum/502)
+        const forumRouteRegex = /(?:https?:\/\/[^\s<]+)?(?:\/api\/forum\/posts\/|\/posts\/|\/forum\/|\/topico\/)(\d+)\b[^\s<]*/gi;
+        formatted = formatted.replace(forumRouteRegex, function(match, id) {
+            return buildForumMentionPillHtml(id);
+        });
+
+        // 3. Menções e hashtags (#502, @topico:502), ignorando tags HTML já geradas
+        formatted = formatted.replace(/(<[^>]+>)|((?:^|[\s(])(?:#|@topico:|@post:|#topico:)(\d+)\b)/gi, function(match, tag, fullMention, id) {
+            if (tag) return tag;
+            const prefix = match.match(/^[\s(]/) ? match[0] : '';
+            return `${prefix}${buildForumMentionPillHtml(id)}`;
+        });
+
+        // 4. Links externos genéricos (preservando tags HTML já geradas)
+        formatted = formatted.replace(/(<[^>]+>)|(https?:\/\/[^\s<]+)/gi, function(match, tag, url) {
+            if (tag) return tag;
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #1B4332; text-decoration: underline; font-weight: 600; word-break: break-all;">${url}</a>`;
+        });
+
+        // 5. Quebras de linha por último
         formatted = formatted.replace(/\n/g, '<br>');
 
         return formatted;
-    }
+    };
+
+    window.yeloOpenForumPost = function(postId) {
+        const parsedId = parseInt(postId, 10);
+        if (isNaN(parsedId)) return;
+
+        if (typeof window.loadFullPost === 'function' && document.getElementById('forum-posts-container')) {
+            window.loadFullPost(parsedId);
+        } else {
+            window.yeloPostToOpen = parsedId;
+            const forumNav = document.querySelector('[data-page="forum"]') || 
+                             document.querySelector('[data-target-page="psi_forum.html"]') || 
+                             document.querySelector('a[data-page="psi_forum.html"]');
+            if (forumNav) {
+                forumNav.click();
+            } else if (typeof window.loadPage === 'function') {
+                window.loadPage('psi_forum.html');
+            }
+        }
+    };
 
     async function fetchPsychologistData() {
         const token = localStorage.getItem('Yelo_token');
@@ -455,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!psychologistData) return;
 
         // Páginas permitidas mesmo com o status inativo (para assinar, ajustar perfil, suporte ou exclusão)
-        const paginasPermitidas = ['psi_assinatura.html', 'psi_ajustes_hub.html', 'psi_caixa_de_entrada.html', 'psi_excluir_conta.html'];
+        const paginasPermitidas = ['psi_assinatura.html', 'psi_ajustes_hub.html', 'psi_caixa_de_entrada.html', 'psi_excluir_conta.html', 'psi_novidades.html'];
 
         // O Paywall de fim de teste é acionado quando o status muda para inactive
         const estaInativo = psychologistData.status === 'inactive';
@@ -553,11 +607,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         currentPageUrl = url;
 
-        // NOVO: Extrai parâmetros do link (ex: psi_forum.html?postId=123)
+        // NOVO: Extrai parâmetros do link (ex: psi_forum.html?postId=123 ou tab=forum&post=123)
         const [pageUrl, queryString] = url.split('?');
-        if (queryString && queryString.includes('postId=')) {
+        if (queryString && (queryString.includes('postId=') || queryString.includes('post='))) {
             const params = new URLSearchParams(queryString);
-            window.yeloPostToOpen = params.get('postId');
+            window.yeloPostToOpen = params.get('postId') || params.get('post');
             if (params.has('commentId')) {
                 window.yeloCommentToHighlight = params.get('commentId');
             }
@@ -608,7 +662,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 hubPage = 'psi_clinica_hub.html';
             } else if (['psi_jornada.html', 'psi_blog.html', 'psi_forum.html', 'psi_comunidade.html', 'psi_hub.html', 'psi_lista_espera.html'].includes(url)) {
                 hubPage = 'psi_evolucao_hub.html';
-            } else if (['psi_meu_perfil.html', 'psi_assinatura.html', 'psi_caixa_de_entrada.html', 'psi_excluir_conta.html'].includes(url)) {
+            } else if (['psi_meu_perfil.html', 'psi_assinatura.html', 'psi_caixa_de_entrada.html', 'psi_excluir_conta.html', 'psi_novidades.html'].includes(url)) {
                 hubPage = 'psi_ajustes_hub.html';
             }
 
@@ -684,6 +738,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 else if (url.includes('psi_favoritos_analytics.html')) {
                     /// a página se auto-inicializa, mas garantimos que o cleanup de outras páginas rode.
                 }
+                else if (url.includes('psi_novidades')) { if (window.inicializarNovidades) window.inicializarNovidades(); }
+                else if (url.includes('psi_manual_conversao')) { if (window.inicializarManualConversao) window.inicializarManualConversao(); }
                 // Adicione outras inicializações de página aqui
 
                 // SEMPRE atualiza a bolinha do sino ao navegar entre as páginas do painel
@@ -693,22 +749,10 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(e => mainContent.innerHTML = `<p>Erro ao carregar: ${e}</p>`);
 
-        // --- LÓGICA DE SMART SCROLL (PÁGINAS CURTAS) ---
-        // Adicionado aqui para rodar a cada carregamento de página
-        const scrollableContent = document.querySelector('.dashboard-main');
+        // --- LÓGICA DE VISIBILIDADE DA BOTTOM NAV (SEMPRE ACESSÍVEL) ---
         const bottomNav = document.querySelector('.mobile-bottom-nav');
-
-        if (scrollableContent && bottomNav && window.innerWidth <= 992) {
-            // Usa um timeout para garantir que o DOM foi renderizado e a altura é calculada corretamente
-            setTimeout(() => {
-                const isScrollable = scrollableContent.scrollHeight > scrollableContent.clientHeight;
-                if (!isScrollable) {
-                    // Se a página não tem rolagem, encolhe a barra após 2 segundos
-                    setTimeout(() => {
-                        bottomNav.classList.add('nav-hidden');
-                    }, 2000);
-                }
-            }, 150); // Delay de 150ms para cálculo da altura
+        if (bottomNav && window.innerWidth <= 992) {
+            bottomNav.classList.remove('nav-hidden');
         }
     }
 
@@ -1196,16 +1240,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     showToast('Pagamento Aprovado!', 'success');
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
-            } else if (urlParams.has('postId') || intentPost) {
+            } else if (urlParams.has('postId') || urlParams.has('post') || intentPost) {
                 if (intentPost) localStorage.removeItem('yelo_intent_post');
 
-                if (urlParams.has('postId')) {
-                    window.yeloPostToOpen = urlParams.get('postId');
-                    if (urlParams.has('commentId')) {
-                        window.yeloCommentToHighlight = urlParams.get('commentId');
-                    }
-                } else if (intentPost) {
-                    window.yeloPostToOpen = intentPost;
+                window.yeloPostToOpen = urlParams.get('postId') || urlParams.get('post') || intentPost;
+                if (urlParams.has('commentId')) {
+                    window.yeloCommentToHighlight = urlParams.get('commentId');
                 }
 
                 window.history.replaceState({}, document.title, window.location.pathname);
@@ -1232,10 +1272,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (window.innerWidth > 992) return;
 
                 const bottomNav = document.querySelector('.mobile-bottom-nav');
-                // O elemento que de fato rola é o .dashboard-main
                 const scrollableContent = document.querySelector('.dashboard-main');
 
-                if (!bottomNav || !scrollableContent) return;
+                if (!bottomNav) return;
 
                 // Adiciona listener para expandir ao clicar na barra encolhida (executa uma vez)
                 bottomNav.addEventListener('click', () => {
@@ -1245,11 +1284,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 });
 
-                let lastScrollY = scrollableContent.scrollTop;
-                const scrollThreshold = 100; // Distância mínima para começar a ocultar
+                const getScrollY = () => {
+                    return window.scrollY || document.documentElement.scrollTop || (scrollableContent ? scrollableContent.scrollTop : 0);
+                };
 
-                scrollableContent.addEventListener('scroll', () => {
-                    const currentScrollY = scrollableContent.scrollTop;
+                let lastScrollY = getScrollY();
+                const scrollThreshold = 70; // Distância mínima para começar a ocultar
+
+                const handleScroll = () => {
+                    const currentScrollY = getScrollY();
 
                     if (currentScrollY > lastScrollY && currentScrollY > scrollThreshold) {
                         // Rolando para baixo: Oculta o menu
@@ -1259,7 +1302,42 @@ document.addEventListener('DOMContentLoaded', function () {
                         bottomNav.classList.remove('nav-hidden');
                     }
                     lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
-                }, { passive: true });
+                };
+
+                window.addEventListener('scroll', handleScroll, { passive: true });
+                if (scrollableContent) {
+                    scrollableContent.addEventListener('scroll', handleScroll, { passive: true });
+                }
+
+                // Auto-scroll para inputs quando o teclado virtual sobe no iOS / Android (apenas área de comentários/respostas onde o teclado cobre)
+                document.addEventListener('focusin', (e) => {
+                    if (window.innerWidth > 992) return;
+                    const target = e.target;
+                    if (!target) return;
+                    const isCommentOrReply = target.closest('#comment-form') || (target.classList && target.classList.contains('rich-mention-input')) || target.closest('.comment-section');
+                    if (isCommentOrReply) {
+                        setTimeout(() => {
+                            if (target.scrollIntoViewIfNeeded) {
+                                target.scrollIntoViewIfNeeded();
+                            } else {
+                                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 350);
+                    }
+                }, true);
+
+                if (window.visualViewport) {
+                    window.visualViewport.addEventListener('resize', () => {
+                        if (window.innerWidth > 992) return;
+                        const active = document.activeElement;
+                        if (active && (active.closest('#comment-form') || (active.classList && active.classList.contains('rich-mention-input')) || active.closest('.comment-section'))) {
+                            setTimeout(() => {
+                                if (active.scrollIntoViewIfNeeded) active.scrollIntoViewIfNeeded();
+                                else active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }, 100);
+                        }
+                    });
+                }
             }
             setupSmartScroll();
 

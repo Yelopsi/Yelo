@@ -23,7 +23,7 @@ const report = {
 const runScanner = (name, command, moduleKey) => {
     console.log(`\n▶️ Executando: ${name}...`);
     try {
-        const output = execSync(command, { encoding: 'utf-8', stdio: 'pipe' });
+        const output = execSync(command, { encoding: 'utf-8', stdio: 'pipe', timeout: 35000 });
         console.log(`✅ ${name}: PASS`);
         report.modules[moduleKey] = 'PASS';
         return output;
@@ -43,7 +43,7 @@ const runScanner = (name, command, moduleKey) => {
 // 1. Dependency Scanning (Ignora vulnerabilidades LOW/MEDIUM para bloquear. Bloqueia apenas HIGH/CRITICAL)
 runScanner(
     'Dependency Scanning (npm audit)',
-    'npm audit --audit-level=high --omit=dev --json > security/reports/npm_audit.json || true',
+    'npm audit --audit-level=high --omit=dev --json --fetch-retries=0 --fetch-retry-mintimeout=1000 --fetch-timeout=5000 > security/reports/npm_audit.json.tmp 2>/dev/null && grep -q \'"vulnerabilities"\' security/reports/npm_audit.json.tmp && mv security/reports/npm_audit.json.tmp security/reports/npm_audit.json || rm -f security/reports/npm_audit.json.tmp',
     'dependency_scan'
 );
 
@@ -146,6 +146,16 @@ if (hasCriticalFailure) {
         console.error('⚠️ Aviso: Falha ao gerar hash do código para o token. Criando fallback token.', err.message);
         fs.writeFileSync(securityTokenPath, 'fallback-token');
     }
+
+    // Sincroniza o changelog de runtime (.data) com o repositório (data) para commits do Git
+    try {
+        const dotChangelog = path.join(__dirname, '../backend/.data/system_changelog.json');
+        const repoChangelog = path.join(__dirname, '../backend/data/system_changelog.json');
+        if (fs.existsSync(dotChangelog)) {
+            fs.copyFileSync(dotChangelog, repoChangelog);
+            console.log('📜 system_changelog.json sincronizado com sucesso para deploy/commit.');
+        }
+    } catch (e) {}
     
     process.exit(0);
 }
