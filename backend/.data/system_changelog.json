@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-c2d88c55",
+    "date": "2026-10-26T22:44:22.000Z",
+    "commit": "c2d88c55",
+    "author": "Anderson",
+    "title": "Correção: Blindar ciclo Asaas contra webhook D+30 de cartao, garantir idempotencia e preservar cancelamento (billing)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "blindar ciclo Asaas contra webhook D+30 de cartao, garantir idempotencia e preservar cancelamento",
+    "description": "Commit registrado no repositório: \"fix(billing): blindar ciclo Asaas contra webhook D+30 de cartao, garantir idempotencia e preservar cancelamento\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, backend/jobs/cronScheduler.js, backend/services/paymentStateService.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #c2d88c55"
+    },
+    "after": {
+      "nova_versao": "blindar ciclo Asaas contra webhook D+30 de cartao, garantir idempotencia e preservar cancelamento"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "backend/jobs/cronScheduler.js",
+      "backend/services/paymentStateService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-a2a53b7c",
     "date": "2026-10-26T03:53:18.000Z",
     "commit": "a2a53b7c",
