@@ -560,9 +560,12 @@
                     if (el.tomselect) el.tomselect.enable();
                 }
             });
-            block.querySelector('.btn-edit').classList.add('hidden');
-            block.querySelector('.btn-cancel').classList.remove('hidden');
-            block.querySelector('.btn-save').classList.remove('hidden');
+            const btnEdit = block.querySelector('.btn-edit');
+            if (btnEdit) btnEdit.classList.add('hidden');
+            const btnCancel = block.querySelector('.btn-cancel');
+            if (btnCancel) btnCancel.classList.remove('hidden');
+            const btnSave = block.querySelector('.btn-save');
+            if (btnSave) btnSave.classList.remove('hidden');
             const btnOptimize = block.querySelector('#btn-optimize-bio');
             if (btnOptimize) btnOptimize.style.display = 'inline-flex';
             const btnClearGoogle = block.querySelector('#btn-clear-google-data');
@@ -579,15 +582,19 @@
         }
 
         function exitEditMode(block) {
+            if (!block) return;
             block.classList.remove('editing');
             block.classList.add('collapsed');
             block.querySelectorAll('input, textarea, select').forEach(el => { 
                 el.disabled = true; 
                 if (el.tomselect) el.tomselect.disable();
             });
-            block.querySelector('.btn-edit').classList.remove('hidden');
-            block.querySelector('.btn-cancel').classList.add('hidden');
-            block.querySelector('.btn-save').classList.add('hidden');
+            const btnEdit = block.querySelector('.btn-edit');
+            if (btnEdit) btnEdit.classList.remove('hidden');
+            const btnCancel = block.querySelector('.btn-cancel');
+            if (btnCancel) btnCancel.classList.add('hidden');
+            const btnSave = block.querySelector('.btn-save');
+            if (btnSave) btnSave.classList.add('hidden');
             const btnOptimize = block.querySelector('#btn-optimize-bio');
             if (btnOptimize) btnOptimize.style.display = 'none';
             const btnClearGoogle = block.querySelector('#btn-clear-google-data');
@@ -674,7 +681,17 @@
             const btnCancel = e.target.closest('.btn-cancel');
             const btnSave = e.target.closest('.btn-save');
             
-            if (btnEdit) { e.preventDefault(); enterEditMode(btnEdit.closest('.profile-block')); }
+            if (btnEdit) { 
+                e.preventDefault(); 
+                const block = btnEdit.closest('.profile-block');
+                if (block) {
+                    if (block.classList.contains('collapsible-block')) {
+                        block.classList.toggle('collapsed');
+                    } else {
+                        enterEditMode(block); 
+                    }
+                }
+            }
             else if (btnCancel) { e.preventDefault(); cancelEditMode(btnCancel.closest('.profile-block')); }
             else if (btnSave) { e.preventDefault(); saveBlockData(btnSave.closest('.profile-block')); }
         });

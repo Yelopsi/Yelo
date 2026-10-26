@@ -1,5 +1,33 @@
 [
   {
+    "id": "change-git-f4c161a3",
+    "date": "2026-10-26T03:23:07.000Z",
+    "commit": "f4c161a3",
+    "author": "Anderson",
+    "title": "Novo: Adicionar modal unico de anuncio do Google Meu Negocio para psicologos ja cadastrados (gmb)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "adicionar modal unico de anuncio do Google Meu Negocio para psicologos ja cadastrados",
+    "description": "Commit registrado no repositório: \"feat(gmb): adicionar modal unico de anuncio do Google Meu Negocio para psicologos ja cadastrados\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, public/psi/psi_dashboard.html, public/psi/psi_dashboard.js, public/psi/psi_meu_perfil.js (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #f4c161a3"
+    },
+    "after": {
+      "nova_versao": "adicionar modal unico de anuncio do Google Meu Negocio para psicologos ja cadastrados"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "public/psi/psi_meu_perfil.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-1634a990",
     "date": "2026-10-26T03:16:30.000Z",
     "commit": "1634a990",
