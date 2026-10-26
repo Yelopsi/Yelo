@@ -138,7 +138,7 @@ const notificationService = require('../services/notificationService');
  * 6. AUTOLESÃO / INCENTIVO AO SUICÍDIO / ILEGALIDADES
  */
 async function callGeminiWithFallback(genAI, prompt, safetySettings) {
-    const candidateModels = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.8-flash"];
+    const candidateModels = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash"];
     let lastError = null;
     for (const modelName of candidateModels) {
         try {
@@ -298,7 +298,7 @@ async function findDeterministicDuplicate(newTitle, excludeId = null, candidateP
     return { isDuplicate: false };
 }
 
-const evaluateContentEthicsWithAI = async ({ title, content, category }) => {
+const evaluateContentEthicsWithAI = async ({ title, content, category, isEdit = false }) => {
     const textToCheck = `${title || ''}\n${content || ''}`.trim();
     if (!textToCheck) return { isProhibited: false };
 
@@ -317,7 +317,6 @@ const evaluateContentEthicsWithAI = async ({ title, content, category }) => {
 
     // 1. Heurísticas rápidas determinísticas (zero latência e fallback offline)
     // 1.1 CPF exposto (Violação grave de sigilo do paciente - CFP Art. 9º)
-    // Remove URLs antes de testar regex de CPF para evitar que portas, timestamps ou query params disparem falso positivo
     const textWithoutUrls = textToCheck.replace(/https?:\/\/[^\s<]+/gi, '').replace(/\b(?:postId|post)=\d+\b/gi, '');
     const cpfRegex = /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/;
     if (cpfRegex.test(textWithoutUrls)) {
@@ -351,10 +350,15 @@ const evaluateContentEthicsWithAI = async ({ title, content, category }) => {
         };
     }
 
-    // 2. Análise Semântica Profunda com Gemini (Diretrizes de Convivência + Código de Ética)
-    // Otimização de Performance: Comentários e réplicas cotidianas (< 250 caracteres)
-    // que já passaram pelas heurísticas acima não necessitam de round-trip de 3 segundos para API de IA.
-    if (!title && textToCheck.length < 250) {
+    // 2. Otimização de Performance para Edições:
+    // Posts e comentários já publicados que passaram pelas heurísticas acima salvam instantaneamente (< 20ms) sem travar na IA.
+    if (isEdit) {
+        return { isProhibited: false };
+    }
+
+    // 3. Comentários cotidianos (< 500 caracteres) sem título:
+    // Passaram pelas heurísticas e não precisam de round-trip de 3 segundos à IA.
+    if (!title && textToCheck.length < 500) {
         return { isProhibited: false };
     }
 
@@ -405,7 +409,12 @@ Responda ESTRITAMENTE em formato JSON puro, sem crases ou markdown:
   "suggestion": "Como o profissional pode corrigir para conseguir publicar (1 recomendação prática e acolhedora)."
 }`;
 
-        const text = await callGeminiWithFallback(genAI, prompt, safetySettings);
+        // Timeout rigoroso de 2,5s para não travar a experiência do psicólogo
+        const text = await Promise.race([
+            callGeminiWithFallback(genAI, prompt, safetySettings),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de avaliação ética')), 2500))
+        ]);
+
         const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleanJson);
         if (parsed && typeof parsed.isProhibited === 'boolean') {
@@ -425,7 +434,7 @@ Responda ESTRITAMENTE em formato JSON puro, sem crases ou markdown:
         }
         return { isProhibited: false };
     } catch (err) {
-        console.warn('Erro ao avaliar ética com Gemini, liberando por fallback:', err.message);
+        console.warn('Erro ao avaliar ética com Gemini (ou timeout), liberando por fallback:', err.message);
         return { isProhibited: false };
     }
 };
@@ -979,7 +988,7 @@ exports.updatePost = async (req, res) => {
         }
 
         // --- BARREIRA ÉTICA COM IA (CFP / YELO) ---
-        const ethicsCheck = await evaluateContentEthicsWithAI({ title, content, category });
+        const ethicsCheck = await evaluateContentEthicsWithAI({ title, content, category, isEdit: true });
         if (ethicsCheck.isProhibited) {
             return res.status(422).json({
                 error: 'Alteração bloqueada pelas diretrizes éticas da comunidade.',
@@ -1016,7 +1025,7 @@ exports.updateComment = async (req, res) => {
         }
 
         // --- BARREIRA ÉTICA COM IA (CFP / YELO) ---
-        const ethicsCheck = await evaluateContentEthicsWithAI({ title: '', content, category: '' });
+        const ethicsCheck = await evaluateContentEthicsWithAI({ title: '', content, category: '', isEdit: true });
         if (ethicsCheck.isProhibited) {
             return res.status(422).json({
                 error: 'Edição bloqueada pelas diretrizes éticas da comunidade.',
@@ -1126,10 +1135,10 @@ exports.generateAiComment = async (req, res) => {
             return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem gerar comentários com IA.' });
         }
 
-        const { postTitle, postContent, comments, targetComment, authorName } = req.body;
+        const { postTitle, postContent, comments, targetComment, authorName, context } = req.body;
 
-        if (!postTitle && !postContent) {
-            return res.status(400).json({ error: 'Conteúdo do post é obrigatório.' });
+        if (!postTitle && !postContent && !targetComment) {
+            return res.status(400).json({ error: 'Conteúdo do post ou comentário é obrigatório.' });
         }
 
         if (!process.env.GEMINI_API_KEY) {
@@ -1139,6 +1148,11 @@ exports.generateAiComment = async (req, res) => {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ 
             model: "gemini-3.1-flash-lite",
+            generationConfig: {
+                temperature: 0.92,
+                topP: 0.95,
+                topK: 40
+            },
             safetySettings: [
                 { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
                 { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -1148,33 +1162,116 @@ exports.generateAiComment = async (req, res) => {
         });
 
         let prompt = "";
-        
-        const primeiroNome = authorName ? authorName.split(' ')[0] : "colega";
+        const primeiroNome = (authorName && authorName !== 'Anônimo' && !authorName.toLowerCase().includes('anônimo'))
+            ? authorName.split(' ')[0]
+            : null;
 
-        if (targetComment) {
-            prompt = `Você é um psicólogo clínico homem, de 35 anos, com base na psicanálise, engajando no fórum da comunidade Yelo. Sua comunicação é leve, acolhedora, humana e natural (nada engessado, acadêmico ou excessivamente formal). Não seja didático e não tente ensinar as pessoas; o objetivo é trocar experiências de igual para igual.
+        if (context === 'qna') {
+            // =========================================================================
+            // CONTEXTO: COMUNIDADE Q&A (Orientação profissional a paciente/usuário)
+            // =========================================================================
+            const stylesQna = [
+                "Foco desta resposta: Acolhimento caloroso da angústia inicial e uma pontuação sutil sobre os sentimentos envolvidos.",
+                "Foco desta resposta: Uma reflexão clara e desmistificadora, oferecendo uma nova perspectiva para a pessoa respirar e pensar.",
+                "Foco desta resposta: Uma pergunta reflexiva e empática que devolve para a pessoa a escuta de si mesma.",
+                "Foco desta resposta: Validação do incômodo e uma orientação prática e sensível sobre o autocuidado emocional.",
+                "Foco desta resposta: Um olhar acolhedor sobre a ambivalência e os conflitos comuns nas relações humanas."
+            ];
+            const chosenStyleQna = stylesQna[Math.floor(Math.random() * stylesQna.length)];
 
-Você está conversando DIRETAMENTE com o colega chamado ${primeiroNome}, que escreveu este comentário:
+            prompt = `Você é um psicólogo clínico experiente, humano e acolhedor, respondendo a uma dúvida enviada por uma pessoa na Comunidade Yelo (plataforma de psicologia).
+
+DÚVIDA ENVIADA:
+Título: "${postTitle || 'Dúvida'}"
+Relato: "${postContent || ''}"
+
+DIRETRIZ DE VARIAÇÃO PARA ESTA RESPOSTA:
+${chosenStyleQna}
+
+REGRAS OBRIGATÓRIAS (ANTI-CLICHÊ, CONCISÃO E NATURALIDADE):
+1. PROIBIÇÃO TOTAL DE FRASES BATIDAS: NUNCA use frases automáticas como:
+   - "Na minha prática clínica..."
+   - "No meu consultório..."
+   - "Pela minha experiência..."
+   - "Compreendo sua dor..."
+   - "Como psicólogo..."
+   - "É muito comum ver..."
+2. VARIABILIDADE: Cada resposta deve soar única, humana e espontânea. Comece direto na reflexão central, sem frases protocolares de introdução.
+3. CONCISÃO E IMPACTO: Escreva um texto curto de 3 a 5 frases no máximo (entre 45 e 85 palavras). Sem prolixidade.
+4. ÉTICA CLÍNICA (CFP): Não dê diagnósticos nem rotule a pessoa. Acolha com sensibilidade e sinalize o valor da psicoterapia como espaço de cuidado contínuo.
+5. Sem despedidas burocráticas ("Atenciosamente", "Grande abraço", "Espero ter ajudado").
+
+Retorne SOMENTE a resposta, sem aspas e sem enrolação.`;
+
+        } else {
+            // =========================================================================
+            // CONTEXTO: FÓRUM DE PSICÓLOGOS (Troca horizontal entre colegas)
+            // =========================================================================
+            const stylesForum = [
+                "Abordagem: Foco em reflexão direta e acolhedora, sem rodeios.",
+                "Abordagem: Foco em devolver uma questão sutil para pensar novos caminhos no manejo clínico.",
+                "Abordagem: Foco na validação sincera da situação e simplificação do dilema do colega.",
+                "Abordagem: Foco em apontar uma perspectiva construtiva, descontraída e humanizada.",
+                "Abordagem: Foco sintético e pontual, como uma troca espontânea de corredor entre colegas."
+            ];
+            const chosenStyleForum = stylesForum[Math.floor(Math.random() * stylesForum.length)];
+
+            if (targetComment) {
+                prompt = `Você é um psicólogo clínico participando de uma discussão entre colegas no fórum profissional da Yelo. Sua comunicação é descontraída, madura, horizontal e humana. Você fala de igual para igual.
+
+COLEGA COM QUEM ESTÁ FALANDO: ${primeiroNome || 'colega'}
+COMENTÁRIO DO COLEGA:
 "${targetComment}"
 
-Contexto do post onde isso ocorreu:
-Título: ${postTitle || 'Sem título'}
-Conteúdo: ${postContent || ''}
+CONTEXTO DO TÓPICO:
+Título: "${postTitle || 'Sem título'}"
+Conteúdo: "${postContent || ''}"
 
-Sua tarefa: Escreva uma resposta curta (metade do tamanho de uma resposta normal), direta e exclusiva para ${primeiroNome}. Valide o que a pessoa disse, traga uma contribuição rápida a partir da sua vivência clínica e termine de forma empática. Use o nome da pessoa na resposta de forma natural. Não fale com o resto do grupo.
+DIRETRIZ DE VARIAÇÃO:
+${chosenStyleForum}
+
+REGRAS OBRIGATÓRIAS (ANTI-CLICHÊ, CONCISÃO E NATURALIDADE):
+1. PROIBIÇÃO TOTAL DE MULETAS: NUNCA use frases batidas como:
+   - "Na minha prática clínica..."
+   - "No meu consultório..."
+   - "Pela minha experiência..."
+   - "Pela minha vivência..."
+   - "Concordo plenamente..."
+   - "Como analista / como terapeuta..."
+2. VARIABILIDADE TOTAL: Comece direto no ponto, de forma fresca e diferente a cada interação (às vezes com uma reflexão, às vezes com uma observação sagaz, às vezes com uma pergunta).
+3. CONCISÃO: Escreva entre 2 e 3 frases curtas (máximo 50 palavras). Sem palestrinha, sem didatismo e sem tentar ensinar ninguém.
+4. ${primeiroNome ? `Pode usar o nome ${primeiroNome} de forma leve e natural.` : 'Não use saudações formais.'}
+5. Sem despedidas ("Abraço", "Colega", "Espero ter colaborado").
+
 Retorne SOMENTE a resposta, sem aspas e sem enrolação.`;
-        } else {
-            prompt = `Você é um psicólogo clínico homem, de 35 anos, com base na psicanálise, engajando no fórum da comunidade Yelo. Sua comunicação é leve, acolhedora, humana e natural (nada engessado, acadêmico ou excessivamente formal). Não seja didático e não tente ensinar as pessoas; o objetivo é trocar experiências de igual para igual.
+            } else {
+                prompt = `Você é um psicólogo clínico participando do fórum profissional da Yelo. Sua comunicação é descontraída, madura, horizontal e humana. Você fala com o autor do post de igual para igual.
 
-Você está conversando DIRETAMENTE e EXCLUSIVAMENTE com o autor deste post, chamado ${primeiroNome}:
-Título: ${postTitle || 'Sem título'}
-Conteúdo: ${postContent || ''}
+AUTOR DO TÓPICO: ${primeiroNome || 'colega'}
+TÍTULO: "${postTitle || 'Sem título'}"
+CONTEÚDO: "${postContent || ''}"
 
-Comentários já feitos na thread (apenas para seu contexto):
+COMENTÁRIOS JÁ FEITOS NA THREAD (apenas para contexto):
 ${comments || 'Nenhum comentário ainda.'}
 
-Sua tarefa: Escreva um comentário curto (metade do tamanho de um texto padrão), em tom de conversa direta e exclusiva com ${primeiroNome}. Traga uma validação rápida e uma reflexão leve e acolhedora baseada na sua vivência clínica. Use o nome da pessoa na resposta de forma natural. Não se dirija ao resto da discussão.
+DIRETRIZ DE VARIAÇÃO:
+${chosenStyleForum}
+
+REGRAS OBRIGATÓRIAS (ANTI-CLICHÊ, CONCISÃO E NATURALIDADE):
+1. PROIBIÇÃO TOTAL DE MULETAS: NUNCA use:
+   - "Na minha prática clínica..."
+   - "No meu consultório..."
+   - "Pela minha experiência..."
+   - "A meu ver..."
+   - "Costumo observar..."
+   - "Como psicólogo..."
+2. VARIABILIDADE: Cada comentário em posts diferentes deve soar espontâneo e imprevisível. Vá direto ao cerne da reflexão.
+3. CONCISÃO MÁXIMA: 2 a 3 frases bem formuladas (entre 25 e 60 palavras). Curto e assertivo.
+4. Sem didatismo, sem postura professoral e sem enrolação.
+5. Sem saudações formais nem despedidas protocolares.
+
 Retorne SOMENTE a resposta, sem aspas e sem enrolação.`;
+            }
         }
 
         const result = await model.generateContent(prompt);

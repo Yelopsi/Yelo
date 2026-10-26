@@ -44,7 +44,12 @@
         <div id="qna-answer-modal" class="modal-overlay">
             <div class="modal-content">
                 <button class="modal-close">&times;</button>
-                <div class="modal-header"><h2 class="modal-title">Responder Pergunta</h2></div>
+                <div class="modal-header">
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <h2 class="modal-title" style="margin: 0;">Responder Pergunta</h2>
+                        <button type="button" id="btn-generate-ai-qna" class="btn hidden" style="padding: 5px 14px; font-size: 0.82rem; min-width: 0; width: auto; border-radius: 50px; margin: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 2px 6px rgba(16,185,129,0.3); display: flex; align-items: center; gap: 5px; cursor: pointer;" title="Gerar rascunho com IA">✨ IA</button>
+                    </div>
+                </div>
                 <form id="qna-answer-form">
                     <div class="modal-body">
                         <textarea id="qna-answer-textarea" minlength="50" required placeholder="Sua resposta..."></textarea>

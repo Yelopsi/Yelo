@@ -456,7 +456,13 @@
                 try {
                     const res = await apiFetch(`${API_BASE_URL}/api/forum/ai/generate-comment`, {
                         method: 'POST',
-                        body: JSON.stringify({ postTitle: q.titulo || q.title || 'Dúvida', postContent: q.conteudo || q.content || '', comments: '', authorName: 'Anônimo' })
+                        body: JSON.stringify({ 
+                            postTitle: q.titulo || q.title || 'Dúvida', 
+                            postContent: q.conteudo || q.content || '', 
+                            comments: '', 
+                            authorName: 'Anônimo',
+                            context: 'qna'
+                        })
                     });
                     if (res.ok) {
                         const data = await res.json();

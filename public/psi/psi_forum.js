@@ -2123,6 +2123,7 @@
                     const errData = await res.json().catch(() => ({}));
                     throw new Error(errData.message || 'Erro ao criar discussão.');
                 }
+                const newPost = await res.json().catch(() => null);
                 showToast('Discussão criada com sucesso!', 'success');
                 
                 const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
@@ -2136,7 +2137,12 @@
                 const createPreviewSlot = document.getElementById('post-create-preview-slot');
                 if (createPreviewSlot) createPreviewSlot.innerHTML = '';
                 if (createTextarea) createTextarea.style.height = 'auto';
-                fetchAndRenderPosts();
+
+                if (newPost && newPost.id) {
+                    loadFullPost(newPost.id);
+                } else {
+                    fetchAndRenderPosts();
+                }
             } catch (err) { showToast(err.message || 'Erro ao criar discussão.', 'error'); } 
             finally { btn.disabled = false; btn.textContent = 'Publicar'; }
         }
@@ -2775,14 +2781,38 @@
                         }
                     }
                     if (res.ok) {
-                        showToast('Discussão atualizada!', 'success');
+                        const updatedPost = await res.json().catch(() => null);
+                        showToast('Discussão atualizada com sucesso!', 'success');
                         createModal.style.display = 'none';
                         createForm.reset();
                         const createPreviewSlot = document.getElementById('post-create-preview-slot');
                         if (createPreviewSlot) createPreviewSlot.innerHTML = '';
                         if (createTextarea) createTextarea.style.height = 'auto';
-                        if (currentPostId === post.id) loadFullPost(post.id);
-                        fetchAndRenderPosts();
+
+                        // Se o usuário está com o post aberto, atualiza a tela diretamente sem recarregar/voltar pro feed
+                        if (currentPostId === post.id) {
+                            post.title = updatedPost ? updatedPost.title : data.title;
+                            post.content = updatedPost ? updatedPost.content : data.content;
+                            post.category = updatedPost ? updatedPost.category : data.category;
+                            post.isAnonymous = updatedPost ? updatedPost.isAnonymous : data.isAnonymous;
+
+                            const fullTitle = document.querySelector('.full-post-title');
+                            if (fullTitle) fullTitle.textContent = post.title;
+                            const fullContent = document.querySelector('.full-post-content');
+                            if (fullContent) {
+                                fullContent.innerHTML = window.formatTextContent(post.content);
+                                hydrateForumMentions(fullContent);
+                            }
+                            const fullCat = document.querySelector('.full-post-category');
+                            if (fullCat) {
+                                fullCat.textContent = post.category;
+                                const catClass = getCategoryClass(post.category);
+                                if (catClass) fullCat.className = `breadcrumb-current-cat full-post-category post-category ${catClass}`;
+                            }
+                        } else {
+                            // Se editou a partir do feed, recarrega o feed
+                            fetchAndRenderPosts();
+                        }
                     } else { showToast('Erro ao atualizar.', 'error'); }
                 } catch (err) { showToast('Erro ao atualizar.', 'error'); } 
                 finally { submitBtn.disabled = false; submitBtn.textContent = 'Salvar Alterações'; }
