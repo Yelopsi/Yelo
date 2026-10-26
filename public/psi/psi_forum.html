@@ -279,12 +279,18 @@
         flex-shrink: 0 !important;
     }
     .composer-btn-send,
-    .btn-comment-submit {
+    .btn-comment-submit,
+    .btn-ai-sparkle {
         padding: 7px 16px !important;
         font-size: 0.85rem !important;
         font-weight: 700 !important;
         border-radius: 50px !important;
         white-space: nowrap !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 34px !important;
+        box-sizing: border-box !important;
     }
 
     /* Tipografia e tamanho dos campos de resposta e comentário */
@@ -962,7 +968,7 @@
                         </label>
                         <div class="composer-actions-right" style="display: inline-flex !important; align-items: center !important; gap: 8px !important; margin-left: auto !important; flex-shrink: 0 !important;">
                             <button type="button" id="btn-generate-ai-comment" class="modern-pill-btn btn-ai-sparkle hidden" title="Sugerir rascunho de resposta fundamentada com IA">
-                                ✨ IA Sugestão
+                                IA
                             </button>
                             <button type="submit" class="composer-btn-send btn-principal btn-comment-submit" id="btn-submit-comment">
                                 Comentar

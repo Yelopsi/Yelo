@@ -69,6 +69,7 @@
     .profile-block input[type="email"],
     .profile-block input[type="tel"],
     .profile-block input[type="number"],
+    .profile-block input[type="password"],
     .profile-block input[type="url"]:not(.input-prefix-group input),
     .profile-block textarea {
         min-height: 48px; padding: 10px 14px; border-radius: 12px; border: 1px solid #e0e0e0; background: #f9fafb; font-family: var(--font-principal); font-size: 1rem; width: 100%; box-sizing: border-box; transition: all 0.3s ease;
@@ -825,6 +826,74 @@
                     </div>
                 </div>
             </div>
+        <!-- Bloco Conectar com Google -->
+        <div class="profile-block collapsible-block collapsed" data-block-id="google-connect">
+            <div class="block-header" style="cursor: pointer; user-select: none;">
+                <h4 class="section-title">Conectar com Google</h4>
+                <div class="block-actions"></div>
+            </div>
+            <div class="block-content">
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Vincule sua conta do Google para facilitar o login futuramente.</p>
+                
+                <div id="google-link-container">
+                    <div id="g_id_onload"
+                         data-client_id="283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com"
+                         data-auto_prompt="false"
+                         data-callback="handleGoogleLinkResponse">
+                    </div>
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-size="large"
+                         data-theme="outline"
+                         data-text="continue_with"
+                         data-shape="pill"
+                         data-logo_alignment="left">
+                    </div>
+                </div>
+                <div id="google-linked-message" style="display: none; color: #16a34a; font-weight: 600; align-items: center; gap: 8px;">
+                    ✅ Conta do Google vinculada com sucesso!
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloco Alterar Senha -->
+        <div class="profile-block collapsible-block collapsed" data-block-id="password">
+            <div class="block-header" style="cursor: pointer; user-select: none;">
+                <h4 class="section-title">Alterar Senha</h4>
+                <div class="block-actions"></div>
+            </div>
+            <div class="block-content">
+                <form id="password-form">
+                    <!-- Campo oculto para acessibilidade e gerenciadores de senha -->
+                    <input type="text" name="username" autocomplete="username" style="display:none;">
+
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1; max-width: 350px;">
+                            <label for="senha_atual">Senha Atual</label>
+                            <input type="password" id="senha_atual" name="senha_atual" required autocomplete="current-password">
+                        </div>
+                        <div class="form-group" style="flex: 1; max-width: 350px;">
+                            <label for="nova_senha">Nova Senha</label>
+                            <input type="password" id="nova_senha" name="nova_senha" required autocomplete="new-password">
+                        </div>
+                    </div>
+                    <div class="form-actions" style="justify-content: flex-start; margin-top: 15px;">
+                        <button type="submit" class="btn btn-principal">Alterar Senha</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bloco Excluir Conta -->
+        <div class="profile-block collapsible-block collapsed" data-block-id="delete-account">
+            <div class="block-header" style="cursor: pointer; user-select: none;">
+                <h4 class="section-title" style="color: #DC2626;">Excluir Conta</h4>
+                <div class="block-actions"></div>
+            </div>
+            <div class="block-content">
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Esta ação é irreversível e removerá todos os seus dados da plataforma.</p>
+                <a id="btn-excluir-conta" href="psi_excluir_conta.html" style="color: #DC2626 !important; font-weight: 600; text-decoration: underline;">Excluir Minha Conta</a>
+            </div>
         </div>
 
     </div>
@@ -837,76 +906,6 @@
         <span class="btn-text">Salvar alterações</span>
         <span class="spinner hidden"></span>
     </button>
-</div>
-
-<!-- Bloco Conectar com Google -->
-<div class="profile-block widget collapsible-block collapsed" data-block-id="google-connect" style="margin-top: 20px;">
-    <div class="block-header" style="cursor: pointer; user-select: none;">
-        <h4 class="section-title">Conectar com Google</h4>
-        <div class="block-actions"></div>
-    </div>
-    <div class="block-content">
-        <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Vincule sua conta do Google para facilitar o login futuramente.</p>
-        
-        <div id="google-link-container">
-            <div id="g_id_onload"
-                 data-client_id="283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com"
-                 data-auto_prompt="false"
-                 data-callback="handleGoogleLinkResponse">
-            </div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-size="large"
-                 data-theme="outline"
-                 data-text="continue_with"
-                 data-shape="pill"
-                 data-logo_alignment="left">
-            </div>
-        </div>
-        <div id="google-linked-message" style="display: none; color: #16a34a; font-weight: 600; align-items: center; gap: 8px;">
-            ✅ Conta do Google vinculada com sucesso!
-        </div>
-    </div>
-</div>
-
-<!-- Bloco Alterar Senha -->
-<div class="profile-block widget collapsible-block collapsed" data-block-id="password" style="margin-top: 20px;">
-    <div class="block-header" style="cursor: pointer; user-select: none;">
-        <h4 class="section-title">Alterar Senha</h4>
-        <div class="block-actions"></div>
-    </div>
-    <div class="block-content">
-        <form id="password-form">
-            <!-- Campo oculto para acessibilidade e gerenciadores de senha -->
-            <input type="text" name="username" autocomplete="username" style="display:none;">
-
-            <div class="form-row">
-                <div class="form-group" style="flex: 1; max-width: 350px;">
-                    <label for="senha_atual">Senha Atual</label>
-                    <input type="password" id="senha_atual" name="senha_atual" required autocomplete="current-password">
-                </div>
-                <div class="form-group" style="flex: 1; max-width: 350px;">
-                    <label for="nova_senha">Nova Senha</label>
-                    <input type="password" id="nova_senha" name="nova_senha" required autocomplete="new-password">
-                </div>
-            </div>
-            <div class="form-actions" style="justify-content: flex-start; margin-top: 15px;">
-                <button type="submit" class="btn btn-principal">Alterar Senha</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Bloco Excluir Conta -->
-<div class="profile-block widget collapsible-block collapsed" data-block-id="delete-account" style="margin-top: 20px;">
-    <div class="block-header" style="cursor: pointer; user-select: none;">
-        <h4 class="section-title" style="color: #DC2626;">Excluir Conta</h4>
-        <div class="block-actions"></div>
-    </div>
-    <div class="block-content">
-        <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Esta ação é irreversível e removerá todos os seus dados da plataforma.</p>
-        <a id="btn-excluir-conta" href="psi_excluir_conta.html" style="color: #DC2626 !important; font-weight: 600; text-decoration: underline;">Excluir Minha Conta</a>
-    </div>
 </div>
 
 </div> <!-- Fim do #profile-page-wrapper -->

@@ -66,6 +66,18 @@
         box-shadow: 0 2px 6px rgba(27, 67, 50, 0.2) !important;
     }
 
+    .avisos-btn-novidades {
+        margin-left: auto !important;
+        background: #e0f2fe !important;
+        color: #0284c7 !important;
+        border: 1.5px solid #bae6fd !important;
+        font-weight: 700 !important;
+    }
+    .avisos-btn-novidades:hover {
+        background: #bae6fd !important;
+        color: #0369a1 !important;
+    }
+
     .btn-marcar-todos {
         background: #f8fafc !important;
         border: 1.5px solid #cbd5e1 !important;
@@ -234,13 +246,42 @@
 
         .avisos-filters {
             width: 100% !important;
+            display: flex !important;
+            gap: 8px !important;
+            align-items: center !important;
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: none !important;
             padding-bottom: 4px !important;
+        }
+        .avisos-filters::-webkit-scrollbar {
+            display: none !important;
+        }
+
+        .aviso-filter-btn {
+            flex-shrink: 0 !important;
+            white-space: nowrap !important;
+        }
+
+        .avisos-btn-novidades {
+            margin-left: 0 !important;
+            flex-shrink: 0 !important;
+            white-space: nowrap !important;
         }
 
         .avisos-feed-actions-top {
             width: 100% !important;
             display: flex !important;
-            justify-content: flex-end !important;
+            justify-content: stretch !important;
+            padding-top: 8px !important;
+            border-top: 1px solid #f1f5f9 !important;
+        }
+
+        .btn-marcar-todos {
+            width: 100% !important;
+            text-align: center !important;
+            justify-content: center !important;
         }
 
         .aviso-feed-item {
@@ -302,7 +343,7 @@
             <button class="aviso-filter-btn active" data-filter="all">Todos</button>
             <button class="aviso-filter-btn" data-filter="unread">Não lidos</button>
             <button class="aviso-filter-btn" data-filter="personal">Pessoais</button>
-            <button class="aviso-filter-btn" onclick="if(window.loadPage) window.loadPage('psi_novidades.html')" style="margin-left: auto; background: #e0f2fe !important; color: #0284c7 !important; border: 1.5px solid #bae6fd !important; font-weight: 700;">
+            <button class="aviso-filter-btn avisos-btn-novidades" onclick="if(window.loadPage) window.loadPage('psi_novidades.html')">
                 🚀 O que há de novo?
             </button>
         </div>

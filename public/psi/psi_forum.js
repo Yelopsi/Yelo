@@ -19,124 +19,137 @@
         const closeModalBtn = document.getElementById('forum-modal-close-btn');
         const mobileFabEl = document.getElementById('forum-mobile-fab');
 
-        // Torna o botão FAB mobile livremente arrastável pela tela
+        // Torna o botão FAB mobile livremente arrastável pela tela sem sumir ou quebrar layout
         function setupFabDraggable(fab) {
             if (!fab || fab.dataset.draggableSetup) return;
             fab.dataset.draggableSetup = 'true';
 
             let isDragging = false;
-            let startX = 0, startY = 0;
-            let initLeft = 0, initTop = 0;
-            let hasMoved = false;
+            let startClientX = 0, startClientY = 0;
+            let currentX = 0, currentY = 0;
+            let initialX = 0, initialY = 0;
+            let hasDragged = false;
 
+            // Restaura posição salva no sessionStorage
             try {
                 const saved = JSON.parse(sessionStorage.getItem('yelo_forum_fab_pos') || 'null');
-                if (saved && typeof saved.left === 'number' && typeof saved.top === 'number') {
+                if (saved && typeof saved.x === 'number' && typeof saved.y === 'number') {
                     const fabW = fab.offsetWidth || 54;
                     const fabH = fab.offsetHeight || 54;
-                    const maxL = window.innerWidth - fabW - 10;
-                    const maxT = window.innerHeight - fabH - 10;
-                    const l = Math.max(10, Math.min(saved.left, maxL));
-                    const t = Math.max(10, Math.min(saved.top, maxT));
-                    fab.style.setProperty('left', `${l}px`, 'important');
-                    fab.style.setProperty('top', `${t}px`, 'important');
-                    fab.style.setProperty('right', 'auto', 'important');
-                    fab.style.setProperty('bottom', 'auto', 'important');
-                }
-            } catch(e) {}
+                    const restingRight = 18;
+                    const restingBottom = 90;
+                    const minX = -(window.innerWidth - fabW - restingRight - 10);
+                    const maxX = restingRight - 10;
+                    const minY = -(window.innerHeight - fabH - restingBottom - 10);
+                    const maxY = restingBottom - 10;
 
-            const onStart = (clientX, clientY, target, pointerId = null) => {
+                    currentX = Math.max(minX, Math.min(saved.x, maxX));
+                    currentY = Math.max(minY, Math.min(saved.y, maxY));
+                    fab.style.setProperty('transform', `translate3d(${currentX}px, ${currentY}px, 0)`, 'important');
+                }
+            } catch (e) {}
+
+            const onStart = (clientX, clientY, pointerId = null) => {
                 isDragging = true;
-                hasMoved = false;
-                startX = clientX;
-                startY = clientY;
-                const rect = fab.getBoundingClientRect();
-                initLeft = rect.left;
-                initTop = rect.top;
+                hasDragged = false;
+                startClientX = clientX;
+                startClientY = clientY;
+                initialX = currentX;
+                initialY = currentY;
+
+                fab.classList.add('is-dragging');
                 fab.style.transition = 'none';
-                fab.style.cursor = 'grabbing';
-                if (pointerId !== null && target && typeof target.setPointerCapture === 'function') {
-                    try { target.setPointerCapture(pointerId); } catch(e) {}
+
+                if (pointerId !== null && typeof fab.setPointerCapture === 'function') {
+                    try { fab.setPointerCapture(pointerId); } catch(e) {}
                 }
             };
 
-            const onMove = (clientX, clientY, ev) => {
+            const onMove = (clientX, clientY, e) => {
                 if (!isDragging) return;
-                const dx = clientX - startX;
-                const dy = clientY - startY;
-                if (!hasMoved && Math.hypot(dx, dy) > 5) {
-                    hasMoved = true;
+                const dx = clientX - startClientX;
+                const dy = clientY - startClientY;
+
+                if (!hasDragged && Math.hypot(dx, dy) > 6) {
+                    hasDragged = true;
                 }
-                if (hasMoved) {
-                    if (ev && ev.cancelable) ev.preventDefault();
+
+                if (hasDragged) {
+                    if (e && e.cancelable) e.preventDefault();
+                    
                     const fabW = fab.offsetWidth || 54;
                     const fabH = fab.offsetHeight || 54;
-                    const maxL = window.innerWidth - fabW - 10;
-                    const maxT = window.innerHeight - fabH - 10;
-                    const curL = Math.max(10, Math.min(initLeft + dx, maxL));
-                    const curT = Math.max(10, Math.min(initTop + dy, maxT));
+                    const restingRight = 18;
+                    const restingBottom = 90;
+                    const minX = -(window.innerWidth - fabW - restingRight - 10);
+                    const maxX = restingRight - 10;
+                    const minY = -(window.innerHeight - fabH - restingBottom - 10);
+                    const maxY = restingBottom - 10;
 
-                    fab.style.setProperty('left', `${curL}px`, 'important');
-                    fab.style.setProperty('top', `${curT}px`, 'important');
-                    fab.style.setProperty('right', 'auto', 'important');
-                    fab.style.setProperty('bottom', 'auto', 'important');
+                    currentX = Math.max(minX, Math.min(initialX + dx, maxX));
+                    currentY = Math.max(minY, Math.min(initialY + dy, maxY));
+
+                    fab.style.setProperty('transform', `translate3d(${currentX}px, ${currentY}px, 0)`, 'important');
                 }
             };
 
             const onEnd = () => {
                 if (!isDragging) return;
                 isDragging = false;
-                fab.style.transition = '';
-                fab.style.cursor = 'grab';
+                fab.classList.remove('is-dragging');
+                fab.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1)';
 
-                if (hasMoved) {
-                    const finalRect = fab.getBoundingClientRect();
+                if (hasDragged) {
                     try {
-                        sessionStorage.setItem('yelo_forum_fab_pos', JSON.stringify({ left: finalRect.left, top: finalRect.top }));
+                        sessionStorage.setItem('yelo_forum_fab_pos', JSON.stringify({ x: currentX, y: currentY }));
                     } catch(e) {}
 
+                    // Suprime o clique para não abrir o modal ao terminar o arrasto
                     const stopClick = (ce) => {
-                        ce.stopPropagation();
+                        ce.stopImmediatePropagation();
                         ce.preventDefault();
                         fab.removeEventListener('click', stopClick, true);
                     };
                     fab.addEventListener('click', stopClick, true);
+                    setTimeout(() => fab.removeEventListener('click', stopClick, true), 350);
                 }
             };
 
-            // Eventos de ponteiro (Modern Browsers, Safari, Chrome)
-            fab.addEventListener('pointerdown', (e) => {
-                if (e.button !== undefined && e.button !== 0) return;
-                onStart(e.clientX, e.clientY, fab, e.pointerId);
+            // Se o navegador suporta Pointer Events (unificado para touch, mouse e caneta)
+            if (window.PointerEvent) {
+                fab.addEventListener('pointerdown', (e) => {
+                    if (e.button !== undefined && e.button !== 0) return;
+                    onStart(e.clientX, e.clientY, e.pointerId);
 
-                const onPointerMove = (ev) => onMove(ev.clientX, ev.clientY, ev);
-                const onPointerUp = () => {
-                    window.removeEventListener('pointermove', onPointerMove);
-                    window.removeEventListener('pointerup', onPointerUp);
-                    window.removeEventListener('pointercancel', onPointerUp);
-                    onEnd();
-                };
+                    const onPointerMove = (ev) => onMove(ev.clientX, ev.clientY, ev);
+                    const onPointerUp = () => {
+                        window.removeEventListener('pointermove', onPointerMove);
+                        window.removeEventListener('pointerup', onPointerUp);
+                        window.removeEventListener('pointercancel', onPointerUp);
+                        onEnd();
+                    };
 
-                window.addEventListener('pointermove', onPointerMove, { passive: false });
-                window.addEventListener('pointerup', onPointerUp);
-                window.addEventListener('pointercancel', onPointerUp);
-            });
+                    window.addEventListener('pointermove', onPointerMove, { passive: false });
+                    window.addEventListener('pointerup', onPointerUp);
+                    window.addEventListener('pointercancel', onPointerUp);
+                });
+            } else {
+                // Fallback touch para dispositivos legados
+                fab.addEventListener('touchstart', (e) => {
+                    if (e.touches && e.touches.length === 1) {
+                        onStart(e.touches[0].clientX, e.touches[0].clientY);
+                    }
+                }, { passive: true });
 
-            // Touch events fallback para iOS / Android
-            fab.addEventListener('touchstart', (e) => {
-                if (e.touches && e.touches.length === 1) {
-                    onStart(e.touches[0].clientX, e.touches[0].clientY, fab);
-                }
-            }, { passive: true });
+                fab.addEventListener('touchmove', (e) => {
+                    if (e.touches && e.touches.length === 1) {
+                        onMove(e.touches[0].clientX, e.touches[0].clientY, e);
+                    }
+                }, { passive: false });
 
-            fab.addEventListener('touchmove', (e) => {
-                if (e.touches && e.touches.length === 1) {
-                    onMove(e.touches[0].clientX, e.touches[0].clientY, e);
-                }
-            }, { passive: false });
-
-            fab.addEventListener('touchend', onEnd);
-            fab.addEventListener('touchcancel', onEnd);
+                fab.addEventListener('touchend', onEnd);
+                fab.addEventListener('touchcancel', onEnd);
+            }
         }
 
         if (mobileFabEl) {
@@ -1240,10 +1253,16 @@
                     }
                 }
 
-                // Lógica do botão de IA para Admins
+                // Lógica do botão de IA: Apenas para o perfil oficial pix@yelopsi.com.br
+                const isUserAIAllowed = adminPsiData && (
+                    adminPsiData.email === 'pix@yelopsi.com.br' || 
+                    adminPsiData.email === 'pix@yeloposi.com.br'
+                );
                 const btnAiComment = postEl.querySelector('#btn-generate-ai-comment');
-                if (btnAiComment && isUserAdmin) {
+                if (btnAiComment && isUserAIAllowed) {
                     btnAiComment.classList.remove('hidden');
+                    btnAiComment.style.display = 'inline-flex';
+                    btnAiComment.innerHTML = 'IA';
                     btnAiComment.onclick = async () => {
                         const postTitleEl = postEl.querySelector('.full-post-title');
                         const postContentEl = postEl.querySelector('.full-post-content');
@@ -1262,8 +1281,7 @@
                         }
 
                         btnAiComment.disabled = true;
-                        const originalText = btnAiComment.innerHTML;
-                        btnAiComment.innerHTML = '✨ Pensando...';
+                        btnAiComment.innerHTML = 'IA...';
 
                         try {
                             const res = await apiFetch(`${API_BASE_URL}/api/forum/ai/generate-comment`, {
@@ -1293,9 +1311,12 @@
                             showToast('Erro ao gerar com IA.', 'error');
                         } finally {
                             btnAiComment.disabled = false;
-                            btnAiComment.innerHTML = originalText;
+                            btnAiComment.innerHTML = 'IA';
                         }
                     };
+                } else if (btnAiComment) {
+                    btnAiComment.classList.add('hidden');
+                    btnAiComment.style.display = 'none';
                 }
 
                 const loadMoreCommentsBtn = postEl.querySelector('#btn-load-more-comments');

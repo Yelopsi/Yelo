@@ -58,6 +58,18 @@
     box-shadow: 0 2px 6px rgba(27, 67, 50, 0.2);
 }
 
+.avisos-btn-novidades {
+    margin-left: auto !important;
+    background: #e0f2fe !important;
+    color: #0284c7 !important;
+    border: 1.5px solid #bae6fd !important;
+    font-weight: 700 !important;
+}
+.avisos-btn-novidades:hover {
+    background: #bae6fd !important;
+    color: #0369a1 !important;
+}
+
 .btn-marcar-todos {
     background: #f8fafc;
     border: 1.5px solid #cbd5e1;
@@ -334,13 +346,42 @@
     
     .avisos-filters {
         width: 100%;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
         padding-bottom: 4px;
+    }
+    .avisos-filters::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .aviso-filter-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    .avisos-btn-novidades {
+        margin-left: 0 !important;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
     
     .avisos-feed-actions-top {
         width: 100%;
         display: flex;
-        justify-content: flex-end;
+        justify-content: stretch;
+        padding-top: 8px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .btn-marcar-todos {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
     }
     
     .aviso-feed-item {
