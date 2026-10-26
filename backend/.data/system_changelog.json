@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-8283c03d",
+    "date": "2026-10-26T22:49:28.000Z",
+    "commit": "8283c03d",
+    "author": "Anderson",
+    "title": "Manutenção: Fixar Node.js 24.22.1 conforme advisory de seguranca do Render (eMudhra) (infra)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "fixar Node.js 24.22.1 conforme advisory de seguranca do Render (eMudhra)",
+    "description": "Commit registrado no repositório: \"chore(infra): fixar Node.js 24.22.1 conforme advisory de seguranca do Render (eMudhra)\". Arquivos modificados: .node-version, .nvmrc, backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8283c03d"
+    },
+    "after": {
+      "nova_versao": "fixar Node.js 24.22.1 conforme advisory de seguranca do Render (eMudhra)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      ".node-version",
+      ".nvmrc",
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-c2d88c55",
     "date": "2026-10-26T22:44:22.000Z",
     "commit": "c2d88c55",
