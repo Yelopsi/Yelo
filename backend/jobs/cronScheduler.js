@@ -48,6 +48,10 @@ async function runIntegrityAudit() {
                 // Período de testes (Trial) encerrado sem assinatura contratada
                 shouldBlock = true;
                 reason = 'Período de testes (Trial) encerrado sem assinatura';
+            } else if (psi.cancelAtPeriodEnd) {
+                // Usuário cancelou a renovação e o período pago já encerrou (planExpiresAt <= now)
+                shouldBlock = true;
+                reason = 'Período pago encerrado após cancelamento de renovação';
             } else {
                 // Tem assinatura -> Consulta Ativa no Asaas
                 try {

@@ -158,12 +158,27 @@ class PaymentStateService {
             return;
         }
 
+        // Checagem de idempotência: verifica o estado prévio desta fatura no banco local
+        const existingPayment = await db.Payment.findOne({ where: { id: payment.id } });
+        const wasAlreadyPaid = existingPayment && ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'].includes(existingPayment.status);
+
         // SINCRONIZAÇÃO EM TEMPO REAL COM O BANCO DE DADOS LOCAL
         await this.syncPaymentToDatabase(psi, payment);
 
         // Eventos Positivos
+        // IMPORTANTE: Para cartão de crédito, PAYMENT_RECEIVED é apenas liquidação contábil (D+30), não uma nova cobrança do cliente.
+        // O evento de faturamento/renovação de cartão é exclusivamente PAYMENT_CONFIRMED.
+        // Para PIX/Boleto, PAYMENT_RECEIVED é o evento de faturamento legítimo.
+        const isCreditCardSettlement = payment.billingType === 'CREDIT_CARD' && event.event === 'PAYMENT_RECEIVED';
+
         if (['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED'].includes(event.event)) {
-            await this.processPaymentSuccess(psi, payment);
+            if (!isCreditCardSettlement && !wasAlreadyPaid) {
+                await this.processPaymentSuccess(psi, payment);
+            } else if (isCreditCardSettlement) {
+                console.log(`[ASAAS] Evento PAYMENT_RECEIVED para cartão ${payment.id} tratado exclusivamente como liquidação D+30 (não estende assinatura).`);
+            } else if (wasAlreadyPaid) {
+                console.log(`[ASAAS] Pagamento ${payment.id} já foi processado anteriormente. Ciclo mantido (idempotência garantida).`);
+            }
             await this.syncPaymentToLedger(event.event, payment);
         }
         
@@ -589,8 +604,11 @@ class PaymentStateService {
                 cycleExpiry.setDate(0); // Recua para o último dia do mês correto
             }
 
-            // Garante no mínimo 30 dias a partir da data em que o pagamento foi realizado/confirmado
-            const minExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            // Garante no mínimo 30 dias a partir da data em que o pagamento foi EFETIVAMENTE realizado pelo cliente
+            // (evita usar Date.now() para que webhooks processados em atraso não distorçam o calendário)
+            const payEffectiveDateStr = payment.clientPaymentDate || payment.confirmedDate || payment.paymentDate || payDueDateStr;
+            const payEffectiveDate = payEffectiveDateStr ? new Date(payEffectiveDateStr + (String(payEffectiveDateStr).includes('T') ? '' : 'T12:00:00Z')) : new Date();
+            const minExpiry = new Date(payEffectiveDate.getTime() + 30 * 24 * 60 * 60 * 1000);
             if (cycleExpiry < minExpiry) {
                 cycleExpiry = minExpiry;
             }
@@ -660,15 +678,22 @@ class PaymentStateService {
                 novaValidade = new Date(lockedPsi.planExpiresAt);
             }
 
+            const isNewSubscription = !lockedPsi.subscriptionId || (payment.subscription && lockedPsi.subscriptionId !== payment.subscription);
+
             const updatePayload = {
                 status: 'active',
                 planExpiresAt: novaValidade,
                 plano: planType,
                 subscriptionId: payment.subscription,
-                subscription_payments_count: currentPayments,
-                cancelAtPeriodEnd: false,
-                canceledAt: null
+                subscription_payments_count: currentPayments
             };
+
+            // Só reativa cancelAtPeriodEnd se for uma nova assinatura contratada
+            // Se o psicólogo já havia agendado o cancelamento desta assinatura, seu cancelamento é estritamente preservado
+            if (isNewSubscription) {
+                updatePayload.cancelAtPeriodEnd = false;
+                updatePayload.canceledAt = null;
+            }
 
             if (!lockedPsi.subscribedAt) {
                 updatePayload.subscribedAt = new Date();

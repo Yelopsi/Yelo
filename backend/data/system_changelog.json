@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-a2a53b7c",
+    "date": "2026-10-26T03:53:18.000Z",
+    "commit": "a2a53b7c",
+    "author": "Anderson",
+    "title": "Correção: Corrigir aninhamento e expansao dos blocos de visibilidade, google, senha e exclusao de conta",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir aninhamento e expansao dos blocos de visibilidade, google, senha e exclusao de conta",
+    "description": "Commit registrado no repositório: \"fix: corrigir aninhamento e expansao dos blocos de visibilidade, google, senha e exclusao de conta\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, public/psi/psi_meu_perfil.html, public/psi/psi_meu_perfil.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a2a53b7c"
+    },
+    "after": {
+      "nova_versao": "corrigir aninhamento e expansao dos blocos de visibilidade, google, senha e exclusao de conta"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "public/psi/psi_meu_perfil.html",
+      "public/psi/psi_meu_perfil.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-f4c161a3",
     "date": "2026-10-26T03:23:07.000Z",
     "commit": "f4c161a3",
