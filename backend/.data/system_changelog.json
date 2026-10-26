@@ -1,5 +1,36 @@
 [
   {
+    "id": "change-git-1634a990",
+    "date": "2026-10-26T03:16:30.000Z",
+    "commit": "1634a990",
+    "author": "Anderson",
+    "title": "Correção: Alinhar blocos do perfil, ajustar botao IA e corrigir FAB e filtros no mobile (ui)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "alinhar blocos do perfil, ajustar botao IA e corrigir FAB e filtros no mobile",
+    "description": "Commit registrado no repositório: \"fix(ui): alinhar blocos do perfil, ajustar botao IA e corrigir FAB e filtros no mobile\". Arquivos modificados: backend/data/system_changelog.json, forum-community.css, public/css/components/psi_avisos.css, public/css/forum-community.css, public/psi/psi_avisos.html (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1634a990"
+    },
+    "after": {
+      "nova_versao": "alinhar blocos do perfil, ajustar botao IA e corrigir FAB e filtros no mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "forum-community.css",
+      "public/css/components/psi_avisos.css",
+      "public/css/forum-community.css",
+      "public/psi/psi_avisos.html",
+      "public/psi/psi_forum.html",
+      "public/psi/psi_forum.js",
+      "public/psi/psi_meu_perfil.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-9f6813c5",
     "date": "2026-10-26T02:33:24.000Z",
     "commit": "9f6813c5",

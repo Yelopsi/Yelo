@@ -498,6 +498,66 @@
         </div>
     </div>
 
+    <!-- MODAL DE NOVIDADE: GOOGLE MEU NEGÓCIO & AVALIAÇÕES -->
+    <div id="modal-novidade-google-reviews" class="custom-modal-overlay" style="display: none; z-index: 100050;">
+        <div class="custom-modal-box" style="text-align: center; padding: 34px 28px; max-width: 480px; border-radius: 24px; position: relative; box-shadow: 0 25px 60px rgba(0,0,0,0.25);">
+            <div class="sheet-drag-handle"></div>
+            <!-- Botão Fechar no canto superior -->
+            <button type="button" id="btn-fechar-novidade-gmb-x" style="position: absolute; top: 16px; right: 18px; background: #F1F5F9; border: none; width: 34px; height: 34px; border-radius: 50%; font-size: 1.1rem; color: #64748B; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="Fechar">✕</button>
+
+            <!-- Badge & Ícone Visual -->
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 68px; height: 68px; background: linear-gradient(135deg, #FEF3C7, #FDE68A); border-radius: 50%; margin-bottom: 14px; box-shadow: 0 6px 16px rgba(245, 158, 11, 0.2); border: 2px solid #FCD34D;">
+                <span style="font-size: 2rem;">⭐</span>
+            </div>
+
+            <div style="display: block; margin-bottom: 10px;">
+                <span style="display: inline-block; background: #DCFCE7; color: #166534; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; padding: 4px 12px; border-radius: 20px;">
+                    NOVIDADE NO SEU PERFIL
+                </span>
+            </div>
+
+            <h3 style="margin: 0 0 10px 0; color: #1B4332; font-family: var(--font-titulos, 'Fraunces', serif); font-size: 1.55rem; line-height: 1.25;">
+                Conecte suas Avaliações do Google Meu Negócio!
+            </h3>
+
+            <p style="color: #475569; font-size: 0.95rem; line-height: 1.5; margin: 0 0 18px 0; font-family: var(--font-principal, 'Inter', sans-serif);">
+                Agora você pode exibir suas avaliações, comentários e nota do <strong>Google Meu Negócio & Google Maps</strong> diretamente no seu perfil público aqui na Yelo.
+            </p>
+
+            <!-- Card de Benefícios / Destaques -->
+            <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 16px; padding: 14px 16px; text-align: left; margin-bottom: 22px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🌟</span>
+                    <span style="font-size: 0.88rem; color: #1E293B; line-height: 1.4;">
+                        <strong>Nota e depoimentos reais</strong> destacados na sua página pública.
+                    </span>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">🛡️</span>
+                    <span style="font-size: 0.88rem; color: #1E293B; line-height: 1.4;">
+                        <strong>Muito mais autoridade</strong> e segurança para novos pacientes agendarem com você.
+                    </span>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                    <span style="font-size: 1.15rem; line-height: 1;">📍</span>
+                    <span style="font-size: 0.88rem; color: #1E293B; line-height: 1.4;">
+                        <strong>Super simples:</strong> basta colar o link de avaliações do seu consultório no Google.
+                    </span>
+                </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button type="button" id="btn-conectar-gmb-agora" class="btn btn-principal" style="width: 100%; padding: 14px; border-radius: 50px; font-size: 1rem; font-weight: 700; box-shadow: 0 4px 15px rgba(27,67,50,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    Conectar Meu Google Agora ➔
+                </button>
+                <button type="button" id="btn-lembrar-gmb-depois" style="background: transparent; border: none; color: #64748B; font-size: 0.88rem; font-weight: 600; cursor: pointer; padding: 8px; border-radius: 8px; transition: color 0.2s;">
+                    Lembrar mais tarde
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- BOTTOM NAVIGATION (MOBILE ONLY) -->
     <nav class="mobile-bottom-nav">

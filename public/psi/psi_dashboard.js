@@ -857,6 +857,60 @@ document.addEventListener('DOMContentLoaded', function () {
                 };
             }
 
+            // --- NOVO: MODAL DE NOVIDADE GOOGLE MEU NEGÓCIO (APARECE UMA ÚNICA VEZ PARA PROFISSIONAL JÁ CADASTRADO) ---
+            if (psychologistData.hasSeenWelcome !== false) {
+                const psiId = psychologistData.id || '';
+                const gmbSeen = (psiId && localStorage.getItem('yelo_modal_gmb_reviews_seen_' + psiId) === 'true') || 
+                                (localStorage.getItem('yelo_modal_gmb_reviews_seen') === 'true');
+                const alreadyLinked = !!(psychologistData.google_business_url || (psychologistData.google_reviews && psychologistData.google_reviews.rating));
+
+                if (alreadyLinked) {
+                    if (psiId) localStorage.setItem('yelo_modal_gmb_reviews_seen_' + psiId, 'true');
+                    localStorage.setItem('yelo_modal_gmb_reviews_seen', 'true');
+                } else if (!gmbSeen) {
+                    const modalGmb = document.getElementById('modal-novidade-google-reviews');
+                    if (modalGmb) {
+                        setTimeout(() => {
+                            modalGmb.style.display = 'flex';
+
+                            const markSeenAndClose = () => {
+                                modalGmb.style.transition = 'opacity 0.25s ease';
+                                modalGmb.style.opacity = '0';
+                                setTimeout(() => {
+                                    modalGmb.style.display = 'none';
+                                    modalGmb.style.opacity = '';
+                                }, 250);
+                                if (psiId) localStorage.setItem('yelo_modal_gmb_reviews_seen_' + psiId, 'true');
+                                localStorage.setItem('yelo_modal_gmb_reviews_seen', 'true');
+                            };
+
+                            const btnConectar = document.getElementById('btn-conectar-gmb-agora');
+                            if (btnConectar) {
+                                btnConectar.onclick = () => {
+                                    sessionStorage.setItem('yelo_scroll_to_block', 'google-reviews');
+                                    markSeenAndClose();
+                                    if (typeof window.loadPage === 'function') {
+                                        window.loadPage('psi_meu_perfil.html');
+                                    } else {
+                                        window.location.href = 'psi_meu_perfil.html';
+                                    }
+                                };
+                            }
+
+                            const btnFecharX = document.getElementById('btn-fechar-novidade-gmb-x');
+                            if (btnFecharX) btnFecharX.onclick = markSeenAndClose;
+
+                            const btnLembrar = document.getElementById('btn-lembrar-gmb-depois');
+                            if (btnLembrar) btnLembrar.onclick = markSeenAndClose;
+
+                            modalGmb.onclick = (e) => {
+                                if (e.target === modalGmb) markSeenAndClose();
+                            };
+                        }, 900);
+                    }
+                }
+            }
+
             // Lógica do Modal de Instabilidade
             if (!localStorage.getItem('Yelo_aviso_instabilidade_lido')) {
                 const modalInstabilidade = document.getElementById('modal-aviso-instabilidade');

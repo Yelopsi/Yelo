@@ -1236,6 +1236,23 @@
                 if (window.inicializarLogicaDoPerfil) window.inicializarLogicaDoPerfil();
                 setupOptimizeBioButton(); // Inicializa o botão da IA
                 
+                // Auto-scroll para bloco específico se solicitado (ex: após clicar no modal de novidades do Google Meu Negócio)
+                const targetBlockId = sessionStorage.getItem('yelo_scroll_to_block');
+                if (targetBlockId) {
+                    sessionStorage.removeItem('yelo_scroll_to_block');
+                    setTimeout(() => {
+                        const targetBlock = document.querySelector(`.profile-block[data-block-id="${targetBlockId}"]`);
+                        if (targetBlock) {
+                            targetBlock.classList.remove('collapsed');
+                            targetBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            const editBtn = targetBlock.querySelector('.btn-edit');
+                            if (editBtn && !targetBlock.classList.contains('editing')) {
+                                editBtn.click();
+                            }
+                        }
+                    }, 450);
+                }
+                
                 // Inicializa o Quill para a Biografia
                 if (typeof Quill !== 'undefined' && !quillBio && document.getElementById('bio-editor')) {
                     quillBio = new Quill('#bio-editor', {
