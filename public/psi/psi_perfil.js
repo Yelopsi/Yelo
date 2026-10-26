@@ -70,9 +70,12 @@
                 const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=last30days`);
                 if (res.ok) {
                     const stats = await res.json();
-                    document.getElementById('perf-views').textContent = stats.profileViews || 0;
-                    document.getElementById('perf-clicks').textContent = stats.whatsappClicks || 0;
-                    document.getElementById('perf-favs').textContent = stats.favoritesCount || 0;
+                    const elViews = document.getElementById('perf-views');
+                    if (elViews) elViews.textContent = stats.profileViews || 0;
+                    const elClicks = document.getElementById('perf-clicks');
+                    if (elClicks) elClicks.textContent = stats.whatsappClicks || 0;
+                    const elFavs = document.getElementById('perf-favs');
+                    if (elFavs) elFavs.textContent = stats.favoritesCount || 0;
                 }
             } catch(e) { }
         }

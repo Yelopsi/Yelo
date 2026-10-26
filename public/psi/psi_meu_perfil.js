@@ -300,6 +300,18 @@
                 if (el && data[key]) el.value = data[key].replace(/https?:\/\/(www\.)?/, '').replace(/linkedin\.com\/in\//, '').replace(/instagram\.com\//, '');
             });
 
+            // Google Meu Negócio & Avaliações
+            const googleUrlInput = document.getElementById('google_business_url');
+            if (googleUrlInput) googleUrlInput.value = data.google_business_url || '';
+            const googlePlaceIdInput = document.getElementById('google_place_id');
+            if (googlePlaceIdInput) googlePlaceIdInput.value = data.google_place_id || '';
+            const previewContainer = document.getElementById('google-reviews-preview-container');
+            if (data.google_reviews_data && (data.google_business_url || data.google_place_id)) {
+                renderGoogleReviewsPreview(data.google_reviews_data);
+            } else if (previewContainer) {
+                previewContainer.style.display = 'none';
+            }
+
             // --- NOVOS CAMPOS: Sessão Grátis e Pausa de Perfil ---
             const freeSessionActive = document.getElementById('free_session_active');
             if (freeSessionActive) freeSessionActive.checked = data.free_session_active === true;
@@ -423,9 +435,12 @@
                 const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=last30days`);
                 if (res.ok) {
                     const stats = await res.json();
-                    document.getElementById('perf-views').textContent = stats.profileViews || 0;
-                    document.getElementById('perf-clicks').textContent = stats.whatsappClicks || 0;
-                    document.getElementById('perf-favs').textContent = stats.favoritesCount || 0;
+                    const elViews = document.getElementById('perf-views');
+                    if (elViews) elViews.textContent = stats.profileViews || 0;
+                    const elClicks = document.getElementById('perf-clicks');
+                    if (elClicks) elClicks.textContent = stats.whatsappClicks || 0;
+                    const elFavs = document.getElementById('perf-favs');
+                    if (elFavs) elFavs.textContent = stats.favoritesCount || 0;
                 }
             } catch(e) { }
         }
@@ -464,6 +479,15 @@
                     data.valor_mensal_numero = null;
                 } else {
                     data.valor_sessao_numero = null;
+                }
+            }
+
+            // Trata bloco Google: se ambos estiverem vazios, zera as avaliações no payload
+            if (block.dataset.blockId === 'google-reviews') {
+                const url = (data.google_business_url || '').trim();
+                const placeId = (data.google_place_id || '').trim();
+                if (!url && !placeId) {
+                    data.google_reviews_data = null;
                 }
             }
 
@@ -541,6 +565,8 @@
             block.querySelector('.btn-save').classList.remove('hidden');
             const btnOptimize = block.querySelector('#btn-optimize-bio');
             if (btnOptimize) btnOptimize.style.display = 'inline-flex';
+            const btnClearGoogle = block.querySelector('#btn-clear-google-data');
+            if (btnClearGoogle) btnClearGoogle.style.display = 'inline-flex';
             
             if (quillBio && block.contains(document.getElementById('bio-editor'))) {
                 quillBio.enable(true);
@@ -564,6 +590,8 @@
             block.querySelector('.btn-save').classList.add('hidden');
             const btnOptimize = block.querySelector('#btn-optimize-bio');
             if (btnOptimize) btnOptimize.style.display = 'none';
+            const btnClearGoogle = block.querySelector('#btn-clear-google-data');
+            if (btnClearGoogle) btnClearGoogle.style.display = 'none';
             
             if (quillBio && block.contains(document.getElementById('bio-editor'))) {
                 quillBio.enable(false);
@@ -584,6 +612,13 @@
         async function saveBlockData(block) {
             setBlockState(block, 'saving');
             const payload = getBlockData(block);
+            if (block.dataset.blockId === 'google-reviews') {
+                const url = (payload.google_business_url || '').trim();
+                const placeId = (payload.google_place_id || '').trim();
+                if (!url && !placeId) {
+                    payload.google_reviews_data = null;
+                }
+            }
             try {
                 const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me`, { method: 'PUT', body: JSON.stringify(payload) });
                 const resData = await res.json();
@@ -591,6 +626,23 @@
                 if (!res.ok) throw new Error(resData.error || 'Falha ao salvar.');
                 Object.assign(originalProfileData, payload, resData);
                 psychologistData = { ...psychologistData, ...payload, ...resData };
+
+                if (block.dataset.blockId === 'google-reviews') {
+                    const url = (payload.google_business_url || '').trim();
+                    const placeId = (payload.google_place_id || '').trim();
+                    if (!url && !placeId) {
+                        originalProfileData.google_reviews_data = null;
+                        originalProfileData.google_business_url = null;
+                        originalProfileData.google_place_id = null;
+                        if (psychologistData) {
+                            psychologistData.google_reviews_data = null;
+                            psychologistData.google_business_url = null;
+                            psychologistData.google_place_id = null;
+                        }
+                        const previewContainer = document.getElementById('google-reviews-preview-container');
+                        if (previewContainer) previewContainer.style.display = 'none';
+                    }
+                }
                 
                 // --- ATUALIZA O ESTADO GLOBAL E ESCONDE O BANNER DE TRIAL IMEDIATAMENTE ---
                 if (window.getPsychologistData && window.setPsychologistData) {
@@ -631,6 +683,18 @@
             const block = e.target.closest('.profile-block');
             if (block && block.classList.contains('editing')) {
                 const blockId = block.dataset.blockId;
+                if (blockId === 'google-reviews') {
+                    const urlVal = (document.getElementById('google_business_url')?.value || '').trim();
+                    const placeIdVal = (document.getElementById('google_place_id')?.value || '').trim();
+                    const previewContainer = document.getElementById('google-reviews-preview-container');
+                    if (previewContainer) {
+                        if (!urlVal && !placeIdVal) {
+                            previewContainer.style.display = 'none';
+                        } else if (originalProfileData.google_reviews_data && (urlVal === originalProfileData.google_business_url || placeIdVal === originalProfileData.google_place_id)) {
+                            renderGoogleReviewsPreview(originalProfileData.google_reviews_data);
+                        }
+                    }
+                }
                 clearTimeout(debounceTimers[blockId]);
                 debounceTimers[blockId] = setTimeout(() => { checkForChanges(block); updateProfileInsights(); }, 600);
             }
@@ -692,6 +756,13 @@
 
                     Object.assign(originalProfileData, allDirtyData, resData);
                     psychologistData = { ...psychologistData, ...allDirtyData, ...resData };
+
+                    if (allDirtyData.google_business_url !== undefined && !allDirtyData.google_business_url && !allDirtyData.google_place_id) {
+                        originalProfileData.google_reviews_data = null;
+                        if (psychologistData) psychologistData.google_reviews_data = null;
+                        const previewContainer = document.getElementById('google-reviews-preview-container');
+                        if (previewContainer) previewContainer.style.display = 'none';
+                    }
                     
                     // --- ATUALIZA O ESTADO GLOBAL E ESCONDE O BANNER DE TRIAL IMEDIATAMENTE ---
                     if (window.getPsychologistData && window.setPsychologistData) {
@@ -779,6 +850,7 @@
         if (psychologistData) {
             populateBlockForm(psychologistData);
             profileContainer.querySelectorAll('.profile-block').forEach(block => {
+                if (block.classList.contains('collapsible-block')) return; // Pula blocos colapsáveis independentes
                 if (!block.classList.contains('editing')) {
                     block.classList.add('collapsed');
                     block.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = true; });
@@ -813,6 +885,59 @@
                 passwordForm.prepend(p);
             }
         }
+
+        // Toggle de colapso para blocos colapsáveis (Google Connect, Alterar Senha, Excluir Conta)
+        document.querySelectorAll('.collapsible-block').forEach(block => {
+            const header = block.querySelector('.block-header');
+            if (header) {
+                header.onclick = function(e) {
+                    if (e.target.closest('.block-actions') || e.target.closest('button') || e.target.closest('a')) return;
+                    block.classList.toggle('collapsed');
+                };
+            }
+        });
+
+        // Formulário de Alteração de Senha
+        const passwordForm = document.getElementById('password-form');
+        if (passwordForm) {
+            passwordForm.onsubmit = async function(e) {
+                e.preventDefault();
+                const senhaAtual = (document.getElementById('senha_atual').value || '').trim();
+                const novaSenha = (document.getElementById('nova_senha').value || '').trim();
+                const submitBtn = passwordForm.querySelector('button[type="submit"]');
+
+                if (!senhaAtual || !novaSenha) {
+                    showToast('Preencha a senha atual e a nova senha.', 'error');
+                    return;
+                }
+
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Alterando...';
+                }
+
+                try {
+                    const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/password`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ senha_atual: senhaAtual, nova_senha: novaSenha })
+                    });
+                    const resData = await res.json();
+                    if (!res.ok) throw new Error(resData.error || 'Falha ao alterar senha.');
+
+                    showToast('Senha alterada com sucesso!', 'success');
+                    passwordForm.reset();
+                    const pwBlock = document.querySelector('.profile-block[data-block-id="password"]');
+                    if (pwBlock) pwBlock.classList.add('collapsed');
+                } catch (err) {
+                    showToast(err.message, 'error');
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Alterar Senha';
+                    }
+                }
+            };
+        }
         
         // Evento Copiar Link
         const btnCopyLink = document.getElementById('btn-copy-profile-link');
@@ -839,6 +964,211 @@
             });
         }
         
+        function renderGoogleReviewsPreview(reviewsData) {
+            const previewContainer = document.getElementById('google-reviews-preview-container');
+            if (!previewContainer) return;
+
+            let dataObj = reviewsData;
+            if (typeof dataObj === 'string') {
+                try { dataObj = JSON.parse(dataObj); } catch(e) { dataObj = null; }
+            }
+
+            if (!dataObj || !dataObj.success) {
+                previewContainer.style.display = 'none';
+                return;
+            }
+
+            previewContainer.style.display = 'block';
+
+            const ratingEl = document.getElementById('preview-google-rating');
+            if (ratingEl) ratingEl.textContent = dataObj.rating ? Number(dataObj.rating).toFixed(1) : '5.0';
+
+            const starsEl = document.getElementById('preview-google-stars');
+            if (starsEl) {
+                const r = Math.round(Number(dataObj.rating) || 5);
+                let stars = '';
+                for (let i = 1; i <= 5; i++) {
+                    stars += i <= r ? '★' : '☆';
+                }
+                starsEl.textContent = stars;
+            }
+
+            const countEl = document.getElementById('preview-google-count');
+            if (countEl) {
+                const total = dataObj.user_ratings_total || (dataObj.reviews ? dataObj.reviews.length : 0);
+                countEl.textContent = `(${total} avaliaç${total === 1 ? 'ão' : 'ões'})`;
+            }
+
+            const syncedAtEl = document.getElementById('preview-google-synced-at');
+            if (syncedAtEl) {
+                if (dataObj.synced_at) {
+                    const d = new Date(dataObj.synced_at);
+                    syncedAtEl.textContent = `Sincronizado em ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+                } else {
+                    syncedAtEl.textContent = 'Sincronizado recentemente';
+                }
+            }
+
+            const badgeEl = document.getElementById('preview-google-mode-badge');
+            if (badgeEl) {
+                if (dataObj.is_simulated) {
+                    badgeEl.textContent = 'Modo Demonstração';
+                    badgeEl.style.background = '#fef3c7';
+                    badgeEl.style.color = '#92400e';
+                } else {
+                    badgeEl.textContent = 'Google Maps Conectado ✔';
+                    badgeEl.style.background = '#dcfce7';
+                    badgeEl.style.color = '#166534';
+                }
+            }
+
+            const listEl = document.getElementById('preview-google-reviews-list');
+            if (listEl) {
+                listEl.innerHTML = '';
+                const reviews = dataObj.reviews || [];
+                if (reviews.length === 0) {
+                    listEl.innerHTML = '<p style="color: #64748b; font-size: 0.9rem; margin: 0;">Nenhuma avaliação recente retornada pelo Google.</p>';
+                } else {
+                    reviews.slice(0, 4).forEach(rev => {
+                        const card = document.createElement('div');
+                        card.style.cssText = 'background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); display: flex; flex-direction: column; gap: 8px;';
+                        
+                        let starStr = '';
+                        for (let i = 1; i <= 5; i++) {
+                            starStr += `<span style="color: ${i <= (rev.rating || 5) ? '#f59e0b' : '#cbd5e1'}; font-size: 0.85rem;">★</span>`;
+                        }
+
+                        const avatarHtml = rev.profile_photo_url
+                            ? `<img src="${rev.profile_photo_url}" alt="${rev.author_name || 'Paciente'}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" referrerpolicy="no-referrer">`
+                            : `<div style="width: 32px; height: 32px; border-radius: 50%; background: #e2e8f0; color: #475569; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">${(rev.author_name || 'P')[0].toUpperCase()}</div>`;
+
+                        card.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    ${avatarHtml}
+                                    <div>
+                                        <div style="font-weight: 600; color: #1e293b; font-size: 0.88rem;">${rev.author_name || 'Paciente Verificado'}</div>
+                                        <div style="font-size: 0.75rem; color: #94a3b8;">${rev.relative_time_description || 'recentemente'}</div>
+                                    </div>
+                                </div>
+                                <div>${starStr}</div>
+                            </div>
+                            <p style="margin: 0; color: #475569; font-size: 0.85rem; line-height: 1.4; font-style: italic;">"${rev.text || 'Atendimento excelente!'}"</p>
+                        `;
+                        listEl.appendChild(card);
+                    });
+                }
+            }
+        }
+
+        function setupGoogleReviewsSync() {
+            const btnSync = document.getElementById('btn-sync-google-reviews');
+            if (!btnSync) return;
+
+            btnSync.addEventListener('click', async (e) => {
+                e.preventDefault();
+
+                const urlInput = document.getElementById('google_business_url');
+                const placeIdInput = document.getElementById('google_place_id');
+                const badge = document.getElementById('google-sync-status-badge');
+                const spinner = document.getElementById('google-sync-spinner');
+                const icon = document.getElementById('google-sync-icon');
+                const btnText = document.getElementById('google-sync-btn-text');
+
+                const googleUrl = urlInput ? urlInput.value.trim() : '';
+                const placeId = placeIdInput ? placeIdInput.value.trim() : '';
+
+                if (!googleUrl && !placeId) {
+                    showToast('Por favor, informe o link do Google Maps ou o Place ID.', 'error');
+                    if (urlInput) urlInput.focus();
+                    return;
+                }
+
+                btnSync.disabled = true;
+                if (spinner) spinner.classList.remove('hidden');
+                if (icon) icon.classList.add('hidden');
+                if (btnText) btnText.textContent = 'Sincronizando com Google...';
+                if (badge) badge.style.display = 'none';
+
+                try {
+                    const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me/sync-google-reviews`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            google_business_url: googleUrl,
+                            google_place_id: placeId
+                        })
+                    });
+
+                    const resData = await res.json();
+                    if (!res.ok) {
+                        throw new Error(resData.error || 'Não foi possível sincronizar com o Google.');
+                    }
+
+                    const resultData = resData.google_reviews_data;
+                    originalProfileData.google_reviews_data = resultData;
+                    psychologistData.google_reviews_data = resultData;
+
+                    if (resultData.place_url && urlInput) {
+                        urlInput.value = resultData.place_url;
+                        originalProfileData.google_business_url = resultData.place_url;
+                    }
+                    if (resultData.place_id && placeIdInput) {
+                        placeIdInput.value = resultData.place_id;
+                        originalProfileData.google_place_id = resultData.place_id;
+                    }
+
+                    renderGoogleReviewsPreview(resultData);
+
+                    if (badge) {
+                        badge.style.display = 'inline-block';
+                        badge.style.background = '#dcfce7';
+                        badge.style.color = '#166534';
+                        badge.textContent = 'Sincronizado ✔';
+                        setTimeout(() => { badge.style.display = 'none'; }, 4000);
+                    }
+
+                    showToast(resData.message || 'Avaliações do Google sincronizadas com sucesso!', 'success');
+                } catch (err) {
+                    showToast(err.message, 'error');
+                    if (badge) {
+                        badge.style.display = 'inline-block';
+                        badge.style.background = '#fee2e2';
+                        badge.style.color = '#991b1b';
+                        badge.textContent = 'Erro ao sincronizar';
+                    }
+                } finally {
+                    btnSync.disabled = false;
+                    if (spinner) spinner.classList.add('hidden');
+                    if (icon) icon.classList.remove('hidden');
+                    if (btnText) btnText.textContent = 'Sincronizar Avaliações Agora';
+                }
+            });
+
+            // Botão para limpar e desconectar avaliações do Google
+            const btnClear = document.getElementById('btn-clear-google-data');
+            if (btnClear) {
+                btnClear.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const urlInput = document.getElementById('google_business_url');
+                    const placeIdInput = document.getElementById('google_place_id');
+                    if (urlInput) urlInput.value = '';
+                    if (placeIdInput) placeIdInput.value = '';
+                    const previewContainer = document.getElementById('google-reviews-preview-container');
+                    if (previewContainer) previewContainer.style.display = 'none';
+                    const block = btnClear.closest('.profile-block');
+                    if (block) {
+                        checkForChanges(block);
+                        updateProfileInsights();
+                    }
+                    showToast('Link do Google removido. Clique em "Salvar" para confirmar a desconexão.', 'info');
+                });
+            }
+        }
+
+
+        // Inicializa a sincronização do Google
+        setupGoogleReviewsSync();
+
         // Dispara a busca dos dados do Card de Desempenho
         fetchPerformanceData();
     }

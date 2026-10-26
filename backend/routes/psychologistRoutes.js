@@ -168,6 +168,7 @@ router.get('/me/analytics', safeProtect, psiDashboardController.getAnalyticsData
 router.get('/me/announcements', safeProtect, psiDashboardController.getAnnouncements);
 router.post('/me/announcements/:avisoId/read', safeProtect, psiDashboardController.markAnnouncementAsRead);
 router.get('/me/qna-unanswered-count', safeProtect, psychologistController.getUnansweredQuestionsCount);
+router.post('/me/sync-google-reviews', safeProtect, psychologistController.syncGoogleReviews);
 
 // O middleware 'protect' é aplicado a TODAS as rotas abaixo desta linha
 router.use(protect); 

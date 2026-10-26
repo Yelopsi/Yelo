@@ -22,8 +22,12 @@
             console.log(`[TOAST ${type}]`, msg);
             alert(msg);
         };
-        const abrirModalConfirmacao = window.abrirModalConfirmacaoPersonalizado || function(title, msg, onConfirm) {
-            if (confirm(`${title}\n\n${msg}`)) onConfirm();
+        const abrirModalConfirmacao = (title, msg, onConfirm, opts = {}) => {
+            if (typeof window.abrirModalConfirmacaoPersonalizado === 'function') {
+                window.abrirModalConfirmacaoPersonalizado(title, msg, onConfirm, opts);
+            } else if (confirm(`${title}\n\n${msg}`)) {
+                onConfirm();
+            }
         };
 
         // --- Cache de Snippets de Tópicos para Menções ---
@@ -337,31 +341,38 @@
                             </div>
 
                             <article class="modern-fullpost-card">
-                                <div class="modern-card-header full-post-author-row" style="margin-bottom: 20px;">
+                                <div class="modern-card-header full-post-author-row" style="margin-bottom: 18px;">
                                     <div class="author-info-group">
-                                        <img class="modern-author-avatar" style="width: 50px; height: 50px;" src="${authorPhoto}" alt="${authorName}" onerror="this.src='/img/default-avatar.png'">
+                                        <img class="modern-author-avatar" style="width: 64px; height: 64px; min-width: 64px; min-height: 64px;" src="${authorPhoto}" alt="${authorName}" onerror="this.src='/img/default-avatar.png'">
                                         <div class="author-meta-block">
-                                            <div class="author-name-row" style="font-size: 1.05rem;">
+                                            <div class="author-name-row" style="font-size: 1.25rem; font-weight: 800;">
                                                 ${authorSlugLink}
                                                 <span class="author-badges">${renderAuthorBadges(post.authorBadges)}</span>
                                             </div>
-                                            <span class="post-timestamp-text">Publicado há ${timeSince(post.createdAt)}</span>
+                                            <span class="post-timestamp-text" style="display: none;">Publicado há ${timeSince(post.createdAt)}</span>
+                                            <div class="post-actions-right fullpost-actions-row" style="display: flex !important; gap: 16px !important; align-items: center !important; margin-top: 6px !important;">
+                                                <button type="button" class="modern-icon-action-btn share-btn-full" title="Copiar link da discussão" onclick="navigator.clipboard.writeText(window.location.href); alert('Link copiado!');">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="post-actions-right" style="display: flex; gap: 8px; align-items: center;">
-                                        <button type="button" class="modern-pill-btn support-btn ${post.supportedByMe ? 'supported' : ''}" id="fullpost-support-btn" title="Apoiar Discussão">
-                                            ${HEART_ICON_SVG}
-                                            <span class="post-votes-count">${post.votes || 0}</span>
-                                            <span class="support-label">apoios</span>
-                                        </button>
-                                        <button type="button" class="modern-icon-action-btn share-btn-full" title="Copiar link da discussão" onclick="navigator.clipboard.writeText(window.location.href); alert('Link copiado!');">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                                    <div class="post-header-top-right">
+                                        <button type="button" class="report-btn modern-icon-action-btn" title="Denunciar Discussão" onclick="window.modernForumReportPost ? window.modernForumReportPost(${post.id}) : null">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
                                         </button>
                                     </div>
                                 </div>
 
                                 <h1 class="modern-fullpost-title">${sanitizeHTML(post.title)}</h1>
                                 <div class="modern-fullpost-body">${window.formatTextContent ? window.formatTextContent(post.content) : sanitizeHTML(post.content).replace(/\n/g, '<br>')}</div>
+                                <div class="modern-fullpost-footer">
+                                    <button type="button" class="modern-pill-btn support-btn ${post.supportedByMe ? 'supported' : ''}" id="fullpost-support-btn" title="Gostei">
+                                        ${HEART_ICON_SVG}
+                                        <span class="post-votes-count">${post.votes || 0}</span>
+                                        <span class="support-label">gostei</span>
+                                    </button>
+                                </div>
                             </article>
 
                             <!-- SEÇÃO DE COMENTÁRIOS -->
@@ -373,18 +384,18 @@
 
                                 <!-- Composer Moderno de Comentário -->
                                 <form id="modern-comment-composer-form" class="modern-comment-composer">
-                                    <div id="modern-comment-editor" class="composer-editable-area rich-mention-input" contenteditable="true" data-placeholder="Adicione sua visão clínica ou responda a esta dúvida..."></div>
-                                    <div class="composer-toolbar">
-                                        <label class="composer-checkbox-label">
+                                    <div id="modern-comment-editor" class="composer-editable-area rich-mention-input" contenteditable="true" data-placeholder="deixe seu comentário."></div>
+                                    <div class="composer-toolbar" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; flex-wrap: nowrap !important; gap: 8px !important; width: 100% !important;">
+                                        <label class="composer-checkbox-label" style="display: inline-flex !important; align-items: center !important; gap: 6px !important; margin: 0 !important; white-space: nowrap !important; flex-shrink: 0 !important;">
                                             <input type="checkbox" id="modern-comment-anonymous">
                                             <span>Comentar como Anônimo</span>
                                         </label>
-                                        <div style="display: flex; gap: 10px; align-items: center;">
+                                        <div class="composer-actions-right" style="display: inline-flex !important; align-items: center !important; gap: 8px !important; margin-left: auto !important; flex-shrink: 0 !important;">
                                             <button type="button" id="modern-btn-ai-assist" class="modern-pill-btn" style="background:#ECFDF5; border-color:#A7F3D0; color:#059669; font-weight:700;" title="Sugerir rascunho de resposta fundamentada com IA">
                                                 ✨ IA Sugestão
                                             </button>
                                             <button type="submit" class="composer-btn-send" id="modern-btn-submit-comment">
-                                                Publicar Resposta
+                                                Comentar
                                             </button>
                                         </div>
                                     </div>
@@ -489,15 +500,15 @@
                 <!-- Linha tronco clicável oficial do Reddit -->
                 ${totalReplies > 0 ? `<div class="threadline-strip cursor-pointer" title="Clique para recolher conversa" aria-hidden="true"></div>` : ''}
 
-                <div class="modern-comment-header">
-                    <img class="modern-author-avatar" style="width: 28px; height: 28px;" src="${authorPhoto}" alt="${authorName}" onerror="this.src='/img/default-avatar.png'">
-                    <div class="author-meta-block">
-                        <div class="author-name-row" style="font-size: 0.88rem;">
+                <div class="modern-comment-header" style="display: flex !important; align-items: flex-start !important; gap: 10px !important;">
+                    <img class="modern-author-avatar" style="width: 36px !important; height: 36px !important; min-width: 36px !important; min-height: 36px !important; border-radius: 50% !important; object-fit: cover !important; margin: 0 !important; flex-shrink: 0 !important;" src="${authorPhoto}" alt="${authorName}" onerror="this.src='/img/default-avatar.png'">
+                    <div class="author-meta-block" style="display: flex !important; flex-direction: column !important; align-items: flex-start !important; justify-content: flex-start !important; gap: 0 !important; margin: 0 !important; padding: 0 !important;">
+                        <div class="author-name-row" style="font-size: 0.88rem; margin: 0 !important; padding: 0 !important; height: 36px !important; min-height: 36px !important; display: flex !important; align-items: center !important; gap: 6px !important; line-height: 1 !important;">
                             ${authorSlugLink}
                             <span class="author-badges">${renderAuthorBadges(comment.authorBadges)}</span>
                             ${comment.isPinned ? `<span class="pinned-badge-chip" style="font-size: 0.68rem; padding: 1px 7px;">${PIN_ICON_SVG} Fixado</span>` : ''}
                         </div>
-                        <span class="comment-time-ago">há ${timeSince(comment.createdAt)}</span>
+                        <span class="comment-time-ago" style="margin: -6px 0 0 0 !important; padding: 0 !important; line-height: 1.2 !important;">há ${timeSince(comment.createdAt)}</span>
                     </div>
                 </div>
 
@@ -514,9 +525,6 @@
                             <span>Responder</span>
                         </button>
                         <div class="comment-secondary-actions">
-                            <button type="button" class="comment-action-pill report-btn yt-action-btn inline-report" title="Denunciar" onclick="window.modernForumReportComment ? window.modernForumReportComment(${comment.id}) : null">
-                                ${REPORT_ICON_SVG}
-                            </button>
                             ${comment.isMine ? `
                                 <button type="button" class="comment-action-pill edit-comment-btn yt-action-btn" title="Editar" onclick="window.modernForumEditComment ? window.modernForumEditComment(${comment.id}, this) : null">
                                     ${EDIT_ICON_SVG}
@@ -527,6 +535,9 @@
                                     <span>Excluir</span>
                                 </button>
                             ` : ''}
+                            <button type="button" class="comment-action-pill report-btn yt-action-btn inline-report" title="Denunciar" onclick="window.modernForumReportComment ? window.modernForumReportComment(${comment.id}) : null">
+                                ${REPORT_ICON_SVG}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -813,7 +824,7 @@
                     alert(err.message || 'Erro ao publicar comentário.');
                 } finally {
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Publicar Resposta';
+                    submitBtn.textContent = 'Comentar';
                 }
             };
         }
@@ -854,49 +865,101 @@
 
         // Excluir post (global helper)
         window.modernForumDeletePost = (id, isFullView) => {
-            abrirModalConfirmacao('Excluir Discussão', 'Tem certeza de que deseja excluir permanentemente este tópico?', async () => {
-                try {
-                    const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${id}`, { method: 'DELETE' });
-                    if (res.ok) {
-                        alert('Discussão excluída com sucesso.');
-                        if (isFullView) {
-                            postView.classList.add('hidden');
-                            feedView.classList.remove('hidden');
+            abrirModalConfirmacao(
+                'Excluir Discussão', 
+                'Tem certeza de que deseja excluir permanentemente este tópico?', 
+                async () => {
+                    try {
+                        const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${id}`, { method: 'DELETE' });
+                        if (res.ok) {
+                            showToast('Discussão excluída com sucesso.', 'info');
+                            if (isFullView) {
+                                postView.classList.add('hidden');
+                                feedView.classList.remove('hidden');
+                            }
+                            fetchAndRenderPosts(1, false);
                         }
-                        fetchAndRenderPosts(1, false);
+                    } catch (e) {
+                        showToast('Erro ao excluir discussão.', 'error');
                     }
-                } catch (e) {
-                    alert('Erro ao excluir discussão.');
+                },
+                {
+                    danger: true,
+                    confirmText: 'Sim, excluir discussão',
+                    cancelText: 'Cancelar',
+                    notice: 'Esta ação é irreversível. Todas as respostas e apoios desta discussão serão removidos.'
                 }
-            });
+            );
         };
 
         // Excluir comentário (global helper)
         window.modernForumDeleteComment = (id, btnElement) => {
-            abrirModalConfirmacao('Excluir Comentário', 'Deseja realmente remover seu comentário?', async () => {
-                try {
-                    const res = await apiFetch(`${API_BASE_URL}/api/forum/comments/${id}`, { method: 'DELETE' });
-                    if (res.ok) {
-                        const card = btnElement.closest('.modern-comment-card');
-                        if (card) card.remove();
-                        alert('Comentário removido.');
+            abrirModalConfirmacao(
+                'Excluir Comentário', 
+                'Deseja realmente remover seu comentário permanentemente?', 
+                async () => {
+                    try {
+                        const res = await apiFetch(`${API_BASE_URL}/api/forum/comments/${id}`, { method: 'DELETE' });
+                        if (res.ok) {
+                            const card = btnElement.closest('.modern-comment-card');
+                            if (card) card.remove();
+                            showToast('Comentário removido.', 'info');
+                        }
+                    } catch (e) {
+                        showToast('Erro ao excluir comentário.', 'error');
                     }
-                } catch (e) {
-                    alert('Erro ao excluir comentário.');
+                },
+                {
+                    danger: true,
+                    confirmText: 'Excluir comentário',
+                    cancelText: 'Cancelar',
+                    notice: 'Sua resposta será apagada de forma permanente da discussão.'
                 }
-            });
+            );
+        };
+
+        // Denunciar post (global helper)
+        window.modernForumReportPost = (id) => {
+            abrirModalConfirmacao(
+                'Denunciar Discussão', 
+                'Você tem certeza que deseja denunciar esta discussão à moderação?', 
+                async () => {
+                    try {
+                        await apiFetch(`${API_BASE_URL}/api/forum/report`, { method: 'POST', body: JSON.stringify({ type: 'post', id }) });
+                        showToast('Denúncia enviada. Agradecemos por cuidar da comunidade!', 'info');
+                    } catch (e) {
+                        showToast('Erro ao enviar denúncia.', 'error');
+                    }
+                },
+                {
+                    report: true,
+                    confirmText: 'Enviar denúncia',
+                    cancelText: 'Voltar',
+                    notice: 'Sua denúncia é 100% anônima e será avaliada com prioridade pela moderação da Yelo.'
+                }
+            );
         };
 
         // Denunciar comentário (global helper)
         window.modernForumReportComment = (id) => {
-            abrirModalConfirmacao('Denunciar Comentário', 'Você tem certeza que deseja denunciar este comentário como inadequado?', async () => {
-                try {
-                    await apiFetch(`${API_BASE_URL}/api/forum/report`, { method: 'POST', body: JSON.stringify({ type: 'comment', id }) });
-                    showToast('Denúncia enviada. Agradecemos!', 'info');
-                } catch (e) {
-                    showToast('Erro ao enviar denúncia.', 'error');
+            abrirModalConfirmacao(
+                'Denunciar Comentário', 
+                'Você tem certeza que deseja denunciar este comentário à moderação?', 
+                async () => {
+                    try {
+                        await apiFetch(`${API_BASE_URL}/api/forum/report`, { method: 'POST', body: JSON.stringify({ type: 'comment', id }) });
+                        showToast('Denúncia enviada. Agradecemos por cuidar da comunidade!', 'info');
+                    } catch (e) {
+                        showToast('Erro ao enviar denúncia.', 'error');
+                    }
+                },
+                {
+                    report: true,
+                    confirmText: 'Enviar denúncia',
+                    cancelText: 'Voltar',
+                    notice: 'Sua denúncia é 100% anônima e será avaliada com prioridade pela moderação da Yelo.'
                 }
-            });
+            );
         };
 
         // Editar comentário (global helper)

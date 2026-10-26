@@ -21,7 +21,48 @@
     body.is-mobile .profile-block.collapsed .block-content { display: none !important; }
     body.is-mobile .profile-block.collapsed .block-header { border-bottom: none !important; border-bottom-left-radius: 15px !important; border-bottom-right-radius: 15px !important; }
     body.is-mobile .profile-block.collapsed .block-header .section-title::before { transform: rotate(180deg); }
+    /* Blocos Colapsáveis Individuais (Alterar Senha, Conectar com Google, Excluir Conta) */
+    .collapsible-block .block-header,
+    .profile-block[data-block-id="password"] .block-header {
+        cursor: pointer !important;
+        user-select: none !important;
+    }
+    .collapsible-block .block-header .section-title,
+    .profile-block[data-block-id="password"] .block-header .section-title {
+        gap: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    .collapsible-block .block-header .section-title::before,
+    .profile-block[data-block-id="password"] .block-header .section-title::before {
+        content: '';
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%231B4332' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='18 15 12 9 6 15'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: center;
+        transition: transform 0.3s ease;
+    }
+    .collapsible-block[data-block-id="delete-account"] .block-header .section-title::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23DC2626' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='18 15 12 9 6 15'%3E%3C/polyline%3E%3C/svg%3E") !important;
+    }
+    .collapsible-block.collapsed .block-content,
+    .profile-block[data-block-id="password"].collapsed .block-content {
+        display: none !important;
+    }
+    .collapsible-block.collapsed .block-header,
+    .profile-block[data-block-id="password"].collapsed .block-header {
+        border-bottom: none !important;
+        border-bottom-left-radius: 15px !important;
+        border-bottom-right-radius: 15px !important;
+    }
+    .collapsible-block.collapsed .block-header .section-title::before,
+    .profile-block[data-block-id="password"].collapsed .block-header .section-title::before {
+        transform: rotate(180deg) !important;
+    }
     .specialty-sub-group h5 { font-family: var(--font-titulos); color: var(--verde-escuro); font-size: 1.15rem; margin: 0 0 15px 0; }
+
     
     /* Estética Expandida de Inputs e Textareas para o Restante da Página */
     .profile-block input[type="text"]:not(.input-prefix-group input),
@@ -35,11 +76,16 @@
     .profile-block input:focus, .profile-block textarea:focus { border-color: var(--verde-escuro); background: #fff; box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1); outline: none; }
     .profile-block input:disabled, .profile-block textarea:disabled { background: #f1f3f5; color: #888; border-color: #eee; cursor: not-allowed; opacity: 1; }
     
-    .profile-block .input-prefix-group { border-radius: 12px; border: 1px solid #e0e0e0; background: #f9fafb; transition: all 0.3s ease; overflow: hidden; display: flex; align-items: stretch; }
+    .profile-block .input-prefix-group { border-radius: 12px; border: 1.5px solid #E2E8F0; background: #F8FAFC; transition: all 0.25s ease; overflow: hidden; display: flex; align-items: stretch; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+    .profile-block .input-prefix-group:hover:not(:focus-within) { border-color: #CBD5E1; }
     .profile-block .input-prefix-group:focus-within { border-color: var(--verde-escuro); background: #fff; box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1); }
-    .profile-block .input-prefix-group .prefix { background: #f1f3f5; color: #555; padding: 0 15px; display: flex; align-items: center; border-right: 1px solid #e0e0e0; font-weight: 500; font-size: 0.95rem; }
-    .profile-block .input-prefix-group input { border: none !important; border-radius: 0 !important; background: transparent !important; min-height: 48px; padding: 10px 14px; font-size: 1rem; flex-grow: 1; outline: none; box-shadow: none !important; width: 100%; }
-    .profile-block .input-prefix-group input:disabled { background: transparent !important; color: #888; cursor: not-allowed; }
+    .profile-block .input-prefix-group .prefix { background: #F1F5F9; color: #475569; padding: 0 13px; display: flex; align-items: center; justify-content: center; border-right: 1px solid #E2E8F0; font-weight: 600; font-size: 0.9rem; flex-shrink: 0; }
+    .profile-block .input-prefix-group input { border: none !important; border-radius: 0 !important; background: transparent !important; min-height: 46px; padding: 10px 13px; font-size: 0.92rem; flex-grow: 1; outline: none; box-shadow: none !important; width: 100%; color: #1E293B; }
+    .profile-block .input-prefix-group input::placeholder,
+    .profile-block input::placeholder { font-size: 0.81rem !important; color: #94A3B8 !important; opacity: 1; font-weight: 400; letter-spacing: -0.2px; }
+    .profile-block .input-prefix-group input:disabled { background: transparent !important; color: #64748B; cursor: not-allowed; }
+    .google-prefix-pin { background: #F8FAFC !important; border-right: 1px solid #E2E8F0 !important; }
+
 
     /* --- ETAPA 1: UX Header & Insights --- */
     .profile-hero-modern { background: #fff; border-radius: 24px; padding: 30px; display: flex; align-items: center; gap: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; margin-bottom: 25px; flex-wrap: wrap; }
@@ -63,12 +109,22 @@
     
     .quality-progress-bg { height: 8px; background: #f1f3f5; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
     .quality-progress-fill { height: 100%; background: var(--verde-escuro); width: 0%; transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-    .quality-checklist { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex-grow: 1; max-height: 200px; overflow-y: auto; padding-right: 5px; align-content: start; }
-    .quality-checklist::-webkit-scrollbar { width: 5px; }
-    .quality-checklist::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .quality-checklist { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; flex-grow: 1; max-height: none; overflow: visible; align-content: start; }
     .quality-checklist li { font-size: 0.85rem; color: #555; display: flex; align-items: center; gap: 8px; }
     .quality-checklist li.done { color: #16a34a; font-weight: 500;}
     .quality-checklist li.pending { color: #b45309; }
+    
+    #btn-excluir-conta {
+        color: #DC2626 !important;
+        font-weight: 600;
+        text-decoration: underline;
+        transition: color 0.2s ease;
+    }
+    #btn-excluir-conta:hover,
+    #btn-excluir-conta:active,
+    #btn-excluir-conta:visited {
+        color: #B91C1C !important;
+    }
     
     .perf-metrics-container { display: flex; justify-content: space-between; margin-bottom: 15px; flex-grow: 1; align-items: center;}
     .perf-metric { text-align: center; }
@@ -121,6 +177,8 @@
     }
     @media (max-width: 992px) {
         .social-grid { grid-template-columns: 1fr; }
+        .insight-card.quality-card { height: auto !important; max-height: none !important; }
+        .quality-checklist { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important; max-height: none !important; overflow: visible !important; }
     }
 </style>
 
@@ -149,7 +207,7 @@
 </div>
 
 <!-- INSIGHTS DO PERFIL -->
-<div class="profile-insights-grid">
+<div class="profile-insights-grid" style="grid-template-columns: 1fr;">
     <!-- Card de Qualidade -->
     <div class="insight-card quality-card">
         <div class="insight-header">
@@ -162,22 +220,6 @@
         <ul class="quality-checklist" id="quality-checklist">
             <li class="pending">⏳ Verificando dados...</li>
         </ul>
-    </div>
-    
-    <!-- Card de Desempenho -->
-    <div class="insight-card performance-card">
-        <div class="insight-header">
-            <h3>Desempenho (Últimos 30 dias)</h3>
-            <a href="#" onclick="window.loadPage('psi_analytics.html'); return false;" style="font-size: 0.85rem; color: var(--verde-escuro); font-weight: 600;">Ver detalhes</a>
-        </div>
-        <div class="perf-metrics-container">
-            <div class="perf-metric"><span class="perf-val" id="perf-views">--</span><span class="perf-label">Visualizações</span></div>
-            <div class="perf-metric"><span class="perf-val" id="perf-clicks">--</span><span class="perf-label">Cliques Whats</span></div>
-            <div class="perf-metric"><span class="perf-val" id="perf-favs">--</span><span class="perf-label">Favoritos</span></div>
-        </div>
-        <div class="perf-footer">
-            Mantenha sua agenda com horários livres para atrair mais pacientes.
-        </div>
     </div>
 </div>
 
@@ -482,6 +524,147 @@
             </div>
         </div>
 
+        <!-- Bloco: Google Meu Negócio & Avaliações -->
+        <div class="profile-block" data-block-id="google-reviews">
+            <div class="block-header">
+                <h4 class="section-title">Google Meu Negócio & Avaliações</h4>
+                <div class="block-actions">
+                    <span class="block-status"></span>
+                    <button type="button" class="btn btn-sm btn-secundario btn-edit">Editar</button>
+                    <button type="button" class="btn btn-sm btn-secundario btn-cancel hidden">Cancelar</button>
+                    <button type="button" class="btn btn-sm btn-principal btn-save hidden">Salvar</button>
+                </div>
+            </div>
+            <div class="block-content">
+                <p style="color: #64748b; font-size: 0.95rem; margin-top: 0; margin-bottom: 16px; line-height: 1.5;">
+                    Conecte o seu perfil do <strong>Google Meu Negócio</strong> para exibir avaliações e estrelas de pacientes verificados diretamente no seu perfil público na Yelo, multiplicando sua credibilidade e atraindo mais pacientes.
+                </p>
+
+                <!-- Guia Didático: Qual link colar -->
+                <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 14px; padding: 16px 18px; margin-bottom: 22px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <span style="font-size: 1.15rem;">💡</span>
+                        <strong style="color: #0F172A; font-size: 0.94rem;">Qual link você deve colar aqui?</strong>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 14px; justify-content: center;">
+                        <!-- Opção 1: Google Meu Negócio (Recomendada) -->
+                        <div style="background: #FFFFFF; border: 1.5px solid #BBF7D0; border-radius: 12px; padding: 16px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; align-items: center; text-align: center;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 8px;">
+                                <span style="background: #DCFCE7; color: #166534; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 12px;">OPÇÃO 1 • RECOMENDADA</span>
+                            </div>
+                            <strong style="display: block; font-size: 0.88rem; color: #1E293B; margin-bottom: 6px; text-align: center;">Link de "Pedir Avaliações" do Google</strong>
+                            <p style="font-size: 0.82rem; color: #64748B; margin: 0 0 10px 0; line-height: 1.45; text-align: center;">
+                                Pesquise seu consultório no Google &gt; No painel da sua empresa, clique no botão <strong>"Pedir avaliações"</strong> (ou <em>"Receba mais avaliações"</em>) &gt; Copie o link curto.
+                            </p>
+                            <div style="background: #F1F5F9; padding: 7px 10px; border-radius: 8px; font-size: 0.76rem; color: #0F172A; font-family: monospace; word-break: break-all; width: 100%; box-sizing: border-box; text-align: center;">
+                                https://g.page/r/<strong>SEU_CODIGO</strong>/review
+                            </div>
+                        </div>
+
+                        <!-- Opção 2: Google Maps -->
+                        <div style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px; padding: 16px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; align-items: center; text-align: center;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 8px;">
+                                <span style="background: #E0F2FE; color: #0369A1; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 12px;">OPÇÃO 2 • GOOGLE MAPS</span>
+                            </div>
+                            <strong style="display: block; font-size: 0.88rem; color: #1E293B; margin-bottom: 6px; text-align: center;">Link de "Compartilhar" do Google Maps</strong>
+                            <p style="font-size: 0.82rem; color: #64748B; margin: 0 0 10px 0; line-height: 1.45; text-align: center;">
+                                Abra o <strong>Google Maps</strong> (no celular ou computador) &gt; Busque pelo seu consultório ou clínica &gt; Clique no botão <strong>"Compartilhar"</strong> &gt; <strong>"Copiar link"</strong>.
+                            </p>
+                            <div style="background: #F1F5F9; padding: 7px 10px; border-radius: 8px; font-size: 0.76rem; color: #0F172A; font-family: monospace; word-break: break-all; width: 100%; box-sizing: border-box; text-align: center;">
+                                https://maps.app.goo.gl/<strong>SEU_LOCAL</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerta do que NÃO colar -->
+                    <div style="display: flex; align-items: flex-start; gap: 8px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 10px 12px; font-size: 0.8rem; color: #92400E; line-height: 1.4;">
+                        <span style="font-size: 1rem; flex-shrink: 0;">⚠️</span>
+                        <span>
+                            <strong>O que NÃO colar:</strong> Não cole a URL da barra de pesquisa do seu navegador (como <code>google.com/search?q=...</code>). Use sempre o link gerado pelo botão <strong>"Pedir avaliações"</strong> do Google Meu Negócio ou o botão <strong>"Compartilhar"</strong> do Google Maps.
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-row" style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 2; min-width: 280px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <label for="google_business_url" style="font-weight: 600; color: #1e293b; font-size: 0.88rem; margin: 0;">
+                                Link do Google Meu Negócio ou Maps
+                            </label>
+                            <button type="button" id="btn-clear-google-data" class="hidden" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; font-size: 0.74rem; font-weight: 600; cursor: pointer; padding: 2px 8px; border-radius: 6px; transition: all 0.2s;" title="Limpar link e desvincular avaliações">
+                                ✕ Desconectar e Limpar
+                            </button>
+                        </div>
+                        <div class="input-prefix-group">
+                            <span class="prefix google-prefix-pin" title="Google Maps / Meu Negócio">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#EA4335"/>
+                                    <circle cx="12" cy="9" r="2.5" fill="#FFFFFF"/>
+                                </svg>
+                            </span>
+                            <input type="url" id="google_business_url" name="google_business_url" placeholder="https://g.page/r/... ou maps.app.goo.gl/..." autocomplete="off" disabled="">
+                        </div>
+                        <small style="display: block; color: #64748b; font-size: 0.80rem; margin-top: 6px; line-height: 1.35;">
+                            Cole o link da <strong>Opção 1</strong> (<code>g.page/r/...</code>) ou <strong>Opção 2</strong> (<code>maps.app.goo.gl/...</code>).
+                        </small>
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 220px;">
+                        <label for="google_place_id" style="display: block; margin-bottom: 6px; font-weight: 600; color: #1e293b; font-size: 0.88rem;">
+                            Place ID <span style="font-weight: 400; color: #64748b; font-size: 0.80rem;">(Opcional)</span>
+                        </label>
+                        <div class="input-prefix-group">
+                            <span class="prefix google-prefix-pin" style="font-size: 0.76rem; font-weight: 700; color: #64748b; font-family: monospace;">ID</span>
+                            <input type="text" id="google_place_id" name="google_place_id" placeholder="ChIJ..." autocomplete="off" disabled="">
+                        </div>
+                        <small style="display: block; color: #64748b; font-size: 0.80rem; margin-top: 6px; line-height: 1.35;">
+                            Identificador único oficial. Preenchido automaticamente ao sincronizar.
+                        </small>
+                    </div>
+                </div>
+
+                <div style="margin-top: 18px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <button type="button" id="btn-sync-google-reviews" class="btn btn-principal" style="border-radius: 50px; padding: 10px 22px; font-size: 0.92rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(27,67,50,0.15); cursor: pointer;">
+                        <svg id="google-sync-spinner" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        <svg id="google-sync-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        <span id="google-sync-btn-text">Sincronizar Avaliações Agora</span>
+                    </button>
+                    <span id="google-sync-status-badge" style="font-size: 0.85rem; font-weight: 600; padding: 6px 14px; border-radius: 20px; display: none;"></span>
+                </div>
+
+                <!-- Card de Preview das Avaliações Sincronizadas -->
+                <div id="google-reviews-preview-container" style="display: none; margin-top: 25px; padding: 22px; background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #E2E8F0;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 42px; height: 42px; border-radius: 10px; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #E2E8F0;">
+                                <svg width="22" height="22" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/>
+                                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span id="preview-google-rating" style="font-size: 1.3rem; font-weight: 700; color: #1e293b;">5.0</span>
+                                    <div id="preview-google-stars" style="color: #f59e0b; font-size: 1.1rem; letter-spacing: 2px;">★★★★★</div>
+                                    <span id="preview-google-count" style="font-size: 0.9rem; color: #64748b; font-weight: 500;">(18 avaliações)</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 2px;" id="preview-google-synced-at">Sincronizado recentemente</div>
+                            </div>
+                        </div>
+                        <div id="preview-google-mode-badge" style="font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: #e0f2fe; color: #0369a1;">
+                            Google Maps Conectado
+                        </div>
+                    </div>
+
+                    <div id="preview-google-reviews-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+                        <!-- Preenchido dinamicamente via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Bloco 5: Especialidades e Atuação -->
         <div class="profile-block" data-block-id="specialties">
             <div class="block-header">
@@ -656,56 +839,74 @@
     </button>
 </div>
 
-<div class="widget" style="margin-top: 20px;">
-    <h3>Conectar com Google</h3>
-    <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Vincule sua conta do Google para facilitar o login futuramente.</p>
-    
-    <div id="google-link-container">
-        <div id="g_id_onload"
-             data-client_id="283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com"
-             data-auto_prompt="false"
-             data-callback="handleGoogleLinkResponse">
-        </div>
-        <div class="g_id_signin"
-             data-type="standard"
-             data-size="large"
-             data-theme="outline"
-             data-text="continue_with"
-             data-shape="pill"
-             data-logo_alignment="left">
-        </div>
+<!-- Bloco Conectar com Google -->
+<div class="profile-block widget collapsible-block collapsed" data-block-id="google-connect" style="margin-top: 20px;">
+    <div class="block-header" style="cursor: pointer; user-select: none;">
+        <h4 class="section-title">Conectar com Google</h4>
+        <div class="block-actions"></div>
     </div>
-    <div id="google-linked-message" style="display: none; color: #16a34a; font-weight: 600; align-items: center; gap: 8px;">
-        ✅ Conta do Google vinculada com sucesso!
+    <div class="block-content">
+        <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Vincule sua conta do Google para facilitar o login futuramente.</p>
+        
+        <div id="google-link-container">
+            <div id="g_id_onload"
+                 data-client_id="283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com"
+                 data-auto_prompt="false"
+                 data-callback="handleGoogleLinkResponse">
+            </div>
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-size="large"
+                 data-theme="outline"
+                 data-text="continue_with"
+                 data-shape="pill"
+                 data-logo_alignment="left">
+            </div>
+        </div>
+        <div id="google-linked-message" style="display: none; color: #16a34a; font-weight: 600; align-items: center; gap: 8px;">
+            ✅ Conta do Google vinculada com sucesso!
+        </div>
     </div>
 </div>
 
-<div class="widget" style="margin-top: 20px;">
-    <h3>Alterar Senha</h3>
-    <form id="password-form">
-        <!-- Campo oculto para acessibilidade e gerenciadores de senha -->
-        <input type="text" name="username" autocomplete="username" style="display:none;">
+<!-- Bloco Alterar Senha -->
+<div class="profile-block widget collapsible-block collapsed" data-block-id="password" style="margin-top: 20px;">
+    <div class="block-header" style="cursor: pointer; user-select: none;">
+        <h4 class="section-title">Alterar Senha</h4>
+        <div class="block-actions"></div>
+    </div>
+    <div class="block-content">
+        <form id="password-form">
+            <!-- Campo oculto para acessibilidade e gerenciadores de senha -->
+            <input type="text" name="username" autocomplete="username" style="display:none;">
 
-        <div class="form-row">
-            <div class="form-group" style="flex: 1; max-width: 350px;">
-                <label for="senha_atual">Senha Atual</label>
-                <input type="password" id="senha_atual" name="senha_atual" required autocomplete="current-password">
+            <div class="form-row">
+                <div class="form-group" style="flex: 1; max-width: 350px;">
+                    <label for="senha_atual">Senha Atual</label>
+                    <input type="password" id="senha_atual" name="senha_atual" required autocomplete="current-password">
+                </div>
+                <div class="form-group" style="flex: 1; max-width: 350px;">
+                    <label for="nova_senha">Nova Senha</label>
+                    <input type="password" id="nova_senha" name="nova_senha" required autocomplete="new-password">
+                </div>
             </div>
-            <div class="form-group" style="flex: 1; max-width: 350px;">
-                <label for="nova_senha">Nova Senha</label>
-                <input type="password" id="nova_senha" name="nova_senha" required autocomplete="new-password">
+            <div class="form-actions" style="justify-content: flex-start; margin-top: 15px;">
+                <button type="submit" class="btn btn-principal">Alterar Senha</button>
             </div>
-        </div>
-        <div class="form-actions" style="justify-content: flex-start;">
-            <button type="submit" class="btn btn-primario">Alterar Senha</button>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
-<div class="widget" style="margin-top: 20px;">
-    <h3>Excluir Conta</h3>
-    <p>Esta ação é irreversível e removerá todos os seus dados da plataforma.</p>
-    <a id="btn-excluir-conta" href="psi_excluir_conta.html">Excluir Minha Conta</a>
+<!-- Bloco Excluir Conta -->
+<div class="profile-block widget collapsible-block collapsed" data-block-id="delete-account" style="margin-top: 20px;">
+    <div class="block-header" style="cursor: pointer; user-select: none;">
+        <h4 class="section-title" style="color: #DC2626;">Excluir Conta</h4>
+        <div class="block-actions"></div>
+    </div>
+    <div class="block-content">
+        <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Esta ação é irreversível e removerá todos os seus dados da plataforma.</p>
+        <a id="btn-excluir-conta" href="psi_excluir_conta.html" style="color: #DC2626 !important; font-weight: 600; text-decoration: underline;">Excluir Minha Conta</a>
+    </div>
 </div>
 
 </div> <!-- Fim do #profile-page-wrapper -->

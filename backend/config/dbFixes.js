@@ -33,7 +33,9 @@ const applyDatabaseFixes = async (db, sequelize) => {
                 cep: DataTypes.STRING, cidade: DataTypes.STRING, estado: DataTypes.STRING,
                 telefone: DataTypes.STRING, bio: DataTypes.TEXT, crpDocumentUrl: DataTypes.TEXT,
                 resetPasswordToken: DataTypes.STRING, resetPasswordExpires: DataTypes.BIGINT,
-                formacao_nivel: DataTypes.STRING, formacao_desc: DataTypes.TEXT
+                formacao_nivel: DataTypes.STRING, formacao_desc: DataTypes.TEXT,
+                google_business_url: DataTypes.STRING, google_place_id: DataTypes.STRING,
+                google_reviews_data: DataTypes.JSONB
             };
             for (const [col, type] of Object.entries(colsToAdd)) {
                 if (!attrs[col]) { attrs[col] = { type }; patched = true; }
@@ -161,7 +163,10 @@ const applyDatabaseFixes = async (db, sequelize) => {
                 ADD COLUMN IF NOT EXISTS "last_remarketing_at" TIMESTAMP WITH TIME ZONE, ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "utm_medium" VARCHAR(255), ADD COLUMN IF NOT EXISTS "utm_campaign" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "xp" INTEGER DEFAULT 0, ADD COLUMN IF NOT EXISTS "formacao_nivel" VARCHAR(255),
-                ADD COLUMN IF NOT EXISTS "formacao_desc" TEXT;`,
+                ADD COLUMN IF NOT EXISTS "formacao_desc" TEXT,
+                ADD COLUMN IF NOT EXISTS "google_business_url" VARCHAR(500),
+                ADD COLUMN IF NOT EXISTS "google_place_id" VARCHAR(255),
+                ADD COLUMN IF NOT EXISTS "google_reviews_data" JSONB;`,
             `ALTER TABLE "Psychologists" ALTER COLUMN "crp" DROP NOT NULL;`,
             
             // Patients

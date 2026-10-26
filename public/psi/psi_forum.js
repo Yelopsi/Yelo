@@ -17,6 +17,131 @@
         const createModal = document.getElementById('forum-create-modal');
         const createForm = document.getElementById('forum-create-form');
         const closeModalBtn = document.getElementById('forum-modal-close-btn');
+        const mobileFabEl = document.getElementById('forum-mobile-fab');
+
+        // Torna o botão FAB mobile livremente arrastável pela tela
+        function setupFabDraggable(fab) {
+            if (!fab || fab.dataset.draggableSetup) return;
+            fab.dataset.draggableSetup = 'true';
+
+            let isDragging = false;
+            let startX = 0, startY = 0;
+            let initLeft = 0, initTop = 0;
+            let hasMoved = false;
+
+            try {
+                const saved = JSON.parse(sessionStorage.getItem('yelo_forum_fab_pos') || 'null');
+                if (saved && typeof saved.left === 'number' && typeof saved.top === 'number') {
+                    const fabW = fab.offsetWidth || 54;
+                    const fabH = fab.offsetHeight || 54;
+                    const maxL = window.innerWidth - fabW - 10;
+                    const maxT = window.innerHeight - fabH - 10;
+                    const l = Math.max(10, Math.min(saved.left, maxL));
+                    const t = Math.max(10, Math.min(saved.top, maxT));
+                    fab.style.setProperty('left', `${l}px`, 'important');
+                    fab.style.setProperty('top', `${t}px`, 'important');
+                    fab.style.setProperty('right', 'auto', 'important');
+                    fab.style.setProperty('bottom', 'auto', 'important');
+                }
+            } catch(e) {}
+
+            const onStart = (clientX, clientY, target, pointerId = null) => {
+                isDragging = true;
+                hasMoved = false;
+                startX = clientX;
+                startY = clientY;
+                const rect = fab.getBoundingClientRect();
+                initLeft = rect.left;
+                initTop = rect.top;
+                fab.style.transition = 'none';
+                fab.style.cursor = 'grabbing';
+                if (pointerId !== null && target && typeof target.setPointerCapture === 'function') {
+                    try { target.setPointerCapture(pointerId); } catch(e) {}
+                }
+            };
+
+            const onMove = (clientX, clientY, ev) => {
+                if (!isDragging) return;
+                const dx = clientX - startX;
+                const dy = clientY - startY;
+                if (!hasMoved && Math.hypot(dx, dy) > 5) {
+                    hasMoved = true;
+                }
+                if (hasMoved) {
+                    if (ev && ev.cancelable) ev.preventDefault();
+                    const fabW = fab.offsetWidth || 54;
+                    const fabH = fab.offsetHeight || 54;
+                    const maxL = window.innerWidth - fabW - 10;
+                    const maxT = window.innerHeight - fabH - 10;
+                    const curL = Math.max(10, Math.min(initLeft + dx, maxL));
+                    const curT = Math.max(10, Math.min(initTop + dy, maxT));
+
+                    fab.style.setProperty('left', `${curL}px`, 'important');
+                    fab.style.setProperty('top', `${curT}px`, 'important');
+                    fab.style.setProperty('right', 'auto', 'important');
+                    fab.style.setProperty('bottom', 'auto', 'important');
+                }
+            };
+
+            const onEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                fab.style.transition = '';
+                fab.style.cursor = 'grab';
+
+                if (hasMoved) {
+                    const finalRect = fab.getBoundingClientRect();
+                    try {
+                        sessionStorage.setItem('yelo_forum_fab_pos', JSON.stringify({ left: finalRect.left, top: finalRect.top }));
+                    } catch(e) {}
+
+                    const stopClick = (ce) => {
+                        ce.stopPropagation();
+                        ce.preventDefault();
+                        fab.removeEventListener('click', stopClick, true);
+                    };
+                    fab.addEventListener('click', stopClick, true);
+                }
+            };
+
+            // Eventos de ponteiro (Modern Browsers, Safari, Chrome)
+            fab.addEventListener('pointerdown', (e) => {
+                if (e.button !== undefined && e.button !== 0) return;
+                onStart(e.clientX, e.clientY, fab, e.pointerId);
+
+                const onPointerMove = (ev) => onMove(ev.clientX, ev.clientY, ev);
+                const onPointerUp = () => {
+                    window.removeEventListener('pointermove', onPointerMove);
+                    window.removeEventListener('pointerup', onPointerUp);
+                    window.removeEventListener('pointercancel', onPointerUp);
+                    onEnd();
+                };
+
+                window.addEventListener('pointermove', onPointerMove, { passive: false });
+                window.addEventListener('pointerup', onPointerUp);
+                window.addEventListener('pointercancel', onPointerUp);
+            });
+
+            // Touch events fallback para iOS / Android
+            fab.addEventListener('touchstart', (e) => {
+                if (e.touches && e.touches.length === 1) {
+                    onStart(e.touches[0].clientX, e.touches[0].clientY, fab);
+                }
+            }, { passive: true });
+
+            fab.addEventListener('touchmove', (e) => {
+                if (e.touches && e.touches.length === 1) {
+                    onMove(e.touches[0].clientX, e.touches[0].clientY, e);
+                }
+            }, { passive: false });
+
+            fab.addEventListener('touchend', onEnd);
+            fab.addEventListener('touchcancel', onEnd);
+        }
+
+        if (mobileFabEl) {
+            setupFabDraggable(mobileFabEl);
+        }
 
         // --- Templates ---
         const postCardTemplate = document.getElementById('forum-post-card-template');
@@ -459,8 +584,10 @@
             if (!editor || editor.dataset.richSetupDone) return;
             editor.dataset.richSetupDone = 'true';
             editor.contentEditable = 'true';
-            if (!editor.dataset.placeholder) {
-                editor.dataset.placeholder = editor.getAttribute('placeholder') || 'Adicionar um comentário...';
+            if (editor.id === 'comment-content') {
+                editor.dataset.placeholder = 'deixe seu comentário.';
+            } else if (!editor.dataset.placeholder) {
+                editor.dataset.placeholder = editor.getAttribute('placeholder') || 'deixe seu comentário.';
             }
 
             function updateEmptyState() {
@@ -506,7 +633,7 @@
                     e.stopPropagation();
                     window.yeloOpenForumPost(id);
                 };
-                pill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> <span class="mention-pill-text mention-pill-${id}">${title}</span>`;
+                pill.innerHTML = `<span class="mention-pill-text mention-pill-${id}">${title}</span>`;
                 return pill;
             }
 
@@ -923,7 +1050,7 @@
 
             const dashboardMain = document.querySelector('.dashboard-main');
             if (dashboardMain && window.innerWidth <= 992) {
-                dashboardMain.style.setProperty('padding-top', '0px', 'important');
+                dashboardMain.style.setProperty('padding-top', '8px', 'important');
                 dashboardMain.style.setProperty('padding-left', '0px', 'important');
                 dashboardMain.style.setProperty('padding-right', '0px', 'important');
             }
@@ -957,8 +1084,13 @@
                 
                 const pinnedPill = postEl.querySelector('.post-pinned-pill');
                 if (pinnedPill) {
-                    if (post.isPinned) pinnedPill.classList.remove('hidden');
-                    else pinnedPill.classList.add('hidden');
+                    if (post.isPinned) {
+                        pinnedPill.classList.remove('hidden');
+                        pinnedPill.style.display = 'inline-flex';
+                    } else {
+                        pinnedPill.classList.add('hidden');
+                        pinnedPill.style.display = 'none';
+                    }
                 }
 
                 const badgesContainer = postEl.querySelector('.author-badges-full');
@@ -1036,12 +1168,15 @@
                     adminPsiData.email === 'pix@yeloposi.com.br'
                 );
 
+                if (reportBtnFull) {
+                    reportBtnFull.style.display = 'inline-flex';
+                    reportBtnFull.onclick = () => reportContent('post', post.id);
+                }
+
                 if (post.isMine) {
-                    if (reportBtnFull) reportBtnFull.style.display = 'none';
                     if (editBtnFull) { editBtnFull.classList.remove('hidden'); editBtnFull.onclick = () => openEditPostModal(post); }
                     if (deleteBtnFull) { deleteBtnFull.classList.remove('hidden'); deleteBtnFull.title = 'Excluir Post'; deleteBtnFull.onclick = () => deletePost(post.id, true); }
                 } else {
-                    if (reportBtnFull) { reportBtnFull.style.display = 'inline-block'; reportBtnFull.onclick = () => reportContent('post', post.id); }
                     if (editBtnFull) editBtnFull.classList.add('hidden');
                     if (deleteBtnFull) {
                         if (isUserAdmin) {
@@ -1564,8 +1699,13 @@
                 deleteBtn.title = 'Excluir';
                 deleteBtn.onclick = () => deleteComment(comment.id, commentEl);
 
-                targetContainer.appendChild(editBtn);
-                targetContainer.appendChild(deleteBtn);
+                if (reportBtn && targetContainer.contains(reportBtn)) {
+                    targetContainer.insertBefore(editBtn, reportBtn);
+                    targetContainer.insertBefore(deleteBtn, reportBtn);
+                } else {
+                    targetContainer.appendChild(editBtn);
+                    targetContainer.appendChild(deleteBtn);
+                }
             }
 
             const totalCount = (typeof comment.totalRepliesCount === 'number') 
@@ -1723,12 +1863,12 @@
             formContainer.id = 'reply-form-dynamic';
             formContainer.innerHTML = `
                 <form>
-                    <div class="form-group">
-                        <div class="comment-input-capsule rich-mention-input" contenteditable="true" data-placeholder="Escreva sua resposta..." style="max-height: 25vh; overflow-y: auto; outline: none; border: 1px solid #ccc; border-radius: 8px; padding: 10px 14px;"></div>
+                    <div class="form-group" style="margin-bottom: 8px;">
+                        <div class="comment-input-capsule rich-mention-input" contenteditable="true" data-placeholder="Escreva sua resposta..." style="max-height: 25vh; overflow-y: auto; outline: none; border: 1.5px solid #CBD5E1; border-radius: 12px; padding: 10px 14px; font-size: 1rem; line-height: 1.55; background: #FFFFFF; color: #0F172A;"></div>
                     </div>
-                    <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 8px;">
-                        <button type="button" class="btn-cancel-reply" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#666; font-size:0.9rem;">Cancelar</button>
-                        <button type="submit" class="btn-submit-reply" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#1B4332; font-weight:bold; font-size:0.9rem;">Responder</button>
+                    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 8px;">
+                        <button type="button" class="btn-cancel-reply" style="background: none; border: none; cursor: pointer; color: #64748B; font-size: 0.9rem; font-weight: 600; padding: 6px 12px;">Cancelar</button>
+                        <button type="submit" class="btn-submit-reply" style="background: #1B4332; border: none; border-radius: 50px; cursor: pointer; color: #FFFFFF; font-weight: 700; font-size: 0.9rem; padding: 7px 18px; transition: 0.2s;">Responder</button>
                     </div>
                 </form>
             `;
@@ -2253,84 +2393,115 @@
         }
 
         async function deletePost(id, isFullView = false) {
-            abrirModalConfirmacaoPersonalizado('Excluir Discussão', 'Tem certeza que deseja excluir esta discussão permanentemente?', async () => {
-                try {
-                    const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${id}`, { method: 'DELETE' });
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.pointsDeducted) showToast(`Discussão excluída. Perdeu ${data.pointsDeducted} XP.`, 'info');
-                        else showToast('Discussão excluída.', 'success');
-                        
-                        if (isFullView) {
-                            postView.classList.add('hidden');
-                            feedView.classList.remove('hidden');
-                            currentPostId = null;
-                            currentPostData = null;
-                            const mHeader = document.querySelector('.mobile-header');
-                            if (mHeader) mHeader.style.display = '';
-                        }
-                        fetchAndRenderPosts();
-                    } else { showToast('Erro ao excluir discussão.', 'error'); }
-                } catch (err) { showToast('Erro ao excluir discussão.', 'error'); }
-            });
+            abrirModalConfirmacaoPersonalizado(
+                'Excluir Discussão', 
+                'Tem certeza que deseja excluir esta discussão permanentemente?', 
+                async () => {
+                    try {
+                        const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${id}`, { method: 'DELETE' });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.pointsDeducted) showToast(`Discussão excluída. Perdeu ${data.pointsDeducted} XP.`, 'info');
+                            else showToast('Discussão excluída.', 'success');
+                            
+                            if (isFullView) {
+                                postView.classList.add('hidden');
+                                feedView.classList.remove('hidden');
+                                currentPostId = null;
+                                currentPostData = null;
+                                const mHeader = document.querySelector('.mobile-header');
+                                if (mHeader) mHeader.style.display = '';
+                            }
+                            fetchAndRenderPosts();
+                        } else { showToast('Erro ao excluir discussão.', 'error'); }
+                    } catch (err) { showToast('Erro ao excluir discussão.', 'error'); }
+                },
+                {
+                    danger: true,
+                    confirmText: 'Sim, excluir discussão',
+                    cancelText: 'Cancelar',
+                    notice: 'Esta ação é irreversível. Todas as respostas e apoios desta discussão serão removidos.'
+                }
+            );
         }
 
         async function deleteComment(id, element) {
-            abrirModalConfirmacaoPersonalizado('Excluir Comentário', 'Tem certeza que deseja excluir este comentário?', async () => {
-                try {
-                    const res = await apiFetch(`${API_BASE_URL}/api/forum/comments/${id}`, { method: 'DELETE' });
-                    if (res.ok) {
-                        const data = await res.json();
-                        // Atualiza contadores de respostas nos cards ancestrais
-                        let ancestor = element.parentElement ? element.parentElement.closest('.comment-card') : null;
-                        while (ancestor) {
-                            const ancWrapper = ancestor.querySelector(':scope > .yt-replies-wrapper');
-                            if (ancWrapper) {
-                                const toggleBtn = ancWrapper.previousElementSibling;
-                                if (toggleBtn && toggleBtn.classList.contains('yt-toggle-replies')) {
-                                    const count = Math.max(0, (parseInt(toggleBtn.dataset.totalReplies, 10) || 1) - 1);
-                                    toggleBtn.dataset.totalReplies = count;
-                                    if (count === 0) {
-                                        toggleBtn.remove();
-                                        const repCont = ancWrapper.querySelector('.comment-replies-container');
-                                        if (repCont) repCont.style.display = 'none';
-                                        const line = ancWrapper.querySelector('.yt-thread-line');
-                                        if (line) line.classList.add('hidden');
-                                    } else {
-                                        const repCont = ancWrapper.querySelector('.comment-replies-container');
-                                        const isOpen = repCont && repCont.style.display !== 'none';
-                                        toggleBtn.innerHTML = isOpen 
-                                            ? `${REDDIT_COLLAPSE_ICON_SVG} <span>Ocultar resposta${count > 1 ? 's' : ''}</span>` 
-                                            : `${REDDIT_EXPAND_ICON_SVG} <span>${count} ${count > 1 ? 'outras respostas' : 'outra resposta'}</span>`;
+            abrirModalConfirmacaoPersonalizado(
+                'Excluir Comentário', 
+                'Tem certeza que deseja excluir este comentário?', 
+                async () => {
+                    try {
+                        const res = await apiFetch(`${API_BASE_URL}/api/forum/comments/${id}`, { method: 'DELETE' });
+                        if (res.ok) {
+                            const data = await res.json();
+                            // Atualiza contadores de respostas nos cards ancestrais
+                            let ancestor = element.parentElement ? element.parentElement.closest('.comment-card') : null;
+                            while (ancestor) {
+                                const ancWrapper = ancestor.querySelector(':scope > .yt-replies-wrapper');
+                                if (ancWrapper) {
+                                    const toggleBtn = ancWrapper.previousElementSibling;
+                                    if (toggleBtn && toggleBtn.classList.contains('yt-toggle-replies')) {
+                                        const count = Math.max(0, (parseInt(toggleBtn.dataset.totalReplies, 10) || 1) - 1);
+                                        toggleBtn.dataset.totalReplies = count;
+                                        if (count === 0) {
+                                            toggleBtn.remove();
+                                            const repCont = ancWrapper.querySelector('.comment-replies-container');
+                                            if (repCont) repCont.style.display = 'none';
+                                            const line = ancWrapper.querySelector('.yt-thread-line');
+                                            if (line) line.classList.add('hidden');
+                                        } else {
+                                            const repCont = ancWrapper.querySelector('.comment-replies-container');
+                                            const isOpen = repCont && repCont.style.display !== 'none';
+                                            toggleBtn.innerHTML = isOpen 
+                                                ? `${REDDIT_COLLAPSE_ICON_SVG} <span>Ocultar resposta${count > 1 ? 's' : ''}</span>` 
+                                                : `${REDDIT_EXPAND_ICON_SVG} <span>${count} ${count > 1 ? 'outras respostas' : 'outra resposta'}</span>`;
+                                        }
                                     }
                                 }
+                                ancestor = ancestor.parentElement ? ancestor.parentElement.closest('.comment-card') : null;
                             }
-                            ancestor = ancestor.parentElement ? ancestor.parentElement.closest('.comment-card') : null;
-                        }
-                        element.remove();
-                        // Atualiza contador de comentários no post
-                        const detailCountEls = document.querySelectorAll('.post-comments-count');
-                        detailCountEls.forEach(el => {
-                            const match = el.textContent.match(/\d+/);
-                            if (match) {
-                                const count = Math.max(0, parseInt(match[0], 10) - 1);
-                                el.textContent = el.textContent.includes('💬') ? `💬 ${count} Comentários` : `${count} comentários`;
-                            }
-                        });
-                        if (data.pointsDeducted) showToast(`Comentário excluído. Perdeu ${data.pointsDeducted} XP.`, 'info');
-                        else showToast('Comentário excluído.', 'success');
-                    } else { showToast('Erro ao excluir comentário.', 'error'); }
-                } catch (err) { showToast('Erro ao excluir comentário.', 'error'); }
-            });
+                            element.remove();
+                            // Atualiza contador de comentários no post
+                            const detailCountEls = document.querySelectorAll('.post-comments-count');
+                            detailCountEls.forEach(el => {
+                                const match = el.textContent.match(/\d+/);
+                                if (match) {
+                                    const count = Math.max(0, parseInt(match[0], 10) - 1);
+                                    el.textContent = el.textContent.includes('💬') ? `💬 ${count} Comentários` : `${count} comentários`;
+                                }
+                            });
+                            if (data.pointsDeducted) showToast(`Comentário excluído. Perdeu ${data.pointsDeducted} XP.`, 'info');
+                            else showToast('Comentário excluído.', 'success');
+                        } else { showToast('Erro ao excluir comentário.', 'error'); }
+                    } catch (err) { showToast('Erro ao excluir comentário.', 'error'); }
+                },
+                {
+                    danger: true,
+                    confirmText: 'Excluir comentário',
+                    cancelText: 'Cancelar',
+                    notice: 'Sua resposta será apagada de forma permanente da discussão.'
+                }
+            );
         }
 
         function reportContent(type, id) {
-            abrirModalConfirmacaoPersonalizado('Denunciar Conteúdo', 'Você tem certeza que deseja denunciar este conteúdo como inadequado?', async () => {
-                try {
-                    await apiFetch(`${API_BASE_URL}/api/forum/report`, { method: 'POST', body: JSON.stringify({ type, id }) });
-                    showToast('Denúncia enviada. Agradecemos!', 'info');
-                } catch (err) { showToast('Erro ao enviar denúncia.', 'error'); }
-            });
+            const isPost = type === 'post';
+            abrirModalConfirmacaoPersonalizado(
+                isPost ? 'Denunciar Discussão' : 'Denunciar Comentário', 
+                'Você tem certeza que deseja denunciar este conteúdo como inadequado à moderação?', 
+                async () => {
+                    try {
+                        await apiFetch(`${API_BASE_URL}/api/forum/report`, { method: 'POST', body: JSON.stringify({ type, id }) });
+                        showToast('Denúncia enviada. Agradecemos!', 'info');
+                    } catch (err) { showToast('Erro ao enviar denúncia.', 'error'); }
+                },
+                {
+                    report: true,
+                    confirmText: 'Enviar denúncia',
+                    cancelText: 'Voltar',
+                    notice: 'Sua denúncia é 100% anônima e será avaliada com prioridade pela moderação da Yelo.'
+                }
+            );
         }
 
         function openRedirectModal(post) {
@@ -2612,10 +2783,10 @@
             editForm.className = 'edit-comment-form';
             editForm.style.marginTop = '10px';
             editForm.innerHTML = `
-                <div class="rich-mention-input" contenteditable="true" style="width:100%; padding:10px 14px; border:1px solid #ccc; border-radius:8px; max-height: 25vh; overflow-y: auto; outline: none; background: #fff;">${window.formatTextContent(originalContent).replace(/class="forum-mention-pill"/g, 'class="forum-mention-pill" contenteditable="false"')}</div>
-                <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 8px;">
-                    <button class="cancel-edit" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#666; font-size:0.9rem;">Cancelar</button>
-                    <button class="save-edit" style="background:none; border:none; text-decoration:underline; cursor:pointer; color:#1B4332; font-weight:bold; font-size:0.9rem;">Salvar</button>
+                <div class="rich-mention-input" contenteditable="true" style="width: 100%; box-sizing: border-box; padding: 10px 14px; font-size: 1rem; line-height: 1.55; border: 1.5px solid #CBD5E1; border-radius: 12px; max-height: 25vh; overflow-y: auto; outline: none; background: #fff; color: #0F172A;">${window.formatTextContent(originalContent).replace(/class="forum-mention-pill"/g, 'class="forum-mention-pill" contenteditable="false"')}</div>
+                <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 8px;">
+                    <button class="cancel-edit" style="background: none; border: none; cursor: pointer; color: #64748B; font-size: 0.9rem; font-weight: 600; padding: 6px 12px;">Cancelar</button>
+                    <button class="save-edit" style="background: #1B4332; border: none; border-radius: 50px; cursor: pointer; color: #FFFFFF; font-weight: 700; font-size: 0.9rem; padding: 7px 18px; transition: 0.2s;">Salvar</button>
                 </div>
             `;
             bodyEl.parentNode.insertBefore(editForm, bodyEl.nextSibling);

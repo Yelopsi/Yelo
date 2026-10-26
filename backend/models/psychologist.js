@@ -454,6 +454,19 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.JSONB,
         defaultValue: {} 
         // Ex: { semeador: 'bronze', voz_ativa: 'ouro', autentico: true, pioneiro: true }
+    },
+    google_business_url: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    google_place_id: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    google_reviews_data: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+        defaultValue: null
     }
   }, {
     sequelize,

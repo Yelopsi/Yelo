@@ -39,9 +39,16 @@
     <!-- BARRA DE FILTROS E BUSCA -->
     <div class="novidades-filter-bar" style="background: #fff; border-radius: 16px; padding: 16px 20px; border: 1px solid #e5e7eb; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
         
-        <!-- Categorias Dinâmicas (apenas categorias com melhorias ativas) -->
+        <!-- Categorias Dinâmicas Desktop (Pílulas) -->
         <div class="novidades-cat-pills" id="novidades-cat-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="novidade-pill active" data-cat="all">Todas <span class="pill-count" id="count-all">...</span></button>
+        </div>
+
+        <!-- Menu Suspenso Mobile (Pílula com Menu Nativo do Sistema) -->
+        <div class="novidades-cat-select-wrap">
+            <select id="novidades-cat-select" class="novidades-cat-select-pill" aria-label="Filtrar por categoria">
+                <option value="all">Todas as Categorias</option>
+            </select>
         </div>
 
         <!-- Busca Rápida -->
@@ -327,6 +334,37 @@
         margin: 0;
     }
 
+    .novidades-cat-select-wrap {
+        display: none;
+        position: relative;
+        width: 100%;
+    }
+    .novidades-cat-select-pill {
+        width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-color: #F8FAFC;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231B4332' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        border: 1.5px solid #1B4332;
+        border-radius: 50px;
+        padding: 10px 42px 10px 18px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1B4332;
+        box-shadow: 0 2px 6px rgba(27,67,50,0.08);
+        outline: none;
+        cursor: pointer;
+        box-sizing: border-box;
+    }
+    .novidades-cat-select-pill:focus {
+        border-color: var(--verde-escuro);
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.15);
+    }
+
     @media (max-width: 768px) {
         .novidades-badge-desktop-only {
             display: none !important;
@@ -338,27 +376,10 @@
             gap: 12px !important;
         }
         .novidades-cat-pills {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            overflow-x: auto !important;
-            gap: 8px !important;
-            padding: 2px 2px 8px 2px !important;
-            -webkit-overflow-scrolling: touch !important;
-            scrollbar-width: none !important;
-            scroll-snap-type: x mandatory !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        .novidades-cat-pills::-webkit-scrollbar {
             display: none !important;
         }
-        .novidade-pill {
-            white-space: nowrap !important;
-            flex-shrink: 0 !important;
-            scroll-snap-align: start !important;
-            padding: 7px 14px !important;
-            font-size: 0.8rem !important;
+        .novidades-cat-select-wrap {
+            display: block !important;
         }
         .novidades-search-wrap {
             max-width: 100% !important;
@@ -512,6 +533,7 @@
 
     function renderCategoryPills() {
         const pillGroup = document.getElementById('novidades-cat-group');
+        const selectMobile = document.getElementById('novidades-cat-select');
         if (!pillGroup) return;
 
         const categoriesMap = new Map();
@@ -533,6 +555,10 @@
             </button>
         `;
 
+        let selectHtml = `
+            <option value="all" ${activeCategory === 'all' ? 'selected' : ''}>Todas as Categorias (${allUpdates.length})</option>
+        `;
+
         categoriesMap.forEach((count, cat) => {
             const icon = catIcons[cat] || '✨';
             const isActive = activeCategory === cat ? 'active' : '';
@@ -541,18 +567,33 @@
                     ${icon} ${cat} <span class="pill-count">${count}</span>
                 </button>
             `;
+            selectHtml += `
+                <option value="${cat}" ${activeCategory === cat ? 'selected' : ''}>${icon} ${cat} (${count})</option>
+            `;
         });
 
         pillGroup.innerHTML = html;
+        if (selectMobile) selectMobile.innerHTML = selectHtml;
 
         pillGroup.querySelectorAll('.novidade-pill').forEach(btn => {
             btn.onclick = () => {
                 pillGroup.querySelectorAll('.novidade-pill').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 activeCategory = btn.getAttribute('data-cat');
+                if (selectMobile) selectMobile.value = activeCategory;
                 renderUpdates();
             };
         });
+
+        if (selectMobile) {
+            selectMobile.onchange = (e) => {
+                activeCategory = e.target.value;
+                pillGroup.querySelectorAll('.novidade-pill').forEach(b => {
+                    b.classList.toggle('active', b.getAttribute('data-cat') === activeCategory);
+                });
+                renderUpdates();
+            };
+        }
     }
 
     function renderUpdates() {

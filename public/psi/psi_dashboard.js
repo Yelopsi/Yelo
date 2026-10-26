@@ -157,23 +157,26 @@ document.addEventListener('DOMContentLoaded', function () {
             animation: pulse-green 2s infinite;
         }
 
-        /* BOTÕES MOSTRAR MAIS COMO LINKS ESTILO TEXTO (ARTIGOS) */
+        /* BOTÕES MOSTRAR MAIS ESTILO PÍLULA (ARTIGOS) */
         #btn-load-more-articles {
             background: transparent !important;
-            border: none !important;
-            color: #1B4332 !important;
-            text-decoration: underline !important;
+            border: 1.5px solid var(--verde-escuro, #1B4332) !important;
+            color: var(--verde-escuro, #1B4332) !important;
+            border-radius: 50px !important;
+            text-decoration: none !important;
             font-weight: 600 !important;
             box-shadow: none !important;
-            padding: 10px !important;
-            margin: 15px auto !important;
-            display: block;
+            padding: 8px 26px !important;
+            margin: 0 auto !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             width: fit-content;
         }
         #btn-load-more-articles:hover {
-            color: #2D6A4F !important;
-            transform: none !important;
-            background: transparent !important;
+            color: var(--verde-escuro, #1B4332) !important;
+            background: #f0fdf4 !important;
+            transform: translateY(-1px) !important;
         }
     `;
     document.head.appendChild(globalStyles);
@@ -312,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const hasRealTitle = cached && cached.title && !cached.notFound;
             const title = hasRealTitle ? cached.title : `#${id}`;
             const titleAttr = hasRealTitle ? `Abrir discussão #${id}: ${cached.title}` : `Abrir discussão #${id}`;
-            return `<a href="javascript:void(0)" onclick="window.yeloOpenForumPost(${id})" class="forum-mention-pill" data-post-id="${id}" title="${titleAttr}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> <span class="mention-pill-text mention-pill-${id}">${title}</span></a>`;
+            return `<a href="javascript:void(0)" onclick="window.yeloOpenForumPost(${id})" class="forum-mention-pill" data-post-id="${id}" title="${titleAttr}"><span class="mention-pill-text mention-pill-${id}">${title}</span></a>`;
         };
 
         // 1. URLs de tópicos do fórum (ex: http://localhost:3001/psi/psi_dashboard.html?tab=forum&post=502)

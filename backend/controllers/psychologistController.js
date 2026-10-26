@@ -7,6 +7,7 @@ const fs = require('fs').promises;
 const gamificationService = require('../services/gamificationService'); // Importa o serviço
 const subscriptionController = require('./subscriptionController');
 const seoService = require('../services/seoService'); // Importa a Inteligência Artificial
+const GoogleBusinessService = require('../services/googleBusinessService');
 
 // --- CONFIGURAÇÃO DO CLOUDINARY ---
 const cloudinary = require('cloudinary').v2;
@@ -177,7 +178,8 @@ exports.updatePsychologistProfile = async (req, res) => {
             ano_inicio_experiencia,
             razao_social,
             data_nascimento,
-            free_session_active, free_session_time, profile_paused // NOVOS CAMPOS
+            free_session_active, free_session_time, profile_paused, // NOVOS CAMPOS
+            google_business_url, google_place_id, google_reviews_data
         } = req.body;
 
         // --- FALLBACK PARA CAMPOS LEGADOS (Especialidades/Temas) ---
@@ -322,6 +324,24 @@ exports.updatePsychologistProfile = async (req, res) => {
             updatePayload.praticas_vivencias = praticas_inclusivas; // Fallback que sobrescreve rastros legados
         }
         if (disponibilidade_periodo !== undefined) updatePayload.disponibilidade_periodo = disponibilidade_periodo;
+        if (google_business_url !== undefined) {
+            const cleanUrl = google_business_url ? google_business_url.trim() : null;
+            updatePayload.google_business_url = cleanUrl;
+            const currentOrNewPlaceId = google_place_id !== undefined ? (google_place_id ? google_place_id.trim() : null) : psychologist.google_place_id;
+            if (!cleanUrl && !currentOrNewPlaceId) {
+                updatePayload.google_reviews_data = null;
+                updatePayload.google_place_id = null;
+            }
+        }
+        if (google_place_id !== undefined) {
+            const cleanPlaceId = google_place_id ? google_place_id.trim() : null;
+            updatePayload.google_place_id = cleanPlaceId;
+            const currentOrNewUrl = updatePayload.google_business_url !== undefined ? updatePayload.google_business_url : psychologist.google_business_url;
+            if (!cleanPlaceId && !currentOrNewUrl) {
+                updatePayload.google_reviews_data = null;
+            }
+        }
+        if (google_reviews_data !== undefined) updatePayload.google_reviews_data = google_reviews_data;
 
         // Captura o estado antes do update
         const wasEligible = matchService.isEligibleForMatch(psychologist);
@@ -372,7 +392,10 @@ exports.updatePsychologistProfile = async (req, res) => {
             status: psychologist.status, // Adicionado
             modalidade: psychologist.modalidade,
             plano: psychologist.plano, // Adicionado
-            fotoUrl: psychologist.fotoUrl
+            fotoUrl: psychologist.fotoUrl,
+            google_business_url: psychologist.google_business_url,
+            google_place_id: psychologist.google_place_id,
+            google_reviews_data: psychologist.google_reviews_data
         });
 
     } catch (error) {
@@ -837,5 +860,53 @@ Situação relatada pelo psicólogo: "${prompt}"
     } catch (error) {
         console.error('Erro em generateAiMessageAssistant:', error);
         res.status(500).json({ error: 'Erro ao gerar mensagem com IA.', details: error.message });
+    }
+};
+
+/**
+ * Sincroniza avaliações do Google Meu Negócio / Google Maps
+ */
+exports.syncGoogleReviews = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist?.id || req.user?.id;
+        const psychologist = await db.Psychologist.findByPk(psychologistId);
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        const { google_business_url, google_place_id } = req.body;
+        const targetUrl = google_business_url !== undefined ? (google_business_url ? google_business_url.trim() : '') : psychologist.google_business_url;
+        const targetPlaceId = google_place_id !== undefined ? (google_place_id ? google_place_id.trim() : '') : psychologist.google_place_id;
+
+        if (!targetUrl && !targetPlaceId) {
+            return res.status(400).json({ error: 'Informe o link do Google Meu Negócio ou o Place ID.' });
+        }
+
+        const syncResult = await GoogleBusinessService.syncReviews({
+            googleUrl: targetUrl,
+            placeId: targetPlaceId
+        });
+
+        if (!syncResult || !syncResult.success) {
+            return res.status(400).json({ error: syncResult.error || 'Não foi possível sincronizar as avaliações do Google.' });
+        }
+
+        // Atualiza os campos no banco
+        await psychologist.update({
+            google_business_url: targetUrl || syncResult.place_url,
+            google_place_id: syncResult.place_id || targetPlaceId,
+            google_reviews_data: syncResult
+        });
+
+        return res.json({
+            success: true,
+            message: 'Avaliações do Google sincronizadas com sucesso!',
+            google_reviews_data: syncResult,
+            google_business_url: targetUrl || syncResult.place_url,
+            google_place_id: syncResult.place_id || targetPlaceId
+        });
+    } catch (err) {
+        console.error('Erro ao sincronizar avaliações do Google:', err);
+        return res.status(500).json({ error: 'Erro interno ao sincronizar avaliações.' });
     }
 };

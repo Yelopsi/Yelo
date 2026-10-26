@@ -1,57 +1,33 @@
 <div id="qna-main-view">
-    <div class="main-header" style="margin-bottom: 20px;">
+    <!-- HERO HUB (Mesma linguagem visual do Fórum e Blog) -->
+    <div class="main-header modern-forum-hero" style="border-radius: 16px; margin-bottom: 24px;">
         <div class="header-content">
-            <h1>Comunidade</h1>
-            <p>Tire dúvidas e compartilhe conhecimento com outros profissionais.</p>
+            <div>
+                <div class="hero-badge" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; color: #FFEE8C; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.2);">
+                    <span>🌿</span>
+                    <span>Perguntas & Respostas</span>
+                </div>
+                <h1 class="hero-title" style="margin: 0; font-family: var(--font-titulos); font-size: 2.2rem; color: white;">Comunidade de Dúvidas 💬</h1>
+                <p class="hero-subtitle" style="margin: 6px 0 0 0; color: rgba(255,255,255,0.85); font-size: 1.05rem; max-width: 650px; line-height: 1.5;">Acolha relatos, tire dúvidas reais de pacientes e compartilhe sua visão clínica com a comunidade.</p>
+            </div>
         </div>
     </div>
 
 <style>
-    .modern-qna-filters {
-        display: flex;
-        gap: 10px;
-        background: #f8f9fa;
-        padding: 6px;
-        border-radius: 50px;
-        border: 1px solid #e9ecef;
-        width: fit-content;
-        max-width: 100%;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Esconde scrollbar no Firefox */
+    #qna-main-view {
+        width: 100%;
+        max-width: 1240px;
+        margin: 0 auto;
+        padding-bottom: 25px;
+        box-sizing: border-box;
     }
-    .modern-qna-filters::-webkit-scrollbar {
-        display: none; /* Esconde scrollbar no Chrome/Safari/Edge */
-    }
-    .modern-qna-filters .tab-item {
-        padding: 10px 24px;
-        border-radius: 50px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: #666;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: none;
-        background: transparent;
-        font-family: var(--font-principal);
-        white-space: nowrap;
-        flex-shrink: 0;
-    }
-    .modern-qna-filters .tab-item:hover {
-        color: var(--verde-escuro);
-        background: rgba(27, 67, 50, 0.05);
-    }
-    .modern-qna-filters .tab-item.active {
-        background: var(--verde-escuro);
-        color: #ffffff;
-        box-shadow: 0 4px 12px rgba(27, 67, 50, 0.2);
-    }
+
+    /* Controles: Abas em Pílula e Barra de Busca */
     .qna-controls-wrapper {
         display: flex;
         flex-direction: column;
-        gap: 20px;
-        margin-bottom: 30px;
+        gap: 16px;
+        margin-bottom: 25px;
     }
     @media (min-width: 992px) {
         .qna-controls-wrapper {
@@ -60,19 +36,287 @@
             align-items: center;
         }
     }
-    /* Define o card como padrão, sem cursor de clique */
+
+    .modern-qna-filters {
+        display: flex;
+        gap: 8px;
+        background: #f8fafc;
+        padding: 5px;
+        border-radius: 50px;
+        border: 1px solid #e2e8f0;
+        width: fit-content;
+        max-width: 100%;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .modern-qna-filters::-webkit-scrollbar {
+        display: none;
+    }
+
+    .modern-qna-filters .tab-item {
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+        background: transparent;
+        font-family: var(--font-principal, 'Inter', sans-serif);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .modern-qna-filters .tab-item:hover {
+        color: var(--verde-escuro, #1B4332);
+        background: rgba(27, 67, 50, 0.06);
+    }
+    .modern-qna-filters .tab-item.active {
+        background: var(--verde-escuro, #1B4332);
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(27, 67, 50, 0.2);
+    }
+
+    /* Barra de Busca com ícone SVG */
+    .forum-search-bar {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .forum-search-bar svg.search-icon {
+        position: absolute;
+        left: 14px;
+        pointer-events: none;
+        color: #94a3b8;
+    }
+    .forum-search-bar input {
+        width: 100%;
+        padding: 10px 16px 10px 40px;
+        border-radius: 50px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        font-family: var(--font-principal, 'Inter', sans-serif);
+        font-size: 0.9rem;
+        outline: none;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    .forum-search-bar input:focus {
+        border-color: var(--verde-escuro, #1B4332);
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+    }
+
+    /* Alerta de Novas Perguntas Estilo Pill */
+    #qna-new-questions-alert {
+        display: none;
+        background: #f0fdf4;
+        color: #166534;
+        padding: 12px 20px;
+        border-radius: 50px;
+        margin-bottom: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        text-align: center;
+        border: 1px solid #bbf7d0;
+        box-shadow: 0 4px 12px rgba(22, 101, 52, 0.06);
+        transition: transform 0.2s ease;
+    }
+    #qna-new-questions-alert:hover {
+        transform: translateY(-1px);
+    }
+
+    /* Cards de Perguntas (Mesma linguagem editorial do Fórum e Blog) */
     .qna-card-psi {
+        background: #ffffff !important;
+        border: 1px solid #e9ecef !important;
+        border-radius: 18px !important;
+        padding: 24px 28px !important;
+        margin-bottom: 20px !important;
+        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05) !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
         cursor: default !important;
     }
-    /* Estilização para o estado de respondida/inativa */
+    .qna-card-psi:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.06) !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    .qna-card-header {
+        position: relative;
+        padding-right: 42px;
+    }
+
+    .qna-question-title {
+        font-family: var(--font-titulos, 'Outfit', sans-serif);
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0F172A;
+        margin: 0 0 8px 0;
+        line-height: 1.4;
+        padding-right: 42px;
+        word-break: break-word;
+        box-sizing: border-box;
+    }
+
+    .qna-question-author {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.82rem;
+        color: #64748b;
+        font-weight: 500;
+        margin-bottom: 14px;
+    }
+
+    /* Balão de conteúdo da pergunta */
+    .qna-bubble-question {
+        background: #f8fafc;
+        border-radius: 14px;
+        padding: 16px 20px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #334155;
+    }
+
+    /* Resposta Existente: Estilo Card Verde Menta Suave */
+    .answer-item {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        margin-top: 16px;
+        padding: 16px 20px;
+        background: #f0fdf4 !important;
+        border: 1px solid #bbf7d0 !important;
+        border-radius: 14px !important;
+        position: relative;
+    }
+    .answer-psi-photo {
+        width: 42px !important;
+        height: 42px !important;
+        min-width: 42px !important;
+        border-radius: 50% !important;
+        object-fit: cover !important;
+        border: 2px solid #ffffff !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08) !important;
+        flex-shrink: 0 !important;
+    }
+    .answer-psi-name {
+        font-weight: 700 !important;
+        color: #166534 !important;
+        font-size: 0.96rem !important;
+    }
+    .answer-psi-text {
+        margin: 6px 0 0 0 !important;
+        color: #1e293b !important;
+        line-height: 1.55 !important;
+        font-size: 0.93rem !important;
+    }
+
+    /* Tag de Status Aguardando Resposta */
+    .status-aguardando {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+        padding: 5px 14px;
+        border-radius: 50px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin-top: 14px;
+    }
+
+    /* Ações do Card: Botão Responder em Pílula */
+    .qna-card-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid #f1f5f9;
+    }
+    .btn-responder {
+        border-radius: 50px !important;
+        padding: 8px 22px !important;
+        font-size: 0.88rem !important;
+        font-weight: 600 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        background: var(--verde-escuro, #1B4332) !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 4px 14px rgba(27,67,50,0.18) !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+    .btn-responder:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 18px rgba(27,67,50,0.25) !important;
+    }
+
+    /* Estado de respondida */
     .qna-card-psi.answered {
-        opacity: 0.7;
+        opacity: 0.85;
     }
     .qna-card-psi.answered .qna-card-actions {
         display: none !important;
     }
-    .qna-card-psi.answered .existing-answers-list {
-        margin-top: 15px;
+
+    /* Paginação Moderna */
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 30px;
+    }
+    .pagination-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #475569;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    .pagination-btn:hover {
+        border-color: var(--verde-escuro, #1B4332);
+        color: var(--verde-escuro, #1B4332);
+    }
+    .pagination-btn.active {
+        background: var(--verde-escuro, #1B4332);
+        color: #ffffff;
+        border-color: var(--verde-escuro, #1B4332);
+        box-shadow: 0 4px 10px rgba(27, 67, 50, 0.2);
+    }
+
+    /* Responsividade Mobile */
+    @media (max-width: 991px) {
+        #qna-main-view {
+            padding-bottom: 12px !important;
+        }
+        .qna-card-psi {
+            padding: 18px 20px !important;
+            border-radius: 16px !important;
+        }
+        .qna-question-title {
+            padding-right: 38px !important;
+        }
+        .qna-controls-wrapper {
+            gap: 12px;
+            margin-bottom: 18px;
+        }
     }
 </style>
 
@@ -82,13 +326,14 @@
         <button class="tab-item" data-filter="pending">Aguardando Resposta</button>
         <button class="tab-item" data-filter="answered">Respondidas por mim</button>
     </div>
-    <div class="forum-search-bar" style="width: 100%; max-width: 400px;">
-        <input type="text" id="forum-search-input" placeholder="Buscar por palavras-chave ou temas...">
+    <div class="forum-search-bar" style="width: 100%; max-width: 380px;">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="forum-search-input" placeholder="Buscar por tema ou palavra-chave...">
     </div>
 </div>
 
 <!-- Alerta de Novas Perguntas -->
-<div id="qna-new-questions-alert" style="display:none; background:#e0f2fe; color:#0284c7; padding:15px 20px; border-radius:12px; margin-bottom:25px; font-weight:600; cursor:pointer; text-align:center; border: 1px solid #bae6fd; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.05);" onclick="document.querySelector('.tab-item[data-filter=\\'pending\\']')?.click(); this.style.display='none';">
+<div id="qna-new-questions-alert" onclick="document.querySelector('.tab-item[data-filter=\'pending\']')?.click(); this.style.display='none';">
 </div>
 
 <div class="qna-container-admin" id="qna-list-container">
@@ -97,7 +342,7 @@
     </div>
 </div>
 
-<!-- Novo Sistema de Paginação -->
+<!-- Sistema de Paginação -->
 <div id="qna-pagination" class="pagination-container"></div>
 </div>
 
@@ -111,65 +356,68 @@
             <p class="qna-question-content">Carregando conteúdo da pergunta...</p>
         </div>
         
-        <div class="existing-answers-list">
-            </div>
+        <div class="existing-answers-list"></div>
 
         <div class="qna-card-actions">
-            <button class="btn btn-principal btn-responder">Responder</button>
+            <button class="btn btn-principal btn-responder">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                <span>Responder</span>
+            </button>
         </div>
     </div>
 </template>
 
 <template id="qna-existing-answer-template">
-    <div class="answer-item" style="display: flex; gap: 12px; align-items: flex-start; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 12px; position: relative;">
-        <img src="https://placehold.co/40x40" alt="Foto do Psi" class="answer-psi-photo" style="width: 40px; height: 40px; min-width: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+    <div class="answer-item">
+        <img src="https://placehold.co/40x40" alt="Foto do Psi" class="answer-psi-photo">
         <div class="answer-content" style="flex: 1;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <strong><span class="answer-psi-name"></span></strong>
                     <span class="answer-edited-badge" style="display: none; font-size: 0.75rem; color: #888; font-style: italic; margin-left: 5px;">(Editado)</span>
                 </div>
-                <button class="btn-edit-answer hidden" title="Editar Resposta (Até 15 min)" style="background: none; border: none; cursor: pointer; color: #1B4332; opacity: 0.6; padding: 5px; border-radius: 5px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                <button class="btn-edit-answer hidden" title="Editar Resposta (Até 15 min)" style="background: none; border: none; cursor: pointer; color: #1B4332; opacity: 0.7; padding: 5px; border-radius: 50px; display: inline-flex; align-items: center; justify-content: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 </button>
             </div>
-            <p class="answer-psi-text" style="margin: 5px 0 0 0; color: #444; line-height: 1.5; font-size: 0.95rem;"></p>
+            <p class="answer-psi-text"></p>
         </div>
     </div>
 </template>
 
-
+<!-- MODAL DE RESPOSTA (Estilo Glassmorphism e Pílulas Modernas) -->
 <div id="qna-answer-modal" class="custom-modal-overlay" style="display: none;">
-    <div class="custom-modal-box" style="max-width: 850px; width: 95%;">
-        <button class="modal-close-btn modal-close" style="position: absolute; top: 15px; right: 15px; background: #f5f5f5; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #666; transition: all 0.2s ease; z-index: 10;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    <div class="custom-modal-box" style="max-width: 820px; width: 95%; border-radius: 20px; padding: 28px 32px;">
+        <div class="sheet-drag-handle"></div>
+        <button class="modal-close-btn modal-close" style="position: absolute; top: 15px; right: 15px; background: #f8fafc; border: 1px solid #e2e8f0; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b; transition: all 0.2s ease; z-index: 10;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
         
-        <div style="display: flex; flex-direction: row; gap: 30px; flex-wrap: wrap; margin-top: 10px;">
-            <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column;">
-                <h3 class="modal-title" style="margin-top: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.3rem; margin-bottom: 15px;">Respondendo à Pergunta:</h3>
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; border-left: 4px solid #f59e0b; flex-grow: 1;">
-                    <p id="qna-modal-question-text" style="margin: 0; font-size: 1.05rem; color: #444; line-height: 1.6; font-style: italic;">"é possível ter medo de dormir? toda vez que apago a luz começo a sentir uma agonia no peito e acabo virando a noite no celular"</p>
+        <div style="display: flex; flex-direction: row; gap: 26px; flex-wrap: wrap; margin-top: 10px;">
+            <div style="flex: 1; min-width: 280px; display: flex; flex-direction: column;">
+                <h3 class="modal-title" style="margin-top: 0; color: #1B4332; font-family: var(--font-titulos); font-size: 1.3rem; margin-bottom: 12px;">Respondendo à Pergunta:</h3>
+                <div style="background: #f8fafc; padding: 18px 20px; border-radius: 14px; border-left: 4px solid var(--verde-escuro, #1B4332); border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; flex-grow: 1;">
+                    <p id="qna-modal-question-text" style="margin: 0; font-size: 0.98rem; color: #334155; line-height: 1.6; font-style: italic;">"Carregando dúvida..."</p>
                 </div>
-                <p style="font-size: 0.9rem; color: var(--cinza-texto); margin-top: 15px; line-height: 1.5;">
-                    💡 Sua resposta será pública e ajudará este usuário e outros na comunidade que buscam pela mesma dúvida.
+                <p style="font-size: 0.86rem; color: #64748b; margin-top: 14px; line-height: 1.5;">
+                    💡 Sua resposta será pública e ajudará este usuário e outros que buscam acolhimento pela mesma dúvida.
                 </p>
             </div>
             
-            <div style="flex: 1.5; min-width: 300px;">
+            <div style="flex: 1.4; min-width: 280px;">
                 <form id="qna-answer-form" style="height: 100%; display: flex; flex-direction: column;"> 
-                    <div class="form-group" style="margin-bottom: 20px; text-align: left; flex-grow: 1; display: flex; flex-direction: column;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <label for="qna-answer-textarea" style="display: block; font-weight: 600; color: #333; margin: 0; font-size: 1.1rem;">Sua Resposta</label>
-                            <button type="button" id="btn-generate-ai-qna" class="btn hidden" style="padding: 6px 14px; font-size: 0.85rem; min-width: 0; width: auto; border-radius: 50px; margin: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 2px 5px rgba(16,185,129,0.3); display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Gerar resposta com IA">✨ IA</button>
+                    <div class="form-group" style="margin-bottom: 18px; text-align: left; flex-grow: 1; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <label for="qna-answer-textarea" style="display: block; font-weight: 700; color: #1e293b; margin: 0; font-size: 0.98rem;">Sua Orientação Profissional</label>
+                            <button type="button" id="btn-generate-ai-qna" class="btn hidden" style="padding: 5px 14px; font-size: 0.82rem; min-width: 0; width: auto; border-radius: 50px; margin: 0; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 2px 6px rgba(16,185,129,0.3); display: flex; align-items: center; gap: 5px; cursor: pointer;" title="Gerar rascunho com IA">✨ IA</button>
                         </div>
-                        <textarea id="qna-answer-textarea" minlength="50" required placeholder="Escreva sua orientação profissional aqui... (Mínimo de 50 caracteres)" style="width: 100%; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0; font-family: var(--font-principal); font-size: 1rem; resize: vertical; min-height: 180px; flex-grow: 1; box-sizing: border-box; background: #fff; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); transition: border-color 0.2s;"></textarea>
-                        <div id="qna-char-counter" style="text-align: right; font-size: 0.85rem; color: #64748b; margin-top: 8px;">0/50 caracteres</div>
+                        <textarea id="qna-answer-textarea" minlength="50" required placeholder="Escreva sua orientação clínica aqui... (Mínimo de 50 caracteres)" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1.5px solid #cbd5e1; font-family: var(--font-principal, 'Inter', sans-serif); font-size: 0.95rem; line-height: 1.55; resize: vertical; min-height: 160px; flex-grow: 1; box-sizing: border-box; background: #fff; transition: border-color 0.2s, box-shadow 0.2s; outline: none;"></textarea>
+                        <div id="qna-char-counter" style="text-align: right; font-size: 0.82rem; color: #64748b; margin-top: 6px;">0/50 caracteres</div>
                     </div>
                     
-                    <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
-                        <button type="button" class="btn btn-secundario modal-cancel" style="padding: 12px 24px; border-radius: 50px; font-weight: 600;">Cancelar</button>
-                        <button type="submit" class="btn btn-principal" id="qna-submit-answer" disabled style="padding: 12px 24px; border-radius: 50px; font-weight: 600;">Enviar Resposta</button>
+                    <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px;">
+                        <button type="button" class="btn btn-secundario modal-cancel" style="padding: 10px 22px; border-radius: 50px; font-weight: 600; font-size: 0.9rem;">Cancelar</button>
+                        <button type="submit" class="btn btn-principal" id="qna-submit-answer" disabled style="padding: 10px 24px; border-radius: 50px; font-weight: 600; font-size: 0.9rem; box-shadow: 0 4px 14px rgba(27,67,50,0.18);">Enviar Resposta</button>
                     </div>
                 </form> 
             </div>

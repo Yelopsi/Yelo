@@ -294,26 +294,33 @@
     @media (max-width: 991px) {
         .calc-layout {
             gap: 16px !important;
-            padding-bottom: 110px !important;
+            padding-bottom: 75px !important;
         }
         .dashboard-main .calc-layout {
-            padding-bottom: 60px !important;
+            padding-bottom: 75px !important;
+        }
+        .calc-result-column {
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
         }
         .calc-form-area .calc-section:last-child {
             margin-bottom: 0 !important;
         }
-        .calc-result-area {
+        .calc-result-area,
+        .calc-result-area.dashboard-sticky-card {
             position: fixed !important;
-            bottom: calc(var(--mobile-bottom-h, 70px) + 12px + env(safe-area-inset-bottom)) !important;
+            bottom: calc(var(--mobile-bottom-h, 70px) + 30px + env(safe-area-inset-bottom)) !important;
             top: auto !important; /* Remove a âncora do topo imposta pela classe global */
-            left: 15px;
-            right: 15px;
+            left: 15px !important;
+            right: 15px !important;
             z-index: 1000 !important;
-            margin-bottom: 0;
-            padding: 0;
-            border: none;
-            background: transparent;
-            box-shadow: none;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
         }
         .result-card {
             padding: 15px 20px;
@@ -342,7 +349,7 @@
 
         /* --- ESTADO EXPANDIDO NO MOBILE --- */
         .result-card.expanded {
-            max-height: calc(100dvh - var(--mobile-header-h, 64px) - var(--mobile-bottom-h, 70px) - 40px);
+            max-height: calc(100dvh - var(--mobile-header-h, 64px) - var(--mobile-bottom-h, 70px) - 65px);
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }

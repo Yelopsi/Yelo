@@ -1,25 +1,885 @@
-<div class="main-header">
-    <div class="header-content">
-        <h1>Comunidade Yelo</h1>
-        <p>Evolução contínua, workshops e networking.</p>
-    </div>
-</div>
+<style>
+    /* ==========================================================================
+       HUB DE COMUNIDADE, ENCONTROS & SUPERVISÃO (YELO)
+       Linguagem Visual: Floresta Yelo, Glassmorphism, Microinterações & Responsividade
+       ========================================================================== */
 
-<!-- Container Flexível para centralizar verticalmente -->
-<div style="display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 220px); padding: 20px; box-sizing: border-box;">
-    
-    <!-- O conteúdo com a mesma classe e visual dos modais do sistema -->
-    <div class="custom-modal-box" style="text-align: center; position: static; transform: none; animation: none; box-shadow: 0 15px 40px rgba(0,0,0,0.08); border: 1px solid #f0f0f0; max-width: 450px;">
-        <div style="font-size: 4rem; margin-bottom: 20px; line-height: 1;">🚧</div>
-        <h2 style="color: #1B4332; margin: 0 0 15px 0; font-family: var(--font-titulos); font-size: 2rem;">Em Breve</h2>
-        
-        <p style="color: #666; font-size: 1.05rem; line-height: 1.6; margin: 0 0 25px 0;">
-            Estamos finalizando os últimos detalhes deste espaço exclusivo. Logo você terá acesso a grupos de intervisão, biblioteca de arquivos e cursos rápidos para alavancar sua clínica.
-        </p>
-        
-        <button class="btn btn-principal" onclick="window.loadPage('psi_evolucao_hub.html')" style="width: 100%;">
-            Voltar
+    .hub-comunidade-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding-bottom: 40px;
+    }
+
+    /* Botão Voltar Topo */
+    .hub-nav-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
+
+    .hub-back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        padding: 8px 18px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .hub-back-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: var(--verde-escuro, #1B4332);
+        transform: translateX(-2px);
+    }
+
+    /* Hero Principal */
+    .hub-hero-card {
+        background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 60%, #153928 100%);
+        border-radius: 24px;
+        padding: 38px 42px;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 12px 30px -10px rgba(27, 67, 50, 0.35);
+    }
+
+    .hub-hero-card::before {
+        content: '';
+        position: absolute;
+        top: -60px;
+        right: -60px;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, rgba(255, 238, 140, 0.18) 0%, rgba(255, 238, 140, 0) 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .hub-hero-card::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: 20%;
+        width: 220px;
+        height: 220px;
+        background: radial-gradient(circle, rgba(82, 183, 136, 0.22) 0%, rgba(82, 183, 136, 0) 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .hub-hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 820px;
+    }
+
+    .hub-hero-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: 5px 14px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #ffee8c;
+        margin-bottom: 16px;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+    }
+
+    .hub-hero-title {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0 0 14px 0;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+    }
+
+    .hub-hero-description {
+        font-size: 1.05rem;
+        line-height: 1.65;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0 0 24px 0;
+        max-width: 720px;
+    }
+
+    .hub-hero-status-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(0, 0, 0, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 10px 20px;
+        border-radius: 14px;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+
+    .hub-pulse-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #52b788;
+        border-radius: 50%;
+        box-shadow: 0 0 0 0 rgba(82, 183, 136, 0.7);
+        animation: hubPulse 2s infinite;
+        flex-shrink: 0;
+    }
+
+    @keyframes hubPulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(82, 183, 136, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(82, 183, 136, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(82, 183, 136, 0); }
+    }
+
+    .hub-status-text {
+        font-size: 0.88rem;
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .hub-status-text span {
+        color: #ffee8c;
+    }
+
+    /* Seção de Pilares */
+    .hub-section-header {
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .hub-section-tag {
+        font-size: 0.8rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--verde-escuro, #1B4332);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .hub-section-title {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: clamp(1.4rem, 3vw, 1.85rem);
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+        line-height: 1.25;
+    }
+
+    .hub-section-subtitle {
+        font-size: 0.96rem;
+        color: #64748b;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Grid dos 4 Pilares */
+    .hub-pillars-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+        gap: 20px;
+    }
+
+    .hub-pillar-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 28px 24px;
+        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        overflow: hidden;
+    }
+
+    .hub-pillar-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.1);
+        border-color: #cbd5e1;
+    }
+
+    .hub-pillar-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #1B4332, #52B788);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+
+    .hub-pillar-card:hover::before {
+        opacity: 1;
+    }
+
+    .hub-pillar-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+    }
+
+    .hub-pillar-icon-box {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: #f0fdf4;
+        border: 1px solid #dcfce7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.65rem;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(22, 101, 52, 0.08);
+    }
+
+    .hub-pillar-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 50px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .hub-pillar-title {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: 1.28rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 10px 0;
+        line-height: 1.3;
+    }
+
+    .hub-pillar-desc {
+        font-size: 0.92rem;
+        line-height: 1.6;
+        color: #475569;
+        margin: 0 0 18px 0;
+    }
+
+    .hub-pillar-highlights {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 20px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .hub-pillar-highlights li {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-size: 0.84rem;
+        color: #334155;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+
+    .hub-pillar-highlights li svg {
+        color: #10b981;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .hub-pillar-footer {
+        padding-top: 14px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .hub-pillar-tag-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: #166534;
+        background: #f0fdf4;
+        padding: 4px 10px;
+        border-radius: 50px;
+        border: 1px solid #dcfce7;
+    }
+
+    .hub-pillar-state {
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: #94a3b8;
+    }
+
+    /* Seção Interativa: Votação de Interesse */
+    .hub-interactive-card {
+        background: #ffffff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 22px;
+        padding: 32px 34px;
+        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+        position: relative;
+    }
+
+    .hub-interactive-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 22px;
+        flex-wrap: wrap;
+    }
+
+    .hub-interactive-header h3 {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 6px 0;
+    }
+
+    .hub-interactive-header p {
+        font-size: 0.92rem;
+        color: #64748b;
+        margin: 0;
+        max-width: 640px;
+        line-height: 1.5;
+    }
+
+    .hub-vote-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #fefce8;
+        border: 1px solid #fef08a;
+        color: #854d0e;
+        padding: 6px 12px;
+        border-radius: 50px;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .hub-vote-options-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px;
+    }
+
+    .hub-vote-option-btn {
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hub-vote-option-btn:hover {
+        background: #ffffff;
+        border-color: #52B788;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(82, 183, 136, 0.12);
+    }
+
+    .hub-vote-option-btn.selected {
+        background: #f0fdf4;
+        border-color: #10b981;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+
+    .hub-vote-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .hub-vote-emoji {
+        font-size: 1.35rem;
+        flex-shrink: 0;
+    }
+
+    .hub-vote-label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.3;
+    }
+
+    .hub-vote-check {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 1.5px solid #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+        color: transparent;
+        background: #ffffff;
+    }
+
+    .hub-vote-option-btn.selected .hub-vote-check {
+        background: #10b981;
+        border-color: #10b981;
+        color: #ffffff;
+    }
+
+    /* Banner CTA Especial: Conduzir / Parcerias */
+    .hub-host-banner {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #fefce8 100%);
+        border: 1.5px solid #bbf7d0;
+        border-radius: 22px;
+        padding: 30px 34px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        flex-wrap: wrap;
+        box-shadow: 0 4px 15px rgba(22, 101, 52, 0.04);
+    }
+
+    .hub-host-content {
+        max-width: 680px;
+    }
+
+    .hub-host-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.74rem;
+        font-weight: 800;
+        color: #166534;
+        background: #dcfce7;
+        padding: 3px 10px;
+        border-radius: 50px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .hub-host-title {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #14532d;
+        margin: 0 0 8px 0;
+    }
+
+    .hub-host-desc {
+        font-size: 0.92rem;
+        color: #374151;
+        line-height: 1.55;
+        margin: 0;
+    }
+
+    .hub-host-action {
+        flex-shrink: 0;
+    }
+
+    .hub-cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--verde-escuro, #1B4332);
+        color: #ffffff;
+        font-size: 0.92rem;
+        font-weight: 700;
+        padding: 12px 24px;
+        border-radius: 50px;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(27, 67, 50, 0.25);
+        transition: all 0.25s ease;
+    }
+
+    .hub-cta-btn:hover {
+        background: #143527;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(27, 67, 50, 0.35);
+        color: #ffffff;
+    }
+
+    /* Responsividade Mobile */
+    @media (max-width: 991px) {
+        .hub-comunidade-wrapper {
+            padding-bottom: 95px !important; /* Espaço para a bottom nav fixa */
+            gap: 20px;
+        }
+
+        .hub-hero-card {
+            padding: 26px 20px;
+            border-radius: 20px;
+        }
+
+        .hub-hero-title {
+            font-size: 1.65rem;
+        }
+
+        .hub-hero-description {
+            font-size: 0.95rem;
+            margin-bottom: 18px;
+        }
+
+        .hub-hero-status-box {
+            width: 100%;
+            box-sizing: border-box;
+            justify-content: center;
+            font-size: 0.82rem;
+        }
+
+        .hub-pillars-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .hub-pillar-card {
+            padding: 22px 18px;
+            border-radius: 18px;
+        }
+
+        .hub-interactive-card {
+            padding: 22px 18px;
+            border-radius: 18px;
+        }
+
+        .hub-vote-options-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hub-host-banner {
+            padding: 22px 18px;
+            border-radius: 18px;
+            flex-direction: column;
+            align-items: stretch;
+            text-align: left;
+        }
+
+        .hub-cta-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="hub-comunidade-wrapper fade-in-up">
+
+    <!-- Navegação de Retorno -->
+    <div class="hub-nav-header">
+        <button type="button" class="hub-back-btn" onclick="window.loadPage('psi_evolucao_hub.html')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Voltar para Evolução</span>
         </button>
     </div>
-    
+
+    <!-- 1. Hero Principal de Apresentação & Antecipação -->
+    <div class="hub-hero-card">
+        <div class="hub-hero-content">
+            <div class="hub-hero-pill">
+                <span>🌿</span>
+                <span>Comunidade Clínica Yelo</span>
+            </div>
+            <h1 class="hub-hero-title">Encontros, Intervisão & Supervisão Clínica</h1>
+            <p class="hub-hero-description">
+                A prática clínica não precisa ser um caminho solitário. Estamos construindo um ecossistema seguro de trocas reais para você se conectar com colegas, discutir casos com sigilo, aprofundar seu manejo técnico e fortalecer sua rede de apoio profissional.
+            </p>
+            <div class="hub-hero-status-box">
+                <div class="hub-pulse-dot"></div>
+                <div class="hub-status-text">
+                    Em estruturação ativa • <span>Acesso antecipado em breve aos membros</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Cabeçalho da Seção de Recursos -->
+    <div class="hub-section-header">
+        <span class="hub-section-tag">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            O que está chegando para você
+        </span>
+        <h2 class="hub-section-title">Os 4 Pilares da Nova Comunidade</h2>
+        <p class="hub-section-subtitle">Formatos pensados sob medida para responder às reais necessidades do dia a dia do psicólogo.</p>
+    </div>
+
+    <!-- 3. Grid dos 4 Pilares -->
+    <div class="hub-pillars-grid">
+
+        <!-- Pilar 1: Grupos Presenciais -->
+        <div class="hub-pillar-card">
+            <div>
+                <div class="hub-pillar-top">
+                    <div class="hub-pillar-icon-box">☕</div>
+                    <span class="hub-pillar-badge">Presencial & Local</span>
+                </div>
+                <h3 class="hub-pillar-title">Grupos & Cafés Clínicos</h3>
+                <p class="hub-pillar-desc">
+                    Encontros periódicos presenciais em cafés e hubs terapêuticos parceiros por cidade ou região. Para criar laços reais, trocar vivências e construir parcerias duradouras.
+                </p>
+                <ul class="hub-pillar-highlights">
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Conexão face a face no seu polo regional</span>
+                    </li>
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Cultura de cooperação mútua sem competição</span>
+                    </li>
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Fortalecimento da rede de encaminhamentos</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="hub-pillar-footer">
+                <span class="hub-pillar-tag-pill">📍 Encontros Regionais</span>
+                <span class="hub-pillar-state">Em breve</span>
+            </div>
+        </div>
+
+        <!-- Pilar 2: Grupos de Intervisão -->
+        <div class="hub-pillar-card">
+            <div>
+                <div class="hub-pillar-top">
+                    <div class="hub-pillar-icon-box">🧠</div>
+                    <span class="hub-pillar-badge">Troca Horizontal</span>
+                </div>
+                <h3 class="hub-pillar-title">Grupos de Intervisão</h3>
+                <p class="hub-pillar-desc">
+                    Círculos seguros e acolhedores entre colegas psicólogos para discussão de casos anonimizados, alinhamento ético e suporte emocional para quem cuida.
+                </p>
+                <ul class="hub-pillar-highlights">
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Grupos reduzidos (6 a 8 profissionais)</span>
+                    </li>
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Sigilo inegociável e ambiente de não-julgamento</span>
+                    </li>
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Oxigenação da escuta e visão diagnóstica</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="hub-pillar-footer">
+                <span class="hub-pillar-tag-pill">💬 Troca entre Pares</span>
+                <span class="hub-pillar-state">Em breve</span>
+            </div>
+        </div>
+
+        <!-- Pilar 3: Supervisão Clínica com Especialistas -->
+        <div class="hub-pillar-card">
+            <div>
+                <div class="hub-pillar-top">
+                    <div class="hub-pillar-icon-box">🧭</div>
+                    <span class="hub-pillar-badge">Orientação Sênior</span>
+                </div>
+                <h3 class="hub-pillar-title">Supervisão com Especialistas</h3>
+                <p class="hub-pillar-desc">
+                    Sessões orientadas por psicólogos com vasta bagagem clínica nas principais abordagens (TCC, Psicanálise, Fenomenologia, ACT, Sistêmica, Humanismo e mais).
+                </p>
+                <ul class="hub-pillar-highlights">
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Supervisores selecionados por referência clínica</span>
+                    </li>
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Suporte em tomadas de decisões complexas</span>
+                    </li>
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Formatos individuais e turmas exclusivas</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="hub-pillar-footer">
+                <span class="hub-pillar-tag-pill">⭐ Mestres & Supervisores</span>
+                <span class="hub-pillar-state">Em breve</span>
+            </div>
+        </div>
+
+        <!-- Pilar 4: Workshops & Masterclasses -->
+        <div class="hub-pillar-card">
+            <div>
+                <div class="hub-pillar-top">
+                    <div class="hub-pillar-icon-box">💡</div>
+                    <span class="hub-pillar-badge">Formação Contínua</span>
+                </div>
+                <h3 class="hub-pillar-title">Workshops & Masterclasses</h3>
+                <p class="hub-pillar-desc">
+                    Aulas imersivas focadas na prática com convidados renomados: manejo de crises agudas, precificação sustentável, transição de carreira e ferramentas contemporâneas.
+                </p>
+                <ul class="hub-pillar-highlights">
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Casos reais destrinchados passo a passo</span>
+                    </li>
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Fichas de intervenção e materiais prontos</span>
+                    </li>
+                    <li>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Certificados de horas de aperfeiçoamento</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="hub-pillar-footer">
+                <span class="hub-pillar-tag-pill">🎯 Prática Aplicada</span>
+                <span class="hub-pillar-state">Em breve</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 4. Votação Interativa: O que você mais quer ver primeiro? -->
+    <div class="hub-interactive-card">
+        <div class="hub-interactive-header">
+            <div>
+                <h3>O que você mais gostaria de ver primeiro? 🤔</h3>
+                <p>Ajude a nossa equipe a priorizar o cronograma de lançamentos. Selecione as iniciativas que fariam maior diferença para a sua rotina clínica neste momento:</p>
+            </div>
+            <div class="hub-vote-badge">
+                <span>🗳️</span>
+                <span>Pesquisa da Comunidade</span>
+            </div>
+        </div>
+
+        <div class="hub-vote-options-grid" id="hub-vote-options">
+            <button type="button" class="hub-vote-option-btn" data-key="presencial" onclick="window.yeloToggleHubInterest(this, 'Encontros Presenciais')">
+                <div class="hub-vote-info">
+                    <span class="hub-vote-emoji">☕</span>
+                    <span class="hub-vote-label">Encontros presenciais na minha região</span>
+                </div>
+                <div class="hub-vote-check">✓</div>
+            </button>
+
+            <button type="button" class="hub-vote-option-btn" data-key="intervisao" onclick="window.yeloToggleHubInterest(this, 'Grupos de Intervisão')">
+                <div class="hub-vote-info">
+                    <span class="hub-vote-emoji">🧠</span>
+                    <span class="hub-vote-label">Grupos de intervisão entre colegas</span>
+                </div>
+                <div class="hub-vote-check">✓</div>
+            </button>
+
+            <button type="button" class="hub-vote-option-btn" data-key="supervisao" onclick="window.yeloToggleHubInterest(this, 'Supervisão Clínica')">
+                <div class="hub-vote-info">
+                    <span class="hub-vote-emoji">🧭</span>
+                    <span class="hub-vote-label">Supervisão clínica com especialistas</span>
+                </div>
+                <div class="hub-vote-check">✓</div>
+            </button>
+
+            <button type="button" class="hub-vote-option-btn" data-key="workshops" onclick="window.yeloToggleHubInterest(this, 'Workshops Práticos')">
+                <div class="hub-vote-info">
+                    <span class="hub-vote-emoji">💡</span>
+                    <span class="hub-vote-label">Workshops e masterclasses práticas</span>
+                </div>
+                <div class="hub-vote-check">✓</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- 5. Banner de Parceria / Liderança de Grupos -->
+    <div class="hub-host-banner">
+        <div class="hub-host-content">
+            <span class="hub-host-pill">⭐ Convite Especial para Colegas</span>
+            <h3 class="hub-host-title">Deseja conduzir uma supervisão ou sugerir um encontro local?</h3>
+            <p class="hub-host-desc">
+                Se você é um psicólogo sênior interessado em liderar supervisões ou deseja ser um facilitador de encontros presenciais na sua cidade, a Yelo apoia e fornece a estrutura para você conectar outros profissionais.
+            </p>
+        </div>
+        <div class="hub-host-action">
+            <a href="https://wa.me/5511988887723?text=Ol%C3%A1%20equipe%20Yelo!%20Tenho%20interesse%20em%20conduzir%20supervis%C3%A3o%20ou%20organizar%20um%20encontro%20presencial%20na%20Comunidade%20Yelo." target="_blank" rel="noopener noreferrer" class="hub-cta-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </svg>
+                <span>Falar com a Equipe Yelo</span>
+            </a>
+        </div>
+    </div>
+
 </div>
+
+<script>
+    (function() {
+        // Função de Votação Interativa com persistência em localStorage
+        window.yeloToggleHubInterest = function(btnElement, title) {
+            if (!btnElement) return;
+            const key = btnElement.getAttribute('data-key');
+            const isSelected = btnElement.classList.toggle('selected');
+
+            try {
+                const savedInterests = JSON.parse(localStorage.getItem('yelo_hub_interests') || '[]');
+                let updated = savedInterests;
+
+                if (isSelected) {
+                    if (!updated.includes(key)) updated.push(key);
+                    const toastMsg = `Interesse registrado em "${title}"! Priorizaremos essa iniciativa ✨`;
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(toastMsg, 'success');
+                    }
+                } else {
+                    updated = updated.filter(item => item !== key);
+                }
+
+                localStorage.setItem('yelo_hub_interests', JSON.stringify(updated));
+            } catch(e) {
+                console.warn('Erro ao salvar interesse local:', e);
+            }
+        };
+
+        // Restaura seleções salvas previamente
+        try {
+            const saved = JSON.parse(localStorage.getItem('yelo_hub_interests') || '[]');
+            saved.forEach(key => {
+                const btn = document.querySelector(`.hub-vote-option-btn[data-key="${key}"]`);
+                if (btn) btn.classList.add('selected');
+            });
+        } catch(e) {}
+    })();
+</script>

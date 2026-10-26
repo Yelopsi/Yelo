@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- CSS Moderno do Fórum -->
-    <link rel="stylesheet" href="/psi/psi_forum_modern.css?v=3.5">
+    <link rel="stylesheet" href="/psi/psi_forum_modern.css?v=3.6">
 
     <style>
         /* Estilos Globais da Página Standalone */
@@ -353,8 +353,8 @@
     <!-- Gatilho de execução garantida caso injetado via SPA ou aberto diretamente -->
     <img src="data:image/svg+xml;utf8,<svg></svg>" style="display:none;" onerror="if(typeof window.inicializarForumModerno==='function'){window.inicializarForumModerno();}else{const s=document.createElement('script');s.src='/psi/psi_forum_modern.js?v=' + Date.now();s.onload=()=>window.inicializarForumModerno&&window.inicializarForumModerno();document.head.appendChild(s);}">
 
-    <script src="/jobs/ui-helpers.js?v=2.2"></script>
-    <script src="/psi/psi_forum_modern.js?v=3.6"></script>
+    <script src="/jobs/ui-helpers.js?v=3.0"></script>
+    <script src="/psi/psi_forum_modern.js?v=4.1"></script>
     <script>
         // Oculta a topbar se estiver sendo renderizado dentro do Dashboard SPA
         if (window.loadPage || document.querySelector('.dashboard-sidebar')) {

@@ -100,7 +100,7 @@
 
         function renderizarSugestoesNaTela(container, lista) {
             container.innerHTML = '';
-            lista.forEach(tema => {
+            lista.slice(0, 3).forEach(tema => {
                 const temaNome = tema.name || tema.topic || tema;
                 if (!temaNome) return;
                 const div = document.createElement('div');
@@ -207,8 +207,15 @@
                 renderizarLista(posts, append);
 
                 if (loadMoreBtn) {
-                    if (hasMore) { loadMoreBtn.classList.remove('hidden'); loadMoreBtn.style.display = 'block'; } 
-                    else loadMoreBtn.style.display = 'none';
+                    const loadMoreWrapper = loadMoreBtn.closest('.load-more-wrapper');
+                    if (hasMore) { 
+                        loadMoreBtn.classList.remove('hidden'); 
+                        loadMoreBtn.style.display = 'inline-flex'; 
+                        if (loadMoreWrapper) loadMoreWrapper.style.display = 'block';
+                    } else { 
+                        loadMoreBtn.style.display = 'none'; 
+                        if (loadMoreWrapper) loadMoreWrapper.style.display = 'none';
+                    }
                 }
             } catch (error) {
                 if (!append) containerLista.innerHTML = `<div style="text-align:center; padding:30px; color:#d32f2f; background:#fff0f0; border-radius:8px;"><p><strong>Não foi possível carregar seus posts.</strong></p><p style="font-size:0.8rem;">Tente recarregar a página.</p></div>`;
@@ -251,8 +258,14 @@
                         </div>
                     </div>
                     <div class="btn-acoes-grupo">
-                        <button class="btn-acao btn-editar">✏️ Editar</button>
-                        <button class="btn-acao btn-excluir">🗑️ Excluir</button>
+                        <button class="btn-acao btn-editar" title="Editar Post">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path><path d="M5 15l4 4"></path><path d="M3.5 16.5l4 4"></path></svg>
+                            <span>Editar</span>
+                        </button>
+                        <button class="btn-acao btn-excluir" title="Excluir Post">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            <span>Excluir</span>
+                        </button>
                     </div>
                 `;
 

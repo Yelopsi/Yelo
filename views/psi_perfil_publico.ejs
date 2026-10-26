@@ -45,6 +45,28 @@
           ? psicologo.especialidades.join(', ') 
           : psicologo.especialidades;
       }
+
+      // --- DADOS DO GOOGLE MEU NEGÓCIO & MAPS ---
+      let googleData = psicologo.google_reviews_data;
+      if (typeof googleData === 'string') {
+          try { googleData = JSON.parse(googleData); } catch(e) { googleData = null; }
+      }
+      const hasGoogleReviews = (psicologo.google_business_url || psicologo.google_place_id) && googleData && googleData.success && Array.isArray(googleData.reviews) && googleData.reviews.length > 0;
+      const googleReviews = hasGoogleReviews ? googleData.reviews : [];
+      const googleRating = hasGoogleReviews && googleData.rating ? Number(googleData.rating).toFixed(1) : '5.0';
+      const googleTotalCount = hasGoogleReviews ? (googleData.user_ratings_total || googleReviews.length) : 0;
+      const totalCombinedReviewsCount = reviewCount + (hasGoogleReviews ? googleReviews.length : 0);
+
+      let effectiveAggregateRating = averageRating;
+      let effectiveAggregateCount = reviewCount;
+      if (reviewCount === 0 && hasGoogleReviews) {
+          effectiveAggregateRating = googleRating;
+          effectiveAggregateCount = googleTotalCount;
+      } else if (reviewCount > 0 && hasGoogleReviews) {
+          const totalScore = (parseFloat(averageRating) * reviewCount) + (parseFloat(googleRating) * googleTotalCount);
+          effectiveAggregateRating = (totalScore / (reviewCount + googleTotalCount)).toFixed(1);
+          effectiveAggregateCount = reviewCount + googleTotalCount;
+      }
     %>
 
     <title><%= psicologo.nome %> | <%= profTitleBase %><% if(psicologo.cidade) { %> em <%= psicologo.cidade %><% } else { %> Online<% } %> | Yelo</title>
@@ -71,11 +93,11 @@
       "image": "<%= imageUrl %>",
       "url": "<%= currentUrl %>",
       "knowsAbout": "<%= especialidadesStr.replace(/"/g, '\\"') %>"
-      <% if (reviewCount > 0) { %>
+      <% if (effectiveAggregateCount > 0) { %>
       ,"aggregateRating": {
         "@type": "AggregateRating",
-        "ratingValue": "<%= averageRating %>",
-        "reviewCount": "<%= reviewCount %>"
+        "ratingValue": "<%= effectiveAggregateRating %>",
+        "reviewCount": "<%= effectiveAggregateCount %>"
       }
       <% } %>
     }
@@ -94,11 +116,8 @@
             height: auto !important;
             min-height: 100% !important;
             max-height: none !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-            overscroll-behavior-y: auto !important;
-            touch-action: pan-y !important;
+            overflow-x: clip;
+            overflow-y: visible;
         }
 
         body.pagina-publica {
@@ -108,15 +127,13 @@
             height: auto !important;
             min-height: 100% !important;
             max-height: none !important;
-            overflow-x: hidden !important;
-            overflow-y: visible !important;
-            -webkit-overflow-scrolling: touch !important;
-            overscroll-behavior-y: auto !important;
-            touch-action: pan-y !important;
+            overflow-x: clip;
+            overflow-y: visible;
             margin: 0 !important;
             padding: 0 !important;
             zoom: 1 !important;
         }
+
 
         /* Cores do CTA Verde Oficial Yelo (#1B4332) */
         .btn-principal, 
@@ -147,6 +164,113 @@
             background-color: transparent !important;
             border: 2px solid var(--verde-escuro, #1B4332) !important;
             color: var(--verde-escuro, #1B4332) !important;
+        }
+
+        /* ==========================================================================
+           HEADER E CTA MOBILE ULTRA-FINOS & OTIMIZADOS P/ LEGIBILIDADE DO PERFIL
+           Reduz espessura vertical do header e do rodapé fixo para dar destaque ao conteúdo
+           ========================================================================== */
+        body.pagina-publica header {
+            padding: 8px 24px !important;
+            min-height: 48px !important;
+            height: 48px !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+
+        body.pagina-publica header .logo {
+            width: 125px !important;
+            height: 32px !important;
+            display: block !important;
+            position: relative !important;
+        }
+
+        body.pagina-publica header .logo img {
+            height: 32px !important;
+            width: auto !important;
+            object-fit: contain !important;
+        }
+
+        body.pagina-publica header .menu-hamburguer {
+            width: 24px !important;
+            height: 18px !important;
+            padding: 0 !important;
+        }
+
+        body.pagina-publica header .menu-hamburguer .barra {
+            height: 2px !important;
+        }
+
+        body.pagina-publica header .mobile-top-links {
+            gap: 12px !important;
+        }
+
+        body.pagina-publica header .mobile-top-links a {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+        }
+
+        body.pagina-publica header .user-welcome-text {
+            font-size: 13px !important;
+        }
+
+        body.pagina-publica header .user-logged-area {
+            gap: 12px !important;
+            margin-left: 12px !important;
+        }
+
+        body.pagina-publica header .btn,
+        body.pagina-publica header .botoes-acao .btn,
+        body.pagina-publica header .user-logged-area .btn {
+            font-size: 12.5px !important;
+            padding: 5px 14px !important;
+            min-height: 30px !important;
+            line-height: 1.2 !important;
+            border-radius: 50px !important;
+        }
+
+        body.pagina-publica header nav a {
+            font-size: 14px !important;
+        }
+
+        body.pagina-publica .profile-page-main {
+            padding-top: 60px !important;
+        }
+
+        @media (max-width: 768px) {
+            body.pagina-publica header {
+                padding: 6px 16px !important;
+                min-height: 44px !important;
+                height: 44px !important;
+            }
+
+            body.pagina-publica header .logo {
+                width: 110px !important;
+                height: 28px !important;
+            }
+
+            body.pagina-publica header .logo img {
+                height: 28px !important;
+            }
+
+            body.pagina-publica .profile-page-main {
+                padding-top: 52px !important;
+            }
+
+            .mobile-sticky-cta {
+                padding: 8px 16px calc(10px + env(safe-area-inset-bottom, 10px)) 16px !important;
+                gap: 6px !important;
+                border-top-left-radius: 18px !important;
+                border-top-right-radius: 18px !important;
+            }
+
+            .mobile-sticky-cta .btn-principal {
+                padding: 10px 16px !important;
+                min-height: 42px !important;
+                font-size: 0.95rem !important;
+            }
         }
 
         /* ==========================================================================
@@ -205,6 +329,10 @@
 
         /* --- Ajustes Estruturais para Desktop (Evita vazamento lateral) --- */
         @media (min-width: 993px) {
+            html, body.pagina-publica {
+                overflow-x: clip !important;
+                overflow-y: visible !important;
+            }
             .container {
                 width: 100%;
                 max-width: 1200px;
@@ -216,6 +344,14 @@
                 grid-template-columns: minmax(0, 1fr) 360px;
                 gap: 40px;
                 align-items: start;
+            }
+            .conversion-card-wrapper {
+                display: block !important;
+                position: -webkit-sticky !important;
+                position: sticky !important;
+                top: 100px !important;
+                align-self: start !important;
+                z-index: 10 !important;
             }
             .mobile-only-badge { display: none !important; }
             .desktop-only-badge { display: inline-flex !important; }
@@ -406,7 +542,7 @@
                                 
                                 <!-- Resumo clicável das avaliações -->
                                 <div id="psi-rating-summary" class="hero-rating-clickable" onclick="document.getElementById('reviews-section').scrollIntoView({behavior: 'smooth'})">
-                                    <% if (reviewCount === 0) { %>
+                                    <% if (reviewCount === 0 && !hasGoogleReviews) { %>
                                         <% 
                                             let novoText = 'Novo(a) na Yelo';
                                             if (psicologo.genero_identidade === 'Feminino') {
@@ -418,6 +554,19 @@
                                             }
                                         %>
                                         <span style="color: #666; font-size: 0.9rem; font-weight: 600;"><%= novoText %></span>
+                                    <% } else if (reviewCount === 0 && hasGoogleReviews) { %>
+                                        <% 
+                                            let gStarsHtml = '';
+                                            const gRounded = Math.round(Number(googleRating) || 5);
+                                            for (let i = 1; i <= 5; i++) {
+                                                gStarsHtml += `<span style="color: ${i <= gRounded ? '#f59e0b' : '#e5e7eb'}; font-size: 1.2rem;">★</span>`;
+                                            }
+                                        %>
+                                        <%- gStarsHtml %> <span style="color: #1e293b; font-size: 0.9rem; font-weight: 700; margin-left: 5px;"><%= googleRating %></span>
+                                        <span style="display: inline-flex; align-items: center; gap: 4px; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; color: #475569; margin-left: 6px;">
+                                            <svg width="12" height="12" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+                                            Google (<%= googleTotalCount %>)
+                                        </span>
                                     <% } else { %>
                                         <% 
                                             let starsHtml = '';
@@ -426,6 +575,12 @@
                                             }
                                         %>
                                         <%- starsHtml %> <span style="color: #666; font-size: 0.9rem; font-weight: 600; margin-left: 5px;"><%= averageRating %> de 5</span>
+                                        <% if (hasGoogleReviews) { %>
+                                            <span style="display: inline-flex; align-items: center; gap: 4px; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; color: #475569; margin-left: 6px;">
+                                                <svg width="12" height="12" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+                                                + <%= googleTotalCount %> no Google
+                                            </span>
+                                        <% } %>
                                     <% } %>
                                 </div>
                                 <% 
@@ -592,21 +747,48 @@
                     
                     <!-- SEÇÃO DE AVALIAÇÕES -->
                     <div id="reviews-section" class="profile-info-card">
-                        <h3 class="profile-section-title" style="font-size: 1.8rem;">Avaliações dos Pacientes <span id="review-count-wrapper" style="<% if (reviewCount === 0) { %>display: none;<% } %>">(<span id="review-count"><%= reviewCount %></span>)</span></h3>
+                        <h3 class="profile-section-title" style="font-size: 1.8rem;">Avaliações dos Pacientes <span id="review-count-wrapper" style="<% if (totalCombinedReviewsCount === 0) { %>display: none;<% } %>">(<span id="review-count"><%= totalCombinedReviewsCount %></span>)</span></h3>
                         <p style="color: #666; font-size: 0.95rem; margin: 0 0 20px 0;">Experiências e relatos de pessoas que acompanhei.</p>
+
+                        <% if (hasGoogleReviews) { %>
+                        <!-- Banner Oficial do Google Meu Negócio -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 12px 18px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 38px; height: 38px; border-radius: 10px; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; flex-shrink: 0;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24">
+                                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/>
+                                        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #1e293b; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                                        <span><%= googleRating %> de 5 no Google</span>
+                                        <span style="color: #f59e0b; font-size: 0.95rem;">★★★★★</span>
+                                    </div>
+                                    <span style="font-size: 0.82rem; color: #64748b;"><%= googleTotalCount %> avaliações verificadas no Google Meu Negócio</span>
+                                </div>
+                            </div>
+                            <% if (googleData.place_url || psicologo.google_business_url) { %>
+                            <a href="<%= googleData.place_url || psicologo.google_business_url %>" target="_blank" rel="noopener noreferrer" style="font-size: 0.82rem; font-weight: 600; color: #1B4332; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; background: #fff; border: 1px solid #cbd5e1; border-radius: 20px; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                                Ver no Google Maps ↗
+                            </a>
+                            <% } %>
+                        </div>
+                        <% } %>
                         
                         <div style="margin-bottom: 20px;">
                             <button id="btn-open-review-modal" class="btn btn-secundario" style="border-radius: 50px; font-weight: 600; padding: 10px 24px; font-size: 0.95rem;">Escrever Avaliação</button>
                         </div>
 
                         <div id="reviews-list-container" style="display: flex; gap: 15px; padding-bottom: 15px;">
-                            <% if (reviewCount === 0) { %>
+                            <% if (totalCombinedReviewsCount === 0) { %>
                                 <p style="color: #666; font-style: italic; width: 100%;">Este profissional ingressou recentemente. Se você já conhece o trabalho, seja o primeiro a deixar um depoimento!</p>
                             <% } else { %>
                                 <% 
-                                    const visibleCount = 5;
-                                    const reviewsToShow = reviews.slice(0, visibleCount);
-                                    reviewsToShow.forEach(review => {
+                                    // Avaliações da Yelo
+                                    reviews.slice(0, 4).forEach(review => {
                                         let reviewStars = '';
                                         for (let i = 1; i <= 5; i++) {
                                             reviewStars += `<span style="color: ${i <= review.rating ? '#f59e0b' : '#e5e7eb'};">★</span>`;
@@ -620,8 +802,48 @@
                                     <p style="margin: 0; color: #555; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"<%= review.comment %>"</p>
                                 </article>
                                 <% }); %>
-                                <% if (reviewCount > visibleCount) { %>
-                                <button class="btn-more-reviews" style="display: flex; align-items: center; justify-content: center; min-width: 200px; flex-shrink: 0; scroll-snap-align: start; background: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); padding: 10px 24px; border-radius: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background = 'rgba(27, 67, 50, 0.05)'" onmouseout="this.style.background = 'transparent'" onclick="document.getElementById('all-reviews-view').style.display='block'; document.body.style.overflow='hidden';">Ver todas as <%= reviewCount %> avaliações</button>
+
+                                <% 
+                                    // Avaliações do Google Meu Negócio
+                                    if (hasGoogleReviews) {
+                                        googleReviews.slice(0, 4).forEach(gRev => {
+                                %>
+                                <article class="review-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; width: 85vw; max-width: 350px; flex-shrink: 0; scroll-snap-align: start; cursor: pointer; transition: background 0.2s; box-sizing: border-box;" onmouseover="this.style.background = '#f0fdf4'" onmouseout="this.style.background = '#f8fafc'" onclick="document.getElementById('all-reviews-view').style.display='block'; document.body.style.overflow='hidden';">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <% if (gRev.profile_photo_url) { %>
+                                                <img src="<%= gRev.profile_photo_url %>" alt="<%= gRev.author_name %>" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;" referrerpolicy="no-referrer">
+                                            <% } else { %>
+                                                <div style="width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0; color: #475569; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">
+                                                    <%= (gRev.author_name || 'P')[0].toUpperCase() %>
+                                                </div>
+                                            <% } %>
+                                            <div>
+                                                <h4 style="margin: 0; font-family: var(--font-principal); color: #1e293b; font-size: 0.95rem; font-weight: 600;"><%= gRev.author_name %></h4>
+                                                <span style="font-size: 0.75rem; color: #64748b;"><%= gRev.relative_time_description || 'recentemente' %></span>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px;">
+                                            <div style="color: #f59e0b; font-size: 0.85rem;">
+                                                <% for (let i = 1; i <= 5; i++) { %>
+                                                    <span style="color: <%= i <= gRev.rating ? '#f59e0b' : '#cbd5e1' %>;">★</span>
+                                                <% } %>
+                                            </div>
+                                            <span style="font-size: 0.7rem; color: #475569; background: #e2e8f0; padding: 2px 6px; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;">
+                                                <svg width="10" height="10" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+                                                Google
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <p style="margin: 0; color: #475569; font-style: italic; font-size: 0.92rem; line-height: 1.5;">"<%= gRev.text %>"</p>
+                                </article>
+                                <% 
+                                        });
+                                    } 
+                                %>
+
+                                <% if (totalCombinedReviewsCount > 5) { %>
+                                <button class="btn-more-reviews" style="display: flex; align-items: center; justify-content: center; min-width: 200px; flex-shrink: 0; scroll-snap-align: start; background: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); padding: 10px 24px; border-radius: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background = 'rgba(27, 67, 50, 0.05)'" onmouseout="this.style.background = 'transparent'" onclick="document.getElementById('all-reviews-view').style.display='block'; document.body.style.overflow='hidden';">Ver todas as <%= totalCombinedReviewsCount %> avaliações</button>
                                 <% } %>
                             <% } %>
                         </div>
@@ -766,31 +988,31 @@
         </div>
         
         <!-- STICKY BOTTOM BAR (Apenas Mobile) -->
-        <div class="mobile-sticky-cta" style="width: 100%; box-sizing: border-box; flex-direction: column; gap: 12px; padding: 20px 24px calc(34px + env(safe-area-inset-bottom)) 24px;">
+        <div class="mobile-sticky-cta" style="width: 100%; box-sizing: border-box; flex-direction: column; gap: 6px; padding: 8px 16px calc(10px + env(safe-area-inset-bottom, 10px)) 16px; border-top-left-radius: 18px; border-top-right-radius: 18px;">
             
             <!-- Container for Floating Badges (Mobile Fixed) -->
-            <div style="position: absolute; bottom: 100%; left: 0; width: 100%; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; padding: 0 24px 12px 15px; pointer-events: none; z-index: 10; box-sizing: border-box;">
+            <div style="position: absolute; bottom: 100%; left: 0; width: 100%; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; padding: 0 16px 8px 12px; pointer-events: none; z-index: 10; box-sizing: border-box;">
                 
                 <% if (psicologo.free_session_active && psicologo.free_session_time) { %>
-                <div style="position: relative; display: inline-flex; align-items: center; gap: 6px; background-color: #FFF4E5; color: #B25E02; border: 1px solid #FFB020; padding: 8px 14px; border-radius: 16px; font-size: 0.85rem; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.08); animation: floatUpDown 3s ease-in-out infinite; pointer-events: auto; align-self: flex-end;">
+                <div style="position: relative; display: inline-flex; align-items: center; gap: 5px; background-color: #FFF4E5; color: #B25E02; border: 1px solid #FFB020; padding: 5px 12px; border-radius: 14px; font-size: 0.78rem; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.08); animation: floatUpDown 3s ease-in-out infinite; pointer-events: auto; align-self: flex-end;">
                     💬 Primeiro atendimento grátis: <%= psicologo.free_session_time %>
-                    <div style="position: absolute; bottom: -6px; right: 20px; border-width: 6px 6px 0 6px; border-style: solid; border-color: #FFB020 transparent transparent transparent;"></div>
-                    <div style="position: absolute; bottom: -5px; right: 20px; border-width: 6px 6px 0 6px; border-style: solid; border-color: #FFF4E5 transparent transparent transparent;"></div>
+                    <div style="position: absolute; bottom: -5px; right: 18px; border-width: 5px 5px 0 5px; border-style: solid; border-color: #FFB020 transparent transparent transparent;"></div>
+                    <div style="position: absolute; bottom: -4px; right: 18px; border-width: 5px 5px 0 5px; border-style: solid; border-color: #FFF4E5 transparent transparent transparent;"></div>
                 </div>
                 <% } %>
 
-                <div id="proximo-horario-badge-mobile" style="pointer-events: auto; display: none; align-items: center; justify-content: center; gap: 8px; background: #dcfce7; padding: 8px 16px; border-radius: 50px; border: 1px solid #86efac; text-align: center; animation: float-badge 3s ease-in-out infinite; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.15); transition: transform 0.3s ease-out, opacity 0.3s ease-out; touch-action: pan-y; width: fit-content; max-width: 100%; align-self: center;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span style="color: #15803d; font-size: 0.85rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Próximo horário: <span id="proximo-horario-texto-mobile" style="text-decoration: underline;"></span></span>
-                    <button id="close-badge-mobile" style="background: transparent; border: none; padding: 4px; margin-left: 2px; color: #15803d; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" aria-label="Fechar alerta de horário">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <div id="proximo-horario-badge-mobile" style="pointer-events: auto; display: none; align-items: center; justify-content: center; gap: 6px; background: #dcfce7; padding: 5px 12px; border-radius: 50px; border: 1px solid #86efac; text-align: center; animation: float-badge 3s ease-in-out infinite; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.15); transition: transform 0.3s ease-out, opacity 0.3s ease-out; touch-action: pan-y; width: fit-content; max-width: 100%; align-self: center;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span style="color: #15803d; font-size: 0.78rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Próximo horário: <span id="proximo-horario-texto-mobile" style="text-decoration: underline;"></span></span>
+                    <button id="close-badge-mobile" style="background: transparent; border: none; padding: 2px 4px; margin-left: 2px; color: #15803d; opacity: 0.7; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" aria-label="Fechar alerta de horário">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                    <div id="mobile-sticky-rating" style="font-size: 0.95rem; font-weight: 700; color: #333; display: flex; align-items: center; gap: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; line-height: 1.1;">
+                <div style="display: flex; flex-direction: column; gap: 1px;">
+                    <div id="mobile-sticky-rating" style="font-size: 0.85rem; font-weight: 700; color: #333; display: flex; align-items: center; gap: 4px;">
                         <% if (reviewCount === 0) { %>
                             <% 
                                 let novoTextMobile = 'Novo(a) na Yelo';
@@ -809,42 +1031,42 @@
                     </div>
                 </div>
 
-                <div class="mobile-sticky-price" id="price-display-mobile" style="text-align: right; flex-direction: column;">
+                <div class="mobile-sticky-price" id="price-display-mobile" style="text-align: right; flex-direction: column; display: flex;">
                     <% if (psicologo.tipo_cobranca === 'mensal') { %>
                         <% if (psicologo.valor_mensal_numero && parseFloat(psicologo.valor_mensal_numero) > 0) { %>
-                            <span class="label" style="font-size: 0.7rem; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">Mensal</span>
-                            <span class="value" style="font-size: 1.3rem;">R$ <%= parseFloat(psicologo.valor_mensal_numero).toFixed(2).replace('.', ',') %></span>
-                            <span class="sub-label" style="font-size: 0.65rem; color: #999; margin-top: 2px;">1 sessão por semana</span>
+                            <span class="label" style="font-size: 0.65rem; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 0;">Mensal</span>
+                            <span class="value" style="font-size: 1.15rem; font-weight: 800; line-height: 1.1;">R$ <%= parseFloat(psicologo.valor_mensal_numero).toFixed(2).replace('.', ',') %></span>
+                            <span class="sub-label" style="font-size: 0.62rem; color: #999; margin-top: 1px;">1 sessão por semana</span>
                         <% } else { %>
-                            <span class="label" style="font-size: 0.7rem; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">Mensal</span>
-                            <span class="value" style="font-size: 1.3rem;">A combinar</span>
-                            <span class="sub-label" style="font-size: 0.65rem; color: #999; margin-top: 2px;">1 sessão por semana</span>
+                            <span class="label" style="font-size: 0.65rem; color: #888; font-weight: 700; text-transform: uppercase; margin-bottom: 0;">Mensal</span>
+                            <span class="value" style="font-size: 1.15rem; font-weight: 800; line-height: 1.1;">A combinar</span>
+                            <span class="sub-label" style="font-size: 0.62rem; color: #999; margin-top: 1px;">1 sessão por semana</span>
                         <% } %>
                     <% } else { %>
                         <% if (psicologo.valor_sessao_numero && parseFloat(psicologo.valor_sessao_numero) > 0) { %>
-                            <span class="value" style="font-size: 1.3rem;">R$ <%= parseFloat(psicologo.valor_sessao_numero).toFixed(2).replace('.', ',') %></span>
-                            <span class="label" style="font-size: 0.7rem; color: #888; font-weight: 600;">Por Sessão</span>
+                            <span class="value" style="font-size: 1.15rem; font-weight: 800; line-height: 1.1;">R$ <%= parseFloat(psicologo.valor_sessao_numero).toFixed(2).replace('.', ',') %></span>
+                            <span class="label" style="font-size: 0.65rem; color: #888; font-weight: 600;">Por Sessão</span>
                         <% } else { %>
-                            <span class="value" style="font-size: 1.3rem;">A combinar</span>
-                            <span class="label" style="font-size: 0.7rem; color: #888; font-weight: 600;">Por Sessão</span>
+                            <span class="value" style="font-size: 1.15rem; font-weight: 800; line-height: 1.1;">A combinar</span>
+                            <span class="label" style="font-size: 0.65rem; color: #888; font-weight: 600;">Por Sessão</span>
                         <% } %>
                     <% } %>
                 </div>
             </div>
 
-            <a id="btn-agendar-whatsapp-mobile" href="#" class="btn btn-principal" target="_blank" rel="noopener noreferrer" style="width: 100%; margin: 0; display: flex; justify-content: center; align-items: center;">
+            <a id="btn-agendar-whatsapp-mobile" href="#" class="btn btn-principal" target="_blank" rel="noopener noreferrer" style="width: 100%; margin: 0; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 50px; font-size: 0.95rem; font-weight: 700; min-height: 42px; box-shadow: 0 4px 12px rgba(27,67,50,0.2);">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                 Conversar com <%= pronome %><%= firstName %>
             </a>
             
-            <div style="font-size: 0.75rem; color: #888; text-align: center; margin-top: -2px;">
+            <div style="font-size: 0.7rem; color: #888; text-align: center; margin-top: 0; line-height: 1.1;">
                 Você falará diretamente com <%= firstName %>. Sem compromisso.
             </div>
         </div>
 
         <style>
             .mobile-footer-spacer { height: 0px; display: block; width: 100%; }
-            @media (max-width: 992px) { .mobile-footer-spacer { height: calc(160px + env(safe-area-inset-bottom, 20px)); } }
+            @media (max-width: 992px) { .mobile-footer-spacer { height: calc(105px + env(safe-area-inset-bottom, 12px)); } }
         </style>
         <div class="mobile-footer-spacer"></div>
     </main>
@@ -860,7 +1082,7 @@
                 <button id="btn-close-all-reviews" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #1B4332; display: flex; align-items: center; justify-content: center; padding: 5px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                 </button>
-                <h3 style="margin: 0; color: #1B4332; font-size: 1.2rem;">Todas as Avaliações (<span id="all-reviews-count"><%= reviewCount %></span>)</h3>
+                <h3 style="margin: 0; color: #1B4332; font-size: 1.2rem;">Todas as Avaliações (<span id="all-reviews-count"><%= totalCombinedReviewsCount %></span>)</h3>
             </div>
         </div>
 
@@ -877,6 +1099,66 @@
 
         <div class="reviews-modal-layout">
             <div class="reviews-modal-list">
+                <% if (hasGoogleReviews) { %>
+                <!-- Banner Google no Modal -->
+                <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-sizing: border-box; width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; flex-shrink: 0;">
+                            <svg width="22" height="22" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/>
+                                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #1e293b; font-size: 1rem; display: flex; align-items: center; gap: 6px;">
+                                <span><%= googleRating %> de 5 no Google Maps</span>
+                                <span style="color: #f59e0b; font-size: 0.95rem;">★★★★★</span>
+                            </div>
+                            <span style="font-size: 0.82rem; color: #64748b;"><%= googleTotalCount %> avaliações verificadas pela equipe do Google</span>
+                        </div>
+                    </div>
+                    <% if (googleData.place_url || psicologo.google_business_url) { %>
+                    <a href="<%= googleData.place_url || psicologo.google_business_url %>" target="_blank" rel="noopener noreferrer" style="font-size: 0.82rem; font-weight: 600; color: #1B4332; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px; background: #fff; border: 1px solid #cbd5e1; border-radius: 20px;">
+                        Abrir no Google Maps ↗
+                    </a>
+                    <% } %>
+                </div>
+
+                <% googleReviews.forEach(gRev => { %>
+                <div style="background: #fff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); box-sizing: border-box; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <% if (gRev.profile_photo_url) { %>
+                                <img src="<%= gRev.profile_photo_url %>" alt="<%= gRev.author_name %>" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover;" referrerpolicy="no-referrer">
+                            <% } else { %>
+                                <div style="width: 38px; height: 38px; border-radius: 50%; background: #e2e8f0; color: #475569; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem;">
+                                    <%= (gRev.author_name || 'P')[0].toUpperCase() %>
+                                </div>
+                            <% } %>
+                            <div>
+                                <h4 style="margin: 0; font-family: var(--font-principal); color: #1e293b; font-size: 1rem; font-weight: 600;"><%= gRev.author_name %></h4>
+                                <span style="font-size: 0.78rem; color: #64748b;"><%= gRev.relative_time_description || 'recentemente' %></span>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                            <div style="color: #f59e0b; font-size: 0.9rem;">
+                                <% for (let i = 1; i <= 5; i++) { %>
+                                    <span style="color: <%= i <= gRev.rating ? '#f59e0b' : '#cbd5e1' %>;">★</span>
+                                <% } %>
+                            </div>
+                            <span style="font-size: 0.72rem; color: #475569; background: #e2e8f0; padding: 2px 7px; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                <svg width="10" height="10" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+                                Google Meu Negócio
+                            </span>
+                        </div>
+                    </div>
+                    <p style="margin: 0; color: #475569; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"<%= gRev.text %>"</p>
+                </div>
+                <% }); %>
+                <% } %>
+
                 <% if (reviewCount > 0) { %>
                     <% reviews.forEach(review => {
                         let reviewStars = '';
@@ -936,26 +1218,26 @@
 
         <!-- MOBILE CTA FOOTER -->
         <div class="reviews-modal-mobile-cta-wrapper">
-            <div class="mobile-sticky-cta" style="width: 100%; box-sizing: border-box; flex-direction: column; gap: 12px; padding: 20px 24px calc(24px + env(safe-area-inset-bottom)) 24px; background: transparent;">
-                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                    <div style="display: flex; flex-direction: column; gap: 2px;">
-                        <div id="mobile-sticky-rating-reviews" style="font-size: 0.95rem; font-weight: 700; color: #333; display: flex; align-items: center; gap: 4px;">
-                            <span style="color: #f59e0b;">⭐</span> <%= reviewCount > 0 ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount).toFixed(1).replace('.', ',') : '5,0' %> de 5
+            <div class="mobile-sticky-cta" style="width: 100%; box-sizing: border-box; flex-direction: column; gap: 6px; padding: 8px 16px calc(10px + env(safe-area-inset-bottom, 10px)) 16px; background: transparent;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; line-height: 1.1;">
+                    <div style="display: flex; flex-direction: column; gap: 1px;">
+                        <div id="mobile-sticky-rating-reviews" style="font-size: 0.85rem; font-weight: 700; color: #333; display: flex; align-items: center; gap: 4px;">
+                            <span style="color: #f59e0b;">⭐</span> <%= effectiveAggregateRating ? String(effectiveAggregateRating).replace('.', ',') : '5,0' %> de 5
                         </div>
                     </div>
 
                     <div class="mobile-sticky-price" id="price-display-mobile-reviews" style="text-align: right; flex-direction: column; display: flex;">
-                        <span class="label" style="font-size: 0.7rem; color: #888; text-transform: uppercase; font-weight: 700;">Por Sessão</span>
-                        <span class="value" style="font-size: 1.1rem; font-weight: 700; color: #1B4332;"><%= psicologo.valor_sessao_numero ? 'R$ ' + parseFloat(psicologo.valor_sessao_numero).toFixed(2).replace('.', ',') : 'R$ 120,00' %></span>
+                        <span class="label" style="font-size: 0.65rem; color: #888; text-transform: uppercase; font-weight: 700;">Por Sessão</span>
+                        <span class="value" style="font-size: 1.12rem; font-weight: 800; color: #1B4332; line-height: 1.1;"><%= psicologo.valor_sessao_numero ? 'R$ ' + parseFloat(psicologo.valor_sessao_numero).toFixed(2).replace('.', ',') : 'R$ 120,00' %></span>
                     </div>
                 </div>
 
-                <a id="btn-agendar-whatsapp-mobile-reviews" href="#" class="btn btn-principal" target="_blank" rel="noopener noreferrer" style="width: 100%; margin: 0; display: flex; justify-content: center; align-items: center;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                <a id="btn-agendar-whatsapp-mobile-reviews" href="#" class="btn btn-principal" target="_blank" rel="noopener noreferrer" style="width: 100%; margin: 0; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 50px; font-size: 0.95rem; font-weight: 700; min-height: 42px; box-shadow: 0 4px 12px rgba(27,67,50,0.2);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:0;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                     Conversar com <%= pronome %><%= firstName %>
                 </a>
                 
-                <div style="font-size: 0.75rem; color: #888; text-align: center; margin-top: -2px;">
+                <div style="font-size: 0.7rem; color: #888; text-align: center; margin-top: 0; line-height: 1.1;">
                     Você falará diretamente com <%= firstName %>. Sem custo e sem compromisso.
                 </div>
             </div>

@@ -326,31 +326,31 @@ body.pagina-publica .mobile-bottom-nav { display: none !important; }
 
     .mobile-sticky-cta {
         display: flex !important;
-         position: fixed;
+        position: fixed;
         bottom: 0;
         left: 0;
         width: 100%;
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
-        padding: 24px 24px;
-        padding-bottom: calc(24px + env(safe-area-inset-bottom));
+        padding: 8px 16px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 10px));
         box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
         z-index: 1000;
         align-items: center;
         justify-content: space-between;
         border-top: 1px solid rgba(0,0,0,0.05);
         box-sizing: border-box;
-        border-top-left-radius: 24px;
-        border-top-right-radius: 24px;
+        border-top-left-radius: 18px;
+        border-top-right-radius: 18px;
     }
     .mobile-sticky-price {
         display: flex;
         flex-direction: column-reverse;
-        gap: 2px;
+        gap: 1px;
     }
 
     .mobile-sticky-price .label {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
         text-transform: uppercase;
         color: #888;
         font-weight: 700;
@@ -359,28 +359,29 @@ body.pagina-publica .mobile-bottom-nav { display: none !important; }
 
     .mobile-sticky-price .value {
         font-family: var(--font-titulos);
-        font-size: 1.8rem;
+        font-size: 1.25rem;
         color: var(--verde-escuro);
-        font-weight: 700;
-        line-height: 1;
+        font-weight: 800;
+        line-height: 1.1;
     }
 
     .mobile-sticky-cta .btn-principal {
         width: auto;
-        padding: 16px 20px;
-        font-size: 1rem;
+        padding: 10px 16px;
+        font-size: 0.95rem;
+        min-height: 42px;
         margin-left: auto;
         box-shadow: 0 4px 15px rgba(27,67,50,0.2);
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         border-radius: 50px !important;
     }
 
     .mobile-sticky-cta .btn-principal svg {
-        width: 22px;
-        height: 22px;
+        width: 18px;
+        height: 18px;
     }
 
     .trust-badges-row {

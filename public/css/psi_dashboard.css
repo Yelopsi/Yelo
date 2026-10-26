@@ -1,5 +1,5 @@
 @import url('01-variables.css');
-@import url('forum-community.css?v=13.0');
+@import url('forum-community.css?v=25.0');
 @import url('components/financeiro.css');
 @import url('components/inbox.css');
 @import url('components/perfil.css');
@@ -344,7 +344,7 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
         overflow-y: visible !important;
         -webkit-overflow-scrolling: touch !important;
         /* Padding inferior dinâmico para garantir que o conteúdo tenha o mesmo 'respiro' acima da bottom nav em todas as páginas */
-        padding: calc(var(--mobile-header-h, 64px) + 20px) 10px calc(var(--mobile-bottom-h, 70px) + 35px + env(safe-area-inset-bottom)) 10px !important;
+        padding: calc(var(--mobile-header-h, 64px) + 20px) 10px calc(var(--mobile-bottom-h, 70px) + 12px + env(safe-area-inset-bottom)) 10px !important;
         margin-left: 0 !important; /* Remove a margem no mobile */
     }
 
@@ -935,31 +935,40 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 /* ==========================================================================
    FORUM MENTION PILL (LINKS E CITAÇÕES DE DISCUSSÕES DO FÓRUM)
    ========================================================================== */
-.forum-mention-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: #E8F5E9;
+.forum-mention-pill,
+.rich-mention-input .forum-mention-pill,
+.mention-pill-text,
+span[class*="mention-pill-"],
+a.forum-mention-pill {
+    display: inline !important;
+    background: transparent !important;
+    background-color: transparent !important;
     color: #1B4332 !important;
-    border: 1px solid #C8E6C9;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-size: 0.82rem;
-    font-weight: 700;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    font-size: inherit !important;
+    font-weight: 700 !important;
     text-decoration: none !important;
-    cursor: pointer;
-    transition: all 0.18s ease;
-    vertical-align: middle;
+    cursor: pointer !important;
+    transition: color 0.18s ease;
+    vertical-align: baseline !important;
+    box-shadow: none !important;
 }
-.forum-mention-pill:hover {
-    background: #1B4332;
-    color: #FFEE8C !important;
-    border-color: #1B4332;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(27,67,50,0.15);
+.forum-mention-pill:hover,
+a.forum-mention-pill:hover,
+.mention-pill-text:hover {
+    background: transparent !important;
+    color: #10B981 !important;
+    border: none !important;
+    transform: none !important;
+    text-decoration: underline !important;
+    box-shadow: none !important;
 }
-.forum-mention-pill svg {
-    flex-shrink: 0;
+.forum-mention-pill svg,
+a.forum-mention-pill svg {
+    display: none !important;
 }
 .forum-comment-live-preview-box {
     animation: previewFadeIn 0.2s ease-out;
@@ -996,9 +1005,9 @@ h1, h2, h3, h4 { font-family: var(--font-titulos); color: var(--verde-escuro); f
 }
 .rich-mention-input .forum-mention-pill {
     user-select: all;
-    display: inline-flex;
-    margin: 0 3px;
-    vertical-align: middle;
+    display: inline !important;
+    margin: 0 2px;
+    vertical-align: baseline !important;
 }
 
 /* Modais no Mobile: z-index superior e esconde a bottom nav durante o preenchimento */

@@ -897,19 +897,19 @@
 }
 
 .modern-fullpost-title {
-    font-size: 1.85rem;
+    font-size: 2.1rem;
     font-weight: 800;
     color: var(--yelo-text-main);
-    margin: 16px 0 20px 0;
-    line-height: 1.35;
-    letter-spacing: -0.5px;
+    margin: 22px 0 14px 0;
+    line-height: 1.28;
+    letter-spacing: -0.028em;
 }
 
 .modern-fullpost-body {
-    font-size: 1.05rem;
-    line-height: 1.7;
-    color: #334155;
-    margin-bottom: 28px;
+    font-size: 1.12rem;
+    line-height: 1.72;
+    color: #1E293B;
+    margin-bottom: 24px;
 }
 
 /* --- SEÇÃO DE COMENTÁRIOS MODERNA (THREAD & REPLIES) --- */
@@ -1083,27 +1083,29 @@
 /* Cabeçalho do Comentário (Reddit Style) */
 .modern-comment-header {
     display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
     margin-bottom: 3px !important;
     position: relative !important;
 }
 
 .modern-comment-header .modern-author-avatar {
-    width: 28px !important;
-    height: 28px !important;
+    width: 36px !important;
+    height: 36px !important;
     border-radius: 50% !important;
     object-fit: cover !important;
     border: 1.5px solid var(--yelo-border) !important;
     flex-shrink: 0 !important;
     z-index: 2 !important;
     background: #FFFFFF !important;
+    margin: 0 !important;
 }
 
 .modern-replies-branch .modern-author-avatar,
 .comment-replies-container .modern-author-avatar {
     width: 28px !important;
     height: 28px !important;
+    margin: 0 !important;
 }
 
 .comment-author-name,
@@ -1113,6 +1115,20 @@
     color: var(--yelo-text-main, #0F172A) !important;
     display: flex !important;
     align-items: center !important;
+    gap: 5px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.modern-replies-branch .comment-author-name,
+.modern-replies-branch .author-name-row,
+.comment-replies-container .comment-author-name,
+.comment-replies-container .author-name-row {
+    height: 28px !important;
+    min-height: 28px !important;
     gap: 5px !important;
 }
 
@@ -1131,11 +1147,19 @@
 .comment-time-ago {
     font-size: 0.74rem !important;
     color: var(--yelo-text-muted, #64748B) !important;
+    line-height: 1.2 !important;
+    margin: -6px 0 0 0 !important;
+    padding: 0 !important;
 }
 
-/* Conteúdo do Comentário Alinhado ao Nome (Gutter de 36px) */
+.modern-replies-branch .comment-time-ago,
+.comment-replies-container .comment-time-ago {
+    margin: -4px 0 0 0 !important;
+}
+
+/* Conteúdo do Comentário Alinhado ao Nome (Gutter de 46px) */
 .yt-comment-content-wrapper {
-    margin-left: 36px !important;
+    margin-left: 46px !important;
 }
 
 .modern-comment-text {
@@ -1185,21 +1209,90 @@
     stroke: #DC2626 !important;
 }
 
-/* Grupo de ações secundárias alinhado à direita (Denunciar, Editar, Excluir) */
+/* Grupo de ações secundárias alinhado à direita (Denunciar sempre à direita) */
 .comment-secondary-actions {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 6px !important;
     margin-left: auto !important;
 }
 
-.comment-action-pill.report-btn {
+.comment-secondary-actions .edit-comment-btn {
+    order: 1 !important;
+}
+
+.comment-secondary-actions .delete-comment-btn {
+    order: 2 !important;
+}
+
+.comment-secondary-actions .report-btn,
+.comment-secondary-actions .inline-report {
+    order: 10 !important;
     color: var(--yelo-text-muted, #64748B) !important;
 }
 
-.comment-action-pill.report-btn:hover {
+.comment-secondary-actions .report-btn:hover,
+.comment-secondary-actions .inline-report:hover {
     color: #DC2626 !important;
     background: #FEE2E2 !important;
+}
+
+.modern-fullpost-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    margin-top: 16px !important;
+    padding-top: 14px !important;
+    border-top: 1px solid var(--yelo-border, #E2E8F0) !important;
+    width: 100% !important;
+}
+
+.modern-fullpost-footer .support-btn {
+    background: #FFF1F2 !important;
+    border: 1px solid #FECDD3 !important;
+    color: #BE123C !important;
+    font-weight: 700 !important;
+    padding: 4px 12px !important;
+    font-size: 0.8rem !important;
+    min-height: 28px !important;
+    height: 28px !important;
+    border-radius: 50px !important;
+    gap: 5px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 1px 3px rgba(190, 18, 60, 0.06) !important;
+}
+
+.modern-fullpost-footer .support-btn svg {
+    fill: #E11D48 !important;
+    stroke: #E11D48 !important;
+    width: 13px !important;
+    height: 13px !important;
+}
+
+.modern-fullpost-footer .support-btn .post-votes-count {
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+}
+
+.modern-fullpost-footer .support-btn .support-label {
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+}
+
+.modern-fullpost-footer .support-btn.supported {
+    background: #FFE4E6 !important;
+    border-color: #FDA4AF !important;
+    color: #9F1239 !important;
+    box-shadow: 0 2px 6px rgba(225, 29, 72, 0.12) !important;
+}
+
+.modern-fullpost-footer .support-btn:hover {
+    background: #FFE4E6 !important;
+    border-color: #FDA4AF !important;
+    transform: translateY(-1px) scale(1.02) !important;
 }
 
 /* ==========================================================================
@@ -1871,14 +1964,15 @@
     }
 
     .modern-fullpost-title {
-        font-size: 1.35rem;
-        line-height: 1.35;
-        margin: 12px 0 16px 0;
+        font-size: 1.65rem;
+        line-height: 1.3;
+        margin: 18px 0 12px 0;
     }
 
     .modern-fullpost-body {
-        font-size: 0.98rem;
-        line-height: 1.6;
+        font-size: 1.05rem;
+        line-height: 1.68;
+        color: #1E293B;
         margin-bottom: 20px;
         word-break: break-word;
     }
@@ -1912,29 +2006,36 @@
     }
 
     .composer-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-        margin-top: 10px;
-        padding-top: 10px;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        margin-top: 10px !important;
+        padding-top: 10px !important;
+        width: 100% !important;
     }
 
-    .composer-toolbar > div {
-        display: flex;
-        gap: 8px;
-        width: 100%;
+    .composer-toolbar > div,
+    .composer-toolbar .composer-actions-right {
+        display: inline-flex !important;
+        gap: 8px !important;
+        width: auto !important;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
     }
 
     .composer-toolbar #modern-btn-ai-assist {
-        flex: 1;
-        justify-content: center;
-        min-height: 40px;
+        flex: none !important;
+        min-height: 34px !important;
+        padding: 5px 12px !important;
     }
 
     .composer-toolbar .composer-btn-send {
-        flex: 1.2;
-        justify-content: center;
-        min-height: 40px;
+        flex: none !important;
+        min-height: 34px !important;
+        padding: 7px 16px !important;
+        white-space: nowrap !important;
     }
 
     /* Cards de Comentário e Árvore de Respostas (Mobile Flat Reddit) */
@@ -1947,12 +2048,15 @@
     }
 
     .modern-comment-card .modern-author-avatar {
-        width: 26px !important;
-        height: 26px !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        margin: 0 !important;
     }
 
     .yt-comment-content-wrapper {
-        margin-left: 32px !important;
+        margin-left: 46px !important;
     }
 
     .modern-comment-text {
