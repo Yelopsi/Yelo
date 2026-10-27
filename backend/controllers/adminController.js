@@ -2144,10 +2144,9 @@ Se houver histórico acima:
 3. Avance na jornada do usuário com base nos dados atuais.
 `;
 
-        // 5. Chamada ao Gemini com fallback de modelos e fallback determinístico
+        // 5. Chamada ao Gemini com fallback rápido e fallback determinístico
         const CANDIDATE_MODELS = [
-            "gemini-3.5-flash-lite",
-            "gemini-3.1-flash-lite"
+            "gemini-3.5-flash-lite"
         ];
 
         let rawAnalysis = null;
@@ -2160,11 +2159,11 @@ Se houver histórico acima:
                             model: modelName,
                             systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
                             generationConfig: {
-                                temperature: 0.7,
-                                maxOutputTokens: 900
+                                temperature: 0.3,
+                                maxOutputTokens: 400
                             }
                         });
-                        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de 7s no modelo')), 7000));
+                        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de 3.5s no modelo')), 3500));
                         const result = await Promise.race([model.generateContent(promptGrowth), timeoutPromise]);
                         const text = result?.response?.text?.();
                         if (text && text.trim().length > 20) {

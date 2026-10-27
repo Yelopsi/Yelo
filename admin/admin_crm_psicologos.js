@@ -944,41 +944,53 @@ window.initializePage = function () {
                 fullPhone = '55' + fullPhone;
             }
 
-            // Universal link oficial: abre direto no app nativo no mobile (iOS/Android) sem perder quebras de linha e formatação
-            const whatsappUrl = `https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodeURIComponent(msg)}`;
+            // Links de envio do WhatsApp
+            const webWhatsAppUrl = `https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodeURIComponent(msg)}`;
+            const nativeWhatsAppUrl = `whatsapp://send?phone=${fullPhone}&text=${encodeURIComponent(msg)}`;
 
-            // Marcar como enviado no banco ANTES de redirecionar para o WhatsApp (evita que a requisição seja cancelada pelo descarregamento no mobile)
+            // 1. Abre o WhatsApp IMEDIATAMENTE (sem esperar o roundtrip do PATCH de action-sent)
+            if (isMobile) {
+                // No mobile (iOS e Android), o schema nativo whatsapp:// abre diretamente o app (WhatsApp ou WA Business)
+                // sem navegar o Safari para a landing page api.whatsapp.com.
+                // O navegador permanece na tela de Follow-ups do CRM, pronto para a próxima mensagem!
+                const tempLink = document.createElement('a');
+                tempLink.href = nativeWhatsAppUrl;
+                tempLink.style.display = 'none';
+                document.body.appendChild(tempLink);
+                tempLink.click();
+                setTimeout(() => tempLink.remove(), 1000);
+            } else if (popupWindow && !popupWindow.closed) {
+                popupWindow.location.href = webWhatsAppUrl;
+            } else {
+                const win = window.open(webWhatsAppUrl, '_blank');
+                if (!win) {
+                    window.location.href = webWhatsAppUrl;
+                }
+            }
+
+            // 2. Registra o envio no banco em segundo plano via keepalive (não bloqueia nem atrasa a abertura)
             try {
                 const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
-                const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/action-sent`, {
+                fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/action-sent`, {
                     method: 'PATCH',
                     headers: {
                         'Authorization': `Bearer ${tokenAdmin}`,
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include',
+                    keepalive: true,
                     body: JSON.stringify({ actionType, messageContent: msg })
-                });
-                if (res.ok) {
-                    if (window.showToast) window.showToast('Ação registrada com sucesso!', 'success');
-                    const statusInput = document.getElementById('crm-status-psi');
-                    if (statusInput && statusInput.value === 'pending_actions') {
-                        setTimeout(() => fetchAndRenderPsis(window.currentCrmPage || 1), 600);
+                }).then(async (res) => {
+                    if (res.ok) {
+                        if (window.showToast) window.showToast('Ação registrada com sucesso!', 'success');
+                        const statusInput = document.getElementById('crm-status-psi');
+                        if (statusInput && statusInput.value === 'pending_actions') {
+                            setTimeout(() => fetchAndRenderPsis(window.currentCrmPage || 1), 300);
+                        }
                     }
-                }
+                }).catch(e => console.error('Erro ao marcar ação como enviada:', e));
             } catch (e) {
-                console.error('Erro ao marcar ação como enviada:', e);
-            }
-
-            if (popupWindow && !popupWindow.closed) {
-                popupWindow.location.href = whatsappUrl;
-            } else if (isMobile) {
-                window.location.href = whatsappUrl;
-            } else {
-                const win = window.open(whatsappUrl, '_blank');
-                if (!win) {
-                    window.location.href = whatsappUrl;
-                }
+                console.error('Erro ao disparar action-sent:', e);
             }
         } catch (err) {
             console.error('Erro em sendWhatsAppAction:', err);

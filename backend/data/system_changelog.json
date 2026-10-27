@@ -1,5 +1,79 @@
 [
   {
+    "id": "change-git-9e942479",
+    "date": "2026-10-27T00:44:38.000Z",
+    "commit": "9e942479",
+    "author": "Anderson",
+    "title": "Correção: Destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos (forum, avisos)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos",
+    "description": "Commit registrado no repositório: \"fix(forum, avisos): destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/forumController.js, backend/data/system_changelog.json, forum-community.css, public/css/components/psi_avisos.css (+10 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9e942479"
+    },
+    "after": {
+      "nova_versao": "destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/forumController.js",
+      "backend/data/system_changelog.json",
+      "forum-community.css",
+      "public/css/components/psi_avisos.css",
+      "public/css/components/psi_overview.css",
+      "public/css/components/psi_ui.css",
+      "public/css/forum-community.css",
+      "public/psi/psi_avisos.html",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_forum.html",
+      "public/psi/psi_forum.js",
+      "public/psi/psi_forum_modern.css",
+      "public/psi/psi_forum_modern.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-e37f61d6",
+    "date": "2026-10-27T00:44:38.000Z",
+    "commit": "e37f61d6",
+    "author": "Anderson",
+    "title": "Correção: Destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos (forum, avisos)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos",
+    "description": "Commit registrado no repositório: \"fix(forum, avisos): destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/forumController.js, backend/data/system_changelog.json, forum-community.css, public/css/components/psi_avisos.css (+10 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #e37f61d6"
+    },
+    "after": {
+      "nova_versao": "destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/forumController.js",
+      "backend/data/system_changelog.json",
+      "forum-community.css",
+      "public/css/components/psi_avisos.css",
+      "public/css/components/psi_overview.css",
+      "public/css/components/psi_ui.css",
+      "public/css/forum-community.css",
+      "public/psi/psi_avisos.html",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_forum.html",
+      "public/psi/psi_forum.js",
+      "public/psi/psi_forum_modern.css",
+      "public/psi/psi_forum_modern.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-30a8f8c9",
     "date": "2026-10-26T23:35:11.000Z",
     "commit": "30a8f8c9",

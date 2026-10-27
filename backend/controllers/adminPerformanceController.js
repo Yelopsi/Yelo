@@ -271,15 +271,33 @@ Retorne SOMENTE um JSON com a seguinte estrutura (não use blocos markdown de c�
         }
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
-
-        const result = await model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json" }
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-3.5-flash-lite",
+            generationConfig: { 
+                responseMimeType: "application/json",
+                temperature: 0.3,
+                maxOutputTokens: 400
+            }
         });
 
-        const responseText = result.response.text();
-        const aiData = JSON.parse(responseText);
+        let aiData;
+        try {
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de IA (3.5s)')), 3500));
+            const result = await Promise.race([
+                model.generateContent({
+                    contents: [{ role: 'user', parts: [{ text: prompt }] }]
+                }),
+                timeoutPromise
+            ]);
+            const responseText = result.response.text();
+            aiData = JSON.parse(responseText);
+        } catch (genErr) {
+            console.warn('⚠️ [generateAiDiagnosis] Falha ou timeout no Gemini:', genErr.message);
+            aiData = {
+                diagnosis: "Perfil necessita de enriquecimento na bio e conquista de primeiras avaliações para elevar conversão.",
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nEstive acompanhando as métricas do seu perfil nesta semana e vejo uma oportunidade excelente para aumentarmos os seus contatos no WhatsApp.\n\nPara atrair mais pacientes de forma prática, recomendo:\n1. Adicionar temas de dores reais na sua bio (como ansiedade e estresse);\n2. Solicitar 2 avaliações de pacientes antigos via *Evolução > Solicitar Avaliações*;\n3. Responder a uma dúvida recente de paciente no nosso Fórum.\n\nEstamos juntos nessa parceria! Se precisar de uma ajuda com a apresentação do seu perfil, conte comigo.`
+            };
+        }
         aiData.whatsappCopy = formatForWhatsApp(aiData.whatsappCopy);
 
         // Salvar histórico no banco apenas se não for mock
@@ -425,12 +443,13 @@ ${metricsBlockPrompt}
                     model: "gemini-3.5-flash-lite", 
                     systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
                     generationConfig: {
-                        temperature: 0.7,
-                        maxOutputTokens: 800
+                        temperature: 0.3,
+                        maxOutputTokens: 350
                     }
                 });
                 
-                const result = await model.generateContent(prompt);
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de IA (3.5s)')), 3500));
+                const result = await Promise.race([model.generateContent(prompt), timeoutPromise]);
                 const rawText = result.response.text();
                 if (rawText && rawText.trim().length > 10) {
                     whatsappCopy = formatForWhatsApp(rawText.replace(/^```whatsapp\s*/i, '').replace(/^```\s*/, '').replace(/```$/, '').trim());
@@ -568,19 +587,31 @@ ${metricsBlockPrompt}
         }
 
         const { GoogleGenerativeAI } = require("@google/generative-ai");
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-3.5-flash-lite",
-            systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 800
-            }
-        });
+        let text = '';
+        if (process.env.GEMINI_API_KEY) {
+            try {
+                const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+                const model = genAI.getGenerativeModel({ 
+                    model: "gemini-3.5-flash-lite",
+                    systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
+                    generationConfig: {
+                        temperature: 0.3,
+                        maxOutputTokens: 350
+                    }
+                });
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let text = formatForWhatsApp(response.text());
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de IA (3.5s)')), 3500));
+                const result = await Promise.race([model.generateContent(prompt), timeoutPromise]);
+                const response = await result.response;
+                text = formatForWhatsApp(response.text());
+            } catch (aiErr) {
+                console.warn('⚠️ [generateAiConversionFailure] Falha no Gemini:', aiErr.message);
+            }
+        }
+
+        if (!text) {
+            text = formatForWhatsApp(`Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nEstava acompanhando as métricas do seu perfil na Yelo e é muito bom ver que a sua página está gerando interesse e atraindo cliques no WhatsApp! Notei, porém, que os últimos contatos acabaram ainda não avançando para o agendamento.\n\nQuando o paciente clica no WhatsApp, os primeiros minutos de acolhimento e a forma de conduzir a conversa até o valor da sessão fazem toda a diferença. Recomendo dar uma olhada na ferramenta *Clínica > Manual de Conversão* lá no seu painel — preparamos roteiros práticos justamente para evitar que o paciente deixe no vácuo.\n\nQualquer dúvida ou se quiser trocar uma ideia sobre a abordagem inicial, estou por aqui! 🌿`);
+        }
 
         res.json({ whatsappCopy: text });
     } catch (e) {
@@ -744,12 +775,13 @@ Seu perfil obteve:
                     model: "gemini-3.5-flash-lite", 
                     systemInstruction: "Você é o gerente de CS e Growth da Yelo. Retorne APENAS o texto exato da mensagem de WhatsApp sem aspas extras, blocos markdown (```) ou comentários.",
                     generationConfig: {
-                        temperature: 0.7,
-                        maxOutputTokens: 800
+                        temperature: 0.3,
+                        maxOutputTokens: 350
                     }
                 });
                 
-                const result = await model.generateContent(prompt);
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de IA (3.5s)')), 3500));
+                const result = await Promise.race([model.generateContent(prompt), timeoutPromise]);
                 const responseText = result.response.text();
                 if (responseText && responseText.trim().length > 10) {
                     whatsappCopy = formatForWhatsApp(responseText);
