@@ -184,6 +184,7 @@ router.post('/me/optimize-article', psychologistController.optimizeArticle);
 // Rota para marcar modal de boas-vindas como visto
 router.post('/me/welcome-seen', psychologistController.markWelcomeAsSeen);
 router.post('/me/confetti-seen', psychologistController.markConfettiAsSeen);
+router.post('/me/gmb-modal-seen', safeProtect, psychologistController.markGmbModalAsSeen);
 
 // Dados de Dashboards do Psicólogo
 router.get('/me/analytics', psiDashboardController.getAnalyticsData);

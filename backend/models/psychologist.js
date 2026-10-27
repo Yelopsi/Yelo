@@ -467,6 +467,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.JSONB,
         allowNull: true,
         defaultValue: null
+    },
+    has_seen_gmb_modal: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
     }
   }, {
     sequelize,

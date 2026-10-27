@@ -489,6 +489,24 @@ exports.markConfettiAsSeen = async (req, res) => {
 };
 
 // ----------------------------------------------------------------------
+// Rota: POST /api/psychologists/me/gmb-modal-seen
+// Descrição: Marca que o psicólogo já viu/recebeu o modal de novidade do Google Meu Negócio
+// ----------------------------------------------------------------------
+exports.markGmbModalAsSeen = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist?.id || req.user?.id;
+        if (!psychologistId) {
+            return res.status(401).json({ error: 'Não autorizado.' });
+        }
+        await db.Psychologist.update({ has_seen_gmb_modal: true }, { where: { id: psychologistId } });
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('Erro ao marcar modal GMB como visto:', error);
+        res.status(500).json({ error: 'Erro interno ao salvar status do modal.' });
+    }
+};
+
+// ----------------------------------------------------------------------
 // Rota: POST /api/psychologists/me/optimize-article
 // Descrição: Otimiza um rascunho de artigo do psicólogo
 // ----------------------------------------------------------------------
@@ -910,7 +928,8 @@ exports.syncGoogleReviews = async (req, res) => {
         await psychologist.update({
             google_business_url: targetUrl || syncResult.place_url,
             google_place_id: syncResult.place_id || targetPlaceId,
-            google_reviews_data: syncResult
+            google_reviews_data: syncResult,
+            has_seen_gmb_modal: true
         });
 
         const hasReviews = syncResult.reviews && syncResult.reviews.length > 0;

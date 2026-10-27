@@ -857,21 +857,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 };
             }
 
-            // --- NOVO: MODAL DE NOVIDADE GOOGLE MEU NEGÓCIO (APARECE UMA ÚNICA VEZ PARA PROFISSIONAL JÁ CADASTRADO) ---
+            // --- NOVO: MODAL DE NOVIDADE GOOGLE MEU NEGÓCIO (PERSISTIDO NO BANCO PARA NUNCA REPETIR ENTRE DISPOSITIVOS) ---
             if (psychologistData.hasSeenWelcome !== false) {
                 const psiId = psychologistData.id || '';
-                const gmbSeen = (psiId && localStorage.getItem('yelo_modal_gmb_reviews_seen_' + psiId) === 'true') || 
-                                (localStorage.getItem('yelo_modal_gmb_reviews_seen') === 'true');
-                const alreadyLinked = !!(psychologistData.google_business_url || (psychologistData.google_reviews && psychologistData.google_reviews.rating));
+                const gmbSeenInDb = psychologistData.has_seen_gmb_modal === true;
+                const gmbSeenInStorage = (psiId && localStorage.getItem('yelo_modal_gmb_reviews_seen_' + psiId) === 'true') || 
+                                         (localStorage.getItem('yelo_modal_gmb_reviews_seen') === 'true');
+                const alreadyLinked = !!(psychologistData.google_business_url || psychologistData.google_place_id || (psychologistData.google_reviews_data && psychologistData.google_reviews_data.rating) || (psychologistData.google_reviews && psychologistData.google_reviews.rating));
 
-                if (alreadyLinked) {
+                if (alreadyLinked || gmbSeenInDb) {
+                    if (!gmbSeenInDb) {
+                        psychologistData.has_seen_gmb_modal = true;
+                        apiFetch(`${API_BASE_URL}/api/psychologists/me/gmb-modal-seen`, { method: 'POST' }).catch(() => {});
+                    }
                     if (psiId) localStorage.setItem('yelo_modal_gmb_reviews_seen_' + psiId, 'true');
                     localStorage.setItem('yelo_modal_gmb_reviews_seen', 'true');
-                } else if (!gmbSeen) {
+                } else if (!gmbSeenInStorage) {
                     const modalGmb = document.getElementById('modal-novidade-google-reviews');
                     if (modalGmb) {
                         setTimeout(() => {
                             modalGmb.style.display = 'flex';
+
+                            // Salva no banco de dados imediatamente para garantir que não apareça em nenhum outro dispositivo
+                            psychologistData.has_seen_gmb_modal = true;
+                            apiFetch(`${API_BASE_URL}/api/psychologists/me/gmb-modal-seen`, { method: 'POST' }).catch(() => {});
+                            if (psiId) localStorage.setItem('yelo_modal_gmb_reviews_seen_' + psiId, 'true');
+                            localStorage.setItem('yelo_modal_gmb_reviews_seen', 'true');
 
                             const markSeenAndClose = () => {
                                 modalGmb.style.transition = 'opacity 0.25s ease';
@@ -880,8 +891,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                     modalGmb.style.display = 'none';
                                     modalGmb.style.opacity = '';
                                 }, 250);
-                                if (psiId) localStorage.setItem('yelo_modal_gmb_reviews_seen_' + psiId, 'true');
-                                localStorage.setItem('yelo_modal_gmb_reviews_seen', 'true');
                             };
 
                             const btnConectar = document.getElementById('btn-conectar-gmb-agora');

@@ -1,5 +1,30 @@
 [
   {
+    "id": "change-git-f68953d2",
+    "date": "2026-10-27T12:21:55.000Z",
+    "commit": "f68953d2",
+    "author": "Anderson",
+    "title": "Manutenção: Sincronizar changelog e relatorio de seguranca pos-deploy",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar changelog e relatorio de seguranca pos-deploy",
+    "description": "Commit registrado no repositório: \"chore: sincronizar changelog e relatorio de seguranca pos-deploy\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #f68953d2"
+    },
+    "after": {
+      "nova_versao": "sincronizar changelog e relatorio de seguranca pos-deploy"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-11304e49",
     "date": "2026-10-27T12:21:04.000Z",
     "commit": "11304e49",
