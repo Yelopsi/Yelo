@@ -16,6 +16,10 @@
             container.id = 'pill-notification-container';
             document.body.appendChild(container);
         }
+        const existingToasts = container.querySelectorAll('.pill-notification');
+        for (const t of existingToasts) {
+            if (t.textContent.includes(message)) return;
+        }
         const pill = document.createElement('div');
         pill.className = `pill-notification ${type}`;
         let iconHtml = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
@@ -1090,9 +1094,9 @@
 
         function setupGoogleReviewsSync() {
             const btnSync = document.getElementById('btn-sync-google-reviews');
-            if (!btnSync) return;
-
-            btnSync.addEventListener('click', async (e) => {
+            if (btnSync && btnSync.dataset.syncBound !== 'true') {
+                btnSync.dataset.syncBound = 'true';
+                btnSync.addEventListener('click', async (e) => {
                 e.preventDefault();
 
                 const urlInput = document.getElementById('google_business_url');
@@ -1170,10 +1174,12 @@
                     if (btnText) btnText.textContent = 'Sincronizar Avaliações Agora';
                 }
             });
+            }
 
             // Botão para limpar e desconectar avaliações do Google
             const btnClear = document.getElementById('btn-clear-google-data');
-            if (btnClear) {
+            if (btnClear && btnClear.dataset.clearBound !== 'true') {
+                btnClear.dataset.clearBound = 'true';
                 btnClear.addEventListener('click', async (e) => {
                     e.preventDefault();
                     const urlInput = document.getElementById('google_business_url');

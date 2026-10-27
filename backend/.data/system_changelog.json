@@ -1,5 +1,42 @@
 [
   {
+    "id": "change-git-bbea7d70",
+    "date": "2026-10-27T01:45:27.000Z",
+    "commit": "bbea7d70",
+    "author": "Anderson",
+    "title": "Novo: Validacao rigorosa de avaliacoes google, detalhes de pagamentos/asaas e remocao de dr(a) em emails",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "validacao rigorosa de avaliacoes google, detalhes de pagamentos/asaas e remocao de dr(a) em emails",
+    "description": "Commit registrado no repositório: \"feat: validacao rigorosa de avaliacoes google, detalhes de pagamentos/asaas e remocao de dr(a) em emails\". Arquivos modificados: admin/admin_detalhes_psicologo.html, admin/admin_detalhes_psicologo.js, backend/.data/system_changelog.json, backend/controllers/adminUsersController.js, backend/controllers/psychologistController.js (+10 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #bbea7d70"
+    },
+    "after": {
+      "nova_versao": "validacao rigorosa de avaliacoes google, detalhes de pagamentos/asaas e remocao de dr(a) em emails"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_detalhes_psicologo.html",
+      "admin/admin_detalhes_psicologo.js",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminUsersController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/data/system_changelog.json",
+      "backend/scripts/simulate_v5.js",
+      "backend/services/emailService.js",
+      "backend/services/googleBusinessService.js",
+      "mobile/src/app/(admin)/(crm)/analytics-crescimento.tsx",
+      "public/preview_emails.html",
+      "public/psi/psi_meu_perfil.html",
+      "public/psi/psi_meu_perfil.js",
+      "security/reports/gate_report.json",
+      "views/psi_perfil_publico.ejs"
+    ]
+  },
+  {
     "id": "change-git-a0691d00",
     "date": "2026-10-27T01:02:27.000Z",
     "commit": "a0691d00",

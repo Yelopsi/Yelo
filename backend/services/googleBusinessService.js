@@ -185,10 +185,30 @@ class GoogleBusinessService {
     }
 
     /**
+     * Traduz descrições relativas de tempo para português amigável
+     */
+    static formatRelativeTime(desc) {
+        if (!desc || typeof desc !== 'string') return 'recentemente';
+        const lower = desc.toLowerCase().trim();
+        if (lower.includes('month ago') || lower === 'a month ago') return 'há 1 mês';
+        if (lower.includes('months ago')) return lower.replace(/(\d+)\s*months?\s*ago/i, 'há $1 meses');
+        if (lower.includes('year ago') || lower === 'a year ago') return 'há 1 ano';
+        if (lower.includes('years ago')) return lower.replace(/(\d+)\s*years?\s*ago/i, 'há $1 anos');
+        if (lower.includes('week ago') || lower === 'a week ago') return 'há 1 semana';
+        if (lower.includes('weeks ago')) return lower.replace(/(\d+)\s*weeks?\s*ago/i, 'há $1 semanas');
+        if (lower.includes('in the last week') || lower.includes('last week')) return 'na última semana';
+        if (lower.includes('day ago') || lower === 'a day ago' || lower.includes('yesterday')) return 'ontem';
+        if (lower.includes('days ago')) return lower.replace(/(\d+)\s*days?\s*ago/i, 'há $1 dias');
+        if (lower.includes('hour ago') || lower === 'an hour ago') return 'há 1 hora';
+        if (lower.includes('hours ago')) return lower.replace(/(\d+)\s*hours?\s*ago/i, 'há $1 horas');
+        return desc;
+    }
+
+    /**
      * Função principal de sincronização com o Google Places
      */
     static async syncReviews({ googleUrl, placeId, psychologistName, psychologistCity, psychologistRazaoSocial }) {
-        const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+        const apiKey = process.env.GOOGLE_PLACES_API_KEY || 'AIzaSyCTPVgBzTLajUBP9DZUq_-ET1LQtCU0NZ8';
         if (!apiKey) {
             return {
                 success: false,
@@ -206,7 +226,7 @@ class GoogleBusinessService {
             detectedPlaceId = this.extractPlaceId(resolvedUrl);
         }
 
-        // Validação: aceita link oficial de pedir avaliações (g.page/r/...), links Maps, ou Place ID direto (ChIJ...)
+        // Validação: aceita link oficial de pedir avaliações (g.page/r/...), links Maps, search.google.com, ou Place ID direto (ChIJ...)
         const isOfficialReviewUrl = googleUrl && (
             googleUrl.includes('g.page/r/') || 
             googleUrl.includes('placeid=ChIJ') || 
@@ -214,6 +234,7 @@ class GoogleBusinessService {
             googleUrl.includes('maps.app.goo.gl') ||
             googleUrl.includes('goo.gl/maps') ||
             googleUrl.includes('google.com/maps') ||
+            googleUrl.includes('search.google.com') ||
             googleUrl.includes('g.page')
         );
         const isDirectPlaceId = (placeId && placeId.trim().startsWith('ChIJ')) || 
@@ -275,8 +296,8 @@ class GoogleBusinessService {
             const reviews = (place.reviews || []).map(r => ({
                 author_name: r.authorAttribution?.displayName || 'Paciente Verificado',
                 rating: r.rating || 5,
-                text: r.text?.text || r.originalText?.text || (typeof r.text === 'string' ? r.text : ''),
-                relative_time_description: r.relativePublishTimeDescription || 'recentemente',
+                text: (r.originalText && r.originalText.text) ? r.originalText.text : (r.text?.text || (typeof r.text === 'string' ? r.text : '')),
+                relative_time_description: this.formatRelativeTime(r.relativePublishTimeDescription),
                 profile_photo_url: r.authorAttribution?.photoUri || null,
                 time: r.publishTime ? Math.floor(new Date(r.publishTime).getTime() / 1000) : Math.floor(Date.now() / 1000)
             }));

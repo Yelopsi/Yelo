@@ -7,6 +7,10 @@ window.showToast = function(message, type = 'success', duration = 4500) {
         container.id = 'pill-notification-container';
         document.body.appendChild(container);
     }
+    const existing = container.querySelectorAll('.pill-notification');
+    for (const t of existing) {
+        if (t.textContent.includes(message)) return;
+    }
     const pill = document.createElement('div');
     pill.className = `pill-notification ${type}`;
     
