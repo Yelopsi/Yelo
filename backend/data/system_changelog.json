@@ -1,5 +1,61 @@
 [
   {
+    "id": "change-git-a0691d00",
+    "date": "2026-10-27T01:02:27.000Z",
+    "commit": "a0691d00",
+    "author": "Anderson",
+    "title": "Correção: Abrir whatsapp nativo direto no mobile e acelerar geracao de mensagens IA (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "abrir whatsapp nativo direto no mobile e acelerar geracao de mensagens IA",
+    "description": "Commit registrado no repositório: \"fix(crm): abrir whatsapp nativo direto no mobile e acelerar geracao de mensagens IA\". Arquivos modificados: admin/admin_crm_psicologos.js, backend/.data/system_changelog.json, backend/controllers/adminController.js, backend/controllers/adminPerformanceController.js, backend/data/system_changelog.json (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a0691d00"
+    },
+    "after": {
+      "nova_versao": "abrir whatsapp nativo direto no mobile e acelerar geracao de mensagens IA"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.js",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminController.js",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-8b850929",
+    "date": "2026-10-27T01:02:27.000Z",
+    "commit": "8b850929",
+    "author": "Anderson",
+    "title": "Correção: Abrir whatsapp nativo direto no mobile e acelerar geracao de mensagens IA (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "abrir whatsapp nativo direto no mobile e acelerar geracao de mensagens IA",
+    "description": "Commit registrado no repositório: \"fix(crm): abrir whatsapp nativo direto no mobile e acelerar geracao de mensagens IA\". Arquivos modificados: admin/admin_crm_psicologos.js, backend/.data/system_changelog.json, backend/controllers/adminController.js, backend/controllers/adminPerformanceController.js, backend/data/system_changelog.json (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8b850929"
+    },
+    "after": {
+      "nova_versao": "abrir whatsapp nativo direto no mobile e acelerar geracao de mensagens IA"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.js",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminController.js",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-9e942479",
     "date": "2026-10-27T00:44:38.000Z",
     "commit": "9e942479",

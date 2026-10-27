@@ -327,21 +327,20 @@ exports.updatePsychologistProfile = async (req, res) => {
         if (google_business_url !== undefined) {
             const cleanUrl = google_business_url ? google_business_url.trim() : null;
             updatePayload.google_business_url = cleanUrl;
-            const currentOrNewPlaceId = google_place_id !== undefined ? (google_place_id ? google_place_id.trim() : null) : psychologist.google_place_id;
-            if (!cleanUrl && !currentOrNewPlaceId) {
-                updatePayload.google_reviews_data = null;
-                updatePayload.google_place_id = null;
-            }
         }
         if (google_place_id !== undefined) {
             const cleanPlaceId = google_place_id ? google_place_id.trim() : null;
             updatePayload.google_place_id = cleanPlaceId;
-            const currentOrNewUrl = updatePayload.google_business_url !== undefined ? updatePayload.google_business_url : psychologist.google_business_url;
-            if (!cleanPlaceId && !currentOrNewUrl) {
-                updatePayload.google_reviews_data = null;
-            }
         }
-        if (google_reviews_data !== undefined) updatePayload.google_reviews_data = google_reviews_data;
+        const finalUrl = updatePayload.google_business_url !== undefined ? updatePayload.google_business_url : psychologist.google_business_url;
+        const finalPlaceId = updatePayload.google_place_id !== undefined ? updatePayload.google_place_id : psychologist.google_place_id;
+        if (!finalUrl && !finalPlaceId) {
+            updatePayload.google_business_url = null;
+            updatePayload.google_place_id = null;
+            updatePayload.google_reviews_data = null;
+        } else if (google_reviews_data !== undefined) {
+            updatePayload.google_reviews_data = google_reviews_data;
+        }
 
         // Captura o estado antes do update
         const wasEligible = matchService.isEligibleForMatch(psychologist);
@@ -875,32 +874,53 @@ exports.syncGoogleReviews = async (req, res) => {
         }
 
         const { google_business_url, google_place_id } = req.body;
-        const targetUrl = google_business_url !== undefined ? (google_business_url ? google_business_url.trim() : '') : psychologist.google_business_url;
-        const targetPlaceId = google_place_id !== undefined ? (google_place_id ? google_place_id.trim() : '') : psychologist.google_place_id;
+        const targetUrl = google_business_url !== undefined ? (google_business_url ? google_business_url.trim() : '') : (psychologist.google_business_url || '');
+        const targetPlaceId = google_place_id !== undefined ? (google_place_id ? google_place_id.trim() : '') : (psychologist.google_place_id || '');
 
+        // Se ambos estiverem vazios, desconecta e limpa as avaliações no banco
         if (!targetUrl && !targetPlaceId) {
-            return res.status(400).json({ error: 'Informe o link do Google Meu Negócio ou o Place ID.' });
+            await psychologist.update({
+                google_business_url: null,
+                google_place_id: null,
+                google_reviews_data: null
+            });
+            return res.json({
+                success: true,
+                disconnected: true,
+                message: 'Google Meu Negócio desconectado com sucesso.',
+                google_reviews_data: null,
+                google_business_url: null,
+                google_place_id: null
+            });
         }
 
         const syncResult = await GoogleBusinessService.syncReviews({
             googleUrl: targetUrl,
-            placeId: targetPlaceId
+            placeId: targetPlaceId,
+            psychologistName: psychologist.nome,
+            psychologistCity: psychologist.cidade,
+            psychologistRazaoSocial: psychologist.razao_social
         });
 
         if (!syncResult || !syncResult.success) {
-            return res.status(400).json({ error: syncResult.error || 'Não foi possível sincronizar as avaliações do Google.' });
+            return res.status(400).json({ error: syncResult?.error || 'Não foi possível sincronizar as avaliações do Google.' });
         }
 
-        // Atualiza os campos no banco
+        // Atualiza os campos no banco com os dados oficiais validados
         await psychologist.update({
             google_business_url: targetUrl || syncResult.place_url,
             google_place_id: syncResult.place_id || targetPlaceId,
             google_reviews_data: syncResult
         });
 
+        const hasReviews = syncResult.reviews && syncResult.reviews.length > 0;
+        const successMsg = hasReviews
+            ? `Perfil verificado! ${syncResult.reviews.length} avaliação(ões) sincronizada(s) com sucesso.`
+            : 'Perfil verificado com sucesso! (Ainda não há avaliações cadastradas no Google para este local).';
+
         return res.json({
             success: true,
-            message: 'Avaliações do Google sincronizadas com sucesso!',
+            message: successMsg,
             google_reviews_data: syncResult,
             google_business_url: targetUrl || syncResult.place_url,
             google_place_id: syncResult.place_id || targetPlaceId

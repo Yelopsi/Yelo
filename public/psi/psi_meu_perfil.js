@@ -569,7 +569,10 @@
             const btnOptimize = block.querySelector('#btn-optimize-bio');
             if (btnOptimize) btnOptimize.style.display = 'inline-flex';
             const btnClearGoogle = block.querySelector('#btn-clear-google-data');
-            if (btnClearGoogle) btnClearGoogle.style.display = 'inline-flex';
+            if (btnClearGoogle) {
+                btnClearGoogle.classList.remove('hidden');
+                btnClearGoogle.style.display = 'inline-flex';
+            }
             
             if (quillBio && block.contains(document.getElementById('bio-editor'))) {
                 quillBio.enable(true);
@@ -598,7 +601,10 @@
             const btnOptimize = block.querySelector('#btn-optimize-bio');
             if (btnOptimize) btnOptimize.style.display = 'none';
             const btnClearGoogle = block.querySelector('#btn-clear-google-data');
-            if (btnClearGoogle) btnClearGoogle.style.display = 'none';
+            if (btnClearGoogle) {
+                btnClearGoogle.classList.add('hidden');
+                btnClearGoogle.style.display = 'none';
+            }
             
             if (quillBio && block.contains(document.getElementById('bio-editor'))) {
                 quillBio.enable(false);
@@ -1012,8 +1018,8 @@
 
             const countEl = document.getElementById('preview-google-count');
             if (countEl) {
-                const total = dataObj.user_ratings_total || (dataObj.reviews ? dataObj.reviews.length : 0);
-                countEl.textContent = `(${total} avaliaç${total === 1 ? 'ão' : 'ões'})`;
+                const total = dataObj.user_ratings_total !== undefined ? dataObj.user_ratings_total : (dataObj.reviews ? dataObj.reviews.length : 0);
+                countEl.textContent = total > 0 ? `(${total} avaliaç${total === 1 ? 'ão' : 'ões'})` : '(0 avaliações)';
             }
 
             const syncedAtEl = document.getElementById('preview-google-synced-at');
@@ -1028,14 +1034,15 @@
 
             const badgeEl = document.getElementById('preview-google-mode-badge');
             if (badgeEl) {
-                if (dataObj.is_simulated) {
-                    badgeEl.textContent = 'Modo Demonstração';
-                    badgeEl.style.background = '#fef3c7';
-                    badgeEl.style.color = '#92400e';
-                } else {
+                const reviewsCount = dataObj.reviews ? dataObj.reviews.length : 0;
+                if (reviewsCount > 0) {
                     badgeEl.textContent = 'Google Maps Conectado ✔';
                     badgeEl.style.background = '#dcfce7';
                     badgeEl.style.color = '#166534';
+                } else {
+                    badgeEl.textContent = 'Google Conectado (Sem avaliações)';
+                    badgeEl.style.background = '#f1f5f9';
+                    badgeEl.style.color = '#475569';
                 }
             }
 
@@ -1044,7 +1051,10 @@
                 listEl.innerHTML = '';
                 const reviews = dataObj.reviews || [];
                 if (reviews.length === 0) {
-                    listEl.innerHTML = '<p style="color: #64748b; font-size: 0.9rem; margin: 0;">Nenhuma avaliação recente retornada pelo Google.</p>';
+                    listEl.innerHTML = '<div style="grid-column: 1 / -1; padding: 14px 16px; background: #fff; border: 1.5px dashed #cbd5e1; border-radius: 12px; color: #475569; font-size: 0.88rem; line-height: 1.5;">' +
+                        '✅ <strong>Perfil do Google Meu Negócio vinculado com sucesso!</strong><br>' +
+                        '<span style="color: #64748b; font-size: 0.83rem;">No momento este local não possui avaliações públicas registradas no Google Maps. Quando seus pacientes deixarem avaliações no seu perfil do Google, clique em <em>Sincronizar Avaliações Agora</em> para exibi-las em seu perfil público na Yelo.</span>' +
+                        '</div>';
                 } else {
                     reviews.slice(0, 4).forEach(rev => {
                         const card = document.createElement('div');
@@ -1164,7 +1174,7 @@
             // Botão para limpar e desconectar avaliações do Google
             const btnClear = document.getElementById('btn-clear-google-data');
             if (btnClear) {
-                btnClear.addEventListener('click', (e) => {
+                btnClear.addEventListener('click', async (e) => {
                     e.preventDefault();
                     const urlInput = document.getElementById('google_business_url');
                     const placeIdInput = document.getElementById('google_place_id');
@@ -1172,12 +1182,35 @@
                     if (placeIdInput) placeIdInput.value = '';
                     const previewContainer = document.getElementById('google-reviews-preview-container');
                     if (previewContainer) previewContainer.style.display = 'none';
+
+                    // Se já havia dados salvos no banco, executa a desconexão no backend imediatamente
+                    if (originalProfileData.google_business_url || originalProfileData.google_place_id || originalProfileData.google_reviews_data) {
+                        try {
+                            await apiFetch(`${API_BASE_URL}/api/psychologists/me/sync-google-reviews`, {
+                                method: 'POST',
+                                body: JSON.stringify({ google_business_url: '', google_place_id: '' })
+                            });
+                            originalProfileData.google_business_url = null;
+                            originalProfileData.google_place_id = null;
+                            originalProfileData.google_reviews_data = null;
+                            if (psychologistData) {
+                                psychologistData.google_business_url = null;
+                                psychologistData.google_place_id = null;
+                                psychologistData.google_reviews_data = null;
+                            }
+                            showToast('Google Meu Negócio desconectado com sucesso!', 'success');
+                        } catch (err) {
+                            showToast('Erro ao desconectar Google: ' + err.message, 'error');
+                        }
+                    } else {
+                        showToast('Campos do Google limpos.', 'info');
+                    }
+
                     const block = btnClear.closest('.profile-block');
                     if (block) {
                         checkForChanges(block);
                         updateProfileInsights();
                     }
-                    showToast('Link do Google removido. Clique em "Salvar" para confirmar a desconexão.', 'info');
                 });
             }
         }

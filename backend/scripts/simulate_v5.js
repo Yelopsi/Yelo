@@ -15,7 +15,7 @@ const seoService = require('../services/seoService');
     for (let i = 1; i <= 100; i++) {
         mockPsychologists.push({
             id: i,
-            nome: `Dr(a). Teste ${i}`,
+            nome: `Psicólogo Teste ${i}`,
             status: 'active',
             bio: 'Bio de teste longa o suficiente para passar.',
             fotoUrl: 'https://placehold.co/100',

@@ -319,11 +319,18 @@ const emailCtaBtn = (url, label) => `
 `;
 exports.emailCtaBtn = emailCtaBtn;
 
+const getPsiFirstName = (userOrName) => {
+    const raw = typeof userOrName === 'string' ? userOrName : (userOrName?.nome || '');
+    if (!raw) return 'Profissional';
+    const cleaned = raw.trim().replace(/^(dr\(a\)\.?|dra?\.?)\s+/i, '');
+    return cleaned.split(' ')[0] || 'Profissional';
+};
+
 exports.sendBillCreatedEmail = async (user, payment) => {
     const valor = parseFloat(payment.value || 99).toFixed(2).replace('.', ',');
     const vencimento = payment.dueDate ? payment.dueDate.split('-').reverse().join('/') : 'Em aberto';
     const title = 'Sua fatura da Yelo está disponível 💳';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const invoiceUrl = payment.invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
     
     let pixBlock = '';
@@ -374,7 +381,7 @@ exports.sendDueDateWarningEmail = async (user, payment) => {
     const valor = parseFloat(payment.value || 99).toFixed(2).replace('.', ',');
     const vencimento = payment.dueDate ? payment.dueDate.split('-').reverse().join('/') : 'Hoje';
     const title = 'Sua fatura da Yelo vence hoje ⚠️';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const invoiceUrl = payment.invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
 
     const content = `
@@ -412,7 +419,7 @@ exports.sendDigitableLineEmail = async (user, payment) => {
     const valor = parseFloat(payment.value || 99).toFixed(2).replace('.', ',');
     const vencimento = payment.dueDate ? payment.dueDate.split('-').reverse().join('/') : 'Hoje';
     const title = 'Código para pagamento da sua fatura Yelo 💳';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const invoiceUrl = payment.invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
     
     if (payment.billingType === 'PIX') {
@@ -475,7 +482,7 @@ exports.sendOverdueEmail = async (user, payment) => {
     const valor = parseFloat(payment.value || 99).toFixed(2).replace('.', ',');
     const vencimento = payment.dueDate ? payment.dueDate.split('-').reverse().join('/') : 'Em atraso';
     const title = 'Ação Necessária: Fatura Yelo em atraso ⚠️';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const invoiceUrl = payment.invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
 
     const content = `
@@ -516,7 +523,7 @@ exports.sendBillUpdatedEmail = async (user, payment) => {
     const valor = parseFloat(payment.value || 99).toFixed(2).replace('.', ',');
     const vencimento = payment.dueDate ? payment.dueDate.split('-').reverse().join('/') : 'Atualizado';
     const title = 'Atualização na sua fatura da Yelo ✨';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const invoiceUrl = payment.invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
 
     const content = `
@@ -583,11 +590,11 @@ exports.sendPaymentConfirmationEmail = async (user, planType, value) => {
     const valor = parseFloat(value || 99).toFixed(2).replace('.', ',');
     const plano = planType || 'Ecossistema Yelo';
     const title = 'Pagamento Confirmado com Sucesso! ✅';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const loginUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
 
     const content = `
-        <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
+        <p>Olá, <strong>${psiName}</strong>!</p>
         <p>Confirmamos o recebimento do pagamento da sua assinatura. Muito obrigado pela confiança e por fazer parte da comunidade Yelo.</p>
         
         <div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 16px; padding: 22px; margin: 24px 0;">
@@ -621,7 +628,7 @@ exports.sendPaymentConfirmationEmail = async (user, planType, value) => {
 exports.sendPaymentFailedEmail = async (user, invoiceUrl) => {
     const link = invoiceUrl || `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
     const title = 'Ação Necessária: Falha no processamento da assinatura ⚠️';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
 
     const content = `
         <p>Olá, <strong>${psiName}</strong>.</p>
@@ -647,7 +654,7 @@ exports.sendPaymentFailedEmail = async (user, invoiceUrl) => {
 
 exports.sendSubscriptionCancelledEmail = async (user) => {
     const title = 'Sua assinatura foi pausada 💛';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const feedbackUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/feedback?psiId=${user.id}`;
     const reactivateUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
 
@@ -676,10 +683,10 @@ exports.sendSubscriptionCancelledEmail = async (user) => {
 
 exports.sendWelcomeEmail = async (user, type) => {
     if (type === 'psychologist' || !type) {
-        const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+        const psiName = getPsiFirstName(user);
         const title = 'Seu consultório na Yelo está pronto para nascer ✨';
         const content = `
-            <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
+            <p>Olá, <strong>${psiName}</strong>!</p>
             <p>Estamos muito felizes em receber você no ecossistema Yelo Psi. Nosso compromisso é conectar a sua prática clínica a pacientes que realmente valorizam seu método e abordagem terapêutica.</p>
             <p>Para que o nosso algoritmo de match inteligente comece a direcionar pacientes qualificados para a sua agenda, o primeiro passo é concluir o preenchimento do seu perfil profissional.</p>
             
@@ -762,7 +769,7 @@ exports.sendRemarketingEmail = async (user, step) => {
     let msg = '';
     let tagText = '● Consultório Yelo';
     let tagColor = '#F0FDF4';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const loginUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/login`;
     
     if (step === 1) {
@@ -789,7 +796,7 @@ exports.sendRemarketingEmail = async (user, step) => {
     }
 
     const content = `
-        <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
+        <p>Olá, <strong>${psiName}</strong>!</p>
         <p>${msg}</p>
 
         <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px; margin: 24px 0;">
@@ -813,10 +820,10 @@ exports.sendRemarketingEmail = async (user, step) => {
 };
 
 exports.sendFirstLeadEmail = async (user) => {
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const title = 'Um paciente iniciou contato com você 👋';
     const content = `
-        <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
+        <p>Olá, <strong>${psiName}</strong>!</p>
         <p>Temos ótimas notícias para o seu consultório: um paciente acaba de clicar no seu botão de WhatsApp após ler o seu perfil na Yelo.</p>
         <p>Isso indica que sua abordagem clínica e apresentação ressoaram fortemente com o momento de vida dessa pessoa.</p>
         
@@ -849,11 +856,11 @@ exports.sendFirstLeadEmail = async (user) => {
 
 exports.sendEvaluationEmail = async (user) => {
     const title = 'Como foi sua experiência na Yelo? 💛';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const feedbackUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/feedback?psiId=${user.id}`;
 
     const content = `
-        <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
+        <p>Olá, <strong>${psiName}</strong>!</p>
         <p>Notamos que o seu período na Yelo chegou ao fim recentemente. Nosso maior objetivo é construir uma plataforma que realmente faça a diferença na prática clínica dos profissionais de psicologia, e a sua percepção é a parte mais valiosa dessa construção.</p>
         
         <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 22px; margin: 24px 0;">
@@ -876,14 +883,14 @@ exports.sendEvaluationEmail = async (user) => {
 
 exports.sendFeedbackRequestEmail = async (user, guestName) => {
     const title = 'Acompanhe a evolução desse contato 👋';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const patientText = (guestName === 'um paciente') 
         ? 'Um paciente' 
         : `O paciente <strong>${guestName}</strong>`;
     const dashboardUrl = `${process.env.FRONTEND_URL || 'https://www.yelopsi.com.br'}/psi/psi_dashboard`;
 
     const content = `
-        <p>Olá, <strong>Dr(a). ${psiName}</strong>!</p>
+        <p>Olá, <strong>${psiName}</strong>!</p>
         <p>${patientText} iniciou contato com você pelo WhatsApp recentemente através da plataforma Yelo.</p>
         
         <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px 22px; margin: 24px 0;">
@@ -915,7 +922,7 @@ exports.sendFeedbackRequestEmail = async (user, guestName) => {
 
 exports.sendWeeklyPerformanceEmail = async (user, matchesCount, profileViewsCount, topTheme) => {
     const title = 'Veja como o seu perfil repercutiu nesta semana ✨';
-    const psiName = user.nome ? user.nome.split(' ')[0] : 'Profissional';
+    const psiName = getPsiFirstName(user);
     const destaqueText = topTheme 
         ? `Seu consultório esteve em destaque em buscas por <strong>${topTheme}</strong>.` 
         : `Seu consultório esteve em evidência nas buscas qualificadas da nossa rede.`;
@@ -998,7 +1005,7 @@ exports.sendForumReplyEmail = async (targetUser, senderName, commentContent, pos
     const postLink = `${frontendUrl}/psi/psi_dashboard?page=psi_forum.html&postId=${postId}`;
     const title = 'Novo comentário na sua discussão ✨';
     const snippet = commentContent && commentContent.length > 180 ? `${commentContent.substring(0, 180)}...` : (commentContent || '');
-    const psiName = targetUser.nome ? targetUser.nome.split(' ')[0] : 'Colega';
+    const psiName = getPsiFirstName(targetUser);
 
     const content = `
         <p>Olá, <strong>${psiName}</strong>!</p>

@@ -219,8 +219,22 @@ exports.getPsychologistFullDetails = async (req, res) => {
             order: [['dueDate', 'DESC']]
         }).catch(() => []);
 
+        let subscription = null;
+        if (psychologist.subscriptionId) {
+            subscription = await db.Subscription.findOne({
+                where: { id: psychologist.subscriptionId }
+            }).catch(() => null);
+        }
+        if (!subscription) {
+            subscription = await db.Subscription.findOne({
+                where: { psychologistId: id },
+                order: [['createdAt', 'DESC']]
+            }).catch(() => null);
+        }
+
         const responsePayload = {
             psychologist,
+            subscription,
             stats: {
                 matches: matchesCountFixed,
                 whatsappClicks: wpClicksFixed,
@@ -233,11 +247,13 @@ exports.getPsychologistFullDetails = async (req, res) => {
             reviews,
             matches: matches.map(m => ({ ...m, createdAt: m.createdAt || m.created_at })) || [],
             whatsappLogs,
-            payments,
-            asaasFailedReason: null
+            payments: payments.map(p => p.toJSON ? p.toJSON() : p),
+            asaasFailedReason: null,
+            asaasFailedBillingType: null,
+            asaasSubscription: null
         };
 
-        // Tenta buscar o real motivo da falha no Asaas se houver uma assinatura
+        // Tenta buscar dados em tempo real no Asaas se houver uma assinatura cadastrada
         if (psychologist.subscriptionId) {
             try {
                 const fetch = require('node-fetch');
@@ -248,27 +264,90 @@ exports.getPsychologistFullDetails = async (req, res) => {
                 }
                 const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
                 
-                const asaasRes = await fetch(`${ASAAS_API_URL}/payments?subscription=${psychologist.subscriptionId}&limit=1`, {
-                    headers: { 'access_token': ASAAS_API_KEY }
-                });
-                const asaasData = await asaasRes.json();
-                
-                if (asaasData && asaasData.data && asaasData.data.length > 0) {
-                    const lastPayment = asaasData.data[0];
-                    if (lastPayment.status === 'OVERDUE' || lastPayment.status === 'REFUNDED') {
-                        let failReason = lastPayment.creditCard?.returnMessage || 
-                                         lastPayment.description;
-                        
-                        if (!failReason) {
-                            failReason = lastPayment.billingType === 'PIX' ? 'Prazo de pagamento expirado ou não concluído.' : 'Transação recusada pelo emissor.';
+                const [subRes, paymentsRes] = await Promise.allSettled([
+                    fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.subscriptionId}`, {
+                        headers: { 'access_token': ASAAS_API_KEY },
+                        timeout: 2500
+                    }),
+                    fetch(`${ASAAS_API_URL}/payments?subscription=${psychologist.subscriptionId}&limit=20`, {
+                        headers: { 'access_token': ASAAS_API_KEY },
+                        timeout: 2500
+                    })
+                ]);
+
+                if (subRes.status === 'fulfilled' && subRes.value && subRes.value.ok) {
+                    const subData = await subRes.value.json().catch(() => null);
+                    if (subData && subData.id) {
+                        responsePayload.asaasSubscription = {
+                            id: subData.id,
+                            status: subData.status,
+                            nextDueDate: subData.nextDueDate,
+                            value: subData.value,
+                            cycle: subData.cycle,
+                            billingType: subData.billingType,
+                            description: subData.description,
+                            creditCard: subData.creditCard ? {
+                                creditCardBrand: subData.creditCard.creditCardBrand,
+                                creditCardNumber: subData.creditCard.creditCardNumber
+                            } : null
+                        };
+                    }
+                }
+
+                if (paymentsRes.status === 'fulfilled' && paymentsRes.value && paymentsRes.value.ok) {
+                    const asaasData = await paymentsRes.value.json().catch(() => null);
+                    if (asaasData && Array.isArray(asaasData.data) && asaasData.data.length > 0) {
+                        // Encontra falha se houver
+                        const failedPmt = asaasData.data.find(p => p.status === 'OVERDUE' || p.status === 'REFUNDED');
+                        if (failedPmt) {
+                            let failReason = failedPmt.creditCard?.returnMessage || failedPmt.description;
+                            if (!failReason) {
+                                failReason = failedPmt.billingType === 'PIX' ? 'Prazo de pagamento expirado ou não concluído.' : 'Transação recusada pelo emissor do cartão.';
+                            }
+                            responsePayload.asaasFailedReason = failReason;
+                            responsePayload.asaasFailedBillingType = failedPmt.billingType || 'CREDIT_CARD';
                         }
 
-                        responsePayload.asaasFailedReason = failReason;
-                        responsePayload.asaasFailedBillingType = lastPayment.billingType || 'CREDIT_CARD';
+                        // Mescla ou enriquece lista de pagamentos com dados ricos do Asaas (invoiceUrl, etc)
+                        const paymentMap = new Map();
+                        responsePayload.payments.forEach(p => paymentMap.set(p.id, p));
+
+                        asaasData.data.forEach(asPmt => {
+                            const existing = paymentMap.get(asPmt.id);
+                            if (existing) {
+                                existing.invoiceUrl = asPmt.invoiceUrl || existing.invoiceUrl;
+                                existing.bankSlipUrl = asPmt.bankSlipUrl || existing.bankSlipUrl;
+                                existing.creditCardNumber = asPmt.creditCard?.creditCardNumber || existing.creditCardNumber;
+                                existing.creditCardBrand = asPmt.creditCard?.creditCardBrand || existing.creditCardBrand;
+                                existing.description = asPmt.description || existing.description;
+                                if (!existing.paymentDate && (asPmt.paymentDate || asPmt.clientPaymentDate)) {
+                                    existing.paymentDate = asPmt.paymentDate || asPmt.clientPaymentDate;
+                                }
+                            } else {
+                                responsePayload.payments.push({
+                                    id: asPmt.id,
+                                    subscriptionId: asPmt.subscription,
+                                    psychologistId: psychologist.id,
+                                    status: asPmt.status,
+                                    value: asPmt.value,
+                                    billingType: asPmt.billingType,
+                                    dueDate: asPmt.dueDate,
+                                    paymentDate: asPmt.paymentDate || asPmt.clientPaymentDate,
+                                    invoiceUrl: asPmt.invoiceUrl,
+                                    bankSlipUrl: asPmt.bankSlipUrl,
+                                    creditCardNumber: asPmt.creditCard?.creditCardNumber,
+                                    creditCardBrand: asPmt.creditCard?.creditCardBrand,
+                                    description: asPmt.description
+                                });
+                            }
+                        });
+
+                        // Reordena decrescente por data de vencimento
+                        responsePayload.payments.sort((a, b) => new Date(b.dueDate || 0) - new Date(a.dueDate || 0));
                     }
                 }
             } catch (err) {
-                console.error('Erro ao buscar motivo de falha no Asaas:', err);
+                console.error('Erro ao buscar dados do Asaas em getPsychologistFullDetails:', err);
             }
         }
 

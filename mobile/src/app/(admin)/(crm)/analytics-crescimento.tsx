@@ -231,7 +231,7 @@ export default function AnalyticsCrescimentoScreen() {
                       <Text className="font-title text-[#d97706] text-[14px]">{index + 1}º</Text>
                     </View>
                     <View className="flex-1">
-                      <Text className="font-title text-[#333] text-[14px]">{item.Psychologist?.nome || 'Dr(a). Não identificado'}</Text>
+                      <Text className="font-title text-[#333] text-[14px]">{item.Psychologist?.nome || 'Profissional não identificado'}</Text>
                       <Text className="font-sans text-[#666] text-[12px]">{item.total_cliques} conversões (Wpp)</Text>
                     </View>
                   </View>

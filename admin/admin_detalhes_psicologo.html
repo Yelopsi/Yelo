@@ -1,3 +1,194 @@
+<style>
+/* Estilos da aba de Pagamentos */
+.payment-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+}
+.payment-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.payment-kpi-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.payment-kpi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.payment-kpi-title {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.payment-kpi-icon {
+    font-size: 1.15rem;
+}
+.payment-kpi-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+.payment-kpi-subtitle {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.payment-banner {
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+.payment-banner-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.payment-banner-body {
+    flex-grow: 1;
+}
+.payment-banner-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.payment-banner-desc {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0 0 10px 0;
+}
+.payment-banner-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.payment-banner-danger {
+    background: linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%);
+    border: 1.5px solid #fca5a5;
+    color: #991b1b;
+}
+.payment-banner-warning {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1.5px solid #fde68a;
+    color: #92400e;
+}
+.payment-banner-success {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1.5px solid #86efac;
+    color: #166534;
+}
+.payment-banner-info {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1.5px solid #7dd3fc;
+    color: #075985;
+}
+.payment-banner-gold {
+    background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+    border: 1.5px solid #fde047;
+    color: #854d0e;
+}
+
+.payment-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.payment-tag-danger {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+.payment-tag-success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+.payment-tag-warning {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+.payment-tag-info {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #7dd3fc;
+}
+.payment-tag-neutral {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.payment-invoice-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s ease;
+}
+.payment-invoice-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+@media (max-width: 640px) {
+    .payment-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    .payment-invoice-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .payment-invoice-card > div:last-child {
+        width: 100%;
+        text-align: left !important;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+</style>
+
 <div class="page-header-actions">
     <button onclick="navigateToPage('admin_crm_psicologos.html')" class="btn-voltar">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -131,6 +322,24 @@
     </div>
 
     <div class="tab-content" id="tab-payments" style="display: none;">
+        <!-- Banner de Status & Cancelamento da Renovação -->
+        <div id="payment-status-banner" style="margin-bottom: 20px;"></div>
+
+        <!-- Banner de Falha de Pagamento no Gateway (se houver) -->
+        <div id="payment-failure-banner" style="display: none; margin-bottom: 20px;"></div>
+
+        <!-- Visão Geral da Assinatura / Pagamentos (KPI Cards) -->
+        <div class="payment-kpi-grid" id="payment-kpi-grid" style="margin-bottom: 25px;"></div>
+
+        <!-- Cabeçalho do Histórico de Faturas -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">🧾</span>
+                <h3 style="margin: 0; font-size: 1.05rem; color: #1e293b; font-weight: 700;">Histórico de Faturas & Transações</h3>
+            </div>
+            <span id="payments-count-badge" style="background: #f1f5f9; color: #475569; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; border: 1px solid #e2e8f0;">0 faturas</span>
+        </div>
+
         <div class="content-list" id="payments-list">
             <p class="empty-state">Nenhum pagamento registrado.</p>
         </div>
