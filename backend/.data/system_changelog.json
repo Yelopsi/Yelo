@@ -1,5 +1,35 @@
 [
   {
+    "id": "change-git-11304e49",
+    "date": "2026-10-27T12:21:04.000Z",
+    "commit": "11304e49",
+    "author": "Anderson",
+    "title": "Correção: Fallback de api key google places, desduplicacao de scripts/pilulas e suporte a links maps e g.page (gmb)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "fallback de api key google places, desduplicacao de scripts/pilulas e suporte a links maps e g.page",
+    "description": "Commit registrado no repositório: \"fix(gmb): fallback de api key google places, desduplicacao de scripts/pilulas e suporte a links maps e g.page\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, backend/services/googleBusinessService.js, public/jobs/ui-helpers.js, public/psi/psi_dashboard.html (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #11304e49"
+    },
+    "after": {
+      "nova_versao": "fallback de api key google places, desduplicacao de scripts/pilulas e suporte a links maps e g.page"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "backend/services/googleBusinessService.js",
+      "public/jobs/ui-helpers.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_meu_perfil.html",
+      "public/psi/psi_meu_perfil.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-bbea7d70",
     "date": "2026-10-27T01:45:27.000Z",
     "commit": "bbea7d70",
