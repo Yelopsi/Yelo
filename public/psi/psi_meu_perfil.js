@@ -835,6 +835,53 @@
         // --- Inicialização ---
         setupMasks();
         setupCepSearch();
+
+        // --- QUILL BIO EDITOR ---
+        // Inicializa (ou re-inicializa) o Quill sempre que o HTML do perfil é injetado pelo SPA.
+        // Verificamos se o elemento #bio-editor é o mesmo DOM node de antes; caso contrário, recriamos.
+        const bioEditorEl = document.getElementById('bio-editor');
+        if (bioEditorEl && typeof Quill !== 'undefined') {
+            const isNewNode = !quillBio || quillBio.root !== bioEditorEl;
+            if (isNewNode) {
+                quillBio = new Quill('#bio-editor', {
+                    theme: 'snow',
+                    placeholder: 'Escreva um texto acolhedor contando sua experiência, abordagem e como você pode ajudar o paciente...',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            ['clean']
+                        ]
+                    }
+                });
+
+                // Sincroniza Quill → textarea hidden
+                const bioTextarea = document.getElementById('bio');
+                quillBio.on('text-change', function() {
+                    const html = quillBio.root.innerHTML;
+                    if (bioTextarea) {
+                        bioTextarea.value = html === '<p><br></p>' ? '' : html;
+                        bioTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                });
+
+                // Inicializa desabilitado (modo de visualização padrão)
+                quillBio.enable(false);
+                const toolbar = document.querySelector('#bio-editor-container .ql-toolbar');
+                if (toolbar) {
+                    toolbar.style.opacity = '0.4';
+                    toolbar.style.pointerEvents = 'none';
+                }
+            }
+
+            // Popula o conteúdo da bio assim que o Quill estiver pronto
+            if (psychologistData && psychologistData.bio) {
+                quillBio.root.innerHTML = psychologistData.bio;
+                const bioTextarea = document.getElementById('bio');
+                if (bioTextarea) bioTextarea.value = psychologistData.bio;
+            }
+        }
+
         
         if (typeof TomSelect !== 'undefined') {
             const isMobile = document.body.classList.contains('is-mobile');
@@ -1309,42 +1356,8 @@
                     }, 450);
                 }
                 
-                // Inicializa o Quill para a Biografia
-                if (typeof Quill !== 'undefined' && !quillBio && document.getElementById('bio-editor')) {
-                    quillBio = new Quill('#bio-editor', {
-                        theme: 'snow',
-                        placeholder: (psychologistData && psychologistData.bio) ? '' : 'Escreva um texto acolhedor contando sua experiência, abordagem e como você pode ajudar o paciente...',
-                        modules: {
-                            toolbar: [
-                                ['bold', 'italic', 'underline'],
-                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                ['clean']
-                            ]
-                        }
-                    });
-
-                    // Sincronizar Quill com o textarea hidden (para salvar e pro optimize-bio)
-                    const bioTextarea = document.getElementById('bio');
-                    quillBio.on('text-change', function() {
-                        const html = quillBio.root.innerHTML;
-                        bioTextarea.value = html === '<p><br></p>' ? '' : html;
-                        // Dispara evento para salvar automático e checar progresso
-                        bioTextarea.dispatchEvent(new Event('input', { bubbles: true }));
-                    });
-                    
-                    // Popular dados iniciais se existirem
-                    if (bioTextarea && bioTextarea.value) {
-                        quillBio.root.innerHTML = bioTextarea.value;
-                    }
-                    
-                    // Inicializa desabilitado (modo de visualização padrão)
-                    quillBio.enable(false);
-                    const toolbar = document.querySelector('#bio-editor-container .ql-toolbar');
-                    if (toolbar) {
-                        toolbar.style.opacity = '0.4';
-                        toolbar.style.pointerEvents = 'none';
-                    }
-                }
+                // O Quill é inicializado dentro de inicializarLogicaDoPerfil() a cada injeção do SPA.
+                // Nada a fazer aqui.
             } else {
                 throw new Error("Falha ao carregar dados do perfil.");
             }
