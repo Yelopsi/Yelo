@@ -344,20 +344,34 @@
     .modern-comment-header .comment-author-name {
         margin: 0 !important;
         padding: 0 !important;
-        height: 36px !important;
-        min-height: 36px !important;
-        display: flex !important;
+        height: auto !important;
+        min-height: 0 !important;
+        display: block !important;
+        line-height: 1.35 !important;
+    }
+    .modern-comment-header .author-name-row .comment-author,
+    .modern-comment-header .comment-author-name .comment-author {
+        display: inline !important;
+        font-weight: 700 !important;
+        line-height: inherit !important;
+    }
+    .modern-comment-header .author-name-row .author-badges,
+    .modern-comment-header .comment-author-name .author-badges {
+        display: inline-flex !important;
         align-items: center !important;
-        gap: 6px !important;
-        line-height: 1 !important;
+        gap: 4px !important;
+        vertical-align: middle !important;
+        margin-left: 6px !important;
+        white-space: nowrap !important;
     }
     .modern-comment-header .comment-time-ago,
     .modern-comment-header .comment-time.yt-time {
-        margin: -6px 0 0 0 !important;
+        margin: 2px 0 0 0 !important;
         padding: 0 !important;
         line-height: 1.2 !important;
         font-size: 0.74rem !important;
         color: #94A3B8 !important;
+        display: block !important;
     }
     .yt-comment-content-wrapper {
         margin-left: 46px !important;
@@ -378,18 +392,32 @@
     .comment-replies-container .comment-author-name,
     .modern-replies-branch .author-name-row,
     .modern-replies-branch .comment-author-name {
-        height: 28px !important;
-        min-height: 28px !important;
-        display: flex !important;
+        height: auto !important;
+        min-height: 0 !important;
+        display: block !important;
+        line-height: 1.35 !important;
+    }
+    .comment-replies-container .author-name-row .comment-author,
+    .modern-replies-branch .author-name-row .comment-author {
+        display: inline !important;
+        font-weight: 700 !important;
+        line-height: inherit !important;
+    }
+    .comment-replies-container .author-name-row .author-badges,
+    .modern-replies-branch .author-name-row .author-badges {
+        display: inline-flex !important;
         align-items: center !important;
-        gap: 5px !important;
-        line-height: 1 !important;
+        gap: 4px !important;
+        vertical-align: middle !important;
+        margin-left: 5px !important;
+        white-space: nowrap !important;
     }
     .comment-replies-container .comment-time-ago,
     .modern-replies-branch .comment-time-ago {
-        margin: -4px 0 0 0 !important;
+        margin: 2px 0 0 0 !important;
         padding: 0 !important;
         line-height: 1.2 !important;
+        display: block !important;
     }
 
     /* Tipografia aprimorada e legível do Modal de Discussão (Criar / Editar) */
@@ -458,6 +486,58 @@
     .similar-tip,
     .similar-dismiss-btn {
         font-size: 0.86rem !important;
+    }
+
+    /* Modal de Redirecionamento / Vinculação (Ajuste Mobile Bottom Sheet) */
+    @media (max-width: 768px) {
+        .custom-modal-overlay#forum-redirect-modal {
+            align-items: flex-end !important;
+            padding: 0 !important;
+        }
+        .custom-modal-box.modal-box-redirect {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-top: auto !important;
+            border-radius: 24px 24px 0 0 !important;
+            padding: 20px 18px max(18px, calc(14px + env(safe-area-inset-bottom, 14px))) 18px !important;
+            max-height: 85vh !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        .modal-box-redirect .redirect-intro-icon {
+            font-size: 1.8rem !important;
+            margin-bottom: 4px !important;
+        }
+        .modal-box-redirect .redirect-intro-title {
+            font-size: 1.25rem !important;
+        }
+        .modal-box-redirect .redirect-intro-subtitle {
+            font-size: 0.84rem !important;
+            margin: 4px 0 10px 0 !important;
+        }
+        .modal-box-redirect .modal-form-group {
+            margin-bottom: 10px !important;
+        }
+        .modal-box-redirect .redirect-search-input {
+            padding: 10px 14px !important;
+            font-size: 0.92rem !important;
+        }
+        .modal-box-redirect .redirect-search-results {
+            max-height: min(340px, 45vh) !important;
+            margin-bottom: 10px !important;
+            flex: 1 1 auto !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        .modal-box-redirect .redirect-actions-row {
+            margin-top: 6px !important;
+            padding-top: 10px !important;
+            border-top: 1px solid #f1f5f9 !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+        }
     }
     </style>
 
@@ -766,6 +846,7 @@
 <!-- 4.1. MODAL DE VINCULAÇÃO / REDIRECIONAMENTO DE TÓPICO -->
 <div id="forum-redirect-modal" class="custom-modal-overlay" style="display: none;">
     <div class="custom-modal-box modal-box-redirect">
+        <div class="sheet-drag-handle"></div>
         <button type="button" class="modal-close-btn" id="forum-redirect-modal-close-btn">&times;</button>
         <div class="modal-intro-header">
             <div class="redirect-intro-icon">🔗</div>
@@ -1036,12 +1117,12 @@
         <!-- Cabeçalho do comentário -->
         <div class="modern-comment-header yt-comment-header" style="display: flex !important; align-items: flex-start !important; gap: 10px !important;">
             <img class="modern-author-avatar comment-avatar yt-avatar" style="width: 36px !important; height: 36px !important; min-width: 36px !important; min-height: 36px !important; border-radius: 50% !important; object-fit: cover !important; margin: 0 !important; flex-shrink: 0 !important;" src="/img/default-avatar.png" alt="Avatar">
-            <div class="author-meta-block yt-comment-meta" style="display: flex !important; flex-direction: column !important; align-items: flex-start !important; justify-content: flex-start !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; min-width: 0 !important;">
-                <div class="author-name-row comment-author-name" style="margin: 0 !important; padding: 0 !important; height: 36px !important; min-height: 36px !important; display: flex !important; align-items: center !important; gap: 6px !important; line-height: 1 !important;">
-                    <strong class="comment-author yt-username"></strong>
-                    <span class="author-badges"></span>
+            <div class="author-meta-block yt-comment-meta" style="display: flex !important; flex-direction: column !important; align-items: flex-start !important; justify-content: flex-start !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; min-width: 0 !important; flex: 1 !important;">
+                <div class="author-name-row comment-author-name" style="margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; display: block !important; line-height: 1.35 !important;">
+                    <strong class="comment-author yt-username" style="display: inline !important; font-weight: 700 !important; line-height: inherit !important;"></strong>
+                    <span class="author-badges" style="display: inline-flex !important; align-items: center !important; gap: 4px !important; vertical-align: middle !important; margin-left: 6px !important; white-space: nowrap !important;"></span>
                 </div>
-                <span class="comment-time-ago comment-time yt-time" style="margin: -6px 0 0 0 !important; padding: 0 !important; line-height: 1.2 !important; font-size: 0.74rem !important; color: #94A3B8 !important;"></span>
+                <span class="comment-time-ago comment-time yt-time" style="margin: 2px 0 0 0 !important; padding: 0 !important; line-height: 1.2 !important; font-size: 0.74rem !important; color: #94A3B8 !important; display: block !important;"></span>
             </div>
         </div>
 

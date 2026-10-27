@@ -183,6 +183,7 @@
         const COMMENTS_LIMIT = 5; // Paginação de comentários ativada (Deep linking faz o auto-load caso necessário)
 
         let isLoadingMore = false;
+        let isLoadingComments = false;
 
         const DELETE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
         const EDIT_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-pencil"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path></svg>`;
@@ -1049,6 +1050,7 @@
         async function loadFullPost(postId) {
             currentPostId = postId;
             currentCommentsPage = 1; 
+            isLoadingComments = false; 
             
             feedView.classList.add('hidden');
             postView.innerHTML = '<div class="loader-wrapper"><div class="loader-spinner"></div></div>';
@@ -1363,11 +1365,17 @@
             const loadMoreBtn = document.getElementById('btn-load-more-comments');
             
             if (!commentThread || !loadMoreBtn) return;
+            if (isLoadingComments) return;
+
+            const loadMoreBox = loadMoreBtn.closest('.forum-load-more-comments-box') || loadMoreBtn.parentElement;
 
             if (!append) {
                 commentThread.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Carregando comentários...</div>';
-                loadMoreBtn.style.display = 'none';
+                loadMoreBtn.style.setProperty('display', 'none', 'important');
+                loadMoreBtn.classList.add('hidden');
+                if (loadMoreBox) loadMoreBox.style.setProperty('display', 'none', 'important');
             } else {
+                isLoadingComments = true;
                 loadMoreBtn.textContent = 'Carregando...';
                 loadMoreBtn.disabled = true;
             }
@@ -1381,37 +1389,39 @@
                 if (!append) commentThread.innerHTML = '';
 
                 let hasMore = false;
-                if (comments.length > COMMENTS_LIMIT) {
+                if (Array.isArray(comments) && comments.length > COMMENTS_LIMIT) {
                     hasMore = true;
                     comments.pop();
                 }
 
-                if (comments.length === 0 && !append) {
+                if ((!comments || comments.length === 0) && !append) {
                     commentThread.innerHTML = '<p style="color:#666; padding:20px; text-align:center; font-style:italic;">Seja o primeiro a comentar nesta discussão!</p>';
-                } else {
+                } else if (Array.isArray(comments)) {
                     comments.forEach(comment => renderComment(comment, commentThread));
                 }
 
                 const totalCount = parseInt(res.headers.get('X-Total-Count') || '0', 10);
-                const loadedCount = (page - 1) * COMMENTS_LIMIT + comments.length;
+                const loadedCount = (page - 1) * COMMENTS_LIMIT + (Array.isArray(comments) ? comments.length : 0);
                 const remaining = totalCount - loadedCount;
 
                 if (hasMore) {
-                    loadMoreBtn.style.display = 'inline-flex';
-                    // Premium Button Styles
-                    loadMoreBtn.className = 'btn';
-                    loadMoreBtn.style.cssText = 'padding: 10px 26px; border-radius: 50px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-weight: 600; border: none; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3); display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease; cursor: pointer; font-size: 0.95rem;';
-                    loadMoreBtn.onmouseover = () => { loadMoreBtn.style.transform = 'translateY(-2px)'; loadMoreBtn.style.boxShadow = '0 6px 14px rgba(245, 158, 11, 0.4)'; };
-                    loadMoreBtn.onmouseout = () => { loadMoreBtn.style.transform = 'none'; loadMoreBtn.style.boxShadow = '0 4px 10px rgba(245, 158, 11, 0.3)'; };
+                    loadMoreBtn.className = 'btn btn-pill-load-more';
+                    loadMoreBtn.classList.remove('hidden');
+                    loadMoreBtn.style.setProperty('display', 'inline-flex', 'important');
+                    loadMoreBtn.disabled = false;
+                    if (loadMoreBox) loadMoreBox.style.setProperty('display', 'block', 'important');
                     
                     if (remaining > 0) {
                         loadMoreBtn.innerHTML = `Mostrar mais ${remaining} comentári${remaining > 1 ? 'os' : 'o'} <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
                     } else {
                         loadMoreBtn.innerHTML = `Carregar mais comentários <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
                     }
-                    loadMoreBtn.disabled = false;
                 } else {
-                    loadMoreBtn.style.display = 'none';
+                    loadMoreBtn.style.setProperty('display', 'none', 'important');
+                    loadMoreBtn.classList.add('hidden');
+                    loadMoreBtn.disabled = false;
+                    loadMoreBtn.textContent = 'Mostrar mais comentários';
+                    if (loadMoreBox) loadMoreBox.style.setProperty('display', 'none', 'important');
                 }
 
                 // Destaque de comentário ao abrir via notificação
@@ -1419,7 +1429,22 @@
                     scrollToAndHighlightComment(window.yeloCommentToHighlight);
                 }
             } catch (err) {
-                if (!append) commentThread.innerHTML = '<p style="color:#d32f2f; padding:15px; text-align:center;">Erro ao carregar comentários.</p>';
+                console.error('Erro ao buscar comentários:', err);
+                if (append) {
+                    currentCommentsPage = Math.max(1, currentCommentsPage - 1);
+                }
+                if (!append) {
+                    commentThread.innerHTML = '<p style="color:#d32f2f; padding:15px; text-align:center;">Erro ao carregar comentários.</p>';
+                } else if (typeof showToast === 'function') {
+                    showToast('Não foi possível carregar mais comentários.', 'error');
+                }
+                loadMoreBtn.style.setProperty('display', 'none', 'important');
+                loadMoreBtn.classList.add('hidden');
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.textContent = 'Mostrar mais comentários';
+                if (loadMoreBox) loadMoreBox.style.setProperty('display', 'none', 'important');
+            } finally {
+                isLoadingComments = false;
             }
         }
 
@@ -1834,7 +1859,9 @@
                     while (shownCount < allReplies.length) {
                         const found = repliesContainer.querySelector(`.comment-card[data-comment-id="${window.yeloCommentToHighlight}"]`);
                         if (found) break;
+                        const prevShown = shownCount;
                         renderNextBatch();
+                        if (shownCount <= prevShown) break;
                     }
                 }
             }
@@ -1955,7 +1982,10 @@
                 
                 if (!Array.isArray(posts) || posts.length === 0) {
                     if (!append) postsContainer.innerHTML = '<p style="text-align:center; color:#888;">Nenhuma discussão encontrada.</p>';
-                    if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+                    if (loadMoreBtn) {
+                        loadMoreBtn.style.setProperty('display', 'none', 'important');
+                        loadMoreBtn.classList.add('hidden');
+                    }
                     return;
                 }
 
@@ -1969,11 +1999,11 @@
                 
                 if (loadMoreBtn) {
                     if (hasMore) {
-                        loadMoreBtn.style.display = 'inline-block';
+                        loadMoreBtn.style.setProperty('display', 'inline-flex', 'important');
                         loadMoreBtn.classList.remove('hidden');
                         loadMoreBtn.textContent = 'Mostrar mais';
                     } else {
-                        loadMoreBtn.style.display = 'none';
+                        loadMoreBtn.style.setProperty('display', 'none', 'important');
                         loadMoreBtn.classList.add('hidden');
                     }
                 }
@@ -2288,6 +2318,7 @@
                                 };
                             }
                         }
+                        currCard = currCard.parentElement ? currCard.parentElement.closest('.comment-card') : null;
                     }
                 } else {
                     const threadContainer = document.getElementById('comment-thread');

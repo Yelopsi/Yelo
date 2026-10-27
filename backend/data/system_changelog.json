@@ -1,5 +1,35 @@
 [
   {
+    "id": "change-git-30a8f8c9",
+    "date": "2026-10-26T23:35:11.000Z",
+    "commit": "30a8f8c9",
+    "author": "Anderson",
+    "title": "Otimização: Otimizar envio/edicao de posts e comentarios e refinar IA de respostas (forum e qna)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "otimizar envio/edicao de posts e comentarios e refinar IA de respostas (forum e qna)",
+    "description": "Commit registrado no repositório: \"perf(forum): otimizar envio/edicao de posts e comentarios e refinar IA de respostas (forum e qna)\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/forumController.js, backend/data/system_changelog.json, public/psi/psi_comunidade.js, public/psi/psi_dashboard.html (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #30a8f8c9"
+    },
+    "after": {
+      "nova_versao": "otimizar envio/edicao de posts e comentarios e refinar IA de respostas (forum e qna)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/forumController.js",
+      "backend/data/system_changelog.json",
+      "public/psi/psi_comunidade.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_forum.js",
+      "security/reports/gate_report.json",
+      "views/psi_comunidade.ejs"
+    ]
+  },
+  {
     "id": "change-git-790e7e73",
     "date": "2026-10-26T22:50:09.000Z",
     "commit": "790e7e73",

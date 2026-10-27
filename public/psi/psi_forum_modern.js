@@ -503,12 +503,12 @@
                 <div class="modern-comment-header" style="display: flex !important; align-items: flex-start !important; gap: 10px !important;">
                     <img class="modern-author-avatar" style="width: 36px !important; height: 36px !important; min-width: 36px !important; min-height: 36px !important; border-radius: 50% !important; object-fit: cover !important; margin: 0 !important; flex-shrink: 0 !important;" src="${authorPhoto}" alt="${authorName}" onerror="this.src='/img/default-avatar.png'">
                     <div class="author-meta-block" style="display: flex !important; flex-direction: column !important; align-items: flex-start !important; justify-content: flex-start !important; gap: 0 !important; margin: 0 !important; padding: 0 !important;">
-                        <div class="author-name-row" style="font-size: 0.88rem; margin: 0 !important; padding: 0 !important; height: 36px !important; min-height: 36px !important; display: flex !important; align-items: center !important; gap: 6px !important; line-height: 1 !important;">
+                        <div class="author-name-row" style="font-size: 0.88rem; margin: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; display: block !important; line-height: 1.35 !important;">
                             ${authorSlugLink}
-                            <span class="author-badges">${renderAuthorBadges(comment.authorBadges)}</span>
+                            <span class="author-badges" style="display: inline-flex !important; align-items: center !important; gap: 4px !important; vertical-align: middle !important; margin-left: 6px !important; white-space: nowrap !important;">${renderAuthorBadges(comment.authorBadges)}</span>
                             ${comment.isPinned ? `<span class="pinned-badge-chip" style="font-size: 0.68rem; padding: 1px 7px;">${PIN_ICON_SVG} Fixado</span>` : ''}
                         </div>
-                        <span class="comment-time-ago" style="margin: -6px 0 0 0 !important; padding: 0 !important; line-height: 1.2 !important;">há ${timeSince(comment.createdAt)}</span>
+                        <span class="comment-time-ago" style="margin: 2px 0 0 0 !important; padding: 0 !important; line-height: 1.2 !important; display: block !important;">há ${timeSince(comment.createdAt)}</span>
                     </div>
                 </div>
 

@@ -1113,12 +1113,10 @@
     font-weight: 700 !important;
     font-size: 0.86rem !important;
     color: var(--yelo-text-main, #0F172A) !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 5px !important;
-    height: 36px !important;
-    min-height: 36px !important;
-    line-height: 1 !important;
+    display: block !important;
+    line-height: 1.35 !important;
+    height: auto !important;
+    min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
 }
@@ -1127,9 +1125,8 @@
 .modern-replies-branch .author-name-row,
 .comment-replies-container .comment-author-name,
 .comment-replies-container .author-name-row {
-    height: 28px !important;
-    min-height: 28px !important;
-    gap: 5px !important;
+    height: auto !important;
+    min-height: 0 !important;
 }
 
 .comment-author-name a,

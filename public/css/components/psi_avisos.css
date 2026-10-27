@@ -2,196 +2,149 @@
    FEED DE AVISOS (APP-LIKE & ALTO CONTRASTE)
    ========================================================================== */
 .avisos-feed-widget {
-    background: transparent !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    border: none;
 }
 
-/* Barra de Filtros e Ações */
-.avisos-filter-bar {
-    background: #ffffff;
-    border: 1.5px solid #cbd5e1;
-    border-radius: 16px;
-    padding: 12px 18px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
+/* Filtros Superiores */
 .avisos-filters {
     display: flex;
     gap: 8px;
     align-items: center;
-    flex-wrap: wrap;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 14px;
     overflow-x: auto;
     scrollbar-width: none; /* Esconde scrollbar */
 }
 .avisos-filters::-webkit-scrollbar { display: none; }
 
 .aviso-filter-btn {
-    background: #f1f5f9;
+    background: #f8f9fa;
     border: 1.5px solid #cbd5e1;
     padding: 7px 16px;
     border-radius: 50px;
     font-size: 0.88rem;
     font-weight: 600;
-    color: #334155;
+    color: #495057;
     cursor: pointer;
     white-space: nowrap;
+    flex-shrink: 0;
     transition: all 0.2s ease;
 }
+
 .aviso-filter-btn:hover {
-    background: #e2e8f0;
+    background: #e9ecef;
     border-color: #94a3b8;
     color: #0f172a;
 }
 .aviso-filter-btn.active {
-    background: #1B4332 !important;
-    color: #ffffff !important;
-    border-color: #1B4332 !important;
+    background: var(--verde-escuro);
+    color: #ffffff;
+    border-color: var(--verde-escuro);
     font-weight: 700;
-    box-shadow: 0 2px 6px rgba(27, 67, 50, 0.2);
 }
 
-.avisos-btn-novidades {
-    margin-left: auto !important;
-    background: #e0f2fe !important;
-    color: #0284c7 !important;
-    border: 1.5px solid #bae6fd !important;
-    font-weight: 700 !important;
+.avisos-feed-actions-top {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
 }
-.avisos-btn-novidades:hover {
-    background: #bae6fd !important;
-    color: #0369a1 !important;
-}
-
-.btn-marcar-todos {
-    background: #f8fafc;
-    border: 1.5px solid #cbd5e1;
-    color: #166534;
-    font-weight: 700;
-    font-size: 0.84rem;
-    padding: 7px 16px;
-    border-radius: 50px;
+#btn-marcar-todos-lidos {
+    background: none;
+    border: none;
+    color: var(--verde-escuro);
+    font-weight: 600;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    text-decoration: underline;
+    transition: opacity 0.2s ease;
 }
-.btn-marcar-todos:hover {
-    background: #dcfce7;
-    border-color: #86efac;
-    color: #14532d;
+#btn-marcar-todos-lidos:hover {
+    opacity: 0.8;
 }
 
 /* Lista de Cards */
 .avisos-feed-list {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
 }
 
-/* Card Individual de Aviso */
+/* Card Individual de Aviso - Estética Anterior com Contorno Mais Forte */
 .aviso-feed-item {
-    background: #ffffff !important;
+    background: #ffffff;
     border-radius: 16px;
-    border: 1.5px solid #cbd5e1;
-    border-left: 5px solid #94a3b8;
-    padding: 18px 20px;
+    border: 1.5px solid #cbd5e1; /* Contorno bem visível e definido */
+    padding: 18px;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 .aviso-feed-item:hover {
     border-color: #94a3b8;
-    border-left-color: #1B4332;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
-    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
-/* Card Não Lido (Destaque Alto Contraste) */
+/* Card Não Lido (Destaque Verde) */
 .aviso-feed-item.unread {
-    background: #f0fdf4 !important;
-    border: 1.5px solid #86efac !important;
-    border-left: 5px solid #16a34a !important;
-    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.09), 0 1px 3px rgba(22, 163, 74, 0.04) !important;
+    background: #f0fdf4;
+    border: 1.5px solid #86efac;
+    border-left: 5px solid #16a34a;
 }
 .aviso-feed-item.unread:hover {
-    border-color: #4ade80 !important;
-    border-left-color: #15803d !important;
-    box-shadow: 0 10px 24px rgba(22, 163, 74, 0.14) !important;
-    transform: translateY(-2px);
+    border-color: #4ade80;
+    border-left-color: #15803d;
 }
 .aviso-feed-item.unread .aviso-title {
     font-weight: 700;
-    color: #14532d !important;
+    color: var(--verde-escuro);
 }
 
-/* Seta / Indicador de Accordion */
+/* Indicador Seta Simples ▼ */
 .aviso-feed-item::after {
     content: '▼';
     position: absolute;
-    right: 18px;
-    top: 18px;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: #f1f5f9;
-    border: 1.5px solid #cbd5e1;
-    color: #475569;
-    font-size: 0.72rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.25s ease, background 0.2s, color 0.2s;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-}
-.aviso-feed-item:hover::after {
-    background: #e2e8f0;
-    color: #0f172a;
+    right: 20px;
+    top: 25px;
+    font-size: 0.85rem;
+    color: #64748b;
+    transition: transform 0.3s ease, color 0.2s ease;
 }
 .aviso-feed-item.expanded::after {
     transform: rotate(180deg);
-    background: #1B4332;
-    color: #ffffff;
-    border-color: #1B4332;
+    color: var(--verde-escuro);
 }
 
 /* Cabeçalho do Card */
 .aviso-feed-header {
     display: flex;
     align-items: flex-start;
-    gap: 14px;
-    padding-right: 36px; /* Evita sobreposição com o botão ▼ */
+    gap: 12px;
+    padding-right: 32px; /* Espaço para o chevron ▼ */
 }
 
-/* Ícone */
+/* Ícone Circular */
 .aviso-icon-wrapper {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: #f1f5f9;
-    border: 1.5px solid #cbd5e1;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e8f5e9;
     color: #1B4332;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     flex-shrink: 0;
 }
 .aviso-feed-item.unread .aviso-icon-wrapper {
-    background: #16a34a !important;
-    color: #ffffff !important;
-    border-color: #15803d !important;
+    background: #16a34a;
+    color: #ffffff;
 }
 
 /* Textos e Metadados */
@@ -202,8 +155,8 @@
 .aviso-title {
     font-family: var(--font-principal);
     font-size: 1.05rem;
-    font-weight: 700;
-    color: #0f172a;
+    font-weight: 600;
+    color: #1e293b;
     margin: 0 0 4px 0;
     line-height: 1.35;
     white-space: nowrap;
@@ -212,42 +165,40 @@
 }
 .aviso-meta {
     font-size: 0.82rem;
-    color: #475569;
-    font-weight: 500;
+    color: #64748b;
     display: block;
-    line-height: 1.4;
 }
 
 .aviso-click-hint {
     display: inline-block;
-    font-size: 0.74rem;
-    color: #14532d;
+    font-size: 0.75rem;
+    color: #16a34a;
     background: #dcfce7;
     border: 1px solid #bbf7d0;
     padding: 2px 8px;
     border-radius: 12px;
-    margin-left: 6px;
+    margin-left: 10px;
     font-weight: 700;
     vertical-align: middle;
 }
 
 .aviso-personal-badge {
     background: #e0f2fe;
-    color: #0369a1;
+    color: #0284c7;
     border: 1px solid #bae6fd;
-    padding: 2px 9px;
+    padding: 2px 8px;
     border-radius: 12px;
-    font-size: 0.72rem;
-    font-weight: 700;
+    font-size: 0.7rem;
+    font-weight: bold;
     white-space: nowrap;
 }
 
 /* Prévia e Conteúdo Expandido */
 .aviso-preview {
     margin: 10px 0 0 0;
-    font-size: 0.92rem;
-    color: #334155;
-    line-height: 1.55;
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.5;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -269,18 +220,16 @@
     overflow: hidden;
     transition: max-height 0.35s ease, opacity 0.35s ease, margin-top 0.35s ease;
     font-size: 0.95rem;
-    color: #1e293b;
-    line-height: 1.65;
+    color: #334155;
+    line-height: 1.6;
 }
 
 .aviso-feed-item.expanded .aviso-full-content {
     max-height: 2000px;
     opacity: 1;
-    margin-top: 14px;
-    padding: 16px 18px;
-    background: #f8fafc;
-    border: 1px solid #cbd5e1;
-    border-radius: 12px;
+    margin-top: 15px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 15px;
 }
 
 .aviso-full-content p {
@@ -291,7 +240,7 @@
 }
 
 .aviso-full-content a {
-    color: #1B4332;
+    color: var(--verde-escuro);
     font-weight: 700;
     text-decoration: underline;
 }
@@ -305,7 +254,7 @@
 .aviso-card-psi .aviso-conteudo {
     margin: 0;
     font-size: 0.95rem;
-    color: #1e293b;
+    color: #334155;
     line-height: 1.5;
 }
 .aviso-card-psi .aviso-conteudo p {
@@ -317,107 +266,63 @@
 
 /* Botão Carregar Mais */
 #btn-load-more-avisos {
-    margin: 24px auto;
+    margin: 20px auto;
     display: block;
-    padding: 10px 28px;
+    padding: 10px 25px;
     border-radius: 50px;
     font-weight: 700;
-    background: #ffffff !important;
-    border: 1.5px solid #1B4332 !important;
-    color: #1B4332 !important;
+    background: transparent;
+    border: 2px solid var(--verde-escuro);
+    color: var(--verde-escuro);
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
     transition: all 0.2s ease;
 }
 #btn-load-more-avisos:hover {
-    background: #1B4332 !important;
-    color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(27, 67, 50, 0.2);
+    background: var(--verde-escuro);
+    color: #ffffff;
 }
 
 /* Responsividade Mobile */
-@media (max-width: 768px) {
-    .avisos-filter-bar {
-        padding: 12px 14px;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
+@media (max-width: 991px) {
+    .avisos-feed-widget {
+        padding-bottom: 80px;
     }
-    
+}
+
+@media (max-width: 768px) {
     .avisos-filters {
-        width: 100%;
         display: flex;
-        gap: 8px;
-        align-items: center;
+        gap: 6px;
         overflow-x: auto;
         flex-wrap: nowrap;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
-        padding-bottom: 4px;
+        padding-bottom: 8px;
+        margin-bottom: 12px;
     }
     .avisos-filters::-webkit-scrollbar {
         display: none;
     }
-    
     .aviso-filter-btn {
         flex-shrink: 0;
-        white-space: nowrap;
     }
-
-    .avisos-btn-novidades {
-        margin-left: 0 !important;
-        flex-shrink: 0;
-        white-space: nowrap;
-    }
-    
-    .avisos-feed-actions-top {
-        width: 100%;
-        display: flex;
-        justify-content: stretch;
-        padding-top: 8px;
-        border-top: 1px solid #f1f5f9;
-    }
-
-    .btn-marcar-todos {
-        width: 100%;
-        text-align: center;
-        justify-content: center;
-    }
-    
     .aviso-feed-item {
-        padding: 16px 14px;
-        border-radius: 14px;
+        padding: 15px;
     }
-    
     .aviso-feed-header {
         gap: 10px;
-        padding-right: 32px;
+        padding-right: 28px;
     }
-    
+    .aviso-feed-item::after {
+        right: 14px;
+        top: 18px;
+    }
     .aviso-icon-wrapper {
-        width: 38px;
-        height: 38px;
-        font-size: 1.15rem;
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
     }
-    
     .aviso-title {
         font-size: 0.98rem;
-    }
-    
-    .aviso-meta {
-        font-size: 0.78rem;
-    }
-    
-    .aviso-feed-item::after {
-        right: 12px;
-        top: 14px;
-        width: 26px;
-        height: 26px;
-        font-size: 0.68rem;
-    }
-    
-    .aviso-feed-item.expanded .aviso-full-content {
-        padding: 14px 14px;
-        font-size: 0.9rem;
     }
 }

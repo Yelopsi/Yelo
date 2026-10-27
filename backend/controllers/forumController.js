@@ -356,9 +356,8 @@ const evaluateContentEthicsWithAI = async ({ title, content, category, isEdit = 
         return { isProhibited: false };
     }
 
-    // 3. Comentários cotidianos (< 500 caracteres) sem título:
-    // Passaram pelas heurísticas e não precisam de round-trip de 3 segundos à IA.
-    if (!title && textToCheck.length < 500) {
+    // 3. Comentários (sem título): liberados imediatamente sem validação por IA para envio instantâneo
+    if (!title) {
         return { isProhibited: false };
     }
 
@@ -701,18 +700,9 @@ exports.createComment = async (req, res) => {
             return res.status(403).json({ error: 'Esta discussão está encerrada para novos comentários.' });
         }
 
-        const { content, isAnonymous, parentId } = req.body; // Adiciona parentId
-
-        // --- BARREIRA ÉTICA COM IA (CFP / YELO) ---
-        const ethicsCheck = await evaluateContentEthicsWithAI({ title: '', content, category: '' });
-        if (ethicsCheck.isProhibited) {
-            return res.status(422).json({
-                error: 'Comentário bloqueado pelas diretrizes éticas da comunidade.',
-                reason: ethicsCheck.reason,
-                suggestion: ethicsCheck.suggestion,
-                category: ethicsCheck.category,
-                code: 'ETHICS_VIOLATION'
-            });
+        const { content, isAnonymous, parentId } = req.body;
+        if (!content || !content.trim()) {
+            return res.status(400).json({ error: 'O comentário não pode ser vazio.' });
         }
 
         const comment = await ForumComment.create({
@@ -1024,16 +1014,8 @@ exports.updateComment = async (req, res) => {
             }
         }
 
-        // --- BARREIRA ÉTICA COM IA (CFP / YELO) ---
-        const ethicsCheck = await evaluateContentEthicsWithAI({ title: '', content, category: '', isEdit: true });
-        if (ethicsCheck.isProhibited) {
-            return res.status(422).json({
-                error: 'Edição bloqueada pelas diretrizes éticas da comunidade.',
-                reason: ethicsCheck.reason,
-                suggestion: ethicsCheck.suggestion,
-                category: ethicsCheck.category,
-                code: 'ETHICS_VIOLATION'
-            });
+        if (!content || !content.trim()) {
+            return res.status(400).json({ error: 'O comentário não pode ser vazio.' });
         }
 
         await comment.update({ content });

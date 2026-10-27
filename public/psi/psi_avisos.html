@@ -6,353 +6,24 @@
 </div>
 
 <style>
-    /* RESET DE CONTÊINER: Remove qualquer herança do widget branco */
-    .avisos-feed-widget {
-        background: transparent !important;
-        padding: 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-
-    /* BARRA DE FILTROS SUPERIOR */
-    .avisos-filter-bar {
-        background: #ffffff !important;
-        border: 1.5px solid #cbd5e1 !important;
-        border-radius: 16px !important;
-        padding: 12px 18px !important;
-        margin-bottom: 20px !important;
-        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        gap: 12px !important;
-        flex-wrap: wrap !important;
-    }
-
-    .avisos-filters {
-        display: flex !important;
-        gap: 8px !important;
-        align-items: center !important;
-        flex-wrap: wrap !important;
-        border-bottom: none !important;
-        padding-bottom: 0 !important;
-        margin-bottom: 0 !important;
-    }
-
-    .aviso-filter-btn {
-        background: #f1f5f9 !important;
-        border: 1.5px solid #cbd5e1 !important;
-        padding: 7px 16px !important;
-        border-radius: 50px !important;
-        font-size: 0.88rem !important;
-        font-weight: 600 !important;
-        color: #334155 !important;
-        cursor: pointer !important;
-        white-space: nowrap !important;
-        transition: all 0.2s ease !important;
-    }
-
-    .aviso-filter-btn:hover {
-        background: #e2e8f0 !important;
-        border-color: #94a3b8 !important;
-        color: #0f172a !important;
-    }
-
-    .aviso-filter-btn.active {
-        background: #1B4332 !important;
-        color: #ffffff !important;
-        border-color: #1B4332 !important;
-        font-weight: 700 !important;
-        box-shadow: 0 2px 6px rgba(27, 67, 50, 0.2) !important;
-    }
-
-    .avisos-btn-novidades {
-        margin-left: auto !important;
-        background: #e0f2fe !important;
-        color: #0284c7 !important;
-        border: 1.5px solid #bae6fd !important;
-        font-weight: 700 !important;
-    }
-    .avisos-btn-novidades:hover {
-        background: #bae6fd !important;
-        color: #0369a1 !important;
-    }
-
-    .btn-marcar-todos {
-        background: #f8fafc !important;
-        border: 1.5px solid #cbd5e1 !important;
-        color: #166534 !important;
-        font-weight: 700 !important;
-        font-size: 0.84rem !important;
-        padding: 7px 16px !important;
-        border-radius: 50px !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease !important;
-    }
-
-    .btn-marcar-todos:hover {
-        background: #dcfce7 !important;
-        border-color: #86efac !important;
-        color: #14532d !important;
-    }
-
-    /* CARDS DE AVISO - ALTO CONTRASTE */
-    .aviso-feed-item {
-        background: #ffffff !important;
-        border-radius: 16px !important;
-        border: 1.5px solid #cbd5e1 !important;
-        border-left: 5px solid #94a3b8 !important;
-        padding: 18px 20px !important;
-        cursor: pointer !important;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
-        position: relative !important;
-        overflow: hidden !important;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03) !important;
-        margin-bottom: 14px !important;
-    }
-
-    .aviso-feed-item:hover {
-        border-color: #94a3b8 !important;
-        border-left-color: #1B4332 !important;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04) !important;
-        transform: translateY(-2px) !important;
-    }
-
-    .aviso-feed-item.unread {
-        background: #f0fdf4 !important;
-        border: 1.5px solid #86efac !important;
-        border-left: 5px solid #16a34a !important;
-        box-shadow: 0 4px 14px rgba(22, 163, 74, 0.09), 0 1px 3px rgba(22, 163, 74, 0.04) !important;
-    }
-
-    .aviso-feed-item.unread:hover {
-        border-color: #4ade80 !important;
-        border-left-color: #15803d !important;
-        box-shadow: 0 10px 24px rgba(22, 163, 74, 0.14) !important;
-        transform: translateY(-2px) !important;
-    }
-
-    .aviso-feed-header {
-        display: flex !important;
-        align-items: flex-start !important;
-        gap: 14px !important;
-        padding-right: 36px !important;
-    }
-
-    .aviso-icon-wrapper {
-        width: 42px !important;
-        height: 42px !important;
-        border-radius: 12px !important;
-        background: #f1f5f9 !important;
-        border: 1.5px solid #cbd5e1 !important;
-        color: #1B4332 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 1.25rem !important;
-        flex-shrink: 0 !important;
-    }
-
-    .aviso-title {
-        font-family: var(--font-principal) !important;
-        font-size: 1.05rem !important;
-        font-weight: 700 !important;
-        color: #0f172a !important;
-        margin: 0 0 4px 0 !important;
-        line-height: 1.35 !important;
-    }
-
-    .aviso-feed-item.unread .aviso-title {
-        color: #14532d !important;
-    }
-
-    .aviso-meta {
-        font-size: 0.82rem !important;
-        color: #475569 !important;
-        font-weight: 500 !important;
-        display: block !important;
-        line-height: 1.4 !important;
-    }
-
-    .aviso-personal-badge {
-        background: #e0f2fe !important;
-        color: #0369a1 !important;
-        border: 1px solid #bae6fd !important;
-        padding: 2px 9px !important;
-        border-radius: 12px !important;
-        font-size: 0.72rem !important;
-        font-weight: 700 !important;
-        white-space: nowrap !important;
-    }
-
-    .aviso-feed-item::after {
-        content: '▼' !important;
-        position: absolute !important;
-        right: 18px !important;
-        top: 18px !important;
-        width: 28px !important;
-        height: 28px !important;
-        border-radius: 50% !important;
-        background: #f1f5f9 !important;
-        border: 1.5px solid #cbd5e1 !important;
-        color: #475569 !important;
-        font-size: 0.72rem !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        transition: transform 0.25s ease, background 0.2s, color 0.2s !important;
-    }
-
-    .aviso-feed-item.expanded::after {
-        transform: rotate(180deg) !important;
-        background: #1B4332 !important;
-        color: #ffffff !important;
-        border-color: #1B4332 !important;
-    }
-
-    .aviso-full-content {
-        max-height: 0;
-        opacity: 0;
-        overflow: hidden;
-        transition: max-height 0.35s ease, opacity 0.35s ease, margin-top 0.35s ease;
-        font-size: 0.95rem !important;
-        color: #1e293b !important;
-        line-height: 1.65 !important;
-    }
-
-    .aviso-feed-item.expanded .aviso-full-content {
-        max-height: 2000px !important;
-        opacity: 1 !important;
-        margin-top: 14px !important;
-        padding: 16px 18px !important;
-        background: #f8fafc !important;
-        border: 1px solid #cbd5e1 !important;
-        border-radius: 12px !important;
-    }
-
     @media (max-width: 991px) {
         .avisos-feed-widget {
-            padding-bottom: 85px !important; /* Garante que o último card não fique escondido pela navegação mobile */
-        }
-    }
-
-    @media (max-width: 768px) {
-        .avisos-filter-bar {
-            padding: 12px 14px !important;
-            flex-direction: column !important;
-            align-items: stretch !important;
-            gap: 12px !important;
-        }
-
-        .avisos-filters {
-            width: 100% !important;
-            display: flex !important;
-            gap: 8px !important;
-            align-items: center !important;
-            overflow-x: auto !important;
-            flex-wrap: nowrap !important;
-            -webkit-overflow-scrolling: touch !important;
-            scrollbar-width: none !important;
-            padding-bottom: 4px !important;
-        }
-        .avisos-filters::-webkit-scrollbar {
-            display: none !important;
-        }
-
-        .aviso-filter-btn {
-            flex-shrink: 0 !important;
-            white-space: nowrap !important;
-        }
-
-        .avisos-btn-novidades {
-            margin-left: 0 !important;
-            flex-shrink: 0 !important;
-            white-space: nowrap !important;
-        }
-
-        .avisos-feed-actions-top {
-            width: 100% !important;
-            display: flex !important;
-            justify-content: stretch !important;
-            padding-top: 8px !important;
-            border-top: 1px solid #f1f5f9 !important;
-        }
-
-        .btn-marcar-todos {
-            width: 100% !important;
-            text-align: center !important;
-            justify-content: center !important;
-        }
-
-        .aviso-feed-item {
-            padding: 16px 14px !important;
-            border-radius: 14px !important;
-        }
-
-        .aviso-feed-header {
-            gap: 10px !important;
-            padding-right: 32px !important;
-        }
-
-        .aviso-icon-wrapper {
-            width: 38px !important;
-            height: 38px !important;
-            font-size: 1.15rem !important;
-        }
-
-        .aviso-title {
-            font-size: 0.98rem !important;
-        }
-
-        .aviso-meta {
-            font-size: 0.78rem !important;
-        }
-
-        .aviso-feed-item::after {
-            right: 12px !important;
-            top: 14px !important;
-            width: 26px !important;
-            height: 26px !important;
-            font-size: 0.68rem !important;
-        }
-
-        .aviso-feed-item.expanded .aviso-full-content {
-            padding: 14px 14px !important;
-            font-size: 0.9rem !important;
+            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
         }
     }
 </style>
 
-<!-- BANNER DE DESTAQUE PARA NOVIDADES -->
-<div style="background: linear-gradient(135deg, #f0fdf4 0%, #e6f7ec 100%); border: 1.5px solid #bbf7d0; border-radius: 14px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(22, 101, 52, 0.05);">
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 1.5rem;">🚀</span>
-        <div>
-            <strong style="color: #166534; font-size: 0.95rem; display: block;">Compilado Semanal de Ajustes & Novidades</strong>
-            <span style="color: #15803d; font-size: 0.85rem;">Toda sexta-feira liberamos um compilado unificado com todos os novos recursos e melhorias da semana.</span>
-        </div>
+<div class="widget avisos-feed-widget">
+    <div class="avisos-filters" style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+        <button class="aviso-filter-btn active" data-filter="all">Todos</button>
+        <button class="aviso-filter-btn" data-filter="unread">Não lidos</button>
+        <button class="aviso-filter-btn" data-filter="personal">Pessoais</button>
     </div>
-    <button onclick="if(window.loadPage) window.loadPage('psi_novidades.html')" style="background: #1B4332; color: #FFEE8C; font-weight: 700; border: none; padding: 8px 18px; border-radius: 50px; cursor: pointer; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(27,67,50,0.15); white-space: nowrap;">
-        Ver Compilado da Semana ➔
-    </button>
-</div>
-
-<div class="avisos-feed-widget">
-    <div class="avisos-filter-bar">
-        <div class="avisos-filters">
-            <button class="aviso-filter-btn active" data-filter="all">Todos</button>
-            <button class="aviso-filter-btn" data-filter="unread">Não lidos</button>
-            <button class="aviso-filter-btn" data-filter="personal">Pessoais</button>
-            <button class="aviso-filter-btn avisos-btn-novidades" onclick="if(window.loadPage) window.loadPage('psi_novidades.html')">
-                🚀 O que há de novo?
-            </button>
-        </div>
-        
-        <div class="avisos-feed-actions-top">
-            <button id="btn-marcar-todos-lidos" class="btn-marcar-todos">
-                Marcar todos como lidos
-            </button>
-        </div>
+    
+    <div class="avisos-feed-actions-top" style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+        <button id="btn-marcar-todos-lidos" style="background: none; border: none; color: var(--verde-escuro); font-weight: 600; font-size: 0.9rem; cursor: pointer; text-decoration: underline;">
+            Marcar todos como lidos
+        </button>
     </div>
 
     <div id="avisos-feed-container" class="avisos-feed-list">
@@ -370,7 +41,7 @@
             <div class="aviso-title-group">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <h4 class="aviso-title" style="margin: 0;"></h4>
-                    <span class="aviso-personal-badge" style="display: none;">Pessoal</span>
+                    <span class="aviso-personal-badge" style="display: none; background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; white-space: nowrap;">Pessoal</span>
                 </div>
                 <span class="aviso-meta"></span>
             </div>
@@ -391,9 +62,9 @@
     function renderAvisos(avisos) {
         container.innerHTML = '';
         if (avisos.length === 0) {
-            container.innerHTML = `<div class="smart-empty-state" style="margin: 0; padding: 40px 20px; background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 16px; text-align: center;">
-                <div class="empty-state-icon" style="font-size: 2.2rem; margin-bottom: 8px;">✨</div>
-                <p class="empty-state-text" style="color: #475569; font-weight: 600; font-size: 0.95rem; margin: 0;">Nenhum aviso por aqui. Tudo em ordem!</p>
+            container.innerHTML = `<div class="smart-empty-state" style="margin: 0; padding: 30px;">
+                <div class="empty-state-icon">✨</div>
+                <p class="empty-state-text">Nenhum aviso por aqui. Tudo em ordem!</p>
             </div>`;
             return;
         }
@@ -416,28 +87,18 @@
                 iconWrapper.innerHTML = '⚠️';
                 iconWrapper.style.backgroundColor = '#fffbeb';
                 iconWrapper.style.color = '#b45309';
-                iconWrapper.style.borderColor = '#fcd34d';
             } else if (lowerTitle.includes('novidade') || lowerTitle.includes('lançamento') || lowerTitle.includes('compilado') || lowerTitle.includes('ajustes') || lowerTitle.includes('melhorias')) {
                 iconWrapper.innerHTML = '🚀';
                 iconWrapper.style.backgroundColor = '#ecfdf5';
                 iconWrapper.style.color = '#047857';
-                iconWrapper.style.borderColor = '#86efac';
             } else if (lowerTitle.includes('resposta') || lowerTitle.includes('comentário')) {
                 iconWrapper.innerHTML = '💬';
                 iconWrapper.style.backgroundColor = '#e0f2fe';
                 iconWrapper.style.color = '#0284c7';
-                iconWrapper.style.borderColor = '#bae6fd';
             } else {
                 iconWrapper.innerHTML = '🔔';
-                if (!aviso.read) {
-                    iconWrapper.style.backgroundColor = '#16a34a';
-                    iconWrapper.style.color = '#ffffff';
-                    iconWrapper.style.borderColor = '#15803d';
-                } else {
-                    iconWrapper.style.backgroundColor = '#f1f5f9';
-                    iconWrapper.style.color = '#1b4332';
-                    iconWrapper.style.borderColor = '#cbd5e1';
-                }
+                iconWrapper.style.backgroundColor = '';
+                iconWrapper.style.color = '';
             }
 
             // Mostra a tag "Pessoal" se o aviso foi direcionado especificamente a este psicólogo
@@ -516,14 +177,13 @@
             container.appendChild(item);
         });
         
-        // NOVO: Botão "Ver mais"
+        // Botão "Ver mais"
         let loadMoreBtn = document.getElementById('btn-load-more-avisos');
         if (allAvisos.filter(a => (currentFilter === 'all') || (currentFilter === 'unread' && !a.read) || (currentFilter === 'personal' && a.psychologistId)).length > visibleCount) {
             if (!loadMoreBtn) {
                 loadMoreBtn = document.createElement('button');
                 loadMoreBtn.id = 'btn-load-more-avisos';
                 loadMoreBtn.className = 'btn btn-secundario';
-                loadMoreBtn.style.cssText = 'margin: 20px auto; display: block; padding: 10px 25px; border-radius: 50px; font-weight: bold; background: transparent; border: 2px solid var(--verde-escuro); color: var(--verde-escuro); cursor: pointer;';
                 loadMoreBtn.textContent = 'Ver mais antigos';
                 loadMoreBtn.onclick = () => {
                     visibleCount += 10;
@@ -543,7 +203,6 @@
             const response = await fetch(`${API_BASE_URL}/api/psychologists/me/announcements?t=${new Date().getTime()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
             
             if (response.ok) {
                 allAvisos = await response.json();
@@ -568,12 +227,6 @@
             });
             if (itemElement) {
                 itemElement.classList.remove('unread');
-                const icon = itemElement.querySelector('.aviso-icon-wrapper');
-                if (icon && icon.innerHTML.includes('🔔')) {
-                    icon.style.backgroundColor = '#f1f5f9';
-                    icon.style.color = '#1b4332';
-                    icon.style.borderColor = '#cbd5e1';
-                }
             }
             if (window.carregarAvisosBackground) window.carregarAvisosBackground(); // Atualiza a bolinha vermelha
         } catch (error) {
@@ -600,12 +253,6 @@
             allAvisos.forEach(a => a.read = true);
             document.querySelectorAll('.aviso-feed-item.unread').forEach(item => {
                 item.classList.remove('unread');
-                const icon = item.querySelector('.aviso-icon-wrapper');
-                if (icon && icon.innerHTML.includes('🔔')) {
-                    icon.style.backgroundColor = '#f1f5f9';
-                    icon.style.color = '#1b4332';
-                    icon.style.borderColor = '#cbd5e1';
-                }
             });
             
             if (window.showToast) window.showToast('Todos os avisos foram marcados como lidos.', 'success');
@@ -633,7 +280,7 @@
             document.querySelectorAll('.aviso-filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentFilter = btn.dataset.filter;
-        visibleCount = 10; // Reseta a paginação ao trocar de aba
+            visibleCount = 10; // Reseta a paginação ao trocar de aba
             filterAndRender();
         });
     });

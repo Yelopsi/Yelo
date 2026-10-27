@@ -1,5 +1,72 @@
 [
   {
+    "id": "change-git-9e942479",
+    "date": "2026-10-27T00:44:38.000Z",
+    "commit": "9e942479",
+    "author": "Anderson",
+    "title": "Correção: Destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos (forum, avisos)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos",
+    "description": "Commit registrado no repositório: \"fix(forum, avisos): destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/forumController.js, backend/data/system_changelog.json, forum-community.css, public/css/components/psi_avisos.css (+10 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9e942479"
+    },
+    "after": {
+      "nova_versao": "destravar envio de comentarios, ocultar 'ver mais' ao fim e limpar filtros de avisos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/forumController.js",
+      "backend/data/system_changelog.json",
+      "forum-community.css",
+      "public/css/components/psi_avisos.css",
+      "public/css/components/psi_overview.css",
+      "public/css/components/psi_ui.css",
+      "public/css/forum-community.css",
+      "public/psi/psi_avisos.html",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_forum.html",
+      "public/psi/psi_forum.js",
+      "public/psi/psi_forum_modern.css",
+      "public/psi/psi_forum_modern.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-30a8f8c9",
+    "date": "2026-10-26T23:35:11.000Z",
+    "commit": "30a8f8c9",
+    "author": "Anderson",
+    "title": "Otimização: Otimizar envio/edicao de posts e comentarios e refinar IA de respostas (forum e qna)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "otimizar envio/edicao de posts e comentarios e refinar IA de respostas (forum e qna)",
+    "description": "Commit registrado no repositório: \"perf(forum): otimizar envio/edicao de posts e comentarios e refinar IA de respostas (forum e qna)\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/forumController.js, backend/data/system_changelog.json, public/psi/psi_comunidade.js, public/psi/psi_dashboard.html (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #30a8f8c9"
+    },
+    "after": {
+      "nova_versao": "otimizar envio/edicao de posts e comentarios e refinar IA de respostas (forum e qna)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/forumController.js",
+      "backend/data/system_changelog.json",
+      "public/psi/psi_comunidade.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_forum.js",
+      "security/reports/gate_report.json",
+      "views/psi_comunidade.ejs"
+    ]
+  },
+  {
     "id": "change-git-790e7e73",
     "date": "2026-10-26T22:50:09.000Z",
     "commit": "790e7e73",
