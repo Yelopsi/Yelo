@@ -208,11 +208,11 @@ class GoogleBusinessService {
      * Função principal de sincronização com o Google Places
      */
     static async syncReviews({ googleUrl, placeId, psychologistName, psychologistCity, psychologistRazaoSocial }) {
-        const apiKey = process.env.GOOGLE_PLACES_API_KEY || 'AIzaSyCTPVgBzTLajUBP9DZUq_-ET1LQtCU0NZ8';
+        const apiKey = process.env.GOOGLE_PLACES_API_KEY;
         if (!apiKey) {
             return {
                 success: false,
-                error: 'A chave da Google Places API não está configurada no servidor.'
+                error: 'A chave da Google Places API não está configurada no servidor. Configure a variável de ambiente GOOGLE_PLACES_API_KEY no painel do servidor.'
             };
         }
 

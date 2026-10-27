@@ -1,6 +1,7 @@
+require('dotenv').config();
 const { Client } = require('pg');
 const client = new Client({
-  connectionString: 'postgresql://yelopsi_db_user:y0HIi5A7onT11TSfSrpSTaLvsp3lEdl3@dpg-d500f1s9c44c73d84n70-a.ohio-postgres.render.com/yelo_db',
+  connectionString: process.env.DATABASE_URL || 'postgresql://localhost/yelo_db',
   ssl: { rejectUnauthorized: false }
 });
 
