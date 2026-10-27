@@ -1,5 +1,36 @@
 [
   {
+    "id": "change-git-ead28429",
+    "date": "2026-10-27T21:36:59.000Z",
+    "commit": "ead28429",
+    "author": "Anderson",
+    "title": "Novo: Persistir visualizacao do modal de novidades no banco de dados para evitar reexibicao entre dispositivos (gmb)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "persistir visualizacao do modal de novidades no banco de dados para evitar reexibicao entre dispositivos",
+    "description": "Commit registrado no repositório: \"feat(gmb): persistir visualizacao do modal de novidades no banco de dados para evitar reexibicao entre dispositivos\". Arquivos modificados: backend/.data/system_changelog.json, backend/config/dbFixes.js, backend/controllers/psychologistController.js, backend/data/system_changelog.json, backend/models/psychologist.js (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ead28429"
+    },
+    "after": {
+      "nova_versao": "persistir visualizacao do modal de novidades no banco de dados para evitar reexibicao entre dispositivos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/config/dbFixes.js",
+      "backend/controllers/psychologistController.js",
+      "backend/data/system_changelog.json",
+      "backend/models/psychologist.js",
+      "backend/routes/psychologistRoutes.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-f68953d2",
     "date": "2026-10-27T12:21:55.000Z",
     "commit": "f68953d2",
