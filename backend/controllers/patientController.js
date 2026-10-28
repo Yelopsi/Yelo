@@ -47,7 +47,9 @@ exports.registerPatient = async (req, res) => {
         const hashedPassword = await bcrypt.hash(senha, 10);
 
         // [AUDITORIA] Captura dados de segurança
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0';
+        const forwardedIp = req.headers['x-forwarded-for'];
+        const rawIp = forwardedIp ? forwardedIp.split(',')[0].trim() : (req.socket.remoteAddress || req.ip || '0.0.0.0');
+        const ip = rawIp.substring(0, 45);
         const userAgent = req.headers['user-agent'] || 'Unknown';
 
         const newPatient = await db.Patient.create({
@@ -302,7 +304,9 @@ exports.googleLogin = async (req, res) => {
             const randomPassword = crypto.randomBytes(16).toString('hex');
             const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-            const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0';
+            const forwardedIp = req.headers['x-forwarded-for'];
+            const rawIp = forwardedIp ? forwardedIp.split(',')[0].trim() : (req.socket.remoteAddress || req.ip || '0.0.0.0');
+            const ip = rawIp.substring(0, 45);
 
             patient = await db.Patient.create({
                 nome: nome,

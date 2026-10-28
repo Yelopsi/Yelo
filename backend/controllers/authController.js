@@ -177,7 +177,9 @@ exports.unifiedGoogleLogin = async (req, res) => {
         // 4. Cria Novo Paciente (Padrão para novos logins via Google sem role específica)
         const randomPassword = crypto.randomBytes(16).toString('hex');
         const hashedPassword = await bcrypt.hash(randomPassword, 10);
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0';
+        const forwardedIp = req.headers['x-forwarded-for'];
+        const rawIp = forwardedIp ? forwardedIp.split(',')[0].trim() : (req.socket.remoteAddress || req.ip || '0.0.0.0');
+        const ip = rawIp.substring(0, 45);
 
         const { utm_source, utm_medium, utm_campaign, utm_content, first_utm_source, first_utm_medium, first_utm_campaign, first_utm_content } = req.body;
 

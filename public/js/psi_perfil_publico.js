@@ -686,76 +686,87 @@ document.addEventListener('DOMContentLoaded', () => {
                 '<div id="google-btn-container" style="display:flex; justify-content:center; align-items:center; min-height:48px; width:100%; margin:10px 0;"></div>'
             );
 
-            const renderGoogleBtn = () => {
+            let gsiInitialized = false;
+
+            const renderButtonOnly = () => {
+                const btnContainer = document.getElementById('google-btn-container');
+                if (!btnContainer || typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
+                btnContainer.innerHTML = '';
+                const btnWidth = Math.min(window.innerWidth - 80, 300);
+                google.accounts.id.renderButton(btnContainer, { 
+                    type: 'standard',
+                    theme: 'outline', 
+                    size: 'large', 
+                    shape: 'pill', 
+                    text: 'continue_with',
+                    logo_alignment: 'left',
+                    width: btnWidth
+                });
+            };
+
+            const setupGoogleAuth = () => {
                 const btnContainer = document.getElementById('google-btn-container');
                 if (!btnContainer || typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
 
-                btnContainer.innerHTML = '';
-                try {
-                    google.accounts.id.initialize({
-                        client_id: '283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com',
-                        callback: async (response) => {
-                            try {
-                                if (btnContainer) {
-                                    btnContainer.innerHTML = '<span style="color:#1B4332; font-weight:600; font-size:0.95rem;">Validando identidade...</span>';
+                if (!gsiInitialized) {
+                    try {
+                        google.accounts.id.initialize({
+                            client_id: '283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com',
+                            callback: async (response) => {
+                                try {
+                                    if (btnContainer) {
+                                        btnContainer.innerHTML = '<span style="color:#1B4332; font-weight:600; font-size:0.95rem;">Validando identidade...</span>';
+                                    }
+                                    const authRes = await fetch(`${API_BASE_URL}/api/patients/google`, { 
+                                        method: 'POST', 
+                                        headers: { 'Content-Type': 'application/json' }, 
+                                        credentials: 'include',
+                                        body: JSON.stringify({ token: response.credential, isReviewValidation: true }) 
+                                    });
+                                    
+                                    const authData = await authRes.json().catch(() => ({}));
+
+                                    if (authRes.ok && authData.token) {
+                                        localStorage.setItem('Yelo_token', authData.token);
+                                        if (authData.nome) localStorage.setItem('Yelo_user_name', authData.nome);
+                                        localStorage.setItem('Yelo_user_type', 'patient');
+
+                                        const modernOverlay = document.getElementById('modern-modal-overlay');
+                                        if (modernOverlay) modernOverlay.remove();
+
+                                        enviarAvaliacao(authData.token, currentRating, currentComment);
+                                    } else { 
+                                        console.error('[Google Auth Error]:', authRes.status, authData);
+                                        showToast(authData.error || "Falha na autenticação com Google.", "error"); 
+                                        renderButtonOnly();
+                                    }
+                                } catch (error) { 
+                                    console.error('[Google Auth Connection Error]:', error);
+                                    showToast("Erro de conexão ao validar Google.", "error"); 
+                                    renderButtonOnly();
                                 }
-                                const authRes = await fetch(`${API_BASE_URL}/api/patients/google`, { 
-                                    method: 'POST', 
-                                    headers: { 'Content-Type': 'application/json' }, 
-                                    credentials: 'include',
-                                    body: JSON.stringify({ token: response.credential, isReviewValidation: true }) 
-                                });
-                                
-                                const authData = await authRes.json().catch(() => ({}));
-
-                                if (authRes.ok && authData.token) {
-                                    localStorage.setItem('Yelo_token', authData.token);
-                                    if (authData.nome) localStorage.setItem('Yelo_user_name', authData.nome);
-                                    localStorage.setItem('Yelo_user_type', 'patient');
-
-                                    const modernOverlay = document.getElementById('modern-modal-overlay');
-                                    if (modernOverlay) modernOverlay.remove();
-
-                                    enviarAvaliacao(authData.token, currentRating, currentComment);
-                                } else { 
-                                    console.error('[Google Auth Error]:', authRes.status, authData);
-                                    showToast(authData.error || "Falha na autenticação com Google.", "error"); 
-                                    renderGoogleBtn();
-                                }
-                            } catch (error) { 
-                                console.error('[Google Auth Connection Error]:', error);
-                                showToast("Erro de conexão ao validar Google.", "error"); 
-                                renderGoogleBtn();
-                            }
-                        },
-                        auto_select: false,
-                        itp_support: true
-                    });
-
-                    const btnWidth = Math.min(window.innerWidth - 80, 300);
-                    google.accounts.id.renderButton(btnContainer, { 
-                        type: 'standard',
-                        theme: 'outline', 
-                        size: 'large', 
-                        shape: 'pill', 
-                        text: 'continue_with',
-                        logo_alignment: 'left',
-                        width: btnWidth
-                    });
-                } catch (e) {
-                    console.error('[Google GSI Error]:', e);
+                            },
+                            auto_select: false,
+                            itp_support: true
+                        });
+                        gsiInitialized = true;
+                    } catch (e) {
+                        console.error('[Google GSI Error]:', e);
+                    }
                 }
+
+                renderButtonOnly();
             };
 
             if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-                renderGoogleBtn();
+                setupGoogleAuth();
             } else {
                 let attempts = 0;
                 const checkGoogle = setInterval(() => {
                     attempts++;
                     if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
                         clearInterval(checkGoogle);
-                        renderGoogleBtn();
+                        setupGoogleAuth();
                     } else if (attempts > 30) {
                         clearInterval(checkGoogle);
                         const btnContainer = document.getElementById('google-btn-container');

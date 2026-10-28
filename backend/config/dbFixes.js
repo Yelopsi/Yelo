@@ -176,7 +176,7 @@ const applyDatabaseFixes = async (db, sequelize) => {
                 ADD COLUMN IF NOT EXISTS "faixa_etaria" VARCHAR(255), ADD COLUMN IF NOT EXISTS "idade" VARCHAR(255),
                 ADD COLUMN IF NOT EXISTS "genero_profissional" VARCHAR(255), ADD COLUMN IF NOT EXISTS "abordagem_desejada" JSONB DEFAULT '[]',
                 ADD COLUMN IF NOT EXISTS "praticas_afirmativas" JSONB DEFAULT '[]', ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255),
-                ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(45), ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS "ip_registro" VARCHAR(255), ADD COLUMN IF NOT EXISTS "termos_aceitos" BOOLEAN DEFAULT FALSE,
                 ADD COLUMN IF NOT EXISTS "marketing_aceito" BOOLEAN DEFAULT FALSE, ADD COLUMN IF NOT EXISTS "sessionValue" FLOAT DEFAULT 0,
                 ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'active', ADD COLUMN IF NOT EXISTS "observacoes" TEXT,
                 ADD COLUMN IF NOT EXISTS "resetPasswordToken" VARCHAR(255), ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255),
@@ -185,6 +185,7 @@ const applyDatabaseFixes = async (db, sequelize) => {
                 ADD COLUMN IF NOT EXISTS "identidade_genero" VARCHAR(255), ADD COLUMN IF NOT EXISTS "recebe_mensagens" BOOLEAN DEFAULT TRUE,
                 ADD COLUMN IF NOT EXISTS "resetPasswordExpires" BIGINT;`,
             `ALTER TABLE "Patients" ALTER COLUMN "email" DROP NOT NULL;`,
+            `ALTER TABLE "Patients" ALTER COLUMN "ip_registro" TYPE VARCHAR(255);`,
 
             // Outras
             `ALTER TABLE "Messages" ADD COLUMN IF NOT EXISTS "status" VARCHAR(255) DEFAULT 'sent';`,

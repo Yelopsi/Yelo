@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-e8d34529",
+    "date": "2026-10-28T22:51:33.000Z",
+    "commit": "e8d34529",
+    "author": "Anderson",
+    "title": "Correção: Corrigir fluxo de avaliacao e validacao google no perfil publico (desktop, ios e android) (reviews)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir fluxo de avaliacao e validacao google no perfil publico (desktop, ios e android)",
+    "description": "Commit registrado no repositório: \"fix(reviews): corrigir fluxo de avaliacao e validacao google no perfil publico (desktop, ios e android)\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, public/js/psi_perfil_publico.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #e8d34529"
+    },
+    "after": {
+      "nova_versao": "corrigir fluxo de avaliacao e validacao google no perfil publico (desktop, ios e android)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "public/js/psi_perfil_publico.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-571127c5",
     "date": "2026-10-28T01:17:41.000Z",
     "commit": "571127c5",
