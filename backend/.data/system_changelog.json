@@ -1,5 +1,30 @@
 [
   {
+    "id": "change-git-571127c5",
+    "date": "2026-10-28T01:17:41.000Z",
+    "commit": "571127c5",
+    "author": "Anderson",
+    "title": "Manutenção: Sincronizar changelog e relatorios de seguranca",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar changelog e relatorios de seguranca",
+    "description": "Commit registrado no repositório: \"chore: sincronizar changelog e relatorios de seguranca\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #571127c5"
+    },
+    "after": {
+      "nova_versao": "sincronizar changelog e relatorios de seguranca"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-be2724f8",
     "date": "2026-10-28T01:16:37.000Z",
     "commit": "be2724f8",

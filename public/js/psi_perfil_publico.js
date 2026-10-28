@@ -626,38 +626,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showModernModal(icon, title, message, primaryText, primaryUrl, secondaryText, customHtml = '') {
+        const existing = document.getElementById('modern-modal-overlay');
+        if (existing) existing.remove();
+
         const overlay = document.createElement('div');
         overlay.id = 'modern-modal-overlay';
-        overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999999; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(3px); opacity: 0; transition: opacity 0.3s ease;";
+        overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:200005; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); box-sizing: border-box; padding: 15px;";
         
         const box = document.createElement('div');
-        box.style.cssText = "background:#fff; padding:40px 30px; border-radius:24px; width:90%; max-width:420px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.15); transform: translateY(20px); transition: transform 0.3s ease; box-sizing: border-box;";
+        box.style.cssText = "background:#fff; padding:35px 25px; border-radius:24px; width:100%; max-width:420px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.25); box-sizing: border-box; position:relative;";
         
         box.innerHTML = `
-            <div style="font-size:3.5rem; margin-bottom:15px; line-height:1;">${icon}</div>
-            <h3 style="color:var(--verde-escuro, #1B4332); margin:0 0 15px 0; font-family: var(--font-titulos, serif); font-size:1.6rem;">${title}</h3>
-            <p style="color:#555; font-size:1rem; line-height:1.6; margin-bottom:30px;">${message}</p>
+            <div style="font-size:3rem; margin-bottom:12px; line-height:1;">${icon}</div>
+            <h3 style="color:var(--verde-escuro, #1B4332); margin:0 0 10px 0; font-family: var(--font-titulos, serif); font-size:1.5rem;">${title}</h3>
+            <p style="color:#555; font-size:0.95rem; line-height:1.5; margin:0 0 24px 0;">${message}</p>
             ${customHtml}
-            <div style="display:flex; flex-direction:column; gap:12px;">
-                ${primaryText ? `<button id="modal-primary-btn" style="background:var(--verde-escuro, #1B4332); color:#fff; border:none; padding:14px; border-radius:50px; font-weight:bold; font-size:1rem; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">${primaryText}</button>` : ''}
-                <button id="modal-secondary-btn" style="background:transparent; color:#666; border:none; padding:10px; font-weight:600; cursor:pointer; text-decoration:underline;">${secondaryText}</button>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
+                ${primaryText ? `<button id="modal-primary-btn" style="background:var(--verde-escuro, #1B4332); color:#fff; border:none; padding:14px; border-radius:50px; font-weight:bold; font-size:1rem; cursor:pointer; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">${primaryText}</button>` : ''}
+                <button id="modal-secondary-btn" style="background:transparent; color:#666; border:none; padding:10px; font-weight:600; cursor:pointer; text-decoration:underline; font-size:0.9rem;">${secondaryText}</button>
             </div>
         `;
         
         overlay.appendChild(box);
         document.body.appendChild(overlay);
         
-        requestAnimationFrame(() => {
-            overlay.style.opacity = '1';
-            box.style.transform = 'translateY(0)';
-        });
-        
         const closeModal = () => {
-            overlay.style.opacity = '0';
-            box.style.transform = 'translateY(20px)';
-            setTimeout(() => overlay.remove(), 300);
+            overlay.remove();
         };
-        document.getElementById('modal-secondary-btn').onclick = closeModal;
+        const secBtn = document.getElementById('modal-secondary-btn');
+        if (secBtn) secBtn.onclick = closeModal;
         overlay.onclick = (e) => { if(e.target === overlay) closeModal(); };
     }
 
@@ -671,11 +668,144 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedDraft) {
             try {
                 const { rating, comment } = JSON.parse(savedDraft);
-                // Preenche os dados, mas NÃO abre o modal automaticamente para não ser intrusivo
                 if (comment) form.querySelector('textarea[name="comentario"]').value = comment;
                 if (rating) form.querySelector(`input[name="rating"][value="${rating}"]`).checked = true;
             } catch (e) { }
         }
+
+        const promptGoogleValidation = (currentRating, currentComment) => {
+            localStorage.setItem(draftKey, JSON.stringify({ rating: currentRating, comment: currentComment }));
+
+            showModernModal(
+                '🔒',
+                'Identificação Necessária',
+                'Para garantir autenticidade e evitar perfis falsos, confirme sua identidade com o Google para enviar sua avaliação.',
+                null,
+                null,
+                'Cancelar',
+                '<div id="google-btn-container" style="display:flex; justify-content:center; align-items:center; min-height:48px; width:100%; margin:10px 0;"></div>'
+            );
+
+            const renderGoogleBtn = () => {
+                const btnContainer = document.getElementById('google-btn-container');
+                if (!btnContainer || typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
+
+                btnContainer.innerHTML = '';
+                try {
+                    google.accounts.id.initialize({
+                        client_id: '283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com',
+                        callback: async (response) => {
+                            try {
+                                if (btnContainer) {
+                                    btnContainer.innerHTML = '<span style="color:#1B4332; font-weight:600; font-size:0.95rem;">Validando identidade...</span>';
+                                }
+                                const authRes = await fetch(`${API_BASE_URL}/api/patients/google`, { 
+                                    method: 'POST', 
+                                    headers: { 'Content-Type': 'application/json' }, 
+                                    credentials: 'include',
+                                    body: JSON.stringify({ token: response.credential, isReviewValidation: true }) 
+                                });
+                                
+                                const authData = await authRes.json().catch(() => ({}));
+
+                                if (authRes.ok && authData.token) {
+                                    localStorage.setItem('Yelo_token', authData.token);
+                                    if (authData.nome) localStorage.setItem('Yelo_user_name', authData.nome);
+                                    localStorage.setItem('Yelo_user_type', 'patient');
+
+                                    const modernOverlay = document.getElementById('modern-modal-overlay');
+                                    if (modernOverlay) modernOverlay.remove();
+
+                                    enviarAvaliacao(authData.token, currentRating, currentComment);
+                                } else { 
+                                    console.error('[Google Auth Error]:', authRes.status, authData);
+                                    showToast(authData.error || "Falha na autenticação com Google.", "error"); 
+                                    renderGoogleBtn();
+                                }
+                            } catch (error) { 
+                                console.error('[Google Auth Connection Error]:', error);
+                                showToast("Erro de conexão ao validar Google.", "error"); 
+                                renderGoogleBtn();
+                            }
+                        },
+                        auto_select: false,
+                        itp_support: true
+                    });
+
+                    const btnWidth = Math.min(window.innerWidth - 80, 300);
+                    google.accounts.id.renderButton(btnContainer, { 
+                        type: 'standard',
+                        theme: 'outline', 
+                        size: 'large', 
+                        shape: 'pill', 
+                        text: 'continue_with',
+                        logo_alignment: 'left',
+                        width: btnWidth
+                    });
+                } catch (e) {
+                    console.error('[Google GSI Error]:', e);
+                }
+            };
+
+            if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                renderGoogleBtn();
+            } else {
+                let attempts = 0;
+                const checkGoogle = setInterval(() => {
+                    attempts++;
+                    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                        clearInterval(checkGoogle);
+                        renderGoogleBtn();
+                    } else if (attempts > 30) {
+                        clearInterval(checkGoogle);
+                        const btnContainer = document.getElementById('google-btn-container');
+                        if (btnContainer) {
+                            btnContainer.innerHTML = '<span style="color:#dc2626; font-size:0.9rem;">Não foi possível carregar o Google. Verifique sua conexão e tente novamente.</span>';
+                        }
+                    }
+                }, 150);
+            }
+        };
+
+        const enviarAvaliacao = async (authToken, ratingVal, commentVal) => {
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn ? btn.textContent : 'Avaliar Profissional';
+            if (btn) { btn.disabled = true; btn.textContent = "Enviando..."; }
+
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                if (authToken && authToken !== 'cookie_auth_active') {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/api/reviews`, {
+                    method: 'POST',
+                    headers,
+                    credentials: 'include',
+                    body: JSON.stringify({ psychologistId, rating: parseInt(ratingVal, 10), comment: commentVal })
+                });
+
+                if (response.ok) {
+                    showToast("Avaliação enviada com sucesso!", "success");
+                    localStorage.removeItem(draftKey);
+                    const modalReview = document.getElementById('modal-review');
+                    if (modalReview) modalReview.style.display = 'none';
+                    setTimeout(() => window.location.reload(), 1500);
+                } else if (response.status === 409) {
+                    showToast("Você já avaliou este profissional. Não é possível enviar avaliações duplicadas.", "error");
+                } else if (response.status === 401) {
+                    // Não autenticado: abre validação Google
+                    promptGoogleValidation(ratingVal, commentVal);
+                } else {
+                    const errData = await response.json().catch(() => ({}));
+                    showToast(errData.error || "Erro ao enviar avaliação.", "error");
+                }
+            } catch (error) {
+                showToast("Erro de conexão.", "error");
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = originalText; }
+            }
+        };
 
         form.onsubmit = async (e) => {
             e.preventDefault();
@@ -690,121 +820,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const btn = form.querySelector('button[type="submit"]');
-            const originalText = btn ? btn.textContent : 'Enviar';
+            const storedToken = localStorage.getItem('Yelo_token');
+            const hasAuthToken = storedToken && storedToken !== 'cookie_auth_active';
 
-            const enviarAvaliacao = async (authToken) => {
-                if (btn) { btn.disabled = true; btn.textContent = "Enviando..."; }
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/reviews`, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({ psychologistId, rating: parseInt(rating), comment })
-                    });
-                    if (response.ok) {
-                        showToast("Avaliação enviada com sucesso!", "success");
-                        localStorage.removeItem(draftKey);
-                        const modalReview = document.getElementById('modal-review');
-                        if (modalReview) modalReview.style.display = 'none';
-                        setTimeout(() => window.location.reload(), 1500);
-                    } else {
-                        if (response.status === 409) {
-                            showToast("Você já avaliou este profissional. Não é possível enviar avaliações duplicadas.", "error");
-                        } else if (response.status === 401) {
-                            showToast("Sua sessão expirou. Por favor, autentique-se novamente.", "error");
-                        } else {
-                            const errData = await response.json().catch(() => ({}));
-                            showToast(errData.error || "Erro ao enviar avaliação.", "error");
-                        }
-                    }
-                } catch (error) {
-                    showToast("Erro de conexão.", "error");
-                } finally {
-                    if (btn) { btn.disabled = false; btn.textContent = originalText; }
-                }
-            };
-
-            let token = "cookie_auth_active";
-            if (token === 'cookie_auth_active') {
-                localStorage.removeItem('Yelo_token');
-                token = null;
-            }
-
-            if (!token) {
-                localStorage.setItem(draftKey, JSON.stringify({ rating, comment }));
-                
-                showModernModal('🔒', 'Identificação Necessária', 'Para garantir autenticidade e evitar perfis falsos, confirme sua identidade com o Google.', null, null, 'Cancelar', '<div id="google-btn-container" style="display:flex; justify-content:center; margin-bottom: 20px; min-height: 44px;"></div>');
-        
-                const setupGoogleButton = () => {
-                    const btnContainer = document.getElementById('google-btn-container');
-                    if (!btnContainer || typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
-
-                    try {
-                        google.accounts.id.initialize({
-                            client_id: '283886540808-qj13i35cfagnp9rc6qou1o66mdv3ppkl.apps.googleusercontent.com',
-                            callback: async (response) => {
-                                try {
-                                    if (btnContainer) {
-                                        btnContainer.innerHTML = '<span style="color:#1B4332; font-weight:600; font-size:0.95rem;">Validando identidade...</span>';
-                                    }
-                                    const authRes = await fetch(`${API_BASE_URL}/api/patients/google`, { 
-                                        method: 'POST', 
-                                        headers: { 'Content-Type': 'application/json' }, 
-                                        credentials: 'include',
-                                        body: JSON.stringify({ token: response.credential, isReviewValidation: true }) 
-                                    });
-                                    
-                                    const authData = await authRes.json().catch(() => ({}));
-
-                                    if (authRes.ok && authData.token) {
-                                        const modernOverlay = document.getElementById('modern-modal-overlay') || document.querySelector('div[style*="z-index:999999"]') || document.querySelector('div[style*="z-index: 999999"]');
-                                        if (modernOverlay) modernOverlay.remove();
-                                        
-                                        enviarAvaliacao(authData.token);
-                                    } else { 
-                                        console.error('[Google Auth Error]:', authRes.status, authData);
-                                        showToast(authData.error || "Falha na autenticação.", "error"); 
-                                        if (btnContainer) {
-                                            btnContainer.innerHTML = '';
-                                            google.accounts.id.renderButton(btnContainer, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
-                                        }
-                                    }
-                                } catch (error) { 
-                                    console.error('[Google Auth Connection Error]:', error);
-                                    showToast("Erro ao conectar com o Google.", "error"); 
-                                    if (btnContainer) {
-                                        btnContainer.innerHTML = '';
-                                        google.accounts.id.renderButton(btnContainer, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
-                                    }
-                                }
-                            }
-                        });
-                        google.accounts.id.renderButton(btnContainer, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with' });
-                    } catch (e) {
-                        console.error('[Google GSI Error]:', e);
-                    }
-                };
-
-                if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-                    setupGoogleButton();
-                } else {
-                    let script = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
-                    if (!script) {
-                        script = document.createElement('script');
-                        script.src = 'https://accounts.google.com/gsi/client';
-                        script.async = true;
-                        script.defer = true;
-                        document.head.appendChild(script);
-                    }
-                    script.onload = () => setupGoogleButton();
-                }
-                return;
-            }
-            enviarAvaliacao(token);
+            // Tenta enviar diretamente caso o usuário já esteja autenticado via cookie ou token
+            // Se retornar 401, a função enviarAvaliacao automaticamente abre o promptGoogleValidation
+            await enviarAvaliacao(hasAuthToken ? storedToken : null, rating, comment);
         };
     }
 
