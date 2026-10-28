@@ -152,10 +152,10 @@
             width: 100% !important;
         }
         .modern-fullpost-footer .support-btn {
-            background: #FFF1F2 !important;
-            border: 1px solid #FECDD3 !important;
-            color: #BE123C !important;
-            font-weight: 700 !important;
+            background: #F8FAFC !important;
+            border: 1px solid var(--yelo-border, #E2E8F0) !important;
+            color: var(--yelo-text-secondary, #64748B) !important;
+            font-weight: 600 !important;
             padding: 4px 12px !important;
             font-size: 0.8rem !important;
             min-height: 28px !important;
@@ -166,32 +166,49 @@
             align-items: center !important;
             cursor: pointer !important;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            box-shadow: 0 1px 3px rgba(190, 18, 60, 0.06) !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
         }
         .modern-fullpost-footer .support-btn svg {
-            fill: #E11D48 !important;
-            stroke: #E11D48 !important;
+            fill: none !important;
+            stroke: #64748B !important;
             width: 13px !important;
             height: 13px !important;
+            transition: all 0.2s ease !important;
         }
         .modern-fullpost-footer .support-btn .post-votes-count {
             font-size: 0.82rem !important;
             font-weight: 700 !important;
+            color: inherit !important;
         }
         .modern-fullpost-footer .support-btn .support-label {
             font-size: 0.78rem !important;
             font-weight: 600 !important;
+            color: inherit !important;
+        }
+        .modern-fullpost-footer .support-btn:hover {
+            background: #F1F5F9 !important;
+            border-color: #CBD5E1 !important;
+            color: var(--yelo-text-main, #0F172A) !important;
+            transform: translateY(-1px) scale(1.02) !important;
+        }
+        .modern-fullpost-footer .support-btn:hover svg {
+            stroke: #0F172A !important;
         }
         .modern-fullpost-footer .support-btn.supported {
+            background: #FFF1F2 !important;
+            border-color: #FECDD3 !important;
+            color: #BE123C !important;
+            box-shadow: 0 2px 6px rgba(225, 29, 72, 0.12) !important;
+        }
+        .modern-fullpost-footer .support-btn.supported svg {
+            fill: #E11D48 !important;
+            stroke: #E11D48 !important;
+            animation: heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .modern-fullpost-footer .support-btn.supported:hover {
             background: #FFE4E6 !important;
             border-color: #FDA4AF !important;
             color: #9F1239 !important;
-            box-shadow: 0 2px 6px rgba(225, 29, 72, 0.12) !important;
-        }
-        .modern-fullpost-footer .support-btn:hover {
-            background: #FFE4E6 !important;
-            border-color: #FDA4AF !important;
-            transform: translateY(-1px) scale(1.02) !important;
         }
 
         /* Ações secundárias do comentário: Denunciar sempre na extremidade direita */

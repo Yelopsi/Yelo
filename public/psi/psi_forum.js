@@ -1023,7 +1023,12 @@
             const supportBtn = card.querySelector('.support-btn');
             if (supportBtn) {
                 supportBtn.dataset.postId = post.id;
-                if (post.supportedByMe) supportBtn.classList.add('supported');
+                const isSupported = post.supportedByMe === true || post.supportedByMe === 'true' || post.supportedByMe === 't' || post.supportedByMe === 1;
+                if (isSupported) {
+                    supportBtn.classList.add('supported');
+                } else {
+                    supportBtn.classList.remove('supported');
+                }
                 supportBtn.onclick = (e) => {
                     e.stopPropagation();
                     toggleSupport(post.id, supportBtn);
@@ -1160,7 +1165,12 @@
 
                 postEl.querySelectorAll('.support-btn').forEach(supportBtn => {
                     supportBtn.dataset.postId = post.id;
-                    if (post.supportedByMe) supportBtn.classList.add('supported');
+                    const isSupported = post.supportedByMe === true || post.supportedByMe === 'true' || post.supportedByMe === 't' || post.supportedByMe === 1;
+                    if (isSupported) {
+                        supportBtn.classList.add('supported');
+                    } else {
+                        supportBtn.classList.remove('supported');
+                    }
                     supportBtn.onclick = (e) => {
                         e.stopPropagation();
                         toggleSupport(post.id, supportBtn);

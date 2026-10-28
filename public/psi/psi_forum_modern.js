@@ -244,7 +244,7 @@
 
                 <div class="modern-card-footer">
                     <div class="modern-action-group-left">
-                        <button type="button" class="modern-pill-btn support-btn ${post.supportedByMe ? 'supported' : ''}" data-post-id="${post.id}" title="Apoiar este post">
+                        <button type="button" class="modern-pill-btn support-btn ${(post.supportedByMe === true || post.supportedByMe === 'true' || post.supportedByMe === 't' || post.supportedByMe === 1) ? 'supported' : ''}" data-post-id="${post.id}" title="Apoiar este post">
                             ${HEART_ICON_SVG}
                             <span class="post-votes-count">${post.votes || 0}</span>
                         </button>
@@ -367,7 +367,7 @@
                                 <h1 class="modern-fullpost-title">${sanitizeHTML(post.title)}</h1>
                                 <div class="modern-fullpost-body">${window.formatTextContent ? window.formatTextContent(post.content) : sanitizeHTML(post.content).replace(/\n/g, '<br>')}</div>
                                 <div class="modern-fullpost-footer">
-                                    <button type="button" class="modern-pill-btn support-btn ${post.supportedByMe ? 'supported' : ''}" id="fullpost-support-btn" title="Gostei">
+                                    <button type="button" class="modern-pill-btn support-btn ${(post.supportedByMe === true || post.supportedByMe === 'true' || post.supportedByMe === 't' || post.supportedByMe === 1) ? 'supported' : ''}" id="fullpost-support-btn" title="Gostei">
                                         ${HEART_ICON_SVG}
                                         <span class="post-votes-count">${post.votes || 0}</span>
                                         <span class="support-label">gostei</span>

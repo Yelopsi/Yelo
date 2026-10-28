@@ -112,7 +112,7 @@ exports.getAllPosts = async (req, res) => {
                 authorPhoto: post.isAnonymous ? null : post.Psychologist?.fotoUrl,
                 authorSlug: authorSlug,
                 commentCount: parseInt(post.dataValues.commentCount, 10) || 0,
-                supportedByMe: post.dataValues.supportedByMe,
+                supportedByMe: post.dataValues.supportedByMe === true || post.dataValues.supportedByMe === 'true' || post.dataValues.supportedByMe === 't' || post.dataValues.supportedByMe === 1,
                 isMine: post.dataValues.isMine
             };
         });
