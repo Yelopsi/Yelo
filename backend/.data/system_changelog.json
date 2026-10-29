@@ -1,5 +1,35 @@
 [
   {
+    "id": "change-git-8ecfb285",
+    "date": "2026-10-28T23:08:36.000Z",
+    "commit": "8ecfb285",
+    "author": "Anderson",
+    "title": "Correção: Corrigir erro value too long ip_registro e evitar inicializacao duplicada do google gsi (auth)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir erro value too long ip_registro e evitar inicializacao duplicada do google gsi",
+    "description": "Commit registrado no repositório: \"fix(auth): corrigir erro value too long ip_registro e evitar inicializacao duplicada do google gsi\". Arquivos modificados: backend/.data/system_changelog.json, backend/config/dbFixes.js, backend/controllers/authController.js, backend/controllers/patientController.js, backend/data/system_changelog.json (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8ecfb285"
+    },
+    "after": {
+      "nova_versao": "corrigir erro value too long ip_registro e evitar inicializacao duplicada do google gsi"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/config/dbFixes.js",
+      "backend/controllers/authController.js",
+      "backend/controllers/patientController.js",
+      "backend/data/system_changelog.json",
+      "backend/utils/fixController.js",
+      "public/js/psi_perfil_publico.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-e8d34529",
     "date": "2026-10-28T22:51:33.000Z",
     "commit": "e8d34529",

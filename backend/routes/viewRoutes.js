@@ -406,13 +406,22 @@ router.get('/:slug', async (req, res, next) => {
             const averageRating = dbReviews.length > 0 ? (totalRating / dbReviews.length).toFixed(1) : 0;
             
             const formattedReviews = dbReviews.map(r => {
+                const rawComment = (r.comment === 'null' || r.comment === null) ? '' : (r.comment || '').trim();
                 return {
                     id: r.id,
                     rating: r.rating,
-                    comment: (r.comment === 'null' || r.comment === null) ? '' : r.comment,
+                    comment: rawComment,
                     patientName: formatPatientName(r.patient?.nome),
                     createdAt: r.createdAt
                 };
+            });
+
+            // Avaliações com texto primeiro; avaliações sem texto por último
+            formattedReviews.sort((a, b) => {
+                const aHasText = a.comment && a.comment.length > 0 ? 1 : 0;
+                const bHasText = b.comment && b.comment.length > 0 ? 1 : 0;
+                if (aHasText !== bHasText) return bHasText - aHasText;
+                return new Date(b.createdAt) - new Date(a.createdAt);
             });
             // --- FIM: Buscar Avaliações para SSR e SEO ---
 

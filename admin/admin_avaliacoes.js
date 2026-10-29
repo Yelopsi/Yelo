@@ -129,7 +129,7 @@ window.initializePage = async function() {
         if (!perfisTbody) return;
 
         if (reviews.length === 0) {
-            perfisTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #666;">Nenhuma avaliação encontrada nos perfis.</td></tr>';
+            perfisTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #666;">Nenhuma avaliação encontrada nos perfis.</td></tr>';
             return;
         }
 
@@ -152,6 +152,9 @@ window.initializePage = async function() {
                 <td data-label="Nota" style="text-align: center; font-size: 1.1rem;" title="Nota ${r.rating}">${starsHtml}</td>
                 <td data-label="Comentário" style="max-width: 300px; white-space: normal; overflow-wrap: break-word;">${comment}</td>
                 <td data-label="Status" style="text-align: center;">${statusHtml}</td>
+                <td data-label="Ações" style="text-align: center;">
+                    <button class="btn-tabela btn-tabela-perigo" onclick="window.deleteReview(${r.id})" style="padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; cursor: pointer;">Excluir</button>
+                </td>
             </tr>`;
         }).join('');
     }
@@ -178,7 +181,7 @@ window.initializePage = async function() {
         tbody.innerHTML = '';
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhuma avaliação encontrada.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Nenhuma avaliação encontrada.</td></tr>`;
             return;
         }
 
@@ -206,13 +209,54 @@ window.initializePage = async function() {
                     ${review.comment ? `"${review.comment}"` : '<em style="color:#aaa;">Sem comentário</em>'}
                 </td>
                 <td data-label="Data">${dataFormatada}</td>
-                <td>
+                <td data-label="Prova Social">
                     <button class="btn-tabela ${btnClass}" onclick="toggleTestimonial(${review.id}, ${!review.isTestimonial})">${btnTestimonialText}</button>
+                </td>
+                <td data-label="Ações" style="text-align: center;">
+                    <button class="btn-tabela btn-tabela-perigo" onclick="deletePlatformReview(${review.id})" style="padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; cursor: pointer;">Excluir</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
+
+    window.deleteReview = async function(id) {
+        if (!confirm('Tem certeza que deseja excluir esta avaliação do perfil do profissional? Esta ação não pode ser desfeita.')) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/reviews/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                window.showToast('Avaliação excluída com sucesso!', 'success');
+                loadPlatformReviews();
+            } else {
+                const data = await res.json().catch(() => ({}));
+                window.showToast(data.error || 'Erro ao excluir avaliação.', 'error');
+            }
+        } catch(e) {
+            window.showToast('Erro de conexão ao excluir avaliação.', 'error');
+        }
+    };
+
+    window.deletePlatformReview = async function(id) {
+        if (!confirm('Tem certeza que deseja excluir esta avaliação da plataforma?')) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/platform-reviews/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                window.showToast('Avaliação da plataforma excluída com sucesso!', 'success');
+                loadPlatformReviews();
+            } else {
+                const data = await res.json().catch(() => ({}));
+                window.showToast(data.error || 'Erro ao excluir avaliação.', 'error');
+            }
+        } catch(e) {
+            window.showToast('Erro de conexão ao excluir avaliação.', 'error');
+        }
+    };
 
     window.toggleTestimonial = async function(id, isTestimonial) {
         try {

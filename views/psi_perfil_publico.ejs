@@ -59,6 +59,18 @@
           Array.isArray(googleData.reviews) && 
           googleData.reviews.length > 0;
       const googleReviews = hasGoogleReviews ? googleData.reviews : [];
+      const sortedReviews = (reviews || []).slice().sort((a, b) => {
+          const aHasText = a.comment && a.comment.trim().length > 0 ? 1 : 0;
+          const bHasText = b.comment && b.comment.trim().length > 0 ? 1 : 0;
+          if (aHasText !== bHasText) return bHasText - aHasText;
+          return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+      const sortedGoogleReviews = (googleReviews || []).slice().sort((a, b) => {
+          const aHasText = a.text && a.text.trim().length > 0 ? 1 : 0;
+          const bHasText = b.text && b.text.trim().length > 0 ? 1 : 0;
+          if (aHasText !== bHasText) return bHasText - aHasText;
+          return 0;
+      });
       const googleRating = hasGoogleReviews && googleData.rating ? Number(googleData.rating).toFixed(1) : '5.0';
       const googleTotalCount = hasGoogleReviews ? (googleData.user_ratings_total || googleReviews.length) : 0;
       const totalCombinedReviewsCount = reviewCount + (hasGoogleReviews ? googleReviews.length : 0);
@@ -793,8 +805,8 @@
                                 <p style="color: #666; font-style: italic; width: 100%;">Este profissional ingressou recentemente. Se você já conhece o trabalho, seja o primeiro a deixar um depoimento!</p>
                             <% } else { %>
                                 <% 
-                                    // Avaliações da Yelo
-                                    reviews.slice(0, 4).forEach(review => {
+                                    // Avaliações da Yelo (com texto primeiro)
+                                    sortedReviews.slice(0, 4).forEach(review => {
                                         let reviewStars = '';
                                         for (let i = 1; i <= 5; i++) {
                                             reviewStars += `<span style="color: ${i <= review.rating ? '#f59e0b' : '#e5e7eb'};">★</span>`;
@@ -805,14 +817,18 @@
                                         <h4 style="margin: 0; font-family: var(--font-principal); color: #333; font-size: 1rem;"><%= review.patientName %></h4>
                                         <div><%- reviewStars %></div>
                                     </div>
-                                    <p style="margin: 0; color: #555; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"<%= review.comment %>"</p>
+                                    <% if (review.comment && review.comment.trim()) { %>
+                                        <p style="margin: 0; color: #555; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"<%= review.comment.trim() %>"</p>
+                                    <% } else { %>
+                                        <p style="margin: 0; color: #888; font-style: italic; font-size: 0.85rem; line-height: 1.4;">Avaliação sem comentário por escrito</p>
+                                    <% } %>
                                 </article>
                                 <% }); %>
 
                                 <% 
                                     // Avaliações do Google Meu Negócio
                                     if (hasGoogleReviews) {
-                                        googleReviews.slice(0, 4).forEach(gRev => {
+                                        sortedGoogleReviews.slice(0, 4).forEach(gRev => {
                                 %>
                                 <article class="review-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; width: 85vw; max-width: 350px; flex-shrink: 0; scroll-snap-align: start; cursor: pointer; transition: background 0.2s; box-sizing: border-box;" onmouseover="this.style.background = '#f0fdf4'" onmouseout="this.style.background = '#f8fafc'" onclick="document.getElementById('all-reviews-view').style.display='block'; document.body.style.overflow='hidden';">
                                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px;">
@@ -841,11 +857,15 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <p style="margin: 0; color: #475569; font-style: italic; font-size: 0.92rem; line-height: 1.5;">"<%= gRev.text %>"</p>
+                                    <% if (gRev.text && gRev.text.trim()) { %>
+                                        <p style="margin: 0; color: #475569; font-style: italic; font-size: 0.92rem; line-height: 1.5;">"<%= gRev.text %>"</p>
+                                    <% } else { %>
+                                        <p style="margin: 0; color: #888; font-style: italic; font-size: 0.85rem; line-height: 1.4;">Avaliação sem comentário por escrito</p>
+                                    <% } %>
                                 </article>
                                 <% 
                                         });
-                                    } 
+                                    }  
                                 %>
 
                                 <% if (totalCombinedReviewsCount > 5) { %>
@@ -1101,6 +1121,10 @@
                 .reviews-modal-sidebar { display: block; }
                 .reviews-modal-mobile-cta-wrapper { display: none !important; }
             }
+            @media (max-width: 992px) {
+                .reviews-modal-layout { padding: 15px 12px 0 12px; }
+                .reviews-modal-list { padding-bottom: calc(140px + env(safe-area-inset-bottom, 24px)); }
+            }
         </style>
 
         <div class="reviews-modal-layout">
@@ -1132,7 +1156,7 @@
                     <% } %>
                 </div>
 
-                <% googleReviews.forEach(gRev => { %>
+                <% sortedGoogleReviews.forEach(gRev => { %>
                 <div style="background: #fff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); box-sizing: border-box; width: 100%;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 10px;">
                         <div style="display: flex; align-items: center; gap: 12px;">
@@ -1160,13 +1184,17 @@
                             </span>
                         </div>
                     </div>
-                    <p style="margin: 0; color: #475569; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"<%= gRev.text %>"</p>
+                    <% if (gRev.text && gRev.text.trim()) { %>
+                        <p style="margin: 0; color: #475569; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"<%= gRev.text %>"</p>
+                    <% } else { %>
+                        <p style="margin: 0; color: #888; font-style: italic; font-size: 0.85rem; line-height: 1.4;">Avaliação sem comentário por escrito</p>
+                    <% } %>
                 </div>
                 <% }); %>
                 <% } %>
 
                 <% if (reviewCount > 0) { %>
-                    <% reviews.forEach(review => {
+                    <% sortedReviews.forEach(review => {
                         let reviewStars = '';
                         for (let i = 1; i <= 5; i++) {
                             reviewStars += `<span style="color: ${i <= review.rating ? '#f59e0b' : '#e5e7eb'};">★</span>`;
@@ -1177,10 +1205,17 @@
                             <h4 style="margin: 0; font-family: var(--font-principal); color: #333; font-size: 1rem;"><%= review.patientName %></h4>
                             <div><%- reviewStars %></div>
                         </div>
-                        <p style="margin: 0; color: #555; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"<%= review.comment %>"</p>
+                        <% if (review.comment && review.comment.trim()) { %>
+                            <p style="margin: 0; color: #555; font-style: italic; font-size: 0.95rem; line-height: 1.5;">"<%= review.comment.trim() %>"</p>
+                        <% } else { %>
+                            <p style="margin: 0; color: #888; font-style: italic; font-size: 0.85rem; line-height: 1.4;">Avaliação sem comentário por escrito</p>
+                        <% } %>
                     </div>
                     <% }); %>
                 <% } %>
+
+                <!-- Espaçamento extra no mobile para evitar sobreposição da bottom nav / CTA fixo -->
+                <div class="reviews-bottom-spacer" style="height: calc(120px + env(safe-area-inset-bottom, 24px)); width: 100%; flex-shrink: 0;" aria-hidden="true"></div>
             </div>
 
             <!-- DESKTOP SIDEBAR -->

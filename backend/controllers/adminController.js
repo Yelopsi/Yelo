@@ -424,6 +424,40 @@ exports.togglePlatformReviewTestimonial = async (req, res) => {
 };
 
 /**
+ * Rota: DELETE /api/admin/reviews/:id
+ * Descrição: Exclui permanentemente uma avaliação de perfil do psicólogo.
+ */
+exports.deleteReview = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const review = await db.Review.findByPk(id);
+        if (!review) {
+            return res.status(404).json({ error: 'Avaliação não encontrada.' });
+        }
+        await review.destroy();
+        res.status(200).json({ message: 'Avaliação excluída com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao excluir avaliação:', error);
+        res.status(500).json({ error: 'Erro interno ao excluir avaliação.' });
+    }
+};
+
+/**
+ * Rota: DELETE /api/admin/platform-reviews/:id
+ * Descrição: Exclui uma avaliação de NPS da plataforma.
+ */
+exports.deletePlatformReview = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await db.sequelize.query(`DELETE FROM "PlatformReviews" WHERE id = :id`, { replacements: { id } });
+        res.status(200).json({ message: 'Avaliação da plataforma excluída com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao excluir avaliação da plataforma:', error);
+        res.status(500).json({ error: 'Erro interno ao excluir avaliação.' });
+    }
+};
+
+/**
  * Rota: GET /api/admin/analytics/ranking (NOVA)
  * Descrição: Retorna o ranking de performance dos psicólogos
  */
