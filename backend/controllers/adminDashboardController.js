@@ -1508,14 +1508,20 @@ exports.getFounderMetrics = async (req, res) => {
             where: {
                 is_exempt: false,
                 deletedAt: null,
-                [Op.or]: [
-                    { subscribedAt: { [Op.not]: null } },
-                    { subscriptionId: { [Op.ne]: null } },
-                    { subscription_payments_count: { [Op.gt]: 0 } }
-                ],
-                [Op.or]: [
-                    { canceledAt: { [Op.between]: [thirtyDaysAgo, now] } },
-                    { status: 'inactive', updatedAt: { [Op.between]: [thirtyDaysAgo, now] } }
+                [Op.and]: [
+                    {
+                        [Op.or]: [
+                            { subscribedAt: { [Op.not]: null } },
+                            { subscriptionId: { [Op.ne]: null } },
+                            { subscription_payments_count: { [Op.gt]: 0 } }
+                        ]
+                    },
+                    {
+                        [Op.or]: [
+                            { canceledAt: { [Op.between]: [thirtyDaysAgo, now] } },
+                            { status: 'inactive', updatedAt: { [Op.between]: [thirtyDaysAgo, now] } }
+                        ]
+                    }
                 ]
             }
         });
@@ -1526,14 +1532,20 @@ exports.getFounderMetrics = async (req, res) => {
             where: {
                 is_exempt: false,
                 deletedAt: null,
-                [Op.or]: [
-                    { subscribedAt: { [Op.not]: null } },
-                    { subscriptionId: { [Op.ne]: null } },
-                    { subscription_payments_count: { [Op.gt]: 0 } }
-                ],
-                [Op.or]: [
-                    { canceledAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } },
-                    { status: 'inactive', updatedAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } }
+                [Op.and]: [
+                    {
+                        [Op.or]: [
+                            { subscribedAt: { [Op.not]: null } },
+                            { subscriptionId: { [Op.ne]: null } },
+                            { subscription_payments_count: { [Op.gt]: 0 } }
+                        ]
+                    },
+                    {
+                        [Op.or]: [
+                            { canceledAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } },
+                            { status: 'inactive', updatedAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } }
+                        ]
+                    }
                 ]
             }
         });

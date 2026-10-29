@@ -213,6 +213,7 @@ const applyDatabaseFixes = async (db, sequelize) => {
             `ALTER TABLE "MatchEvents" ADD COLUMN IF NOT EXISTS "source" VARCHAR(255);`,
             `CREATE TABLE IF NOT EXISTS "AdminPushSubscriptions" ( "id" SERIAL PRIMARY KEY, "endpoint" TEXT UNIQUE NOT NULL, "keys" JSONB NOT NULL, "adminId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `CREATE TABLE IF NOT EXISTS "SystemSettings" ( "id" SERIAL PRIMARY KEY, "maintenance_mode" BOOLEAN DEFAULT FALSE, "allow_registrations" BOOLEAN DEFAULT TRUE, "price_Essencial" FLOAT, "price_Clínico" FLOAT, "price_sol" FLOAT, "whatsapp_support" VARCHAR(255), "email_support" VARCHAR(255), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "system_changelog_data" TEXT;`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "telefone" VARCHAR(255);`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(255);`,
             `ALTER TABLE "WaitingLists" ADD COLUMN IF NOT EXISTS "utm_medium" VARCHAR(255);`,

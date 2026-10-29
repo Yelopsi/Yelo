@@ -1,5 +1,33 @@
 [
   {
+    "id": "change-git-21d03535",
+    "date": "2026-10-29T01:14:30.000Z",
+    "commit": "21d03535",
+    "author": "Anderson",
+    "title": "Correção: Blindagem de casing e integridade de status no banco para cancelamento e supressao de cobranca (billing)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "blindagem de casing e integridade de status no banco para cancelamento e supressao de cobranca",
+    "description": "Commit registrado no repositório: \"fix(billing): blindagem de casing e integridade de status no banco para cancelamento e supressao de cobranca\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/adminUsersController.js, backend/data/system_changelog.json, backend/jobs/cronScheduler.js, backend/services/paymentStateService.js (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #21d03535"
+    },
+    "after": {
+      "nova_versao": "blindagem de casing e integridade de status no banco para cancelamento e supressao de cobranca"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminUsersController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/cronScheduler.js",
+      "backend/services/paymentStateService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-3914fa0d",
     "date": "2026-10-29T01:02:28.000Z",
     "commit": "3914fa0d",

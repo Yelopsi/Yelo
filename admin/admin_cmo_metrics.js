@@ -496,6 +496,9 @@ function initGrowthSimulator(data) {
                 inputGatewayRate.value = formatBRPercent((m.projectedGatewayRate.value * 10000).toFixed(0));
             }
         }
+        if (!inputGatewayRate.value) {
+            inputGatewayRate.value = '2,65%';
+        }
         const inputManualCacMeta = document.getElementById('sim-manual-cac-meta');
         const inputManualMetaHistSpend = document.getElementById('sim-manual-meta-hist-spend');
 
@@ -758,7 +761,7 @@ function initGrowthSimulator(data) {
 
         const fixedOPEX = getNumericSimInput(inputFixedOpex, false);
         const taxRate = getNumericSimInput(inputTaxRate, true);
-        const gatewayRate = getNumericSimInput(inputGatewayRate, true);
+        const gatewayRate = getNumericSimInput(inputGatewayRate, true) !== null ? getNumericSimInput(inputGatewayRate, true) : 0.0265;
         const varCostRate = getNumericSimInput(inputVarCostRate, true);
 
         // 1. BASE INICIAL VEM DA PRODUÇÃO ATUAL (Motor Final)
