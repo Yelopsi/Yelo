@@ -788,7 +788,7 @@ function initGrowthSimulator(data) {
         const trialConversionObj = data.simulator?.trialConv;
         const trialConversionRate = getSimValue(trialConversionObj);
         const apiCacMeta = getSimValue(data.simulator?.cac);
-        const cplGoogle = getSimValue(data.simulator?.cpl);
+        const cplGoogle = getSimValue(data.simulator?.cpl) || 5.00;
         const monthlyChurn = getSimValue(data.simulator?.churn);
         const apiHistMetaMonthlySpend = getSimValue(data.historical?.meta?.monthly_spend_avg);
 

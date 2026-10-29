@@ -53,6 +53,31 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 const data = await googleAdsService.getCampaignInsights(dStart, dEnd);
                 return { available: true, data };
             } catch (err) {
+                try {
+                    const { Op } = require('sequelize');
+                    const manualRecords = await db.ManualAdMetric.findAll({
+                        where: {
+                            platform: 'google',
+                            dateStart: { [Op.lte]: dEnd },
+                            dateEnd: { [Op.gte]: dStart }
+                        }
+                    });
+                    if (manualRecords && manualRecords.length > 0) {
+                        const totalSpend = manualRecords.reduce((acc, r) => acc + (parseFloat(r.spend) || 0), 0);
+                        const totalClicks = manualRecords.reduce((acc, r) => acc + (parseInt(r.clicks) || 0), 0);
+                        const totalConversions = manualRecords.reduce((acc, r) => acc + (parseInt(r.conversions) || 0), 0);
+                        return {
+                            available: true,
+                            data: [{
+                                campaign_name: 'Yelo MVP - Busca SP',
+                                spend: totalSpend,
+                                clicks: totalClicks,
+                                conversions: totalConversions,
+                                isManual: true
+                            }]
+                        };
+                    }
+                } catch(mErr) {}
                 return { available: false, errorCode: err.message, data: null };
             }
         };
@@ -1059,9 +1084,26 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             const googleWppClicksBaseline = parseInt(googleMetricsBaselineRes.google_wpp_clicks || 0);
             
             if (googleSpendBaseline === 'MISSING_INPUT') {
-                simGoogleCpl = null;
-                simGoogleCplType = 'MISSING_INPUT';
-                simGoogleCplSource = 'GOOGLE_ADS_API';
+                try {
+                    const latestManualGoogle = await db.ManualAdMetric.findOne({
+                        where: { platform: 'google' },
+                        order: [['dateEnd', 'DESC']]
+                    });
+                    if (latestManualGoogle && parseFloat(latestManualGoogle.spend) > 0 && (parseInt(latestManualGoogle.clicks) > 0 || googleWppClicksBaseline > 0)) {
+                        const clicks = parseInt(latestManualGoogle.clicks) || googleWppClicksBaseline || 1;
+                        simGoogleCpl = parseFloat(latestManualGoogle.spend) / clicks;
+                        simGoogleCplType = 'DERIVED_FROM_OBSERVED';
+                        simGoogleCplSource = 'MANUAL_AD_METRICS_FALLBACK';
+                    } else {
+                        simGoogleCpl = 5.00;
+                        simGoogleCplType = 'CONFIG';
+                        simGoogleCplSource = 'ESTIMATED_BENCHMARK_FALLBACK';
+                    }
+                } catch (e) {
+                    simGoogleCpl = 5.00;
+                    simGoogleCplType = 'CONFIG';
+                    simGoogleCplSource = 'ESTIMATED_BENCHMARK_FALLBACK';
+                }
             } else if (googleSpendBaseline > 0 && googleWppClicksBaseline > 0) {
                 simGoogleCpl = googleSpendBaseline / googleWppClicksBaseline;
             } else if (googleSpendBaseline > 0 && googleWppClicksBaseline === 0) {

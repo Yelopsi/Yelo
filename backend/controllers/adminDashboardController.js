@@ -199,7 +199,7 @@ exports.getDashboardStats = async (req, res) => {
 
         console.timeEnd('⏱️ Dashboard Stats Load');
         res.status(200).json({
-            mrr: mrr.toFixed(2),
+            mrr: parseFloat(mrr.toFixed(2)),
             newPatients30d: parseInt(patientStats?.new30d || 0, 10),
             newPsis30d: parseInt(psychologistStats?.new30d || 0, 10),
             questToday: parseInt(demandStats?.today || 0, 10),

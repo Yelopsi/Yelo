@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-5f4dd09c",
+    "date": "2026-10-29T22:21:48.000Z",
+    "commit": "5f4dd09c",
+    "author": "Anderson",
+    "title": "Correção: Corrigir calculo pos-trial e desbloquear simulador cmo (cmo & dashboard)",
+    "category": "Planos & Trial",
+    "badgeColor": "#f59e0b",
+    "status": "Em Produção",
+    "summary": "corrigir calculo pos-trial e desbloquear simulador cmo",
+    "description": "Commit registrado no repositório: \"fix(cmo & dashboard): corrigir calculo pos-trial e desbloquear simulador cmo\". Arquivos modificados: admin/admin_cmo_metrics.html, admin/admin_cmo_metrics.js, backend/.data/system_changelog.json, backend/config/dbFixes.js, backend/controllers/adminDashboardController.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5f4dd09c"
+    },
+    "after": {
+      "nova_versao": "corrigir calculo pos-trial e desbloquear simulador cmo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.html",
+      "admin/admin_cmo_metrics.js",
+      "backend/.data/system_changelog.json",
+      "backend/config/dbFixes.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-21d03535",
     "date": "2026-10-29T01:14:30.000Z",
     "commit": "21d03535",

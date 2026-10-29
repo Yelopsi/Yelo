@@ -120,7 +120,7 @@ window.initializePage = function () {
                 // MRR (espelhando a lógica e valor do admin_visao_geral)
                 const mrrEl = document.getElementById('crm-mrr');
                 if (mrrEl) {
-                    mrrEl.innerText = (stats.mrr || 0).toLocaleString('pt-BR', {
+                    mrrEl.innerText = Number(stats.mrr || 0).toLocaleString('pt-BR', {
                         style: 'currency',
                         currency: 'BRL'
                     });
