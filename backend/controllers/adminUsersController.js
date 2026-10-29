@@ -1,6 +1,7 @@
 const db = require('../models');
 const { Op } = require('sequelize');
 const gamificationService = require('../services/gamificationService');
+const PaymentStateService = require('../services/paymentStateService');
 
 /**
  * Rota: GET /api/admin/verifications (NOVA)
@@ -794,6 +795,15 @@ exports.updatePsychologistStatus = async (req, res) => {
         
         if (finalStatus === 'inactive') {
             updatePayload.planExpiresAt = new Date(Date.now() - 24 * 60 * 60 * 1000); // Expira a validade
+            updatePayload.cancelAtPeriodEnd = true;
+            if (!psychologist.canceledAt) {
+                updatePayload.canceledAt = new Date();
+            }
+            if (psychologist.subscriptionId) {
+                PaymentStateService.cancelAndPurgeSubscription(psychologist.subscriptionId, {
+                    psychologistId: psychologist.id
+                }).catch(err => console.error('Erro ao purgar assinatura do psicólogo inativado:', err));
+            }
         }
         
         await psychologist.update(updatePayload);
@@ -882,6 +892,12 @@ exports.deletePsychologist = async (req, res) => {
         const psychologist = await db.Psychologist.findByPk(id);
         if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
         
+        if (psychologist.subscriptionId) {
+            PaymentStateService.cancelAndPurgeSubscription(psychologist.subscriptionId, {
+                psychologistId: psychologist.id
+            }).catch(err => console.error('Erro ao purgar assinatura do psicólogo excluído:', err));
+        }
+
         // Libera campos únicos (CRP, CPF, e-mail e slug) para não travar novos cadastros com os mesmos documentos
         await psychologist.update({
             crp: null,
@@ -903,6 +919,13 @@ exports.forceDeletePsychologist = async (req, res) => {
         const { id } = req.params;
         const psychologist = await db.Psychologist.findByPk(id, { paranoid: false });
         if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+
+        if (psychologist.subscriptionId) {
+            PaymentStateService.cancelAndPurgeSubscription(psychologist.subscriptionId, {
+                psychologistId: psychologist.id
+            }).catch(err => console.error('Erro ao purgar assinatura do psicólogo excluído:', err));
+        }
+
         await psychologist.destroy({ force: true });
         res.status(200).json({ message: 'Psicólogo excluído permanentemente com sucesso. O e-mail agora está liberado.' });
     } catch (error) {
@@ -1424,7 +1447,11 @@ exports.getPendingActions = async (req, res) => {
                 let reasonText = 'Ciclo da assinatura finalizado';
                 let lastDueDateStr = '';
 
-                if (lastPay) {
+                // Se o psicólogo solicitou cancelamento ou teve estorno, é cancelamento voluntário e NUNCA falha de cartão/PIX
+                if (p.cancelAtPeriodEnd || p.canceledAt || (lastPay && lastPay.status === 'REFUNDED')) {
+                    churnSubType = 'voluntary_refund';
+                    reasonText = 'Cancelamento voluntário / Encerramento solicitado';
+                } else if (lastPay) {
                     if (lastPay.dueDate) {
                         lastDueDateStr = new Date(lastPay.dueDate).toLocaleDateString('pt-BR');
                     }
@@ -1434,16 +1461,10 @@ exports.getPendingActions = async (req, res) => {
                     } else if (lastPay.status === 'OVERDUE' && lastPay.billingType === 'PIX') {
                         churnSubType = 'pix_expired';
                         reasonText = `PIX de renovação expirou sem pagamento (${lastDueDateStr || 'recente'})`;
-                    } else if (lastPay.status === 'REFUNDED' || p.canceledAt) {
-                        churnSubType = 'voluntary_refund';
-                        reasonText = 'Cancelamento voluntário / Estorno recente';
                     } else {
                         churnSubType = 'expired_cycle';
                         reasonText = `Ciclo da assinatura encerrou em ${lastDueDateStr || 'recente'}`;
                     }
-                } else if (p.canceledAt) {
-                    churnSubType = 'voluntary_refund';
-                    reasonText = 'Cancelamento voluntário recente';
                 }
 
                 pendingList.push({

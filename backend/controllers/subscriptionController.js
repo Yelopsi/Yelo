@@ -1,6 +1,7 @@
 const db = require('../models');
 const bcrypt = require('bcryptjs');
 const { sendSubscriptionCancelledEmail } = require('../services/emailService');
+const PaymentStateService = require('../services/paymentStateService');
 
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
 if (process.env.ASAAS_API_KEY && process.env.ASAAS_API_KEY.includes('prod_')) {
@@ -48,9 +49,8 @@ exports.deletePsychologistAccount = async (req, res) => {
         // --- PONTO CRÍTICO: CANCELAMENTO NO ASAAS ---
         if (psychologist.subscriptionId) {
             try {
-                await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.subscriptionId}`, {
-                    method: 'DELETE',
-                    headers: { 'access_token': ASAAS_API_KEY }
+                await PaymentStateService.cancelAndPurgeSubscription(psychologist.subscriptionId, {
+                    psychologistId: psychologist.id
                 });
             } catch (asaasError) {
                 // Log error but continue deletion
@@ -120,65 +120,12 @@ exports.cancelSubscription = async (req, res) => {
              return res.status(200).json({ message: 'Assinatura cancelada localmente (Vínculo de pagamento não encontrado).' });
         }
 
-        // 1. Busca dados da assinatura no Asaas para verificar existência
-        const subResponse = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
-            headers: { 'access_token': ASAAS_API_KEY }
+        // Purgar faturas pendentes, deletar assinatura no Asaas e desativar notificações
+        await PaymentStateService.cancelAndPurgeSubscription(subId, {
+            psychologistId: psychologist.id
         });
-        const subText = await subResponse.text();
-        const subData = subText ? JSON.parse(subText) : {};
 
-        if (!subData.id) {
-             // Se não achou no Asaas, assume cancelamento manual local e limpa faturas abertas locais
-             await db.Payment.update({ status: 'CANCELED' }, {
-                 where: {
-                     psychologistId: psychologist.id,
-                     status: ['PENDING', 'OVERDUE']
-                 }
-             }).catch(() => {});
-             await psychologist.update({ 
-                  cancelAtPeriodEnd: true,
-                  canceledAt: new Date()
-              });
-             return res.json({ message: 'Assinatura cancelada localmente (Não encontrada no provedor).' });
-        }
-
-        // 2. ATUALIZA O ASAAS
-        // Remove faturas PENDING e OVERDUE já geradas para essa assinatura no Asaas
-        // para que o Asaas não envie e-mails de cobrança, SMS ou lembretes indevidos após o cancelamento
-        try {
-            const [pendingRes, overdueRes] = await Promise.all([
-                fetch(`${ASAAS_API_URL}/subscriptions/${subId}/payments?status=PENDING`, {
-                    headers: { 'access_token': ASAAS_API_KEY }
-                }),
-                fetch(`${ASAAS_API_URL}/subscriptions/${subId}/payments?status=OVERDUE`, {
-                    headers: { 'access_token': ASAAS_API_KEY }
-                })
-            ]);
-            const pendingData = await pendingRes.json().catch(() => ({ data: [] }));
-            const overdueData = await overdueRes.json().catch(() => ({ data: [] }));
-            const openPayments = [
-                ...(pendingData.data || []),
-                ...(overdueData.data || [])
-            ];
-            for (const p of openPayments) {
-                await fetch(`${ASAAS_API_URL}/payments/${p.id}`, {
-                    method: 'DELETE',
-                    headers: { 'access_token': ASAAS_API_KEY }
-                }).catch(() => {});
-                await db.Payment.update({ status: 'CANCELED' }, { where: { id: p.id } }).catch(() => {});
-            }
-        } catch (pErr) {
-            console.error('[ASAAS] Erro ao limpar faturas pendentes da assinatura cancelada:', pErr);
-        }
-
-        // Deleta a assinatura imediatamente no Asaas para cessar o ciclo
-        await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
-            method: 'DELETE',
-            headers: { 'access_token': ASAAS_API_KEY }
-        }).catch(() => {});
-
-        // 3. ATUALIZA O BANCO LOCAL
-        // Garante que faturas em aberto do psicólogo no banco local sejam marcadas como CANCELED
+        // ATUALIZA O BANCO LOCAL
         await db.Payment.update({ status: 'CANCELED' }, {
             where: {
                 psychologistId: psychologist.id,

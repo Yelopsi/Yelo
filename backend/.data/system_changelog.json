@@ -1,5 +1,36 @@
 [
   {
+    "id": "change-git-5a2ea9dd",
+    "date": "2026-10-29T00:37:35.000Z",
+    "commit": "5a2ea9dd",
+    "author": "Anderson",
+    "title": "Novo: Ordenar avaliacoes com texto primeiro, respiro mobile no modal e exclusao no admin (reviews)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "ordenar avaliacoes com texto primeiro, respiro mobile no modal e exclusao no admin",
+    "description": "Commit registrado no repositório: \"feat(reviews): ordenar avaliacoes com texto primeiro, respiro mobile no modal e exclusao no admin\". Arquivos modificados: admin/admin_avaliacoes.html, admin/admin_avaliacoes.js, backend/.data/system_changelog.json, backend/controllers/adminController.js, backend/data/system_changelog.json (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5a2ea9dd"
+    },
+    "after": {
+      "nova_versao": "ordenar avaliacoes com texto primeiro, respiro mobile no modal e exclusao no admin"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_avaliacoes.html",
+      "admin/admin_avaliacoes.js",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminController.js",
+      "backend/data/system_changelog.json",
+      "backend/routes/adminRoutes.js",
+      "backend/routes/viewRoutes.js",
+      "security/reports/gate_report.json",
+      "views/psi_perfil_publico.ejs"
+    ]
+  },
+  {
     "id": "change-git-8ecfb285",
     "date": "2026-10-28T23:08:36.000Z",
     "commit": "8ecfb285",

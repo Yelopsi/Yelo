@@ -1,5 +1,6 @@
 const db = require('../models');
 const { Op } = require('sequelize');
+const PaymentStateService = require('../services/paymentStateService');
 // ============================================================================
 // 1. AUDITORIA DE INTEGRIDADE DA BASE DE DADOS (Limpeza de Inadimplentes)
 // ============================================================================
@@ -121,10 +122,49 @@ async function runIntegrityAudit() {
 
             if (shouldBlock) {
                 console.log(`❌ [CRON AUDIT] Bloqueando psicólogo ID ${psi.id} (${psi.nome}). Motivo: ${reason}`);
-                await psi.update({ status: 'inactive' });
+                await psi.update({
+                    status: 'inactive',
+                    cancelAtPeriodEnd: true,
+                    canceledAt: psi.canceledAt || new Date()
+                });
                 if (psi.subscriptionId) {
-                    await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: psi.subscriptionId } }).catch(() => {});
+                    await PaymentStateService.cancelAndPurgeSubscription(psi.subscriptionId, {
+                        psychologistId: psi.id
+                    }).catch(() => {});
                 }
+            }
+        }
+
+        // 4. Checagem de integridade: Psicólogos inativos ou cancelados que ainda possuem subscriptionId vinculada
+        const inactiveWithSub = await db.Psychologist.findAll({
+            where: {
+                [Op.or]: [
+                    { status: 'inactive' },
+                    { cancelAtPeriodEnd: true },
+                    { canceledAt: { [Op.ne]: null } }
+                ],
+                subscriptionId: { [Op.ne]: null }
+            }
+        });
+
+        for (const psi of inactiveWithSub) {
+            try {
+                // Checa no Asaas se a assinatura ainda está ativa ou tem faturas abertas
+                const subRes = await fetch(`${ASAAS_API_URL}/subscriptions/${psi.subscriptionId}`, {
+                    headers: { 'access_token': process.env.ASAAS_API_KEY }
+                });
+                if (subRes.ok) {
+                    const subData = await subRes.json();
+                    if ((subData.status === 'ACTIVE' && !subData.deleted) || !subData.deleted) {
+                        console.log(`🛡️ [CRON AUDIT] Purgando assinatura órfã no Asaas para psicólogo inativo/cancelado ID ${psi.id} (${psi.nome})...`);
+                        await PaymentStateService.cancelAndPurgeSubscription(psi.subscriptionId, {
+                            psychologistId: psi.id,
+                            customerId: subData.customer
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error(`[CRON AUDIT] Erro na checagem de assinatura inativa ${psi.subscriptionId}:`, err.message);
             }
         }
         
