@@ -192,8 +192,9 @@ class PaymentStateService {
         }
 
         if (user) {
-            // Se o usuário cancelou a renovação, a assinatura, ou está inativo, suprimimos avisos de vencimento e cobranças
-            if (user.cancelAtPeriodEnd || user.canceledAt || user.status === 'inactive') {
+            const userStatus = String(user.status || '').toLowerCase();
+            // Se o usuário cancelou a renovação, a assinatura, ou está inativo/vencido, suprimimos avisos de vencimento e cobranças
+            if (user.cancelAtPeriodEnd || user.canceledAt || userStatus === 'inactive' || userStatus === 'vencido') {
                 console.log(`[ASAAS] Supressão de e-mail ${event.event} para ${user.email} (cancelamento agendado/efetuado ou inativo)`);
                 return;
             }

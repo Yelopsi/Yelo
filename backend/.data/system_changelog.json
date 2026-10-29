@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-3914fa0d",
+    "date": "2026-10-29T01:02:28.000Z",
+    "commit": "3914fa0d",
+    "author": "Anderson",
+    "title": "Correção: Eliminar cobrancas e notificacoes indevidas para psicologos cancelados e inativos (billing)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "eliminar cobrancas e notificacoes indevidas para psicologos cancelados e inativos",
+    "description": "Commit registrado no repositório: \"fix(billing): eliminar cobrancas e notificacoes indevidas para psicologos cancelados e inativos\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/adminUsersController.js, backend/controllers/subscriptionController.js, backend/data/system_changelog.json, backend/jobs/cronScheduler.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #3914fa0d"
+    },
+    "after": {
+      "nova_versao": "eliminar cobrancas e notificacoes indevidas para psicologos cancelados e inativos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminUsersController.js",
+      "backend/controllers/subscriptionController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/cronScheduler.js",
+      "backend/services/paymentStateService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-5a2ea9dd",
     "date": "2026-10-29T00:37:35.000Z",
     "commit": "5a2ea9dd",

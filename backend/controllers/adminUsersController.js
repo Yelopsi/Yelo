@@ -1447,8 +1447,8 @@ exports.getPendingActions = async (req, res) => {
                 let reasonText = 'Ciclo da assinatura finalizado';
                 let lastDueDateStr = '';
 
-                // Se o psicólogo solicitou cancelamento ou teve estorno, é cancelamento voluntário e NUNCA falha de cartão/PIX
-                if (p.cancelAtPeriodEnd || p.canceledAt || (lastPay && lastPay.status === 'REFUNDED')) {
+                // Se o psicólogo solicitou cancelamento ou teve estorno/fatura cancelada, é cancelamento voluntário e NUNCA falha de cartão/PIX
+                if (p.cancelAtPeriodEnd || p.canceledAt || (lastPay && (lastPay.status === 'REFUNDED' || lastPay.status === 'CANCELED'))) {
                     churnSubType = 'voluntary_refund';
                     reasonText = 'Cancelamento voluntário / Encerramento solicitado';
                 } else if (lastPay) {

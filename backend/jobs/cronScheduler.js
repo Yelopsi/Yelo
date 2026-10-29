@@ -140,6 +140,7 @@ async function runIntegrityAudit() {
             where: {
                 [Op.or]: [
                     { status: 'inactive' },
+                    { status: 'vencido' },
                     { cancelAtPeriodEnd: true },
                     { canceledAt: { [Op.ne]: null } }
                 ],
