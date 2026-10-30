@@ -1,5 +1,33 @@
 [
   {
+    "id": "change-git-8384b32b",
+    "date": "2026-10-30T00:23:50.000Z",
+    "commit": "8384b32b",
+    "author": "Anderson",
+    "title": "Novo: Aprimorar mensagens de boas-vindas e fim de trial com valor a combinar e tom de equipe (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "aprimorar mensagens de boas-vindas e fim de trial com valor a combinar e tom de equipe",
+    "description": "Commit registrado no repositório: \"feat(crm): aprimorar mensagens de boas-vindas e fim de trial com valor a combinar e tom de equipe\". Arquivos modificados: admin/admin_crm_psicologos.js, backend/.data/system_changelog.json, backend/controllers/adminController.js, backend/controllers/adminPerformanceController.js, backend/data/system_changelog.json (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8384b32b"
+    },
+    "after": {
+      "nova_versao": "aprimorar mensagens de boas-vindas e fim de trial com valor a combinar e tom de equipe"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.js",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminController.js",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-94a7b4bf",
     "date": "2026-10-29T22:29:19.000Z",
     "commit": "94a7b4bf",

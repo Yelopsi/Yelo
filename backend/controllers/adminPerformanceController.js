@@ -384,7 +384,7 @@ Você DEVE citar esses indicadores no corpo do seu texto:
             if (hasConversions) {
                 feedbackInstruction = `Se ele fechou pacientes (${dealYes}), parabenize-o! É o maior argumento de que a plataforma funciona.`;
             } else {
-                feedbackInstruction = `Ele recebeu ${clicksCount} contato(s) no WhatsApp, mas ainda não fechou. NUNCA diga "0 conversões" ou "nenhum fechamento". Em vez disso, diga que o fluxo já começou a tracionar e que com pequenos ajustes na conversa/abordagem as conversões acontecem, bastando 1 sessão para a plataforma se pagar.`;
+                feedbackInstruction = `Ele recebeu ${clicksCount} contato(s) no WhatsApp, mas ainda não fechou. NUNCA diga "0 conversões" ou "nenhum fechamento". Em vez disso, diga em tom de equipe que o fluxo já começou a tracionar e que com a continuidade do perfil e pequenos ajustes na conversa/abordagem as conversões acontecem naturalmente.`;
             }
         } else {
             metricsBlockPrompt = `
@@ -404,12 +404,28 @@ Em vez disso:
             feedbackInstruction = `Como não houve cliques ainda, foque exclusivamente em valorizar as buscas e visitas, sem mencionar falta de fechamento ou conversões.`;
         }
 
+        const hasValorSessaoChurn = psi.valor_sessao_numero && psi.valor_sessao_numero > 0;
+        let instrucaoFinanceiraChurn = '';
+        if (hasValorSessaoChurn) {
+            const val = psi.valor_sessao_numero;
+            if (val >= 99) {
+                instrucaoFinanceiraChurn = `Compare amigavelmente o valor da sessão dele (R$ ${val}) com a mensalidade da Yelo (R$ 99,00). Mostre que realizar apenas 1 atendimento no mês inteiro já cobre os R$ 99 da plataforma e ainda deixa lucro líquido direto no consultório dele.`;
+            } else {
+                const sessoes2 = val * 2;
+                const sessoes4 = val * 4;
+                instrucaoFinanceiraChurn = `Como a sessão dele custa R$ ${val} (que é menor que os R$ 99 da assinatura), NUNCA afirme que "1 sessão já cobre a plataforma", pois matematicamente R$ ${val} não cobre R$ 99. Em vez disso, explique que fechar com apenas 1 paciente no mês (que costuma realizar acompanhamento contínuo de 2 a 4 sessões mensais, totalizando entre R$ ${sessoes2} e R$ ${sessoes4}) já cobre a assinatura de R$ 99 com folga e se transforma em lucro líquido para o consultório dele.`;
+            }
+        } else {
+            instrucaoFinanceiraChurn = `Lembre-o amigavelmente de que a assinatura da Yelo tem um valor fixo de R$ 99 mensais e que nós NÃO cobramos nenhuma taxa ou comissão sobre os atendimentos dele. Como ele atende com valor a combinar diretamente com o paciente no WhatsApp, ele tem total autonomia na sua precificação e 100% de tudo o que acordar nos atendimentos fica no consultório dele. NUNCA presuma que "1 sessão cobre a plataforma" ou "já cobre com folga", pois o valor é a combinar. Enfatize a autonomia de precificação e o fato de ser 0% de comissão.`;
+        }
+
         const prompt = `
-Atue como Anderson, gerente de Customer Success da plataforma de saúde mental Yelo. 
+Você é Anderson, representante da equipe de Customer Success e Growth da Yelo. 
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}, cujo período de testes (Trial) de 7 dias expirou recentemente (Churn).
 O objetivo da mensagem é convencer o profissional a reativar sua assinatura (que custa R$ 99,00/mês).
 
-Aja de forma humanizada, direta, e TOTALMENTE PROFISSIONAL. NÃO use NENHUMA gíria (como "dar um tchan", "dar um grito", etc.).
+Aja de forma humanizada, direta, empática e SEMPRE com tom e voz de equipe ("nós vimos", "analisamos", "acreditamos", "percebemos", "nossa equipe"). NÃO seja agressivamente vendedor e não use gírias.
+Inicie cumprimentando: "Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson, da equipe da Yelo. 🌿"
 
 ${metricsBlockPrompt}
 
@@ -420,19 +436,20 @@ ${metricsBlockPrompt}
 - Não fechou (achou caro ou desistiu): ${dealNo}
 
 [ANÁLISE FINANCEIRA]
-- O psicólogo cobra R$ ${psi.valor_sessao_numero ? psi.valor_sessao_numero : '(Valor não preenchido)'} por sessão.
-- A mensalidade da Yelo custa R$ 99,00.
+- O psicólogo cobra: ${hasValorSessaoChurn ? `R$ ${psi.valor_sessao_numero} por sessão` : 'Valor a combinar'}
+- A mensalidade da Yelo custa R$ 99,00 (sem taxa nem comissão por atendimento).
 
 [INSTRUÇÕES DA COPY (MENSAGEM)]
 1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\\n\\n).
-2. Cumprimente o psicólogo pelo nome e se apresente. Comece em um tom acolhedor e agradeça por ele ter testado a plataforma.
-3. Seja SUAVE ao informar que o Trial de 7 dias expirou. Exemplo: "O seu período gratuito encerrou, mas eu estava analisando as suas métricas e os resultados foram super interessantes..."
+2. Cumprimente o psicólogo pelo nome e introduza a equipe. Comece em um tom acolhedor e agradeça por ele ter testado a plataforma.
+3. Seja SUAVE ao informar que o Trial de 7 dias encerrou. Exemplo: "O seu período gratuito encerrou, mas nós estávamos analisando as suas métricas e os resultados foram muito promissores..."
 4. É OBRIGATÓRIO APRESENTAR AS MÉTRICAS EM TÓPICOS NATIVOS DO WHATSAPP com os números em negrito para evidenciar os números, iniciando cada linha com '* *' (ex: * *18 aparições* nos resultados de matches, * *2 visitas* na página, * *1 paciente te chamou no WhatsApp*). Se teve 0 cliques, apresente apenas as aparições e visitas.
-5. Analise os resultados de fechamento de forma consultiva e empática:
+5. Analise os resultados de fechamento de forma consultiva e empática, em tom de equipe:
    ${feedbackInstruction}
-6. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE, mas faça de forma amigável e parceira: cite explicitamente o valor que ele cobra por sessão (R$ ${psi.valor_sessao_numero || 'X'}) e compare com a mensalidade (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. (Ex: "Como a sua sessão é R$ 150,00, fechando apenas 1 sessão você já cobre todo o custo da plataforma e garante o seu lucro. É um investimento que se paga com um único atendimento"). NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".
-7. Finalize de forma super acolhedora perguntando se faz sentido para ele manter o perfil ativo. Se sim, instrua-o a reativar acessando a conta na Yelo, indo na opção "Ajustes" e depois "Assinaturas e Planos".
-8. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto (como "Um abraço, Anderson - CS & Growth Yelo", "Equipe Yelo", etc.). Finalize diretamente após perguntar se faz sentido reativar ou dar as instruções para ativar o plano.
+6. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE COM RIGOR (A MATEMÁTICA DEVE SER PERFEITA E PRECISA): 
+   ${instrucaoFinanceiraChurn}
+7. Finalize de forma super acolhedora perguntando se faz sentido para mantermos a página ativa. Se sim, instrua-o a reativar acessando a conta na Yelo, indo na opção "Ajustes" e depois "Assinaturas e Planos".
+8. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto. Finalize diretamente após perguntar se faz sentido reativar ou dar as instruções para ativar o plano.
 `;
 
         let whatsappCopy = '';
@@ -469,20 +486,30 @@ ${metricsBlockPrompt}
                 metricsText = `Durante os testes, o seu perfil obteve:\n\n* *${matchesCount} aparições* nos resultados de matches\n* *${viewsCount} visualizações* na sua página\n* *${contatoStr}*`;
                 
                 if (dealYes > 0) {
-                    feedbackText = `E notei pelo seu feedback que você já conseguiu fechar ${dealYes} sessão(ões)! 🎉`;
-                    mathText = `essa sessão que você fechou já paga o investimento da plataforma do mês todo e ainda sobra lucro.`;
+                    feedbackText = `E vimos pelo seu feedback que você já conseguiu agendar com ${dealYes} paciente(s)! 🎉`;
                 } else {
-                    feedbackText = `O fluxo de contatos já estava começando a ganhar tração! Com a continuidade do perfil no ar e pequenos ajustes na conversa, os fechamentos acontecem naturalmente.`;
-                    mathText = `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
+                    feedbackText = `O fluxo de contatos já estava começando a ganhar tração! Com a continuidade do perfil no ar e pequenos ajustes na conversa, os agendamentos acontecem naturalmente.`;
                 }
             } else {
                 metricsText = `Durante os testes, o seu perfil obteve:\n\n* *${matchesCount} aparições* nos resultados de buscas\n* *${viewsCount} visualizações* diretas na sua página`;
-                feedbackText = `O seu perfil já começou a ganhar relevância nas buscas e visitas de potenciais pacientes. O próximo passo natural é a chegada dos primeiros contatos no WhatsApp. Posso te ajudar a dar uma revisada rápida na bio e na apresentação para destravarmos esses contatos!`;
-                mathText = `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.`;
+                feedbackText = `O seu perfil já começou a ganhar relevância nas buscas e visitas de potenciais pacientes. O próximo passo natural é a conversão dessas visitas em conversas no WhatsApp. Nossa equipe pode te ajudar a dar uma revisada rápida na apresentação para destravarmos esses contatos!`;
+            }
+
+            if (hasValorSessaoChurn) {
+                const val = psi.valor_sessao_numero;
+                if (val >= 99) {
+                    mathText = `Como a sua sessão é de R$ ${val}, realizar apenas 1 atendimento no mês inteiro já cobre a plataforma com folga e ainda te deixa com lucro direto.`;
+                } else {
+                    const s2 = val * 2;
+                    const s4 = val * 4;
+                    mathText = `Como a sua sessão é de R$ ${val}, fechar com apenas 1 paciente no mês (que costuma realizar de 2 a 4 atendimentos, somando entre R$ ${s2} e R$ ${s4}) já cobre a mensalidade de R$ 99 com folga e se transforma em lucro líquido para você.`;
+                }
+            } else {
+                mathText = `Como você atende com valor a combinar diretamente com o paciente no WhatsApp, você tem total autonomia na sua precificação e 100% de tudo o que acordar nos atendimentos fica no seu consultório, sem nenhuma taxa ou comissão da nossa parte.`;
             }
 
             whatsappCopy = formatForWhatsApp(
-                `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson da equipe da Yelo. 🌿\n\nPassei para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito acabou encerrando, mas eu estava analisando as suas métricas e os resultados foram bem legais.\n\n${metricsText}\n\n${feedbackText}\n\nPensando pelo seu lado financeiro, a assinatura da Yelo é apenas R$ 99,00 mensais. Como a sua sessão é de R$ ${psi.valor_sessao_numero || 'X'}, ${mathText}\n\nFaria sentido para você reativar a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, clicar em "Ajustes" e depois ir em "Assinaturas e Planos". Qualquer dúvida, estou por aqui!`
+                `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson, da equipe da Yelo. 🌿\n\nPassamos para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito encerrou, mas nós estávamos analisando as suas métricas e os resultados foram muito positivos.\n\n${metricsText}\n\n${feedbackText}\n\nPensando pelo seu lado financeiro: a assinatura da Yelo tem um valor fixo de R$ 99,00 mensais. ${mathText}\n\nFaria sentido para você reativarmos a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, ir em "Ajustes" e depois em "Assinaturas e Planos". Estamos totalmente à disposição!`
             );
         }
 
@@ -551,27 +578,42 @@ NUNCA escreva "0 cliques" ou "Cliques: 0". Valorize o histórico de buscas e vis
 `;
         }
 
+        const hasValorSessaoPaid = psi.valor_sessao_numero && psi.valor_sessao_numero > 0;
+        let instrucaoFinanceiraPaid = '';
+        if (hasValorSessaoPaid) {
+            const val = psi.valor_sessao_numero;
+            if (val >= 99) {
+                instrucaoFinanceiraPaid = `cite o valor da sessão dele (R$ ${val}) e compare com a mensalidade (R$ 99,00). Mostre que manter o perfil ativo custa menos do que realizar apenas 1 único atendimento no mês todo.`;
+            } else {
+                const s2 = val * 2;
+                const s4 = val * 4;
+                instrucaoFinanceiraPaid = `como a sessão dele é R$ ${val} (menor que R$ 99), NUNCA diga que custa menos que 1 sessão. Mostre que fechar com apenas 1 paciente no mês (que costuma realizar de 2 a 4 consultas, somando de R$ ${s2} a R$ ${s4}) já cobre todo o custo de manter o perfil ativo e ainda deixa lucro.`;
+            }
+        } else {
+            instrucaoFinanceiraPaid = `lembre que a mensalidade tem taxa zero de comissão, sendo um valor fixo de R$ 99 mensais.`;
+        }
+
         const prompt = `
-Atue como Anderson, gerente de Customer Success da plataforma de saúde mental Yelo. 
+Você é Anderson, representante da equipe de Customer Success da plataforma de saúde mental Yelo. 
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}. 
 Situação atual: Este profissional já era assinante do plano Essencial (R$ 99,00), mas a sua assinatura expirou/foi cancelada recentemente (Churn de Pagante). 
 O objetivo da mensagem é entender o que houve e convencê-lo a reativar a assinatura.
 
-Aja de forma humanizada, parceira, e TOTALMENTE PROFISSIONAL. NÃO use NENHUMA gíria.
+Aja de forma humanizada, parceira, e SEMPRE em tom de equipe ("nós vimos", "acompanhamos", "acreditamos"). NÃO use NENHUMA gíria.
 
 ${metricsBlockPrompt}
 
 [ANÁLISE FINANCEIRA]
-- O psicólogo cobra R$ ${psi.valor_sessao_numero ? psi.valor_sessao_numero : '(Valor não preenchido)'} por sessão.
-- A mensalidade da Yelo custa R$ 99,00.
+- O psicólogo cobra: ${hasValorSessaoPaid ? `R$ ${psi.valor_sessao_numero} por sessão` : 'Valor a combinar'}
+- A mensalidade da Yelo custa R$ 99,00 (sem taxa nem comissão).
 
 [INSTRUÇÕES DA COPY (MENSAGEM)]
 1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_).
-2. Cumprimente pelo nome. Comece dizendo que você notou que a assinatura dele na Yelo expirou e o perfil acabou saindo do ar, e pergunte se houve algum problema com o cartão ou se foi uma decisão de pausa.
+2. Cumprimente pelo nome. Comece dizendo que você notou que a assinatura dele na Yelo expirou e o perfil acabou saindo do ar, e pergunte se houve algum problema com a renovação do cartão ou se foi uma decisão de pausa.
 3. Apresente os resultados históricos dele para gerar ancoragem de valor. Mostre que o perfil dele já tem relevância e que recomeçar depois pode ser mais lento.
-4. Seja empático. Se ele teve cliques no passado, lembre-o de que o perfil dele atrai pacientes. Se o problema for conversão, ofereça ajuda: 'Se o volume de fechamentos não estava como você gostaria, eu posso revisar seu perfil junto com você para melhorarmos isso!'
-5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: cite o valor que ele cobra por sessão e compare com a mensalidade (R$ 99,00). Mostre que manter o perfil ativo é um investimento muito baixo comparado ao retorno. (Ex: 'Lembrando que como a sua sessão é R$ 150,00, manter seu perfil no ar custa menos do que 1 única sessão fechada no mês inteiro').
-6. Finalize deixando a porta aberta. Pergunte como você pode ajudá-lo hoje a reativar o perfil, ou informe para acessar "Ajustes > Assinaturas e Planos" no app.
+4. Seja empático. Se ele teve cliques no passado, lembre-o de que o perfil dele atrai pacientes. Se o problema for conversão, ofereça ajuda: 'Se o volume de fechamentos não estava como você gostaria, nossa equipe pode revisar seu perfil junto com você para melhorarmos isso!'
+5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE COM PRECISÃO: ${instrucaoFinanceiraPaid}
+6. Finalize deixando a porta aberta. Pergunte como a nossa equipe pode ajudá-lo hoje a reativar o perfil, ou informe para acessar "Ajustes > Assinaturas e Planos" no app.
 7. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto.
 `;
 
@@ -581,8 +623,21 @@ ${metricsBlockPrompt}
                 ? `Ao todo, você já apareceu em *${matchesCount} buscas*, teve *${viewsCount} visitas* e recebeu *${clicksCount} cliques* no WhatsApp.`
                 : `Ao todo, você já apareceu em *${matchesCount} buscas* e teve *${viewsCount} visitas* na sua página.`;
 
+            let mathPaidText = '';
+            if (hasValorSessaoPaid) {
+                const val = psi.valor_sessao_numero;
+                if (val >= 99) {
+                    mathPaidText = `Como a sua sessão particular é de R$ ${val}, queríamos te lembrar que manter a sua assinatura na Yelo (R$ 99,00) acaba custando menos do que 1 único atendimento no mês todo.`;
+                } else {
+                    const s2 = val * 2;
+                    mathPaidText = `Como a sua sessão particular é de R$ ${val}, queríamos te lembrar que fechar com apenas 1 paciente no mês (que costuma fazer ao menos 2 a 4 consultas, somando R$ ${s2}+) já cobre a assinatura da Yelo (R$ 99,00) com folga e se paga com facilidade.`;
+                }
+            } else {
+                mathPaidText = `Como a sua assinatura na Yelo tem taxa zero de comissão, manter o seu perfil ativo tem o custo fixo de apenas R$ 99,00 mensais.`;
+            }
+
             return res.json({
-                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson, da Yelo.\n\nNotei aqui no sistema que a sua assinatura expirou nos últimos dias e, por conta disso, seu perfil acabou sendo ocultado das buscas dos pacientes. Houve algum problema com a renovação do cartão ou você decidiu dar uma pausa?\n\nFui dar uma olhada no seu histórico e vi que seu perfil construiu uma relevância bem legal com a gente! ${metricsText}\n\nComo a sua sessão particular é de R$ ${psi.valor_sessao_numero || '150,00'}, queria te lembrar que manter a sua assinatura na Yelo (R$ 99,00) acaba custando menos do que 1 única sessão fechada no mês todo.\n\nSe o motivo da pausa foi não estar conseguindo converter esses contatos, me avisa! Posso revisar o seu perfil com você.\n\nFaz sentido para você reativarmos o seu perfil hoje e não perder esse fluxo?`
+                whatsappCopy: `Olá, ${psi.nome.split(' ')[0]}! Tudo bem? Aqui é o Anderson, da equipe da Yelo. 🌿\n\nNotamos aqui no sistema que a sua assinatura expirou nos últimos dias e, por conta disso, seu perfil acabou sendo ocultado das buscas dos pacientes. Houve algum problema com a renovação do cartão ou você decidiu dar uma pausa?\n\nFomos dar uma olhada no seu histórico e vimos que seu perfil construiu uma relevância bem legal com a gente! ${metricsText}\n\n${mathPaidText}\n\nSe o motivo da pausa foi não estar conseguindo converter esses contatos, nos avise! Nossa equipe pode revisar o seu perfil com você.\n\nFaz sentido para você reativarmos o seu perfil hoje e não perder esse fluxo?`
             });
         }
 
@@ -686,9 +741,19 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
         const timingClosing = isToday ? 'nas próximas horas' : 'amanhã';
 
         const hasValorSessao = psi.valor_sessao_numero && psi.valor_sessao_numero > 0;
-        const instrucaoFinanceira = hasValorSessao
-            ? `Compare amigavelmente o valor da sessão dele (R$ ${psi.valor_sessao_numero}) com a mensalidade da Yelo (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".`
-            : `Lembre-o amigavelmente de que a assinatura da Yelo tem um valor fixo de R$ 99 mensais e que nós NÃO cobramos nenhuma taxa ou comissão sobre os atendimentos dele. Como ele atende com valor a combinar diretamente com o paciente no WhatsApp, ele tem total autonomia na sua precificação e 100% de tudo o que acordar nos atendimentos fica no consultório dele. NUNCA presuma que "1 sessão cobre a plataforma" ou "já cobre com folga", pois o valor é a combinar. Enfatize a autonomia de precificação e o fato de ser 0% de comissão.`;
+        let instrucaoFinanceira = '';
+        if (hasValorSessao) {
+            const val = psi.valor_sessao_numero;
+            if (val >= 99) {
+                instrucaoFinanceira = `Compare amigavelmente o valor da sessão dele (R$ ${val}) com a mensalidade da Yelo (R$ 99,00). Mostre que realizar apenas 1 atendimento no mês inteiro já cobre os R$ 99 da plataforma e ainda deixa lucro líquido direto no consultório dele.`;
+            } else {
+                const sessoes2 = val * 2;
+                const sessoes4 = val * 4;
+                instrucaoFinanceira = `Como a sessão dele custa R$ ${val} (que é menor que os R$ 99 da assinatura), NUNCA afirme que "1 sessão já cobre a plataforma", pois matematicamente R$ ${val} não cobre R$ 99. Em vez disso, explique que fechar com apenas 1 paciente no mês (que costuma realizar acompanhamento contínuo de 2 a 4 sessões mensais, totalizando entre R$ ${sessoes2} e R$ ${sessoes4}) já cobre a assinatura de R$ 99 com folga e se transforma em lucro líquido para o consultório dele.`;
+            }
+        } else {
+            instrucaoFinanceira = `Lembre-o amigavelmente de que a assinatura da Yelo tem um valor fixo de R$ 99 mensais e que nós NÃO cobramos nenhuma taxa ou comissão sobre os atendimentos dele. Como ele atende com valor a combinar diretamente com o paciente no WhatsApp, ele tem total autonomia na sua precificação e 100% de tudo o que acordar nos atendimentos fica no consultório dele. NUNCA presuma que "1 sessão cobre a plataforma" ou "já cobre com folga", pois o valor é a combinar. Enfatize a autonomia de precificação e o fato de ser 0% de comissão.`;
+        }
 
         const hasClicks = clicksCount > 0;
         const hasConversions = dealYes > 0;
@@ -704,11 +769,11 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
 3. Contatos recebidos no WhatsApp: ${clicksCount}
 `;
             if (hasConversions) {
-                resultAnalysisGuideline = `- O profissional já conseguiu agendar/fechar com ${dealYes} paciente(s)! Parabenize-o calorosamente e mostre que isso já comprova o retorno da plataforma.`;
+                resultAnalysisGuideline = `- O profissional já conseguiu agendar/fechar com ${dealYes} paciente(s)! Parabenize-o calorosamente em tom de equipe e mostre que isso já comprova o retorno da plataforma.`;
             } else if (dealNoFeedback > 0) {
-                resultAnalysisGuideline = `- Ele recebeu ${clicksCount} contato(s) no WhatsApp, e ${dealNoFeedback} ainda estão pendentes/sem feedback. NUNCA diga "0 conversões" ou "você não fechou nada". Dê um forte incentivo para que ele chame esses contatos de volta! Reforce que fechar *apenas um* já garante o pagamento da plataforma e o deixa com lucro. EM SEGUIDA, adicione a instrução: "Caso já tenha conversado com eles, atualize a situação na opção *Evolução > Histórico de Contatos* para que o nosso algoritmo te entregue sempre os melhores pacientes."`;
+                resultAnalysisGuideline = `- Ele recebeu ${clicksCount} contato(s) no WhatsApp, e ${dealNoFeedback} ainda estão pendentes/sem feedback. NUNCA diga "0 conversões" ou "você não fechou nada". Dê um forte incentivo para que ele chame esses contatos de volta! Reforce que fechar com *apenas um* desses contatos já garante o pagamento da plataforma e o deixa com lucro. EM SEGUIDA, adicione a instrução: "Caso já tenha conversado com eles, atualize a situação na opção *Evolução > Histórico de Contatos* para que o nosso algoritmo te entregue sempre os melhores pacientes."`;
             } else {
-                resultAnalysisGuideline = `- Ele recebeu ${clicksCount} contato(s) no WhatsApp, mas ainda não houve fechamentos. NUNCA diga "0 conversões" ou "nenhum fechamento" (isso é desanimador). Use um tom de parceria construtiva: mostre que o fluxo já começou a tracionar e que essas primeiras conversas são essenciais para ajustar a abordagem e o público, e que manter a página ativa garante a continuidade desses contatos.`;
+                resultAnalysisGuideline = `- Ele recebeu ${clicksCount} contato(s) no WhatsApp, mas ainda não houve fechamentos. NUNCA diga "0 conversões" ou "nenhum fechamento" (isso é desanimador). Use um tom de parceria construtiva e de equipe: mostre que o fluxo já começou a tracionar e que essas primeiras conversas são essenciais para calibrar a abordagem, e que manter a página ativa garante a continuidade desses contatos.`;
             }
         } else {
             // 0 CLIQUES NO WHATSAPP
@@ -729,11 +794,11 @@ Em vez disso:
         }
 
         const prompt = `
-Atue como Anderson, gerente de Customer Success da Yelo. 
+Você é Anderson, representante da equipe de Customer Success e Growth da Yelo. 
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}.
 Situação atual: O período de testes gratuito (Trial) de 7 dias deste profissional ${isToday ? 'expira HOJE, nas próximas horas' : 'expirará AMANHÃ'}.
 
-Aja de forma humanizada, empática e consultiva. NÃO seja agressivamente vendedor e não use gírias.
+Aja de forma humanizada, empática, consultiva e SEMPRE com tom e voz de EQUIPE ("nós vimos", "analisamos", "acreditamos", "percebemos", "nossa equipe"). NÃO seja agressivamente vendedor e não use gírias.
 NÃO se apresente ("Aqui é o Anderson..." ou similar) pois o psicólogo já conversa com você e já sabe quem você é.
 
 ${performanceSection}
@@ -747,7 +812,7 @@ ${performanceSection}
 
 [INSTRUÇÕES DA COPY (MENSAGEM)]
 1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\\n\\n).
-2. Vá direto ao ponto (cumprimente com um 'Olá [Nome], tudo bem?' e avance). Informe com precisão sobre o momento do encerramento do teste:
+2. Vá direto ao ponto (cumprimente com um 'Olá [Nome], tudo bem?' ou 'Olá [Nome], como vai?' e avance em tom de equipe informando sobre o encerramento do teste):
    ${isToday 
      ? '- Como o período expira hoje/em breve, mencione que o período gratuito "expira nas próximas horas" ou "está encerrando nas próximas horas".' 
      : '- Como o período expira amanhã, mencione que o período gratuito "expirará amanhã".'}
@@ -760,10 +825,11 @@ Seu perfil obteve:
 * *${clicksCount === 1 ? '1 paciente te chamou no WhatsApp' : `${clicksCount} pacientes te chamaram no WhatsApp`}*
 
 (Inicie cada linha com '* *' para que no WhatsApp apareça como tópicos e com os números em destaque em negrito. Se teve 0 cliques, apresente apenas as aparições e visitas, nunca mencione 0 cliques).
-4. Analise os resultados de forma consultiva e parceira:
+4. Analise os resultados de forma consultiva e parceira, sempre em tom de equipe:
    ${resultAnalysisGuideline}
-5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE: ${instrucaoFinanceira}
-6. Finalize perguntando de forma aberta se faz sentido para ele ativar a assinatura para não perder a página e os pacientes que já estão chegando. Instrua-o a reativar acessando a conta na Yelo, indo em "Ajustes" e depois em "Assinaturas e Planos".
+5. É OBRIGATÓRIO EXPLICAR MATEMATICAMENTE A MENSALIDADE COM RIGOR (A MATEMÁTICA DEVE SER PERFEITA E PRECISA): 
+   ${instrucaoFinanceira}
+6. Finalize perguntando de forma aberta se faz sentido para mantermos a página ativa para não perder o histórico e os pacientes que já estão chegando. Instrua-o a reativar acessando a conta na Yelo, indo em "Ajustes" e depois em "Assinaturas e Planos".
 7. REGRAS EXTRAS E ASSINATURA: NUNCA coloque despedidas ou assinaturas no final do texto. Finalize diretamente após a pergunta de assinatura.
 `;
 
@@ -815,7 +881,14 @@ Seu perfil obteve:
             }
 
             if (hasValorSessao) {
-                mathText = `Pensando no lado financeiro: a assinatura da Yelo é de apenas R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero}, fechar apenas 1 atendimento no mês inteiro já cobre a plataforma com folga e ainda te deixa com lucro direto.`;
+                const val = psi.valor_sessao_numero;
+                if (val >= 99) {
+                    mathText = `Pensando no lado financeiro: a assinatura da Yelo é de apenas R$ 99 mensais. Como a sua sessão é R$ ${val}, realizar apenas 1 atendimento no mês inteiro já cobre a plataforma com folga e ainda te deixa com lucro direto.`;
+                } else {
+                    const duasSessoes = val * 2;
+                    const quatroSessoes = val * 4;
+                    mathText = `Pensando no lado financeiro: a assinatura da Yelo é de apenas R$ 99 mensais e nós não cobramos nenhuma taxa ou comissão sobre os seus atendimentos. Como a sua sessão é R$ ${val}, fechar com apenas 1 paciente no mês (que costuma realizar acompanhamento de 2 a 4 consultas, somando entre R$ ${duasSessoes} e R$ ${quatroSessoes}) já cobre a mensalidade de R$ 99 com muita folga e se transforma em lucro líquido para você.`;
+                }
             } else {
                 mathText = `Pensando no lado financeiro: a assinatura da Yelo tem um valor fixo de R$ 99 mensais e nós *não cobramos nenhuma taxa ou comissão* sobre as suas consultas. Como você atende com valor a combinar diretamente com o paciente no WhatsApp, você tem total autonomia na sua precificação e 100% de tudo o que acordar nos atendimentos fica no seu consultório.`;
             }
