@@ -1141,11 +1141,17 @@ Você é um representante da equipe de *Growth e Customer Success da Yelo*.
 
 ## APRESENTAÇÃO
 
-A mensagem deve apresentar obrigatoriamente o remetente como:
+A mensagem deve iniciar obrigatoriamente com a apresentação pessoal do Anderson e a introdução da equipe da Yelo, exatamente neste formato:
 
-"Eu sou o Anderson, da Yelo."
+"Olá, [Nome]! Como vai?
+Aqui é o Anderson, da Yelo. 🌿
 
-O nome do psicólogo analisado é independente do nome do remetente. Nunca confundir os dois.
+Passamos para te desejar boas-vindas e compartilhar uma análise que fizemos do seu perfil agora que você iniciou sua trajetória na plataforma!"
+
+Ao longo de toda a mensagem, use SEMPRE a voz de equipe: "nós vimos", "analisamos", "percebemos", "acreditamos", "nossa equipe pode te ajudar", etc. NUNCA use "eu vi", "eu analisei", "pedi para minha equipe".
+NUNCA cite a métrica "Força do Perfil" ou porcentagens (ex: não diga "Força de 45%"). Em vez disso, consulte internamente o que já foi preenchido e o que falta:
+- O que já foi preenchido (abordagens, temas de atuação, bio): analise construtivamente, valide e elogie a escolha.
+- O que NÃO foi preenchido (especialmente se a biografia profissional estiver vazia ou muito curta, ou faltar foto/preço): aponte com clareza a ausência desse dado essencial, convide a preencher em *Ajustes > Meu Perfil* e explique a importância disso para o paciente e para a conexão inicial.
 
 ## REGRA SOBRE TEMPO DE INSCRIÇÃO
 NUNCA cite datas de calendário, números de dias ou o dia específico de inscrição/cadastro (ex: NUNCA diga "desde o dia 10", "desde 15/03", "desde o dia X").
@@ -2215,24 +2221,37 @@ Se houver histórico acima:
 
         if (!rawAnalysis) {
             const firstName = (psi.nome || 'colega').split(' ')[0];
-            const hasGoodBio = !!(psi.bio && psi.bio.trim().length >= 80);
+            const cleanBio = psi.bio ? psi.bio.replace(/<[^>]*>/g, '').trim() : '';
+            const hasBio = cleanBio.length >= 30;
             const hasPrice = valorConsulta !== 'A combinar';
-            const elogio = hasGoodBio
-                ? `Gostei bastante de como você estruturou a apresentação do seu perfil — já transmite acolhimento e clareza para quem visita a sua página.`
-                : `Que ótimo ver o seu perfil ativo na plataforma! Você já deu o passo principal para construir sua vitrine clínica por aqui.`;
+            const hasApproaches = psi.abordagens_tecnicas && (Array.isArray(psi.abordagens_tecnicas) ? psi.abordagens_tecnicas.length > 0 : !!psi.abordagens_tecnicas);
+            const hasTopics = psi.temas_atuacao && (Array.isArray(psi.temas_atuacao) ? psi.temas_atuacao.length > 0 : !!psi.temas_atuacao);
 
-            let prioridadeBlock = '';
-            if (!hasGoodBio) {
-                prioridadeBlock = `Neste início, a nossa principal recomendação é enriquecer um pouco mais a sua biografia falando diretamente com a dor do paciente e detalhando como funciona o seu acolhimento.\n\n• Ferramenta: *Ajustes > Meu Perfil*\n• O que fazer: divida o texto em parágrafos curtos (a maioria dos pacientes lê pelo celular) e alinhe seus temas de atuação com o que você descreve na bio.`;
-            } else if (!hasPrice) {
-                prioridadeBlock = `Neste início, a nossa principal recomendação é configurar um valor de referência para a sessão. Perfis com valor visível costumam gerar mais segurança e cliques qualificados no WhatsApp.\n\n• Ferramenta: *Ajustes > Meu Perfil*\n• O que fazer: adicione o valor da sessão para reduzir a insegurança do paciente antes do primeiro contato.`;
-            } else if (reviewsCount === 0) {
-                prioridadeBlock = `Como a sua apresentação e valor já estão bem configurados, o próximo passo de maior impacto é conquistar suas primeiras avaliações de pacientes, que funcionam como prova social e aumentam muito a conversão.\n\n• Ferramenta: *Evolução > Solicitar Avaliações*\n• O que fazer: compartilhe seu link de avaliação com 2 ou 3 pacientes ou ex-pacientes de confiança.`;
+            let analisePreenchido = '';
+            let pendenciasBlock = '';
+
+            if (hasBio) {
+                analisePreenchido = `Lemos a sua biografia e gostamos muito da clareza e do tom acolhedor que você trouxe. A forma como você contextualizou a sua abordagem transmite muita segurança para o paciente que visita a sua página.`;
+                
+                if (!hasPrice) {
+                    pendenciasBlock = `Para darmos o próximo passo juntos e acelerar a chegada dos primeiros contatos no seu WhatsApp, recomendamos:\n\n• Definir um valor de referência para a sessão em *Ajustes > Meu Perfil* (percebemos que valores visíveis reduzem a hesitação do paciente antes do primeiro contato);\n• Compartilhar seu link com 1 ou 2 pacientes de confiança para inaugurar a seção de avaliações do seu perfil.`;
+                } else if (reviewsCount === 0) {
+                    pendenciasBlock = `Como a sua apresentação e valor já estão muito bem configurados, o próximo passo de maior impacto é conquistar suas primeiras avaliações de pacientes, que funcionam como prova social e aumentam muito a conversão de visitas em mensagens.\n\n• Onde ir: *Evolução > Solicitar Avaliações*\n• O que fazer: compartilhe seu link de avaliação com 1 ou 2 pacientes ou ex-pacientes de confiança.`;
+                } else {
+                    pendenciasBlock = `Como a sua página já está muito completa, uma ótima forma de ampliar seu alcance orgânico é participar dos conteúdos e perguntas da plataforma em *Comunidade > Perguntas ou Blog*.`;
+                }
             } else {
-                prioridadeBlock = `Como o seu perfil já está muito bem completo, uma ótima forma de ampliar seu alcance orgânico é participar das discussões e conteúdos da plataforma.\n\n• Ferramenta: *Comunidade > Perguntas ou Blog*\n• O que fazer: responda dúvidas de pacientes ou publique um artigo curto sobre um dos seus temas de atuação.`;
+                // Bio ausente ou muito curta
+                if (hasApproaches || hasTopics) {
+                    analisePreenchido = `Analisamos a sua página e achamos excelente a forma como você selecionou suas abordagens e temas de atuação. Essa segmentação é fundamental para o nosso sistema entender o seu público ideal.`;
+                } else {
+                    analisePreenchido = `Analisamos o seu perfil e ficamos muito felizes em ver você dando os primeiros passos para estruturar a sua vitrine clínica na Yelo.`;
+                }
+
+                pendenciasBlock = `Percebemos, no entanto, que a sua *biografia profissional ainda não foi preenchida*.\n\nPara quem busca terapia, a bio é o elemento mais decisivo: é através dela que o paciente compreende como funciona o seu acolhimento, cria identificação com a sua postura clínica e se sente seguro para dar o passo de te chamar no WhatsApp. Sem ela, o perfil perde grande parte do potencial de conversão.\n\nPara deixar sua página completa e pronta para receber contatos, sugerimos:\n\n• Onde ir: No seu painel, acesse *Ajustes > Meu Perfil*\n• O que incluir: Um texto simples em parágrafos curtos, explicando como você conduz as sessões e quais demandas você mais acolhe no consultório.`;
             }
 
-            rawAnalysis = `Olá, ${firstName}! Tudo bem?\n\nEu sou o Anderson, da Yelo. Pedi à nossa equipe de Growth para analisar o seu perfil agora que você está dando os primeiros passos na plataforma e trouxe algumas sugestões práticas para te ajudar a atrair pacientes. 🌿\n\n${elogio}\n\n${prioridadeBlock}\n\nNos próximos dias, vale acompanhar a evolução das suas aparições nas buscas e visualizações de perfil no seu painel. Qualquer dúvida, conte comigo por aqui! 🚀`;
+            rawAnalysis = `Olá, ${firstName}! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise que fizemos do seu perfil agora que você iniciou sua trajetória na plataforma!\n\n${analisePreenchido}\n\n${pendenciasBlock}\n\nSe quiser, nossa equipe pode te ajudar com ideias para estruturar esse texto. Estamos totalmente à disposição por aqui! 🚀`;
         }
 
         const analysis = formatForWhatsApp(rawAnalysis);
@@ -2242,7 +2261,7 @@ Se houver histórico acima:
         console.error("Erro em analyzeProfile:", error);
         // Fallback preventivo contra 500 para garantir que o Admin consiga enviar a mensagem
         try {
-            const fallbackMsg = `Olá! Tudo bem?\n\nEu sou o Anderson, da Yelo. Pedi à nossa equipe de Growth para dar uma olhada no seu perfil e vi que você já está com a sua vitrine ativa por aqui. 🌿\n\nNeste início, o passo mais importante é garantir que a sua bio explique com clareza o seu acolhimento e que o valor da sessão esteja visível para reduzir dúvidas dos pacientes antes do primeiro contato.\n\nQualquer dúvida, conte comigo por aqui! 🚀`;
+            const fallbackMsg = `Olá! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise inicial da sua vitrine na plataforma!\n\nAnalisamos o seu cadastro e o passo mais importante agora é garantir que a sua bio explique com clareza o seu acolhimento em *Ajustes > Meu Perfil*, além de manter os valores transparentes para reduzir dúvidas dos pacientes antes do primeiro contato no WhatsApp.\n\nNossa equipe está à disposição caso queira apoio para estruturar o texto! 🚀`;
             return res.json({ message: formatForWhatsApp(fallbackMsg), isFallback: true });
         } catch (_) {
             return res.status(500).json({ error: error.message || 'Erro interno ao gerar análise.' });

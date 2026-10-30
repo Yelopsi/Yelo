@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-94a7b4bf",
+    "date": "2026-10-29T22:29:19.000Z",
+    "commit": "94a7b4bf",
+    "author": "Anderson",
+    "title": "Correção: Formatar mrr em moeda e adicionar fallback robusto de cpl e manual ads (crm & cmo)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "formatar mrr em moeda e adicionar fallback robusto de cpl e manual ads",
+    "description": "Commit registrado no repositório: \"fix(crm & cmo): formatar mrr em moeda e adicionar fallback robusto de cpl e manual ads\". Arquivos modificados: admin/admin_cmo_metrics.js, admin/admin_crm_psicologos.js, backend/.data/system_changelog.json, backend/controllers/adminDashboardController.js, backend/data/system_changelog.json (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #94a7b4bf"
+    },
+    "after": {
+      "nova_versao": "formatar mrr em moeda e adicionar fallback robusto de cpl e manual ads"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "admin/admin_crm_psicologos.js",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminDashboardController.js",
+      "backend/data/system_changelog.json",
+      "backend/routes/cmoRoutes.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-5f4dd09c",
     "date": "2026-10-29T22:21:48.000Z",
     "commit": "5f4dd09c",

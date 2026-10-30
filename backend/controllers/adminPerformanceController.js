@@ -688,7 +688,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
         const hasValorSessao = psi.valor_sessao_numero && psi.valor_sessao_numero > 0;
         const instrucaoFinanceira = hasValorSessao
             ? `Compare amigavelmente o valor da sessão dele (R$ ${psi.valor_sessao_numero}) com a mensalidade da Yelo (R$ 99,00). Prove que fechar apenas 1 sessão já paga a mensalidade toda. NUNCA use a expressão "fechar 1 paciente", use SEMPRE "fechar 1 sessão".`
-            : `Lembre-o amigavelmente que a assinatura da Yelo é apenas R$ 99 mensais. Como o valor da sessão dele é "a combinar", argumente que fechar com apenas 1 paciente (que fará em média de 2 a 4 sessões no mês) já garante o pagamento da plataforma do mês todo e ainda o deixa com lucro! USE livremente a expressão "fechar 1 paciente" neste cenário.`;
+            : `Lembre-o amigavelmente de que a assinatura da Yelo tem um valor fixo de R$ 99 mensais e que nós NÃO cobramos nenhuma taxa ou comissão sobre os atendimentos dele. Como ele atende com valor a combinar diretamente com o paciente no WhatsApp, ele tem total autonomia na sua precificação e 100% de tudo o que acordar nos atendimentos fica no consultório dele. NUNCA presuma que "1 sessão cobre a plataforma" ou "já cobre com folga", pois o valor é a combinar. Enfatize a autonomia de precificação e o fato de ser 0% de comissão.`;
 
         const hasClicks = clicksCount > 0;
         const hasConversions = dealYes > 0;
@@ -797,34 +797,31 @@ Seu perfil obteve:
             let feedbackText = "";
             let mathText = "";
 
-            const fraseSessaoMock = hasValorSessao ? `Como a sua sessão é R$ ${psi.valor_sessao_numero}` : `Como o valor da sua sessão é a combinar`;
-            const defaultMathText = hasValorSessao 
-                ? `fechar apenas 1 sessão já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.` 
-                : `fechar com apenas 1 paciente (que costuma fazer de 2 a 4 sessões no mês) já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro!`;
-
             if (hasClicks) {
                 const contatoStr = clicksCount === 1 ? '1 paciente te chamou no WhatsApp' : `${clicksCount} pacientes te chamaram no WhatsApp`;
-                metricsText = `Seu perfil obteve:\n\n* *${matchesCount} aparições* nos resultados de matches\n* *${viewsCount} visitas* na página\n* *${contatoStr}*`;
+                metricsText = `Seu perfil obteve nestes 7 dias:\n\n* *${matchesCount} aparições* nos resultados de busca\n* *${viewsCount} visitas* diretas na sua página\n* *${contatoStr}*`;
 
                 if (dealYes > 0) {
-                    feedbackText = `Notei que você conseguiu fechar terapia com ${dealYes} sessão(ões)! 🎉 Isso é a maior prova de que a plataforma já se pagou com sobra.`;
-                    mathText = hasValorSessao ? `essa sessão que você fechou já garante o pagamento da plataforma do mês todo e ainda te deixa com lucro.` : `essa sessão que você fechou já garante o pagamento da plataforma do mês todo!`;
+                    feedbackText = `Notamos que você conseguiu fechar com ${dealYes} paciente(s)! 🎉 Isso comprova na prática que a sua vitrine já está gerando pacientes reais.`;
                 } else if (dealNoFeedback > 0) {
-                    feedbackText = `Vi que você tem ${dealNoFeedback} paciente(s) que ainda não deu retorno de fechamento. Vale muito a pena dar aquele "oi, tudo bem?" neles, porque se fechar apenas 1 deles já cobre a plataforma e deixa você com lucro! Caso já tenha conversado com eles, atualize a situação na opção *Evolução > Histórico de Contatos* para que o nosso algoritmo te entregue sempre os melhores pacientes.`;
-                    mathText = defaultMathText;
+                    feedbackText = `Vimos que você recebeu ${clicksCount} contato(s) e alguns ainda estão em conversa. Como o nosso algoritmo leva alguns dias para calibrar o perfil e as primeiras pessoas já começaram a chegar até você, acreditamos que manter o seu consultório virtual ativo é fundamental para não interromper esse fluxo que começou a tracionar.`;
                 } else {
-                    feedbackText = `O fluxo de contatos já está ganhando tração! Mesmo que essas primeiras conversas ainda estejam em andamento ou não tenham agendado de imediato, isso é super comum no início enquanto o público se alinha com a sua abordagem.`;
-                    mathText = defaultMathText;
+                    feedbackText = `Como o nosso algoritmo leva alguns dias para calibrar o perfil e as primeiras conversas já começaram a chegar, acreditamos que manter o seu consultório virtual ativo é essencial para dar continuidade a esse ritmo.`;
                 }
             } else {
                 // 0 CLIQUES
-                metricsText = `Seu perfil obteve:\n\n* *${matchesCount} aparições* nas buscas da plataforma\n* *${viewsCount} visitas* diretas na página`;
-                feedbackText = `Como o algoritmo de distribuição da plataforma leva alguns dias para calibrar o seu público ideal e o seu perfil já está ganhando tração de visualizações, o próximo passo natural é a chegada dos primeiros contatos no WhatsApp. Com pequenos ajustes na sua apresentação e mantendo a página ativa, os agendamentos começam a acontecer.`;
-                mathText = defaultMathText;
+                metricsText = `Seu perfil obteve nestes 7 dias:\n\n* *${matchesCount} aparições* nos resultados de busca\n* *${viewsCount} visitas* diretas na sua página`;
+                feedbackText = `Como o nosso algoritmo de distribuição leva alguns dias para calibrar o seu público ideal e o seu perfil já começou a ganhar visibilidade e visitas, o próximo passo natural é a chegada dos primeiros contatos no WhatsApp. Acreditamos que manter a sua vitrine ativa é fundamental para não perder essa tração inicial.`;
+            }
+
+            if (hasValorSessao) {
+                mathText = `Pensando no lado financeiro: a assinatura da Yelo é de apenas R$ 99 mensais. Como a sua sessão é R$ ${psi.valor_sessao_numero}, fechar apenas 1 atendimento no mês inteiro já cobre a plataforma com folga e ainda te deixa com lucro direto.`;
+            } else {
+                mathText = `Pensando no lado financeiro: a assinatura da Yelo tem um valor fixo de R$ 99 mensais e nós *não cobramos nenhuma taxa ou comissão* sobre as suas consultas. Como você atende com valor a combinar diretamente com o paciente no WhatsApp, você tem total autonomia na sua precificação e 100% de tudo o que acordar nos atendimentos fica no seu consultório.`;
             }
 
             whatsappCopy = formatForWhatsApp(
-                `Olá, ${psi.nome.split(' ')[0]}! Tudo bem?\n\nVi que o seu período gratuito na Yelo ${expiryPhrase}, então passei para dar uma olhada nas suas métricas. Os resultados de visibilidade foram ótimos!\n\n${metricsText}\n\n${feedbackText}\n\nPensando no seu lado financeiro: a assinatura da Yelo será de R$ 99 mensais. ${fraseSessaoMock}, ${mathText}\n\nFaz sentido para você ativar a assinatura para não perdermos esse fluxo de pacientes ${timingClosing}? Basta acessar sua conta na Yelo, ir na opção "Ajustes" e depois em "Assinaturas e Planos".`
+                `Olá, ${psi.nome.split(' ')[0]}! Como vai?\n\nNotamos que o seu período de teste gratuito na Yelo ${expiryPhrase}, e passamos para compartilhar um panorama do seu perfil nesses primeiros 7 dias.\n\n${metricsText}\n\n${feedbackText}\n\n${mathText}\n\nFaz sentido para você mantermos a sua página ativa para continuar recebendo os pacientes que chegam pela plataforma?\n\nPara renovar, basta acessar o seu painel em *Ajustes > Assinaturas e Planos*. Estamos à disposição caso precise de qualquer apoio com o acesso! 🌿`
             );
         }
 
