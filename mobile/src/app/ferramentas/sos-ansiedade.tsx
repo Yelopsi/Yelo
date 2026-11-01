@@ -39,7 +39,7 @@ export default function SosAnsiedade() {
   };
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: any;
     if (isBreathing) {
       runCycle();
       interval = setInterval(runCycle, cycleLength);

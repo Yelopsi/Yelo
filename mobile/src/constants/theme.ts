@@ -7,20 +7,43 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+export const YeloColors = {
+  verdeEscuro: '#1B4332',
+  verdeMedio: '#2D6A4F',
+  verdeClaro: '#52B788',
+  verdeNeon: '#74C69D',
+  verdeSuave: '#D8F3DC',
+  verdeSucesso: '#28a745',
+  amarelo: '#FFEE8C',
+  amareloOuro: '#FFB703',
+  creme: '#FDFBF7',
+  offwhite: '#FDFAF6',
+  coral: '#E63946',
+  cinzaFundo: '#F8F9FA',
+  cinzaBorda: '#E5E7EB',
+  cinzaTexto: '#555555',
+  cinzaClaro: '#ADB5BD',
+  branco: '#FFFFFF',
+} as const;
+
 export const Colors = {
   light: {
-    text: '#000000',
+    text: '#1B4332',
     background: '#ffffff',
     backgroundElement: '#F0F0F3',
     backgroundSelected: '#E0E1E6',
     textSecondary: '#60646C',
+    primary: YeloColors.verdeEscuro,
+    accent: YeloColors.amarelo,
   },
   dark: {
     text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
+    background: '#1B4332',
+    backgroundElement: '#2D6A4F',
     backgroundSelected: '#2E3135',
     textSecondary: '#B0B4BA',
+    primary: YeloColors.verdeNeon,
+    accent: YeloColors.amarelo,
   },
 } as const;
 

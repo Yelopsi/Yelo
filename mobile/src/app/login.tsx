@@ -18,81 +18,89 @@ export default function LoginScreen() {
   const router = useRouter();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      setErrorMsg('Preencha e-mail e senha.');
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail || !password) {
+      setErrorMsg('Por favor, preencha e-mail e senha.');
       return;
     }
     setErrorMsg('');
     setLoadingLocal(true);
+
     try {
-      let response;
-      let userData;
-      let tokenStr;
-      let userType;
+      let tokenStr = '';
+      let userType = 'psychologist';
+      let userData: any = null;
 
       try {
-        // 1. Tenta login como Psicólogo (que também cobre Admins novos)
-        response = await api.post('/api/psychologists/login', {
-          email,
+        // 1. Tenta login como Psicólogo ou Admin
+        const response = await api.post('/api/psychologists/login', {
+          email: cleanEmail,
           password
         });
         tokenStr = response.data.token;
-        userType = response.data.type || 'psychologist';
+        userType = response.data.type || (response.data.isAdmin ? 'admin' : 'psychologist');
         userData = {
           id: response.data.id,
           nome: response.data.nome,
           email: response.data.email,
-          type: userType
+          type: userType,
+          slug: response.data.slug,
+          fotoUrl: response.data.fotoUrl
         };
-      } catch (err: any) {
-        if (err.response && err.response.status === 401) {
-          // 2. Fallback para rota admin legado
-          response = await api.post('/api/admin/login', {
-            email,
-            password
-          });
-          tokenStr = response.data.token;
-          userType = 'admin';
-          userData = {
-            id: response.data.user.id,
-            nome: response.data.user.nome,
-            email: response.data.user.email,
-            type: userType
-          };
+      } catch (psiErr: any) {
+        // 2. Se não encontrou o e-mail na base de profissionais/admin, tenta como Paciente
+        const status = psiErr.response?.status;
+        const errText = psiErr.response?.data?.error || '';
+
+        if (status === 401 && (errText.includes('não encontrado') || errText.includes('inválido'))) {
+          try {
+            const patientRes = await api.post('/api/patients/login', {
+              email: cleanEmail,
+              password
+            });
+            tokenStr = patientRes.data.token;
+            userType = 'patient';
+            userData = {
+              id: patientRes.data.id,
+              nome: patientRes.data.nome,
+              email: patientRes.data.email,
+              type: userType
+            };
+          } catch (patientErr: any) {
+            // Se falhou como paciente também, exibe o erro
+            throw patientErr;
+          }
         } else {
-          throw err;
+          // Erro de senha incorreta ou outro erro do psicólogo
+          throw psiErr;
         }
       }
 
-      // Salva no SecureStore
+      if (!tokenStr) {
+        throw new Error('Falha ao receber token de acesso do servidor.');
+      }
+
+      // Salva a sessão no SecureStore de forma segura
       await signIn(tokenStr, userData);
       
-      // Redireciona dependendo de quem está logando
-      const destination = userType === 'admin' ? '/(admin)' : '/(tabs)';
-      
-      router.replace(destination);
-    } catch (error: any) {
-      console.error(error);
-      const isPsi = email.toLowerCase().includes('psi') || email.toLowerCase().includes('teste');
-      const destination = isPsi ? '/(tabs)' : '/(admin)';
-
-      // Fallback amigável caso a API não esteja rodando ou a rota de login não exista ainda (404)
-      if (error.message === 'Network Error' || (error.response && (error.response.status >= 500 || error.response.status === 404))) {
-        Alert.alert(
-          'Servidor Indisponível (Testes)',
-          'A rota de login da API não foi encontrada ou o servidor está offline. Entrando em Modo Offline (Testes).',
-          [
-            { 
-              text: 'Entrar Offline', 
-              onPress: async () => {
-                await signIn('offline-token', { id: 1, nome: isPsi ? 'Psicólogo (Offline)' : 'Admin (Offline)', email: email });
-                router.replace(destination);
-              }
-            }
-          ]
-        );
+      // Redireciona para o fluxo correspondente
+      if (userType === 'admin') {
+        router.replace('/(admin)');
+      } else if (userType === 'patient') {
+        router.replace('/(paciente)');
       } else {
-        setErrorMsg('E-mail ou senha inválidos.');
+        router.replace('/(tabs)');
+      }
+    } catch (error: any) {
+      console.warn('Erro na autenticação:', error?.response?.data || error.message);
+      const backendMessage = error.response?.data?.error;
+      
+      if (backendMessage) {
+        setErrorMsg(backendMessage);
+      } else if (error.message === 'Network Error' || error.code === 'ECONNABORTED') {
+        setErrorMsg('Não foi possível conectar ao servidor. Verifique sua conexão.');
+      } else {
+        setErrorMsg('E-mail ou senha incorretos.');
       }
     } finally {
       setLoadingLocal(false);

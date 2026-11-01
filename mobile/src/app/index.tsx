@@ -22,7 +22,7 @@ const faqs = [
 ];
 
 export default function Index() {
-  const { YeloToken, loading } = useAuth();
+  const { user, YeloToken, loading } = useAuth();
   const router = useRouter();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -54,13 +54,19 @@ export default function Index() {
   };
 
   useEffect(() => {
-    // Se o app já checou e há Token (logado), vamos direto pro Dashboard
-    if (!loading && YeloToken) {
+    // Se o app já checou e há Token (logado), vamos direto pro Dashboard correto
+    if (!loading && YeloToken && user) {
       setTimeout(() => {
-        router.replace('/(tabs)');
+        if (user.type === 'admin') {
+          router.replace('/(admin)');
+        } else if (user.type === 'patient') {
+          router.replace('/(paciente)');
+        } else {
+          router.replace('/(tabs)');
+        }
       }, 100);
     }
-  }, [YeloToken, loading]);
+  }, [YeloToken, user, loading]);
 
   if (loading || YeloToken) {
     return (

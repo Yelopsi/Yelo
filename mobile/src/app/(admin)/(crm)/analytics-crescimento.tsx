@@ -161,7 +161,7 @@ export default function AnalyticsCrescimentoScreen() {
                   </View>
                   <Text className="font-sans text-[#f59e0b] bg-[#fef3c7] self-start px-[8px] py-[2px] rounded-full text-[10px] font-bold mb-[8px]">{conversao1}% do tráfego inicial</Text>
                   <View className="h-[8px] bg-[#e2e8f0] rounded-full w-full">
-                    <View className={`h-full bg-[#f59e0b] rounded-full`} style={{ width: `${conversao1}%` }} />
+                    <View className={`h-full bg-[#f59e0b] rounded-full`} style={{ width: `${conversao1}%` as any }} />
                   </View>
                 </View>
 
@@ -175,7 +175,7 @@ export default function AnalyticsCrescimentoScreen() {
                   </View>
                   <Text className="font-sans text-[#059669] bg-[#d1fae5] self-start px-[8px] py-[2px] rounded-full text-[10px] font-bold mb-[8px]">{conversao2}% da etapa anterior</Text>
                   <View className="h-[8px] bg-[#e2e8f0] rounded-full w-full">
-                    <View className={`h-full bg-[#10b981] rounded-full`} style={{ width: `${conversao2}%` }} />
+                    <View className={`h-full bg-[#10b981] rounded-full`} style={{ width: `${conversao2}%` as any }} />
                   </View>
                 </View>
               </View>

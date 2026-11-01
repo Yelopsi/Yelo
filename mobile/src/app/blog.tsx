@@ -176,7 +176,6 @@ export default function BlogScreen() {
                           name="heart" 
                           size={18} 
                           color={likedPosts[post.id] ? "#e63946" : "#555"} 
-                          style={likedPosts[post.id] ? { fill: '#e63946' } : {}}
                         />
                         <Text className="font-sans font-bold text-[14px] text-[#333]">
                           {(post.curtidas || 0) + (likedPosts[post.id] ? 1 : 0)}
