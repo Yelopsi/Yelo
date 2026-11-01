@@ -4,6 +4,7 @@ import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { router } from 'expo-router';
 import api from '../../services/api';
 
 export default function HomeScreen() {
@@ -326,8 +327,11 @@ export default function HomeScreen() {
               <Text className="font-sans text-[#555] text-[11px] mt-1">Taxa de clique</Text>
             </View>
           </View>
-          <TouchableOpacity className="bg-[#1B4332] py-4 rounded-[14px] items-center">
-            <Text className="font-sans font-bold text-white text-[15px]">Gerenciar</Text>
+          <TouchableOpacity 
+            onPress={() => router.push('/(tabs)/pacientes')}
+            className="bg-[#1B4332] py-4 rounded-[14px] items-center"
+          >
+            <Text className="font-sans font-bold text-white text-[15px]">Gerenciar Pacientes</Text>
           </TouchableOpacity>
         </View>
 
@@ -341,7 +345,7 @@ export default function HomeScreen() {
                 <Text className="font-title text-[#1B4332] text-[22px] leading-tight">
                   {artigos !== null ? artigos : '—'}
                 </Text>
-                <Text className="font-sans text-[#555] text-[11px]">Artigos publicados</Text>
+                <Text className="font-sans text-[#555] text-[11px]">Posts publicados</Text>
               </View>
             </View>
             <View className="flex-1 bg-[#f8f9fa] rounded-[14px] p-4 flex-row items-center">
@@ -355,10 +359,16 @@ export default function HomeScreen() {
             </View>
           </View>
           <View className="flex-row gap-3">
-            <TouchableOpacity className="flex-1 border border-[#e5e7eb] py-3 rounded-full items-center">
-              <Text className="font-sans font-bold text-[#333] text-[12px]">Escrever artigo</Text>
+            <TouchableOpacity 
+              onPress={() => router.push('/(tabs)/blog')}
+              className="flex-1 border border-[#e5e7eb] py-3 rounded-full items-center"
+            >
+              <Text className="font-sans font-bold text-[#333] text-[12px]">Escrever post</Text>
             </TouchableOpacity>
-            <TouchableOpacity className="flex-1 border border-[#e5e7eb] py-3 rounded-full items-center">
+            <TouchableOpacity 
+              onPress={() => router.push('/(tabs)/forum')}
+              className="flex-1 border border-[#e5e7eb] py-3 rounded-full items-center"
+            >
               <Text className="font-sans font-bold text-[#333] text-[12px]">Participar do fórum</Text>
             </TouchableOpacity>
           </View>
@@ -370,12 +380,18 @@ export default function HomeScreen() {
             <Feather name="layers" size={16} color="#555" />
             <Text className="font-sans font-bold text-[#555] text-[15px] ml-2">Gestão Resumida</Text>
           </View>
-          <TouchableOpacity className="flex-row items-center py-4 border-b border-[#f0f0f0]">
+          <TouchableOpacity 
+            onPress={() => router.push('/(tabs)/clinica')}
+            className="flex-row items-center py-4 border-b border-[#f0f0f0]"
+          >
             <Text className="text-[18px] mr-3">📅</Text>
             <Text className="font-sans font-bold text-[#333] text-[14px] flex-1">Agenda Hoje</Text>
             <Text className="font-sans text-[#555] text-[13px]">{sessoeHoje} atends.</Text>
           </TouchableOpacity>
-          <TouchableOpacity className="flex-row items-center pt-4">
+          <TouchableOpacity 
+            onPress={() => router.push('/(tabs)/financeiro')}
+            className="flex-row items-center pt-4"
+          >
             <Text className="text-[18px] mr-3">💰</Text>
             <Text className="font-sans font-bold text-[#333] text-[14px] flex-1">Financeiro</Text>
             <Text className="font-sans text-[#555] text-[13px]">

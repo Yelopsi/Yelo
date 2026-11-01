@@ -50,6 +50,7 @@ export default function MeuPerfilScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isOptimizingBio, setIsOptimizingBio] = useState(false);
+  const [isSyncingGoogle, setIsSyncingGoogle] = useState(false);
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
 
   // Estados dos blocos sanfona e edição
@@ -71,6 +72,7 @@ export default function MeuPerfilScreen() {
     instagram: '',
     linkedin: '',
     tiktok: '',
+    google_business_url: '',
   });
 
   useEffect(() => {
@@ -95,6 +97,7 @@ export default function MeuPerfilScreen() {
             instagram: p.instagram_url ? p.instagram_url.replace('@', '') : '',
             linkedin: p.linkedin_url || '',
             tiktok: p.tiktok_url ? p.tiktok_url.replace('@', '') : '',
+            google_business_url: p.google_business_url || '',
           });
           setFotoUrl(p.fotoUrl || null);
         }
@@ -178,6 +181,26 @@ export default function MeuPerfilScreen() {
       Alert.alert("Erro", "Não foi possível otimizar a bio no momento.");
     } finally {
       setIsOptimizingBio(false);
+    }
+  };
+
+  const handleSyncGoogleReviews = async () => {
+    if (!form.google_business_url.trim()) {
+      Alert.alert("Aviso", "Por favor, insira o link do seu perfil no Google Maps ou Google Meu Negócio.");
+      return;
+    }
+    try {
+      setIsSyncingGoogle(true);
+      const res = await api.post('/api/psychologists/me/sync-google-reviews', {
+        google_business_url: form.google_business_url.trim()
+      });
+      if (res.data?.success) {
+        Alert.alert("Sincronizado! ⭐", res.data.message || "Suas avaliações do Google Meu Negócio foram importadas para o seu perfil Yelo!");
+      }
+    } catch (e: any) {
+      Alert.alert("Erro", e.response?.data?.error || "Não foi possível validar o link do Google Meu Negócio.");
+    } finally {
+      setIsSyncingGoogle(false);
     }
   };
 
@@ -403,6 +426,47 @@ export default function MeuPerfilScreen() {
                   {renderInput('social', 'instagram', 'Instagram', 'usuario', 'default', true, '@')}
                   {renderInput('social', 'linkedin', 'LinkedIn', 'usuario', 'default', true, 'in/')}
                   {renderInput('social', 'tiktok', 'TikTok', 'usuario', 'default', true, '@')}
+                </View>
+              )}
+            </View>
+
+            {/* BLOCO 6: GOOGLE MEU NEGÓCIO & REVIEWS (Sincronização Oficial) */}
+            <View className="bg-white border border-[#e5e7eb] rounded-[20px] overflow-hidden shadow-sm">
+              <TouchableOpacity onPress={() => toggleBlock('google')} className="flex-row justify-between items-center p-5 bg-[#f9fafb] border-b border-[#e5e7eb]">
+                <View className="flex-row items-center flex-1">
+                  <Text className="text-[18px] mr-2">📍</Text>
+                  <Text className="font-title text-[#1B4332] text-[18px] mr-2">Google Meu Negócio</Text>
+                  <Feather name={activeBlock === 'google' ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
+                </View>
+              </TouchableOpacity>
+              
+              {activeBlock === 'google' && (
+                <View className="p-5">
+                  <Text className="font-sans text-[#555] text-[13px] mb-4 leading-5">
+                    Conecte o link do seu perfil no Google Maps/Google Meu Negócio para exibir suas avaliações 5 estrelas diretamente no seu perfil Yelo.
+                  </Text>
+                  
+                  <Text className="font-sans font-bold text-[#495057] text-[13px] mb-1.5 ml-1">Link do Google Maps / GMB</Text>
+                  <TextInput 
+                    placeholder="https://maps.google.com/?cid=... ou link g.page"
+                    value={form.google_business_url}
+                    onChangeText={(t) => handleTextChange('google_business_url', t)}
+                    className="border border-[#e0e0e0] rounded-[12px] px-4 py-3.5 font-sans text-[14px] bg-white text-[#333] mb-4"
+                  />
+
+                  <TouchableOpacity
+                    onPress={handleSyncGoogleReviews}
+                    disabled={isSyncingGoogle}
+                    className="bg-[#1B4332] py-3 rounded-full items-center justify-center shadow-sm"
+                  >
+                    {isSyncingGoogle ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Text className="font-sans font-bold text-white text-[13px]">
+                        Sincronizar Avaliações do Google ⭐
+                      </Text>
+                    )}
+                  </TouchableOpacity>
                 </View>
               )}
             </View>
