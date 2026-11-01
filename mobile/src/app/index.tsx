@@ -9,6 +9,7 @@ import Svg, { Path } from 'react-native-svg';
 import Footer from '../components/Footer';
 import PublicBottomNav from '../components/PublicBottomNav';
 import PublicHeader from '../components/PublicHeader';
+import MouseScrollIndicator from '../components/MouseScrollIndicator';
 import api from '../services/api';
 
 const { width } = Dimensions.get('window');
@@ -277,12 +278,24 @@ export default function Index() {
                   </Text>
                 </View>
               </YeloScrollView>
+
+              {/* Indicador de rolagem do mouse (1:1 com web) */}
+              <View className="mt-6 mb-2">
+                <MouseScrollIndicator dark />
+              </View>
             </View>
 
             {/* ============================================================ */}
             {/* 3. SEÇÃO SEGURANÇA E QUALIDADE (PROFISSIONAIS VERIFICADOS)    */}
             {/* ============================================================ */}
-            <View className="bg-[#fdfaf6] pt-[50px] pb-[60px] px-[20px] relative">
+            <View className="bg-[#fdfaf6] pt-[20px] pb-[60px] px-[20px] relative">
+              {/* Wave Top suave vinda da seção branca anterior (1:1 com .wave-top-organica da web) */}
+              <View className="w-full -mt-5 mb-6">
+                <Svg viewBox="0 0 1200 120" width="100%" height={width * (50 / 1200)} preserveAspectRatio="none">
+                  <Path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="#ffffff" />
+                </Svg>
+              </View>
+
               <View className="items-center text-center z-10 mb-6">
                 <View className="bg-[#E6F4F1] px-[18px] py-[8px] rounded-[50px] mb-[20px]">
                   <Text className="font-sans font-bold text-[#1B4332] text-[12px] uppercase tracking-[1px]">
@@ -315,11 +328,11 @@ export default function Index() {
                   </View>
                 </View>
 
-                {/* Imagem Oficial dos Psicólogos Verificados Yelo (1:1 com a Web) */}
+                {/* Imagem Oficial dos Psicólogos Verificados Yelo (Proporção Natural 1:1) */}
                 <View className="w-full items-center justify-center my-8">
                   <Image 
                     source={require('../../assets/images/psicologos_yelo.png')} 
-                    style={{ width: width - 40, height: (width - 40) * 0.7 }}
+                    style={{ width: width - 40, height: (width - 40) * (1799 / 1908), maxWidth: 520 }}
                     resizeMode="contain"
                   />
                 </View>
@@ -351,14 +364,17 @@ export default function Index() {
             {/* 4. SEÇÃO COMO FUNCIONA (PASSOS 1, 2 E 3)                    */}
             {/* ============================================================ */}
             <View className="px-6 pb-14 pt-8 bg-white">
-              <View className="items-center mb-10 text-center">
+              <View className="items-center mb-8 text-center">
                 <Text className="font-title text-[32px] text-[#1B4332] mb-3 text-center">Como a Yelo funciona</Text>
                 <Text className="font-sans text-[15px] text-[#555] text-center leading-relaxed">
                   Uma jornada simples, transparente e focada no seu bem-estar.
                 </Text>
+                <View className="mt-4">
+                  <MouseScrollIndicator dark />
+                </View>
               </View>
 
-              <View className="gap-12">
+              <View className="gap-8">
                 {/* Passo 01 */}
                 <View className="items-center text-center">
                   <View className="bg-[#E6F4F1] px-[16px] py-[6px] rounded-[50px] mb-[15px] self-center">
@@ -367,14 +383,22 @@ export default function Index() {
                   <Text className="font-title text-[24px] text-[#1B4332] mb-3 text-center leading-tight">
                     Encontre o profissional ideal para você
                   </Text>
-                  <Text className="font-sans text-[15px] text-[#555] leading-relaxed text-center mb-6">
+                  <Text className="font-sans text-[15px] text-[#555] leading-relaxed text-center mb-4">
                     Esqueça as listas infinitas. Responda ao nosso questionário inteligente sobre suas necessidades e preferências — <Text className="font-bold">leva menos de 1 minuto!</Text> Nossa tecnologia fará a curadoria e te apresentará os psicólogos mais compatíveis com o seu perfil. Se não gostar dos resultados, você pode refazer o questionário quantas vezes quiser.
                   </Text>
                   
-                  <View className="w-full relative items-center justify-center h-[260px] bg-[#F8F3ED] rounded-[40px] overflow-hidden p-4">
-                    <Image source={require('../../assets/images/passo_1.png')} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                  {/* Ilustração Passo 1 Oficial (sem caixas cortadas, 1:1 com web) */}
+                  <View className="w-full items-center justify-center my-2">
+                    <Image 
+                      source={require('../../assets/images/passo_1.png')} 
+                      style={{ width: width - 48, height: (width - 48) * (1027 / 1532), maxWidth: 500 }} 
+                      resizeMode="contain" 
+                    />
                   </View>
                 </View>
+
+                {/* Indicador de scroll entre Passo 1 e Passo 2 */}
+                <MouseScrollIndicator dark />
 
                 {/* Passo 02 */}
                 <View className="items-center text-center">
@@ -384,14 +408,22 @@ export default function Index() {
                   <Text className="font-title text-[24px] text-[#1B4332] mb-3 text-center leading-tight">
                     Conheça e conecte-se com segurança
                   </Text>
-                  <Text className="font-sans text-[15px] text-[#555] leading-relaxed text-center mb-6">
+                  <Text className="font-sans text-[15px] text-[#555] leading-relaxed text-center mb-4">
                     Veja o perfil detalhado, conheça a abordagem e a trajetória do profissional e leia avaliações reais. Quando sentir confiança, inicie uma conversa ou agende sua sessão diretamente pelo WhatsApp, sem intermediários.
                   </Text>
                   
-                  <View className="w-full relative items-center justify-center h-[260px] bg-[#E6F4F1] rounded-[40px] overflow-hidden p-4">
-                    <Image source={require('../../assets/images/passo_2.png')} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                  {/* Ilustração Passo 2 Oficial (sem caixas cortadas, 1:1 com web) */}
+                  <View className="w-full items-center justify-center my-2">
+                    <Image 
+                      source={require('../../assets/images/passo_2.png')} 
+                      style={{ width: width - 48, height: (width - 48) * (1696 / 2524), maxWidth: 500 }} 
+                      resizeMode="contain" 
+                    />
                   </View>
                 </View>
+
+                {/* Indicador de scroll entre Passo 2 e Passo 3 */}
+                <MouseScrollIndicator dark />
 
                 {/* Passo 03 */}
                 <View className="items-center text-center">
@@ -401,12 +433,17 @@ export default function Index() {
                   <Text className="font-title text-[24px] text-[#1B4332] mb-3 text-center leading-tight">
                     Comece sua jornada de transformação
                   </Text>
-                  <Text className="font-sans text-[15px] text-[#555] leading-relaxed text-center mb-6">
+                  <Text className="font-sans text-[15px] text-[#555] leading-relaxed text-center mb-4">
                     Realize suas sessões online no conforto da sua casa ou presencialmente. Se não se adaptar, nosso sistema de <Text className="font-bold">Troca Facilitada</Text> permite que você encontre outro profissional rapidamente.
                   </Text>
                   
-                  <View className="w-full relative items-center justify-center h-[260px] bg-[#FFF8E1] rounded-[40px] overflow-hidden p-4">
-                    <Image source={require('../../assets/images/passo_3.png')} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
+                  {/* Ilustração Passo 3 Oficial (sem caixas cortadas, 1:1 com web) */}
+                  <View className="w-full items-center justify-center my-2">
+                    <Image 
+                      source={require('../../assets/images/passo_3.png')} 
+                      style={{ width: width - 48, height: (width - 48) * (1049 / 1500), maxWidth: 500 }} 
+                      resizeMode="contain" 
+                    />
                   </View>
                 </View>
               </View>
@@ -525,8 +562,13 @@ export default function Index() {
                 })}
               </YeloScrollView>
 
-              {/* Wave Divider para FAQ */}
-              <View className="w-full -mb-1 mt-8">
+              {/* Indicador de rolagem do mouse (1:1 com web) */}
+              <View className="mt-6 mb-2">
+                <MouseScrollIndicator dark />
+              </View>
+
+              {/* Wave Divider para FAQ (Invertida 180deg como na web) */}
+              <View className="w-full -mb-1 mt-6" style={{ transform: [{ rotate: '180deg' }] }}>
                 <Svg viewBox="0 0 1200 120" width="100%" height={width * (80 / 1200)} preserveAspectRatio="none">
                   <Path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="#ffffff" />
                 </Svg>
