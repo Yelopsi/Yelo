@@ -3,9 +3,10 @@ import { View, Animated } from 'react-native';
 
 interface MouseScrollIndicatorProps {
   dark?: boolean;
+  horizontal?: boolean;
 }
 
-export default function MouseScrollIndicator({ dark = true }: MouseScrollIndicatorProps) {
+export default function MouseScrollIndicator({ dark = true, horizontal = false }: MouseScrollIndicatorProps) {
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -37,11 +38,11 @@ export default function MouseScrollIndicator({ dark = true }: MouseScrollIndicat
     outputRange: [1, 0.6, 0],
   });
 
-  const borderColor = dark ? 'rgba(27, 67, 50, 0.4)' : 'rgba(255, 255, 255, 0.6)';
+  const borderColor = dark ? (horizontal ? '#1B4332' : 'rgba(27, 67, 50, 0.4)') : 'rgba(255, 255, 255, 0.6)';
   const wheelColor = dark ? '#1B4332' : '#ffffff';
 
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 10, opacity: 0.6 }}>
+    <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: horizontal ? 12 : 10, opacity: 0.6 }}>
       <View
         style={{
           width: 26,
@@ -52,6 +53,7 @@ export default function MouseScrollIndicator({ dark = true }: MouseScrollIndicat
           alignItems: 'center',
           paddingTop: 8,
           position: 'relative',
+          transform: horizontal ? [{ rotate: '90deg' }] : [],
         }}
       >
         <Animated.View

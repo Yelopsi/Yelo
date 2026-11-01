@@ -48,7 +48,7 @@ export default function Index() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Dados dinâmicos da Home carregados do banco de dados online
+  // Dados dinâmicos da Home carregados do banco de dados local
   const [homeData, setHomeData] = useState<{
     mediaAvaliacao: string;
     totalAvaliacoes: string;
@@ -81,7 +81,7 @@ export default function Index() {
   const [fraseHero, setFraseHero] = useState(() => frases[Math.floor(Math.random() * frases.length)]);
 
   useEffect(() => {
-    // Busca dados reais do banco online
+    // Busca dados reais do banco
     api.get('/api/public/home-data')
       .then(res => {
         if (res.data) {
@@ -151,219 +151,225 @@ export default function Index() {
           onScroll={(e) => setIsScrolled(e.nativeEvent.contentOffset.y > 20)}
           scrollEventThrottle={16}
         >
-          <View className="bg-white">
+          {/* ============================================================ */}
+          {/* 1. HERO SECTION                                              */}
+          {/* ============================================================ */}
+          <View className="bg-[#1B4332] pt-8 items-center relative overflow-hidden">
+            <View className="px-6 items-center w-full">
+              {/* Glow decorativo de fundo */}
+              <View className="absolute -top-10 -right-20 w-64 h-64 bg-white/5 rounded-full blur-xl" />
 
-            {/* ============================================================ */}
-            {/* 1. HERO SECTION                                              */}
-            {/* ============================================================ */}
-            <View className="bg-[#1B4332] pt-8 items-center relative overflow-hidden">
-              <View className="px-6 items-center w-full">
-                {/* Glow decorativo de fundo */}
-                <View className="absolute -top-10 -right-20 w-64 h-64 bg-white/5 rounded-full blur-xl" />
+              <Text className="font-title text-[40px] text-white text-center leading-tight mb-4 font-extrabold">
+                Você merece {fraseHero}
+              </Text>
 
-                <Text className="font-title text-[40px] text-white text-center leading-tight mb-4 font-extrabold">
-                  Você merece {fraseHero}
-                </Text>
+              <Text className="font-sans font-medium text-[16px] text-white/90 text-center mb-5 px-4 leading-relaxed">
+                Encontrar a pessoa certa para te acompanhar nessa jornada é o primeiro passo.
+              </Text>
 
-                <Text className="font-sans font-medium text-[16px] text-white/90 text-center mb-5 px-4 leading-relaxed">
-                  Encontrar a pessoa certa para te acompanhar nessa jornada é o primeiro passo.
-                </Text>
-
-                {/* Social Proof (M C F + Avaliações Reais do Banco) */}
-                <View className="flex-row items-center justify-center gap-3 mb-6 mt-1 relative z-10">
-                  <View className="flex-row -mr-1">
-                    <View className="w-8 h-8 rounded-full bg-[#FFF8E1] border-2 border-[#1B4332] items-center justify-center -mr-3 z-30">
-                      <Text className="font-sans font-bold text-[#1B4332] text-[13px]">M</Text>
-                    </View>
-                    <View className="w-8 h-8 rounded-full bg-[#E6F4F1] border-2 border-[#1B4332] items-center justify-center -mr-3 z-20">
-                      <Text className="font-sans font-bold text-[#1B4332] text-[13px]">C</Text>
-                    </View>
-                    <View className="w-8 h-8 rounded-full bg-[#F8F3ED] border-2 border-[#1B4332] items-center justify-center z-10">
-                      <Text className="font-sans font-bold text-[#1B4332] text-[13px]">F</Text>
-                    </View>
+              {/* Social Proof (M C F + Avaliações Reais do Banco) */}
+              <View className="flex-row items-center justify-center gap-3 mb-6 mt-1 relative z-10">
+                <View className="flex-row -mr-1">
+                  <View className="w-8 h-8 rounded-full bg-[#FFF8E1] border-2 border-[#1B4332] items-center justify-center -mr-3 z-30">
+                    <Text className="font-sans font-bold text-[#1B4332] text-[13px]">M</Text>
                   </View>
-
-                  <View className="items-start">
-                    <Text className="text-[#FFC107] text-[14px] tracking-[2px] leading-none">★★★★★</Text>
-                    <Text className="font-sans text-[rgba(255,255,255,0.9)] text-[13px] mt-1">
-                      <Text className="font-bold">{homeData.mediaAvaliacao}/5</Text> ({homeData.totalAvaliacoes} avaliações)
-                    </Text>
+                  <View className="w-8 h-8 rounded-full bg-[#E6F4F1] border-2 border-[#1B4332] items-center justify-center -mr-3 z-20">
+                    <Text className="font-sans font-bold text-[#1B4332] text-[13px]">C</Text>
+                  </View>
+                  <View className="w-8 h-8 rounded-full bg-[#F8F3ED] border-2 border-[#1B4332] items-center justify-center z-10">
+                    <Text className="font-sans font-bold text-[#1B4332] text-[13px]">F</Text>
                   </View>
                 </View>
 
-                {/* CTA Principal Amarelo */}
-                <TouchableOpacity 
-                  activeOpacity={0.85}
-                  onPress={() => router.push('/questionario')}
-                  className="bg-[#FFEE8C] px-[35px] py-[15px] rounded-[50px] shadow-[0_4px_20px_rgba(0,0,0,0.2)] items-center mb-4 active:scale-95"
-                >
-                  <Text className="font-title font-bold text-[#1B4332] text-[18px]">
-                    Encontrar meu psicólogo
+                <View className="items-start">
+                  <Text className="text-[#FFC107] text-[14px] tracking-[2px] leading-none">★★★★★</Text>
+                  <Text className="font-sans text-[rgba(255,255,255,0.9)] text-[13px] mt-1">
+                    <Text className="font-bold">{homeData.mediaAvaliacao}/5</Text> ({homeData.totalAvaliacoes} avaliações)
                   </Text>
-                </TouchableOpacity>
-
-                {/* Subtexto com "leva menos de 1 minuto" em destaque */}
-                <Text className="font-sans text-[13.5px] text-[#E6F4F1] text-center opacity-90 px-4 leading-[1.4] max-w-[500px]">
-                  ✨ O match é por nossa conta, sem compromisso e <Text className="font-bold text-white">leva menos de 1 minuto</Text>.{'\n'}O pagamento das sessões é combinado direto com o/a psicólogo/a.
-                </Text>
+                </View>
               </View>
 
-              {/* Wave Divider para a seção branca */}
-              <View className="w-full mt-10 -mb-1">
-                <Svg viewBox="0 0 1440 320" width="100%" height={width * (320 / 1440)} preserveAspectRatio="none">
-                  <Path fill="#ffffff" fillOpacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
-                </Svg>
-              </View>
-            </View>
-
-            {/* ============================================================ */}
-            {/* 2. SEÇÃO VANTAGENS ("Por que escolher a yelo?")             */}
-            {/* ============================================================ */}
-            <View className="py-12 bg-white">
-              <View className="px-6 mb-8 items-center">
-                <Text className="font-title text-[30px] text-[#1B4332] text-center mb-3">
-                  Por que escolher a <Text className="font-bold">yelo</Text>?
-                </Text>
-                <Text className="font-sans text-[15px] text-[#555] text-center leading-relaxed max-w-[600px]">
-                  Cuidar da mente não precisa ser complicado. Criamos uma experiência fluida para você focar no que importa.
-                </Text>
-              </View>
-
-              <YeloScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false} 
-                contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }} 
-                snapToInterval={width * 0.8 + 16} 
-                decelerationRate="fast"
+              {/* CTA Principal Amarelo */}
+              <TouchableOpacity 
+                activeOpacity={0.85}
+                onPress={() => router.push('/questionario')}
+                className="bg-[#FFEE8C] px-[35px] py-[15px] rounded-[50px] shadow-[0_4px_20px_rgba(0,0,0,0.2)] items-center mb-4 active:scale-95"
               >
-                {/* Card 1: Match Inteligente */}
-                <View 
-                  style={{ width: width * 0.8 }} 
-                  className="bg-[#F8F3ED] border border-[rgba(0,0,0,0.03)] p-8 rounded-[24px] rounded-tr-[60px] rounded-bl-[60px] shadow-[0_4px_15px_rgba(0,0,0,0.03)]"
-                >
-                  <View className="w-20 h-20 bg-white rounded-full items-center justify-center shadow-[0_5px_15px_rgba(0,0,0,0.05)] mb-6 self-start">
-                    <Image source={require('../../assets/images/match.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
-                  </View>
-                  <Text className="font-title text-[22px] text-[#1B4332] mb-3">Match Inteligente</Text>
-                  <Text className="font-sans text-[15px] text-[#555] leading-relaxed">
-                    Não perca tempo procurando. Nossa tecnologia conecta você aos especialistas ideais para sua necessidade específica.
-                  </Text>
-                </View>
+                <Text className="font-title font-bold text-[#1B4332] text-[18px]">
+                  Encontrar meu psicólogo
+                </Text>
+              </TouchableOpacity>
 
-                {/* Card 2: 100% Sigiloso e Seguro */}
-                <View 
-                  style={{ width: width * 0.8 }} 
-                  className="bg-[#E6F4F1] border border-[rgba(0,0,0,0.03)] p-8 rounded-[60px] rounded-tr-[24px] rounded-bl-[24px] shadow-[0_4px_15px_rgba(0,0,0,0.03)]"
-                >
-                  <View className="w-20 h-20 bg-white rounded-full items-center justify-center shadow-[0_5px_15px_rgba(0,0,0,0.05)] mb-6 self-start">
-                    <Image source={require('../../assets/images/sigilo.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
-                  </View>
-                  <Text className="font-title text-[22px] text-[#1B4332] mb-3">100% Sigiloso e Seguro</Text>
-                  <Text className="font-sans text-[15px] text-[#555] leading-relaxed">
-                    Sua privacidade é nossa prioridade. Plataforma criptografada e profissionais éticos verificados pelo CRP.
-                  </Text>
-                </View>
-
-                {/* Card 3: Troca Facilitada */}
-                <View 
-                  style={{ width: width * 0.8 }} 
-                  className="bg-[#FFF8E1] border border-[rgba(0,0,0,0.03)] p-8 rounded-[24px] rounded-tr-[60px] rounded-bl-[60px] shadow-[0_4px_15px_rgba(0,0,0,0.03)]"
-                >
-                  <View className="w-20 h-20 bg-white rounded-full items-center justify-center shadow-[0_5px_15px_rgba(0,0,0,0.05)] mb-6 self-start">
-                    <Image source={require('../../assets/images/troca.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
-                  </View>
-                  <Text className="font-title text-[22px] text-[#1B4332] mb-3">Troca Facilitada</Text>
-                  <Text className="font-sans text-[15px] text-[#555] leading-relaxed">
-                    Não se adaptou? Acontece. Troque de profissional a qualquer momento sem burocracia ou custo extra.
-                  </Text>
-                </View>
-              </YeloScrollView>
-
-              {/* Indicador de rolagem do mouse (1:1 com web) */}
-              <View className="mt-6 mb-2">
-                <MouseScrollIndicator dark />
-              </View>
+              {/* Subtexto com "leva menos de 1 minuto" em destaque */}
+              <Text className="font-sans text-[13.5px] text-[#E6F4F1] text-center opacity-90 px-4 leading-[1.4] max-w-[500px]">
+                ✨ O match é por nossa conta, sem compromisso e <Text className="font-bold text-white">leva menos de 1 minuto</Text>.{'\n'}O pagamento das sessões é combinado direto com o/a psicólogo/a.
+              </Text>
             </View>
 
-            {/* ============================================================ */}
-            {/* 3. SEÇÃO SEGURANÇA E QUALIDADE (PROFISSIONAIS VERIFICADOS)    */}
-            {/* ============================================================ */}
-            <View className="bg-[#fdfaf6] pt-[20px] pb-[60px] px-[20px] relative">
-              {/* Wave Top suave vinda da seção branca anterior (1:1 com .wave-top-organica da web) */}
-              <View className="w-full -mt-5 mb-6">
-                <Svg viewBox="0 0 1200 120" width="100%" height={width * (50 / 1200)} preserveAspectRatio="none">
-                  <Path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="#ffffff" />
-                </Svg>
-              </View>
+            {/* Wave Divider 1: Transição Hero -> Seção 2 Vantagens (Branca) */}
+            <View style={{ width: '100%', marginTop: 32, marginBottom: -1 }}>
+              <Svg viewBox="0 0 1440 320" width="100%" height={width * (320 / 1440)} preserveAspectRatio="none">
+                <Path fill="#ffffff" fillOpacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+              </Svg>
+            </View>
+          </View>
 
-              <View className="items-center text-center z-10 mb-6">
-                <View className="bg-[#E6F4F1] px-[18px] py-[8px] rounded-[50px] mb-[20px]">
-                  <Text className="font-sans font-bold text-[#1B4332] text-[12px] uppercase tracking-[1px]">
-                    Segurança e Qualidade
-                  </Text>
-                </View>
-
-                <Text className="font-title text-[30px] text-[#1B4332] text-center leading-tight mb-4">
-                  Profissionais verificados em quem você pode confiar.
-                </Text>
-
-                <Text className="font-sans text-[15px] text-[#555] text-center leading-[25px] max-w-[650px]">
-                  Garantimos a sua segurança através de um processo de verificação rigoroso. Todos os profissionais da plataforma possuem registro ativo no Conselho Regional de Psicologia (CRP). Aqui, você encontra especialistas prontos para te ajudar com ansiedade, depressão, carreira, relacionamentos e muito mais.
-                </Text>
-                
-                {/* Badges de Confiança */}
-                <View className="flex-row flex-wrap justify-center gap-3 mt-6 w-full">
-                  <View className="flex-row items-center bg-white py-2 pr-5 pl-2 rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.04)] border border-[rgba(0,0,0,0.03)]">
-                    <View className="w-8 h-8 bg-[#E6F4F1] rounded-full items-center justify-center mr-2.5">
-                      <Feather name="check-square" size={15} color="#1B4332" />
-                    </View>
-                    <Text className="font-sans font-bold text-[#1B4332] text-[13.5px]">CRP Ativo</Text>
-                  </View>
-
-                  <View className="flex-row items-center bg-white py-2 pr-5 pl-2 rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.04)] border border-[rgba(0,0,0,0.03)]">
-                    <View className="w-8 h-8 bg-[#FFF8E1] rounded-full items-center justify-center mr-2.5">
-                      <Feather name="shield" size={15} color="#B38600" />
-                    </View>
-                    <Text className="font-sans font-bold text-[#1B4332] text-[13.5px]">Profissionais Verificados</Text>
-                  </View>
-                </View>
-
-                {/* Imagem Oficial dos Psicólogos Verificados Yelo (Proporção Natural 1:1) */}
-                <View className="w-full items-center justify-center my-8">
-                  <Image 
-                    source={require('../../assets/images/psicologos_yelo.png')} 
-                    style={{ width: width - 40, height: (width - 40) * (1799 / 1908), maxWidth: 520 }}
-                    resizeMode="contain"
-                  />
-                </View>
-
-                {/* CTA da Seção com subtexto */}
-                <TouchableOpacity 
-                  activeOpacity={0.85}
-                  onPress={() => router.push('/questionario')}
-                  className="bg-[#FFEE8C] px-[35px] py-[15px] rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.15)] active:scale-95"
-                >
-                  <Text className="font-title font-bold text-[#1B4332] text-[16px]">
-                    Encontrar meu psicólogo
-                  </Text>
-                </TouchableOpacity>
-                <Text className="font-sans italic text-[13px] text-[#666] mt-2">
-                  leva menos de 1 minuto
-                </Text>
-              </View>
-
-              {/* Wave Divider para Como Funciona */}
-              <View className="w-full -mb-1 mt-6">
-                <Svg viewBox="0 0 1440 320" width="100%" height={width * (200 / 1440)} preserveAspectRatio="none">
-                  <Path fill="#ffffff" fillOpacity="1" d="M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,90.7C672,85,768,107,864,122.7C960,139,1056,149,1152,133.3C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
-                </Svg>
-              </View>
+          {/* ============================================================ */}
+          {/* 2. SEÇÃO VANTAGENS ("Por que escolher a yelo?") - BRANCA      */}
+          {/* ============================================================ */}
+          <View style={{ backgroundColor: '#ffffff', paddingTop: 40, paddingBottom: 24 }}>
+            <View className="px-6 mb-8 items-center">
+              <Text className="font-title text-[30px] text-[#1B4332] text-center mb-3">
+                Por que escolher a <Text className="font-bold">yelo</Text>?
+              </Text>
+              <Text className="font-sans text-[15px] text-[#555] text-center leading-relaxed max-w-[600px]">
+                Cuidar da mente não precisa ser complicado. Criamos uma experiência fluida para você focar no que importa.
+              </Text>
             </View>
 
-            {/* ============================================================ */}
-            {/* 4. SEÇÃO COMO FUNCIONA (PASSOS 1, 2 E 3)                    */}
-            {/* ============================================================ */}
-            <View className="px-6 pb-14 pt-8 bg-white">
+            <YeloScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }} 
+              snapToInterval={width * 0.8 + 16} 
+              decelerationRate="fast"
+            >
+              {/* Card 1: Match Inteligente */}
+              <View 
+                style={{ width: width * 0.8 }} 
+                className="bg-[#F8F3ED] border border-[rgba(0,0,0,0.03)] p-8 rounded-[24px] rounded-tr-[60px] rounded-bl-[60px] shadow-[0_4px_15px_rgba(0,0,0,0.03)]"
+              >
+                <View className="w-20 h-20 bg-white rounded-full items-center justify-center shadow-[0_5px_15px_rgba(0,0,0,0.05)] mb-6 self-start">
+                  <Image source={require('../../assets/images/match.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
+                </View>
+                <Text className="font-title text-[22px] text-[#1B4332] mb-3">Match Inteligente</Text>
+                <Text className="font-sans text-[15px] text-[#555] leading-relaxed">
+                  Não perca tempo procurando. Nossa tecnologia conecta você aos especialistas ideais para sua necessidade específica.
+                </Text>
+              </View>
+
+              {/* Card 2: 100% Sigiloso e Seguro */}
+              <View 
+                style={{ width: width * 0.8 }} 
+                className="bg-[#E6F4F1] border border-[rgba(0,0,0,0.03)] p-8 rounded-[60px] rounded-tr-[24px] rounded-bl-[24px] shadow-[0_4px_15px_rgba(0,0,0,0.03)]"
+              >
+                <View className="w-20 h-20 bg-white rounded-full items-center justify-center shadow-[0_5px_15px_rgba(0,0,0,0.05)] mb-6 self-start">
+                  <Image source={require('../../assets/images/sigilo.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
+                </View>
+                <Text className="font-title text-[22px] text-[#1B4332] mb-3">100% Sigiloso e Seguro</Text>
+                <Text className="font-sans text-[15px] text-[#555] leading-relaxed">
+                  Sua privacidade é nossa prioridade. Plataforma criptografada e profissionais éticos verificados pelo CRP.
+                </Text>
+              </View>
+
+              {/* Card 3: Troca Facilitada */}
+              <View 
+                style={{ width: width * 0.8 }} 
+                className="bg-[#FFF8E1] border border-[rgba(0,0,0,0.03)] p-8 rounded-[24px] rounded-tr-[60px] rounded-bl-[60px] shadow-[0_4px_15px_rgba(0,0,0,0.03)]"
+              >
+                <View className="w-20 h-20 bg-white rounded-full items-center justify-center shadow-[0_5px_15px_rgba(0,0,0,0.05)] mb-6 self-start">
+                  <Image source={require('../../assets/images/troca.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
+                </View>
+                <Text className="font-title text-[22px] text-[#1B4332] mb-3">Troca Facilitada</Text>
+                <Text className="font-sans text-[15px] text-[#555] leading-relaxed">
+                  Não se adaptou? Acontece. Troque de profissional a qualquer momento sem burocracia ou custo extra.
+                </Text>
+              </View>
+            </YeloScrollView>
+
+            {/* Indicador de rolagem do mouse HORIZONTAL (1:1 com views/index.ejs:441) */}
+            <View className="mt-4 mb-2">
+              <MouseScrollIndicator dark horizontal />
+            </View>
+          </View>
+
+          {/* ============================================================ */}
+          {/* 3. SEÇÃO SEGURANÇA E QUALIDADE - OFF-WHITE (#fdfaf6)          */}
+          {/* ============================================================ */}
+          <View style={{ backgroundColor: '#fdfaf6', position: 'relative' }}>
+            {/* Wave Top suave vinda da seção branca anterior (1:1 com .wave-top-organica da web) */}
+            <View style={{ width: '100%', height: 50, backgroundColor: '#fdfaf6', overflow: 'hidden' }}>
+              <Svg viewBox="0 0 1200 120" width="100%" height={50} preserveAspectRatio="none">
+                <Path
+                  d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
+                  fill="#ffffff"
+                />
+              </Svg>
+            </View>
+
+            <View className="px-5 pt-4 pb-8 items-center text-center z-10">
+              <View className="bg-[#E6F4F1] px-[18px] py-[8px] rounded-[50px] mb-[20px]">
+                <Text className="font-sans font-bold text-[#1B4332] text-[12px] uppercase tracking-[1px]">
+                  Segurança e Qualidade
+                </Text>
+              </View>
+
+              <Text className="font-title text-[30px] text-[#1B4332] text-center leading-tight mb-4">
+                Profissionais verificados em quem você pode confiar.
+              </Text>
+
+              <Text className="font-sans text-[15px] text-[#555] text-center leading-[25px] max-w-[650px]">
+                Garantimos a sua segurança através de um processo de verificação rigoroso. Todos os profissionais da plataforma possuem registro ativo no Conselho Regional de Psicologia (CRP). Aqui, você encontra especialistas prontos para te ajudar com ansiedade, depressão, carreira, relacionamentos e muito mais.
+              </Text>
+              
+              {/* Badges de Confiança */}
+              <View className="flex-row flex-wrap justify-center gap-3 mt-6 w-full">
+                <View className="flex-row items-center bg-white py-2 pr-5 pl-2 rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.04)] border border-[rgba(0,0,0,0.03)]">
+                  <View className="w-8 h-8 bg-[#E6F4F1] rounded-full items-center justify-center mr-2.5">
+                    <Feather name="check-square" size={15} color="#1B4332" />
+                  </View>
+                  <Text className="font-sans font-bold text-[#1B4332] text-[13.5px]">CRP Ativo</Text>
+                </View>
+
+                <View className="flex-row items-center bg-white py-2 pr-5 pl-2 rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.04)] border border-[rgba(0,0,0,0.03)]">
+                  <View className="w-8 h-8 bg-[#FFF8E1] rounded-full items-center justify-center mr-2.5">
+                    <Feather name="shield" size={15} color="#B38600" />
+                  </View>
+                  <Text className="font-sans font-bold text-[#1B4332] text-[13.5px]">Profissionais Verificados</Text>
+                </View>
+              </View>
+
+              {/* Imagem Oficial dos Psicólogos Verificados Yelo (Proporção Natural 1:1) */}
+              <View className="w-full items-center justify-center my-8">
+                <Image 
+                  source={require('../../assets/images/psicologos_yelo.png')} 
+                  style={{ width: width - 40, height: (width - 40) * (1799 / 1908), maxWidth: 520 }}
+                  resizeMode="contain"
+                />
+              </View>
+
+              {/* CTA da Seção com subtexto */}
+              <TouchableOpacity 
+                activeOpacity={0.85}
+                onPress={() => router.push('/questionario')}
+                className="bg-[#FFEE8C] px-[35px] py-[15px] rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.15)] active:scale-95"
+              >
+                <Text className="font-title font-bold text-[#1B4332] text-[16px]">
+                  Encontrar meu psicólogo
+                </Text>
+              </TouchableOpacity>
+              <Text className="font-sans italic text-[13px] text-[#666] mt-2">
+                leva menos de 1 minuto
+              </Text>
+            </View>
+
+            {/* Wave Divider 3: Transição Off-White -> Seção 4 Como Funciona (Branca) 1:1 com views/index.ejs:789 */}
+            <View style={{ width: '100%', height: 70, backgroundColor: '#fdfaf6', overflow: 'hidden', marginBottom: -1 }}>
+              <Svg viewBox="0 0 1440 320" width="100%" height={70} preserveAspectRatio="none">
+                <Path
+                  fill="#ffffff"
+                  fillOpacity="1"
+                  d="M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,90.7C672,85,768,107,864,122.7C960,139,1056,149,1152,133.3C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+                />
+              </Svg>
+            </View>
+          </View>
+
+          {/* ============================================================ */}
+          {/* 4. SEÇÃO COMO FUNCIONA (PASSOS 1, 2 E 3) - BRANCA            */}
+          {/* ============================================================ */}
+          <View style={{ backgroundColor: '#ffffff' }}>
+            <View className="px-6 pt-8 pb-10">
               <View className="items-center mb-8 text-center">
                 <Text className="font-title text-[32px] text-[#1B4332] mb-3 text-center">Como a Yelo funciona</Text>
                 <Text className="font-sans text-[15px] text-[#555] text-center leading-relaxed">
@@ -387,7 +393,7 @@ export default function Index() {
                     Esqueça as listas infinitas. Responda ao nosso questionário inteligente sobre suas necessidades e preferências — <Text className="font-bold">leva menos de 1 minuto!</Text> Nossa tecnologia fará a curadoria e te apresentará os psicólogos mais compatíveis com o seu perfil. Se não gostar dos resultados, você pode refazer o questionário quantas vezes quiser.
                   </Text>
                   
-                  {/* Ilustração Passo 1 Oficial (sem caixas cortadas, 1:1 com web) */}
+                  {/* Ilustração Passo 1 Oficial */}
                   <View className="w-full items-center justify-center my-2">
                     <Image 
                       source={require('../../assets/images/passo_1.png')} 
@@ -397,7 +403,7 @@ export default function Index() {
                   </View>
                 </View>
 
-                {/* Indicador de scroll entre Passo 1 e Passo 2 */}
+                {/* Indicador de scroll VERTICAL entre Passo 1 e Passo 2 */}
                 <MouseScrollIndicator dark />
 
                 {/* Passo 02 */}
@@ -412,7 +418,7 @@ export default function Index() {
                     Veja o perfil detalhado, conheça a abordagem e a trajetória do profissional e leia avaliações reais. Quando sentir confiança, inicie uma conversa ou agende sua sessão diretamente pelo WhatsApp, sem intermediários.
                   </Text>
                   
-                  {/* Ilustração Passo 2 Oficial (sem caixas cortadas, 1:1 com web) */}
+                  {/* Ilustração Passo 2 Oficial */}
                   <View className="w-full items-center justify-center my-2">
                     <Image 
                       source={require('../../assets/images/passo_2.png')} 
@@ -422,7 +428,7 @@ export default function Index() {
                   </View>
                 </View>
 
-                {/* Indicador de scroll entre Passo 2 e Passo 3 */}
+                {/* Indicador de scroll VERTICAL entre Passo 2 e Passo 3 */}
                 <MouseScrollIndicator dark />
 
                 {/* Passo 03 */}
@@ -437,7 +443,7 @@ export default function Index() {
                     Realize suas sessões online no conforto da sua casa ou presencialmente. Se não se adaptar, nosso sistema de <Text className="font-bold">Troca Facilitada</Text> permite que você encontre outro profissional rapidamente.
                   </Text>
                   
-                  {/* Ilustração Passo 3 Oficial (sem caixas cortadas, 1:1 com web) */}
+                  {/* Ilustração Passo 3 Oficial */}
                   <View className="w-full items-center justify-center my-2">
                     <Image 
                       source={require('../../assets/images/passo_3.png')} 
@@ -448,7 +454,7 @@ export default function Index() {
                 </View>
               </View>
               
-              <View className="items-center mt-12 mb-4">
+              <View className="items-center mt-10 mb-2">
                 <TouchableOpacity 
                   activeOpacity={0.85}
                   onPress={() => router.push('/questionario')}
@@ -462,19 +468,24 @@ export default function Index() {
                   leva menos de 1 minuto
                 </Text>
               </View>
-
-              {/* Wave Divider para Depoimentos */}
-              <View className="w-full -mb-1 mt-8">
-                <Svg viewBox="0 0 1200 120" width="100%" height={width * (80 / 1200)} preserveAspectRatio="none">
-                  <Path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" fill="#F8F3ED" />
-                </Svg>
-              </View>
             </View>
 
-            {/* ============================================================ */}
-            {/* 5. SEÇÃO DEPOIMENTOS (HISTÓRIAS DE QUEM JÁ COMEÇOU)          */}
-            {/* ============================================================ */}
-            <View className="bg-[#F8F3ED] py-14">
+            {/* Wave Divider 4: Transição Branca -> Seção 5 Depoimentos (Bege #F8F3ED) 1:1 com views/index.ejs:852 */}
+            <View style={{ width: '100%', height: 70, backgroundColor: '#ffffff', overflow: 'hidden', marginBottom: -1 }}>
+              <Svg viewBox="0 0 1200 120" width="100%" height={70} preserveAspectRatio="none">
+                <Path
+                  d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z"
+                  fill="#F8F3ED"
+                />
+              </Svg>
+            </View>
+          </View>
+
+          {/* ============================================================ */}
+          {/* 5. SEÇÃO DEPOIMENTOS (HISTÓRIAS DE QUEM JÁ COMEÇOU) - BEGE   */}
+          {/* ============================================================ */}
+          <View style={{ backgroundColor: '#F8F3ED', position: 'relative' }}>
+            <View className="pt-8 pb-4">
               <View className="px-6 mb-8 text-center items-center">
                 <Text className="font-title text-[32px] text-[#1B4332] text-center mb-5">
                   Histórias de quem já começou
@@ -562,96 +573,98 @@ export default function Index() {
                 })}
               </YeloScrollView>
 
-              {/* Indicador de rolagem do mouse (1:1 com web) */}
-              <View className="mt-6 mb-2">
-                <MouseScrollIndicator dark />
+              {/* Indicador de rolagem do mouse HORIZONTAL (1:1 com views/index.ejs:441) */}
+              <View className="mt-4 mb-2">
+                <MouseScrollIndicator dark horizontal />
               </View>
+            </View>
 
-              {/* Wave Divider para FAQ (Invertida 180deg como na web) */}
-              <View className="w-full -mb-1 mt-6" style={{ transform: [{ rotate: '180deg' }] }}>
-                <Svg viewBox="0 0 1200 120" width="100%" height={width * (80 / 1200)} preserveAspectRatio="none">
-                  <Path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="#ffffff" />
+            {/* Wave Divider 5: Transição Bege -> Seção 6 FAQ (Branca) Invertida 180deg (1:1 com views/index.ejs:904) */}
+            <View style={{ width: '100%', height: 70, backgroundColor: '#F8F3ED', overflow: 'hidden', marginBottom: -1 }}>
+              <View style={{ width: '100%', height: 70, transform: [{ rotate: '180deg' }] }}>
+                <Svg viewBox="0 0 1200 120" width="100%" height={70} preserveAspectRatio="none">
+                  <Path
+                    d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
+                    fill="#ffffff"
+                  />
                 </Svg>
               </View>
             </View>
+          </View>
 
-            {/* ============================================================ */}
-            {/* 6. SEÇÃO PERGUNTAS FREQUENTES (FAQ)                         */}
-            {/* ============================================================ */}
-            <View className="px-6 py-12 bg-white">
-              <Text className="font-title text-[32px] text-[#1B4332] mb-8 text-center">
-                Perguntas Frequentes
-              </Text>
+          {/* ============================================================ */}
+          {/* 6. SEÇÃO PERGUNTAS FREQUENTES (FAQ) - BRANCA                 */}
+          {/* ============================================================ */}
+          <View style={{ backgroundColor: '#ffffff', paddingHorizontal: 24, paddingVertical: 48 }}>
+            <Text className="font-title text-[32px] text-[#1B4332] mb-8 text-center">
+              Perguntas Frequentes
+            </Text>
 
-              <View className="gap-4">
-                {faqs.map((faq, index) => (
-                  <View 
-                    key={index} 
-                    className={`bg-white border border-[#f0f0f0] shadow-[0_4px_15px_rgba(0,0,0,0.03)] overflow-hidden ${
-                      index % 2 === 0 
-                        ? 'rounded-[24px] rounded-tr-[40px] rounded-bl-[40px]' 
-                        : 'rounded-[40px] rounded-tr-[24px] rounded-bl-[24px]'
-                    }`}
-                  >
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() => setActiveFaq(activeFaq === index ? null : index)}
-                      className="px-6 py-5 flex-row justify-between items-center"
-                    >
-                      <Text className="font-title text-[17px] text-[#1B4332] flex-1 mr-4">{faq.q}</Text>
-                      <Feather name={activeFaq === index ? "minus" : "plus"} size={20} color="#1B4332" />
-                    </TouchableOpacity>
-                    {activeFaq === index && (
-                      <View className="px-6 pb-6 pt-1 border-t border-[#fafafa]">
-                        <Text className="font-sans text-[14.5px] text-[#555] leading-relaxed">{faq.a}</Text>
-                      </View>
-                    )}
-                  </View>
-                ))}
-              </View>
-
-              <View className="items-center mt-8">
-                <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/faq')}>
-                  <Text className="font-sans font-bold text-[#1B4332] text-[15px] underline">
-                    Ver todas as perguntas frequentes
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* CTA abaixo do FAQ */}
-              <View className="items-center mt-8 mb-4">
-                <TouchableOpacity 
-                  activeOpacity={0.85}
-                  onPress={() => router.push('/questionario')}
-                  className="bg-[#FFEE8C] px-[35px] py-[15px] rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.15)] active:scale-95"
+            <View className="gap-4">
+              {faqs.map((faq, index) => (
+                <View 
+                  key={index} 
+                  className={`bg-white border border-[#f0f0f0] shadow-[0_4px_15px_rgba(0,0,0,0.03)] overflow-hidden ${
+                    index % 2 === 0 
+                      ? 'rounded-[24px] rounded-tr-[40px] rounded-bl-[40px]' 
+                      : 'rounded-[40px] rounded-tr-[24px] rounded-bl-[24px]'
+                  }`}
                 >
-                  <Text className="font-title font-bold text-[#1B4332] text-[16px]">
-                    Encontrar meu psicólogo
-                  </Text>
-                </TouchableOpacity>
-                <Text className="font-sans italic text-[13px] text-[#666] mt-2">
-                  leva menos de 1 minuto
-                </Text>
-              </View>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => setActiveFaq(activeFaq === index ? null : index)}
+                    className="px-6 py-5 flex-row justify-between items-center"
+                  >
+                    <Text className="font-title text-[17px] text-[#1B4332] flex-1 mr-4">{faq.q}</Text>
+                    <Feather name={activeFaq === index ? "minus" : "plus"} size={20} color="#1B4332" />
+                  </TouchableOpacity>
+                  {activeFaq === index && (
+                    <View className="px-6 pb-6 pt-1 border-t border-[#fafafa]">
+                      <Text className="font-sans text-[14.5px] text-[#555] leading-relaxed">{faq.a}</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
             </View>
 
-            {/* ============================================================ */}
-            {/* 7. AVISO DE CRISE (SAÚDE MENTAL & LGPD)                      */}
-            {/* ============================================================ */}
-            <View className="px-6 pb-12 pt-2 bg-white">
-              <View className="bg-[#FFF8E1] border border-[#FFE082] rounded-[24px] p-5 items-center">
-                <Text className="font-sans text-[13.5px] text-[#795548] text-center leading-[20px]">
-                  Se você está em crise ou qualquer outra pessoa pode estar em perigo, <Text className="font-bold text-[#5D4037]">não use este aplicativo</Text>. Ligue <Text className="font-bold text-[#1B4332]">188 (CVV)</Text> para apoio emocional gratuito 24h ou procure o pronto-socorro mais próximo.
+            <View className="items-center mt-8">
+              <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/faq')}>
+                <Text className="font-sans font-bold text-[#1B4332] text-[15px] underline">
+                  Ver todas as perguntas frequentes
                 </Text>
-              </View>
+              </TouchableOpacity>
             </View>
 
+            {/* CTA abaixo do FAQ */}
+            <View className="items-center mt-8 mb-4">
+              <TouchableOpacity 
+                activeOpacity={0.85}
+                onPress={() => router.push('/questionario')}
+                className="bg-[#FFEE8C] px-[35px] py-[15px] rounded-[50px] shadow-[0_4px_15px_rgba(0,0,0,0.15)] active:scale-95"
+              >
+                <Text className="font-title font-bold text-[#1B4332] text-[16px]">
+                  Encontrar meu psicólogo
+                </Text>
+              </TouchableOpacity>
+              <Text className="font-sans italic text-[13px] text-[#666] mt-2">
+                leva menos de 1 minuto
+              </Text>
+            </View>
+          </View>
+
+          {/* ============================================================ */}
+          {/* 7. AVISO DE CRISE (1:1 COM WEB: OFF-WHITE #fdfaf6)          */}
+          {/* ============================================================ */}
+          <View style={{ backgroundColor: '#fdfaf6', borderTopWidth: 1, borderTopColor: '#e9ecef', paddingVertical: 40, paddingHorizontal: 24, alignItems: 'center' }}>
+            <Text className="font-sans text-[14px] text-[#666] text-center leading-[22px] max-w-[650px]">
+              Se você está em crise ou qualquer outra pessoa pode estar em perigo, <Text className="font-bold text-[#333]">não use este aplicativo</Text>. Ligue <Text className="font-bold text-[#1B4332]">188 (CVV)</Text> para apoio emocional gratuito 24h ou <Text onPress={() => router.push('/ajuda')} className="text-[#007bff] underline">estes recursos</Text> podem fornecer ajuda imediata.
+            </Text>
           </View>
 
           {/* ============================================================ */}
           {/* 8. RODAPÉ INSTITUCIONAL GLOBAL                              */}
           {/* ============================================================ */}
-          <Footer />
+          <Footer topBgColor="#fdfaf6" />
           
         </YeloScrollView>
 

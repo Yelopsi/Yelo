@@ -6,20 +6,23 @@ import { useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { FontAwesome5, Feather } from '@expo/vector-icons';
 
-export default function Footer() {
+interface FooterProps {
+  topBgColor?: string;
+}
+
+export default function Footer({ topBgColor = '#ffffff' }: FooterProps) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [consent, setConsent] = useState(false);
 
   return (
-    <View className="bg-white">
-      {/* ONDA DE DIVISÃO (Transição para o Footer) - Copiada da Index */}
-      <View className="w-full -mb-1">
-        <Svg viewBox="0 0 1440 320" width="100%" height={width * (320 / 1440)} preserveAspectRatio="none">
+    <View style={{ backgroundColor: topBgColor }}>
+      {/* ONDA DE DIVISÃO (Transição para o Footer) 1:1 com views/partials/footer.ejs */}
+      <View style={{ width: '100%', height: 70, backgroundColor: topBgColor, overflow: 'hidden', marginBottom: -1 }}>
+        <Svg viewBox="0 0 1200 120" width="100%" height={70} preserveAspectRatio="none">
           <Path
             fill="#1B4332"
-            fillOpacity="1"
-            d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,112C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+            d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z"
           />
         </Svg>
       </View>
