@@ -1,5 +1,58 @@
 [
   {
+    "id": "change-git-c9784cce",
+    "date": "2026-11-01T01:57:32.000Z",
+    "commit": "c9784cce",
+    "author": "Anderson",
+    "title": "Correção: Fallback navigation on questionario back action (mobile)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "fallback navigation on questionario back action",
+    "description": "Commit registrado no repositório: \"fix(mobile): fallback navigation on questionario back action\". Arquivos modificados: mobile/src/app/questionario.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #c9784cce"
+    },
+    "after": {
+      "nova_versao": "fallback navigation on questionario back action"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/questionario.tsx"
+    ]
+  },
+  {
+    "id": "change-git-ff1140c7",
+    "date": "2026-11-01T01:45:40.000Z",
+    "commit": "ff1140c7",
+    "author": "Anderson",
+    "title": "Novo: Sincronizar forum real, comunidade qna, posts clinicos e google meu negocio (mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar forum real, comunidade qna, posts clinicos e google meu negocio",
+    "description": "Commit registrado no repositório: \"feat(mobile): sincronizar forum real, comunidade qna, posts clinicos e google meu negocio\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/blog.tsx, mobile/src/app/(tabs)/comunidade.tsx, mobile/src/app/(tabs)/forum.tsx (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ff1140c7"
+    },
+    "after": {
+      "nova_versao": "sincronizar forum real, comunidade qna, posts clinicos e google meu negocio"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/blog.tsx",
+      "mobile/src/app/(tabs)/comunidade.tsx",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "mobile/src/app/(tabs)/index.tsx",
+      "mobile/src/app/(tabs)/meu_perfil.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-f8b7fedc",
     "date": "2026-11-01T01:34:20.000Z",
     "commit": "f8b7fedc",
