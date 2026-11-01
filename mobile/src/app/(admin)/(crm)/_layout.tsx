@@ -9,6 +9,9 @@ export default function CRMLayout() {
   return (
     <ExpoStack
       screenOptions={{
+        animation: 'default',
+        gestureEnabled: true,
+        fullScreenGestureEnabled: true,
         headerStyle: {
           backgroundColor: '#1B4332',
         },
