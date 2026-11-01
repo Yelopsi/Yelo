@@ -3,10 +3,13 @@ import { View, Text, Image, TouchableOpacity, Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function MobileHeader() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const fotoUri = user?.fotoUrl || 'https://res.cloudinary.com/dzqmypviz/image/upload/v1779824708/yelo/profiles/profile-94.jpg';
 
   return (
     <View 
@@ -18,9 +21,9 @@ export default function MobileHeader() {
       }}
     >
       {/* AVATAR */}
-      <TouchableOpacity onPress={() => router.push('/ajustes')} className="relative mr-2">
+      <TouchableOpacity onPress={() => router.push('/(tabs)/meu_perfil')} className="relative mr-2">
         <Image 
-          source={{ uri: 'https://res.cloudinary.com/dzqmypviz/image/upload/v1779824708/yelo/profiles/profile-94.jpg' }} 
+          source={{ uri: fotoUri }} 
           className="w-[36px] h-[36px] rounded-full border-2 border-[#1B4332]"
         />
       </TouchableOpacity>

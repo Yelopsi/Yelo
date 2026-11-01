@@ -95,8 +95,8 @@ export default function TabLayout() {
           paddingTop: 4,
         },
         tabBarBackground: () => (
-          <View style={{ flex: 1, borderRadius: 50, overflow: 'hidden' }}>
-            <BlurView intensity={80} tint="light" style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.85)' }} />
+          <View style={{ flex: 1, borderRadius: 50, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)' }}>
+            <BlurView intensity={95} tint="light" style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.96)' }} />
           </View>
         ),
         tabBarActiveBackgroundColor: '#f0fdf4',
