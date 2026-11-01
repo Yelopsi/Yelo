@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Image, Platform, KeyboardAvoidingView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  TextInput, 
+  Image, 
+  Platform, 
+  KeyboardAvoidingView, 
+  ActivityIndicator, 
+  Alert 
+} from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
-
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import api from '../../services/api';
 
 // Funções de Máscara
 const formatCPF = (text: string) => {
@@ -37,27 +47,66 @@ const formatCRP = (text: string) => {
 export default function MeuPerfilScreen() {
   const router = useRouter();
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isOptimizingBio, setIsOptimizingBio] = useState(false);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+
   // Estados dos blocos sanfona e edição
   const [activeBlock, setActiveBlock] = useState<string | null>('personal');
   const [editMode, setEditMode] = useState<{ [key: string]: boolean }>({});
 
-  // Valores mockados
   const [form, setForm] = useState({
-    nome: 'Dra. Ana Silva',
-    crp: '12/34567',
-    telefone: '(11) 99999-9999',
-    cpf: '123.456.789-00',
-    cep: '01000-000',
-    cidade: 'São Paulo',
-    uf: 'SP',
-    slug: 'ana-silva',
-    bio: 'Sou a Dra. Ana, apaixonada por psicologia e por ajudar as pessoas a encontrarem seu caminho.',
-    ano_inicio: '2018',
-    valor_sessao: '150',
-    instagram: 'draanasilva',
-    linkedin: 'anasilva',
-    tiktok: 'draanapsi',
+    nome: '',
+    crp: '',
+    telefone: '',
+    cpf: '',
+    cep: '',
+    cidade: '',
+    uf: '',
+    slug: '',
+    bio: '',
+    ano_inicio: '',
+    valor_sessao: '',
+    instagram: '',
+    linkedin: '',
+    tiktok: '',
   });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoading(true);
+        const res = await api.get('/api/psychologists/me');
+        const p = res.data;
+        if (p) {
+          setForm({
+            nome: p.nome || '',
+            crp: p.crp || '',
+            telefone: p.telefone || '',
+            cpf: p.cpf || '',
+            cep: p.cep || '',
+            cidade: p.cidade || '',
+            uf: p.estado || '',
+            slug: p.slug || '',
+            bio: p.bio || '',
+            ano_inicio: p.ano_inicio_experiencia ? String(p.ano_inicio_experiencia) : '',
+            valor_sessao: p.valor_sessao_numero ? String(p.valor_sessao_numero) : '',
+            instagram: p.instagram_url ? p.instagram_url.replace('@', '') : '',
+            linkedin: p.linkedin_url || '',
+            tiktok: p.tiktok_url ? p.tiktok_url.replace('@', '') : '',
+          });
+          setFotoUrl(p.fotoUrl || null);
+        }
+      } catch (e) {
+        console.error("Erro ao carregar perfil:", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const toggleBlock = (block: string) => {
     setActiveBlock(activeBlock === block ? null : block);
@@ -65,7 +114,6 @@ export default function MeuPerfilScreen() {
 
   const setEditing = (block: string, isEditing: boolean) => {
     setEditMode(prev => ({ ...prev, [block]: isEditing }));
-    // Quando entra em edição, já garante que a sanfona está aberta
     if (isEditing) setActiveBlock(block);
   };
 
@@ -74,7 +122,65 @@ export default function MeuPerfilScreen() {
     setForm(prev => ({ ...prev, [field]: formattedText }));
   };
 
-  // Renderizador de Input com suporte a editMode
+  const handleSave = async (blockKey: string) => {
+    try {
+      setIsSaving(true);
+      const payload: any = {};
+
+      if (blockKey === 'personal') {
+        payload.nome = form.nome;
+        payload.cpf = form.cpf;
+        payload.telefone = form.telefone;
+        payload.crp = form.crp;
+        payload.slug = form.slug;
+      } else if (blockKey === 'location') {
+        payload.cep = form.cep;
+        payload.cidade = form.cidade;
+        payload.estado = form.uf;
+      } else if (blockKey === 'bio') {
+        payload.bio = form.bio;
+      } else if (blockKey === 'professional') {
+        if (form.ano_inicio) {
+          payload.ano_inicio_experiencia = parseInt(form.ano_inicio, 10);
+        }
+        if (form.valor_sessao) {
+          payload.valor_sessao_numero = parseFloat(form.valor_sessao.replace(',', '.'));
+        }
+      } else if (blockKey === 'social') {
+        payload.instagram_url = form.instagram;
+        payload.linkedin_url = form.linkedin;
+        payload.tiktok_url = form.tiktok;
+      }
+
+      await api.put('/api/psychologists/me', payload);
+      Alert.alert('Sucesso', 'Informações atualizadas com sucesso!');
+      setEditing(blockKey, false);
+    } catch (e: any) {
+      Alert.alert('Erro', e.response?.data?.error || 'Erro ao salvar alterações.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleOptimizeBio = async () => {
+    if (!form.bio || form.bio.length < 20) {
+      Alert.alert("Aviso", "Escreva pelo menos um rascunho na bio antes de solicitar a otimização com IA.");
+      return;
+    }
+    try {
+      setIsOptimizingBio(true);
+      const res = await api.post('/api/psychologists/me/optimize-bio', { bio: form.bio });
+      if (res.data?.optimizedBio) {
+        setForm(prev => ({ ...prev, bio: res.data.optimizedBio }));
+        Alert.alert("Bio Otimizada ✨", "Sua biografia foi refinada com foco em conexão e conversão. Lembre-se de salvar!");
+      }
+    } catch (e) {
+      Alert.alert("Erro", "Não foi possível otimizar a bio no momento.");
+    } finally {
+      setIsOptimizingBio(false);
+    }
+  };
+
   const renderInput = (
     blockKey: string,
     field: string,
@@ -93,7 +199,7 @@ export default function MeuPerfilScreen() {
       <View className="mb-4">
         <Text className="font-sans font-bold text-[#495057] text-[13px] mb-2 ml-1">{label}</Text>
         {isPrefix ? (
-          <View className={`flex-row items-center border rounded-[12px] overflow-hidden ${isEditable ? 'bg-white border-[#1B4332] shadow-[0_0_0_2px_rgba(27,67,50,0.1)]' : 'bg-[#f1f3f5] border-[#e0e0e0]'}`}>
+          <View className={`flex-row items-center border rounded-[12px] overflow-hidden ${isEditable ? 'bg-white border-[#1B4332]' : 'bg-[#f1f3f5] border-[#e0e0e0]'}`}>
             <View className={`px-4 py-3.5 border-r ${isEditable ? 'bg-[#f8f9fa] border-[#e0e0e0]' : 'bg-[#e9ecef] border-[#d1d5db]'}`}>
               <Text className="font-sans font-medium text-[#555]">{prefix}</Text>
             </View>
@@ -115,7 +221,7 @@ export default function MeuPerfilScreen() {
             maxLength={maxLength}
             value={value}
             onChangeText={(t) => handleTextChange(field, t, maskFn)}
-            className={`border rounded-[12px] px-4 py-3.5 font-sans text-[15px] ${isEditable ? 'bg-white border-[#1B4332] text-[#333] shadow-[0_0_0_2px_rgba(27,67,50,0.1)]' : 'bg-[#f1f3f5] border-[#e0e0e0] text-[#888]'}`}
+            className={`border rounded-[12px] px-4 py-3.5 font-sans text-[15px] ${isEditable ? 'bg-white border-[#1B4332] text-[#333]' : 'bg-[#f1f3f5] border-[#e0e0e0] text-[#888]'}`}
           />
         )}
       </View>
@@ -134,15 +240,30 @@ export default function MeuPerfilScreen() {
         
         {isEditing ? (
           <View className="flex-row gap-2">
-            <TouchableOpacity onPress={() => setEditing(blockKey, false)} className="px-3 py-1.5 border border-[#ccc] rounded-[50px]">
+            <TouchableOpacity 
+              onPress={() => setEditing(blockKey, false)} 
+              disabled={isSaving}
+              className="px-3 py-1.5 border border-[#ccc] rounded-[50px]"
+            >
               <Text className="font-sans font-bold text-[#666] text-[12px]">Cancelar</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setEditing(blockKey, false)} className="px-3 py-1.5 bg-[#1B4332] rounded-[50px]">
-              <Text className="font-sans font-bold text-white text-[12px]">Salvar</Text>
+            <TouchableOpacity 
+              onPress={() => handleSave(blockKey)} 
+              disabled={isSaving}
+              className="px-4 py-1.5 bg-[#1B4332] rounded-[50px] flex-row items-center justify-center"
+            >
+              {isSaving ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text className="font-sans font-bold text-white text-[12px]">Salvar</Text>
+              )}
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity onPress={() => setEditing(blockKey, true)} className="px-4 py-1.5 bg-white border border-[#e0e0e0] rounded-[50px] shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+          <TouchableOpacity 
+            onPress={() => setEditing(blockKey, true)} 
+            className="px-4 py-1.5 bg-white border border-[#e0e0e0] rounded-[50px] shadow-sm"
+          >
             <Text className="font-sans font-bold text-[#444] text-[12px]">Editar</Text>
           </TouchableOpacity>
         )}
@@ -150,151 +271,132 @@ export default function MeuPerfilScreen() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-[#f9fafb] items-center justify-center p-6">
+        <ActivityIndicator size="large" color="#1B4332" />
+        <Text className="font-sans text-[#666] mt-4">Carregando seus dados...</Text>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 bg-[#f9fafb]">
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
         <YeloScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
           
           <View className="mx-6 mt-6 mb-6 flex-row items-center">
-            <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 bg-white border border-[#e0e0e0] rounded-full items-center justify-center mr-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+            <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 bg-white border border-[#e0e0e0] rounded-full items-center justify-center mr-4 shadow-sm">
               <Feather name="arrow-left" size={20} color="#1B4332" />
             </TouchableOpacity>
             <Text className="font-title text-[22px] text-[#1B4332] flex-1">Editar Perfil</Text>
           </View>
 
           {/* HERO MODERN */}
-          <View className="mx-6 bg-white border border-[#f0f0f0] rounded-[24px] p-6 mb-6 flex-col shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+          <View className="mx-6 bg-white border border-[#f0f0f0] rounded-[24px] p-6 mb-6 flex-col shadow-sm">
             <View className="flex-row items-center mb-5">
               <View className="relative w-[80px] h-[80px] mr-5">
-                <Image source={{ uri: 'https://res.cloudinary.com/dzqmypviz/image/upload/v1779824708/yelo/profiles/profile-94.jpg' }} className="w-full h-full rounded-full border-2 border-[#1B4332]" />
-                <View className="absolute bottom-0 right-0 bg-[#1B4332] w-[26px] h-[26px] rounded-full items-center justify-center border-2 border-white">
-                  <Feather name="camera" size={12} color="white" />
-                </View>
+                <Image 
+                  source={{ uri: fotoUrl || 'https://placehold.co/200x200/1B4332/FFF?text=PSI' }} 
+                  className="w-full h-full rounded-full border-2 border-[#1B4332]" 
+                />
               </View>
               <View className="flex-1">
-                <Text className="font-title text-[#1B4332] text-[22px] mb-1">Dra. Ana Silva</Text>
-                <View className="bg-[#dcfce7] self-start px-3 py-1 rounded-[20px] border border-[#bbf7d0] mb-1">
-                  <Text className="font-sans font-bold text-[#166534] text-[11px]">Perfil Ativo</Text>
+                <Text className="font-title text-[#1B4332] text-[20px] mb-1">{form.nome || 'Psicólogo(a)'}</Text>
+                <Text className="font-sans text-[#666] text-[13px] mb-2">CRP {form.crp || 'Não informado'}</Text>
+                <View className="bg-[#e8f5e9] border border-[#c8e6c9] px-3 py-1 rounded-full self-start">
+                  <Text className="font-sans font-bold text-[#166534] text-[11px] uppercase tracking-wide">Perfil Ativo</Text>
                 </View>
-                <Text className="font-sans text-[#666] text-[13px]">🔗 yelopsi.com.br/ana-silva</Text>
               </View>
             </View>
-            <View className="flex-row gap-3">
-              <TouchableOpacity className="flex-1 bg-[#f1f3f5] py-3 rounded-[50px] items-center">
-                <Text className="font-sans font-bold text-[#444] text-[14px]">Copiar Link</Text>
-              </TouchableOpacity>
-              <TouchableOpacity className="flex-1 bg-[#1B4332] py-3 rounded-[50px] items-center">
-                <Text className="font-sans font-bold text-white text-[14px]">Ver Perfil Público</Text>
-              </TouchableOpacity>
-            </View>
+
+            <TouchableOpacity 
+              onPress={() => router.push(`/${form.slug}` as any)}
+              className="bg-[#FFEE8C] py-3 rounded-full items-center shadow-sm"
+            >
+              <Text className="font-sans font-bold text-[#1B4332] text-[13px] uppercase tracking-wide">
+                Ver Como Paciente Vê Perfil 👁️
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          {/* INSIGHTS */}
-          <View className="px-6 mb-6">
-            <View className="bg-white border border-[#f0f0f0] rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)] mb-5">
-              <View className="flex-row justify-between items-center mb-4">
-                <Text className="font-title text-[#1B4332] text-[18px]">Qualidade do Perfil</Text>
-                <View className="bg-[#1B4332] px-3 py-1.5 rounded-[20px]">
-                  <Text className="font-sans font-bold text-white text-[12px]">85/100</Text>
-                </View>
-              </View>
-              <View className="h-2 bg-[#f1f3f5] rounded-[4px] mb-4 overflow-hidden">
-                <View className="h-full bg-[#1B4332] w-[85%]" />
-              </View>
-              <Text className="font-sans text-[#555] text-[13px]">✅ Adicione uma biografia completa para chegar a 100%.</Text>
-            </View>
-
-            <View className="bg-white border border-[#f0f0f0] rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-              <View className="flex-row justify-between items-center mb-5">
-                <Text className="font-title text-[#1B4332] text-[18px]">Desempenho (30d)</Text>
-                <Text className="font-sans font-bold text-[#1B4332] text-[13px]">Ver detalhes</Text>
-              </View>
-              <View className="flex-row justify-between">
-                <View className="items-center">
-                  <Text className="font-title text-[#1B4332] text-[28px] mb-1">124</Text>
-                  <Text className="font-sans font-bold text-[#666] text-[10px] uppercase">Visualizações</Text>
-                </View>
-                <View className="items-center">
-                  <Text className="font-title text-[#1B4332] text-[28px] mb-1">12</Text>
-                  <Text className="font-sans font-bold text-[#666] text-[10px] uppercase">Cliques Whats</Text>
-                </View>
-                <View className="items-center">
-                  <Text className="font-title text-[#1B4332] text-[28px] mb-1">5</Text>
-                  <Text className="font-sans font-bold text-[#666] text-[10px] uppercase">Favoritos</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* FORMULÁRIOS COM EDIÇÃO E MÁSCARAS */}
-          <View className="px-6">
+          {/* SANFONAS DE CONFIGURAÇÃO */}
+          <View className="mx-6 gap-4">
             
-            {/* Bloco 1: Dados Pessoais */}
-            <View className={`bg-white border ${editMode['personal'] ? 'border-[#1B4332]' : 'border-[#e5e7eb]'} rounded-[16px] mb-4 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)]`}>
+            {/* BLOCO 1: DADOS BÁSICOS */}
+            <View className="bg-white border border-[#e5e7eb] rounded-[20px] overflow-hidden shadow-sm">
               {renderBlockHeader('personal', 'Dados Pessoais')}
               {activeBlock === 'personal' && (
                 <View className="p-5">
-                  {renderInput('personal', 'nome', 'Nome de Exibição *', 'Seu nome')}
-                  {renderInput('personal', 'crp', 'Número do CRP *', '00/00000', 'numeric', false, '', formatCRP, 9)}
-                  {renderInput('personal', 'telefone', 'WhatsApp Profissional *', '(00) 00000-0000', 'phone-pad', false, '', formatPhone, 15)}
-                  {renderInput('personal', 'cpf', 'CPF *', '000.000.000-00', 'numeric', false, '', formatCPF, 14)}
+                  {renderInput('personal', 'nome', 'Nome Completo', 'Seu nome')}
+                  {renderInput('personal', 'crp', 'CRP', '00/00000', 'default', false, '', formatCRP)}
+                  {renderInput('personal', 'telefone', 'WhatsApp / Telefone', '(00) 00000-0000', 'phone-pad', false, '', formatPhone)}
+                  {renderInput('personal', 'cpf', 'CPF', '000.000.000-00', 'number-pad', false, '', formatCPF)}
+                  {renderInput('personal', 'slug', 'Link Personalizado (Slug)', 'seu-nome', 'default', true, 'yelopsi.com.br/')}
                 </View>
               )}
             </View>
 
-            {/* Bloco 2: Localização */}
-            <View className={`bg-white border ${editMode['location'] ? 'border-[#1B4332]' : 'border-[#e5e7eb]'} rounded-[16px] mb-4 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)]`}>
-              {renderBlockHeader('location', 'Localização')}
+            {/* BLOCO 2: LOCALIZAÇÃO */}
+            <View className="bg-white border border-[#e5e7eb] rounded-[20px] overflow-hidden shadow-sm">
+              {renderBlockHeader('location', 'Endereço e Atendimento')}
               {activeBlock === 'location' && (
                 <View className="p-5">
-                  {renderInput('location', 'cep', 'CEP *', '00000-000', 'numeric', false, '', formatCEP, 9)}
-                  <View className="flex-row gap-3">
-                    <View className="flex-1">{renderInput('location', 'cidade', 'Cidade *', 'São Paulo')}</View>
-                    <View className="w-[80px]">{renderInput('location', 'uf', 'UF *', 'SP')}</View>
-                  </View>
+                  {renderInput('location', 'cep', 'CEP', '00000-000', 'number-pad', false, '', formatCEP, 9)}
+                  {renderInput('location', 'cidade', 'Cidade', 'Ex: São Paulo')}
+                  {renderInput('location', 'uf', 'Estado (UF)', 'Ex: SP', 'default', false, '', undefined, 2)}
                 </View>
               )}
             </View>
 
-            {/* Bloco 3: Detalhes Profissionais */}
-            <View className={`bg-white border ${editMode['professional'] ? 'border-[#1B4332]' : 'border-[#e5e7eb]'} rounded-[16px] mb-4 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)]`}>
-              {renderBlockHeader('professional', 'Detalhes Profissionais')}
+            {/* BLOCO 3: BIOGRAFIA COM IA */}
+            <View className="bg-white border border-[#e5e7eb] rounded-[20px] overflow-hidden shadow-sm">
+              {renderBlockHeader('bio', 'Biografia Clínica')}
+              {activeBlock === 'bio' && (
+                <View className="p-5">
+                  <View className="flex-row justify-between items-center mb-2">
+                    <Text className="font-sans font-bold text-[#495057] text-[13px] ml-1">Sobre Mim</Text>
+                    {editMode['bio'] && (
+                      <TouchableOpacity 
+                        onPress={handleOptimizeBio}
+                        disabled={isOptimizingBio}
+                        className="bg-[#f0fdf4] border border-[#bbf7d0] px-3 py-1 rounded-full flex-row items-center gap-1"
+                      >
+                        {isOptimizingBio ? (
+                          <ActivityIndicator size="small" color="#166534" />
+                        ) : (
+                          <Text className="font-sans font-bold text-[#166534] text-[11px]">Otimizar com IA ✨</Text>
+                        )}
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <TextInput 
+                    multiline 
+                    numberOfLines={6}
+                    value={form.bio}
+                    editable={editMode['bio']}
+                    onChangeText={(t) => handleTextChange('bio', t)}
+                    placeholder="Conte sobre sua trajetória, escuta e como apoia seus pacientes..."
+                    className={`border rounded-[14px] p-4 font-sans text-[15px] leading-6 ${editMode['bio'] ? 'bg-white border-[#1B4332] text-[#333]' : 'bg-[#f1f3f5] border-[#e0e0e0] text-[#777]'}`}
+                    style={{ minHeight: 140, textAlignVertical: 'top' }}
+                  />
+                </View>
+              )}
+            </View>
+
+            {/* BLOCO 4: VALOR E EXPERIÊNCIA */}
+            <View className="bg-white border border-[#e5e7eb] rounded-[20px] overflow-hidden shadow-sm">
+              {renderBlockHeader('professional', 'Valores e Experiência')}
               {activeBlock === 'professional' && (
                 <View className="p-5">
-                  {renderInput('professional', 'slug', '🔗 Link do Perfil', 'seu-nome', 'default', true, 'yelopsi.com.br/')}
-                  
-                  <View className="mb-4 mt-2">
-                    <Text className="font-sans font-bold text-[#495057] text-[13px] mb-2 ml-1">Biografia / Sobre Mim *</Text>
-                    <TextInput 
-                      multiline
-                      numberOfLines={5}
-                      textAlignVertical="top"
-                      placeholder="Escreva um texto acolhedor..."
-                      editable={editMode['professional']}
-                      value={form.bio}
-                      onChangeText={(t) => handleTextChange('bio', t)}
-                      className={`border rounded-[12px] p-4 font-sans text-[15px] min-h-[120px] ${editMode['professional'] ? 'bg-white border-[#1B4332] text-[#333] shadow-[0_0_0_2px_rgba(27,67,50,0.1)]' : 'bg-[#f1f3f5] border-[#e0e0e0] text-[#888]'}`}
-                    />
-                    <View className="flex-row justify-between items-center mt-2">
-                      {editMode['professional'] ? (
-                        <TouchableOpacity className="flex-row items-center bg-[#dcfce7] border border-[#bbf7d0] px-3 py-1.5 rounded-[50px]">
-                          <Text className="font-sans font-bold text-[#166534] text-[12px]">✨ Otimizar com IA</Text>
-                        </TouchableOpacity>
-                      ) : <View />}
-                      <Text className="font-sans text-[#999] text-[12px]">{form.bio.length} / 500</Text>
-                    </View>
-                  </View>
-
-                  <View className="flex-row gap-3">
-                    <View className="flex-1">{renderInput('professional', 'ano_inicio', 'Ano Início', '2018', 'numeric', false, '', undefined, 4)}</View>
-                    <View className="flex-1">{renderInput('professional', 'valor_sessao', 'Valor Sessão', '150', 'numeric', true, 'R$')}</View>
-                  </View>
+                  {renderInput('professional', 'valor_sessao', 'Valor por Sessão', '150', 'numeric', true, 'R$')}
+                  {renderInput('professional', 'ano_inicio', 'Ano de Início da Atuação Clínica', 'Ex: 2018', 'numeric', false, '', undefined, 4)}
                 </View>
               )}
             </View>
 
-            {/* Bloco 4: Redes Sociais */}
-            <View className={`bg-white border ${editMode['social'] ? 'border-[#1B4332]' : 'border-[#e5e7eb]'} rounded-[16px] mb-4 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)]`}>
+            {/* BLOCO 5: REDES SOCIAIS */}
+            <View className="bg-white border border-[#e5e7eb] rounded-[20px] overflow-hidden shadow-sm">
               {renderBlockHeader('social', 'Redes Sociais')}
               {activeBlock === 'social' && (
                 <View className="p-5">
@@ -305,45 +407,6 @@ export default function MeuPerfilScreen() {
               )}
             </View>
 
-          </View>
-
-          {/* DANGER ZONE */}
-          <View className="px-6 mt-6">
-            {/* Alterar Senha (Collapsible) */}
-            <View className="bg-white border border-[#e5e7eb] rounded-[16px] mb-4 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
-              <TouchableOpacity onPress={() => toggleBlock('password')} className="flex-row justify-between items-center p-5 bg-[#f9fafb]">
-                <Text className="font-title text-[#1B4332] text-[18px]">Alterar Senha</Text>
-                <Feather name={activeBlock === 'password' ? 'chevron-up' : 'chevron-down'} size={20} color="#666" />
-              </TouchableOpacity>
-              
-              {activeBlock === 'password' && (
-                <View className="p-5 border-t border-[#e5e7eb]">
-                  <View className="mb-4">
-                    <Text className="font-sans font-bold text-[#495057] text-[13px] mb-2 ml-1">Senha Atual</Text>
-                    <TextInput secureTextEntry className="bg-white border border-[#e0e0e0] rounded-[12px] px-4 py-3.5 font-sans text-[15px] text-[#333]" />
-                  </View>
-                  
-                  <View className="mb-4">
-                    <Text className="font-sans font-bold text-[#495057] text-[13px] mb-2 ml-1">Nova Senha</Text>
-                    <TextInput secureTextEntry className="bg-white border border-[#e0e0e0] rounded-[12px] px-4 py-3.5 font-sans text-[15px] text-[#333]" />
-                  </View>
-
-                  <TouchableOpacity className="bg-[#1B4332] py-3.5 rounded-[50px] items-center mt-2 shadow-[0_4px_15px_rgba(27,67,50,0.2)]">
-                    <Text className="font-sans font-bold text-white text-[15px]">Atualizar Senha</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-
-            <View className="bg-[#fff1f2] border border-[#ffe4e6] rounded-[16px] p-5">
-              <Text className="font-title text-[#e63946] text-[18px] mb-2">Excluir Conta</Text>
-              <Text className="font-sans text-[#666] text-[14px] mb-4 leading-relaxed">
-                Esta ação é irreversível e removerá todos os seus dados da plataforma.
-              </Text>
-              <TouchableOpacity className="border border-[#e63946] py-3.5 rounded-[50px] items-center bg-white">
-                <Text className="font-sans font-bold text-[#e63946] text-[15px]">Excluir Minha Conta</Text>
-              </TouchableOpacity>
-            </View>
           </View>
 
         </YeloScrollView>

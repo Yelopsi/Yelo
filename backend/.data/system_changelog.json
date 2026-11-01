@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-9de45946",
+    "date": "2026-11-01T01:25:45.000Z",
+    "commit": "9de45946",
+    "author": "Anderson",
+    "title": "Novo: Alinhar funil do paciente, motor de match e perfil publico com site web (mobile)",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "alinhar funil do paciente, motor de match e perfil publico com site web",
+    "description": "Commit registrado no repositório: \"feat(mobile): alinhar funil do paciente, motor de match e perfil publico com site web\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/[slug].tsx, mobile/src/app/questionario.tsx, mobile/src/app/resultados.tsx (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9de45946"
+    },
+    "after": {
+      "nova_versao": "alinhar funil do paciente, motor de match e perfil publico com site web"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/[slug].tsx",
+      "mobile/src/app/questionario.tsx",
+      "mobile/src/app/resultados.tsx",
+      "mobile/src/config/questionario_config.ts",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-94041361",
     "date": "2026-11-01T01:18:56.000Z",
     "commit": "94041361",

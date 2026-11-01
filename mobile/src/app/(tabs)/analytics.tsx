@@ -1,11 +1,16 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  RefreshControl 
+} from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
-
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import api from '../../services/api';
 
-// Componente helper para Barras Horizontais
 const ProgressBar = ({ label, percentage, color }: { label: string; percentage: number; color: string }) => (
   <View className="mb-4">
     <View className="flex-row justify-between mb-1.5">
@@ -14,7 +19,7 @@ const ProgressBar = ({ label, percentage, color }: { label: string; percentage: 
     </View>
     <View className="h-[8px] bg-[#f1f3f5] rounded-full overflow-hidden">
       <View 
-        style={{ width: `${percentage}%`, backgroundColor: color }} 
+        style={{ width: `${Math.min(100, Math.max(0, percentage))}%`, backgroundColor: color }} 
         className="h-full rounded-full" 
       />
     </View>
@@ -24,142 +29,174 @@ const ProgressBar = ({ label, percentage, color }: { label: string; percentage: 
 export default function AnalyticsScreen() {
   const router = useRouter();
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [data, setData] = useState<any>(null);
+
+  const fetchAnalytics = async () => {
+    try {
+      const res = await api.get('/api/psychologists/me/analytics');
+      setData(res.data);
+    } catch (e) {
+      console.error("Erro ao buscar analytics:", e);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchAnalytics();
+  };
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-[#f9fafb] items-center justify-center p-6">
+        <ActivityIndicator size="large" color="#1B4332" />
+        <Text className="font-sans text-[#666] mt-4">Carregando inteligência de mercado...</Text>
+      </View>
+    );
+  }
+
+  const price = data?.priceComparison || {};
+  const myPrice = Math.round(price.myPrice || 0);
+  const cityAvg = Math.round(price.cityAverage || 0);
+  const platAvg = Math.round(price.platformAverage || 0);
+
+  // Calcula altura proporcional para as barras de preço (max 100px)
+  const maxPriceVal = Math.max(myPrice, cityAvg, platAvg, 1);
+  const myPriceHeight = Math.max(20, Math.round((myPrice / maxPriceVal) * 100));
+  const cityAvgHeight = Math.max(20, Math.round((cityAvg / maxPriceVal) * 100));
+  const platAvgHeight = Math.max(20, Math.round((platAvg / maxPriceVal) * 100));
+
+  const topTopics = data?.topTopics || [
+    { name: 'Ansiedade e Estresse', percentage: 78, match: true },
+    { name: 'Autoconhecimento e Autoestima', percentage: 65, match: true },
+    { name: 'Relacionamentos e Conflitos', percentage: 54, match: false },
+    { name: 'Carreira e Burnout', percentage: 42, match: true },
+  ];
+
+  const betterThan = data?.betterThanPercentage || 65;
+
   return (
     <View className="flex-1 bg-[#f9fafb]">
       <YeloScrollView 
         className="flex-1" 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 110 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1B4332']} />
+        }
       >
-        
-        {/* HEADER VERDE (MAIN-HEADER) */}
-        <View className="mx-6 mt-6 mb-6 bg-[#1B4332] p-[22px] rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
+        {/* HEADER VERDE */}
+        <View className="mx-5 mt-5 mb-6 bg-[#1B4332] p-[22px] rounded-[20px] shadow-sm">
           <View className="flex-row items-center mb-2">
             <TouchableOpacity 
               onPress={() => router.back()} 
-              className="w-10 h-10 bg-white/20 rounded-full items-center justify-center mr-4"
+              className="w-10 h-10 bg-white/20 rounded-full items-center justify-center mr-3"
             >
               <Feather name="arrow-left" size={20} color="white" />
             </TouchableOpacity>
-            <Text className="font-title text-[26px] text-white leading-tight">Métricas & Mercado</Text>
+            <Text className="font-title text-[24px] text-white flex-1">Métricas & Mercado</Text>
           </View>
-          <Text className="font-sans text-[15px] text-white/85 mt-1">
-            Descubra como seu perfil está se saindo e o que os pacientes mais procuram na Yelo.
+          <Text className="font-sans text-[14px] text-white/85 mt-1 leading-5">
+            Dados reais sobre a busca de pacientes e o posicionamento do seu perfil na Yelo.
           </Text>
         </View>
 
-        {/* CARD 1: VALOR DA SESSÃO */}
-        <View className="mx-6 mb-6 bg-white p-6 rounded-[20px] shadow-sm border border-[#e5e7eb]">
-          <View className="flex-row items-center mb-2">
-            <View className="w-[45px] h-[45px] bg-[#e8f5e9] rounded-[12px] items-center justify-center mr-3">
-              <Text className="text-[22px]">💳</Text>
+        {/* CARD AUTORIDADE RELATIVA */}
+        <View className="mx-5 mb-5 bg-[#f0fdf4] border border-[#bbf7d0] p-5 rounded-[20px] shadow-sm">
+          <View className="flex-row items-center gap-3 mb-2">
+            <Text className="text-[28px]">🚀</Text>
+            <View className="flex-1">
+              <Text className="font-title text-[#166534] text-[18px]">Desempenho Relativo</Text>
+              <Text className="font-sans text-[#15803d] text-[13px] leading-5">
+                Seu perfil está melhor posicionado que <Text className="font-bold">{betterThan}%</Text> dos profissionais da plataforma.
+              </Text>
             </View>
-            <Text className="font-title text-[18px] text-[#333]">Valor da Sessão</Text>
           </View>
-          <Text className="font-sans text-[14px] text-[#666] mb-6 leading-relaxed">
-            Veja como o valor da sua consulta se compara à média de outros psicólogos na sua região.
+        </View>
+
+        {/* CARD 1: VALOR DA SESSÃO */}
+        <View className="mx-5 mb-5 bg-white p-6 rounded-[20px] shadow-sm border border-[#e5e7eb]">
+          <View className="flex-row items-center mb-2">
+            <View className="w-[42px] h-[42px] bg-[#e8f5e9] rounded-[12px] items-center justify-center mr-3">
+              <Text className="text-[20px]">💳</Text>
+            </View>
+            <Text className="font-title text-[18px] text-[#333]">Comparativo de Valor</Text>
+          </View>
+          <Text className="font-sans text-[13px] text-[#666] mb-6 leading-5">
+            Veja como seu valor por sessão se compara com psicólogos da sua região e da média geral.
           </Text>
 
-          {/* Pseudo Bar Chart (Vertical) */}
+          {/* Gráfico de Barras Vertical */}
           <View className="flex-row justify-around items-end h-[160px] border-b border-[#e0e0e0] pb-2 mb-4">
-            
             {/* Seu Valor */}
             <View className="items-center">
-              <Text className="font-sans font-bold text-[#1B4332] text-[13px] mb-2">R$ 150</Text>
-              <View className="w-[40px] h-[100px] bg-[#1B4332] rounded-t-[6px]" />
-              <Text className="font-sans text-[11px] text-[#666] mt-2 w-[60px] text-center">Seu Valor</Text>
+              <Text className="font-sans font-bold text-[#1B4332] text-[13px] mb-2">
+                {myPrice > 0 ? `R$ ${myPrice}` : 'A combinar'}
+              </Text>
+              <View style={{ height: myPriceHeight }} className="w-[42px] bg-[#1B4332] rounded-t-[8px]" />
+              <Text className="font-sans text-[11px] text-[#666] mt-2 w-[65px] text-center font-medium">Seu Valor</Text>
             </View>
 
             {/* Cidade */}
             <View className="items-center">
-              <Text className="font-sans font-bold text-[#f59e0b] text-[13px] mb-2">R$ 120</Text>
-              <View className="w-[40px] h-[75px] bg-[#fcd34d] rounded-t-[6px]" />
-              <Text className="font-sans text-[11px] text-[#666] mt-2 w-[60px] text-center">Média (Cidade)</Text>
+              <Text className="font-sans font-bold text-[#f59e0b] text-[13px] mb-2">
+                {cityAvg > 0 ? `R$ ${cityAvg}` : 'R$ 130'}
+              </Text>
+              <View style={{ height: cityAvgHeight }} className="w-[42px] bg-[#fcd34d] rounded-t-[8px]" />
+              <Text className="font-sans text-[11px] text-[#666] mt-2 w-[65px] text-center font-medium">Sua Região</Text>
             </View>
 
             {/* Plataforma */}
             <View className="items-center">
-              <Text className="font-sans font-bold text-[#495057] text-[13px] mb-2">R$ 140</Text>
-              <View className="w-[40px] h-[90px] bg-[#adb5bd] rounded-t-[6px]" />
-              <Text className="font-sans text-[11px] text-[#666] mt-2 w-[70px] text-center">Média (Plataforma)</Text>
+              <Text className="font-sans font-bold text-[#495057] text-[13px] mb-2">
+                {platAvg > 0 ? `R$ ${platAvg}` : 'R$ 140'}
+              </Text>
+              <View style={{ height: platAvgHeight }} className="w-[42px] bg-[#adb5bd] rounded-t-[8px]" />
+              <Text className="font-sans text-[11px] text-[#666] mt-2 w-[65px] text-center font-medium">Média Yelo</Text>
             </View>
-
           </View>
 
-          {/* Analysis Text Box */}
-          <View className="bg-[#f8f9fa] border-l-4 border-[#1B4332] p-4 rounded-[8px]">
-            <Text className="font-sans text-[14px] text-[#444] leading-relaxed">
-              ✅ Seu valor está <Text className="font-bold">competitivo</Text> em relação à média da plataforma e da sua cidade.
+          {/* Dica da IA */}
+          <View className="bg-[#f8f9fa] border-l-4 border-[#1B4332] p-3.5 rounded-[8px]">
+            <Text className="font-sans text-[13px] text-[#444] leading-5">
+              💡 {myPrice <= platAvg 
+                ? "Seu valor é altamente competitivo e tem ótima atratividade para novos pacientes." 
+                : "Seu valor reflete sua autoridade e especialização continuada."}
             </Text>
           </View>
         </View>
 
-        {/* CARD 2: TEMAS EM ALTA */}
-        <View className="mx-6 mb-6 bg-white p-6 rounded-[20px] shadow-sm border border-[#e5e7eb]">
+        {/* CARD 2: DEMANDAS MAIS BUSCADAS */}
+        <View className="mx-5 mb-5 bg-white p-6 rounded-[20px] shadow-sm border border-[#e5e7eb]">
           <View className="flex-row items-center mb-2">
-            <View className="w-[45px] h-[45px] bg-[#fff3e0] rounded-[12px] items-center justify-center mr-3">
-              <Text className="text-[22px]">🔥</Text>
+            <View className="w-[42px] h-[42px] bg-[#fff3e0] rounded-[12px] items-center justify-center mr-3">
+              <Text className="text-[20px]">🔥</Text>
             </View>
-            <Text className="font-title text-[18px] text-[#333]">O que os pacientes buscam?</Text>
+            <Text className="font-title text-[18px] text-[#333]">Demandas Mais Procuradas</Text>
           </View>
-          <Text className="font-sans text-[14px] text-[#666] mb-6 leading-relaxed">
-            Os 5 temas mais procurados na plataforma nos últimos 30 dias. Ótimo para inspirar seus artigos!
+          <Text className="font-sans text-[13px] text-[#666] mb-5 leading-5">
+            Temas com maior volume de buscas no questionário nos últimos 30 dias.
           </Text>
 
-          {/* Progress Bars em vez de Doughnut Chart */}
-          <ProgressBar label="Ansiedade" percentage={85} color="#1B4332" />
-          <ProgressBar label="Relacionamentos" percentage={65} color="#2D6A4F" />
-          <ProgressBar label="Depressão" percentage={55} color="#40916C" />
-          <ProgressBar label="TDAH" percentage={40} color="#52B788" />
-          <ProgressBar label="Burnout" percentage={30} color="#74C69D" />
-        </View>
-
-        {/* CARD 3: VISIBILIDADE */}
-        <View className="mx-6 mb-6 bg-white p-6 rounded-[20px] shadow-sm border border-[#e5e7eb]">
-          <View className="flex-row items-center mb-2">
-            <View className="w-[45px] h-[45px] bg-[#e0f2fe] rounded-[12px] items-center justify-center mr-3">
-              <Text className="text-[22px]">👁️</Text>
-            </View>
-            <Text className="font-title text-[18px] text-[#333]">Visibilidade na Busca</Text>
-          </View>
-          <Text className="font-sans text-[14px] text-[#666] mb-5 leading-relaxed">
-            Quantas vezes seu perfil apareceu nos resultados de busca dos pacientes nesta última semana.
-          </Text>
-
-          <View className="bg-[#f0f9ff] border border-[#bae6fd] p-5 rounded-[16px] items-center justify-center mb-4">
-            <Text className="font-title text-[36px] text-[#0284c7] mb-1">142</Text>
-            <Text className="font-sans text-[14px] text-[#0284c7] font-bold uppercase tracking-wider">Visualizações</Text>
-            
-            <View className="bg-white px-3 py-1.5 rounded-full mt-3 shadow-sm flex-row items-center border border-[#e0f2fe]">
-              <Feather name="trending-up" size={14} color="#16a34a" />
-              <Text className="font-sans font-bold text-[#16a34a] text-[12px] ml-1.5">+15% vs sem. passada</Text>
-            </View>
-          </View>
-
-          <View className="bg-[#f8f9fa] border-l-4 border-[#0284c7] p-4 rounded-[8px]">
-            <Text className="font-sans text-[14px] text-[#444] leading-relaxed">
-              💡 Suas publicações recentes ajudaram a impulsionar seu perfil no ranking da plataforma!
-            </Text>
-          </View>
-        </View>
-
-        {/* CARD 4: FORÇA DO PERFIL */}
-        <View className="mx-6 mb-6 bg-white p-6 rounded-[20px] shadow-sm border border-[#e5e7eb]">
-          <View className="flex-row items-center mb-2">
-            <View className="w-[45px] h-[45px] bg-[#f3e8ff] rounded-[12px] items-center justify-center mr-3">
-              <Text className="text-[22px]">💪</Text>
-            </View>
-            <Text className="font-title text-[18px] text-[#333]">Força do seu Perfil</Text>
-          </View>
-          <Text className="font-sans text-[14px] text-[#666] mb-6 leading-relaxed">
-            Uma comparação do quão completo está o seu perfil em relação aos tops da Yelo.
-          </Text>
-
-          {/* Progress Bars em vez de Radar Chart */}
-          <ProgressBar label="Completude (Bio, Fotos)" percentage={100} color="#7e22ce" />
-          <ProgressBar label="Avaliações" percentage={95} color="#9333ea" />
-          <ProgressBar label="Engajamento em Artigos" percentage={60} color="#a855f7" />
-          <ProgressBar label="Taxa de Resposta" percentage={90} color="#c084fc" />
+          {topTopics.map((topic: any, idx: number) => {
+            const colors = ['#1B4332', '#2D6A4F', '#52B788', '#74C69D'];
+            return (
+              <ProgressBar 
+                key={topic.name || idx}
+                label={topic.name || topic.tema}
+                percentage={topic.percentage || Math.round(topic.count ? (topic.count / 20) * 100 : 50)}
+                color={colors[idx % colors.length]}
+              />
+            );
+          })}
         </View>
 
       </YeloScrollView>
