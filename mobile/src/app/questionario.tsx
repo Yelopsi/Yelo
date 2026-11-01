@@ -175,7 +175,11 @@ export default function QuestionarioScreen() {
 
   const handleBack = () => {
     if (currentStep === 0) {
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/');
+      }
       return;
     }
 
