@@ -1,5 +1,65 @@
 [
   {
+    "id": "change-git-94041361",
+    "date": "2026-11-01T01:18:56.000Z",
+    "commit": "94041361",
+    "author": "Anderson",
+    "title": "Novo: Configurar conexao dinamica com backend, paleta de cores Yelo e autenticacao real (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "configurar conexao dinamica com backend, paleta de cores Yelo e autenticacao real",
+    "description": "Commit registrado no repositório: \"feat(mobile): configurar conexao dinamica com backend, paleta de cores Yelo e autenticacao real\". Arquivos modificados: mobile/src/app/(admin)/(crm)/analytics-crescimento.tsx, mobile/src/app/blog.tsx, mobile/src/app/ferramentas/roda-da-vida.tsx, mobile/src/app/ferramentas/sos-ansiedade.tsx, mobile/src/app/index.tsx (+7 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #94041361"
+    },
+    "after": {
+      "nova_versao": "configurar conexao dinamica com backend, paleta de cores Yelo e autenticacao real"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/(crm)/analytics-crescimento.tsx",
+      "mobile/src/app/blog.tsx",
+      "mobile/src/app/ferramentas/roda-da-vida.tsx",
+      "mobile/src/app/ferramentas/sos-ansiedade.tsx",
+      "mobile/src/app/index.tsx",
+      "mobile/src/app/login.tsx",
+      "mobile/src/constants/theme.ts",
+      "mobile/src/contexts/AuthContext.tsx",
+      "mobile/src/hooks/use-theme.ts",
+      "mobile/src/services/api.ts",
+      "mobile/tailwind.config.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-70b7894b",
+    "date": "2026-10-30T00:38:32.000Z",
+    "commit": "70b7894b",
+    "author": "Anderson",
+    "title": "Correção: Corrigir calculo matematico de sessao vs mensalidade e alinhar tom de equipe (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "corrigir calculo matematico de sessao vs mensalidade e alinhar tom de equipe",
+    "description": "Commit registrado no repositório: \"fix(crm): corrigir calculo matematico de sessao vs mensalidade e alinhar tom de equipe\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/adminPerformanceController.js, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #70b7894b"
+    },
+    "after": {
+      "nova_versao": "corrigir calculo matematico de sessao vs mensalidade e alinhar tom de equipe"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-8384b32b",
     "date": "2026-10-30T00:23:50.000Z",
     "commit": "8384b32b",
