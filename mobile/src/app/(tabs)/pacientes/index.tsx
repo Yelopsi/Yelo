@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,8 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  KeyboardAvoidingView,
-  Keyboard
+  Keyboard,
+  Vibration
 } from 'react-native';
 import YeloScrollView from '../../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
@@ -61,7 +61,6 @@ const normalizeTimeStr = (raw: string, fallback = '14:00'): string => {
     hh = parseInt(digits, 10);
     mm = 0;
   } else if (digits.length === 3) {
-    // Ex: "730" -> 07:30
     hh = parseInt(digits.slice(0, 1), 10);
     mm = parseInt(digits.slice(1, 3), 10);
   } else {
@@ -98,6 +97,13 @@ const RECURRENCE_OPTIONS: { label: string; value: 'none' | 'weekly' | 'biweekly'
   { label: 'Quinzenal', value: 'biweekly' }
 ];
 
+const STATUS_QUICK_OPTIONS: { label: string; value: string; color: string; bg: string }[] = [
+  { label: 'Confirmado', value: 'confirmed', color: '#1B4332', bg: '#e8f5e9' },
+  { label: 'Agendado', value: 'scheduled', color: '#3788d8', bg: '#ebf5ff' },
+  { label: 'Realizado', value: 'done', color: '#555555', bg: '#f1f3f5' },
+  { label: 'Falta', value: 'missed', color: '#d32f2f', bg: '#fef2f2' }
+];
+
 // Helpers de Data Local (evita bugs de fuso UTC em horários noturnos)
 const isSameLocalDay = (d1: Date, d2: Date) =>
   d1.getFullYear() === d2.getFullYear() &&
@@ -116,9 +122,9 @@ const FALLBACK_PATIENTS = [
 ];
 
 const FALLBACK_UPCOMING = [
-  { id: 'f1', patientName: 'Clícia', time: '20:10', date: 'Hoje', status: 'scheduled' },
-  { id: 'f2', patientName: 'Ana Maria Silva', time: '14:00', date: 'Amanhã', status: 'confirmed' },
-  { id: 'f3', patientName: 'João Paulo', time: '16:30', date: '4 de nov.', status: 'confirmed' }
+  { id: 'f1', patientName: 'Clícia', time: '20:10', date: 'Hoje', status: 'scheduled', isFallback: true },
+  { id: 'f2', patientName: 'Ana Maria Silva', time: '14:00', date: 'Amanhã', status: 'confirmed', isFallback: true },
+  { id: 'f3', patientName: 'João Paulo', time: '16:30', date: '4 de nov.', status: 'confirmed', isFallback: true }
 ];
 
 export default function PacientesScreen() {
@@ -143,9 +149,15 @@ export default function PacientesScreen() {
   const [statusFilter, setStatusFilter] = useState<'ativo' | 'inativo' | 'todos'>('ativo');
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
-  // Modais estilizados como Bottom Sheet Overlay (evita perda de LinkingContext do <Modal> nativo)
+  // Modais estilizados como Bottom Sheet Overlay
   const [modalNewPatient, setModalNewPatient] = useState(false);
   const [modalNewAppt, setModalNewAppt] = useState(false);
+
+  // Estados de Opções / Edição / Exclusão de Agendamento (Segurar no evento)
+  const [selectedEventForAction, setSelectedEventForAction] = useState<any | null>(null);
+  const [confirmDeleteMode, setConfirmDeleteMode] = useState(false);
+  const [editingAppt, setEditingAppt] = useState<any | null>(null);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
   // Formulário Novo Paciente
   const [newPatientName, setNewPatientName] = useState('');
@@ -153,8 +165,9 @@ export default function PacientesScreen() {
   const [newPatientValue, setNewPatientValue] = useState('');
   const [newPatientStatus, setNewPatientStatus] = useState('ativo');
   const [isSubmittingPatient, setIsSubmittingPatient] = useState(false);
+  const patientFormScrollRef = useRef<any>(null);
 
-  // Formulário Novo Agendamento (Híbrido: Roleta 24h + Atalhos Airbnb + Digitação Nubank)
+  // Formulário Novo / Editar Agendamento
   const [apptType, setApptType] = useState<'session' | 'available'>('session');
   const [apptPatientId, setApptPatientId] = useState<string>('1');
   const [apptTime, setApptTime] = useState<string>('14:00');
@@ -167,33 +180,146 @@ export default function PacientesScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [timeInputMode, setTimeInputMode] = useState<'wheel' | 'type'>('wheel');
   const [typedTimeDraft, setTypedTimeDraft] = useState('14:00');
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
-  // Ajusta o respiro do rodapé dos modais dinamicamente:
-  // - Teclado fechado: 102px (iOS) / 96px (Android) = 14px de mini respiro acima da Bottom Nav
-  // - Teclado aberto: 16px acima do teclado (pois o teclado já encobre a Bottom Nav)
-  const sheetFooterBottomPadding = isKeyboardVisible ? 16 : BOTTOM_NAV_CLEARANCE;
+  // Altura exata do teclado em pixels (garante que os campos nunca fiquem cobertos pelo teclado no iOS)
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const isKeyboardOpen = keyboardHeight > 0;
+  const sheetFooterBottomPadding = isKeyboardOpen ? 12 : BOTTOM_NAV_CLEARANCE;
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    const subShow = Keyboard.addListener(showEvent, () => setIsKeyboardVisible(true));
-    const subHide = Keyboard.addListener(hideEvent, () => setIsKeyboardVisible(false));
+    const subShow = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates?.height || 300);
+    });
+    const subHide = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
     return () => {
       subShow.remove();
       subHide.remove();
     };
   }, []);
 
-  // Helper para abrir modal de agendamento já sincronizado
-  const openApptSheet = (initialTime: string, expandTimeSelector = false) => {
+  // Helper para abrir modal de NOVO agendamento
+  const openNewApptSheet = (initialTime: string, expandTimeSelector = false) => {
     const cleanTime = normalizeTimeStr(initialTime, '14:00');
+    setEditingAppt(null);
     setApptTime(cleanTime);
     setTypedTimeDraft(cleanTime);
+    setApptRecurrence('none');
     setShowPatientPicker(false);
     setShowTimePicker(expandTimeSelector);
     setTimeInputMode('wheel');
     setModalNewAppt(true);
+  };
+
+  // Helper para abrir o menu de opções ao segurar (ou tocar) em um agendamento existente
+  const handleOpenEventActions = (evt: any, triggerHaptic = false) => {
+    if (!evt || evt.isFallback) return;
+    if (triggerHaptic) {
+      try {
+        Vibration.vibrate(15);
+      } catch {}
+    }
+    setConfirmDeleteMode(false);
+    setSelectedEventForAction(evt);
+  };
+
+  // Helper para entrar no modo de EDIÇÃO a partir do menu do agendamento
+  const handleStartEditEvent = (evt: any) => {
+    const startDt = new Date(evt.start);
+    const endDt = evt.end ? new Date(evt.end) : new Date(startDt.getTime() + 50 * 60 * 1000);
+    const diffMins = Math.round((endDt.getTime() - startDt.getTime()) / 60000);
+    const validDuration = [30, 50, 60].includes(diffMins) ? diffMins : 50;
+    const startHHMM = formatHHMM(startDt);
+
+    setSelectedDate(new Date(startDt.getFullYear(), startDt.getMonth(), startDt.getDate()));
+    setEditingAppt(evt);
+    setApptType(evt.status === 'available' ? 'available' : 'session');
+    if (evt.patientId) {
+      setApptPatientId(String(evt.patientId));
+    }
+    setApptTime(startHHMM);
+    setTypedTimeDraft(startHHMM);
+    setApptDuration(validDuration);
+    setApptRecurrence('none');
+    setShowPatientPicker(false);
+    setShowTimePicker(true);
+    setTimeInputMode('wheel');
+
+    setSelectedEventForAction(null);
+    setConfirmDeleteMode(false);
+    setModalNewAppt(true);
+  };
+
+  // Detecta ocorrências futuras da mesma série recorrente (mesmo paciente/tipo, dia da semana e hora:minuto)
+  const futureRecurringIds = useMemo(() => {
+    if (!selectedEventForAction || !selectedEventForAction.start) return [];
+    const targetStart = new Date(selectedEventForAction.start);
+    const targetDay = targetStart.getDay();
+    const targetH = targetStart.getHours();
+    const targetM = targetStart.getMinutes();
+    const isAvail = selectedEventForAction.status === 'available';
+
+    return appointments
+      .filter((a: any) => {
+        if (!a.start || String(a.id) === String(selectedEventForAction.id)) return false;
+        const d = new Date(a.start);
+        if (d <= targetStart) return false;
+        if (isAvail) {
+          if (a.status !== 'available') return false;
+        } else {
+          if (String(a.patientId) !== String(selectedEventForAction.patientId)) return false;
+          if (a.status === 'cancelled' || a.status === 'done') return false;
+        }
+        return d.getDay() === targetDay && d.getHours() === targetH && d.getMinutes() === targetM;
+      })
+      .map((a: any) => a.id);
+  }, [selectedEventForAction, appointments]);
+
+  // Atualizar Status Rápido de um Agendamento
+  const handleQuickUpdateStatus = async (newStatus: string) => {
+    if (!selectedEventForAction) return;
+    try {
+      setIsActionLoading(true);
+      await api.put(`/api/appointments/${selectedEventForAction.id}`, {
+        status: newStatus,
+        start: selectedEventForAction.start,
+        end: selectedEventForAction.end,
+        value: selectedEventForAction.value || 0,
+        title: selectedEventForAction.title
+      });
+      setSelectedEventForAction(null);
+      await fetchData();
+    } catch (err) {
+      Alert.alert('Erro', 'Não foi possível atualizar o status deste agendamento.');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  // Excluir Agendamento (apenas este OU este + próximos futuros)
+  const handleDeleteEvent = async (deleteFutureSeries = false) => {
+    if (!selectedEventForAction) return;
+    try {
+      setIsActionLoading(true);
+      if (deleteFutureSeries && futureRecurringIds.length > 0) {
+        const idsToDelete = [selectedEventForAction.id, ...futureRecurringIds];
+        await api.delete('/api/appointments/bulk', {
+          data: { ids: idsToDelete }
+        });
+      } else {
+        await api.delete(`/api/appointments/${selectedEventForAction.id}`);
+      }
+      setSelectedEventForAction(null);
+      setConfirmDeleteMode(false);
+      await fetchData();
+    } catch (err) {
+      Alert.alert('Erro', 'Não foi possível excluir o agendamento. Tente novamente.');
+    } finally {
+      setIsActionLoading(false);
+    }
   };
 
   // Carregar dados reais da API
@@ -266,7 +392,7 @@ export default function PacientesScreen() {
     setSelectedDate(new Date());
   };
 
-  // Próximos Atendimentos
+  // Próximos Atendimentos (mantém referência ao objeto original para permitir editar/excluir ao segurar)
   const upcomingList = useMemo(() => {
     const realUpcoming = appointments
       .filter((a: any) => (a.status === 'scheduled' || a.status === 'confirmed') && new Date(a.start) >= new Date())
@@ -274,6 +400,7 @@ export default function PacientesScreen() {
       .slice(0, 5)
       .map((a: any) => {
         const d = new Date(a.start);
+        const endDt = a.end ? new Date(a.end) : null;
         const timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         const dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
         return {
@@ -281,7 +408,13 @@ export default function PacientesScreen() {
           patientName: a.title || 'Consulta',
           time: timeStr,
           date: dateStr,
-          status: a.status
+          status: a.status,
+          isFallback: false,
+          rawEvent: {
+            ...a,
+            exactStartLabel: formatHHMM(d),
+            exactEndLabel: endDt && !isNaN(endDt.getTime()) ? formatHHMM(endDt) : null
+          }
         };
       });
 
@@ -316,15 +449,15 @@ export default function PacientesScreen() {
     return [...BASE_MINUTES, selectedMinute].sort();
   }, [selectedMinute]);
 
-  // Cálculo em tempo real do horário de término da sessão (ex: 17:00 -> até 17:50)
+  // Cálculo em tempo real do horário de término da sessão
   const calculatedEndTimeStr = useMemo(() => {
     const [hh, mm] = apptTime.split(':').map(Number);
     const d = new Date(2026, 0, 1, hh || 0, mm || 0, 0, 0);
-    d.setMinutes(d.getMinutes() + apptDuration);
+    d.setMinutes(d.getMinutes() + (apptType === 'available' ? 60 : apptDuration));
     return formatHHMM(d);
-  }, [apptTime, apptDuration]);
+  }, [apptTime, apptDuration, apptType]);
 
-  // Agendamentos do dia selecionado ordenados cronologicamente (qualquer hora 00:00–23:59 e minutos quebrados)
+  // Agendamentos do dia selecionado ordenados cronologicamente
   const dayAppointments = useMemo(() => {
     return appointments
       .filter((a: any) => {
@@ -335,7 +468,6 @@ export default function PacientesScreen() {
       .sort((a: any, b: any) => new Date(a.start).getTime() - new Date(b.start).getTime());
   }, [appointments, selectedDate]);
 
-  // Quantidade de eventos fora do horário comercial (antes das 08h ou após 21h) para sinalização inteligente
   const earlyEventsCount = useMemo(
     () => dayAppointments.filter((a: any) => new Date(a.start).getHours() < 8).length,
     [dayAppointments]
@@ -345,10 +477,7 @@ export default function PacientesScreen() {
     [dayAppointments]
   );
 
-  // Construção Inteligente da Grade (Estilo Notion Calendar):
-  // - Padrão limpo 08h–21h
-  // - Expande 06h–07h ou 22h–23h sob demanda, ou 24h completo (00h–23h)
-  // - NUNCA esconde um agendamento existente fora de hora (auto-inclui qualquer hora com sessão marcada!)
+  // Construção Inteligente da Grade (Estilo Notion Calendar)
   const timeSlots = useMemo(() => {
     const hoursSet = new Set<number>();
 
@@ -368,7 +497,6 @@ export default function PacientesScreen() {
       }
     }
 
-    // Auto-inclusão de qualquer hora (ex: 05:30, 07:00, 22:45) que já possua evento agendado no dia
     dayAppointments.forEach((a: any) => {
       const h = new Date(a.start).getHours();
       hoursSet.add(h);
@@ -406,6 +534,8 @@ export default function PacientesScreen() {
       return;
     }
 
+    Keyboard.dismiss();
+
     try {
       setIsSubmittingPatient(true);
       const res = await api.post('/api/my-patients', {
@@ -439,8 +569,10 @@ export default function PacientesScreen() {
     }
   };
 
-  // Salvar Novo Agendamento (Suporta qualquer horário 00:00–23:59, duração customizada e recorrência em lote)
+  // Salvar Agendamento (Criação OU Edição)
   const handleSaveAppt = async () => {
+    Keyboard.dismiss();
+
     const finalTime = timeInputMode === 'type'
       ? normalizeTimeStr(typedTimeDraft, apptTime)
       : apptTime;
@@ -463,6 +595,34 @@ export default function PacientesScreen() {
     try {
       setIsSubmittingAppt(true);
 
+      if (editingAppt) {
+        // MODO EDIÇÃO: Atualiza o agendamento existente
+        const nextStatus =
+          apptType === 'available'
+            ? 'available'
+            : editingAppt.status === 'available'
+              ? 'scheduled'
+              : editingAppt.status || 'scheduled';
+
+        await api.put(`/api/appointments/${editingAppt.id}`, {
+          title: apptType === 'available' ? 'Horário Disponível' : (patient ? patient.nome : 'Consulta'),
+          start: startDt.toISOString(),
+          end: endDt.toISOString(),
+          patientId: apptType === 'available' ? null : (patient ? patient.id : null),
+          status: nextStatus,
+          value: apptType === 'available' ? 0 : (patient?.sessionValue || editingAppt.value || 150)
+        });
+
+        setModalNewAppt(false);
+        setEditingAppt(null);
+        setShowTimePicker(false);
+        setShowPatientPicker(false);
+        await fetchData();
+        Alert.alert('Atualizado', `Agendamento atualizado para ${finalTime}!`);
+        return;
+      }
+
+      // MODO CRIAÇÃO
       if (apptRecurrence === 'none') {
         if (apptType === 'available') {
           await api.post('/api/appointments', {
@@ -484,7 +644,6 @@ export default function PacientesScreen() {
           });
         }
       } else {
-        // Criação recorrente (Semanal: 16 semanas | Quinzenal: 12 quinzenas) via endpoint /bulk
         const occCount = apptRecurrence === 'weekly' ? 16 : 12;
         const stepDays = apptRecurrence === 'weekly' ? 7 : 14;
         const occurrences = [];
@@ -520,6 +679,7 @@ export default function PacientesScreen() {
       );
     } catch (err) {
       setModalNewAppt(false);
+      setEditingAppt(null);
       Alert.alert('Agendamento', `Horário (${finalTime}) registrado na sua agenda!`);
     } finally {
       setIsSubmittingAppt(false);
@@ -529,19 +689,18 @@ export default function PacientesScreen() {
   // Estilo utilitário da cor de cada agendamento na timeline
   const getEventPillColors = (status?: string) => {
     if (status === 'confirmed') {
-      return { bg: '#1B4332', text: '#ffffff', sub: 'rgba(255,255,255,0.82)', borderColor: '#1B4332', dashed: false };
+      return { bg: '#1B4332', text: '#ffffff', sub: 'rgba(255,255,255,0.82)', borderColor: '#1B4332', dashed: false, label: 'Confirmado' };
     }
     if (status === 'available') {
-      return { bg: '#FFEE8C', text: '#1B4332', sub: '#1B4332', borderColor: '#1B4332', dashed: true };
+      return { bg: '#FFEE8C', text: '#1B4332', sub: '#1B4332', borderColor: '#1B4332', dashed: true, label: 'Disponível' };
     }
     if (status === 'done' || status === 'completed') {
-      return { bg: '#9e9e9e', text: '#ffffff', sub: 'rgba(255,255,255,0.85)', borderColor: '#9e9e9e', dashed: false };
+      return { bg: '#9e9e9e', text: '#ffffff', sub: 'rgba(255,255,255,0.85)', borderColor: '#9e9e9e', dashed: false, label: 'Realizado' };
     }
     if (status === 'missed' || status === 'absent') {
-      return { bg: '#d32f2f', text: '#ffffff', sub: 'rgba(255,255,255,0.85)', borderColor: '#d32f2f', dashed: false };
+      return { bg: '#d32f2f', text: '#ffffff', sub: 'rgba(255,255,255,0.85)', borderColor: '#d32f2f', dashed: false, label: 'Falta' };
     }
-    // Padrão: scheduled (Agendado)
-    return { bg: '#3788d8', text: '#ffffff', sub: 'rgba(255,255,255,0.85)', borderColor: '#3788d8', dashed: false };
+    return { bg: '#3788d8', text: '#ffffff', sub: 'rgba(255,255,255,0.85)', borderColor: '#3788d8', dashed: false, label: 'Agendado' };
   };
 
   return (
@@ -613,7 +772,7 @@ export default function PacientesScreen() {
               <TouchableOpacity
                 onPress={() => {
                   setApptType('session');
-                  openApptSheet('14:00', false);
+                  openNewApptSheet('14:00', false);
                 }}
                 className="flex-1 py-3 bg-[#1B4332] rounded-full items-center justify-center shadow-sm ml-2 flex-row"
               >
@@ -632,9 +791,13 @@ export default function PacientesScreen() {
                 </View>
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-                  {upcomingList.map((sess) => (
-                    <View
+                  {upcomingList.map((sess: any) => (
+                    <TouchableOpacity
                       key={sess.id}
+                      activeOpacity={0.8}
+                      delayLongPress={250}
+                      onPress={() => !sess.isFallback && handleOpenEventActions(sess.rawEvent, false)}
+                      onLongPress={() => !sess.isFallback && handleOpenEventActions(sess.rawEvent, true)}
                       className="bg-white border border-[#e5e7eb] rounded-[16px] p-3.5 flex-row items-center mr-3 min-w-[210px]"
                     >
                       <View className="bg-[#e8f5e9] px-2.5 py-1.5 rounded-[10px] items-center mr-3">
@@ -653,41 +816,49 @@ export default function PacientesScreen() {
                         </Text>
                       </View>
                       <Text className="text-[#ccc] text-[16px]">➔</Text>
-                    </View>
+                    </TouchableOpacity>
                   ))}
                 </ScrollView>
               </View>
             )}
 
-            {/* LEGENDA DE CORES */}
-            <View className="flex-row flex-wrap justify-center items-center py-4 px-4 border-b border-[#f0f0f0] mt-3">
-              <View className="flex-row items-center mr-3.5 mb-1.5">
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#3788d8', marginRight: 6 }} />
-                <Text className="font-sans text-[12px] text-[#495057]">Agendado</Text>
+            {/* LEGENDA DE CORES + MICRO DICA DE INTERAÇÃO */}
+            <View className="pt-4 pb-3 px-4 border-b border-[#f0f0f0] mt-3 items-center">
+              <View className="flex-row flex-wrap justify-center items-center">
+                <View className="flex-row items-center mr-3.5 mb-1.5">
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#3788d8', marginRight: 6 }} />
+                  <Text className="font-sans text-[12px] text-[#495057]">Agendado</Text>
+                </View>
+
+                <View className="flex-row items-center mr-3.5 mb-1.5">
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#1B4332', marginRight: 6 }} />
+                  <Text className="font-sans text-[12px] text-[#495057]">Confirmado</Text>
+                </View>
+
+                <View className="flex-row items-center mr-3.5 mb-1.5">
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#FFEE8C', borderWidth: 1, borderStyle: 'dashed', borderColor: '#1B4332', marginRight: 6 }} />
+                  <Text className="font-sans text-[12px] text-[#495057]">Disponível</Text>
+                </View>
+
+                <View className="flex-row items-center mr-3.5 mb-1.5">
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#9e9e9e', marginRight: 6 }} />
+                  <Text className="font-sans text-[12px] text-[#495057]">Realizado</Text>
+                </View>
+
+                <View className="flex-row items-center mb-1.5">
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#d32f2f', marginRight: 6 }} />
+                  <Text className="font-sans text-[12px] text-[#495057]">Falta</Text>
+                </View>
               </View>
 
-              <View className="flex-row items-center mr-3.5 mb-1.5">
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#1B4332', marginRight: 6 }} />
-                <Text className="font-sans text-[12px] text-[#495057]">Confirmado</Text>
-              </View>
-
-              <View className="flex-row items-center mr-3.5 mb-1.5">
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#FFEE8C', borderWidth: 1, borderStyle: 'dashed', borderColor: '#1B4332', marginRight: 6 }} />
-                <Text className="font-sans text-[12px] text-[#495057]">Disponível</Text>
-              </View>
-
-              <View className="flex-row items-center mr-3.5 mb-1.5">
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#9e9e9e', marginRight: 6 }} />
-                <Text className="font-sans text-[12px] text-[#495057]">Realizado</Text>
-              </View>
-
-              <View className="flex-row items-center mb-1.5">
-                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#d32f2f', marginRight: 6 }} />
-                <Text className="font-sans text-[12px] text-[#495057]">Falta</Text>
-              </View>
+              {dayAppointments.length > 0 && (
+                <Text className="font-sans text-[11px] text-[#888] mt-1">
+                  Toque e segure em um horário agendado para editar ou excluir
+                </Text>
+              )}
             </View>
 
-            {/* CABEÇALHO DO DIA NA GRADE + TOGGLE RÁPIDO 08h–21h / 24h (ESTILO NOTION CALENDAR) */}
+            {/* CABEÇALHO DO DIA NA GRADE + TOGGLE RÁPIDO 08h–21h / 24h */}
             <View className="bg-[#f8f9fa] py-2.5 px-4 border-b border-[#eee] flex-row items-center justify-between">
               <Text className="font-title text-[12px] text-[#1B4332] tracking-wider flex-1 mr-2" numberOfLines={1}>
                 {dayHeaderTitle}
@@ -746,7 +917,7 @@ export default function PacientesScreen() {
                 <TouchableOpacity
                   onPress={() => {
                     setApptType('session');
-                    openApptSheet('07:30', true);
+                    openNewApptSheet('07:30', true);
                   }}
                   className="px-3 py-1.5 rounded-full bg-[#f0fdf4]"
                 >
@@ -755,7 +926,7 @@ export default function PacientesScreen() {
               </View>
             )}
 
-            {/* GRADE DE HORÁRIOS COM SUPORTE A HORÁRIOS QUEBRADOS E MULTI-EVENTOS */}
+            {/* GRADE DE HORÁRIOS COM SUPORTE A SEGURAR PARA EDITAR / EXCLUIR */}
             <View className="py-1">
               {timeSlots.map((slot) => {
                 const hasEvents = slot.events.length > 0;
@@ -789,7 +960,10 @@ export default function PacientesScreen() {
                                 style={{ marginBottom: idx < slot.events.length - 1 ? 6 : 0 }}
                               >
                                 <TouchableOpacity
-                                  activeOpacity={0.85}
+                                  activeOpacity={0.82}
+                                  delayLongPress={250}
+                                  onPress={() => handleOpenEventActions(evt, false)}
+                                  onLongPress={() => handleOpenEventActions(evt, true)}
                                   className="flex-1 h-[40px] px-4 rounded-full justify-center"
                                   style={{
                                     backgroundColor: palette.bg,
@@ -817,12 +991,12 @@ export default function PacientesScreen() {
                                   </View>
                                 </TouchableOpacity>
 
-                                {/* Botão sutil (+) para encaixar horário quebrado na mesma hora (ex: 14:50) */}
+                                {/* Botão sutil (+) para encaixar horário quebrado na mesma hora */}
                                 <TouchableOpacity
                                   onPress={() => {
                                     const nextHalf = `${String(slot.hourNumber).padStart(2, '0')}:30`;
                                     setApptType('session');
-                                    openApptSheet(nextHalf, true);
+                                    openNewApptSheet(nextHalf, true);
                                   }}
                                   className="w-8 h-8 rounded-full bg-[#f0fdf4] border border-[#cce5d4] items-center justify-center ml-2"
                                 >
@@ -836,7 +1010,7 @@ export default function PacientesScreen() {
                         <TouchableOpacity
                           onPress={() => {
                             setApptType('session');
-                            openApptSheet(slot.hour, false);
+                            openNewApptSheet(slot.hour, false);
                           }}
                           className="h-[38px] rounded-full border border-dashed border-[#ced4da] bg-[#fafafa] items-center justify-center px-4"
                         >
@@ -851,7 +1025,7 @@ export default function PacientesScreen() {
               })}
             </View>
 
-            {/* RODAPÉ INTELIGENTE DA GRADE: NOITE ESTENDIDA (22h–23h) + QUALQUER OUTRO HORÁRIO (ESTILO AIRBNB / NUBANK) */}
+            {/* RODAPÉ INTELIGENTE DA GRADE: NOITE ESTENDIDA (22h–23h) + QUALQUER OUTRO HORÁRIO */}
             <View className="px-4 py-3.5 bg-[#fcfdfd] flex-row items-center justify-between">
               {!view24h ? (
                 <TouchableOpacity
@@ -892,7 +1066,7 @@ export default function PacientesScreen() {
               <TouchableOpacity
                 onPress={() => {
                   setApptType('session');
-                  openApptSheet('21:30', true);
+                  openNewApptSheet('21:30', true);
                 }}
                 className="flex-1 flex-row items-center justify-center px-4 py-2 rounded-full bg-[#f0fdf4] border border-[#bbf7d0]"
               >
@@ -905,10 +1079,9 @@ export default function PacientesScreen() {
           </View>
         ) : (
           /* ============================================================ */
-          /* VISÃO 2: CARTEIRA DE PACIENTES (ABERTA VIA [ PACIENTES ])     */
+          /* VISÃO 2: CARTEIRA DE PACIENTES                               */
           /* ============================================================ */
           <View className="mx-4 bg-white rounded-[20px] border border-[#eee] p-5 shadow-sm">
-            {/* BOTÃO VOLTAR PARA A AGENDA */}
             <TouchableOpacity
               onPress={() => setShowPatientsView(false)}
               className="bg-[#f0fdf4] border border-[#bbf7d0] px-4 py-2.5 rounded-full flex-row items-center self-start mb-5"
@@ -919,7 +1092,6 @@ export default function PacientesScreen() {
               </Text>
             </TouchableOpacity>
 
-            {/* CABEÇALHO DA CARTEIRA: TÍTULO + BOTÃO + NOVO */}
             <View className="flex-row items-center justify-between pb-3 mb-4 border-b border-[#eee]">
               <Text className="font-title text-[20px] text-[#1B4332]">Carteira de Pacientes</Text>
               <TouchableOpacity
@@ -930,7 +1102,6 @@ export default function PacientesScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* CONTROLES: BUSCA, BOTÃO (+) E FILTRO DE STATUS */}
             <View className="flex-row items-center mb-5">
               <View className="flex-1 flex-row items-center bg-[#f9fafb] border border-[#eee] rounded-full px-4 py-2.5 mr-2">
                 <Feather name="search" size={16} color="#9ca3af" style={{ marginRight: 6 }} />
@@ -961,7 +1132,6 @@ export default function PacientesScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* MENU DE OPÇÕES DO FILTRO */}
             {showStatusMenu && (
               <View className="bg-white border border-[#eee] rounded-[16px] shadow-lg mb-4 overflow-hidden">
                 <TouchableOpacity
@@ -1003,7 +1173,6 @@ export default function PacientesScreen() {
               </View>
             )}
 
-            {/* LISTA DE PACIENTES */}
             {filteredPatients.length === 0 ? (
               <View className="py-8 items-center justify-center">
                 <Text className="font-sans text-[#888] text-[14px]">Nenhum paciente cadastrado.</Text>
@@ -1060,43 +1229,266 @@ export default function PacientesScreen() {
       </YeloScrollView>
 
       {/* ============================================================ */}
-      {/* MODAL: NOVO AGENDAMENTO (ROLETA 24H + CHIPS AIRBNB + NUBANK) */}
-      {/* Rodapé com respiro calibrado acima da Bottom Tab Bar         */}
+      {/* MODAL: OPÇÕES DO AGENDAMENTO (AO SEGURAR: EDITAR / EXCLUIR)  */}
       {/* ============================================================ */}
-      {modalNewAppt && (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={StyleSheet.absoluteFill}
-          className="z-50 justify-end bg-black/50"
+      {selectedEventForAction && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              zIndex: 55,
+              justifyContent: 'flex-end',
+              backgroundColor: 'rgba(0,0,0,0.5)'
+            }
+          ]}
         >
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={() => {
+              setSelectedEventForAction(null);
+              setConfirmDeleteMode(false);
+            }}
+          />
+
+          <View
+            style={{
+              backgroundColor: '#ffffff',
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+              paddingTop: 18,
+              paddingHorizontal: 24,
+              paddingBottom: BOTTOM_NAV_CLEARANCE,
+              zIndex: 10
+            }}
+          >
+            <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-4" />
+
+            {/* Cabeçalho do Evento Selecionado */}
+            <View className="flex-row items-center mb-4">
+              <View className="w-[44px] h-[44px] rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                <Feather
+                  name={selectedEventForAction.status === 'available' ? 'clock' : 'calendar'}
+                  size={20}
+                  color="#1B4332"
+                />
+              </View>
+              <View className="flex-1 mr-2">
+                <Text className="font-title text-[20px] text-[#1B4332]" numberOfLines={1}>
+                  {selectedEventForAction.title || 'Agendamento'}
+                </Text>
+                <Text className="font-sans text-[13px] text-[#666]">
+                  {new Date(selectedEventForAction.start).toLocaleDateString('pt-BR', {
+                    weekday: 'short',
+                    day: '2-digit',
+                    month: 'short'
+                  })}{' '}
+                  •{' '}
+                  {selectedEventForAction.exactEndLabel
+                    ? `${selectedEventForAction.exactStartLabel} – ${selectedEventForAction.exactEndLabel}`
+                    : selectedEventForAction.exactStartLabel || formatHHMM(new Date(selectedEventForAction.start))}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                className="p-2"
+                onPress={() => {
+                  setSelectedEventForAction(null);
+                  setConfirmDeleteMode(false);
+                }}
+              >
+                <Feather name="x" size={22} color="#999" />
+              </TouchableOpacity>
+            </View>
+
+            {!confirmDeleteMode ? (
+              <>
+                {/* Troca Rápida de Status (apenas para sessões com paciente) */}
+                {selectedEventForAction.status !== 'available' && (
+                  <View className="mb-4">
+                    <Text className="font-sans font-bold text-[11px] text-[#495057] uppercase mb-2">
+                      Status da Sessão
+                    </Text>
+                    <View className="flex-row flex-wrap">
+                      {STATUS_QUICK_OPTIONS.map((st) => {
+                        const isCurrent = selectedEventForAction.status === st.value;
+                        return (
+                          <TouchableOpacity
+                            key={st.value}
+                            disabled={isActionLoading}
+                            onPress={() => handleQuickUpdateStatus(st.value)}
+                            className="px-3.5 py-2 rounded-full border mr-2 mb-2"
+                            style={{
+                              backgroundColor: isCurrent ? st.color : st.bg,
+                              borderColor: st.color
+                            }}
+                          >
+                            <Text
+                              className="font-sans font-bold text-[12px]"
+                              style={{ color: isCurrent ? '#ffffff' : st.color }}
+                            >
+                              {st.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
+
+                {/* BOTÕES PRINCIPAIS EM PÍLULA: EDITAR & EXCLUIR */}
+                <TouchableOpacity
+                  disabled={isActionLoading}
+                  onPress={() => handleStartEditEvent(selectedEventForAction)}
+                  className="bg-[#1B4332] rounded-full py-3.5 px-5 flex-row items-center justify-center mb-3 shadow-sm"
+                >
+                  <Feather name="edit-2" size={16} color="#ffffff" style={{ marginRight: 8 }} />
+                  <Text className="font-sans font-bold text-white text-[15px]">
+                    Editar Agendamento
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  disabled={isActionLoading}
+                  onPress={() => setConfirmDeleteMode(true)}
+                  className="bg-[#fef2f2] border border-[#fecaca] rounded-full py-3.5 px-5 flex-row items-center justify-center"
+                >
+                  <Feather name="trash-2" size={16} color="#d32f2f" style={{ marginRight: 8 }} />
+                  <Text className="font-sans font-bold text-[#d32f2f] text-[15px]">
+                    Excluir Agendamento
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              /* Confirmação de Exclusão (Suporta evento único ou série recorrente!) */
+              <View className="pt-1">
+                <View className="bg-[#fef2f2] border border-[#fecaca] rounded-[18px] p-3.5 mb-4">
+                  <Text className="font-sans font-bold text-[#991b1b] text-[14px] mb-1">
+                    Confirmar exclusão?
+                  </Text>
+                  <Text className="font-sans text-[#7f1d1d] text-[13px]">
+                    {futureRecurringIds.length > 0
+                      ? `Encontramos mais ${futureRecurringIds.length} horário(s) futuro(s) desta série recorrente. Como deseja excluir?`
+                      : 'Este horário será removido permanentemente da sua agenda.'}
+                  </Text>
+                </View>
+
+                {isActionLoading ? (
+                  <View className="py-6 items-center">
+                    <ActivityIndicator size="small" color="#d32f2f" />
+                  </View>
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteEvent(false)}
+                      className="rounded-full py-3.5 px-5 items-center justify-center mb-2.5 border"
+                      style={{
+                        backgroundColor: futureRecurringIds.length > 0 ? '#ffffff' : '#d32f2f',
+                        borderColor: '#d32f2f'
+                      }}
+                    >
+                      <Text
+                        className="font-sans font-bold text-[15px]"
+                        style={{ color: futureRecurringIds.length > 0 ? '#d32f2f' : '#ffffff' }}
+                      >
+                        {futureRecurringIds.length > 0 ? 'Excluir apenas este dia' : 'Sim, excluir horário'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {futureRecurringIds.length > 0 && (
+                      <TouchableOpacity
+                        onPress={() => handleDeleteEvent(true)}
+                        className="bg-[#d32f2f] rounded-full py-3.5 px-5 items-center justify-center mb-2.5"
+                      >
+                        <Text className="font-sans font-bold text-white text-[15px]">
+                          Excluir este e os próximos ({futureRecurringIds.length + 1})
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+
+                    <TouchableOpacity
+                      onPress={() => setConfirmDeleteMode(false)}
+                      className="bg-[#f1f3f5] rounded-full py-3 px-5 items-center justify-center"
+                    >
+                      <Text className="font-sans font-semibold text-[#495057] text-[14px]">
+                        Voltar
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: NOVO / EDITAR AGENDAMENTO (COM GEOMETRIA DE TECLADO)  */}
+      {/* ============================================================ */}
+      {modalNewAppt && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              zIndex: 50,
+              justifyContent: 'flex-end',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              paddingBottom: Platform.OS === 'ios' ? keyboardHeight : 0
+            }
+          ]}
+        >
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => {
+              Keyboard.dismiss();
               setShowPatientPicker(false);
               setShowTimePicker(false);
+              setEditingAppt(null);
               setModalNewAppt(false);
             }}
           />
           <View
-            className="bg-white rounded-t-[32px] pt-5 px-6 z-10"
-            style={{ maxHeight: '92%' }}
+            style={{
+              backgroundColor: '#ffffff',
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+              paddingTop: isKeyboardOpen ? 12 : 20,
+              paddingHorizontal: 24,
+              maxHeight: isKeyboardOpen ? '98%' : '92%',
+              flexShrink: 1,
+              zIndex: 10
+            }}
           >
-            <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-4" />
+            <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-3" />
 
             {/* Header do Sheet */}
-            <View className="flex-row items-center mb-4">
-              <View className="w-[44px] h-[44px] rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
-                <Text className="text-[20px]">📅</Text>
+            <View className="flex-row items-center mb-3">
+              <View className="w-[42px] h-[42px] rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                <Text className="text-[19px]">{editingAppt ? '✏️' : '📅'}</Text>
               </View>
-              <View>
-                <Text className="font-title text-[20px] text-[#1B4332]">Agendar Horário</Text>
+              <View className="flex-1">
+                <Text className="font-title text-[20px] text-[#1B4332]">
+                  {editingAppt ? 'Editar Horário' : 'Agendar Horário'}
+                </Text>
                 <Text className="font-sans text-[13px] text-[#666]">{formattedDateTitle}</Text>
               </View>
+
+              {isKeyboardOpen && (
+                <TouchableOpacity
+                  onPress={() => Keyboard.dismiss()}
+                  className="px-3 py-1.5 rounded-full bg-[#f0fdf4] border border-[#bbf7d0] mr-2 flex-row items-center"
+                >
+                  <Text className="font-sans font-bold text-[11px] text-[#1B4332] mr-1">OK</Text>
+                  <Feather name="chevron-down" size={13} color="#1B4332" />
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity
-                className="ml-auto p-2"
+                className="p-2"
                 onPress={() => {
+                  Keyboard.dismiss();
                   setShowPatientPicker(false);
                   setShowTimePicker(false);
+                  setEditingAppt(null);
                   setModalNewAppt(false);
                 }}
               >
@@ -1105,9 +1497,10 @@ export default function PacientesScreen() {
             </View>
 
             <ScrollView
-              showsVerticalScrollIndicator={false}
+              showsVerticalScrollIndicator={true}
               keyboardShouldPersistTaps="handled"
               style={{ flexGrow: 0, flexShrink: 1 }}
+              contentContainerStyle={{ paddingBottom: 12 }}
             >
               {/* TABS DE TIPO: CONSULTA vs HORÁRIO DISPONÍVEL */}
               <View className="flex-row bg-[#f1f3f5] p-1.5 rounded-full mb-4">
@@ -1163,6 +1556,7 @@ export default function PacientesScreen() {
 
                   <TouchableOpacity
                     onPress={() => {
+                      Keyboard.dismiss();
                       setShowPatientPicker(!showPatientPicker);
                       setShowTimePicker(false);
                     }}
@@ -1194,7 +1588,7 @@ export default function PacientesScreen() {
                 </View>
               )}
 
-              {/* SELEÇÃO DE HORÁRIO DE INÍCIO (24H COMPLETO: ROLETA DUPLA HH:MM + CHIPS + DIGITAR) */}
+              {/* SELEÇÃO DE HORÁRIO DE INÍCIO (24H COMPLETO) */}
               <View className="mb-4">
                 <View className="flex-row items-center justify-between mb-1.5">
                   <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase">
@@ -1205,9 +1599,9 @@ export default function PacientesScreen() {
                   </Text>
                 </View>
 
-                {/* Pílula Principal de Disparo */}
                 <TouchableOpacity
                   onPress={() => {
+                    Keyboard.dismiss();
                     setShowTimePicker(!showTimePicker);
                     setShowPatientPicker(false);
                   }}
@@ -1227,7 +1621,7 @@ export default function PacientesScreen() {
                   <Feather name={showTimePicker ? 'chevron-up' : 'chevron-down'} size={18} color="#1B4332" />
                 </TouchableOpacity>
 
-                {/* Atalhos Rápidos Horizontais (Estilo Airbnb - Qualquer turno com 1 toque) */}
+                {/* Atalhos Rápidos Horizontais */}
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -1260,7 +1654,6 @@ export default function PacientesScreen() {
                   })}
                 </ScrollView>
 
-                {/* Painel Expandido: Roleta Dupla Nativa (00h–23h : 00m–55m) OU Digitação Direta (Estilo Nubank) */}
                 {showTimePicker && (
                   <View className="bg-[#f8f9fa] border border-[#e5e7eb] rounded-[22px] mt-2.5 p-3 overflow-hidden">
                     <View className="flex-row items-center justify-between mb-2 px-1">
@@ -1276,6 +1669,7 @@ export default function PacientesScreen() {
                             setTypedTimeDraft(apptTime);
                             setTimeInputMode('type');
                           } else {
+                            Keyboard.dismiss();
                             const normalized = normalizeTimeStr(typedTimeDraft, apptTime);
                             setApptTime(normalized);
                             setTypedTimeDraft(normalized);
@@ -1298,7 +1692,6 @@ export default function PacientesScreen() {
 
                     {timeInputMode === 'wheel' ? (
                       <View className="flex-row items-center justify-center">
-                        {/* Roda Nativa das Horas (00 a 23) */}
                         <View className="flex-1">
                           <Picker
                             selectedValue={selectedHour}
@@ -1317,7 +1710,6 @@ export default function PacientesScreen() {
 
                         <Text className="font-sans font-bold text-[20px] text-[#1B4332] mx-1">:</Text>
 
-                        {/* Roda Nativa dos Minutos (00 a 55) */}
                         <View className="flex-1">
                           <Picker
                             selectedValue={selectedMinute}
@@ -1366,10 +1758,10 @@ export default function PacientesScreen() {
                 )}
               </View>
 
-              {/* DURAÇÃO E RECORRÊNCIA EM PÍLULAS COMPACTAS (ESTILO NOTION / YELO) */}
-              <View className="flex-row justify-between mb-3">
+              {/* DURAÇÃO E RECORRÊNCIA */}
+              <View className="flex-row justify-between mb-2">
                 {apptType === 'session' && (
-                  <View className="flex-1 mr-2">
+                  <View className="flex-1" style={!editingAppt ? { marginRight: 8 } : undefined}>
                     <Text className="font-sans font-bold text-[11px] text-[#495057] uppercase mb-1.5">
                       Duração
                     </Text>
@@ -1396,35 +1788,37 @@ export default function PacientesScreen() {
                   </View>
                 )}
 
-                <View className="flex-1" style={apptType === 'session' ? { marginLeft: 6 } : undefined}>
-                  <Text className="font-sans font-bold text-[11px] text-[#495057] uppercase mb-1.5">
-                    Repetição
-                  </Text>
-                  <View className="flex-row bg-[#f1f3f5] p-1 rounded-full">
-                    {RECURRENCE_OPTIONS.map((rec) => {
-                      const active = apptRecurrence === rec.value;
-                      return (
-                        <TouchableOpacity
-                          key={rec.value}
-                          onPress={() => setApptRecurrence(rec.value)}
-                          className="flex-1 py-1.5 rounded-full items-center"
-                          style={active ? { backgroundColor: '#1B4332' } : undefined}
-                        >
-                          <Text
-                            className="font-sans font-bold text-[11px]"
-                            style={{ color: active ? '#ffffff' : '#555555' }}
+                {!editingAppt && (
+                  <View className="flex-1" style={apptType === 'session' ? { marginLeft: 6 } : undefined}>
+                    <Text className="font-sans font-bold text-[11px] text-[#495057] uppercase mb-1.5">
+                      Repetição
+                    </Text>
+                    <View className="flex-row bg-[#f1f3f5] p-1 rounded-full">
+                      {RECURRENCE_OPTIONS.map((rec) => {
+                        const active = apptRecurrence === rec.value;
+                        return (
+                          <TouchableOpacity
+                            key={rec.value}
+                            onPress={() => setApptRecurrence(rec.value)}
+                            className="flex-1 py-1.5 rounded-full items-center"
+                            style={active ? { backgroundColor: '#1B4332' } : undefined}
                           >
-                            {rec.label}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
+                            <Text
+                              className="font-sans font-bold text-[11px]"
+                              style={{ color: active ? '#ffffff' : '#555555' }}
+                            >
+                              {rec.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
                   </View>
-                </View>
+                )}
               </View>
             </ScrollView>
 
-            {/* RODAPÉ FIXO COM MINI RESPIRO ACIMA DA BOTTOM TAB BAR */}
+            {/* RODAPÉ FIXO ACIMA DO TECLADO OU DA BOTTOM NAV */}
             <View
               className="pt-3 border-t border-[#f3f4f6] bg-white"
               style={{ paddingBottom: sheetFooterBottomPadding }}
@@ -1438,54 +1832,98 @@ export default function PacientesScreen() {
                   <ActivityIndicator size="small" color="white" />
                 ) : (
                   <Text className="font-sans font-bold text-white text-[16px]">
-                    Confirmar Horário ({apptTime})
+                    {editingAppt
+                      ? `Salvar Alterações (${apptTime})`
+                      : `Confirmar Horário (${apptTime})`}
                   </Text>
                 )}
               </TouchableOpacity>
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       )}
 
       {/* ============================================================ */}
-      {/* MODAL: NOVO PACIENTE (COM MINI RESPIRO ACIMA DA BOTTOM NAV)  */}
+      {/* MODAL: NOVO PACIENTE (TODOS OS CAMPOS VISÍVEIS COM TECLADO)  */}
       {/* ============================================================ */}
       {modalNewPatient && (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={StyleSheet.absoluteFill}
-          className="z-50 justify-end bg-black/50"
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              zIndex: 50,
+              justifyContent: 'flex-end',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              paddingBottom: Platform.OS === 'ios' ? keyboardHeight : 0
+            }
+          ]}
         >
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setModalNewPatient(false)} />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => {
+              Keyboard.dismiss();
+              setModalNewPatient(false);
+            }}
+          />
           <View
-            className="bg-white rounded-t-[32px] pt-5 px-6 z-10"
-            style={{ maxHeight: '92%' }}
+            style={{
+              backgroundColor: '#ffffff',
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+              paddingTop: isKeyboardOpen ? 12 : 20,
+              paddingHorizontal: 24,
+              maxHeight: isKeyboardOpen ? '98%' : '90%',
+              flexShrink: 1,
+              zIndex: 10
+            }}
           >
-            <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-4" />
+            <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-3" />
 
-            <View className="flex-row items-center mb-4">
-              <View className="w-[44px] h-[44px] rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
-                <Text className="text-[20px]">👤</Text>
+            <View className="flex-row items-center mb-3">
+              <View className="w-[40px] h-[40px] rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                <Text className="text-[18px]">👤</Text>
               </View>
-              <View>
+              <View className="flex-1">
                 <Text className="font-title text-[20px] text-[#1B4332]">Novo Paciente</Text>
-                <Text className="font-sans text-[13px] text-[#666]">Preencha os dados do cadastro.</Text>
+                {!isKeyboardOpen && (
+                  <Text className="font-sans text-[13px] text-[#666]">Preencha os dados do cadastro.</Text>
+                )}
               </View>
-              <TouchableOpacity className="ml-auto p-2" onPress={() => setModalNewPatient(false)}>
+
+              {isKeyboardOpen && (
+                <TouchableOpacity
+                  onPress={() => Keyboard.dismiss()}
+                  className="px-3 py-1.5 rounded-full bg-[#f0fdf4] border border-[#bbf7d0] mr-2 flex-row items-center"
+                >
+                  <Text className="font-sans font-bold text-[11px] text-[#1B4332] mr-1">Ocultar</Text>
+                  <Feather name="chevron-down" size={13} color="#1B4332" />
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                className="p-2"
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setModalNewPatient(false);
+                }}
+              >
                 <Feather name="x" size={22} color="#999" />
               </TouchableOpacity>
             </View>
 
             <ScrollView
-              showsVerticalScrollIndicator={false}
+              ref={patientFormScrollRef}
+              showsVerticalScrollIndicator={true}
               keyboardShouldPersistTaps="handled"
               style={{ flexGrow: 0, flexShrink: 1 }}
+              contentContainerStyle={{ paddingBottom: 14 }}
             >
               <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">Nome Completo *</Text>
               <TextInput
                 className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3 mb-3 font-sans text-[15px] text-[#1B4332]"
                 placeholder="Ex: João Silva"
                 placeholderTextColor="#9ca3af"
+                returnKeyType="next"
                 value={newPatientName}
                 onChangeText={setNewPatientName}
               />
@@ -1495,13 +1933,18 @@ export default function PacientesScreen() {
                 className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3 mb-3 font-sans text-[15px] text-[#1B4332]"
                 placeholder="(00) 00000-0000"
                 placeholderTextColor="#9ca3af"
-                keyboardType="numeric"
+                keyboardType="phone-pad"
                 value={newPatientPhone}
                 onChangeText={(t) => setNewPatientPhone(maskPhone(t))}
+                onFocus={() => {
+                  setTimeout(() => {
+                    patientFormScrollRef.current?.scrollTo({ y: 75, animated: true });
+                  }, 120);
+                }}
                 maxLength={15}
               />
 
-              <View className="flex-row justify-between mb-3">
+              <View className="flex-row justify-between mb-2">
                 <View className="flex-1 mr-2">
                   <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">Valor da Sessão</Text>
                   <TextInput
@@ -1511,6 +1954,11 @@ export default function PacientesScreen() {
                     keyboardType="numeric"
                     value={newPatientValue}
                     onChangeText={(t) => setNewPatientValue(maskCurrency(t))}
+                    onFocus={() => {
+                      setTimeout(() => {
+                        patientFormScrollRef.current?.scrollToEnd({ animated: true });
+                      }, 120);
+                    }}
                   />
                 </View>
 
@@ -1529,7 +1977,7 @@ export default function PacientesScreen() {
               </View>
             </ScrollView>
 
-            {/* RODAPÉ FIXO COM MINI RESPIRO ACIMA DA BOTTOM TAB BAR */}
+            {/* RODAPÉ FIXO ACIMA DO TECLADO OU DA BOTTOM NAV */}
             <View
               className="pt-3 border-t border-[#f3f4f6] bg-white"
               style={{ paddingBottom: sheetFooterBottomPadding }}
@@ -1547,7 +1995,7 @@ export default function PacientesScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       )}
     </View>
   );

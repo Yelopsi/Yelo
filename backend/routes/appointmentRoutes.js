@@ -115,14 +115,31 @@ router.post('/bulk', verifyTokenLocal, async (req, res) => {
 router.put('/:id', verifyTokenLocal, async (req, res) => {
     try {
         const decoded = req.userDecoded;
-        const { status, start, end, value, phone, title } = req.body;
+        const { status, start, end, value, phone, title, patientId } = req.body;
         const appt = await db.Appointment.findOne({
             where: { id: req.params.id, psychologistId: decoded.id }
         });
         
         if (!appt) return res.status(404).json({ error: 'Agendamento não encontrado' });
+
+        if (patientId) {
+            const validPatient = await db.Patient.findOne({
+                where: { id: patientId, psychologistId: decoded.id }
+            });
+            if (!validPatient) {
+                return res.status(403).json({ error: 'Paciente inválido ou não pertence a você.' });
+            }
+        }
+
+        const updateData = {};
+        if (status !== undefined) updateData.status = status;
+        if (start !== undefined) updateData.start = start;
+        if (end !== undefined) updateData.end = end;
+        if (value !== undefined) updateData.value = value;
+        if (title !== undefined) updateData.title = title;
+        if (patientId !== undefined) updateData.patientId = patientId;
         
-        await appt.update({ status, start: start, end: end, value });
+        await appt.update(updateData);
 
         if (status === 'cancelled') {
             const exists = await db.Appointment.findOne({
