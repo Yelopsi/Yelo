@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,13 @@ import {
   Pressable,
   StyleSheet,
   Keyboard,
-  Vibration
+  Vibration,
+  Animated,
+  Easing
 } from 'react-native';
 import YeloScrollView from '../../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Picker } from '@react-native-picker/picker';
 import api from '../../../services/api';
@@ -191,25 +193,41 @@ export default function PacientesScreen() {
     setShowRecurrencePicker(false);
   };
 
-  // Altura exata do teclado em pixels (garante que os campos nunca fiquem cobertos pelo teclado no iOS)
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const isKeyboardOpen = keyboardHeight > 0;
-  const sheetFooterBottomPadding = isKeyboardOpen ? 12 : BOTTOM_NAV_CLEARANCE;
+  const newPatientPhoneRef = useRef<any>(null);
+  const newPatientValueRef = useRef<any>(null);
+
+  // Animação fluida sincronizada com a curva nativa do teclado do iOS (sem recortes nem saltos bruscos)
+  const sheetBottomAnim = useRef(new Animated.Value(BOTTOM_NAV_CLEARANCE)).current;
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
     const subShow = Keyboard.addListener(showEvent, (e) => {
-      setKeyboardHeight(e.endCoordinates?.height || 300);
+      const kbHeight = e.endCoordinates?.height || 300;
+      const targetPadding = Platform.OS === 'ios' ? kbHeight + 16 : 20;
+      Animated.timing(sheetBottomAnim, {
+        toValue: targetPadding,
+        duration: Platform.OS === 'ios' ? (e.duration || 250) : 180,
+        easing: Easing.bezier(0.33, 1, 0.68, 1),
+        useNativeDriver: false
+      }).start();
     });
-    const subHide = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
+
+    const subHide = Keyboard.addListener(hideEvent, (e) => {
+      Animated.timing(sheetBottomAnim, {
+        toValue: BOTTOM_NAV_CLEARANCE,
+        duration: Platform.OS === 'ios' ? (e?.duration || 250) : 180,
+        easing: Easing.bezier(0.33, 1, 0.68, 1),
+        useNativeDriver: false
+      }).start();
     });
+
     return () => {
       subShow.remove();
       subHide.remove();
     };
-  }, []);
+  }, [sheetBottomAnim]);
 
   // Helper para abrir modal de NOVO agendamento
   const openNewApptSheet = (initialTime: string, expandTimeSelector = false) => {
@@ -333,38 +351,43 @@ export default function PacientesScreen() {
   };
 
   // Carregar dados reais da API
-  const fetchData = async () => {
+  const fetchData = useCallback(async (showSpinner = true) => {
     try {
-      setIsLoading(true);
+      if (showSpinner) setIsLoading(true);
       const [resPatients, resAppts] = await Promise.all([
-        api.get('/api/my-patients').catch(() => ({ data: [] })),
+        api.get('/api/my-patients').then(r => ({ ok: true, data: r.data })).catch(() => ({ ok: false, data: [] })),
         api.get('/api/appointments').catch(() => ({ data: [] }))
       ]);
 
-      const loadedPatients =
-        resPatients.data && resPatients.data.length > 0
-          ? resPatients.data
-          : FALLBACK_PATIENTS;
+      const loadedPatients = resPatients.ok
+        ? (Array.isArray(resPatients.data) ? resPatients.data : [])
+        : FALLBACK_PATIENTS;
 
       setPatients(loadedPatients);
       if (loadedPatients.length > 0) {
-        const exists = loadedPatients.some((p: any) => String(p.id) === String(apptPatientId));
-        if (!exists) {
-          setApptPatientId(String(loadedPatients[0].id));
-        }
+        setApptPatientId(prev => {
+          const exists = loadedPatients.some((p: any) => String(p.id) === String(prev));
+          return exists ? prev : String(loadedPatients[0].id);
+        });
       }
       setAppointments(resAppts.data || []);
     } catch (err) {
       console.warn('Erro ao buscar dados:', err);
       setPatients(FALLBACK_PATIENTS);
     } finally {
-      setIsLoading(false);
+      if (showSpinner) setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData(true);
+  }, [fetchData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData(false);
+    }, [fetchData])
+  );
 
   // Formatação da data no cabeçalho (ex: "2 De Nov. De 2026")
   const formattedDateTitle = useMemo(() => {
@@ -1208,7 +1231,20 @@ export default function PacientesScreen() {
                 return (
                   <TouchableOpacity
                     key={p.id}
-                    onPress={() => router.push(`/(tabs)/pacientes/${p.id}`)}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/(tabs)/pacientes/[id]' as any,
+                        params: {
+                          id: String(p.id),
+                          nome: p.nome || '',
+                          telefone: p.telefone || '',
+                          email: p.email || '',
+                          status: p.status || 'ativo',
+                          sessionValue: String(p.sessionValue ?? 0),
+                          observacoes: p.observacoes || ''
+                        }
+                      })
+                    }
                     className="border-b border-[#f0f0f0] py-3.5 flex-row items-center"
                   >
                     <View className="w-10 h-10 rounded-full bg-[#f0fdf4] border border-[#cce5d4] items-center justify-center mr-3">
@@ -1439,7 +1475,7 @@ export default function PacientesScreen() {
       )}
 
       {/* ============================================================ */}
-      {/* MODAL: NOVO / EDITAR AGENDAMENTO (COM GEOMETRIA DE TECLADO)  */}
+      {/* MODAL: NOVO / EDITAR AGENDAMENTO                             */}
       {/* ============================================================ */}
       {modalNewAppt && (
         <View
@@ -1448,8 +1484,7 @@ export default function PacientesScreen() {
             {
               zIndex: 50,
               justifyContent: 'flex-end',
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              paddingBottom: Platform.OS === 'ios' ? keyboardHeight : 0
+              backgroundColor: 'rgba(0,0,0,0.5)'
             }
           ]}
         >
@@ -1462,61 +1497,54 @@ export default function PacientesScreen() {
               setModalNewAppt(false);
             }}
           />
-          <View
+          <Animated.View
             style={{
               backgroundColor: '#ffffff',
               borderTopLeftRadius: 32,
               borderTopRightRadius: 32,
-              paddingTop: isKeyboardOpen ? 12 : 20,
+              paddingTop: 20,
               paddingHorizontal: 24,
-              maxHeight: isKeyboardOpen ? '98%' : '92%',
+              paddingBottom: sheetBottomAnim,
+              maxHeight: '94%',
               flexShrink: 1,
               zIndex: 10
             }}
           >
-            <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-3" />
+            <Pressable onPress={() => Keyboard.dismiss()}>
+              <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-4" />
 
-            {/* Header do Sheet */}
-            <View className="flex-row items-center mb-3">
-              <View className="w-[42px] h-[42px] rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
-                <Text className="text-[19px]">{editingAppt ? '✏️' : '📅'}</Text>
-              </View>
-              <View className="flex-1">
-                <Text className="font-title text-[20px] text-[#1B4332]">
-                  {editingAppt ? 'Editar Horário' : 'Agendar Horário'}
-                </Text>
-                <Text className="font-sans text-[13px] text-[#666]">{formattedDateTitle}</Text>
-              </View>
+              {/* Header do Sheet */}
+              <View className="flex-row items-center mb-4">
+                <View className="w-[42px] h-[42px] rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                  <Text className="text-[19px]">{editingAppt ? '✏️' : '📅'}</Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="font-title text-[20px] text-[#1B4332]">
+                    {editingAppt ? 'Editar Horário' : 'Agendar Horário'}
+                  </Text>
+                  <Text className="font-sans text-[13px] text-[#666]">{formattedDateTitle}</Text>
+                </View>
 
-              {isKeyboardOpen && (
                 <TouchableOpacity
-                  onPress={() => Keyboard.dismiss()}
-                  className="px-3 py-1.5 rounded-full bg-[#f0fdf4] border border-[#bbf7d0] mr-2 flex-row items-center"
+                  className="p-2"
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    closeAllApptPickers();
+                    setEditingAppt(null);
+                    setModalNewAppt(false);
+                  }}
                 >
-                  <Text className="font-sans font-bold text-[11px] text-[#1B4332] mr-1">OK</Text>
-                  <Feather name="chevron-down" size={13} color="#1B4332" />
+                  <Feather name="x" size={22} color="#999" />
                 </TouchableOpacity>
-              )}
-
-              <TouchableOpacity
-                className="p-2"
-                onPress={() => {
-                  Keyboard.dismiss();
-                  closeAllApptPickers();
-                  setEditingAppt(null);
-                  setModalNewAppt(false);
-                }}
-              >
-                <Feather name="x" size={22} color="#999" />
-              </TouchableOpacity>
-            </View>
+              </View>
+            </Pressable>
 
             <ScrollView
               ref={apptFormScrollRef}
-              showsVerticalScrollIndicator={true}
+              showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
               style={{ flexGrow: 0, flexShrink: 1 }}
-              contentContainerStyle={{ paddingBottom: 12 }}
             >
               {/* TABS DE TIPO: CONSULTA vs HORÁRIO DISPONÍVEL */}
               <View className="flex-row bg-[#f1f3f5] p-1.5 rounded-full mb-4">
@@ -1851,17 +1879,10 @@ export default function PacientesScreen() {
                   )}
                 </View>
               )}
-            </ScrollView>
-
-            {/* RODAPÉ FIXO ACIMA DO TECLADO OU DA BOTTOM NAV */}
-            <View
-              className="pt-3 border-t border-[#f3f4f6] bg-white"
-              style={{ paddingBottom: sheetFooterBottomPadding }}
-            >
               <TouchableOpacity
                 onPress={handleSaveAppt}
                 disabled={isSubmittingAppt}
-                className="bg-[#1B4332] rounded-full py-4 items-center justify-center shadow-sm"
+                className="bg-[#1B4332] rounded-full py-4 mt-3 items-center justify-center shadow-sm"
               >
                 {isSubmittingAppt ? (
                   <ActivityIndicator size="small" color="white" />
@@ -1873,13 +1894,13 @@ export default function PacientesScreen() {
                   </Text>
                 )}
               </TouchableOpacity>
-            </View>
-          </View>
+            </ScrollView>
+          </Animated.View>
         </View>
       )}
 
       {/* ============================================================ */}
-      {/* MODAL: NOVO PACIENTE (TODOS OS CAMPOS VISÍVEIS COM TECLADO)  */}
+      {/* MODAL: NOVO PACIENTE (ANIMAÇÃO FLUIDA E NATIVA COM TECLADO)  */}
       {/* ============================================================ */}
       {modalNewPatient && (
         <View
@@ -1888,8 +1909,7 @@ export default function PacientesScreen() {
             {
               zIndex: 50,
               justifyContent: 'flex-end',
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              paddingBottom: Platform.OS === 'ios' ? keyboardHeight : 0
+              backgroundColor: 'rgba(0,0,0,0.5)'
             }
           ]}
         >
@@ -1900,90 +1920,79 @@ export default function PacientesScreen() {
               setModalNewPatient(false);
             }}
           />
-          <View
+          <Animated.View
             style={{
               backgroundColor: '#ffffff',
               borderTopLeftRadius: 32,
               borderTopRightRadius: 32,
-              paddingTop: isKeyboardOpen ? 12 : 20,
+              paddingTop: 20,
               paddingHorizontal: 24,
-              maxHeight: isKeyboardOpen ? '98%' : '90%',
+              paddingBottom: sheetBottomAnim,
+              maxHeight: '94%',
               flexShrink: 1,
               zIndex: 10
             }}
           >
-            <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-3" />
+            <Pressable onPress={() => Keyboard.dismiss()}>
+              <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-4" />
 
-            <View className="flex-row items-center mb-3">
-              <View className="w-[40px] h-[40px] rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
-                <Text className="text-[18px]">👤</Text>
-              </View>
-              <View className="flex-1">
-                <Text className="font-title text-[20px] text-[#1B4332]">Novo Paciente</Text>
-                {!isKeyboardOpen && (
+              <View className="flex-row items-center mb-5">
+                <View className="w-[42px] h-[42px] rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                  <Text className="text-[18px]">👤</Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="font-title text-[20px] text-[#1B4332]">Novo Paciente</Text>
                   <Text className="font-sans text-[13px] text-[#666]">Preencha os dados do cadastro.</Text>
-                )}
-              </View>
+                </View>
 
-              {isKeyboardOpen && (
                 <TouchableOpacity
-                  onPress={() => Keyboard.dismiss()}
-                  className="px-3 py-1.5 rounded-full bg-[#f0fdf4] border border-[#bbf7d0] mr-2 flex-row items-center"
+                  className="p-2"
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setModalNewPatient(false);
+                  }}
                 >
-                  <Text className="font-sans font-bold text-[11px] text-[#1B4332] mr-1">Ocultar</Text>
-                  <Feather name="chevron-down" size={13} color="#1B4332" />
+                  <Feather name="x" size={22} color="#999" />
                 </TouchableOpacity>
-              )}
-
-              <TouchableOpacity
-                className="p-2"
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setModalNewPatient(false);
-                }}
-              >
-                <Feather name="x" size={22} color="#999" />
-              </TouchableOpacity>
-            </View>
+              </View>
+            </Pressable>
 
             <ScrollView
               ref={patientFormScrollRef}
-              showsVerticalScrollIndicator={true}
+              showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
               style={{ flexGrow: 0, flexShrink: 1 }}
-              contentContainerStyle={{ paddingBottom: 14 }}
             >
               <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">Nome Completo *</Text>
               <TextInput
-                className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3 mb-3 font-sans text-[15px] text-[#1B4332]"
+                className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3.5 mb-3.5 font-sans text-[15px] text-[#1B4332]"
                 placeholder="Ex: João Silva"
                 placeholderTextColor="#9ca3af"
                 returnKeyType="next"
+                onSubmitEditing={() => newPatientPhoneRef.current?.focus?.()}
                 value={newPatientName}
                 onChangeText={setNewPatientName}
               />
 
               <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">WhatsApp *</Text>
               <TextInput
-                className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3 mb-3 font-sans text-[15px] text-[#1B4332]"
+                ref={newPatientPhoneRef}
+                className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3.5 mb-3.5 font-sans text-[15px] text-[#1B4332]"
                 placeholder="(00) 00000-0000"
                 placeholderTextColor="#9ca3af"
                 keyboardType="phone-pad"
                 value={newPatientPhone}
                 onChangeText={(t) => setNewPatientPhone(maskPhone(t))}
-                onFocus={() => {
-                  setTimeout(() => {
-                    patientFormScrollRef.current?.scrollTo({ y: 75, animated: true });
-                  }, 120);
-                }}
                 maxLength={15}
               />
 
-              <View className="flex-row justify-between mb-2">
+              <View className="flex-row justify-between mb-5">
                 <View className="flex-1 mr-2">
                   <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">Valor da Sessão</Text>
                   <TextInput
-                    className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3 font-sans text-[15px] text-[#1B4332]"
+                    ref={newPatientValueRef}
+                    className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3.5 font-sans text-[15px] text-[#1B4332]"
                     placeholder="R$ 150,00"
                     placeholderTextColor="#9ca3af"
                     keyboardType="numeric"
@@ -1992,7 +2001,7 @@ export default function PacientesScreen() {
                     onFocus={() => {
                       setTimeout(() => {
                         patientFormScrollRef.current?.scrollToEnd({ animated: true });
-                      }, 120);
+                      }, 150);
                     }}
                   />
                 </View>
@@ -2000,8 +2009,11 @@ export default function PacientesScreen() {
                 <View className="flex-1 ml-2">
                   <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">Status</Text>
                   <TouchableOpacity
-                    onPress={() => setNewPatientStatus(newPatientStatus === 'ativo' ? 'inativo' : 'ativo')}
-                    className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3 flex-row justify-between items-center"
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setNewPatientStatus(newPatientStatus === 'ativo' ? 'inativo' : 'ativo');
+                    }}
+                    className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3.5 flex-row justify-between items-center"
                   >
                     <Text className="font-sans text-[15px] text-[#1B4332] font-bold capitalize">
                       {newPatientStatus}
@@ -2010,13 +2022,7 @@ export default function PacientesScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
-            </ScrollView>
 
-            {/* RODAPÉ FIXO ACIMA DO TECLADO OU DA BOTTOM NAV */}
-            <View
-              className="pt-3 border-t border-[#f3f4f6] bg-white"
-              style={{ paddingBottom: sheetFooterBottomPadding }}
-            >
               <TouchableOpacity
                 onPress={handleSavePatient}
                 disabled={isSubmittingPatient}
@@ -2028,8 +2034,8 @@ export default function PacientesScreen() {
                   <Text className="font-sans font-bold text-white text-[16px]">Salvar Paciente</Text>
                 )}
               </TouchableOpacity>
-            </View>
-          </View>
+            </ScrollView>
+          </Animated.View>
         </View>
       )}
     </View>
