@@ -19,7 +19,7 @@ import YeloScrollView from '../../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Picker } from '@react-native-picker/picker';
+import NativeSelectMenu from '../../../components/NativeSelectMenu';
 import api from '../../../services/api';
 
 // ============================================================
@@ -90,7 +90,6 @@ export default function PacienteDetailScreen() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterMonth, setFilterMonth] = useState<string>('all');
-  const [showMonthPicker, setShowMonthPicker] = useState(false);
 
   // Modal Editar Paciente
   const [modalEdit, setModalEdit] = useState(false);
@@ -105,7 +104,6 @@ export default function PacienteDetailScreen() {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const editScrollRef = useRef<any>(null);
-  const monthPickerRef = useRef<any>(null);
 
   // Animação suave sincronizada com o teclado nativo do iOS
   const sheetBottomAnim = useRef(new Animated.Value(BOTTOM_NAV_CLEARANCE)).current;
@@ -440,42 +438,38 @@ export default function PacienteDetailScreen() {
             <Text className="font-title text-[19px] text-[#1B4332]">Histórico de Sessões</Text>
 
             {availableMonths.length > 0 && (
-              <TouchableOpacity
-                onPress={() => {
-                  const next = !showMonthPicker;
-                  setShowMonthPicker(next);
-                  if (next && Platform.OS === 'android') {
-                    setTimeout(() => monthPickerRef.current?.focus?.(), 60);
-                  }
-                }}
-                className="flex-row items-center bg-[#f9fafb] border border-[#ced4da] rounded-full px-3.5 py-1.5"
+              <NativeSelectMenu
+                options={[
+                  { label: 'Todas as sessões', value: 'all' },
+                  ...availableMonths.map((m) => ({ label: m.label, value: m.value })),
+                ]}
+                selectedValue={filterMonth}
+                onSelect={(val) => setFilterMonth(String(val))}
               >
-                <Feather name="calendar" size={13} color="#1B4332" style={{ marginRight: 6 }} />
-                <Text className="font-sans font-bold text-[12px] text-[#1B4332] mr-1.5">
-                  {selectedMonthLabel}
-                </Text>
-                <Feather name={showMonthPicker ? 'chevron-up' : 'chevron-down'} size={14} color="#1B4332" />
-              </TouchableOpacity>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: '#f9fafb',
+                    borderWidth: 1,
+                    borderColor: '#ced4da',
+                    borderRadius: 999,
+                    paddingHorizontal: 14,
+                    paddingVertical: 6,
+                  }}
+                >
+                  <Feather name="calendar" size={13} color="#1B4332" style={{ marginRight: 6 }} />
+                  <Text
+                    className="font-sans font-bold text-[12px] text-[#1B4332]"
+                    style={{ marginRight: 6 }}
+                  >
+                    {selectedMonthLabel}
+                  </Text>
+                  <Feather name="chevron-down" size={14} color="#1B4332" />
+                </View>
+              </NativeSelectMenu>
             )}
           </View>
-
-          {showMonthPicker && availableMonths.length > 0 && (
-            <View className="bg-[#f8f9fa] border border-[#eee] rounded-[20px] mb-4 overflow-hidden">
-              <Picker
-                ref={monthPickerRef}
-                mode="dialog"
-                prompt="Filtrar por Mês"
-                selectedValue={filterMonth}
-                onValueChange={(val) => setFilterMonth(String(val))}
-                itemStyle={{ height: 120, fontSize: 16, color: '#1B4332', fontWeight: '600' }}
-              >
-                <Picker.Item label="Todas as sessões" value="all" />
-                {availableMonths.map((m) => (
-                  <Picker.Item key={m.value} label={m.label} value={m.value} />
-                ))}
-              </Picker>
-            </View>
-          )}
 
           {isLoading ? (
             <View className="py-8 items-center justify-center">
@@ -686,18 +680,35 @@ export default function PacienteDetailScreen() {
                   <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
                     Status
                   </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      setEditStatus(editStatus === 'ativo' ? 'inativo' : 'ativo');
-                    }}
-                    className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3 flex-row justify-between items-center"
+                  <NativeSelectMenu
+                    options={[
+                      { label: 'Ativo', value: 'ativo' },
+                      { label: 'Inativo', value: 'inativo' },
+                    ]}
+                    selectedValue={editStatus}
+                    onSelect={(val) => setEditStatus(val as 'ativo' | 'inativo')}
+                    style={{ width: '100%' }}
                   >
-                    <Text className="font-sans text-[15px] text-[#1B4332] font-bold capitalize">
-                      {editStatus}
-                    </Text>
-                    <Feather name="refresh-cw" size={14} color="#1B4332" />
-                  </TouchableOpacity>
+                    <View
+                      style={{
+                        backgroundColor: '#f9fafb',
+                        borderWidth: 1,
+                        borderColor: '#cccccc',
+                        borderRadius: 999,
+                        paddingHorizontal: 20,
+                        paddingVertical: 12,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        width: '100%',
+                      }}
+                    >
+                      <Text className="font-sans text-[15px] text-[#1B4332] font-bold capitalize">
+                        {editStatus}
+                      </Text>
+                      <Feather name="chevron-down" size={16} color="#1B4332" />
+                    </View>
+                  </NativeSelectMenu>
                 </View>
               </View>
 

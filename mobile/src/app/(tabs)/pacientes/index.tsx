@@ -20,8 +20,8 @@ import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Picker } from '@react-native-picker/picker';
-import { BlurView } from 'expo-blur';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
+import NativeSelectMenu, { type NativeSelectOption } from '../../../components/NativeSelectMenu';
 import api from '../../../services/api';
 
 LocaleConfig.locales['pt-br'] = {
@@ -168,7 +168,6 @@ export default function PacientesScreen() {
   // Estados de Busca e Filtro de Pacientes
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ativo' | 'inativo' | 'todos'>('ativo');
-  const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   // Modais estilizados como Bottom Sheet Overlay
   const [modalNewPatient, setModalNewPatient] = useState(false);
@@ -197,69 +196,15 @@ export default function PacientesScreen() {
   const [apptRecurrence, setApptRecurrence] = useState<'none' | 'weekly' | 'biweekly'>('none');
   const [isSubmittingAppt, setIsSubmittingAppt] = useState(false);
 
-  // Menu Flutuante estilo iOS (Liquid Glass Popover igual à Web Mobile) + Roleta 24h de Horário
-  const [activeFloatingMenu, setActiveFloatingMenu] = useState<'patient' | 'duration' | 'recurrence' | null>(null);
-  const [floatingMenuTop, setFloatingMenuTop] = useState<number>(145);
+  // Seletor 24h de Horário
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [timeInputMode, setTimeInputMode] = useState<'wheel' | 'type'>('wheel');
   const [typedTimeDraft, setTypedTimeDraft] = useState('14:00');
 
   const apptFormScrollRef = useRef<any>(null);
-  const apptSheetInnerRef = useRef<any>(null);
-  const patientTriggerRef = useRef<any>(null);
-  const menuScaleAnim = useRef(new Animated.Value(0.95)).current;
-  const menuOpacityAnim = useRef(new Animated.Value(0)).current;
 
   const closeAllApptPickers = () => {
-    setActiveFloatingMenu(null);
     setShowTimePicker(false);
-  };
-
-  const toggleFloatingMenu = (
-    menuType: 'patient' | 'duration' | 'recurrence',
-    triggerRef?: React.RefObject<any>
-  ) => {
-    Keyboard.dismiss();
-    if (activeFloatingMenu === menuType) {
-      setActiveFloatingMenu(null);
-      return;
-    }
-    setShowTimePicker(false);
-
-    const runOpenAnim = () => {
-      menuScaleAnim.setValue(0.95);
-      menuOpacityAnim.setValue(0);
-      setActiveFloatingMenu(menuType);
-      Animated.parallel([
-        Animated.spring(menuScaleAnim, {
-          toValue: 1,
-          damping: 22,
-          stiffness: 340,
-          mass: 0.7,
-          useNativeDriver: true
-        }),
-        Animated.timing(menuOpacityAnim, {
-          toValue: 1,
-          duration: 130,
-          useNativeDriver: true
-        })
-      ]).start();
-    };
-
-    if (
-      menuType === 'patient' &&
-      triggerRef?.current?.measureInWindow &&
-      apptSheetInnerRef.current?.measureInWindow
-    ) {
-      triggerRef.current.measureInWindow((_tx: number, ty: number) => {
-        apptSheetInnerRef.current.measureInWindow((_sx: number, sy: number) => {
-          setFloatingMenuTop(Math.max(24, ty - sy - 4));
-          runOpenAnim();
-        });
-      });
-    } else {
-      runOpenAnim();
-    }
   };
 
   const newPatientPhoneRef = useRef<any>(null);
@@ -582,6 +527,53 @@ export default function PacientesScreen() {
     return rec ? rec.label : 'Não repetir';
   }, [apptRecurrence]);
 
+  // Opções para os menus nativos do sistema operacional (iOS UIMenu / Android DropdownMenu)
+  const patientMenuOptions: NativeSelectOption[] = useMemo(
+    () => [
+      { label: 'Selecione o paciente...', value: '' },
+      ...sortedPatientsForMenu.map((p: any) => ({
+        label: p.nome,
+        value: String(p.id),
+      })),
+    ],
+    [sortedPatientsForMenu]
+  );
+
+  const durationMenuOptions: NativeSelectOption[] = useMemo(
+    () =>
+      DURATION_OPTIONS.map((opt) => ({
+        label: opt.pickerLabel,
+        value: String(opt.value),
+      })),
+    []
+  );
+
+  const recurrenceMenuOptions: NativeSelectOption[] = useMemo(
+    () =>
+      RECURRENCE_OPTIONS.map((rec) => ({
+        label: rec.label,
+        value: rec.value,
+      })),
+    []
+  );
+
+  const statusFilterMenuOptions: NativeSelectOption[] = useMemo(
+    () => [
+      { label: 'Ativos', value: 'ativo' },
+      { label: 'Inativos', value: 'inativo' },
+      { label: 'Todos', value: 'todos' },
+    ],
+    []
+  );
+
+  const patientStatusMenuOptions: NativeSelectOption[] = useMemo(
+    () => [
+      { label: 'Ativo', value: 'ativo' },
+      { label: 'Inativo', value: 'inativo' },
+    ],
+    []
+  );
+
   // Decomposição HH e MM para a Roleta Dupla 24h
   const [selectedHour, selectedMinute] = useMemo(() => {
     const parts = apptTime.split(':');
@@ -739,7 +731,6 @@ export default function PacientesScreen() {
     const patient = patients.find(p => String(p.id) === String(apptPatientId));
     if (apptType === 'session' && !patient) {
       Alert.alert('Selecione o Paciente', 'Por favor, selecione o paciente para confirmar o agendamento.');
-      toggleFloatingMenu('patient', patientTriggerRef);
       return;
     }
 
@@ -1337,57 +1328,33 @@ export default function PacientesScreen() {
                 <Text className="text-white text-[20px] font-bold leading-none mb-0.5">+</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() => setShowStatusMenu(!showStatusMenu)}
-                className="bg-[#f9fafb] border border-[#eee] rounded-full px-3.5 py-2.5 flex-row items-center"
+              <NativeSelectMenu
+                options={statusFilterMenuOptions}
+                selectedValue={statusFilter}
+                onSelect={(val) => setStatusFilter(val as 'ativo' | 'inativo' | 'todos')}
               >
-                <Text className="font-sans font-semibold text-[#495057] text-[13px] mr-1 capitalize">
-                  {statusFilter === 'ativo' ? 'Ativos' : statusFilter === 'inativo' ? 'Inativos' : 'Todos'}
-                </Text>
-                <Feather name="chevron-down" size={13} color="#666" />
-              </TouchableOpacity>
+                <View
+                  style={{
+                    backgroundColor: '#f9fafb',
+                    borderWidth: 1,
+                    borderColor: '#e5e7eb',
+                    borderRadius: 999,
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text
+                    className="font-sans font-semibold text-[#495057] text-[13px] capitalize"
+                    style={{ marginRight: 4 }}
+                  >
+                    {statusFilter === 'ativo' ? 'Ativos' : statusFilter === 'inativo' ? 'Inativos' : 'Todos'}
+                  </Text>
+                  <Feather name="chevron-down" size={13} color="#666" />
+                </View>
+              </NativeSelectMenu>
             </View>
-
-            {showStatusMenu && (
-              <View className="bg-white border border-[#eee] rounded-[16px] shadow-lg mb-4 overflow-hidden">
-                <TouchableOpacity
-                  onPress={() => { setStatusFilter('ativo'); setShowStatusMenu(false); }}
-                  className="p-3 border-b border-[#f5f5f5]"
-                  style={statusFilter === 'ativo' ? { backgroundColor: '#f0fdf4' } : undefined}
-                >
-                  <Text
-                    className="font-sans text-[14px]"
-                    style={{ color: statusFilter === 'ativo' ? '#1B4332' : '#333333', fontWeight: statusFilter === 'ativo' ? '700' : '400' }}
-                  >
-                    Ativos
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => { setStatusFilter('inativo'); setShowStatusMenu(false); }}
-                  className="p-3 border-b border-[#f5f5f5]"
-                  style={statusFilter === 'inativo' ? { backgroundColor: '#f0fdf4' } : undefined}
-                >
-                  <Text
-                    className="font-sans text-[14px]"
-                    style={{ color: statusFilter === 'inativo' ? '#1B4332' : '#333333', fontWeight: statusFilter === 'inativo' ? '700' : '400' }}
-                  >
-                    Inativos
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => { setStatusFilter('todos'); setShowStatusMenu(false); }}
-                  className="p-3"
-                  style={statusFilter === 'todos' ? { backgroundColor: '#f0fdf4' } : undefined}
-                >
-                  <Text
-                    className="font-sans text-[14px]"
-                    style={{ color: statusFilter === 'todos' ? '#1B4332' : '#333333', fontWeight: statusFilter === 'todos' ? '700' : '400' }}
-                  >
-                    Todos
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
 
             {filteredPatients.length === 0 ? (
               <View className="py-8 items-center justify-center">
@@ -1694,561 +1661,387 @@ export default function PacientesScreen() {
               zIndex: 10
             }}
           >
-            <View ref={apptSheetInnerRef} style={{ flexShrink: 1, position: 'relative' }}>
-              <Pressable onPress={() => Keyboard.dismiss()}>
-                <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-4" />
+            <Pressable onPress={() => Keyboard.dismiss()}>
+              <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-4" />
 
-                {/* Header do Sheet */}
-                <View className="flex-row items-center mb-4">
-                  <View
-                    style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 21,
-                      backgroundColor: '#f0fdf4',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: 12
+              {/* Header do Sheet */}
+              <View className="flex-row items-center mb-4">
+                <View
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: 21,
+                    backgroundColor: '#f0fdf4',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 12
+                  }}
+                >
+                  <Text className="text-[19px]">{editingAppt ? '✏️' : '📅'}</Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="font-title text-[20px] text-[#1B4332]">
+                    {editingAppt ? 'Editar Horário' : 'Agendar Horário'}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      closeAllApptPickers();
+                      setShowCalendarModal(true);
                     }}
+                    style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 2 }}
                   >
-                    <Text className="text-[19px]">{editingAppt ? '✏️' : '📅'}</Text>
-                  </View>
-                  <View className="flex-1">
-                    <Text className="font-title text-[20px] text-[#1B4332]">
-                      {editingAppt ? 'Editar Horário' : 'Agendar Horário'}
+                    <Text className="font-sans text-[13px] text-[#1B4332] font-semibold">
+                      {formattedDateTitle}
                     </Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        closeAllApptPickers();
-                        setShowCalendarModal(true);
+                    <Feather name="chevron-down" size={13} color="#1B4332" style={{ marginLeft: 4 }} />
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity
+                  className="p-2"
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    closeAllApptPickers();
+                    setEditingAppt(null);
+                    setModalNewAppt(false);
+                  }}
+                >
+                  <Feather name="x" size={22} color="#999" />
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+
+            <ScrollView
+              ref={apptFormScrollRef}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+              style={{ flexGrow: 0, flexShrink: 1 }}
+            >
+              {/* TABS DE TIPO: CONSULTA vs HORÁRIO DISPONÍVEL */}
+              <View className="flex-row bg-[#f1f3f5] p-1.5 rounded-full mb-4">
+                <TouchableOpacity
+                  onPress={() => {
+                    setApptType('session');
+                    closeAllApptPickers();
+                  }}
+                  className="flex-1 py-2.5 rounded-full items-center justify-center"
+                  style={
+                    apptType === 'session'
+                      ? { backgroundColor: '#ffffff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 }
+                      : undefined
+                  }
+                >
+                  <Text
+                    className="font-sans font-bold text-[14px]"
+                    style={{ color: apptType === 'session' ? '#1B4332' : '#666666' }}
+                  >
+                    Consulta
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setApptType('available');
+                    closeAllApptPickers();
+                  }}
+                  className="flex-1 py-2.5 rounded-full items-center justify-center"
+                  style={
+                    apptType === 'available'
+                      ? { backgroundColor: '#ffffff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 }
+                      : undefined
+                  }
+                >
+                  <Text
+                    className="font-sans font-bold text-[14px]"
+                    style={{ color: apptType === 'available' ? '#1B4332' : '#666666' }}
+                  >
+                    Horário Disponível
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* SELEÇÃO DE PACIENTE (MENU NATIVO DO DISPOSITIVO EM ORDEM ALFABÉTICA) */}
+              {apptType === 'session' && (
+                <View className="mb-4">
+                  <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
+                    Selecione o Paciente
+                  </Text>
+
+                  <NativeSelectMenu
+                    options={patientMenuOptions}
+                    selectedValue={apptPatientId}
+                    onSelect={(val) => {
+                      setShowTimePicker(false);
+                      setApptPatientId(val);
+                    }}
+                    style={{ width: '100%' }}
+                  >
+                    <View
+                      style={{
+                        backgroundColor: '#f9fafb',
+                        borderWidth: 1,
+                        borderColor: '#ced4da',
+                        borderRadius: 999,
+                        paddingHorizontal: 20,
+                        paddingVertical: 12,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        width: '100%',
                       }}
-                      style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 2 }}
                     >
-                      <Text className="font-sans text-[13px] text-[#1B4332] font-semibold">
-                        {formattedDateTitle}
-                      </Text>
-                      <Feather name="chevron-down" size={13} color="#1B4332" style={{ marginLeft: 4 }} />
-                    </TouchableOpacity>
-                  </View>
-
-                  <TouchableOpacity
-                    className="p-2"
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      closeAllApptPickers();
-                      setEditingAppt(null);
-                      setModalNewAppt(false);
-                    }}
-                  >
-                    <Feather name="x" size={22} color="#999" />
-                  </TouchableOpacity>
-                </View>
-              </Pressable>
-
-              <ScrollView
-                ref={apptFormScrollRef}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                keyboardDismissMode="interactive"
-                style={{ flexGrow: 0, flexShrink: 1 }}
-              >
-                {/* TABS DE TIPO: CONSULTA vs HORÁRIO DISPONÍVEL */}
-                <View className="flex-row bg-[#f1f3f5] p-1.5 rounded-full mb-4">
-                  <TouchableOpacity
-                    onPress={() => {
-                      setApptType('session');
-                      closeAllApptPickers();
-                    }}
-                    className="flex-1 py-2.5 rounded-full items-center justify-center"
-                    style={
-                      apptType === 'session'
-                        ? { backgroundColor: '#ffffff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 }
-                        : undefined
-                    }
-                  >
-                    <Text
-                      className="font-sans font-bold text-[14px]"
-                      style={{ color: apptType === 'session' ? '#1B4332' : '#666666' }}
-                    >
-                      Consulta
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => {
-                      setApptType('available');
-                      closeAllApptPickers();
-                    }}
-                    className="flex-1 py-2.5 rounded-full items-center justify-center"
-                    style={
-                      apptType === 'available'
-                        ? { backgroundColor: '#ffffff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 }
-                        : undefined
-                    }
-                  >
-                    <Text
-                      className="font-sans font-bold text-[14px]"
-                      style={{ color: apptType === 'available' ? '#1B4332' : '#666666' }}
-                    >
-                      Horário Disponível
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* SELEÇÃO DE PACIENTE (MENU FLUTUANTE ESTILO iOS EM ORDEM ALFABÉTICA) */}
-                {apptType === 'session' && (
-                  <View className="mb-4">
-                    <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
-                      Selecione o Paciente
-                    </Text>
-
-                    <View ref={patientTriggerRef} collapsable={false}>
-                      <TouchableOpacity
-                        onPress={() => toggleFloatingMenu('patient', patientTriggerRef)}
-                        className="bg-[#f9fafb] rounded-full px-5 py-3 flex-row justify-between items-center"
+                      <Text
+                        className="font-sans text-[15px] flex-1 mr-2"
                         style={{
-                          borderWidth: activeFloatingMenu === 'patient' ? 1.5 : 1,
-                          borderColor: activeFloatingMenu === 'patient' ? '#1B4332' : '#ced4da'
+                          color: apptPatientId ? '#1B4332' : '#111827',
+                          fontWeight: apptPatientId ? '600' : '500',
                         }}
+                        numberOfLines={1}
                       >
-                        <Text
-                          className="font-sans text-[15px] flex-1 mr-2"
-                          style={{
-                            color: apptPatientId ? '#1B4332' : '#111827',
-                            fontWeight: apptPatientId ? '600' : '500'
-                          }}
-                          numberOfLines={1}
-                        >
-                          {selectedPatientName}
-                        </Text>
+                        {selectedPatientName}
+                      </Text>
+                      <Feather name="chevron-down" size={18} color="#1B4332" />
+                    </View>
+                  </NativeSelectMenu>
+                </View>
+              )}
+
+              {/* SELEÇÃO DE HORÁRIO DE INÍCIO (CARROSSEL NATIVO 24H) */}
+              <View className="mb-4">
+                <View className="flex-row items-center justify-between mb-1.5">
+                  <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase">
+                    Horário de Início (24h)
+                  </Text>
+                  <Text className="font-sans text-[12px] text-[#1B4332] font-semibold">
+                    Término: {calculatedEndTimeStr}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    const next = !showTimePicker;
+                    Keyboard.dismiss();
+                    setShowTimePicker(next);
+                  }}
+                  className="bg-[#f9fafb] border rounded-full px-5 py-3 flex-row justify-between items-center"
+                  style={{ borderColor: showTimePicker ? '#1B4332' : '#ced4da' }}
+                >
+                  <View className="flex-row items-center">
+                    <Feather name="clock" size={16} color="#1B4332" style={{ marginRight: 8 }} />
+                    <Text className="font-sans font-bold text-[#1B4332] text-[16px]">
+                      {apptTime}
+                    </Text>
+                    <View className="ml-2.5 px-2.5 py-0.5 rounded-full bg-[#e8f5e9]">
+                      <Text className="font-sans font-semibold text-[11px] text-[#1B4332]">
+                        {apptType === 'available' ? '1h livre' : selectedDurationOption.label}
+                      </Text>
+                    </View>
+                  </View>
+                  <Feather name={showTimePicker ? 'chevron-up' : 'chevron-down'} size={18} color="#1B4332" />
+                </TouchableOpacity>
+
+                {showTimePicker && (
+                  <View className="bg-[#f8f9fa] border border-[#e5e7eb] rounded-[22px] mt-2.5 p-3 overflow-hidden">
+                    <View className="flex-row items-center justify-between mb-2 px-1">
+                      <Text className="font-sans font-semibold text-[12px] text-[#666]">
+                        {timeInputMode === 'wheel'
+                          ? 'Gire para qualquer hora e minuto'
+                          : 'Digite qualquer horário (00:00 a 23:59)'}
+                      </Text>
+
+                      <TouchableOpacity
+                        onPress={() => {
+                          if (timeInputMode === 'wheel') {
+                            setTypedTimeDraft(apptTime);
+                            setTimeInputMode('type');
+                          } else {
+                            Keyboard.dismiss();
+                            const normalized = normalizeTimeStr(typedTimeDraft, apptTime);
+                            setApptTime(normalized);
+                            setTypedTimeDraft(normalized);
+                            setTimeInputMode('wheel');
+                          }
+                        }}
+                        className="px-3 py-1 rounded-full bg-white border border-[#ced4da] flex-row items-center"
+                      >
                         <Feather
-                          name={activeFloatingMenu === 'patient' ? 'chevron-up' : 'chevron-down'}
-                          size={18}
+                          name={timeInputMode === 'wheel' ? 'edit-3' : 'sliders'}
+                          size={12}
                           color="#1B4332"
+                          style={{ marginRight: 5 }}
                         />
+                        <Text className="font-sans font-bold text-[11px] text-[#1B4332]">
+                          {timeInputMode === 'wheel' ? 'Digitar' : 'Roleta'}
+                        </Text>
                       </TouchableOpacity>
                     </View>
-                  </View>
-                )}
 
-                {/* SELEÇÃO DE HORÁRIO DE INÍCIO (CARROSSEL NATIVO 24H) */}
-                <View className="mb-4">
-                  <View className="flex-row items-center justify-between mb-1.5">
-                    <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase">
-                      Horário de Início (24h)
-                    </Text>
-                    <Text className="font-sans text-[12px] text-[#1B4332] font-semibold">
-                      Término: {calculatedEndTimeStr}
-                    </Text>
-                  </View>
+                    {timeInputMode === 'wheel' ? (
+                      <View className="flex-row items-center justify-center">
+                        <View className="flex-1">
+                          <Picker
+                            selectedValue={selectedHour}
+                            onValueChange={(hVal) => {
+                              const next = `${String(hVal).padStart(2, '0')}:${selectedMinute}`;
+                              setApptTime(next);
+                              setTypedTimeDraft(next);
+                            }}
+                            itemStyle={{ height: 120, fontSize: 17, color: '#1B4332', fontWeight: '600' }}
+                          >
+                            {ALL_24_HOURS.map(h => (
+                              <Picker.Item key={h} label={`${h} h`} value={h} />
+                            ))}
+                          </Picker>
+                        </View>
 
-                  <TouchableOpacity
-                    onPress={() => {
-                      const next = !showTimePicker;
-                      Keyboard.dismiss();
-                      closeAllApptPickers();
-                      setShowTimePicker(next);
-                    }}
-                    className="bg-[#f9fafb] border rounded-full px-5 py-3 flex-row justify-between items-center"
-                    style={{ borderColor: showTimePicker ? '#1B4332' : '#ced4da' }}
-                  >
-                    <View className="flex-row items-center">
-                      <Feather name="clock" size={16} color="#1B4332" style={{ marginRight: 8 }} />
-                      <Text className="font-sans font-bold text-[#1B4332] text-[16px]">
-                        {apptTime}
-                      </Text>
-                      <View className="ml-2.5 px-2.5 py-0.5 rounded-full bg-[#e8f5e9]">
-                        <Text className="font-sans font-semibold text-[11px] text-[#1B4332]">
-                          {apptType === 'available' ? '1h livre' : selectedDurationOption.label}
-                        </Text>
+                        <Text className="font-sans font-bold text-[20px] text-[#1B4332] mx-1">:</Text>
+
+                        <View className="flex-1">
+                          <Picker
+                            selectedValue={selectedMinute}
+                            onValueChange={(mVal) => {
+                              const next = `${selectedHour}:${String(mVal).padStart(2, '0')}`;
+                              setApptTime(next);
+                              setTypedTimeDraft(next);
+                            }}
+                            itemStyle={{ height: 120, fontSize: 17, color: '#1B4332', fontWeight: '600' }}
+                          >
+                            {minuteOptions.map(m => (
+                              <Picker.Item key={m} label={`${m} min`} value={m} />
+                            ))}
+                          </Picker>
+                        </View>
                       </View>
-                    </View>
-                    <Feather name={showTimePicker ? 'chevron-up' : 'chevron-down'} size={18} color="#1B4332" />
-                  </TouchableOpacity>
-
-                  {showTimePicker && (
-                    <View className="bg-[#f8f9fa] border border-[#e5e7eb] rounded-[22px] mt-2.5 p-3 overflow-hidden">
-                      <View className="flex-row items-center justify-between mb-2 px-1">
-                        <Text className="font-sans font-semibold text-[12px] text-[#666]">
-                          {timeInputMode === 'wheel'
-                            ? 'Gire para qualquer hora e minuto'
-                            : 'Digite qualquer horário (00:00 a 23:59)'}
-                        </Text>
-
-                        <TouchableOpacity
-                          onPress={() => {
-                            if (timeInputMode === 'wheel') {
-                              setTypedTimeDraft(apptTime);
-                              setTimeInputMode('type');
-                            } else {
-                              Keyboard.dismiss();
-                              const normalized = normalizeTimeStr(typedTimeDraft, apptTime);
-                              setApptTime(normalized);
-                              setTypedTimeDraft(normalized);
-                              setTimeInputMode('wheel');
+                    ) : (
+                      <View className="py-2 items-center">
+                        <TextInput
+                          value={typedTimeDraft}
+                          onChangeText={(txt) => {
+                            const masked = maskTimeInput(txt);
+                            setTypedTimeDraft(masked);
+                            if (masked.length === 5) {
+                              setApptTime(normalizeTimeStr(masked, apptTime));
                             }
                           }}
-                          className="px-3 py-1 rounded-full bg-white border border-[#ced4da] flex-row items-center"
-                        >
-                          <Feather
-                            name={timeInputMode === 'wheel' ? 'edit-3' : 'sliders'}
-                            size={12}
-                            color="#1B4332"
-                            style={{ marginRight: 5 }}
-                          />
-                          <Text className="font-sans font-bold text-[11px] text-[#1B4332]">
-                            {timeInputMode === 'wheel' ? 'Digitar' : 'Roleta'}
-                          </Text>
-                        </TouchableOpacity>
+                          onBlur={() => {
+                            const normalized = normalizeTimeStr(typedTimeDraft, apptTime);
+                            setApptTime(normalized);
+                            setTypedTimeDraft(normalized);
+                          }}
+                          keyboardType="number-pad"
+                          maxLength={5}
+                          placeholder="Ex: 07:30"
+                          placeholderTextColor="#9ca3af"
+                          autoFocus
+                          className="bg-white border border-[#1B4332] rounded-full px-6 py-2.5 font-sans font-bold text-[22px] text-[#1B4332] text-center min-w-[150px]"
+                        />
+                        <Text className="font-sans text-[11px] text-[#777] mt-1.5">
+                          Ex: 06:30, 14:20, 20:10 ou 22:45
+                        </Text>
                       </View>
+                    )}
+                  </View>
+                )}
+              </View>
 
-                      {timeInputMode === 'wheel' ? (
-                        <View className="flex-row items-center justify-center">
-                          <View className="flex-1">
-                            <Picker
-                              selectedValue={selectedHour}
-                              onValueChange={(hVal) => {
-                                const next = `${String(hVal).padStart(2, '0')}:${selectedMinute}`;
-                                setApptTime(next);
-                                setTypedTimeDraft(next);
-                              }}
-                              itemStyle={{ height: 120, fontSize: 17, color: '#1B4332', fontWeight: '600' }}
-                            >
-                              {ALL_24_HOURS.map(h => (
-                                <Picker.Item key={h} label={`${h} h`} value={h} />
-                              ))}
-                            </Picker>
-                          </View>
-
-                          <Text className="font-sans font-bold text-[20px] text-[#1B4332] mx-1">:</Text>
-
-                          <View className="flex-1">
-                            <Picker
-                              selectedValue={selectedMinute}
-                              onValueChange={(mVal) => {
-                                const next = `${selectedHour}:${String(mVal).padStart(2, '0')}`;
-                                setApptTime(next);
-                                setTypedTimeDraft(next);
-                              }}
-                              itemStyle={{ height: 120, fontSize: 17, color: '#1B4332', fontWeight: '600' }}
-                            >
-                              {minuteOptions.map(m => (
-                                <Picker.Item key={m} label={`${m} min`} value={m} />
-                              ))}
-                            </Picker>
-                          </View>
-                        </View>
-                      ) : (
-                        <View className="py-2 items-center">
-                          <TextInput
-                            value={typedTimeDraft}
-                            onChangeText={(txt) => {
-                              const masked = maskTimeInput(txt);
-                              setTypedTimeDraft(masked);
-                              if (masked.length === 5) {
-                                setApptTime(normalizeTimeStr(masked, apptTime));
-                              }
-                            }}
-                            onBlur={() => {
-                              const normalized = normalizeTimeStr(typedTimeDraft, apptTime);
-                              setApptTime(normalized);
-                              setTypedTimeDraft(normalized);
-                            }}
-                            keyboardType="number-pad"
-                            maxLength={5}
-                            placeholder="Ex: 07:30"
-                            placeholderTextColor="#9ca3af"
-                            autoFocus
-                            className="bg-white border border-[#1B4332] rounded-full px-6 py-2.5 font-sans font-bold text-[22px] text-[#1B4332] text-center min-w-[150px]"
-                          />
-                          <Text className="font-sans text-[11px] text-[#777] mt-1.5">
-                            Ex: 06:30, 14:20, 20:10 ou 22:45
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  )}
-                </View>
-
-                {/* DURAÇÃO E REPETIÇÃO (MENU FLUTUANTE PADRÃO iOS) */}
-                {(apptType === 'session' || !editingAppt) && (
-                  <View className="mb-2">
-                    <View className="flex-row justify-between">
-                      {apptType === 'session' && (
-                        <View className="flex-1" style={!editingAppt ? { marginRight: 6 } : undefined}>
-                          <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
-                            Duração
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => toggleFloatingMenu('duration')}
-                            className="bg-[#f9fafb] rounded-full px-4 py-3 flex-row justify-between items-center"
+              {/* DURAÇÃO E REPETIÇÃO (MENU NATIVO DO DISPOSITIVO) */}
+              {(apptType === 'session' || !editingAppt) && (
+                <View className="mb-2">
+                  <View className="flex-row justify-between">
+                    {apptType === 'session' && (
+                      <View className="flex-1" style={!editingAppt ? { marginRight: 6 } : undefined}>
+                        <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
+                          Duração
+                        </Text>
+                        <NativeSelectMenu
+                          options={durationMenuOptions}
+                          selectedValue={String(apptDuration)}
+                          onSelect={(val) => {
+                            setShowTimePicker(false);
+                            setApptDuration(Number(val));
+                          }}
+                          style={{ width: '100%' }}
+                        >
+                          <View
                             style={{
-                              borderWidth: activeFloatingMenu === 'duration' ? 1.5 : 1,
-                              borderColor: activeFloatingMenu === 'duration' ? '#1B4332' : '#ced4da'
+                              backgroundColor: '#f9fafb',
+                              borderWidth: 1,
+                              borderColor: '#ced4da',
+                              borderRadius: 999,
+                              paddingHorizontal: 16,
+                              paddingVertical: 12,
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              width: '100%',
                             }}
                           >
                             <Text className="font-sans font-semibold text-[#1B4332] text-[15px]" numberOfLines={1}>
                               {selectedDurationOption.label}
                             </Text>
-                            <Feather
-                              name={activeFloatingMenu === 'duration' ? 'chevron-up' : 'chevron-down'}
-                              size={18}
-                              color="#1B4332"
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      )}
+                            <Feather name="chevron-down" size={18} color="#1B4332" />
+                          </View>
+                        </NativeSelectMenu>
+                      </View>
+                    )}
 
-                      {!editingAppt && (
-                        <View className="flex-1" style={apptType === 'session' ? { marginLeft: 6 } : undefined}>
-                          <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
-                            Repetição
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => toggleFloatingMenu('recurrence')}
-                            className="bg-[#f9fafb] rounded-full px-4 py-3 flex-row justify-between items-center"
+                    {!editingAppt && (
+                      <View className="flex-1" style={apptType === 'session' ? { marginLeft: 6 } : undefined}>
+                        <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
+                          Repetição
+                        </Text>
+                        <NativeSelectMenu
+                          options={recurrenceMenuOptions}
+                          selectedValue={apptRecurrence}
+                          onSelect={(val) => {
+                            setShowTimePicker(false);
+                            setApptRecurrence(val as 'none' | 'weekly' | 'biweekly');
+                          }}
+                          style={{ width: '100%' }}
+                        >
+                          <View
                             style={{
-                              borderWidth: activeFloatingMenu === 'recurrence' ? 1.5 : 1,
-                              borderColor: activeFloatingMenu === 'recurrence' ? '#1B4332' : '#ced4da'
+                              backgroundColor: '#f9fafb',
+                              borderWidth: 1,
+                              borderColor: '#ced4da',
+                              borderRadius: 999,
+                              paddingHorizontal: 16,
+                              paddingVertical: 12,
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              width: '100%',
                             }}
                           >
                             <Text className="font-sans font-semibold text-[#1B4332] text-[15px]" numberOfLines={1}>
                               {selectedRecurrenceLabel}
                             </Text>
-                            <Feather
-                              name={activeFloatingMenu === 'recurrence' ? 'chevron-up' : 'chevron-down'}
-                              size={18}
-                              color="#1B4332"
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </View>
+                            <Feather name="chevron-down" size={18} color="#1B4332" />
+                          </View>
+                        </NativeSelectMenu>
+                      </View>
+                    )}
                   </View>
-                )}
-
-                <TouchableOpacity
-                  onPress={handleSaveAppt}
-                  disabled={isSubmittingAppt}
-                  className="bg-[#1B4332] rounded-full py-4 mt-3 items-center justify-center shadow-sm"
-                >
-                  {isSubmittingAppt ? (
-                    <ActivityIndicator size="small" color="white" />
-                  ) : (
-                    <Text className="font-sans font-bold text-white text-[16px]">
-                      {editingAppt
-                        ? `Salvar Alterações (${apptTime})`
-                        : `Confirmar Horário (${apptTime})`}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </ScrollView>
-
-              {/* ============================================================ */}
-              {/* MENU FLUTUANTE ESTILO iOS (LIQUID GLASS POPOVER COM ✓)       */}
-              {/* ============================================================ */}
-              {activeFloatingMenu !== null && (
-                <View style={[StyleSheet.absoluteFill, { zIndex: 200 }]} pointerEvents="box-none">
-                  <Pressable
-                    style={StyleSheet.absoluteFill}
-                    onPress={() => setActiveFloatingMenu(null)}
-                  />
-
-                  <Animated.View
-                    style={[
-                      {
-                        position: 'absolute',
-                        borderRadius: 28,
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 14 },
-                        shadowOpacity: 0.26,
-                        shadowRadius: 28,
-                        elevation: 20,
-                        opacity: menuOpacityAnim,
-                        transform: [{ scale: menuScaleAnim }]
-                      },
-                      activeFloatingMenu === 'patient'
-                        ? { top: floatingMenuTop, left: 36, right: 36 }
-                        : activeFloatingMenu === 'duration'
-                          ? { bottom: 68, left: 4, width: 225 }
-                          : { bottom: 68, right: 4, width: 205 }
-                    ]}
-                  >
-                    <View
-                      style={{
-                        borderRadius: 28,
-                        overflow: 'hidden',
-                        borderWidth: 1,
-                        borderColor: 'rgba(255, 255, 255, 0.28)',
-                        backgroundColor:
-                          Platform.OS === 'ios'
-                            ? 'rgba(116, 120, 124, 0.78)'
-                            : 'rgba(98, 102, 106, 0.95)'
-                      }}
-                    >
-                      {Platform.OS === 'ios' && (
-                        <BlurView intensity={55} tint="dark" style={StyleSheet.absoluteFill} />
-                      )}
-
-                      <ScrollView
-                        style={{ maxHeight: 240 }}
-                        contentContainerStyle={{ paddingVertical: 10 }}
-                        showsVerticalScrollIndicator={true}
-                        indicatorStyle="white"
-                        nestedScrollEnabled={true}
-                        keyboardShouldPersistTaps="handled"
-                      >
-                        {activeFloatingMenu === 'patient' && (
-                          <>
-                            <TouchableOpacity
-                              activeOpacity={0.65}
-                              onPress={() => {
-                                try { Vibration.vibrate(8); } catch {}
-                                setApptPatientId('');
-                                setActiveFloatingMenu(null);
-                              }}
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                paddingVertical: 12,
-                                paddingHorizontal: 20
-                              }}
-                            >
-                              <View style={{ width: 26, alignItems: 'flex-start' }}>
-                                {!apptPatientId && <Feather name="check" size={16} color="#ffffff" />}
-                              </View>
-                              <Text
-                                className="font-sans"
-                                style={{
-                                  fontSize: 16,
-                                  color: '#ffffff',
-                                  fontWeight: !apptPatientId ? '600' : '400',
-                                  flex: 1
-                                }}
-                                numberOfLines={1}
-                              >
-                                Selecione o paciente...
-                              </Text>
-                            </TouchableOpacity>
-
-                            {sortedPatientsForMenu.map((p: any) => {
-                              const isSelected = String(p.id) === String(apptPatientId);
-                              return (
-                                <TouchableOpacity
-                                  key={p.id}
-                                  activeOpacity={0.65}
-                                  onPress={() => {
-                                    try { Vibration.vibrate(8); } catch {}
-                                    setApptPatientId(String(p.id));
-                                    setActiveFloatingMenu(null);
-                                  }}
-                                  style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    paddingVertical: 12,
-                                    paddingHorizontal: 20
-                                  }}
-                                >
-                                  <View style={{ width: 26, alignItems: 'flex-start' }}>
-                                    {isSelected && <Feather name="check" size={16} color="#ffffff" />}
-                                  </View>
-                                  <Text
-                                    className="font-sans"
-                                    style={{
-                                      fontSize: 16,
-                                      color: '#ffffff',
-                                      fontWeight: isSelected ? '600' : '400',
-                                      flex: 1
-                                    }}
-                                    numberOfLines={1}
-                                  >
-                                    {p.nome}
-                                  </Text>
-                                </TouchableOpacity>
-                              );
-                            })}
-                          </>
-                        )}
-
-                        {activeFloatingMenu === 'duration' &&
-                          DURATION_OPTIONS.map((opt) => {
-                            const isSelected = apptDuration === opt.value;
-                            return (
-                              <TouchableOpacity
-                                key={opt.value}
-                                activeOpacity={0.65}
-                                onPress={() => {
-                                  try { Vibration.vibrate(8); } catch {}
-                                  setApptDuration(opt.value);
-                                  setActiveFloatingMenu(null);
-                                }}
-                                style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  paddingVertical: 12,
-                                  paddingHorizontal: 20
-                                }}
-                              >
-                                <View style={{ width: 26, alignItems: 'flex-start' }}>
-                                  {isSelected && <Feather name="check" size={16} color="#ffffff" />}
-                                </View>
-                                <Text
-                                  className="font-sans"
-                                  style={{
-                                    fontSize: 16,
-                                    color: '#ffffff',
-                                    fontWeight: isSelected ? '600' : '400',
-                                    flex: 1
-                                  }}
-                                >
-                                  {opt.pickerLabel}
-                                </Text>
-                              </TouchableOpacity>
-                            );
-                          })}
-
-                        {activeFloatingMenu === 'recurrence' &&
-                          RECURRENCE_OPTIONS.map((rec) => {
-                            const isSelected = apptRecurrence === rec.value;
-                            return (
-                              <TouchableOpacity
-                                key={rec.value}
-                                activeOpacity={0.65}
-                                onPress={() => {
-                                  try { Vibration.vibrate(8); } catch {}
-                                  setApptRecurrence(rec.value);
-                                  setActiveFloatingMenu(null);
-                                }}
-                                style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  paddingVertical: 12,
-                                  paddingHorizontal: 20
-                                }}
-                              >
-                                <View style={{ width: 26, alignItems: 'flex-start' }}>
-                                  {isSelected && <Feather name="check" size={16} color="#ffffff" />}
-                                </View>
-                                <Text
-                                  className="font-sans"
-                                  style={{
-                                    fontSize: 16,
-                                    color: '#ffffff',
-                                    fontWeight: isSelected ? '600' : '400',
-                                    flex: 1
-                                  }}
-                                >
-                                  {rec.label}
-                                </Text>
-                              </TouchableOpacity>
-                            );
-                          })}
-                      </ScrollView>
-                    </View>
-                  </Animated.View>
                 </View>
               )}
-            </View>
+
+              <TouchableOpacity
+                onPress={handleSaveAppt}
+                disabled={isSubmittingAppt}
+                className="bg-[#1B4332] rounded-full py-4 mt-3 items-center justify-center shadow-sm"
+              >
+                {isSubmittingAppt ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text className="font-sans font-bold text-white text-[16px]">
+                    {editingAppt
+                      ? `Salvar Alterações (${apptTime})`
+                      : `Confirmar Horário (${apptTime})`}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
           </Animated.View>
         </View>
       )}
@@ -2362,18 +2155,32 @@ export default function PacientesScreen() {
 
                 <View className="flex-1 ml-2">
                   <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">Status</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      setNewPatientStatus(newPatientStatus === 'ativo' ? 'inativo' : 'ativo');
-                    }}
-                    className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3.5 flex-row justify-between items-center"
+                  <NativeSelectMenu
+                    options={patientStatusMenuOptions}
+                    selectedValue={newPatientStatus}
+                    onSelect={(val) => setNewPatientStatus(val)}
+                    style={{ width: '100%' }}
                   >
-                    <Text className="font-sans text-[15px] text-[#1B4332] font-bold capitalize">
-                      {newPatientStatus}
-                    </Text>
-                    <Feather name="refresh-cw" size={14} color="#1B4332" />
-                  </TouchableOpacity>
+                    <View
+                      style={{
+                        backgroundColor: '#f9fafb',
+                        borderWidth: 1,
+                        borderColor: '#cccccc',
+                        borderRadius: 999,
+                        paddingHorizontal: 20,
+                        paddingVertical: 14,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        width: '100%',
+                      }}
+                    >
+                      <Text className="font-sans text-[15px] text-[#1B4332] font-bold capitalize">
+                        {newPatientStatus}
+                      </Text>
+                      <Feather name="chevron-down" size={16} color="#1B4332" />
+                    </View>
+                  </NativeSelectMenu>
                 </View>
               </View>
 
