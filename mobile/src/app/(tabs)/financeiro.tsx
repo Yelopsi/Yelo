@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
+import NativeSelectMenu from '../../components/NativeSelectMenu';
 
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+
+const PERIODO_OPTIONS = [
+  { label: 'Este Mês', value: 'este_mes' },
+  { label: 'Mês Anterior', value: 'mes_anterior' },
+  { label: 'Últimos 3 Meses', value: 'ultimos_3_meses' },
+  { label: 'Este Ano', value: 'este_ano' },
+  { label: 'Todo o Período', value: 'todos' },
+];
 
 // Mock Data
 const MOCK_TRANSACTIONS = [
@@ -17,6 +26,8 @@ const MOCK_TRANSACTIONS = [
 export default function FinanceiroScreen() {
   const router = useRouter();
   const [showTip, setShowTip] = useState(true);
+  const [periodo, setPeriodo] = useState('este_mes');
+  const selectedPeriodoLabel = PERIODO_OPTIONS.find((p) => p.value === periodo)?.label || 'Este Mês';
 
   React.useEffect(() => {
     console.log('[MOUNT] FinanceiroScreen montada com sucesso!');
@@ -98,10 +109,32 @@ export default function FinanceiroScreen() {
             {/* Filtro de Período */}
             <View className="w-full flex-row justify-between items-center bg-white border border-[#e5e7eb] rounded-[12px] p-3 shadow-sm">
               <Text className="font-sans text-[#6b7280] text-[14px]">Período:</Text>
-              <TouchableOpacity className="flex-row items-center bg-[#f9fafb] px-3 py-1.5 rounded-full border border-[#e0e0e0]">
-                <Text className="font-sans font-bold text-[#1B4332] text-[13px] mr-2">Este Mês</Text>
-                <Feather name="chevron-down" size={14} color="#1B4332" />
-              </TouchableOpacity>
+              <NativeSelectMenu
+                options={PERIODO_OPTIONS}
+                selectedValue={periodo}
+                onSelect={(val) => setPeriodo(val)}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: '#f9fafb',
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: '#e0e0e0',
+                  }}
+                >
+                  <Text
+                    className="font-sans font-bold text-[#1B4332] text-[13px]"
+                    style={{ marginRight: 6 }}
+                  >
+                    {selectedPeriodoLabel}
+                  </Text>
+                  <Feather name="chevron-down" size={14} color="#1B4332" />
+                </View>
+              </NativeSelectMenu>
             </View>
           </View>
         </View>

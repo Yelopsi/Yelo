@@ -1,46 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Switch, Modal, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
+import NativeSelectMenu from '../../components/NativeSelectMenu';
 
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import { LinearGradient } from 'expo-linear-gradient';
 
-// Componente: Custom Select (Imita o select nativo visualmente)
+// Componente: Select Nativo do Sistema Operacional (iOS UIMenu / Android DropdownMenu)
 const CustomSelect = ({ label, options, selectedValue, onValueChange }: any) => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const selectedOption = options.find((o: any) => o.value === selectedValue) || options[0];
+  const selectedOption = options.find((o: any) => String(o.value) === String(selectedValue)) || options[0];
 
   return (
     <View className="mb-5">
       <Text className="font-sans font-bold text-[#333] text-[15px] mb-2">{label}</Text>
-      <TouchableOpacity 
-        onPress={() => setModalVisible(true)}
-        className="flex-row items-center justify-between bg-[#f9fafb] border border-[#ced4da] rounded-[12px] px-4 py-3"
+      <NativeSelectMenu
+        options={options.map((o: any) => ({ label: String(o.label), value: String(o.value) }))}
+        selectedValue={String(selectedValue)}
+        onSelect={(val) => {
+          const matched = options.find((o: any) => String(o.value) === String(val));
+          onValueChange(matched ? matched.value : val);
+        }}
+        style={{ width: '100%' }}
       >
-        <Text className="font-sans font-bold text-[#1B4332] text-[16px]">{selectedOption?.label}</Text>
-        <Feather name="chevron-down" size={20} color="#1B4332" />
-      </TouchableOpacity>
-
-      <Modal transparent={true} visible={modalVisible} animationType="fade">
-        <Pressable className="flex-1 bg-black/50 justify-end" onPress={() => setModalVisible(false)}>
-          <View className="bg-white rounded-t-[24px] pb-8 pt-4 px-6">
-            <View className="w-12 h-1 bg-gray-300 rounded-full self-center mb-6" />
-            <Text className="font-title text-[#1B4332] text-[20px] mb-4">{label}</Text>
-            {options.map((opt: any, i: number) => (
-              <TouchableOpacity 
-                key={i} 
-                className={`py-4 border-b border-gray-100 flex-row justify-between items-center ${selectedValue === opt.value ? 'bg-[#f0fdf4] -mx-6 px-6' : ''}`}
-                onPress={() => { onValueChange(opt.value); setModalVisible(false); }}
-              >
-                <Text className={`font-sans text-[16px] ${selectedValue === opt.value ? 'font-bold text-[#1B4332]' : 'text-[#333]'}`}>{opt.label}</Text>
-                {selectedValue === opt.value && <Feather name="check" size={20} color="#1B4332" />}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: '#f9fafb',
+            borderWidth: 1,
+            borderColor: '#ced4da',
+            borderRadius: 999,
+            paddingHorizontal: 18,
+            paddingVertical: 13,
+            width: '100%',
+          }}
+        >
+          <Text
+            className="font-sans font-bold text-[#1B4332] text-[15px] flex-1 mr-2"
+            numberOfLines={1}
+          >
+            {selectedOption?.label}
+          </Text>
+          <Feather name="chevron-down" size={20} color="#1B4332" />
+        </View>
+      </NativeSelectMenu>
     </View>
   );
 };

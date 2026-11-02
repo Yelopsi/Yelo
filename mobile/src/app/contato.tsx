@@ -7,6 +7,7 @@ import YeloScrollView from '../components/YeloScrollView';
 import PublicHeader from '../components/PublicHeader';
 import Footer from '../components/Footer';
 import PublicBottomNav from '../components/PublicBottomNav';
+import NativeSelectMenu from '../components/NativeSelectMenu';
 
 const { width } = Dimensions.get('window');
 
@@ -23,9 +24,9 @@ export default function ContatoScreen() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState({ type: '', msg: '' });
   
-  // Dropdown UI state
-  const [showAssuntoPicker, setShowAssuntoPicker] = useState(false);
+  // Opções do seletor nativo de Assunto
   const assuntos = ['Dúvida Geral', 'Sou Paciente', 'Sou Profissional', 'Imprensa // Parcerias'];
+  const assuntoOptions = assuntos.map((item) => ({ label: item, value: item }));
 
   const handleSubmit = () => {
     if (!nome || !email || !mensagem) {
@@ -135,36 +136,35 @@ export default function ContatoScreen() {
                 />
               </View>
               
-              {/* Fake Select / Assunto */}
-              <View className="mb-[20px] z-10 relative">
+              {/* Seletor Nativo / Assunto */}
+              <View className="mb-[20px]">
                 <Text className="font-sans font-semibold text-[#333] text-[14px] mb-[8px]">Assunto</Text>
-                <TouchableOpacity 
-                  activeOpacity={0.7}
-                  onPress={() => setShowAssuntoPicker(!showAssuntoPicker)}
-                  className="bg-white border border-[#ced4da] rounded-[50px] px-[20px] py-[14px] flex-row justify-between items-center"
+                <NativeSelectMenu
+                  options={assuntoOptions}
+                  selectedValue={assunto}
+                  onSelect={(val) => setAssunto(val)}
+                  style={{ width: '100%' }}
                 >
-                  <Text className="font-sans text-[15px] text-[#333]">{assunto}</Text>
-                  <Feather name={showAssuntoPicker ? "chevron-up" : "chevron-down"} size={20} color="#555" />
-                </TouchableOpacity>
-                
-                {showAssuntoPicker && (
-                  <View className="absolute top-[80px] left-0 right-0 bg-white border border-[#ced4da] rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] py-[10px] z-50">
-                    {assuntos.map((item, idx) => (
-                      <TouchableOpacity 
-                        key={idx}
-                        className="py-[12px] px-[20px]"
-                        onPress={() => {
-                          setAssunto(item);
-                          setShowAssuntoPicker(false);
-                        }}
-                      >
-                        <Text className={`font-sans text-[15px] ${assunto === item ? 'text-[#1B4332] font-bold' : 'text-[#555]'}`}>
-                          {item}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                  <View
+                    style={{
+                      backgroundColor: '#ffffff',
+                      borderWidth: 1,
+                      borderColor: '#ced4da',
+                      borderRadius: 50,
+                      paddingHorizontal: 20,
+                      paddingVertical: 14,
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      width: '100%',
+                    }}
+                  >
+                    <Text className="font-sans text-[15px] text-[#333] flex-1 mr-2" numberOfLines={1}>
+                      {assunto}
+                    </Text>
+                    <Feather name="chevron-down" size={20} color="#555" />
                   </View>
-                )}
+                </NativeSelectMenu>
               </View>
               
               <View className="mb-[25px]">
