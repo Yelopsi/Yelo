@@ -68,7 +68,7 @@ export default function PacientesScreen() {
 
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity 
-      onPress={() => router.push(`/pacientes/${item.id}`)}
+      onPress={() => router.push(`/(tabs)/pacientes/${item.id}`)}
       className="bg-white rounded-[16px] p-5 mb-4 border border-[#e5e7eb] shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
     >
       <View className="flex-row justify-between items-start mb-3">

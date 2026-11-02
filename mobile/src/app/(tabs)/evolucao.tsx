@@ -30,7 +30,7 @@ export default function EvolucaoScreen() {
           <View className="px-6 pb-32">
             
             {/* Card 1: Minha Jornada */}
-            <TouchableOpacity onPress={() => router.push('/jornada')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
+            <TouchableOpacity onPress={() => router.push('/(tabs)/jornada')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">🚀</Text>
               </View>
@@ -41,7 +41,7 @@ export default function EvolucaoScreen() {
             </TouchableOpacity>
 
             {/* Card 2: Meus Artigos */}
-            <TouchableOpacity onPress={() => router.push('/blog')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
+            <TouchableOpacity onPress={() => router.push('/(tabs)/blog')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">✍️</Text>
               </View>
@@ -52,7 +52,7 @@ export default function EvolucaoScreen() {
             </TouchableOpacity>
 
             {/* Card 3: Fórum de Discussão */}
-            <TouchableOpacity onPress={() => router.push('/forum')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
+            <TouchableOpacity onPress={() => router.push('/(tabs)/forum')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">💬</Text>
               </View>
@@ -63,7 +63,7 @@ export default function EvolucaoScreen() {
             </TouchableOpacity>
 
             {/* Card 4: Perguntas da Comunidade */}
-            <TouchableOpacity onPress={() => router.push('/comunidade')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
+            <TouchableOpacity onPress={() => router.push('/(tabs)/comunidade')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">❓</Text>
               </View>
@@ -74,7 +74,7 @@ export default function EvolucaoScreen() {
             </TouchableOpacity>
 
             {/* Card 5: Comunidade Yelo */}
-            <TouchableOpacity onPress={() => router.push('/comunidade_yelo')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
+            <TouchableOpacity onPress={() => router.push('/(tabs)/comunidade_yelo')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">🎓</Text>
               </View>

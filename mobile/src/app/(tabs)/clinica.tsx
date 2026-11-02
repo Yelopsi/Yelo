@@ -31,7 +31,7 @@ export default function ClinicaScreen() {
             
             {/* Card 1: Meus Pacientes */}
             <TouchableOpacity 
-              onPress={() => router.push('/pacientes')}
+              onPress={() => router.push('/(tabs)/pacientes')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -45,7 +45,7 @@ export default function ClinicaScreen() {
 
             {/* Card 2: Financeiro */}
             <TouchableOpacity 
-              onPress={() => router.push('/financeiro')}
+              onPress={() => router.push('/(tabs)/financeiro')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -59,7 +59,7 @@ export default function ClinicaScreen() {
 
             {/* Card 3: Métricas & Mercado */}
             <TouchableOpacity 
-              onPress={() => router.push('/analytics')}
+              onPress={() => router.push('/(tabs)/analytics')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -73,7 +73,7 @@ export default function ClinicaScreen() {
 
             {/* Card 4: Análise de Favoritos */}
             <TouchableOpacity 
-              onPress={() => router.push('/favoritos-analytics')}
+              onPress={() => router.push('/(tabs)/favoritos-analytics')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -87,7 +87,7 @@ export default function ClinicaScreen() {
 
             {/* Card 5: Calculadora */}
             <TouchableOpacity 
-              onPress={() => router.push('/calculadora')}
+              onPress={() => router.push('/(tabs)/calculadora')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#fef3c7] items-center justify-center mr-5">
@@ -101,7 +101,7 @@ export default function ClinicaScreen() {
 
             {/* Card 6: Manual */}
             <TouchableOpacity 
-              onPress={() => router.push('/manual-conversao')}
+              onPress={() => router.push('/(tabs)/manual-conversao')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#dcfce7] items-center justify-center mr-5">
