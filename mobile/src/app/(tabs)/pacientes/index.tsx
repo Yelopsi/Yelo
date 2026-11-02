@@ -78,21 +78,17 @@ const normalizeTimeStr = (raw: string, fallback = '14:00'): string => {
 const ALL_24_HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const BASE_MINUTES = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
 
-// Atalhos rápidos estilo Airbnb (1 toque para horários frequentes + extremos)
-const QUICK_TIME_PRESETS = [
-  '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
-  '14:00', '15:00', '16:00', '17:00', '18:00', '19:00',
-  '20:00', '21:00', '22:00', '23:00'
-];
-
 const DURATION_OPTIONS = [
-  { label: '30 min', value: 30 },
-  { label: '50 min', value: 50 },
-  { label: '1h', value: 60 }
+  { label: '30 min', pickerLabel: '30 minutos', value: 30 },
+  { label: '40 min', pickerLabel: '40 minutos', value: 40 },
+  { label: '45 min', pickerLabel: '45 minutos', value: 45 },
+  { label: '50 min', pickerLabel: '50 minutos', value: 50 },
+  { label: '1h (60m)', pickerLabel: '1 hora (60 min)', value: 60 },
+  { label: '1h 30m', pickerLabel: '1h 30min (90 min)', value: 90 }
 ];
 
 const RECURRENCE_OPTIONS: { label: string; value: 'none' | 'weekly' | 'biweekly' }[] = [
-  { label: 'Único', value: 'none' },
+  { label: 'Não repetir', value: 'none' },
   { label: 'Semanal', value: 'weekly' },
   { label: 'Quinzenal', value: 'biweekly' }
 ];
@@ -175,11 +171,25 @@ export default function PacientesScreen() {
   const [apptRecurrence, setApptRecurrence] = useState<'none' | 'weekly' | 'biweekly'>('none');
   const [isSubmittingAppt, setIsSubmittingAppt] = useState(false);
 
-  // Seletores Carrossel / Wheel Picker & Modo Digitar
+  // Seletores Carrossel / Wheel Picker Nativo (iOS & Android) & Modo Digitar
   const [showPatientPicker, setShowPatientPicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showDurationPicker, setShowDurationPicker] = useState(false);
+  const [showRecurrencePicker, setShowRecurrencePicker] = useState(false);
   const [timeInputMode, setTimeInputMode] = useState<'wheel' | 'type'>('wheel');
   const [typedTimeDraft, setTypedTimeDraft] = useState('14:00');
+
+  const apptFormScrollRef = useRef<any>(null);
+  const patientPickerRef = useRef<any>(null);
+  const durationPickerRef = useRef<any>(null);
+  const recurrencePickerRef = useRef<any>(null);
+
+  const closeAllApptPickers = () => {
+    setShowPatientPicker(false);
+    setShowTimePicker(false);
+    setShowDurationPicker(false);
+    setShowRecurrencePicker(false);
+  };
 
   // Altura exata do teclado em pixels (garante que os campos nunca fiquem cobertos pelo teclado no iOS)
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -208,7 +218,7 @@ export default function PacientesScreen() {
     setApptTime(cleanTime);
     setTypedTimeDraft(cleanTime);
     setApptRecurrence('none');
-    setShowPatientPicker(false);
+    closeAllApptPickers();
     setShowTimePicker(expandTimeSelector);
     setTimeInputMode('wheel');
     setModalNewAppt(true);
@@ -231,7 +241,7 @@ export default function PacientesScreen() {
     const startDt = new Date(evt.start);
     const endDt = evt.end ? new Date(evt.end) : new Date(startDt.getTime() + 50 * 60 * 1000);
     const diffMins = Math.round((endDt.getTime() - startDt.getTime()) / 60000);
-    const validDuration = [30, 50, 60].includes(diffMins) ? diffMins : 50;
+    const validDuration = DURATION_OPTIONS.some((o) => o.value === diffMins) ? diffMins : 50;
     const startHHMM = formatHHMM(startDt);
 
     setSelectedDate(new Date(startDt.getFullYear(), startDt.getMonth(), startDt.getDate()));
@@ -244,7 +254,7 @@ export default function PacientesScreen() {
     setTypedTimeDraft(startHHMM);
     setApptDuration(validDuration);
     setApptRecurrence('none');
-    setShowPatientPicker(false);
+    closeAllApptPickers();
     setShowTimePicker(true);
     setTimeInputMode('wheel');
 
@@ -430,11 +440,20 @@ export default function PacientesScreen() {
     });
   }, [patients, statusFilter, search]);
 
-  // Paciente selecionado para o picker
+  // Paciente, duração e repetição selecionados para os pickers em carrossel
   const selectedPatientName = useMemo(() => {
     const p = patients.find(item => String(item.id) === String(apptPatientId));
     return p ? p.nome : (patients[0]?.nome || 'Selecione um paciente');
   }, [patients, apptPatientId]);
+
+  const selectedDurationOption = useMemo(() => {
+    return DURATION_OPTIONS.find(opt => opt.value === apptDuration) || DURATION_OPTIONS[3];
+  }, [apptDuration]);
+
+  const selectedRecurrenceLabel = useMemo(() => {
+    const rec = RECURRENCE_OPTIONS.find(r => r.value === apptRecurrence);
+    return rec ? rec.label : 'Não repetir';
+  }, [apptRecurrence]);
 
   // Decomposição HH e MM para a Roleta Dupla 24h
   const [selectedHour, selectedMinute] = useMemo(() => {
@@ -615,8 +634,7 @@ export default function PacientesScreen() {
 
         setModalNewAppt(false);
         setEditingAppt(null);
-        setShowTimePicker(false);
-        setShowPatientPicker(false);
+        closeAllApptPickers();
         await fetchData();
         Alert.alert('Atualizado', `Agendamento atualizado para ${finalTime}!`);
         return;
@@ -668,8 +686,7 @@ export default function PacientesScreen() {
       }
 
       setModalNewAppt(false);
-      setShowTimePicker(false);
-      setShowPatientPicker(false);
+      closeAllApptPickers();
       await fetchData();
       Alert.alert(
         'Sucesso',
@@ -1440,8 +1457,7 @@ export default function PacientesScreen() {
             style={StyleSheet.absoluteFill}
             onPress={() => {
               Keyboard.dismiss();
-              setShowPatientPicker(false);
-              setShowTimePicker(false);
+              closeAllApptPickers();
               setEditingAppt(null);
               setModalNewAppt(false);
             }}
@@ -1486,8 +1502,7 @@ export default function PacientesScreen() {
                 className="p-2"
                 onPress={() => {
                   Keyboard.dismiss();
-                  setShowPatientPicker(false);
-                  setShowTimePicker(false);
+                  closeAllApptPickers();
                   setEditingAppt(null);
                   setModalNewAppt(false);
                 }}
@@ -1497,6 +1512,7 @@ export default function PacientesScreen() {
             </View>
 
             <ScrollView
+              ref={apptFormScrollRef}
               showsVerticalScrollIndicator={true}
               keyboardShouldPersistTaps="handled"
               style={{ flexGrow: 0, flexShrink: 1 }}
@@ -1507,8 +1523,7 @@ export default function PacientesScreen() {
                 <TouchableOpacity
                   onPress={() => {
                     setApptType('session');
-                    setShowTimePicker(false);
-                    setShowPatientPicker(false);
+                    closeAllApptPickers();
                   }}
                   className="flex-1 py-2.5 rounded-full items-center justify-center"
                   style={
@@ -1528,8 +1543,7 @@ export default function PacientesScreen() {
                 <TouchableOpacity
                   onPress={() => {
                     setApptType('available');
-                    setShowPatientPicker(false);
-                    setShowTimePicker(false);
+                    closeAllApptPickers();
                   }}
                   className="flex-1 py-2.5 rounded-full items-center justify-center"
                   style={
@@ -1556,13 +1570,18 @@ export default function PacientesScreen() {
 
                   <TouchableOpacity
                     onPress={() => {
+                      const next = !showPatientPicker;
                       Keyboard.dismiss();
-                      setShowPatientPicker(!showPatientPicker);
-                      setShowTimePicker(false);
+                      closeAllApptPickers();
+                      setShowPatientPicker(next);
+                      if (next && Platform.OS === 'android') {
+                        setTimeout(() => patientPickerRef.current?.focus?.(), 60);
+                      }
                     }}
-                    className="bg-[#f9fafb] border border-[#ced4da] rounded-full px-5 py-3 flex-row justify-between items-center"
+                    className="bg-[#f9fafb] border rounded-full px-5 py-3 flex-row justify-between items-center"
+                    style={{ borderColor: showPatientPicker ? '#1B4332' : '#ced4da' }}
                   >
-                    <Text className="font-sans font-semibold text-[#1B4332] text-[15px]">
+                    <Text className="font-sans font-semibold text-[#1B4332] text-[15px]" numberOfLines={1}>
                       {selectedPatientName}
                     </Text>
                     <Feather name={showPatientPicker ? 'chevron-up' : 'chevron-down'} size={18} color="#1B4332" />
@@ -1571,9 +1590,12 @@ export default function PacientesScreen() {
                   {showPatientPicker && (
                     <View className="bg-[#f8f9fa] border border-[#eee] rounded-[20px] mt-2 overflow-hidden">
                       <Picker
+                        ref={patientPickerRef}
+                        mode="dialog"
+                        prompt="Selecione o Paciente"
                         selectedValue={apptPatientId}
                         onValueChange={(itemValue) => setApptPatientId(String(itemValue))}
-                        itemStyle={{ height: 120, fontSize: 16, color: '#1B4332' }}
+                        itemStyle={{ height: 120, fontSize: 16, color: '#1B4332', fontWeight: '600' }}
                       >
                         {patients.map(p => (
                           <Picker.Item
@@ -1588,7 +1610,7 @@ export default function PacientesScreen() {
                 </View>
               )}
 
-              {/* SELEÇÃO DE HORÁRIO DE INÍCIO (24H COMPLETO) */}
+              {/* SELEÇÃO DE HORÁRIO DE INÍCIO (CARROSSEL NATIVO 24H) */}
               <View className="mb-4">
                 <View className="flex-row items-center justify-between mb-1.5">
                   <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase">
@@ -1601,11 +1623,13 @@ export default function PacientesScreen() {
 
                 <TouchableOpacity
                   onPress={() => {
+                    const next = !showTimePicker;
                     Keyboard.dismiss();
-                    setShowTimePicker(!showTimePicker);
-                    setShowPatientPicker(false);
+                    closeAllApptPickers();
+                    setShowTimePicker(next);
                   }}
-                  className="bg-[#f9fafb] border border-[#ced4da] rounded-full px-5 py-3 flex-row justify-between items-center"
+                  className="bg-[#f9fafb] border rounded-full px-5 py-3 flex-row justify-between items-center"
+                  style={{ borderColor: showTimePicker ? '#1B4332' : '#ced4da' }}
                 >
                   <View className="flex-row items-center">
                     <Feather name="clock" size={16} color="#1B4332" style={{ marginRight: 8 }} />
@@ -1614,45 +1638,12 @@ export default function PacientesScreen() {
                     </Text>
                     <View className="ml-2.5 px-2.5 py-0.5 rounded-full bg-[#e8f5e9]">
                       <Text className="font-sans font-semibold text-[11px] text-[#1B4332]">
-                        {apptType === 'available' ? '1h livre' : `${apptDuration} min`}
+                        {apptType === 'available' ? '1h livre' : selectedDurationOption.label}
                       </Text>
                     </View>
                   </View>
                   <Feather name={showTimePicker ? 'chevron-up' : 'chevron-down'} size={18} color="#1B4332" />
                 </TouchableOpacity>
-
-                {/* Atalhos Rápidos Horizontais */}
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  className="mt-2.5"
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {QUICK_TIME_PRESETS.map((preset) => {
-                    const isSelected = apptTime === preset;
-                    return (
-                      <TouchableOpacity
-                        key={preset}
-                        onPress={() => {
-                          setApptTime(preset);
-                          setTypedTimeDraft(preset);
-                        }}
-                        className="px-3.5 py-1.5 rounded-full border mr-2"
-                        style={{
-                          backgroundColor: isSelected ? '#1B4332' : '#ffffff',
-                          borderColor: isSelected ? '#1B4332' : '#e5e7eb'
-                        }}
-                      >
-                        <Text
-                          className="font-sans font-semibold text-[12px]"
-                          style={{ color: isSelected ? '#ffffff' : '#495057' }}
-                        >
-                          {preset}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
 
                 {showTimePicker && (
                   <View className="bg-[#f8f9fa] border border-[#e5e7eb] rounded-[22px] mt-2.5 p-3 overflow-hidden">
@@ -1758,64 +1749,108 @@ export default function PacientesScreen() {
                 )}
               </View>
 
-              {/* DURAÇÃO E RECORRÊNCIA */}
-              <View className="flex-row justify-between mb-2">
-                {apptType === 'session' && (
-                  <View className="flex-1" style={!editingAppt ? { marginRight: 8 } : undefined}>
-                    <Text className="font-sans font-bold text-[11px] text-[#495057] uppercase mb-1.5">
-                      Duração
-                    </Text>
-                    <View className="flex-row bg-[#f1f3f5] p-1 rounded-full">
-                      {DURATION_OPTIONS.map((opt) => {
-                        const active = apptDuration === opt.value;
-                        return (
-                          <TouchableOpacity
-                            key={opt.value}
-                            onPress={() => setApptDuration(opt.value)}
-                            className="flex-1 py-1.5 rounded-full items-center"
-                            style={active ? { backgroundColor: '#1B4332' } : undefined}
-                          >
-                            <Text
-                              className="font-sans font-bold text-[11px]"
-                              style={{ color: active ? '#ffffff' : '#555555' }}
-                            >
-                              {opt.label}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-                )}
+              {/* DURAÇÃO E REPETIÇÃO (SELETORES NATIVOS EM CARROSSEL PADRÃO iOS / ANDROID) */}
+              {(apptType === 'session' || !editingAppt) && (
+                <View className="mb-2">
+                  <View className="flex-row justify-between">
+                    {apptType === 'session' && (
+                      <View className="flex-1" style={!editingAppt ? { marginRight: 6 } : undefined}>
+                        <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
+                          Duração
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            const next = !showDurationPicker;
+                            Keyboard.dismiss();
+                            closeAllApptPickers();
+                            setShowDurationPicker(next);
+                            if (next) {
+                              setTimeout(() => {
+                                apptFormScrollRef.current?.scrollToEnd({ animated: true });
+                                if (Platform.OS === 'android') {
+                                  durationPickerRef.current?.focus?.();
+                                }
+                              }, 80);
+                            }
+                          }}
+                          className="bg-[#f9fafb] border rounded-full px-4 py-3 flex-row justify-between items-center"
+                          style={{ borderColor: showDurationPicker ? '#1B4332' : '#ced4da' }}
+                        >
+                          <Text className="font-sans font-semibold text-[#1B4332] text-[15px]" numberOfLines={1}>
+                            {selectedDurationOption.label}
+                          </Text>
+                          <Feather name={showDurationPicker ? 'chevron-up' : 'chevron-down'} size={18} color="#1B4332" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
 
-                {!editingAppt && (
-                  <View className="flex-1" style={apptType === 'session' ? { marginLeft: 6 } : undefined}>
-                    <Text className="font-sans font-bold text-[11px] text-[#495057] uppercase mb-1.5">
-                      Repetição
-                    </Text>
-                    <View className="flex-row bg-[#f1f3f5] p-1 rounded-full">
-                      {RECURRENCE_OPTIONS.map((rec) => {
-                        const active = apptRecurrence === rec.value;
-                        return (
-                          <TouchableOpacity
-                            key={rec.value}
-                            onPress={() => setApptRecurrence(rec.value)}
-                            className="flex-1 py-1.5 rounded-full items-center"
-                            style={active ? { backgroundColor: '#1B4332' } : undefined}
-                          >
-                            <Text
-                              className="font-sans font-bold text-[11px]"
-                              style={{ color: active ? '#ffffff' : '#555555' }}
-                            >
-                              {rec.label}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
+                    {!editingAppt && (
+                      <View className="flex-1" style={apptType === 'session' ? { marginLeft: 6 } : undefined}>
+                        <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
+                          Repetição
+                        </Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            const next = !showRecurrencePicker;
+                            Keyboard.dismiss();
+                            closeAllApptPickers();
+                            setShowRecurrencePicker(next);
+                            if (next) {
+                              setTimeout(() => {
+                                apptFormScrollRef.current?.scrollToEnd({ animated: true });
+                                if (Platform.OS === 'android') {
+                                  recurrencePickerRef.current?.focus?.();
+                                }
+                              }, 80);
+                            }
+                          }}
+                          className="bg-[#f9fafb] border rounded-full px-4 py-3 flex-row justify-between items-center"
+                          style={{ borderColor: showRecurrencePicker ? '#1B4332' : '#ced4da' }}
+                        >
+                          <Text className="font-sans font-semibold text-[#1B4332] text-[15px]" numberOfLines={1}>
+                            {selectedRecurrenceLabel}
+                          </Text>
+                          <Feather name={showRecurrencePicker ? 'chevron-up' : 'chevron-down'} size={18} color="#1B4332" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
+
+                  {showDurationPicker && apptType === 'session' && (
+                    <View className="bg-[#f8f9fa] border border-[#eee] rounded-[20px] mt-2.5 overflow-hidden">
+                      <Picker
+                        ref={durationPickerRef}
+                        mode="dialog"
+                        prompt="Selecione a Duração"
+                        selectedValue={apptDuration}
+                        onValueChange={(val) => setApptDuration(Number(val))}
+                        itemStyle={{ height: 120, fontSize: 16, color: '#1B4332', fontWeight: '600' }}
+                      >
+                        {DURATION_OPTIONS.map((opt) => (
+                          <Picker.Item key={opt.value} label={opt.pickerLabel} value={opt.value} />
+                        ))}
+                      </Picker>
+                    </View>
+                  )}
+
+                  {showRecurrencePicker && !editingAppt && (
+                    <View className="bg-[#f8f9fa] border border-[#eee] rounded-[20px] mt-2.5 overflow-hidden">
+                      <Picker
+                        ref={recurrencePickerRef}
+                        mode="dialog"
+                        prompt="Selecione a Repetição"
+                        selectedValue={apptRecurrence}
+                        onValueChange={(val) => setApptRecurrence(val as 'none' | 'weekly' | 'biweekly')}
+                        itemStyle={{ height: 120, fontSize: 16, color: '#1B4332', fontWeight: '600' }}
+                      >
+                        {RECURRENCE_OPTIONS.map((rec) => (
+                          <Picker.Item key={rec.value} label={rec.label} value={rec.value} />
+                        ))}
+                      </Picker>
+                    </View>
+                  )}
+                </View>
+              )}
             </ScrollView>
 
             {/* RODAPÉ FIXO ACIMA DO TECLADO OU DA BOTTOM NAV */}
