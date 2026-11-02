@@ -454,8 +454,9 @@ export default function HomeScreen() {
             </View>
           </View>
           <TouchableOpacity 
+            activeOpacity={0.8}
             onPress={() => router.push('/(tabs)/pacientes')}
-            className="bg-[#1B4332] py-4 rounded-[14px] items-center"
+            className="bg-[#1B4332] py-4 rounded-full items-center"
           >
             <Text className="font-sans font-bold text-white text-[15px]">Gerenciar</Text>
           </TouchableOpacity>
