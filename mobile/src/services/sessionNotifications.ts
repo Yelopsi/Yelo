@@ -14,7 +14,6 @@ export interface AppNotificationPreferences {
   post_comment: boolean;
   comment_reply: boolean;
   community_questions: boolean;
-  payments: boolean;
 }
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: AppNotificationPreferences = {
@@ -23,7 +22,6 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: AppNotificationPreferences = {
   post_comment: true,
   comment_reply: true,
   community_questions: true,
-  payments: true,
 };
 
 // Configura o comportamento quando uma notificação chega com o app aberto em primeiro plano
@@ -114,7 +112,6 @@ export async function getNotificationPreferences(): Promise<AppNotificationPrefe
         post_comment: parsed?.post_comment !== false,
         comment_reply: parsed?.comment_reply !== false,
         community_questions: parsed?.community_questions !== false,
-        payments: parsed?.payments !== false,
       };
     }
   } catch {
@@ -198,13 +195,17 @@ export async function cancelAllSessionReminders(): Promise<void> {
 }
 
 /**
- * Dispara uma notificação de teste quase imediata (1 segundo) para o usuário validar os alertas nativos.
+ * Dispara uma notificação de teste para o usuário validar os alertas nativos.
+ * Suporta disparo imediato (trigger: null) e disparo com delay para teste na tela de bloqueio.
  */
-export async function sendTestNotification(): Promise<boolean> {
+export async function sendTestNotification(delaySeconds: number = 0): Promise<boolean> {
   if (Platform.OS === 'web') return false;
 
-  const granted = await requestNotificationPermission();
-  if (!granted) return false;
+  const perm = await getNotificationPermissionStatus();
+  if (perm !== 'granted') {
+    const granted = await requestNotificationPermission();
+    if (!granted) return false;
+  }
 
   try {
     if (Platform.OS === 'android') {
@@ -217,20 +218,34 @@ export async function sendTestNotification(): Promise<boolean> {
       });
     }
 
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '🔔 Teste de Notificação • Yelo',
-        body: 'Seus lembretes de atendimento estão ativos e funcionando no seu aparelho!',
-        data: { type: 'test' },
-        sound: true,
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: 1,
-        repeats: false,
-        channelId: CHANNEL_ID,
-      },
-    });
+    if (delaySeconds > 0) {
+      // Disparo agendado para o usuário poder bloquear o celular ou minimizar o app
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🔔 Teste de Notificação • Yelo',
+          body: 'Seus lembretes de atendimento estão ativos e funcionando no seu aparelho!',
+          data: { type: 'test' },
+          sound: 'default',
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: delaySeconds,
+          repeats: false,
+          channelId: CHANNEL_ID,
+        },
+      });
+    } else {
+      // Disparo imediato (trigger: null)
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🔔 Teste de Notificação • Yelo',
+          body: 'Seus lembretes de atendimento estão ativos e funcionando no seu aparelho!',
+          data: { type: 'test' },
+          sound: 'default',
+        },
+        trigger: null,
+      });
+    }
     return true;
   } catch (e) {
     console.error('Erro ao agendar notificação de teste:', e);

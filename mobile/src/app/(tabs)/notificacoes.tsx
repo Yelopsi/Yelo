@@ -231,15 +231,33 @@ export default function NotificacoesScreen() {
     }
   };
 
+  const [testFeedback, setTestFeedback] = useState<string | null>(null);
+
   // Disparo de notificação de teste
   const handleTestNotification = async () => {
-    if (permissionStatus !== 'granted') {
+    setTestFeedback(null);
+    let perm = permissionStatus;
+    if (perm !== 'granted') {
       const granted = await requestNotificationPermission();
-      setPermissionStatus(granted ? 'granted' : 'denied');
+      perm = granted ? 'granted' : 'denied';
+      setPermissionStatus(perm);
       if (!granted) {
         Alert.alert(
-          'Permissão Necessária',
-          'Permita as notificações para testar o envio de alertas.'
+          'Permissão no iOS / Expo Go',
+          'Para receber notificações no seu iPhone, abra os Ajustes do iOS e ative as notificações para o Expo Go (Alertas, Banners e Sons).',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+              text: 'Abrir Ajustes do iPhone',
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              },
+            },
+          ]
         );
         return;
       }
@@ -247,18 +265,13 @@ export default function NotificacoesScreen() {
 
     try {
       setIsTesting(true);
-      const ok = await sendTestNotification();
-      if (ok) {
-        Alert.alert(
-          'Disparado! 🔔',
-          'Enviamos uma notificação de teste. Ela aparecerá no topo da sua tela em instantes.'
-        );
-      } else {
-        Alert.alert(
-          'Aviso',
-          'Não foi possível disparar a notificação de teste neste dispositivo.'
-        );
-      }
+      // Dispara imediatamente e também agenda uma para 3 segundos depois
+      await sendTestNotification(0);
+      await sendTestNotification(3);
+
+      setTestFeedback(
+        '🔔 Notificação enviada! O banner deve descer no topo agora. Se preferir, bloqueie a tela em até 3s para ver na tela de bloqueio.'
+      );
     } catch {
       Alert.alert('Erro', 'Ocorreu uma falha ao enviar o teste.');
     } finally {
@@ -565,42 +578,6 @@ export default function NotificacoesScreen() {
             </View>
           </View>
 
-          {/* SEÇÃO 4: FINANCEIRO & PAGAMENTOS */}
-          <View className="mx-6 mb-2 mt-2">
-            <Text className="font-title text-[18px] text-[#1B4332]">
-              Financeiro & Assinatura
-            </Text>
-          </View>
-
-          <View
-            className="mx-6 mb-5 bg-white border border-[#e5e7eb] rounded-[18px] p-5 shadow-sm"
-            style={{ borderRadius: 18 }}
-          >
-            {/* Pagamentos */}
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center flex-1 mr-3">
-                <View className="w-10 h-10 rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
-                  <Feather name="credit-card" size={18} color="#1B4332" />
-                </View>
-                <View className="flex-1">
-                  <Text className="font-sans font-bold text-[15px] text-[#1B4332]">
-                    Pagamentos
-                  </Text>
-                  <Text className="font-sans text-[12px] text-[#6b7280]">
-                    Confirmações de sessões pagas e faturas da assinatura
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={preferences.payments}
-                onValueChange={(val) => handleTogglePreference('payments', val)}
-                trackColor={{ false: '#e5e7eb', true: '#1B4332' }}
-                thumbColor="#ffffff"
-                ios_backgroundColor="#e5e7eb"
-              />
-            </View>
-          </View>
-
           {/* STATUS DO DISPOSITIVO & TESTE NATIVO */}
           <View
             className="mx-6 mb-5 bg-white border border-[#e5e7eb] rounded-[18px] p-5 shadow-sm"
@@ -665,24 +642,33 @@ export default function NotificacoesScreen() {
               </View>
             </View>
 
-            {/* Link para Ajustes do Celular se pendente */}
-            {permissionStatus !== 'granted' && (
-              <TouchableOpacity
-                onPress={() => {
-                  if (Platform.OS === 'ios') {
-                    Linking.openURL('app-settings:');
-                  } else {
-                    Linking.openSettings();
-                  }
-                }}
-                className="w-full py-2.5 mb-3 rounded-full border border-[#d97706] bg-[#fffbeb] items-center justify-center flex-row"
-                activeOpacity={0.7}
-              >
-                <Feather name="settings" size={14} color="#b45309" style={{ marginRight: 6 }} />
-                <Text className="font-sans font-bold text-[12px] text-[#b45309]">
-                  Habilitar Notificações nos Ajustes do Celular
+            {/* Link para Ajustes do Celular */}
+            <TouchableOpacity
+              onPress={() => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              }}
+              className="w-full py-2.5 mb-3 rounded-full border border-[#d1d5db] bg-[#f9fafb] items-center justify-center flex-row"
+              activeOpacity={0.7}
+            >
+              <Feather name="settings" size={14} color="#4b5563" style={{ marginRight: 6 }} />
+              <Text className="font-sans font-bold text-[12px] text-[#4b5563]">
+                {Platform.OS === 'ios'
+                  ? 'Ajustes do iPhone > Expo Go > Notificações'
+                  : 'Abrir Configurações do Sistema'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Feedback inline do teste */}
+            {testFeedback && (
+              <View className="mb-3.5 p-3.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-[14px]">
+                <Text className="font-sans text-[12px] text-[#166534] leading-relaxed">
+                  {testFeedback}
                 </Text>
-              </TouchableOpacity>
+              </View>
             )}
 
             {/* Botão de Teste Rápido */}
