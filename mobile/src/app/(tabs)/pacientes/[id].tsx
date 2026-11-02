@@ -738,34 +738,40 @@ export default function PacienteDetailScreen() {
                 <TouchableOpacity
                   onPress={() => setConfirmDelete(true)}
                   disabled={isSaving || isDeleting}
-                  className="bg-[#fef2f2] border border-[#fecaca] rounded-full py-3.5 items-center justify-center flex-row"
+                  className="rounded-full py-3.5 items-center justify-center flex-row"
+                  style={{ backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca' }}
                 >
                   <Feather name="trash-2" size={15} color="#d32f2f" style={{ marginRight: 7 }} />
-                  <Text className="font-sans font-bold text-[#d32f2f] text-[14px]">
+                  <Text className="font-sans font-bold text-[14px]" style={{ color: '#d32f2f' }}>
                     Excluir Paciente
                   </Text>
                 </TouchableOpacity>
               ) : (
-                <View className="bg-[#fef2f2] border border-[#fecaca] rounded-[20px] p-4 items-center">
-                  <Text className="font-sans font-bold text-[13px] text-[#991b1b] mb-3 text-center">
+                <View
+                  className="rounded-[20px] p-4 items-center"
+                  style={{ backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca' }}
+                >
+                  <Text className="font-sans font-bold text-[13px] mb-3 text-center" style={{ color: '#991b1b' }}>
                     Tem certeza que deseja excluir {patient.nome}?
                   </Text>
                   <View className="flex-row w-full">
                     <TouchableOpacity
                       onPress={() => setConfirmDelete(false)}
-                      className="flex-1 bg-white border border-[#e5e7eb] rounded-full py-2.5 mr-2 items-center"
+                      className="flex-1 bg-white rounded-full py-2.5 mr-2 items-center"
+                      style={{ borderWidth: 1, borderColor: '#e5e7eb' }}
                     >
-                      <Text className="font-sans font-bold text-[13px] text-[#495057]">Cancelar</Text>
+                      <Text className="font-sans font-bold text-[13px]" style={{ color: '#495057' }}>Cancelar</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={handleDeletePatient}
                       disabled={isDeleting}
-                      className="flex-1 bg-[#d32f2f] rounded-full py-2.5 ml-2 items-center justify-center"
+                      className="flex-1 rounded-full py-2.5 ml-2 items-center justify-center"
+                      style={{ backgroundColor: '#d32f2f' }}
                     >
                       {isDeleting ? (
                         <ActivityIndicator size="small" color="#ffffff" />
                       ) : (
-                        <Text className="font-sans font-bold text-[13px] text-white">Confirmar Exclusão</Text>
+                        <Text className="font-sans font-bold text-[13px]" style={{ color: '#ffffff' }}>Confirmar Exclusão</Text>
                       )}
                     </TouchableOpacity>
                   </View>

@@ -1403,10 +1403,11 @@ export default function PacientesScreen() {
                 <TouchableOpacity
                   disabled={isActionLoading}
                   onPress={() => setConfirmDeleteMode(true)}
-                  className="bg-[#fef2f2] border border-[#fecaca] rounded-full py-3.5 px-5 flex-row items-center justify-center"
+                  className="rounded-full py-3.5 px-5 flex-row items-center justify-center"
+                  style={{ backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca' }}
                 >
                   <Feather name="trash-2" size={16} color="#d32f2f" style={{ marginRight: 8 }} />
-                  <Text className="font-sans font-bold text-[#d32f2f] text-[15px]">
+                  <Text className="font-sans font-bold text-[15px]" style={{ color: '#d32f2f' }}>
                     Excluir Agendamento
                   </Text>
                 </TouchableOpacity>
@@ -1414,11 +1415,14 @@ export default function PacientesScreen() {
             ) : (
               /* Confirmação de Exclusão (Suporta evento único ou série recorrente!) */
               <View className="pt-1">
-                <View className="bg-[#fef2f2] border border-[#fecaca] rounded-[18px] p-3.5 mb-4">
-                  <Text className="font-sans font-bold text-[#991b1b] text-[14px] mb-1">
+                <View
+                  className="rounded-[18px] p-3.5 mb-4"
+                  style={{ backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca' }}
+                >
+                  <Text className="font-sans font-bold text-[14px] mb-1" style={{ color: '#991b1b' }}>
                     Confirmar exclusão?
                   </Text>
-                  <Text className="font-sans text-[#7f1d1d] text-[13px]">
+                  <Text className="font-sans text-[13px]" style={{ color: '#7f1d1d' }}>
                     {futureRecurringIds.length > 0
                       ? `Encontramos mais ${futureRecurringIds.length} horário(s) futuro(s) desta série recorrente. Como deseja excluir?`
                       : 'Este horário será removido permanentemente da sua agenda.'}
@@ -1433,9 +1437,10 @@ export default function PacientesScreen() {
                   <>
                     <TouchableOpacity
                       onPress={() => handleDeleteEvent(false)}
-                      className="rounded-full py-3.5 px-5 items-center justify-center mb-2.5 border"
+                      className="rounded-full py-3.5 px-5 items-center justify-center mb-2.5"
                       style={{
                         backgroundColor: futureRecurringIds.length > 0 ? '#ffffff' : '#d32f2f',
+                        borderWidth: 1,
                         borderColor: '#d32f2f'
                       }}
                     >
@@ -1450,19 +1455,22 @@ export default function PacientesScreen() {
                     {futureRecurringIds.length > 0 && (
                       <TouchableOpacity
                         onPress={() => handleDeleteEvent(true)}
-                        className="bg-[#d32f2f] rounded-full py-3.5 px-5 items-center justify-center mb-2.5"
+                        className="rounded-full py-3.5 px-5 flex-row items-center justify-center mb-2.5"
+                        style={{ backgroundColor: '#d32f2f', borderWidth: 1, borderColor: '#d32f2f' }}
                       >
-                        <Text className="font-sans font-bold text-white text-[15px]">
-                          Excluir este e os próximos ({futureRecurringIds.length + 1})
+                        <Feather name="trash-2" size={16} color="#ffffff" style={{ marginRight: 8 }} />
+                        <Text className="font-sans font-bold text-[15px]" style={{ color: '#ffffff' }}>
+                          {`Excluir este e os ${futureRecurringIds.length} futuros`}
                         </Text>
                       </TouchableOpacity>
                     )}
 
                     <TouchableOpacity
                       onPress={() => setConfirmDeleteMode(false)}
-                      className="bg-[#f1f3f5] rounded-full py-3 px-5 items-center justify-center"
+                      className="rounded-full py-3 px-5 items-center justify-center"
+                      style={{ backgroundColor: '#f1f3f5' }}
                     >
-                      <Text className="font-sans font-semibold text-[#495057] text-[14px]">
+                      <Text className="font-sans font-semibold text-[14px]" style={{ color: '#495057' }}>
                         Voltar
                       </Text>
                     </TouchableOpacity>
