@@ -3,10 +3,23 @@ import YeloScrollView from '../../components/YeloScrollView';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 
 export default function EvolucaoScreen() {
   const router = useRouter();
+  const navigation = useNavigation<any>();
+
+  const navigateTo = (targetTab: string) => {
+    try {
+      if (navigation && typeof navigation.navigate === 'function') {
+        navigation.navigate(targetTab);
+      } else {
+        router.navigate(`/(tabs)/${targetTab}` as any);
+      }
+    } catch {
+      router.navigate(`/(tabs)/${targetTab}` as any);
+    }
+  };
 
   return (
     <View className="flex-1 bg-[#f9fafb]">
@@ -30,7 +43,7 @@ export default function EvolucaoScreen() {
           <View className="px-6 pb-32">
             
             {/* Card 1: Minha Jornada */}
-            <TouchableOpacity onPress={() => router.navigate('/jornada')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
+            <TouchableOpacity onPress={() => navigateTo('jornada')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">🚀</Text>
               </View>
@@ -41,7 +54,7 @@ export default function EvolucaoScreen() {
             </TouchableOpacity>
 
             {/* Card 2: Meus Artigos */}
-            <TouchableOpacity onPress={() => router.navigate('/blog')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
+            <TouchableOpacity onPress={() => navigateTo('blog')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">✍️</Text>
               </View>
@@ -52,7 +65,7 @@ export default function EvolucaoScreen() {
             </TouchableOpacity>
 
             {/* Card 3: Fórum de Discussão */}
-            <TouchableOpacity onPress={() => router.navigate('/forum')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
+            <TouchableOpacity onPress={() => navigateTo('forum')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">💬</Text>
               </View>
@@ -63,7 +76,7 @@ export default function EvolucaoScreen() {
             </TouchableOpacity>
 
             {/* Card 4: Perguntas da Comunidade */}
-            <TouchableOpacity onPress={() => router.navigate('/comunidade')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
+            <TouchableOpacity onPress={() => navigateTo('comunidade')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">❓</Text>
               </View>
@@ -74,7 +87,7 @@ export default function EvolucaoScreen() {
             </TouchableOpacity>
 
             {/* Card 5: Comunidade Yelo */}
-            <TouchableOpacity onPress={() => router.navigate('/comunidade_yelo')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
+            <TouchableOpacity onPress={() => navigateTo('comunidade_yelo')} className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">🎓</Text>
               </View>

@@ -21,7 +21,7 @@ export default function MobileHeader() {
       }}
     >
       {/* AVATAR */}
-      <TouchableOpacity onPress={() => router.navigate('/meu_perfil')} className="relative mr-2">
+      <TouchableOpacity onPress={() => router.navigate('/(tabs)/meu_perfil')} className="relative mr-2">
         <Image 
           source={{ uri: fotoUri }} 
           className="w-[36px] h-[36px] rounded-full border-2 border-[#1B4332]"

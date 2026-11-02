@@ -22,6 +22,14 @@ export default function FinanceiroScreen() {
     console.log('[MOUNT] FinanceiroScreen montada com sucesso!');
   }, []);
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.navigate('/(tabs)/clinica');
+    }
+  };
+
   return (
     <View className="flex-1 bg-[#f9fafb]">
       <YeloScrollView 
@@ -34,7 +42,7 @@ export default function FinanceiroScreen() {
         <View className="mx-6 mt-6 mb-6 bg-[#1B4332] p-[22px] rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
           <View className="flex-row items-center mb-2">
             <TouchableOpacity 
-              onPress={() => router.back()} 
+              onPress={handleBack} 
               className="w-10 h-10 bg-white/20 rounded-full items-center justify-center mr-4"
             >
               <Feather name="arrow-left" size={20} color="white" />

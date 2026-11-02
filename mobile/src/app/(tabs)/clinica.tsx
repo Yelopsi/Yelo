@@ -4,26 +4,36 @@ import YeloScrollView from '../../components/YeloScrollView';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useRouter, usePathname } from 'expo-router';
+import { useRouter, usePathname, useNavigation } from 'expo-router';
 
 export default function ClinicaScreen() {
   const router = useRouter();
+  const navigation = useNavigation<any>();
   const currentPath = usePathname();
   const [debugTrace, setDebugTrace] = useState<string | null>(null);
 
-  const handleNavigate = (cardTitle: string, targetRoute: string) => {
+  const handleNavigate = (cardTitle: string, targetTab: string) => {
     const timestamp = new Date().toLocaleTimeString();
-    const logInfo = `[${timestamp}] De: ${currentPath} -> Para: ${targetRoute} ("${cardTitle}")`;
+    const logInfo = `[${timestamp}] De: ${currentPath} -> Aba: ${targetTab} ("${cardTitle}")`;
     console.log('[DEBUG_RASTREIO_NAV]', logInfo);
     setDebugTrace(logInfo);
 
     try {
-      router.navigate(targetRoute as any);
+      if (navigation && typeof navigation.navigate === 'function') {
+        navigation.navigate(targetTab);
+      } else {
+        router.navigate(`/(tabs)/${targetTab}` as any);
+      }
     } catch (err: any) {
-      console.error('[DEBUG_RASTREIO_ERROR]', err);
-      const errMsg = `Erro ao navegar: ${err?.message || err}`;
-      setDebugTrace(errMsg);
-      Alert.alert('Rastreio de Navegação', errMsg);
+      console.warn('[DEBUG_RASTREIO_FALLBACK]', err);
+      try {
+        router.navigate(`/(tabs)/${targetTab}` as any);
+      } catch (innerErr: any) {
+        console.error('[DEBUG_RASTREIO_ERROR]', innerErr);
+        const errMsg = `Erro ao navegar: ${innerErr?.message || innerErr}`;
+        setDebugTrace(errMsg);
+        Alert.alert('Rastreio de Navegação', errMsg);
+      }
     }
   };
 
@@ -63,7 +73,7 @@ export default function ClinicaScreen() {
             
             {/* Card 1: Meus Pacientes */}
             <TouchableOpacity 
-              onPress={() => handleNavigate('Meus Pacientes', '/pacientes')}
+              onPress={() => handleNavigate('Meus Pacientes', 'pacientes')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -77,7 +87,7 @@ export default function ClinicaScreen() {
 
             {/* Card 2: Financeiro */}
             <TouchableOpacity 
-              onPress={() => handleNavigate('Financeiro', '/financeiro')}
+              onPress={() => handleNavigate('Financeiro', 'financeiro')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -91,7 +101,7 @@ export default function ClinicaScreen() {
 
             {/* Card 3: Métricas & Mercado */}
             <TouchableOpacity 
-              onPress={() => handleNavigate('Métricas & Mercado', '/analytics')}
+              onPress={() => handleNavigate('Métricas & Mercado', 'analytics')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -105,7 +115,7 @@ export default function ClinicaScreen() {
 
             {/* Card 4: Análise de Favoritos */}
             <TouchableOpacity 
-              onPress={() => handleNavigate('Análise de Favoritos', '/favoritos-analytics')}
+              onPress={() => handleNavigate('Análise de Favoritos', 'favoritos-analytics')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -119,7 +129,7 @@ export default function ClinicaScreen() {
 
             {/* Card 5: Calculadora */}
             <TouchableOpacity 
-              onPress={() => handleNavigate('Calculadora de Honorários', '/calculadora')}
+              onPress={() => handleNavigate('Calculadora de Honorários', 'calculadora')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#fef3c7] items-center justify-center mr-5">
@@ -133,7 +143,7 @@ export default function ClinicaScreen() {
 
             {/* Card 6: Manual */}
             <TouchableOpacity 
-              onPress={() => handleNavigate('Manual de Conversão', '/manual-conversao')}
+              onPress={() => handleNavigate('Manual de Conversão', 'manual-conversao')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#dcfce7] items-center justify-center mr-5">

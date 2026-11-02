@@ -97,7 +97,7 @@ export default function AnalyticsScreen() {
         <View className="mx-5 mt-5 mb-6 bg-[#1B4332] p-[22px] rounded-[20px] shadow-sm">
           <View className="flex-row items-center mb-2">
             <TouchableOpacity 
-              onPress={() => router.back()} 
+              onPress={() => router.canGoBack() ? router.back() : router.navigate('/(tabs)/clinica')} 
               className="w-10 h-10 bg-white/20 rounded-full items-center justify-center mr-3"
             >
               <Feather name="arrow-left" size={20} color="white" />

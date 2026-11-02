@@ -48,7 +48,7 @@ export default function ManualConversaoScreen() {
         {/* HEADER */}
         <View className="mx-6 mt-6 mb-6">
           <TouchableOpacity 
-            onPress={() => router.back()} 
+            onPress={() => router.canGoBack() ? router.back() : router.navigate('/(tabs)/clinica')} 
             className="flex-row items-center mb-4"
           >
             <Feather name="arrow-left" size={20} color="#666" />
