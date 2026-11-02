@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../models');
 const { Op } = require('sequelize');
 const { verifyTokenLocal } = require('../middlewares/localAuth');
+const { expandAppointmentsInRange } = require('../utils/recurrenceExpander');
 
 router.get('/dashboard', verifyTokenLocal, async (req, res) => {
     try {
@@ -11,20 +12,29 @@ router.get('/dashboard', verifyTokenLocal, async (req, res) => {
         let startDate, endDate;
         
         if (month) {
-            startDate = new Date(`${month}-01`);
-            endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+            const [y, m] = String(month).split('-').map(Number);
+            startDate = new Date(y, (m || 1) - 1, 1, 0, 0, 0, 0);
+            endDate = new Date(y, m || 1, 0, 23, 59, 59, 999);
         } else {
             const now = new Date();
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         }
 
-        const appointments = await db.Appointment.findAll({
+        const rawAppointments = await db.Appointment.findAll({
             where: {
                 psychologistId: decoded.id,
-                start: { [Op.between]: [startDate, endDate] }
+                [Op.or]: [
+                    { start: { [Op.between]: [startDate, endDate] } },
+                    {
+                        recurrence: { [Op.in]: ['weekly', 'biweekly', 'monthly'] },
+                        start: { [Op.lte]: endDate }
+                    }
+                ]
             }
         });
+
+        const appointments = expandAppointmentsInRange(rawAppointments, startDate, endDate);
 
         const expenses = await db.Expense.findAll({
             where: {

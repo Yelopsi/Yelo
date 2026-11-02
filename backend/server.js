@@ -345,6 +345,12 @@ const startServer = async () => {
 
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS title VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE;');
+
+            // Colunas leves para recorrência infinita na agenda (estilo iOS Calendar / RRULE)
+            await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "recurrence" VARCHAR(32) DEFAULT \'none\';');
+            await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "recurrenceUntil" TIMESTAMP WITH TIME ZONE NULL;');
+            await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "recurrenceExceptions" TEXT DEFAULT \'[]\';');
+            await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "seriesId" INTEGER NULL;');
         } catch(e) {
             console.warn('⚠️ Aviso ao tentar criar colunas manualmente (podem já existir ou banco travado):', e.message);
         }

@@ -24,3 +24,4 @@ export function dateToTimeString(date: Date): string {
   const m = String(date.getMinutes()).padStart(2, '0');
   return `${h}:${m}`;
 }
+

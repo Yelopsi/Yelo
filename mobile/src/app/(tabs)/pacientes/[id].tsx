@@ -142,9 +142,10 @@ export default function PacienteDetailScreen() {
     if (!patientId) return;
     try {
       setIsLoading(true);
+      const historyHorizon = new Date(Date.now() + 31 * 24 * 60 * 60 * 1000).toISOString();
       const [resPatient, resAppts] = await Promise.all([
         api.get(`/api/my-patients/${patientId}`).catch(() => null),
-        api.get('/api/appointments').catch(() => ({ data: [] }))
+        api.get(`/api/appointments?to=${encodeURIComponent(historyHorizon)}`).catch(() => ({ data: [] }))
       ]);
 
       let resolvedName = params.nome || '';

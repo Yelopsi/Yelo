@@ -22,6 +22,13 @@ import { StatusBar } from 'expo-status-bar';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import NativeSelectMenu, { type NativeSelectOption } from '../../../components/NativeSelectMenu';
 import NativeTimePicker from '../../../components/NativeTimePicker';
+import {
+  expandAppointmentsForLocalDay,
+  expandAppointmentsInLocalRange,
+  isRecurringRuleRow,
+  toLocalISODate,
+  type RecurrenceFrequency,
+} from '../../../utils/recurrenceExpander';
 import api from '../../../services/api';
 
 LocaleConfig.locales['pt-br'] = {
@@ -41,9 +48,6 @@ LocaleConfig.locales['pt-br'] = {
   today: 'Hoje'
 };
 LocaleConfig.defaultLocale = 'pt-br';
-
-const toLocalISODate = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 // ============================================================
 // CONSTANTES DE LAYOUT & ESPAÇAMENTO (CALIBRAÇÃO BOTTOM NAV)
@@ -101,10 +105,11 @@ const DURATION_OPTIONS = [
   { label: '1h 30m', pickerLabel: '1h 30min (90 min)', value: 90 }
 ];
 
-const RECURRENCE_OPTIONS: { label: string; value: 'none' | 'weekly' | 'biweekly' }[] = [
+const RECURRENCE_OPTIONS: { label: string; value: RecurrenceFrequency }[] = [
   { label: 'Não repetir', value: 'none' },
   { label: 'Semanal', value: 'weekly' },
-  { label: 'Quinzenal', value: 'biweekly' }
+  { label: 'Quinzenal', value: 'biweekly' },
+  { label: 'Mensal', value: 'monthly' }
 ];
 
 const STATUS_QUICK_OPTIONS: { label: string; value: string; color: string; bg: string }[] = [
@@ -162,6 +167,7 @@ export default function PacientesScreen() {
   const [modalNewPatient, setModalNewPatient] = useState(false);
   const [modalNewAppt, setModalNewAppt] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [calendarFocusDate, setCalendarFocusDate] = useState<Date>(() => new Date());
 
   // Estados de Opções / Edição / Exclusão de Agendamento (Segurar no evento)
   const [selectedEventForAction, setSelectedEventForAction] = useState<any | null>(null);
@@ -182,7 +188,7 @@ export default function PacientesScreen() {
   const [apptPatientId, setApptPatientId] = useState<string>('');
   const [apptTime, setApptTime] = useState<string>('14:00');
   const [apptDuration, setApptDuration] = useState<number>(50);
-  const [apptRecurrence, setApptRecurrence] = useState<'none' | 'weekly' | 'biweekly'>('none');
+  const [apptRecurrence, setApptRecurrence] = useState<RecurrenceFrequency>('none');
   const [isSubmittingAppt, setIsSubmittingAppt] = useState(false);
 
   const apptFormScrollRef = useRef<any>(null);
@@ -252,6 +258,10 @@ export default function PacientesScreen() {
     const diffMins = Math.round((endDt.getTime() - startDt.getTime()) / 60000);
     const validDuration = DURATION_OPTIONS.some((o) => o.value === diffMins) ? diffMins : 50;
     const startHHMM = formatHHMM(startDt);
+    const currentRec: RecurrenceFrequency =
+      evt.recurrence === 'weekly' || evt.recurrence === 'biweekly' || evt.recurrence === 'monthly'
+        ? evt.recurrence
+        : 'none';
 
     setSelectedDate(new Date(startDt.getFullYear(), startDt.getMonth(), startDt.getDate()));
     setEditingAppt(evt);
@@ -261,15 +271,15 @@ export default function PacientesScreen() {
     }
     setApptTime(startHHMM);
     setApptDuration(validDuration);
-    setApptRecurrence('none');
+    setApptRecurrence(currentRec);
 
     setSelectedEventForAction(null);
     setConfirmDeleteMode(false);
     setModalNewAppt(true);
   };
 
-  // Detecta ocorrências futuras da mesma série recorrente (mesmo paciente/tipo, dia da semana e hora:minuto)
-  const futureRecurringIds = useMemo(() => {
+  // Compatibilidade retroativa: detecta linhas avulsas antigas criadas em lote antes das regras infinitas
+  const legacyFutureRecurringIds = useMemo(() => {
     if (!selectedEventForAction || !selectedEventForAction.start) return [];
     const targetStart = new Date(selectedEventForAction.start);
     const targetDay = targetStart.getDay();
@@ -279,7 +289,9 @@ export default function PacientesScreen() {
 
     return appointments
       .filter((a: any) => {
-        if (!a.start || String(a.id) === String(selectedEventForAction.id)) return false;
+        if (!a.start || isRecurringRuleRow(a) || String(a.id) === String(selectedEventForAction.id)) {
+          return false;
+        }
         const d = new Date(a.start);
         if (d <= targetStart) return false;
         if (isAvail) {
@@ -293,7 +305,18 @@ export default function PacientesScreen() {
       .map((a: any) => a.id);
   }, [selectedEventForAction, appointments]);
 
-  // Atualizar Status Rápido de um Agendamento
+  // Identifica se o evento selecionado pertence a uma repetição contínua (nova regra infinita ou série antiga)
+  const isSelectedEventRecurring = useMemo(() => {
+    if (!selectedEventForAction) return false;
+    return Boolean(
+      selectedEventForAction.isRecurring ||
+        isRecurringRuleRow(selectedEventForAction) ||
+        selectedEventForAction.seriesId ||
+        legacyFutureRecurringIds.length > 0
+    );
+  }, [selectedEventForAction, legacyFutureRecurringIds]);
+
+  // Atualizar Status Rápido de um Agendamento (materializa apenas o dia em regras infinitas)
   const handleQuickUpdateStatus = async (newStatus: string) => {
     if (!selectedEventForAction) return;
     try {
@@ -303,7 +326,9 @@ export default function PacientesScreen() {
         start: selectedEventForAction.start,
         end: selectedEventForAction.end,
         value: selectedEventForAction.value || 0,
-        title: selectedEventForAction.title
+        title: selectedEventForAction.title,
+        occurrenceDate: selectedEventForAction.occurrenceDate,
+        scope: 'single'
       });
       setSelectedEventForAction(null);
       await fetchData();
@@ -314,19 +339,24 @@ export default function PacientesScreen() {
     }
   };
 
-  // Excluir Agendamento (apenas este OU este + próximos futuros)
+  // Excluir Agendamento (apenas este dia OU este + futuros, sem limite artificial)
   const handleDeleteEvent = async (deleteFutureSeries = false) => {
     if (!selectedEventForAction) return;
     try {
       setIsActionLoading(true);
-      if (deleteFutureSeries && futureRecurringIds.length > 0) {
-        const idsToDelete = [selectedEventForAction.id, ...futureRecurringIds];
+      const scope = deleteFutureSeries ? 'future' : 'single';
+      const occParam = selectedEventForAction.occurrenceDate
+        ? `&occurrenceDate=${encodeURIComponent(selectedEventForAction.occurrenceDate)}`
+        : '';
+
+      await api.delete(`/api/appointments/${selectedEventForAction.id}?scope=${scope}${occParam}`);
+
+      if (deleteFutureSeries && legacyFutureRecurringIds.length > 0) {
         await api.delete('/api/appointments/bulk', {
-          data: { ids: idsToDelete }
+          data: { ids: legacyFutureRecurringIds }
         });
-      } else {
-        await api.delete(`/api/appointments/${selectedEventForAction.id}`);
       }
+
       setSelectedEventForAction(null);
       setConfirmDeleteMode(false);
       await fetchData();
@@ -337,13 +367,13 @@ export default function PacientesScreen() {
     }
   };
 
-  // Carregar dados reais da API
+  // Carregar dados reais da API (modo compacto `rules`: 1 única linha por série infinita)
   const fetchData = useCallback(async (showSpinner = true) => {
     try {
       if (showSpinner) setIsLoading(true);
       const [resPatients, resAppts] = await Promise.all([
         api.get('/api/my-patients').then(r => ({ ok: true, data: r.data })).catch(() => ({ ok: false, data: [] })),
-        api.get('/api/appointments').catch(() => ({ data: [] }))
+        api.get('/api/appointments?mode=rules').catch(() => ({ data: [] }))
       ]);
 
       const loadedPatients = resPatients.ok
@@ -406,10 +436,14 @@ export default function PacientesScreen() {
     setSelectedDate(new Date());
   };
 
-  // Próximos Atendimentos (mantém referência ao objeto original para permitir editar/excluir ao segurar)
+  // Próximos Atendimentos (expande regras recorrentes nos próximos 45 dias em memória)
   const upcomingList = useMemo(() => {
-    const realUpcoming = appointments
-      .filter((a: any) => (a.status === 'scheduled' || a.status === 'confirmed') && new Date(a.start) >= new Date())
+    const now = new Date();
+    const horizon = new Date(now.getTime() + 45 * 24 * 60 * 60 * 1000);
+    const expandedUpcoming = expandAppointmentsInLocalRange(appointments, now, horizon);
+
+    const realUpcoming = expandedUpcoming
+      .filter((a: any) => (a.status === 'scheduled' || a.status === 'confirmed') && new Date(a.start) >= now)
       .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
       .slice(0, 5)
       .map((a: any) => {
@@ -469,10 +503,15 @@ export default function PacientesScreen() {
   const selectedDateISO = useMemo(() => toLocalISODate(selectedDate), [selectedDate]);
   const isSelectedToday = useMemo(() => isSameLocalDay(selectedDate, new Date()), [selectedDate]);
 
-  // Datas marcadas no Calendário Mensal (bolinha verde nos dias com agendamento + destaque no dia selecionado)
+  // Datas marcadas no Calendário Mensal (expande sob demanda para qualquer ano/mês navegado, inclusive infinito)
   const markedCalendarDates = useMemo(() => {
     const marks: Record<string, any> = {};
-    appointments.forEach((a: any) => {
+    const refDate = showCalendarModal ? calendarFocusDate : selectedDate;
+    const rangeStart = new Date(refDate.getFullYear(), refDate.getMonth() - 1, 1, 0, 0, 0, 0);
+    const rangeEnd = new Date(refDate.getFullYear(), refDate.getMonth() + 2, 0, 23, 59, 59, 999);
+    const expandedMonth = expandAppointmentsInLocalRange(appointments, rangeStart, rangeEnd);
+
+    expandedMonth.forEach((a: any) => {
       if (!a.start || a.status === 'cancelled' || a.status === 'available') return;
       const d = new Date(a.start);
       if (!isNaN(d.getTime())) {
@@ -488,7 +527,7 @@ export default function PacientesScreen() {
       dotColor: '#ffffff'
     };
     return marks;
-  }, [appointments, selectedDateISO]);
+  }, [appointments, selectedDate, selectedDateISO, calendarFocusDate, showCalendarModal]);
 
   const selectedDurationOption = useMemo(() => {
     return DURATION_OPTIONS.find(opt => opt.value === apptDuration) || DURATION_OPTIONS[3];
@@ -554,14 +593,10 @@ export default function PacientesScreen() {
     return formatHHMM(d);
   }, [apptTime, apptDuration, apptType]);
 
-  // Agendamentos do dia selecionado ordenados cronologicamente
+  // Agendamentos do dia selecionado ordenados cronologicamente (projeta regras infinitas em O(1))
   const dayAppointments = useMemo(() => {
-    return appointments
-      .filter((a: any) => {
-        if (!a.start || a.status === 'cancelled') return false;
-        const d = new Date(a.start);
-        return !isNaN(d.getTime()) && isSameLocalDay(d, selectedDate);
-      })
+    return expandAppointmentsForLocalDay(appointments, selectedDate)
+      .filter((a: any) => a.start && a.status !== 'cancelled')
       .sort((a: any, b: any) => new Date(a.start).getTime() - new Date(b.start).getTime());
   }, [appointments, selectedDate]);
 
@@ -666,7 +701,50 @@ export default function PacientesScreen() {
     }
   };
 
-  // Salvar Agendamento (Criação OU Edição)
+  // Executa salvamento de Edição (com escopo 'single' ou 'future' para séries recorrentes)
+  const submitEditedAppt = async (
+    scope: 'single' | 'future',
+    startDt: Date,
+    endDt: Date,
+    patient: any,
+    finalTime: string
+  ) => {
+    if (!editingAppt) return;
+    try {
+      setIsSubmittingAppt(true);
+      const nextStatus =
+        apptType === 'available'
+          ? 'available'
+          : editingAppt.status === 'available'
+            ? 'scheduled'
+            : editingAppt.status || 'scheduled';
+
+      await api.put(`/api/appointments/${editingAppt.id}`, {
+        title: apptType === 'available' ? 'Horário Disponível' : (patient ? patient.nome : 'Consulta'),
+        start: startDt.toISOString(),
+        end: endDt.toISOString(),
+        patientId: apptType === 'available' ? null : (patient ? patient.id : null),
+        status: nextStatus,
+        value: apptType === 'available' ? 0 : (patient?.sessionValue || editingAppt.value || 150),
+        recurrence: apptRecurrence,
+        occurrenceDate: editingAppt.occurrenceDate,
+        scope
+      });
+
+      setModalNewAppt(false);
+      setEditingAppt(null);
+      await fetchData();
+      Alert.alert('Atualizado', `Agendamento atualizado para ${finalTime}!`);
+    } catch {
+      setModalNewAppt(false);
+      setEditingAppt(null);
+      Alert.alert('Agendamento', `Horário (${finalTime}) atualizado na sua agenda!`);
+    } finally {
+      setIsSubmittingAppt(false);
+    }
+  };
+
+  // Salvar Agendamento (Criação com regra infinita leve OU Edição)
   const handleSaveAppt = async () => {
     Keyboard.dismiss();
 
@@ -691,78 +769,46 @@ export default function PacientesScreen() {
       return;
     }
 
-    try {
-      setIsSubmittingAppt(true);
-
-      if (editingAppt) {
-        // MODO EDIÇÃO: Atualiza o agendamento existente
-        const nextStatus =
-          apptType === 'available'
-            ? 'available'
-            : editingAppt.status === 'available'
-              ? 'scheduled'
-              : editingAppt.status || 'scheduled';
-
-        await api.put(`/api/appointments/${editingAppt.id}`, {
-          title: apptType === 'available' ? 'Horário Disponível' : (patient ? patient.nome : 'Consulta'),
-          start: startDt.toISOString(),
-          end: endDt.toISOString(),
-          patientId: apptType === 'available' ? null : (patient ? patient.id : null),
-          status: nextStatus,
-          value: apptType === 'available' ? 0 : (patient?.sessionValue || editingAppt.value || 150)
-        });
-
-        setModalNewAppt(false);
-        setEditingAppt(null);
-        await fetchData();
-        Alert.alert('Atualizado', `Agendamento atualizado para ${finalTime}!`);
+    if (editingAppt) {
+      const isEditingRecurring = Boolean(
+        editingAppt.isRecurring || isRecurringRuleRow(editingAppt)
+      );
+      if (isEditingRecurring) {
+        Alert.alert(
+          'Agendamento recorrente',
+          'Deseja salvar as alterações apenas para este dia ou também para os agendamentos futuros?',
+          [
+            {
+              text: 'Apenas este dia',
+              onPress: () => submitEditedAppt('single', startDt, endDt, patient, finalTime)
+            },
+            {
+              text: 'Este e os futuros',
+              onPress: () => submitEditedAppt('future', startDt, endDt, patient, finalTime)
+            },
+            { text: 'Cancelar', style: 'cancel' }
+          ]
+        );
         return;
       }
 
-      // MODO CRIAÇÃO
-      if (apptRecurrence === 'none') {
-        if (apptType === 'available') {
-          await api.post('/api/appointments', {
-            title: 'Horário Disponível',
-            start: startDt.toISOString(),
-            end: endDt.toISOString(),
-            patientId: null,
-            status: 'available',
-            value: 0
-          });
-        } else {
-          await api.post('/api/appointments', {
-            title: patient ? patient.nome : 'Consulta',
-            start: startDt.toISOString(),
-            end: endDt.toISOString(),
-            patientId: patient ? patient.id : null,
-            status: 'scheduled',
-            value: patient?.sessionValue || 150
-          });
-        }
-      } else {
-        const occCount = apptRecurrence === 'weekly' ? 16 : 12;
-        const stepDays = apptRecurrence === 'weekly' ? 7 : 14;
-        const occurrences = [];
+      await submitEditedAppt('future', startDt, endDt, patient, finalTime);
+      return;
+    }
 
-        for (let i = 0; i < occCount; i++) {
-          const curStart = new Date(startDt);
-          curStart.setDate(curStart.getDate() + i * stepDays);
-          const curEnd = new Date(curStart.getTime() + durationMs);
+    try {
+      setIsSubmittingAppt(true);
 
-          occurrences.push({
-            title: apptType === 'available' ? 'Horário Disponível' : (patient ? patient.nome : 'Consulta'),
-            start: curStart.toISOString(),
-            end: curEnd.toISOString(),
-            patientId: apptType === 'available' ? null : (patient ? patient.id : null),
-            phone: apptType === 'session' && patient ? patient.telefone : null,
-            status: apptType === 'available' ? 'available' : 'scheduled',
-            value: apptType === 'session' && patient ? (patient.sessionValue || 0) : 0
-          });
-        }
-
-        await api.post('/api/appointments/bulk', { appointments: occurrences });
-      }
+      // MODO CRIAÇÃO: grava 1 única regra no banco (mesmo se Semanal, Quinzenal ou Mensal infinito!)
+      await api.post('/api/appointments', {
+        title: apptType === 'available' ? 'Horário Disponível' : (patient ? patient.nome : 'Consulta'),
+        start: startDt.toISOString(),
+        end: endDt.toISOString(),
+        patientId: apptType === 'available' ? null : (patient ? patient.id : null),
+        status: apptType === 'available' ? 'available' : 'scheduled',
+        value: apptType === 'available' ? 0 : (patient?.sessionValue || 150),
+        recurrence: apptRecurrence
+      });
 
       setModalNewAppt(false);
       await fetchData();
@@ -1511,18 +1557,18 @@ export default function PacientesScreen() {
                 </TouchableOpacity>
               </>
             ) : (
-              /* Confirmação de Exclusão (Suporta evento único ou série recorrente!) */
+              /* Confirmação de Exclusão (Estilo Calendário iOS: sem contagem numérica de sessões) */
               <View className="pt-1">
                 <View
                   className="rounded-[18px] p-3.5 mb-4"
                   style={{ backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fecaca' }}
                 >
                   <Text className="font-sans font-bold text-[14px] mb-1" style={{ color: '#991b1b' }}>
-                    Confirmar exclusão?
+                    {isSelectedEventRecurring ? 'Este é um agendamento recorrente' : 'Confirmar exclusão?'}
                   </Text>
                   <Text className="font-sans text-[13px]" style={{ color: '#7f1d1d' }}>
-                    {futureRecurringIds.length > 0
-                      ? `Encontramos mais ${futureRecurringIds.length} horário(s) futuro(s) desta série recorrente. Como deseja excluir?`
+                    {isSelectedEventRecurring
+                      ? 'Deseja excluir apenas este dia ou cancelar também os agendamentos futuros?'
                       : 'Este horário será removido permanentemente da sua agenda.'}
                   </Text>
                 </View>
@@ -1537,20 +1583,20 @@ export default function PacientesScreen() {
                       onPress={() => handleDeleteEvent(false)}
                       className="rounded-full py-3.5 px-5 items-center justify-center mb-2.5"
                       style={{
-                        backgroundColor: futureRecurringIds.length > 0 ? '#ffffff' : '#d32f2f',
+                        backgroundColor: isSelectedEventRecurring ? '#ffffff' : '#d32f2f',
                         borderWidth: 1,
                         borderColor: '#d32f2f'
                       }}
                     >
                       <Text
                         className="font-sans font-bold text-[15px]"
-                        style={{ color: futureRecurringIds.length > 0 ? '#d32f2f' : '#ffffff' }}
+                        style={{ color: isSelectedEventRecurring ? '#d32f2f' : '#ffffff' }}
                       >
-                        {futureRecurringIds.length > 0 ? 'Excluir apenas este dia' : 'Sim, excluir horário'}
+                        {isSelectedEventRecurring ? 'Excluir apenas este dia' : 'Sim, excluir horário'}
                       </Text>
                     </TouchableOpacity>
 
-                    {futureRecurringIds.length > 0 && (
+                    {isSelectedEventRecurring && (
                       <TouchableOpacity
                         onPress={() => handleDeleteEvent(true)}
                         className="rounded-full py-3.5 px-5 flex-row items-center justify-center mb-2.5"
@@ -1558,7 +1604,7 @@ export default function PacientesScreen() {
                       >
                         <Feather name="trash-2" size={16} color="#ffffff" style={{ marginRight: 8 }} />
                         <Text className="font-sans font-bold text-[15px]" style={{ color: '#ffffff' }}>
-                          {`Excluir este e os ${futureRecurringIds.length} futuros`}
+                          Cancelar este e os futuros
                         </Text>
                       </TouchableOpacity>
                     )}
@@ -1776,84 +1822,80 @@ export default function PacientesScreen() {
                 />
               </View>
 
-              {/* DURAÇÃO E REPETIÇÃO (MENU NATIVO DO DISPOSITIVO) */}
-              {(apptType === 'session' || !editingAppt) && (
-                <View className="mb-2">
-                  <View className="flex-row justify-between">
-                    {apptType === 'session' && (
-                      <View className="flex-1" style={!editingAppt ? { marginRight: 6 } : undefined}>
-                        <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
-                          Duração
-                        </Text>
-                        <NativeSelectMenu
-                          options={durationMenuOptions}
-                          selectedValue={String(apptDuration)}
-                          onSelect={(val) => {
-                            setApptDuration(Number(val));
+              {/* DURAÇÃO E REPETIÇÃO (MENU NATIVO DO DISPOSITIVO — RECORRÊNCIA CONTÍNUA INFINITA) */}
+              <View className="mb-2">
+                <View className="flex-row justify-between">
+                  {apptType === 'session' && (
+                    <View className="flex-1" style={{ marginRight: 6 }}>
+                      <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
+                        Duração
+                      </Text>
+                      <NativeSelectMenu
+                        options={durationMenuOptions}
+                        selectedValue={String(apptDuration)}
+                        onSelect={(val) => {
+                          setApptDuration(Number(val));
+                        }}
+                        style={{ width: '100%' }}
+                      >
+                        <View
+                          style={{
+                            backgroundColor: '#f9fafb',
+                            borderWidth: 1,
+                            borderColor: '#ced4da',
+                            borderRadius: 999,
+                            paddingHorizontal: 16,
+                            paddingVertical: 12,
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            width: '100%',
                           }}
-                          style={{ width: '100%' }}
                         >
-                          <View
-                            style={{
-                              backgroundColor: '#f9fafb',
-                              borderWidth: 1,
-                              borderColor: '#ced4da',
-                              borderRadius: 999,
-                              paddingHorizontal: 16,
-                              paddingVertical: 12,
-                              flexDirection: 'row',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              width: '100%',
-                            }}
-                          >
-                            <Text className="font-sans font-semibold text-[#1B4332] text-[15px]" numberOfLines={1}>
-                              {selectedDurationOption.label}
-                            </Text>
-                            <Feather name="chevron-down" size={18} color="#1B4332" />
-                          </View>
-                        </NativeSelectMenu>
-                      </View>
-                    )}
+                          <Text className="font-sans font-semibold text-[#1B4332] text-[15px]" numberOfLines={1}>
+                            {selectedDurationOption.label}
+                          </Text>
+                          <Feather name="chevron-down" size={18} color="#1B4332" />
+                        </View>
+                      </NativeSelectMenu>
+                    </View>
+                  )}
 
-                    {!editingAppt && (
-                      <View className="flex-1" style={apptType === 'session' ? { marginLeft: 6 } : undefined}>
-                        <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
-                          Repetição
+                  <View className="flex-1" style={apptType === 'session' ? { marginLeft: 6 } : undefined}>
+                    <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">
+                      Repetição
+                    </Text>
+                    <NativeSelectMenu
+                      options={recurrenceMenuOptions}
+                      selectedValue={apptRecurrence}
+                      onSelect={(val) => {
+                        setApptRecurrence(val as RecurrenceFrequency);
+                      }}
+                      style={{ width: '100%' }}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: '#f9fafb',
+                          borderWidth: 1,
+                          borderColor: '#ced4da',
+                          borderRadius: 999,
+                          paddingHorizontal: 16,
+                          paddingVertical: 12,
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          width: '100%',
+                        }}
+                      >
+                        <Text className="font-sans font-semibold text-[#1B4332] text-[15px]" numberOfLines={1}>
+                          {selectedRecurrenceLabel}
                         </Text>
-                        <NativeSelectMenu
-                          options={recurrenceMenuOptions}
-                          selectedValue={apptRecurrence}
-                          onSelect={(val) => {
-                            setApptRecurrence(val as 'none' | 'weekly' | 'biweekly');
-                          }}
-                          style={{ width: '100%' }}
-                        >
-                          <View
-                            style={{
-                              backgroundColor: '#f9fafb',
-                              borderWidth: 1,
-                              borderColor: '#ced4da',
-                              borderRadius: 999,
-                              paddingHorizontal: 16,
-                              paddingVertical: 12,
-                              flexDirection: 'row',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              width: '100%',
-                            }}
-                          >
-                            <Text className="font-sans font-semibold text-[#1B4332] text-[15px]" numberOfLines={1}>
-                              {selectedRecurrenceLabel}
-                            </Text>
-                            <Feather name="chevron-down" size={18} color="#1B4332" />
-                          </View>
-                        </NativeSelectMenu>
+                        <Feather name="chevron-down" size={18} color="#1B4332" />
                       </View>
-                    )}
+                    </NativeSelectMenu>
                   </View>
                 </View>
-              )}
+              </View>
 
               <TouchableOpacity
                 onPress={handleSaveAppt}
@@ -2093,9 +2135,16 @@ export default function PacientesScreen() {
               current={selectedDateISO}
               enableSwipeMonths={true}
               markedDates={markedCalendarDates}
+              onMonthChange={(m: any) => {
+                if (m?.year && m?.month) {
+                  setCalendarFocusDate(new Date(m.year, m.month - 1, 1));
+                }
+              }}
               onDayPress={(day: any) => {
                 try { Vibration.vibrate(10); } catch {}
-                setSelectedDate(new Date(day.year, day.month - 1, day.day));
+                const chosen = new Date(day.year, day.month - 1, day.day);
+                setSelectedDate(chosen);
+                setCalendarFocusDate(chosen);
                 setShowCalendarModal(false);
               }}
               theme={{
