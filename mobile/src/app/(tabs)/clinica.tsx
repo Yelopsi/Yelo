@@ -1,12 +1,31 @@
-import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 
 export default function ClinicaScreen() {
   const router = useRouter();
+  const currentPath = usePathname();
+  const [debugTrace, setDebugTrace] = useState<string | null>(null);
+
+  const handleNavigate = (cardTitle: string, targetRoute: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const logInfo = `[${timestamp}] De: ${currentPath} -> Para: ${targetRoute} ("${cardTitle}")`;
+    console.log('[DEBUG_RASTREIO_NAV]', logInfo);
+    setDebugTrace(logInfo);
+
+    try {
+      router.navigate(targetRoute as any);
+    } catch (err: any) {
+      console.error('[DEBUG_RASTREIO_ERROR]', err);
+      const errMsg = `Erro ao navegar: ${err?.message || err}`;
+      setDebugTrace(errMsg);
+      Alert.alert('Rastreio de Navegação', errMsg);
+    }
+  };
 
   return (
     <View className="flex-1 bg-[#f9fafb]">
@@ -15,7 +34,7 @@ export default function ClinicaScreen() {
         <YeloScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           
           {/* HEADER DA PÁGINA (main-header) */}
-          <View className="mx-6 mt-6 mb-6 bg-[#1B4332] p-[22px] rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] justify-between">
+          <View className="mx-6 mt-6 mb-4 bg-[#1B4332] p-[22px] rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] justify-between">
             <View>
               <Text className="font-title text-[26px] text-white mb-2 leading-tight">
                 Gestão da Clínica
@@ -26,12 +45,25 @@ export default function ClinicaScreen() {
             </View>
           </View>
 
+          {/* PAINEL DE DEBUG DE RASTREIO VISUAL */}
+          {debugTrace && (
+            <View className="mx-6 mb-4 p-3.5 bg-[#1B4332] rounded-[14px] border border-[#FFEE8C]/50 shadow-sm">
+              <View className="flex-row items-center justify-between mb-1">
+                <Text className="font-sans font-bold text-[#FFEE8C] text-[12px]">🔍 Rastreio de Navegação</Text>
+                <TouchableOpacity onPress={() => setDebugTrace(null)} className="px-2 py-0.5 bg-white/20 rounded-full">
+                  <Text className="text-white text-[10px] font-bold">Fechar</Text>
+                </TouchableOpacity>
+              </View>
+              <Text className="text-white text-[12px] font-mono leading-tight">{debugTrace}</Text>
+            </View>
+          )}
+
           {/* GRID DE CARDS (HUB) */}
           <View className="px-6 pb-32">
             
             {/* Card 1: Meus Pacientes */}
             <TouchableOpacity 
-              onPress={() => router.push('/(tabs)/pacientes')}
+              onPress={() => handleNavigate('Meus Pacientes', '/pacientes')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -45,7 +77,7 @@ export default function ClinicaScreen() {
 
             {/* Card 2: Financeiro */}
             <TouchableOpacity 
-              onPress={() => router.push('/(tabs)/financeiro')}
+              onPress={() => handleNavigate('Financeiro', '/financeiro')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -59,7 +91,7 @@ export default function ClinicaScreen() {
 
             {/* Card 3: Métricas & Mercado */}
             <TouchableOpacity 
-              onPress={() => router.push('/(tabs)/analytics')}
+              onPress={() => handleNavigate('Métricas & Mercado', '/analytics')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -73,7 +105,7 @@ export default function ClinicaScreen() {
 
             {/* Card 4: Análise de Favoritos */}
             <TouchableOpacity 
-              onPress={() => router.push('/(tabs)/favoritos-analytics')}
+              onPress={() => handleNavigate('Análise de Favoritos', '/favoritos-analytics')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -87,7 +119,7 @@ export default function ClinicaScreen() {
 
             {/* Card 5: Calculadora */}
             <TouchableOpacity 
-              onPress={() => router.push('/(tabs)/calculadora')}
+              onPress={() => handleNavigate('Calculadora de Honorários', '/calculadora')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#fef3c7] items-center justify-center mr-5">
@@ -101,7 +133,7 @@ export default function ClinicaScreen() {
 
             {/* Card 6: Manual */}
             <TouchableOpacity 
-              onPress={() => router.push('/(tabs)/manual-conversao')}
+              onPress={() => handleNavigate('Manual de Conversão', '/manual-conversao')}
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#dcfce7] items-center justify-center mr-5">

@@ -260,7 +260,7 @@ export default function HomeScreen() {
             </View>
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => router.push('/(tabs)/meu_perfil')}
+              onPress={() => router.navigate('/meu_perfil')}
               className="bg-[#FFEE8C] px-4 py-2.5 rounded-full self-start shadow-sm"
             >
               <Text className="font-sans font-bold text-[#1B4332] text-[13px]">
@@ -377,10 +377,10 @@ export default function HomeScreen() {
                   key={i}
                   activeOpacity={0.7}
                   onPress={() => {
-                    if (step.url === 'psi_forum.html') router.push('/(tabs)/forum');
-                    else if (step.url === 'psi_blog.html') router.push('/(tabs)/blog');
-                    else if (step.url === 'psi_meu_perfil.html') router.push('/(tabs)/meu_perfil');
-                    else if (step.url === 'psi_financeiro.html') router.push('/(tabs)/financeiro');
+                    if (step.url === 'psi_forum.html') router.navigate('/forum');
+                    else if (step.url === 'psi_blog.html') router.navigate('/blog');
+                    else if (step.url === 'psi_meu_perfil.html') router.navigate('/meu_perfil');
+                    else if (step.url === 'psi_financeiro.html') router.navigate('/financeiro');
                   }}
                   className={`flex-row items-center p-3.5 rounded-[16px] ${
                     isCompleted
@@ -455,7 +455,7 @@ export default function HomeScreen() {
           </View>
           <TouchableOpacity 
             activeOpacity={0.8}
-            onPress={() => router.push('/(tabs)/pacientes')}
+            onPress={() => router.navigate('/pacientes')}
             className="bg-[#1B4332] py-4 rounded-full items-center"
           >
             <Text className="font-sans font-bold text-white text-[15px]">Gerenciar</Text>
@@ -487,13 +487,13 @@ export default function HomeScreen() {
           </View>
           <View className="flex-row gap-3">
             <TouchableOpacity 
-              onPress={() => router.push('/(tabs)/blog')}
+              onPress={() => router.navigate('/blog')}
               className="flex-1 border border-[#e5e7eb] py-3 rounded-full items-center"
             >
               <Text className="font-sans font-bold text-[#333] text-[12px]">Criar post</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              onPress={() => router.push('/(tabs)/forum')}
+              onPress={() => router.navigate('/forum')}
               className="flex-1 border border-[#e5e7eb] py-3 rounded-full items-center"
             >
               <Text className="font-sans font-bold text-[#333] text-[12px]">Participar do fórum</Text>
@@ -508,7 +508,7 @@ export default function HomeScreen() {
             <Text className="font-sans font-bold text-[#555] text-[15px] ml-2">Gestão Resumida</Text>
           </View>
           <TouchableOpacity 
-            onPress={() => router.push('/(tabs)/clinica')}
+            onPress={() => router.navigate('/clinica')}
             className="flex-row items-center py-4 border-b border-[#f0f0f0]"
           >
             <Text className="text-[18px] mr-3">📅</Text>
@@ -516,7 +516,7 @@ export default function HomeScreen() {
             <Text className="font-sans text-[#555] text-[13px]">{sessoeHoje} atends.</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            onPress={() => router.push('/(tabs)/financeiro')}
+            onPress={() => router.navigate('/financeiro')}
             className="flex-row items-center pt-4"
           >
             <Text className="text-[18px] mr-3">💰</Text>

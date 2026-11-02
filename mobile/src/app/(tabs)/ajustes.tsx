@@ -32,7 +32,7 @@ export default function AjustesScreen() {
     if (user?.slug) {
       router.push(`/${user.slug}` as any);
     } else {
-      router.push('/(tabs)/meu_perfil');
+      router.navigate('/meu_perfil');
     }
   };
 
@@ -59,7 +59,7 @@ export default function AjustesScreen() {
             
             {/* Card 1: Meu Perfil */}
             <TouchableOpacity 
-              onPress={() => router.push('/(tabs)/meu_perfil')} 
+              onPress={() => router.navigate('/meu_perfil')} 
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -73,7 +73,7 @@ export default function AjustesScreen() {
 
             {/* Card 2: Assinatura */}
             <TouchableOpacity 
-              onPress={() => router.push('/(tabs)/assinatura')} 
+              onPress={() => router.navigate('/assinatura')} 
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -101,7 +101,7 @@ export default function AjustesScreen() {
 
             {/* Card 4: Métricas de Mercado */}
             <TouchableOpacity 
-              onPress={() => router.push('/(tabs)/analytics')} 
+              onPress={() => router.navigate('/analytics')} 
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
