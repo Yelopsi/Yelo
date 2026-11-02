@@ -6,9 +6,9 @@ import {
   dateToTimeString,
   timeStringToDate,
   type NativeTimePickerProps,
-} from './NativeTimePicker';
+} from './NativeTimePicker.shared';
 
-export type { NativeTimePickerProps } from './NativeTimePicker';
+export type { NativeTimePickerProps } from './NativeTimePicker.shared';
 
 /**
  * Android Nativo: renderiza a pílula Yelo que, ao ser tocada, abre o

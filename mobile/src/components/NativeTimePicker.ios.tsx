@@ -7,9 +7,9 @@ import {
   dateToTimeString,
   timeStringToDate,
   type NativeTimePickerProps,
-} from './NativeTimePicker';
+} from './NativeTimePicker.shared';
 
-export type { NativeTimePickerProps } from './NativeTimePicker';
+export type { NativeTimePickerProps } from './NativeTimePicker.shared';
 
 /**
  * iOS Nativo: renderiza o `SwiftUI.DatePicker` (`UIDatePicker` em estilo `.compact`)
