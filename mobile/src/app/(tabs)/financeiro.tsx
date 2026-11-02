@@ -18,6 +18,10 @@ export default function FinanceiroScreen() {
   const router = useRouter();
   const [showTip, setShowTip] = useState(true);
 
+  React.useEffect(() => {
+    console.log('[MOUNT] FinanceiroScreen montada com sucesso!');
+  }, []);
+
   return (
     <View className="flex-1 bg-[#f9fafb]">
       <YeloScrollView 

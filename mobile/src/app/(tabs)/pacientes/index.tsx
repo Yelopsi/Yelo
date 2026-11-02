@@ -49,6 +49,9 @@ const maskCurrency = (value: string) => {
 };
 
 export default function PacientesScreen() {
+  React.useEffect(() => {
+    console.log('[MOUNT] PacientesScreen montada com sucesso!');
+  }, []);
   
   // States - Visão Principal
   const [viewMode, setViewMode] = useState<'lista' | 'agenda'>('lista');

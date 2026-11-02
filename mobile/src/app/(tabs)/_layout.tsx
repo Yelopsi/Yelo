@@ -159,47 +159,53 @@ export default function TabLayout() {
       <Tabs.Screen
         name="pacientes"
         options={{
-          href: null,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen
         name="financeiro"
         options={{
-          href: null,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen
         name="analytics"
         options={{
-          href: null,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen
         name="favoritos-analytics"
         options={{
-          href: null,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen
         name="calculadora"
         options={{
-          href: null,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen
         name="manual-conversao"
         options={{
-          href: null,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
-      <Tabs.Screen name="jornada" options={{ href: null }} />
-      <Tabs.Screen name="blog" options={{ href: null }} />
-      <Tabs.Screen name="forum" options={{ href: null }} />
-      <Tabs.Screen name="comunidade" options={{ href: null }} />
-      <Tabs.Screen name="comunidade_yelo" options={{ href: null }} />
-      <Tabs.Screen name="meu_perfil" options={{ href: null }} />
-      <Tabs.Screen name="assinatura" options={{ href: null }} />
-      <Tabs.Screen name="fale_com_a_yelo" options={{ href: null }} />
+      <Tabs.Screen name="jornada" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+      <Tabs.Screen name="blog" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+      <Tabs.Screen name="forum" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+      <Tabs.Screen name="comunidade" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+      <Tabs.Screen name="comunidade_yelo" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+      <Tabs.Screen name="meu_perfil" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+      <Tabs.Screen name="assinatura" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+      <Tabs.Screen name="fale_com_a_yelo" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
     </Tabs>
   );
 }
