@@ -7,7 +7,9 @@ import {
   KeyboardAvoidingView, 
   Platform, 
   Animated,
-  ActivityIndicator
+  ActivityIndicator,
+  Dimensions,
+  PanResponder
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -17,6 +19,8 @@ import {
   getAbordagemConfig, 
   AbordagemOption 
 } from '../config/questionario_config';
+
+const { width } = Dimensions.get('window');
 
 export default function QuestionarioScreen() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -238,8 +242,36 @@ export default function QuestionarioScreen() {
     ? abordagemConfig.subtitle 
     : currentQuestion.subtitle;
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponderCapture: () => false,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+        if (!isHorizontal) return false;
+        const isLeft = gestureState.x0 <= 60 && gestureState.dx > 15;
+        const isRight = gestureState.x0 >= width - 60 && gestureState.dx < -15;
+        return isLeft || isRight;
+      },
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => {
+        const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
+        if (!isHorizontal) return false;
+        const isLeft = gestureState.x0 <= 60 && gestureState.dx > 15;
+        const isRight = gestureState.x0 >= width - 60 && gestureState.dx < -15;
+        return isLeft || isRight;
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.x0 <= 60 && (gestureState.dx > 40 || gestureState.vx > 0.25)) {
+          handleBack();
+        } else if (gestureState.x0 >= width - 60 && (gestureState.dx < -40 || gestureState.vx < -0.25)) {
+          handleNext();
+        }
+      },
+    })
+  ).current;
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#1B4332' }}>
+    <View style={{ flex: 1, backgroundColor: '#1B4332' }} {...panResponder.panHandlers}>
       <SafeAreaView style={{ flex: 1, backgroundColor: '#1B4332' }} edges={['top']}>
         <KeyboardAvoidingView 
           style={{ flex: 1 }} 

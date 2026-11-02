@@ -8,6 +8,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import SwipeEdgeNavigator from '../components/SwipeEdgeNavigator';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,16 +37,17 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: 'default',
-          gestureEnabled: true,
-          fullScreenGestureEnabled: true,
-          contentStyle: { backgroundColor: '#ffffff' },
-        }}
-      >
-        <Stack.Screen name="index" />
+      <SwipeEdgeNavigator>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: 'default',
+            gestureEnabled: true,
+            fullScreenGestureEnabled: true,
+            contentStyle: { backgroundColor: '#ffffff' },
+          }}
+        >
+          <Stack.Screen name="index" />
 
         {/* --- FLUXOS MODAIS / BOTTOM SHEET (Estilo Airbnb / Notion / Apple) --- */}
         <Stack.Screen
@@ -188,6 +190,7 @@ export default function RootLayout() {
           }}
         />
       </Stack>
+      </SwipeEdgeNavigator>
     </AuthProvider>
   );
 }
