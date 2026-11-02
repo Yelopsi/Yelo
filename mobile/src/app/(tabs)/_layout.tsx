@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
-import { Text } from 'react-native';
-import { Platform, View, Dimensions } from 'react-native';
+import { Text, Platform, View, Dimensions, AppState } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Svg, { Path, Polyline, Line, Circle } from 'react-native-svg';
 import MobileHeader from '../../components/MobileHeader';
+import * as Notifications from 'expo-notifications';
+import { syncSessionNotifications } from '../../services/sessionNotifications';
 
 const ICON_SIZE = 20;
 
@@ -61,6 +62,34 @@ const SairIcon = ({ color, focused }: { color: string, focused: boolean }) => (
 export default function TabLayout() {
   const { signOut } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    syncSessionNotifications();
+
+    const subAppState = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        syncSessionNotifications();
+      }
+    });
+
+    let subNotification: any = null;
+    if (Platform.OS !== 'web') {
+      subNotification = Notifications.addNotificationResponseReceivedListener(() => {
+        try {
+          router.navigate('/(tabs)/pacientes');
+        } catch {
+          // Fallback silencioso
+        }
+      });
+    }
+
+    return () => {
+      subAppState.remove();
+      if (subNotification && typeof subNotification.remove === 'function') {
+        subNotification.remove();
+      }
+    };
+  }, []);
 
   return (
     <Tabs
@@ -205,6 +234,7 @@ export default function TabLayout() {
       <Tabs.Screen name="comunidade_yelo" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
       <Tabs.Screen name="meu_perfil" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
       <Tabs.Screen name="assinatura" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+      <Tabs.Screen name="notificacoes" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
       <Tabs.Screen name="fale_com_a_yelo" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
     </Tabs>
   );

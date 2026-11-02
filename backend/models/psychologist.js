@@ -450,6 +450,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       defaultValue: 24
     },
+    appReminderMinutesBefore: {
+      type: DataTypes.INTEGER,
+      defaultValue: 15, // Padrão: 15 minutos antes. -1 = desativado (não receber)
+      allowNull: true
+    },
     badges: {
         type: DataTypes.JSONB,
         defaultValue: {} 

@@ -56,7 +56,7 @@ export default function MobileHeader() {
       {/* NOTIFICAÇÕES */}
       <TouchableOpacity 
         className="ml-auto p-1 rounded-full items-center justify-center"
-        onPress={() => console.log('Ir para Avisos')}
+        onPress={() => router.navigate('/(tabs)/notificacoes')}
       >
         <Feather name="bell" size={22} color="#1B4332" />
       </TouchableOpacity>

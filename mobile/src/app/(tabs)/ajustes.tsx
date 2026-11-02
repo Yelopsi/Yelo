@@ -98,6 +98,20 @@ export default function AjustesScreen() {
               </View>
             </TouchableOpacity>
 
+            {/* Card 3: Notificações */}
+            <TouchableOpacity 
+              onPress={() => navigateTo('notificacoes')} 
+              className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
+            >
+              <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
+                <Feather name="bell" size={24} color="#1B4332" />
+              </View>
+              <View className="flex-1">
+                <Text className="font-title text-[#1B4332] text-[19px] mb-1">Notificações</Text>
+                <Text className="font-sans text-[14px] text-[#888] leading-snug">Lembretes de sessões e avisos de pacientes.</Text>
+              </View>
+            </TouchableOpacity>
+
             {/* Card 3: Perfil Público */}
             <TouchableOpacity 
               onPress={handleOpenPublicProfile} 

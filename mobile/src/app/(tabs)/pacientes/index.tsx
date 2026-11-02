@@ -30,6 +30,7 @@ import {
   type RecurrenceFrequency,
 } from '../../../utils/recurrenceExpander';
 import api from '../../../services/api';
+import { syncSessionNotifications } from '../../../services/sessionNotifications';
 
 LocaleConfig.locales['pt-br'] = {
   monthNames: [
@@ -382,6 +383,7 @@ export default function PacientesScreen() {
 
       setPatients(loadedPatients);
       setAppointments(resAppts.data || []);
+      syncSessionNotifications();
     } catch (err) {
       console.warn('Erro ao buscar dados:', err);
       setPatients(FALLBACK_PATIENTS);
