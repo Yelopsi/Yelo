@@ -19,9 +19,9 @@ import YeloScrollView from '../../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Picker } from '@react-native-picker/picker';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import NativeSelectMenu, { type NativeSelectOption } from '../../../components/NativeSelectMenu';
+import NativeTimePicker from '../../../components/NativeTimePicker';
 import api from '../../../services/api';
 
 LocaleConfig.locales['pt-br'] = {
@@ -70,13 +70,6 @@ const maskCurrency = (value: string) => {
   return `R$ ${v}`;
 };
 
-// Máscara inteligente estilo Nubank para digitação direta de horário (HH:MM 24h)
-const maskTimeInput = (raw: string) => {
-  const digits = raw.replace(/\D/g, '').slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
-};
-
 const normalizeTimeStr = (raw: string, fallback = '14:00'): string => {
   const digits = raw.replace(/\D/g, '');
   if (!digits) return fallback;
@@ -98,10 +91,6 @@ const normalizeTimeStr = (raw: string, fallback = '14:00'): string => {
   mm = Math.max(0, Math.min(59, mm));
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 };
-
-// Listas 24h completas para a Roleta Nativa do OS (00h–23h e minutos de 5 em 5)
-const ALL_24_HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
-const BASE_MINUTES = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
 
 const DURATION_OPTIONS = [
   { label: '30 min', pickerLabel: '30 minutos', value: 30 },
@@ -196,16 +185,7 @@ export default function PacientesScreen() {
   const [apptRecurrence, setApptRecurrence] = useState<'none' | 'weekly' | 'biweekly'>('none');
   const [isSubmittingAppt, setIsSubmittingAppt] = useState(false);
 
-  // Seletor 24h de Horário
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [timeInputMode, setTimeInputMode] = useState<'wheel' | 'type'>('wheel');
-  const [typedTimeDraft, setTypedTimeDraft] = useState('14:00');
-
   const apptFormScrollRef = useRef<any>(null);
-
-  const closeAllApptPickers = () => {
-    setShowTimePicker(false);
-  };
 
   const newPatientPhoneRef = useRef<any>(null);
   const newPatientValueRef = useRef<any>(null);
@@ -244,16 +224,12 @@ export default function PacientesScreen() {
   }, [sheetBottomAnim]);
 
   // Helper para abrir modal de NOVO agendamento
-  const openNewApptSheet = (initialTime: string, expandTimeSelector = false) => {
+  const openNewApptSheet = (initialTime: string, _expandTimeSelector = false) => {
     const cleanTime = normalizeTimeStr(initialTime, '14:00');
     setEditingAppt(null);
     setApptPatientId('');
     setApptTime(cleanTime);
-    setTypedTimeDraft(cleanTime);
     setApptRecurrence('none');
-    closeAllApptPickers();
-    setShowTimePicker(expandTimeSelector);
-    setTimeInputMode('wheel');
     setModalNewAppt(true);
   };
 
@@ -284,12 +260,8 @@ export default function PacientesScreen() {
       setApptPatientId(String(evt.patientId));
     }
     setApptTime(startHHMM);
-    setTypedTimeDraft(startHHMM);
     setApptDuration(validDuration);
     setApptRecurrence('none');
-    closeAllApptPickers();
-    setShowTimePicker(true);
-    setTimeInputMode('wheel');
 
     setSelectedEventForAction(null);
     setConfirmDeleteMode(false);
@@ -574,19 +546,6 @@ export default function PacientesScreen() {
     []
   );
 
-  // Decomposição HH e MM para a Roleta Dupla 24h
-  const [selectedHour, selectedMinute] = useMemo(() => {
-    const parts = apptTime.split(':');
-    const hh = (parts[0] || '14').padStart(2, '0');
-    const mm = (parts[1] || '00').padStart(2, '0');
-    return [hh, mm];
-  }, [apptTime]);
-
-  const minuteOptions = useMemo(() => {
-    if (BASE_MINUTES.includes(selectedMinute)) return BASE_MINUTES;
-    return [...BASE_MINUTES, selectedMinute].sort();
-  }, [selectedMinute]);
-
   // Cálculo em tempo real do horário de término da sessão
   const calculatedEndTimeStr = useMemo(() => {
     const [hh, mm] = apptTime.split(':').map(Number);
@@ -711,9 +670,7 @@ export default function PacientesScreen() {
   const handleSaveAppt = async () => {
     Keyboard.dismiss();
 
-    const finalTime = timeInputMode === 'type'
-      ? normalizeTimeStr(typedTimeDraft, apptTime)
-      : apptTime;
+    const finalTime = normalizeTimeStr(apptTime, '14:00');
 
     const [hh, mm] = finalTime.split(':').map(Number);
     const startDt = new Date(
@@ -757,7 +714,6 @@ export default function PacientesScreen() {
 
         setModalNewAppt(false);
         setEditingAppt(null);
-        closeAllApptPickers();
         await fetchData();
         Alert.alert('Atualizado', `Agendamento atualizado para ${finalTime}!`);
         return;
@@ -809,7 +765,6 @@ export default function PacientesScreen() {
       }
 
       setModalNewAppt(false);
-      closeAllApptPickers();
       await fetchData();
       Alert.alert(
         'Sucesso',
@@ -1643,7 +1598,6 @@ export default function PacientesScreen() {
             style={StyleSheet.absoluteFill}
             onPress={() => {
               Keyboard.dismiss();
-              closeAllApptPickers();
               setEditingAppt(null);
               setModalNewAppt(false);
             }}
@@ -1685,7 +1639,6 @@ export default function PacientesScreen() {
                   </Text>
                   <TouchableOpacity
                     onPress={() => {
-                      closeAllApptPickers();
                       setShowCalendarModal(true);
                     }}
                     style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', marginTop: 2 }}
@@ -1701,7 +1654,6 @@ export default function PacientesScreen() {
                   className="p-2"
                   onPress={() => {
                     Keyboard.dismiss();
-                    closeAllApptPickers();
                     setEditingAppt(null);
                     setModalNewAppt(false);
                   }}
@@ -1723,7 +1675,6 @@ export default function PacientesScreen() {
                 <TouchableOpacity
                   onPress={() => {
                     setApptType('session');
-                    closeAllApptPickers();
                   }}
                   className="flex-1 py-2.5 rounded-full items-center justify-center"
                   style={
@@ -1743,7 +1694,6 @@ export default function PacientesScreen() {
                 <TouchableOpacity
                   onPress={() => {
                     setApptType('available');
-                    closeAllApptPickers();
                   }}
                   className="flex-1 py-2.5 rounded-full items-center justify-center"
                   style={
@@ -1772,7 +1722,6 @@ export default function PacientesScreen() {
                     options={patientMenuOptions}
                     selectedValue={apptPatientId}
                     onSelect={(val) => {
-                      setShowTimePicker(false);
                       setApptPatientId(val);
                     }}
                     style={{ width: '100%' }}
@@ -1807,7 +1756,7 @@ export default function PacientesScreen() {
                 </View>
               )}
 
-              {/* SELEÇÃO DE HORÁRIO DE INÍCIO (CARROSSEL NATIVO 24H) */}
+              {/* SELEÇÃO DE HORÁRIO DE INÍCIO (POPOVER NATIVO DE HORA DO OS 24H) */}
               <View className="mb-4">
                 <View className="flex-row items-center justify-between mb-1.5">
                   <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase">
@@ -1818,131 +1767,13 @@ export default function PacientesScreen() {
                   </Text>
                 </View>
 
-                <TouchableOpacity
-                  onPress={() => {
-                    const next = !showTimePicker;
-                    Keyboard.dismiss();
-                    setShowTimePicker(next);
-                  }}
-                  className="bg-[#f9fafb] border rounded-full px-5 py-3 flex-row justify-between items-center"
-                  style={{ borderColor: showTimePicker ? '#1B4332' : '#ced4da' }}
-                >
-                  <View className="flex-row items-center">
-                    <Feather name="clock" size={16} color="#1B4332" style={{ marginRight: 8 }} />
-                    <Text className="font-sans font-bold text-[#1B4332] text-[16px]">
-                      {apptTime}
-                    </Text>
-                    <View className="ml-2.5 px-2.5 py-0.5 rounded-full bg-[#e8f5e9]">
-                      <Text className="font-sans font-semibold text-[11px] text-[#1B4332]">
-                        {apptType === 'available' ? '1h livre' : selectedDurationOption.label}
-                      </Text>
-                    </View>
-                  </View>
-                  <Feather name={showTimePicker ? 'chevron-up' : 'chevron-down'} size={18} color="#1B4332" />
-                </TouchableOpacity>
-
-                {showTimePicker && (
-                  <View className="bg-[#f8f9fa] border border-[#e5e7eb] rounded-[22px] mt-2.5 p-3 overflow-hidden">
-                    <View className="flex-row items-center justify-between mb-2 px-1">
-                      <Text className="font-sans font-semibold text-[12px] text-[#666]">
-                        {timeInputMode === 'wheel'
-                          ? 'Gire para qualquer hora e minuto'
-                          : 'Digite qualquer horário (00:00 a 23:59)'}
-                      </Text>
-
-                      <TouchableOpacity
-                        onPress={() => {
-                          if (timeInputMode === 'wheel') {
-                            setTypedTimeDraft(apptTime);
-                            setTimeInputMode('type');
-                          } else {
-                            Keyboard.dismiss();
-                            const normalized = normalizeTimeStr(typedTimeDraft, apptTime);
-                            setApptTime(normalized);
-                            setTypedTimeDraft(normalized);
-                            setTimeInputMode('wheel');
-                          }
-                        }}
-                        className="px-3 py-1 rounded-full bg-white border border-[#ced4da] flex-row items-center"
-                      >
-                        <Feather
-                          name={timeInputMode === 'wheel' ? 'edit-3' : 'sliders'}
-                          size={12}
-                          color="#1B4332"
-                          style={{ marginRight: 5 }}
-                        />
-                        <Text className="font-sans font-bold text-[11px] text-[#1B4332]">
-                          {timeInputMode === 'wheel' ? 'Digitar' : 'Roleta'}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    {timeInputMode === 'wheel' ? (
-                      <View className="flex-row items-center justify-center">
-                        <View className="flex-1">
-                          <Picker
-                            selectedValue={selectedHour}
-                            onValueChange={(hVal) => {
-                              const next = `${String(hVal).padStart(2, '0')}:${selectedMinute}`;
-                              setApptTime(next);
-                              setTypedTimeDraft(next);
-                            }}
-                            itemStyle={{ height: 120, fontSize: 17, color: '#1B4332', fontWeight: '600' }}
-                          >
-                            {ALL_24_HOURS.map(h => (
-                              <Picker.Item key={h} label={`${h} h`} value={h} />
-                            ))}
-                          </Picker>
-                        </View>
-
-                        <Text className="font-sans font-bold text-[20px] text-[#1B4332] mx-1">:</Text>
-
-                        <View className="flex-1">
-                          <Picker
-                            selectedValue={selectedMinute}
-                            onValueChange={(mVal) => {
-                              const next = `${selectedHour}:${String(mVal).padStart(2, '0')}`;
-                              setApptTime(next);
-                              setTypedTimeDraft(next);
-                            }}
-                            itemStyle={{ height: 120, fontSize: 17, color: '#1B4332', fontWeight: '600' }}
-                          >
-                            {minuteOptions.map(m => (
-                              <Picker.Item key={m} label={`${m} min`} value={m} />
-                            ))}
-                          </Picker>
-                        </View>
-                      </View>
-                    ) : (
-                      <View className="py-2 items-center">
-                        <TextInput
-                          value={typedTimeDraft}
-                          onChangeText={(txt) => {
-                            const masked = maskTimeInput(txt);
-                            setTypedTimeDraft(masked);
-                            if (masked.length === 5) {
-                              setApptTime(normalizeTimeStr(masked, apptTime));
-                            }
-                          }}
-                          onBlur={() => {
-                            const normalized = normalizeTimeStr(typedTimeDraft, apptTime);
-                            setApptTime(normalized);
-                            setTypedTimeDraft(normalized);
-                          }}
-                          keyboardType="number-pad"
-                          maxLength={5}
-                          placeholder="Ex: 07:30"
-                          placeholderTextColor="#9ca3af"
-                          autoFocus
-                          className="bg-white border border-[#1B4332] rounded-full px-6 py-2.5 font-sans font-bold text-[22px] text-[#1B4332] text-center min-w-[150px]"
-                        />
-                        <Text className="font-sans text-[11px] text-[#777] mt-1.5">
-                          Ex: 06:30, 14:20, 20:10 ou 22:45
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                )}
+                <NativeTimePicker
+                  time={apptTime}
+                  onChangeTime={setApptTime}
+                  durationBadgeLabel={
+                    apptType === 'available' ? '1h livre' : selectedDurationOption.label
+                  }
+                />
               </View>
 
               {/* DURAÇÃO E REPETIÇÃO (MENU NATIVO DO DISPOSITIVO) */}
@@ -1958,7 +1789,6 @@ export default function PacientesScreen() {
                           options={durationMenuOptions}
                           selectedValue={String(apptDuration)}
                           onSelect={(val) => {
-                            setShowTimePicker(false);
                             setApptDuration(Number(val));
                           }}
                           style={{ width: '100%' }}
@@ -1995,7 +1825,6 @@ export default function PacientesScreen() {
                           options={recurrenceMenuOptions}
                           selectedValue={apptRecurrence}
                           onSelect={(val) => {
-                            setShowTimePicker(false);
                             setApptRecurrence(val as 'none' | 'weekly' | 'biweekly');
                           }}
                           style={{ width: '100%' }}
