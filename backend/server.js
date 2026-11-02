@@ -329,6 +329,7 @@ const startServer = async () => {
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "evaluationEmailSent" BOOLEAN DEFAULT false;');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "msg_paid_churn_sent_at" TIMESTAMP WITH TIME ZONE NULL;');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "appReminderMinutesBefore" INTEGER DEFAULT 15;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "notificationPreferences" JSONB DEFAULT \'{"new_blog_post":true,"new_forum_post":true,"post_comment":true,"comment_reply":true,"community_questions":true,"payments":true}\';');
 
             console.log('🛠️ [DB FIX] Injetando colunas faltantes na tabela Questions...');
             

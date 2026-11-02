@@ -1,15 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 
 export default function MobileHeader() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState<number>(0);
   const fotoUri = user?.fotoUrl || 'https://res.cloudinary.com/dzqmypviz/image/upload/v1779824708/yelo/profiles/profile-94.jpg';
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUnread = async () => {
+      try {
+        const res = await api.get(`/api/psychologists/me/announcements?t=${Date.now()}`);
+        if (isMounted && Array.isArray(res.data)) {
+          const unread = res.data.filter((a: any) => !a.read).length;
+          setUnreadCount(unread);
+        }
+      } catch {
+        // Silencioso
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 60000); // Atualiza periodicamente
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <View 
@@ -53,12 +78,19 @@ export default function MobileHeader() {
         </View>
       </View>
 
-      {/* NOTIFICAÇÕES */}
+      {/* NOTIFICAÇÕES (Últimos Avisos) */}
       <TouchableOpacity 
-        className="ml-auto p-1 rounded-full items-center justify-center"
-        onPress={() => router.navigate('/(tabs)/notificacoes')}
+        className="ml-auto p-1.5 rounded-full items-center justify-center relative"
+        onPress={() => router.navigate('/(tabs)/avisos')}
+        activeOpacity={0.7}
       >
         <Feather name="bell" size={22} color="#1B4332" />
+        {unreadCount > 0 && (
+          <View 
+            className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#e63946] border border-white"
+            style={{ minWidth: 10, minHeight: 10 }}
+          />
+        )}
       </TouchableOpacity>
     </View>
   );

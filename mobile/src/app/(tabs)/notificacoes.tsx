@@ -17,6 +17,10 @@ import {
   REMINDER_OPTIONS,
   getReminderMinutes,
   saveReminderMinutes,
+  getNotificationPreferences,
+  saveNotificationPreferences,
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  type AppNotificationPreferences,
   getNotificationPermissionStatus,
   requestNotificationPermission,
   syncSessionNotifications,
@@ -39,6 +43,11 @@ export default function NotificacoesScreen() {
   const [permissionStatus, setPermissionStatus] = useState<'granted' | 'denied' | 'undetermined'>('undetermined');
   const [scheduledCount, setScheduledCount] = useState<number>(0);
 
+  // Preferências adicionais de notificações (fórum, blog, comentários, pagamentos)
+  const [preferences, setPreferences] = useState<AppNotificationPreferences>(
+    DEFAULT_NOTIFICATION_PREFERENCES
+  );
+
   const isEnabled = minutesBefore >= 0;
 
   // Carrega configurações iniciais do armazenamento e do perfil do psicólogo
@@ -46,15 +55,18 @@ export default function NotificacoesScreen() {
     try {
       setIsLoading(true);
 
-      const [storedMinutes, perm] = await Promise.all([
+      const [storedMinutes, storedPrefs, perm] = await Promise.all([
         getReminderMinutes(),
+        getNotificationPreferences(),
         getNotificationPermissionStatus(),
       ]);
 
       setPermissionStatus(perm);
 
-      // Tenta sincronizar também com o backend se disponível
       let effectiveMinutes = storedMinutes;
+      let effectivePrefs = storedPrefs;
+
+      // Tenta sincronizar também com o backend se disponível
       try {
         const res = await api.get('/api/psychologists/me');
         if (
@@ -65,11 +77,19 @@ export default function NotificacoesScreen() {
           effectiveMinutes = res.data.appReminderMinutesBefore;
           await saveReminderMinutes(effectiveMinutes, false);
         }
+        if (res.data && res.data.notificationPreferences) {
+          effectivePrefs = {
+            ...DEFAULT_NOTIFICATION_PREFERENCES,
+            ...res.data.notificationPreferences,
+          };
+          await saveNotificationPreferences(effectivePrefs, false);
+        }
       } catch {
         // Modo offline: continua com o valor do SecureStore
       }
 
       setMinutesBefore(effectiveMinutes);
+      setPreferences(effectivePrefs);
 
       // Sincroniza a grade de lembretes reais
       if (effectiveMinutes >= 0 && perm === 'granted') {
@@ -89,10 +109,9 @@ export default function NotificacoesScreen() {
     loadSettings();
   }, [loadSettings]);
 
-  // Alterna o toggle mestre (Receber / Não receber)
+  // Alterna o toggle mestre de lembretes de sessão (Receber / Não receber)
   const handleToggle = async (value: boolean) => {
     if (!value) {
-      // Desativar: marca como -1
       setMinutesBefore(-1);
       setScheduledCount(0);
       setIsSaving(true);
@@ -105,7 +124,6 @@ export default function NotificacoesScreen() {
       return;
     }
 
-    // Ativar: verifica permissão primeiro
     let perm = permissionStatus;
     if (perm !== 'granted') {
       const granted = await requestNotificationPermission();
@@ -134,7 +152,6 @@ export default function NotificacoesScreen() {
       }
     }
 
-    // Ativado com permissão: define padrão de 15 minutos
     const newMinutes = 15;
     setMinutesBefore(newMinutes);
     setIsSaving(true);
@@ -147,7 +164,7 @@ export default function NotificacoesScreen() {
     }
   };
 
-  // Alteração via menu nativo (dropdown)
+  // Alteração via menu suspenso nativo (dropdown)
   const handleSelectAntecedencia = async (selectedValue: string) => {
     const val = parseInt(selectedValue, 10);
     if (isNaN(val)) return;
@@ -157,7 +174,6 @@ export default function NotificacoesScreen() {
       return;
     }
 
-    // Se estiver ativando pela primeira vez a partir de um valor positivo
     let perm = permissionStatus;
     if (perm !== 'granted') {
       const granted = await requestNotificationPermission();
@@ -192,6 +208,24 @@ export default function NotificacoesScreen() {
       await saveReminderMinutes(val, true);
       const res = await syncSessionNotifications();
       setScheduledCount(res.scheduledCount);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Alterna preferências de canais/eventos
+  const handleTogglePreference = async (
+    key: keyof AppNotificationPreferences,
+    newValue: boolean
+  ) => {
+    const updated = {
+      ...preferences,
+      [key]: newValue,
+    };
+    setPreferences(updated);
+    setIsSaving(true);
+    try {
+      await saveNotificationPreferences(updated, true);
     } finally {
       setIsSaving(false);
     }
@@ -232,7 +266,6 @@ export default function NotificacoesScreen() {
     }
   };
 
-  // Opções para o NativeSelectMenu
   const selectOptions: NativeSelectOption[] = REMINDER_OPTIONS.map((opt) => ({
     label: opt.label,
     value: opt.value,
@@ -274,7 +307,7 @@ export default function NotificacoesScreen() {
         >
           {/* HERO BANNER YELO */}
           <View
-            className="mx-6 mb-6 bg-[#1B4332] p-[22px] rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
+            className="mx-6 mb-5 bg-[#1B4332] p-[22px] rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
             style={{ borderRadius: 20 }}
           >
             <View className="flex-row items-center mb-2">
@@ -282,17 +315,36 @@ export default function NotificacoesScreen() {
                 <Feather name="bell" size={17} color="#ffffff" />
               </View>
               <Text className="font-title text-[22px] text-white leading-tight">
-                Lembretes de Sessão
+                Ajustes de Alertas
               </Text>
             </View>
             <Text className="font-sans text-[14px] text-white/85 leading-relaxed">
-              Mantenha-se pontual em todos os seus atendimentos recebendo avisos no celular antes de cada sessão com seus pacientes.
+              Personalize quando você deseja receber avisos de consultas, interações na comunidade, posts do blog e pagamentos.
+            </Text>
+
+            {/* ATALHO PARA VER O FEED DE AVISOS */}
+            <TouchableOpacity
+              onPress={() => router.navigate('/(tabs)/avisos')}
+              className="mt-4 bg-white/15 border border-white/25 py-2.5 px-4 rounded-full flex-row items-center justify-center self-start"
+              activeOpacity={0.8}
+            >
+              <Feather name="inbox" size={15} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text className="font-sans font-bold text-white text-[13px]">
+                Ver Minhas Notificações Recebidas 🔔
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* SEÇÃO 1: LEMBRETES DE CONSULTAS */}
+          <View className="mx-6 mb-2">
+            <Text className="font-title text-[18px] text-[#1B4332]">
+              Consultas & Atendimentos
             </Text>
           </View>
 
-          {/* CARD PRINCIPAL: TOGGLE ATIVAR/DESATIVAR */}
+          {/* CARD DO TOGGLE MESTRE DE SESSÃO */}
           <View
-            className="mx-6 mb-5 bg-white border border-[#e5e7eb] rounded-[18px] p-5 shadow-sm"
+            className="mx-6 mb-4 bg-white border border-[#e5e7eb] rounded-[18px] p-5 shadow-sm"
             style={{ borderRadius: 18 }}
           >
             <View className="flex-row items-center justify-between">
@@ -302,19 +354,19 @@ export default function NotificacoesScreen() {
                   style={{ backgroundColor: isEnabled ? '#f0fdf4' : '#f3f4f6' }}
                 >
                   <Feather
-                    name={isEnabled ? 'bell' : 'bell-off'}
+                    name={isEnabled ? 'calendar' : 'calendar'}
                     size={20}
                     color={isEnabled ? '#1B4332' : '#9ca3af'}
                   />
                 </View>
                 <View className="flex-1">
                   <Text className="font-title text-[17px] text-[#1B4332] mb-0.5">
-                    Receber Lembretes
+                    Lembretes de Sessão
                   </Text>
                   <Text className="font-sans text-[13px] text-[#6b7280] leading-snug">
                     {isEnabled
                       ? 'Alertas ativos no seu dispositivo'
-                      : 'Você optou por não receber notificações'}
+                      : 'Você optou por não receber lembretes'}
                   </Text>
                 </View>
               </View>
@@ -327,62 +379,229 @@ export default function NotificacoesScreen() {
                 ios_backgroundColor="#e5e7eb"
               />
             </View>
+
+            {/* SELETOR DE ANTECEDÊNCIA */}
+            <View className="mt-4 pt-4 border-t border-[#f3f4f6]">
+              <Text className="font-sans font-bold text-[13px] text-[#374151] mb-2">
+                Antecedência da Notificação
+              </Text>
+
+              <NativeSelectMenu
+                options={selectOptions}
+                selectedValue={String(minutesBefore)}
+                onSelect={handleSelectAntecedencia}
+                style={{ width: '100%' }}
+              >
+                <View
+                  className="w-full flex-row items-center justify-between px-4 py-3.5 border rounded-[14px]"
+                  style={{
+                    backgroundColor: isEnabled ? '#ffffff' : '#f9fafb',
+                    borderColor: isEnabled ? '#1B4332' : '#d1d5db',
+                    borderRadius: 14,
+                  }}
+                >
+                  <View className="flex-row items-center flex-1 mr-2">
+                    <Feather
+                      name={isEnabled ? 'clock' : 'slash'}
+                      size={16}
+                      color={isEnabled ? '#1B4332' : '#9ca3af'}
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text
+                      className="font-sans font-medium text-[15px] flex-1"
+                      style={{ color: isEnabled ? '#1B4332' : '#6b7280' }}
+                      numberOfLines={1}
+                    >
+                      {currentOptionLabel}
+                    </Text>
+                  </View>
+                  <Feather name="chevron-down" size={18} color="#1B4332" />
+                </View>
+              </NativeSelectMenu>
+            </View>
           </View>
 
-          {/* CARD DE ANTECEDÊNCIA (DROPDOWN NATIVO) */}
+          {/* SEÇÃO 2: COMUNIDADE & FÓRUM */}
+          <View className="mx-6 mb-2 mt-2">
+            <Text className="font-title text-[18px] text-[#1B4332]">
+              Comunidade & Fórum
+            </Text>
+          </View>
+
           <View
             className="mx-6 mb-5 bg-white border border-[#e5e7eb] rounded-[18px] p-5 shadow-sm"
             style={{ borderRadius: 18 }}
           >
-            <View className="flex-row items-center mb-2">
-              <View className="w-8 h-8 rounded-full bg-[#f0fdf4] items-center justify-center mr-2.5">
-                <Feather name="clock" size={16} color="#1B4332" />
-              </View>
-              <Text className="font-title text-[17px] text-[#1B4332]">
-                Antecedência do Alerta
-              </Text>
-            </View>
-
-            <Text className="font-sans text-[13px] text-[#6b7280] mb-3.5 leading-snug">
-              Com quanto tempo antes da sessão você deseja receber o aviso no aparelho:
-            </Text>
-
-            {/* SELETOR COM DROPDOWN NATIVO DO SISTEMA (SwiftUI Menu no iOS / Nativo no Android) */}
-            <NativeSelectMenu
-              options={selectOptions}
-              selectedValue={String(minutesBefore)}
-              onSelect={handleSelectAntecedencia}
-              style={{ width: '100%' }}
-            >
-              <View
-                className="w-full flex-row items-center justify-between px-4 py-3.5 border rounded-[14px]"
-                style={{
-                  backgroundColor: isEnabled ? '#ffffff' : '#f9fafb',
-                  borderColor: isEnabled ? '#1B4332' : '#d1d5db',
-                  borderRadius: 14,
-                }}
-              >
-                <View className="flex-row items-center flex-1 mr-2">
-                  <Feather
-                    name={isEnabled ? 'check-circle' : 'slash'}
-                    size={16}
-                    color={isEnabled ? '#1B4332' : '#9ca3af'}
-                    style={{ marginRight: 8 }}
-                  />
-                  <Text
-                    className="font-sans font-medium text-[15px] flex-1"
-                    style={{ color: isEnabled ? '#1B4332' : '#6b7280' }}
-                    numberOfLines={1}
-                  >
-                    {currentOptionLabel}
+            {/* 1. Novo post no fórum */}
+            <View className="flex-row items-center justify-between pb-4 border-b border-[#f3f4f6]">
+              <View className="flex-row items-center flex-1 mr-3">
+                <View className="w-10 h-10 rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                  <Feather name="message-square" size={18} color="#1B4332" />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-sans font-bold text-[15px] text-[#1B4332]">
+                    Novo post no fórum
+                  </Text>
+                  <Text className="font-sans text-[12px] text-[#6b7280]">
+                    Novos tópicos e debates clínicos na rede
                   </Text>
                 </View>
-                <Feather name="chevron-down" size={18} color="#1B4332" />
               </View>
-            </NativeSelectMenu>
+              <Switch
+                value={preferences.new_forum_post}
+                onValueChange={(val) => handleTogglePreference('new_forum_post', val)}
+                trackColor={{ false: '#e5e7eb', true: '#1B4332' }}
+                thumbColor="#ffffff"
+                ios_backgroundColor="#e5e7eb"
+              />
+            </View>
+
+            {/* 2. Comentário em um post seu */}
+            <View className="flex-row items-center justify-between py-4 border-b border-[#f3f4f6]">
+              <View className="flex-row items-center flex-1 mr-3">
+                <View className="w-10 h-10 rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                  <Feather name="corner-down-right" size={18} color="#1B4332" />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-sans font-bold text-[15px] text-[#1B4332]">
+                    Comentário em um post seu
+                  </Text>
+                  <Text className="font-sans text-[12px] text-[#6b7280]">
+                    Quando interagirem em uma discussão que você criou
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={preferences.post_comment}
+                onValueChange={(val) => handleTogglePreference('post_comment', val)}
+                trackColor={{ false: '#e5e7eb', true: '#1B4332' }}
+                thumbColor="#ffffff"
+                ios_backgroundColor="#e5e7eb"
+              />
+            </View>
+
+            {/* 3. Comentário a um comentário seu (resposta) */}
+            <View className="flex-row items-center justify-between py-4 border-b border-[#f3f4f6]">
+              <View className="flex-row items-center flex-1 mr-3">
+                <View className="w-10 h-10 rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                  <Feather name="message-circle" size={18} color="#1B4332" />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-sans font-bold text-[15px] text-[#1B4332]">
+                    Comentário a um comentário seu
+                  </Text>
+                  <Text className="font-sans text-[12px] text-[#6b7280]">
+                    Respostas diretas a comentários que você publicou
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={preferences.comment_reply}
+                onValueChange={(val) => handleTogglePreference('comment_reply', val)}
+                trackColor={{ false: '#e5e7eb', true: '#1B4332' }}
+                thumbColor="#ffffff"
+                ios_backgroundColor="#e5e7eb"
+              />
+            </View>
+
+            {/* 4. Perguntas da comunidade */}
+            <View className="flex-row items-center justify-between pt-4">
+              <View className="flex-row items-center flex-1 mr-3">
+                <View className="w-10 h-10 rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                  <Feather name="help-circle" size={18} color="#1B4332" />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-sans font-bold text-[15px] text-[#1B4332]">
+                    Perguntas da comunidade
+                  </Text>
+                  <Text className="font-sans text-[12px] text-[#6b7280]">
+                    Novas dúvidas enviadas por pacientes e pela rede
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={preferences.community_questions}
+                onValueChange={(val) => handleTogglePreference('community_questions', val)}
+                trackColor={{ false: '#e5e7eb', true: '#1B4332' }}
+                thumbColor="#ffffff"
+                ios_backgroundColor="#e5e7eb"
+              />
+            </View>
           </View>
 
-          {/* CARD DE STATUS DO SISTEMA E CONTADOR */}
+          {/* SEÇÃO 3: CONTEÚDO CLÍNICO & BLOG */}
+          <View className="mx-6 mb-2 mt-2">
+            <Text className="font-title text-[18px] text-[#1B4332]">
+              Conteúdo Clínico
+            </Text>
+          </View>
+
+          <View
+            className="mx-6 mb-5 bg-white border border-[#e5e7eb] rounded-[18px] p-5 shadow-sm"
+            style={{ borderRadius: 18 }}
+          >
+            {/* Novo post no blog */}
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1 mr-3">
+                <View className="w-10 h-10 rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                  <Feather name="book-open" size={18} color="#1B4332" />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-sans font-bold text-[15px] text-[#1B4332]">
+                    Novo post no blog
+                  </Text>
+                  <Text className="font-sans text-[12px] text-[#6b7280]">
+                    Artigos científicos, atualizações teóricas e práticas
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={preferences.new_blog_post}
+                onValueChange={(val) => handleTogglePreference('new_blog_post', val)}
+                trackColor={{ false: '#e5e7eb', true: '#1B4332' }}
+                thumbColor="#ffffff"
+                ios_backgroundColor="#e5e7eb"
+              />
+            </View>
+          </View>
+
+          {/* SEÇÃO 4: FINANCEIRO & PAGAMENTOS */}
+          <View className="mx-6 mb-2 mt-2">
+            <Text className="font-title text-[18px] text-[#1B4332]">
+              Financeiro & Assinatura
+            </Text>
+          </View>
+
+          <View
+            className="mx-6 mb-5 bg-white border border-[#e5e7eb] rounded-[18px] p-5 shadow-sm"
+            style={{ borderRadius: 18 }}
+          >
+            {/* Pagamentos */}
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1 mr-3">
+                <View className="w-10 h-10 rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                  <Feather name="credit-card" size={18} color="#1B4332" />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-sans font-bold text-[15px] text-[#1B4332]">
+                    Pagamentos
+                  </Text>
+                  <Text className="font-sans text-[12px] text-[#6b7280]">
+                    Confirmações de sessões pagas e faturas da assinatura
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={preferences.payments}
+                onValueChange={(val) => handleTogglePreference('payments', val)}
+                trackColor={{ false: '#e5e7eb', true: '#1B4332' }}
+                thumbColor="#ffffff"
+                ios_backgroundColor="#e5e7eb"
+              />
+            </View>
+          </View>
+
+          {/* STATUS DO DISPOSITIVO & TESTE NATIVO */}
           <View
             className="mx-6 mb-5 bg-white border border-[#e5e7eb] rounded-[18px] p-5 shadow-sm"
             style={{ borderRadius: 18 }}
@@ -433,7 +652,7 @@ export default function NotificacoesScreen() {
                   style={{ marginRight: 8 }}
                 />
                 <Text className="font-sans text-[13px] text-[#4b5563]">
-                  Lembretes programados (próx. semanas)
+                  Lembretes agendados no aparelho
                 </Text>
               </View>
               <View
@@ -485,22 +704,6 @@ export default function NotificacoesScreen() {
                 </>
               )}
             </TouchableOpacity>
-          </View>
-
-          {/* DICA DE PRIVACIDADE E SIGILO */}
-          <View
-            className="mx-6 p-4 rounded-[16px] bg-[#f3f4f6] flex-row items-start"
-            style={{ borderRadius: 16 }}
-          >
-            <Feather
-              name="lock"
-              size={16}
-              color="#6b7280"
-              style={{ marginRight: 8, marginTop: 2 }}
-            />
-            <Text className="font-sans text-[12px] text-[#6b7280] flex-1 leading-relaxed">
-              Em respeito ao sigilo profissional, os lembretes exibem apenas o horário e nome do paciente, sem detalhes clínicos ou de prontuário na tela de bloqueio.
-            </Text>
           </View>
         </YeloScrollView>
       )}

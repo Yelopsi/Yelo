@@ -455,6 +455,18 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 15, // Padrão: 15 minutos antes. -1 = desativado (não receber)
       allowNull: true
     },
+    notificationPreferences: {
+      type: DataTypes.JSONB,
+      defaultValue: {
+        new_blog_post: true,
+        new_forum_post: true,
+        post_comment: true,
+        comment_reply: true,
+        community_questions: true,
+        payments: true
+      },
+      allowNull: true
+    },
     badges: {
         type: DataTypes.JSONB,
         defaultValue: {} 

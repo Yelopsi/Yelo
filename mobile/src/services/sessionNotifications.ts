@@ -5,7 +5,26 @@ import api from './api';
 import { expandAppointmentsInLocalRange } from '../utils/recurrenceExpander';
 
 const REMINDER_KEY = 'yelo_app_reminder_minutes_before';
+const NOTIF_PREFS_KEY = 'yelo_notification_preferences';
 const CHANNEL_ID = 'lembretes-sessoes';
+
+export interface AppNotificationPreferences {
+  new_blog_post: boolean;
+  new_forum_post: boolean;
+  post_comment: boolean;
+  comment_reply: boolean;
+  community_questions: boolean;
+  payments: boolean;
+}
+
+export const DEFAULT_NOTIFICATION_PREFERENCES: AppNotificationPreferences = {
+  new_blog_post: true,
+  new_forum_post: true,
+  post_comment: true,
+  comment_reply: true,
+  community_questions: true,
+  payments: true,
+};
 
 // Configura o comportamento quando uma notificação chega com o app aberto em primeiro plano
 if (Platform.OS !== 'web') {
@@ -76,6 +95,56 @@ export async function saveReminderMinutes(minutes: number, syncBackend = true): 
       });
     } catch {
       // Sincronização secundária offline, o SecureStore garante a persistência no dispositivo
+    }
+  }
+}
+
+/**
+ * Retorna as preferências de notificações do app (fórum, blog, comentários, pagamentos, etc.)
+ */
+export async function getNotificationPreferences(): Promise<AppNotificationPreferences> {
+  if (Platform.OS === 'web') return { ...DEFAULT_NOTIFICATION_PREFERENCES };
+  try {
+    const raw = await SecureStore.getItemAsync(NOTIF_PREFS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        new_blog_post: parsed?.new_blog_post !== false,
+        new_forum_post: parsed?.new_forum_post !== false,
+        post_comment: parsed?.post_comment !== false,
+        comment_reply: parsed?.comment_reply !== false,
+        community_questions: parsed?.community_questions !== false,
+        payments: parsed?.payments !== false,
+      };
+    }
+  } catch {
+    // Falha silenciosa
+  }
+  return { ...DEFAULT_NOTIFICATION_PREFERENCES };
+}
+
+/**
+ * Salva as preferências de notificações no SecureStore e sincroniza com o backend.
+ */
+export async function saveNotificationPreferences(
+  prefs: AppNotificationPreferences,
+  syncBackend = true
+): Promise<void> {
+  if (Platform.OS !== 'web') {
+    try {
+      await SecureStore.setItemAsync(NOTIF_PREFS_KEY, JSON.stringify(prefs));
+    } catch (e) {
+      console.warn('Falha ao salvar preferências de notificações no SecureStore:', e);
+    }
+  }
+
+  if (syncBackend) {
+    try {
+      await api.put('/api/psychologists/me', {
+        notificationPreferences: prefs,
+      });
+    } catch {
+      // Fallback offline
     }
   }
 }
@@ -287,3 +356,4 @@ export async function syncSessionNotifications(): Promise<{
     return { scheduledCount: 0, enabled: true };
   }
 }
+
