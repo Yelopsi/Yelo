@@ -9,7 +9,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "br.com.yelopsi.app"
+      "bundleIdentifier": "br.com.yelopsi.app",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "O Yelo utiliza o Face ID para permitir que você acesse sua conta com rapidez e máxima segurança."
+      }
     },
     "android": {
       "package": "br.com.yelopsi.app",
@@ -33,6 +36,12 @@
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 100
           }
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "O Yelo utiliza o Face ID para permitir que você acesse sua conta com rapidez e máxima segurança."
         }
       ]
     ],

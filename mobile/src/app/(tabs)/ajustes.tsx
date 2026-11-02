@@ -1,15 +1,105 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Alert, Switch } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
 import { StatusBar } from 'expo-status-bar';
 import { Feather } from '@expo/vector-icons';
 import { useRouter, useNavigation } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+  checkBiometricsCapability,
+  isBiometricsActive,
+  saveBiometricAccount,
+  removeBiometricAccount,
+  promptBiometricAuthentication,
+  BiometricCapability,
+} from '../../services/biometrics';
 
 export default function AjustesScreen() {
-  const { user, signOut } = useAuth();
+  const { user, token, signOut } = useAuth();
   const router = useRouter();
   const navigation = useNavigation<any>();
+
+  const [biometricCap, setBiometricCap] = useState<BiometricCapability>({
+    hasHardware: false,
+    isEnrolled: false,
+    available: false,
+    biometryType: 'generic',
+    label: 'Face ID / Biometria',
+  });
+  const [biometricActive, setBiometricActive] = useState(false);
+  const [loadingBiometrics, setLoadingBiometrics] = useState(true);
+
+  useEffect(() => {
+    async function loadBiometricsState() {
+      try {
+        const cap = await checkBiometricsCapability();
+        setBiometricCap(cap);
+        const active = await isBiometricsActive();
+        setBiometricActive(active);
+      } catch (err) {
+        console.warn('Erro ao carregar dados de biometria:', err);
+      } finally {
+        setLoadingBiometrics(false);
+      }
+    }
+    loadBiometricsState();
+  }, []);
+
+  const handleToggleBiometrics = async (nextVal: boolean) => {
+    if (nextVal) {
+      if (!biometricCap.hasHardware) {
+        Alert.alert(
+          'Biometria Indisponível',
+          'Este aparelho não possui hardware biométrico compatível.'
+        );
+        return;
+      }
+      if (!biometricCap.isEnrolled) {
+        Alert.alert(
+          'Biometria Não Cadastrada',
+          `Para usar o ${biometricCap.label}, configure o reconhecimento facial ou impressão digital nos Ajustes do seu celular primeiro.`
+        );
+        return;
+      }
+
+      // Solicita autenticação imediata para confirmar
+      const auth = await promptBiometricAuthentication(
+        `Confirme com ${biometricCap.label} para ativar o login rápido`
+      );
+
+      if (auth.success) {
+        if (token && user) {
+          await saveBiometricAccount(token, user);
+          setBiometricActive(true);
+          Alert.alert(
+            'Biometria Ativada',
+            `Pronto! Agora você poderá entrar no Yelo usando ${biometricCap.label} com 1 toque.`
+          );
+        } else {
+          Alert.alert('Atenção', 'Faça login novamente para registrar as credenciais.');
+        }
+      } else if (auth.error && auth.error !== 'Autenticação cancelada.') {
+        Alert.alert('Falha na Biometria', auth.error);
+      }
+    } else {
+      Alert.alert(
+        `Desativar ${biometricCap.label}`,
+        `Tem certeza que deseja desativar o acesso por ${biometricCap.label}? Você precisará digitar seu e-mail e senha no próximo login.`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Desativar',
+            style: 'destructive',
+            onPress: async () => {
+              await removeBiometricAccount();
+              setBiometricActive(false);
+              Alert.alert('Desativado', `O login por ${biometricCap.label} foi desativado.`);
+            },
+          },
+        ]
+      );
+    }
+  };
 
   const navigateTo = (targetTab: string) => {
     try {
@@ -111,6 +201,39 @@ export default function AjustesScreen() {
                 <Text className="font-sans text-[14px] text-[#888] leading-snug">Lembretes de sessões e avisos de pacientes.</Text>
               </View>
             </TouchableOpacity>
+
+            {/* Card 4: Segurança & Biometria (Face ID / Touch ID) */}
+            <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-[22px] flex-row items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
+              <View className="flex-row items-center flex-1 mr-3">
+                <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
+                  <Feather name="shield" size={24} color="#1B4332" />
+                </View>
+                <View className="flex-1">
+                  <View className="flex-row items-center flex-wrap">
+                    <Text className="font-title text-[#1B4332] text-[19px] mb-1 mr-2">
+                      {biometricCap.label}
+                    </Text>
+                    {biometricActive && (
+                      <View className="bg-[#dcfce7] px-2 py-0.5 rounded-full mb-1">
+                        <Text className="text-[#15803d] text-[11px] font-bold">ATIVADO</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text className="font-sans text-[13px] text-[#888] leading-snug">
+                    {biometricActive
+                      ? `Entrar rapidamente no app com ${biometricCap.label}.`
+                      : `Habilite para entrar no Yelo com ${biometricCap.label} sem digitar senha.`}
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={biometricActive}
+                onValueChange={handleToggleBiometrics}
+                trackColor={{ false: '#e5e7eb', true: '#1B4332' }}
+                thumbColor="#ffffff"
+                disabled={loadingBiometrics}
+              />
+            </View>
 
             {/* Card 3: Perfil Público */}
             <TouchableOpacity 
