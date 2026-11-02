@@ -4,16 +4,18 @@ import {
   Text, 
   TouchableOpacity, 
   TextInput, 
-  Modal, 
   ScrollView, 
   ActivityIndicator,
   Alert,
-  Platform 
+  Platform,
+  Pressable,
+  StyleSheet
 } from 'react-native';
 import YeloScrollView from '../../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Picker } from '@react-native-picker/picker';
 import api from '../../../services/api';
 
 // Máscaras de entrada
@@ -33,6 +35,13 @@ const maskCurrency = (value: string) => {
   v = v.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   return `R$ ${v}`;
 };
+
+// Horários disponíveis para seleção na agenda (08:00 às 21:00)
+const AVAILABLE_HOURS = [
+  '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
+  '14:00', '15:00', '16:00', '17:00', '18:00', '19:00',
+  '20:00', '21:00'
+];
 
 // Dados padrão caso a base não tenha agendamentos/pacientes
 const FALLBACK_PATIENTS = [
@@ -65,7 +74,7 @@ export default function PacientesScreen() {
   const [statusFilter, setStatusFilter] = useState<'ativo' | 'inativo' | 'todos'>('ativo');
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
-  // Modais
+  // Modais estilizados como Bottom Sheet Overlay (evita perda de LinkingContext do <Modal> nativo)
   const [modalNewPatient, setModalNewPatient] = useState(false);
   const [modalNewAppt, setModalNewAppt] = useState(false);
 
@@ -78,8 +87,12 @@ export default function PacientesScreen() {
 
   // Formulário Novo Agendamento
   const [apptType, setApptType] = useState<'session' | 'available'>('session');
-  const [apptPatientId, setApptPatientId] = useState('');
-  const [apptTime, setApptTime] = useState('14:00');
+  const [apptPatientId, setApptPatientId] = useState<string>('1');
+  const [apptTime, setApptTime] = useState<string>('14:00');
+
+  // Seletores Carrossel / Wheel Picker
+  const [showPatientPicker, setShowPatientPicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   // Carregar dados reais da API
   const fetchData = async () => {
@@ -95,6 +108,9 @@ export default function PacientesScreen() {
         : FALLBACK_PATIENTS;
       
       setPatients(loadedPatients);
+      if (loadedPatients.length > 0 && !apptPatientId) {
+        setApptPatientId(String(loadedPatients[0].id));
+      }
       setAppointments(resAppts.data || []);
     } catch (err) {
       console.warn('Erro ao buscar dados:', err);
@@ -175,7 +191,13 @@ export default function PacientesScreen() {
     });
   }, [patients, statusFilter, search]);
 
-  // Horários do dia (Grade das 07:00 às 22:00)
+  // Paciente selecionado para o picker
+  const selectedPatientName = useMemo(() => {
+    const p = patients.find(item => String(item.id) === String(apptPatientId));
+    return p ? p.nome : (patients[0]?.nome || 'Selecione um paciente');
+  }, [patients, apptPatientId]);
+
+  // Horários do dia (Grade das 08:00 às 21:00)
   const timeSlots = useMemo(() => {
     const slots = [];
     const dateStr = selectedDate.toISOString().split('T')[0];
@@ -183,7 +205,6 @@ export default function PacientesScreen() {
     for (let h = 8; h <= 21; h++) {
       const hourStr = `${String(h).padStart(2, '0')}:00`;
       
-      // Busca agendamentos correspondentes neste slot
       const eventInSlot = appointments.find((a: any) => {
         if (!a.start) return false;
         return a.start.startsWith(dateStr) && a.start.includes(`T${hourStr}`);
@@ -222,7 +243,6 @@ export default function PacientesScreen() {
         Alert.alert('Sucesso', 'Paciente cadastrado com sucesso!');
       }
     } catch (err: any) {
-      // Fallback local se estiver offline
       const mockNew = {
         id: String(Date.now()),
         nome: newPatientName,
@@ -256,7 +276,7 @@ export default function PacientesScreen() {
           value: 0
         });
       } else {
-        const patient = patients.find(p => p.id == apptPatientId) || patients[0];
+        const patient = patients.find(p => String(p.id) === String(apptPatientId)) || patients[0];
         await api.post('/api/appointments', {
           title: patient ? patient.nome : 'Consulta',
           start: startIso,
@@ -278,7 +298,13 @@ export default function PacientesScreen() {
   return (
     <View className="flex-1 bg-[#f9fafb]">
       <StatusBar style="dark" />
-      <YeloScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      
+      {/* Scroll com respiro inferior generoso (paddingBottom: 160) para não cobrir pela Bottom Tab Bar */}
+      <YeloScrollView 
+        className="flex-1" 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 160 }}
+      >
         
         {/* ============================================================ */}
         {/* HEADER PRINCIPAL VERDE (MAIN-HEADER - IDÊNTICO À WEB MOBILE)  */}
@@ -296,7 +322,7 @@ export default function PacientesScreen() {
         {/* VISÃO 1: AGENDA (VISÃO PADRÃO IGUAL AO WEBMOBILE)            */}
         {/* ============================================================ */}
         {!showPatientsView ? (
-          <View className="mx-4 bg-white rounded-[20px] border border-[#eee] shadow-sm overflow-hidden mb-28">
+          <View className="mx-4 bg-white rounded-[20px] border border-[#eee] shadow-sm overflow-hidden mb-6">
             
             {/* TOOLBAR DA AGENDA: Navegação de Datas */}
             <View className="flex-row items-center justify-between p-4 border-b border-[#f0f0f0]">
@@ -333,15 +359,18 @@ export default function PacientesScreen() {
               {/* Botão Pacientes (abre Carteira de Pacientes) */}
               <TouchableOpacity 
                 onPress={() => setShowPatientsView(true)}
-                className="flex-1 py-2.5 bg-white border border-[#1B4332] rounded-full items-center justify-center shadow-sm mr-2"
+                className="flex-1 py-3 bg-white border border-[#1B4332] rounded-full items-center justify-center shadow-sm mr-2"
               >
                 <Text className="font-sans font-bold text-[#1B4332] text-[15px]">Pacientes</Text>
               </TouchableOpacity>
 
               {/* Botão + Agendar */}
               <TouchableOpacity 
-                onPress={() => setModalNewAppt(true)}
-                className="flex-1 py-2.5 bg-[#1B4332] rounded-full items-center justify-center shadow-sm ml-2 flex-row"
+                onPress={() => {
+                  setApptType('session');
+                  setModalNewAppt(true);
+                }}
+                className="flex-1 py-3 bg-[#1B4332] rounded-full items-center justify-center shadow-sm ml-2 flex-row"
               >
                 <Text className="font-sans font-bold text-white text-[15px]">+ Agendar</Text>
               </TouchableOpacity>
@@ -382,26 +411,35 @@ export default function PacientesScreen() {
               </View>
             )}
 
-            {/* LEGENDA DE CORES (IDÊNTICA À WEB) */}
+            {/* LEGENDA DE CORES (BOLINHAS COLORIDAS FIXADAS COM ESTILO EXPLÍCITO) */}
             <View className="flex-row flex-wrap justify-center items-center py-4 px-4 border-b border-[#f0f0f0] mt-3">
-              <View className="flex-row items-center mr-3 mb-1">
-                <View className="w-2.5 h-2.5 rounded-full bg-[#3788d8] mr-1.5" />
+              {/* Agendado */}
+              <View className="flex-row items-center mr-3.5 mb-1.5">
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#3788d8', marginRight: 6 }} />
                 <Text className="font-sans text-[12px] text-[#495057]">Agendado</Text>
               </View>
-              <View className="flex-row items-center mr-3 mb-1">
-                <View className="w-2.5 h-2.5 rounded-full bg-[#1B4332] mr-1.5" />
+
+              {/* Confirmado */}
+              <View className="flex-row items-center mr-3.5 mb-1.5">
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#1B4332', marginRight: 6 }} />
                 <Text className="font-sans text-[12px] text-[#495057]">Confirmado</Text>
               </View>
-              <View className="flex-row items-center mr-3 mb-1">
-                <View className="w-2.5 h-2.5 rounded-full bg-[#FFEE8C] border border-dashed border-[#1B4332] mr-1.5" />
+
+              {/* Disponível */}
+              <View className="flex-row items-center mr-3.5 mb-1.5">
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#FFEE8C', borderWidth: 1, borderStyle: 'dashed', borderColor: '#1B4332', marginRight: 6 }} />
                 <Text className="font-sans text-[12px] text-[#495057]">Disponível</Text>
               </View>
-              <View className="flex-row items-center mr-3 mb-1">
-                <View className="w-2.5 h-2.5 rounded-full bg-[#9e9e9e] mr-1.5" />
+
+              {/* Realizado */}
+              <View className="flex-row items-center mr-3.5 mb-1.5">
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#9e9e9e', marginRight: 6 }} />
                 <Text className="font-sans text-[12px] text-[#495057]">Realizado</Text>
               </View>
-              <View className="flex-row items-center mb-1">
-                <View className="w-2.5 h-2.5 rounded-full bg-[#d32f2f] mr-1.5" />
+
+              {/* Falta */}
+              <View className="flex-row items-center mb-1.5">
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#d32f2f', marginRight: 6 }} />
                 <Text className="font-sans text-[12px] text-[#495057]">Falta</Text>
               </View>
             </View>
@@ -413,7 +451,7 @@ export default function PacientesScreen() {
               </Text>
             </View>
 
-            {/* GRADE DE HORÁRIOS (TIMEGRID DIÁRIO) */}
+            {/* GRADE DE HORÁRIOS COM CAMPOS EM FORMATO DE PÍLULA */}
             <View className="py-2">
               {timeSlots.map((slot, index) => {
                 const hasEvent = slot.event !== null;
@@ -422,7 +460,7 @@ export default function PacientesScreen() {
                 const isAvailable = slot.event?.status === 'available';
 
                 return (
-                  <View key={index} className="flex-row items-center min-h-[52px] border-b border-[#f5f5f5] px-4">
+                  <View key={index} className="flex-row items-center min-h-[54px] border-b border-[#f5f5f5] px-4">
                     {/* Coluna de Horário */}
                     <View className="w-14 items-center justify-center">
                       <Text className="font-sans text-[12px] text-[#888] font-medium">
@@ -430,33 +468,41 @@ export default function PacientesScreen() {
                       </Text>
                     </View>
 
-                    {/* Coluna de Conteúdo do Slot */}
-                    <View className="flex-1 pl-2 py-1">
+                    {/* Coluna de Conteúdo do Slot - Formato de Pílula */}
+                    <View className="flex-1 pl-2 py-1.5">
                       {hasEvent ? (
                         <TouchableOpacity
-                          className={`p-2.5 rounded-[8px] justify-center ${
+                          className={`h-[40px] px-4 rounded-full justify-center shadow-xs ${
                             isConfirmed ? 'bg-[#1B4332]' : 
                             isScheduled ? 'bg-[#3788d8]' : 
                             isAvailable ? 'bg-[#FFEE8C] border border-dashed border-[#1B4332]' : 
                             'bg-[#9e9e9e]'
                           }`}
                         >
-                          <Text className={`font-sans font-bold text-[13px] ${isAvailable ? 'text-[#1B4332]' : 'text-white'}`}>
-                            {slot.event.title}
-                          </Text>
-                          <Text className={`font-sans text-[11px] ${isAvailable ? 'text-[#1B4332]' : 'text-white/80'}`}>
-                            {slot.hour} - Sessão Individual
-                          </Text>
+                          <View className="flex-row items-center justify-between">
+                            <Text 
+                              className={`font-sans font-bold text-[13px] ${isAvailable ? 'text-[#1B4332]' : 'text-white'}`}
+                              numberOfLines={1}
+                            >
+                              {slot.event.title}
+                            </Text>
+                            <Text className={`font-sans text-[11px] ${isAvailable ? 'text-[#1B4332]' : 'text-white/80'}`}>
+                              {slot.hour}
+                            </Text>
+                          </View>
                         </TouchableOpacity>
                       ) : (
                         <TouchableOpacity 
                           onPress={() => {
                             setApptTime(slot.hour);
+                            setApptType('session');
                             setModalNewAppt(true);
                           }}
-                          className="h-[40px] rounded-[6px] border border-dashed border-[#e9ecef] items-center justify-center"
+                          className="h-[38px] rounded-full border border-dashed border-[#ced4da] bg-[#fafafa] items-center justify-center px-4"
                         >
-                          <Text className="font-sans text-[11px] text-[#bbb]">+ Toque para agendar</Text>
+                          <Text className="font-sans font-medium text-[12px] text-[#777]">
+                            + Toque para agendar
+                          </Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -470,7 +516,7 @@ export default function PacientesScreen() {
           /* ============================================================ */
           /* VISÃO 2: CARTEIRA DE PACIENTES (ABERTA VIA [ PACIENTES ])     */
           /* ============================================================ */
-          <View className="mx-4 bg-white rounded-[20px] border border-[#eee] p-5 shadow-sm mb-28">
+          <View className="mx-4 bg-white rounded-[20px] border border-[#eee] p-5 shadow-sm mb-6">
             
             {/* BOTÃO VOLTAR PARA A AGENDA (IDÊNTICO À WEB) */}
             <TouchableOpacity 
@@ -496,8 +542,8 @@ export default function PacientesScreen() {
 
             {/* CONTROLES: BUSCA, BOTÃO (+) E FILTRO DE STATUS */}
             <View className="flex-row items-center mb-5">
-              {/* Campo de Busca */}
-              <View className="flex-1 flex-row items-center bg-[#f9fafb] border border-[#eee] rounded-full px-4 py-2 mr-2">
+              {/* Campo de Busca em Pílula */}
+              <View className="flex-1 flex-row items-center bg-[#f9fafb] border border-[#eee] rounded-full px-4 py-2.5 mr-2">
                 <Feather name="search" size={16} color="#9ca3af" style={{ marginRight: 6 }} />
                 <TextInput
                   placeholder="Buscar por nome..."
@@ -516,10 +562,10 @@ export default function PacientesScreen() {
                 <Text className="text-white text-[20px] font-bold leading-none mb-0.5">+</Text>
               </TouchableOpacity>
 
-              {/* Seletor Customizado de Filtro */}
+              {/* Seletor Customizado de Filtro em Pílula */}
               <TouchableOpacity 
                 onPress={() => setShowStatusMenu(!showStatusMenu)}
-                className="bg-[#f9fafb] border border-[#eee] rounded-full px-3 py-2 flex-row items-center"
+                className="bg-[#f9fafb] border border-[#eee] rounded-full px-3.5 py-2.5 flex-row items-center"
               >
                 <Text className="font-sans font-semibold text-[#495057] text-[13px] mr-1 capitalize">
                   {statusFilter === 'ativo' ? 'Ativos' : statusFilter === 'inativo' ? 'Inativos' : 'Todos'}
@@ -530,7 +576,7 @@ export default function PacientesScreen() {
 
             {/* MENU DE OPÇÕES DO FILTRO (QUANDO ABERTO) */}
             {showStatusMenu && (
-              <View className="bg-white border border-[#eee] rounded-[12px] shadow-lg mb-4 overflow-hidden">
+              <View className="bg-white border border-[#eee] rounded-[16px] shadow-lg mb-4 overflow-hidden">
                 <TouchableOpacity 
                   onPress={() => { setStatusFilter('ativo'); setShowStatusMenu(false); }}
                   className={`p-3 border-b border-[#f5f5f5] ${statusFilter === 'ativo' ? 'bg-[#f0fdf4]' : ''}`}
@@ -610,16 +656,180 @@ export default function PacientesScreen() {
       </YeloScrollView>
 
       {/* ============================================================ */}
-      {/* MODAL: NOVO PACIENTE (BOTTOM SHEET COM MÁSCARAS)            */}
+      {/* MODAL: NOVO AGENDAMENTO (CONSULTA / HORÁRIO DISPONÍVEL)      */}
+      {/* Overlay com Bottom Sheet direta - Zero erro de LinkingContext*/}
       {/* ============================================================ */}
-      <Modal 
-        visible={modalNewPatient} 
-        animationType="slide" 
-        transparent={true} 
-        onRequestClose={() => setModalNewPatient(false)}
-      >
-        <View className="flex-1 justify-end bg-black/40">
-          <View className="bg-white rounded-t-[32px] p-6 max-h-[85%]">
+      {modalNewAppt && (
+        <View style={StyleSheet.absoluteFill} className="z-50 justify-end bg-black/50">
+          <Pressable 
+            style={StyleSheet.absoluteFill} 
+            onPress={() => {
+              setShowPatientPicker(false);
+              setShowTimePicker(false);
+              setModalNewAppt(false);
+            }} 
+          />
+          <View className="bg-white rounded-t-[32px] p-6 max-h-[90%] z-10 pb-10">
+            <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-5" />
+
+            <View className="flex-row items-center mb-5">
+              <View className="w-[45px] h-[45px] rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
+                <Text className="text-[20px]">📅</Text>
+              </View>
+              <View>
+                <Text className="font-title text-[20px] text-[#1B4332]">Agendar Horário</Text>
+                <Text className="font-sans text-[13px] text-[#666]">{formattedDateTitle}</Text>
+              </View>
+              <TouchableOpacity 
+                className="ml-auto p-2" 
+                onPress={() => {
+                  setShowPatientPicker(false);
+                  setShowTimePicker(false);
+                  setModalNewAppt(false);
+                }}
+              >
+                <Feather name="x" size={22} color="#999" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* TABS DE TIPO: CONSULTA vs HORÁRIO DISPONÍVEL (EM FORMATO DE PÍLULA) */}
+              <View className="flex-row bg-[#f1f3f5] p-1.5 rounded-full mb-5">
+                <TouchableOpacity 
+                  onPress={() => {
+                    setApptType('session');
+                    setShowTimePicker(false);
+                    setShowPatientPicker(false);
+                  }}
+                  className="flex-1 py-2.5 rounded-full items-center justify-center"
+                  style={apptType === 'session' ? { backgroundColor: '#ffffff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 } : undefined}
+                >
+                  <Text 
+                    className="font-sans font-bold text-[14px]"
+                    style={{ color: apptType === 'session' ? '#1B4332' : '#666666' }}
+                  >
+                    Consulta
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  onPress={() => {
+                    setApptType('available');
+                    setShowPatientPicker(false);
+                    setShowTimePicker(false);
+                  }}
+                  className="flex-1 py-2.5 rounded-full items-center justify-center"
+                  style={apptType === 'available' ? { backgroundColor: '#ffffff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 } : undefined}
+                >
+                  <Text 
+                    className="font-sans font-bold text-[14px]"
+                    style={{ color: apptType === 'available' ? '#1B4332' : '#666666' }}
+                  >
+                    Horário Disponível
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* SELEÇÃO DE PACIENTE (FORMATO PÍLULA COM SELETOR NATIVO DO OS CARROSSEL/WHEEL) */}
+              {apptType === 'session' && (
+                <View className="mb-4">
+                  <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-2">
+                    Selecione o Paciente
+                  </Text>
+                  
+                  {/* Botão de Disparo em Pílula */}
+                  <TouchableOpacity 
+                    onPress={() => {
+                      setShowPatientPicker(!showPatientPicker);
+                      setShowTimePicker(false);
+                    }}
+                    className="bg-[#f9fafb] border border-[#ced4da] rounded-full px-5 py-3.5 flex-row justify-between items-center"
+                  >
+                    <Text className="font-sans font-semibold text-[#1B4332] text-[15px]">
+                      {selectedPatientName}
+                    </Text>
+                    <Feather name={showPatientPicker ? "chevron-up" : "chevron-down"} size={18} color="#1B4332" />
+                  </TouchableOpacity>
+
+                  {/* Carrossel Nativo do OS (iOS Wheel / Android Spinner) */}
+                  {showPatientPicker && (
+                    <View className="bg-[#f8f9fa] border border-[#eee] rounded-[20px] mt-2 overflow-hidden">
+                      <Picker
+                        selectedValue={apptPatientId}
+                        onValueChange={(itemValue) => setApptPatientId(String(itemValue))}
+                        itemStyle={{ height: 120, fontSize: 16, color: '#1B4332' }}
+                      >
+                        {patients.map(p => (
+                          <Picker.Item 
+                            key={p.id} 
+                            label={`${p.nome} - R$ ${p.sessionValue || 0}`} 
+                            value={String(p.id)} 
+                          />
+                        ))}
+                      </Picker>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* SELEÇÃO DE HORÁRIO DE INÍCIO (FORMATO PÍLULA COM SELETOR NATIVO DO OS CARROSSEL/WHEEL) */}
+              <View className="mb-5">
+                <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-2">
+                  Horário de Início
+                </Text>
+
+                {/* Botão de Disparo em Pílula */}
+                <TouchableOpacity 
+                  onPress={() => {
+                    setShowTimePicker(!showTimePicker);
+                    setShowPatientPicker(false);
+                  }}
+                  className="bg-[#f9fafb] border border-[#ced4da] rounded-full px-5 py-3.5 flex-row justify-between items-center"
+                >
+                  <Text className="font-sans font-semibold text-[#1B4332] text-[15px]">
+                    {apptTime}
+                  </Text>
+                  <Feather name={showTimePicker ? "chevron-up" : "chevron-down"} size={18} color="#1B4332" />
+                </TouchableOpacity>
+
+                {/* Carrossel Nativo do OS (iOS Wheel / Android Spinner) */}
+                {showTimePicker && (
+                  <View className="bg-[#f8f9fa] border border-[#eee] rounded-[20px] mt-2 overflow-hidden">
+                    <Picker
+                      selectedValue={apptTime}
+                      onValueChange={(itemValue) => setApptTime(String(itemValue))}
+                      itemStyle={{ height: 120, fontSize: 16, color: '#1B4332' }}
+                    >
+                      {AVAILABLE_HOURS.map(h => (
+                        <Picker.Item key={h} label={h} value={h} />
+                      ))}
+                    </Picker>
+                  </View>
+                )}
+              </View>
+
+              {/* BOTÃO CONFIRMAR HORÁRIO EM FORMATO DE PÍLULA (ROUNDED-FULL) */}
+              <TouchableOpacity 
+                onPress={handleSaveAppt}
+                className="bg-[#1B4332] rounded-full py-4 items-center justify-center mt-2 mb-6 shadow-sm"
+              >
+                <Text className="font-sans font-bold text-white text-[16px]">
+                  Confirmar Horário
+                </Text>
+              </TouchableOpacity>
+
+            </ScrollView>
+          </View>
+        </View>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL: NOVO PACIENTE (OVERLAY COM CAMPOS EM PÍLULA)          */}
+      {/* ============================================================ */}
+      {modalNewPatient && (
+        <View style={StyleSheet.absoluteFill} className="z-50 justify-end bg-black/50">
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setModalNewPatient(false)} />
+          <View className="bg-white rounded-t-[32px] p-6 max-h-[90%] z-10 pb-10">
             <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-5" />
 
             <View className="flex-row items-center mb-5">
@@ -638,7 +848,7 @@ export default function PacientesScreen() {
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">Nome Completo *</Text>
               <TextInput 
-                className="bg-[#f9fafb] border border-[#ccc] rounded-[12px] px-4 py-3 mb-3 font-sans text-[15px] text-[#1B4332]" 
+                className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3 mb-3 font-sans text-[15px] text-[#1B4332]" 
                 placeholder="Ex: João Silva" 
                 value={newPatientName}
                 onChangeText={setNewPatientName}
@@ -646,7 +856,7 @@ export default function PacientesScreen() {
 
               <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">WhatsApp *</Text>
               <TextInput 
-                className="bg-[#f9fafb] border border-[#ccc] rounded-[12px] px-4 py-3 mb-3 font-sans text-[15px] text-[#1B4332]" 
+                className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3 mb-3 font-sans text-[15px] text-[#1B4332]" 
                 placeholder="(00) 00000-0000" 
                 keyboardType="numeric"
                 value={newPatientPhone}
@@ -658,7 +868,7 @@ export default function PacientesScreen() {
                 <View className="flex-1 mr-2">
                   <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">Valor da Sessão</Text>
                   <TextInput 
-                    className="bg-[#f9fafb] border border-[#ccc] rounded-[12px] px-4 py-3 font-sans text-[15px] text-[#1B4332]" 
+                    className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3 font-sans text-[15px] text-[#1B4332]" 
                     placeholder="R$ 150,00" 
                     keyboardType="numeric"
                     value={newPatientValue}
@@ -670,7 +880,7 @@ export default function PacientesScreen() {
                   <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">Status</Text>
                   <TouchableOpacity 
                     onPress={() => setNewPatientStatus(newPatientStatus === 'ativo' ? 'inativo' : 'ativo')}
-                    className="bg-[#f9fafb] border border-[#ccc] rounded-[12px] px-4 py-[13px] flex-row justify-between items-center"
+                    className="bg-[#f9fafb] border border-[#ccc] rounded-full px-5 py-3 flex-row justify-between items-center"
                   >
                     <Text className="font-sans text-[15px] text-[#1B4332] font-bold capitalize">
                       {newPatientStatus}
@@ -683,103 +893,18 @@ export default function PacientesScreen() {
               <TouchableOpacity 
                 onPress={handleSavePatient}
                 disabled={isSubmittingPatient}
-                className="bg-[#1B4332] rounded-[14px] py-[15px] items-center mt-2 mb-8 shadow-sm"
+                className="bg-[#1B4332] rounded-full py-4 items-center justify-center mt-2 mb-8 shadow-sm"
               >
                 {isSubmittingPatient ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
-                  <Text className="font-sans font-bold text-white text-[15px]">Salvar Paciente</Text>
+                  <Text className="font-sans font-bold text-white text-[16px]">Salvar Paciente</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
           </View>
         </View>
-      </Modal>
-
-      {/* ============================================================ */}
-      {/* MODAL: NOVO AGENDAMENTO (CONSULTA / HORÁRIO DISPONÍVEL)      */}
-      {/* ============================================================ */}
-      <Modal 
-        visible={modalNewAppt} 
-        animationType="slide" 
-        transparent={true} 
-        onRequestClose={() => setModalNewAppt(false)}
-      >
-        <View className="flex-1 justify-end bg-black/40">
-          <View className="bg-white rounded-t-[32px] p-6 max-h-[85%]">
-            <View className="w-12 h-1 bg-[#e5e7eb] rounded-full self-center mb-5" />
-
-            <View className="flex-row items-center mb-5">
-              <View className="w-[45px] h-[45px] rounded-full bg-[#f0fdf4] items-center justify-center mr-3">
-                <Text className="text-[20px]">📅</Text>
-              </View>
-              <View>
-                <Text className="font-title text-[20px] text-[#1B4332]">Agendar Horário</Text>
-                <Text className="font-sans text-[13px] text-[#666]">{formattedDateTitle}</Text>
-              </View>
-              <TouchableOpacity className="ml-auto p-2" onPress={() => setModalNewAppt(false)}>
-                <Feather name="x" size={22} color="#999" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Tipo de Horário: Consulta vs Disponível */}
-              <View className="flex-row bg-[#f1f3f5] p-1 rounded-full mb-4">
-                <TouchableOpacity 
-                  onPress={() => setApptType('session')}
-                  className={`flex-1 py-2 rounded-full items-center ${apptType === 'session' ? 'bg-white shadow-sm' : ''}`}
-                >
-                  <Text className={`font-sans font-bold text-[13px] ${apptType === 'session' ? 'text-[#1B4332]' : 'text-[#666]'}`}>
-                    Consulta
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  onPress={() => setApptType('available')}
-                  className={`flex-1 py-2 rounded-full items-center ${apptType === 'available' ? 'bg-white shadow-sm' : ''}`}
-                >
-                  <Text className={`font-sans font-bold text-[13px] ${apptType === 'available' ? 'text-[#1B4332]' : 'text-[#666]'}`}>
-                    Horário Disponível
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {apptType === 'session' && (
-                <>
-                  <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">Selecione o Paciente</Text>
-                  <View className="bg-[#f9fafb] border border-[#ccc] rounded-[12px] p-2 mb-4">
-                    {patients.slice(0, 4).map(p => (
-                      <TouchableOpacity 
-                        key={p.id}
-                        onPress={() => setApptPatientId(p.id)}
-                        className={`p-2.5 rounded-[8px] flex-row justify-between items-center ${apptPatientId == p.id ? 'bg-[#e8f5e9]' : ''}`}
-                      >
-                        <Text className="font-sans font-semibold text-[#333] text-[14px]">{p.nome}</Text>
-                        {apptPatientId == p.id && <Feather name="check" size={16} color="#1B4332" />}
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </>
-              )}
-
-              <Text className="font-sans font-bold text-[12px] text-[#495057] uppercase mb-1.5">Horário de Início</Text>
-              <TextInput 
-                className="bg-[#f9fafb] border border-[#ccc] rounded-[12px] px-4 py-3 mb-4 font-sans text-[15px] text-[#1B4332]" 
-                placeholder="Ex: 14:00" 
-                value={apptTime}
-                onChangeText={setApptTime}
-              />
-
-              <TouchableOpacity 
-                onPress={handleSaveAppt}
-                className="bg-[#1B4332] rounded-[14px] py-[15px] items-center mt-2 mb-8 shadow-sm"
-              >
-                <Text className="font-sans font-bold text-white text-[15px]">Confirmar Horário</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      )}
 
     </View>
   );
