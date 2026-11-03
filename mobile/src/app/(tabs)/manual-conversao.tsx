@@ -8,8 +8,8 @@ import {
   Modal,
   Pressable,
   Alert,
+  ScrollView,
 } from 'react-native';
-import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -235,43 +235,37 @@ export default function ManualConversaoScreen() {
     }
   };
 
+  const handleBackPress = () => {
+    console.log('[DEBUG_MANUAL_CONVERSAO] Voltando para o hub /clinica');
+    router.navigate('/(tabs)/clinica');
+  };
+
+  const handleTabPress = (tab: 'mindset' | 'templates' | 'copilot') => {
+    console.log('[DEBUG_MANUAL_CONVERSAO] Mudando para aba:', tab);
+    setActiveTab(tab);
+  };
+
   return (
     <View className="flex-1 bg-[#f9fafb]">
-      <YeloScrollView
+      <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 110 }}
       >
-        {/* TOP ECOSYSTEM NAVIGATION */}
-        <View className="mx-5 mt-5 mb-4 flex-row items-center justify-between flex-wrap gap-2">
+        {/* TOP NAVIGATION: BOTÃO VOLTAR */}
+        <View className="mx-5 mt-5 mb-3 flex-row items-center">
           <TouchableOpacity
-            onPress={() => (router.canGoBack() ? router.back() : router.navigate('/(tabs)/clinica'))}
-            className="flex-row items-center py-1.5 pr-2"
+            onPress={handleBackPress}
+            activeOpacity={0.7}
+            hitSlop={{ top: 14, bottom: 14, left: 14, right: 24 }}
+            className="flex-row items-center py-2 pr-4 self-start"
           >
-            <Feather name="arrow-left" size={18} color="#1B4332" />
-            <Text className="font-sans font-bold text-[#1B4332] text-[14px] ml-1.5">
-              Voltar para Clínica
+            <Feather name="arrow-left" size={20} color="#1B4332" />
+            <Text className="font-sans font-bold text-[#1B4332] text-[15px] ml-1.5">
+              Voltar
             </Text>
           </TouchableOpacity>
-
-          <View className="flex-row items-center gap-2">
-            <TouchableOpacity
-              onPress={() => router.navigate('/(tabs)/pacientes')}
-              className="flex-row items-center bg-white px-3.5 py-2 rounded-full border border-[#e2e8f0] shadow-sm"
-            >
-              <Text className="text-[13px] mr-1.5">📊</Text>
-              <Text className="font-sans font-bold text-[#475569] text-[12px]">Meus Leads</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => router.navigate('/(tabs)/calculadora')}
-              className="flex-row items-center bg-white px-3.5 py-2 rounded-full border border-[#e2e8f0] shadow-sm"
-            >
-              <Text className="text-[13px] mr-1.5">🧮</Text>
-              <Text className="font-sans font-bold text-[#475569] text-[12px]">Calculadora</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* MAIN HEADER */}
@@ -287,53 +281,98 @@ export default function ManualConversaoScreen() {
         </View>
 
         {/* PILL TABS */}
-        <View className="mx-5 mb-6 flex-row bg-[#f1f5f9] p-1 rounded-full border border-[#e2e8f0]">
+        <View
+          className="mx-5 mb-6 flex-row bg-[#f1f5f9] p-1 rounded-full border border-[#e2e8f0]"
+          style={{ flexDirection: 'row', backgroundColor: '#f1f5f9', borderRadius: 9999, padding: 4 }}
+        >
           <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setActiveTab('mindset')}
-            className={`flex-1 py-2.5 rounded-full flex-row items-center justify-center ${
-              activeTab === 'mindset' ? 'bg-[#1B4332] shadow-sm' : ''
-            }`}
+            activeOpacity={0.7}
+            onPress={() => handleTabPress('mindset')}
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            style={{
+              flex: 1,
+              paddingVertical: 10,
+              borderRadius: 9999,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: activeTab === 'mindset' ? '#1B4332' : 'transparent',
+              shadowColor: activeTab === 'mindset' ? '#1B4332' : 'transparent',
+              shadowOpacity: activeTab === 'mindset' ? 0.2 : 0,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 2 },
+            }}
           >
-            <Text className="text-[14px] mr-1.5">🧠</Text>
+            <Text style={{ fontSize: 14, marginRight: 5 }}>🧠</Text>
             <Text
-              className={`font-sans font-bold text-[13px] ${
-                activeTab === 'mindset' ? 'text-white' : 'text-[#64748b]'
-              }`}
+              style={{
+                fontFamily: 'sans-serif',
+                fontWeight: '700',
+                fontSize: 13,
+                color: activeTab === 'mindset' ? '#ffffff' : '#64748b',
+              }}
             >
               Orientações
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setActiveTab('templates')}
-            className={`flex-1 py-2.5 rounded-full flex-row items-center justify-center ${
-              activeTab === 'templates' ? 'bg-[#1B4332] shadow-sm' : ''
-            }`}
+            activeOpacity={0.7}
+            onPress={() => handleTabPress('templates')}
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            style={{
+              flex: 1,
+              paddingVertical: 10,
+              borderRadius: 9999,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: activeTab === 'templates' ? '#1B4332' : 'transparent',
+              shadowColor: activeTab === 'templates' ? '#1B4332' : 'transparent',
+              shadowOpacity: activeTab === 'templates' ? 0.2 : 0,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 2 },
+            }}
           >
-            <Text className="text-[14px] mr-1.5">💬</Text>
+            <Text style={{ fontSize: 14, marginRight: 5 }}>💬</Text>
             <Text
-              className={`font-sans font-bold text-[13px] ${
-                activeTab === 'templates' ? 'text-white' : 'text-[#64748b]'
-              }`}
+              style={{
+                fontFamily: 'sans-serif',
+                fontWeight: '700',
+                fontSize: 13,
+                color: activeTab === 'templates' ? '#ffffff' : '#64748b',
+              }}
             >
               Templates
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setActiveTab('copilot')}
-            className={`flex-1 py-2.5 rounded-full flex-row items-center justify-center ${
-              activeTab === 'copilot' ? 'bg-[#1B4332] shadow-sm' : ''
-            }`}
+            activeOpacity={0.7}
+            onPress={() => handleTabPress('copilot')}
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+            style={{
+              flex: 1,
+              paddingVertical: 10,
+              borderRadius: 9999,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: activeTab === 'copilot' ? '#1B4332' : 'transparent',
+              shadowColor: activeTab === 'copilot' ? '#1B4332' : 'transparent',
+              shadowOpacity: activeTab === 'copilot' ? 0.2 : 0,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 2 },
+            }}
           >
-            <Text className="text-[14px] mr-1.5">✨</Text>
+            <Text style={{ fontSize: 14, marginRight: 5 }}>✨</Text>
             <Text
-              className={`font-sans font-bold text-[13px] ${
-                activeTab === 'copilot' ? 'text-white' : 'text-[#64748b]'
-              }`}
+              style={{
+                fontFamily: 'sans-serif',
+                fontWeight: '700',
+                fontSize: 13,
+                color: activeTab === 'copilot' ? '#ffffff' : '#64748b',
+              }}
             >
               Copilot IA
             </Text>
@@ -737,7 +776,7 @@ export default function ManualConversaoScreen() {
             </View>
           </View>
         )}
-      </YeloScrollView>
+      </ScrollView>
 
       {/* ======================================================== */}
       {/* MODAL BOTTOM SHEET: SELETOR DE CENÁRIOS EM CASCATA */}
