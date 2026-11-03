@@ -13,6 +13,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Share,
+  StyleSheet,
 } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
 import NativeSelectMenu from '../../components/NativeSelectMenu';
@@ -140,6 +141,15 @@ export default function FinanceiroScreen() {
   const [showExpenseCalendar, setShowExpenseCalendar] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
   const [expenseError, setExpenseError] = useState('');
+
+  const todayBR = useMemo(() => getLocalBrazilianDate(), []);
+  const yesterdayBR = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return getLocalBrazilianDate(d);
+  }, []);
+  const isExpToday = expDateBR === todayBR;
+  const isExpYesterday = expDateBR === yesterdayBR;
 
   // Modal: Exportar
   const [modalExportVisible, setModalExportVisible] = useState(false);
@@ -821,7 +831,10 @@ export default function FinanceiroScreen() {
                       Data (DD/MM/AAAA)
                     </Text>
                     <TouchableOpacity
-                      onPress={() => setShowExpenseCalendar(true)}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setShowExpenseCalendar(true);
+                      }}
                       activeOpacity={0.75}
                       className="w-full bg-[#f9fafb] border border-[#e5e7eb] rounded-[12px] px-3.5 py-3 flex-row items-center justify-between"
                     >
@@ -833,26 +846,50 @@ export default function FinanceiroScreen() {
                   </View>
                 </View>
 
-                {/* Atalhos Rápidos de Data com cálculo no fuso local */}
-                <View className="flex-row items-center mb-6 space-x-2">
+                {/* Atalhos Rápidos de Data com cálculo no fuso local e estado selecionado */}
+                <View className="flex-row items-center mb-6">
                   <Text className="text-[12px] text-[#888] font-sans mr-2">Atalhos:</Text>
+                  
                   <TouchableOpacity
-                    onPress={() => setExpDateBR(getLocalBrazilianDate())}
-                    className="bg-[#f0fdf4] border border-[#bbf7d0] px-3 py-1.5 rounded-full mr-2"
+                    onPress={() => setExpDateBR(todayBR)}
+                    className={`px-3.5 py-1.5 rounded-full mr-2 border flex-row items-center ${
+                      isExpToday
+                        ? 'bg-[#1B4332] border-[#1B4332]'
+                        : 'bg-[#f3f4f6] border-[#e5e7eb]'
+                    }`}
                     activeOpacity={0.7}
                   >
-                    <Text className="text-[12px] font-sans text-[#166534] font-semibold">Hoje</Text>
+                    {isExpToday && (
+                      <Feather name="check" size={12} color="#ffffff" style={{ marginRight: 4 }} />
+                    )}
+                    <Text
+                      className={`text-[12px] font-sans ${
+                        isExpToday ? 'text-white font-bold' : 'text-[#4b5563] font-medium'
+                      }`}
+                    >
+                      Hoje
+                    </Text>
                   </TouchableOpacity>
+
                   <TouchableOpacity
-                    onPress={() => {
-                      const d = new Date();
-                      d.setDate(d.getDate() - 1);
-                      setExpDateBR(getLocalBrazilianDate(d));
-                    }}
-                    className="bg-[#f3f4f6] px-3 py-1.5 rounded-full"
+                    onPress={() => setExpDateBR(yesterdayBR)}
+                    className={`px-3.5 py-1.5 rounded-full mr-2 border flex-row items-center ${
+                      isExpYesterday
+                        ? 'bg-[#1B4332] border-[#1B4332]'
+                        : 'bg-[#f3f4f6] border-[#e5e7eb]'
+                    }`}
                     activeOpacity={0.7}
                   >
-                    <Text className="text-[12px] font-sans text-[#4b5563] font-medium">Ontem</Text>
+                    {isExpYesterday && (
+                      <Feather name="check" size={12} color="#ffffff" style={{ marginRight: 4 }} />
+                    )}
+                    <Text
+                      className={`text-[12px] font-sans ${
+                        isExpYesterday ? 'text-white font-bold' : 'text-[#4b5563] font-medium'
+                      }`}
+                    >
+                      Ontem
+                    </Text>
                   </TouchableOpacity>
                 </View>
 
@@ -885,88 +922,87 @@ export default function FinanceiroScreen() {
                 </View>
               </View>
             </KeyboardAvoidingView>
+
+            {/* OVERLAY DO CALENDÁRIO DENTRO DO MESMO MODAL (EVITA CONFLITO NATIVO DO IOS) */}
+            {showExpenseCalendar && (
+              <View
+                style={StyleSheet.absoluteFill}
+                className="bg-black/60 justify-center items-center px-4 z-50"
+              >
+                <TouchableWithoutFeedback onPress={() => setShowExpenseCalendar(false)}>
+                  <View style={StyleSheet.absoluteFill} />
+                </TouchableWithoutFeedback>
+                <View className="w-full max-w-[360px] bg-white rounded-[24px] p-5 shadow-2xl z-50">
+                  {/* Header do Calendário */}
+                  <View className="flex-row items-center justify-between pb-3 mb-2 border-b border-[#f1f3f5]">
+                    <View className="flex-row items-center">
+                      <View className="w-8 h-8 rounded-full bg-[#f0fdf4] items-center justify-center mr-2.5">
+                        <Feather name="calendar" size={16} color="#1B4332" />
+                      </View>
+                      <Text className="font-title text-[18px] text-[#1B4332]">Selecionar Data</Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => setShowExpenseCalendar(false)}
+                      className="w-8 h-8 rounded-full bg-[#f3f4f6] items-center justify-center"
+                    >
+                      <Feather name="x" size={16} color="#4b5563" />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Calendário Interativo */}
+                  <Calendar
+                    current={parseBrazilianToISO(expDateBR)}
+                    enableSwipeMonths={true}
+                    markedDates={{
+                      [parseBrazilianToISO(expDateBR)]: {
+                        selected: true,
+                        selectedColor: '#1B4332',
+                      },
+                    }}
+                    onDayPress={(day: any) => {
+                      const br = parseISOToBrazilian(day.dateString);
+                      setExpDateBR(br);
+                      setShowExpenseCalendar(false);
+                    }}
+                    theme={{
+                      backgroundColor: '#ffffff',
+                      calendarBackground: '#ffffff',
+                      textSectionTitleColor: '#6b7280',
+                      selectedDayBackgroundColor: '#1B4332',
+                      selectedDayTextColor: '#ffffff',
+                      todayTextColor: '#1B4332',
+                      dayTextColor: '#1f2937',
+                      textDisabledColor: '#d1d5db',
+                      dotColor: '#1B4332',
+                      arrowColor: '#1B4332',
+                      monthTextColor: '#1B4332',
+                      textDayFontWeight: '500',
+                      textMonthFontWeight: '700',
+                      textDayHeaderFontWeight: '600',
+                      textDayFontSize: 14,
+                      textMonthFontSize: 16,
+                      textDayHeaderFontSize: 11,
+                    }}
+                  />
+
+                  {/* Botão rápido: Selecionar Hoje */}
+                  <TouchableOpacity
+                    onPress={() => {
+                      setExpDateBR(todayBR);
+                      setShowExpenseCalendar(false);
+                    }}
+                    className="mt-3 bg-[#f0fdf4] border border-[#bbf7d0] py-2.5 rounded-full items-center justify-center flex-row"
+                  >
+                    <Feather name="check" size={14} color="#166534" style={{ marginRight: 6 }} />
+                    <Text className="text-[#166534] font-bold text-[13px] font-sans">
+                      Selecionar Hoje ({todayBR})
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* ============================================================ */}
-      {/* MODAL: CALENDÁRIO PARA SELEÇÃO DA DATA DA DESPESA */}
-      {/* ============================================================ */}
-      <Modal
-        visible={showExpenseCalendar}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowExpenseCalendar(false)}
-      >
-        <View className="flex-1 justify-center items-center bg-black/50 px-4">
-          <View className="w-full max-w-[360px] bg-white rounded-[24px] p-5 shadow-2xl">
-            {/* Header do Calendário */}
-            <View className="flex-row items-center justify-between pb-3 mb-2 border-b border-[#f1f3f5]">
-              <View className="flex-row items-center">
-                <View className="w-8 h-8 rounded-full bg-[#f0fdf4] items-center justify-center mr-2.5">
-                  <Feather name="calendar" size={16} color="#1B4332" />
-                </View>
-                <Text className="font-title text-[18px] text-[#1B4332]">Selecionar Data</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setShowExpenseCalendar(false)}
-                className="w-8 h-8 rounded-full bg-[#f3f4f6] items-center justify-center"
-              >
-                <Feather name="x" size={16} color="#4b5563" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Calendário Interativo */}
-            <Calendar
-              current={parseBrazilianToISO(expDateBR)}
-              enableSwipeMonths={true}
-              markedDates={{
-                [parseBrazilianToISO(expDateBR)]: {
-                  selected: true,
-                  selectedColor: '#1B4332',
-                },
-              }}
-              onDayPress={(day: any) => {
-                const br = parseISOToBrazilian(day.dateString);
-                setExpDateBR(br);
-                setShowExpenseCalendar(false);
-              }}
-              theme={{
-                backgroundColor: '#ffffff',
-                calendarBackground: '#ffffff',
-                textSectionTitleColor: '#6b7280',
-                selectedDayBackgroundColor: '#1B4332',
-                selectedDayTextColor: '#ffffff',
-                todayTextColor: '#1B4332',
-                dayTextColor: '#1f2937',
-                textDisabledColor: '#d1d5db',
-                dotColor: '#1B4332',
-                arrowColor: '#1B4332',
-                monthTextColor: '#1B4332',
-                textDayFontWeight: '500',
-                textMonthFontWeight: '700',
-                textDayHeaderFontWeight: '600',
-                textDayFontSize: 14,
-                textMonthFontSize: 16,
-                textDayHeaderFontSize: 11,
-              }}
-            />
-
-            {/* Botão rápido: Selecionar Hoje */}
-            <TouchableOpacity
-              onPress={() => {
-                setExpDateBR(getLocalBrazilianDate());
-                setShowExpenseCalendar(false);
-              }}
-              className="mt-3 bg-[#f0fdf4] border border-[#bbf7d0] py-2.5 rounded-full items-center justify-center flex-row"
-            >
-              <Feather name="check" size={14} color="#166534" style={{ marginRight: 6 }} />
-              <Text className="text-[#166534] font-bold text-[13px] font-sans">
-                Selecionar Hoje ({getLocalBrazilianDate()})
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       </Modal>
 
       {/* ============================================================ */}
