@@ -12,7 +12,7 @@ import {
   Image,
   StyleSheet,
   ScrollView,
-  Keyboard,
+  KeyboardAvoidingView,
 } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
@@ -45,6 +45,8 @@ interface Post {
 export default function BlogScreen() {
   const router = useRouter();
   const formScrollRef = useRef<any>(null);
+  const contentInputRef = useRef<any>(null);
+  const selectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
 
   // Estados da Listagem
   const [posts, setPosts] = useState<Post[]>([]);
@@ -67,34 +69,11 @@ export default function BlogScreen() {
   const [isOptimizing, setIsOptimizing] = useState(false);
 
   // Estados de Formatação do Conteúdo & Seleção
-  const [selection, setSelection] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
   const [currentHeader, setCurrentHeader] = useState<'Normal' | 'Título 2' | 'Título 3'>('Normal');
   const [showHeaderOptions, setShowHeaderOptions] = useState(false);
 
-  // Altura dinâmica do teclado para evitar espaços vazios e botões cobertos
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
   // Estado do Modal de Preview / Visualização
   const [previewPost, setPreviewPost] = useState<Post | null>(null);
-
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const showSub = Keyboard.addListener(showEvent, (e) => {
-      const h = e.endCoordinates?.height || 0;
-      setKeyboardHeight(h);
-    });
-
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
-    });
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   // Helper para limpar HTML e manter quebras de linha
   const stripHtml = (html?: string) => {
@@ -127,9 +106,9 @@ export default function BlogScreen() {
     }
   };
 
-  // Aplicação de formatação de texto (estilo editor web)
+  // Aplicação instantânea de formatação de texto (sem perder seleção)
   const applyFormat = (format: string) => {
-    let { start, end } = selection;
+    let { start, end } = selectionRef.current;
     if (start > end) {
       const tmp = start;
       start = end;
@@ -143,43 +122,43 @@ export default function BlogScreen() {
     let replacement = '';
     switch (format) {
       case 'bold':
-        replacement = hasSelection ? `<strong>${selectedText}</strong>` : '<strong>texto em negrito</strong>';
+        replacement = hasSelection ? `<b>${selectedText}</b>` : '<b>negrito</b>';
         break;
       case 'italic':
-        replacement = hasSelection ? `<em>${selectedText}</em>` : '<em>texto em itálico</em>';
+        replacement = hasSelection ? `<i>${selectedText}</i>` : '<i>itálico</i>';
         break;
       case 'underline':
-        replacement = hasSelection ? `<u>${selectedText}</u>` : '<u>texto sublinhado</u>';
+        replacement = hasSelection ? `<u>${selectedText}</u>` : '<u>sublinhado</u>';
         break;
       case 'strike':
-        replacement = hasSelection ? `<s>${selectedText}</s>` : '<s>texto tachado</s>';
+        replacement = hasSelection ? `<s>${selectedText}</s>` : '<s>tachado</s>';
         break;
       case 'h2':
-        replacement = hasSelection ? `<h2>${selectedText}</h2>` : '<h2>Subtítulo</h2>';
+        replacement = hasSelection ? `\n<h2>${selectedText}</h2>\n` : '\n<h2>Título</h2>\n';
         break;
       case 'h3':
-        replacement = hasSelection ? `<h3>${selectedText}</h3>` : '<h3>Tópico</h3>';
+        replacement = hasSelection ? `\n<h3>${selectedText}</h3>\n` : '\n<h3>Subtítulo</h3>\n';
         break;
       case 'bullet':
         if (hasSelection) {
           const lines = selectedText.split('\n').filter(l => l.trim().length > 0);
-          replacement = `<ul>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ul>`;
+          replacement = `\n<ul>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ul>\n`;
         } else {
-          replacement = `<ul>\n  <li>Item da lista</li>\n</ul>`;
+          replacement = '\n<ul>\n  <li>Item</li>\n</ul>\n';
         }
         break;
       case 'number':
         if (hasSelection) {
           const lines = selectedText.split('\n').filter(l => l.trim().length > 0);
-          replacement = `<ol>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ol>`;
+          replacement = `\n<ol>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ol>\n`;
         } else {
-          replacement = `<ol>\n  <li>Item 1</li>\n</ol>`;
+          replacement = '\n<ol>\n  <li>Item 1</li>\n</ol>\n';
         }
         break;
       case 'link':
         replacement = hasSelection
           ? `<a href="https://">${selectedText}</a>`
-          : `<a href="https://exemplo.com">link</a>`;
+          : '<a href="https://exemplo.com">link</a>';
         break;
       case 'clean':
         if (hasSelection) {
@@ -196,7 +175,7 @@ export default function BlogScreen() {
     const updatedContent = `${before}${replacement}${after}`;
     setContent(updatedContent);
     const newPos = start + replacement.length;
-    setSelection({ start: newPos, end: newPos });
+    selectionRef.current = { start: newPos, end: newPos };
   };
 
   // Carregar sugestões de temas da plataforma
@@ -275,6 +254,7 @@ export default function BlogScreen() {
     setExistingImageUrl(null);
     setShowHeaderOptions(false);
     setCurrentHeader('Normal');
+    selectionRef.current = { start: 0, end: 0 };
     setModalVisible(true);
   };
 
@@ -288,6 +268,7 @@ export default function BlogScreen() {
     setExistingImageUrl(post.imagem_url || null);
     setShowHeaderOptions(false);
     setCurrentHeader('Normal');
+    selectionRef.current = { start: 0, end: 0 };
     setModalVisible(true);
   };
 
@@ -623,137 +604,130 @@ export default function BlogScreen() {
         </View>
       </YeloScrollView>
 
-      {/* MODAL: NOVO / EDITAR POST */}
+      {/* MODAL: NOVO / EDITAR POST (BOTTOM SHEET YELO) */}
       <Modal
         visible={modalVisible}
+        transparent={true}
         animationType="slide"
-        presentationStyle="pageSheet"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
-          {/* Header do Modal */}
-          <View style={styles.modalHeader}>
-            <View style={styles.sheetDragHandle} />
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 15 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-                <View style={styles.modalIconBox}>
-                  <Text style={{ fontSize: 20 }}>📝</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalBackdrop}
+        >
+          <View style={styles.bottomSheetCard}>
+            {/* Header do Modal */}
+            <View style={styles.modalHeader}>
+              <View style={styles.sheetDragHandle} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                  <View style={styles.modalIconBox}>
+                    <Text style={{ fontSize: 18 }}>📝</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.modalHeaderTitle}>
+                      {editingPostId ? 'Editar Post' : 'Novo Post'}
+                    </Text>
+                    <Text style={styles.modalHeaderSubtitle} numberOfLines={1}>
+                      Compartilhe com naturalidade sua visão clínica.
+                    </Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.modalHeaderTitle}>
-                    {editingPostId ? 'Editar Post' : 'Novo Post'}
-                  </Text>
-                  <Text style={styles.modalHeaderSubtitle}>
-                    Compartilhe com naturalidade para mostrar sua visão clínica e abordagem aos pacientes.
-                  </Text>
-                </View>
+
+                <TouchableOpacity
+                  onPress={() => setModalVisible(false)}
+                  style={styles.modalCloseButton}
+                  activeOpacity={0.7}
+                >
+                  <Feather name="x" size={18} color="#666666" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Scroll do Formulário com altura ajustada ao conteúdo */}
+            <ScrollView
+              ref={formScrollRef}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 }}
+            >
+              {/* Campo: Título do Post */}
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>TÍTULO DO POST *</Text>
+                <TextInput
+                  value={title}
+                  onChangeText={setTitle}
+                  maxLength={50}
+                  placeholder="Ex: A importância da terapia..."
+                  placeholderTextColor="#9ca3af"
+                  style={styles.inputTextInput}
+                />
+                <Text
+                  style={[
+                    styles.charCounter,
+                    title.length >= 50 ? { color: '#e63946', fontWeight: 'bold' } : {},
+                  ]}
+                >
+                  {title.length}/50 caracteres
+                </Text>
               </View>
 
-              <TouchableOpacity
-                onPress={() => setModalVisible(false)}
-                style={styles.modalCloseButton}
-                activeOpacity={0.7}
-              >
-                <Feather name="x" size={18} color="#666666" />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Formulário com ScrollView ajustado com precisão para o teclado */}
-          <ScrollView
-            ref={formScrollRef}
-            style={{ flex: 1 }}
-            contentContainerStyle={{
-              paddingHorizontal: 20,
-              paddingTop: 16,
-              paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : 28,
-            }}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Campo: Título do Post */}
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>TÍTULO DO POST *</Text>
-              <TextInput
-                value={title}
-                onChangeText={setTitle}
-                maxLength={50}
-                placeholder="Ex: A importância da terapia..."
-                placeholderTextColor="#9ca3af"
-                style={styles.inputTextInput}
-              />
-              <Text
-                style={[
-                  styles.charCounter,
-                  title.length >= 50 ? { color: '#e63946', fontWeight: 'bold' } : {},
-                ]}
-              >
-                {title.length}/50 caracteres
-              </Text>
-            </View>
-
-            {/* Campo: Capa do Post */}
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>CAPA DO POST</Text>
-              {imageUri || existingImageUrl ? (
-                <View style={styles.imageSelectedBox}>
-                  <Image
-                    source={{ uri: imageUri || resolveImageUrl(existingImageUrl) || '' }}
-                    style={styles.imagePreviewThumb}
-                    resizeMode="cover"
-                  />
-                  <View style={{ flex: 1, marginHorizontal: 10 }}>
-                    <Text style={styles.imageSelectedName} numberOfLines={1}>
-                      {imageName || (imageUri ? 'Nova imagem selecionada' : 'Capa atual do post')}
-                    </Text>
-                    <TouchableOpacity onPress={handlePickImage} activeOpacity={0.7}>
-                      <Text style={styles.imageChangeText}>Alterar foto</Text>
+              {/* Campo: Capa do Post */}
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>CAPA DO POST</Text>
+                {imageUri || existingImageUrl ? (
+                  <View style={styles.imageSelectedBox}>
+                    <Image
+                      source={{ uri: imageUri || resolveImageUrl(existingImageUrl) || '' }}
+                      style={styles.imagePreviewThumb}
+                      resizeMode="cover"
+                    />
+                    <View style={{ flex: 1, marginHorizontal: 10 }}>
+                      <Text style={styles.imageSelectedName} numberOfLines={1}>
+                        {imageName || (imageUri ? 'Nova imagem selecionada' : 'Capa atual do post')}
+                      </Text>
+                      <TouchableOpacity onPress={handlePickImage} activeOpacity={0.7}>
+                        <Text style={styles.imageChangeText}>Alterar foto</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                      onPress={handleRemoveImage}
+                      style={styles.imageRemoveBtn}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="trash-2" size={16} color="#d32f2f" />
                     </TouchableOpacity>
                   </View>
+                ) : (
                   <TouchableOpacity
-                    onPress={handleRemoveImage}
-                    style={styles.imageRemoveBtn}
-                    activeOpacity={0.7}
+                    onPress={handlePickImage}
+                    style={styles.imageUploadPlaceholder}
+                    activeOpacity={0.75}
                   >
-                    <Feather name="trash-2" size={16} color="#d32f2f" />
+                    <Feather name="paperclip" size={16} color="#6b7280" />
+                    <Text style={styles.imageUploadText}>
+                      Nenhuma imagem selecionada...
+                    </Text>
                   </TouchableOpacity>
-                </View>
-              ) : (
-                <TouchableOpacity
-                  onPress={handlePickImage}
-                  style={styles.imageUploadPlaceholder}
-                  activeOpacity={0.75}
-                >
-                  <Feather name="paperclip" size={16} color="#6b7280" />
-                  <Text style={styles.imageUploadText}>
-                    Nenhuma imagem selecionada...
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
+                )}
+              </View>
 
-            {/* Campo: Conteúdo com Toolbar de Formatação */}
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>CONTEÚDO *</Text>
+              {/* Campo: Conteúdo com Toolbar de Formatação Robusta */}
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>CONTEÚDO *</Text>
 
-              {/* Caixa Unificada do Editor */}
-              <View style={styles.editorBoxContainer}>
-                {/* Barra de Ferramentas de Formatação (idêntica ao Quill Web) */}
-                <View style={styles.editorToolbar}>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 4 }}
-                  >
-                    {/* Seletor Normal / Cabeçalhos */}
+                {/* Caixa Unificada do Editor */}
+                <View style={styles.editorBoxContainer}>
+                  {/* Barra de Ferramentas de Formatação (Sem ScrollView para garantir toque imediato) */}
+                  <View style={styles.editorToolbar}>
+                    {/* Seletor Normal / Título */}
                     <TouchableOpacity
                       onPress={() => setShowHeaderOptions(prev => !prev)}
                       style={styles.toolbarDropdown}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.toolbarDropdownText}>{currentHeader}</Text>
-                      <Feather name="chevron-down" size={12} color="#4b5563" style={{ marginLeft: 3 }} />
+                      <Feather name="chevron-down" size={12} color="#4b5563" style={{ marginLeft: 2 }} />
                     </TouchableOpacity>
 
                     <View style={styles.toolbarDivider} />
@@ -796,7 +770,7 @@ export default function BlogScreen() {
 
                     <View style={styles.toolbarDivider} />
 
-                    {/* Lista Numerada */}
+                    {/* Lista Numerada 1. */}
                     <TouchableOpacity
                       onPress={() => applyFormat('number')}
                       style={styles.toolbarBtn}
@@ -808,7 +782,7 @@ export default function BlogScreen() {
                       </View>
                     </TouchableOpacity>
 
-                    {/* Lista Marcadores */}
+                    {/* Lista Marcadores • */}
                     <TouchableOpacity
                       onPress={() => applyFormat('bullet')}
                       style={styles.toolbarBtn}
@@ -828,7 +802,7 @@ export default function BlogScreen() {
                       <Feather name="link" size={13} color="#374151" />
                     </TouchableOpacity>
 
-                    {/* Limpar Formatação (Tx) */}
+                    {/* Limpar Formatação Tx */}
                     <TouchableOpacity
                       onPress={() => applyFormat('clean')}
                       style={styles.toolbarBtn}
@@ -839,68 +813,70 @@ export default function BlogScreen() {
                         <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#6b7280' }}>x</Text>
                       </View>
                     </TouchableOpacity>
-                  </ScrollView>
-                </View>
-
-                {/* Dropdown Menu Flutuante para Seleção de Títulos */}
-                {showHeaderOptions && (
-                  <View style={styles.headerDropdownMenu}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setCurrentHeader('Normal');
-                        setShowHeaderOptions(false);
-                      }}
-                      style={styles.headerDropdownItem}
-                    >
-                      <Text style={[styles.headerDropdownItemText, currentHeader === 'Normal' && styles.headerDropdownItemActive]}>
-                        Normal
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setCurrentHeader('Título 2');
-                        setShowHeaderOptions(false);
-                        applyFormat('h2');
-                      }}
-                      style={styles.headerDropdownItem}
-                    >
-                      <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 2' && styles.headerDropdownItemActive, { fontSize: 14, fontWeight: 'bold' }]}>
-                        Título (H2)
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setCurrentHeader('Título 3');
-                        setShowHeaderOptions(false);
-                        applyFormat('h3');
-                      }}
-                      style={styles.headerDropdownItem}
-                    >
-                      <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 3' && styles.headerDropdownItemActive, { fontSize: 13, fontWeight: '600' }]}>
-                        Subtítulo (H3)
-                      </Text>
-                    </TouchableOpacity>
                   </View>
-                )}
 
-                {/* Área de Digitação do Conteúdo */}
-                <TextInput
-                  multiline
-                  placeholder="Comece a escrever seu post aqui..."
-                  placeholderTextColor="#9ca3af"
-                  value={content}
-                  onChangeText={setContent}
-                  onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
-                  textAlignVertical="top"
-                  style={styles.editorTextInput}
-                />
+                  {/* Dropdown Menu Flutuante para Seleção de Títulos */}
+                  {showHeaderOptions && (
+                    <View style={styles.headerDropdownMenu}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCurrentHeader('Normal');
+                          setShowHeaderOptions(false);
+                        }}
+                        style={styles.headerDropdownItem}
+                      >
+                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Normal' && styles.headerDropdownItemActive]}>
+                          Normal
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCurrentHeader('Título 2');
+                          setShowHeaderOptions(false);
+                          applyFormat('h2');
+                        }}
+                        style={styles.headerDropdownItem}
+                      >
+                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 2' && styles.headerDropdownItemActive, { fontSize: 14, fontWeight: 'bold' }]}>
+                          Título 2 (H2)
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCurrentHeader('Título 3');
+                          setShowHeaderOptions(false);
+                          applyFormat('h3');
+                        }}
+                        style={styles.headerDropdownItem}
+                      >
+                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 3' && styles.headerDropdownItemActive, { fontSize: 13, fontWeight: '600' }]}>
+                          Título 3 (H3)
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* Área de Digitação do Conteúdo */}
+                  <TextInput
+                    ref={contentInputRef}
+                    multiline
+                    placeholder="Comece a escrever seu post aqui..."
+                    placeholderTextColor="#9ca3af"
+                    value={content}
+                    onChangeText={setContent}
+                    onSelectionChange={(e) => {
+                      const sel = e.nativeEvent.selection;
+                      selectionRef.current = sel;
+                    }}
+                    textAlignVertical="top"
+                    style={styles.editorTextInput}
+                  />
+                </View>
               </View>
-            </View>
 
-            {/* Ações do Rodapé: Botão de IA acima + Botões Cancelar / Publicar à Direita */}
-            <View style={styles.modalFooterActions}>
-              {/* Botão IA alinhado à direita */}
-              <View style={{ alignItems: 'flex-end', marginBottom: 12 }}>
+              {/* Ações do Rodapé: TODOS OS BOTÕES NA MESMA LINHA SEM QUEBRA */}
+              <View style={styles.modalFooterSingleRow}>
+                {/* Botão IA na Esquerda */}
                 <TouchableOpacity
                   onPress={handleOptimizeAI}
                   disabled={isOptimizing}
@@ -908,44 +884,44 @@ export default function BlogScreen() {
                   activeOpacity={0.8}
                 >
                   {isOptimizing ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <ActivityIndicator size="small" color="#166534" />
                       <Text style={styles.btnIaOptimizeText}>Revisando...</Text>
                     </View>
                   ) : (
-                    <Text style={styles.btnIaOptimizeText}>✨ Revisar Ortografia (IA)</Text>
+                    <Text style={styles.btnIaOptimizeText}>✨ Revisar IA</Text>
                   )}
                 </TouchableOpacity>
-              </View>
 
-              {/* Botões Cancelar e Publicar Post (Alinhados à direita) */}
-              <View style={styles.modalFooterRightGroup}>
-                <TouchableOpacity
-                  onPress={() => setModalVisible(false)}
-                  style={styles.btnCancelModal}
-                  activeOpacity={0.75}
-                >
-                  <Text style={styles.btnCancelModalText}>Cancelar</Text>
-                </TouchableOpacity>
+                {/* Botões Cancelar e Publicar na Direita */}
+                <View style={styles.modalRightButtonsRow}>
+                  <TouchableOpacity
+                    onPress={() => setModalVisible(false)}
+                    style={styles.btnCancelModal}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={styles.btnCancelModalText}>Cancelar</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={handleSavePost}
-                  disabled={isSubmitting}
-                  style={styles.btnSaveModal}
-                  activeOpacity={0.85}
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator size="small" color="#ffffff" />
-                  ) : (
-                    <Text style={styles.btnSaveModalText}>
-                      {editingPostId ? 'Salvar Alterações' : 'Publicar Post'}
-                    </Text>
-                  )}
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handleSavePost}
+                    disabled={isSubmitting}
+                    style={styles.btnSaveModal}
+                    activeOpacity={0.85}
+                  >
+                    {isSubmitting ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <Text style={styles.btnSaveModalText}>
+                        {editingPostId ? 'Salvar' : 'Publicar Post'}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          </ScrollView>
-        </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* MODAL: PREVIEW / VISUALIZAÇÃO DO POST COMPLETO */}
@@ -1362,35 +1338,51 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // MODAL NOVO / EDITAR
+  // MODAL BOTTOM SHEET
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheetCard: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 8,
+  },
   modalHeader: {
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
     paddingTop: 10,
   },
   sheetDragHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
+    width: 44,
+    height: 4.5,
+    borderRadius: 3,
     backgroundColor: '#e5e7eb',
     alignSelf: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   modalIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#f0fdf4',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalHeaderTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
     color: '#1B4332',
   },
   modalHeaderSubtitle: {
-    fontSize: 12,
+    fontSize: 11.5,
     color: '#666666',
   },
   modalCloseButton: {
@@ -1402,13 +1394,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   formGroup: {
-    marginBottom: 18,
+    marginBottom: 14,
   },
   formLabel: {
     fontSize: 11,
     fontWeight: 'bold',
     color: '#495057',
-    marginBottom: 6,
+    marginBottom: 5,
     letterSpacing: 0.5,
   },
   inputTextInput: {
@@ -1417,7 +1409,7 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
     borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingVertical: 10,
     fontSize: 14,
     color: '#1f2937',
   },
@@ -1433,7 +1425,7 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
     borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 11,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -1453,8 +1445,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   imagePreviewThumb: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: 8,
     backgroundColor: '#e5e7eb',
   },
@@ -1473,7 +1465,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
 
-  // EDITOR COM TOOLBAR
+  // EDITOR COM TOOLBAR NATIVO
   editorBoxContainer: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
@@ -1484,9 +1476,11 @@ const styles = StyleSheet.create({
   editorToolbar: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#f9fafb',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
+    paddingHorizontal: 8,
     paddingVertical: 6,
     minHeight: 40,
   },
@@ -1497,28 +1491,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d1d5db',
     borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginRight: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   toolbarDropdownText: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '600',
     color: '#374151',
   },
   toolbarDivider: {
     width: 1,
-    height: 18,
+    height: 16,
     backgroundColor: '#d1d5db',
-    marginHorizontal: 5,
+    marginHorizontal: 3,
   },
   toolbarBtn: {
-    width: 32,
-    height: 30,
+    width: 28,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 6,
-    marginHorizontal: 1,
+    borderRadius: 5,
   },
   toolbarBoldText: {
     fontSize: 14,
@@ -1551,7 +1543,7 @@ const styles = StyleSheet.create({
   },
   headerDropdownItem: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 7,
   },
   headerDropdownItemText: {
     fontSize: 13,
@@ -1564,39 +1556,41 @@ const styles = StyleSheet.create({
   editorTextInput: {
     backgroundColor: '#ffffff',
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 10,
     fontSize: 14,
     color: '#1f2937',
-    minHeight: 150,
-    lineHeight: 22,
+    minHeight: 130,
+    lineHeight: 21,
   },
 
-  // RODAPÉ MODAL
-  modalFooterActions: {
-    marginTop: 14,
+  // RODAPÉ: LINHA ÚNICA SEM QUEBRA
+  modalFooterSingleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    gap: 8,
   },
   btnIaOptimize: {
     backgroundColor: '#dcfce7',
     borderWidth: 1,
     borderColor: '#bbf7d0',
     borderRadius: 50,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    alignSelf: 'flex-end',
+    paddingVertical: 9,
+    paddingHorizontal: 12,
   },
   btnIaOptimizeText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#166534',
   },
-  modalFooterRightGroup: {
+  modalRightButtonsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 10,
+    gap: 8,
   },
   btnCancelModal: {
-    paddingHorizontal: 22,
+    paddingHorizontal: 16,
     paddingVertical: 9,
     borderRadius: 50,
     backgroundColor: '#ffffff',
@@ -1604,13 +1598,13 @@ const styles = StyleSheet.create({
     borderColor: '#1B4332',
   },
   btnCancelModalText: {
-    fontSize: 13.5,
+    fontSize: 12.5,
     fontWeight: '600',
     color: '#1B4332',
   },
   btnSaveModal: {
     backgroundColor: '#1B4332',
-    paddingHorizontal: 24,
+    paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 50,
     shadowColor: '#1B4332',
@@ -1620,7 +1614,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   btnSaveModalText: {
-    fontSize: 13.5,
+    fontSize: 12.5,
     fontWeight: 'bold',
     color: '#ffffff',
   },

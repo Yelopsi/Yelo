@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-8d3f037c",
+    "date": "2026-11-03T02:44:54.000Z",
+    "commit": "8d3f037c",
+    "author": "Anderson",
+    "title": "Correção: Adicionar toolbar de formatacao completa no blog e ajustar precisao do teclado no modal (mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "adicionar toolbar de formatacao completa no blog e ajustar precisao do teclado no modal",
+    "description": "Commit registrado no repositório: \"fix(mobile): adicionar toolbar de formatacao completa no blog e ajustar precisao do teclado no modal\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/blog.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8d3f037c"
+    },
+    "after": {
+      "nova_versao": "adicionar toolbar de formatacao completa no blog e ajustar precisao do teclado no modal"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/blog.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-f86e35bf",
     "date": "2026-11-03T02:30:57.000Z",
     "commit": "f86e35bf",
