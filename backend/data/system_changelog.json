@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-eed15641",
+    "date": "2026-11-03T02:04:00.000Z",
+    "commit": "eed15641",
+    "author": "Anderson",
+    "title": "Correção: Kpi cards sempre visiveis sem looping de loading e padding dinamico premium no copilot (financeiro,copilot)",
+    "category": "Financeiro & Estornos",
+    "badgeColor": "#ef4444",
+    "status": "Em Produção",
+    "summary": "kpi cards sempre visiveis sem looping de loading e padding dinamico premium no copilot",
+    "description": "Commit registrado no repositório: \"fix(financeiro,copilot): kpi cards sempre visiveis sem looping de loading e padding dinamico premium no copilot\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/financeiro.tsx, mobile/src/app/(tabs)/manual-conversao.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #eed15641"
+    },
+    "after": {
+      "nova_versao": "kpi cards sempre visiveis sem looping de loading e padding dinamico premium no copilot"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/financeiro.tsx",
+      "mobile/src/app/(tabs)/manual-conversao.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-52bfe2b7",
     "date": "2026-11-03T01:51:01.000Z",
     "commit": "52bfe2b7",
