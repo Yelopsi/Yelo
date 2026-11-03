@@ -43,7 +43,8 @@
         {
           "faceIDPermission": "O Yelo utiliza o Face ID para permitir que você acesse sua conta com rapidez e máxima segurança."
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,
