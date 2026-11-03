@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-52bfe2b7",
+    "date": "2026-11-03T01:51:01.000Z",
+    "commit": "52bfe2b7",
+    "author": "Anderson",
+    "title": "Correção: Resolve tela travada em looping no financeiro e campo coberto por teclado no copilot ia (financeiro,copilot)",
+    "category": "Financeiro & Estornos",
+    "badgeColor": "#ef4444",
+    "status": "Em Produção",
+    "summary": "resolve tela travada em looping no financeiro e campo coberto por teclado no copilot ia",
+    "description": "Commit registrado no repositório: \"fix(financeiro,copilot): resolve tela travada em looping no financeiro e campo coberto por teclado no copilot ia\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/.expo/types/router.d.ts, mobile/src/app/(tabs)/financeiro.tsx, mobile/src/app/(tabs)/manual-conversao.tsx (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #52bfe2b7"
+    },
+    "after": {
+      "nova_versao": "resolve tela travada em looping no financeiro e campo coberto por teclado no copilot ia"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/.expo/types/router.d.ts",
+      "mobile/src/app/(tabs)/financeiro.tsx",
+      "mobile/src/app/(tabs)/manual-conversao.tsx",
+      "mobile/src/components/NativeSelectMenu.ios.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-1db4a1d1",
     "date": "2026-11-03T01:30:01.000Z",
     "commit": "1db4a1d1",

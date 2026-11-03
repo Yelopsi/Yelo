@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,8 @@ import {
   Pressable,
   Alert,
   ScrollView,
-  KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -203,6 +203,29 @@ export default function ManualConversaoScreen() {
   const [aiResult, setAiResult] = useState<string | null>(null);
 
   const scrollViewRef = useRef<any>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const subShow = Keyboard.addListener(showEvent, (e) => {
+      const h = e.endCoordinates?.height || 300;
+      setKeyboardHeight(h);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 50);
+    });
+
+    const subHide = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      subShow.remove();
+      subHide.remove();
+    };
+  }, []);
 
   const currentScenario =
     SCENARIOS_DATA.find((s) => s.id === selectedScenarioId) || SCENARIOS_DATA[0];
@@ -250,20 +273,17 @@ export default function ManualConversaoScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 95 : 0}
-      style={{ flex: 1 }}
-    >
-      <View className="flex-1 bg-[#f9fafb]">
-        <ScrollView
-          ref={scrollViewRef}
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          contentContainerStyle={{ paddingBottom: activeTab === 'copilot' ? 380 : 120 }}
-        >
+    <View className="flex-1 bg-[#f9fafb]">
+      <ScrollView
+        ref={scrollViewRef}
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={{
+          paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : 32,
+        }}
+      >
         {/* TOP NAVIGATION: BOTÃO VOLTAR */}
         <View className="mx-5 mt-5 mb-3 flex-row items-center">
           <TouchableOpacity
@@ -881,7 +901,6 @@ export default function ManualConversaoScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-      </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

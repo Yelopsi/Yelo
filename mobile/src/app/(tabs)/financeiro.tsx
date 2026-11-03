@@ -126,7 +126,7 @@ export default function FinanceiroScreen() {
   // Estados principais
   const [showTip, setShowTip] = useState(true);
   const [periodo, setPeriodo] = useState('este_mes');
-  const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   // Dados brutos da API
@@ -164,27 +164,31 @@ export default function FinanceiroScreen() {
     return PERIODO_OPTIONS.find((p) => p.value === periodo)?.label || 'Este Mês';
   }, [periodo]);
 
-  // Carrega dados da API Yelo
+  // Carrega dados da API Yelo silenciosamente em background
   const loadFinancialData = useCallback(async (selectedPeriod: string, isPullRefresh = false) => {
-    console.log('[DEBUG_FINANCEIRO] Carregando dados para o período:', selectedPeriod, 'isPullRefresh:', isPullRefresh);
-    if (!isPullRefresh) setLoading(true);
+    console.log('[DEBUG_FINANCEIRO] Sincronizando dados para o período:', selectedPeriod, 'isPullRefresh:', isPullRefresh);
+    if (isPullRefresh) {
+      setRefreshing(true);
+    } else {
+      setIsSyncing(true);
+    }
+
     try {
       const response = await api.get('/api/financials/dashboard', {
         params: { period: selectedPeriod },
       });
 
-      console.log('[DEBUG_FINANCEIRO] Sucesso na resposta do backend:', response.status);
+      console.log('[DEBUG_FINANCEIRO] Dados recebidos com sucesso:', response.status);
       if (response.data) {
         setAppointments(response.data.appointments || []);
         setExpenses(response.data.expenses || []);
       }
     } catch (err: any) {
-      console.warn('[DEBUG_FINANCEIRO] Erro ao carregar dados financeiros:', err?.response?.data || err.message);
+      console.warn('[DEBUG_FINANCEIRO] Erro ao sincronizar dados financeiros:', err?.response?.data || err.message);
       setAppointments((prev) => prev || []);
       setExpenses((prev) => prev || []);
     } finally {
-      console.log('[DEBUG_FINANCEIRO] Concluindo loading');
-      setLoading(false);
+      setIsSyncing(false);
       setRefreshing(false);
     }
   }, []);
@@ -197,7 +201,6 @@ export default function FinanceiroScreen() {
   );
 
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
     loadFinancialData(periodo, true);
   }, [periodo, loadFinancialData]);
 
@@ -531,7 +534,10 @@ export default function FinanceiroScreen() {
               title="Filtrar por Período"
               options={PERIODO_OPTIONS}
               selectedValue={periodo}
-              onSelect={(val) => setPeriodo(val)}
+              onSelect={(val) => {
+                setPeriodo(val);
+                loadFinancialData(val);
+              }}
             >
               <View
                 style={{
@@ -557,121 +563,109 @@ export default function FinanceiroScreen() {
           </View>
         </View>
 
-        {/* CARDS DE KPI (2x2 Grid) */}
+        {/* CARDS DE KPI (2x2 Grid) - Sempre visíveis com atualização em tempo real */}
         <View className="px-6 mb-8">
-          {loading && !refreshing ? (
-            <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-6 items-center justify-center">
-              <ActivityIndicator color="#1B4332" size="small" />
-              <Text className="font-sans text-[13px] text-[#6b7280] mt-2">
-                Calculando indicadores financeiros...
+          <View className="flex-row justify-between mb-4">
+            {/* Receita Realizada */}
+            <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-4 flex-1 mr-2 shadow-sm">
+              <View className="flex-row items-center mb-2">
+                <View className="bg-[#e8f5e9] p-1.5 rounded-lg mr-2">
+                  <Text className="text-[14px]">📈</Text>
+                </View>
+                <Text className="font-sans font-bold text-[#333] text-[12px] flex-1" numberOfLines={1}>
+                  Receita Realizada
+                </Text>
+              </View>
+              <Text className="font-title text-[#1B4332] text-[19px] mb-1">
+                {formatCurrency(income)}
+              </Text>
+              <Text className="font-sans text-[11px] text-[#888]">Sessões pagas/concluídas</Text>
+            </View>
+
+            {/* A Receber */}
+            <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-4 flex-1 ml-2 shadow-sm">
+              <View className="flex-row items-center mb-2">
+                <View className="bg-[#fff3e0] p-1.5 rounded-lg mr-2">
+                  <Text className="text-[14px]">⏳</Text>
+                </View>
+                <Text className="font-sans font-bold text-[#333] text-[12px] flex-1" numberOfLines={1}>
+                  A Receber
+                </Text>
+              </View>
+              <Text className="font-title text-[#d97706] text-[19px] mb-1">
+                {formatCurrency(pending)}
+              </Text>
+              <Text className="font-sans text-[11px] text-[#888]">Agendamentos futuros</Text>
+            </View>
+          </View>
+
+          <View className="flex-row justify-between">
+            {/* Despesas */}
+            <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-4 flex-1 mr-2 shadow-sm">
+              <View className="flex-row items-center mb-2">
+                <View className="bg-[#ffebee] p-1.5 rounded-lg mr-2">
+                  <Text className="text-[14px]">💸</Text>
+                </View>
+                <Text className="font-sans font-bold text-[#333] text-[12px] flex-1" numberOfLines={1}>
+                  Despesas
+                </Text>
+              </View>
+              <Text className="font-title text-[#e63946] text-[19px] mb-1">
+                {formatCurrency(totalExpenses)}
+              </Text>
+              <Text className="font-sans text-[11px] text-[#888]">Gastos operacionais</Text>
+            </View>
+
+            {/* Saldo Líquido */}
+            <View
+              className={`border rounded-[16px] p-4 flex-1 ml-2 shadow-sm ${
+                netBalance >= 0
+                  ? 'bg-[#f0fdf4] border-[#bbf7d0]'
+                  : 'bg-[#fff1f2] border-[#fecdd3]'
+              }`}
+            >
+              <View className="flex-row items-center mb-2">
+                <View className="bg-white p-1.5 rounded-lg mr-2 shadow-sm">
+                  <Text className="text-[14px]">{netBalance >= 0 ? '💎' : '⚠️'}</Text>
+                </View>
+                <Text className="font-sans font-bold text-[#333] text-[12px] flex-1" numberOfLines={1}>
+                  Saldo Líquido
+                </Text>
+              </View>
+              <Text
+                className={`font-title text-[19px] mb-1 ${
+                  netBalance >= 0 ? 'text-[#166534]' : 'text-[#e63946]'
+                }`}
+              >
+                {formatCurrency(netBalance)}
+              </Text>
+              <Text
+                className={`font-sans text-[11px] ${
+                  netBalance >= 0 ? 'text-[#166534]' : 'text-[#e63946]'
+                }`}
+              >
+                {netBalance >= 0 ? 'Lucro do período' : 'Déficit no período'}
               </Text>
             </View>
-          ) : (
-            <>
-              <View className="flex-row justify-between mb-4">
-                {/* Receita Realizada */}
-                <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-4 flex-1 mr-2 shadow-sm">
-                  <View className="flex-row items-center mb-2">
-                    <View className="bg-[#e8f5e9] p-1.5 rounded-lg mr-2">
-                      <Text className="text-[14px]">📈</Text>
-                    </View>
-                    <Text className="font-sans font-bold text-[#333] text-[12px] flex-1" numberOfLines={1}>
-                      Receita Realizada
-                    </Text>
-                  </View>
-                  <Text className="font-title text-[#1B4332] text-[19px] mb-1">
-                    {formatCurrency(income)}
-                  </Text>
-                  <Text className="font-sans text-[11px] text-[#888]">Sessões pagas/concluídas</Text>
-                </View>
-
-                {/* A Receber */}
-                <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-4 flex-1 ml-2 shadow-sm">
-                  <View className="flex-row items-center mb-2">
-                    <View className="bg-[#fff3e0] p-1.5 rounded-lg mr-2">
-                      <Text className="text-[14px]">⏳</Text>
-                    </View>
-                    <Text className="font-sans font-bold text-[#333] text-[12px] flex-1" numberOfLines={1}>
-                      A Receber
-                    </Text>
-                  </View>
-                  <Text className="font-title text-[#d97706] text-[19px] mb-1">
-                    {formatCurrency(pending)}
-                  </Text>
-                  <Text className="font-sans text-[11px] text-[#888]">Agendamentos futuros</Text>
-                </View>
-              </View>
-
-              <View className="flex-row justify-between">
-                {/* Despesas */}
-                <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-4 flex-1 mr-2 shadow-sm">
-                  <View className="flex-row items-center mb-2">
-                    <View className="bg-[#ffebee] p-1.5 rounded-lg mr-2">
-                      <Text className="text-[14px]">💸</Text>
-                    </View>
-                    <Text className="font-sans font-bold text-[#333] text-[12px] flex-1" numberOfLines={1}>
-                      Despesas
-                    </Text>
-                  </View>
-                  <Text className="font-title text-[#e63946] text-[19px] mb-1">
-                    {formatCurrency(totalExpenses)}
-                  </Text>
-                  <Text className="font-sans text-[11px] text-[#888]">Gastos operacionais</Text>
-                </View>
-
-                {/* Saldo Líquido */}
-                <View
-                  className={`border rounded-[16px] p-4 flex-1 ml-2 shadow-sm ${
-                    netBalance >= 0
-                      ? 'bg-[#f0fdf4] border-[#bbf7d0]'
-                      : 'bg-[#fff1f2] border-[#fecdd3]'
-                  }`}
-                >
-                  <View className="flex-row items-center mb-2">
-                    <View className="bg-white p-1.5 rounded-lg mr-2 shadow-sm">
-                      <Text className="text-[14px]">{netBalance >= 0 ? '💎' : '⚠️'}</Text>
-                    </View>
-                    <Text className="font-sans font-bold text-[#333] text-[12px] flex-1" numberOfLines={1}>
-                      Saldo Líquido
-                    </Text>
-                  </View>
-                  <Text
-                    className={`font-title text-[19px] mb-1 ${
-                      netBalance >= 0 ? 'text-[#166534]' : 'text-[#e63946]'
-                    }`}
-                  >
-                    {formatCurrency(netBalance)}
-                  </Text>
-                  <Text
-                    className={`font-sans text-[11px] ${
-                      netBalance >= 0 ? 'text-[#166534]' : 'text-[#e63946]'
-                    }`}
-                  >
-                    {netBalance >= 0 ? 'Lucro do período' : 'Déficit no período'}
-                  </Text>
-                </View>
-              </View>
-            </>
-          )}
+          </View>
         </View>
 
         {/* EXTRATO RECENTE */}
         <View className="px-6 pb-12">
           <View className="flex-row items-center justify-between mb-4">
             <Text className="font-title text-[20px] text-[#1B4332]">Extrato Recente</Text>
-            <View className="bg-[#f3f4f6] px-2.5 py-1 rounded-full">
+            <View className="bg-[#f3f4f6] px-2.5 py-1 rounded-full flex-row items-center">
+              {isSyncing && (
+                <ActivityIndicator size="small" color="#1B4332" style={{ marginRight: 6 }} />
+              )}
               <Text className="text-[#6b7280] text-[12px] font-sans font-semibold">
                 {transactions.length} movimentaç{transactions.length === 1 ? 'ão' : 'ões'}
               </Text>
             </View>
           </View>
 
-          {loading && !refreshing ? (
-            <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-8 items-center justify-center">
-              <ActivityIndicator color="#1B4332" />
-            </View>
-          ) : transactions.length === 0 ? (
-            <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-8 items-center justify-center text-center">
+          {transactions.length === 0 ? (
+            <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-8 items-center justify-center text-center shadow-sm">
               <View className="w-14 h-14 rounded-full bg-[#f9fafb] items-center justify-center mb-3">
                 <Feather name="file-text" size={26} color="#9ca3af" />
               </View>
