@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -164,8 +164,12 @@ export default function FinanceiroScreen() {
     return PERIODO_OPTIONS.find((p) => p.value === periodo)?.label || 'Este Mês';
   }, [periodo]);
 
+  const isFetchingRef = useRef(false);
+
   // Carrega dados da API Yelo
-  const loadFinancialData = useCallback(async (selectedPeriod = periodo, isPullRefresh = false) => {
+  const loadFinancialData = useCallback(async (selectedPeriod: string, isPullRefresh = false) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     if (!isPullRefresh) setLoading(true);
     try {
       const response = await api.get('/api/financials/dashboard', {
@@ -185,8 +189,9 @@ export default function FinanceiroScreen() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      isFetchingRef.current = false;
     }
-  }, [periodo]);
+  }, []);
 
   useEffect(() => {
     loadFinancialData(periodo);
