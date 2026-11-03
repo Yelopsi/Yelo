@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-9e3bbc5a",
+    "date": "2026-11-03T02:18:23.000Z",
+    "commit": "9e3bbc5a",
+    "author": "Anderson",
+    "title": "Correção: Usa dimensoes explicitas nos componentes de progresso eliminando arco distorcido (jornada)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "usa dimensoes explicitas nos componentes de progresso eliminando arco distorcido",
+    "description": "Commit registrado no repositório: \"fix(jornada): usa dimensoes explicitas nos componentes de progresso eliminando arco distorcido\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/jornada.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9e3bbc5a"
+    },
+    "after": {
+      "nova_versao": "usa dimensoes explicitas nos componentes de progresso eliminando arco distorcido"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/jornada.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-6f84ca56",
     "date": "2026-11-03T02:12:57.000Z",
     "commit": "6f84ca56",
