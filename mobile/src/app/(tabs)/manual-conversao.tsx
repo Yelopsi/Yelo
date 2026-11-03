@@ -281,7 +281,7 @@ export default function ManualConversaoScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentContainerStyle={{
-          paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : 32,
+          paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : 140,
         }}
       >
         {/* TOP NAVIGATION: BOTÃO VOLTAR */}
