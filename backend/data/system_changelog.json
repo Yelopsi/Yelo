@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-ebc9b0be",
+    "date": "2026-11-03T00:43:35.000Z",
+    "commit": "ebc9b0be",
+    "author": "Anderson",
+    "title": "Correção: Ajusta navegação do botão Voltar e torna abas e toques 100% responsivos (manual-conversao)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "ajusta navegação do botão Voltar e torna abas e toques 100% responsivos",
+    "description": "Commit registrado no repositório: \"fix(manual-conversao): ajusta navegação do botão Voltar e torna abas e toques 100% responsivos\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/manual-conversao.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ebc9b0be"
+    },
+    "after": {
+      "nova_versao": "ajusta navegação do botão Voltar e torna abas e toques 100% responsivos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/manual-conversao.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-11857883",
     "date": "2026-11-03T00:37:15.000Z",
     "commit": "11857883",

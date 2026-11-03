@@ -1,90 +1,164 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, PanResponder, Dimensions, Animated, StyleSheet } from 'react-native';
+import {
+  View,
+  PanResponder,
+  Dimensions,
+  Animated,
+  StyleSheet,
+} from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-
-const { width } = Dimensions.get('window');
-
-// Fluxo principal de abas públicas (ordem lógica do app)
-const PUBLIC_TABS = ['/', '/perguntas', '/questionario', '/sobre_psis', '/login'];
-
-// Páginas de conteúdo institucional
-const INSTITUTIONAL_PAGES = ['/sobre_psis', '/faq', '/blog', '/contato', '/termos', '/privacidade'];
 
 interface SwipeEdgeNavigatorProps {
   children: React.ReactNode;
 }
 
+// Rotas conhecidas de abas principais no fluxo do profissional
+const TABS_ROUTES = [
+  '/',
+  '/clinica',
+  '/calculadora',
+  '/manual-conversao',
+  '/financeiro',
+  '/analytics',
+  '/pacientes',
+  '/ajustes',
+  '/avisos',
+  '/meu_perfil',
+  '/fale_com_a_yelo',
+  '/comunidade',
+  '/forum',
+  '/blog',
+  '/jornada',
+  '/notificacoes',
+  '/favoritos-analytics',
+];
+
+const normalizePath = (p: string) => {
+  if (!p) return '/';
+  let clean = p.replace('/(tabs)', '');
+  if (clean.endsWith('/') && clean.length > 1) {
+    clean = clean.slice(0, -1);
+  }
+  if (clean === '/index' || clean === '' || clean === '/') return '/';
+  return clean;
+};
+
 export default function SwipeEdgeNavigator({ children }: SwipeEdgeNavigatorProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Histórico de avanço (forward stack) para quando o usuário volta e quer avançar
-  const forwardStack = useRef<string[]>([]);
+  // Histórico de navegação completo (pilha bidirecional Voltar / Avançar estilo browser)
+  const historyRef = useRef<string[]>([]);
+  const currentIndexRef = useRef<number>(-1);
+  const isSwipingNav = useRef(false);
   const isNavigating = useRef(false);
+
+  // Refs de estado para leitura síncrona sem stale closure no PanResponder
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+
+  const canGoBackRef = useRef(false);
+  const canGoForwardRef = useRef(false);
+  const activeEdgeRef = useRef<'left' | 'right' | null>(null);
 
   // Animação e estado do indicador visual deslizante
   const [activeEdge, setActiveEdge] = useState<'left' | 'right' | null>(null);
   const dragAnim = useRef(new Animated.Value(0)).current;
 
+  // Atualiza as flags de permissão de gesto
+  const updateCanGoFlags = () => {
+    canGoBackRef.current = currentIndexRef.current > 0;
+    canGoForwardRef.current = currentIndexRef.current < historyRef.current.length - 1;
+  };
+
+  // Monitora alterações de pathname para gerenciar o histórico completo da sessão
+  useEffect(() => {
+    if (!pathname) return;
+    const currentNormalized = normalizePath(pathname);
+
+    // Se a navegação foi disparada pelo próprio gesto de swipe, apenas atualiza flags
+    if (isSwipingNav.current) {
+      isSwipingNav.current = false;
+      updateCanGoFlags();
+      return;
+    }
+
+    const history = historyRef.current;
+    const currIdx = currentIndexRef.current;
+
+    // Se já estiver na mesma página atual do histórico, não duplica
+    if (currIdx >= 0 && history[currIdx] === currentNormalized) {
+      updateCanGoFlags();
+      return;
+    }
+
+    // Se o usuário navegou de volta através de um botão na tela (ex: botão "Voltar")
+    if (currIdx > 0 && history[currIdx - 1] === currentNormalized) {
+      currentIndexRef.current = currIdx - 1;
+      updateCanGoFlags();
+      return;
+    }
+
+    // Caso contrário, é uma nova navegação: descarta o histórico "para frente" e adiciona a nova página
+    const newHistory = history.slice(0, currIdx + 1);
+    newHistory.push(currentNormalized);
+    historyRef.current = newHistory;
+    currentIndexRef.current = newHistory.length - 1;
+    updateCanGoFlags();
+  }, [pathname]);
+
+  const navigateToRoute = (route: string) => {
+    const clean = normalizePath(route);
+    if (TABS_ROUTES.includes(clean)) {
+      const target = clean === '/' ? '/(tabs)' : `/(tabs)${clean}`;
+      try {
+        router.navigate(target as any);
+        return;
+      } catch (err) {
+        console.warn('[SWIPE_NAV] Erro ao navegar para aba:', target, err);
+      }
+    }
+    try {
+      router.navigate(clean as any);
+    } catch (err) {
+      console.warn('[SWIPE_NAV] Erro ao navegar para rota:', clean, err);
+    }
+  };
+
   const handleGoBack = () => {
     if (isNavigating.current) return;
+    if (currentIndexRef.current <= 0) return;
+
     isNavigating.current = true;
     setTimeout(() => { isNavigating.current = false; }, 400);
 
-    // Salva a rota atual na pilha de avanço para permitir avançar de volta
-    if (pathname && !forwardStack.current.includes(pathname)) {
-      forwardStack.current.push(pathname);
-    }
+    const prevIndex = currentIndexRef.current - 1;
+    const targetRoute = historyRef.current[prevIndex];
 
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-
-    // Se não há histórico nativo, navega para a aba anterior
-    const tabIndex = PUBLIC_TABS.indexOf(pathname);
-    if (tabIndex > 0) {
-      router.replace(PUBLIC_TABS[tabIndex - 1] as any);
-      return;
-    }
-
-    if (pathname !== '/') {
-      router.replace('/');
+    if (targetRoute) {
+      currentIndexRef.current = prevIndex;
+      updateCanGoFlags();
+      isSwipingNav.current = true;
+      navigateToRoute(targetRoute);
     }
   };
 
   const handleGoForward = () => {
     if (isNavigating.current) return;
+    if (currentIndexRef.current >= historyRef.current.length - 1) return;
+
     isNavigating.current = true;
     setTimeout(() => { isNavigating.current = false; }, 400);
 
-    // 1. Prioridade: pilha de páginas das quais o usuário voltou recentemente
-    if (forwardStack.current.length > 0) {
-      const nextRoute = forwardStack.current.pop();
-      if (nextRoute && nextRoute !== pathname) {
-        router.push(nextRoute as any);
-        return;
-      }
-    }
+    const nextIndex = currentIndexRef.current + 1;
+    const targetRoute = historyRef.current[nextIndex];
 
-    // 2. Próxima aba no menu público
-    const tabIndex = PUBLIC_TABS.indexOf(pathname);
-    if (tabIndex >= 0 && tabIndex < PUBLIC_TABS.length - 1) {
-      router.push(PUBLIC_TABS[tabIndex + 1] as any);
-      return;
-    }
-
-    // 3. Próxima página institucional
-    const instIndex = INSTITUTIONAL_PAGES.indexOf(pathname);
-    if (instIndex >= 0 && instIndex < INSTITUTIONAL_PAGES.length - 1) {
-      router.push(INSTITUTIONAL_PAGES[instIndex + 1] as any);
-      return;
-    }
-
-    // Se estiver na Home ('/'), avança para o Questionário
-    if (pathname === '/') {
-      router.push('/questionario');
+    if (targetRoute) {
+      currentIndexRef.current = nextIndex;
+      updateCanGoFlags();
+      isSwipingNav.current = true;
+      navigateToRoute(targetRoute);
     }
   };
 
@@ -94,38 +168,49 @@ export default function SwipeEdgeNavigator({ children }: SwipeEdgeNavigatorProps
       onStartShouldSetPanResponderCapture: () => false,
 
       onMoveShouldSetPanResponder: (evt, gestureState) => {
-        // No questionário, a tela possui seu próprio controle por passos
-        if (pathname === '/questionario') return false;
+        const curPath = pathnameRef.current;
+        if (curPath === '/questionario' || curPath === '/psi_questionario') return false;
+
+        const screenWidth = Dimensions.get('window').width;
+        const edgeWidth = Math.max(90, screenWidth * 0.25);
 
         const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
         if (!isHorizontal) return false;
 
-        // Arraste da lateral esquerda para a direita (Voltar)
-        const isLeftEdgeSwipe = gestureState.x0 <= 60 && gestureState.dx > 15;
-
-        // Arraste da lateral direita para a esquerda (Avançar)
-        const isRightEdgeSwipe = gestureState.x0 >= width - 60 && gestureState.dx < -15;
+        const isLeftEdgeSwipe = gestureState.x0 <= edgeWidth && gestureState.dx > 15 && canGoBackRef.current;
+        const isRightEdgeSwipe = gestureState.x0 >= screenWidth - edgeWidth && gestureState.dx < -15 && canGoForwardRef.current;
 
         return isLeftEdgeSwipe || isRightEdgeSwipe;
       },
 
       onMoveShouldSetPanResponderCapture: (evt, gestureState) => {
-        if (pathname === '/questionario') return false;
+        const curPath = pathnameRef.current;
+        if (curPath === '/questionario' || curPath === '/psi_questionario') return false;
+
+        const screenWidth = Dimensions.get('window').width;
+        const edgeWidth = Math.max(90, screenWidth * 0.25);
 
         const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
         if (!isHorizontal) return false;
 
-        const isLeftEdgeSwipe = gestureState.x0 <= 60 && gestureState.dx > 15;
-        const isRightEdgeSwipe = gestureState.x0 >= width - 60 && gestureState.dx < -15;
+        const isLeftEdgeSwipe = gestureState.x0 <= edgeWidth && gestureState.dx > 15 && canGoBackRef.current;
+        const isRightEdgeSwipe = gestureState.x0 >= screenWidth - edgeWidth && gestureState.dx < -15 && canGoForwardRef.current;
 
         return isLeftEdgeSwipe || isRightEdgeSwipe;
       },
 
       onPanResponderGrant: (evt, gestureState) => {
-        if (gestureState.x0 <= 60) {
+        const screenWidth = Dimensions.get('window').width;
+        const edgeWidth = Math.max(90, screenWidth * 0.25);
+
+        if (gestureState.x0 <= edgeWidth && canGoBackRef.current) {
+          activeEdgeRef.current = 'left';
           setActiveEdge('left');
-        } else if (gestureState.x0 >= width - 60) {
+        } else if (gestureState.x0 >= screenWidth - edgeWidth && canGoForwardRef.current) {
+          activeEdgeRef.current = 'right';
           setActiveEdge('right');
+        } else {
+          activeEdgeRef.current = null;
         }
         dragAnim.setValue(0);
       },
@@ -136,11 +221,14 @@ export default function SwipeEdgeNavigator({ children }: SwipeEdgeNavigatorProps
       },
 
       onPanResponderRelease: (evt, gestureState) => {
-        const isLeft = activeEdge === 'left';
-        const isRight = activeEdge === 'right';
+        const edge = activeEdgeRef.current;
+        const isLeft = edge === 'left';
+        const isRight = edge === 'right';
 
-        const triggerLeft = isLeft && (gestureState.dx > 45 || gestureState.vx > 0.3);
-        const triggerRight = isRight && (gestureState.dx < -45 || gestureState.vx < -0.3);
+        const triggerLeft = isLeft && (gestureState.dx > 35 || gestureState.vx > 0.25);
+        const triggerRight = isRight && (gestureState.dx < -35 || gestureState.vx < -0.25);
+
+        activeEdgeRef.current = null;
 
         Animated.timing(dragAnim, {
           toValue: 0,
@@ -158,6 +246,7 @@ export default function SwipeEdgeNavigator({ children }: SwipeEdgeNavigatorProps
       },
 
       onPanResponderTerminate: () => {
+        activeEdgeRef.current = null;
         Animated.timing(dragAnim, {
           toValue: 0,
           duration: 150,
@@ -261,4 +350,3 @@ const styles = StyleSheet.create({
     right: 0,
   },
 });
-
