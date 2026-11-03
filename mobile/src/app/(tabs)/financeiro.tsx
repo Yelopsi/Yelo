@@ -18,10 +18,71 @@ import YeloScrollView from '../../components/YeloScrollView';
 import NativeSelectMenu from '../../components/NativeSelectMenu';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
 import api from '../../services/api';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
+
+// Configuração do calendário para Português do Brasil
+if (!LocaleConfig.locales['pt-br']) {
+  LocaleConfig.locales['pt-br'] = {
+    monthNames: [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ],
+    monthNamesShort: [
+      'Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.',
+      'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'
+    ],
+    dayNames: [
+      'Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira',
+      'Quinta-feira', 'Sexta-feira', 'Sábado'
+    ],
+    dayNamesShort: ['Dom.', 'Seg.', 'Ter.', 'Qua.', 'Qui.', 'Sex.', 'Sáb.'],
+    today: 'Hoje'
+  };
+}
+LocaleConfig.defaultLocale = 'pt-br';
+
+// Helpers de data com fuso local brasileiro (evita bug de UTC do toISOString)
+const getLocalBrazilianDate = (d = new Date()) => {
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const getLocalISODate = (d = new Date()) => {
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${year}-${month}-${day}`;
+};
+
+const parseBrazilianToISO = (brDate: string) => {
+  if (!brDate) return getLocalISODate();
+  const parts = brDate.trim().split('/');
+  if (parts.length === 3) {
+    const day = parts[0].padStart(2, '0');
+    const month = parts[1].padStart(2, '0');
+    const year = parts[2];
+    return `${year}-${month}-${day}`;
+  }
+  return brDate;
+};
+
+const parseISOToBrazilian = (isoDate: string) => {
+  if (!isoDate) return getLocalBrazilianDate();
+  const parts = isoDate.trim().split('-');
+  if (parts.length === 3) {
+    const year = parts[0];
+    const month = parts[1].padStart(2, '0');
+    const day = parts[2].padStart(2, '0');
+    return `${day}/${month}/${year}`;
+  }
+  return isoDate;
+};
 
 const PERIODO_OPTIONS = [
   { label: 'Este Mês', value: 'este_mes' },
@@ -75,7 +136,8 @@ export default function FinanceiroScreen() {
   const [modalExpenseVisible, setModalExpenseVisible] = useState(false);
   const [expDesc, setExpDesc] = useState('');
   const [expValue, setExpValue] = useState('');
-  const [expDate, setExpDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [expDateBR, setExpDateBR] = useState(() => getLocalBrazilianDate());
+  const [showExpenseCalendar, setShowExpenseCalendar] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
   const [expenseError, setExpenseError] = useState('');
 
@@ -195,7 +257,7 @@ export default function FinanceiroScreen() {
       }
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString('pt-BR');
+      return getLocalBrazilianDate(d);
     } catch {
       return dateStr;
     }
@@ -213,7 +275,7 @@ export default function FinanceiroScreen() {
   const handleOpenAddExpense = () => {
     setExpDesc('');
     setExpValue('');
-    setExpDate(new Date().toISOString().slice(0, 10));
+    setExpDateBR(getLocalBrazilianDate());
     setExpenseError('');
     setModalExpenseVisible(true);
   };
@@ -231,10 +293,12 @@ export default function FinanceiroScreen() {
       return;
     }
 
-    if (!expDate) {
+    if (!expDateBR) {
       setExpenseError('Informe a data da despesa.');
       return;
     }
+
+    const isoDate = parseBrazilianToISO(expDateBR);
 
     setExpenseError('');
     setSavingExpense(true);
@@ -243,7 +307,7 @@ export default function FinanceiroScreen() {
       await api.post('/api/financials/expenses', {
         description: cleanDesc,
         value: parsedVal,
-        date: expDate,
+        date: isoDate,
       });
 
       setModalExpenseVisible(false);
@@ -751,39 +815,44 @@ export default function FinanceiroScreen() {
                     />
                   </View>
 
-                  {/* Campo: Data */}
+                  {/* Campo: Data no padrão brasileiro DD/MM/AAAA */}
                   <View className="flex-1 ml-2">
                     <Text className="text-[12px] font-bold text-[#4b5563] mb-1.5 tracking-wide uppercase font-sans">
-                      Data (AAAA-MM-DD)
+                      Data (DD/MM/AAAA)
                     </Text>
-                    <TextInput
-                      className="w-full bg-[#f9fafb] border border-[#e5e7eb] rounded-[12px] px-4 py-3 text-[15px] text-[#111] font-sans"
-                      placeholder="2026-11-02"
-                      placeholderTextColor="#9ca3af"
-                      value={expDate}
-                      onChangeText={setExpDate}
-                    />
+                    <TouchableOpacity
+                      onPress={() => setShowExpenseCalendar(true)}
+                      activeOpacity={0.75}
+                      className="w-full bg-[#f9fafb] border border-[#e5e7eb] rounded-[12px] px-3.5 py-3 flex-row items-center justify-between"
+                    >
+                      <Text className="text-[15px] text-[#111] font-sans font-medium">
+                        {expDateBR}
+                      </Text>
+                      <Feather name="calendar" size={18} color="#1B4332" />
+                    </TouchableOpacity>
                   </View>
                 </View>
 
-                {/* Atalhos Rápidos de Data */}
+                {/* Atalhos Rápidos de Data com cálculo no fuso local */}
                 <View className="flex-row items-center mb-6 space-x-2">
                   <Text className="text-[12px] text-[#888] font-sans mr-2">Atalhos:</Text>
                   <TouchableOpacity
-                    onPress={() => setExpDate(new Date().toISOString().slice(0, 10))}
-                    className="bg-[#f3f4f6] px-3 py-1.5 rounded-full mr-2"
+                    onPress={() => setExpDateBR(getLocalBrazilianDate())}
+                    className="bg-[#f0fdf4] border border-[#bbf7d0] px-3 py-1.5 rounded-full mr-2"
+                    activeOpacity={0.7}
                   >
-                    <Text className="text-[12px] font-sans text-[#333] font-medium">Hoje</Text>
+                    <Text className="text-[12px] font-sans text-[#166534] font-semibold">Hoje</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => {
                       const d = new Date();
                       d.setDate(d.getDate() - 1);
-                      setExpDate(d.toISOString().slice(0, 10));
+                      setExpDateBR(getLocalBrazilianDate(d));
                     }}
                     className="bg-[#f3f4f6] px-3 py-1.5 rounded-full"
+                    activeOpacity={0.7}
                   >
-                    <Text className="text-[12px] font-sans text-[#333] font-medium">Ontem</Text>
+                    <Text className="text-[12px] font-sans text-[#4b5563] font-medium">Ontem</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -818,6 +887,86 @@ export default function FinanceiroScreen() {
             </KeyboardAvoidingView>
           </View>
         </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* ============================================================ */}
+      {/* MODAL: CALENDÁRIO PARA SELEÇÃO DA DATA DA DESPESA */}
+      {/* ============================================================ */}
+      <Modal
+        visible={showExpenseCalendar}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowExpenseCalendar(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black/50 px-4">
+          <View className="w-full max-w-[360px] bg-white rounded-[24px] p-5 shadow-2xl">
+            {/* Header do Calendário */}
+            <View className="flex-row items-center justify-between pb-3 mb-2 border-b border-[#f1f3f5]">
+              <View className="flex-row items-center">
+                <View className="w-8 h-8 rounded-full bg-[#f0fdf4] items-center justify-center mr-2.5">
+                  <Feather name="calendar" size={16} color="#1B4332" />
+                </View>
+                <Text className="font-title text-[18px] text-[#1B4332]">Selecionar Data</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowExpenseCalendar(false)}
+                className="w-8 h-8 rounded-full bg-[#f3f4f6] items-center justify-center"
+              >
+                <Feather name="x" size={16} color="#4b5563" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Calendário Interativo */}
+            <Calendar
+              current={parseBrazilianToISO(expDateBR)}
+              enableSwipeMonths={true}
+              markedDates={{
+                [parseBrazilianToISO(expDateBR)]: {
+                  selected: true,
+                  selectedColor: '#1B4332',
+                },
+              }}
+              onDayPress={(day: any) => {
+                const br = parseISOToBrazilian(day.dateString);
+                setExpDateBR(br);
+                setShowExpenseCalendar(false);
+              }}
+              theme={{
+                backgroundColor: '#ffffff',
+                calendarBackground: '#ffffff',
+                textSectionTitleColor: '#6b7280',
+                selectedDayBackgroundColor: '#1B4332',
+                selectedDayTextColor: '#ffffff',
+                todayTextColor: '#1B4332',
+                dayTextColor: '#1f2937',
+                textDisabledColor: '#d1d5db',
+                dotColor: '#1B4332',
+                arrowColor: '#1B4332',
+                monthTextColor: '#1B4332',
+                textDayFontWeight: '500',
+                textMonthFontWeight: '700',
+                textDayHeaderFontWeight: '600',
+                textDayFontSize: 14,
+                textMonthFontSize: 16,
+                textDayHeaderFontSize: 11,
+              }}
+            />
+
+            {/* Botão rápido: Selecionar Hoje */}
+            <TouchableOpacity
+              onPress={() => {
+                setExpDateBR(getLocalBrazilianDate());
+                setShowExpenseCalendar(false);
+              }}
+              className="mt-3 bg-[#f0fdf4] border border-[#bbf7d0] py-2.5 rounded-full items-center justify-center flex-row"
+            >
+              <Feather name="check" size={14} color="#166534" style={{ marginRight: 6 }} />
+              <Text className="text-[#166534] font-bold text-[13px] font-sans">
+                Selecionar Hoje ({getLocalBrazilianDate()})
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
 
       {/* ============================================================ */}
