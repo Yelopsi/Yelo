@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-6f84ca56",
+    "date": "2026-11-03T02:12:57.000Z",
+    "commit": "6f84ca56",
+    "author": "Anderson",
+    "title": "Novo: Adiciona espectro de niveis, 8 cards de xp e 5 conquistas alinhado a versao web mobile (jornada)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "adiciona espectro de niveis, 8 cards de xp e 5 conquistas alinhado a versao web mobile",
+    "description": "Commit registrado no repositório: \"feat(jornada): adiciona espectro de niveis, 8 cards de xp e 5 conquistas alinhado a versao web mobile\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/jornada.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #6f84ca56"
+    },
+    "after": {
+      "nova_versao": "adiciona espectro de niveis, 8 cards de xp e 5 conquistas alinhado a versao web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/jornada.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-eed15641",
     "date": "2026-11-03T02:04:00.000Z",
     "commit": "eed15641",

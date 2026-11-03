@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   RefreshControl,
+  StyleSheet,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -79,7 +80,6 @@ const XP_WAYS = [
   { icon: '🔑', title: 'Login Diário', xp: 1, desc: '1x/dia' },
 ];
 
-// Helper: Card de Conquista com visual premium
 interface AchievementCardProps {
   icon: string;
   colorBg: string;
@@ -103,48 +103,95 @@ const AchievementCard = ({
   statusLabel,
   isUnlocked,
 }: AchievementCardProps) => (
-  <View className="bg-white border border-[#e5e7eb] rounded-[20px] p-5 mb-4 shadow-sm">
-    <View className="flex-row items-center mb-3">
+  <View
+    style={{
+      backgroundColor: '#ffffff',
+      borderWidth: 1,
+      borderColor: '#e5e7eb',
+      borderRadius: 20,
+      padding: 18,
+      marginBottom: 14,
+      shadowColor: '#000',
+      shadowOpacity: 0.02,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 2 },
+    }}
+  >
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
       <View
-        style={{ backgroundColor: colorBg }}
-        className="w-[48px] h-[48px] rounded-[14px] items-center justify-center mr-3.5 shadow-sm"
+        style={{
+          width: 48,
+          height: 48,
+          backgroundColor: colorBg,
+          borderRadius: 14,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 14,
+        }}
       >
-        <Text className="text-[24px]">{icon}</Text>
+        <Text style={{ fontSize: 24 }}>{icon}</Text>
       </View>
-      <View className="flex-1">
-        <View className="flex-row items-center justify-between mb-1">
-          <Text className="font-title text-[#1B4332] text-[17px]">{title}</Text>
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+          <Text style={{ fontFamily: 'sans-serif', fontWeight: 'bold', fontSize: 16, color: '#1B4332' }}>
+            {title}
+          </Text>
           <View
-            className={`px-2.5 py-1 rounded-full border ${
-              isUnlocked ? 'bg-[#f0fdf4] border-[#bbf7d0]' : 'bg-[#f1f5f9] border-[#e2e8f0]'
-            }`}
+            style={{
+              paddingHorizontal: 10,
+              paddingVertical: 3,
+              borderRadius: 999,
+              backgroundColor: isUnlocked ? '#f0fdf4' : '#f1f5f9',
+              borderWidth: 1,
+              borderColor: isUnlocked ? '#bbf7d0' : '#e2e8f0',
+            }}
           >
             <Text
-              className={`font-sans font-bold text-[11px] ${
-                isUnlocked ? 'text-[#166534]' : 'text-[#64748b]'
-              }`}
+              style={{
+                fontFamily: 'sans-serif',
+                fontWeight: '700',
+                fontSize: 11,
+                color: isUnlocked ? '#166534' : '#64748b',
+                textTransform: 'uppercase',
+              }}
             >
               {statusLabel}
             </Text>
           </View>
         </View>
-        <Text className="font-sans text-[#64748b] text-[12.5px] leading-snug">{desc}</Text>
+        <Text style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#64748b', lineHeight: 16 }}>
+          {desc}
+        </Text>
       </View>
     </View>
 
-    {/* Barra de Progresso da Conquista */}
-    <View className="h-[8px] bg-[#f1f5f9] rounded-full overflow-hidden mb-2">
+    {/* Barra de Progresso com altura e largura explícitas */}
+    <View
+      style={{
+        height: 8,
+        width: '100%',
+        backgroundColor: '#f1f5f9',
+        borderRadius: 4,
+        overflow: 'hidden',
+        marginBottom: 6,
+      }}
+    >
       <View
-        className="h-full rounded-full"
         style={{
-          width: `${progressPercent}%`,
+          height: 8,
+          width: `${Math.max(0, Math.min(100, progressPercent))}%`,
           backgroundColor: isUnlocked ? colorText : '#94a3b8',
+          borderRadius: 4,
         }}
       />
     </View>
-    <View className="flex-row justify-between items-center">
-      <Text className="font-sans font-semibold text-[#888] text-[12px]">Progresso</Text>
-      <Text className="font-sans font-bold text-[#334155] text-[12px]">{progressText}</Text>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Text style={{ fontFamily: 'sans-serif', fontWeight: '600', fontSize: 11, color: '#888' }}>
+        Progresso
+      </Text>
+      <Text style={{ fontFamily: 'sans-serif', fontWeight: '700', fontSize: 12, color: '#334155' }}>
+        {progressText}
+      </Text>
     </View>
   </View>
 );
@@ -276,9 +323,9 @@ export default function JornadaScreen() {
   const pioneiroUnlocked = Boolean(badges.pioneiro);
 
   return (
-    <View className="flex-1 bg-[#f9fafb]">
+    <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 60 }}
         refreshControl={
@@ -291,90 +338,195 @@ export default function JornadaScreen() {
         }
       >
         {/* HEADER PRINCIPAL */}
-        <View className="mx-6 mt-6 mb-6 bg-[#1B4332] p-[22px] rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
-          <View className="flex-row items-center mb-2">
+        <View
+          style={{
+            marginHorizontal: 20,
+            marginTop: 20,
+            marginBottom: 20,
+            backgroundColor: '#1B4332',
+            padding: 22,
+            borderRadius: 16,
+            shadowColor: '#000',
+            shadowOpacity: 0.05,
+            shadowRadius: 10,
+            shadowOffset: { width: 0, height: 4 },
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
             <TouchableOpacity
               onPress={handleBack}
-              className="w-10 h-10 bg-white/20 rounded-full items-center justify-center mr-4"
+              style={{
+                width: 40,
+                height: 40,
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                borderRadius: 20,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 14,
+              }}
               activeOpacity={0.8}
             >
               <Feather name="arrow-left" size={20} color="white" />
             </TouchableOpacity>
-            <Text className="font-title text-[24px] text-white leading-tight flex-1">
+            <Text style={{ fontFamily: 'sans-serif', fontWeight: 'bold', fontSize: 24, color: '#ffffff', flex: 1 }}>
               Sua Jornada 🚀
             </Text>
           </View>
-          <Text className="font-sans text-[15px] text-white/85 mt-2 leading-relaxed">
+          <Text style={{ fontFamily: 'sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.85)', lineHeight: 21 }}>
             Acompanhe seu crescimento, desbloqueie conquistas e destaque-se na plataforma!
           </Text>
         </View>
 
         {/* WIDGET 1: SUA EVOLUÇÃO */}
-        <View className="mx-6 mb-6 bg-white border border-[#e5e7eb] rounded-[20px] p-5 shadow-sm">
-          <View className="flex-row items-center justify-between mb-5">
-            <View className="flex-row items-center">
-              <View className="w-[45px] h-[45px] bg-[#e8f5e9] rounded-[12px] items-center justify-center mr-3">
-                <Text className="text-[20px]">📈</Text>
+        <View
+          style={{
+            marginHorizontal: 20,
+            marginBottom: 20,
+            backgroundColor: '#ffffff',
+            borderWidth: 1,
+            borderColor: '#e5e7eb',
+            borderRadius: 20,
+            padding: 20,
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View
+                style={{
+                  width: 44,
+                  height: 44,
+                  backgroundColor: '#e8f5e9',
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 12,
+                }}
+              >
+                <Text style={{ fontSize: 20 }}>📈</Text>
               </View>
-              <Text className="font-title text-[#1B4332] text-[20px]">Sua Evolução</Text>
+              <Text style={{ fontFamily: 'sans-serif', fontWeight: 'bold', fontSize: 19, color: '#1B4332' }}>
+                Sua Evolução
+              </Text>
             </View>
-            <View className="bg-[#f8fafc] border border-[#f1f5f9] px-3.5 py-1.5 rounded-full">
-              <Text className="font-sans font-bold text-[#1B4332] text-[13px]">
+            <View
+              style={{
+                backgroundColor: '#f8fafc',
+                borderWidth: 1,
+                borderColor: '#f1f5f9',
+                paddingHorizontal: 14,
+                paddingVertical: 6,
+                borderRadius: 999,
+              }}
+            >
+              <Text style={{ fontFamily: 'sans-serif', fontWeight: 'bold', fontSize: 13, color: '#1B4332' }}>
                 {currentLevel.label}
               </Text>
             </View>
           </View>
 
-          {/* Barra de Progresso de XP */}
-          <View className="mb-4">
-            <View className="h-[16px] bg-[#f1f5f9] rounded-full overflow-hidden mb-2">
+          {/* Barra de Progresso de XP - Dimensões rígidas com height explícito */}
+          <View style={{ marginBottom: 16 }}>
+            <View
+              style={{
+                height: 16,
+                width: '100%',
+                backgroundColor: '#f1f5f9',
+                borderRadius: 8,
+                overflow: 'hidden',
+                marginBottom: 8,
+              }}
+            >
               <View
-                className="h-full rounded-full bg-[#10b981]"
-                style={{ width: `${progressPercent}%` }}
+                style={{
+                  height: 16,
+                  width: `${Math.max(2, Math.min(100, progressPercent))}%`,
+                  backgroundColor: '#10b981',
+                  borderRadius: 8,
+                }}
               />
             </View>
-            <View className="flex-row justify-between items-center">
-              <Text className="font-sans font-semibold text-[#64748b] text-[12px]">
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontFamily: 'sans-serif', fontWeight: '600', fontSize: 12, color: '#64748b' }}>
                 {currentLevel.label}
               </Text>
-              <Text className="font-sans font-extrabold text-[#0f172a] text-[13px]">
+              <Text style={{ fontFamily: 'sans-serif', fontWeight: '800', fontSize: 13, color: '#0f172a' }}>
                 {userXp} // {nextLevel.min} XP
               </Text>
-              <Text className="font-sans font-semibold text-[#64748b] text-[12px]">
+              <Text style={{ fontFamily: 'sans-serif', fontWeight: '600', fontSize: 12, color: '#64748b' }}>
                 {nextLevel.label}
               </Text>
             </View>
           </View>
 
           {/* Painel de Próximo Marco */}
-          <View className="bg-[#f8fafc] border border-[#f1f5f9] p-4 rounded-[14px] flex-row items-center">
-            <Text className="text-[28px] mr-3">🎯</Text>
-            <View className="flex-1">
-              <Text className="font-sans font-bold text-[#334155] text-[14px] mb-0.5">
+          <View
+            style={{
+              backgroundColor: '#f8fafc',
+              borderWidth: 1,
+              borderColor: '#f1f5f9',
+              padding: 14,
+              borderRadius: 14,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ fontSize: 26, marginRight: 12 }}>🎯</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: 'sans-serif', fontWeight: 'bold', fontSize: 13, color: '#334155', marginBottom: 2 }}>
                 Seu próximo marco:
               </Text>
-              <Text className="font-sans text-[#64748b] text-[13px] leading-relaxed">
+              <Text style={{ fontFamily: 'sans-serif', fontSize: 12.5, color: '#64748b', lineHeight: 18 }}>
                 {nextMilestoneText}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* WIDGET 2: ESPECTRO DE NÍVEIS (NOVO NO APP - ALINHADO À WEB) */}
-        <View className="mx-6 mb-6 bg-white border border-[#e5e7eb] rounded-[20px] p-5 shadow-sm">
-          <View className="flex-row items-center mb-5">
-            <View className="w-[36px] h-[36px] bg-[#e8f5e9] rounded-[10px] items-center justify-center mr-3">
-              <Text className="text-[18px]">📊</Text>
+        {/* WIDGET 2: ESPECTRO DE NÍVEIS (ALINHADO À VERSÃO WEB) */}
+        <View
+          style={{
+            marginHorizontal: 20,
+            marginBottom: 20,
+            backgroundColor: '#ffffff',
+            borderWidth: 1,
+            borderColor: '#e5e7eb',
+            borderRadius: 20,
+            padding: 20,
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                backgroundColor: '#e8f5e9',
+                borderRadius: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 10,
+              }}
+            >
+              <Text style={{ fontSize: 18 }}>📊</Text>
             </View>
-            <Text className="font-title text-[#1B4332] text-[18px]">Espectro de Níveis</Text>
+            <Text style={{ fontFamily: 'sans-serif', fontWeight: 'bold', fontSize: 18, color: '#1B4332' }}>
+              Espectro de Níveis
+            </Text>
           </View>
 
-          <View className="relative flex-row justify-between items-start pt-1">
-            {/* Linha de Conexão */}
+          <View style={{ position: 'relative', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingTop: 4 }}>
+            {/* Linha de Conexão Horizontal */}
             <View
               style={{
                 position: 'absolute',
-                top: 20,
+                top: 21,
                 left: 20,
                 right: 20,
                 height: 3,
@@ -388,49 +540,55 @@ export default function JornadaScreen() {
               const isPassed = userXp >= lvl.min;
 
               return (
-                <View key={lvl.slug} className="items-center z-10" style={{ width: 60 }}>
+                <View key={lvl.slug} style={{ alignItems: 'center', zIndex: 10, width: 56 }}>
                   <View
-                    className={`w-[36px] h-[36px] rounded-full items-center justify-center mb-2 border-2 ${
-                      isCurrent
-                        ? 'bg-[#1B4332] border-[#1B4332] shadow-md'
-                        : isPassed
-                        ? 'bg-[#e8f5e9] border-[#16a34a]'
-                        : lvl.level === 5
-                        ? 'bg-[#fef3c7] border-[#fde68a]'
-                        : 'bg-white border-[#e2e8f0]'
-                    }`}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 6,
+                      borderWidth: 2,
+                      borderColor: isCurrent ? '#1B4332' : isPassed ? '#16a34a' : lvl.level === 5 ? '#fde68a' : '#e2e8f0',
+                      backgroundColor: isCurrent ? '#1B4332' : isPassed ? '#e8f5e9' : lvl.level === 5 ? '#fef3c7' : '#ffffff',
+                      shadowColor: isCurrent ? '#1B4332' : 'transparent',
+                      shadowOpacity: isCurrent ? 0.25 : 0,
+                      shadowRadius: 4,
+                      shadowOffset: { width: 0, height: 2 },
+                    }}
                   >
                     {lvl.level === 5 ? (
-                      <Text className="text-[16px]">👑</Text>
+                      <Text style={{ fontSize: 16 }}>👑</Text>
                     ) : isPassed && !isCurrent ? (
                       <Feather name="check" size={16} color="#16a34a" />
                     ) : (
                       <Text
-                        className={`font-sans font-bold text-[13px] ${
-                          isCurrent
-                            ? 'text-white'
-                            : isPassed
-                            ? 'text-[#16a34a]'
-                            : 'text-[#94a3b8]'
-                        }`}
+                        style={{
+                          fontFamily: 'sans-serif',
+                          fontWeight: 'bold',
+                          fontSize: 13,
+                          color: isCurrent ? '#ffffff' : isPassed ? '#16a34a' : '#94a3b8',
+                        }}
                       >
                         {lvl.level}
                       </Text>
                     )}
                   </View>
                   <Text
-                    className={`font-sans text-center text-[11px] leading-tight mb-0.5 ${
-                      isCurrent
-                        ? 'font-bold text-[#1B4332]'
-                        : isPassed
-                        ? 'font-semibold text-[#334155]'
-                        : 'text-[#64748b]'
-                    }`}
+                    style={{
+                      fontFamily: 'sans-serif',
+                      fontSize: 10.5,
+                      textAlign: 'center',
+                      fontWeight: isCurrent ? '700' : isPassed ? '600' : '400',
+                      color: isCurrent ? '#1B4332' : isPassed ? '#334155' : '#64748b',
+                      marginBottom: 2,
+                    }}
                     numberOfLines={1}
                   >
                     {lvl.short}
                   </Text>
-                  <Text className="font-sans text-center text-[10px] text-[#94a3b8]">
+                  <Text style={{ fontFamily: 'sans-serif', fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>
                     {lvl.xpLabel}
                   </Text>
                 </View>
@@ -439,48 +597,86 @@ export default function JornadaScreen() {
           </View>
         </View>
 
-        {/* WIDGET 3: COMO GANHAR XP? (8 FORMAS COMPLETAS DA VERSÃO WEB) */}
-        <View className="mx-6 mb-6">
-          <View className="flex-row items-center mb-4">
-            <View className="w-[36px] h-[36px] bg-[#fef3c7] rounded-[10px] items-center justify-center mr-3">
-              <Text className="text-[18px]">⭐</Text>
+        {/* WIDGET 3: COMO GANHAR XP? (TODOS OS 8 CARDS OFICIAIS) */}
+        <View style={{ marginHorizontal: 20, marginBottom: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                backgroundColor: '#fef3c7',
+                borderRadius: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 10,
+              }}
+            >
+              <Text style={{ fontSize: 18 }}>⭐</Text>
             </View>
-            <Text className="font-title text-[#1B4332] text-[18px]">Como ganhar XP?</Text>
+            <Text style={{ fontFamily: 'sans-serif', fontWeight: 'bold', fontSize: 18, color: '#1B4332' }}>
+              Como ganhar XP?
+            </Text>
           </View>
 
-          <View className="flex-row flex-wrap justify-between">
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
             {XP_WAYS.map((item) => (
               <View
                 key={item.title}
-                className="w-[48%] bg-white border border-[#e5e7eb] rounded-[16px] p-3.5 mb-3 shadow-[0_2px_6px_rgba(0,0,0,0.02)]"
+                style={{
+                  width: '48%',
+                  backgroundColor: '#ffffff',
+                  borderWidth: 1,
+                  borderColor: '#e5e7eb',
+                  borderRadius: 16,
+                  padding: 14,
+                  marginBottom: 12,
+                  shadowColor: '#000',
+                  shadowOpacity: 0.02,
+                  shadowRadius: 6,
+                  shadowOffset: { width: 0, height: 2 },
+                }}
               >
-                <View className="flex-row items-center justify-between mb-2">
-                  <Text className="text-[22px]">{item.icon}</Text>
-                  <View className="bg-[#f0fdf4] px-2 py-0.5 rounded-full">
-                    <Text className="font-sans font-extrabold text-[#10b981] text-[12px]">
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 22 }}>{item.icon}</Text>
+                  <View style={{ backgroundColor: '#f0fdf4', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
+                    <Text style={{ fontFamily: 'sans-serif', fontWeight: '800', color: '#10b981', fontSize: 11.5 }}>
                       +{item.xp} XP
                     </Text>
                   </View>
                 </View>
                 <Text
-                  className="font-sans font-bold text-[#334155] text-[13px] mb-0.5"
+                  style={{ fontFamily: 'sans-serif', fontWeight: 'bold', color: '#334155', fontSize: 13, marginBottom: 2 }}
                   numberOfLines={1}
                 >
                   {item.title}
                 </Text>
-                <Text className="font-sans text-[#94a3b8] text-[11px]">{item.desc || 'Por ação'}</Text>
+                <Text style={{ fontFamily: 'sans-serif', fontSize: 11, color: '#94a3b8' }}>
+                  {item.desc || 'Por ação'}
+                </Text>
               </View>
             ))}
           </View>
         </View>
 
-        {/* WIDGET 4: CONQUISTAS (TODAS AS 5 BADGES OFICIAIS DA VERSÃO WEB) */}
-        <View className="mx-6 mb-6">
-          <View className="flex-row items-center mb-4">
-            <View className="w-[36px] h-[36px] bg-[#f3e8ff] rounded-[10px] items-center justify-center mr-3">
-              <Text className="text-[18px]">🏆</Text>
+        {/* WIDGET 4: CONQUISTAS (TODAS AS 5 BADGES OFICIAIS) */}
+        <View style={{ marginHorizontal: 20, marginBottom: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                backgroundColor: '#f3e8ff',
+                borderRadius: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 10,
+              }}
+            >
+              <Text style={{ fontSize: 18 }}>🏆</Text>
             </View>
-            <Text className="font-title text-[#1B4332] text-[18px]">Conquistas</Text>
+            <Text style={{ fontFamily: 'sans-serif', fontWeight: 'bold', fontSize: 18, color: '#1B4332' }}>
+              Conquistas
+            </Text>
           </View>
 
           {/* 1. Semeador */}
@@ -505,7 +701,7 @@ export default function JornadaScreen() {
             isUnlocked={autenticoUnlocked}
           />
 
-          {/* 5. Pioneiro (NOVO NO APP - ALINHADO À WEB) */}
+          {/* 5. Pioneiro */}
           <AchievementCard
             icon={BADGE_CONFIG.pioneiro.icon}
             colorBg={BADGE_CONFIG.pioneiro.colorBg}
