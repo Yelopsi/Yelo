@@ -1,5 +1,918 @@
 [
   {
+    "id": "change-git-86363bc0",
+    "date": "2026-11-03T00:18:48.000Z",
+    "commit": "86363bc0",
+    "author": "Anderson",
+    "title": "Correção: Corrige fuso horario de atalhos e adiciona seletor de calendario brasileiro (financeiro)",
+    "category": "Financeiro & Estornos",
+    "badgeColor": "#ef4444",
+    "status": "Em Produção",
+    "summary": "corrige fuso horario de atalhos e adiciona seletor de calendario brasileiro",
+    "description": "Commit registrado no repositório: \"fix(financeiro): corrige fuso horario de atalhos e adiciona seletor de calendario brasileiro\". Arquivos modificados: mobile/src/app/(tabs)/financeiro.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #86363bc0"
+    },
+    "after": {
+      "nova_versao": "corrige fuso horario de atalhos e adiciona seletor de calendario brasileiro"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/financeiro.tsx"
+    ]
+  },
+  {
+    "id": "change-git-8eb59dd9",
+    "date": "2026-11-03T00:12:01.000Z",
+    "commit": "8eb59dd9",
+    "author": "Anderson",
+    "title": "Novo: Alinha pagina de metricas e mercado com versao web (analytics)",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "alinha pagina de metricas e mercado com versao web",
+    "description": "Commit registrado no repositório: \"feat(analytics): alinha pagina de metricas e mercado com versao web\". Arquivos modificados: mobile/src/app/(tabs)/analytics.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8eb59dd9"
+    },
+    "after": {
+      "nova_versao": "alinha pagina de metricas e mercado com versao web"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/analytics.tsx"
+    ]
+  },
+  {
+    "id": "change-git-ef930e31",
+    "date": "2026-11-03T00:08:22.000Z",
+    "commit": "ef930e31",
+    "author": "Anderson",
+    "title": "Novo: Implementa lancamento de despesas, exportacao CSV e integracao real de dados (financeiro)",
+    "category": "Financeiro & Estornos",
+    "badgeColor": "#ef4444",
+    "status": "Em Produção",
+    "summary": "implementa lancamento de despesas, exportacao CSV e integracao real de dados",
+    "description": "Commit registrado no repositório: \"feat(financeiro): implementa lancamento de despesas, exportacao CSV e integracao real de dados\". Arquivos modificados: backend/routes/financialRoutes.js, mobile/app.json, mobile/package-lock.json, mobile/package.json, mobile/src/app/(tabs)/financeiro.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ef930e31"
+    },
+    "after": {
+      "nova_versao": "implementa lancamento de despesas, exportacao CSV e integracao real de dados"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/routes/financialRoutes.js",
+      "mobile/app.json",
+      "mobile/package-lock.json",
+      "mobile/package.json",
+      "mobile/src/app/(tabs)/financeiro.tsx"
+    ]
+  },
+  {
+    "id": "change-git-8f7a641c",
+    "date": "2026-11-02T23:52:36.000Z",
+    "commit": "8f7a641c",
+    "author": "Anderson",
+    "title": "Novo: Implementa autenticacao biometrica (Face ID / Touch ID / Digital) (auth)",
+    "category": "Segurança & Autenticação",
+    "badgeColor": "#0ea5e9",
+    "status": "Em Produção",
+    "summary": "implementa autenticacao biometrica (Face ID / Touch ID / Digital)",
+    "description": "Commit registrado no repositório: \"feat(auth): implementa autenticacao biometrica (Face ID / Touch ID / Digital)\". Arquivos modificados: mobile/app.json, mobile/package-lock.json, mobile/package.json, mobile/src/app/(tabs)/ajustes.tsx, mobile/src/app/login.tsx (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8f7a641c"
+    },
+    "after": {
+      "nova_versao": "implementa autenticacao biometrica (Face ID / Touch ID / Digital)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/app.json",
+      "mobile/package-lock.json",
+      "mobile/package.json",
+      "mobile/src/app/(tabs)/ajustes.tsx",
+      "mobile/src/app/login.tsx",
+      "mobile/src/services/biometrics.ts"
+    ]
+  },
+  {
+    "id": "change-git-884ccced",
+    "date": "2026-11-02T23:43:42.000Z",
+    "commit": "884ccced",
+    "author": "Anderson",
+    "title": "Interface: Centraliza itens da bottom nav e adiciona modal de confirmacao ao sair (tabs)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "centraliza itens da bottom nav e adiciona modal de confirmacao ao sair",
+    "description": "Commit registrado no repositório: \"style(tabs): centraliza itens da bottom nav e adiciona modal de confirmacao ao sair\". Arquivos modificados: mobile/src/app/(tabs)/_layout.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #884ccced"
+    },
+    "after": {
+      "nova_versao": "centraliza itens da bottom nav e adiciona modal de confirmacao ao sair"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/_layout.tsx"
+    ]
+  },
+  {
+    "id": "change-git-0524aa91",
+    "date": "2026-11-02T23:37:35.000Z",
+    "commit": "0524aa91",
+    "author": "Anderson",
+    "title": "Correção: Remove toggle de pagamentos e ajusta handler nativo de notificacoes (mobile)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "remove toggle de pagamentos e ajusta handler nativo de notificacoes",
+    "description": "Commit registrado no repositório: \"fix(mobile): remove toggle de pagamentos e ajusta handler nativo de notificacoes\". Arquivos modificados: mobile/src/app/(tabs)/avisos.tsx, mobile/src/app/(tabs)/notificacoes.tsx, mobile/src/app/_layout.tsx, mobile/src/services/sessionNotifications.ts.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #0524aa91"
+    },
+    "after": {
+      "nova_versao": "remove toggle de pagamentos e ajusta handler nativo de notificacoes"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/avisos.tsx",
+      "mobile/src/app/(tabs)/notificacoes.tsx",
+      "mobile/src/app/_layout.tsx",
+      "mobile/src/services/sessionNotifications.ts"
+    ]
+  },
+  {
+    "id": "change-git-1edf183c",
+    "date": "2026-11-02T23:20:31.000Z",
+    "commit": "1edf183c",
+    "author": "Anderson",
+    "title": "Novo: Sininho abre ultimas notificacoes e adiciona canais de notificacao (mobile)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "sininho abre ultimas notificacoes e adiciona canais de notificacao",
+    "description": "Commit registrado no repositório: \"feat(mobile): sininho abre ultimas notificacoes e adiciona canais de notificacao\". Arquivos modificados: backend/controllers/psychologistController.js, backend/models/psychologist.js, backend/server.js, mobile/src/app/(tabs)/_layout.tsx, mobile/src/app/(tabs)/avisos.tsx (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1edf183c"
+    },
+    "after": {
+      "nova_versao": "sininho abre ultimas notificacoes e adiciona canais de notificacao"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/psychologistController.js",
+      "backend/models/psychologist.js",
+      "backend/server.js",
+      "mobile/src/app/(tabs)/_layout.tsx",
+      "mobile/src/app/(tabs)/avisos.tsx",
+      "mobile/src/app/(tabs)/notificacoes.tsx",
+      "mobile/src/components/MobileHeader.tsx",
+      "mobile/src/services/sessionNotifications.ts"
+    ]
+  },
+  {
+    "id": "change-git-71e327dc",
+    "date": "2026-11-02T23:07:27.000Z",
+    "commit": "71e327dc",
+    "author": "Anderson",
+    "title": "Novo: Tela de notificacoes e agendamento de lembretes nativos de sessoes (mobile)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "tela de notificacoes e agendamento de lembretes nativos de sessoes",
+    "description": "Commit registrado no repositório: \"feat(mobile): tela de notificacoes e agendamento de lembretes nativos de sessoes\". Arquivos modificados: backend/controllers/psychologistController.js, backend/models/psychologist.js, backend/server.js, mobile/package-lock.json, mobile/package.json (+6 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #71e327dc"
+    },
+    "after": {
+      "nova_versao": "tela de notificacoes e agendamento de lembretes nativos de sessoes"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/psychologistController.js",
+      "backend/models/psychologist.js",
+      "backend/server.js",
+      "mobile/package-lock.json",
+      "mobile/package.json",
+      "mobile/src/app/(tabs)/_layout.tsx",
+      "mobile/src/app/(tabs)/ajustes.tsx",
+      "mobile/src/app/(tabs)/notificacoes.tsx",
+      "mobile/src/app/(tabs)/pacientes/index.tsx",
+      "mobile/src/components/MobileHeader.tsx",
+      "mobile/src/services/sessionNotifications.ts"
+    ]
+  },
+  {
+    "id": "change-git-f7810275",
+    "date": "2026-11-02T22:35:37.000Z",
+    "commit": "f7810275",
+    "author": "Anderson",
+    "title": "Novo: Implement zero-bloat infinite recurrence rules like iOS Calendar (agenda)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "implement zero-bloat infinite recurrence rules like iOS Calendar",
+    "description": "Commit registrado no repositório: \"feat(agenda): implement zero-bloat infinite recurrence rules like iOS Calendar\". Arquivos modificados: backend/models/appointment.js, backend/routes/appointmentRoutes.js, backend/routes/financialRoutes.js, backend/server.js, backend/utils/fixController.js (+5 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #f7810275"
+    },
+    "after": {
+      "nova_versao": "implement zero-bloat infinite recurrence rules like iOS Calendar"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/models/appointment.js",
+      "backend/routes/appointmentRoutes.js",
+      "backend/routes/financialRoutes.js",
+      "backend/server.js",
+      "backend/utils/fixController.js",
+      "backend/utils/recurrenceExpander.js",
+      "mobile/src/app/(tabs)/pacientes/[id].tsx",
+      "mobile/src/app/(tabs)/pacientes/index.tsx",
+      "mobile/src/components/NativeTimePicker.shared.ts",
+      "mobile/src/utils/recurrenceExpander.ts"
+    ]
+  },
+  {
+    "id": "change-git-9715ce8c",
+    "date": "2026-11-02T22:05:09.000Z",
+    "commit": "9715ce8c",
+    "author": "Anderson",
+    "title": "Correção: Extract NativeTimePicker shared helpers to prevent platform self-import (mobile)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "extract NativeTimePicker shared helpers to prevent platform self-import",
+    "description": "Commit registrado no repositório: \"fix(mobile): extract NativeTimePicker shared helpers to prevent platform self-import\". Arquivos modificados: mobile/src/components/NativeTimePicker.android.tsx, mobile/src/components/NativeTimePicker.ios.tsx, mobile/src/components/NativeTimePicker.shared.ts, mobile/src/components/NativeTimePicker.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9715ce8c"
+    },
+    "after": {
+      "nova_versao": "extract NativeTimePicker shared helpers to prevent platform self-import"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/components/NativeTimePicker.android.tsx",
+      "mobile/src/components/NativeTimePicker.ios.tsx",
+      "mobile/src/components/NativeTimePicker.shared.ts",
+      "mobile/src/components/NativeTimePicker.tsx"
+    ]
+  },
+  {
+    "id": "change-git-7c65bde5",
+    "date": "2026-11-02T22:00:03.000Z",
+    "commit": "7c65bde5",
+    "author": "Anderson",
+    "title": "Novo: Replace custom inline time wheel with OS-native time picker popover (mobile)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "replace custom inline time wheel with OS-native time picker popover",
+    "description": "Commit registrado no repositório: \"feat(mobile): replace custom inline time wheel with OS-native time picker popover\". Arquivos modificados: mobile/src/app/(tabs)/pacientes/index.tsx, mobile/src/components/NativeSelectMenu.android.tsx, mobile/src/components/NativeSelectMenu.ios.tsx, mobile/src/components/NativeSelectMenu.tsx, mobile/src/components/NativeTimePicker.android.tsx (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #7c65bde5"
+    },
+    "after": {
+      "nova_versao": "replace custom inline time wheel with OS-native time picker popover"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/pacientes/index.tsx",
+      "mobile/src/components/NativeSelectMenu.android.tsx",
+      "mobile/src/components/NativeSelectMenu.ios.tsx",
+      "mobile/src/components/NativeSelectMenu.tsx",
+      "mobile/src/components/NativeTimePicker.android.tsx",
+      "mobile/src/components/NativeTimePicker.ios.tsx",
+      "mobile/src/components/NativeTimePicker.tsx"
+    ]
+  },
+  {
+    "id": "change-git-0033becb",
+    "date": "2026-11-02T21:42:10.000Z",
+    "commit": "0033becb",
+    "author": "Anderson",
+    "title": "Novo: Standardize all remaining dropdown menus to OS-native NativeSelectMenu (mobile)",
+    "category": "Financeiro & Estornos",
+    "badgeColor": "#ef4444",
+    "status": "Em Produção",
+    "summary": "standardize all remaining dropdown menus to OS-native NativeSelectMenu",
+    "description": "Commit registrado no repositório: \"feat(mobile): standardize all remaining dropdown menus to OS-native NativeSelectMenu\". Arquivos modificados: mobile/src/app/(tabs)/calculadora.tsx, mobile/src/app/(tabs)/fale_com_a_yelo.tsx, mobile/src/app/(tabs)/financeiro.tsx, mobile/src/app/contato.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #0033becb"
+    },
+    "after": {
+      "nova_versao": "standardize all remaining dropdown menus to OS-native NativeSelectMenu"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/calculadora.tsx",
+      "mobile/src/app/(tabs)/fale_com_a_yelo.tsx",
+      "mobile/src/app/(tabs)/financeiro.tsx",
+      "mobile/src/app/contato.tsx"
+    ]
+  },
+  {
+    "id": "change-git-2af2421d",
+    "date": "2026-11-02T21:34:56.000Z",
+    "commit": "2af2421d",
+    "author": "Anderson",
+    "title": "Novo: Replace custom simulated dropdowns with real OS-native menus via @expo/ui (mobile)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "replace custom simulated dropdowns with real OS-native menus via @expo/ui",
+    "description": "Commit registrado no repositório: \"feat(mobile): replace custom simulated dropdowns with real OS-native menus via @expo/ui\". Arquivos modificados: mobile/src/app/(tabs)/pacientes/[id].tsx, mobile/src/app/(tabs)/pacientes/index.tsx, mobile/src/components/NativeSelectMenu.android.tsx, mobile/src/components/NativeSelectMenu.ios.tsx, mobile/src/components/NativeSelectMenu.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2af2421d"
+    },
+    "after": {
+      "nova_versao": "replace custom simulated dropdowns with real OS-native menus via @expo/ui"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/pacientes/[id].tsx",
+      "mobile/src/app/(tabs)/pacientes/index.tsx",
+      "mobile/src/components/NativeSelectMenu.android.tsx",
+      "mobile/src/components/NativeSelectMenu.ios.tsx",
+      "mobile/src/components/NativeSelectMenu.tsx"
+    ]
+  },
+  {
+    "id": "change-git-551331d6",
+    "date": "2026-11-02T21:18:43.000Z",
+    "commit": "551331d6",
+    "author": "Anderson",
+    "title": "Novo: Add interactive calendar modal, improved day nav buttons, and alphabetical iOS glass select menu (pacientes)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "add interactive calendar modal, improved day nav buttons, and alphabetical iOS glass select menu",
+    "description": "Commit registrado no repositório: \"feat(pacientes): add interactive calendar modal, improved day nav buttons, and alphabetical iOS glass select menu\". Arquivos modificados: mobile/src/app/(tabs)/pacientes/index.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #551331d6"
+    },
+    "after": {
+      "nova_versao": "add interactive calendar modal, improved day nav buttons, and alphabetical iOS glass select menu"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/pacientes/index.tsx"
+    ]
+  },
+  {
+    "id": "change-git-e4c188e4",
+    "date": "2026-11-02T20:58:29.000Z",
+    "commit": "e4c188e4",
+    "author": "Anderson",
+    "title": "Correção: Apply explicit red button style for recurring delete option (pacientes)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "apply explicit red button style for recurring delete option",
+    "description": "Commit registrado no repositório: \"fix(pacientes): apply explicit red button style for recurring delete option\". Arquivos modificados: mobile/src/app/(tabs)/pacientes/[id].tsx, mobile/src/app/(tabs)/pacientes/index.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #e4c188e4"
+    },
+    "after": {
+      "nova_versao": "apply explicit red button style for recurring delete option"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/pacientes/[id].tsx",
+      "mobile/src/app/(tabs)/pacientes/index.tsx"
+    ]
+  },
+  {
+    "id": "change-git-5d8b632a",
+    "date": "2026-11-02T20:54:55.000Z",
+    "commit": "5d8b632a",
+    "author": "Anderson",
+    "title": "Correção: Smooth native keyboard sheet animation and real patient profile screen (pacientes)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "smooth native keyboard sheet animation and real patient profile screen",
+    "description": "Commit registrado no repositório: \"fix(pacientes): smooth native keyboard sheet animation and real patient profile screen\". Arquivos modificados: mobile/src/app/(tabs)/pacientes/[id].tsx, mobile/src/app/(tabs)/pacientes/index.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5d8b632a"
+    },
+    "after": {
+      "nova_versao": "smooth native keyboard sheet animation and real patient profile screen"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/pacientes/[id].tsx",
+      "mobile/src/app/(tabs)/pacientes/index.tsx"
+    ]
+  },
+  {
+    "id": "change-git-be7e0bc0",
+    "date": "2026-11-02T20:43:09.000Z",
+    "commit": "be7e0bc0",
+    "author": "Anderson",
+    "title": "Novo: Remove quick time chips and use native OS carousel pickers for duration and recurrence (pacientes)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "remove quick time chips and use native OS carousel pickers for duration and recurrence",
+    "description": "Commit registrado no repositório: \"feat(pacientes): remove quick time chips and use native OS carousel pickers for duration and recurrence\". Arquivos modificados: mobile/src/app/(tabs)/pacientes/index.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #be7e0bc0"
+    },
+    "after": {
+      "nova_versao": "remove quick time chips and use native OS carousel pickers for duration and recurrence"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/pacientes/index.tsx"
+    ]
+  },
+  {
+    "id": "change-git-77373cb4",
+    "date": "2026-11-02T20:33:43.000Z",
+    "commit": "77373cb4",
+    "author": "Anderson",
+    "title": "Novo: Fix modal keyboard visibility and add long-press edit/delete sheet (pacientes)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "fix modal keyboard visibility and add long-press edit/delete sheet",
+    "description": "Commit registrado no repositório: \"feat(pacientes): fix modal keyboard visibility and add long-press edit/delete sheet\". Arquivos modificados: backend/routes/appointmentRoutes.js, mobile/src/app/(tabs)/pacientes/index.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #77373cb4"
+    },
+    "after": {
+      "nova_versao": "fix modal keyboard visibility and add long-press edit/delete sheet"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/routes/appointmentRoutes.js",
+      "mobile/src/app/(tabs)/pacientes/index.tsx"
+    ]
+  },
+  {
+    "id": "change-git-2049f0f5",
+    "date": "2026-11-02T20:17:30.000Z",
+    "commit": "2049f0f5",
+    "author": "Anderson",
+    "title": "Novo: Calibrate bottom-nav breathing room and refactor 24h hybrid time picker & timeline (pacientes)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "calibrate bottom-nav breathing room and refactor 24h hybrid time picker & timeline",
+    "description": "Commit registrado no repositório: \"feat(pacientes): calibrate bottom-nav breathing room and refactor 24h hybrid time picker & timeline\". Arquivos modificados: mobile/src/app/(tabs)/pacientes/index.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2049f0f5"
+    },
+    "after": {
+      "nova_versao": "calibrate bottom-nav breathing room and refactor 24h hybrid time picker & timeline"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/pacientes/index.tsx"
+    ]
+  },
+  {
+    "id": "change-git-187bb345",
+    "date": "2026-11-02T20:01:49.000Z",
+    "commit": "187bb345",
+    "author": "Anderson",
+    "title": "Correção: Style slots and buttons as pills, fix legend dots, add OS wheel picker, and prevent LinkingContext crash (pacientes)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "style slots and buttons as pills, fix legend dots, add OS wheel picker, and prevent LinkingContext crash",
+    "description": "Commit registrado no repositório: \"fix(pacientes): style slots and buttons as pills, fix legend dots, add OS wheel picker, and prevent LinkingContext crash\". Arquivos modificados: mobile/src/app/(tabs)/pacientes/index.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #187bb345"
+    },
+    "after": {
+      "nova_versao": "style slots and buttons as pills, fix legend dots, add OS wheel picker, and prevent LinkingContext crash"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/pacientes/index.tsx"
+    ]
+  },
+  {
+    "id": "change-git-dd14d588",
+    "date": "2026-11-02T19:45:39.000Z",
+    "commit": "dd14d588",
+    "author": "Anderson",
+    "title": "Novo: Align Minha Agenda (pacientes) screen with web mobile design",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "align Minha Agenda (pacientes) screen with web mobile design",
+    "description": "Commit registrado no repositório: \"feat(mobile): align Minha Agenda (pacientes) screen with web mobile design\". Arquivos modificados: mobile/src/app/(tabs)/pacientes/index.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #dd14d588"
+    },
+    "after": {
+      "nova_versao": "align Minha Agenda (pacientes) screen with web mobile design"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/pacientes/index.tsx"
+    ]
+  },
+  {
+    "id": "change-git-884f372a",
+    "date": "2026-11-02T01:03:57.000Z",
+    "commit": "884f372a",
+    "author": "Anderson",
+    "title": "Correção: Fix hub card routing by using navigation.navigate with direct tab screen names and /(tabs)/ fallback",
+    "category": "Financeiro & Estornos",
+    "badgeColor": "#ef4444",
+    "status": "Em Produção",
+    "summary": "fix hub card routing by using navigation.navigate with direct tab screen names and /(tabs)/ fallback",
+    "description": "Commit registrado no repositório: \"fix(tabs): fix hub card routing by using navigation.navigate with direct tab screen names and /(tabs)/ fallback\". Arquivos modificados: mobile/src/app/(tabs)/ajustes.tsx, mobile/src/app/(tabs)/analytics.tsx, mobile/src/app/(tabs)/calculadora.tsx, mobile/src/app/(tabs)/clinica.tsx, mobile/src/app/(tabs)/evolucao.tsx (+6 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #884f372a"
+    },
+    "after": {
+      "nova_versao": "fix hub card routing by using navigation.navigate with direct tab screen names and /(tabs)/ fallback"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/ajustes.tsx",
+      "mobile/src/app/(tabs)/analytics.tsx",
+      "mobile/src/app/(tabs)/calculadora.tsx",
+      "mobile/src/app/(tabs)/clinica.tsx",
+      "mobile/src/app/(tabs)/evolucao.tsx",
+      "mobile/src/app/(tabs)/favoritos-analytics.tsx",
+      "mobile/src/app/(tabs)/financeiro.tsx",
+      "mobile/src/app/(tabs)/manual-conversao.tsx",
+      "mobile/src/app/(tabs)/pacientes/index.tsx",
+      "mobile/src/components/MobileHeader.tsx",
+      "mobile/src/components/SwipeEdgeNavigator.tsx"
+    ]
+  },
+  {
+    "id": "change-git-eff0f302",
+    "date": "2026-11-02T00:50:33.000Z",
+    "commit": "eff0f302",
+    "author": "Anderson",
+    "title": "Correção: Replace href null with tabBarButton null to avoid hidden tab redirect to index (tabs)",
+    "category": "Financeiro & Estornos",
+    "badgeColor": "#ef4444",
+    "status": "Em Produção",
+    "summary": "replace href null with tabBarButton null to avoid hidden tab redirect to index",
+    "description": "Commit registrado no repositório: \"fix(tabs): replace href null with tabBarButton null to avoid hidden tab redirect to index\". Arquivos modificados: mobile/src/app/(tabs)/_layout.tsx, mobile/src/app/(tabs)/financeiro.tsx, mobile/src/app/(tabs)/pacientes/index.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #eff0f302"
+    },
+    "after": {
+      "nova_versao": "replace href null with tabBarButton null to avoid hidden tab redirect to index"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/_layout.tsx",
+      "mobile/src/app/(tabs)/financeiro.tsx",
+      "mobile/src/app/(tabs)/pacientes/index.tsx"
+    ]
+  },
+  {
+    "id": "change-git-fe5a292d",
+    "date": "2026-11-02T00:43:08.000Z",
+    "commit": "fe5a292d",
+    "author": "Anderson",
+    "title": "Correção: Use router.navigate instead of push for tab navigation, enable backBehavior history, and add on-screen debug trace (tabs)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "use router.navigate instead of push for tab navigation, enable backBehavior history, and add on-screen debug trace",
+    "description": "Commit registrado no repositório: \"fix(tabs): use router.navigate instead of push for tab navigation, enable backBehavior history, and add on-screen debug trace\". Arquivos modificados: mobile/src/app/(tabs)/_layout.tsx, mobile/src/app/(tabs)/ajustes.tsx, mobile/src/app/(tabs)/clinica.tsx, mobile/src/app/(tabs)/evolucao.tsx, mobile/src/app/(tabs)/index.tsx (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #fe5a292d"
+    },
+    "after": {
+      "nova_versao": "use router.navigate instead of push for tab navigation, enable backBehavior history, and add on-screen debug trace"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/_layout.tsx",
+      "mobile/src/app/(tabs)/ajustes.tsx",
+      "mobile/src/app/(tabs)/clinica.tsx",
+      "mobile/src/app/(tabs)/evolucao.tsx",
+      "mobile/src/app/(tabs)/index.tsx",
+      "mobile/src/components/MobileHeader.tsx"
+    ]
+  },
+  {
+    "id": "change-git-e5d38392",
+    "date": "2026-11-02T00:22:22.000Z",
+    "commit": "e5d38392",
+    "author": "Anderson",
+    "title": "Correção: Fix hub card routing by targeting nested tab paths and preventing default link jump (nav)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "fix hub card routing by targeting nested tab paths and preventing default link jump",
+    "description": "Commit registrado no repositório: \"fix(nav): fix hub card routing by targeting nested tab paths and preventing default link jump\". Arquivos modificados: mobile/src/app/(tabs)/clinica.tsx, mobile/src/app/(tabs)/evolucao.tsx, mobile/src/app/(tabs)/pacientes/index.tsx, public/psi/psi_ajustes_hub.html, public/psi/psi_clinica_hub.html (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #e5d38392"
+    },
+    "after": {
+      "nova_versao": "fix hub card routing by targeting nested tab paths and preventing default link jump"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/clinica.tsx",
+      "mobile/src/app/(tabs)/evolucao.tsx",
+      "mobile/src/app/(tabs)/pacientes/index.tsx",
+      "public/psi/psi_ajustes_hub.html",
+      "public/psi/psi_clinica_hub.html",
+      "public/psi/psi_evolucao_hub.html"
+    ]
+  },
+  {
+    "id": "change-git-d9114661",
+    "date": "2026-11-02T00:09:17.000Z",
+    "commit": "d9114661",
+    "author": "Anderson",
+    "title": "Interface: Make Gerenciar button pill-shaped (rounded-full) in dashboard (psi)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "make Gerenciar button pill-shaped (rounded-full) in dashboard",
+    "description": "Commit registrado no repositório: \"style(psi): make Gerenciar button pill-shaped (rounded-full) in dashboard\". Arquivos modificados: mobile/src/app/(tabs)/index.tsx, public/css/components/psi_dashboard_cards.css, public/css/components/psi_modern_dashboard.css.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #d9114661"
+    },
+    "after": {
+      "nova_versao": "make Gerenciar button pill-shaped (rounded-full) in dashboard"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/index.tsx",
+      "public/css/components/psi_dashboard_cards.css",
+      "public/css/components/psi_modern_dashboard.css"
+    ]
+  },
+  {
+    "id": "change-git-57d2562d",
+    "date": "2026-11-02T00:06:31.000Z",
+    "commit": "57d2562d",
+    "author": "Anderson",
+    "title": "Interface: Harmonize ajustes hub cards with clinica and evolucao hubs (mobile)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "harmonize ajustes hub cards with clinica and evolucao hubs",
+    "description": "Commit registrado no repositório: \"style(mobile): harmonize ajustes hub cards with clinica and evolucao hubs\". Arquivos modificados: mobile/src/app/(tabs)/ajustes.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #57d2562d"
+    },
+    "after": {
+      "nova_versao": "harmonize ajustes hub cards with clinica and evolucao hubs"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/ajustes.tsx"
+    ]
+  },
+  {
+    "id": "change-git-c1e898d5",
+    "date": "2026-11-02T00:02:36.000Z",
+    "commit": "c1e898d5",
+    "author": "Anderson",
+    "title": "Novo: Add lateral edge swipe gestures to go back (left-to-right) and advance forward (right-to-left) with visual pill indicators (mobile)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "add lateral edge swipe gestures to go back (left-to-right) and advance forward (right-to-left) with visual pill indicators",
+    "description": "Commit registrado no repositório: \"feat(mobile): add lateral edge swipe gestures to go back (left-to-right) and advance forward (right-to-left) with visual pill indicators\". Arquivos modificados: mobile/src/app/_layout.tsx, mobile/src/app/questionario.tsx, mobile/src/components/SwipeEdgeNavigator.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #c1e898d5"
+    },
+    "after": {
+      "nova_versao": "add lateral edge swipe gestures to go back (left-to-right) and advance forward (right-to-left) with visual pill indicators"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/_layout.tsx",
+      "mobile/src/app/questionario.tsx",
+      "mobile/src/components/SwipeEdgeNavigator.tsx"
+    ]
+  },
+  {
+    "id": "change-git-7510110c",
+    "date": "2026-11-01T18:59:20.000Z",
+    "commit": "7510110c",
+    "author": "Anderson",
+    "title": "Novo: Modern app screen transitions with native parallax push and modal sheets like Notion Airbnb WhatsApp (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "modern app screen transitions with native parallax push and modal sheets like Notion Airbnb WhatsApp",
+    "description": "Commit registrado no repositório: \"feat(mobile): modern app screen transitions with native parallax push and modal sheets like Notion Airbnb WhatsApp\". Arquivos modificados: mobile/src/app/(admin)/(crm)/_layout.tsx, mobile/src/app/(tabs)/pacientes/_layout.tsx, mobile/src/app/_layout.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #7510110c"
+    },
+    "after": {
+      "nova_versao": "modern app screen transitions with native parallax push and modal sheets like Notion Airbnb WhatsApp"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/(crm)/_layout.tsx",
+      "mobile/src/app/(tabs)/pacientes/_layout.tsx",
+      "mobile/src/app/_layout.tsx"
+    ]
+  },
+  {
+    "id": "change-git-34fb9181",
+    "date": "2026-11-01T18:52:05.000Z",
+    "commit": "34fb9181",
+    "author": "Anderson",
+    "title": "Interface: Align index page waves, colors and horizontal scroll indicator with web mobile",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "align index page waves, colors and horizontal scroll indicator with web mobile",
+    "description": "Commit registrado no repositório: \"style(mobile): align index page waves, colors and horizontal scroll indicator with web mobile\". Arquivos modificados: mobile/src/app/index.tsx, mobile/src/components/Footer.tsx, mobile/src/components/MouseScrollIndicator.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #34fb9181"
+    },
+    "after": {
+      "nova_versao": "align index page waves, colors and horizontal scroll indicator with web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/index.tsx",
+      "mobile/src/components/Footer.tsx",
+      "mobile/src/components/MouseScrollIndicator.tsx"
+    ]
+  },
+  {
+    "id": "change-git-4b13d686",
+    "date": "2026-11-01T18:33:33.000Z",
+    "commit": "4b13d686",
+    "author": "Anderson",
+    "title": "Correção: Adicionar pacote @expo/vector-icons para compatibilidade SDK 58 (mobile)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "adicionar pacote @expo/vector-icons para compatibilidade SDK 58",
+    "description": "Commit registrado no repositório: \"fix(mobile): adicionar pacote @expo/vector-icons para compatibilidade SDK 58\". Arquivos modificados: mobile/package-lock.json, mobile/package.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4b13d686"
+    },
+    "after": {
+      "nova_versao": "adicionar pacote @expo/vector-icons para compatibilidade SDK 58"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/package-lock.json",
+      "mobile/package.json"
+    ]
+  },
+  {
+    "id": "change-git-28c46736",
+    "date": "2026-11-01T15:51:15.000Z",
+    "commit": "28c46736",
+    "author": "Anderson",
+    "title": "Novo: Atualizar projeto para Expo SDK 58 compativel com iPhone (mobile)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "atualizar projeto para Expo SDK 58 compativel com iPhone",
+    "description": "Commit registrado no repositório: \"feat(mobile): atualizar projeto para Expo SDK 58 compativel com iPhone\". Arquivos modificados: mobile/package-lock.json, mobile/package.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #28c46736"
+    },
+    "after": {
+      "nova_versao": "atualizar projeto para Expo SDK 58 compativel com iPhone"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/package-lock.json",
+      "mobile/package.json"
+    ]
+  },
+  {
+    "id": "change-git-8d92123f",
+    "date": "2026-11-01T02:57:05.000Z",
+    "commit": "8d92123f",
+    "author": "Anderson",
+    "title": "Novo: Sincronizar 1:1 imagens oficiais, waves e scroll indicator da landing page (mobile)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "sincronizar 1:1 imagens oficiais, waves e scroll indicator da landing page",
+    "description": "Commit registrado no repositório: \"feat(mobile): sincronizar 1:1 imagens oficiais, waves e scroll indicator da landing page\". Arquivos modificados: mobile/assets/images/drawing1.png, mobile/assets/images/drawing2.png, mobile/assets/images/elo.png, mobile/assets/images/espaco_seguro.jpg, mobile/assets/images/identidade.jpg (+8 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8d92123f"
+    },
+    "after": {
+      "nova_versao": "sincronizar 1:1 imagens oficiais, waves e scroll indicator da landing page"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/assets/images/drawing1.png",
+      "mobile/assets/images/drawing2.png",
+      "mobile/assets/images/elo.png",
+      "mobile/assets/images/espaco_seguro.jpg",
+      "mobile/assets/images/identidade.jpg",
+      "mobile/assets/images/passo_1.png",
+      "mobile/assets/images/passo_2.png",
+      "mobile/assets/images/passo_3.png",
+      "mobile/assets/images/rodape.png",
+      "mobile/assets/images/seguranca_verificada.jpg",
+      "mobile/assets/images/sobre_psis.png",
+      "mobile/src/app/index.tsx",
+      "mobile/src/components/MouseScrollIndicator.tsx"
+    ]
+  },
+  {
+    "id": "change-git-632bc19e",
+    "date": "2026-11-01T02:48:26.000Z",
+    "commit": "632bc19e",
+    "author": "Anderson",
+    "title": "Novo: Alinhar 1:1 dashboard do psicologo com versao web mobile",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "alinhar 1:1 dashboard do psicologo com versao web mobile",
+    "description": "Commit registrado no repositório: \"feat(mobile): alinhar 1:1 dashboard do psicologo com versao web mobile\". Arquivos modificados: mobile/src/app/(tabs)/_layout.tsx, mobile/src/app/(tabs)/index.tsx, mobile/src/components/MobileHeader.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #632bc19e"
+    },
+    "after": {
+      "nova_versao": "alinhar 1:1 dashboard do psicologo com versao web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/_layout.tsx",
+      "mobile/src/app/(tabs)/index.tsx",
+      "mobile/src/components/MobileHeader.tsx"
+    ]
+  },
+  {
+    "id": "change-git-76315bcf",
+    "date": "2026-11-01T02:33:20.000Z",
+    "commit": "76315bcf",
+    "author": "Anderson",
+    "title": "Novo: Sincronizar landing page 1:1 com web mobile e conectar avaliacoes ao banco online",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar landing page 1:1 com web mobile e conectar avaliacoes ao banco online",
+    "description": "Commit registrado no repositório: \"feat(mobile): sincronizar landing page 1:1 com web mobile e conectar avaliacoes ao banco online\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, backend/routes/publicRoutes.js, mobile/assets/images/psicologos_yelo.png, mobile/src/app/index.tsx (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #76315bcf"
+    },
+    "after": {
+      "nova_versao": "sincronizar landing page 1:1 com web mobile e conectar avaliacoes ao banco online"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "backend/routes/publicRoutes.js",
+      "mobile/assets/images/psicologos_yelo.png",
+      "mobile/src/app/index.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-c9784cce",
     "date": "2026-11-01T01:57:32.000Z",
     "commit": "c9784cce",

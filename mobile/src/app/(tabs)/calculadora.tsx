@@ -1,5 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Switch } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Switch,
+  Animated,
+  Keyboard,
+  TouchableWithoutFeedback,
+  Easing,
+} from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
 import NativeSelectMenu from '../../components/NativeSelectMenu';
 
@@ -62,6 +75,8 @@ const InputCurrency = ({ label, value, onChangeText, subtitle = "" }: any) => (
       <TextInput 
         className="flex-1 font-sans font-bold text-[#333] text-[16px] px-4 py-3"
         keyboardType="numeric"
+        returnKeyType="done"
+        onSubmitEditing={Keyboard.dismiss}
         value={value}
         onChangeText={onChangeText}
       />
@@ -95,6 +110,47 @@ export default function CalculadoraScreen() {
 
   // Estado do Bottom Sheet Result
   const [resultExpanded, setResultExpanded] = useState(false);
+
+  // Animação sincronizada do Card Flutuante com o Teclado
+  const BOTTOM_RESTING = 90;
+  const bottomAnim = useRef(new Animated.Value(BOTTOM_RESTING)).current;
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const subShow = Keyboard.addListener(showEvent, (e) => {
+      setIsKeyboardVisible(true);
+      setResultExpanded(false); // Recolhe detalhes para manter o layout limpo ao digitar
+
+      const kbHeight = e.endCoordinates?.height || 336;
+      const targetBottom = Platform.OS === 'ios' ? kbHeight + 12 : 16;
+
+      Animated.timing(bottomAnim, {
+        toValue: targetBottom,
+        duration: Platform.OS === 'ios' ? (e.duration || 250) : 180,
+        easing: Easing.bezier(0.33, 1, 0.68, 1),
+        useNativeDriver: false,
+      }).start();
+    });
+
+    const subHide = Keyboard.addListener(hideEvent, (e) => {
+      setIsKeyboardVisible(false);
+
+      Animated.timing(bottomAnim, {
+        toValue: BOTTOM_RESTING,
+        duration: Platform.OS === 'ios' ? (e?.duration || 250) : 180,
+        easing: Easing.bezier(0.33, 1, 0.68, 1),
+        useNativeDriver: false,
+      }).start();
+    });
+
+    return () => {
+      subShow.remove();
+      subHide.remove();
+    };
+  }, [bottomAnim]);
 
   // Lógica de Cálculo exata à Web
   useEffect(() => {
@@ -149,11 +205,17 @@ export default function CalculadoraScreen() {
 
   return (
     <View className="flex-1 bg-[#f9fafb]">
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView 
+        className="flex-1" 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 95 : 0}
+      >
         <YeloScrollView 
           className="flex-1" 
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: resultExpanded ? 500 : 250 }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={{ paddingBottom: resultExpanded ? 520 : (isKeyboardVisible ? 160 : 250) }}
         >
           {/* HEADER */}
           <View className="mx-6 mt-6 mb-6 bg-[#1B4332] p-[22px] rounded-[16px] shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
@@ -279,32 +341,77 @@ export default function CalculadoraScreen() {
         </YeloScrollView>
       </KeyboardAvoidingView>
 
-      {/* RESULT CARD ABSOLUTO (STICKY) */}
-      <View className="absolute bottom-[90px] left-4 right-4 z-50">
+      {/* RESULT CARD ABSOLUTO (STICKY) - Desliza e permanece sempre visível acima do teclado */}
+      <Animated.View 
+        style={{
+          position: 'absolute',
+          bottom: bottomAnim,
+          left: 16,
+          right: 16,
+          zIndex: 50,
+        }}
+      >
         <TouchableOpacity 
           activeOpacity={0.9} 
-          onPress={() => setResultExpanded(!resultExpanded)}
+          onPress={() => {
+            if (isKeyboardVisible) {
+              Keyboard.dismiss();
+            } else {
+              setResultExpanded(!resultExpanded);
+            }
+          }}
           className="rounded-[24px] overflow-hidden shadow-[0_10px_30px_rgba(27,67,50,0.3)] bg-[#1B4332]"
         >
           <LinearGradient
             colors={['#1B4332', '#0d2e21']}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={{ padding: 25 }}
+            style={{ 
+              paddingVertical: isKeyboardVisible ? 14 : 20, 
+              paddingHorizontal: isKeyboardVisible ? 18 : 24 
+            }}
           >
             {/* Header Mobile - Sempre Visível */}
             <View className="flex-row justify-between items-center w-full">
-              <View>
-                <Text className="font-title text-[18px] text-white mb-1">Valor Ideal por Sessão</Text>
-                <Text className="font-sans text-[12px] text-white/70">Para atingir sua meta financeira</Text>
+              <View className="flex-1 mr-2">
+                <Text 
+                  className={`font-title text-white mb-0.5 ${isKeyboardVisible ? 'text-[15px]' : 'text-[18px]'}`}
+                  numberOfLines={1}
+                >
+                  Valor Ideal por Sessão
+                </Text>
+                <Text 
+                  className={`font-sans text-white/70 ${isKeyboardVisible ? 'text-[11px]' : 'text-[12px]'}`}
+                  numberOfLines={1}
+                >
+                  Para atingir sua meta financeira
+                </Text>
               </View>
+
               <View className="flex-row items-center">
-                <Text className="font-title text-[32px] text-[#FFEE8C] mr-2 tracking-tight">{formatCurrency(valorSessaoIdeal)}</Text>
-                <Feather name={resultExpanded ? "chevron-down" : "chevron-up"} size={24} color="white" />
+                <Text 
+                  className={`font-title text-[#FFEE8C] tracking-tight ${isKeyboardVisible ? 'text-[24px] mr-2' : 'text-[30px] mr-2'}`}
+                  numberOfLines={1}
+                >
+                  {formatCurrency(valorSessaoIdeal)}
+                </Text>
+
+                {isKeyboardVisible ? (
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => Keyboard.dismiss()}
+                    className="bg-[#FFEE8C] px-3 py-1.5 rounded-full flex-row items-center shadow-sm"
+                  >
+                    <Feather name="check" size={14} color="#1B4332" />
+                    <Text className="font-sans font-bold text-[#1B4332] text-[12px] ml-1">OK</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Feather name={resultExpanded ? "chevron-down" : "chevron-up"} size={24} color="white" />
+                )}
               </View>
             </View>
 
-            {/* Conteúdo Expandido */}
-            {resultExpanded && (
+            {/* Conteúdo Expandido (apenas quando teclado oculto) */}
+            {resultExpanded && !isKeyboardVisible && (
               <View className="mt-5 pt-5 border-t border-white/20">
                 <View className="bg-white/10 rounded-[16px] p-5 mb-5 border border-white/10">
                   <View className="flex-row justify-between mb-3"><Text className="font-sans text-white/90">Sessões p/ mês (75% ocup):</Text><Text className="font-sans font-bold text-white">{sessoesMes}</Text></View>
@@ -328,7 +435,7 @@ export default function CalculadoraScreen() {
             )}
           </LinearGradient>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
     </View>
   );
