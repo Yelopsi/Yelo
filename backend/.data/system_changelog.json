@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-1db4a1d1",
+    "date": "2026-11-03T01:30:01.000Z",
+    "commit": "1db4a1d1",
+    "author": "Anderson",
+    "title": "Correção: Elimina loop de requisições e congelamento nos indicadores causados por Toggle nativo do iOS (financeiro)",
+    "category": "Financeiro & Estornos",
+    "badgeColor": "#ef4444",
+    "status": "Em Produção",
+    "summary": "elimina loop de requisições e congelamento nos indicadores causados por Toggle nativo do iOS",
+    "description": "Commit registrado no repositório: \"fix(financeiro): elimina loop de requisições e congelamento nos indicadores causados por Toggle nativo do iOS\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/financeiro.tsx, mobile/src/components/NativeSelectMenu.ios.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1db4a1d1"
+    },
+    "after": {
+      "nova_versao": "elimina loop de requisições e congelamento nos indicadores causados por Toggle nativo do iOS"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/financeiro.tsx",
+      "mobile/src/components/NativeSelectMenu.ios.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-c7362241",
     "date": "2026-11-03T00:52:17.000Z",
     "commit": "c7362241",

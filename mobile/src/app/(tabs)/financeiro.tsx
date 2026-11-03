@@ -14,11 +14,11 @@ import {
   Keyboard,
   Share,
   StyleSheet,
+  ScrollView,
 } from 'react-native';
-import YeloScrollView from '../../components/YeloScrollView';
 import NativeSelectMenu from '../../components/NativeSelectMenu';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import api from '../../services/api';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -164,38 +164,37 @@ export default function FinanceiroScreen() {
     return PERIODO_OPTIONS.find((p) => p.value === periodo)?.label || 'Este Mês';
   }, [periodo]);
 
-  const isFetchingRef = useRef(false);
-
   // Carrega dados da API Yelo
   const loadFinancialData = useCallback(async (selectedPeriod: string, isPullRefresh = false) => {
-    if (isFetchingRef.current) return;
-    isFetchingRef.current = true;
+    console.log('[DEBUG_FINANCEIRO] Carregando dados para o período:', selectedPeriod, 'isPullRefresh:', isPullRefresh);
     if (!isPullRefresh) setLoading(true);
     try {
       const response = await api.get('/api/financials/dashboard', {
         params: { period: selectedPeriod },
       });
 
+      console.log('[DEBUG_FINANCEIRO] Sucesso na resposta do backend:', response.status);
       if (response.data) {
         setAppointments(response.data.appointments || []);
         setExpenses(response.data.expenses || []);
       }
     } catch (err: any) {
-      console.warn('Erro ao carregar dados financeiros:', err?.response?.data || err.message);
-      Alert.alert(
-        'Erro ao carregar',
-        'Não foi possível atualizar o financeiro. Verifique sua conexão.'
-      );
+      console.warn('[DEBUG_FINANCEIRO] Erro ao carregar dados financeiros:', err?.response?.data || err.message);
+      setAppointments((prev) => prev || []);
+      setExpenses((prev) => prev || []);
     } finally {
+      console.log('[DEBUG_FINANCEIRO] Concluindo loading');
       setLoading(false);
       setRefreshing(false);
-      isFetchingRef.current = false;
     }
   }, []);
 
-  useEffect(() => {
-    loadFinancialData(periodo);
-  }, [periodo, loadFinancialData]);
+  useFocusEffect(
+    useCallback(() => {
+      console.log('[DEBUG_FINANCEIRO] Tela Financeiro em foco, disparando carregamento...');
+      loadFinancialData(periodo);
+    }, [periodo, loadFinancialData])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -443,7 +442,7 @@ export default function FinanceiroScreen() {
 
   return (
     <View className="flex-1 bg-[#f9fafb]">
-      <YeloScrollView
+      <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
@@ -529,6 +528,7 @@ export default function FinanceiroScreen() {
               <Text className="font-sans font-semibold text-[#4b5563] text-[14px]">Período:</Text>
             </View>
             <NativeSelectMenu
+              title="Filtrar por Período"
               options={PERIODO_OPTIONS}
               selectedValue={periodo}
               onSelect={(val) => setPeriodo(val)}
@@ -750,7 +750,7 @@ export default function FinanceiroScreen() {
             </View>
           )}
         </View>
-      </YeloScrollView>
+      </ScrollView>
 
       {/* ============================================================ */}
       {/* MODAL: LANÇAR DESPESA (BOTTOM SHEET YELO) */}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Pressable,
   Alert,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -200,6 +202,8 @@ export default function ManualConversaoScreen() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
 
+  const scrollViewRef = useRef<any>(null);
+
   const currentScenario =
     SCENARIOS_DATA.find((s) => s.id === selectedScenarioId) || SCENARIOS_DATA[0];
 
@@ -246,13 +250,20 @@ export default function ManualConversaoScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#f9fafb]">
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: 110 }}
-      >
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 95 : 0}
+      style={{ flex: 1 }}
+    >
+      <View className="flex-1 bg-[#f9fafb]">
+        <ScrollView
+          ref={scrollViewRef}
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={{ paddingBottom: activeTab === 'copilot' ? 380 : 120 }}
+        >
         {/* TOP NAVIGATION: BOTÃO VOLTAR */}
         <View className="mx-5 mt-5 mb-3 flex-row items-center">
           <TouchableOpacity
@@ -710,6 +721,11 @@ export default function ManualConversaoScreen() {
                 textAlignVertical="top"
                 value={aiPrompt}
                 onChangeText={setAiPrompt}
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 250);
+                }}
                 placeholder="Ex: Um paciente chamado João entrou em contato, perguntou sobre TCC para ansiedade, mas achou a sessão de R$ 200 cara porque está desempregado. Como posso responder acolhendo a situação dele, mas mantendo meu valor?"
                 placeholderTextColor="#94a3b8"
                 className="bg-[#f8fafc] border border-[#e2e8f0] rounded-[16px] p-4 font-sans text-[#334155] text-[14.5px] leading-relaxed mb-4 min-h-[130px]"
@@ -865,6 +881,7 @@ export default function ManualConversaoScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
