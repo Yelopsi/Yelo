@@ -14,6 +14,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -42,11 +43,104 @@ interface Post {
   slug?: string;
 }
 
+const EDITOR_HTML = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1f2937;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  #editor {
+    min-height: 140px;
+    padding: 10px 12px;
+    outline: none;
+    border: none;
+    word-break: break-word;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  #editor:empty:before {
+    content: "Comece a escrever seu post aqui...";
+    color: #9ca3af;
+    pointer-events: none;
+    display: block;
+  }
+  h2 { font-size: 1.25em; margin: 0.4em 0 0.2em 0; color: #1B4332; font-weight: bold; }
+  h3 { font-size: 1.1em; margin: 0.3em 0 0.2em 0; color: #1B4332; font-weight: 600; }
+  p { margin: 0 0 0.5em 0; }
+  ul, ol { margin: 0.3em 0 0.5em 1.2em; padding: 0; }
+  li { margin-bottom: 0.2em; }
+  b, strong { font-weight: 700; color: #111827; }
+  i, em { font-style: italic; }
+  u { text-decoration: underline; }
+  s, strike { text-decoration: line-through; }
+  a { color: #166534; text-decoration: underline; }
+</style>
+</head>
+<body>
+  <div id="editor" contenteditable="true" spellcheck="true"></div>
+  <script>
+    const editor = document.getElementById('editor');
+    
+    editor.addEventListener('input', function() {
+      const html = editor.innerHTML;
+      const text = editor.innerText.trim();
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'contentChange', html: html, text: text }));
+    });
+
+    function formatDoc(cmd, value) {
+      if (cmd === 'h2') {
+        document.execCommand('formatBlock', false, '<h2>');
+      } else if (cmd === 'h3') {
+        document.execCommand('formatBlock', false, '<h3>');
+      } else if (cmd === 'p') {
+        document.execCommand('formatBlock', false, '<p>');
+      } else if (cmd === 'bold') {
+        document.execCommand('bold', false, null);
+      } else if (cmd === 'italic') {
+        document.execCommand('italic', false, null);
+      } else if (cmd === 'underline') {
+        document.execCommand('underline', false, null);
+      } else if (cmd === 'strike') {
+        document.execCommand('strikeThrough', false, null);
+      } else if (cmd === 'number') {
+        document.execCommand('insertOrderedList', false, null);
+      } else if (cmd === 'bullet') {
+        document.execCommand('insertUnorderedList', false, null);
+      } else if (cmd === 'clean') {
+        document.execCommand('removeFormat', false, null);
+        document.execCommand('formatBlock', false, '<p>');
+      } else if (cmd === 'link') {
+        const url = prompt('Digite a URL do link:', 'https://');
+        if (url) document.execCommand('createLink', false, url);
+      } else {
+        document.execCommand(cmd, false, value || null);
+      }
+      editor.focus();
+    }
+
+    function setEditorHtml(html) {
+      editor.innerHTML = html || '';
+    }
+  </script>
+</body>
+</html>
+`;
+
 export default function BlogScreen() {
   const router = useRouter();
   const formScrollRef = useRef<any>(null);
-  const contentInputRef = useRef<any>(null);
-  const selectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
+  const webViewRef = useRef<any>(null);
 
   // Estados da Listagem
   const [posts, setPosts] = useState<Post[]>([]);
@@ -68,7 +162,7 @@ export default function BlogScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
 
-  // Estados de Formatação do Conteúdo & Seleção
+  // Estados de Formatação do Conteúdo
   const [currentHeader, setCurrentHeader] = useState<'Normal' | 'Título 2' | 'Título 3'>('Normal');
   const [showHeaderOptions, setShowHeaderOptions] = useState(false);
 
@@ -106,76 +200,10 @@ export default function BlogScreen() {
     }
   };
 
-  // Aplicação instantânea de formatação de texto (sem perder seleção)
-  const applyFormat = (format: string) => {
-    let { start, end } = selectionRef.current;
-    if (start > end) {
-      const tmp = start;
-      start = end;
-      end = tmp;
-    }
-    const hasSelection = start !== end;
-    const selectedText = hasSelection ? content.substring(start, end) : '';
-    const before = content.substring(0, start);
-    const after = content.substring(end);
-
-    let replacement = '';
-    switch (format) {
-      case 'bold':
-        replacement = hasSelection ? `<b>${selectedText}</b>` : '<b>negrito</b>';
-        break;
-      case 'italic':
-        replacement = hasSelection ? `<i>${selectedText}</i>` : '<i>itálico</i>';
-        break;
-      case 'underline':
-        replacement = hasSelection ? `<u>${selectedText}</u>` : '<u>sublinhado</u>';
-        break;
-      case 'strike':
-        replacement = hasSelection ? `<s>${selectedText}</s>` : '<s>tachado</s>';
-        break;
-      case 'h2':
-        replacement = hasSelection ? `\n<h2>${selectedText}</h2>\n` : '\n<h2>Título</h2>\n';
-        break;
-      case 'h3':
-        replacement = hasSelection ? `\n<h3>${selectedText}</h3>\n` : '\n<h3>Subtítulo</h3>\n';
-        break;
-      case 'bullet':
-        if (hasSelection) {
-          const lines = selectedText.split('\n').filter(l => l.trim().length > 0);
-          replacement = `\n<ul>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ul>\n`;
-        } else {
-          replacement = '\n<ul>\n  <li>Item</li>\n</ul>\n';
-        }
-        break;
-      case 'number':
-        if (hasSelection) {
-          const lines = selectedText.split('\n').filter(l => l.trim().length > 0);
-          replacement = `\n<ol>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ol>\n`;
-        } else {
-          replacement = '\n<ol>\n  <li>Item 1</li>\n</ol>\n';
-        }
-        break;
-      case 'link':
-        replacement = hasSelection
-          ? `<a href="https://">${selectedText}</a>`
-          : '<a href="https://exemplo.com">link</a>';
-        break;
-      case 'clean':
-        if (hasSelection) {
-          replacement = selectedText.replace(/<[^>]+>/g, '');
-        } else {
-          setContent(content.replace(/<[^>]+>/g, ''));
-          return;
-        }
-        break;
-      default:
-        return;
-    }
-
-    const updatedContent = `${before}${replacement}${after}`;
-    setContent(updatedContent);
-    const newPos = start + replacement.length;
-    selectionRef.current = { start: newPos, end: newPos };
+  // Aplicação instantânea de formatação de texto WYSIWYG
+  const execFormat = (cmd: string, val: string | null = null) => {
+    const valArg = val ? `'${val}'` : 'null';
+    webViewRef.current?.injectJavaScript(`formatDoc('${cmd}', ${valArg}); true;`);
   };
 
   // Carregar sugestões de temas da plataforma
@@ -254,8 +282,10 @@ export default function BlogScreen() {
     setExistingImageUrl(null);
     setShowHeaderOptions(false);
     setCurrentHeader('Normal');
-    selectionRef.current = { start: 0, end: 0 };
     setModalVisible(true);
+    setTimeout(() => {
+      webViewRef.current?.injectJavaScript(`setEditorHtml(''); true;`);
+    }, 150);
   };
 
   // Abrir Modal para Edição
@@ -268,8 +298,10 @@ export default function BlogScreen() {
     setExistingImageUrl(post.imagem_url || null);
     setShowHeaderOptions(false);
     setCurrentHeader('Normal');
-    selectionRef.current = { start: 0, end: 0 };
     setModalVisible(true);
+    setTimeout(() => {
+      webViewRef.current?.injectJavaScript(`setEditorHtml(${JSON.stringify(post.conteudo || '')}); true;`);
+    }, 150);
   };
 
   // Selecionar imagem da galeria
@@ -319,7 +351,10 @@ export default function BlogScreen() {
 
       if (res.data) {
         if (res.data.titulo) setTitle(res.data.titulo);
-        if (res.data.conteudo) setContent(res.data.conteudo);
+        if (res.data.conteudo) {
+          setContent(res.data.conteudo);
+          webViewRef.current?.injectJavaScript(`setEditorHtml(${JSON.stringify(res.data.conteudo)}); true;`);
+        }
         Alert.alert('Sucesso ✨', 'Post revisado com sucesso pela Inteligência Artificial!');
       }
     } catch (e: any) {
@@ -335,7 +370,8 @@ export default function BlogScreen() {
       Alert.alert('Aviso', 'Por favor, informe o título do post.');
       return;
     }
-    if (!content.trim()) {
+    const plain = stripHtml(content);
+    if (!plain) {
       Alert.alert('Aviso', 'Por favor, escreva o conteúdo do post.');
       return;
     }
@@ -649,7 +685,7 @@ export default function BlogScreen() {
               ref={formScrollRef}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 }}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 }}
             >
               {/* Campo: Título do Post */}
               <View style={styles.formGroup}>
@@ -712,13 +748,82 @@ export default function BlogScreen() {
                 )}
               </View>
 
-              {/* Campo: Conteúdo com Toolbar de Formatação Robusta */}
+              {/* Campo: Conteúdo com Editor WYSIWYG e Toolbar na Base */}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>CONTEÚDO *</Text>
 
-                {/* Caixa Unificada do Editor */}
+                {/* Caixa Unificada do Editor WYSIWYG */}
                 <View style={styles.editorBoxContainer}>
-                  {/* Barra de Ferramentas de Formatação (Sem ScrollView para garantir toque imediato) */}
+                  {/* Dropdown Menu Flutuante para Seleção de Títulos */}
+                  {showHeaderOptions && (
+                    <View style={styles.headerDropdownMenu}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCurrentHeader('Normal');
+                          setShowHeaderOptions(false);
+                          execFormat('p');
+                        }}
+                        style={styles.headerDropdownItem}
+                      >
+                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Normal' && styles.headerDropdownItemActive]}>
+                          Normal
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCurrentHeader('Título 2');
+                          setShowHeaderOptions(false);
+                          execFormat('h2');
+                        }}
+                        style={styles.headerDropdownItem}
+                      >
+                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 2' && styles.headerDropdownItemActive, { fontSize: 14, fontWeight: 'bold' }]}>
+                          Título 2 (H2)
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCurrentHeader('Título 3');
+                          setShowHeaderOptions(false);
+                          execFormat('h3');
+                        }}
+                        style={styles.headerDropdownItem}
+                      >
+                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 3' && styles.headerDropdownItemActive, { fontSize: 13, fontWeight: '600' }]}>
+                          Título 3 (H3)
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* Área de Digitação WYSIWYG com Suporte Nativo ao Menu Format do iOS */}
+                  <View style={{ height: 160, backgroundColor: '#ffffff' }}>
+                    <WebView
+                      ref={webViewRef}
+                      originWhitelist={['*']}
+                      source={{ html: EDITOR_HTML }}
+                      onMessage={(event: any) => {
+                        try {
+                          const data = JSON.parse(event.nativeEvent.data);
+                          if (data.type === 'contentChange') {
+                            setContent(data.html);
+                          }
+                        } catch (e) {}
+                      }}
+                      onLoadEnd={() => {
+                        if (content) {
+                          webViewRef.current?.injectJavaScript(`setEditorHtml(${JSON.stringify(content)}); true;`);
+                        }
+                      }}
+                      style={{ backgroundColor: 'transparent' }}
+                      scrollEnabled={true}
+                      nestedScrollEnabled={true}
+                      hideKeyboardAccessoryView={false}
+                      keyboardDisplayRequiresUserAction={false}
+                    />
+                  </View>
+
+                  {/* Barra de Ferramentas de Formatação Posicionada na Base (Não colide com menu do iOS) */}
                   <View style={styles.editorToolbar}>
                     {/* Seletor Normal / Título */}
                     <TouchableOpacity
@@ -734,7 +839,7 @@ export default function BlogScreen() {
 
                     {/* B (Negrito) */}
                     <TouchableOpacity
-                      onPress={() => applyFormat('bold')}
+                      onPress={() => execFormat('bold')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -743,7 +848,7 @@ export default function BlogScreen() {
 
                     {/* I (Itálico) */}
                     <TouchableOpacity
-                      onPress={() => applyFormat('italic')}
+                      onPress={() => execFormat('italic')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -752,7 +857,7 @@ export default function BlogScreen() {
 
                     {/* U (Sublinhado) */}
                     <TouchableOpacity
-                      onPress={() => applyFormat('underline')}
+                      onPress={() => execFormat('underline')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -761,7 +866,7 @@ export default function BlogScreen() {
 
                     {/* S (Tachado) */}
                     <TouchableOpacity
-                      onPress={() => applyFormat('strike')}
+                      onPress={() => execFormat('strike')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -772,7 +877,7 @@ export default function BlogScreen() {
 
                     {/* Lista Numerada 1. */}
                     <TouchableOpacity
-                      onPress={() => applyFormat('number')}
+                      onPress={() => execFormat('number')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -784,7 +889,7 @@ export default function BlogScreen() {
 
                     {/* Lista Marcadores • */}
                     <TouchableOpacity
-                      onPress={() => applyFormat('bullet')}
+                      onPress={() => execFormat('bullet')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -795,7 +900,7 @@ export default function BlogScreen() {
 
                     {/* Link */}
                     <TouchableOpacity
-                      onPress={() => applyFormat('link')}
+                      onPress={() => execFormat('link')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -804,7 +909,7 @@ export default function BlogScreen() {
 
                     {/* Limpar Formatação Tx */}
                     <TouchableOpacity
-                      onPress={() => applyFormat('clean')}
+                      onPress={() => execFormat('clean')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -814,63 +919,6 @@ export default function BlogScreen() {
                       </View>
                     </TouchableOpacity>
                   </View>
-
-                  {/* Dropdown Menu Flutuante para Seleção de Títulos */}
-                  {showHeaderOptions && (
-                    <View style={styles.headerDropdownMenu}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setCurrentHeader('Normal');
-                          setShowHeaderOptions(false);
-                        }}
-                        style={styles.headerDropdownItem}
-                      >
-                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Normal' && styles.headerDropdownItemActive]}>
-                          Normal
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setCurrentHeader('Título 2');
-                          setShowHeaderOptions(false);
-                          applyFormat('h2');
-                        }}
-                        style={styles.headerDropdownItem}
-                      >
-                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 2' && styles.headerDropdownItemActive, { fontSize: 14, fontWeight: 'bold' }]}>
-                          Título 2 (H2)
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setCurrentHeader('Título 3');
-                          setShowHeaderOptions(false);
-                          applyFormat('h3');
-                        }}
-                        style={styles.headerDropdownItem}
-                      >
-                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 3' && styles.headerDropdownItemActive, { fontSize: 13, fontWeight: '600' }]}>
-                          Título 3 (H3)
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-
-                  {/* Área de Digitação do Conteúdo */}
-                  <TextInput
-                    ref={contentInputRef}
-                    multiline
-                    placeholder="Comece a escrever seu post aqui..."
-                    placeholderTextColor="#9ca3af"
-                    value={content}
-                    onChangeText={setContent}
-                    onSelectionChange={(e) => {
-                      const sel = e.nativeEvent.selection;
-                      selectionRef.current = sel;
-                    }}
-                    textAlignVertical="top"
-                    style={styles.editorTextInput}
-                  />
                 </View>
               </View>
 
@@ -1465,7 +1513,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
 
-  // EDITOR COM TOOLBAR NATIVO
+  // EDITOR WYSIWYG
   editorBoxContainer: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
@@ -1478,8 +1526,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#f9fafb',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
     paddingHorizontal: 8,
     paddingVertical: 6,
     minHeight: 40,
@@ -1553,22 +1601,13 @@ const styles = StyleSheet.create({
     color: '#166534',
     fontWeight: 'bold',
   },
-  editorTextInput: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#1f2937',
-    minHeight: 130,
-    lineHeight: 21,
-  },
 
   // RODAPÉ: LINHA ÚNICA SEM QUEBRA
   modalFooterSingleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 12,
     gap: 8,
   },
   btnIaOptimize: {
