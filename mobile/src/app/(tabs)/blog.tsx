@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   Modal,
   TextInput,
-  KeyboardAvoidingView,
   Platform,
   Alert,
   ActivityIndicator,
@@ -13,6 +12,7 @@ import {
   Image,
   StyleSheet,
   ScrollView,
+  Keyboard,
 } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
@@ -44,6 +44,7 @@ interface Post {
 
 export default function BlogScreen() {
   const router = useRouter();
+  const formScrollRef = useRef<any>(null);
 
   // Estados da Listagem
   const [posts, setPosts] = useState<Post[]>([]);
@@ -65,8 +66,35 @@ export default function BlogScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
 
+  // Estados de Formatação do Conteúdo & Seleção
+  const [selection, setSelection] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
+  const [currentHeader, setCurrentHeader] = useState<'Normal' | 'Título 2' | 'Título 3'>('Normal');
+  const [showHeaderOptions, setShowHeaderOptions] = useState(false);
+
+  // Altura dinâmica do teclado para evitar espaços vazios e botões cobertos
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
   // Estado do Modal de Preview / Visualização
   const [previewPost, setPreviewPost] = useState<Post | null>(null);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      const h = e.endCoordinates?.height || 0;
+      setKeyboardHeight(h);
+    });
+
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Helper para limpar HTML e manter quebras de linha
   const stripHtml = (html?: string) => {
@@ -97,6 +125,78 @@ export default function BlogScreen() {
     } catch {
       return dateStr;
     }
+  };
+
+  // Aplicação de formatação de texto (estilo editor web)
+  const applyFormat = (format: string) => {
+    let { start, end } = selection;
+    if (start > end) {
+      const tmp = start;
+      start = end;
+      end = tmp;
+    }
+    const hasSelection = start !== end;
+    const selectedText = hasSelection ? content.substring(start, end) : '';
+    const before = content.substring(0, start);
+    const after = content.substring(end);
+
+    let replacement = '';
+    switch (format) {
+      case 'bold':
+        replacement = hasSelection ? `<strong>${selectedText}</strong>` : '<strong>texto em negrito</strong>';
+        break;
+      case 'italic':
+        replacement = hasSelection ? `<em>${selectedText}</em>` : '<em>texto em itálico</em>';
+        break;
+      case 'underline':
+        replacement = hasSelection ? `<u>${selectedText}</u>` : '<u>texto sublinhado</u>';
+        break;
+      case 'strike':
+        replacement = hasSelection ? `<s>${selectedText}</s>` : '<s>texto tachado</s>';
+        break;
+      case 'h2':
+        replacement = hasSelection ? `<h2>${selectedText}</h2>` : '<h2>Subtítulo</h2>';
+        break;
+      case 'h3':
+        replacement = hasSelection ? `<h3>${selectedText}</h3>` : '<h3>Tópico</h3>';
+        break;
+      case 'bullet':
+        if (hasSelection) {
+          const lines = selectedText.split('\n').filter(l => l.trim().length > 0);
+          replacement = `<ul>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ul>`;
+        } else {
+          replacement = `<ul>\n  <li>Item da lista</li>\n</ul>`;
+        }
+        break;
+      case 'number':
+        if (hasSelection) {
+          const lines = selectedText.split('\n').filter(l => l.trim().length > 0);
+          replacement = `<ol>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ol>`;
+        } else {
+          replacement = `<ol>\n  <li>Item 1</li>\n</ol>`;
+        }
+        break;
+      case 'link':
+        replacement = hasSelection
+          ? `<a href="https://">${selectedText}</a>`
+          : `<a href="https://exemplo.com">link</a>`;
+        break;
+      case 'clean':
+        if (hasSelection) {
+          replacement = selectedText.replace(/<[^>]+>/g, '');
+        } else {
+          setContent(content.replace(/<[^>]+>/g, ''));
+          return;
+        }
+        break;
+      default:
+        return;
+    }
+
+    const updatedContent = `${before}${replacement}${after}`;
+    setContent(updatedContent);
+    const newPos = start + replacement.length;
+    setSelection({ start: newPos, end: newPos });
   };
 
   // Carregar sugestões de temas da plataforma
@@ -173,6 +273,8 @@ export default function BlogScreen() {
     setImageUri(null);
     setImageName(null);
     setExistingImageUrl(null);
+    setShowHeaderOptions(false);
+    setCurrentHeader('Normal');
     setModalVisible(true);
   };
 
@@ -180,10 +282,12 @@ export default function BlogScreen() {
   const handleOpenEditPost = (post: Post) => {
     setEditingPostId(post.id);
     setTitle(post.titulo || '');
-    setContent(stripHtml(post.conteudo));
+    setContent(post.conteudo || '');
     setImageUri(null);
     setImageName(null);
     setExistingImageUrl(post.imagem_url || null);
+    setShowHeaderOptions(false);
+    setCurrentHeader('Normal');
     setModalVisible(true);
   };
 
@@ -234,7 +338,7 @@ export default function BlogScreen() {
 
       if (res.data) {
         if (res.data.titulo) setTitle(res.data.titulo);
-        if (res.data.conteudo) setContent(stripHtml(res.data.conteudo));
+        if (res.data.conteudo) setContent(res.data.conteudo);
         Alert.alert('Sucesso ✨', 'Post revisado com sucesso pela Inteligência Artificial!');
       }
     } catch (e: any) {
@@ -340,7 +444,6 @@ export default function BlogScreen() {
       >
         {/* HERO HEADER */}
         <View style={styles.heroCard}>
-          {/* Linha de navegação e Badge */}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <TouchableOpacity
               onPress={() => router.back()}
@@ -527,10 +630,7 @@ export default function BlogScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setModalVisible(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={{ flex: 1, backgroundColor: '#ffffff' }}
-        >
+        <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
           {/* Header do Modal */}
           <View style={styles.modalHeader}>
             <View style={styles.sheetDragHandle} />
@@ -544,7 +644,7 @@ export default function BlogScreen() {
                     {editingPostId ? 'Editar Post' : 'Novo Post'}
                   </Text>
                   <Text style={styles.modalHeaderSubtitle}>
-                    Compartilhe com naturalidade para mostrar sua visão clínica.
+                    Compartilhe com naturalidade para mostrar sua visão clínica e abordagem aos pacientes.
                   </Text>
                 </View>
               </View>
@@ -559,11 +659,17 @@ export default function BlogScreen() {
             </View>
           </View>
 
-          {/* Corpo do Formulário */}
+          {/* Formulário com ScrollView ajustado com precisão para o teclado */}
           <ScrollView
+            ref={formScrollRef}
             style={{ flex: 1 }}
-            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+            contentContainerStyle={{
+              paddingHorizontal: 20,
+              paddingTop: 16,
+              paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : 28,
+            }}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
           >
             {/* Campo: Título do Post */}
@@ -621,44 +727,198 @@ export default function BlogScreen() {
                 >
                   <Feather name="paperclip" size={16} color="#6b7280" />
                   <Text style={styles.imageUploadText}>
-                    Nenhuma imagem selecionada (toque para escolher)
+                    Nenhuma imagem selecionada...
                   </Text>
                 </TouchableOpacity>
               )}
             </View>
 
-            {/* Campo: Conteúdo */}
+            {/* Campo: Conteúdo com Toolbar de Formatação */}
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>CONTEÚDO *</Text>
-              <TextInput
-                multiline
-                numberOfLines={10}
-                placeholder="Comece a escrever seu post aqui..."
-                placeholderTextColor="#9ca3af"
-                value={content}
-                onChangeText={setContent}
-                textAlignVertical="top"
-                style={styles.inputTextArea}
-              />
+
+              {/* Caixa Unificada do Editor */}
+              <View style={styles.editorBoxContainer}>
+                {/* Barra de Ferramentas de Formatação (idêntica ao Quill Web) */}
+                <View style={styles.editorToolbar}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 4 }}
+                  >
+                    {/* Seletor Normal / Cabeçalhos */}
+                    <TouchableOpacity
+                      onPress={() => setShowHeaderOptions(prev => !prev)}
+                      style={styles.toolbarDropdown}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.toolbarDropdownText}>{currentHeader}</Text>
+                      <Feather name="chevron-down" size={12} color="#4b5563" style={{ marginLeft: 3 }} />
+                    </TouchableOpacity>
+
+                    <View style={styles.toolbarDivider} />
+
+                    {/* B (Negrito) */}
+                    <TouchableOpacity
+                      onPress={() => applyFormat('bold')}
+                      style={styles.toolbarBtn}
+                      activeOpacity={0.6}
+                    >
+                      <Text style={styles.toolbarBoldText}>B</Text>
+                    </TouchableOpacity>
+
+                    {/* I (Itálico) */}
+                    <TouchableOpacity
+                      onPress={() => applyFormat('italic')}
+                      style={styles.toolbarBtn}
+                      activeOpacity={0.6}
+                    >
+                      <Text style={styles.toolbarItalicText}>I</Text>
+                    </TouchableOpacity>
+
+                    {/* U (Sublinhado) */}
+                    <TouchableOpacity
+                      onPress={() => applyFormat('underline')}
+                      style={styles.toolbarBtn}
+                      activeOpacity={0.6}
+                    >
+                      <Text style={styles.toolbarUnderlineText}>U</Text>
+                    </TouchableOpacity>
+
+                    {/* S (Tachado) */}
+                    <TouchableOpacity
+                      onPress={() => applyFormat('strike')}
+                      style={styles.toolbarBtn}
+                      activeOpacity={0.6}
+                    >
+                      <Text style={styles.toolbarStrikeText}>S</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.toolbarDivider} />
+
+                    {/* Lista Numerada */}
+                    <TouchableOpacity
+                      onPress={() => applyFormat('number')}
+                      style={styles.toolbarBtn}
+                      activeOpacity={0.6}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 9, fontWeight: '700', color: '#374151', marginRight: 1 }}>1</Text>
+                        <Feather name="list" size={13} color="#374151" />
+                      </View>
+                    </TouchableOpacity>
+
+                    {/* Lista Marcadores */}
+                    <TouchableOpacity
+                      onPress={() => applyFormat('bullet')}
+                      style={styles.toolbarBtn}
+                      activeOpacity={0.6}
+                    >
+                      <Feather name="list" size={14} color="#374151" />
+                    </TouchableOpacity>
+
+                    <View style={styles.toolbarDivider} />
+
+                    {/* Link */}
+                    <TouchableOpacity
+                      onPress={() => applyFormat('link')}
+                      style={styles.toolbarBtn}
+                      activeOpacity={0.6}
+                    >
+                      <Feather name="link" size={13} color="#374151" />
+                    </TouchableOpacity>
+
+                    {/* Limpar Formatação (Tx) */}
+                    <TouchableOpacity
+                      onPress={() => applyFormat('clean')}
+                      style={styles.toolbarBtn}
+                      activeOpacity={0.6}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                        <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#374151' }}>T</Text>
+                        <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#6b7280' }}>x</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </ScrollView>
+                </View>
+
+                {/* Dropdown Menu Flutuante para Seleção de Títulos */}
+                {showHeaderOptions && (
+                  <View style={styles.headerDropdownMenu}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setCurrentHeader('Normal');
+                        setShowHeaderOptions(false);
+                      }}
+                      style={styles.headerDropdownItem}
+                    >
+                      <Text style={[styles.headerDropdownItemText, currentHeader === 'Normal' && styles.headerDropdownItemActive]}>
+                        Normal
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setCurrentHeader('Título 2');
+                        setShowHeaderOptions(false);
+                        applyFormat('h2');
+                      }}
+                      style={styles.headerDropdownItem}
+                    >
+                      <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 2' && styles.headerDropdownItemActive, { fontSize: 14, fontWeight: 'bold' }]}>
+                        Título (H2)
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setCurrentHeader('Título 3');
+                        setShowHeaderOptions(false);
+                        applyFormat('h3');
+                      }}
+                      style={styles.headerDropdownItem}
+                    >
+                      <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 3' && styles.headerDropdownItemActive, { fontSize: 13, fontWeight: '600' }]}>
+                        Subtítulo (H3)
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Área de Digitação do Conteúdo */}
+                <TextInput
+                  multiline
+                  placeholder="Comece a escrever seu post aqui..."
+                  placeholderTextColor="#9ca3af"
+                  value={content}
+                  onChangeText={setContent}
+                  onSelectionChange={(e) => setSelection(e.nativeEvent.selection)}
+                  textAlignVertical="top"
+                  style={styles.editorTextInput}
+                />
+              </View>
             </View>
 
-            {/* Rodapé de Ações: Otimizar com IA + Cancelar + Publicar */}
+            {/* Ações do Rodapé: Botão de IA acima + Botões Cancelar / Publicar à Direita */}
             <View style={styles.modalFooterActions}>
-              <TouchableOpacity
-                onPress={handleOptimizeAI}
-                disabled={isOptimizing}
-                style={styles.btnIaOptimize}
-                activeOpacity={0.8}
-              >
-                {isOptimizing ? (
-                  <ActivityIndicator size="small" color="#166534" />
-                ) : (
-                  <>
-                    <Text style={styles.btnIaOptimizeText}>✨ Revisar com IA</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+              {/* Botão IA alinhado à direita */}
+              <View style={{ alignItems: 'flex-end', marginBottom: 12 }}>
+                <TouchableOpacity
+                  onPress={handleOptimizeAI}
+                  disabled={isOptimizing}
+                  style={styles.btnIaOptimize}
+                  activeOpacity={0.8}
+                >
+                  {isOptimizing ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <ActivityIndicator size="small" color="#166534" />
+                      <Text style={styles.btnIaOptimizeText}>Revisando...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.btnIaOptimizeText}>✨ Revisar Ortografia (IA)</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
 
+              {/* Botões Cancelar e Publicar Post (Alinhados à direita) */}
               <View style={styles.modalFooterRightGroup}>
                 <TouchableOpacity
                   onPress={() => setModalVisible(false)}
@@ -685,7 +945,7 @@ export default function BlogScreen() {
               </View>
             </View>
           </ScrollView>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       {/* MODAL: PREVIEW / VISUALIZAÇÃO DO POST COMPLETO */}
@@ -1170,11 +1430,10 @@ const styles = StyleSheet.create({
   imageUploadPlaceholder: {
     backgroundColor: '#f9fafb',
     borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#d1d5db',
+    borderColor: '#e5e7eb',
     borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 13,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -1213,35 +1472,121 @@ const styles = StyleSheet.create({
   imageRemoveBtn: {
     padding: 8,
   },
-  inputTextArea: {
-    backgroundColor: '#f9fafb',
+
+  // EDITOR COM TOOLBAR
+  editorBoxContainer: {
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#d1d5db',
     borderRadius: 12,
+    overflow: 'hidden',
+  },
+  editorToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    paddingVertical: 6,
+    minHeight: 40,
+  },
+  toolbarDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginRight: 4,
+  },
+  toolbarDropdownText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  toolbarDivider: {
+    width: 1,
+    height: 18,
+    backgroundColor: '#d1d5db',
+    marginHorizontal: 5,
+  },
+  toolbarBtn: {
+    width: 32,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 6,
+    marginHorizontal: 1,
+  },
+  toolbarBoldText: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#374151',
+  },
+  toolbarItalicText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    fontStyle: 'italic',
+    color: '#374151',
+  },
+  toolbarUnderlineText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+    color: '#374151',
+  },
+  toolbarStrikeText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textDecorationLine: 'line-through',
+    color: '#374151',
+  },
+  headerDropdownMenu: {
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    paddingVertical: 4,
+  },
+  headerDropdownItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  headerDropdownItemText: {
+    fontSize: 13,
+    color: '#374151',
+  },
+  headerDropdownItemActive: {
+    color: '#166534',
+    fontWeight: 'bold',
+  },
+  editorTextInput: {
+    backgroundColor: '#ffffff',
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 14,
     color: '#1f2937',
-    minHeight: 160,
-    lineHeight: 21,
+    minHeight: 150,
+    lineHeight: 22,
   },
+
+  // RODAPÉ MODAL
   modalFooterActions: {
-    marginTop: 10,
-    gap: 12,
+    marginTop: 14,
   },
   btnIaOptimize: {
     backgroundColor: '#dcfce7',
     borderWidth: 1,
     borderColor: '#bbf7d0',
     borderRadius: 50,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignSelf: 'flex-end',
   },
   btnIaOptimizeText: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#166534',
   },
   modalFooterRightGroup: {
@@ -1249,28 +1594,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     gap: 10,
-    marginTop: 6,
   },
   btnCancelModal: {
-    paddingHorizontal: 18,
-    paddingVertical: 11,
+    paddingHorizontal: 22,
+    paddingVertical: 9,
     borderRadius: 50,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#1B4332',
   },
   btnCancelModalText: {
     fontSize: 13.5,
     fontWeight: '600',
-    color: '#4b5563',
+    color: '#1B4332',
   },
   btnSaveModal: {
     backgroundColor: '#1B4332',
-    paddingHorizontal: 22,
-    paddingVertical: 11,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
     borderRadius: 50,
     shadowColor: '#1B4332',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   btnSaveModalText: {
