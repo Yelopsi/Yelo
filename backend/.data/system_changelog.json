@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-5d3037ff",
+    "date": "2026-11-03T23:25:47.000Z",
+    "commit": "5d3037ff",
+    "author": "Anderson",
+    "title": "Correção: Restaurar barra de formatacao no topo do editor de post e melhorar responsividade do teclado (mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "restaurar barra de formatacao no topo do editor de post e melhorar responsividade do teclado",
+    "description": "Commit registrado no repositório: \"fix(mobile): restaurar barra de formatacao no topo do editor de post e melhorar responsividade do teclado\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/blog.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5d3037ff"
+    },
+    "after": {
+      "nova_versao": "restaurar barra de formatacao no topo do editor de post e melhorar responsividade do teclado"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/blog.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-0d4c0801",
     "date": "2026-11-03T23:11:42.000Z",
     "commit": "0d4c0801",
