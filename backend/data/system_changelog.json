@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-a14d3bc4",
+    "date": "2026-11-03T00:27:20.000Z",
+    "commit": "a14d3bc4",
+    "author": "Anderson",
+    "title": "Correção: Mantém card verde flutuante de honorários visível acima do teclado (calculadora)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "mantém card verde flutuante de honorários visível acima do teclado",
+    "description": "Commit registrado no repositório: \"fix(calculadora): mantém card verde flutuante de honorários visível acima do teclado\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/calculadora.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a14d3bc4"
+    },
+    "after": {
+      "nova_versao": "mantém card verde flutuante de honorários visível acima do teclado"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/calculadora.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-86363bc0",
     "date": "2026-11-03T00:18:48.000Z",
     "commit": "86363bc0",
