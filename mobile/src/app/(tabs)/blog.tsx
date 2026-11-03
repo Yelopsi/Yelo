@@ -13,8 +13,9 @@ import {
   StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
+  Keyboard,
+  Pressable,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
 import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -43,104 +44,11 @@ interface Post {
   slug?: string;
 }
 
-const EDITOR_HTML = `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: #1f2937;
-    font-size: 15px;
-    line-height: 1.5;
-  }
-  #editor {
-    min-height: 140px;
-    padding: 10px 12px;
-    outline: none;
-    border: none;
-    word-break: break-word;
-    -webkit-user-select: text;
-    user-select: text;
-  }
-  #editor:empty:before {
-    content: "Comece a escrever seu post aqui...";
-    color: #9ca3af;
-    pointer-events: none;
-    display: block;
-  }
-  h2 { font-size: 1.25em; margin: 0.4em 0 0.2em 0; color: #1B4332; font-weight: bold; }
-  h3 { font-size: 1.1em; margin: 0.3em 0 0.2em 0; color: #1B4332; font-weight: 600; }
-  p { margin: 0 0 0.5em 0; }
-  ul, ol { margin: 0.3em 0 0.5em 1.2em; padding: 0; }
-  li { margin-bottom: 0.2em; }
-  b, strong { font-weight: 700; color: #111827; }
-  i, em { font-style: italic; }
-  u { text-decoration: underline; }
-  s, strike { text-decoration: line-through; }
-  a { color: #166534; text-decoration: underline; }
-</style>
-</head>
-<body>
-  <div id="editor" contenteditable="true" spellcheck="true"></div>
-  <script>
-    const editor = document.getElementById('editor');
-    
-    editor.addEventListener('input', function() {
-      const html = editor.innerHTML;
-      const text = editor.innerText.trim();
-      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'contentChange', html: html, text: text }));
-    });
-
-    function formatDoc(cmd, value) {
-      if (cmd === 'h2') {
-        document.execCommand('formatBlock', false, '<h2>');
-      } else if (cmd === 'h3') {
-        document.execCommand('formatBlock', false, '<h3>');
-      } else if (cmd === 'p') {
-        document.execCommand('formatBlock', false, '<p>');
-      } else if (cmd === 'bold') {
-        document.execCommand('bold', false, null);
-      } else if (cmd === 'italic') {
-        document.execCommand('italic', false, null);
-      } else if (cmd === 'underline') {
-        document.execCommand('underline', false, null);
-      } else if (cmd === 'strike') {
-        document.execCommand('strikeThrough', false, null);
-      } else if (cmd === 'number') {
-        document.execCommand('insertOrderedList', false, null);
-      } else if (cmd === 'bullet') {
-        document.execCommand('insertUnorderedList', false, null);
-      } else if (cmd === 'clean') {
-        document.execCommand('removeFormat', false, null);
-        document.execCommand('formatBlock', false, '<p>');
-      } else if (cmd === 'link') {
-        const url = prompt('Digite a URL do link:', 'https://');
-        if (url) document.execCommand('createLink', false, url);
-      } else {
-        document.execCommand(cmd, false, value || null);
-      }
-      editor.focus();
-    }
-
-    function setEditorHtml(html) {
-      editor.innerHTML = html || '';
-    }
-  </script>
-</body>
-</html>
-`;
-
 export default function BlogScreen() {
   const router = useRouter();
   const formScrollRef = useRef<any>(null);
-  const webViewRef = useRef<any>(null);
+  const contentInputRef = useRef<any>(null);
+  const selectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
 
   // Estados da Listagem
   const [posts, setPosts] = useState<Post[]>([]);
@@ -168,6 +76,26 @@ export default function BlogScreen() {
 
   // Estado do Modal de Preview / Visualização
   const [previewPost, setPreviewPost] = useState<Post | null>(null);
+
+  // Monitoramento de visibilidade do teclado no modal
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const subShow = Keyboard.addListener(showEvent, () => {
+      setIsKeyboardVisible(true);
+    });
+    const subHide = Keyboard.addListener(hideEvent, () => {
+      setIsKeyboardVisible(false);
+    });
+
+    return () => {
+      subShow.remove();
+      subHide.remove();
+    };
+  }, []);
 
   // Helper para limpar HTML e manter quebras de linha
   const stripHtml = (html?: string) => {
@@ -200,10 +128,79 @@ export default function BlogScreen() {
     }
   };
 
-  // Aplicação instantânea de formatação de texto WYSIWYG
-  const execFormat = (cmd: string, val: string | null = null) => {
-    const valArg = val ? `'${val}'` : 'null';
-    webViewRef.current?.injectJavaScript(`formatDoc('${cmd}', ${valArg}); true;`);
+  // Aplicação instantânea de formatação de texto (sem perder seleção)
+  const applyFormat = (format: string) => {
+    let { start, end } = selectionRef.current;
+    if (start > end) {
+      const tmp = start;
+      start = end;
+      end = tmp;
+    }
+    const hasSelection = start !== end;
+    const selectedText = hasSelection ? content.substring(start, end) : '';
+    const before = content.substring(0, start);
+    const after = content.substring(end);
+
+    let replacement = '';
+    switch (format) {
+      case 'bold':
+        replacement = hasSelection ? `<b>${selectedText}</b>` : '<b>negrito</b>';
+        break;
+      case 'italic':
+        replacement = hasSelection ? `<i>${selectedText}</i>` : '<i>itálico</i>';
+        break;
+      case 'underline':
+        replacement = hasSelection ? `<u>${selectedText}</u>` : '<u>sublinhado</u>';
+        break;
+      case 'strike':
+        replacement = hasSelection ? `<s>${selectedText}</s>` : '<s>tachado</s>';
+        break;
+      case 'h2':
+        replacement = hasSelection ? `\n<h2>${selectedText}</h2>\n` : '\n<h2>Título</h2>\n';
+        break;
+      case 'h3':
+        replacement = hasSelection ? `\n<h3>${selectedText}</h3>\n` : '\n<h3>Subtítulo</h3>\n';
+        break;
+      case 'bullet':
+        if (hasSelection) {
+          const lines = selectedText.split('\n').filter(l => l.trim().length > 0);
+          replacement = `\n<ul>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ul>\n`;
+        } else {
+          replacement = '\n<ul>\n  <li>Item</li>\n</ul>\n';
+        }
+        break;
+      case 'number':
+        if (hasSelection) {
+          const lines = selectedText.split('\n').filter(l => l.trim().length > 0);
+          replacement = `\n<ol>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ol>\n`;
+        } else {
+          replacement = '\n<ol>\n  <li>Item 1</li>\n</ol>\n';
+        }
+        break;
+      case 'link':
+        replacement = hasSelection
+          ? `<a href="https://">${selectedText}</a>`
+          : '<a href="https://exemplo.com">link</a>';
+        break;
+      case 'clean':
+        if (hasSelection) {
+          replacement = selectedText.replace(/<[^>]+>/g, '');
+        } else {
+          setContent(content.replace(/<[^>]+>/g, ''));
+          return;
+        }
+        break;
+      default:
+        return;
+    }
+
+    const updatedContent = `${before}${replacement}${after}`;
+    setContent(updatedContent);
+    const newPos = start + replacement.length;
+    selectionRef.current = { start: newPos, end: newPos };
+    setTimeout(() => {
+      contentInputRef.current?.focus();
+    }, 50);
   };
 
   // Carregar sugestões de temas da plataforma
@@ -282,10 +279,8 @@ export default function BlogScreen() {
     setExistingImageUrl(null);
     setShowHeaderOptions(false);
     setCurrentHeader('Normal');
+    selectionRef.current = { start: 0, end: 0 };
     setModalVisible(true);
-    setTimeout(() => {
-      webViewRef.current?.injectJavaScript(`setEditorHtml(''); true;`);
-    }, 150);
   };
 
   // Abrir Modal para Edição
@@ -298,10 +293,8 @@ export default function BlogScreen() {
     setExistingImageUrl(post.imagem_url || null);
     setShowHeaderOptions(false);
     setCurrentHeader('Normal');
+    selectionRef.current = { start: 0, end: 0 };
     setModalVisible(true);
-    setTimeout(() => {
-      webViewRef.current?.injectJavaScript(`setEditorHtml(${JSON.stringify(post.conteudo || '')}); true;`);
-    }, 150);
   };
 
   // Selecionar imagem da galeria
@@ -351,10 +344,7 @@ export default function BlogScreen() {
 
       if (res.data) {
         if (res.data.titulo) setTitle(res.data.titulo);
-        if (res.data.conteudo) {
-          setContent(res.data.conteudo);
-          webViewRef.current?.injectJavaScript(`setEditorHtml(${JSON.stringify(res.data.conteudo)}); true;`);
-        }
+        if (res.data.conteudo) setContent(res.data.conteudo);
         Alert.alert('Sucesso ✨', 'Post revisado com sucesso pela Inteligência Artificial!');
       }
     } catch (e: any) {
@@ -651,6 +641,16 @@ export default function BlogScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.modalBackdrop}
         >
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => {
+              if (isKeyboardVisible) {
+                Keyboard.dismiss();
+              } else {
+                setModalVisible(false);
+              }
+            }}
+          />
           <View style={styles.bottomSheetCard}>
             {/* Header do Modal */}
             <View style={styles.modalHeader}>
@@ -680,12 +680,13 @@ export default function BlogScreen() {
               </View>
             </View>
 
-            {/* Scroll do Formulário com altura ajustada ao conteúdo */}
+            {/* Scroll do Formulário com altura responsiva */}
             <ScrollView
               ref={formScrollRef}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 }}
+              style={{ flexShrink: 1, maxHeight: isKeyboardVisible ? 240 : 420 }}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 12 }}
             >
               {/* Campo: Título do Post */}
               <View style={styles.formGroup}>
@@ -748,83 +749,14 @@ export default function BlogScreen() {
                 )}
               </View>
 
-              {/* Campo: Conteúdo com Editor WYSIWYG e Toolbar na Base */}
+              {/* Campo: Conteúdo com Barra de Formatação na PARTE SUPERIOR */}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>CONTEÚDO *</Text>
 
-                {/* Caixa Unificada do Editor WYSIWYG */}
+                {/* Caixa Unificada do Editor */}
                 <View style={styles.editorBoxContainer}>
-                  {/* Dropdown Menu Flutuante para Seleção de Títulos */}
-                  {showHeaderOptions && (
-                    <View style={styles.headerDropdownMenu}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setCurrentHeader('Normal');
-                          setShowHeaderOptions(false);
-                          execFormat('p');
-                        }}
-                        style={styles.headerDropdownItem}
-                      >
-                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Normal' && styles.headerDropdownItemActive]}>
-                          Normal
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setCurrentHeader('Título 2');
-                          setShowHeaderOptions(false);
-                          execFormat('h2');
-                        }}
-                        style={styles.headerDropdownItem}
-                      >
-                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 2' && styles.headerDropdownItemActive, { fontSize: 14, fontWeight: 'bold' }]}>
-                          Título 2 (H2)
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setCurrentHeader('Título 3');
-                          setShowHeaderOptions(false);
-                          execFormat('h3');
-                        }}
-                        style={styles.headerDropdownItem}
-                      >
-                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 3' && styles.headerDropdownItemActive, { fontSize: 13, fontWeight: '600' }]}>
-                          Título 3 (H3)
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-
-                  {/* Área de Digitação WYSIWYG com Suporte Nativo ao Menu Format do iOS */}
-                  <View style={{ height: 160, backgroundColor: '#ffffff' }}>
-                    <WebView
-                      ref={webViewRef}
-                      originWhitelist={['*']}
-                      source={{ html: EDITOR_HTML }}
-                      onMessage={(event: any) => {
-                        try {
-                          const data = JSON.parse(event.nativeEvent.data);
-                          if (data.type === 'contentChange') {
-                            setContent(data.html);
-                          }
-                        } catch (e) {}
-                      }}
-                      onLoadEnd={() => {
-                        if (content) {
-                          webViewRef.current?.injectJavaScript(`setEditorHtml(${JSON.stringify(content)}); true;`);
-                        }
-                      }}
-                      style={{ backgroundColor: 'transparent' }}
-                      scrollEnabled={true}
-                      nestedScrollEnabled={true}
-                      hideKeyboardAccessoryView={false}
-                      keyboardDisplayRequiresUserAction={false}
-                    />
-                  </View>
-
-                  {/* Barra de Ferramentas de Formatação Posicionada na Base (Não colide com menu do iOS) */}
-                  <View style={styles.editorToolbar}>
+                  {/* Barra de Ferramentas de Formatação (PARTE SUPERIOR) */}
+                  <View style={styles.editorToolbarTop}>
                     {/* Seletor Normal / Título */}
                     <TouchableOpacity
                       onPress={() => setShowHeaderOptions(prev => !prev)}
@@ -839,7 +771,7 @@ export default function BlogScreen() {
 
                     {/* B (Negrito) */}
                     <TouchableOpacity
-                      onPress={() => execFormat('bold')}
+                      onPress={() => applyFormat('bold')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -848,7 +780,7 @@ export default function BlogScreen() {
 
                     {/* I (Itálico) */}
                     <TouchableOpacity
-                      onPress={() => execFormat('italic')}
+                      onPress={() => applyFormat('italic')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -857,7 +789,7 @@ export default function BlogScreen() {
 
                     {/* U (Sublinhado) */}
                     <TouchableOpacity
-                      onPress={() => execFormat('underline')}
+                      onPress={() => applyFormat('underline')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -866,7 +798,7 @@ export default function BlogScreen() {
 
                     {/* S (Tachado) */}
                     <TouchableOpacity
-                      onPress={() => execFormat('strike')}
+                      onPress={() => applyFormat('strike')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -877,7 +809,7 @@ export default function BlogScreen() {
 
                     {/* Lista Numerada 1. */}
                     <TouchableOpacity
-                      onPress={() => execFormat('number')}
+                      onPress={() => applyFormat('number')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -889,7 +821,7 @@ export default function BlogScreen() {
 
                     {/* Lista Marcadores • */}
                     <TouchableOpacity
-                      onPress={() => execFormat('bullet')}
+                      onPress={() => applyFormat('bullet')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -900,7 +832,7 @@ export default function BlogScreen() {
 
                     {/* Link */}
                     <TouchableOpacity
-                      onPress={() => execFormat('link')}
+                      onPress={() => applyFormat('link')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -909,7 +841,7 @@ export default function BlogScreen() {
 
                     {/* Limpar Formatação Tx */}
                     <TouchableOpacity
-                      onPress={() => execFormat('clean')}
+                      onPress={() => applyFormat('clean')}
                       style={styles.toolbarBtn}
                       activeOpacity={0.6}
                     >
@@ -919,55 +851,123 @@ export default function BlogScreen() {
                       </View>
                     </TouchableOpacity>
                   </View>
-                </View>
-              </View>
 
-              {/* Ações do Rodapé: TODOS OS BOTÕES NA MESMA LINHA SEM QUEBRA */}
-              <View style={styles.modalFooterSingleRow}>
-                {/* Botão IA na Esquerda */}
-                <TouchableOpacity
-                  onPress={handleOptimizeAI}
-                  disabled={isOptimizing}
-                  style={styles.btnIaOptimize}
-                  activeOpacity={0.8}
-                >
-                  {isOptimizing ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <ActivityIndicator size="small" color="#166534" />
-                      <Text style={styles.btnIaOptimizeText}>Revisando...</Text>
+                  {/* Dropdown Menu Flutuante para Seleção de Títulos */}
+                  {showHeaderOptions && (
+                    <View style={styles.headerDropdownMenu}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCurrentHeader('Normal');
+                          setShowHeaderOptions(false);
+                          applyFormat('clean');
+                        }}
+                        style={styles.headerDropdownItem}
+                      >
+                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Normal' && styles.headerDropdownItemActive]}>
+                          Normal
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCurrentHeader('Título 2');
+                          setShowHeaderOptions(false);
+                          applyFormat('h2');
+                        }}
+                        style={styles.headerDropdownItem}
+                      >
+                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 2' && styles.headerDropdownItemActive, { fontSize: 14, fontWeight: 'bold' }]}>
+                          Título 2 (H2)
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setCurrentHeader('Título 3');
+                          setShowHeaderOptions(false);
+                          applyFormat('h3');
+                        }}
+                        style={styles.headerDropdownItem}
+                      >
+                        <Text style={[styles.headerDropdownItemText, currentHeader === 'Título 3' && styles.headerDropdownItemActive, { fontSize: 13, fontWeight: '600' }]}>
+                          Título 3 (H3)
+                        </Text>
+                      </TouchableOpacity>
                     </View>
-                  ) : (
-                    <Text style={styles.btnIaOptimizeText}>✨ Revisar IA</Text>
                   )}
-                </TouchableOpacity>
 
-                {/* Botões Cancelar e Publicar na Direita */}
-                <View style={styles.modalRightButtonsRow}>
-                  <TouchableOpacity
-                    onPress={() => setModalVisible(false)}
-                    style={styles.btnCancelModal}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={styles.btnCancelModalText}>Cancelar</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={handleSavePost}
-                    disabled={isSubmitting}
-                    style={styles.btnSaveModal}
-                    activeOpacity={0.85}
-                  >
-                    {isSubmitting ? (
-                      <ActivityIndicator size="small" color="#ffffff" />
-                    ) : (
-                      <Text style={styles.btnSaveModalText}>
-                        {editingPostId ? 'Salvar' : 'Publicar Post'}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
+                  {/* Área de Digitação Nativa Estável e Responsiva */}
+                  <TextInput
+                    ref={contentInputRef}
+                    multiline
+                    placeholder="Comece a escrever seu post aqui..."
+                    placeholderTextColor="#9ca3af"
+                    value={content}
+                    onChangeText={setContent}
+                    onFocus={() => {
+                      setShowHeaderOptions(false);
+                      setTimeout(() => {
+                        formScrollRef.current?.scrollToEnd({ animated: true });
+                      }, 100);
+                    }}
+                    onSelectionChange={(e) => {
+                      selectionRef.current = e.nativeEvent.selection;
+                    }}
+                    textAlignVertical="top"
+                    style={styles.editorTextInput}
+                  />
                 </View>
               </View>
             </ScrollView>
+
+            {/* Ações do Rodapé: FIXAS NA BASE DO MODAL EM LINHA ÚNICA (NUNCA COBERTAS PELO TECLADO) */}
+            <View
+              style={[
+                styles.modalFooterPinned,
+                isKeyboardVisible && { paddingBottom: 10, paddingTop: 10 },
+              ]}
+            >
+              {/* Botão IA na Esquerda */}
+              <TouchableOpacity
+                onPress={handleOptimizeAI}
+                disabled={isOptimizing}
+                style={styles.btnIaOptimize}
+                activeOpacity={0.8}
+              >
+                {isOptimizing ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <ActivityIndicator size="small" color="#166534" />
+                    <Text style={styles.btnIaOptimizeText}>Revisando...</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.btnIaOptimizeText}>✨ Revisar IA</Text>
+                )}
+              </TouchableOpacity>
+
+              {/* Botões Cancelar e Publicar na Direita */}
+              <View style={styles.modalRightButtonsRow}>
+                <TouchableOpacity
+                  onPress={() => setModalVisible(false)}
+                  style={styles.btnCancelModal}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.btnCancelModalText}>Cancelar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleSavePost}
+                  disabled={isSubmitting}
+                  style={styles.btnSaveModal}
+                  activeOpacity={0.85}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.btnSaveModalText}>
+                      {editingPostId ? 'Salvar' : 'Publicar Post'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -1513,7 +1513,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
 
-  // EDITOR WYSIWYG
+  // EDITOR NATIVO COM TOOLBAR NO TOPO
   editorBoxContainer: {
     backgroundColor: '#ffffff',
     borderWidth: 1,
@@ -1521,13 +1521,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
-  editorToolbar: {
+  editorToolbarTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#f9fafb',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
     paddingHorizontal: 8,
     paddingVertical: 6,
     minHeight: 40,
@@ -1601,13 +1601,28 @@ const styles = StyleSheet.create({
     color: '#166534',
     fontWeight: 'bold',
   },
+  editorTextInput: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 12,
+    fontSize: 14.5,
+    color: '#1f2937',
+    minHeight: 140,
+    lineHeight: 22,
+  },
 
-  // RODAPÉ: LINHA ÚNICA SEM QUEBRA
-  modalFooterSingleRow: {
+  // RODAPÉ FIXO NA BASE: LINHA ÚNICA SEM QUEBRA (SEMPRE VISÍVEL)
+  modalFooterPinned: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 12,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    backgroundColor: '#ffffff',
     gap: 8,
   },
   btnIaOptimize: {
