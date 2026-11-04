@@ -1,5 +1,30 @@
 [
   {
+    "id": "change-git-89981f16",
+    "date": "2026-11-03T23:37:10.000Z",
+    "commit": "89981f16",
+    "author": "Anderson",
+    "title": "Novo: Alinhar visual do forum mobile com a versao web mobile",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "alinhar visual do forum mobile com a versao web mobile",
+    "description": "Commit registrado no repositório: \"feat(mobile): alinhar visual do forum mobile com a versao web mobile\". Arquivos modificados: backend/data/system_changelog.json, mobile/src/app/(tabs)/forum.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #89981f16"
+    },
+    "after": {
+      "nova_versao": "alinhar visual do forum mobile com a versao web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-5d3037ff",
     "date": "2026-11-03T23:25:47.000Z",
     "commit": "5d3037ff",

@@ -15,6 +15,8 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   Pressable,
+  Animated,
+  Easing,
 } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
@@ -77,25 +79,39 @@ export default function BlogScreen() {
   // Estado do Modal de Preview / Visualização
   const [previewPost, setPreviewPost] = useState<Post | null>(null);
 
-  // Monitoramento de visibilidade do teclado no modal
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  // Animação fluida sincronizada com a curva nativa do teclado do iOS (mesmo padrão do modal Novo Paciente)
+  const BOTTOM_SHEET_PADDING = Platform.OS === 'ios' ? 24 : 16;
+  const sheetBottomAnim = useRef(new Animated.Value(BOTTOM_SHEET_PADDING)).current;
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
-    const subShow = Keyboard.addListener(showEvent, () => {
-      setIsKeyboardVisible(true);
+    const subShow = Keyboard.addListener(showEvent, (e) => {
+      const kbHeight = e.endCoordinates?.height || 300;
+      const targetPadding = Platform.OS === 'ios' ? kbHeight : 16;
+      Animated.timing(sheetBottomAnim, {
+        toValue: targetPadding,
+        duration: Platform.OS === 'ios' ? (e.duration || 250) : 180,
+        easing: Easing.bezier(0.33, 1, 0.68, 1),
+        useNativeDriver: false,
+      }).start();
     });
-    const subHide = Keyboard.addListener(hideEvent, () => {
-      setIsKeyboardVisible(false);
+
+    const subHide = Keyboard.addListener(hideEvent, (e) => {
+      Animated.timing(sheetBottomAnim, {
+        toValue: BOTTOM_SHEET_PADDING,
+        duration: Platform.OS === 'ios' ? (e?.duration || 250) : 180,
+        easing: Easing.bezier(0.33, 1, 0.68, 1),
+        useNativeDriver: false,
+      }).start();
     });
 
     return () => {
       subShow.remove();
       subHide.remove();
     };
-  }, []);
+  }, [sheetBottomAnim]);
 
   // Helper para limpar HTML e manter quebras de linha
   const stripHtml = (html?: string) => {
@@ -630,30 +646,32 @@ export default function BlogScreen() {
         </View>
       </YeloScrollView>
 
-      {/* MODAL: NOVO / EDITAR POST (BOTTOM SHEET YELO) */}
+      {/* MODAL: NOVO / EDITAR POST (BOTTOM SHEET YELO COM ANIMAÇÃO NATIVA DE TECLADO) */}
       <Modal
         visible={modalVisible}
         transparent={true}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
+        animationType="fade"
+        onRequestClose={() => {
+          Keyboard.dismiss();
+          setModalVisible(false);
+        }}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.modalBackdrop}
-        >
+        <View style={styles.modalBackdrop}>
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={() => {
-              if (isKeyboardVisible) {
-                Keyboard.dismiss();
-              } else {
-                setModalVisible(false);
-              }
+              Keyboard.dismiss();
+              setModalVisible(false);
             }}
           />
-          <View style={styles.bottomSheetCard}>
+          <Animated.View
+            style={[
+              styles.bottomSheetCard,
+              { paddingBottom: sheetBottomAnim }
+            ]}
+          >
             {/* Header do Modal */}
-            <View style={styles.modalHeader}>
+            <Pressable onPress={() => Keyboard.dismiss()} style={styles.modalHeader}>
               <View style={styles.sheetDragHandle} />
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
@@ -671,21 +689,25 @@ export default function BlogScreen() {
                 </View>
 
                 <TouchableOpacity
-                  onPress={() => setModalVisible(false)}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setModalVisible(false);
+                  }}
                   style={styles.modalCloseButton}
                   activeOpacity={0.7}
                 >
                   <Feather name="x" size={18} color="#666666" />
                 </TouchableOpacity>
               </View>
-            </View>
+            </Pressable>
 
             {/* Scroll do Formulário com altura responsiva */}
             <ScrollView
               ref={formScrollRef}
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
               showsVerticalScrollIndicator={false}
-              style={{ flexShrink: 1, maxHeight: isKeyboardVisible ? 240 : 420 }}
+              style={{ flexGrow: 0, flexShrink: 1 }}
               contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 12 }}
             >
               {/* Campo: Título do Post */}
@@ -918,13 +940,8 @@ export default function BlogScreen() {
               </View>
             </ScrollView>
 
-            {/* Ações do Rodapé: FIXAS NA BASE DO MODAL EM LINHA ÚNICA (NUNCA COBERTAS PELO TECLADO) */}
-            <View
-              style={[
-                styles.modalFooterPinned,
-                isKeyboardVisible && { paddingBottom: 10, paddingTop: 10 },
-              ]}
-            >
+            {/* Ações do Rodapé: FIXAS NA BASE DO MODAL EM LINHA ÚNICA */}
+            <View style={styles.modalFooterPinned}>
               {/* Botão IA na Esquerda */}
               <TouchableOpacity
                 onPress={handleOptimizeAI}
@@ -945,7 +962,10 @@ export default function BlogScreen() {
               {/* Botões Cancelar e Publicar na Direita */}
               <View style={styles.modalRightButtonsRow}>
                 <TouchableOpacity
-                  onPress={() => setModalVisible(false)}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setModalVisible(false);
+                  }}
                   style={styles.btnCancelModal}
                   activeOpacity={0.75}
                 >
@@ -968,8 +988,8 @@ export default function BlogScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
-        </KeyboardAvoidingView>
+          </Animated.View>
+        </View>
       </Modal>
 
       {/* MODAL: PREVIEW / VISUALIZAÇÃO DO POST COMPLETO */}
@@ -1386,17 +1406,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // MODAL BOTTOM SHEET
+  // MODAL BOTTOM SHEET (ESTILO NATIVO YELO)
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   bottomSheetCard: {
     backgroundColor: '#ffffff',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: '90%',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    maxHeight: '94%',
+    flexShrink: 1,
     shadowColor: '#000',
     shadowOpacity: 0.15,
     shadowRadius: 16,
@@ -1618,8 +1639,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
+    paddingTop: 10,
+    paddingBottom: 10,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
     backgroundColor: '#ffffff',
