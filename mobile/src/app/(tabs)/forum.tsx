@@ -68,7 +68,10 @@ export default function ForumScreen() {
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentAnonymous, setCommentAnonymous] = useState(false);
-  const [replyTo, setReplyTo] = useState<{ id: number; authorName: string } | null>(null);
+  const [activeReplyCommentId, setActiveReplyCommentId] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyAnonymous, setReplyAnonymous] = useState(false);
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [expandedReplies, setExpandedReplies] = useState<{ [key: number]: boolean }>({});
   const [commentPage, setCommentPage] = useState(1);
   const [hasMoreComments, setHasMoreComments] = useState(false);
@@ -351,7 +354,8 @@ export default function ForumScreen() {
   const openPostDetails = async (post: any) => {
     setActivePost(post);
     setNewComment('');
-    setReplyTo(null);
+    setActiveReplyCommentId(null);
+    setReplyText('');
     setCommentPage(1);
     setIsLoadingComments(true);
 
@@ -395,29 +399,38 @@ export default function ForumScreen() {
     }));
   };
 
-  // Enviar Resposta / Comentário
-  const handleSendComment = async () => {
-    if (!newComment.trim() || !activePost) return;
+  // Abrir / Fechar Formulário Inline de Resposta sob um Comentário Específico
+  const handleOpenReply = (parentId: number, targetAuthorName?: string) => {
+    if (activeReplyCommentId === parentId && !targetAuthorName) {
+      setActiveReplyCommentId(null);
+      setReplyText('');
+      return;
+    }
+    setActiveReplyCommentId(parentId);
+    const prefix = targetAuthorName && targetAuthorName !== 'Anônimo' ? `@${targetAuthorName.split(' ')[0]} ` : '';
+    setReplyText(prefix);
+    setReplyAnonymous(false);
+  };
+
+  // Enviar Resposta Inline a um Comentário Específico
+  const handleSendInlineReply = async (parentId: number) => {
+    if (!replyText.trim() || !activePost) return;
 
     try {
-      setIsSubmittingComment(true);
-      const targetParentId = replyTo ? replyTo.id : null;
+      setIsSubmittingReply(true);
       await api.post(`/api/forum/posts/${activePost.id}/comments`, {
-        content: newComment.trim(),
-        isAnonymous: commentAnonymous,
-        parentId: targetParentId
+        content: replyText.trim(),
+        isAnonymous: replyAnonymous,
+        parentId
       });
 
       const reload = await api.get(`/api/forum/posts/${activePost.id}/comments?page=1&limit=25`);
       const fetched = Array.isArray(reload.data) ? reload.data : [];
       setComments(fetched);
-      setNewComment('');
-      setReplyTo(null);
-      setCommentAnonymous(false);
-
-      if (targetParentId) {
-        setExpandedReplies(prev => ({ ...prev, [targetParentId]: true }));
-      }
+      setActiveReplyCommentId(null);
+      setReplyText('');
+      setReplyAnonymous(false);
+      setExpandedReplies(prev => ({ ...prev, [parentId]: true }));
 
       // Atualiza o contador de comentários no feed
       setPosts(prev => prev.map(p => {
@@ -428,6 +441,38 @@ export default function ForumScreen() {
       }));
     } catch (e: any) {
       Alert.alert("Erro", e.response?.data?.error || "Falha ao enviar resposta.");
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
+  // Enviar Comentário Principal no Post
+  const handleSendComment = async () => {
+    if (!newComment.trim() || !activePost) return;
+
+    try {
+      setIsSubmittingComment(true);
+      await api.post(`/api/forum/posts/${activePost.id}/comments`, {
+        content: newComment.trim(),
+        isAnonymous: commentAnonymous,
+        parentId: null
+      });
+
+      const reload = await api.get(`/api/forum/posts/${activePost.id}/comments?page=1&limit=25`);
+      const fetched = Array.isArray(reload.data) ? reload.data : [];
+      setComments(fetched);
+      setNewComment('');
+      setCommentAnonymous(false);
+
+      // Atualiza o contador de comentários no feed
+      setPosts(prev => prev.map(p => {
+        if (p.id === activePost.id) {
+          return { ...p, commentCount: (p.commentCount || 0) + 1 };
+        }
+        return p;
+      }));
+    } catch (e: any) {
+      Alert.alert("Erro", e.response?.data?.error || "Falha ao enviar comentário.");
     } finally {
       setIsSubmittingComment(false);
     }
@@ -478,9 +523,13 @@ export default function ForumScreen() {
       const res = await api.post('/api/forum/ai/generate-comment', payload);
       if (res.data?.generatedText) {
         if (targetComment) {
-          setReplyTo({ id: targetComment.id, authorName: targetComment.authorName || 'Colega' });
+          setActiveReplyCommentId(targetComment.id);
+          setReplyText(res.data.generatedText);
+          setReplyAnonymous(false);
+          setExpandedReplies(prev => ({ ...prev, [targetComment.id]: true }));
+        } else {
+          setNewComment(res.data.generatedText);
         }
-        setNewComment(res.data.generatedText);
       } else {
         Alert.alert('IA Yelo', 'Não foi possível gerar sugestão no momento.');
       }
@@ -608,7 +657,7 @@ export default function ForumScreen() {
           <YeloScrollView 
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 140, paddingTop: 6 }}
+            contentContainerStyle={{ paddingBottom: 170, paddingTop: 6 }}
             refreshControl={
               <RefreshControl refreshing={isLoadingComments} onRefresh={() => openPostDetails(activePost)} colors={['#1B4332']} />
             }
@@ -734,24 +783,6 @@ export default function ForumScreen() {
 
               {/* COMPOSER DE COMENTÁRIO */}
               <View style={styles.composerWrapper}>
-                {/* Banner de Respondendo a */}
-                {replyTo && (
-                  <View style={styles.replyingToBanner}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                      <Feather name="corner-down-right" size={13} color="#15803d" />
-                      <Text style={styles.replyingToText}>
-                        Respondendo a <Text style={{ fontWeight: 'bold' }}>{replyTo.authorName}</Text>
-                      </Text>
-                    </View>
-                    <TouchableOpacity 
-                      onPress={() => setReplyTo(null)}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Feather name="x" size={14} color="#64748b" />
-                    </TouchableOpacity>
-                  </View>
-                )}
-
                 {/* Campo de Texto */}
                 <TextInput 
                   multiline
@@ -894,12 +925,21 @@ export default function ForumScreen() {
                         </TouchableOpacity>
 
                         <TouchableOpacity 
-                          onPress={() => setReplyTo({ id: comment.id, authorName: comment.isAnonymous ? 'Anônimo' : (comment.authorName || 'Colega') })}
+                          onPress={() => handleOpenReply(comment.id)}
                           style={styles.commentInlineActionBtn}
                           activeOpacity={0.7}
                         >
-                          <Feather name="message-square" size={12} color="#64748b" />
-                          <Text style={styles.commentInlineActionText}>Responder</Text>
+                          <Feather 
+                            name="message-square" 
+                            size={12} 
+                            color={activeReplyCommentId === comment.id ? "#1B4332" : "#64748b"} 
+                          />
+                          <Text style={[
+                            styles.commentInlineActionText,
+                            activeReplyCommentId === comment.id && { color: '#1B4332', fontWeight: 'bold' }
+                          ]}>
+                            Responder
+                          </Text>
                         </TouchableOpacity>
 
                         {isUserAdmin && (
@@ -935,6 +975,65 @@ export default function ForumScreen() {
                           <Feather name="flag" size={12} color="#94a3b8" />
                         </TouchableOpacity>
                       </View>
+
+                      {/* Formulário Inline de Resposta Dinâmica sob o Comentário */}
+                      {activeReplyCommentId === comment.id && (
+                        <View style={styles.inlineReplyBox}>
+                          <TextInput 
+                            multiline
+                            placeholder="Escreva sua resposta..."
+                            placeholderTextColor="#94a3b8"
+                            value={replyText}
+                            onChangeText={setReplyText}
+                            style={styles.inlineReplyInput}
+                            autoFocus
+                          />
+                          <View style={styles.inlineReplyFooter}>
+                            <TouchableOpacity 
+                              onPress={() => setReplyAnonymous(!replyAnonymous)}
+                              style={styles.composerCheckboxRow}
+                              activeOpacity={0.8}
+                            >
+                              <View style={[
+                                styles.composerCheckboxCircle,
+                                replyAnonymous && styles.composerCheckboxCircleActive
+                              ]}>
+                                {replyAnonymous && <View style={styles.composerCheckboxInnerDot} />}
+                              </View>
+                              <Text style={styles.composerCheckboxLabel}>Anônimo</Text>
+                            </TouchableOpacity>
+
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                              <TouchableOpacity 
+                                onPress={() => {
+                                  setActiveReplyCommentId(null);
+                                  setReplyText('');
+                                }}
+                                style={styles.btnInlineCancel}
+                                activeOpacity={0.7}
+                              >
+                                <Text style={styles.btnInlineCancelText}>Cancelar</Text>
+                              </TouchableOpacity>
+
+                              <TouchableOpacity 
+                                onPress={() => handleSendInlineReply(comment.id)}
+                                disabled={isSubmittingReply || !replyText.trim()}
+                                style={[
+                                  styles.btnInlineSubmit,
+                                  (!replyText.trim() || isSubmittingReply) && { opacity: 0.6 }
+                                ]}
+                                activeOpacity={0.8}
+                              >
+                                {isSubmittingReply ? (
+                                  <ActivityIndicator size="small" color="#ffffff" />
+                                ) : (
+                                  <Text style={styles.btnInlineSubmitText}>Responder</Text>
+                                )}
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        </View>
+                      )}
 
                       {/* Respostas Aninhadas (Sub-replies) */}
                       {comment.replies && comment.replies.length > 0 && (
@@ -1018,7 +1117,7 @@ export default function ForumScreen() {
                                     </TouchableOpacity>
 
                                     <TouchableOpacity 
-                                      onPress={() => setReplyTo({ id: comment.id, authorName: reply.isAnonymous ? 'Anônimo' : (reply.authorName || 'Colega') })}
+                                      onPress={() => handleOpenReply(comment.id, reply.authorName)}
                                       style={styles.commentInlineActionBtn}
                                       activeOpacity={0.7}
                                     >
@@ -1055,7 +1154,14 @@ export default function ForumScreen() {
                     {isLoadingMoreComments ? (
                       <ActivityIndicator size="small" color="#1B4332" />
                     ) : (
-                      <Text style={styles.btnLoadMoreCommentsText}>Mostrar mais comentários ▾</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.btnLoadMoreCommentsText}>
+                          {activePost?.commentCount && (activePost.commentCount - comments.length > 0)
+                            ? `Mostrar mais ${activePost.commentCount - comments.length} ${activePost.commentCount - comments.length === 1 ? 'comentário' : 'comentários'}`
+                            : 'Mostrar mais comentários'}
+                        </Text>
+                        <Feather name="chevron-down" size={16} color="#334155" />
+                      </View>
                     )}
                   </TouchableOpacity>
                 )}
@@ -2697,6 +2803,59 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
+  // RESPOSTA INLINE A COMENTÁRIO
+  inlineReplyBox: {
+    marginTop: 10,
+    marginBottom: 6,
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#cbd5e1',
+    borderRadius: 14,
+    padding: 12,
+  },
+  inlineReplyInput: {
+    backgroundColor: '#ffffff',
+    fontSize: 13.5,
+    color: '#0f172a',
+    minHeight: 54,
+    textAlignVertical: 'top',
+    padding: 0,
+    lineHeight: 20,
+  },
+  inlineReplyFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  btnInlineCancel: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  btnInlineCancelText: {
+    color: '#64748b',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  btnInlineSubmit: {
+    backgroundColor: '#1B4332',
+    borderRadius: 50,
+    paddingVertical: 7,
+    paddingHorizontal: 18,
+    shadowColor: '#1B4332',
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  btnInlineSubmitText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
   // SUB-REPLIES
   subRepliesContainer: {
     marginTop: 8,
@@ -2773,11 +2932,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 50,
-    paddingVertical: 9,
+    paddingVertical: 10,
+    paddingHorizontal: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 14,
+    marginTop: 18,
     backgroundColor: '#ffffff',
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   btnLoadMoreCommentsText: {
     fontSize: 12.5,

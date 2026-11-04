@@ -50,6 +50,14 @@ api.interceptors.request.use(
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+      const baseUrl = config.baseURL || getBaseUrl();
+      if (!config.headers.Origin && !config.headers.origin) {
+        config.headers.Origin = baseUrl;
+      }
+      if (!config.headers.Referer && !config.headers.referer) {
+        config.headers.Referer = `${baseUrl}/`;
+      }
+      config.headers['x-yelo-client'] = 'mobile';
     } catch (e) {
       // Ignora falha de leitura em storage temporário
     }
