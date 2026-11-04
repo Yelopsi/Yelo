@@ -15,6 +15,7 @@ import {
   ScrollView,
   StyleSheet
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -35,6 +36,7 @@ const FORUM_CATEGORIES = [
 export default function ForumScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const isUserAdmin = Boolean((user as any)?.isAdmin || user?.email === 'pix@yelopsi.com.br');
 
   // Estados de Filtro e Busca
   const [activeTab, setActiveTab] = useState<'recentes' | 'populares' | 'meus_posts'>('recentes');
@@ -59,13 +61,19 @@ export default function ForumScreen() {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
-  // Modal Detalhes da Discussão & Comentários
+  // Detalhes da Discussão & Comentários (Visão Completa em Página)
   const [activePost, setActivePost] = useState<any | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentAnonymous, setCommentAnonymous] = useState(false);
+  const [replyTo, setReplyTo] = useState<{ id: number; authorName: string } | null>(null);
+  const [expandedReplies, setExpandedReplies] = useState<{ [key: number]: boolean }>({});
+  const [commentPage, setCommentPage] = useState(1);
+  const [hasMoreComments, setHasMoreComments] = useState(false);
+  const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
   // Helper para resolver URL da imagem
   const resolveImageUrl = (path?: string | null) => {
@@ -328,21 +336,63 @@ export default function ForumScreen() {
     }
   };
 
+  // Compartilhar link da discussão
+  const handleSharePost = async (post: any) => {
+    try {
+      const url = `https://yelopsi.com.br/psi/forum?post=${post.id}`;
+      await Clipboard.setStringAsync(url);
+      Alert.alert('Link Copiado! 🔗', 'O link da discussão foi copiado para a sua área de transferência.');
+    } catch {
+      Alert.alert('Link', `https://yelopsi.com.br/psi/forum?post=${post.id}`);
+    }
+  };
+
   // Abrir Detalhes do Post & Carregar Respostas
   const openPostDetails = async (post: any) => {
     setActivePost(post);
     setNewComment('');
+    setReplyTo(null);
+    setCommentPage(1);
     setIsLoadingComments(true);
 
     try {
-      const res = await api.get(`/api/forum/posts/${post.id}/comments?limit=25`);
+      const res = await api.get(`/api/forum/posts/${post.id}/comments?page=1&limit=6`);
       const fetched = Array.isArray(res.data) ? res.data : (res.data?.comments || []);
       setComments(fetched);
+      setHasMoreComments(fetched.length >= 6);
     } catch (e) {
       console.error("Erro ao carregar respostas:", e);
     } finally {
       setIsLoadingComments(false);
     }
+  };
+
+  // Carregar Mais Comentários (Paginação)
+  const handleLoadMoreComments = async () => {
+    if (!activePost || isLoadingMoreComments) return;
+    const nextPage = commentPage + 1;
+    setIsLoadingMoreComments(true);
+    try {
+      const res = await api.get(`/api/forum/posts/${activePost.id}/comments?page=${nextPage}&limit=6`);
+      const fetched = Array.isArray(res.data) ? res.data : (res.data?.comments || []);
+      if (fetched.length > 0) {
+        setComments(prev => [...prev, ...fetched]);
+        setCommentPage(nextPage);
+      }
+      setHasMoreComments(fetched.length >= 6);
+    } catch (e) {
+      console.error("Erro ao carregar mais comentários:", e);
+    } finally {
+      setIsLoadingMoreComments(false);
+    }
+  };
+
+  // Expandir / Recolher respostas aninhadas de um comentário
+  const toggleReplies = (commentId: number) => {
+    setExpandedReplies(prev => ({
+      ...prev,
+      [commentId]: !prev[commentId]
+    }));
   };
 
   // Enviar Resposta / Comentário
@@ -351,20 +401,24 @@ export default function ForumScreen() {
 
     try {
       setIsSubmittingComment(true);
-      const res = await api.post(`/api/forum/posts/${activePost.id}/comments`, {
+      const targetParentId = replyTo ? replyTo.id : null;
+      await api.post(`/api/forum/posts/${activePost.id}/comments`, {
         content: newComment.trim(),
-        isAnonymous: commentAnonymous
+        isAnonymous: commentAnonymous,
+        parentId: targetParentId
       });
 
-      const created = res.data;
-      if (created) {
-        setComments(prev => [...prev, created]);
-      } else {
-        const reload = await api.get(`/api/forum/posts/${activePost.id}/comments?limit=25`);
-        setComments(Array.isArray(reload.data) ? reload.data : []);
+      const reload = await api.get(`/api/forum/posts/${activePost.id}/comments?page=1&limit=25`);
+      const fetched = Array.isArray(reload.data) ? reload.data : [];
+      setComments(fetched);
+      setNewComment('');
+      setReplyTo(null);
+      setCommentAnonymous(false);
+
+      if (targetParentId) {
+        setExpandedReplies(prev => ({ ...prev, [targetParentId]: true }));
       }
 
-      setNewComment('');
       // Atualiza o contador de comentários no feed
       setPosts(prev => prev.map(p => {
         if (p.id === activePost.id) {
@@ -377,6 +431,95 @@ export default function ForumScreen() {
     } finally {
       setIsSubmittingComment(false);
     }
+  };
+
+  // Fixar / Desafixar comentário (Moderador)
+  const handlePinComment = async (commentId: number) => {
+    try {
+      const res = await api.put(`/api/forum/comments/${commentId}/pin`);
+      const targetPinned = res.data?.isPinned;
+      setComments(prev => prev.map(c => {
+        if (c.id === commentId) {
+          return { ...c, isPinned: targetPinned };
+        }
+        if (targetPinned) {
+          return { ...c, isPinned: false };
+        }
+        return c;
+      }));
+      Alert.alert('Sucesso', res.data?.message || 'Comentário atualizado.');
+    } catch (err: any) {
+      Alert.alert('Aviso', err.response?.data?.error || 'Apenas moderadores podem fixar comentários.');
+    }
+  };
+
+  // Gerar Comentário com IA
+  const handleGenerateAiComment = async (targetComment?: any) => {
+    if (!activePost || isGeneratingAi) return;
+    try {
+      setIsGeneratingAi(true);
+      let commentsContext = '';
+      if (comments && comments.length > 0) {
+        commentsContext = comments.slice(0, 3).map(c => `- ${c.content}`).join('\n');
+      }
+
+      const payload: any = {
+        postTitle: activePost.title,
+        postContent: activePost.content,
+        comments: commentsContext,
+        authorName: activePost.authorName
+      };
+
+      if (targetComment) {
+        payload.targetComment = targetComment.content;
+        payload.authorName = targetComment.authorName;
+      }
+
+      const res = await api.post('/api/forum/ai/generate-comment', payload);
+      if (res.data?.generatedText) {
+        if (targetComment) {
+          setReplyTo({ id: targetComment.id, authorName: targetComment.authorName || 'Colega' });
+        }
+        setNewComment(res.data.generatedText);
+      } else {
+        Alert.alert('IA Yelo', 'Não foi possível gerar sugestão no momento.');
+      }
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        Alert.alert('IA Yelo', 'A geração de comentários fundamentados com IA está disponível para a moderação clínica.');
+      } else {
+        Alert.alert('Aviso', 'Não foi possível gerar resposta com IA no momento.');
+      }
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
+
+  // Denúncia de Comentário
+  const handleReportComment = (comment: any) => {
+    Alert.alert(
+      'Denunciar Comentário',
+      'Deseja enviar este comentário para análise da moderação da Yelo?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Denunciar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.post('/api/forum/report', {
+                targetType: 'comment',
+                targetId: comment.id,
+                reason: 'Violação das diretrizes éticas da comunidade'
+              });
+              Alert.alert('Obrigado', 'Denúncia enviada com sucesso para a moderação.');
+            } catch (err: any) {
+              Alert.alert('Aviso', 'Denúncia já registrada ou erro ao enviar.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   // Votar em Comentário
@@ -424,8 +567,506 @@ export default function ForumScreen() {
 
   return (
     <View style={styles.container}>
-      {/* BARRA SUPERIOR SLIM DE NAVEGAÇÃO */}
-      <View style={styles.topNavRow}>
+      {activePost ? (
+        <>
+          {/* ======================================================== */}
+          {/* BARRA SUPERIOR: TRILHA DE NAVEGAÇÃO (BREADCRUMB) */}
+          {/* ======================================================== */}
+          <View style={styles.postNavRow}>
+            <TouchableOpacity 
+              onPress={() => setActivePost(null)} 
+              style={styles.postBreadcrumbBtn}
+              activeOpacity={0.75}
+            >
+              <View style={styles.breadcrumbIconCircle}>
+                <Feather name="arrow-left" size={13} color="#334155" />
+              </View>
+              <Text style={styles.breadcrumbBackText}>Fórum</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.breadcrumbBullet}>•</Text>
+
+            <View style={[
+              styles.breadcrumbCategoryTag,
+              { 
+                backgroundColor: getCategoryStyle(activePost.category).bg,
+                borderColor: getCategoryStyle(activePost.category).border
+              }
+            ]}>
+              <Text style={[
+                styles.breadcrumbCategoryTagText,
+                { color: getCategoryStyle(activePost.category).text }
+              ]}>
+                {activePost.category || 'Geral'}
+              </Text>
+            </View>
+          </View>
+
+          {/* ======================================================== */}
+          {/* CONTEÚDO DA DISCUSSÃO COMPLETA & SEÇÃO DE COMENTÁRIOS */}
+          {/* ======================================================== */}
+          <YeloScrollView 
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 140, paddingTop: 6 }}
+            refreshControl={
+              <RefreshControl refreshing={isLoadingComments} onRefresh={() => openPostDetails(activePost)} colors={['#1B4332']} />
+            }
+          >
+            {/* CARD 1: ARTIGO DA DISCUSSÃO ABERTA */}
+            <View style={styles.fullPostCard}>
+              {/* Cabeçalho do Post com Autor e Ações */}
+              <View style={styles.fullPostHeaderRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+                  {activePost.authorPhoto && !activePost.isAnonymous ? (
+                    <Image 
+                      source={{ uri: resolveImageUrl(activePost.authorPhoto) || '' }} 
+                      style={styles.fullPostAvatar} 
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.fullPostAvatarFallback}>
+                      <Text style={styles.fullPostAvatarFallbackText}>
+                        {activePost.isAnonymous ? 'A' : (activePost.authorName?.charAt(0) || 'P')}
+                      </Text>
+                    </View>
+                  )}
+
+                  <View style={{ flex: 1 }}>
+                    {/* Linha 1: Nome do Autor + Badges */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                      <Text style={styles.fullPostAuthorName}>
+                        {activePost.isAnonymous ? 'Anônimo' : (activePost.authorName || 'Psicólogo(a)')}
+                      </Text>
+                      {renderAuthorBadges(activePost.authorBadges)}
+                      {activePost.isPinned && (
+                        <View style={styles.postPinnedChip}>
+                          <Text style={styles.postPinnedChipText}>📌 Fixado</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Linha 2: Ações Rápidas (Compartilhar, Link, Excluir) */}
+                    <View style={styles.fullPostActionIconsRow}>
+                      <TouchableOpacity 
+                        onPress={() => handleSharePost(activePost)}
+                        style={styles.fullPostHeaderIconBtn}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Feather name="share-2" size={14} color="#64748b" />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity 
+                        onPress={() => handleSharePost(activePost)}
+                        style={styles.fullPostHeaderIconBtn}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Feather name="external-link" size={14} color="#64748b" />
+                      </TouchableOpacity>
+
+                      {activePost.isMine && (
+                        <TouchableOpacity 
+                          onPress={() => handleDeletePost(activePost)}
+                          style={styles.fullPostHeaderIconBtn}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Feather name="trash-2" size={14} color="#dc2626" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                </View>
+
+                {/* Denunciar Post */}
+                <TouchableOpacity 
+                  onPress={() => handleReportPost(activePost)}
+                  style={styles.fullPostHeaderReportBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Feather name="flag" size={15} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Título da Discussão */}
+              <Text style={styles.fullPostTitle}>{activePost.title}</Text>
+
+              {/* Conteúdo Completo */}
+              <Text style={styles.fullPostBody}>{activePost.content}</Text>
+
+              {/* Ações Inferiores: Botão Gostei */}
+              <View style={styles.fullPostFooter}>
+                <TouchableOpacity 
+                  onPress={() => handleVotePost(activePost)}
+                  style={[
+                    styles.supportLikePillBtn,
+                    activePost.supportedByMe && styles.supportLikePillBtnActive
+                  ]}
+                  activeOpacity={0.7}
+                >
+                  <Feather 
+                    name="heart" 
+                    size={13} 
+                    color={activePost.supportedByMe ? "#e11d48" : "#64748b"} 
+                  />
+                  <Text style={[
+                    styles.supportLikeCount,
+                    activePost.supportedByMe && { color: '#e11d48' }
+                  ]}>
+                    {activePost.votes || 0}
+                  </Text>
+                  <Text style={[
+                    styles.supportLikeLabel,
+                    activePost.supportedByMe && { color: '#e11d48' }
+                  ]}>
+                    gostei
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* CARD 2: SEÇÃO DE COMENTÁRIOS E TROCAS */}
+            <View style={styles.fullPostCommentsCard}>
+              {/* Título da Seção */}
+              <View style={styles.commentsCardHeader}>
+                <Text style={{ fontSize: 18 }}>💬</Text>
+                <Text style={styles.commentsCardTitle}>Comentários e Trocas</Text>
+              </View>
+
+              {/* COMPOSER DE COMENTÁRIO */}
+              <View style={styles.composerWrapper}>
+                {/* Banner de Respondendo a */}
+                {replyTo && (
+                  <View style={styles.replyingToBanner}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                      <Feather name="corner-down-right" size={13} color="#15803d" />
+                      <Text style={styles.replyingToText}>
+                        Respondendo a <Text style={{ fontWeight: 'bold' }}>{replyTo.authorName}</Text>
+                      </Text>
+                    </View>
+                    <TouchableOpacity 
+                      onPress={() => setReplyTo(null)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Feather name="x" size={14} color="#64748b" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Campo de Texto */}
+                <TextInput 
+                  multiline
+                  placeholder="deixe seu comentário."
+                  placeholderTextColor="#94a3b8"
+                  value={newComment}
+                  onChangeText={setNewComment}
+                  style={styles.composerTextInput}
+                />
+
+                {/* Barra de Ações do Composer */}
+                <View style={styles.composerToolbarRow}>
+                  <TouchableOpacity 
+                    onPress={() => setCommentAnonymous(!commentAnonymous)}
+                    style={styles.composerCheckboxRow}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[
+                      styles.composerCheckboxCircle,
+                      commentAnonymous && styles.composerCheckboxCircleActive
+                    ]}>
+                      {commentAnonymous && <View style={styles.composerCheckboxInnerDot} />}
+                    </View>
+                    <Text style={styles.composerCheckboxLabel}>Comentar como Anônimo</Text>
+                  </TouchableOpacity>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <TouchableOpacity 
+                      onPress={() => handleGenerateAiComment()}
+                      disabled={isGeneratingAi}
+                      style={styles.composerAiBtn}
+                      activeOpacity={0.7}
+                    >
+                      {isGeneratingAi ? (
+                        <ActivityIndicator size="small" color="#16a34a" />
+                      ) : (
+                        <Text style={styles.composerAiBtnText}>✨ IA</Text>
+                      )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      onPress={handleSendComment}
+                      disabled={isSubmittingComment || !newComment.trim()}
+                      style={[
+                        styles.composerSubmitBtn,
+                        (!newComment.trim() || isSubmittingComment) && { opacity: 0.6 }
+                      ]}
+                      activeOpacity={0.8}
+                    >
+                      {isSubmittingComment ? (
+                        <ActivityIndicator size="small" color="#ffffff" />
+                      ) : (
+                        <Text style={styles.composerSubmitBtnText}>Comentar</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
+              {/* THREAD DE COMENTÁRIOS */}
+              <View style={styles.commentsListThread}>
+                {isLoadingComments ? (
+                  <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+                    <ActivityIndicator color="#1B4332" />
+                  </View>
+                ) : comments.length === 0 ? (
+                  <View style={styles.emptyCommentsBox}>
+                    <Text style={styles.emptyCommentsText}>
+                      Nenhum comentário ainda. Seja o primeiro a compartilhar sua reflexão clínica!
+                    </Text>
+                  </View>
+                ) : (
+                  comments.map((comment) => (
+                    <View key={comment.id} style={styles.commentItemBox}>
+                      {/* Header do Comentário */}
+                      <View style={styles.commentHeaderRow}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                          {comment.authorPhoto && !comment.isAnonymous ? (
+                            <Image 
+                              source={{ uri: resolveImageUrl(comment.authorPhoto) || '' }} 
+                              style={styles.commentAvatar} 
+                            />
+                          ) : (
+                            <View style={styles.commentAvatarFallback}>
+                              <Text style={styles.commentAvatarFallbackText}>
+                                {comment.isAnonymous ? 'A' : (comment.authorName?.charAt(0) || 'P')}
+                              </Text>
+                            </View>
+                          )}
+
+                          <View style={{ flex: 1 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                              <Text style={styles.commentAuthorName}>
+                                {comment.isAnonymous ? 'Anônimo' : (comment.authorName || 'Colega')}
+                              </Text>
+                              {renderAuthorBadges(comment.authorBadges)}
+                              {comment.isPinned && (
+                                <View style={styles.commentPinnedChip}>
+                                  <Text style={styles.commentPinnedChipText}>📌 Fixado</Text>
+                                </View>
+                              )}
+                            </View>
+                            <Text style={styles.commentTimeAgo}>
+                              há {formatTimeAgo(comment.createdAt)}
+                            </Text>
+                          </View>
+                        </View>
+
+                        {comment.isMine && (
+                          <TouchableOpacity 
+                            onPress={() => handleDeleteComment(comment.id)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Feather name="trash-2" size={13} color="#dc2626" />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+
+                      {/* Conteúdo do Comentário */}
+                      <Text style={styles.commentBodyText}>{comment.content}</Text>
+
+                      {/* Ações do Comentário */}
+                      <View style={styles.commentActionsBar}>
+                        <TouchableOpacity 
+                          onPress={() => handleVoteComment(comment.id)}
+                          style={styles.commentInlineActionBtn}
+                          activeOpacity={0.7}
+                        >
+                          <Feather 
+                            name="heart" 
+                            size={12} 
+                            color={comment.likedByMe ? "#e11d48" : "#64748b"} 
+                          />
+                          <Text style={[
+                            styles.commentInlineActionText,
+                            comment.likedByMe && { color: '#e11d48', fontWeight: 'bold' }
+                          ]}>
+                            {comment.likes || 0}
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                          onPress={() => setReplyTo({ id: comment.id, authorName: comment.isAnonymous ? 'Anônimo' : (comment.authorName || 'Colega') })}
+                          style={styles.commentInlineActionBtn}
+                          activeOpacity={0.7}
+                        >
+                          <Feather name="message-square" size={12} color="#64748b" />
+                          <Text style={styles.commentInlineActionText}>Responder</Text>
+                        </TouchableOpacity>
+
+                        {isUserAdmin && (
+                          <TouchableOpacity 
+                            onPress={() => handlePinComment(comment.id)}
+                            style={styles.commentInlineActionBtn}
+                            activeOpacity={0.7}
+                          >
+                            <Feather name="anchor" size={12} color={comment.isPinned ? "#b45309" : "#64748b"} />
+                            <Text style={[
+                              styles.commentInlineActionText,
+                              comment.isPinned && { color: '#b45309', fontWeight: 'bold' }
+                            ]}>
+                              {comment.isPinned ? 'Desafixar' : 'Fixar'}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+
+                        <TouchableOpacity 
+                          onPress={() => handleGenerateAiComment(comment)}
+                          style={styles.commentInlineActionBtn}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={{ fontSize: 11 }}>✨</Text>
+                          <Text style={[styles.commentInlineActionText, { color: '#16a34a', fontWeight: 'bold' }]}>IA</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                          onPress={() => handleReportComment(comment)}
+                          style={styles.commentInlineActionBtn}
+                          activeOpacity={0.7}
+                        >
+                          <Feather name="flag" size={12} color="#94a3b8" />
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Respostas Aninhadas (Sub-replies) */}
+                      {comment.replies && comment.replies.length > 0 && (
+                        <View style={styles.subRepliesContainer}>
+                          <TouchableOpacity 
+                            onPress={() => toggleReplies(comment.id)}
+                            style={styles.subRepliesToggleBtn}
+                            activeOpacity={0.7}
+                          >
+                            <Feather 
+                              name={expandedReplies[comment.id] ? "minus-circle" : "plus-circle"} 
+                              size={12} 
+                              color="#64748b" 
+                            />
+                            <Text style={styles.subRepliesToggleText}>
+                              {expandedReplies[comment.id]
+                                ? "Ocultar respostas"
+                                : `${comment.replies.length} ${comment.replies.length === 1 ? 'outra resposta' : 'outras respostas'}`}
+                            </Text>
+                          </TouchableOpacity>
+
+                          {expandedReplies[comment.id] && (
+                            <View style={styles.subRepliesTree}>
+                              {comment.replies.map((reply: any) => (
+                                <View key={reply.id} style={styles.subReplyItem}>
+                                  <View style={styles.subReplyHeaderRow}>
+                                    {reply.authorPhoto && !reply.isAnonymous ? (
+                                      <Image 
+                                        source={{ uri: resolveImageUrl(reply.authorPhoto) || '' }} 
+                                        style={styles.subReplyAvatar} 
+                                      />
+                                    ) : (
+                                      <View style={styles.subReplyAvatarFallback}>
+                                        <Text style={styles.subReplyAvatarFallbackText}>
+                                          {reply.isAnonymous ? 'A' : (reply.authorName?.charAt(0) || 'P')}
+                                        </Text>
+                                      </View>
+                                    )}
+
+                                    <View style={{ flex: 1 }}>
+                                      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                                        <Text style={styles.subReplyAuthorName}>
+                                          {reply.isAnonymous ? 'Anônimo' : (reply.authorName || 'Colega')}
+                                        </Text>
+                                        {renderAuthorBadges(reply.authorBadges)}
+                                      </View>
+                                      <Text style={styles.subReplyTimeAgo}>
+                                        há {formatTimeAgo(reply.createdAt)}
+                                      </Text>
+                                    </View>
+
+                                    {reply.isMine && (
+                                      <TouchableOpacity 
+                                        onPress={() => handleDeleteComment(reply.id)}
+                                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                      >
+                                        <Feather name="trash-2" size={11} color="#dc2626" />
+                                      </TouchableOpacity>
+                                    )}
+                                  </View>
+
+                                  <Text style={styles.subReplyBodyText}>{reply.content}</Text>
+
+                                  <View style={styles.subReplyActionsBar}>
+                                    <TouchableOpacity 
+                                      onPress={() => handleVoteComment(reply.id)}
+                                      style={styles.commentInlineActionBtn}
+                                      activeOpacity={0.7}
+                                    >
+                                      <Feather 
+                                        name="heart" 
+                                        size={11} 
+                                        color={reply.likedByMe ? "#e11d48" : "#64748b"} 
+                                      />
+                                      <Text style={[
+                                        styles.commentInlineActionText,
+                                        reply.likedByMe && { color: '#e11d48', fontWeight: 'bold' }
+                                      ]}>
+                                        {reply.likes || 0}
+                                      </Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity 
+                                      onPress={() => setReplyTo({ id: comment.id, authorName: reply.isAnonymous ? 'Anônimo' : (reply.authorName || 'Colega') })}
+                                      style={styles.commentInlineActionBtn}
+                                      activeOpacity={0.7}
+                                    >
+                                      <Feather name="message-square" size={11} color="#64748b" />
+                                      <Text style={styles.commentInlineActionText}>Responder</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity 
+                                      onPress={() => handleReportComment(reply)}
+                                      style={styles.commentInlineActionBtn}
+                                      activeOpacity={0.7}
+                                    >
+                                      <Feather name="flag" size={11} color="#94a3b8" />
+                                    </TouchableOpacity>
+                                  </View>
+                                </View>
+                              ))}
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  ))
+                )}
+
+                {/* Botão Mostrar Mais Comentários */}
+                {comments.length > 0 && hasMoreComments && (
+                  <TouchableOpacity 
+                    onPress={handleLoadMoreComments}
+                    disabled={isLoadingMoreComments}
+                    style={styles.btnLoadMoreComments}
+                    activeOpacity={0.8}
+                  >
+                    {isLoadingMoreComments ? (
+                      <ActivityIndicator size="small" color="#1B4332" />
+                    ) : (
+                      <Text style={styles.btnLoadMoreCommentsText}>Mostrar mais comentários ▾</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </YeloScrollView>
+        </>
+      ) : (
+        <>
+          {/* BARRA SUPERIOR SLIM DE NAVEGAÇÃO */}
+          <View style={styles.topNavRow}>
         <TouchableOpacity 
           onPress={() => router.back()} 
           style={styles.btnVoltar}
@@ -832,6 +1473,8 @@ export default function ForumScreen() {
       >
         <Feather name="plus" size={24} color="#ffffff" />
       </TouchableOpacity>
+        </>
+      )}
 
       {/* ======================================================== */}
       {/* MODAL BOTTOM SHEET: SELETOR DE CATEGORIAS */}
@@ -1054,222 +1697,7 @@ export default function ForumScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* ======================================================== */}
-      {/* MODAL: DETALHES DA DISCUSSÃO & RESPOSTAS */}
-      {/* ======================================================== */}
-      <Modal
-        visible={!!activePost}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setActivePost(null)}
-      >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={{ flex: 1, backgroundColor: '#f8fafc' }}
-        >
-          {/* Header da Tela de Detalhes */}
-          <View style={styles.detailsHeader}>
-            <View style={styles.sheetDragHandle} />
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 14 }}>
-              <Text style={styles.detailsHeaderTitle}>Discussão Clínica</Text>
-              <TouchableOpacity 
-                onPress={() => setActivePost(null)}
-                style={styles.modalCloseBtn}
-              >
-                <Feather name="x" size={18} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-          </View>
 
-          <ScrollView 
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 20, paddingBottom: 30 }}
-          >
-            {activePost && (
-              <View style={styles.detailsMainCard}>
-                {/* Header do Post */}
-                <View style={styles.postAuthorRow}>
-                  {activePost.authorPhoto && !activePost.isAnonymous ? (
-                    <Image 
-                      source={{ uri: resolveImageUrl(activePost.authorPhoto) || '' }} 
-                      style={styles.postAuthorAvatar} 
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.postAuthorAvatarFallback}>
-                      <Text style={styles.postAuthorAvatarFallbackText}>
-                        {activePost.isAnonymous ? 'A' : (activePost.authorName?.charAt(0) || 'P')}
-                      </Text>
-                    </View>
-                  )}
-
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                      <View style={[
-                        styles.categoryPill,
-                        { 
-                          backgroundColor: getCategoryStyle(activePost.category).bg,
-                          borderColor: getCategoryStyle(activePost.category).border
-                        }
-                      ]}>
-                        <Text style={[styles.categoryPillText, { color: getCategoryStyle(activePost.category).text }]}>
-                          {activePost.category || 'Geral'}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <Text style={styles.authorNameText}>
-                      por <Text style={{ fontWeight: 'bold' }}>{activePost.isAnonymous ? 'Anônimo' : (activePost.authorName || 'Psicólogo(a)')}</Text>
-                      {' '}• há {formatTimeAgo(activePost.createdAt)}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Título & Conteúdo Completo */}
-                <Text style={styles.detailsTitle}>{activePost.title}</Text>
-                <Text style={styles.detailsBody}>{activePost.content}</Text>
-
-                {/* Ações */}
-                <View style={styles.detailsActionsRow}>
-                  <TouchableOpacity 
-                    onPress={() => handleVotePost(activePost)}
-                    style={[
-                      styles.actionPillBtn,
-                      activePost.supportedByMe && styles.actionPillBtnVoted
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <Feather 
-                      name="heart" 
-                      size={15} 
-                      color={activePost.supportedByMe ? "#e11d48" : "#64748b"} 
-                    />
-                    <Text style={[
-                      styles.actionPillCount,
-                      activePost.supportedByMe && { color: '#e11d48' }
-                    ]}>
-                      {activePost.votes || 0} apoios
-                    </Text>
-                  </TouchableOpacity>
-
-                  <Text style={{ fontSize: 13, color: '#64748b', fontWeight: '500' }}>
-                    {comments.length} {comments.length === 1 ? 'resposta' : 'respostas'}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {/* Seção Respostas */}
-            <Text style={styles.commentsSectionTitle}>
-              Respostas dos Colegas
-            </Text>
-
-            {isLoadingComments ? (
-              <View style={{ paddingVertical: 30, alignItems: 'center' }}>
-                <ActivityIndicator color="#1B4332" />
-              </View>
-            ) : comments.length === 0 ? (
-              <View style={styles.emptyCommentsCard}>
-                <Text style={styles.emptyCommentsText}>
-                  Nenhuma resposta ainda. Seja o primeiro a compartilhar sua reflexão clínica!
-                </Text>
-              </View>
-            ) : (
-              comments.map((comment) => (
-                <View key={comment.id} style={styles.commentCard}>
-                  <View style={styles.commentHeaderRow}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                      {comment.authorPhoto && !comment.isAnonymous ? (
-                        <Image 
-                          source={{ uri: resolveImageUrl(comment.authorPhoto) || '' }} 
-                          style={styles.commentAvatar}
-                        />
-                      ) : (
-                        <View style={styles.commentAvatarFallback}>
-                          <Text style={styles.commentAvatarFallbackText}>
-                            {comment.isAnonymous ? 'A' : (comment.authorName?.charAt(0) || 'P')}
-                          </Text>
-                        </View>
-                      )}
-                      <View>
-                        <Text style={styles.commentAuthorName}>
-                          {comment.isAnonymous ? 'Anônimo' : (comment.authorName || 'Psicólogo(a)')}
-                        </Text>
-                        <Text style={styles.commentTimeAgo}>
-                          há {formatTimeAgo(comment.createdAt)}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {comment.isMine && (
-                      <TouchableOpacity 
-                        onPress={() => handleDeleteComment(comment.id)}
-                        style={{ padding: 4 }}
-                      >
-                        <Feather name="trash-2" size={13} color="#dc2626" />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-
-                  <Text style={styles.commentContentText}>
-                    {comment.content}
-                  </Text>
-
-                  {/* Voto no Comentário */}
-                  <TouchableOpacity 
-                    onPress={() => handleVoteComment(comment.id)}
-                    style={[
-                      styles.commentLikeBtn,
-                      comment.hasVoted && { backgroundColor: '#fee2e2', borderColor: '#fca5a5' }
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <Feather 
-                      name="heart" 
-                      size={12} 
-                      color={comment.hasVoted ? "#e11d48" : "#64748b"} 
-                    />
-                    <Text style={[
-                      styles.commentLikeCount,
-                      comment.hasVoted && { color: '#e11d48' }
-                    ]}>
-                      {comment.likes || 0}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ))
-            )}
-          </ScrollView>
-
-          {/* Rodapé Fixo de Envio de Resposta */}
-          <View style={styles.commentComposerBar}>
-            <View style={styles.commentInputRow}>
-              <TextInput 
-                placeholder="Escreva uma resposta construtiva..."
-                placeholderTextColor="#94a3b8"
-                value={newComment}
-                onChangeText={setNewComment}
-                style={styles.commentInput}
-              />
-              <TouchableOpacity 
-                onPress={handleSendComment}
-                disabled={isSubmittingComment || !newComment.trim()}
-                style={[
-                  styles.commentSendBtn,
-                  !newComment.trim() && { opacity: 0.5 }
-                ]}
-                activeOpacity={0.8}
-              >
-                {isSubmittingComment ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
-                ) : (
-                  <Feather name="arrow-up" size={16} color="#ffffff" />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
     </View>
   );
 }
@@ -1894,64 +2322,297 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // MODAL DETALHES
-  detailsHeader: {
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+  // BREADCRUMB NAVEGAÇÃO DA DISCUSSÃO
+  postNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
     paddingTop: 10,
+    paddingBottom: 8,
   },
-  detailsHeaderTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1B4332',
+  postBreadcrumbBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  detailsMainCard: {
+  breadcrumbIconCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  breadcrumbBackText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1e293b',
+  },
+  breadcrumbBullet: {
+    fontSize: 14,
+    color: '#94a3b8',
+  },
+  breadcrumbCategoryTag: {
+    borderWidth: 1,
+    borderRadius: 50,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  breadcrumbCategoryTagText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+
+  // CARD 1: ARTIGO DA DISCUSSÃO COMPLETO
+  fullPostCard: {
+    marginHorizontal: 16,
+    marginBottom: 16,
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 20,
     padding: 18,
-    marginBottom: 18,
     shadowColor: '#000',
     shadowOpacity: 0.04,
     shadowRadius: 10,
-    elevation: 1,
+    elevation: 2,
   },
-  detailsTitle: {
-    fontSize: 20,
+  fullPostHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  fullPostAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  fullPostAvatarFallback: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#D8F3DC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullPostAvatarFallbackText: {
+    color: '#1B4332',
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#0f172a',
-    marginTop: 6,
-    marginBottom: 10,
-    lineHeight: 26,
   },
-  detailsBody: {
+  fullPostAuthorName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  postPinnedChip: {
+    backgroundColor: '#fef3c7',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+    marginLeft: 4,
+  },
+  postPinnedChipText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#b45309',
+  },
+  fullPostActionIconsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 6,
+  },
+  fullPostHeaderIconBtn: {
+    padding: 2,
+  },
+  fullPostHeaderReportBtn: {
+    padding: 4,
+  },
+  fullPostTitle: {
+    fontFamily: 'NewKansas-Bold',
+    fontSize: 21,
+    color: '#111827',
+    lineHeight: 27,
+    marginTop: 14,
+    marginBottom: 12,
+  },
+  fullPostBody: {
     fontSize: 14.5,
     color: '#334155',
     lineHeight: 23,
     marginBottom: 16,
   },
-  detailsActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  fullPostFooter: {
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
   },
-  commentsSectionTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#1B4332',
-    marginBottom: 12,
-  },
-  emptyCommentsCard: {
+  supportLikePillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    borderRadius: 50,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    gap: 5,
+  },
+  supportLikePillBtnActive: {
+    backgroundColor: '#fff1f2',
+    borderColor: '#fecdd3',
+  },
+  supportLikeCount: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#475569',
+  },
+  supportLikeLabel: {
+    fontSize: 12.5,
+    fontWeight: '500',
+    color: '#64748b',
+  },
+
+  // CARD 2: COMENTÁRIOS E TROCAS
+  fullPostCommentsCard: {
+    marginHorizontal: 16,
+    marginBottom: 20,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 20,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  commentsCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  commentsCardTitle: {
+    fontFamily: 'NewKansas-Bold',
+    fontSize: 19,
+    color: '#111827',
+  },
+  composerWrapper: {
+    marginBottom: 18,
+  },
+  replyingToBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  replyingToText: {
+    fontSize: 12,
+    color: '#166534',
+  },
+  composerTextInput: {
+    backgroundColor: '#fcfcfc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 13.5,
+    color: '#1e293b',
+    minHeight: 60,
+    textAlignVertical: 'top',
+  },
+  composerToolbarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  composerCheckboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  composerCheckboxCircle: {
+    width: 17,
+    height: 17,
+    borderRadius: 8.5,
+    borderWidth: 1.5,
+    borderColor: '#cbd5e1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  composerCheckboxCircleActive: {
+    borderColor: '#1B4332',
+  },
+  composerCheckboxInnerDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#1B4332',
+  },
+  composerCheckboxLabel: {
+    fontSize: 12.5,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  composerAiBtn: {
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#86efac',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 50,
+  },
+  composerAiBtnText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#16a34a',
+  },
+  composerSubmitBtn: {
+    backgroundColor: '#1B4332',
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 50,
+    shadowColor: '#1B4332',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  composerSubmitBtnText: {
+    color: '#ffffff',
+    fontSize: 12.5,
+    fontWeight: 'bold',
+  },
+
+  // THREAD DE COMENTÁRIOS
+  commentsListThread: {
+    marginTop: 6,
+  },
+  emptyCommentsBox: {
+    paddingVertical: 24,
     alignItems: 'center',
   },
   emptyCommentsText: {
@@ -1960,44 +2621,37 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
-  commentCard: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.02,
-    shadowRadius: 4,
-    elevation: 1,
+  commentItemBox: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
   },
   commentHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   commentAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
   commentAvatarFallback: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: '#1B4332',
     alignItems: 'center',
     justifyContent: 'center',
   },
   commentAvatarFallbackText: {
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
   },
   commentAuthorName: {
-    fontSize: 12.5,
+    fontSize: 13.5,
     fontWeight: 'bold',
     color: '#1e293b',
   },
@@ -2005,61 +2659,130 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#94a3b8',
   },
-  commentContentText: {
+  commentPinnedChip: {
+    backgroundColor: '#fef3c7',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+    marginLeft: 4,
+  },
+  commentPinnedChipText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#b45309',
+  },
+  commentBodyText: {
     fontSize: 13.5,
     color: '#334155',
     lineHeight: 20,
-    marginBottom: 10,
+    marginTop: 6,
+    marginBottom: 8,
   },
-  commentLikeBtn: {
+  commentActionsBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 50,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    gap: 4,
+    gap: 14,
   },
-  commentLikeCount: {
-    fontSize: 11.5,
-    fontWeight: 'bold',
+  commentInlineActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 2,
+  },
+  commentInlineActionText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+
+  // SUB-REPLIES
+  subRepliesContainer: {
+    marginTop: 8,
+  },
+  subRepliesToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 4,
+  },
+  subRepliesToggleText: {
+    fontSize: 12,
+    fontWeight: '600',
     color: '#64748b',
   },
-  commentComposerBar: {
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 14,
+  subRepliesTree: {
+    borderLeftWidth: 2,
+    borderLeftColor: '#f1f5f9',
+    marginLeft: 14,
+    paddingLeft: 12,
+    marginTop: 8,
+    gap: 12,
   },
-  commentInputRow: {
+  subReplyItem: {
+    paddingVertical: 4,
+  },
+  subReplyHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 50,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    gap: 8,
   },
-  commentInput: {
-    flex: 1,
-    fontSize: 13.5,
-    color: '#1e293b',
-    padding: 0,
+  subReplyAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
   },
-  commentSendBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  subReplyAvatarFallback: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: '#1B4332',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
+  },
+  subReplyAvatarFallbackText: {
+    color: '#ffffff',
+    fontSize: 10.5,
+    fontWeight: 'bold',
+  },
+  subReplyAuthorName: {
+    fontSize: 12.5,
+    fontWeight: 'bold',
+    color: '#1e293b',
+  },
+  subReplyTimeAgo: {
+    fontSize: 11,
+    color: '#94a3b8',
+  },
+  subReplyBodyText: {
+    fontSize: 13,
+    color: '#334155',
+    lineHeight: 19,
+    marginTop: 4,
+    marginBottom: 6,
+  },
+  subReplyActionsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  // BOTÃO MOSTRAR MAIS COMENTÁRIOS
+  btnLoadMoreComments: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 50,
+    paddingVertical: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+    backgroundColor: '#ffffff',
+  },
+  btnLoadMoreCommentsText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#334155',
   },
 
   // LOADER & EMPTY
