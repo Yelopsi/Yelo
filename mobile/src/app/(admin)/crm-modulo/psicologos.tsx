@@ -1297,11 +1297,29 @@ export default function AdminCRMPsicologosScreen() {
                 return (
                   <View
                     key={`${item.id}_${item.actionType}_${idx}`}
-                    className="bg-white rounded-[22px] p-4 mb-3 border border-[#e2e8f0] shadow-xs"
+                    className="bg-white rounded-2xl p-4 mb-3 border border-[#e2e8f0]"
+                    style={{
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 8,
+                      elevation: 2,
+                    }}
                   >
                     {/* Topo do Card */}
                     <View className="flex-row items-center gap-3 pb-3 border-b border-[#f1f5f9]">
-                      <View className="w-[52px] h-[52px] rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0] items-center justify-center shadow-2xs">
+                      <View
+                        style={{
+                          width: 52,
+                          height: 52,
+                          borderRadius: 16,
+                          backgroundColor: '#ecfdf5',
+                          borderWidth: 1,
+                          borderColor: '#a7f3d0',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
                         <Text className="font-title text-[#166534] text-[20px] font-bold">
                           {(item.nome || '?').charAt(0).toUpperCase()}
                         </Text>
@@ -1377,13 +1395,26 @@ export default function AdminCRMPsicologosScreen() {
                         onPress={() => handleSendAction(item)}
                         disabled={actionLoading}
                         activeOpacity={0.8}
-                        className="flex-1 h-[40px] rounded-xl overflow-hidden shadow-2xs"
+                        style={{
+                          flex: 1,
+                          height: 42,
+                          borderRadius: 12,
+                          overflow: 'hidden',
+                        }}
                       >
                         <LinearGradient
                           colors={btnGradient as any}
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 1 }}
-                          className="w-full h-full flex-row items-center justify-center gap-1.5 px-3"
+                          style={{
+                            width: '100%',
+                            height: 42,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                            paddingHorizontal: 12,
+                          }}
                         >
                           {actionLoading ? (
                             <ActivityIndicator size="small" color="#fff" />
@@ -1401,7 +1432,17 @@ export default function AdminCRMPsicologosScreen() {
                       <TouchableOpacity
                         onPress={() => handleDismissAction(item.id, item.actionType)}
                         activeOpacity={0.7}
-                        className="h-[40px] px-3.5 rounded-xl border border-red-200 bg-red-50/70 flex-row items-center gap-1.5"
+                        style={{
+                          height: 42,
+                          paddingHorizontal: 14,
+                          borderRadius: 12,
+                          backgroundColor: '#fef2f2',
+                          borderWidth: 1,
+                          borderColor: '#fecaca',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
                       >
                         <Feather name="x" size={14} color="#ef4444" />
                         <Text className="font-sans font-bold text-[#ef4444] text-[12px]">Ignorar</Text>
@@ -1472,18 +1513,43 @@ export default function AdminCRMPsicologosScreen() {
                 return (
                   <View
                     key={psy.id}
-                    className="bg-white rounded-[22px] p-4 mb-3 border border-[#e2e8f0] shadow-xs"
+                    className="bg-white rounded-2xl p-4 mb-3 border border-[#e2e8f0]"
+                    style={{
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 8,
+                      elevation: 2,
+                    }}
                   >
                     {/* Topo do Card: Foto/Avatar + Nome do Profissional */}
                     <View className="flex-row items-center gap-3 pb-3 border-b border-[#f1f5f9]">
                       {psy.fotoUrl ? (
                         <Image
                           source={{ uri: psy.fotoUrl }}
-                          className="w-[52px] h-[52px] rounded-2xl border border-slate-200"
-                          style={{ resizeMode: 'cover' }}
+                          style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            borderColor: '#e2e8f0',
+                            backgroundColor: '#f8fafc',
+                          }}
+                          resizeMode="cover"
                         />
                       ) : (
-                        <View className="w-[52px] h-[52px] rounded-2xl bg-emerald-50 border border-emerald-200/80 items-center justify-center shadow-2xs">
+                        <View
+                          style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: 16,
+                            backgroundColor: '#ecfdf5',
+                            borderWidth: 1,
+                            borderColor: '#a7f3d0',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
                           <Text className="font-title text-[#166534] text-[20px] font-bold">
                             {(psy.nome || '?').charAt(0).toUpperCase()}
                           </Text>
@@ -1552,16 +1618,33 @@ export default function AdminCRMPsicologosScreen() {
                         <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
                           Força do Perfil
                         </Text>
-                        <View className="flex-row items-center gap-2">
-                          <View className="w-[84px] h-[7px] bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <View
+                            style={{
+                              width: 84,
+                              height: 8,
+                              backgroundColor: '#e2e8f0',
+                              borderRadius: 999,
+                              overflow: 'hidden',
+                            }}
+                          >
                             <View
-                              className="h-full rounded-full"
-                              style={{ width: `${Math.max(6, score)}%`, backgroundColor: scoreColor }}
+                              style={{
+                                width: `${Math.max(6, Math.min(100, score))}%`,
+                                height: 8,
+                                backgroundColor: scoreColor,
+                                borderRadius: 999,
+                              }}
                             />
                           </View>
                           <Text
-                            className="font-sans font-bold text-[12px] min-w-[34px] text-right"
-                            style={{ color: scoreColor }}
+                            style={{
+                              fontFamily: 'Inter_700Bold',
+                              fontSize: 12,
+                              color: scoreColor,
+                              minWidth: 34,
+                              textAlign: 'right',
+                            }}
                           >
                             {score}%
                           </Text>
@@ -1594,7 +1677,16 @@ export default function AdminCRMPsicologosScreen() {
                       <TouchableOpacity
                         onPress={() => openCSDrawer(psy)}
                         activeOpacity={0.8}
-                        className="flex-1 bg-[#1B4332] h-[40px] px-3.5 rounded-xl flex-row items-center justify-center gap-1.5 shadow-2xs"
+                        style={{
+                          flex: 1,
+                          height: 42,
+                          backgroundColor: '#1B4332',
+                          borderRadius: 12,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                        }}
                       >
                         <Feather name="eye" size={15} color="#fff" />
                         <Text className="font-sans font-bold text-white text-[13px]">
@@ -1606,7 +1698,16 @@ export default function AdminCRMPsicologosScreen() {
                         <TouchableOpacity
                           onPress={() => handleSendAction(psy, 'standard_contact')}
                           activeOpacity={0.8}
-                          className="bg-[#10b981] h-[40px] px-3.5 rounded-xl flex-row items-center justify-center gap-1.5 shadow-2xs"
+                          style={{
+                            height: 42,
+                            paddingHorizontal: 14,
+                            backgroundColor: '#10b981',
+                            borderRadius: 12,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                          }}
                         >
                           <Feather name="message-circle" size={15} color="#fff" />
                           <Text className="font-sans font-bold text-white text-[13px]">WhatsApp</Text>
@@ -1617,7 +1718,16 @@ export default function AdminCRMPsicologosScreen() {
                         <TouchableOpacity
                           onPress={() => handleDeletePsychologist(psy.id, psy.nome)}
                           activeOpacity={0.7}
-                          className="w-[40px] h-[40px] rounded-xl bg-red-50 border border-red-200/80 items-center justify-center"
+                          style={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: 12,
+                            backgroundColor: '#fef2f2',
+                            borderWidth: 1,
+                            borderColor: '#fecaca',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
                         >
                           <Feather name="trash-2" size={16} color="#ef4444" />
                         </TouchableOpacity>
@@ -1700,7 +1810,7 @@ export default function AdminCRMPsicologosScreen() {
             </View>
 
             {/* Cabeçalho do Drawer */}
-            <View className="bg-white px-5 py-3.5 border-b border-slate-200/80 flex-row justify-between items-center">
+            <View className="bg-white px-5 py-3.5 border-b border-slate-200 flex-row justify-between items-center">
               <View className="flex-row items-center gap-2.5">
                 <View className="w-9 h-9 rounded-xl bg-purple-100 items-center justify-center">
                   <Feather name="activity" size={18} color="#7c3aed" />
@@ -1753,16 +1863,34 @@ export default function AdminCRMPsicologosScreen() {
                   return (
                     <>
                       {/* Cartão de Informações Básicas */}
-                      <View className="bg-white rounded-2xl p-4 border border-[#e2e8f0] shadow-2xs">
+                      <View className="bg-white rounded-2xl p-4 border border-[#e2e8f0] shadow-sm">
                         <View className="flex-row items-center gap-3.5 mb-3">
                           {psy.fotoUrl ? (
                             <Image
                               source={{ uri: psy.fotoUrl }}
-                              className="w-[56px] h-[56px] rounded-2xl border border-slate-200"
-                              style={{ resizeMode: 'cover' }}
+                              style={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: 16,
+                                borderWidth: 1,
+                                borderColor: '#e2e8f0',
+                                backgroundColor: '#f8fafc',
+                              }}
+                              resizeMode="cover"
                             />
                           ) : (
-                            <View className="w-[56px] h-[56px] rounded-2xl bg-emerald-50 border border-emerald-200 items-center justify-center shadow-2xs">
+                            <View
+                              style={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: 16,
+                                backgroundColor: '#ecfdf5',
+                                borderWidth: 1,
+                                borderColor: '#a7f3d0',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
                               <Text className="font-title text-[#166534] text-[22px] font-bold">
                                 {(psy.nome || '?').charAt(0).toUpperCase()}
                               </Text>
@@ -1819,10 +1947,9 @@ export default function AdminCRMPsicologosScreen() {
                           </Text>
                         </View>
 
-                        <View className="w-full h-[8px] bg-[#e2e8f0] rounded-full overflow-hidden mb-[14px]">
+                        <View style={{ width: '100%', height: 8, backgroundColor: '#e2e8f0', borderRadius: 999, overflow: 'hidden', marginBottom: 14 }}>
                           <View
-                            className="h-full rounded-full"
-                            style={{ width: `${score}%`, backgroundColor: scoreColor }}
+                            style={{ width: `${Math.max(4, Math.min(100, score))}%`, height: 8, backgroundColor: scoreColor, borderRadius: 999 }}
                           />
                         </View>
 

@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-eb32f3d6",
+    "date": "2026-11-06T22:17:01.000Z",
+    "commit": "eb32f3d6",
+    "author": "Anderson",
+    "title": "Correção: Align CS hero card style with overview, maintain bottom nav and refine layout (mobile/admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "align CS hero card style with overview, maintain bottom nav and refine layout",
+    "description": "Commit registrado no repositório: \"fix(mobile/admin): align CS hero card style with overview, maintain bottom nav and refine layout\". Arquivos modificados: backend/data/system_changelog.json, mobile/src/app/(admin)/_layout.tsx, mobile/src/app/(admin)/crm-modulo/psicologos.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #eb32f3d6"
+    },
+    "after": {
+      "nova_versao": "align CS hero card style with overview, maintain bottom nav and refine layout"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-4f1300d3",
     "date": "2026-11-06T22:04:49.000Z",
     "commit": "4f1300d3",
