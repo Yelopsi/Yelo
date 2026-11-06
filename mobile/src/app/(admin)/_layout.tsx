@@ -4,6 +4,7 @@ import { Tabs, Redirect, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
+import { resolvePhotoUrl } from '../../utils/imageUrl';
 import { StatusBar } from 'expo-status-bar';
 
 export default function AdminLayout() {
@@ -43,10 +44,18 @@ export default function AdminLayout() {
 
   const HeaderLeft = () => (
     <View className="flex-row items-center ml-[20px] gap-2">
-      <Image 
-        source={user?.fotoUrl ? { uri: user.fotoUrl } : { uri: "https://placehold.co/100x100/1B4332/FFFFFF?text=AD" }} 
-        className="w-[36px] h-[36px] rounded-full border-2 border-[#1B4332]" 
-      />
+      {user?.fotoUrl ? (
+        <Image 
+          source={{ uri: resolvePhotoUrl(user.fotoUrl) }} 
+          style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: '#1B4332' }} 
+        />
+      ) : (
+        <View 
+          style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: '#1B4332', backgroundColor: '#1B4332', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 13 }}>AD</Text>
+        </View>
+      )}
       <View className="bg-[#e8f5e9] border border-[#c8e6c9] px-[10px] py-[4px] rounded-[50px]">
         <Text className="text-[#1B4332] font-sans font-bold text-[12px]">🛡️ Admin</Text>
       </View>

@@ -531,48 +531,55 @@ export default function AdminVisaoGeralScreen() {
           </View>
 
           {/* MARCOS ESTRATÉGICOS (PAGANTES) — Single Bar com Marcos */}
-          <View className="border-t border-[#e2e8f0] pt-4">
-            <Text className="font-title text-[#1e293b] text-[15px] font-bold text-center mb-3">
-              Marcos Estratégicos (Pagantes)
-            </Text>
+          <View style={{ borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 16 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Text className="font-title text-[#1e293b] text-[15px] font-bold">
+                Marcos Estratégicos (Pagantes)
+              </Text>
+              <View className="bg-[#f1f5f9] px-2.5 py-0.5 rounded-full">
+                <Text className="font-sans text-[11px] font-bold text-[#64748b]">
+                  Atual: <Text className="text-[#6366f1]">{currentPaying}</Text>
+                </Text>
+              </View>
+            </View>
 
-            {/* Single Progress Bar */}
-            <View className="h-3.5 bg-[#e2e8f0] rounded-full overflow-hidden mb-3 relative">
+            {/* Single Progress Bar com altura fixa em pixels */}
+            <View style={{ height: 16, backgroundColor: '#e2e8f0', borderRadius: 999, overflow: 'hidden', marginBottom: 14, width: '100%' }}>
               <LinearGradient
                 colors={['#6366f1', '#8b5cf6']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={{ width: `${progressPercent}%`, height: '100%', borderRadius: 999 }}
+                style={{ width: `${Math.max(2, Math.min(100, progressPercent))}%`, height: 16, borderRadius: 999 }}
               />
             </View>
 
             {/* Marcadores Estratégicos */}
-            <View className="flex-row gap-2">
+            <View style={{ flexDirection: 'row', gap: 8, width: '100%' }}>
               {/* Breakeven */}
-              <View className="flex-1 bg-[#eff6ff] border border-[#bfdbfe] rounded-[14px] p-2.5 items-center">
+              <View style={{ flex: 1, backgroundColor: '#eff6ff', borderWidth: 1, borderColor: '#bfdbfe', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' }}>
                 <Text className="font-sans font-bold text-[#1d4ed8] text-[11px]">Breakeven</Text>
-                <Text className="font-title font-black text-[#1e293b] text-[16px] my-0.5">{breakevenTarget}</Text>
-                <View className="bg-white/80 px-1.5 py-0.5 rounded-md flex-row items-center gap-1 mt-1">
+                <Text className="font-title font-bold text-[#1e293b] text-[17px] my-0.5">{breakevenTarget}</Text>
+                <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, borderWidth: 1, borderColor: '#e2e8f0' }}>
                   <Text className="font-sans font-semibold text-[#64748b] text-[9px]">{projBreakeven.text}</Text>
                   <Text className="font-sans font-bold text-[#10b981] text-[9px]">{projBreakeven.badge}</Text>
                 </View>
               </View>
 
               {/* Saída MEI */}
-              <View className="flex-1 bg-[#f5f3ff] border border-[#ddd6fe] rounded-[14px] p-2.5 items-center">
+              <View style={{ flex: 1, backgroundColor: '#f5f3ff', borderWidth: 1, borderColor: '#ddd6fe', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' }}>
                 <Text className="font-sans font-bold text-[#6d28d9] text-[11px]">Saída MEI</Text>
-                <Text className="font-title font-black text-[#1e293b] text-[16px] my-0.5">70</Text>
-                <View className="bg-white/80 px-1.5 py-0.5 rounded-md flex-row items-center gap-1 mt-1">
+                <Text className="font-title font-bold text-[#1e293b] text-[17px] my-0.5">70</Text>
+                <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, borderWidth: 1, borderColor: '#e2e8f0' }}>
                   <Text className="font-sans font-semibold text-[#64748b] text-[9px]">{proj70.text}</Text>
                   <Text className="font-sans font-bold text-[#10b981] text-[9px]">{proj70.badge}</Text>
                 </View>
               </View>
 
               {/* Pró-labore */}
-              <View className="flex-1 bg-[#fdf2f8] border border-[#fbcfe8] rounded-[14px] p-2.5 items-center">
+              <View style={{ flex: 1, backgroundColor: '#fdf2f8', borderWidth: 1, borderColor: '#fbcfe8', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' }}>
                 <Text className="font-sans font-bold text-[#be185d] text-[11px]">Pró-labore</Text>
-                <Text className="font-title font-black text-[#1e293b] text-[16px] my-0.5">120</Text>
-                <View className="bg-white/80 px-1.5 py-0.5 rounded-md flex-row items-center gap-1 mt-1">
+                <Text className="font-title font-bold text-[#1e293b] text-[17px] my-0.5">120</Text>
+                <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, borderWidth: 1, borderColor: '#e2e8f0' }}>
                   <Text className="font-sans font-semibold text-[#64748b] text-[9px]">{proj120.text}</Text>
                   <Text className="font-sans font-bold text-[#10b981] text-[9px]">{proj120.badge}</Text>
                 </View>
