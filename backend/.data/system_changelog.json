@@ -1,5 +1,240 @@
 [
   {
+    "id": "change-git-9c9bd156",
+    "date": "2026-11-06T20:35:21.000Z",
+    "commit": "9c9bd156",
+    "author": "Anderson",
+    "title": "Correção: Remover conflito entre href e tabBarButton nas telas internas (mobile-admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "remover conflito entre href e tabBarButton nas telas internas",
+    "description": "Commit registrado no repositório: \"fix(mobile-admin): remover conflito entre href e tabBarButton nas telas internas\". Arquivos modificados: mobile/src/app/(admin)/_layout.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9c9bd156"
+    },
+    "after": {
+      "nova_versao": "remover conflito entre href e tabBarButton nas telas internas"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/_layout.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-6b50b27a",
+    "date": "2026-11-06T20:31:38.000Z",
+    "commit": "6b50b27a",
+    "author": "Anderson",
+    "title": "Correção: Corrigir bottom navigation usando tabBarStyle nativo e eliminando bloqueio de toques (mobile-admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir bottom navigation usando tabBarStyle nativo e eliminando bloqueio de toques",
+    "description": "Commit registrado no repositório: \"fix(mobile-admin): corrigir bottom navigation usando tabBarStyle nativo e eliminando bloqueio de toques\". Arquivos modificados: mobile/src/app/(admin)/_layout.tsx, mobile/src/app/(admin)/sair.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #6b50b27a"
+    },
+    "after": {
+      "nova_versao": "corrigir bottom navigation usando tabBarStyle nativo e eliminando bloqueio de toques"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(admin)/sair.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-ff6f79ca",
+    "date": "2026-11-06T20:24:20.000Z",
+    "commit": "ff6f79ca",
+    "author": "Anderson",
+    "title": "Novo: Sincronizar tela CRM Hub com a versao web mobile (mobile-admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "sincronizar tela CRM Hub com a versao web mobile",
+    "description": "Commit registrado no repositório: \"feat(mobile-admin): sincronizar tela CRM Hub com a versao web mobile\". Arquivos modificados: mobile/src/app/(admin)/crm.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ff6f79ca"
+    },
+    "after": {
+      "nova_versao": "sincronizar tela CRM Hub com a versao web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/crm.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-f297a4dd",
+    "date": "2026-11-06T20:20:52.000Z",
+    "commit": "f297a4dd",
+    "author": "Anderson",
+    "title": "Correção: Centralizar numeros com os textos nos cards de kpis (mobile-admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "centralizar numeros com os textos nos cards de kpis",
+    "description": "Commit registrado no repositório: \"fix(mobile-admin): centralizar numeros com os textos nos cards de kpis\". Arquivos modificados: mobile/src/app/(admin)/index.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #f297a4dd"
+    },
+    "after": {
+      "nova_versao": "centralizar numeros com os textos nos cards de kpis"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/index.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-60203853",
+    "date": "2026-11-06T20:16:44.000Z",
+    "commit": "60203853",
+    "author": "Anderson",
+    "title": "Correção: Corrigir altura fixa da barra de marcos e fallback do avatar (mobile-admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir altura fixa da barra de marcos e fallback do avatar",
+    "description": "Commit registrado no repositório: \"fix(mobile-admin): corrigir altura fixa da barra de marcos e fallback do avatar\". Arquivos modificados: mobile/src/app/(admin)/_layout.tsx, mobile/src/app/(admin)/index.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #60203853"
+    },
+    "after": {
+      "nova_versao": "corrigir altura fixa da barra de marcos e fallback do avatar"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(admin)/index.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-1622fd54",
+    "date": "2026-11-06T20:12:00.000Z",
+    "commit": "1622fd54",
+    "author": "Anderson",
+    "title": "Novo: Sincronizar tela de visão geral do admin com a versão web mobile (mobile-admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar tela de visão geral do admin com a versão web mobile",
+    "description": "Commit registrado no repositório: \"feat(mobile-admin): sincronizar tela de visão geral do admin com a versão web mobile\". Arquivos modificados: mobile/.expo/types/router.d.ts, mobile/src/app/(admin)/_layout.tsx, mobile/src/app/(admin)/index.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1622fd54"
+    },
+    "after": {
+      "nova_versao": "sincronizar tela de visão geral do admin com a versão web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/.expo/types/router.d.ts",
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(admin)/index.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-f79f7523",
+    "date": "2026-11-06T15:52:41.000Z",
+    "commit": "f79f7523",
+    "author": "Anderson",
+    "title": "Novo: Checkout modal nativo, remocao de paywall de teste e paridade admin (mobile)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "checkout modal nativo, remocao de paywall de teste e paridade admin",
+    "description": "Commit registrado no repositório: \"feat(mobile): checkout modal nativo, remocao de paywall de teste e paridade admin\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/paymentController.js, backend/controllers/psiDashboardController.js, backend/data/system_changelog.json, backend/routes/psychologistRoutes.js (+60 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #f79f7523"
+    },
+    "after": {
+      "nova_versao": "checkout modal nativo, remocao de paywall de teste e paridade admin"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/psiDashboardController.js",
+      "backend/data/system_changelog.json",
+      "backend/routes/psychologistRoutes.js",
+      "backend/routes/publicRoutes.js",
+      "backend/routes/viewRoutes.js",
+      "mobile/.expo/types/router.d.ts",
+      "mobile/src/app/(admin)/(crm)/_layout.tsx",
+      "mobile/src/app/(admin)/(crm)/analytics-funil.tsx",
+      "mobile/src/app/(admin)/(crm)/avaliacoes.tsx",
+      "mobile/src/app/(admin)/(crm)/caixa-entrada.tsx",
+      "mobile/src/app/(admin)/(crm)/cancelamentos.tsx",
+      "mobile/src/app/(admin)/(crm)/cmo-metrics.tsx",
+      "mobile/src/app/(admin)/(crm)/copilot-wpp.tsx",
+      "mobile/src/app/(admin)/(crm)/distribuicao.tsx",
+      "mobile/src/app/(admin)/(crm)/espera.tsx",
+      "mobile/src/app/(admin)/(crm)/followup.tsx",
+      "mobile/src/app/(admin)/(crm)/leads.tsx",
+      "mobile/src/app/(admin)/(crm)/pacientes.tsx",
+      "mobile/src/app/(admin)/(crm)/psicologos.tsx",
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(admin)/ajustes.tsx",
+      "mobile/src/app/(admin)/backlog-ajustes.tsx",
+      "mobile/src/app/(admin)/crm.tsx",
+      "mobile/src/app/(admin)/historico-alteracoes.tsx",
+      "mobile/src/app/(admin)/index.tsx",
+      "mobile/src/app/(paciente)/_layout.tsx",
+      "mobile/src/app/(tabs)/_layout.tsx",
+      "mobile/src/app/(tabs)/ajustes.tsx",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "mobile/src/app/(tabs)/blog.tsx",
+      "mobile/src/app/(tabs)/clinica.tsx",
+      "mobile/src/app/(tabs)/comunidade_yelo.tsx",
+      "mobile/src/app/(tabs)/evolucao.tsx",
+      "mobile/src/app/(tabs)/favoritos-analytics.tsx",
+      "mobile/src/app/(tabs)/financeiro.tsx",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "mobile/src/app/(tabs)/historico_contatos.tsx",
+      "mobile/src/app/(tabs)/index.tsx",
+      "mobile/src/app/(tabs)/manual-conversao.tsx",
+      "mobile/src/app/(tabs)/meu_perfil.tsx",
+      "mobile/src/app/(tabs)/notificacoes.tsx",
+      "mobile/src/app/(tabs)/novidades.tsx",
+      "mobile/src/app/(tabs)/pacientes/index.tsx",
+      "mobile/src/app/blog.tsx",
+      "mobile/src/app/cadastro.tsx",
+      "mobile/src/app/contato.tsx",
+      "mobile/src/app/psi_questionario.tsx",
+      "mobile/src/app/recuperar-senha.tsx",
+      "mobile/src/components/MobileHeader.tsx",
+      "mobile/src/components/NativeSelectMenu.ios.tsx",
+      "mobile/src/components/PublicHeader.tsx",
+      "mobile/src/components/YeloRichEditor.tsx",
+      "mobile/src/components/YeloToast.tsx",
+      "mobile/src/components/forum/ForumCommentThread.tsx",
+      "mobile/src/components/forum/ForumMainComposer.tsx",
+      "mobile/src/components/forum/forumUi.tsx",
+      "mobile/src/contexts/AuthContext.tsx",
+      "mobile/src/utils/imageUrl.ts",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "public/psi/psi_meu_perfil.html",
+      "public/psi/psi_meu_perfil.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-54c80c0a",
     "date": "2026-11-04T00:59:56.000Z",
     "commit": "54c80c0a",

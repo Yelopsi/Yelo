@@ -15,3 +15,4 @@ export default function AdminSairScreen() {
 
   return <View className="flex-1 bg-[#f8f9fa]" />;
 }
+
