@@ -623,95 +623,101 @@ export default function AdminCRMPsicologosScreen() {
             </Text>
           </View>
 
-          {/* 4 Métricas de Topo (2x2 Grid) */}
-          <View className="flex-row flex-wrap gap-2.5">
-            {/* MRR */}
-            <TouchableOpacity
-              onPress={() =>
-                setTooltipModal({
-                  visible: true,
-                  title: 'MRR',
-                  desc: 'Receita Mensal Recorrente estimada baseada nas assinaturas ativas em tempo real.',
-                })
-              }
-              activeOpacity={0.85}
-              className="bg-white/10 rounded-2xl p-3 flex-1 min-w-[45%] border border-white/15 justify-between"
-            >
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
-                  MRR
-                </Text>
-                <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
-              </View>
-              <Text className="font-title text-white text-[20px]">{mrrFormatted}</Text>
-              <Text className="font-sans text-white/50 text-[10px] mt-0.5">tempo real</Text>
-            </TouchableOpacity>
+          {/* 4 Métricas de Topo (2 Linhas de 2 Cards - 50%/50%) */}
+          <View className="gap-2.5">
+            {/* Linha 1: MRR & Ativação */}
+            <View className="flex-row gap-2.5">
+              {/* MRR */}
+              <TouchableOpacity
+                onPress={() =>
+                  setTooltipModal({
+                    visible: true,
+                    title: 'MRR',
+                    desc: 'Receita Mensal Recorrente estimada baseada nas assinaturas ativas em tempo real.',
+                  })
+                }
+                activeOpacity={0.85}
+                className="flex-1 bg-white/10 rounded-2xl p-3 border border-white/15 justify-between"
+              >
+                <View className="flex-row items-center justify-between mb-1">
+                  <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
+                    MRR
+                  </Text>
+                  <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
+                </View>
+                <Text className="font-title text-white text-[20px]">{mrrFormatted}</Text>
+                <Text className="font-sans text-white/50 text-[10px] mt-0.5">tempo real</Text>
+              </TouchableOpacity>
 
-            {/* Ativação */}
-            <TouchableOpacity
-              onPress={() =>
-                setTooltipModal({
-                  visible: true,
-                  title: 'Taxa de Ativação',
-                  desc: 'Percentual de psicólogos cadastrados nos últimos 30 dias que ativaram o perfil e estão prontos para atendimento.',
-                })
-              }
-              activeOpacity={0.85}
-              className="bg-white/10 rounded-2xl p-3 flex-1 min-w-[45%] border border-white/15 justify-between"
-            >
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
-                  Ativação
-                </Text>
-                <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
-              </View>
-              <Text className="font-title text-[#34d399] text-[20px]">{activationPct}</Text>
-              {renderMetricDiff(founderMetrics.activationDiff)}
-            </TouchableOpacity>
+              {/* Ativação */}
+              <TouchableOpacity
+                onPress={() =>
+                  setTooltipModal({
+                    visible: true,
+                    title: 'Taxa de Ativação',
+                    desc: 'Percentual de psicólogos cadastrados nos últimos 30 dias que ativaram o perfil e estão prontos para atendimento.',
+                  })
+                }
+                activeOpacity={0.85}
+                className="flex-1 bg-white/10 rounded-2xl p-3 border border-white/15 justify-between"
+              >
+                <View className="flex-row items-center justify-between mb-1">
+                  <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
+                    Ativação
+                  </Text>
+                  <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
+                </View>
+                <Text className="font-title text-[#34d399] text-[20px]">{activationPct}</Text>
+                {renderMetricDiff(founderMetrics.activationDiff)}
+              </TouchableOpacity>
+            </View>
 
-            {/* Pós-Trial */}
-            <TouchableOpacity
-              onPress={() =>
-                setTooltipModal({
-                  visible: true,
-                  title: 'Retenção Pós-Trial',
-                  desc: 'Percentual de psicólogos que continuam pagantes ativos após o trial nos últimos 30 dias.',
-                })
-              }
-              activeOpacity={0.85}
-              className="bg-white/10 rounded-2xl p-3 flex-1 min-w-[45%] border border-white/15 justify-between"
-            >
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
-                  Pós-Trial
-                </Text>
-                <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
-              </View>
-              <Text className="font-title text-[#60a5fa] text-[20px]">{postTrialPct}</Text>
-              {renderMetricDiff(founderMetrics.postTrialDiff)}
-            </TouchableOpacity>
+            {/* Linha 2: Pós-Trial & Renovação */}
+            <View className="flex-row gap-2.5">
+              {/* Pós-Trial */}
+              <TouchableOpacity
+                onPress={() =>
+                  setTooltipModal({
+                    visible: true,
+                    title: 'Retenção Pós-Trial',
+                    desc: 'Percentual de psicólogos que continuam pagantes ativos após o trial nos últimos 30 dias.',
+                  })
+                }
+                activeOpacity={0.85}
+                className="flex-1 bg-white/10 rounded-2xl p-3 border border-white/15 justify-between"
+              >
+                <View className="flex-row items-center justify-between mb-1">
+                  <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
+                    Pós-Trial
+                  </Text>
+                  <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
+                </View>
+                <Text className="font-title text-[#60a5fa] text-[20px]">{postTrialPct}</Text>
+                {renderMetricDiff(founderMetrics.postTrialDiff)}
+              </TouchableOpacity>
 
-            {/* Renovação */}
-            <TouchableOpacity
-              onPress={() =>
-                setTooltipModal({
-                  visible: true,
-                  title: 'Renovação',
-                  desc: 'Percentual de psicólogos elegíveis que renovaram a mensalidade nos últimos 30 dias.',
-                })
-              }
-              activeOpacity={0.85}
-              className="bg-white/10 rounded-2xl p-3 flex-1 min-w-[45%] border border-white/15 justify-between"
-            >
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
-                  Renovação
-                </Text>
-                <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
-              </View>
-              <Text className="font-title text-[#c084fc] text-[20px]">{renewalPct}</Text>
-              {renderMetricDiff(founderMetrics.renewalDiff)}
-            </TouchableOpacity>
+              {/* Renovação */}
+              <TouchableOpacity
+                onPress={() =>
+                  setTooltipModal({
+                    visible: true,
+                    title: 'Renovação',
+                    desc: 'Percentual de psicólogos elegíveis que renovaram a mensalidade nos últimos 30 dias.',
+                  })
+                }
+                activeOpacity={0.85}
+                className="flex-1 bg-white/10 rounded-2xl p-3 border border-white/15 justify-between"
+              >
+                <View className="flex-row items-center justify-between mb-1">
+                  <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
+                    Renovação
+                  </Text>
+                  <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
+                </View>
+                <Text className="font-title text-[#c084fc] text-[20px]">{renewalPct}</Text>
+                {renderMetricDiff(founderMetrics.renewalDiff)}
+              </TouchableOpacity>
+            </View>
           </View>
         </LinearGradient>
 
@@ -825,7 +831,7 @@ export default function AdminCRMPsicologosScreen() {
         </View>
 
         {/* ========================================================= */}
-        {/* 3. STATUS DA BASE / FUNIL (2-COL GRID ESTILO WEB MOBILE)   */}
+        {/* 3. STATUS DA BASE / FUNIL (2 LINHAS DE 2 CARDS + 1 FULL)   */}
         {/* ========================================================= */}
         <View className="px-4 mb-5">
           <View className="flex-row items-center justify-between mb-2.5">
@@ -833,132 +839,138 @@ export default function AdminCRMPsicologosScreen() {
             <Text className="font-sans text-[#64748b] text-[12px]">Toque para filtrar</Text>
           </View>
 
-          <View className="flex-row flex-wrap gap-2.5">
-            {/* Pagantes */}
-            <TouchableOpacity
-              onPress={() => setActiveFilter(activeFilter === 'active_paying' ? '' : 'active_paying')}
-              activeOpacity={0.8}
-              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3.5 border-t-4 border-t-[#10b981] border border-[#e2e8f0] shadow-xs ${
-                activeFilter === 'active_paying' ? 'bg-emerald-50/80 border-[#10b981]' : ''
-              }`}
-            >
-              <View className="flex-row items-center justify-between mb-1">
-                <View className="flex-row items-center gap-1.5">
-                  <Feather name="dollar-sign" size={13} color="#10b981" />
-                  <Text className="font-sans font-bold text-[#475569] text-[12px]">Pagantes</Text>
+          <View className="gap-2.5">
+            {/* Linha 1: Pagantes & Em Trial */}
+            <View className="flex-row gap-2.5">
+              {/* Pagantes */}
+              <TouchableOpacity
+                onPress={() => setActiveFilter(activeFilter === 'active_paying' ? '' : 'active_paying')}
+                activeOpacity={0.8}
+                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#10b981] border border-[#e2e8f0] shadow-xs ${
+                  activeFilter === 'active_paying' ? 'bg-emerald-50/80 border-[#10b981]' : ''
+                }`}
+              >
+                <View className="flex-row items-center justify-between mb-1">
+                  <View className="flex-row items-center gap-1.5">
+                    <Feather name="dollar-sign" size={13} color="#10b981" />
+                    <Text className="font-sans font-bold text-[#475569] text-[12px]">Pagantes</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setTooltipModal({
+                        visible: true,
+                        title: 'Pagantes',
+                        desc: 'Psicólogos que já assinaram e estão com o pagamento em dia.',
+                      })
+                    }
+                  >
+                    <Feather name="info" size={12} color="#94a3b8" />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  onPress={() =>
-                    setTooltipModal({
-                      visible: true,
-                      title: 'Pagantes',
-                      desc: 'Psicólogos que já assinaram e estão com o pagamento em dia.',
-                    })
-                  }
-                >
-                  <Feather name="info" size={12} color="#94a3b8" />
-                </TouchableOpacity>
-              </View>
-              <Text className="font-title text-[#10b981] text-[24px] mt-1">
-                {kpis.active_paying || 0}
-              </Text>
-              <Text className="font-sans text-emerald-600 font-medium text-[11px] mt-0.5">+5 este mês</Text>
-            </TouchableOpacity>
+                <Text className="font-title text-[#10b981] text-[24px] mt-1">
+                  {kpis.active_paying || 0}
+                </Text>
+                <Text className="font-sans text-emerald-600 font-medium text-[11px] mt-0.5">+5 este mês</Text>
+              </TouchableOpacity>
 
-            {/* Em Trial */}
-            <TouchableOpacity
-              onPress={() => setActiveFilter(activeFilter === 'active_trial' ? '' : 'active_trial')}
-              activeOpacity={0.8}
-              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3.5 border-t-4 border-t-[#3b82f6] border border-[#e2e8f0] shadow-xs ${
-                activeFilter === 'active_trial' ? 'bg-blue-50/80 border-[#3b82f6]' : ''
-              }`}
-            >
-              <View className="flex-row items-center justify-between mb-1">
-                <View className="flex-row items-center gap-1.5">
-                  <Feather name="clock" size={13} color="#3b82f6" />
-                  <Text className="font-sans font-bold text-[#475569] text-[12px]">Em Trial</Text>
+              {/* Em Trial */}
+              <TouchableOpacity
+                onPress={() => setActiveFilter(activeFilter === 'active_trial' ? '' : 'active_trial')}
+                activeOpacity={0.8}
+                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#3b82f6] border border-[#e2e8f0] shadow-xs ${
+                  activeFilter === 'active_trial' ? 'bg-blue-50/80 border-[#3b82f6]' : ''
+                }`}
+              >
+                <View className="flex-row items-center justify-between mb-1">
+                  <View className="flex-row items-center gap-1.5">
+                    <Feather name="clock" size={13} color="#3b82f6" />
+                    <Text className="font-sans font-bold text-[#475569] text-[12px]">Em Trial</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setTooltipModal({
+                        visible: true,
+                        title: 'Em Trial',
+                        desc: 'Psicólogos nos 7 dias de teste grátis.',
+                      })
+                    }
+                  >
+                    <Feather name="info" size={12} color="#94a3b8" />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  onPress={() =>
-                    setTooltipModal({
-                      visible: true,
-                      title: 'Em Trial',
-                      desc: 'Psicólogos nos 7 dias de teste grátis.',
-                    })
-                  }
-                >
-                  <Feather name="info" size={12} color="#94a3b8" />
-                </TouchableOpacity>
-              </View>
-              <Text className="font-title text-[#3b82f6] text-[24px] mt-1">
-                {kpis.active_trial || 0}
-              </Text>
-              <Text className="font-sans text-[#64748b] font-medium text-[11px] mt-0.5">Mantido</Text>
-            </TouchableOpacity>
+                <Text className="font-title text-[#3b82f6] text-[24px] mt-1">
+                  {kpis.active_trial || 0}
+                </Text>
+                <Text className="font-sans text-[#64748b] font-medium text-[11px] mt-0.5">Mantido</Text>
+              </TouchableOpacity>
+            </View>
 
-            {/* Churn no Mês */}
-            <TouchableOpacity
-              onPress={() => setActiveFilter(activeFilter === 'churn_month' ? '' : 'churn_month')}
-              activeOpacity={0.8}
-              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3.5 border-t-4 border-t-[#ef4444] border border-[#e2e8f0] shadow-xs ${
-                activeFilter === 'churn_month' ? 'bg-red-50/80 border-[#ef4444]' : ''
-              }`}
-            >
-              <View className="flex-row items-center justify-between mb-1">
-                <View className="flex-row items-center gap-1.5">
-                  <Feather name="user-x" size={13} color="#ef4444" />
-                  <Text className="font-sans font-bold text-[#475569] text-[12px]">Churn no Mês</Text>
+            {/* Linha 2: Churn no Mês & Pendentes */}
+            <View className="flex-row gap-2.5">
+              {/* Churn no Mês */}
+              <TouchableOpacity
+                onPress={() => setActiveFilter(activeFilter === 'churn_month' ? '' : 'churn_month')}
+                activeOpacity={0.8}
+                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#ef4444] border border-[#e2e8f0] shadow-xs ${
+                  activeFilter === 'churn_month' ? 'bg-red-50/80 border-[#ef4444]' : ''
+                }`}
+              >
+                <View className="flex-row items-center justify-between mb-1">
+                  <View className="flex-row items-center gap-1.5">
+                    <Feather name="user-x" size={13} color="#ef4444" />
+                    <Text className="font-sans font-bold text-[#475569] text-[12px]">Churn no Mês</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setTooltipModal({
+                        visible: true,
+                        title: 'Churn no Mês',
+                        desc: 'Psicólogos pagantes (com ao menos 1 pagamento) que cancelaram ou expiraram no mês atual.',
+                      })
+                    }
+                  >
+                    <Feather name="info" size={12} color="#94a3b8" />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  onPress={() =>
-                    setTooltipModal({
-                      visible: true,
-                      title: 'Churn no Mês',
-                      desc: 'Psicólogos pagantes (com ao menos 1 pagamento) que cancelaram ou expiraram no mês atual.',
-                    })
-                  }
-                >
-                  <Feather name="info" size={12} color="#94a3b8" />
-                </TouchableOpacity>
-              </View>
-              <Text className="font-title text-[#ef4444] text-[24px] mt-1">
-                {kpis.churn_month || 0}
-              </Text>
-              <Text className="font-sans text-[#ef4444] font-medium text-[11px] mt-0.5">Pagantes do mês</Text>
-            </TouchableOpacity>
+                <Text className="font-title text-[#ef4444] text-[24px] mt-1">
+                  {kpis.churn_month || 0}
+                </Text>
+                <Text className="font-sans text-[#ef4444] font-medium text-[11px] mt-0.5">Pagantes do mês</Text>
+              </TouchableOpacity>
 
-            {/* Pendentes */}
-            <TouchableOpacity
-              onPress={() => setActiveFilter(activeFilter === 'pending' ? '' : 'pending')}
-              activeOpacity={0.8}
-              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3.5 border-t-4 border-t-[#f59e0b] border border-[#e2e8f0] shadow-xs ${
-                activeFilter === 'pending' ? 'bg-amber-50/80 border-[#f59e0b]' : ''
-              }`}
-            >
-              <View className="flex-row items-center justify-between mb-1">
-                <View className="flex-row items-center gap-1.5">
-                  <Feather name="alert-circle" size={13} color="#f59e0b" />
-                  <Text className="font-sans font-bold text-[#475569] text-[12px]">Pendentes</Text>
+              {/* Pendentes */}
+              <TouchableOpacity
+                onPress={() => setActiveFilter(activeFilter === 'pending' ? '' : 'pending')}
+                activeOpacity={0.8}
+                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#f59e0b] border border-[#e2e8f0] shadow-xs ${
+                  activeFilter === 'pending' ? 'bg-amber-50/80 border-[#f59e0b]' : ''
+                }`}
+              >
+                <View className="flex-row items-center justify-between mb-1">
+                  <View className="flex-row items-center gap-1.5">
+                    <Feather name="alert-circle" size={13} color="#f59e0b" />
+                    <Text className="font-sans font-bold text-[#475569] text-[12px]">Pendentes</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() =>
+                      setTooltipModal({
+                        visible: true,
+                        title: 'Pendentes',
+                        desc: 'Não finalizaram o perfil. Após um certo período, irão para a lixeira.',
+                      })
+                    }
+                  >
+                    <Feather name="info" size={12} color="#94a3b8" />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  onPress={() =>
-                    setTooltipModal({
-                      visible: true,
-                      title: 'Pendentes',
-                      desc: 'Não finalizaram o perfil. Após um certo período, irão para a lixeira.',
-                    })
-                  }
-                >
-                  <Feather name="info" size={12} color="#94a3b8" />
-                </TouchableOpacity>
-              </View>
-              <Text className="font-title text-[#f59e0b] text-[24px] mt-1">
-                {kpis.pending || 0}
-              </Text>
-              <Text className="font-sans text-[#b45309] font-medium text-[11px] mt-0.5">há &gt; 3 dias</Text>
-            </TouchableOpacity>
+                <Text className="font-title text-[#f59e0b] text-[24px] mt-1">
+                  {kpis.pending || 0}
+                </Text>
+                <Text className="font-sans text-[#b45309] font-medium text-[11px] mt-0.5">há &gt; 3 dias</Text>
+              </TouchableOpacity>
+            </View>
 
-            {/* Inativos (Full Width) */}
+            {/* Linha 3: Inativos (Full Width) */}
             <TouchableOpacity
               onPress={() => setActiveFilter(activeFilter === 'inactive' ? '' : 'inactive')}
               activeOpacity={0.8}
@@ -983,83 +995,89 @@ export default function AdminCRMPsicologosScreen() {
         </View>
 
         {/* ========================================================= */}
-        {/* 4. ORIGENS UTM (AQUISIÇÃO - 2-COL GRID ESTILO WEB)        */}
+        {/* 4. ORIGENS UTM (AQUISIÇÃO - 2 LINHAS DE 2 CARDS + 1 FULL) */}
         {/* ========================================================= */}
         <View className="px-4 mb-5">
           <Text className="font-title text-[#1e293b] text-[18px] mb-2.5">Origens de Aquisição (UTM)</Text>
 
-          <View className="flex-row flex-wrap gap-2.5">
-            {/* WhatsApp */}
-            <TouchableOpacity
-              onPress={() => setActiveFilter(activeFilter === 'utm_whatsapp' ? '' : 'utm_whatsapp')}
-              activeOpacity={0.8}
-              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3 border-t-4 border-t-[#10b981] border border-[#e2e8f0] shadow-xs ${
-                activeFilter === 'utm_whatsapp' ? 'bg-emerald-50/80 border-[#10b981]' : ''
-              }`}
-            >
-              <Text className="font-sans font-bold text-[#10b981] text-[11px] uppercase tracking-wider mb-0.5">
-                WhatsApp
-              </Text>
-              <Text className="font-title text-[#10b981] text-[20px]">
-                {kpis.utm_whatsapp || 0}
-              </Text>
-            </TouchableOpacity>
+          <View className="gap-2.5">
+            {/* Linha 1: WhatsApp & Meta / Ads */}
+            <View className="flex-row gap-2.5">
+              {/* WhatsApp */}
+              <TouchableOpacity
+                onPress={() => setActiveFilter(activeFilter === 'utm_whatsapp' ? '' : 'utm_whatsapp')}
+                activeOpacity={0.8}
+                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#10b981] border border-[#e2e8f0] shadow-xs ${
+                  activeFilter === 'utm_whatsapp' ? 'bg-emerald-50/80 border-[#10b981]' : ''
+                }`}
+              >
+                <Text className="font-sans font-bold text-[#10b981] text-[11px] uppercase tracking-wider mb-0.5">
+                  WhatsApp
+                </Text>
+                <Text className="font-title text-[#10b981] text-[20px]">
+                  {kpis.utm_whatsapp || 0}
+                </Text>
+              </TouchableOpacity>
 
-            {/* Meta / Ads */}
-            <TouchableOpacity
-              onPress={() => setActiveFilter(activeFilter === 'utm_meta' ? '' : 'utm_meta')}
-              activeOpacity={0.8}
-              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3 border-t-4 border-t-[#3b82f6] border border-[#e2e8f0] shadow-xs ${
-                activeFilter === 'utm_meta' ? 'bg-blue-50/80 border-[#3b82f6]' : ''
-              }`}
-            >
-              <Text className="font-sans font-bold text-[#3b82f6] text-[11px] uppercase tracking-wider mb-0.5">
-                Meta / Ads
-              </Text>
-              <Text className="font-title text-[#3b82f6] text-[20px]">
-                {kpis.utm_meta || 0}
-              </Text>
-            </TouchableOpacity>
+              {/* Meta / Ads */}
+              <TouchableOpacity
+                onPress={() => setActiveFilter(activeFilter === 'utm_meta' ? '' : 'utm_meta')}
+                activeOpacity={0.8}
+                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#3b82f6] border border-[#e2e8f0] shadow-xs ${
+                  activeFilter === 'utm_meta' ? 'bg-blue-50/80 border-[#3b82f6]' : ''
+                }`}
+              >
+                <Text className="font-sans font-bold text-[#3b82f6] text-[11px] uppercase tracking-wider mb-0.5">
+                  Meta / Ads
+                </Text>
+                <Text className="font-title text-[#3b82f6] text-[20px]">
+                  {kpis.utm_meta || 0}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-            {/* Google */}
-            <TouchableOpacity
-              onPress={() => setActiveFilter(activeFilter === 'utm_google' ? '' : 'utm_google')}
-              activeOpacity={0.8}
-              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3 border-t-4 border-t-[#f59e0b] border border-[#e2e8f0] shadow-xs ${
-                activeFilter === 'utm_google' ? 'bg-amber-50/80 border-[#f59e0b]' : ''
-              }`}
-            >
-              <Text className="font-sans font-bold text-[#f59e0b] text-[11px] uppercase tracking-wider mb-0.5">
-                Google
-              </Text>
-              <Text className="font-title text-[#f59e0b] text-[20px]">
-                {kpis.utm_google || 0}
-              </Text>
-            </TouchableOpacity>
+            {/* Linha 2: Google & Instagram Bio */}
+            <View className="flex-row gap-2.5">
+              {/* Google */}
+              <TouchableOpacity
+                onPress={() => setActiveFilter(activeFilter === 'utm_google' ? '' : 'utm_google')}
+                activeOpacity={0.8}
+                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#f59e0b] border border-[#e2e8f0] shadow-xs ${
+                  activeFilter === 'utm_google' ? 'bg-amber-50/80 border-[#f59e0b]' : ''
+                }`}
+              >
+                <Text className="font-sans font-bold text-[#f59e0b] text-[11px] uppercase tracking-wider mb-0.5">
+                  Google
+                </Text>
+                <Text className="font-title text-[#f59e0b] text-[20px]">
+                  {kpis.utm_google || 0}
+                </Text>
+              </TouchableOpacity>
 
-            {/* Instagram Bio */}
-            <TouchableOpacity
-              onPress={() =>
-                setActiveFilter(activeFilter === 'utm_instagram_bio' ? '' : 'utm_instagram_bio')
-              }
-              activeOpacity={0.8}
-              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3 border-t-4 border-t-[#ec4899] border border-[#e2e8f0] shadow-xs ${
-                activeFilter === 'utm_instagram_bio' ? 'bg-pink-50/80 border-[#ec4899]' : ''
-              }`}
-            >
-              <Text className="font-sans font-bold text-[#ec4899] text-[11px] uppercase tracking-wider mb-0.5">
-                Instagram Bio
-              </Text>
-              <Text className="font-title text-[#ec4899] text-[20px]">
-                {kpis.utm_instagram_bio || 0}
-              </Text>
-            </TouchableOpacity>
+              {/* Instagram Bio */}
+              <TouchableOpacity
+                onPress={() =>
+                  setActiveFilter(activeFilter === 'utm_instagram_bio' ? '' : 'utm_instagram_bio')
+                }
+                activeOpacity={0.8}
+                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#ec4899] border border-[#e2e8f0] shadow-xs ${
+                  activeFilter === 'utm_instagram_bio' ? 'bg-pink-50/80 border-[#ec4899]' : ''
+                }`}
+              >
+                <Text className="font-sans font-bold text-[#ec4899] text-[11px] uppercase tracking-wider mb-0.5">
+                  Instagram Bio
+                </Text>
+                <Text className="font-title text-[#ec4899] text-[20px]">
+                  {kpis.utm_instagram_bio || 0}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-            {/* Direto / Outros */}
+            {/* Linha 3: Direto / Outros */}
             <TouchableOpacity
               onPress={() => setActiveFilter(activeFilter === 'utm_outros' ? '' : 'utm_outros')}
               activeOpacity={0.8}
-              className={`w-full bg-white rounded-2xl p-3 border-l-4 border-l-[#64748b] border border-[#e2e8f0] shadow-xs flex-row items-center justify-between ${
+              className={`w-full bg-white rounded-2xl p-3.5 border-l-4 border-l-[#64748b] border border-[#e2e8f0] shadow-xs flex-row items-center justify-between ${
                 activeFilter === 'utm_outros' ? 'bg-slate-100 border-[#64748b]' : ''
               }`}
             >

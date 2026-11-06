@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-cf94034f",
+    "date": "2026-11-06T21:41:13.000Z",
+    "commit": "cf94034f",
+    "author": "Anderson",
+    "title": "Novo: Alinhar layout de Sucesso do Psicólogo (CS) com a versão web mobile",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "alinhar layout de Sucesso do Psicólogo (CS) com a versão web mobile",
+    "description": "Commit registrado no repositório: \"feat(mobile): alinhar layout de Sucesso do Psicólogo (CS) com a versão web mobile\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/_layout.tsx, mobile/src/app/(admin)/crm-modulo/psicologos.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #cf94034f"
+    },
+    "after": {
+      "nova_versao": "alinhar layout de Sucesso do Psicólogo (CS) com a versão web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-464745cf",
     "date": "2026-11-06T21:17:47.000Z",
     "commit": "464745cf",
