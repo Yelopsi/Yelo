@@ -22,7 +22,13 @@ export default function CRMLayout() {
         headerLeft: () => (
           <TouchableOpacity 
             activeOpacity={0.7}
-            onPress={() => router.back()} 
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(admin)/crm');
+              }
+            }} 
             className="flex-row items-center bg-white/20 px-[14px] py-[8px] rounded-[50px] mr-[15px]"
           >
             <Feather name="arrow-left" size={18} color="white" />

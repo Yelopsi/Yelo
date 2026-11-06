@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-516f1a5b",
+    "date": "2026-11-06T21:05:18.000Z",
+    "commit": "516f1a5b",
+    "author": "Anderson",
+    "title": "Correção: Configurar e apontar rotas e titulos de todos os 15 cards do CRM Hub (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "configurar e apontar rotas e titulos de todos os 15 cards do CRM Hub",
+    "description": "Commit registrado no repositório: \"fix(mobile): configurar e apontar rotas e titulos de todos os 15 cards do CRM Hub\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/(crm)/_layout.tsx, mobile/src/app/(admin)/crm.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #516f1a5b"
+    },
+    "after": {
+      "nova_versao": "configurar e apontar rotas e titulos de todos os 15 cards do CRM Hub"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/(crm)/_layout.tsx",
+      "mobile/src/app/(admin)/crm.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-feeb6d57",
     "date": "2026-11-06T20:45:41.000Z",
     "commit": "feeb6d57",
