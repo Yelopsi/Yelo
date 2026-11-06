@@ -6,9 +6,72 @@
 </div>
 
 <style>
+    .avisos-load-more-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin: 24px 0 20px 0;
+    }
+
+    #btn-load-more-avisos,
+    .btn-yelo-load-more {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: #F8FAFC;
+        color: #1B4332;
+        border: 1.5px solid #CBD5E1;
+        border-radius: 50px;
+        padding: 12px 28px;
+        font-family: var(--font-principal, inherit);
+        font-size: 0.92rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        margin: 0 auto;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    #btn-load-more-avisos:hover,
+    .btn-yelo-load-more:hover {
+        background: #1B4332;
+        color: #FFFFFF;
+        border-color: #1B4332;
+        box-shadow: 0 4px 14px rgba(27, 67, 50, 0.2);
+        transform: translateY(-1px);
+    }
+
+    #btn-load-more-avisos:active,
+    .btn-yelo-load-more:active {
+        transform: scale(0.97);
+    }
+
+    #btn-load-more-avisos svg,
+    .btn-yelo-load-more svg {
+        transition: transform 0.2s ease;
+    }
+
+    #btn-load-more-avisos:hover svg,
+    .btn-yelo-load-more:hover svg {
+        transform: translateY(2px);
+    }
+
     @media (max-width: 991px) {
         .avisos-feed-widget {
-            padding-bottom: 80px; /* Garante que o último card não fique escondido pela navegação mobile */
+            padding-bottom: 100px !important; /* Garante que o botão e o último card não fiquem escondidos pela navegação mobile */
+        }
+        .avisos-load-more-wrapper {
+            margin: 20px 0 25px 0;
+        }
+        #btn-load-more-avisos,
+        .btn-yelo-load-more {
+            width: 100%;
+            max-width: 320px;
+            padding: 13px 24px;
+            font-size: 0.95rem;
         }
     }
 </style>
@@ -29,6 +92,16 @@
     <div id="avisos-feed-container" class="avisos-feed-list">
         <!-- Loader inicial -->
         <div class="loader-wrapper"><div class="loader-spinner"></div></div>
+    </div>
+
+    <!-- Botão Carregar Mais Antigos (Modern Yelo Pill) -->
+    <div id="avisos-load-more-wrapper" class="avisos-load-more-wrapper" style="display: none;">
+        <button id="btn-load-more-avisos" class="btn-yelo-load-more" type="button">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+            <span>Ver mais antigos</span>
+        </button>
     </div>
 </div>
 
@@ -177,24 +250,21 @@
             container.appendChild(item);
         });
         
-        // Botão "Ver mais"
-        let loadMoreBtn = document.getElementById('btn-load-more-avisos');
-        if (allAvisos.filter(a => (currentFilter === 'all') || (currentFilter === 'unread' && !a.read) || (currentFilter === 'personal' && a.psychologistId)).length > visibleCount) {
-            if (!loadMoreBtn) {
-                loadMoreBtn = document.createElement('button');
-                loadMoreBtn.id = 'btn-load-more-avisos';
-                loadMoreBtn.className = 'btn btn-secundario';
-                loadMoreBtn.textContent = 'Ver mais antigos';
-                loadMoreBtn.onclick = () => {
-                    visibleCount += 10;
-                    filterAndRender();
-                };
-                container.parentNode.appendChild(loadMoreBtn);
-            } else {
-                loadMoreBtn.style.display = 'block';
-            }
-        } else {
-            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+        // Botão "Ver mais" (Controla exibição do container centralizado)
+        const loadMoreWrapper = document.getElementById('avisos-load-more-wrapper');
+        const loadMoreBtn = document.getElementById('btn-load-more-avisos');
+        const filteredCount = allAvisos.filter(a => (currentFilter === 'all') || (currentFilter === 'unread' && !a.read) || (currentFilter === 'personal' && a.psychologistId)).length;
+        const hasMore = filteredCount > visibleCount;
+
+        if (loadMoreWrapper) {
+            loadMoreWrapper.style.display = hasMore ? 'flex' : 'none';
+        }
+        if (loadMoreBtn && !loadMoreBtn.dataset.bound) {
+            loadMoreBtn.dataset.bound = 'true';
+            loadMoreBtn.onclick = () => {
+                visibleCount += 10;
+                filterAndRender();
+            };
         }
     }
 

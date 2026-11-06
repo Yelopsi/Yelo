@@ -1,5 +1,59 @@
 [
   {
+    "id": "change-git-9d920bc8",
+    "date": "2026-11-06T17:25:06.000Z",
+    "commit": "9d920bc8",
+    "author": "Anderson",
+    "title": "Correção: Refinar regra de churn no mes, unificar aparicoes no match e blindar sync google (crm & metrics)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "refinar regra de churn no mes, unificar aparicoes no match e blindar sync google",
+    "description": "Commit registrado no repositório: \"fix(crm & metrics): refinar regra de churn no mes, unificar aparicoes no match e blindar sync google\". Arquivos modificados: admin/admin_crm_psicologos.html, backend/controllers/adminUsersController.js, backend/controllers/psiDashboardController.js, backend/services/googleBusinessService.js, public/psi/psi_meu_perfil.js (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9d920bc8"
+    },
+    "after": {
+      "nova_versao": "refinar regra de churn no mes, unificar aparicoes no match e blindar sync google"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "backend/controllers/adminUsersController.js",
+      "backend/controllers/psiDashboardController.js",
+      "backend/services/googleBusinessService.js",
+      "public/psi/psi_meu_perfil.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-70b7894b",
+    "date": "2026-10-30T00:38:32.000Z",
+    "commit": "70b7894b",
+    "author": "Anderson",
+    "title": "Correção: Corrigir calculo matematico de sessao vs mensalidade e alinhar tom de equipe (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "corrigir calculo matematico de sessao vs mensalidade e alinhar tom de equipe",
+    "description": "Commit registrado no repositório: \"fix(crm): corrigir calculo matematico de sessao vs mensalidade e alinhar tom de equipe\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/adminPerformanceController.js, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #70b7894b"
+    },
+    "after": {
+      "nova_versao": "corrigir calculo matematico de sessao vs mensalidade e alinhar tom de equipe"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-8384b32b",
     "date": "2026-10-30T00:23:50.000Z",
     "commit": "8384b32b",
