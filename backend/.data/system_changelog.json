@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-86272e8b",
+    "date": "2026-11-06T23:14:05.000Z",
+    "commit": "86272e8b",
+    "author": "Anderson",
+    "title": "Interface: Fotos redondas e botoes em formato de pilula nos cards de psicologos (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "fotos redondas e botoes em formato de pilula nos cards de psicologos",
+    "description": "Commit registrado no repositório: \"style(mobile): fotos redondas e botoes em formato de pilula nos cards de psicologos\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/psicologos.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #86272e8b"
+    },
+    "after": {
+      "nova_versao": "fotos redondas e botoes em formato de pilula nos cards de psicologos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-89ccbb01",
     "date": "2026-11-06T22:46:12.000Z",
     "commit": "89ccbb01",

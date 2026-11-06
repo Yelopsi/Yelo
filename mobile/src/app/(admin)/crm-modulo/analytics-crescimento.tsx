@@ -479,7 +479,7 @@ export default function AnalyticsCrescimentoScreen() {
               onPress={() => fetchGrowthData(false)}
               disabled={loading}
               style={{ backgroundColor: '#FFEE8C' }}
-              className="flex-row items-center px-3.5 py-2 rounded-xl shadow-xs active:opacity-80"
+              className="flex-row items-center px-4 py-2 rounded-full shadow-xs active:opacity-80"
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#1B4332" />
@@ -500,7 +500,7 @@ export default function AnalyticsCrescimentoScreen() {
 
             <TouchableOpacity
               onPress={handleExportCSV}
-              className="flex-row items-center bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 active:bg-white/20"
+              className="flex-row items-center bg-white/10 px-3.5 py-1.5 rounded-full border border-white/20 active:bg-white/20"
             >
               <Feather name="download" size={12} color="#ffffff" />
               <Text className="text-white font-sans font-bold text-[11px] ml-1.5">Exportar CSV</Text>
@@ -1001,14 +1001,32 @@ export default function AnalyticsCrescimentoScreen() {
                       elevation: 1,
                     }}
                   >
-                    <View className="flex-row items-start justify-between">
-                      <View className="flex-1 mr-2">
-                        <Text className="font-title text-[#0f172a] text-[14px]">
-                          {psi.nome || 'Psicólogo sem nome'}
-                        </Text>
-                        <Text className="font-sans text-[#64748b] text-[11px] mt-0.5">
-                          {psi.telefone || 'Sem telefone cadastrado'}
-                        </Text>
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center gap-2.5 flex-1 mr-2">
+                        <View
+                          style={{
+                            width: 44,
+                            height: 44,
+                            borderRadius: 999,
+                            backgroundColor: '#ecfdf5',
+                            borderWidth: 1.5,
+                            borderColor: '#a7f3d0',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text className="font-title text-[#166534] text-[16px] font-bold">
+                            {(psi.nome || '?').charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <View className="flex-1">
+                          <Text className="font-title text-[#0f172a] text-[14px]">
+                            {psi.nome || 'Psicólogo sem nome'}
+                          </Text>
+                          <Text className="font-sans text-[#64748b] text-[11px] mt-0.5">
+                            {psi.telefone || 'Sem telefone cadastrado'}
+                          </Text>
+                        </View>
                       </View>
 
                       <View
@@ -1031,14 +1049,14 @@ export default function AnalyticsCrescimentoScreen() {
                       </View>
 
                       {psi.admin_billing_sent_at ? (
-                        <View className="bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200">
+                        <View className="bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200">
                           <Text className="font-sans font-bold text-[10px] text-indigo-700">✅ Contatado</Text>
                         </View>
                       ) : (
                         <TouchableOpacity
                           onPress={() => handleContactTrial(psi)}
                           activeOpacity={0.8}
-                          className="flex-row items-center bg-[#25D366] px-3 py-1.5 rounded-lg active:opacity-90"
+                          className="flex-row items-center bg-[#25D366] px-3.5 py-1.5 rounded-full active:opacity-90"
                         >
                           <Feather name="message-circle" size={13} color="white" />
                           <Text className="text-white font-sans font-bold text-[11px] ml-1">Chamar</Text>
@@ -1258,12 +1276,30 @@ export default function AnalyticsCrescimentoScreen() {
                       key={psi.id}
                       className="bg-slate-50 p-4 rounded-2xl border border-slate-200"
                     >
-                      <View className="flex-row items-start justify-between mb-2">
-                        <View className="flex-1 mr-2">
-                          <Text className="font-title text-[#0f172a] text-[15px]">{psi.nome}</Text>
-                          <Text className="font-sans text-[#64748b] text-[11px] mt-0.5">
-                            {psi.plano ? `Plano ${psi.plano}` : 'Em Trial'} • Ativo há {Math.floor(psi.days_active || 0)}d
-                          </Text>
+                      <View className="flex-row items-center justify-between mb-2">
+                        <View className="flex-row items-center gap-2.5 flex-1 mr-2">
+                          <View
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 999,
+                              backgroundColor: '#ecfdf5',
+                              borderWidth: 1.5,
+                              borderColor: '#a7f3d0',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Text className="font-title text-[#166534] text-[16px] font-bold">
+                              {(psi.nome || '?').charAt(0).toUpperCase()}
+                            </Text>
+                          </View>
+                          <View className="flex-1">
+                            <Text className="font-title text-[#0f172a] text-[15px]">{psi.nome}</Text>
+                            <Text className="font-sans text-[#64748b] text-[11px] mt-0.5">
+                              {psi.plano ? `Plano ${psi.plano}` : 'Em Trial'} • Ativo há {Math.floor(psi.days_active || 0)}d
+                            </Text>
+                          </View>
                         </View>
                         <View className="bg-white px-2.5 py-1 rounded-full border border-slate-200">
                           <Text className="font-sans font-bold text-[10px] text-slate-700">
@@ -1277,7 +1313,7 @@ export default function AnalyticsCrescimentoScreen() {
                         <TouchableOpacity
                           onPress={() => handleContactPsi(psi)}
                           activeOpacity={0.8}
-                          className="flex-1 bg-[#25D366] flex-row items-center justify-center py-2.5 rounded-xl active:opacity-90"
+                          className="flex-1 bg-[#25D366] flex-row items-center justify-center py-2.5 rounded-full active:opacity-90"
                         >
                           <Feather name="message-circle" size={14} color="white" />
                           <Text className="text-white font-sans font-bold text-[12px] ml-1.5">WhatsApp</Text>
@@ -1289,7 +1325,7 @@ export default function AnalyticsCrescimentoScreen() {
                             router.navigate('/(admin)/crm-modulo/psicologos');
                           }}
                           activeOpacity={0.8}
-                          className="flex-1 bg-white border border-slate-300 flex-row items-center justify-center py-2.5 rounded-xl active:bg-slate-100"
+                          className="flex-1 bg-white border border-slate-300 flex-row items-center justify-center py-2.5 rounded-full active:bg-slate-100"
                         >
                           <Feather name="user" size={14} color="#0f172a" />
                           <Text className="text-[#0f172a] font-sans font-bold text-[12px] ml-1.5">Visão 360° CS</Text>
@@ -1347,7 +1383,7 @@ export default function AnalyticsCrescimentoScreen() {
                 </View>
                 <TouchableOpacity
                   onPress={() => setAiModalVisible(false)}
-                  className="bg-[#1B4332] py-3 rounded-xl items-center active:opacity-90"
+                  className="bg-[#1B4332] py-3 rounded-full items-center active:opacity-90"
                 >
                   <Text className="text-white font-sans font-bold text-[13px]">Entendido</Text>
                 </TouchableOpacity>

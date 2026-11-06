@@ -657,7 +657,7 @@ export default function AdminCRMLeadsScreen() {
               onPress={handleIniciarScraper}
               disabled={scraping}
               activeOpacity={0.8}
-              className="flex-1 bg-[#1B4332] py-2.5 px-3 rounded-xl flex-row items-center justify-center gap-1.5 shadow-xs"
+              className="flex-1 bg-[#1B4332] py-2.5 px-3 rounded-full flex-row items-center justify-center gap-1.5 shadow-xs"
             >
               {scraping ? (
                 <ActivityIndicator size="small" color="#fff" />
@@ -672,7 +672,7 @@ export default function AdminCRMLeadsScreen() {
             <TouchableOpacity
               onPress={handleExportarCSV}
               activeOpacity={0.8}
-              className="bg-white py-2.5 px-3.5 rounded-xl border border-slate-200 flex-row items-center justify-center gap-1.5 shadow-xs"
+              className="bg-white py-2.5 px-3.5 rounded-full border border-slate-200 flex-row items-center justify-center gap-1.5 shadow-xs"
             >
               <Feather name="download" size={14} color="#475569" />
               <Text className="font-sans font-bold text-[#475569] text-[12px]">Exportar CSV</Text>
@@ -728,17 +728,17 @@ export default function AdminCRMLeadsScreen() {
                   <View className="flex-row items-center gap-3 pb-3 border-b border-[#f1f5f9]">
                     <View
                       style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 14,
+                        width: 52,
+                        height: 52,
+                        borderRadius: 999,
                         backgroundColor: '#ecfdf5',
-                        borderWidth: 1,
+                        borderWidth: 1.5,
                         borderColor: '#a7f3d0',
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
-                      <Text className="font-title text-[#166534] text-[18px] font-bold">
+                      <Text className="font-title text-[#166534] text-[20px] font-bold">
                         {primeiroNome.charAt(0).toUpperCase()}
                       </Text>
                     </View>
@@ -798,7 +798,7 @@ export default function AdminCRMLeadsScreen() {
                     )}
                   </View>
 
-                  {/* Rodapé de Ações B2B */}
+                  {/* Rodapé de Ações B2B (Botões em Formato Pílula) */}
                   <View className="flex-row items-center gap-2 pt-3 border-t border-[#f1f5f9]">
                     {/* Botão de WhatsApp Primário */}
                     <TouchableOpacity
@@ -812,13 +812,14 @@ export default function AdminCRMLeadsScreen() {
                       activeOpacity={0.8}
                       style={{
                         flex: 1,
-                        height: 42,
+                        height: 40,
                         backgroundColor: isPendente ? '#10b981' : '#2563eb',
-                        borderRadius: 12,
+                        borderRadius: 999,
                         flexDirection: 'row',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 6,
+                        paddingHorizontal: 14,
                       }}
                     >
                       <Feather name="message-circle" size={15} color="#fff" />
@@ -832,9 +833,9 @@ export default function AdminCRMLeadsScreen() {
                       onPress={() => handleAlterarStatus(lead.id, 'Aguardando')}
                       activeOpacity={0.7}
                       style={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: 12,
+                        width: 40,
+                        height: 40,
+                        borderRadius: 999,
                         backgroundColor: '#fef3c7',
                         borderWidth: 1,
                         borderColor: '#fde68a',
@@ -842,7 +843,7 @@ export default function AdminCRMLeadsScreen() {
                         justifyContent: 'center',
                       }}
                     >
-                      <Feather name="clock" size={16} color="#d97706" />
+                      <Feather name="clock" size={15} color="#d97706" />
                     </TouchableOpacity>
 
                     {/* Marcar como Convertido */}
@@ -850,9 +851,9 @@ export default function AdminCRMLeadsScreen() {
                       onPress={() => handleAlterarStatus(lead.id, 'Cadastrado')}
                       activeOpacity={0.7}
                       style={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: 12,
+                        width: 40,
+                        height: 40,
+                        borderRadius: 999,
                         backgroundColor: '#e0f2fe',
                         borderWidth: 1,
                         borderColor: '#bae6fd',
@@ -868,9 +869,9 @@ export default function AdminCRMLeadsScreen() {
                       onPress={() => handleExcluirLead(lead)}
                       activeOpacity={0.7}
                       style={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: 12,
+                        width: 40,
+                        height: 40,
+                        borderRadius: 999,
                         backgroundColor: '#fef2f2',
                         borderWidth: 1,
                         borderColor: '#fecaca',
@@ -878,7 +879,7 @@ export default function AdminCRMLeadsScreen() {
                         justifyContent: 'center',
                       }}
                     >
-                      <Feather name="trash-2" size={16} color="#ef4444" />
+                      <Feather name="trash-2" size={15} color="#ef4444" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -901,7 +902,7 @@ export default function AdminCRMLeadsScreen() {
               <TouchableOpacity
                 onPress={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                className={`w-[36px] h-[36px] rounded-[8px] items-center justify-center border ${
+                className={`w-[36px] h-[36px] rounded-full items-center justify-center border ${
                   currentPage <= 1 ? 'border-[#e2e8f0] opacity-40' : 'border-[#cbd5e1] bg-white'
                 }`}
               >
@@ -911,7 +912,7 @@ export default function AdminCRMLeadsScreen() {
               <TouchableOpacity
                 onPress={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage >= totalPages}
-                className={`w-[36px] h-[36px] rounded-[8px] items-center justify-center border ${
+                className={`w-[36px] h-[36px] rounded-full items-center justify-center border ${
                   currentPage >= totalPages ? 'border-[#e2e8f0] opacity-40' : 'border-[#cbd5e1] bg-white'
                 }`}
               >
@@ -1030,7 +1031,7 @@ export default function AdminCRMLeadsScreen() {
 
               <TouchableOpacity
                 onPress={() => setModalZapLead(null)}
-                className="mt-2 py-3 bg-slate-100 rounded-xl items-center"
+                className="mt-2 py-3 bg-slate-100 rounded-full items-center active:bg-slate-200"
               >
                 <Text className="font-sans font-bold text-[#64748b] text-[13px]">Cancelar</Text>
               </TouchableOpacity>
