@@ -262,7 +262,7 @@ export default function AdminVisaoGeralScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Grid dos 4 KPIs Principais */}
+          {/* Grid dos 4 KPIs Principais Centralizados */}
           <View className="flex-row flex-wrap">
             {/* Receita Recorrente (MRR) */}
             <TouchableOpacity 
@@ -271,12 +271,12 @@ export default function AdminVisaoGeralScreen() {
                 title: 'Receita Recorrente (MRR)',
                 text: 'Soma das mensalidades ativas (exclui isentos/VIPs e inadimplentes).'
               })}
-              className="w-1/2 pr-2 mb-4"
+              className="w-1/2 p-2 mb-4 items-center justify-center"
             >
-              <Text className="font-title text-[#FFEE8C] text-[26px] font-bold leading-tight mb-1">
+              <Text className="font-title text-[#FFEE8C] text-[26px] font-bold leading-tight mb-1 text-center">
                 {formatCurrency(stats?.mrr || 0)}
               </Text>
-              <Text className="font-sans text-white/90 text-[10px] uppercase tracking-wider font-semibold">
+              <Text className="font-sans text-white/90 text-[10px] uppercase tracking-wider font-semibold text-center">
                 Receita Recorrente (MRR)
               </Text>
             </TouchableOpacity>
@@ -288,12 +288,12 @@ export default function AdminVisaoGeralScreen() {
                 title: 'Novos Pacientes (30d)',
                 text: 'Pacientes que se cadastraram nos últimos 30 dias.'
               })}
-              className="w-1/2 pl-2 mb-4"
+              className="w-1/2 p-2 mb-4 items-center justify-center"
             >
-              <Text className="font-title text-[#FFEE8C] text-[26px] font-bold leading-tight mb-1">
+              <Text className="font-title text-[#FFEE8C] text-[26px] font-bold leading-tight mb-1 text-center">
                 {stats?.newPatients30d ?? 0}
               </Text>
-              <Text className="font-sans text-white/90 text-[10px] uppercase tracking-wider font-semibold">
+              <Text className="font-sans text-white/90 text-[10px] uppercase tracking-wider font-semibold text-center">
                 Novos Pacientes (30d)
               </Text>
             </TouchableOpacity>
@@ -305,12 +305,12 @@ export default function AdminVisaoGeralScreen() {
                 title: 'Novos Psicólogos (30d)',
                 text: 'Psicólogos que tiveram suas contas aprovadas e ativadas nos últimos 30 dias.'
               })}
-              className="w-1/2 pr-2"
+              className="w-1/2 p-2 items-center justify-center"
             >
-              <Text className="font-title text-[#FFEE8C] text-[26px] font-bold leading-tight mb-1">
+              <Text className="font-title text-[#FFEE8C] text-[26px] font-bold leading-tight mb-1 text-center">
                 {stats?.newPsis30d ?? 0}
               </Text>
-              <Text className="font-sans text-white/90 text-[10px] uppercase tracking-wider font-semibold">
+              <Text className="font-sans text-white/90 text-[10px] uppercase tracking-wider font-semibold text-center">
                 Novos Psicólogos (30d)
               </Text>
             </TouchableOpacity>
@@ -322,12 +322,12 @@ export default function AdminVisaoGeralScreen() {
                 title: 'Questionários (Hoje)',
                 text: 'Questionários iniciados e concluídos na data de hoje.'
               })}
-              className="w-1/2 pl-2"
+              className="w-1/2 p-2 items-center justify-center"
             >
-              <Text className="font-title text-[#FFEE8C] text-[26px] font-bold leading-tight mb-1">
+              <Text className="font-title text-[#FFEE8C] text-[26px] font-bold leading-tight mb-1 text-center">
                 {stats?.questToday ?? 0}
               </Text>
-              <Text className="font-sans text-white/90 text-[10px] uppercase tracking-wider font-semibold">
+              <Text className="font-sans text-white/90 text-[10px] uppercase tracking-wider font-semibold text-center">
                 Questionários (Hoje)
               </Text>
             </TouchableOpacity>
@@ -348,7 +348,7 @@ export default function AdminVisaoGeralScreen() {
             <View className="flex-row flex-wrap">
               {/* Total Cadastrados */}
               <View className="w-1/2 p-2 items-center">
-                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1">
+                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1 text-center">
                   {stats?.psychologists?.total ?? 0}
                 </Text>
                 <TouchableOpacity 
@@ -372,7 +372,7 @@ export default function AdminVisaoGeralScreen() {
 
               {/* Psicólogos Ativos */}
               <View className="w-1/2 p-2 items-center">
-                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1">
+                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1 text-center">
                   {stats?.psychologists?.active ?? 0}
                 </Text>
                 <TouchableOpacity 
@@ -396,7 +396,7 @@ export default function AdminVisaoGeralScreen() {
 
               {/* Psicólogos Pagantes */}
               <View className="w-1/2 p-2 items-center mt-2">
-                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1">
+                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1 text-center">
                   {stats?.psychologists?.paying ?? 0}
                 </Text>
                 <TouchableOpacity 
@@ -417,7 +417,7 @@ export default function AdminVisaoGeralScreen() {
 
               {/* Em período de teste */}
               <View className="w-1/2 p-2 items-center mt-2">
-                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1">
+                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1 text-center">
                   {stats?.psychologists?.trials ?? 0}
                 </Text>
                 <TouchableOpacity 
@@ -446,7 +446,7 @@ export default function AdminVisaoGeralScreen() {
             <View className="flex-row flex-wrap">
               {/* Taxa Conversão Geral */}
               <View className="w-1/2 p-2 items-center">
-                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1">
+                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1 text-center">
                   {stats?.overallConversionRate ?? 0}%
                 </Text>
                 <TouchableOpacity 
@@ -467,7 +467,7 @@ export default function AdminVisaoGeralScreen() {
 
               {/* Total Aparições (Match) */}
               <View className="w-1/2 p-2 items-center">
-                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1">
+                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1 text-center">
                   {formatNumber(stats?.totalMatches)}
                 </Text>
                 <TouchableOpacity 
@@ -488,7 +488,7 @@ export default function AdminVisaoGeralScreen() {
 
               {/* Total Cliques (Contato) */}
               <View className="w-1/2 p-2 items-center mt-2">
-                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1">
+                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1 text-center">
                   {formatNumber(stats?.totalClicks)}
                 </Text>
                 <TouchableOpacity 
@@ -509,7 +509,7 @@ export default function AdminVisaoGeralScreen() {
 
               {/* Fila de Espera */}
               <View className="w-1/2 p-2 items-center mt-2">
-                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1">
+                <Text className="font-title text-[#1B4332] text-[24px] font-bold mb-1 text-center">
                   {stats?.waitingListCount ?? 0}
                 </Text>
                 <TouchableOpacity 
