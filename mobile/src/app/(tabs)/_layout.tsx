@@ -259,11 +259,13 @@ export default function TabLayout() {
         <Tabs.Screen name="forum" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
         <Tabs.Screen name="comunidade" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
         <Tabs.Screen name="comunidade_yelo" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+        <Tabs.Screen name="historico_contatos" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
         <Tabs.Screen name="meu_perfil" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
         <Tabs.Screen name="assinatura" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
         <Tabs.Screen name="notificacoes" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
         <Tabs.Screen name="avisos" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
         <Tabs.Screen name="fale_com_a_yelo" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+        <Tabs.Screen name="novidades" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
       </Tabs>
 
       {/* MODAL DE CONFIRMAÇÃO DE SAIR (ESTILO BOTTOM SHEET DE BAIXO PRA CIMA) */}

@@ -169,6 +169,7 @@ router.get('/me/announcements', safeProtect, psiDashboardController.getAnnouncem
 router.post('/me/announcements/:avisoId/read', safeProtect, psiDashboardController.markAnnouncementAsRead);
 router.get('/me/qna-unanswered-count', safeProtect, psychologistController.getUnansweredQuestionsCount);
 router.post('/me/sync-google-reviews', safeProtect, psychologistController.syncGoogleReviews);
+router.get('/me/favorites-profile', safeProtect, psiDashboardController.getFavoritesProfile);
 
 // O middleware 'protect' é aplicado a TODAS as rotas abaixo desta linha
 router.use(protect); 
@@ -190,7 +191,6 @@ router.post('/me/gmb-modal-seen', safeProtect, psychologistController.markGmbMod
 router.get('/me/analytics', psiDashboardController.getAnalyticsData);
 router.post('/me/ai-insights', psiDashboardController.getAiInsights);
 
-router.get('/me/favorites-profile', (req, res) => res.json({ total: 0, temas: {}, faixaValor: {}, genero: {} }));
 router.get('/me/announcements', psiDashboardController.getAnnouncements);
 router.post('/me/announcements/:avisoId/read', psiDashboardController.markAnnouncementAsRead);
 

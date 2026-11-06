@@ -1,5 +1,55 @@
 [
   {
+    "id": "change-git-54c80c0a",
+    "date": "2026-11-04T00:59:56.000Z",
+    "commit": "54c80c0a",
+    "author": "Anderson",
+    "title": "Correção: Inline comment replies, csrf headers and forum aesthetics (mobile)",
+    "category": "Segurança & Autenticação",
+    "badgeColor": "#0ea5e9",
+    "status": "Em Produção",
+    "summary": "inline comment replies, csrf headers and forum aesthetics",
+    "description": "Commit registrado no repositório: \"fix(mobile): inline comment replies, csrf headers and forum aesthetics\". Arquivos modificados: backend/middlewares/authMiddleware.js, mobile/src/app/(tabs)/forum.tsx, mobile/src/services/api.ts.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #54c80c0a"
+    },
+    "after": {
+      "nova_versao": "inline comment replies, csrf headers and forum aesthetics"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/middlewares/authMiddleware.js",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "mobile/src/services/api.ts"
+    ]
+  },
+  {
+    "id": "change-git-42438bcb",
+    "date": "2026-11-04T00:36:42.000Z",
+    "commit": "42438bcb",
+    "author": "Anderson",
+    "title": "Novo: Redesign opened post view to match web mobile with comments thread and bottom nav clearance (forum)",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "redesign opened post view to match web mobile with comments thread and bottom nav clearance",
+    "description": "Commit registrado no repositório: \"feat(forum): redesign opened post view to match web mobile with comments thread and bottom nav clearance\". Arquivos modificados: backend/data/system_changelog.json, mobile/src/app/(tabs)/forum.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #42438bcb"
+    },
+    "after": {
+      "nova_versao": "redesign opened post view to match web mobile with comments thread and bottom nav clearance"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-340bb2e7",
     "date": "2026-11-04T00:10:34.000Z",
     "commit": "340bb2e7",

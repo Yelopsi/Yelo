@@ -26,10 +26,7 @@ export default function CaixaEntradaScreen() {
         setOfflineMode(false);
       } catch (error) {
         setOfflineMode(true);
-        setChats([
-          { id: 1, name: 'Dra. Camila Soares', lastMessage: 'Como faço para alterar meu plano?', time: '14:30', unread: 2 },
-          { id: 2, name: 'Dr. Roberto Alves', lastMessage: 'Obrigado pelo suporte!', time: 'Ontem', unread: 0 },
-        ]);
+        setChats([]);
       } finally {
         setLoading(false);
       }

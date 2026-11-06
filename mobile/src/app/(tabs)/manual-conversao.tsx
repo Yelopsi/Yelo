@@ -263,12 +263,10 @@ export default function ManualConversaoScreen() {
   };
 
   const handleBackPress = () => {
-    console.log('[DEBUG_MANUAL_CONVERSAO] Voltando para o hub /clinica');
     router.navigate('/(tabs)/clinica');
   };
 
   const handleTabPress = (tab: 'mindset' | 'templates' | 'copilot') => {
-    console.log('[DEBUG_MANUAL_CONVERSAO] Mudando para aba:', tab);
     setActiveTab(tab);
   };
 

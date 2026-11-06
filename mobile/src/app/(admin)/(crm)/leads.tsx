@@ -26,11 +26,8 @@ export default function AdminCRMLeadsScreen() {
         setOfflineMode(false);
       } catch (error) {
         setOfflineMode(true);
-        setLeads([
-          { id: 1, nome_completo: 'Dr. Carlos Mendes', telefone: '(11) 98888-8888', origem: 'LinkedIn B2B', status_funil: 'Contatado' },
-          { id: 2, nome_completo: 'Dra. Fernanda Silva', telefone: '(11) 99999-9999', origem: 'Instagram', status_funil: 'Pendente' }
-        ]);
-        setKpis({ pendentes: 50, contatados: 25, aguardando: 10, cadastrados: 5 });
+        setLeads([]);
+        setKpis({ pendentes: 0, contatados: 0, aguardando: 0, cadastrados: 0 });
       } finally {
         setLoading(false);
       }

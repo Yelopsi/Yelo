@@ -166,7 +166,6 @@ export default function FinanceiroScreen() {
 
   // Carrega dados da API Yelo silenciosamente em background
   const loadFinancialData = useCallback(async (selectedPeriod: string, isPullRefresh = false) => {
-    console.log('[DEBUG_FINANCEIRO] Sincronizando dados para o período:', selectedPeriod, 'isPullRefresh:', isPullRefresh);
     if (isPullRefresh) {
       setRefreshing(true);
     } else {
@@ -178,13 +177,11 @@ export default function FinanceiroScreen() {
         params: { period: selectedPeriod },
       });
 
-      console.log('[DEBUG_FINANCEIRO] Dados recebidos com sucesso:', response.status);
       if (response.data) {
         setAppointments(response.data.appointments || []);
         setExpenses(response.data.expenses || []);
       }
     } catch (err: any) {
-      console.warn('[DEBUG_FINANCEIRO] Erro ao sincronizar dados financeiros:', err?.response?.data || err.message);
       setAppointments((prev) => prev || []);
       setExpenses((prev) => prev || []);
     } finally {
@@ -195,7 +192,6 @@ export default function FinanceiroScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      console.log('[DEBUG_FINANCEIRO] Tela Financeiro em foco, disparando carregamento...');
       loadFinancialData(periodo);
     }, [periodo, loadFinancialData])
   );

@@ -42,7 +42,8 @@ export default function PacienteLayout() {
         headerLeft: () => <HeaderLeft />,
         headerRight: () => null,
       }}
-      tabBar={({ state, descriptors, navigation }) => {
+      tabBar={(props: any) => {
+        const { state, descriptors, navigation } = props;
         return (
           <View 
             className="absolute bottom-8 left-5 right-5 bg-white/95 rounded-[50px] shadow-[0_10px_30px_rgba(0,0,0,0.12)] flex-row justify-between items-center px-2 py-2 border border-[#f0f0f0]" 
@@ -91,21 +92,21 @@ export default function PacienteLayout() {
         name="index"
         options={{
           title: 'Início',
-          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
+          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color as string} />,
         }}
       />
       <Tabs.Screen
         name="conexoes"
         options={{
           title: 'Conexões',
-          tabBarIcon: ({ color }) => <Feather name="users" size={22} color={color} />,
+          tabBarIcon: ({ color }) => <Feather name="users" size={22} color={color as string} />,
         }}
       />
       <Tabs.Screen
         name="ajustes"
         options={{
           title: 'Ajustes',
-          tabBarIcon: ({ color }) => <Feather name="settings" size={22} color={color} />,
+          tabBarIcon: ({ color }) => <Feather name="settings" size={22} color={color as string} />,
         }}
       />
     </Tabs>

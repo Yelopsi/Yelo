@@ -23,6 +23,9 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import api, { getBaseUrl } from '../../services/api';
+import YeloToast from '../../components/YeloToast';
+import YeloRichEditor, { YeloRichEditorRef } from '../../components/YeloRichEditor';
+import { WebView } from 'react-native-webview';
 
 const ARTICLES_LIMIT = 3;
 
@@ -49,6 +52,7 @@ interface Post {
 export default function BlogScreen() {
   const router = useRouter();
   const formScrollRef = useRef<any>(null);
+  const editorRef = useRef<YeloRichEditorRef>(null);
   const contentInputRef = useRef<any>(null);
   const selectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
 
@@ -78,6 +82,12 @@ export default function BlogScreen() {
 
   // Estado do Modal de Preview / Visualização
   const [previewPost, setPreviewPost] = useState<Post | null>(null);
+
+  // Toast flutuante de feedback no estilo WhatsApp
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (message: string) => {
+    setToastMessage(message);
+  };
 
   // Animação fluida sincronizada com a curva nativa do teclado do iOS (mesmo padrão do modal Novo Paciente)
   const BOTTOM_SHEET_PADDING = Platform.OS === 'ios' ? 24 : 16;
@@ -144,79 +154,9 @@ export default function BlogScreen() {
     }
   };
 
-  // Aplicação instantânea de formatação de texto (sem perder seleção)
+  // Aplicação instantânea de formatação de texto WYSIWYG
   const applyFormat = (format: string) => {
-    let { start, end } = selectionRef.current;
-    if (start > end) {
-      const tmp = start;
-      start = end;
-      end = tmp;
-    }
-    const hasSelection = start !== end;
-    const selectedText = hasSelection ? content.substring(start, end) : '';
-    const before = content.substring(0, start);
-    const after = content.substring(end);
-
-    let replacement = '';
-    switch (format) {
-      case 'bold':
-        replacement = hasSelection ? `<b>${selectedText}</b>` : '<b>negrito</b>';
-        break;
-      case 'italic':
-        replacement = hasSelection ? `<i>${selectedText}</i>` : '<i>itálico</i>';
-        break;
-      case 'underline':
-        replacement = hasSelection ? `<u>${selectedText}</u>` : '<u>sublinhado</u>';
-        break;
-      case 'strike':
-        replacement = hasSelection ? `<s>${selectedText}</s>` : '<s>tachado</s>';
-        break;
-      case 'h2':
-        replacement = hasSelection ? `\n<h2>${selectedText}</h2>\n` : '\n<h2>Título</h2>\n';
-        break;
-      case 'h3':
-        replacement = hasSelection ? `\n<h3>${selectedText}</h3>\n` : '\n<h3>Subtítulo</h3>\n';
-        break;
-      case 'bullet':
-        if (hasSelection) {
-          const lines = selectedText.split('\n').filter(l => l.trim().length > 0);
-          replacement = `\n<ul>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ul>\n`;
-        } else {
-          replacement = '\n<ul>\n  <li>Item</li>\n</ul>\n';
-        }
-        break;
-      case 'number':
-        if (hasSelection) {
-          const lines = selectedText.split('\n').filter(l => l.trim().length > 0);
-          replacement = `\n<ol>\n${lines.map(l => `  <li>${l}</li>`).join('\n')}\n</ol>\n`;
-        } else {
-          replacement = '\n<ol>\n  <li>Item 1</li>\n</ol>\n';
-        }
-        break;
-      case 'link':
-        replacement = hasSelection
-          ? `<a href="https://">${selectedText}</a>`
-          : '<a href="https://exemplo.com">link</a>';
-        break;
-      case 'clean':
-        if (hasSelection) {
-          replacement = selectedText.replace(/<[^>]+>/g, '');
-        } else {
-          setContent(content.replace(/<[^>]+>/g, ''));
-          return;
-        }
-        break;
-      default:
-        return;
-    }
-
-    const updatedContent = `${before}${replacement}${after}`;
-    setContent(updatedContent);
-    const newPos = start + replacement.length;
-    selectionRef.current = { start: newPos, end: newPos };
-    setTimeout(() => {
-      contentInputRef.current?.focus();
-    }, 50);
+    editorRef.current?.applyFormat(format);
   };
 
   // Carregar sugestões de temas da plataforma
@@ -297,6 +237,9 @@ export default function BlogScreen() {
     setCurrentHeader('Normal');
     selectionRef.current = { start: 0, end: 0 };
     setModalVisible(true);
+    setTimeout(() => {
+      editorRef.current?.setContent('');
+    }, 50);
   };
 
   // Abrir Modal para Edição
@@ -311,6 +254,9 @@ export default function BlogScreen() {
     setCurrentHeader('Normal');
     selectionRef.current = { start: 0, end: 0 };
     setModalVisible(true);
+    setTimeout(() => {
+      editorRef.current?.setContent(post.conteudo || '');
+    }, 50);
   };
 
   // Selecionar imagem da galeria
@@ -342,7 +288,8 @@ export default function BlogScreen() {
 
   // Otimizar com IA (Revisar Ortografia e Gramática)
   const handleOptimizeAI = async () => {
-    const plainText = stripHtml(content);
+    const currentContent = editorRef.current?.getHtml() || content;
+    const plainText = stripHtml(currentContent);
     if (plainText.length < 30) {
       Alert.alert(
         'Aviso',
@@ -355,13 +302,16 @@ export default function BlogScreen() {
       setIsOptimizing(true);
       const res = await api.post('/api/psychologists/me/optimize-article', {
         title: title.trim(),
-        content: content.trim(),
+        content: currentContent.trim(),
       });
 
       if (res.data) {
         if (res.data.titulo) setTitle(res.data.titulo);
-        if (res.data.conteudo) setContent(res.data.conteudo);
-        Alert.alert('Sucesso ✨', 'Post revisado com sucesso pela Inteligência Artificial!');
+        if (res.data.conteudo) {
+          setContent(res.data.conteudo);
+          editorRef.current?.setContent(res.data.conteudo);
+        }
+        showToast('Post revisado com sucesso pela Inteligência Artificial! ✨');
       }
     } catch (e: any) {
       Alert.alert('Erro', e.response?.data?.error || 'Erro ao revisar post com IA.');
@@ -376,7 +326,8 @@ export default function BlogScreen() {
       Alert.alert('Aviso', 'Por favor, informe o título do post.');
       return;
     }
-    const plain = stripHtml(content);
+    const finalContent = editorRef.current?.getHtml() || content;
+    const plain = stripHtml(finalContent);
     if (!plain) {
       Alert.alert('Aviso', 'Por favor, escreva o conteúdo do post.');
       return;
@@ -387,7 +338,7 @@ export default function BlogScreen() {
 
       const formData = new FormData();
       formData.append('titulo', title.trim());
-      formData.append('conteudo', content.trim());
+      formData.append('conteudo', finalContent.trim());
 
       if (imageUri) {
         const filename = imageName || imageUri.split('/').pop() || 'capa.jpg';
@@ -410,12 +361,12 @@ export default function BlogScreen() {
         await api.put(`/api/psychologists/me/posts/${editingPostId}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        Alert.alert('Atualizado! 🎉', 'Seu post foi atualizado com sucesso.');
+        showToast('Seu post foi atualizado com sucesso! 🎉');
       } else {
         await api.post('/api/psychologists/me/posts', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        Alert.alert('Publicado! 🚀', 'Seu post foi publicado com sucesso no Blog Yelo.');
+        showToast('Post publicado com sucesso no Blog Yelo! 🚀');
       }
 
       setModalVisible(false);
@@ -441,9 +392,9 @@ export default function BlogScreen() {
             try {
               const res = await api.delete(`/api/psychologists/me/posts/${post.id}`);
               if (res.data?.pointsDeducted) {
-                Alert.alert('Post Excluído', `Post excluído. Você perdeu ${res.data.pointsDeducted} XP.`);
+                showToast(`Post excluído. Você perdeu ${res.data.pointsDeducted} XP.`);
               } else {
-                Alert.alert('Sucesso', 'Post excluído com sucesso.');
+                showToast('Post excluído com sucesso.');
               }
               fetchPosts(1, false);
             } catch (e: any) {
@@ -916,25 +867,21 @@ export default function BlogScreen() {
                     </View>
                   )}
 
-                  {/* Área de Digitação Nativa Estável e Responsiva */}
-                  <TextInput
-                    ref={contentInputRef}
-                    multiline
+                  {/* Editor Rich Text Formatado Visualmente (WYSIWYG sem tags brutas) */}
+                  <YeloRichEditor
+                    ref={editorRef}
+                    initialContent={content}
                     placeholder="Comece a escrever seu post aqui..."
-                    placeholderTextColor="#9ca3af"
-                    value={content}
-                    onChangeText={setContent}
+                    onChange={(html) => {
+                      setContent(html);
+                    }}
                     onFocus={() => {
                       setShowHeaderOptions(false);
                       setTimeout(() => {
                         formScrollRef.current?.scrollToEnd({ animated: true });
                       }, 100);
                     }}
-                    onSelectionChange={(e) => {
-                      selectionRef.current = e.nativeEvent.selection;
-                    }}
-                    textAlignVertical="top"
-                    style={styles.editorTextInput}
+                    minHeight={250}
                   />
                 </View>
               </View>
@@ -1046,10 +993,53 @@ export default function BlogScreen() {
                 </View>
               </View>
 
-              {/* Conteúdo Completo */}
-              <Text style={styles.previewContent}>
-                {stripHtml(previewPost.conteudo)}
-              </Text>
+              {/* Conteúdo Completo Formatado (Sem tags visíveis) */}
+              <View style={{ minHeight: 220, width: '100%', marginVertical: 10 }}>
+                {(() => {
+                  const WebViewComp = WebView as any;
+                  return (
+                    <WebViewComp
+                      originWhitelist={['*']}
+                      source={{
+                        html: `
+                          <!DOCTYPE html>
+                          <html>
+                          <head>
+                            <meta charset="utf-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                            <style>
+                              body {
+                                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                                font-size: 15px;
+                                line-height: 1.65;
+                                color: #333333;
+                                margin: 0;
+                                padding: 0;
+                                background-color: transparent;
+                              }
+                              h1, h2 { font-size: 1.25rem; color: #1B4332; margin: 16px 0 8px 0; font-weight: 700; }
+                              h3, h4 { font-size: 1.1rem; color: #1B4332; margin: 14px 0 6px 0; font-weight: 600; }
+                              p { margin: 0 0 12px 0; }
+                              ul, ol { margin: 6px 0 12px 0; padding-left: 24px; }
+                              li { margin-bottom: 5px; }
+                              b, strong { font-weight: 700; color: #111827; }
+                              i, em { font-style: italic; }
+                              u { text-decoration: underline; }
+                              s { text-decoration: line-through; }
+                              a { color: #1B4332; text-decoration: underline; }
+                              blockquote { border-left: 3px solid #1B4332; margin: 10px 0; padding: 4px 0 4px 14px; color: #4b5563; font-style: italic; background: #f8fafc; }
+                            </style>
+                          </head>
+                          <body>${previewPost.conteudo || ''}</body>
+                          </html>
+                        `
+                      }}
+                      scrollEnabled={false}
+                      style={{ backgroundColor: 'transparent', minHeight: 320, width: '100%' }}
+                    />
+                  );
+                })()}
+              </View>
 
               {/* Ações Rápidas */}
               <View style={{ flexDirection: 'row', gap: 12, marginTop: 30, borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 20 }}>
@@ -1078,6 +1068,9 @@ export default function BlogScreen() {
           )}
         </View>
       </Modal>
+
+      {/* Notificação Flutuante em Pílula (Estilo WhatsApp) */}
+      <YeloToast message={toastMessage} onDismiss={() => setToastMessage(null)} />
     </View>
   );
 }

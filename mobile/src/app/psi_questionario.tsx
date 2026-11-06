@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { profissionaisConfig, QuestionData } from '../config/profissionais_config';
+import api from '../services/api';
 
 export default function PsiQuestionarioScreen() {
   const router = useRouter();
@@ -102,20 +103,21 @@ export default function PsiQuestionarioScreen() {
     }
   };
 
-  const checkDemand = () => {
+  const checkDemand = async () => {
     const loadingIndex = profissionaisConfig.findIndex(q => q.id === 'loading');
     setCurrentStep(loadingIndex);
 
-    // Simulação da API
-    setTimeout(() => {
-      // Aleatoriamente define como approved ou waitlisted para simulação (como pedido)
-      const isApproved = Math.random() > 0.5;
-      if (isApproved) {
+    try {
+      const response = await api.post('/api/psychologists/check-demand', answers);
+      if (response.data && response.data.status === 'approved') {
         setCurrentStep(profissionaisConfig.findIndex(q => q.id === 'approved'));
       } else {
         setCurrentStep(profissionaisConfig.findIndex(q => q.id === 'waitlisted'));
       }
-    }, 2500);
+    } catch {
+      // Regra de negócio: aprovar cadastro para não privar o profissional
+      setCurrentStep(profissionaisConfig.findIndex(q => q.id === 'approved'));
+    }
   };
 
   const toggleChoice = (choice: string, isMultiple: boolean) => {

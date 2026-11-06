@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 
 export default function CadastroScreen() {
   const [nome, setNome] = useState('');
@@ -35,12 +36,32 @@ export default function CadastroScreen() {
     setErrorMsg('');
     setLoadingLocal(true);
     
-    // Bypass: Simula um cadastro e loga automaticamente
-    setTimeout(async () => {
-      await signIn('fake-token', { id: 2, nome: nome, email: email });
-      router.replace('/(tabs)');
+    try {
+      const response = await api.post('/api/psychologists/register', {
+        nome: nome.trim(),
+        email: email.trim().toLowerCase(),
+        password: password,
+      });
+
+      if (response.data && response.data.token) {
+        const psi = response.data.psychologist;
+        await signIn(response.data.token, {
+          id: psi?.id,
+          nome: psi?.nome || nome.trim(),
+          email: psi?.email || email.trim().toLowerCase(),
+          type: 'psychologist',
+          slug: psi?.slug,
+        });
+        router.replace('/(tabs)');
+      } else {
+        setErrorMsg('Não foi possível concluir o cadastro. Tente novamente.');
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.message || 'Erro ao realizar cadastro. Verifique os dados e tente novamente.';
+      setErrorMsg(msg);
+    } finally {
       setLoadingLocal(false);
-    }, 800);
+    }
   };
 
   return (

@@ -332,7 +332,7 @@ export default function NotificacoesScreen() {
               </Text>
             </View>
             <Text className="font-sans text-[14px] text-white/85 leading-relaxed">
-              Personalize quando você deseja receber avisos de consultas, interações na comunidade, posts do blog e pagamentos.
+              Personalize quando você deseja receber avisos de consultas, interações na comunidade e posts do blog.
             </Text>
 
             {/* ATALHO PARA VER O FEED DE AVISOS */}

@@ -1,32 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Image, Share } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
+import YeloToast from '../../components/YeloToast';
+import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 
 export default function HomeScreen() {
+  const { user, updateUser } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [hojeSessoes, setHojeSessoes] = useState<any[]>([]);
   const [faturamento, setFaturamento] = useState<number>(0);
   const [psiData, setPsiData] = useState<any>(null);
+  const [aiTips, setAiTips] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [copiedReview, setCopiedReview] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, apptsRes, finRes, meRes] = await Promise.all([
+        const [statsRes, apptsRes, finRes, meRes, aiRes] = await Promise.all([
           api.get('/api/psychologists/me/stats?period=all_time').catch(() => ({ data: null })),
           api.get('/api/appointments').catch(() => ({ data: [] })),
           api.get('/api/financials/dashboard?period=current').catch(() => ({ data: { appointments: [] } })),
-          api.get('/api/psychologists/me').catch(() => ({ data: null }))
+          api.get('/api/psychologists/me').catch(() => ({ data: null })),
+          api.post('/api/psychologists/me/ai-insights', {}).catch(() => ({ data: null })),
         ]);
 
         if (meRes.data) {
           setPsiData(meRes.data);
+          if (meRes.data.fotoUrl && meRes.data.fotoUrl !== user?.fotoUrl) {
+            updateUser({ fotoUrl: meRes.data.fotoUrl, nome: meRes.data.nome });
+          }
         } else {
           setIsOffline(true);
           return;
@@ -34,6 +45,10 @@ export default function HomeScreen() {
 
         if (statsRes.data) {
           setStats(statsRes.data);
+        }
+
+        if (aiRes?.data) {
+          setAiTips(aiRes.data);
         }
 
         // Sessões de hoje
@@ -120,7 +135,7 @@ export default function HomeScreen() {
   const showReminder = totalInteractions === 0 || (diffDays !== null && diffDays >= 7);
   const reminderContext = totalInteractions === 0 ? 'ainda não interagiu' : `não interage há ${diffDays} dias`;
 
-  // Checklist (Fase 1/2/3 — com dados reais)
+  // Checklist (Fase 1/2/3 — espelho idêntico de psi_visao_geral.js)
   const hasPhoto = !!(psiData.fotoUrl && !psiData.fotoUrl.includes('placehold.co'));
   const hasBio = !!(psiData.bio && psiData.bio.length > 150);
   const hasCpf = !!(psiData.cpf && psiData.cpf.replace(/\D/g, '').length >= 11);
@@ -128,104 +143,179 @@ export default function HomeScreen() {
   const hasForumActivity = (stats?.forumActivityCount || 0) > 0;
   const hasArticle = (stats?.blogPostCount || 0) > 0;
 
-  const phase1 = [
+  const phase1Steps = [
     { title: hasPhoto ? 'Foto profissional adicionada' : 'Adicionar uma foto profissional', impact: 'Obrigatório', completed: hasPhoto, url: 'psi_meu_perfil.html' },
     { title: hasBio ? 'Biografia otimizada' : 'Escrever biografia (mín. 150 caracteres)', impact: 'Obrigatório', completed: hasBio, url: 'psi_meu_perfil.html' },
     { title: hasCpf ? 'Documento validado' : 'Preencher CPF/CNPJ', impact: 'Obrigatório', completed: hasCpf, url: 'psi_meu_perfil.html' },
-    { title: hasSpecialties ? 'Especialidades definidas' : 'Definir temas de atuação', impact: 'Obrigatório', completed: hasSpecialties, url: 'psi_meu_perfil.html' },
-  ];
-  const phase2 = [
-    { title: hasForumActivity ? 'Primeira participação no fórum' : 'Responder a uma dúvida na comunidade', impact: 'Maior Visibilidade', completed: hasForumActivity, url: 'psi_forum.html' },
-    { title: hasArticle ? 'Primeiro artigo publicado' : 'Publicar seu primeiro artigo', impact: 'Autoridade', completed: hasArticle, url: 'psi_blog.html' },
+    { title: hasSpecialties ? 'Especialidades definidas' : 'Definir temas de atuação', impact: 'Obrigatório', completed: hasSpecialties, url: 'psi_meu_perfil.html' }
   ];
 
-  const isPhase1Done = phase1.every(s => s.completed);
-  const isPhase2Done = phase2.every(s => s.completed);
+  const phase2Steps = [
+    { title: hasForumActivity ? 'Primeira participação no fórum' : 'Responder a uma dúvida na comunidade', impact: 'Maior Visibilidade', completed: hasForumActivity, url: 'psi_forum.html' },
+    { title: hasArticle ? 'Primeiro post publicado' : 'Publicar seu primeiro post', impact: 'Autoridade', completed: hasArticle, url: 'psi_blog.html' }
+  ];
+
+  const isPhase1Completed = phase1Steps.every(s => s.completed);
+  const isPhase2Completed = phase2Steps.every(s => s.completed);
 
   let stepsToRender: any[] = [];
   let headerTitle = '';
   let isAdvancedPhase = false;
 
-  if (!isPhase1Done) {
+  if (!isPhase1Completed) {
     headerTitle = '🎯 Fase 1: Primeiros passos para os matches';
-    stepsToRender = [...phase1].sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
-  } else if (!isPhase2Done) {
+    stepsToRender = [...phase1Steps].sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
+  } else if (!isPhase2Completed) {
     headerTitle = '🚀 Fase 2: Próximos passos para crescer';
-    stepsToRender = [...phase2].sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
+    stepsToRender = [...phase2Steps].sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
   } else {
     isAdvancedPhase = true;
     headerTitle = '🔄 Fase 3: Manutenção de Autoridade';
 
+    const dateBlog = stats?.lastInteractions?.blog;
     const dateForum = stats?.lastInteractions?.forum;
     const dateComment = stats?.lastInteractions?.comment;
     const dateAnswer = stats?.lastInteractions?.answer;
-    const forumDates = [
+
+    const diasSemArtigo = dateBlog ? Math.floor((Date.now() - new Date(dateBlog).getTime()) / (1000 * 60 * 60 * 24)) : (stats?.diasDesdeUltimoArtigo !== undefined ? stats.diasDesdeUltimoArtigo : 999);
+
+    const interacoesForum = [
       dateForum ? new Date(dateForum) : null,
       dateComment ? new Date(dateComment) : null,
-      dateAnswer ? new Date(dateAnswer) : null,
+      dateAnswer ? new Date(dateAnswer) : null
     ].filter(d => d !== null && !isNaN(d.getTime())) as Date[];
-    const lastForum = forumDates.length > 0 ? new Date(Math.max(...forumDates.map(d => d.getTime()))) : null;
-    const diasSemForum = lastForum ? Math.floor((Date.now() - lastForum.getTime()) / (1000 * 60 * 60 * 24)) : (stats?.diasDesdeUltimaInteracao !== undefined ? stats.diasDesdeUltimaInteracao : 999);
 
-    const dateBlog = stats?.lastInteractions?.blog;
-    const lastArtigo = dateBlog ? new Date(dateBlog) : null;
-    const diasSemArtigo = lastArtigo ? Math.floor((Date.now() - lastArtigo.getTime()) / (1000 * 60 * 60 * 24)) : (stats?.diasDesdeUltimoArtigo !== undefined ? stats.diasDesdeUltimoArtigo : 999);
+    const lastForumDate = interacoesForum.length > 0 ? new Date(Math.max(...interacoesForum.map(d => d.getTime()))) : null;
+    const diasSemForum = lastForumDate ? Math.floor((Date.now() - lastForumDate.getTime()) / (1000 * 60 * 60 * 24)) : (stats?.diasDesdeUltimaInteracao !== undefined ? stats.diasDesdeUltimaInteracao : 999);
 
-    const hasRecentForum = diasSemForum <= 7;
     const hasRecentArticle = diasSemArtigo <= 7;
+    const hasRecentForum = diasSemForum <= 7;
 
-    stepsToRender = [
-      {
-        title: hasRecentForum ? 'Você marcou presença na comunidade recentemente!' : 'Já deu uma passada no fórum essa semana?',
-        impact: hasRecentForum ? 'Em dia!' : 'Comunidade',
-        completed: hasRecentForum,
-        url: 'psi_forum.html',
-        isRecurring: true
-      },
-      {
-        title: hasRecentArticle ? 'Seu último artigo está fresquinho!' : 'Alguma ideia em mente? Que tal fazer um post no blog',
-        impact: hasRecentArticle ? 'Em dia!' : 'Autoridade',
-        completed: hasRecentArticle,
-        url: 'psi_blog.html',
-        isRecurring: true
+    const aiMarketingTip = aiTips?.marketingTip;
+    const aiContentIdea = aiTips?.contentIdea;
+
+    // 1. INTEGRAÇÃO DA IA COM TAREFAS RECORRENTES (Blog/Fórum)
+    const isForumIdea = aiContentIdea && aiContentIdea.url && aiContentIdea.url.includes('forum');
+    const forumPendingTitle = isForumIdea ? aiContentIdea.title : 'Já deu uma passada no fórum essa semana?';
+    stepsToRender.push({
+      title: hasRecentForum ? 'Você marcou presença na comunidade recentemente!' : forumPendingTitle,
+      impact: hasRecentForum ? 'Em dia!' : 'Comunidade',
+      completed: hasRecentForum,
+      url: 'psi_forum.html',
+      isRecurring: true
+    });
+
+    const isBlogIdea = aiContentIdea && aiContentIdea.url && aiContentIdea.url.includes('blog');
+    const blogPendingTitle = isBlogIdea ? aiContentIdea.title : 'Alguma ideia em mente? Que tal fazer um post no blog';
+    stepsToRender.push({
+      title: hasRecentArticle ? 'Seu último artigo está fresquinho!' : blogPendingTitle,
+      impact: hasRecentArticle ? 'Em dia!' : 'Autoridade',
+      completed: hasRecentArticle,
+      url: 'psi_blog.html',
+      isRecurring: true
+    });
+
+    // 2. DICAS DE MARKETING / CONVERSÃO (Sempre exibidas como Lâmpada 💡)
+    const reviewCount = (typeof psiData?.reviewCount === 'number')
+      ? psiData.reviewCount
+      : ((typeof stats?.reviewCount === 'number') ? stats.reviewCount : 0);
+    const psiSlug = psiData?.slug || psiData?.customSlug || psiData?.id || '';
+    const reviewShareUrl = psiSlug ? `https://www.yelopsi.com.br/${psiSlug}/?review=true` : `https://www.yelopsi.com.br/?review=true`;
+
+    const impressions = stats?.totalImpressions || 0;
+    const views = stats?.profileViews || 0;
+    const clicks = stats?.whatsappClicks || 0;
+    const viewToClickRate = views > 0 ? (clicks / views) : 0;
+    const myPrice = Number(psiData?.preco_consulta || 0);
+
+    if (reviewCount === 0) {
+      stepsToRender.push({
+        title: 'Você ainda não tem avaliações! Peça para pacientes antigos deixarem um depoimento no seu perfil público.',
+        impact: 'Prova Social',
+        completed: false,
+        url: '#',
+        shareUrl: reviewShareUrl,
+        isTip: true,
+        isReviewRequest: true
+      });
+    } else if (reviewCount < 5) {
+      stepsToRender.push({
+        title: `Você já tem ${reviewCount} ${reviewCount === 1 ? 'avaliação' : 'avaliações'}! Peça para mais pacientes deixarem um depoimento no seu perfil público.`,
+        impact: 'Prova Social',
+        completed: false,
+        url: '#',
+        shareUrl: reviewShareUrl,
+        isTip: true,
+        isReviewRequest: true
+      });
+    } else if (aiMarketingTip) {
+      stepsToRender.push({
+        title: aiMarketingTip.title?.startsWith('✨') ? aiMarketingTip.title : `✨ ${aiMarketingTip.title}`,
+        impact: aiMarketingTip.impact || 'Dica IA',
+        completed: false,
+        url: aiMarketingTip.url || 'psi_meu_perfil.html',
+        isTip: true,
+        isMarketingAI: true
+      });
+    } else {
+      if (impressions >= 10 && (views / impressions) < 0.15) {
+        stepsToRender.push({ title: 'Ajustar o início do seu texto de bio para melhorar a taxa de clique no seu perfil', impact: 'Maior Conversão', completed: false, url: 'psi_meu_perfil.html', isTip: true });
+      } else if (views >= 10 && viewToClickRate >= 0.25 && myPrice > 0 && myPrice < 130) {
+        stepsToRender.push({ title: 'Sua conversão está excelente! Considere reajustar o valor da sessão para valorizar sua hora clínica', impact: 'Mais Faturamento', completed: false, url: 'psi_meu_perfil.html', isTip: true });
+      } else if (views >= 10 && viewToClickRate < 0.10 && myPrice > 160) {
+        stepsToRender.push({ title: 'Muitas visitas, mas poucos contatos. Considere reduzir o valor da sessão temporariamente para atrair pacientes', impact: 'Mais Contatos', completed: false, url: 'psi_meu_perfil.html', isTip: true });
+      } else if (views >= 5 && viewToClickRate < 0.15) {
+        stepsToRender.push({ title: 'Ajustar sua página pública e foto para passar mais confiança e receber mais chamadas', impact: 'Mais Contatos', completed: false, url: 'psi_meu_perfil.html', isTip: true });
       }
-    ];
+    }
 
-    // Ordenação idêntica à web: pendentes primeiro, concluídos depois
-    stepsToRender.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
+    stepsToRender.push({ title: 'Gestão financeira e agenda revisadas', impact: 'Organização', completed: true, url: 'psi_financeiro.html', isRecurring: true });
+
+    stepsToRender.sort((a, b) => {
+      if (a.isTip !== b.isTip) return a.isTip ? 1 : -1;
+      return a.completed === b.completed ? 0 : a.completed ? 1 : -1;
+    });
   }
 
-  const totalTasks = stepsToRender.length;
-  const completedForProgress = stepsToRender.filter(s => s.completed).length;
+  const validTasks = stepsToRender.filter(s => !s.isTip && s.title !== 'Gestão financeira e agenda revisadas');
+  const totalTasks = validTasks.length;
+  const completedForProgress = validTasks.filter(s => s.completed).length;
   const progressPercent = totalTasks > 0 ? (completedForProgress / totalTasks) * 100 : 100;
+
+  const handleStepPress = async (step: any) => {
+    if (step.isReviewRequest) {
+      const psiSlug = psiData?.slug || psiData?.customSlug || psiData?.id || '';
+      const publicLink = step.shareUrl || (psiSlug ? `https://www.yelopsi.com.br/${psiSlug}/?review=true` : `https://www.yelopsi.com.br/?review=true`);
+      try {
+        await Clipboard.setStringAsync(publicLink);
+        setCopiedReview(true);
+        setToastMessage('Link de avaliação copiado para a área de transferência!');
+        setTimeout(() => setCopiedReview(false), 3000);
+        await Share.share({
+          title: 'Avalie meu atendimento',
+          message: `Avalie meu atendimento na Yelo: ${publicLink}`,
+          url: publicLink,
+        });
+      } catch (e) {
+        // Ignora cancelamento da folha de compartilhamento
+      }
+      return;
+    }
+
+    if (step.url === 'psi_forum.html') {
+      router.navigate('/forum');
+    } else if (step.url === 'psi_blog.html') {
+      router.navigate('/blog');
+    } else if (step.url === 'psi_meu_perfil.html') {
+      router.navigate('/meu_perfil');
+    } else if (step.url === 'psi_financeiro.html') {
+      router.navigate('/financeiro');
+    }
+  };
 
   return (
     <View className="flex-1 bg-[#f9fafb]">
       <StatusBar style="dark" />
-
-      {/* PAYWALL OVERLAY — igual à web: mostra banner por cima quando inativo, não bloqueia a tela */}
-      {estaInativo && (
-        <View
-          style={{
-            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 100,
-            alignItems: 'center', justifyContent: 'center', padding: 24,
-          }}
-        >
-          <View className="bg-white rounded-[24px] p-8 w-full max-w-[400px] items-center">
-            <Text className="text-[48px] mb-4">🔒</Text>
-            <Text className="font-title text-[#1B4332] text-[22px] text-center mb-3">
-              Período de teste expirou
-            </Text>
-            <Text className="font-sans text-[#555] text-[15px] text-center leading-relaxed mb-6">
-              Ative o Plano Essencial para continuar recebendo pacientes pela Yelo.
-            </Text>
-            <TouchableOpacity className="bg-[#1B4332] py-4 w-full rounded-[16px] items-center">
-              <Text className="font-sans font-bold text-white text-[16px]">Assinar Agora</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
 
       <YeloScrollView
         className="flex-1 px-5 pt-6"
@@ -354,74 +444,90 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* BLOCO 1: CHECKLIST — "Próximos passos para crescer / Manutenção de Autoridade" */}
-        <View className="bg-white rounded-[24px] p-5 border border-[#e5e7eb] mb-6">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="font-title text-[#1B4332] text-[17px] flex-1 mr-2">{headerTitle}</Text>
-            <View className="bg-[#f0fdf4] px-3 py-1 rounded-[20px] border border-[#bbf7d0]">
-              <Text className="font-sans text-[#1B4332] font-bold text-[11px]">
+        {/* BLOCO 1: CHECKLIST — "Fase 1 / Fase 2 / Fase 3" (espelho exato da web mobile) */}
+        <View className="bg-white rounded-[24px] p-[22px] border border-[#e5e7eb] mb-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+          <View className="flex-row justify-between items-center mb-6 gap-3">
+            <Text className="font-title text-[#1B4332] text-[19px] flex-1 leading-snug">
+              {headerTitle}
+            </Text>
+            <View className="bg-[#f0fdf4] px-[14px] py-[6px] rounded-[20px] border border-[#bbf7d0] self-center">
+              <Text className="font-sans font-bold text-[#1B4332] text-[12px]">
                 {completedForProgress}/{totalTasks} {isAdvancedPhase ? 'em dia' : 'concluídos'}
               </Text>
             </View>
           </View>
 
-          <View className="h-[6px] bg-[#f1f3f5] rounded-[4px] overflow-hidden mb-4">
-            <View className="h-full bg-[#1B4332] rounded-[4px]" style={{ width: `${progressPercent}%` }} />
+          <View className="h-[8px] bg-[#f1f3f5] rounded-[4px] overflow-hidden mb-6">
+            <View
+              className="h-full bg-[#1B4332] rounded-[4px]"
+              style={{ width: `${progressPercent}%` }}
+            />
           </View>
 
-          <View className="gap-2.5">
+          <View className="gap-3">
             {stepsToRender.map((step, i) => {
               const isCompleted = step.completed;
+              const isTip = !!step.isTip;
+              const isReview = !!step.isReviewRequest;
+              const showCopied = isReview && copiedReview;
+
               return (
                 <TouchableOpacity
-                  key={i}
+                  key={`${step.title}-${i}`}
                   activeOpacity={0.7}
-                  onPress={() => {
-                    if (step.url === 'psi_forum.html') router.navigate('/forum');
-                    else if (step.url === 'psi_blog.html') router.navigate('/blog');
-                    else if (step.url === 'psi_meu_perfil.html') router.navigate('/meu_perfil');
-                    else if (step.url === 'psi_financeiro.html') router.navigate('/financeiro');
-                  }}
-                  className={`flex-row items-center p-3.5 rounded-[16px] ${
+                  onPress={() => handleStepPress(step)}
+                  className={`flex-row items-center px-[14px] py-[12px] rounded-[16px] ${
                     isCompleted
-                      ? 'bg-transparent border border-transparent opacity-70'
+                      ? 'bg-transparent border border-transparent opacity-60'
                       : 'bg-[#f8f9fa] border border-[#f1f3f5]'
                   }`}
                 >
-                  <View
-                    className={`w-[18px] h-[18px] rounded-full border-2 items-center justify-center mr-3 ${
-                      isCompleted
-                        ? 'bg-[#1B4332] border-[#1B4332]'
-                        : 'border-[#adb5bd]'
-                    }`}
-                  >
-                    {isCompleted && <Text className="text-white text-[10px] font-bold leading-none">✓</Text>}
-                  </View>
+                  {isTip ? (
+                    <View className="w-[18px] h-[18px] items-center justify-center mr-3">
+                      <Text className="text-[17px] leading-none">💡</Text>
+                    </View>
+                  ) : (
+                    <View
+                      className={`w-[18px] h-[18px] rounded-full border-2 items-center justify-center mr-3 ${
+                        isCompleted
+                          ? 'bg-[#1B4332] border-[#1B4332]'
+                          : 'border-[#adb5bd] bg-white'
+                      }`}
+                    >
+                      {isCompleted && (
+                        <Text className="text-white text-[10px] font-bold leading-none">✓</Text>
+                      )}
+                    </View>
+                  )}
+
                   <View className="flex-1">
                     <Text
-                      className={`font-sans font-semibold text-[13px] ${
-                        isCompleted
-                          ? isAdvancedPhase ? 'text-[#888]' : 'text-[#888] line-through'
+                      className={`font-sans font-semibold text-[14px] leading-snug mb-1 ${
+                        showCopied
+                          ? 'text-[#10b981]'
+                          : isCompleted
+                          ? isAdvancedPhase
+                            ? 'text-[#888]'
+                            : 'text-[#888] line-through'
                           : 'text-[#333]'
                       }`}
                     >
-                      {step.title}
+                      {showCopied
+                        ? '✅ Link copiado com sucesso! Envie aos pacientes.'
+                        : step.title}
                     </Text>
-                    {!isCompleted ? (
-                      <View className="self-start bg-[#d1fae5] px-2 py-0.5 rounded-[6px] mt-1">
-                        <Text className="font-sans font-bold text-[#059669] text-[10px]">
+
+                    {!isCompleted || isTip ? (
+                      <View className="self-start bg-[#d1fae5] px-2 py-0.5 rounded-[6px]">
+                        <Text className="font-sans font-bold text-[#059669] text-[11px]">
                           {step.impact}
                         </Text>
                       </View>
                     ) : isAdvancedPhase ? (
-                      <Text className="font-sans text-[11px] text-[#888] mt-0.5">
+                      <Text className="font-sans text-[12px] text-[#888]">
                         {step.impact}
                       </Text>
-                    ) : (
-                      <Text className="font-sans text-[11px] text-[#888] mt-0.5">
-                        {step.impact}
-                      </Text>
-                    )}
+                    ) : null}
                   </View>
                 </TouchableOpacity>
               );
@@ -529,6 +635,9 @@ export default function HomeScreen() {
 
         <View className="h-[20px]" />
       </YeloScrollView>
+
+      {/* Toast flutuante de baixo pra cima */}
+      <YeloToast message={toastMessage} onDismiss={() => setToastMessage(null)} />
     </View>
   );
 }

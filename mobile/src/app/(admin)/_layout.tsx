@@ -66,12 +66,13 @@ export default function AdminLayout() {
           headerTitle: "",
           headerLeft: () => <HeaderLeft />,
         }}
-        tabBar={({ state, descriptors, navigation }) => {
+        tabBar={(props: any) => {
+          const { state, descriptors, navigation } = props;
         return (
           <View className="absolute bottom-8 left-5 right-5 bg-white/95 rounded-[50px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] flex-row justify-between items-center px-2 py-2" style={{ elevation: 5 }}>
             {state.routes
               .filter((route: any) => {
-                const hiddenRoutes = ['(crm)', 'configuracoes', 'perfil-admin', 'logs-sistema', 'metricas-match', 'exportar', 'gestao-conteudo', 'moderacao-forum', 'comunidade-gestao'];
+                const hiddenRoutes = ['(crm)', 'configuracoes', 'perfil-admin', 'logs-sistema', 'metricas-match', 'exportar', 'gestao-conteudo', 'moderacao-forum', 'comunidade-gestao', 'backlog-ajustes', 'historico-alteracoes'];
                 return !hiddenRoutes.includes(route.name);
               })
               .map((route: any) => {
@@ -81,14 +82,16 @@ export default function AdminLayout() {
               const isFocused = state.index === index;
 
               const onPress = () => {
-                const event = navigation.emit({
+                const event = navigation?.emit ? navigation.emit({
                   type: 'tabPress',
                   target: route.key,
                   canPreventDefault: true,
-                });
+                }) : null;
 
-                if (!isFocused && !event.defaultPrevented) {
-                  navigation.navigate(route.name);
+                if (!isFocused && (!event || !event.defaultPrevented)) {
+                  if (navigation?.navigate) {
+                    navigation.navigate(route.name);
+                  }
                 }
               };
 
@@ -145,6 +148,8 @@ export default function AdminLayout() {
       <Tabs.Screen name="gestao-conteudo" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
       <Tabs.Screen name="moderacao-forum" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
       <Tabs.Screen name="comunidade-gestao" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
+      <Tabs.Screen name="backlog-ajustes" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
+      <Tabs.Screen name="historico-alteracoes" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
     </Tabs>
     </>
   );

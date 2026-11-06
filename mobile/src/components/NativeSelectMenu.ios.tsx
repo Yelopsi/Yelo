@@ -1,13 +1,16 @@
-import React from 'react';
-import { TouchableOpacity, ActionSheetIOS, Keyboard, type StyleProp, type ViewStyle } from 'react-native';
+import React, { useMemo } from 'react';
+import { Keyboard, type StyleProp, type ViewStyle } from 'react-native';
+import { MenuView, type MenuAction } from '@expo/ui/community/menu';
 import type { NativeSelectMenuProps } from './NativeSelectMenu';
 
 export type { NativeSelectOption, NativeSelectMenuProps } from './NativeSelectMenu';
 
+const EMPTY_SENTINEL = '__NATIVE_SELECT_EMPTY__';
+
 /**
- * iOS Nativo: utiliza o ActionSheetIOS oficial do UIKit da Apple.
- * Totalmente imune a recursões de layout no Yoga/SwiftUI, ágil,
- * acessível e seguindo a interface padrão do iOS.
+ * iOS Nativo: renderiza o componente real `SwiftUI.Menu` (`UIMenu`) do sistema operacional iOS
+ * ancorado diretamente ao elemento gatilho, com efeitos de Liquid Glass e SF Symbols checkmark,
+ * exatamente no padrão nativo do ecossistema Apple.
  */
 export default function NativeSelectMenu({
   options,
@@ -17,39 +20,34 @@ export default function NativeSelectMenu({
   style,
   children,
 }: NativeSelectMenuProps) {
-  const handlePress = () => {
-    Keyboard.dismiss();
-    const optionLabels = options.map((opt) => opt.label);
-    const cancelButtonIndex = optionLabels.length;
-
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        title: title || undefined,
-        options: [...optionLabels, 'Cancelar'],
-        cancelButtonIndex,
-      },
-      (buttonIndex) => {
-        if (
-          buttonIndex !== cancelButtonIndex &&
-          buttonIndex >= 0 &&
-          buttonIndex < options.length
-        ) {
-          const selected = options[buttonIndex];
-          if (selected && String(selected.value) !== String(selectedValue)) {
-            onSelect(selected.value);
-          }
-        }
-      }
-    );
-  };
+  const actions: MenuAction[] = useMemo(
+    () =>
+      options.map((opt) => {
+        const isSelected = String(opt.value) === String(selectedValue);
+        return {
+          id: opt.value === '' ? EMPTY_SENTINEL : String(opt.value),
+          title: opt.label,
+          image: isSelected ? 'checkmark' : undefined,
+        };
+      }),
+    [options, selectedValue]
+  );
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={handlePress}
+    <MenuView
+      title={title}
       style={style as StyleProp<ViewStyle>}
+      actions={actions}
+      onOpenMenu={() => Keyboard.dismiss()}
+      onPressAction={({ nativeEvent }) => {
+        const raw = nativeEvent.event;
+        const val = raw === EMPTY_SENTINEL ? '' : raw;
+        if (val !== String(selectedValue)) {
+          onSelect(val);
+        }
+      }}
     >
       {children}
-    </TouchableOpacity>
+    </MenuView>
   );
 }

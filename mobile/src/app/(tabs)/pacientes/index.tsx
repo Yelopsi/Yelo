@@ -688,16 +688,8 @@ export default function PacientesScreen() {
         Alert.alert('Sucesso', 'Paciente cadastrado com sucesso!');
       }
     } catch (err: any) {
-      const mockNew = {
-        id: String(Date.now()),
-        nome: newPatientName,
-        telefone: newPatientPhone,
-        status: newPatientStatus,
-        sessionValue: parseFloat(newPatientValue.replace(/\D/g, '')) / 100 || 0,
-      };
-      setPatients(prev => [mockNew, ...prev]);
-      setModalNewPatient(false);
-      Alert.alert('Paciente Salvo', 'Paciente salvo com sucesso na sua lista!');
+      const msg = err.response?.data?.error || err.message || 'Não foi possível cadastrar o paciente. Verifique sua conexão e tente novamente.';
+      Alert.alert('Erro ao Salvar', msg);
     } finally {
       setIsSubmittingPatient(false);
     }

@@ -25,11 +25,8 @@ export default function CancelamentosScreen() {
         setOfflineMode(false);
       } catch (error) {
         setOfflineMode(true);
-        setSurveys([
-          { id: 1, psychologistId: 10, avaliacao: 3, motivo: 'Financeiro', detalhe: 'Não consigo pagar agora.', createdAt: new Date().toISOString() },
-          { id: 2, psychologistId: 11, avaliacao: 2, motivo: 'Plataforma', detalhe: 'Achei confuso.', createdAt: new Date().toISOString() }
-        ]);
-        setStats({ total: 2, media: 2.5, topReason: 'Financeiro' });
+        setSurveys([]);
+        setStats({ total: 0, media: 0, topReason: '-' });
       } finally {
         setLoading(false);
       }

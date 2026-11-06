@@ -668,3 +668,83 @@ exports.getAiInsights = async (req, res) => {
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };
+
+exports.getFavoritesProfile = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
+        if (!psychologistId) {
+            return res.status(401).json({ error: 'Psicólogo não autenticado.' });
+        }
+
+        const [patients] = await db.sequelize.query(`
+            SELECT 
+                pt."id",
+                pt."temas_buscados",
+                pt."valor_sessao_faixa",
+                pt."identidade_genero"
+            FROM "PatientFavorites" pf
+            JOIN "Patients" pt ON pf."PatientId" = pt."id"
+            WHERE pf."PsychologistId" = :psychologistId 
+              AND pf."deletedAt" IS NULL 
+              AND pt."deletedAt" IS NULL
+        `, { replacements: { psychologistId } });
+
+        if (!patients || patients.length === 0) {
+            return res.json({ total: 0, temas: {}, faixaValor: {}, genero: {} });
+        }
+
+        const total = patients.length;
+        const temasCount = {};
+        const faixaValorCount = {};
+        const generoCount = {};
+
+        for (const p of patients) {
+            // Temas buscados
+            if (Array.isArray(p.temas_buscados)) {
+                for (const t of p.temas_buscados) {
+                    if (t) {
+                        const tema = t.trim();
+                        temasCount[tema] = (temasCount[tema] || 0) + 1;
+                    }
+                }
+            } else if (typeof p.temas_buscados === 'string') {
+                try {
+                    const parsed = JSON.parse(p.temas_buscados);
+                    if (Array.isArray(parsed)) {
+                        for (const t of parsed) {
+                            if (t) {
+                                const tema = t.trim();
+                                temasCount[tema] = (temasCount[tema] || 0) + 1;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    const tema = p.temas_buscados.trim();
+                    if (tema) temasCount[tema] = (temasCount[tema] || 0) + 1;
+                }
+            }
+
+            // Faixa de valor
+            if (p.valor_sessao_faixa) {
+                const faixa = p.valor_sessao_faixa.trim();
+                if (faixa) faixaValorCount[faixa] = (faixaValorCount[faixa] || 0) + 1;
+            }
+
+            // Gênero
+            if (p.identidade_genero) {
+                const genero = p.identidade_genero.trim();
+                if (genero) generoCount[genero] = (generoCount[genero] || 0) + 1;
+            }
+        }
+
+        res.json({
+            total,
+            temas: temasCount,
+            faixaValor: faixaValorCount,
+            genero: generoCount
+        });
+    } catch (error) {
+        console.error("Erro em getFavoritesProfile:", error);
+        res.status(500).json({ error: 'Erro ao buscar perfil de favoritos.' });
+    }
+};

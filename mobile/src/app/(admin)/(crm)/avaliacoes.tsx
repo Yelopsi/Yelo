@@ -24,8 +24,8 @@ export default function AvaliacoesScreen() {
         setOfflineMode(false);
       } catch (error) {
         setOfflineMode(true);
-        setReviews([{ id: 1, rating: 5, comment: "A plataforma tem sido ótima...", createdAt: new Date().toISOString(), Psychologist: { nome: "Dra. Camila Soares" } }]);
-        setPlatformReviews([{ id: 1, rating: 4, comment: "Gostei muito dos matches...", isAnonymous: true, Patient: { nome: "Anônimo" } }]);
+        setReviews([]);
+        setPlatformReviews([]);
       } finally {
         setLoading(false);
       }

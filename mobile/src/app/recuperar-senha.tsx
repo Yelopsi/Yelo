@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import api from '../services/api';
 
 export default function RecuperarSenhaScreen() {
   const [email, setEmail] = useState('');
@@ -13,18 +14,23 @@ export default function RecuperarSenhaScreen() {
   const router = useRouter();
 
   const handleRecuperar = async () => {
-    if (!email) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
       setErrorMsg('Informe seu e-mail.');
       return;
     }
     setErrorMsg('');
     setLoadingLocal(true);
     
-    // Bypass: Simula envio do email
-    setTimeout(() => {
+    try {
+      await api.post('/api/psychologists/forgot-password', { email: cleanEmail });
       setSucesso(true);
+    } catch (err: any) {
+      const msg = err.response?.data?.error || 'Não foi possível solicitar a recuperação. Verifique sua conexão e tente novamente.';
+      setErrorMsg(msg);
+    } finally {
       setLoadingLocal(false);
-    }, 1000);
+    }
   };
 
   return (

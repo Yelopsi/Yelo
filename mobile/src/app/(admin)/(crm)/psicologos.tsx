@@ -35,12 +35,8 @@ export default function AdminCRMPsicologosScreen() {
       console.log('Erro ao buscar psicólogos, modo offline:', error);
       setErrorMsg(error.message || 'Erro desconhecido');
       setOfflineMode(true);
-      setPsychologists([
-        { id: 1, name: 'Dra. Roberta Silva', email: 'roberta@email.com', plan: 'Clínico', status: 'active', createdAt: '2024-01-10T00:00:00.000Z' },
-        { id: 2, name: 'Dr. Carlos Mendes', email: 'carlos@email.com', plan: 'Essencial', status: 'pending', createdAt: '2024-02-15T00:00:00.000Z' },
-        { id: 3, name: 'Dra. Ana Costa', email: 'ana@email.com', plan: 'Essencial', status: 'inactive', createdAt: '2023-11-05T00:00:00.000Z' },
-      ]);
-      setKpis({ total: 3, active: 1, pending: 1, inactive: 1, vip: 0, fila_cs: 0 });
+      setPsychologists([]);
+      setKpis({ total: 0, active: 0, pending: 0, inactive: 0, vip: 0, fila_cs: 0 });
     } finally {
       setLoading(false);
       setRefreshing(false);

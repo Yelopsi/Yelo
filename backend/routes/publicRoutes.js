@@ -101,6 +101,23 @@ router.get('/psychologists/list', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Erro ao buscar psicólogos.' }); }
 });
 
+router.get('/posts', async (req, res) => {
+    try {
+        const posts = await db.Post.scope(null).findAll({
+            order: [['createdAt', 'DESC']],
+            limit: 30,
+            include: [{
+                model: db.Psychologist,
+                as: 'autor',
+                attributes: ['id', 'nome', 'fotoUrl', 'slug', 'status']
+            }]
+        });
+        res.json(posts);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar artigos do blog.' });
+    }
+});
+
 router.get('/psychologists/:slug/availability', async (req, res) => {
     try {
         const { slug } = req.params;

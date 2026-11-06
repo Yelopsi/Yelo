@@ -27,6 +27,28 @@ export default function AdminAjustesHubScreen() {
       </View>
 
       <View className="gap-[15px]">
+        {/* Central de Ajustes (Notion Flow) */}
+        <TouchableOpacity 
+          onPress={() => router.push('/(admin)/backlog-ajustes')} 
+          className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#c7d2fe]"
+        >
+          <View className="w-[45px] h-[45px] bg-[#ede9fe] rounded-[12px] items-center justify-center mr-[15px]">
+            <Feather name="check-square" size={20} color="#6d28d9" />
+          </View>
+          <View className="flex-1">
+            <View className="flex-row items-center gap-1.5 mb-[2px]">
+              <Text className="font-title text-[#4338ca] text-[16px]">Central de Ajustes</Text>
+              <View className="bg-[#6366f1] px-2 py-0.5 rounded-full">
+                <Text className="font-sans font-bold text-white text-[9px]">Notion Flow</Text>
+              </View>
+            </View>
+            <Text className="font-sans text-[#666] text-[12px] leading-[16px]">
+              Fila de ajustes por tela, prioridades e status.
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={20} color="#ccc" />
+        </TouchableOpacity>
+
         {/* Configurações Globais */}
         <TouchableOpacity onPress={() => router.push('/(admin)/configuracoes')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
           <View className="w-[45px] h-[45px] bg-[#f3f4f6] rounded-[12px] items-center justify-center mr-[15px]">
@@ -59,6 +81,21 @@ export default function AdminAjustesHubScreen() {
           <View className="flex-1">
             <Text className="font-title text-[#333] text-[16px] mb-[2px]">Monitoramento e Logs</Text>
             <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Erros, saúde do servidor e acessos.</Text>
+          </View>
+          <Feather name="chevron-right" size={20} color="#ccc" />
+        </TouchableOpacity>
+
+        {/* Histórico de Alterações */}
+        <TouchableOpacity 
+          onPress={() => router.push('/(admin)/historico-alteracoes')} 
+          className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#fde68a]"
+        >
+          <View className="w-[45px] h-[45px] bg-[#fef9c3] rounded-[12px] items-center justify-center mr-[15px]">
+            <Feather name="clock" size={20} color="#854d0e" />
+          </View>
+          <View className="flex-1">
+            <Text className="font-title text-[#854d0e] text-[16px] mb-[2px]">Histórico de Alterações</Text>
+            <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Mudanças de produto, regras e comparativo com hoje.</Text>
           </View>
           <Feather name="chevron-right" size={20} color="#ccc" />
         </TouchableOpacity>

@@ -87,11 +87,7 @@ export default function AdminCRMPacientesScreen() {
     } catch (error) {
       console.log('Erro ao buscar pacientes, modo offline');
       setOfflineMode(true);
-      setPacientes([
-        { id: 1, name: 'João Pedro', email: 'joao.pedro@email.com', status: 'active', createdAt: '2026-01-01T00:00:00.000Z', internalId: 'YL-9988' },
-        { id: 2, name: 'Maria Souza', email: 'maria@email.com', status: 'active', createdAt: '2025-11-20T00:00:00.000Z', internalId: 'YL-9989' },
-        { id: 3, name: 'Carlos Silva', email: 'carlos@email.com', status: 'deleted', createdAt: '2025-10-15T00:00:00.000Z', internalId: 'YL-9990' },
-      ]);
+      setPacientes([]);
     } finally {
       setLoading(false);
       setRefreshing(false);

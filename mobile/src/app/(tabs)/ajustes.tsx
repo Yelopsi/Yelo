@@ -157,41 +157,59 @@ export default function AjustesScreen() {
             </View>
           </View>
 
-          {/* GRID DE CARDS (HUB) */}
+          {/* GRID DE CARDS (HUB) EM ORDEM LÓGICA DE UX */}
           <View className="px-6 pb-32">
             
-            {/* Card 1: Meu Perfil */}
+            {/* 1. PERFIL: Meu Perfil */}
             <TouchableOpacity 
               onPress={() => navigateTo('meu_perfil')} 
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
+              activeOpacity={0.8}
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">⚙️</Text>
               </View>
               <View className="flex-1">
                 <Text className="font-title text-[#1B4332] text-[19px] mb-1">Meu Perfil</Text>
-                <Text className="font-sans text-[14px] text-[#888] leading-snug">Dados pessoais, biografia e credenciais.</Text>
+                <Text className="font-sans text-[14px] text-[#888] leading-snug">Dados pessoais, foto, biografia e abordagens.</Text>
               </View>
             </TouchableOpacity>
 
-            {/* Card 2: Assinatura */}
+            {/* 2. VITRINE PÚBLICA: Meu Perfil Público */}
+            <TouchableOpacity 
+              onPress={handleOpenPublicProfile} 
+              className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
+              activeOpacity={0.8}
+            >
+              <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
+                <Feather name="external-link" size={24} color="#1B4332" />
+              </View>
+              <View className="flex-1">
+                <Text className="font-title text-[#1B4332] text-[19px] mb-1">Meu Perfil Público</Text>
+                <Text className="font-sans text-[14px] text-[#888] leading-snug">Veja como os pacientes visualizam sua página na internet.</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* 3. CONTA & PLANO: Assinatura & Planos */}
             <TouchableOpacity 
               onPress={() => navigateTo('assinatura')} 
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
+              activeOpacity={0.8}
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Text className="text-[24px]">⭐</Text>
               </View>
               <View className="flex-1">
                 <Text className="font-title text-[#1B4332] text-[19px] mb-1">Assinatura & Planos</Text>
-                <Text className="font-sans text-[14px] text-[#888] leading-snug">Gerenciar plano ativo e renovação.</Text>
+                <Text className="font-sans text-[14px] text-[#888] leading-snug">Gerenciar plano ativo, renovação e benefícios.</Text>
               </View>
             </TouchableOpacity>
 
-            {/* Card 3: Notificações */}
+            {/* 4. PREFERÊNCIAS: Notificações */}
             <TouchableOpacity 
               onPress={() => navigateTo('notificacoes')} 
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
+              activeOpacity={0.8}
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
                 <Feather name="bell" size={24} color="#1B4332" />
@@ -202,7 +220,7 @@ export default function AjustesScreen() {
               </View>
             </TouchableOpacity>
 
-            {/* Card 4: Segurança & Biometria (Face ID / Touch ID) */}
+            {/* 5. SEGURANÇA: Biometria (Face ID / Touch ID) */}
             <View className="bg-white border border-[#e5e7eb] rounded-[16px] p-[22px] flex-row items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5">
               <View className="flex-row items-center flex-1 mr-3">
                 <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
@@ -235,38 +253,46 @@ export default function AjustesScreen() {
               />
             </View>
 
-            {/* Card 3: Perfil Público */}
+            {/* 6. SUPORTE: Fale com a Yelo */}
             <TouchableOpacity 
-              onPress={handleOpenPublicProfile} 
+              onPress={() => navigateTo('fale_com_a_yelo')} 
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
+              activeOpacity={0.8}
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
-                <Feather name="external-link" size={24} color="#1B4332" />
+                <Text className="text-[24px]">🎧</Text>
               </View>
               <View className="flex-1">
-                <Text className="font-title text-[#1B4332] text-[19px] mb-1">Meu Perfil Público</Text>
-                <Text className="font-sans text-[14px] text-[#888] leading-snug">Veja como os pacientes visualizam sua página.</Text>
+                <Text className="font-title text-[#1B4332] text-[19px] mb-1">Fale com a Yelo</Text>
+                <Text className="font-sans text-[14px] text-[#888] leading-snug">Suporte humanizado direto com nossa equipe.</Text>
               </View>
             </TouchableOpacity>
 
-            {/* Card 4: Métricas de Mercado */}
+            {/* 7. NOVIDADES: Melhorias da Plataforma */}
             <TouchableOpacity 
-              onPress={() => navigateTo('analytics')} 
+              onPress={() => navigateTo('novidades')} 
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
+              activeOpacity={0.8}
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
-                <Text className="text-[24px]">📊</Text>
+                <Text className="text-[24px]">🚀</Text>
               </View>
               <View className="flex-1">
-                <Text className="font-title text-[#1B4332] text-[19px] mb-1">Inteligência de Mercado</Text>
-                <Text className="font-sans text-[14px] text-[#888] leading-snug">Demandas mais buscadas e autoridade relativa.</Text>
+                <View className="flex-row items-center justify-between flex-wrap gap-1 mb-1">
+                  <Text className="font-title text-[#1B4332] text-[19px]">Melhorias da Plataforma</Text>
+                  <View className="bg-[#dcfce7] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
+                    <Text className="text-[#15803d] text-[11px] font-bold">Novidades ✨</Text>
+                  </View>
+                </View>
+                <Text className="font-sans text-[14px] text-[#888] leading-snug">Conheça os novos recursos e atualizações da Yelo.</Text>
               </View>
             </TouchableOpacity>
 
-            {/* Card 5: Encerrar Sessão */}
+            {/* 8. ACESSO: Encerrar Sessão */}
             <TouchableOpacity 
               onPress={handleLogout}
               className="bg-white border border-[#ffe4e6] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5 mt-2"
+              activeOpacity={0.8}
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#fff1f2] items-center justify-center mr-5">
                 <Text className="text-[24px]">🚪</Text>

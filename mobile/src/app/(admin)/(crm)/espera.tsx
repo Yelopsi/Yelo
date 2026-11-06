@@ -35,9 +35,7 @@ export default function AdminCRMListaEsperaScreen() {
         setOfflineMode(false);
       } catch (error) {
         setOfflineMode(true);
-        setLeads([
-          { id: 1, nome: 'Dr. Roberto Alves', email: 'roberto@email.com', telefone: '11999999999', status: 'pending', createdAt: new Date().toISOString() }
-        ]);
+        setLeads([]);
       } finally {
         setLoading(false);
       }

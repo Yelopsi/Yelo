@@ -35,6 +35,16 @@ export default function CRMLayout() {
       <ExpoStack.Screen name="leads" options={{ title: "Leads e CRM" }} />
       <ExpoStack.Screen name="espera" options={{ title: "Lista de Espera" }} />
       <ExpoStack.Screen name="pacientes" options={{ title: "Pacientes" }} />
+      <ExpoStack.Screen name="copilot-wpp" options={{ title: "Copilot WhatsApp AI" }} />
+      <ExpoStack.Screen name="distribuicao" options={{ title: "Distribuição e Ads" }} />
+      <ExpoStack.Screen name="cmo-metrics" options={{ title: "Painel do CMO" }} />
+      <ExpoStack.Screen name="analytics-funil" options={{ title: "Analytics de Funil" }} />
+      <ExpoStack.Screen name="followup" options={{ title: "Follow-up WhatsApp" }} />
+      <ExpoStack.Screen name="receita" options={{ title: "Receita e Assinaturas" }} />
+      <ExpoStack.Screen name="avaliacoes" options={{ title: "Avaliações NPS" }} />
+      <ExpoStack.Screen name="cancelamentos" options={{ title: "Cancelamentos (Churn)" }} />
+      <ExpoStack.Screen name="caixa-entrada" options={{ title: "Caixa de Entrada" }} />
+      <ExpoStack.Screen name="avisos" options={{ title: "Mural de Avisos" }} />
     </ExpoStack>
   );
 }

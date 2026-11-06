@@ -3,19 +3,19 @@ import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndic
 import { Feather, Ionicons } from '@expo/vector-icons';
 import api from '../../services/api';
 
-const fallbackStats = {
-  mrr: 42500,
-  newPatients: 145,
-  newPsychologists: 32,
-  questionnairesToday: 18,
-  patients: { total: 1205, active: 1100, deleted: 105 },
-  psychologists: { total: 450, active: 400, deleted: 50, plans: { essencial: 100, clinico: 250, sol: 50 } },
-  questionnaires: { total: 3200, deleted: 120 },
-  conversionRate: 15.2,
-  totalMatches: 4520,
-  totalClicks: 890,
-  waitingList: 12,
-  pendingReviews: 5
+const emptyStats = {
+  mrr: 0,
+  newPatients: 0,
+  newPsychologists: 0,
+  questionnairesToday: 0,
+  patients: { total: 0, active: 0, deleted: 0 },
+  psychologists: { total: 0, active: 0, deleted: 0, plans: { essencial: 0, clinico: 0, sol: 0 } },
+  questionnaires: { total: 0, deleted: 0 },
+  conversionRate: 0,
+  totalMatches: 0,
+  totalClicks: 0,
+  waitingList: 0,
+  pendingReviews: 0
 };
 
 export default function AdminVisaoGeralScreen() {
@@ -33,7 +33,7 @@ export default function AdminVisaoGeralScreen() {
     } catch (error) {
       console.log('Erro ao buscar stats, entrando em modo offline', error);
       setOfflineMode(true);
-      setStats(fallbackStats);
+      setStats(emptyStats);
     } finally {
       setLoading(false);
       setRefreshing(false);

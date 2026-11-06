@@ -8,6 +8,7 @@ import PublicHeader from '../components/PublicHeader';
 import Footer from '../components/Footer';
 import PublicBottomNav from '../components/PublicBottomNav';
 import NativeSelectMenu from '../components/NativeSelectMenu';
+import api from '../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -28,8 +29,8 @@ export default function ContatoScreen() {
   const assuntos = ['Dúvida Geral', 'Sou Paciente', 'Sou Profissional', 'Imprensa // Parcerias'];
   const assuntoOptions = assuntos.map((item) => ({ label: item, value: item }));
 
-  const handleSubmit = () => {
-    if (!nome || !email || !mensagem) {
+  const handleSubmit = async () => {
+    if (!nome.trim() || !email.trim() || !mensagem.trim()) {
       setStatus({ type: 'error', msg: 'Preencha todos os campos obrigatórios.' });
       return;
     }
@@ -37,14 +38,23 @@ export default function ContatoScreen() {
     setLoading(true);
     setStatus({ type: '', msg: '' });
     
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await api.post('/api/public/contato', {
+        nome: nome.trim(),
+        email: email.trim().toLowerCase(),
+        assunto,
+        mensagem: mensagem.trim(),
+      });
       setStatus({ type: 'success', msg: 'Mensagem enviada com sucesso! Responderemos em breve.' });
       setNome('');
       setEmail('');
       setMensagem('');
-    }, 1500);
+    } catch (err: any) {
+      const msg = err.response?.data?.error || 'Não foi possível enviar a mensagem. Verifique sua conexão e tente novamente.';
+      setStatus({ type: 'error', msg });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

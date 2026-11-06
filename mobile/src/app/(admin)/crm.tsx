@@ -90,6 +90,35 @@ export default function AdminCRMHubScreen() {
             <Feather name="chevron-right" size={20} color="#ccc" />
           </TouchableOpacity>
 
+          {/* Painel do CMO */}
+          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/cmo-metrics')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#dbeafe]">
+            <View className="w-[45px] h-[45px] bg-[#eff6ff] rounded-[12px] items-center justify-center mr-[15px]">
+              <Feather name="cpu" size={20} color="#1e40af" />
+            </View>
+            <View className="flex-1">
+              <View className="flex-row items-center gap-1.5 mb-[2px]">
+                <Text className="font-title text-[#1e3a8a] text-[16px]">Painel do CMO 🧠</Text>
+                <View className="bg-[#1e40af] px-2 py-0.5 rounded-full">
+                  <Text className="font-sans font-bold text-white text-[9px]">LTV / CAC</Text>
+                </View>
+              </View>
+              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Decisão executiva de tráfego Meta e Google.</Text>
+            </View>
+            <Feather name="chevron-right" size={20} color="#ccc" />
+          </TouchableOpacity>
+
+          {/* Analytics de Funil */}
+          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/analytics-funil')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#fef3c7]">
+            <View className="w-[45px] h-[45px] bg-[#fffbeb] rounded-[12px] items-center justify-center mr-[15px]">
+              <Feather name="filter" size={20} color="#d97706" />
+            </View>
+            <View className="flex-1">
+              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Analytics de Funil</Text>
+              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Conversão end-to-end, visitas e taxas de Match.</Text>
+            </View>
+            <Feather name="chevron-right" size={20} color="#ccc" />
+          </TouchableOpacity>
+
           <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/receita')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
             <View className="w-[45px] h-[45px] bg-[#ccfbf1] rounded-[12px] items-center justify-center mr-[15px]">
               <Feather name="dollar-sign" size={20} color="#0d9488" />
@@ -97,6 +126,35 @@ export default function AdminCRMHubScreen() {
             <View className="flex-1">
               <Text className="font-title text-[#333] text-[16px] mb-[2px]">Receita e Assinaturas</Text>
               <Text className="font-sans text-[#666] text-[12px] leading-[16px]">MRR, Churn, LTV e faturas Asaas.</Text>
+            </View>
+            <Feather name="chevron-right" size={20} color="#ccc" />
+          </TouchableOpacity>
+
+          {/* Distribuição & Ads */}
+          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/distribuicao')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#fee2e2]">
+            <View className="w-[45px] h-[45px] bg-[#fce8e6] rounded-[12px] items-center justify-center mr-[15px]">
+              <Feather name="trending-up" size={20} color="#d93025" />
+            </View>
+            <View className="flex-1">
+              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Distribuição & Ads</Text>
+              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Cota justa e sugestões de investimento em Ads.</Text>
+            </View>
+            <Feather name="chevron-right" size={20} color="#ccc" />
+          </TouchableOpacity>
+
+          {/* Copilot WhatsApp AI */}
+          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/copilot-wpp')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#dcfce7]">
+            <View className="w-[45px] h-[45px] bg-[#dcfce7] rounded-[12px] items-center justify-center mr-[15px]">
+              <Feather name="message-circle" size={20} color="#16a34a" />
+            </View>
+            <View className="flex-1">
+              <View className="flex-row items-center gap-1.5 mb-[2px]">
+                <Text className="font-title text-[#166534] text-[16px]">Copilot WhatsApp 💬</Text>
+                <View className="bg-[#16a34a] px-2 py-0.5 rounded-full">
+                  <Text className="font-sans font-bold text-white text-[9px]">IA</Text>
+                </View>
+              </View>
+              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Dossiê real do psicólogo e respostas automáticas.</Text>
             </View>
             <Feather name="chevron-right" size={20} color="#ccc" />
           </TouchableOpacity>
@@ -163,7 +221,7 @@ export default function AdminCRMHubScreen() {
             <Feather name="chevron-right" size={20} color="#ccc" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => Alert.alert('Aviso', 'Módulo em construção.')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
+          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/followup')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#dcfce7]">
             <View className="w-[45px] h-[45px] bg-[#dcfce7] rounded-[12px] items-center justify-center mr-[15px]">
               <Feather name="message-square" size={20} color="#22c55e" />
             </View>
