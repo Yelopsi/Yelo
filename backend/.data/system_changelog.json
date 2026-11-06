@@ -1,5 +1,58 @@
 [
   {
+    "id": "change-git-a955c78f",
+    "date": "2026-11-06T18:55:24.000Z",
+    "commit": "a955c78f",
+    "author": "Anderson",
+    "title": "Correção: Corrigir caminho e adicionar ferramenta e modal de solicitar avaliacoes no hub evolucao (cs)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir caminho e adicionar ferramenta e modal de solicitar avaliacoes no hub evolucao",
+    "description": "Commit registrado no repositório: \"fix(cs): corrigir caminho e adicionar ferramenta e modal de solicitar avaliacoes no hub evolucao\". Arquivos modificados: backend/controllers/adminController.js, backend/controllers/adminPerformanceController.js, public/psi/psi_dashboard.html, public/psi/psi_dashboard.js, public/psi/psi_evolucao_hub.html (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a955c78f"
+    },
+    "after": {
+      "nova_versao": "corrigir caminho e adicionar ferramenta e modal de solicitar avaliacoes no hub evolucao"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/adminController.js",
+      "backend/controllers/adminPerformanceController.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "public/psi/psi_evolucao_hub.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-e4b7bcad",
+    "date": "2026-11-06T17:47:10.000Z",
+    "commit": "e4b7bcad",
+    "author": "Anderson",
+    "title": "Manutenção: Sincronizar changelog e relatorios do security gate (sync)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar changelog e relatorios do security gate",
+    "description": "Commit registrado no repositório: \"chore(sync): sincronizar changelog e relatorios do security gate\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #e4b7bcad"
+    },
+    "after": {
+      "nova_versao": "sincronizar changelog e relatorios do security gate"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-85c6321f",
     "date": "2026-11-06T17:45:12.000Z",
     "commit": "85c6321f",

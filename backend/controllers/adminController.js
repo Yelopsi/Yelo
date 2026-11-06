@@ -980,7 +980,7 @@ exports.analyzeProfile = async (req, res) => {
         const psi = await db.Psychologist.findByPk(id, {
             paranoid: false,
             attributes: [
-                'nome', 'bio', 'valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca', 
+                'id', 'slug', 'nome', 'bio', 'valor_sessao_numero', 'valor_mensal_numero', 'tipo_cobranca', 
                 'temas_atuacao', 'abordagens_tecnicas', 'fotoUrl', 'authority_level', 'xp',
                 'profile_appearances', 'whatsapp_clicks', 'createdAt',
                 'planExpiresAt', 'subscriptionId', 'subscription_payments_count', 'status', 'plano', 'is_exempt',
@@ -991,6 +991,8 @@ exports.analyzeProfile = async (req, res) => {
         if (!psi) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
         const safeNumericId = (!isNaN(parseInt(id, 10)) && parseInt(id, 10) > 0) ? parseInt(id, 10) : null;
+        const psiSlug = psi.slug || psi.id || id;
+        const reviewLink = `https://www.yelopsi.com.br/${psiSlug}/?review=true`;
 
         // 2. Busca métricas extras de engajamento
         const reviewsCount = safeNumericId ? await db.Review.count({ where: { psychologistId: safeNumericId, status: 'approved' } }).catch(() => 0) : 0;
@@ -1644,6 +1646,7 @@ Exemplo de abordagem: "Como o seu perfil já está super bem estruturado, queria
 - Calculadora de Honorários → apoiar decisões relacionadas aos honorários.
 - Manual de Conversão → orientar o profissional sobre como transformar contatos em pacientes.
 - Comunidade Yelo → interação e troca com outros profissionais.
+- Solicitar Avaliações (em Evolução > Solicitar Avaliações ou na tela de Início) → link direto para pedir avaliações de pacientes (${reviewLink}) ou sincronizar com o Google Meu Negócio em Ajustes > Meu Perfil.
 
 IMPORTANTE:
 Nunca invente ferramentas, funções ou caminhos de navegação que não estejam neste catálogo.
@@ -2166,6 +2169,7 @@ Aparições no Match (Recomendações): ${matchAppearances}
 Visualizações do Perfil (Tráfego): ${profileViews}
 Cliques no WhatsApp (Leads): ${whatsappClicks}
 Total de Avaliações de Pacientes: ${reviewsCount}
+Link Direto de Avaliações: ${reviewLink}
 
 🔥 Top 5 Temas Mais Buscados Pelos Pacientes (Últimos 30 dias):
 ${topDemandsText}
@@ -2234,9 +2238,9 @@ Se houver histórico acima:
                 analisePreenchido = `Lemos a sua biografia e gostamos muito da clareza e do tom acolhedor que você trouxe. A forma como você contextualizou a sua abordagem transmite muita segurança para o paciente que visita a sua página.`;
                 
                 if (!hasPrice) {
-                    pendenciasBlock = `Para darmos o próximo passo juntos e acelerar a chegada dos primeiros contatos no seu WhatsApp, recomendamos:\n\n• Definir um valor de referência para a sessão em *Ajustes > Meu Perfil* (percebemos que valores visíveis reduzem a hesitação do paciente antes do primeiro contato);\n• Compartilhar seu link com 1 ou 2 pacientes de confiança para inaugurar a seção de avaliações do seu perfil.`;
+                    pendenciasBlock = `Para darmos o próximo passo juntos e acelerar a chegada dos primeiros contatos no seu WhatsApp, recomendamos:\n\n• Definir um valor de referência para a sessão em *Ajustes > Meu Perfil* (percebemos que valores visíveis reduzem a hesitação do paciente antes do primeiro contato);\n• Compartilhar seu link direto de avaliação (${reviewLink}) com 1 ou 2 pacientes de confiança para inaugurar a seção de avaliações do seu perfil (disponível também em *Evolução > Solicitar Avaliações*).`;
                 } else if (reviewsCount === 0) {
-                    pendenciasBlock = `Como a sua apresentação e valor já estão muito bem configurados, o próximo passo de maior impacto é conquistar suas primeiras avaliações de pacientes, que funcionam como prova social e aumentam muito a conversão de visitas em mensagens.\n\n• Onde ir: *Evolução > Solicitar Avaliações*\n• O que fazer: compartilhe seu link de avaliação com 1 ou 2 pacientes ou ex-pacientes de confiança.`;
+                    pendenciasBlock = `Como a sua apresentação e valor já estão muito bem configurados, o próximo passo de maior impacto é conquistar suas primeiras avaliações de pacientes, que funcionam como prova social e aumentam muito a conversão de visitas em mensagens.\n\n• Seu link direto para avaliações:\n${reviewLink}\n\n• Onde ir no painel: *Evolução > Solicitar Avaliações* (ou em *Ajustes > Meu Perfil* se você já tiver avaliações no Google Meu Negócio)\n• O que fazer: compartilhe esse link com 1 ou 2 pacientes ou ex-pacientes de confiança para que deixem um depoimento em poucos segundos.`;
                 } else {
                     pendenciasBlock = `Como a sua página já está muito completa, uma ótima forma de ampliar seu alcance orgânico é participar dos conteúdos e perguntas da plataforma em *Comunidade > Perguntas ou Blog*.`;
                 }
