@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-88982841",
+    "date": "2026-11-06T19:50:39.000Z",
+    "commit": "88982841",
+    "author": "Anderson",
+    "title": "Correção: Adicionar links de login e profissionais e preservar formatacao de whatsapp (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "adicionar links de login e profissionais e preservar formatacao de whatsapp",
+    "description": "Commit registrado no repositório: \"fix(crm): adicionar links de login e profissionais e preservar formatacao de whatsapp\". Arquivos modificados: admin/admin_crm_psicologos.js, admin/admin_cs_drawer.js, admin/admin_lista_espera.js, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #88982841"
+    },
+    "after": {
+      "nova_versao": "adicionar links de login e profissionais e preservar formatacao de whatsapp"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.js",
+      "admin/admin_cs_drawer.js",
+      "admin/admin_lista_espera.js",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-18d44d1a",
     "date": "2026-11-06T19:41:11.000Z",
     "commit": "18d44d1a",
@@ -19,6 +46,36 @@
     },
     "metricsToCompare": [],
     "filesChanged": [
+      "backend/controllers/adminController.js",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/data/system_changelog.json",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "public/psi/psi_evolucao_hub.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-5332e0b6",
+    "date": "2026-11-06T19:41:11.000Z",
+    "commit": "5332e0b6",
+    "author": "Anderson",
+    "title": "Correção: Direcionar solicitacao de avaliacoes e google meu negocio para Ajustes > Meu Perfil > Copiar Link (cs)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "direcionar solicitacao de avaliacoes e google meu negocio para Ajustes > Meu Perfil > Copiar Link",
+    "description": "Commit registrado no repositório: \"fix(cs): direcionar solicitacao de avaliacoes e google meu negocio para Ajustes > Meu Perfil > Copiar Link\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/adminController.js, backend/controllers/adminPerformanceController.js, backend/data/system_changelog.json, public/psi/psi_dashboard.html (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5332e0b6"
+    },
+    "after": {
+      "nova_versao": "direcionar solicitacao de avaliacoes e google meu negocio para Ajustes > Meu Perfil > Copiar Link"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
       "backend/controllers/adminController.js",
       "backend/controllers/adminPerformanceController.js",
       "backend/data/system_changelog.json",

@@ -1,5 +1,29 @@
 // Lógica para a página de Lista de Espera
 
+function formatForWhatsApp(text) {
+    if (!text || typeof text !== 'string') return '';
+    return text
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/^```[a-zA-Z]*\n?/gm, '')
+        .replace(/```$/gm, '')
+        .replace(/^["'“”](.*)["'“”]$/s, '$1')
+        .replace(/^[-*_]{3,}\s*$/gm, '')
+        .replace(/^#{1,6}\s*(.+)$/gm, '*$1*')
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '$1: $2')
+        .replace(/\*\*([^*\n]+?)\*\*/g, '*$1*')
+        .replace(/__([^_\n]+?)__/g, '_$1_')
+        .replace(/^[-]\s+/gm, '* ')
+        .replace(/\*[ \t]+([^*\n]+?)[ \t]+\*/g, '*$1*')
+        .replace(/\*[ \t]+([^*\n]+?)\*/g, '*$1*')
+        .replace(/\*([^*\n]+?)[ \t]+\*/g, '*$1*')
+        .replace(/_[ \t]+([^_\n]+?)[ \t]+_/g, '_$1_')
+        .replace(/_[ \t]+([^_\n]+?)_/g, '_$1_')
+        .replace(/_([^_\n]+?)[ \t]+_/g, '_$1_')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
 window.initializePage = function() {
     const tableBody = document.getElementById('waiting-list-body');
     const rowTemplate = document.getElementById('waiting-list-row-template');
@@ -96,12 +120,15 @@ window.initializePage = function() {
 
                 const actionsCell = row.querySelector('[data-label="Ações"]');
                 if (candidate.status === 'pending' || candidate.status === 'invited') {
-                    const firstName = candidate.nome ? candidate.nome.split(' ')[0] : 'Profissional';
-                    const text = `Olá ${firstName}! Tudo bem? Aqui é da equipe da Yelo. Vimos que você iniciou o seu cadastro na plataforma mas acabou não finalizando. Ficou alguma dúvida ou teve alguma dificuldade? Estamos à disposição para ajudar!`;
-                    let phone = candidate.telefone ? candidate.telefone.replace(/\D/g, '') : '';
+                    const firstName = candidate.nome ? candidate.nome.split(' ')[0] : 'colega';
+                    const rawText = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você respondeu ao nosso questionário profissional recentemente, mas acabou não concluindo a criação do seu perfil na plataforma.\n\nQueria te dar um toque rápido: liberamos 7 dias de teste gratuito — sem precisar cadastrar cartão de crédito — para você conhecer o nosso sistema de matches e receber pacientes direto no seu WhatsApp, com autonomia total e zero comissão sobre as suas sessões.\n\nPara conhecer todos os detalhes e ativar sua vitrine gratuita, acesse:\nhttps://yelopsi.com.br/profissionais\n\nSe tiver ficado com alguma dúvida ou precisar de qualquer ajuda, é só me responder por aqui. Estou à disposição!`;
+                    const text = formatForWhatsApp(rawText);
                     
+                    let phone = candidate.telefone ? candidate.telefone.replace(/\D/g, '') : '';
                     if (phone && (phone.length === 10 || phone.length === 11)) { phone = '55' + phone; }
-                    const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : '#';
+                    
+                    const webWhatsAppUrl = phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(text)}` : '#';
+                    const nativeWhatsAppUrl = phone ? `whatsapp://send?phone=${phone}&text=${encodeURIComponent(text)}` : '#';
 
                     const whatsappButton = document.createElement('button');
                     whatsappButton.className = 'btn-tabela btn-fixar';
@@ -136,6 +163,28 @@ window.initializePage = function() {
                             showToast('Telefone não disponível ou inválido para este profissional.', 'error');
                             return;
                         }
+
+                        // Garante que a formatação não se perca: copia o texto formatado para a área de transferência
+                        try {
+                            if (navigator.clipboard && window.isSecureContext) {
+                                await navigator.clipboard.writeText(text);
+                            } else {
+                                const textArea = document.createElement("textarea");
+                                textArea.value = text;
+                                textArea.style.position = "fixed";
+                                textArea.style.left = "-999999px";
+                                document.body.appendChild(textArea);
+                                textArea.focus();
+                                textArea.select();
+                                document.execCommand('copy');
+                                textArea.remove();
+                            }
+                            if (typeof showToast === 'function') {
+                                showToast('Mensagem formatada copiada com sucesso!', 'success');
+                            }
+                        } catch (clipErr) {
+                            console.warn('Falha ao copiar para clipboard:', clipErr);
+                        }
                         
                         // Registra na memória sem bloquear o clique nativo do <a> (Evita bloqueadores de pop-up no mobile)
                         let sent = JSON.parse(localStorage.getItem('yelo_wpp_sent_pending') || '[]');
@@ -157,12 +206,17 @@ window.initializePage = function() {
                         whatsappButton.style.backgroundColor = '#dcfce7';
                         whatsappButton.style.color = '#166534';
                         whatsappButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Enviado`;
-                        const linkMobile = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(text)}`;
+                        
                         const isMobile = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 800;
                         if (isMobile) {
-                            window.location.href = linkMobile;
+                            const tempLink = document.createElement('a');
+                            tempLink.href = nativeWhatsAppUrl;
+                            tempLink.style.display = 'none';
+                            document.body.appendChild(tempLink);
+                            tempLink.click();
+                            setTimeout(() => tempLink.remove(), 1000);
                         } else {
-                            window.open(url, '_blank');
+                            window.open(webWhatsAppUrl, '_blank');
                         }
                         
                         // Ocultar a linha da tabela se estiver na visualização de pendentes

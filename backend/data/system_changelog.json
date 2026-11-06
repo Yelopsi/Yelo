@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-18d44d1a",
+    "date": "2026-11-06T19:41:11.000Z",
+    "commit": "18d44d1a",
+    "author": "Anderson",
+    "title": "Correção: Direcionar solicitacao de avaliacoes e google meu negocio para Ajustes > Meu Perfil > Copiar Link (cs)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "direcionar solicitacao de avaliacoes e google meu negocio para Ajustes > Meu Perfil > Copiar Link",
+    "description": "Commit registrado no repositório: \"fix(cs): direcionar solicitacao de avaliacoes e google meu negocio para Ajustes > Meu Perfil > Copiar Link\". Arquivos modificados: backend/controllers/adminController.js, backend/controllers/adminPerformanceController.js, backend/data/system_changelog.json, public/psi/psi_dashboard.html, public/psi/psi_dashboard.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #18d44d1a"
+    },
+    "after": {
+      "nova_versao": "direcionar solicitacao de avaliacoes e google meu negocio para Ajustes > Meu Perfil > Copiar Link"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/adminController.js",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/data/system_changelog.json",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "public/psi/psi_evolucao_hub.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-a955c78f",
     "date": "2026-11-06T18:55:24.000Z",
     "commit": "a955c78f",
@@ -19,6 +48,35 @@
     },
     "metricsToCompare": [],
     "filesChanged": [
+      "backend/controllers/adminController.js",
+      "backend/controllers/adminPerformanceController.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "public/psi/psi_evolucao_hub.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-1b2c7eb4",
+    "date": "2026-11-06T18:55:24.000Z",
+    "commit": "1b2c7eb4",
+    "author": "Anderson",
+    "title": "Correção: Corrigir caminho e adicionar ferramenta e modal de solicitar avaliacoes no hub evolucao (cs)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir caminho e adicionar ferramenta e modal de solicitar avaliacoes no hub evolucao",
+    "description": "Commit registrado no repositório: \"fix(cs): corrigir caminho e adicionar ferramenta e modal de solicitar avaliacoes no hub evolucao\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/adminController.js, backend/controllers/adminPerformanceController.js, public/psi/psi_dashboard.html, public/psi/psi_dashboard.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1b2c7eb4"
+    },
+    "after": {
+      "nova_versao": "corrigir caminho e adicionar ferramenta e modal de solicitar avaliacoes no hub evolucao"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
       "backend/controllers/adminController.js",
       "backend/controllers/adminPerformanceController.js",
       "public/psi/psi_dashboard.html",
