@@ -1646,7 +1646,7 @@ Exemplo de abordagem: "Como o seu perfil já está super bem estruturado, queria
 - Calculadora de Honorários → apoiar decisões relacionadas aos honorários.
 - Manual de Conversão → orientar o profissional sobre como transformar contatos em pacientes.
 - Comunidade Yelo → interação e troca com outros profissionais.
-- Solicitar Avaliações (em Evolução > Solicitar Avaliações ou na tela de Início) → link direto para pedir avaliações de pacientes (${reviewLink}) ou sincronizar com o Google Meu Negócio em Ajustes > Meu Perfil.
+- Ajustes > Meu Perfil → no topo da página clicar em "Copiar Link" para enviar a URL pública aos pacientes deixarem avaliações, ou rolar até "Google Meu Negócio & Avaliações" para sincronizar com o Google Maps.
 
 IMPORTANTE:
 Nunca invente ferramentas, funções ou caminhos de navegação que não estejam neste catálogo.
@@ -2238,9 +2238,9 @@ Se houver histórico acima:
                 analisePreenchido = `Lemos a sua biografia e gostamos muito da clareza e do tom acolhedor que você trouxe. A forma como você contextualizou a sua abordagem transmite muita segurança para o paciente que visita a sua página.`;
                 
                 if (!hasPrice) {
-                    pendenciasBlock = `Para darmos o próximo passo juntos e acelerar a chegada dos primeiros contatos no seu WhatsApp, recomendamos:\n\n• Definir um valor de referência para a sessão em *Ajustes > Meu Perfil* (percebemos que valores visíveis reduzem a hesitação do paciente antes do primeiro contato);\n• Compartilhar seu link direto de avaliação (${reviewLink}) com 1 ou 2 pacientes de confiança para inaugurar a seção de avaliações do seu perfil (disponível também em *Evolução > Solicitar Avaliações*).`;
+                    pendenciasBlock = `Para darmos o próximo passo juntos e acelerar a chegada dos primeiros contatos no seu WhatsApp, recomendamos:\n\n• Definir um valor de referência para a sessão em *Ajustes > Meu Perfil* (percebemos que valores visíveis reduzem a hesitação do paciente antes do primeiro contato);\n• Nessa mesma página (*Ajustes > Meu Perfil*), clicar em *Copiar Link* no topo e compartilhar sua vitrine com 1 ou 2 pacientes de confiança para inaugurar as suas avaliações, ou conectar seu *Google Meu Negócio*.`;
                 } else if (reviewsCount === 0) {
-                    pendenciasBlock = `Como a sua apresentação e valor já estão muito bem configurados, o próximo passo de maior impacto é conquistar suas primeiras avaliações de pacientes, que funcionam como prova social e aumentam muito a conversão de visitas em mensagens.\n\n• Seu link direto para avaliações:\n${reviewLink}\n\n• Onde ir no painel: *Evolução > Solicitar Avaliações* (ou em *Ajustes > Meu Perfil* se você já tiver avaliações no Google Meu Negócio)\n• O que fazer: compartilhe esse link com 1 ou 2 pacientes ou ex-pacientes de confiança para que deixem um depoimento em poucos segundos.`;
+                    pendenciasBlock = `Como a sua apresentação e valor já estão muito bem configurados, o próximo passo de maior impacto é conquistar suas primeiras avaliações de pacientes, que funcionam como prova social e aumentam muito a conversão de visitas em mensagens.\n\n• Onde ir: No seu painel, acesse *Ajustes > Meu Perfil*\n• O que fazer: No topo da página, clique no botão *Copiar Link* e envie a sua página para 1 ou 2 pacientes ou ex-pacientes de confiança para que deixem um depoimento. Caso já tenha avaliações no Google Meu Negócio, você também pode sincronizá-las diretamente nessa mesma página!`;
                 } else {
                     pendenciasBlock = `Como a sua página já está muito completa, uma ótima forma de ampliar seu alcance orgânico é participar dos conteúdos e perguntas da plataforma em *Comunidade > Perguntas ou Blog*.`;
                 }
