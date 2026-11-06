@@ -10,6 +10,7 @@ import {
   Share,
   Linking,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -420,13 +421,14 @@ export default function AnalyticsCrescimentoScreen() {
   }, [acquisition]);
 
   return (
-    <View className="flex-1 bg-[#f8fafc]">
+    <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
       <StatusBar style="dark" />
 
       <ScrollView
-        className="flex-1 px-4"
+        style={{ flex: 1 }}
         contentContainerStyle={{
           paddingTop: insets.top + 8,
+          paddingHorizontal: 16,
           paddingBottom: 130, // respiro premium para a bottom nav fixa
         }}
         showsVerticalScrollIndicator={false}
@@ -442,18 +444,45 @@ export default function AnalyticsCrescimentoScreen() {
         {/* ========================================================= */}
         {/* TOP BAR: BOTÃO VOLTAR CRM HUB + BADGE ADMIN              */}
         {/* ========================================================= */}
-        <View className="flex-row items-center justify-between mb-3.5">
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <TouchableOpacity
-            onPress={() => router.navigate('/(admin)/dashboard-hub')}
-            className="flex-row items-center bg-emerald-950/40 px-3 py-2 rounded-full border border-emerald-800/40"
-            activeOpacity={0.8}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(admin)/crm'))}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#ffffff',
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: '#e2e8f0',
+              shadowColor: '#000',
+              shadowOpacity: 0.03,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 1 },
+              elevation: 1,
+            }}
+            activeOpacity={0.7}
           >
-            <Feather name="arrow-left" size={15} color="#A7F3D0" />
-            <Text className="text-emerald-100 font-sans font-bold text-xs ml-1.5">CRM Hub</Text>
+            <Feather name="arrow-left" size={16} color="#1B4332" />
+            <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#1B4332', fontSize: 12, marginLeft: 6 }}>CRM Hub</Text>
           </TouchableOpacity>
 
-          <View className="flex-row items-center bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-xs">
-            <Text className="text-[11px] font-sans font-bold text-slate-700">🛡️ Admin Growth</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#ecfdf5',
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: '#a7f3d0',
+              gap: 4,
+            }}
+          >
+            <Text style={{ fontSize: 11 }}>🛡️</Text>
+            <Text style={{ fontFamily: 'Inter_700Bold', color: '#166534', fontSize: 11 }}>Admin Growth</Text>
           </View>
         </View>
 
@@ -464,13 +493,39 @@ export default function AnalyticsCrescimentoScreen() {
           colors={['#1B4332', '#2A5A40']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ borderRadius: 24 }}
-          className="p-5 mb-4 shadow-lg border border-emerald-800/30"
+          style={{
+            borderRadius: 24,
+            padding: 22,
+            marginBottom: 16,
+            shadowColor: '#1B4332',
+            shadowOpacity: 0.14,
+            shadowRadius: 30,
+            shadowOffset: { width: 0, height: 10 },
+            elevation: 5,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
         >
-          <View className="flex-row items-start justify-between">
-            <View className="flex-1 mr-3">
-              <Text className="font-title text-white text-2xl tracking-tight">Growth 📈</Text>
-              <Text className="font-sans text-emerald-100/90 text-xs mt-1 leading-relaxed">
+          {/* Efeito decorativo de fundo */}
+          <View
+            style={{
+              position: 'absolute',
+              top: -50,
+              right: -50,
+              width: 200,
+              height: 200,
+              borderRadius: 100,
+              backgroundColor: 'rgba(255,255,255,0.05)',
+            }}
+            pointerEvents="none"
+          />
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <View style={{ flex: 1, paddingRight: 10 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#ffffff', fontSize: 24, lineHeight: 30, marginBottom: 4 }}>
+                Growth 📈
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.85)', fontSize: 12, lineHeight: 18 }}>
                 Visão executiva de aquisição, conversão, retenção e economia do Yelo.
               </Text>
             </View>
@@ -478,32 +533,65 @@ export default function AnalyticsCrescimentoScreen() {
             <TouchableOpacity
               onPress={() => fetchGrowthData(false)}
               disabled={loading}
-              style={{ backgroundColor: '#FFEE8C' }}
-              className="flex-row items-center px-4 py-2 rounded-full shadow-xs active:opacity-80"
+              activeOpacity={0.8}
+              style={{
+                backgroundColor: '#FFEE8C',
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                borderRadius: 999,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                shadowColor: '#000',
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 2,
+              }}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#1B4332" />
               ) : (
                 <>
                   <Feather name="refresh-cw" size={13} color="#1B4332" />
-                  <Text className="text-[#1B4332] font-sans font-extrabold text-xs ml-1.5">Atualizar</Text>
+                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 12 }}>Atualizar</Text>
                 </>
               )}
             </TouchableOpacity>
           </View>
 
           {/* Sub-ações do Header */}
-          <View className="flex-row items-center justify-between mt-4 pt-3 border-t border-emerald-700/40">
-            <Text className="font-sans text-emerald-200/80 text-[11px]">
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingTop: 12,
+              borderTopWidth: 1,
+              borderTopColor: 'rgba(255,255,255,0.15)',
+            }}
+          >
+            <Text style={{ fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>
               Atualizado às {lastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </Text>
 
             <TouchableOpacity
               onPress={handleExportCSV}
-              className="flex-row items-center bg-white/10 px-3.5 py-1.5 rounded-full border border-white/20 active:bg-white/20"
+              activeOpacity={0.8}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: 'rgba(255,255,255,0.12)',
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.25)',
+                gap: 6,
+              }}
             >
               <Feather name="download" size={12} color="#ffffff" />
-              <Text className="text-white font-sans font-bold text-[11px] ml-1.5">Exportar CSV</Text>
+              <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#ffffff', fontSize: 11 }}>Exportar CSV</Text>
             </TouchableOpacity>
           </View>
         </LinearGradient>
@@ -511,11 +599,11 @@ export default function AnalyticsCrescimentoScreen() {
         {/* ========================================================= */}
         {/* SELETOR DE PERÍODO HORIZONTAL (7D, 30D, 90D, 180D, 365D) */}
         {/* ========================================================= */}
-        <View className="mb-4 -mx-4">
+        <View style={{ marginBottom: 16 }}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+            contentContainerStyle={{ gap: 8 }}
           >
             {[
               { id: 7, label: '7 dias' },
@@ -530,10 +618,13 @@ export default function AnalyticsCrescimentoScreen() {
                   key={p.id}
                   onPress={() => setSelectedPeriod(p.id)}
                   activeOpacity={0.8}
-                  className={`px-4 py-2 rounded-full border ${
-                    isActive ? 'bg-[#1B4332] border-[#1B4332]' : 'bg-white border-[#e2e8f0]'
-                  }`}
                   style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 999,
+                    backgroundColor: isActive ? '#1B4332' : '#ffffff',
+                    borderWidth: 1,
+                    borderColor: isActive ? '#1B4332' : '#e2e8f0',
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 1 },
                     shadowOpacity: isActive ? 0.08 : 0.02,
@@ -542,9 +633,11 @@ export default function AnalyticsCrescimentoScreen() {
                   }}
                 >
                   <Text
-                    className={`font-sans font-bold text-[12px] ${
-                      isActive ? 'text-white' : 'text-[#64748b]'
-                    }`}
+                    style={{
+                      fontFamily: 'Inter_700Bold',
+                      fontSize: 12,
+                      color: isActive ? '#ffffff' : '#64748b',
+                    }}
                   >
                     {p.label}
                   </Text>
@@ -558,43 +651,73 @@ export default function AnalyticsCrescimentoScreen() {
         {/* BLOCO 1: DIAGNÓSTICO AUTOMÁTICO (IA & REGRAS)             */}
         {/* ========================================================= */}
         <View
-          className="bg-white rounded-2xl p-4 mb-4 border border-[#e2e8f0]"
           style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            padding: 16,
+            marginBottom: 16,
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.03,
-            shadowRadius: 6,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 2 },
             elevation: 1,
           }}
         >
-          <View className="flex-row items-center justify-between mb-2">
-            <View className="flex-row items-center gap-1.5">
-              <Text className="text-[16px]">🤖</Text>
-              <Text className="font-title text-[#0f172a] text-[15px]">Diagnóstico Executivo</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontSize: 16 }}>🤖</Text>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#0f172a', fontSize: 16 }}>
+                Diagnóstico
+              </Text>
             </View>
 
             <TouchableOpacity
               onPress={handleGenerateAIInsights}
-              className="flex-row items-center bg-[#8b5cf6]/10 px-2.5 py-1 rounded-full border border-[#8b5cf6]/30 active:opacity-70"
+              activeOpacity={0.8}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: '#f5f3ff',
+                borderWidth: 1,
+                borderColor: '#ddd6fe',
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                borderRadius: 999,
+                gap: 4,
+              }}
             >
               <Feather name="zap" size={11} color="#7c3aed" />
-              <Text className="font-sans font-bold text-[11px] text-[#7c3aed] ml-1">IA Deep Dive</Text>
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#7c3aed', fontSize: 11 }}>IA Deep Dive</Text>
             </TouchableOpacity>
           </View>
 
-          <Text className="font-sans text-[#64748b] text-[11px] mb-3">
-            Alertas automáticos para os últimos {selectedPeriod} dias:
+          <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 11, marginBottom: 12 }}>
+            Alertas automáticos baseados nos dados do período selecionado.
           </Text>
 
           {diagnostics.length === 0 ? (
-            <Text className="font-sans text-[#94a3b8] text-[12px] italic">
+            <Text style={{ fontFamily: 'Inter_400Regular', color: '#94a3b8', fontSize: 12, fontStyle: 'italic' }}>
               Carregando indicadores para diagnóstico...
             </Text>
           ) : (
-            <View className="gap-2">
+            <View style={{ gap: 8 }}>
               {diagnostics.map((bullet, idx) => (
-                <View key={idx} className="flex-row items-start bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                  <Text className="font-sans text-[#334155] text-[12px] leading-relaxed flex-1">
+                <View
+                  key={idx}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'flex-start',
+                    backgroundColor: '#f8fafc',
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: '#edf2f7',
+                  }}
+                >
+                  <Text style={{ fontFamily: 'Inter_400Regular', color: '#334155', fontSize: 12, lineHeight: 18, flex: 1 }}>
                     {bullet}
                   </Text>
                 </View>
@@ -606,41 +729,57 @@ export default function AnalyticsCrescimentoScreen() {
         {/* ========================================================= */}
         {/* BLOCO 2: DECISÃO EXECUTIVA (OS 5 KPIS ESSENCIAIS)         */}
         {/* ========================================================= */}
-        <View className="mb-4">
-          <Text className="font-title text-[#111827] text-[16px] mb-3">
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#111827', fontSize: 16, marginBottom: 10 }}>
             Primeira Viewport: Decisão Executiva
           </Text>
 
-          {/* Grid de KPIs executivos */}
-          <View className="gap-3">
+          {/* Grid de KPIs executivos com Accent Stripe Interna (Zero Vazamento) */}
+          <View style={{ gap: 12 }}>
             {/* 1. Crescimento MRR */}
             <View
-              className="bg-white rounded-2xl p-4 border border-[#e2e8f0]"
               style={{
-                borderLeftWidth: 5,
-                borderLeftColor: '#10b981',
+                backgroundColor: '#ffffff',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                padding: 16,
+                paddingLeft: 20,
+                position: 'relative',
+                overflow: 'hidden',
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.03,
-                shadowRadius: 5,
+                shadowOffset: { width: 0, height: 2 },
+                shadowRadius: 6,
                 elevation: 1,
               }}
             >
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="font-sans font-bold text-[#64748b] text-[11px] uppercase tracking-wider">
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 5,
+                  backgroundColor: '#10b981',
+                }}
+              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   Crescimento (MRR)
                 </Text>
                 <Feather name="trending-up" size={14} color="#10b981" />
               </View>
-              <Text className="font-title text-[#10b981] text-[24px]">
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#10b981', fontSize: 24, marginVertical: 2 }}>
                 {formatBRL(overview?.mrrTotal)}
               </Text>
-              <View className="mt-1 pt-1.5 border-t border-slate-100 flex-row items-center justify-between">
-                <Text className="font-sans font-bold text-[12px] text-emerald-700">
+              <View style={{ height: 1, backgroundColor: '#f1f5f9', marginVertical: 8 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: (overview?.netNewMrr || 0) >= 0 ? '#059669' : '#dc2626' }}>
                   {(overview?.netNewMrr || 0) >= 0 ? '+' : ''}
                   {formatBRL(overview?.netNewMrr)} Net New MRR
                 </Text>
-                <Text className="font-sans text-[11px] text-[#94a3b8]">
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#94a3b8' }}>
                   vs {formatBRL(overview?.mrrAnterior)} ant.
                 </Text>
               </View>
@@ -648,31 +787,47 @@ export default function AnalyticsCrescimentoScreen() {
 
             {/* 2. Aquisição */}
             <View
-              className="bg-white rounded-2xl p-4 border border-[#e2e8f0]"
               style={{
-                borderLeftWidth: 5,
-                borderLeftColor: '#3b82f6',
+                backgroundColor: '#ffffff',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                padding: 16,
+                paddingLeft: 20,
+                position: 'relative',
+                overflow: 'hidden',
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.03,
-                shadowRadius: 5,
+                shadowOffset: { width: 0, height: 2 },
+                shadowRadius: 6,
                 elevation: 1,
               }}
             >
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="font-sans font-bold text-[#64748b] text-[11px] uppercase tracking-wider">
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 5,
+                  backgroundColor: '#3b82f6',
+                }}
+              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   Aquisição
                 </Text>
                 <Feather name="user-plus" size={14} color="#3b82f6" />
               </View>
-              <Text className="font-title text-[#3b82f6] text-[24px]">
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#3b82f6', fontSize: 24, marginVertical: 2 }}>
                 {overview?.novosPagantes || 0}
               </Text>
-              <View className="mt-1 pt-1.5 border-t border-slate-100 flex-row items-center justify-between">
-                <Text className="font-sans font-bold text-[12px] text-blue-700">
+              <View style={{ height: 1, backgroundColor: '#f1f5f9', marginVertical: 8 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#1d4ed8' }}>
                   {(overview?.trialConversionRate || 0).toFixed(1)}% conv. de trial
                 </Text>
-                <Text className="font-sans text-[11px] text-[#94a3b8]">
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#94a3b8' }}>
                   ({overview?.trialsAtivos || 0} trials ativos)
                 </Text>
               </View>
@@ -680,31 +835,47 @@ export default function AnalyticsCrescimentoScreen() {
 
             {/* 3. Health Rate (Com Demanda) */}
             <View
-              className="bg-[#f5f3ff] rounded-2xl p-4 border border-[#ddd6fe]"
               style={{
-                borderLeftWidth: 5,
-                borderLeftColor: '#8b5cf6',
+                backgroundColor: '#faf5ff',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: '#e9d5ff',
+                padding: 16,
+                paddingLeft: 20,
+                position: 'relative',
+                overflow: 'hidden',
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.03,
-                shadowRadius: 5,
+                shadowOffset: { width: 0, height: 2 },
+                shadowRadius: 6,
                 elevation: 1,
               }}
             >
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="font-sans font-bold text-[#6d28d9] text-[11px] uppercase tracking-wider">
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 5,
+                  backgroundColor: '#8b5cf6',
+                }}
+              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', color: '#6d28d9', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   Health Rate (% com demanda)
                 </Text>
                 <Feather name="activity" size={14} color="#8b5cf6" />
               </View>
-              <Text className="font-title text-[#6d28d9] text-[24px]">
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#6d28d9', fontSize: 24, marginVertical: 2 }}>
                 {(overview?.pctDemanda || 0).toFixed(1)}%
               </Text>
-              <View className="mt-1 pt-1.5 border-t border-purple-200/60 flex-row items-center justify-between">
-                <Text className="font-sans font-bold text-[12px] text-purple-900">
+              <View style={{ height: 1, backgroundColor: 'rgba(216,180,254,0.4)', marginVertical: 8 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#581c87' }}>
                   {overview?.pagantesComDemandaCount || 0} de {overview?.totalAtivos || 0} com contatos
                 </Text>
-                <Text className="font-sans text-[11px] text-purple-700">
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#6b21a8' }}>
                   Mediana: {acquisition?.timeToFirstContact?.medianDays !== null && acquisition?.timeToFirstContact?.medianDays !== undefined ? `${acquisition.timeToFirstContact.medianDays}d` : 'N/D'}
                 </Text>
               </View>
@@ -714,68 +885,100 @@ export default function AnalyticsCrescimentoScreen() {
             <TouchableOpacity
               onPress={() => handleOpenDrilldown('sem_demanda_cs', 'Psicólogos Sem Demanda (Risco de Evasão)')}
               activeOpacity={0.8}
-              className="bg-white rounded-2xl p-4 border border-[#e2e8f0]"
               style={{
-                borderLeftWidth: 5,
-                borderLeftColor: '#f59e0b',
+                backgroundColor: '#ffffff',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                padding: 16,
+                paddingLeft: 20,
+                position: 'relative',
+                overflow: 'hidden',
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.03,
-                shadowRadius: 5,
+                shadowOffset: { width: 0, height: 2 },
+                shadowRadius: 6,
                 elevation: 1,
               }}
             >
-              <View className="flex-row items-center justify-between mb-1">
-                <View className="flex-row items-center gap-1.5">
-                  <Text className="font-sans font-bold text-[#b45309] text-[11px] uppercase tracking-wider">
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 5,
+                  backgroundColor: '#f59e0b',
+                }}
+              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#b45309', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                     Ação: Sem Demanda
                   </Text>
                   <Feather name="external-link" size={12} color="#b45309" />
                 </View>
-                <View className="bg-amber-100 px-2 py-0.5 rounded-full">
-                  <Text className="font-sans font-bold text-[10px] text-amber-800">Toque p/ ver lista</Text>
+                <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#92400e' }}>Toque p/ ver lista</Text>
                 </View>
               </View>
-              <Text className="font-title text-[#d97706] text-[24px]">
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#d97706', fontSize: 24, marginVertical: 2 }}>
                 {overview?.pagantesSemDemandaCount || 0}
               </Text>
-              <View className="mt-1 pt-1.5 border-t border-slate-100 flex-row items-center justify-between">
-                <Text className="font-sans font-bold text-[12px] text-amber-700">
+              <View style={{ height: 1, backgroundColor: '#f1f5f9', marginVertical: 8 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#b45309' }}>
                   {formatBRL(overview?.mrrSemDemanda)} MRR em risco
                 </Text>
-                <Text className="font-sans text-[11px] text-[#94a3b8]">
-                  Clique para agir ↗
+                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#d97706' }}>
+                  Ver detalhes ↗
                 </Text>
               </View>
             </TouchableOpacity>
 
             {/* 5. Retenção (Churn Financeiro) */}
             <View
-              className="bg-white rounded-2xl p-4 border border-[#e2e8f0]"
               style={{
-                borderLeftWidth: 5,
-                borderLeftColor: '#ef4444',
+                backgroundColor: '#ffffff',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                padding: 16,
+                paddingLeft: 20,
+                position: 'relative',
+                overflow: 'hidden',
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.03,
-                shadowRadius: 5,
+                shadowOffset: { width: 0, height: 2 },
+                shadowRadius: 6,
                 elevation: 1,
               }}
             >
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="font-sans font-bold text-[#64748b] text-[11px] uppercase tracking-wider">
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 5,
+                  backgroundColor: '#ef4444',
+                }}
+              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   Retenção (Churn Financeiro)
                 </Text>
                 <Feather name="user-x" size={14} color="#ef4444" />
               </View>
-              <Text className="font-title text-[#ef4444] text-[24px]">
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#ef4444', fontSize: 24, marginVertical: 2 }}>
                 {overview?.churnPagantes || 0}
               </Text>
-              <View className="mt-1 pt-1.5 border-t border-slate-100 flex-row items-center justify-between">
-                <Text className="font-sans font-bold text-[12px] text-rose-700">
+              <View style={{ height: 1, backgroundColor: '#f1f5f9', marginVertical: 8 }} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#be123c' }}>
                   {(overview?.taxaChurnPagantes || 0).toFixed(1)}% da base
                 </Text>
-                <Text className="font-sans text-[11px] text-rose-600 font-semibold">
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#e11d48' }}>
                   - {formatBRL(overview?.mrrPerdido)} perdido
                 </Text>
               </View>
@@ -786,94 +989,101 @@ export default function AnalyticsCrescimentoScreen() {
         {/* ========================================================= */}
         {/* BLOCO 3: OS DOIS FUNIS (B2C PACIENTES & B2B PSICÓLOGOS)    */}
         {/* ========================================================= */}
-        <View className="mb-4">
-          <Text className="font-title text-[#111827] text-[16px] mb-3">
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#111827', fontSize: 16, marginBottom: 10 }}>
             Funis de Conversão
           </Text>
 
           {/* Funil 1: Pacientes (B2C) */}
           <View
-            className="bg-white rounded-2xl p-4 mb-3 border border-[#e2e8f0]"
             style={{
+              backgroundColor: '#ffffff',
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: '#e2e8f0',
+              padding: 18,
+              marginBottom: 12,
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.03,
               shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 },
               elevation: 1,
             }}
           >
-            <View className="flex-row items-center justify-between mb-1">
-              <Text className="font-title text-[#111827] text-[14px]">Jornada dos Pacientes (B2C)</Text>
-              <View className="bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
-                <Text className="font-sans font-bold text-[10px] text-sky-700">Tráfego & Busca</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#111827', fontSize: 15 }}>
+                Jornada dos Pacientes (B2C)
+              </Text>
+              <View style={{ backgroundColor: '#f0f9ff', borderWidth: 1, borderColor: '#bae6fd', paddingHorizontal: 10, paddingVertical: 2, borderRadius: 999 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#0369a1' }}>Tráfego & Demanda</Text>
               </View>
             </View>
-            <Text className="font-sans text-[#64748b] text-[11px] mb-3">
+            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 11, marginBottom: 14 }}>
               Da visita no site até o clique no WhatsApp do psicólogo.
             </Text>
 
-            <View className="gap-2.5">
+            <View style={{ gap: 10 }}>
               {/* Etapa 1: Visitas */}
-              <View className="flex-row items-center justify-between pb-2 border-b border-slate-100">
-                <View className="flex-row items-center gap-2">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Feather name="globe" size={14} color="#64748b" />
-                  <Text className="font-sans font-semibold text-[#475569] text-[12px]">Visitas no Site</Text>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#475569', fontSize: 12 }}>Visitas no Site</Text>
                 </View>
-                <Text className="font-title text-[#1e293b] text-[15px]">{funnelB2C.visitas}</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15 }}>{funnelB2C.visitas}</Text>
               </View>
 
               {/* Etapa 2: Questionários Iniciados */}
-              <View className="flex-row items-center justify-between pb-2 border-b border-slate-100">
-                <View className="flex-row items-center gap-2">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Feather name="play-circle" size={14} color="#64748b" />
-                  <Text className="font-sans font-semibold text-[#475569] text-[12px]">Buscas Iniciadas</Text>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#475569', fontSize: 12 }}>Buscas Iniciadas</Text>
                 </View>
-                <View className="flex-row items-center gap-2">
-                  <Text className="font-title text-[#1e293b] text-[15px]">{funnelB2C.iniciados}</Text>
-                  <View className="bg-emerald-50 px-2 py-0.5 rounded-full">
-                    <Text className="font-sans font-bold text-[10px] text-emerald-700">{funnelB2C.convIniciados}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15 }}>{funnelB2C.iniciados}</Text>
+                  <View style={{ backgroundColor: '#ecfdf5', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#047857' }}>{funnelB2C.convIniciados}</Text>
                   </View>
                 </View>
               </View>
 
               {/* Etapa 3: Questionários Concluídos */}
-              <View className="flex-row items-center justify-between pb-2 border-b border-slate-100">
-                <View className="flex-row items-center gap-2">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Feather name="check-circle" size={14} color="#64748b" />
-                  <Text className="font-sans font-semibold text-[#475569] text-[12px]">Buscas Concluídas</Text>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#475569', fontSize: 12 }}>Buscas Concluídas</Text>
                 </View>
-                <View className="flex-row items-center gap-2">
-                  <Text className="font-title text-[#1e293b] text-[15px]">{funnelB2C.concluidos}</Text>
-                  <View className="bg-emerald-50 px-2 py-0.5 rounded-full">
-                    <Text className="font-sans font-bold text-[10px] text-emerald-700">{funnelB2C.convConcluidos}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15 }}>{funnelB2C.concluidos}</Text>
+                  <View style={{ backgroundColor: '#ecfdf5', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#047857' }}>{funnelB2C.convConcluidos}</Text>
                   </View>
                 </View>
               </View>
 
               {/* Etapa 4: Indicados na Vitrine */}
-              <View className="flex-row items-center justify-between pb-2 border-b border-slate-100">
-                <View className="flex-row items-center gap-2">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Feather name="users" size={14} color="#64748b" />
-                  <Text className="font-sans font-semibold text-[#475569] text-[12px]">Indicados (Vitrine)</Text>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#475569', fontSize: 12 }}>Indicados (Vitrine)</Text>
                 </View>
-                <View className="flex-row items-center gap-2">
-                  <Text className="font-title text-[#1e293b] text-[15px]">{funnelB2C.matches}</Text>
-                  <View className="bg-blue-50 px-2 py-0.5 rounded-full">
-                    <Text className="font-sans font-bold text-[10px] text-blue-700">{funnelB2C.psisPorBusca}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15 }}>{funnelB2C.matches}</Text>
+                  <View style={{ backgroundColor: '#eff6ff', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#1d4ed8' }}>{funnelB2C.psisPorBusca}</Text>
                   </View>
                 </View>
               </View>
 
               {/* Etapa 5: Cliques no WhatsApp */}
-              <View className="flex-row items-center justify-between pt-1">
-                <View className="flex-row items-center gap-2">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Feather name="message-circle" size={15} color="#25D366" />
-                  <Text className="font-sans font-bold text-[#1e293b] text-[12px]">Cliques WhatsApp</Text>
+                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#1e293b', fontSize: 13 }}>Cliques WhatsApp</Text>
                 </View>
-                <View className="flex-row items-center gap-2">
-                  <Text className="font-title text-[#25D366] text-[16px]">{funnelB2C.contatos}</Text>
-                  <View className="bg-emerald-100 px-2 py-0.5 rounded-full">
-                    <Text className="font-sans font-extrabold text-[10px] text-emerald-800">{funnelB2C.convContatos}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#25D366', fontSize: 16 }}>{funnelB2C.contatos}</Text>
+                  <View style={{ backgroundColor: '#dcfce7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#166534' }}>{funnelB2C.convContatos}</Text>
                   </View>
                 </View>
               </View>
@@ -882,73 +1092,79 @@ export default function AnalyticsCrescimentoScreen() {
 
           {/* Funil 2: Aquisição Psicólogos (B2B) */}
           <View
-            className="bg-white rounded-2xl p-4 border border-[#e2e8f0]"
             style={{
+              backgroundColor: '#ffffff',
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: '#e2e8f0',
+              padding: 18,
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.03,
               shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 },
               elevation: 1,
             }}
           >
-            <View className="flex-row items-center justify-between mb-1">
-              <Text className="font-title text-[#111827] text-[14px]">Funil de Aquisição B2B</Text>
-              <View className="bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                <Text className="font-sans font-bold text-[10px] text-emerald-700">Vendas & Conversão</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#111827', fontSize: 15 }}>
+                Funil de Aquisição B2B
+              </Text>
+              <View style={{ backgroundColor: '#ecfdf5', borderWidth: 1, borderColor: '#a7f3d0', paddingHorizontal: 10, paddingVertical: 2, borderRadius: 999 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#047857' }}>Vendas & Conversão</Text>
               </View>
             </View>
-            <Text className="font-sans text-[#64748b] text-[11px] mb-3">
+            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 11, marginBottom: 14 }}>
               Conversão de leads prospectados em assinantes da plataforma.
             </Text>
 
-            <View className="gap-2.5">
+            <View style={{ gap: 10 }}>
               {/* Etapa 1: Leads */}
-              <View className="flex-row items-center justify-between pb-2 border-b border-slate-100">
-                <View className="flex-row items-center gap-2">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Feather name="target" size={14} color="#64748b" />
-                  <Text className="font-sans font-semibold text-[#475569] text-[12px]">Leads (Mapeados)</Text>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#475569', fontSize: 12 }}>Leads Mapeados</Text>
                 </View>
-                <Text className="font-title text-[#1e293b] text-[15px]">{funnelB2B.leads}</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15 }}>{funnelB2B.leads}</Text>
               </View>
 
               {/* Etapa 2: Contatados */}
-              <View className="flex-row items-center justify-between pb-2 border-b border-slate-100">
-                <View className="flex-row items-center gap-2">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Feather name="phone-call" size={14} color="#64748b" />
-                  <Text className="font-sans font-semibold text-[#475569] text-[12px]">Contatados</Text>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#475569', fontSize: 12 }}>Contatados</Text>
                 </View>
-                <View className="flex-row items-center gap-2">
-                  <Text className="font-title text-[#1e293b] text-[15px]">{funnelB2B.contatados}</Text>
-                  <View className="bg-emerald-50 px-2 py-0.5 rounded-full">
-                    <Text className="font-sans font-bold text-[10px] text-emerald-700">{funnelB2B.convContatados}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15 }}>{funnelB2B.contatados}</Text>
+                  <View style={{ backgroundColor: '#ecfdf5', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#047857' }}>{funnelB2B.convContatados}</Text>
                   </View>
                 </View>
               </View>
 
               {/* Etapa 3: Cadastros Trials */}
-              <View className="flex-row items-center justify-between pb-2 border-b border-slate-100">
-                <View className="flex-row items-center gap-2">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Feather name="user-check" size={14} color="#64748b" />
-                  <Text className="font-sans font-semibold text-[#475569] text-[12px]">Cadastros (Trials)</Text>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#475569', fontSize: 12 }}>Cadastros (Trials)</Text>
                 </View>
-                <View className="flex-row items-center gap-2">
-                  <Text className="font-title text-[#1e293b] text-[15px]">{funnelB2B.trials}</Text>
-                  <View className="bg-emerald-50 px-2 py-0.5 rounded-full">
-                    <Text className="font-sans font-bold text-[10px] text-emerald-700">{funnelB2B.convTrials}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15 }}>{funnelB2B.trials}</Text>
+                  <View style={{ backgroundColor: '#ecfdf5', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#047857' }}>{funnelB2B.convTrials}</Text>
                   </View>
                 </View>
               </View>
 
               {/* Etapa 4: Pagantes Convertidos */}
-              <View className="flex-row items-center justify-between pt-1">
-                <View className="flex-row items-center gap-2">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Feather name="award" size={15} color="#10b981" />
-                  <Text className="font-sans font-bold text-[#1e293b] text-[12px]">Pagantes Convertidos</Text>
+                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#1e293b', fontSize: 13 }}>Pagantes Convertidos</Text>
                 </View>
-                <View className="flex-row items-center gap-2">
-                  <Text className="font-title text-[#10b981] text-[16px]">{funnelB2B.pagantes}</Text>
-                  <View className="bg-emerald-100 px-2 py-0.5 rounded-full">
-                    <Text className="font-sans font-extrabold text-[10px] text-emerald-800">{funnelB2B.convPagantes}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#10b981', fontSize: 16 }}>{funnelB2B.pagantes}</Text>
+                  <View style={{ backgroundColor: '#dcfce7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#166534' }}>{funnelB2B.convPagantes}</Text>
                   </View>
                 </View>
               </View>
@@ -959,29 +1175,41 @@ export default function AnalyticsCrescimentoScreen() {
         {/* ========================================================= */}
         {/* BLOCO 4: PRÓXIMOS FINS DE TRIAL (JANELA DE 7 DIAS)        */}
         {/* ========================================================= */}
-        <View className="mb-4">
-          <View className="flex-row items-center justify-between mb-2">
+        <View style={{ marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <View>
-              <Text className="font-title text-[#111827] text-[16px]">Próximos Fins de Trial</Text>
-              <Text className="font-sans text-[#64748b] text-[11px]">
-                Janela crítica de conversão B2B (próximos 7 dias)
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#111827', fontSize: 16 }}>
+                Próximos Fins de Trial (7 dias)
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 11, marginTop: 1 }}>
+                Psicólogos na janela crítica de conversão B2B.
               </Text>
             </View>
-            <View className="bg-amber-100 px-2.5 py-1 rounded-full border border-amber-300">
-              <Text className="font-sans font-bold text-[11px] text-amber-800">
+            <View style={{ backgroundColor: '#fef3c7', borderWidth: 1, borderColor: '#fde68a', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#92400e' }}>
                 {upcomingTrials.length} {upcomingTrials.length === 1 ? 'trial' : 'trials'}
               </Text>
             </View>
           </View>
 
           {upcomingTrials.length === 0 ? (
-            <View className="bg-white rounded-2xl p-4 border border-[#e2e8f0] items-center justify-center">
-              <Text className="font-sans text-[#94a3b8] text-[12px]">
+            <View
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                padding: 20,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontFamily: 'Inter_400Regular', color: '#94a3b8', fontSize: 12 }}>
                 Nenhum trial expirando nos próximos 7 dias.
               </Text>
             </View>
           ) : (
-            <View className="gap-2.5">
+            <View style={{ gap: 10 }}>
               {upcomingTrials.map((psi) => {
                 const expires = new Date(psi.planExpiresAt);
                 const diffDays = Math.ceil((expires.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -992,17 +1220,22 @@ export default function AnalyticsCrescimentoScreen() {
                 return (
                   <View
                     key={psi.id}
-                    className="bg-white rounded-2xl p-4 border border-[#e2e8f0]"
                     style={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: '#e2e8f0',
+                      padding: 16,
                       shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: 0.03,
-                      shadowRadius: 5,
+                      shadowRadius: 6,
+                      shadowOffset: { width: 0, height: 2 },
                       elevation: 1,
                     }}
                   >
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center gap-2.5 flex-1 mr-2">
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 }}>
+                        {/* Foto ou Avatar Redondo */}
                         <View
                           style={{
                             width: 44,
@@ -1015,51 +1248,75 @@ export default function AnalyticsCrescimentoScreen() {
                             justifyContent: 'center',
                           }}
                         >
-                          <Text className="font-title text-[#166534] text-[16px] font-bold">
+                          <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#166534', fontSize: 17 }}>
                             {(psi.nome || '?').charAt(0).toUpperCase()}
                           </Text>
                         </View>
-                        <View className="flex-1">
-                          <Text className="font-title text-[#0f172a] text-[14px]">
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#0f172a', fontSize: 14 }}>
                             {psi.nome || 'Psicólogo sem nome'}
                           </Text>
-                          <Text className="font-sans text-[#64748b] text-[11px] mt-0.5">
-                            {psi.telefone || 'Sem telefone cadastrado'}
+                          <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                            {psi.telefone || 'Sem telefone'}
                           </Text>
                         </View>
                       </View>
 
                       <View
-                        className="px-2.5 py-1 rounded-full"
-                        style={{ backgroundColor: `${daysColor}15`, borderWidth: 1, borderColor: `${daysColor}40` }}
+                        style={{
+                          paddingHorizontal: 10,
+                          paddingVertical: 4,
+                          borderRadius: 999,
+                          backgroundColor: `${daysColor}15`,
+                          borderWidth: 1,
+                          borderColor: `${daysColor}35`,
+                        }}
                       >
-                        <Text className="font-sans font-extrabold text-[11px]" style={{ color: daysColor }}>
+                        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: daysColor }}>
                           {diffDays <= 0 ? 'Expira hoje' : `Expira em ${diffDays}d`}
                         </Text>
                       </View>
                     </View>
 
-                    {/* Chance e Razão de IA */}
-                    <View className="flex-row items-center justify-between mt-3 pt-2 border-t border-slate-100">
-                      <View className="flex-row items-center gap-1.5 flex-1 mr-2">
-                        <Text className="font-sans text-[11px] text-[#64748b]">Chance de conversão:</Text>
-                        <Text className="font-sans font-bold text-[12px]" style={{ color: probColor }}>
+                    {/* Chance e Ação WhatsApp */}
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginTop: 12,
+                        paddingTop: 10,
+                        borderTopWidth: 1,
+                        borderTopColor: '#f1f5f9',
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, marginRight: 8 }}>
+                        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b' }}>Chance de assinar:</Text>
+                        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: probColor }}>
                           {prob}% {psi.ai_powered ? '✨' : ''}
                         </Text>
                       </View>
 
                       {psi.admin_billing_sent_at ? (
-                        <View className="bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200">
-                          <Text className="font-sans font-bold text-[10px] text-indigo-700">✅ Contatado</Text>
+                        <View style={{ backgroundColor: '#e0e7ff', borderWidth: 1, borderColor: '#c7d2fe', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999 }}>
+                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#4338ca' }}>✅ Contatado</Text>
                         </View>
                       ) : (
                         <TouchableOpacity
                           onPress={() => handleContactTrial(psi)}
                           activeOpacity={0.8}
-                          className="flex-row items-center bg-[#25D366] px-3.5 py-1.5 rounded-full active:opacity-90"
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            backgroundColor: '#25D366',
+                            paddingHorizontal: 14,
+                            paddingVertical: 6,
+                            borderRadius: 999,
+                            gap: 5,
+                          }}
                         >
-                          <Feather name="message-circle" size={13} color="white" />
-                          <Text className="text-white font-sans font-bold text-[11px] ml-1">Chamar</Text>
+                          <Feather name="message-circle" size={13} color="#ffffff" />
+                          <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 12 }}>Chamar</Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -1073,35 +1330,39 @@ export default function AnalyticsCrescimentoScreen() {
         {/* ========================================================= */}
         {/* BLOCO 5: DEMANDA X RETENÇÃO (PMF V3)                      */}
         {/* ========================================================= */}
-        <View className="mb-4">
-          <Text className="font-title text-[#111827] text-[16px] mb-1">
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#111827', fontSize: 16, marginBottom: 2 }}>
             Demanda × Retenção
           </Text>
-          <Text className="font-sans text-[#64748b] text-[11px] mb-3">
+          <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 11, marginBottom: 10 }}>
             Relação entre contatos recebidos e evasão de psicólogos.
           </Text>
 
           <View
-            className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden"
             style={{
+              backgroundColor: '#ffffff',
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: '#e2e8f0',
+              overflow: 'hidden',
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.03,
-              shadowRadius: 5,
+              shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 },
               elevation: 1,
             }}
           >
             {/* Header da Tabela */}
-            <View className="flex-row items-center bg-slate-50 px-3.5 py-2.5 border-b border-slate-200">
-              <Text className="flex-2 font-sans font-bold text-[11px] text-[#475569]">Grupo</Text>
-              <Text className="flex-1 font-sans font-bold text-[11px] text-[#475569] text-center">Base</Text>
-              <Text className="flex-1 font-sans font-bold text-[11px] text-[#475569] text-center">Ativos</Text>
-              <Text className="flex-1 font-sans font-bold text-[11px] text-[#475569] text-right">Churn</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#e2e8f0' }}>
+              <Text style={{ flex: 2, fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569' }}>Grupo</Text>
+              <Text style={{ flex: 1, fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', textAlign: 'center' }}>Base</Text>
+              <Text style={{ flex: 1, fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', textAlign: 'center' }}>Ativos</Text>
+              <Text style={{ flex: 1, fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', textAlign: 'right' }}>Churn</Text>
             </View>
 
             {pmfRows.length === 0 ? (
-              <View className="p-4 items-center justify-center">
-                <Text className="font-sans text-[#94a3b8] text-[12px]">Carregando correlação PMF...</Text>
+              <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: 'Inter_400Regular', color: '#94a3b8', fontSize: 12 }}>Carregando correlação PMF...</Text>
               </View>
             ) : (
               pmfRows.map((row, idx) => (
@@ -1109,24 +1370,29 @@ export default function AnalyticsCrescimentoScreen() {
                   key={idx}
                   onPress={() => handleOpenDrilldown(row.contact_group, `Grupo PMF: ${row.contact_group}`)}
                   activeOpacity={0.7}
-                  className={`flex-row items-center px-3.5 py-3 ${
-                    idx < pmfRows.length - 1 ? 'border-b border-slate-100' : ''
-                  }`}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    borderBottomWidth: idx < pmfRows.length - 1 ? 1 : 0,
+                    borderBottomColor: '#f1f5f9',
+                  }}
                 >
-                  <View className="flex-2 flex-row items-center gap-1">
-                    <Text className="font-sans font-bold text-[12px] text-[#1e293b]">
+                  <View style={{ flex: 2, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#1e293b' }}>
                       {row.contact_group}
                     </Text>
                     <Feather name="chevron-right" size={12} color="#94a3b8" />
                   </View>
-                  <Text className="flex-1 font-sans text-[12px] text-[#475569] text-center">
+                  <Text style={{ flex: 1, fontFamily: 'Inter_500Medium', fontSize: 12, color: '#475569', textAlign: 'center' }}>
                     {row.total_psis}
                   </Text>
-                  <Text className="flex-1 font-sans font-bold text-[12px] text-emerald-600 text-center">
+                  <Text style={{ flex: 1, fontFamily: 'Inter_700Bold', fontSize: 12, color: '#059669', textAlign: 'center' }}>
                     {row.active_psis}
                   </Text>
-                  <View className="flex-1 items-end">
-                    <Text className="font-sans font-bold text-[12px] text-rose-600">
+                  <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#e11d48' }}>
                       {row.churn_rate}%
                     </Text>
                   </View>
@@ -1139,45 +1405,64 @@ export default function AnalyticsCrescimentoScreen() {
         {/* ========================================================= */}
         {/* BLOCO 6: BÚSSOLA DE ESCALA & UNIT ECONOMICS               */}
         {/* ========================================================= */}
-        <View className="mb-4">
-          <Text className="font-title text-[#111827] text-[16px] mb-3">
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#111827', fontSize: 16, marginBottom: 10 }}>
             Economia Unitária (Unit Economics)
           </Text>
 
           {/* Card Bússola de Escala */}
           <View
-            className="bg-[#f0fdf4] rounded-2xl p-4 mb-3 border border-[#bbf7d0]"
             style={{
+              backgroundColor: '#f0fdf4',
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: '#bbf7d0',
+              padding: 16,
+              marginBottom: 12,
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.03,
-              shadowRadius: 5,
+              shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 },
               elevation: 1,
             }}
           >
-            <View className="flex-row items-center justify-between mb-1.5">
-              <View className="flex-row items-center gap-1.5">
-                <Text className="text-[14px]">💡</Text>
-                <Text className="font-title text-[#166534] text-[13px]">Bússola de Escala (B2C)</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ fontSize: 14 }}>💡</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#166534', fontSize: 14 }}>
+                  Bússola de Escala (B2C)
+                </Text>
               </View>
-              <View className="bg-[#dcfce7] px-2 py-0.5 rounded-full border border-[#86efac]">
-                <Text className="font-sans font-bold text-[10px] text-[#166534]">Fixo: R$ 26,88/psi</Text>
+              <View style={{ backgroundColor: '#dcfce7', borderWidth: 1, borderColor: '#86efac', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#166534' }}>Fixo: R$ 26,88/psi</Text>
               </View>
             </View>
-            <Text className="font-title text-[#166534] text-[15px] mb-1">
+            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#166534', fontSize: 15, marginBottom: 4 }}>
               {bussolaInfo.title}
             </Text>
-            <Text className="font-sans text-[#15803d] text-[11px] leading-relaxed">
+            <Text style={{ fontFamily: 'Inter_400Regular', color: '#15803d', fontSize: 11, lineHeight: 17 }}>
               {bussolaInfo.reason}
             </Text>
           </View>
 
           {/* Grid de Métricas de CAC & LTV */}
-          <View className="flex-row flex-wrap gap-2.5">
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {/* CAC B2B */}
-            <View className="flex-1 min-w-[145px] bg-white rounded-2xl p-3.5 border border-[#e2e8f0]">
-              <Text className="font-sans font-bold text-[#64748b] text-[10px] uppercase">CAC Psicólogos (B2B)</Text>
-              <Text className="font-title text-[#1e293b] text-[18px] mt-0.5">
+            <View
+              style={{
+                flex: 1,
+                minWidth: '47%',
+                backgroundColor: '#ffffff',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                padding: 14,
+              }}
+            >
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 10, textTransform: 'uppercase' }}>
+                CAC Psicólogos (B2B)
+              </Text>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 18, marginTop: 4 }}>
                 {marketing?.spendByChannel?.['Meta Ads'] && (acquisition?.trialsIniciados || overview?.novosPagantes)
                   ? formatBRL(
                       (marketing.spendByChannel['Meta Ads'] || 0) /
@@ -1185,44 +1470,82 @@ export default function AnalyticsCrescimentoScreen() {
                     )
                   : 'N/D'}
               </Text>
-              <Text className="font-sans text-[#94a3b8] text-[10px] mt-1">
+              <Text style={{ fontFamily: 'Inter_400Regular', color: '#94a3b8', fontSize: 10, marginTop: 4 }}>
                 Gasto Meta: {formatBRL(marketing?.spendByChannel?.['Meta Ads'])}
               </Text>
             </View>
 
             {/* CAC B2C */}
-            <View className="flex-1 min-w-[145px] bg-white rounded-2xl p-3.5 border border-[#e2e8f0]">
-              <Text className="font-sans font-bold text-[#64748b] text-[10px] uppercase">CAC Demanda (B2C)</Text>
-              <Text className="font-title text-[#1e293b] text-[18px] mt-0.5">
+            <View
+              style={{
+                flex: 1,
+                minWidth: '47%',
+                backgroundColor: '#ffffff',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                padding: 14,
+              }}
+            >
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 10, textTransform: 'uppercase' }}>
+                CAC Demanda (B2C)
+              </Text>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 18, marginTop: 4 }}>
                 {marketing?.spendByChannel?.['Google Ads'] && demand?.funnel?.contatos
                   ? formatBRL(
                       (marketing.spendByChannel['Google Ads'] || 0) / (demand.funnel.contatos || 1)
                     )
                   : 'N/D'}
               </Text>
-              <Text className="font-sans text-[#94a3b8] text-[10px] mt-1">
+              <Text style={{ fontFamily: 'Inter_400Regular', color: '#94a3b8', fontSize: 10, marginTop: 4 }}>
                 Gasto Google: {formatBRL(marketing?.spendByChannel?.['Google Ads'])}
               </Text>
             </View>
 
             {/* LTV Projetado */}
-            <View className="flex-1 min-w-[145px] bg-white rounded-2xl p-3.5 border border-[#e2e8f0]">
-              <Text className="font-sans font-bold text-[#64748b] text-[10px] uppercase">LTV Projetado</Text>
-              <Text className="font-title text-[#8b5cf6] text-[18px] mt-0.5">
+            <View
+              style={{
+                flex: 1,
+                minWidth: '47%',
+                backgroundColor: '#ffffff',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                padding: 14,
+              }}
+            >
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 10, textTransform: 'uppercase' }}>
+                LTV Projetado
+              </Text>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#8b5cf6', fontSize: 18, marginTop: 4 }}>
                 {marketing?.ltvProjetado ? formatBRL(marketing.ltvProjetado) : 'N/D'}
               </Text>
-              <Text className="font-sans text-[#94a3b8] text-[10px] mt-1">
+              <Text style={{ fontFamily: 'Inter_400Regular', color: '#94a3b8', fontSize: 10, marginTop: 4 }}>
                 {marketing?.weightedChurnRate ? `Taxa churn: ${(marketing.weightedChurnRate * 100).toFixed(1)}%` : 'Base inicial curta'}
               </Text>
             </View>
 
             {/* LTV Observado */}
-            <View className="flex-1 min-w-[145px] bg-white rounded-2xl p-3.5 border border-[#e2e8f0]">
-              <Text className="font-sans font-bold text-[#64748b] text-[10px] uppercase">LTV Observado</Text>
-              <Text className="font-title text-[#10b981] text-[18px] mt-0.5">
+            <View
+              style={{
+                flex: 1,
+                minWidth: '47%',
+                backgroundColor: '#ffffff',
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                padding: 14,
+              }}
+            >
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 10, textTransform: 'uppercase' }}>
+                LTV Observado
+              </Text>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#10b981', fontSize: 18, marginTop: 4 }}>
                 {marketing?.ltvObservado ? formatBRL(marketing.ltvObservado) : 'N/D'}
               </Text>
-              <Text className="font-sans text-[#94a3b8] text-[10px] mt-1">Histórico completo</Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', color: '#94a3b8', fontSize: 10, marginTop: 4 }}>
+                Histórico completo
+              </Text>
             </View>
           </View>
         </View>
@@ -1237,22 +1560,34 @@ export default function AnalyticsCrescimentoScreen() {
         transparent={true}
         onRequestClose={() => setDrilldownVisible(false)}
       >
-        <View className="flex-1 bg-black/60 justify-end">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
           <View
-            className="bg-white rounded-t-3xl max-h-[85%] border-t border-slate-200"
-            style={{ paddingBottom: Math.max(insets.bottom, 20) }}
+            style={{
+              backgroundColor: '#ffffff',
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              maxHeight: '85%',
+              borderTopWidth: 1,
+              borderTopColor: '#e2e8f0',
+              paddingBottom: Math.max(insets.bottom, 20),
+            }}
           >
             {/* Header do Bottom Sheet */}
-            <View className="px-5 pt-4 pb-3 border-b border-slate-100 flex-row items-center justify-between">
-              <View className="flex-1 mr-3">
-                <Text className="font-title text-[#0f172a] text-[16px]">{drilldownTitle}</Text>
-                <Text className="font-sans text-[#64748b] text-[12px]">
+            <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#0f172a', fontSize: 16 }}>{drilldownTitle}</Text>
+                <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, marginTop: 2 }}>
                   {drilldownPsis.length} {drilldownPsis.length === 1 ? 'profissional' : 'profissionais'}
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => setDrilldownVisible(false)}
-                className="bg-slate-100 p-2 rounded-full active:bg-slate-200"
+                activeOpacity={0.7}
+                style={{
+                  backgroundColor: '#f1f5f9',
+                  padding: 8,
+                  borderRadius: 999,
+                }}
               >
                 <Feather name="x" size={18} color="#475569" />
               </TouchableOpacity>
@@ -1260,24 +1595,30 @@ export default function AnalyticsCrescimentoScreen() {
 
             {/* Conteúdo do Drilldown */}
             {drilldownLoading ? (
-              <View className="p-8 items-center justify-center">
+              <View style={{ padding: 40, alignItems: 'center', justifyContent: 'center' }}>
                 <ActivityIndicator size="large" color="#1B4332" />
-                <Text className="font-sans text-[#64748b] text-[12px] mt-3">Carregando psicólogos...</Text>
+                <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, marginTop: 12 }}>Carregando psicólogos...</Text>
               </View>
             ) : drilldownPsis.length === 0 ? (
-              <View className="p-8 items-center justify-center">
-                <Text className="font-sans text-[#94a3b8] text-[13px]">Nenhum psicólogo encontrado neste grupo.</Text>
+              <View style={{ padding: 40, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: 'Inter_400Regular', color: '#94a3b8', fontSize: 13 }}>Nenhum psicólogo encontrado neste grupo.</Text>
               </View>
             ) : (
-              <ScrollView className="p-5" showsVerticalScrollIndicator={false}>
-                <View className="gap-3">
+              <ScrollView style={{ padding: 16 }} showsVerticalScrollIndicator={false}>
+                <View style={{ gap: 12 }}>
                   {drilldownPsis.map((psi) => (
                     <View
                       key={psi.id}
-                      className="bg-slate-50 p-4 rounded-2xl border border-slate-200"
+                      style={{
+                        backgroundColor: '#f8fafc',
+                        padding: 16,
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        borderColor: '#e2e8f0',
+                      }}
                     >
-                      <View className="flex-row items-center justify-between mb-2">
-                        <View className="flex-row items-center gap-2.5 flex-1 mr-2">
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 }}>
                           <View
                             style={{
                               width: 44,
@@ -1290,33 +1631,42 @@ export default function AnalyticsCrescimentoScreen() {
                               justifyContent: 'center',
                             }}
                           >
-                            <Text className="font-title text-[#166534] text-[16px] font-bold">
+                            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#166534', fontSize: 17 }}>
                               {(psi.nome || '?').charAt(0).toUpperCase()}
                             </Text>
                           </View>
-                          <View className="flex-1">
-                            <Text className="font-title text-[#0f172a] text-[15px]">{psi.nome}</Text>
-                            <Text className="font-sans text-[#64748b] text-[11px] mt-0.5">
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#0f172a', fontSize: 15 }}>{psi.nome}</Text>
+                            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 11, marginTop: 2 }}>
                               {psi.plano ? `Plano ${psi.plano}` : 'Em Trial'} • Ativo há {Math.floor(psi.days_active || 0)}d
                             </Text>
                           </View>
                         </View>
-                        <View className="bg-white px-2.5 py-1 rounded-full border border-slate-200">
-                          <Text className="font-sans font-bold text-[10px] text-slate-700">
+                        <View style={{ backgroundColor: '#ffffff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#334155' }}>
                             {psi.total_contacts !== undefined ? `${psi.total_contacts} contatos` : '0 contatos'}
                           </Text>
                         </View>
                       </View>
 
                       {/* Botões de Ação Rápida */}
-                      <View className="flex-row items-center gap-2 mt-2">
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <TouchableOpacity
                           onPress={() => handleContactPsi(psi)}
                           activeOpacity={0.8}
-                          className="flex-1 bg-[#25D366] flex-row items-center justify-center py-2.5 rounded-full active:opacity-90"
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#25D366',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            paddingVertical: 10,
+                            borderRadius: 999,
+                            gap: 6,
+                          }}
                         >
-                          <Feather name="message-circle" size={14} color="white" />
-                          <Text className="text-white font-sans font-bold text-[12px] ml-1.5">WhatsApp</Text>
+                          <Feather name="message-circle" size={14} color="#ffffff" />
+                          <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 12 }}>WhatsApp</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
@@ -1325,10 +1675,21 @@ export default function AnalyticsCrescimentoScreen() {
                             router.navigate('/(admin)/crm-modulo/psicologos');
                           }}
                           activeOpacity={0.8}
-                          className="flex-1 bg-white border border-slate-300 flex-row items-center justify-center py-2.5 rounded-full active:bg-slate-100"
+                          style={{
+                            flex: 1,
+                            backgroundColor: '#ffffff',
+                            borderWidth: 1,
+                            borderColor: '#cbd5e1',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            paddingVertical: 10,
+                            borderRadius: 999,
+                            gap: 6,
+                          }}
                         >
                           <Feather name="user" size={14} color="#0f172a" />
-                          <Text className="text-[#0f172a] font-sans font-bold text-[12px] ml-1.5">Visão 360° CS</Text>
+                          <Text style={{ fontFamily: 'Inter_700Bold', color: '#0f172a', fontSize: 12 }}>Visão 360° CS</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -1349,43 +1710,61 @@ export default function AnalyticsCrescimentoScreen() {
         transparent={true}
         onRequestClose={() => setAiModalVisible(false)}
       >
-        <View className="flex-1 bg-black/60 justify-end">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
           <View
-            className="bg-white rounded-t-3xl max-h-[85%] border-t border-slate-200"
-            style={{ paddingBottom: Math.max(insets.bottom, 20) }}
+            style={{
+              backgroundColor: '#ffffff',
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              maxHeight: '85%',
+              borderTopWidth: 1,
+              borderTopColor: '#e2e8f0',
+              paddingBottom: Math.max(insets.bottom, 20),
+            }}
           >
-            <View className="px-5 pt-4 pb-3 border-b border-slate-100 flex-row items-center justify-between">
-              <View className="flex-row items-center gap-2 flex-1 mr-3">
-                <Text className="text-[18px]">✨</Text>
-                <Text className="font-title text-[#0f172a] text-[16px]">Inteligência de Crescimento</Text>
+            <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, marginRight: 12 }}>
+                <Text style={{ fontSize: 18 }}>✨</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#0f172a', fontSize: 16 }}>Inteligência de Crescimento</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setAiModalVisible(false)}
-                className="bg-slate-100 p-2 rounded-full active:bg-slate-200"
+                activeOpacity={0.7}
+                style={{
+                  backgroundColor: '#f1f5f9',
+                  padding: 8,
+                  borderRadius: 999,
+                }}
               >
                 <Feather name="x" size={18} color="#475569" />
               </TouchableOpacity>
             </View>
 
             {aiLoading ? (
-              <View className="p-10 items-center justify-center">
+              <View style={{ padding: 40, alignItems: 'center', justifyContent: 'center' }}>
                 <ActivityIndicator size="large" color="#8b5cf6" />
-                <Text className="font-sans text-[#64748b] text-[13px] mt-3">
+                <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 13, marginTop: 12 }}>
                   Cruzando dados de funil, CAC e retenção com o modelo de IA...
                 </Text>
               </View>
             ) : (
-              <ScrollView className="p-5" showsVerticalScrollIndicator={false}>
-                <View className="bg-purple-50/60 p-4 rounded-2xl border border-purple-100 mb-4">
-                  <Text className="font-sans text-[#334155] text-[13px] leading-relaxed">
+              <ScrollView style={{ padding: 20 }} showsVerticalScrollIndicator={false}>
+                <View style={{ backgroundColor: '#faf5ff', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#e9d5ff', marginBottom: 16 }}>
+                  <Text style={{ fontFamily: 'Inter_400Regular', color: '#334155', fontSize: 13, lineHeight: 20 }}>
                     {aiInsightsText}
                   </Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => setAiModalVisible(false)}
-                  className="bg-[#1B4332] py-3 rounded-full items-center active:opacity-90"
+                  activeOpacity={0.8}
+                  style={{
+                    backgroundColor: '#1B4332',
+                    paddingVertical: 12,
+                    borderRadius: 999,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text className="text-white font-sans font-bold text-[13px]">Entendido</Text>
+                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 13 }}>Entendido</Text>
                 </TouchableOpacity>
               </ScrollView>
             )}
