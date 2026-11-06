@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-59bf7c32",
+    "date": "2026-11-06T23:26:09.000Z",
+    "commit": "59bf7c32",
+    "author": "Anderson",
+    "title": "Correção: Refatorar Growth com layout premium Yelo, eliminando vazamentos e bordas pretas (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "refatorar Growth com layout premium Yelo, eliminando vazamentos e bordas pretas",
+    "description": "Commit registrado no repositório: \"fix(mobile): refatorar Growth com layout premium Yelo, eliminando vazamentos e bordas pretas\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #59bf7c32"
+    },
+    "after": {
+      "nova_versao": "refatorar Growth com layout premium Yelo, eliminando vazamentos e bordas pretas"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-4d72a9c3",
     "date": "2026-11-06T23:19:30.000Z",
     "commit": "4d72a9c3",
