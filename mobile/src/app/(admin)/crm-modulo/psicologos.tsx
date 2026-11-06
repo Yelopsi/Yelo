@@ -4,6 +4,7 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  Pressable,
   TextInput,
   Modal,
   RefreshControl,
@@ -1275,36 +1276,36 @@ export default function AdminCRMPsicologosScreen() {
                 return (
                   <View
                     key={`${item.id}_${item.actionType}_${idx}`}
-                    className="bg-white rounded-[20px] p-[16px] mb-[12px] border border-[#e2e8f0] shadow-xs"
+                    className="bg-white rounded-[22px] p-4 mb-3 border border-[#e2e8f0] shadow-xs"
                   >
                     {/* Topo do Card */}
-                    <View className="flex-row items-center gap-[12px] pb-[12px] border-b border-[#f1f5f9]">
-                      <View className="w-[42px] h-[42px] rounded-full bg-[#f0fdf4] border border-[#bbf7d0] items-center justify-center">
-                        <Text className="font-title text-[#166534] text-[16px]">
+                    <View className="flex-row items-center gap-3 pb-3 border-b border-[#f1f5f9]">
+                      <View className="w-[52px] h-[52px] rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0] items-center justify-center shadow-2xs">
+                        <Text className="font-title text-[#166534] text-[20px] font-bold">
                           {(item.nome || '?').charAt(0).toUpperCase()}
                         </Text>
                       </View>
                       <View className="flex-1">
                         <TouchableOpacity onPress={() => openCSDrawer(item)}>
-                          <Text className="font-title text-[#1B4332] text-[16px]">
+                          <Text className="font-title text-[#1B4332] text-[17px] font-bold">
                             {item.nome || 'Sem Nome'}
                           </Text>
                         </TouchableOpacity>
-                        <Text className="font-sans text-[#64748b] text-[12px]">
+                        <Text className="font-sans text-[#64748b] text-[12px] mt-0.5">
                           {item.telefone || 'Sem telefone'}
                         </Text>
                       </View>
                     </View>
 
                     {/* Linhas Internas */}
-                    <View className="py-[10px] gap-[8px]">
+                    <View className="py-2.5 gap-2">
                       {/* Status da Ação */}
-                      <View className="flex-row justify-between items-center">
+                      <View className="flex-row justify-between items-center py-0.5">
                         <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
                           Status da Ação
                         </Text>
                         <View
-                          className="px-[10px] py-[3px] rounded-full"
+                          className="px-2.5 py-0.5 rounded-full"
                           style={{ backgroundColor: badgeBg }}
                         >
                           <Text
@@ -1321,7 +1322,7 @@ export default function AdminCRMPsicologosScreen() {
                         <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider mb-1">
                           Motivo do Contato
                         </Text>
-                        <View className="bg-[#f8fafc] border border-[#e2e8f0] border-l-4 border-l-[#3b82f6] p-[10px] rounded-[10px]">
+                        <View className="bg-[#f8fafc] border border-[#e2e8f0] border-l-4 border-l-[#3b82f6] p-2.5 rounded-xl">
                           <Text className="font-sans text-[#1e293b] text-[13px] leading-5">
                             {item.reason}
                           </Text>
@@ -1329,7 +1330,7 @@ export default function AdminCRMPsicologosScreen() {
                       </View>
 
                       {/* Data / Previsão */}
-                      <View className="flex-row justify-between items-center pt-1">
+                      <View className="flex-row justify-between items-center py-0.5">
                         <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
                           Data / Previsão
                         </Text>
@@ -1339,7 +1340,7 @@ export default function AdminCRMPsicologosScreen() {
                       </View>
 
                       {/* Plano */}
-                      <View className="flex-row justify-between items-center">
+                      <View className="flex-row justify-between items-center py-0.5">
                         <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
                           Plano
                         </Text>
@@ -1350,23 +1351,24 @@ export default function AdminCRMPsicologosScreen() {
                     </View>
 
                     {/* Rodapé: Ações CS */}
-                    <View className="flex-row items-center gap-[8px] pt-[12px] border-t border-[#f1f5f9]">
+                    <View className="flex-row items-center gap-2 pt-3 border-t border-[#f1f5f9]">
                       <TouchableOpacity
                         onPress={() => handleSendAction(item)}
                         disabled={actionLoading}
-                        className="flex-1 rounded-full overflow-hidden"
+                        activeOpacity={0.8}
+                        className="flex-1 h-[40px] rounded-xl overflow-hidden shadow-2xs"
                       >
                         <LinearGradient
                           colors={btnGradient as any}
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 1 }}
-                          className="py-[10px] px-[14px] flex-row items-center justify-center gap-[6px]"
+                          className="w-full h-full flex-row items-center justify-center gap-1.5 px-3"
                         >
                           {actionLoading ? (
                             <ActivityIndicator size="small" color="#fff" />
                           ) : (
                             <>
-                              <Feather name={btnIcon} size={14} color="#fff" />
+                              <Feather name={btnIcon} size={15} color="#fff" />
                               <Text className="font-sans font-bold text-white text-[13px]">
                                 {btnLabel}
                               </Text>
@@ -1377,9 +1379,10 @@ export default function AdminCRMPsicologosScreen() {
 
                       <TouchableOpacity
                         onPress={() => handleDismissAction(item.id, item.actionType)}
-                        className="border border-[#ef4444] px-[14px] py-[9px] rounded-full bg-white flex-row items-center gap-[4px]"
+                        activeOpacity={0.7}
+                        className="h-[40px] px-3.5 rounded-xl border border-red-200 bg-red-50/70 flex-row items-center gap-1.5"
                       >
-                        <Feather name="x" size={13} color="#ef4444" />
+                        <Feather name="x" size={14} color="#ef4444" />
                         <Text className="font-sans font-bold text-[#ef4444] text-[12px]">Ignorar</Text>
                       </TouchableOpacity>
                     </View>
@@ -1390,7 +1393,7 @@ export default function AdminCRMPsicologosScreen() {
           ) : (
             // ================= MODO PADRÃO =================
             psychologists.length === 0 ? (
-              <View className="bg-white rounded-[18px] p-[30px] items-center border border-[#e2e8f0]">
+              <View className="bg-white rounded-[22px] p-[30px] items-center border border-[#e2e8f0]">
                 <Text className="text-[28px] mb-2">🔍</Text>
                 <Text className="font-title text-[#1B4332] text-[16px]">Nenhum psicólogo encontrado</Text>
                 <Text className="font-sans text-[#64748b] text-[13px] text-center mt-1">
@@ -1448,39 +1451,50 @@ export default function AdminCRMPsicologosScreen() {
                 return (
                   <View
                     key={psy.id}
-                    className="bg-white rounded-[20px] p-[16px] mb-[12px] border border-[#e2e8f0] shadow-xs"
+                    className="bg-white rounded-[22px] p-4 mb-3 border border-[#e2e8f0] shadow-xs"
                   >
-                    {/* Topo do Card: Informações do Profissional */}
-                    <View className="flex-row items-center gap-[12px] pb-[12px] border-b border-[#f1f5f9]">
+                    {/* Topo do Card: Foto/Avatar + Nome do Profissional */}
+                    <View className="flex-row items-center gap-3 pb-3 border-b border-[#f1f5f9]">
                       {psy.fotoUrl ? (
                         <Image
                           source={{ uri: psy.fotoUrl }}
-                          className="w-[42px] h-[42px] rounded-full border border-[#e2e8f0]"
+                          className="w-[52px] h-[52px] rounded-2xl border border-slate-200"
+                          style={{ resizeMode: 'cover' }}
                         />
                       ) : (
-                        <View className="w-[42px] h-[42px] rounded-full bg-[#f0fdf4] border border-[#bbf7d0] items-center justify-center">
-                          <Text className="font-title text-[#166534] text-[16px]">
+                        <View className="w-[52px] h-[52px] rounded-2xl bg-emerald-50 border border-emerald-200/80 items-center justify-center shadow-2xs">
+                          <Text className="font-title text-[#166534] text-[20px] font-bold">
                             {(psy.nome || '?').charAt(0).toUpperCase()}
                           </Text>
                         </View>
                       )}
                       <View className="flex-1">
                         <TouchableOpacity onPress={() => openCSDrawer(psy)}>
-                          <View className="flex-row items-center flex-wrap gap-1">
-                            <Text className="font-title text-[#1B4332] text-[16px]">
+                          <View className="flex-row items-center flex-wrap gap-1.5">
+                            <Text className="font-title text-[#1B4332] text-[17px] font-bold leading-tight">
                               {psy.nome || 'Sem Nome'}
                             </Text>
-                            {isVip && <Text className="text-[12px]">⭐</Text>}
-                            {psy.isProfileAnalyzed && <Text className="text-[12px]">✅</Text>}
+                            {isVip && (
+                              <View className="bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-md">
+                                <Text className="font-sans font-bold text-[10px] text-amber-800">⭐ VIP</Text>
+                              </View>
+                            )}
+                            {psy.isProfileAnalyzed && (
+                              <View className="bg-emerald-100 border border-emerald-300 px-1.5 py-0.5 rounded-md">
+                                <Text className="font-sans font-bold text-[10px] text-emerald-800">✅ Pronta</Text>
+                              </View>
+                            )}
                           </View>
                         </TouchableOpacity>
-                        <View className="flex-row items-center gap-2 mt-0.5">
+                        <View className="flex-row items-center flex-wrap gap-x-2 gap-y-0.5 mt-1">
                           {psy.crp ? (
-                            <Text className="font-sans text-[#64748b] text-[12px]">
-                              CRP: {psy.crp}
-                            </Text>
+                            <View className="bg-slate-100 px-2 py-0.5 rounded-md">
+                              <Text className="font-sans font-semibold text-[#475569] text-[11px]">
+                                CRP: {psy.crp}
+                              </Text>
+                            </View>
                           ) : null}
-                          <Text className="font-sans text-[#94a3b8] text-[12px]" numberOfLines={1}>
+                          <Text className="font-sans text-[#64748b] text-[12px]" numberOfLines={1}>
                             {psy.email || 'Sem email'}
                           </Text>
                         </View>
@@ -1488,15 +1502,15 @@ export default function AdminCRMPsicologosScreen() {
                     </View>
 
                     {/* Informações Linha a Linha (Estilo Tabela Web Mobile) */}
-                    <View className="py-[10px] gap-[8px]">
+                    <View className="py-2.5 gap-2">
                       {/* Status / Plano */}
-                      <View className="flex-row justify-between items-center">
+                      <View className="flex-row justify-between items-center py-0.5">
                         <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
                           Status / Plano
                         </Text>
-                        <View className="flex-row items-center gap-[6px]">
+                        <View className="flex-row items-center gap-1.5">
                           <View
-                            className="px-[8px] py-[2px] rounded-full"
+                            className="px-2.5 py-0.5 rounded-full"
                             style={{ backgroundColor: statusBg }}
                           >
                             <Text
@@ -1513,19 +1527,19 @@ export default function AdminCRMPsicologosScreen() {
                       </View>
 
                       {/* Força do Perfil */}
-                      <View className="flex-row justify-between items-center">
+                      <View className="flex-row justify-between items-center py-0.5">
                         <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
                           Força do Perfil
                         </Text>
-                        <View className="flex-row items-center gap-[8px]">
-                          <View className="w-[70px] h-[6px] bg-[#e2e8f0] rounded-full overflow-hidden">
+                        <View className="flex-row items-center gap-2">
+                          <View className="w-[84px] h-[7px] bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
                             <View
                               className="h-full rounded-full"
-                              style={{ width: `${score}%`, backgroundColor: scoreColor }}
+                              style={{ width: `${Math.max(6, score)}%`, backgroundColor: scoreColor }}
                             />
                           </View>
                           <Text
-                            className="font-sans font-bold text-[12px]"
+                            className="font-sans font-bold text-[12px] min-w-[34px] text-right"
                             style={{ color: scoreColor }}
                           >
                             {score}%
@@ -1534,11 +1548,11 @@ export default function AdminCRMPsicologosScreen() {
                       </View>
 
                       {/* Origem (UTM) */}
-                      <View className="flex-row justify-between items-center">
+                      <View className="flex-row justify-between items-center py-0.5">
                         <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
                           Origem (UTM)
                         </Text>
-                        <View className="bg-[#f1f5f9] px-[8px] py-[2px] rounded-full">
+                        <View className="bg-slate-100 px-2.5 py-0.5 rounded-full">
                           <Text className="font-sans font-bold text-[#475569] text-[11px] uppercase">
                             {psy.utm_source || 'Direto'}
                           </Text>
@@ -1546,22 +1560,23 @@ export default function AdminCRMPsicologosScreen() {
                       </View>
 
                       {/* Data de Inscrição */}
-                      <View className="flex-row justify-between items-center">
+                      <View className="flex-row justify-between items-center py-0.5">
                         <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
                           Data de Inscrição
                         </Text>
-                        <Text className="font-sans text-[#64748b] text-[12px]">{dataInscricao}</Text>
+                        <Text className="font-sans font-medium text-[#475569] text-[12px]">{dataInscricao}</Text>
                       </View>
                     </View>
 
-                    {/* Rodapé de Ações CS */}
-                    <View className="flex-row items-center gap-[8px] pt-[12px] border-t border-[#f1f5f9]">
+                    {/* Rodapé de Ações CS (Layout Limpo & Harmonioso) */}
+                    <View className="flex-row items-center gap-2 pt-3 border-t border-[#f1f5f9]">
                       <TouchableOpacity
                         onPress={() => openCSDrawer(psy)}
-                        className="flex-1 bg-[#f0fdf4] border border-[#bbf7d0] py-[9px] px-[14px] rounded-full flex-row items-center justify-center gap-[6px]"
+                        activeOpacity={0.8}
+                        className="flex-1 bg-[#1B4332] h-[40px] px-3.5 rounded-xl flex-row items-center justify-center gap-1.5 shadow-2xs"
                       >
-                        <Feather name="eye" size={14} color="#166534" />
-                        <Text className="font-sans font-bold text-[#166534] text-[13px]">
+                        <Feather name="eye" size={15} color="#fff" />
+                        <Text className="font-sans font-bold text-white text-[13px]">
                           Visão 360
                         </Text>
                       </TouchableOpacity>
@@ -1569,20 +1584,21 @@ export default function AdminCRMPsicologosScreen() {
                       {psy.telefone ? (
                         <TouchableOpacity
                           onPress={() => handleSendAction(psy, 'standard_contact')}
-                          className="bg-[#10b981] px-[14px] py-[9px] rounded-full flex-row items-center gap-[5px]"
+                          activeOpacity={0.8}
+                          className="bg-[#10b981] h-[40px] px-3.5 rounded-xl flex-row items-center justify-center gap-1.5 shadow-2xs"
                         >
-                          <Feather name="message-circle" size={14} color="#fff" />
-                          <Text className="font-sans font-bold text-white text-[12px]">WhatsApp</Text>
+                          <Feather name="message-circle" size={15} color="#fff" />
+                          <Text className="font-sans font-bold text-white text-[13px]">WhatsApp</Text>
                         </TouchableOpacity>
                       ) : null}
 
                       {!isDeleted && (
                         <TouchableOpacity
                           onPress={() => handleDeletePsychologist(psy.id, psy.nome)}
-                          className="border border-[#fee2e2] px-[12px] py-[9px] rounded-full bg-white flex-row items-center gap-[4px]"
+                          activeOpacity={0.7}
+                          className="w-[40px] h-[40px] rounded-xl bg-red-50 border border-red-200/80 items-center justify-center"
                         >
-                          <Feather name="trash-2" size={13} color="#ef4444" />
-                          <Text className="font-sans font-bold text-[#ef4444] text-[12px]">Excluir</Text>
+                          <Feather name="trash-2" size={16} color="#ef4444" />
                         </TouchableOpacity>
                       )}
                     </View>
@@ -1633,22 +1649,53 @@ export default function AdminCRMPsicologosScreen() {
       </ScrollView>
 
       {/* ========================================================= */}
-      {/* 9. DRAWER / MODAL VISÃO 360 CS                            */}
+      {/* 9. DRAWER / MODAL VISÃO 360 CS (MODERN BOTTOM SHEET)       */}
       {/* ========================================================= */}
-      <Modal visible={drawerVisible} animationType="slide" transparent>
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-[#f8fafc] rounded-t-[26px] max-h-[90%] flex-1">
+      <Modal
+        visible={drawerVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setDrawerVisible(false)}
+      >
+        <View className="flex-1 justify-end bg-black/60">
+          {/* Área de toque superior com altura mínima e dismiss ao toque */}
+          <Pressable
+            onPress={() => setDrawerVisible(false)}
+            className="flex-1"
+            style={{ minHeight: insets.top + 60 }}
+          />
+
+          {/* Bottom Sheet Card com altura controlada */}
+          <View
+            style={{
+              maxHeight: '85%',
+              paddingBottom: insets.bottom + 12,
+            }}
+            className="bg-[#f8fafc] rounded-t-[32px] overflow-hidden shadow-2xl"
+          >
             {/* Puxador Superior */}
-            <View className="w-[44px] h-[5px] bg-[#cbd5e1] rounded-full self-center mt-[12px] mb-[6px]" />
+            <View className="items-center pt-3 pb-1 bg-white">
+              <View className="w-12 h-1.5 bg-slate-300 rounded-full" />
+            </View>
 
             {/* Cabeçalho do Drawer */}
-            <View className="bg-white px-[20px] py-[16px] border-b border-[#e2e8f0] flex-row justify-between items-center">
-              <View className="flex-row items-center gap-[8px]">
-                <Feather name="activity" size={20} color="#8b5cf6" />
-                <Text className="font-title text-[#1e293b] text-[18px]">Visão de CS (360º)</Text>
+            <View className="bg-white px-5 py-3.5 border-b border-slate-200/80 flex-row justify-between items-center">
+              <View className="flex-row items-center gap-2.5">
+                <View className="w-9 h-9 rounded-xl bg-purple-100 items-center justify-center">
+                  <Feather name="activity" size={18} color="#7c3aed" />
+                </View>
+                <View>
+                  <Text className="font-title text-[#1e293b] text-[17px] font-bold">Visão de CS (360º)</Text>
+                  <Text className="font-sans text-[#64748b] text-[11px]">Dossiê completo do psicólogo</Text>
+                </View>
               </View>
-              <TouchableOpacity onPress={() => setDrawerVisible(false)} className="p-[4px]">
-                <Feather name="x" size={22} color="#64748b" />
+              <TouchableOpacity
+                onPress={() => setDrawerVisible(false)}
+                activeOpacity={0.7}
+                className="w-9 h-9 rounded-full bg-slate-100 items-center justify-center active:bg-slate-200"
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Feather name="x" size={18} color="#475569" />
               </TouchableOpacity>
             </View>
 
@@ -1685,43 +1732,51 @@ export default function AdminCRMPsicologosScreen() {
                   return (
                     <>
                       {/* Cartão de Informações Básicas */}
-                      <View className="bg-white rounded-[16px] p-[18px] border border-[#e2e8f0] shadow-sm">
-                        <View className="flex-row items-center gap-[14px] mb-[14px]">
+                      <View className="bg-white rounded-2xl p-4 border border-[#e2e8f0] shadow-2xs">
+                        <View className="flex-row items-center gap-3.5 mb-3">
                           {psy.fotoUrl ? (
                             <Image
                               source={{ uri: psy.fotoUrl }}
-                              className="w-[54px] h-[54px] rounded-full border border-[#e2e8f0]"
+                              className="w-[56px] h-[56px] rounded-2xl border border-slate-200"
+                              style={{ resizeMode: 'cover' }}
                             />
                           ) : (
-                            <View className="w-[54px] h-[54px] rounded-full bg-[#f5f3ff] border border-[#ddd6fe] items-center justify-center">
-                              <Text className="font-title text-[#8b5cf6] text-[22px]">
+                            <View className="w-[56px] h-[56px] rounded-2xl bg-emerald-50 border border-emerald-200 items-center justify-center shadow-2xs">
+                              <Text className="font-title text-[#166534] text-[22px] font-bold">
                                 {(psy.nome || '?').charAt(0).toUpperCase()}
                               </Text>
                             </View>
                           )}
                           <View className="flex-1">
-                            <Text className="font-title text-[#1e293b] text-[18px]">
+                            <Text className="font-title text-[#1e293b] text-[18px] font-bold leading-tight">
                               {psy.nome || 'Sem Nome'}
                             </Text>
-                            <Text className="font-sans text-[#64748b] text-[13px]">
+                            <Text className="font-sans text-[#64748b] text-[13px] mt-0.5">
                               {psy.email || 'Sem email'}
                             </Text>
                           </View>
                         </View>
 
-                        <View className="flex-row flex-wrap gap-[8px]">
-                          <View className="bg-[#f1f5f9] px-[12px] py-[5px] rounded-full">
-                            <Text className="font-sans text-[#475569] text-[12px]">
-                              Tel: {psy.telefone || 'N/A'}
-                            </Text>
-                          </View>
-                          <View className="bg-[#f1f5f9] px-[12px] py-[5px] rounded-full">
-                            <Text className="font-sans text-[#475569] text-[12px]">
-                              CRP: {psy.crp || 'N/A'}
-                            </Text>
-                          </View>
-                          <View className="bg-[#f1f5f9] px-[12px] py-[5px] rounded-full">
-                            <Text className="font-sans text-[#475569] text-[12px]">
+                        <View className="flex-row flex-wrap gap-2 pt-2.5 border-t border-slate-100">
+                          {psy.telefone ? (
+                            <View className="bg-slate-100 px-3 py-1.5 rounded-full flex-row items-center gap-1.5">
+                              <Feather name="phone" size={12} color="#64748b" />
+                              <Text className="font-sans text-[#475569] text-[12px] font-medium">
+                                {psy.telefone}
+                              </Text>
+                            </View>
+                          ) : null}
+                          {psy.crp ? (
+                            <View className="bg-slate-100 px-3 py-1.5 rounded-full flex-row items-center gap-1.5">
+                              <Feather name="award" size={12} color="#64748b" />
+                              <Text className="font-sans text-[#475569] text-[12px] font-medium">
+                                CRP: {psy.crp}
+                              </Text>
+                            </View>
+                          ) : null}
+                          <View className="bg-slate-100 px-3 py-1.5 rounded-full flex-row items-center gap-1.5">
+                            <Feather name="calendar" size={12} color="#64748b" />
+                            <Text className="font-sans text-[#475569] text-[12px] font-medium">
                               Desde:{' '}
                               {psy.createdAt
                                 ? new Date(psy.createdAt).toLocaleDateString('pt-BR')

@@ -1,5 +1,30 @@
 [
   {
+    "id": "change-git-4f1cc5d8",
+    "date": "2026-11-06T21:58:55.000Z",
+    "commit": "4f1cc5d8",
+    "author": "Anderson",
+    "title": "Interface: Transformar header verde de CS em card flutuante com bordas arredondadas e respiro lateral (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "transformar header verde de CS em card flutuante com bordas arredondadas e respiro lateral",
+    "description": "Commit registrado no repositório: \"style(mobile): transformar header verde de CS em card flutuante com bordas arredondadas e respiro lateral\". Arquivos modificados: backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/psicologos.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4f1cc5d8"
+    },
+    "after": {
+      "nova_versao": "transformar header verde de CS em card flutuante com bordas arredondadas e respiro lateral"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-736b4523",
     "date": "2026-11-06T21:53:40.000Z",
     "commit": "736b4523",
