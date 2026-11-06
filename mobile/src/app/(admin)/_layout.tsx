@@ -188,7 +188,6 @@ export default function AdminLayout() {
           options={{ 
             tabBarButton: () => null, 
             tabBarItemStyle: { display: 'none' },
-            tabBarStyle: { display: 'none' },
             headerShown: false,
           }} 
         />

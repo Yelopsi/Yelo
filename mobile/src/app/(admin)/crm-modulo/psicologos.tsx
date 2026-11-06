@@ -582,12 +582,13 @@ export default function AdminCRMPsicologosScreen() {
     <View className="flex-1 bg-[#f8fafc]">
       <StatusBar style="dark" />
       <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 120 }}
+        className="flex-1 px-4"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 130 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
       >
-        {/* Barra de Navegação Superior (Voltar ao CRM Hub + Atualizar) */}
-        <View className="px-4 mb-3 flex-row items-center justify-between">
+        {/* Barra de Navegação Superior (Voltar ao CRM Hub + Badge Admin) */}
+        <View className="mb-3.5 flex-row items-center justify-between">
           <TouchableOpacity
             onPress={() => (router.canGoBack() ? router.back() : router.replace('/(admin)/crm'))}
             activeOpacity={0.7}
@@ -597,33 +598,53 @@ export default function AdminCRMPsicologosScreen() {
             <Text className="font-sans text-[#1B4332] text-xs font-semibold ml-1.5">CRM Hub</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={onRefresh}
-            activeOpacity={0.7}
-            className="w-9 h-9 rounded-full bg-white border border-slate-200 items-center justify-center shadow-xs"
-          >
-            <Feather name="refresh-cw" size={14} color="#1B4332" />
-          </TouchableOpacity>
+          <View className="bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full flex-row items-center gap-1.5">
+            <Text className="text-[12px]">🛡️</Text>
+            <Text className="font-sans font-bold text-emerald-800 text-[11px]">Admin</Text>
+          </View>
         </View>
 
         {/* ========================================================= */}
         {/* 1. HERO CARD SUPERIOR (GRADIENTE YELO COM BORDAS ARREDONDADAS) */}
         {/* ========================================================= */}
         <LinearGradient
-          colors={['#1B4332', '#0f2b20']}
+          colors={['#1B4332', '#2A5A40']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          className="mx-4 rounded-[26px] p-5 mb-5 shadow-sm overflow-hidden"
+          style={{
+            borderRadius: 24,
+            padding: 20,
+            marginBottom: 20,
+            shadowColor: '#1B4332',
+            shadowOpacity: 0.12,
+            shadowRadius: 35,
+            shadowOffset: { width: 0, height: 12 },
+            elevation: 5,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
         >
           {/* Efeito decorativo de fundo */}
-          <View className="absolute -top-[40px] -right-[40px] w-[180px] h-[180px] bg-white/5 rounded-full pointer-events-none" />
+          <View className="absolute -top-[50px] -right-[50px] w-[200px] h-[200px] bg-white/5 rounded-full pointer-events-none" />
 
-          {/* Título e Subtítulo */}
-          <View className="mb-4">
-            <Text className="font-title text-white text-[24px]">Sucesso do Psicólogo (CS)</Text>
-            <Text className="font-sans text-white/80 text-[13px] mt-1 leading-5">
-              Monitoramento de saúde da assinatura, engajamento e força do perfil.
-            </Text>
+          {/* Cabeçalho do Card com Botão Atualizar idêntico à Visão Geral */}
+          <View className="flex-row justify-between items-start mb-5">
+            <View className="flex-1 pr-3">
+              <Text className="font-title text-white text-[22px] font-bold leading-tight mb-1">
+                Sucesso do Psicólogo (CS)
+              </Text>
+              <Text className="font-sans text-white/85 text-[12px] leading-4">
+                Monitoramento de saúde da assinatura, engajamento e força do perfil.
+              </Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={onRefresh}
+              className="bg-[#FFEE8C] px-3.5 py-1.5 rounded-full flex-row items-center gap-1.5 shadow-sm"
+            >
+              <Feather name="refresh-cw" size={12} color="#1B4332" />
+              <Text className="font-sans font-bold text-[#1B4332] text-[11px]">Atualizar</Text>
+            </TouchableOpacity>
           </View>
 
           {/* 4 Métricas de Topo (2 Linhas de 2 Cards - 50%/50%) */}
@@ -727,7 +748,7 @@ export default function AdminCRMPsicologosScreen() {
         {/* ========================================================= */}
         {/* 2. AÇÕES PRIORITÁRIAS (VERTICAL STACK RESPONSIVO WEB)      */}
         {/* ========================================================= */}
-        <View className="px-4 mt-3 mb-5">
+        <View className="mt-1 mb-5">
           <View className="flex-row items-center justify-between mb-2.5">
             <View className="flex-row items-center gap-2">
               <Feather name="alert-triangle" size={18} color="#f59e0b" />
@@ -836,7 +857,7 @@ export default function AdminCRMPsicologosScreen() {
         {/* ========================================================= */}
         {/* 3. STATUS DA BASE / FUNIL (2 LINHAS DE 2 CARDS + 1 FULL)   */}
         {/* ========================================================= */}
-        <View className="px-4 mb-5">
+        <View className="mb-5">
           <View className="flex-row items-center justify-between mb-2.5">
             <Text className="font-title text-[#1e293b] text-[18px]">Status da Base (Funil)</Text>
             <Text className="font-sans text-[#64748b] text-[12px]">Toque para filtrar</Text>
@@ -1000,7 +1021,7 @@ export default function AdminCRMPsicologosScreen() {
         {/* ========================================================= */}
         {/* 4. ORIGENS UTM (AQUISIÇÃO - 2 LINHAS DE 2 CARDS + 1 FULL) */}
         {/* ========================================================= */}
-        <View className="px-4 mb-5">
+        <View className="mb-5">
           <Text className="font-title text-[#1e293b] text-[18px] mb-2.5">Origens de Aquisição (UTM)</Text>
 
           <View className="gap-2.5">
@@ -1097,7 +1118,7 @@ export default function AdminCRMPsicologosScreen() {
         {/* ========================================================= */}
         {/* 5. ABAS DO FUNIL (PILLS HORIZONTAIS)                      */}
         {/* ========================================================= */}
-        <View className="mb-3">
+        <View className="mb-3 -mx-4">
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -1151,7 +1172,7 @@ export default function AdminCRMPsicologosScreen() {
         {/* ========================================================= */}
         {/* 6. BUSCA                                                   */}
         {/* ========================================================= */}
-        <View className="px-4 mb-3.5">
+        <View className="mb-3.5">
           <View className="bg-white rounded-full px-4 py-2.5 border border-[#e2e8f0] flex-row items-center shadow-xs">
             <Feather name="search" size={17} color="#94a3b8" />
             <TextInput
@@ -1174,7 +1195,7 @@ export default function AdminCRMPsicologosScreen() {
         {/* ========================================================= */}
         {/* 7. LISTA DE CARDS (MODO FOLLOW-UP OU MODO PADRÃO)          */}
         {/* ========================================================= */}
-        <View className="px-4">
+        <View className="mb-2">
           {loading ? (
             <View className="py-[40px] items-center justify-center">
               <ActivityIndicator size="large" color="#1B4332" />
@@ -1613,7 +1634,7 @@ export default function AdminCRMPsicologosScreen() {
         {/* 8. PAGINAÇÃO                                               */}
         {/* ========================================================= */}
         {!isFollowupMode && totalItems > 0 && (
-          <View className="mx-4 bg-white rounded-[16px] p-[16px] border border-[#e2e8f0] flex-row justify-between items-center mt-[10px] shadow-xs">
+          <View className="bg-white rounded-[16px] p-[16px] border border-[#e2e8f0] flex-row justify-between items-center mt-[10px] mb-4 shadow-xs">
             <Text className="font-sans text-[#64748b] text-[13px]">
               Mostrando {Math.min((currentPage - 1) * limit + 1, totalItems)}–
               {Math.min(currentPage * limit, totalItems)} de {totalItems}
