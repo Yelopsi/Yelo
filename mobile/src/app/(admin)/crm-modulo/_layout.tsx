@@ -41,7 +41,7 @@ export default function CRMLayout() {
       <ExpoStack.Screen name="leads" options={{ headerShown: false, title: "Pipeline de Leads" }} />
       <ExpoStack.Screen name="espera" options={{ headerShown: false, title: "Leads Inbound (Espera)" }} />
       <ExpoStack.Screen name="pacientes" options={{ title: "Visão 360° Pacientes" }} />
-      <ExpoStack.Screen name="analytics-crescimento" options={{ title: "Growth 📈" }} />
+      <ExpoStack.Screen name="analytics-crescimento" options={{ headerShown: false, title: "Growth 📈" }} />
       <ExpoStack.Screen name="cmo-metrics" options={{ title: "Painel do CMO 🧠" }} />
       <ExpoStack.Screen name="analytics-funil" options={{ title: "Analytics de Funil" }} />
       <ExpoStack.Screen name="receita" options={{ title: "Receita e Assinaturas" }} />
