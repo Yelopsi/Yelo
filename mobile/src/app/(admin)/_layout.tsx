@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Tabs, Redirect, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { resolvePhotoUrl } from '../../utils/imageUrl';
@@ -66,6 +67,7 @@ export default function AdminLayout() {
     <>
       <StatusBar style="dark" />
       <Tabs
+        backBehavior="history"
         screenOptions={{
           headerStyle: {
             backgroundColor: '#ffffff',
@@ -74,99 +76,127 @@ export default function AdminLayout() {
           headerShadowVisible: false,
           headerTitle: "",
           headerLeft: () => <HeaderLeft />,
+          tabBarActiveTintColor: '#1B4332',
+          tabBarInactiveTintColor: '#9ca3af',
+          tabBarStyle: {
+            position: 'absolute',
+            bottom: Platform.OS === 'ios' ? 24 : 20,
+            marginHorizontal: 16,
+            backgroundColor: 'transparent',
+            borderRadius: 50,
+            elevation: 10,
+            shadowColor: '#000',
+            shadowOpacity: 0.15,
+            shadowRadius: 20,
+            shadowOffset: { width: 0, height: 10 },
+            borderTopWidth: 0,
+            height: 64,
+            paddingTop: 0,
+            paddingBottom: 0,
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+          tabBarBackground: () => (
+            <View style={{ flex: 1, borderRadius: 50, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)' }}>
+              <BlurView intensity={95} tint="light" style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.96)' }} />
+            </View>
+          ),
+          tabBarActiveBackgroundColor: '#f0fdf4',
+          tabBarItemStyle: {
+            borderRadius: 24,
+            marginVertical: 4,
+            marginHorizontal: 2,
+            padding: 0,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          },
+          tabBarLabelStyle: {
+            fontSize: 9,
+            fontWeight: '600',
+            textAlign: 'center',
+            marginTop: 2,
+            marginBottom: 0,
+            padding: 0,
+            alignSelf: 'center',
+          },
         }}
-        tabBar={(props: any) => {
-          const { state, descriptors, navigation } = props;
-        return (
-          <View className="absolute bottom-8 left-5 right-5 bg-white/95 rounded-[50px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] flex-row justify-between items-center px-2 py-2" style={{ elevation: 5 }}>
-            {state.routes
-              .filter((route: any) => {
-                const hiddenRoutes = ['(crm)', 'configuracoes', 'perfil-admin', 'logs-sistema', 'metricas-match', 'exportar', 'gestao-conteudo', 'moderacao-forum', 'comunidade-gestao', 'backlog-ajustes', 'historico-alteracoes'];
-                return !hiddenRoutes.includes(route.name);
-              })
-              .map((route: any) => {
-              const index = state.routes.indexOf(route);
-              const { options } = descriptors[route.key];
-              const label = options.title !== undefined ? options.title : route.name;
-              const isFocused = state.index === index;
-
-              const onPress = () => {
-                const event = navigation?.emit ? navigation.emit({
-                  type: 'tabPress',
-                  target: route.key,
-                  canPreventDefault: true,
-                }) : null;
-
-                if (!isFocused && (!event || !event.defaultPrevented)) {
-                  if (navigation?.navigate) {
-                    navigation.navigate(route.name);
-                  }
-                }
-              };
-
-              let iconName = "home";
-              if (route.name === "crm") iconName = "users";
-              if (route.name === "conteudo") iconName = "layout";
-              if (route.name === "dados") iconName = "bar-chart-2";
-              if (route.name === "ajustes") iconName = "settings";
-
-              // Cores idênticas ao web mobile admin (Início em verde #1B4332, CRM em roxo #8b5cf6, etc.)
-              const isCrm = route.name === "crm";
-              const tintColor = isFocused 
-                ? (isCrm ? "#8b5cf6" : "#1B4332") 
-                : (isCrm ? "#8b5cf6" : "#999999");
-              const bgColor = isFocused 
-                ? (isCrm ? "bg-[#f3e8ff]" : "bg-[#f0fdf4]") 
-                : "";
-              const textColor = isFocused 
-                ? (isCrm ? "text-[#8b5cf6]" : "text-[#1B4332]") 
-                : (isCrm ? "text-[#8b5cf6]" : "text-[#999999]");
-              const textWeight = isFocused ? "font-bold" : "font-medium";
-
-              return (
-                <TouchableOpacity
-                  key={route.key}
-                  activeOpacity={0.7}
-                  onPress={onPress}
-                  className={`items-center justify-center flex-1 py-1.5 rounded-[20px] ${bgColor}`}
-                >
-                  <Feather name={iconName as any} size={20} color={tintColor} />
-                  <Text className={`font-sans ${textWeight} ${textColor} text-[10px] mt-0.5`} numberOfLines={1}>
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-            <TouchableOpacity onPress={handleLogout} className="items-center justify-center flex-1 py-1.5 rounded-[20px] bg-transparent">
-               <Feather name="log-out" size={20} color="#e63946" />
-               <Text className="font-sans font-medium text-[#e63946] text-[10px] mt-0.5" numberOfLines={1}>
-                 Sair
-               </Text>
-            </TouchableOpacity>
-          </View>
-        );
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: 'Início' }} />
-      <Tabs.Screen name="crm" options={{ title: 'CRM' }} />
-      <Tabs.Screen name="conteudo" options={{ title: 'Conteúdo' }} />
-      <Tabs.Screen name="dados" options={{ title: 'Dados' }} />
-      <Tabs.Screen name="ajustes" options={{ title: 'Ajustes' }} />
-      
-      <Tabs.Screen name="(crm)" options={{ href: null, headerShown: false }} />
-      
-      {/* Telas Internas com Botão Voltar */}
-      <Tabs.Screen name="configuracoes" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
-      <Tabs.Screen name="perfil-admin" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
-      <Tabs.Screen name="logs-sistema" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
-      <Tabs.Screen name="metricas-match" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
-      <Tabs.Screen name="exportar" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
-      <Tabs.Screen name="gestao-conteudo" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
-      <Tabs.Screen name="moderacao-forum" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
-      <Tabs.Screen name="comunidade-gestao" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
-      <Tabs.Screen name="backlog-ajustes" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
-      <Tabs.Screen name="historico-alteracoes" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
-    </Tabs>
+      >
+        <Tabs.Screen 
+          name="index" 
+          options={{ 
+            title: 'Início',
+            tabBarIcon: ({ color }: { color: any }) => <Feather name="home" size={20} color={color} />,
+          }} 
+        />
+        <Tabs.Screen 
+          name="crm" 
+          options={{ 
+            title: 'CRM',
+            tabBarActiveTintColor: '#8b5cf6',
+            tabBarActiveBackgroundColor: '#f3e8ff',
+            tabBarIcon: ({ focused }: { focused: boolean }) => <Feather name="users" size={20} color={focused ? '#8b5cf6' : '#8b5cf6'} />,
+            tabBarLabel: ({ focused }: { focused: boolean }) => (
+              <Text style={{ fontSize: 9, fontWeight: focused ? '700' : '600', color: '#8b5cf6', textAlign: 'center', marginTop: 2 }}>
+                CRM
+              </Text>
+            ),
+          }} 
+        />
+        <Tabs.Screen 
+          name="conteudo" 
+          options={{ 
+            title: 'Conteúdo',
+            tabBarIcon: ({ color }: { color: any }) => <Feather name="layout" size={20} color={color} />,
+          }} 
+        />
+        <Tabs.Screen 
+          name="dados" 
+          options={{ 
+            title: 'Dados',
+            tabBarIcon: ({ color }: { color: any }) => <Feather name="bar-chart-2" size={20} color={color} />,
+          }} 
+        />
+        <Tabs.Screen 
+          name="ajustes" 
+          options={{ 
+            title: 'Ajustes',
+            tabBarIcon: ({ color }: { color: any }) => <Feather name="settings" size={20} color={color} />,
+          }} 
+        />
+        <Tabs.Screen
+          name="sair"
+          options={{
+            title: 'Sair',
+            tabBarIcon: () => <Feather name="log-out" size={20} color="#e63946" />,
+            tabBarLabel: () => (
+              <Text style={{ fontSize: 9, fontWeight: '600', color: '#e63946', textAlign: 'center', marginTop: 2 }}>
+                Sair
+              </Text>
+            ),
+          }}
+          listeners={() => ({
+            tabPress: (e) => {
+              e.preventDefault();
+              handleLogout();
+            },
+          })}
+        />
+        
+        <Tabs.Screen name="(crm)" options={{ href: null, headerShown: false, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+        
+        {/* Telas Internas com Botão Voltar */}
+        <Tabs.Screen name="configuracoes" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="perfil-admin" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="logs-sistema" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="metricas-match" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="exportar" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="gestao-conteudo" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="moderacao-forum" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="comunidade-gestao" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="backlog-ajustes" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="historico-alteracoes" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
+      </Tabs>
     </>
   );
 }
