@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-feeb6d57",
+    "date": "2026-11-06T20:45:41.000Z",
+    "commit": "feeb6d57",
+    "author": "Anderson",
+    "title": "Novo: Sincronizar tela de CRM Psicólogos com a versão web mobile",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "sincronizar tela de CRM Psicólogos com a versão web mobile",
+    "description": "Commit registrado no repositório: \"feat(mobile): sincronizar tela de CRM Psicólogos com a versão web mobile\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/.expo/types/router.d.ts, mobile/src/app/(admin)/(crm)/psicologos.tsx, mobile/src/app/(admin)/sair.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #feeb6d57"
+    },
+    "after": {
+      "nova_versao": "sincronizar tela de CRM Psicólogos com a versão web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/.expo/types/router.d.ts",
+      "mobile/src/app/(admin)/(crm)/psicologos.tsx",
+      "mobile/src/app/(admin)/sair.tsx"
+    ]
+  },
+  {
     "id": "change-git-9c9bd156",
     "date": "2026-11-06T20:35:21.000Z",
     "commit": "9c9bd156",

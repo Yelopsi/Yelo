@@ -76,6 +76,14 @@ function CrmCard({
 export default function AdminCRMHubScreen() {
   const router = useRouter();
 
+  const handleNavigate = (path: any) => {
+    try {
+      router.push(path);
+    } catch (_) {
+      router.navigate(path);
+    }
+  };
+
   return (
     <ScrollView 
       className="flex-1 bg-[#f8f9fa] px-4 pt-4" 
@@ -127,7 +135,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#8b5cf6"
           iconBg="#f5f3ff"
           borderColor="#8b5cf6"
-          onPress={() => router.push('/(admin)/(crm)/psicologos')}
+          onPress={() => handleNavigate('/(admin)/(crm)/psicologos')}
         />
 
         {/* Leads */}
@@ -139,7 +147,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#3b82f6"
           iconBg="#eff6ff"
           borderColor="#3b82f6"
-          onPress={() => router.push('/(admin)/(crm)/leads')}
+          onPress={() => handleNavigate('/(admin)/(crm)/leads')}
         />
 
         {/* Inbound */}
@@ -151,7 +159,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#f59e0b"
           iconBg="#fffbeb"
           borderColor="#f59e0b"
-          onPress={() => router.push('/(admin)/(crm)/espera')}
+          onPress={() => handleNavigate('/(admin)/(crm)/espera')}
         />
 
         {/* Pacientes */}
@@ -163,7 +171,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#10b981"
           iconBg="#ecfdf5"
           borderColor="#10b981"
-          onPress={() => router.push('/(admin)/(crm)/pacientes')}
+          onPress={() => handleNavigate('/(admin)/(crm)/pacientes')}
         />
       </View>
 
@@ -184,7 +192,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#10b981"
           iconBg="#111827"
           borderColor="#111827"
-          onPress={() => router.push('/(admin)/(crm)/analytics-crescimento')}
+          onPress={() => handleNavigate('/(admin)/(crm)/analytics-crescimento')}
         />
 
         {/* Painel do CMO */}
@@ -196,7 +204,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#1e40af"
           iconBg="#dbeafe"
           borderColor="#1e3a8a"
-          onPress={() => router.push('/(admin)/(crm)/cmo-metrics')}
+          onPress={() => handleNavigate('/(admin)/(crm)/cmo-metrics')}
         />
 
         {/* Analytics Funil */}
@@ -207,7 +215,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#f59e0b"
           iconBg="#fffbeb"
           borderColor="#f59e0b"
-          onPress={() => router.push('/(admin)/(crm)/analytics-funil')}
+          onPress={() => handleNavigate('/(admin)/(crm)/analytics-funil')}
         />
 
         {/* Receita e Assinaturas */}
@@ -218,7 +226,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#14b8a6"
           iconBg="#ccfbf1"
           borderColor="#14b8a6"
-          onPress={() => router.push('/(admin)/(crm)/receita')}
+          onPress={() => handleNavigate('/(admin)/(crm)/receita')}
         />
 
         {/* Distribuição & Ads */}
@@ -229,7 +237,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#d93025"
           iconBg="#fce8e6"
           borderColor="#d93025"
-          onPress={() => router.push('/(admin)/(crm)/distribuicao')}
+          onPress={() => handleNavigate('/(admin)/(crm)/distribuicao')}
         />
 
         {/* Copilot WhatsApp AI */}
@@ -243,7 +251,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#16a34a"
           iconBg="#dcfce7"
           borderColor="#25d366"
-          onPress={() => router.push('/(admin)/(crm)/copilot-wpp')}
+          onPress={() => handleNavigate('/(admin)/(crm)/copilot-wpp')}
         />
       </View>
 
@@ -264,7 +272,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#f59e0b"
           iconBg="#fffbeb"
           borderColor="#f59e0b"
-          onPress={() => router.push('/(admin)/(crm)/avaliacoes')}
+          onPress={() => handleNavigate('/(admin)/(crm)/avaliacoes')}
         />
 
         {/* Motivos de Cancelamento */}
@@ -275,7 +283,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#ef4444"
           iconBg="#fef2f2"
           borderColor="#ef4444"
-          onPress={() => router.push('/(admin)/(crm)/cancelamentos')}
+          onPress={() => handleNavigate('/(admin)/(crm)/cancelamentos')}
         />
       </View>
 
@@ -296,7 +304,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#3b82f6"
           iconBg="#eff6ff"
           borderColor="#3b82f6"
-          onPress={() => router.push('/(admin)/(crm)/caixa-entrada')}
+          onPress={() => handleNavigate('/(admin)/(crm)/caixa-entrada')}
         />
 
         {/* Mural de Avisos */}
@@ -307,7 +315,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#8b5cf6"
           iconBg="#f5f3ff"
           borderColor="#8b5cf6"
-          onPress={() => router.push('/(admin)/(crm)/avisos')}
+          onPress={() => handleNavigate('/(admin)/(crm)/avisos')}
         />
 
         {/* Follow-up WhatsApp */}
@@ -318,7 +326,7 @@ export default function AdminCRMHubScreen() {
           iconColor="#10b981"
           iconBg="#ecfdf5"
           borderColor="#10b981"
-          onPress={() => router.push('/(admin)/(crm)/followup')}
+          onPress={() => handleNavigate('/(admin)/(crm)/followup')}
         />
       </View>
     </ScrollView>
