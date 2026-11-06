@@ -1,5 +1,30 @@
 [
   {
+    "id": "change-git-4f1300d3",
+    "date": "2026-11-06T22:04:49.000Z",
+    "commit": "4f1300d3",
+    "author": "Anderson",
+    "title": "Novo: Modernizar cards de psicólogos e transformar Visão 360 em bottom sheet nativo (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "modernizar cards de psicólogos e transformar Visão 360 em bottom sheet nativo",
+    "description": "Commit registrado no repositório: \"feat(mobile): modernizar cards de psicólogos e transformar Visão 360 em bottom sheet nativo\". Arquivos modificados: backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/psicologos.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4f1300d3"
+    },
+    "after": {
+      "nova_versao": "modernizar cards de psicólogos e transformar Visão 360 em bottom sheet nativo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-4f1cc5d8",
     "date": "2026-11-06T21:58:55.000Z",
     "commit": "4f1cc5d8",
