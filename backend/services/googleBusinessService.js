@@ -129,8 +129,8 @@ class GoogleBusinessService {
         const placeMatch = trimmed.match(/\/place\/[^/]+\/([a-zA-Z0-9_-]+)/);
         if (placeMatch && placeMatch[1].startsWith('ChIJ')) return placeMatch[1];
 
-        // 4. Feature ID Hexadecimal (!1s0x...:0x...)
-        const hexMatch = trimmed.match(/!1s(0x[0-9a-fA-F]+):(0x[0-9a-fA-F]+)/);
+        // 4. Feature ID Hexadecimal (!1s0x...:0x..., /fid/0x...:0x... ou 0x...:0x...)
+        const hexMatch = trimmed.match(/(?:!1s|\/fid\/|[:/\s]|^)(0x[0-9a-fA-F]+):(0x[0-9a-fA-F]+)/);
         if (hexMatch) {
             const converted = this.hexPairToPlaceId(hexMatch[1], hexMatch[2]);
             if (converted && converted.startsWith('ChIJ')) return converted;
@@ -216,29 +216,51 @@ class GoogleBusinessService {
             };
         }
 
-        let resolvedUrl = googleUrl;
-        if (googleUrl) {
-            resolvedUrl = await this.resolveMapsUrl(googleUrl);
+        // Tolerância inteligente para URLs coladas no campo de Place ID por engano
+        let candidateUrl = googleUrl ? googleUrl.trim() : '';
+        let candidatePlaceId = placeId ? placeId.trim() : '';
+
+        if (candidatePlaceId && (/^https?:\/\//i.test(candidatePlaceId) || candidatePlaceId.includes('g.page') || candidatePlaceId.includes('google.com') || candidatePlaceId.includes('goo.gl'))) {
+            // O usuário colou uma URL no campo de Place ID
+            if (!candidateUrl || !candidateUrl.includes('g.page')) {
+                const temp = candidateUrl;
+                candidateUrl = candidatePlaceId;
+                candidatePlaceId = (temp && temp.startsWith('ChIJ')) ? temp : '';
+            } else {
+                candidatePlaceId = '';
+            }
         }
 
-        let detectedPlaceId = placeId ? placeId.trim() : null;
+        let resolvedUrl = candidateUrl;
+        if (candidateUrl) {
+            resolvedUrl = await this.resolveMapsUrl(candidateUrl);
+        }
+
+        let detectedPlaceId = candidatePlaceId && candidatePlaceId.startsWith('ChIJ') ? candidatePlaceId : null;
         if (!detectedPlaceId && resolvedUrl) {
             detectedPlaceId = this.extractPlaceId(resolvedUrl);
         }
+        if (!detectedPlaceId && candidateUrl) {
+            detectedPlaceId = this.extractPlaceId(candidateUrl);
+        }
 
-        // Validação: aceita link oficial de pedir avaliações (g.page/r/...), links Maps, search.google.com, ou Place ID direto (ChIJ...)
-        const isOfficialReviewUrl = googleUrl && (
-            googleUrl.includes('g.page/r/') || 
-            googleUrl.includes('placeid=ChIJ') || 
-            googleUrl.includes('place_id=ChIJ') ||
-            googleUrl.includes('maps.app.goo.gl') ||
-            googleUrl.includes('goo.gl/maps') ||
-            googleUrl.includes('google.com/maps') ||
-            googleUrl.includes('search.google.com') ||
-            googleUrl.includes('g.page')
-        );
-        const isDirectPlaceId = (placeId && placeId.trim().startsWith('ChIJ')) || 
-                               (googleUrl && googleUrl.trim().startsWith('ChIJ')) ||
+        // Validação: aceita link oficial de pedir avaliações (g.page/r/...), links Maps, local/place, search.google.com, ou Place ID direto (ChIJ...)
+        const isOfficialReviewUrl = (candidateUrl && (
+            candidateUrl.includes('g.page/r/') || 
+            candidateUrl.includes('placeid=ChIJ') || 
+            candidateUrl.includes('place_id=ChIJ') ||
+            candidateUrl.includes('maps.app.goo.gl') ||
+            candidateUrl.includes('goo.gl/maps') ||
+            candidateUrl.includes('google.com/maps') ||
+            candidateUrl.includes('google.com/local/place') ||
+            candidateUrl.includes('search.google.com') ||
+            candidateUrl.includes('g.page')
+        )) || (resolvedUrl && (
+            resolvedUrl.includes('google.com') ||
+            resolvedUrl.includes('g.page')
+        ));
+        const isDirectPlaceId = (candidatePlaceId && candidatePlaceId.startsWith('ChIJ')) || 
+                               (candidateUrl && candidateUrl.startsWith('ChIJ')) ||
                                (detectedPlaceId && detectedPlaceId.startsWith('ChIJ'));
 
         if (!isOfficialReviewUrl && !isDirectPlaceId) {

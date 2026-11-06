@@ -443,7 +443,6 @@ exports.getAllPsychologists = async (req, res) => {
             } else if (status === 'churn_month') {
                 const now = new Date();
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
                 whereClause.is_exempt = { [Op.or]: [null, false] };
                 if (!whereClause[Op.and]) whereClause[Op.and] = [];
                 // 1. Deve ter realizado ao menos 1 pagamento
@@ -454,19 +453,31 @@ exports.getAllPsychologists = async (req, res) => {
                         db.Sequelize.literal(`EXISTS (SELECT 1 FROM "Payments" p WHERE p."psychologistId" = "Psychologist"."id" AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'))`)
                     ]
                 });
-                // 2. Não está ativo com renovação válida no futuro
+                // 2. Perfil EFETIVAMENTE inativado/expirado (NUNCA ativo dentro da validade)
                 whereClause[Op.and].push({
                     [Op.or]: [
                         { status: 'inactive' },
-                        { cancelAtPeriodEnd: true },
                         { planExpiresAt: { [Op.lte]: now } }
                     ]
                 });
-                // 3. O término da assinatura/churn ocorreu no mês atual
+                whereClause[Op.and].push({
+                    [Op.not]: {
+                        [Op.and]: [
+                            { status: 'active' },
+                            {
+                                [Op.or]: [
+                                    { planExpiresAt: { [Op.is]: null } },
+                                    { planExpiresAt: { [Op.gt]: now } }
+                                ]
+                            }
+                        ]
+                    }
+                });
+                // 3. O término da assinatura/churn ocorreu no mês atual (já concretizado, nunca no futuro)
                 whereClause[Op.and].push({
                     [Op.or]: [
                         { canceledAt: { [Op.between]: [startOfMonth, now] } },
-                        { planExpiresAt: { [Op.between]: [startOfMonth, endOfMonth] } },
+                        { planExpiresAt: { [Op.between]: [startOfMonth, now] } },
                         db.Sequelize.literal(`EXISTS (
                             SELECT 1 FROM "Payments" p 
                             WHERE p."psychologistId" = "Psychologist"."id" 
@@ -570,13 +581,13 @@ exports.getAllPsychologists = async (req, res) => {
                     )
                     AND (
                         status = 'inactive' 
-                        OR "cancelAtPeriodEnd" = true 
                         OR ("planExpiresAt" IS NOT NULL AND "planExpiresAt" <= NOW())
                     )
+                    AND NOT (status = 'active' AND ("planExpiresAt" IS NULL OR "planExpiresAt" > NOW()))
                     AND (
-                        ("canceledAt" IS NOT NULL AND "canceledAt" >= DATE_TRUNC('month', NOW()))
+                        ("canceledAt" IS NOT NULL AND "canceledAt" >= DATE_TRUNC('month', NOW()) AND "canceledAt" <= NOW())
                         OR
-                        ("planExpiresAt" IS NOT NULL AND "planExpiresAt" >= DATE_TRUNC('month', NOW()) AND "planExpiresAt" < DATE_TRUNC('month', NOW()) + INTERVAL '1 month')
+                        ("planExpiresAt" IS NOT NULL AND "planExpiresAt" >= DATE_TRUNC('month', NOW()) AND "planExpiresAt" <= NOW())
                         OR
                         (
                             "planExpiresAt" IS NULL 

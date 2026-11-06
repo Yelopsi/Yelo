@@ -186,6 +186,10 @@ exports.getStats = async (req, res) => {
         const profileViews7d = parseInt(appearancesResult[0]?.last_7d || 0, 10);
         
         let matchImpressions = parseInt(matchesResult[0]?.total || matchesResult[0]?.count || 0, 10);
+        // Inclui as aparições legadas históricas para que a contagem coincida com a visão 360º do Admin (141 + 487 = 628)
+        if (!dateCondition) {
+            matchImpressions += parseInt(psychologist?.profile_appearances || 0, 10);
+        }
         
         const matchImpressionsToday = parseInt(matchesResult[0]?.today || 0, 10);
         const matchImpressions7d = parseInt(matchesResult[0]?.last_7d || 0, 10);

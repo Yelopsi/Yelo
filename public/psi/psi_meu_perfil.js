@@ -1153,8 +1153,18 @@
                 const icon = document.getElementById('google-sync-icon');
                 const btnText = document.getElementById('google-sync-btn-text');
 
-                const googleUrl = urlInput ? urlInput.value.trim() : '';
-                const placeId = placeIdInput ? placeIdInput.value.trim() : '';
+                let googleUrl = urlInput ? urlInput.value.trim() : '';
+                let placeId = placeIdInput ? placeIdInput.value.trim() : '';
+
+                // UX Inteligente: se o usuário colou uma URL no campo de Place ID por engano
+                if (placeId && (/^https?:\/\//i.test(placeId) || placeId.includes('g.page') || placeId.includes('google.com') || placeId.includes('goo.gl'))) {
+                    if (!googleUrl || !googleUrl.includes('g.page')) {
+                        googleUrl = placeId;
+                        if (urlInput) urlInput.value = googleUrl;
+                    }
+                    placeId = '';
+                    if (placeIdInput) placeIdInput.value = '';
+                }
 
                 if (!googleUrl && !placeId) {
                     showToast('Por favor, informe o link do Google Maps ou o Place ID.', 'error');
