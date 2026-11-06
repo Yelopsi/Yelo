@@ -183,19 +183,19 @@ export default function AdminLayout() {
           })}
         />
         
-        <Tabs.Screen name="(crm)" options={{ href: null, headerShown: false, tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
+        <Tabs.Screen name="(crm)" options={{ href: null, headerShown: false }} />
         
         {/* Telas Internas com Botão Voltar */}
-        <Tabs.Screen name="configuracoes" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
-        <Tabs.Screen name="perfil-admin" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
-        <Tabs.Screen name="logs-sistema" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
-        <Tabs.Screen name="metricas-match" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
-        <Tabs.Screen name="exportar" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
-        <Tabs.Screen name="gestao-conteudo" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
-        <Tabs.Screen name="moderacao-forum" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
-        <Tabs.Screen name="comunidade-gestao" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
-        <Tabs.Screen name="backlog-ajustes" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
-        <Tabs.Screen name="historico-alteracoes" options={{ href: null, headerShown: true, tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="configuracoes" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="perfil-admin" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="logs-sistema" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="metricas-match" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="exportar" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="gestao-conteudo" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="moderacao-forum" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="comunidade-gestao" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="backlog-ajustes" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
+        <Tabs.Screen name="historico-alteracoes" options={{ href: null, headerShown: true, headerLeft: () => <BackButton /> }} />
       </Tabs>
     </>
   );
