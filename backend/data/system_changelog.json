@@ -1,5 +1,57 @@
 [
   {
+    "id": "change-git-89ccbb01",
+    "date": "2026-11-06T22:46:12.000Z",
+    "commit": "89ccbb01",
+    "author": "Anderson",
+    "title": "Novo: Reformular tela Growth & Analytics de Vendas espelhando versao web mobile",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "reformular tela Growth & Analytics de Vendas espelhando versao web mobile",
+    "description": "Commit registrado no repositório: \"feat(mobile): reformular tela Growth & Analytics de Vendas espelhando versao web mobile\". Arquivos modificados: backend/.data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/_layout.tsx, mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #89ccbb01"
+    },
+    "after": {
+      "nova_versao": "reformular tela Growth & Analytics de Vendas espelhando versao web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx"
+    ]
+  },
+  {
+    "id": "change-git-67fbce7d",
+    "date": "2026-11-06T22:37:58.000Z",
+    "commit": "67fbce7d",
+    "author": "Anderson",
+    "title": "Novo: Redesign Leads Inbound (Lista de Espera) mirroring web mobile version (mobile/admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "redesign Leads Inbound (Lista de Espera) mirroring web mobile version",
+    "description": "Commit registrado no repositório: \"feat(mobile/admin): redesign Leads Inbound (Lista de Espera) mirroring web mobile version\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/_layout.tsx, mobile/src/app/(admin)/crm-modulo/espera.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #67fbce7d"
+    },
+    "after": {
+      "nova_versao": "redesign Leads Inbound (Lista de Espera) mirroring web mobile version"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/espera.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-997e0bb9",
     "date": "2026-11-06T22:33:10.000Z",
     "commit": "997e0bb9",
