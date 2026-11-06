@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-e8e71da2",
+    "date": "2026-11-06T23:35:31.000Z",
+    "commit": "e8e71da2",
+    "author": "Anderson",
+    "title": "Novo: Implement complete CMO metrics dashboard mirroring web mobile",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "implement complete CMO metrics dashboard mirroring web mobile",
+    "description": "Commit registrado no repositório: \"feat(mobile): implement complete CMO metrics dashboard mirroring web mobile\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/_layout.tsx, mobile/src/app/(admin)/crm-modulo/cmo-metrics.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #e8e71da2"
+    },
+    "after": {
+      "nova_versao": "implement complete CMO metrics dashboard mirroring web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/cmo-metrics.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-59bf7c32",
     "date": "2026-11-06T23:26:09.000Z",
     "commit": "59bf7c32",
