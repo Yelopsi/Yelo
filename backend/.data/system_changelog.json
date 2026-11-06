@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-736b4523",
+    "date": "2026-11-06T21:53:40.000Z",
+    "commit": "736b4523",
+    "author": "Anderson",
+    "title": "Correção: Corrigir vazamento horizontal dos cards dividindo em linhas 2x2 com flex-1 (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "corrigir vazamento horizontal dos cards dividindo em linhas 2x2 com flex-1",
+    "description": "Commit registrado no repositório: \"fix(mobile): corrigir vazamento horizontal dos cards dividindo em linhas 2x2 com flex-1\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/psicologos.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #736b4523"
+    },
+    "after": {
+      "nova_versao": "corrigir vazamento horizontal dos cards dividindo em linhas 2x2 com flex-1"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-cf94034f",
     "date": "2026-11-06T21:41:13.000Z",
     "commit": "cf94034f",
