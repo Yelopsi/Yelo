@@ -37,7 +37,7 @@ export default function CRMLayout() {
         ),
       }}
     >
-      <ExpoStack.Screen name="psicologos" options={{ title: "Sucesso do Psicólogo" }} />
+      <ExpoStack.Screen name="psicologos" options={{ headerShown: false, title: "Sucesso do Psicólogo" }} />
       <ExpoStack.Screen name="leads" options={{ title: "Pipeline de Leads" }} />
       <ExpoStack.Screen name="espera" options={{ title: "Leads Inbound (Espera)" }} />
       <ExpoStack.Screen name="pacientes" options={{ title: "Visão 360° Pacientes" }} />

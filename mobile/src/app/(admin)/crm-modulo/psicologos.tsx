@@ -15,6 +15,9 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import api from '../../../services/api';
 
 // -------------------------------------------------------------
@@ -115,6 +118,9 @@ function formatForWhatsApp(text: string): string {
 }
 
 export default function AdminCRMPsicologosScreen() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+
   // Dados principais
   const [psychologists, setPsychologists] = useState<any[]>([]);
   const [pendingActions, setPendingActions] = useState<any[]>([]);
@@ -573,8 +579,10 @@ export default function AdminCRMPsicologosScreen() {
 
   return (
     <View className="flex-1 bg-[#f8fafc]">
+      <StatusBar style="light" />
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 120 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
       >
         {/* ========================================================= */}
@@ -584,17 +592,39 @@ export default function AdminCRMPsicologosScreen() {
           colors={['#1B4332', '#0f2b20']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          className="rounded-[20px] p-[20px] mb-[20px] shadow-sm"
+          style={{ paddingTop: insets.top + 10 }}
+          className="px-4 pb-6 rounded-b-[32px] shadow-md mb-2"
         >
-          <View className="mb-[16px]">
-            <Text className="font-title text-white text-[22px]">Sucesso do Psicólogo (CS)</Text>
-            <Text className="font-sans text-white/80 text-[13px] mt-1">
+          {/* Barra de Ações Superior (Voltar + Atualizar) */}
+          <View className="flex-row items-center justify-between mb-3">
+            <TouchableOpacity
+              onPress={() => (router.canGoBack() ? router.back() : router.replace('/(admin)/crm'))}
+              activeOpacity={0.7}
+              className="flex-row items-center bg-white/15 px-3.5 py-1.5 rounded-full border border-white/20"
+            >
+              <Feather name="arrow-left" size={16} color="#fff" />
+              <Text className="font-sans text-white text-xs font-semibold ml-1.5">CRM Hub</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={onRefresh}
+              activeOpacity={0.7}
+              className="w-8 h-8 rounded-full bg-white/15 border border-white/20 items-center justify-center"
+            >
+              <Feather name="refresh-cw" size={13} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Título e Subtítulo */}
+          <View className="mb-4">
+            <Text className="font-title text-white text-[24px]">Sucesso do Psicólogo (CS)</Text>
+            <Text className="font-sans text-white/80 text-[13px] mt-1 leading-5">
               Monitoramento de saúde da assinatura, engajamento e força do perfil.
             </Text>
           </View>
 
-          {/* 4 Métricas de Topo */}
-          <View className="flex-row flex-wrap gap-[10px]">
+          {/* 4 Métricas de Topo (2x2 Grid) */}
+          <View className="flex-row flex-wrap gap-2.5">
             {/* MRR */}
             <TouchableOpacity
               onPress={() =>
@@ -604,16 +634,17 @@ export default function AdminCRMPsicologosScreen() {
                   desc: 'Receita Mensal Recorrente estimada baseada nas assinaturas ativas em tempo real.',
                 })
               }
-              className="bg-white/10 rounded-[14px] p-[12px] flex-1 min-w-[45%] items-center justify-center"
+              activeOpacity={0.85}
+              className="bg-white/10 rounded-2xl p-3 flex-1 min-w-[45%] border border-white/15 justify-between"
             >
-              <View className="flex-row items-center gap-[4px] mb-1">
+              <View className="flex-row items-center justify-between mb-1">
                 <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
                   MRR
                 </Text>
                 <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
               </View>
-              <Text className="font-title text-white text-[20px] text-center">{mrrFormatted}</Text>
-              <Text className="font-sans text-white/50 text-[10px] mt-1 text-center">tempo real</Text>
+              <Text className="font-title text-white text-[20px]">{mrrFormatted}</Text>
+              <Text className="font-sans text-white/50 text-[10px] mt-0.5">tempo real</Text>
             </TouchableOpacity>
 
             {/* Ativação */}
@@ -625,15 +656,16 @@ export default function AdminCRMPsicologosScreen() {
                   desc: 'Percentual de psicólogos cadastrados nos últimos 30 dias que ativaram o perfil e estão prontos para atendimento.',
                 })
               }
-              className="bg-white/10 rounded-[14px] p-[12px] flex-1 min-w-[45%] items-center justify-center"
+              activeOpacity={0.85}
+              className="bg-white/10 rounded-2xl p-3 flex-1 min-w-[45%] border border-white/15 justify-between"
             >
-              <View className="flex-row items-center gap-[4px] mb-1">
+              <View className="flex-row items-center justify-between mb-1">
                 <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
                   Ativação
                 </Text>
                 <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
               </View>
-              <Text className="font-title text-[#10b981] text-[20px] text-center">{activationPct}</Text>
+              <Text className="font-title text-[#34d399] text-[20px]">{activationPct}</Text>
               {renderMetricDiff(founderMetrics.activationDiff)}
             </TouchableOpacity>
 
@@ -646,15 +678,16 @@ export default function AdminCRMPsicologosScreen() {
                   desc: 'Percentual de psicólogos que continuam pagantes ativos após o trial nos últimos 30 dias.',
                 })
               }
-              className="bg-white/10 rounded-[14px] p-[12px] flex-1 min-w-[45%] items-center justify-center"
+              activeOpacity={0.85}
+              className="bg-white/10 rounded-2xl p-3 flex-1 min-w-[45%] border border-white/15 justify-between"
             >
-              <View className="flex-row items-center gap-[4px] mb-1">
+              <View className="flex-row items-center justify-between mb-1">
                 <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
                   Pós-Trial
                 </Text>
                 <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
               </View>
-              <Text className="font-title text-[#3b82f6] text-[20px] text-center">{postTrialPct}</Text>
+              <Text className="font-title text-[#60a5fa] text-[20px]">{postTrialPct}</Text>
               {renderMetricDiff(founderMetrics.postTrialDiff)}
             </TouchableOpacity>
 
@@ -667,254 +700,388 @@ export default function AdminCRMPsicologosScreen() {
                   desc: 'Percentual de psicólogos elegíveis que renovaram a mensalidade nos últimos 30 dias.',
                 })
               }
-              className="bg-white/10 rounded-[14px] p-[12px] flex-1 min-w-[45%] items-center justify-center"
+              activeOpacity={0.85}
+              className="bg-white/10 rounded-2xl p-3 flex-1 min-w-[45%] border border-white/15 justify-between"
             >
-              <View className="flex-row items-center gap-[4px] mb-1">
+              <View className="flex-row items-center justify-between mb-1">
                 <Text className="font-sans text-white/70 text-[11px] font-bold uppercase tracking-wider">
                   Renovação
                 </Text>
                 <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
               </View>
-              <Text className="font-title text-[#a855f7] text-[20px] text-center">{renewalPct}</Text>
+              <Text className="font-title text-[#c084fc] text-[20px]">{renewalPct}</Text>
               {renderMetricDiff(founderMetrics.renewalDiff)}
             </TouchableOpacity>
           </View>
         </LinearGradient>
 
         {/* ========================================================= */}
-        {/* 2. AÇÕES PRIORITÁRIAS                                      */}
+        {/* 2. AÇÕES PRIORITÁRIAS (VERTICAL STACK RESPONSIVO WEB)      */}
         {/* ========================================================= */}
-        <View className="mb-[20px]">
-          <View className="flex-row items-center gap-[8px] mb-[12px]">
-            <Feather name="alert-triangle" size={18} color="#f59e0b" />
-            <Text className="font-title text-[#1e293b] text-[18px]">Ações Prioritárias</Text>
+        <View className="px-4 mt-3 mb-5">
+          <View className="flex-row items-center justify-between mb-2.5">
+            <View className="flex-row items-center gap-2">
+              <Feather name="alert-triangle" size={18} color="#f59e0b" />
+              <Text className="font-title text-[#1e293b] text-[18px]">Ações Prioritárias</Text>
+            </View>
+            {activeFilter.startsWith('pending_') && (
+              <TouchableOpacity
+                onPress={() => setActiveFilter('')}
+                className="bg-slate-200/80 px-2.5 py-1 rounded-full"
+              >
+                <Text className="font-sans text-[11px] text-[#475569] font-bold">Limpar ✕</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="gap-[10px]">
+          <View className="gap-2.5">
             {/* Trials Acabando */}
             <TouchableOpacity
-              onPress={() => setActiveFilter('pending_expiring_trial')}
-              activeOpacity={0.8}
-              className={`p-[16px] rounded-[16px] w-[180px] border ${
+              onPress={() =>
+                setActiveFilter(activeFilter === 'pending_expiring_trial' ? '' : 'pending_expiring_trial')
+              }
+              activeOpacity={0.85}
+              className={`p-4 rounded-2xl border flex-row items-center justify-between shadow-xs ${
                 activeFilter === 'pending_expiring_trial'
                   ? 'bg-[#fef3c7] border-[#d97706]'
                   : 'bg-[#fffbeb] border-[#fde68a]'
               }`}
             >
-              <Text className="font-title text-[#d97706] text-[26px] mb-1">
-                {kpis.pending_expiring_trial || 0}
-              </Text>
-              <Text className="font-title text-[#92400e] text-[15px] mb-[2px]">Trials Acabando</Text>
-              <Text className="font-sans text-[#b45309] text-[12px]">Vencimento nas próximas 24h</Text>
+              <View className="flex-1 pr-3">
+                <Text className="font-title text-[#92400e] text-[16px]">Trials Acabando</Text>
+                <Text className="font-sans text-[#b45309] text-[12px] mt-0.5">
+                  Vencimento nas próximas 24h
+                </Text>
+              </View>
+              <View className="items-end">
+                <Text className="font-title text-[#d97706] text-[28px] leading-tight">
+                  {kpis.pending_expiring_trial || 0}
+                </Text>
+                <View className="flex-row items-center mt-0.5">
+                  <Text className="font-sans text-[11px] text-[#b45309] font-semibold">Filtrar</Text>
+                  <Feather name="chevron-right" size={13} color="#b45309" />
+                </View>
+              </View>
             </TouchableOpacity>
 
             {/* Pagamentos Falhados */}
             <TouchableOpacity
-              onPress={() => setActiveFilter('pending_paid_churn')}
-              activeOpacity={0.8}
-              className={`p-[16px] rounded-[16px] w-[180px] border ${
+              onPress={() =>
+                setActiveFilter(activeFilter === 'pending_paid_churn' ? '' : 'pending_paid_churn')
+              }
+              activeOpacity={0.85}
+              className={`p-4 rounded-2xl border flex-row items-center justify-between shadow-xs ${
                 activeFilter === 'pending_paid_churn'
                   ? 'bg-[#fee2e2] border-[#dc2626]'
                   : 'bg-[#fef2f2] border-[#fecaca]'
               }`}
             >
-              <Text className="font-title text-[#dc2626] text-[26px] mb-1">
-                {kpis.pending_paid_churn || 0}
-              </Text>
-              <Text className="font-title text-[#991b1b] text-[15px] mb-[2px]">Pagamentos Falhados</Text>
-              <Text className="font-sans text-[#b91c1c] text-[12px]">Necessitam de contato urgente</Text>
+              <View className="flex-1 pr-3">
+                <Text className="font-title text-[#991b1b] text-[16px]">Pagamentos Falhados</Text>
+                <Text className="font-sans text-[#b91c1c] text-[12px] mt-0.5">
+                  Necessitam de contato urgente
+                </Text>
+              </View>
+              <View className="items-end">
+                <Text className="font-title text-[#dc2626] text-[28px] leading-tight">
+                  {kpis.pending_paid_churn || 0}
+                </Text>
+                <View className="flex-row items-center mt-0.5">
+                  <Text className="font-sans text-[11px] text-[#b91c1c] font-semibold">Filtrar</Text>
+                  <Feather name="chevron-right" size={13} color="#b91c1c" />
+                </View>
+              </View>
             </TouchableOpacity>
 
             {/* Perfis Incompletos */}
             <TouchableOpacity
-              onPress={() => setActiveFilter('pending_incomplete')}
-              activeOpacity={0.8}
-              className={`p-[16px] rounded-[16px] w-[180px] border ${
+              onPress={() =>
+                setActiveFilter(activeFilter === 'pending_incomplete' ? '' : 'pending_incomplete')
+              }
+              activeOpacity={0.85}
+              className={`p-4 rounded-2xl border flex-row items-center justify-between shadow-xs ${
                 activeFilter === 'pending_incomplete'
                   ? 'bg-[#dcfce7] border-[#16a34a]'
                   : 'bg-[#f0fdf4] border-[#bbf7d0]'
               }`}
             >
-              <Text className="font-title text-[#16a34a] text-[26px] mb-1">{kpis.pending || 0}</Text>
-              <Text className="font-title text-[#166534] text-[15px] mb-[2px]">Perfis Incompletos</Text>
-              <Text className="font-sans text-[#15803d] text-[12px]">Pendentes há mais de 3 dias</Text>
+              <View className="flex-1 pr-3">
+                <Text className="font-title text-[#166534] text-[16px]">Perfis Incompletos</Text>
+                <Text className="font-sans text-[#15803d] text-[12px] mt-0.5">
+                  Pendentes há mais de 3 dias
+                </Text>
+              </View>
+              <View className="items-end">
+                <Text className="font-title text-[#16a34a] text-[28px] leading-tight">
+                  {kpis.pending || 0}
+                </Text>
+                <View className="flex-row items-center mt-0.5">
+                  <Text className="font-sans text-[11px] text-[#15803d] font-semibold">Filtrar</Text>
+                  <Feather name="chevron-right" size={13} color="#15803d" />
+                </View>
+              </View>
             </TouchableOpacity>
-          </ScrollView>
+          </View>
         </View>
 
         {/* ========================================================= */}
-        {/* 3. FUNIL E STATUS PRINCIPAIS                               */}
+        {/* 3. STATUS DA BASE / FUNIL (2-COL GRID ESTILO WEB MOBILE)   */}
         {/* ========================================================= */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-[15px] gap-[10px]">
-          {/* Pagantes */}
-          <TouchableOpacity
-            onPress={() => setActiveFilter('active_paying')}
-            activeOpacity={0.8}
-            className={`bg-white rounded-[16px] p-[14px] w-[130px] border-t-4 border-[#10b981] border border-[#e2e8f0] shadow-sm items-center ${
-              activeFilter === 'active_paying' ? 'bg-emerald-50 border-[#10b981]' : ''
-            }`}
-          >
-            <View className="flex-row items-center gap-[4px] mb-[4px]">
-              <Feather name="dollar-sign" size={13} color="#10b981" />
-              <Text className="font-sans font-bold text-[#475569] text-[12px]">Pagantes</Text>
-            </View>
-            <Text className="font-title text-[#10b981] text-[22px] text-center">
-              {kpis.active_paying || 0}
-            </Text>
-            <Text className="font-sans text-emerald-600 text-[11px] text-center mt-1">+5 este mês</Text>
-          </TouchableOpacity>
+        <View className="px-4 mb-5">
+          <View className="flex-row items-center justify-between mb-2.5">
+            <Text className="font-title text-[#1e293b] text-[18px]">Status da Base (Funil)</Text>
+            <Text className="font-sans text-[#64748b] text-[12px]">Toque para filtrar</Text>
+          </View>
 
-          {/* Em Trial */}
-          <TouchableOpacity
-            onPress={() => setActiveFilter('active_trial')}
-            activeOpacity={0.8}
-            className={`bg-white rounded-[16px] p-[14px] w-[130px] border-t-4 border-[#3b82f6] border border-[#e2e8f0] shadow-sm items-center ${
-              activeFilter === 'active_trial' ? 'bg-blue-50 border-[#3b82f6]' : ''
-            }`}
-          >
-            <View className="flex-row items-center gap-[4px] mb-[4px]">
-              <Feather name="clock" size={13} color="#3b82f6" />
-              <Text className="font-sans font-bold text-[#475569] text-[12px]">Em Trial</Text>
-            </View>
-            <Text className="font-title text-[#3b82f6] text-[22px] text-center">
-              {kpis.active_trial || 0}
-            </Text>
-            <Text className="font-sans text-[#64748b] text-[11px] text-center mt-1">Mantido</Text>
-          </TouchableOpacity>
+          <View className="flex-row flex-wrap gap-2.5">
+            {/* Pagantes */}
+            <TouchableOpacity
+              onPress={() => setActiveFilter(activeFilter === 'active_paying' ? '' : 'active_paying')}
+              activeOpacity={0.8}
+              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3.5 border-t-4 border-t-[#10b981] border border-[#e2e8f0] shadow-xs ${
+                activeFilter === 'active_paying' ? 'bg-emerald-50/80 border-[#10b981]' : ''
+              }`}
+            >
+              <View className="flex-row items-center justify-between mb-1">
+                <View className="flex-row items-center gap-1.5">
+                  <Feather name="dollar-sign" size={13} color="#10b981" />
+                  <Text className="font-sans font-bold text-[#475569] text-[12px]">Pagantes</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() =>
+                    setTooltipModal({
+                      visible: true,
+                      title: 'Pagantes',
+                      desc: 'Psicólogos que já assinaram e estão com o pagamento em dia.',
+                    })
+                  }
+                >
+                  <Feather name="info" size={12} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+              <Text className="font-title text-[#10b981] text-[24px] mt-1">
+                {kpis.active_paying || 0}
+              </Text>
+              <Text className="font-sans text-emerald-600 font-medium text-[11px] mt-0.5">+5 este mês</Text>
+            </TouchableOpacity>
 
-          {/* Churn no Mês */}
-          <TouchableOpacity
-            onPress={() => setActiveFilter('churn_month')}
-            activeOpacity={0.8}
-            className={`bg-white rounded-[16px] p-[14px] w-[130px] border-t-4 border-[#ef4444] border border-[#e2e8f0] shadow-sm items-center ${
-              activeFilter === 'churn_month' ? 'bg-red-50 border-[#ef4444]' : ''
-            }`}
-          >
-            <View className="flex-row items-center gap-[4px] mb-[4px]">
-              <Feather name="user-x" size={13} color="#ef4444" />
-              <Text className="font-sans font-bold text-[#475569] text-[12px]">Churn no Mês</Text>
-            </View>
-            <Text className="font-title text-[#ef4444] text-[22px] text-center">
-              {kpis.churn_month || 0}
-            </Text>
-            <Text className="font-sans text-[#ef4444] text-[11px] text-center mt-1">Pagantes do mês</Text>
-          </TouchableOpacity>
+            {/* Em Trial */}
+            <TouchableOpacity
+              onPress={() => setActiveFilter(activeFilter === 'active_trial' ? '' : 'active_trial')}
+              activeOpacity={0.8}
+              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3.5 border-t-4 border-t-[#3b82f6] border border-[#e2e8f0] shadow-xs ${
+                activeFilter === 'active_trial' ? 'bg-blue-50/80 border-[#3b82f6]' : ''
+              }`}
+            >
+              <View className="flex-row items-center justify-between mb-1">
+                <View className="flex-row items-center gap-1.5">
+                  <Feather name="clock" size={13} color="#3b82f6" />
+                  <Text className="font-sans font-bold text-[#475569] text-[12px]">Em Trial</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() =>
+                    setTooltipModal({
+                      visible: true,
+                      title: 'Em Trial',
+                      desc: 'Psicólogos nos 7 dias de teste grátis.',
+                    })
+                  }
+                >
+                  <Feather name="info" size={12} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+              <Text className="font-title text-[#3b82f6] text-[24px] mt-1">
+                {kpis.active_trial || 0}
+              </Text>
+              <Text className="font-sans text-[#64748b] font-medium text-[11px] mt-0.5">Mantido</Text>
+            </TouchableOpacity>
 
-          {/* Pendentes */}
-          <TouchableOpacity
-            onPress={() => setActiveFilter('pending')}
-            activeOpacity={0.8}
-            className={`bg-white rounded-[16px] p-[14px] w-[130px] border-t-4 border-[#f59e0b] border border-[#e2e8f0] shadow-sm items-center ${
-              activeFilter === 'pending' ? 'bg-amber-50 border-[#f59e0b]' : ''
-            }`}
-          >
-            <View className="flex-row items-center gap-[4px] mb-[4px]">
-              <Feather name="alert-circle" size={13} color="#f59e0b" />
-              <Text className="font-sans font-bold text-[#475569] text-[12px]">Pendentes</Text>
-            </View>
-            <Text className="font-title text-[#f59e0b] text-[22px] text-center">
-              {kpis.pending || 0}
-            </Text>
-            <Text className="font-sans text-[#b45309] text-[11px] text-center mt-1">há &gt; 3 dias</Text>
-          </TouchableOpacity>
+            {/* Churn no Mês */}
+            <TouchableOpacity
+              onPress={() => setActiveFilter(activeFilter === 'churn_month' ? '' : 'churn_month')}
+              activeOpacity={0.8}
+              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3.5 border-t-4 border-t-[#ef4444] border border-[#e2e8f0] shadow-xs ${
+                activeFilter === 'churn_month' ? 'bg-red-50/80 border-[#ef4444]' : ''
+              }`}
+            >
+              <View className="flex-row items-center justify-between mb-1">
+                <View className="flex-row items-center gap-1.5">
+                  <Feather name="user-x" size={13} color="#ef4444" />
+                  <Text className="font-sans font-bold text-[#475569] text-[12px]">Churn no Mês</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() =>
+                    setTooltipModal({
+                      visible: true,
+                      title: 'Churn no Mês',
+                      desc: 'Psicólogos pagantes (com ao menos 1 pagamento) que cancelaram ou expiraram no mês atual.',
+                    })
+                  }
+                >
+                  <Feather name="info" size={12} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+              <Text className="font-title text-[#ef4444] text-[24px] mt-1">
+                {kpis.churn_month || 0}
+              </Text>
+              <Text className="font-sans text-[#ef4444] font-medium text-[11px] mt-0.5">Pagantes do mês</Text>
+            </TouchableOpacity>
 
-          {/* Inativos */}
-          <TouchableOpacity
-            onPress={() => setActiveFilter('inactive')}
-            activeOpacity={0.8}
-            className={`bg-white rounded-[16px] p-[14px] w-[130px] border-t-4 border-[#ef4444] border border-[#e2e8f0] shadow-sm items-center ${
-              activeFilter === 'inactive' ? 'bg-red-50 border-[#ef4444]' : ''
-            }`}
-          >
-            <View className="flex-row items-center gap-[4px] mb-[4px]">
-              <Feather name="slash" size={13} color="#ef4444" />
-              <Text className="font-sans font-bold text-[#475569] text-[12px]">Inativos</Text>
-            </View>
-            <Text className="font-title text-[#ef4444] text-[22px] text-center">
-              {kpis.inactive || 0}
-            </Text>
-            <Text className="font-sans text-[#ef4444] text-[11px] text-center mt-1">Cancelados</Text>
-          </TouchableOpacity>
-        </ScrollView>
+            {/* Pendentes */}
+            <TouchableOpacity
+              onPress={() => setActiveFilter(activeFilter === 'pending' ? '' : 'pending')}
+              activeOpacity={0.8}
+              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3.5 border-t-4 border-t-[#f59e0b] border border-[#e2e8f0] shadow-xs ${
+                activeFilter === 'pending' ? 'bg-amber-50/80 border-[#f59e0b]' : ''
+              }`}
+            >
+              <View className="flex-row items-center justify-between mb-1">
+                <View className="flex-row items-center gap-1.5">
+                  <Feather name="alert-circle" size={13} color="#f59e0b" />
+                  <Text className="font-sans font-bold text-[#475569] text-[12px]">Pendentes</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() =>
+                    setTooltipModal({
+                      visible: true,
+                      title: 'Pendentes',
+                      desc: 'Não finalizaram o perfil. Após um certo período, irão para a lixeira.',
+                    })
+                  }
+                >
+                  <Feather name="info" size={12} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+              <Text className="font-title text-[#f59e0b] text-[24px] mt-1">
+                {kpis.pending || 0}
+              </Text>
+              <Text className="font-sans text-[#b45309] font-medium text-[11px] mt-0.5">há &gt; 3 dias</Text>
+            </TouchableOpacity>
 
-        {/* ========================================================= */}
-        {/* 4. ORIGEM (UTM)                                            */}
-        {/* ========================================================= */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-[20px] gap-[10px]">
-          {/* WhatsApp */}
-          <TouchableOpacity
-            onPress={() => setActiveFilter('utm_whatsapp')}
-            activeOpacity={0.8}
-            className={`bg-white rounded-[14px] p-[12px] w-[110px] border-t-4 border-[#10b981] border border-[#e2e8f0] shadow-sm items-center ${
-              activeFilter === 'utm_whatsapp' ? 'bg-emerald-50' : ''
-            }`}
-          >
-            <Text className="font-sans font-bold text-[#10b981] text-[11px] mb-1">WhatsApp</Text>
-            <Text className="font-title text-[#10b981] text-[18px] text-center">
-              {kpis.utm_whatsapp || 0}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Meta / IG */}
-          <TouchableOpacity
-            onPress={() => setActiveFilter('utm_meta')}
-            activeOpacity={0.8}
-            className={`bg-white rounded-[14px] p-[12px] w-[110px] border-t-4 border-[#3b82f6] border border-[#e2e8f0] shadow-sm items-center ${
-              activeFilter === 'utm_meta' ? 'bg-blue-50' : ''
-            }`}
-          >
-            <Text className="font-sans font-bold text-[#3b82f6] text-[11px] mb-1">Meta / IG</Text>
-            <Text className="font-title text-[#3b82f6] text-[18px] text-center">{kpis.utm_meta || 0}</Text>
-          </TouchableOpacity>
-
-          {/* Google */}
-          <TouchableOpacity
-            onPress={() => setActiveFilter('utm_google')}
-            activeOpacity={0.8}
-            className={`bg-white rounded-[14px] p-[12px] w-[110px] border-t-4 border-[#f59e0b] border border-[#e2e8f0] shadow-sm items-center ${
-              activeFilter === 'utm_google' ? 'bg-amber-50' : ''
-            }`}
-          >
-            <Text className="font-sans font-bold text-[#f59e0b] text-[11px] mb-1">Google</Text>
-            <Text className="font-title text-[#f59e0b] text-[18px] text-center">
-              {kpis.utm_google || 0}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Instagram */}
-          <TouchableOpacity
-            onPress={() => setActiveFilter('utm_instagram_bio')}
-            activeOpacity={0.8}
-            className={`bg-white rounded-[14px] p-[12px] w-[110px] border-t-4 border-[#ec4899] border border-[#e2e8f0] shadow-sm items-center ${
-              activeFilter === 'utm_instagram_bio' ? 'bg-pink-50' : ''
-            }`}
-          >
-            <Text className="font-sans font-bold text-[#ec4899] text-[11px] mb-1">Instagram</Text>
-            <Text className="font-title text-[#ec4899] text-[18px] text-center">
-              {kpis.utm_instagram_bio || 0}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Outros / Direto */}
-          <TouchableOpacity
-            onPress={() => setActiveFilter('utm_outros')}
-            activeOpacity={0.8}
-            className={`bg-white rounded-[14px] p-[12px] w-[110px] border-t-4 border-[#64748b] border border-[#e2e8f0] shadow-sm items-center ${
-              activeFilter === 'utm_outros' ? 'bg-slate-50' : ''
-            }`}
-          >
-            <Text className="font-sans font-bold text-[#64748b] text-[11px] mb-1">Direto</Text>
-            <Text className="font-title text-[#64748b] text-[18px] text-center">
-              {kpis.utm_outros || 0}
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
+            {/* Inativos (Full Width) */}
+            <TouchableOpacity
+              onPress={() => setActiveFilter(activeFilter === 'inactive' ? '' : 'inactive')}
+              activeOpacity={0.8}
+              className={`w-full bg-white rounded-2xl p-3.5 border-l-4 border-l-[#ef4444] border border-[#e2e8f0] shadow-xs flex-row items-center justify-between ${
+                activeFilter === 'inactive' ? 'bg-red-50/80 border-[#ef4444]' : ''
+              }`}
+            >
+              <View className="flex-row items-center gap-2.5">
+                <View className="w-8 h-8 rounded-full bg-red-100 items-center justify-center">
+                  <Feather name="slash" size={14} color="#ef4444" />
+                </View>
+                <View>
+                  <Text className="font-sans font-bold text-[#475569] text-[13px]">Inativos / Cancelados</Text>
+                  <Text className="font-sans text-[#ef4444] text-[11px]">Assinaturas canceladas ou expiradas</Text>
+                </View>
+              </View>
+              <Text className="font-title text-[#ef4444] text-[22px]">
+                {kpis.inactive || 0}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* ========================================================= */}
-        {/* 5. ABAS DO FUNIL (PILLS)                                   */}
+        {/* 4. ORIGENS UTM (AQUISIÇÃO - 2-COL GRID ESTILO WEB)        */}
         {/* ========================================================= */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-[15px]">
-          <View className="flex-row gap-[8px]">
+        <View className="px-4 mb-5">
+          <Text className="font-title text-[#1e293b] text-[18px] mb-2.5">Origens de Aquisição (UTM)</Text>
+
+          <View className="flex-row flex-wrap gap-2.5">
+            {/* WhatsApp */}
+            <TouchableOpacity
+              onPress={() => setActiveFilter(activeFilter === 'utm_whatsapp' ? '' : 'utm_whatsapp')}
+              activeOpacity={0.8}
+              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3 border-t-4 border-t-[#10b981] border border-[#e2e8f0] shadow-xs ${
+                activeFilter === 'utm_whatsapp' ? 'bg-emerald-50/80 border-[#10b981]' : ''
+              }`}
+            >
+              <Text className="font-sans font-bold text-[#10b981] text-[11px] uppercase tracking-wider mb-0.5">
+                WhatsApp
+              </Text>
+              <Text className="font-title text-[#10b981] text-[20px]">
+                {kpis.utm_whatsapp || 0}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Meta / Ads */}
+            <TouchableOpacity
+              onPress={() => setActiveFilter(activeFilter === 'utm_meta' ? '' : 'utm_meta')}
+              activeOpacity={0.8}
+              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3 border-t-4 border-t-[#3b82f6] border border-[#e2e8f0] shadow-xs ${
+                activeFilter === 'utm_meta' ? 'bg-blue-50/80 border-[#3b82f6]' : ''
+              }`}
+            >
+              <Text className="font-sans font-bold text-[#3b82f6] text-[11px] uppercase tracking-wider mb-0.5">
+                Meta / Ads
+              </Text>
+              <Text className="font-title text-[#3b82f6] text-[20px]">
+                {kpis.utm_meta || 0}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Google */}
+            <TouchableOpacity
+              onPress={() => setActiveFilter(activeFilter === 'utm_google' ? '' : 'utm_google')}
+              activeOpacity={0.8}
+              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3 border-t-4 border-t-[#f59e0b] border border-[#e2e8f0] shadow-xs ${
+                activeFilter === 'utm_google' ? 'bg-amber-50/80 border-[#f59e0b]' : ''
+              }`}
+            >
+              <Text className="font-sans font-bold text-[#f59e0b] text-[11px] uppercase tracking-wider mb-0.5">
+                Google
+              </Text>
+              <Text className="font-title text-[#f59e0b] text-[20px]">
+                {kpis.utm_google || 0}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Instagram Bio */}
+            <TouchableOpacity
+              onPress={() =>
+                setActiveFilter(activeFilter === 'utm_instagram_bio' ? '' : 'utm_instagram_bio')
+              }
+              activeOpacity={0.8}
+              className={`w-[48%] flex-1 min-w-[140px] bg-white rounded-2xl p-3 border-t-4 border-t-[#ec4899] border border-[#e2e8f0] shadow-xs ${
+                activeFilter === 'utm_instagram_bio' ? 'bg-pink-50/80 border-[#ec4899]' : ''
+              }`}
+            >
+              <Text className="font-sans font-bold text-[#ec4899] text-[11px] uppercase tracking-wider mb-0.5">
+                Instagram Bio
+              </Text>
+              <Text className="font-title text-[#ec4899] text-[20px]">
+                {kpis.utm_instagram_bio || 0}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Direto / Outros */}
+            <TouchableOpacity
+              onPress={() => setActiveFilter(activeFilter === 'utm_outros' ? '' : 'utm_outros')}
+              activeOpacity={0.8}
+              className={`w-full bg-white rounded-2xl p-3 border-l-4 border-l-[#64748b] border border-[#e2e8f0] shadow-xs flex-row items-center justify-between ${
+                activeFilter === 'utm_outros' ? 'bg-slate-100 border-[#64748b]' : ''
+              }`}
+            >
+              <Text className="font-sans font-bold text-[#475569] text-[12px] uppercase tracking-wider">
+                Direto / Outros
+              </Text>
+              <Text className="font-title text-[#64748b] text-[20px]">
+                {kpis.utm_outros || 0}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ========================================================= */}
+        {/* 5. ABAS DO FUNIL (PILLS HORIZONTAIS)                      */}
+        {/* ========================================================= */}
+        <View className="mb-3">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+          >
             {[
               { id: '', label: 'Todos' },
               { id: 'pending_actions', label: 'Follow-ups 📞' },
@@ -934,20 +1101,21 @@ export default function AdminCRMPsicologosScreen() {
                 <TouchableOpacity
                   key={tab.id}
                   onPress={() => setActiveFilter(tab.id)}
-                  className={`px-[16px] py-[8px] rounded-full border ${
+                  activeOpacity={0.8}
+                  className={`px-4 py-2 rounded-full border ${
                     isActive
                       ? 'bg-[#1B4332] border-[#1B4332]'
                       : isFollowupTab
                       ? 'bg-blue-50 border-[#3b82f6]'
-                      : 'bg-[#f8f9fa] border-[#e2e8f0]'
+                      : 'bg-white border-[#e2e8f0]'
                   }`}
                 >
                   <Text
-                    className={`font-sans font-bold text-[13px] ${
+                    className={`font-sans font-semibold text-[13px] ${
                       isActive
                         ? 'text-white'
                         : isFollowupTab
-                        ? 'text-[#3b82f6]'
+                        ? 'text-[#2563eb]'
                         : 'text-[#64748b]'
                     }`}
                   >
@@ -956,433 +1124,460 @@ export default function AdminCRMPsicologosScreen() {
                 </TouchableOpacity>
               );
             })}
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
 
         {/* ========================================================= */}
         {/* 6. BUSCA                                                   */}
         {/* ========================================================= */}
-        <View className="bg-white rounded-full px-[16px] py-[10px] border border-[#e2e8f0] flex-row items-center mb-[18px] shadow-sm">
-          <Feather name="search" size={18} color="#94a3b8" />
-          <TextInput
-            placeholder="Buscar psicólogo..."
-            placeholderTextColor="#94a3b8"
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            className="flex-1 ml-[10px] font-sans text-[14px] text-[#1e293b]"
-          />
-          {searchTerm.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchTerm('')}>
-              <Feather name="x" size={16} color="#94a3b8" />
-            </TouchableOpacity>
-          )}
+        <View className="px-4 mb-3.5">
+          <View className="bg-white rounded-full px-4 py-2.5 border border-[#e2e8f0] flex-row items-center shadow-xs">
+            <Feather name="search" size={17} color="#94a3b8" />
+            <TextInput
+              placeholder="Buscar por nome, e-mail ou CRP..."
+              placeholderTextColor="#94a3b8"
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              className="flex-1 ml-2.5 font-sans text-[14px] text-[#1e293b]"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {searchTerm.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchTerm('')} className="p-1">
+                <Feather name="x-circle" size={16} color="#94a3b8" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* ========================================================= */}
         {/* 7. LISTA DE CARDS (MODO FOLLOW-UP OU MODO PADRÃO)          */}
         {/* ========================================================= */}
-        {loading ? (
-          <View className="py-[40px] items-center justify-center">
-            <ActivityIndicator size="large" color="#1B4332" />
-            <Text className="font-sans text-[#64748b] text-[13px] mt-3">Carregando CRM...</Text>
-          </View>
-        ) : isFollowupMode ? (
-          // ================= MODO FOLLOW-UP =================
-          pendingActions.length === 0 ? (
-            <View className="bg-white rounded-[18px] p-[30px] items-center border border-[#e2e8f0]">
-              <Text className="text-[28px] mb-2">🎉</Text>
-              <Text className="font-title text-[#1B4332] text-[16px]">Nenhuma ação pendente!</Text>
-              <Text className="font-sans text-[#64748b] text-[13px] text-center mt-1">
-                Todas as tarefas prioritárias de CS estão em dia.
-              </Text>
+        <View className="px-4">
+          {loading ? (
+            <View className="py-[40px] items-center justify-center">
+              <ActivityIndicator size="large" color="#1B4332" />
+              <Text className="font-sans text-[#64748b] text-[13px] mt-3">Carregando CRM...</Text>
             </View>
-          ) : (
-            pendingActions.map((item, idx) => {
-              const actionLoading = actionLoadingId === `${item.id}_${item.actionType}`;
+          ) : isFollowupMode ? (
+            // ================= MODO FOLLOW-UP =================
+            pendingActions.length === 0 ? (
+              <View className="bg-white rounded-[18px] p-[30px] items-center border border-[#e2e8f0]">
+                <Text className="text-[28px] mb-2">🎉</Text>
+                <Text className="font-title text-[#1B4332] text-[16px]">Nenhuma ação pendente!</Text>
+                <Text className="font-sans text-[#64748b] text-[13px] text-center mt-1">
+                  Todas as tarefas prioritárias de CS estão em dia.
+                </Text>
+              </View>
+            ) : (
+              pendingActions.map((item, idx) => {
+                const actionLoading = actionLoadingId === `${item.id}_${item.actionType}`;
 
-              // Cores e labels contextuais do botão de ação primária
-              let btnLabel = 'Contatar (WhatsApp)';
-              let btnGradient = ['#16a34a', '#15803d'];
-              let btnIcon: any = 'message-circle';
-              let badgeBg = '#fef3c7';
-              let badgeColor = '#b45309';
-              let badgeText = item.actionType;
+                // Cores e labels contextuais do botão de ação primária
+                let btnLabel = 'Contatar (WhatsApp)';
+                let btnGradient = ['#16a34a', '#15803d'];
+                let btnIcon: any = 'message-circle';
+                let badgeBg = '#fef3c7';
+                let badgeColor = '#b45309';
+                let badgeText = item.actionType;
 
-              if (item.actionType === 'conversion_failure') {
-                btnLabel = 'Reverter Falha (IA)';
-                btnGradient = ['#e11d48', '#be123c'];
-                btnIcon = 'zap';
-                badgeBg = '#fee2e2';
-                badgeColor = '#b91c1c';
-                badgeText = 'Falha Conversão';
-              } else if (item.actionType === 'analysis') {
-                btnLabel = 'Enviar Análise (IA)';
-                btnGradient = ['#2563eb', '#1d4ed8'];
-                btnIcon = 'award';
-                badgeBg = '#dbeafe';
-                badgeColor = '#1d4ed8';
-                badgeText = 'Análise Pronta';
-              } else if (item.actionType === 'low_performance') {
-                btnLabel = 'Diagnóstico (IA)';
-                btnGradient = ['#7c3aed', '#6d28d9'];
-                btnIcon = 'cpu';
-                badgeBg = '#f3e8ff';
-                badgeColor = '#7c3aed';
-                badgeText = 'Análise (IA)';
-              } else if (item.actionType === 'expiring_trial') {
-                btnLabel = 'Converter Plano (IA)';
-                btnGradient = ['#d97706', '#b45309'];
-                btnIcon = 'clock';
-                badgeBg = '#fef08a';
-                badgeColor = '#b45309';
-                badgeText = 'Trial Expirando';
-              } else if (item.actionType === 'churn') {
-                btnLabel = 'Resgate Trial (IA)';
-                btnGradient = ['#ea580c', '#c2410c'];
-                btnIcon = 'life-buoy';
-                badgeBg = '#ffedd5';
-                badgeColor = '#c2410c';
-                badgeText = 'Churn Trial';
-              } else if (item.actionType === 'paid_churn') {
-                btnLabel = 'Recuperar Assinante';
-                btnGradient = ['#991b1b', '#7f1d1d'];
-                btnIcon = 'shield';
-                badgeBg = '#ffe4e6';
-                badgeColor = '#be123c';
-                badgeText = 'Churn Pago';
-              } else if (item.actionType === 'billing_feedback') {
-                btnLabel = 'Checar Contato';
-                btnGradient = ['#0284c7', '#0369a1'];
-                btnIcon = 'message-square';
-                badgeBg = '#e0e7ff';
-                badgeColor = '#4338ca';
-                badgeText = 'Feedback/Cobrança';
-              } else if (item.actionType === 'incomplete') {
-                btnLabel = 'Ativar Perfil';
-                btnGradient = ['#059669', '#047857'];
-                btnIcon = 'user-check';
-                badgeBg = '#fef3c7';
-                badgeColor = '#b45309';
-                badgeText = 'Perfil Incompleto';
-              } else if (item.actionType === 'negotiation') {
-                btnLabel = 'Acompanhar Negociação';
-                btnGradient = ['#4f46e5', '#4338ca'];
-                btnIcon = 'users';
-                badgeBg = '#ffedd5';
-                badgeColor = '#c2410c';
-                badgeText = 'Em Negociação';
-              }
+                if (item.actionType === 'conversion_failure') {
+                  btnLabel = 'Reverter Falha (IA)';
+                  btnGradient = ['#e11d48', '#be123c'];
+                  btnIcon = 'zap';
+                  badgeBg = '#fee2e2';
+                  badgeColor = '#b91c1c';
+                  badgeText = 'Falha Conversão';
+                } else if (item.actionType === 'analysis') {
+                  btnLabel = 'Enviar Análise (IA)';
+                  btnGradient = ['#2563eb', '#1d4ed8'];
+                  btnIcon = 'award';
+                  badgeBg = '#dbeafe';
+                  badgeColor = '#1d4ed8';
+                  badgeText = 'Análise Pronta';
+                } else if (item.actionType === 'low_performance') {
+                  btnLabel = 'Diagnóstico (IA)';
+                  btnGradient = ['#7c3aed', '#6d28d9'];
+                  btnIcon = 'cpu';
+                  badgeBg = '#f3e8ff';
+                  badgeColor = '#7c3aed';
+                  badgeText = 'Análise (IA)';
+                } else if (item.actionType === 'expiring_trial') {
+                  btnLabel = 'Converter Plano (IA)';
+                  btnGradient = ['#d97706', '#b45309'];
+                  btnIcon = 'clock';
+                  badgeBg = '#fef08a';
+                  badgeColor = '#b45309';
+                  badgeText = 'Trial Expirando';
+                } else if (item.actionType === 'churn') {
+                  btnLabel = 'Resgate Trial (IA)';
+                  btnGradient = ['#ea580c', '#c2410c'];
+                  btnIcon = 'life-buoy';
+                  badgeBg = '#ffedd5';
+                  badgeColor = '#c2410c';
+                  badgeText = 'Churn Trial';
+                } else if (item.actionType === 'paid_churn') {
+                  btnLabel = 'Recuperar Assinante';
+                  btnGradient = ['#991b1b', '#7f1d1d'];
+                  btnIcon = 'shield';
+                  badgeBg = '#ffe4e6';
+                  badgeColor = '#be123c';
+                  badgeText = 'Churn Pago';
+                } else if (item.actionType === 'billing_feedback') {
+                  btnLabel = 'Checar Contato';
+                  btnGradient = ['#0284c7', '#0369a1'];
+                  btnIcon = 'message-square';
+                  badgeBg = '#e0e7ff';
+                  badgeColor = '#4338ca';
+                  badgeText = 'Feedback/Cobrança';
+                } else if (item.actionType === 'incomplete') {
+                  btnLabel = 'Ativar Perfil';
+                  btnGradient = ['#059669', '#047857'];
+                  btnIcon = 'user-check';
+                  badgeBg = '#fef3c7';
+                  badgeColor = '#b45309';
+                  badgeText = 'Perfil Incompleto';
+                } else if (item.actionType === 'negotiation') {
+                  btnLabel = 'Acompanhar Negociação';
+                  btnGradient = ['#4f46e5', '#4338ca'];
+                  btnIcon = 'users';
+                  badgeBg = '#ffedd5';
+                  badgeColor = '#c2410c';
+                  badgeText = 'Em Negociação';
+                }
 
-              const dateStr = item.planExpiresAt
-                ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR')
-                : item.createdAt
-                ? new Date(item.createdAt).toLocaleDateString('pt-BR')
-                : '-';
+                const dateStr = item.planExpiresAt
+                  ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR')
+                  : item.createdAt
+                  ? new Date(item.createdAt).toLocaleDateString('pt-BR')
+                  : '-';
 
-              return (
-                <View
-                  key={`${item.id}_${item.actionType}_${idx}`}
-                  className="bg-white rounded-[18px] p-[16px] mb-[14px] border border-[#e2e8f0] shadow-sm"
-                >
-                  {/* Topo do Card */}
-                  <View className="flex-row items-center gap-[12px] pb-[12px] border-b border-[#f1f5f9]">
-                    <View className="w-[42px] h-[42px] rounded-full bg-[#f0fdf4] border border-[#bbf7d0] items-center justify-center">
-                      <Text className="font-title text-[#166534] text-[16px]">
-                        {(item.nome || '?').charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                    <View className="flex-1">
-                      <TouchableOpacity onPress={() => openCSDrawer(item)}>
-                        <Text className="font-title text-[#1B4332] text-[16px]">
-                          {item.nome || 'Sem Nome'}
-                        </Text>
-                      </TouchableOpacity>
-                      <Text className="font-sans text-[#64748b] text-[12px]">
-                        {item.telefone || 'Sem telefone'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Linhas Internas */}
-                  <View className="py-[10px] gap-[8px]">
-                    {/* Status da Ação */}
-                    <View className="flex-row justify-between items-center">
-                      <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
-                        Status da Ação
-                      </Text>
-                      <View
-                        className="px-[10px] py-[3px] rounded-full"
-                        style={{ backgroundColor: badgeBg }}
-                      >
-                        <Text
-                          className="font-sans font-bold text-[11px]"
-                          style={{ color: badgeColor }}
-                        >
-                          {badgeText}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Motivo do Contato */}
-                    <View className="mt-1">
-                      <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider mb-1">
-                        Motivo do Contato
-                      </Text>
-                      <View className="bg-[#f8fafc] border border-[#e2e8f0] border-l-4 border-l-[#3b82f6] p-[10px] rounded-[8px]">
-                        <Text className="font-sans text-[#1e293b] text-[13px] leading-5">
-                          {item.reason}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Data / Previsão */}
-                    <View className="flex-row justify-between items-center pt-1">
-                      <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
-                        Data / Previsão
-                      </Text>
-                      <Text className="font-sans font-semibold text-[#1e293b] text-[13px]">
-                        {dateStr}
-                      </Text>
-                    </View>
-
-                    {/* Plano */}
-                    <View className="flex-row justify-between items-center">
-                      <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
-                        Plano
-                      </Text>
-                      <Text className="font-sans font-semibold text-[#1e293b] text-[13px]">
-                        {item.plano ? item.plano.toUpperCase() : '-'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Rodapé: Ações CS */}
-                  <View className="flex-row items-center gap-[8px] pt-[12px] border-t border-[#f1f5f9]">
-                    <TouchableOpacity
-                      onPress={() => handleSendAction(item)}
-                      disabled={actionLoading}
-                      className="flex-1 rounded-full overflow-hidden"
-                    >
-                      <LinearGradient
-                        colors={btnGradient as any}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        className="py-[10px] px-[14px] flex-row items-center justify-center gap-[6px]"
-                      >
-                        {actionLoading ? (
-                          <ActivityIndicator size="small" color="#fff" />
-                        ) : (
-                          <>
-                            <Feather name={btnIcon} size={14} color="#fff" />
-                            <Text className="font-sans font-bold text-white text-[13px]">
-                              {btnLabel}
-                            </Text>
-                          </>
-                        )}
-                      </LinearGradient>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      onPress={() => handleDismissAction(item.id, item.actionType)}
-                      className="border border-[#ef4444] px-[14px] py-[9px] rounded-full bg-white flex-row items-center gap-[4px]"
-                    >
-                      <Feather name="x" size={13} color="#ef4444" />
-                      <Text className="font-sans font-bold text-[#ef4444] text-[12px]">Ignorar</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })
-          )
-        ) : (
-          // ================= MODO PADRÃO =================
-          psychologists.length === 0 ? (
-            <View className="bg-white rounded-[18px] p-[30px] items-center border border-[#e2e8f0]">
-              <Text className="text-[28px] mb-2">🔍</Text>
-              <Text className="font-title text-[#1B4332] text-[16px]">Nenhum psicólogo encontrado</Text>
-              <Text className="font-sans text-[#64748b] text-[13px] text-center mt-1">
-                Tente ajustar os filtros ou o termo de busca.
-              </Text>
-            </View>
-          ) : (
-            psychologists.map((psy) => {
-              const isVip = psy.is_exempt === true;
-              const isDeleted = psy.deletedAt !== null && psy.deletedAt !== undefined;
-              const { score } = calculateProfileHealth(psy);
-
-              let statusLabel = 'Ativo';
-              let statusBg = '#dcfce7';
-              let statusColor = '#15803d';
-
-              if (isDeleted) {
-                statusLabel = 'Excluído';
-                statusBg = '#f1f5f9';
-                statusColor = '#64748b';
-              } else if (isVip) {
-                statusLabel = 'VIP';
-                statusBg = '#fefce8';
-                statusColor = '#a16207';
-              } else if (psy.status === 'pending') {
-                statusLabel = 'Incompleto';
-                statusBg = '#ffedd5';
-                statusColor = '#9a3412';
-              } else if (psy.status === 'inactive') {
-                statusLabel = 'Expirado';
-                statusBg = '#fee2e2';
-                statusColor = '#b91c1c';
-              } else if (
-                psy.status === 'active' &&
-                !psy.subscriptionId &&
-                !(psy.subscription_payments_count > 0)
-              ) {
-                statusLabel = 'Trial';
-                statusBg = '#fef3c7';
-                statusColor = '#b45309';
-              }
-
-              let scoreColor = '#ef4444';
-              if (score >= 75) scoreColor = '#10b981';
-              else if (score >= 50) scoreColor = '#f59e0b';
-
-              const planoName = psy.plano
-                ? psy.plano.charAt(0).toUpperCase() + psy.plano.slice(1).toLowerCase()
-                : 'Nenhum';
-
-              const dataInscricao = psy.createdAt
-                ? new Date(psy.createdAt).toLocaleDateString('pt-BR')
-                : '-';
-
-              return (
-                <View
-                  key={psy.id}
-                  className="bg-white rounded-[18px] p-[16px] mb-[14px] border border-[#e2e8f0] shadow-sm"
-                >
-                  {/* Topo do Card */}
-                  <View className="flex-row items-center gap-[12px] pb-[12px] border-b border-[#f1f5f9]">
-                    {psy.fotoUrl ? (
-                      <Image
-                        source={{ uri: psy.fotoUrl }}
-                        className="w-[42px] h-[42px] rounded-full border border-[#e2e8f0]"
-                      />
-                    ) : (
+                return (
+                  <View
+                    key={`${item.id}_${item.actionType}_${idx}`}
+                    className="bg-white rounded-[20px] p-[16px] mb-[12px] border border-[#e2e8f0] shadow-xs"
+                  >
+                    {/* Topo do Card */}
+                    <View className="flex-row items-center gap-[12px] pb-[12px] border-b border-[#f1f5f9]">
                       <View className="w-[42px] h-[42px] rounded-full bg-[#f0fdf4] border border-[#bbf7d0] items-center justify-center">
                         <Text className="font-title text-[#166534] text-[16px]">
-                          {(psy.nome || '?').charAt(0).toUpperCase()}
+                          {(item.nome || '?').charAt(0).toUpperCase()}
                         </Text>
                       </View>
-                    )}
-                    <View className="flex-1">
-                      <TouchableOpacity onPress={() => openCSDrawer(psy)}>
-                        <Text className="font-title text-[#1B4332] text-[16px]">
-                          {psy.nome || 'Sem Nome'}
+                      <View className="flex-1">
+                        <TouchableOpacity onPress={() => openCSDrawer(item)}>
+                          <Text className="font-title text-[#1B4332] text-[16px]">
+                            {item.nome || 'Sem Nome'}
+                          </Text>
+                        </TouchableOpacity>
+                        <Text className="font-sans text-[#64748b] text-[12px]">
+                          {item.telefone || 'Sem telefone'}
                         </Text>
-                      </TouchableOpacity>
-                      <Text className="font-sans text-[#64748b] text-[12px]" numberOfLines={1}>
-                        {psy.email || 'Sem email'}
-                      </Text>
+                      </View>
                     </View>
-                  </View>
 
-                  {/* Informações Linha a Linha */}
-                  <View className="py-[10px] gap-[8px]">
-                    {/* Status / Plano */}
-                    <View className="flex-row justify-between items-center">
-                      <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
-                        Status / Plano
-                      </Text>
-                      <View className="flex-row items-center gap-[6px]">
+                    {/* Linhas Internas */}
+                    <View className="py-[10px] gap-[8px]">
+                      {/* Status da Ação */}
+                      <View className="flex-row justify-between items-center">
+                        <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
+                          Status da Ação
+                        </Text>
                         <View
-                          className="px-[8px] py-[2px] rounded-full"
-                          style={{ backgroundColor: statusBg }}
+                          className="px-[10px] py-[3px] rounded-full"
+                          style={{ backgroundColor: badgeBg }}
                         >
                           <Text
                             className="font-sans font-bold text-[11px]"
-                            style={{ color: statusColor }}
+                            style={{ color: badgeColor }}
                           >
-                            {statusLabel}
+                            {badgeText}
                           </Text>
                         </View>
-                        <Text className="font-sans font-semibold text-[#334155] text-[12px]">
-                          {planoName}
-                        </Text>
                       </View>
-                    </View>
 
-                    {/* Força do Perfil */}
-                    <View className="flex-row justify-between items-center">
-                      <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
-                        Força do Perfil
-                      </Text>
-                      <View className="flex-row items-center gap-[8px]">
-                        <View className="w-[70px] h-[6px] bg-[#e2e8f0] rounded-full overflow-hidden">
-                          <View
-                            className="h-full rounded-full"
-                            style={{ width: `${score}%`, backgroundColor: scoreColor }}
-                          />
+                      {/* Motivo do Contato */}
+                      <View className="mt-1">
+                        <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider mb-1">
+                          Motivo do Contato
+                        </Text>
+                        <View className="bg-[#f8fafc] border border-[#e2e8f0] border-l-4 border-l-[#3b82f6] p-[10px] rounded-[10px]">
+                          <Text className="font-sans text-[#1e293b] text-[13px] leading-5">
+                            {item.reason}
+                          </Text>
                         </View>
-                        <Text
-                          className="font-sans font-bold text-[12px]"
-                          style={{ color: scoreColor }}
-                        >
-                          {score}%
+                      </View>
+
+                      {/* Data / Previsão */}
+                      <View className="flex-row justify-between items-center pt-1">
+                        <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
+                          Data / Previsão
+                        </Text>
+                        <Text className="font-sans font-semibold text-[#1e293b] text-[13px]">
+                          {dateStr}
+                        </Text>
+                      </View>
+
+                      {/* Plano */}
+                      <View className="flex-row justify-between items-center">
+                        <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
+                          Plano
+                        </Text>
+                        <Text className="font-sans font-semibold text-[#1e293b] text-[13px]">
+                          {item.plano ? item.plano.toUpperCase() : '-'}
                         </Text>
                       </View>
                     </View>
 
-                    {/* Origem (UTM) */}
-                    <View className="flex-row justify-between items-center">
-                      <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
-                        Origem (UTM)
-                      </Text>
-                      <View className="bg-[#f1f5f9] px-[8px] py-[2px] rounded-full">
-                        <Text className="font-sans font-bold text-[#475569] text-[11px] uppercase">
-                          {psy.utm_source || 'Direto'}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Data de Inscrição */}
-                    <View className="flex-row justify-between items-center">
-                      <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
-                        Data de Inscrição
-                      </Text>
-                      <Text className="font-sans text-[#64748b] text-[12px]">{dataInscricao}</Text>
-                    </View>
-                  </View>
-
-                  {/* Rodapé de Ações */}
-                  <View className="flex-row items-center gap-[8px] pt-[12px] border-t border-[#f1f5f9]">
-                    <TouchableOpacity
-                      onPress={() => openCSDrawer(psy)}
-                      className="flex-1 bg-[#f0fdf4] border border-[#bbf7d0] py-[8px] px-[14px] rounded-full flex-row items-center justify-center gap-[6px]"
-                    >
-                      <Feather name="eye" size={14} color="#166534" />
-                      <Text className="font-sans font-bold text-[#166534] text-[13px]">
-                        Visão 360
-                      </Text>
-                    </TouchableOpacity>
-
-                    {!isDeleted && (
+                    {/* Rodapé: Ações CS */}
+                    <View className="flex-row items-center gap-[8px] pt-[12px] border-t border-[#f1f5f9]">
                       <TouchableOpacity
-                        onPress={() => handleDeletePsychologist(psy.id, psy.nome)}
-                        className="border border-[#fee2e2] px-[12px] py-[8px] rounded-full bg-white flex-row items-center gap-[4px]"
+                        onPress={() => handleSendAction(item)}
+                        disabled={actionLoading}
+                        className="flex-1 rounded-full overflow-hidden"
                       >
-                        <Feather name="trash-2" size={13} color="#ef4444" />
-                        <Text className="font-sans font-bold text-[#ef4444] text-[12px]">Excluir</Text>
+                        <LinearGradient
+                          colors={btnGradient as any}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          className="py-[10px] px-[14px] flex-row items-center justify-center gap-[6px]"
+                        >
+                          {actionLoading ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                          ) : (
+                            <>
+                              <Feather name={btnIcon} size={14} color="#fff" />
+                              <Text className="font-sans font-bold text-white text-[13px]">
+                                {btnLabel}
+                              </Text>
+                            </>
+                          )}
+                        </LinearGradient>
                       </TouchableOpacity>
-                    )}
+
+                      <TouchableOpacity
+                        onPress={() => handleDismissAction(item.id, item.actionType)}
+                        className="border border-[#ef4444] px-[14px] py-[9px] rounded-full bg-white flex-row items-center gap-[4px]"
+                      >
+                        <Feather name="x" size={13} color="#ef4444" />
+                        <Text className="font-sans font-bold text-[#ef4444] text-[12px]">Ignorar</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              );
-            })
-          )
-        )}
+                );
+              })
+            )
+          ) : (
+            // ================= MODO PADRÃO =================
+            psychologists.length === 0 ? (
+              <View className="bg-white rounded-[18px] p-[30px] items-center border border-[#e2e8f0]">
+                <Text className="text-[28px] mb-2">🔍</Text>
+                <Text className="font-title text-[#1B4332] text-[16px]">Nenhum psicólogo encontrado</Text>
+                <Text className="font-sans text-[#64748b] text-[13px] text-center mt-1">
+                  Tente ajustar os filtros ou o termo de busca.
+                </Text>
+              </View>
+            ) : (
+              psychologists.map((psy) => {
+                const isVip = psy.is_exempt === true;
+                const isDeleted = psy.deletedAt !== null && psy.deletedAt !== undefined;
+                const { score } = calculateProfileHealth(psy);
+
+                let statusLabel = 'Ativo';
+                let statusBg = '#dcfce7';
+                let statusColor = '#15803d';
+
+                if (isDeleted) {
+                  statusLabel = 'Excluído';
+                  statusBg = '#f1f5f9';
+                  statusColor = '#64748b';
+                } else if (isVip) {
+                  statusLabel = 'VIP';
+                  statusBg = '#fefce8';
+                  statusColor = '#a16207';
+                } else if (psy.status === 'pending') {
+                  statusLabel = 'Incompleto';
+                  statusBg = '#ffedd5';
+                  statusColor = '#9a3412';
+                } else if (psy.status === 'inactive') {
+                  statusLabel = 'Expirado';
+                  statusBg = '#fee2e2';
+                  statusColor = '#b91c1c';
+                } else if (
+                  psy.status === 'active' &&
+                  !psy.subscriptionId &&
+                  !(psy.subscription_payments_count > 0)
+                ) {
+                  statusLabel = 'Trial';
+                  statusBg = '#fef3c7';
+                  statusColor = '#b45309';
+                }
+
+                let scoreColor = '#ef4444';
+                if (score >= 75) scoreColor = '#10b981';
+                else if (score >= 50) scoreColor = '#f59e0b';
+
+                const planoName = psy.plano
+                  ? psy.plano.charAt(0).toUpperCase() + psy.plano.slice(1).toLowerCase()
+                  : 'Nenhum';
+
+                const dataInscricao = psy.createdAt
+                  ? new Date(psy.createdAt).toLocaleDateString('pt-BR')
+                  : '-';
+
+                return (
+                  <View
+                    key={psy.id}
+                    className="bg-white rounded-[20px] p-[16px] mb-[12px] border border-[#e2e8f0] shadow-xs"
+                  >
+                    {/* Topo do Card: Informações do Profissional */}
+                    <View className="flex-row items-center gap-[12px] pb-[12px] border-b border-[#f1f5f9]">
+                      {psy.fotoUrl ? (
+                        <Image
+                          source={{ uri: psy.fotoUrl }}
+                          className="w-[42px] h-[42px] rounded-full border border-[#e2e8f0]"
+                        />
+                      ) : (
+                        <View className="w-[42px] h-[42px] rounded-full bg-[#f0fdf4] border border-[#bbf7d0] items-center justify-center">
+                          <Text className="font-title text-[#166534] text-[16px]">
+                            {(psy.nome || '?').charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                      )}
+                      <View className="flex-1">
+                        <TouchableOpacity onPress={() => openCSDrawer(psy)}>
+                          <View className="flex-row items-center flex-wrap gap-1">
+                            <Text className="font-title text-[#1B4332] text-[16px]">
+                              {psy.nome || 'Sem Nome'}
+                            </Text>
+                            {isVip && <Text className="text-[12px]">⭐</Text>}
+                            {psy.isProfileAnalyzed && <Text className="text-[12px]">✅</Text>}
+                          </View>
+                        </TouchableOpacity>
+                        <View className="flex-row items-center gap-2 mt-0.5">
+                          {psy.crp ? (
+                            <Text className="font-sans text-[#64748b] text-[12px]">
+                              CRP: {psy.crp}
+                            </Text>
+                          ) : null}
+                          <Text className="font-sans text-[#94a3b8] text-[12px]" numberOfLines={1}>
+                            {psy.email || 'Sem email'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Informações Linha a Linha (Estilo Tabela Web Mobile) */}
+                    <View className="py-[10px] gap-[8px]">
+                      {/* Status / Plano */}
+                      <View className="flex-row justify-between items-center">
+                        <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
+                          Status / Plano
+                        </Text>
+                        <View className="flex-row items-center gap-[6px]">
+                          <View
+                            className="px-[8px] py-[2px] rounded-full"
+                            style={{ backgroundColor: statusBg }}
+                          >
+                            <Text
+                              className="font-sans font-bold text-[11px]"
+                              style={{ color: statusColor }}
+                            >
+                              {statusLabel}
+                            </Text>
+                          </View>
+                          <Text className="font-sans font-semibold text-[#334155] text-[12px]">
+                            {planoName}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Força do Perfil */}
+                      <View className="flex-row justify-between items-center">
+                        <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
+                          Força do Perfil
+                        </Text>
+                        <View className="flex-row items-center gap-[8px]">
+                          <View className="w-[70px] h-[6px] bg-[#e2e8f0] rounded-full overflow-hidden">
+                            <View
+                              className="h-full rounded-full"
+                              style={{ width: `${score}%`, backgroundColor: scoreColor }}
+                            />
+                          </View>
+                          <Text
+                            className="font-sans font-bold text-[12px]"
+                            style={{ color: scoreColor }}
+                          >
+                            {score}%
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Origem (UTM) */}
+                      <View className="flex-row justify-between items-center">
+                        <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
+                          Origem (UTM)
+                        </Text>
+                        <View className="bg-[#f1f5f9] px-[8px] py-[2px] rounded-full">
+                          <Text className="font-sans font-bold text-[#475569] text-[11px] uppercase">
+                            {psy.utm_source || 'Direto'}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Data de Inscrição */}
+                      <View className="flex-row justify-between items-center">
+                        <Text className="font-sans text-[#64748b] text-[11px] font-bold uppercase tracking-wider">
+                          Data de Inscrição
+                        </Text>
+                        <Text className="font-sans text-[#64748b] text-[12px]">{dataInscricao}</Text>
+                      </View>
+                    </View>
+
+                    {/* Rodapé de Ações CS */}
+                    <View className="flex-row items-center gap-[8px] pt-[12px] border-t border-[#f1f5f9]">
+                      <TouchableOpacity
+                        onPress={() => openCSDrawer(psy)}
+                        className="flex-1 bg-[#f0fdf4] border border-[#bbf7d0] py-[9px] px-[14px] rounded-full flex-row items-center justify-center gap-[6px]"
+                      >
+                        <Feather name="eye" size={14} color="#166534" />
+                        <Text className="font-sans font-bold text-[#166534] text-[13px]">
+                          Visão 360
+                        </Text>
+                      </TouchableOpacity>
+
+                      {psy.telefone ? (
+                        <TouchableOpacity
+                          onPress={() => handleSendAction(psy, 'standard_contact')}
+                          className="bg-[#10b981] px-[14px] py-[9px] rounded-full flex-row items-center gap-[5px]"
+                        >
+                          <Feather name="message-circle" size={14} color="#fff" />
+                          <Text className="font-sans font-bold text-white text-[12px]">WhatsApp</Text>
+                        </TouchableOpacity>
+                      ) : null}
+
+                      {!isDeleted && (
+                        <TouchableOpacity
+                          onPress={() => handleDeletePsychologist(psy.id, psy.nome)}
+                          className="border border-[#fee2e2] px-[12px] py-[9px] rounded-full bg-white flex-row items-center gap-[4px]"
+                        >
+                          <Feather name="trash-2" size={13} color="#ef4444" />
+                          <Text className="font-sans font-bold text-[#ef4444] text-[12px]">Excluir</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                );
+              })
+            )
+          )}
+        </View>
 
         {/* ========================================================= */}
         {/* 8. PAGINAÇÃO                                               */}
         {/* ========================================================= */}
         {!isFollowupMode && totalItems > 0 && (
-          <View className="bg-white rounded-[16px] p-[16px] border border-[#e2e8f0] flex-row justify-between items-center mt-[10px] shadow-sm">
+          <View className="mx-4 bg-white rounded-[16px] p-[16px] border border-[#e2e8f0] flex-row justify-between items-center mt-[10px] shadow-xs">
             <Text className="font-sans text-[#64748b] text-[13px]">
               Mostrando {Math.min((currentPage - 1) * limit + 1, totalItems)}–
               {Math.min(currentPage * limit, totalItems)} de {totalItems}

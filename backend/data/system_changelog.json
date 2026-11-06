@@ -1,5 +1,49 @@
 [
   {
+    "id": "change-git-464745cf",
+    "date": "2026-11-06T21:17:47.000Z",
+    "commit": "464745cf",
+    "author": "Anderson",
+    "title": "Correção: Resolve CRM card navigation redirection in admin dashboard (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "resolve CRM card navigation redirection in admin dashboard",
+    "description": "Commit registrado no repositório: \"fix(mobile): resolve CRM card navigation redirection in admin dashboard\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/.expo/types/router.d.ts, mobile/src/app/(admin)/_layout.tsx, mobile/src/app/(admin)/crm-modulo/_layout.tsx (+17 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #464745cf"
+    },
+    "after": {
+      "nova_versao": "resolve CRM card navigation redirection in admin dashboard"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/.expo/types/router.d.ts",
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx",
+      "mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx",
+      "mobile/src/app/(admin)/crm-modulo/avaliacoes.tsx",
+      "mobile/src/app/(admin)/crm-modulo/avisos.tsx",
+      "mobile/src/app/(admin)/crm-modulo/caixa-entrada.tsx",
+      "mobile/src/app/(admin)/crm-modulo/cancelamentos.tsx",
+      "mobile/src/app/(admin)/crm-modulo/cmo-metrics.tsx",
+      "mobile/src/app/(admin)/crm-modulo/copilot-wpp.tsx",
+      "mobile/src/app/(admin)/crm-modulo/distribuicao.tsx",
+      "mobile/src/app/(admin)/crm-modulo/espera.tsx",
+      "mobile/src/app/(admin)/crm-modulo/followup.tsx",
+      "mobile/src/app/(admin)/crm-modulo/leads.tsx",
+      "mobile/src/app/(admin)/crm-modulo/pacientes.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "mobile/src/app/(admin)/crm-modulo/receita.tsx",
+      "mobile/src/app/(admin)/crm.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-516f1a5b",
     "date": "2026-11-06T21:05:18.000Z",
     "commit": "516f1a5b",
