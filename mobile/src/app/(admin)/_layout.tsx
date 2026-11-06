@@ -44,11 +44,11 @@ export default function AdminLayout() {
   const HeaderLeft = () => (
     <View className="flex-row items-center ml-[20px] gap-2">
       <Image 
-        source={{ uri: "https://placehold.co/100x100?text=AD" }} 
-        className="w-[36px] h-[36px] rounded-full border-2 border-[#8b5cf6]" 
+        source={user?.fotoUrl ? { uri: user.fotoUrl } : { uri: "https://placehold.co/100x100/1B4332/FFFFFF?text=AD" }} 
+        className="w-[36px] h-[36px] rounded-full border-2 border-[#1B4332]" 
       />
-      <View className="bg-[#f3e8ff] border border-[#d8b4fe] px-[8px] py-[4px] rounded-[50px]">
-        <Text className="text-[#8b5cf6] font-sans font-bold text-[12px]">🛡️ Admin</Text>
+      <View className="bg-[#e8f5e9] border border-[#c8e6c9] px-[10px] py-[4px] rounded-[50px]">
+        <Text className="text-[#1B4332] font-sans font-bold text-[12px]">🛡️ Admin</Text>
       </View>
     </View>
   );
@@ -101,11 +101,18 @@ export default function AdminLayout() {
               if (route.name === "dados") iconName = "bar-chart-2";
               if (route.name === "ajustes") iconName = "settings";
 
-              // Admin uses purple as brand color
-              const tintColor = isFocused ? "#8b5cf6" : "#999";
-              const bgColor = isFocused ? "bg-[#f3e8ff]" : "";
-              const textColor = isFocused ? "text-[#8b5cf6]" : "text-[#999]";
-              const textWeight = isFocused ? "font-semibold" : "font-medium";
+              // Cores idênticas ao web mobile admin (Início em verde #1B4332, CRM em roxo #8b5cf6, etc.)
+              const isCrm = route.name === "crm";
+              const tintColor = isFocused 
+                ? (isCrm ? "#8b5cf6" : "#1B4332") 
+                : (isCrm ? "#8b5cf6" : "#999999");
+              const bgColor = isFocused 
+                ? (isCrm ? "bg-[#f3e8ff]" : "bg-[#f0fdf4]") 
+                : "";
+              const textColor = isFocused 
+                ? (isCrm ? "text-[#8b5cf6]" : "text-[#1B4332]") 
+                : (isCrm ? "text-[#8b5cf6]" : "text-[#999999]");
+              const textWeight = isFocused ? "font-bold" : "font-medium";
 
               return (
                 <TouchableOpacity
