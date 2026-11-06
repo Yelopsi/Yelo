@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-720217c4",
+    "date": "2026-11-06T22:26:22.000Z",
+    "commit": "720217c4",
+    "author": "Anderson",
+    "title": "Correção: Fix psychologist card layout and progress bar rendering (mobile/crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "fix psychologist card layout and progress bar rendering",
+    "description": "Commit registrado no repositório: \"fix(mobile/crm): fix psychologist card layout and progress bar rendering\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/psicologos.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #720217c4"
+    },
+    "after": {
+      "nova_versao": "fix psychologist card layout and progress bar rendering"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-eb32f3d6",
     "date": "2026-11-06T22:17:01.000Z",
     "commit": "eb32f3d6",
