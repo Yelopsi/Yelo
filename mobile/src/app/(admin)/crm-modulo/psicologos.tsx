@@ -579,41 +579,43 @@ export default function AdminCRMPsicologosScreen() {
 
   return (
     <View className="flex-1 bg-[#f8fafc]">
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 120 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
       >
+        {/* Barra de Navegação Superior (Voltar ao CRM Hub + Atualizar) */}
+        <View className="px-4 mb-3 flex-row items-center justify-between">
+          <TouchableOpacity
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(admin)/crm'))}
+            activeOpacity={0.7}
+            className="flex-row items-center bg-white px-3.5 py-2 rounded-full border border-slate-200 shadow-xs"
+          >
+            <Feather name="arrow-left" size={16} color="#1B4332" />
+            <Text className="font-sans text-[#1B4332] text-xs font-semibold ml-1.5">CRM Hub</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={onRefresh}
+            activeOpacity={0.7}
+            className="w-9 h-9 rounded-full bg-white border border-slate-200 items-center justify-center shadow-xs"
+          >
+            <Feather name="refresh-cw" size={14} color="#1B4332" />
+          </TouchableOpacity>
+        </View>
+
         {/* ========================================================= */}
-        {/* 1. CABEÇALHO SUPERIOR (GRADIENTE YELO #1B4332 -> #0f2b20) */}
+        {/* 1. HERO CARD SUPERIOR (GRADIENTE YELO COM BORDAS ARREDONDADAS) */}
         {/* ========================================================= */}
         <LinearGradient
           colors={['#1B4332', '#0f2b20']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ paddingTop: insets.top + 10 }}
-          className="px-4 pb-6 rounded-b-[32px] shadow-md mb-2"
+          className="mx-4 rounded-[26px] p-5 mb-5 shadow-sm overflow-hidden"
         >
-          {/* Barra de Ações Superior (Voltar + Atualizar) */}
-          <View className="flex-row items-center justify-between mb-3">
-            <TouchableOpacity
-              onPress={() => (router.canGoBack() ? router.back() : router.replace('/(admin)/crm'))}
-              activeOpacity={0.7}
-              className="flex-row items-center bg-white/15 px-3.5 py-1.5 rounded-full border border-white/20"
-            >
-              <Feather name="arrow-left" size={16} color="#fff" />
-              <Text className="font-sans text-white text-xs font-semibold ml-1.5">CRM Hub</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={onRefresh}
-              activeOpacity={0.7}
-              className="w-8 h-8 rounded-full bg-white/15 border border-white/20 items-center justify-center"
-            >
-              <Feather name="refresh-cw" size={13} color="#fff" />
-            </TouchableOpacity>
-          </View>
+          {/* Efeito decorativo de fundo */}
+          <View className="absolute -top-[40px] -right-[40px] w-[180px] h-[180px] bg-white/5 rounded-full pointer-events-none" />
 
           {/* Título e Subtítulo */}
           <View className="mb-4">
