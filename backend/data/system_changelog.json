@@ -1,5 +1,36 @@
 [
   {
+    "id": "change-git-37b961e7",
+    "date": "2026-11-07T18:27:17.000Z",
+    "commit": "37b961e7",
+    "author": "Anderson",
+    "title": "Correção: Corrigir deteccao de perfil ativo e espacamento inferior no alternador de perfis (modal)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir deteccao de perfil ativo e espacamento inferior no alternador de perfis",
+    "description": "Commit registrado no repositório: \"fix(modal): corrigir deteccao de perfil ativo e espacamento inferior no alternador de perfis\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/psiAuthController.js, backend/data/system_changelog.json, mobile/src/app/(admin)/_layout.tsx, mobile/src/app/(admin)/ajustes.tsx (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #37b961e7"
+    },
+    "after": {
+      "nova_versao": "corrigir deteccao de perfil ativo e espacamento inferior no alternador de perfis"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/psiAuthController.js",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(admin)/ajustes.tsx",
+      "mobile/src/app/(tabs)/ajustes.tsx",
+      "mobile/src/components/MobileHeader.tsx",
+      "mobile/src/components/ProfileSwitcherModal.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-b861a29a",
     "date": "2026-11-07T18:09:55.000Z",
     "commit": "b861a29a",
