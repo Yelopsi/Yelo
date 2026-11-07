@@ -221,6 +221,39 @@ router.get('/analytics/ranking', adminController.getPsiRanking);
 // Rota para listar TODAS as perguntas na aba de remoção
 router.get('/content/qna', qnaController.getAllQuestions);
 
+// Rota para deletar uma pergunta específica (Remoção de Conteúdo)
+router.delete('/content/qna/:id', qnaController.deleteQuestion);
+
+// --- ROTAS DE GESTÃO DE CONTEÚDO (BLOG) ---
+router.get('/content/blog', async (req, res) => {
+    try {
+        const PsiModel = db.Psychologist || db.psychologist;
+        const posts = await db.Post.findAll({
+            include: PsiModel ? [{
+                model: PsiModel,
+                as: 'autor',
+                attributes: ['id', 'nome']
+            }] : [],
+            order: [['createdAt', 'DESC']]
+        });
+        res.json(posts);
+    } catch (error) {
+        console.error("Erro ao listar posts do blog para admin:", error);
+        res.status(500).json({ error: "Erro ao buscar posts do blog" });
+    }
+});
+
+router.delete('/content/blog/:id', async (req, res) => {
+    try {
+        const deleted = await db.Post.destroy({ where: { id: req.params.id } });
+        if (!deleted) return res.status(404).json({ error: "Post não encontrado" });
+        res.json({ success: true, message: "Post removido com sucesso" });
+    } catch (error) {
+        console.error("Erro ao deletar post do blog:", error);
+        res.status(500).json({ error: "Erro ao deletar post" });
+    }
+});
+
 // Rota para buscar todas as perguntas com status 'pending_review'
 router.get('/qna/pending', qnaController.getPendingQuestions);
 

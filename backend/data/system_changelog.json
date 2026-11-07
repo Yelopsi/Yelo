@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-10f8b29b",
+    "date": "2026-11-07T01:01:45.000Z",
+    "commit": "10f8b29b",
+    "author": "Anderson",
+    "title": "Novo: Modernize content hub and sub-screens with Yelo standards (admin-conteudo)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "modernize content hub and sub-screens with Yelo standards",
+    "description": "Commit registrado no repositório: \"feat(admin-conteudo): modernize content hub and sub-screens with Yelo standards\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/comunidade-gestao.tsx, mobile/src/app/(admin)/conteudo.tsx, mobile/src/app/(admin)/gestao-conteudo.tsx (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #10f8b29b"
+    },
+    "after": {
+      "nova_versao": "modernize content hub and sub-screens with Yelo standards"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/comunidade-gestao.tsx",
+      "mobile/src/app/(admin)/conteudo.tsx",
+      "mobile/src/app/(admin)/gestao-conteudo.tsx",
+      "mobile/src/app/(admin)/moderacao-forum.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-6965aebd",
     "date": "2026-11-07T00:53:29.000Z",
     "commit": "6965aebd",
