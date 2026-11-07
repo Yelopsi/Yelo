@@ -375,6 +375,7 @@ export default function AdminAjustesHubScreen() {
       <ProfileSwitcherModal
         visible={switcherVisible}
         onClose={() => setSwitcherVisible(false)}
+        currentRole="admin"
       />
     </ScrollView>
   );

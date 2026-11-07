@@ -128,6 +128,7 @@ export default function MobileHeader() {
     <ProfileSwitcherModal
       visible={switcherVisible}
       onClose={() => setSwitcherVisible(false)}
+      currentRole="psychologist"
     />
     </>
   );

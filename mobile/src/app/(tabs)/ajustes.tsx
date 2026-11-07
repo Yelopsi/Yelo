@@ -336,6 +336,7 @@ export default function AjustesScreen() {
       <ProfileSwitcherModal
         visible={switcherVisible}
         onClose={() => setSwitcherVisible(false)}
+        currentRole="psychologist"
       />
     </View>
   );

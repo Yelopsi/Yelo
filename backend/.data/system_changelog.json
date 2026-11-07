@@ -1,5 +1,36 @@
 [
   {
+    "id": "change-git-b861a29a",
+    "date": "2026-11-07T18:09:55.000Z",
+    "commit": "b861a29a",
+    "author": "Anderson",
+    "title": "Novo: Implementar alternador rapido de perfis admin e psicologo (auth)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "implementar alternador rapido de perfis admin e psicologo",
+    "description": "Commit registrado no repositório: \"feat(auth): implementar alternador rapido de perfis admin e psicologo\". Arquivos modificados: backend/data/system_changelog.json, mobile/src/app/(admin)/_layout.tsx, mobile/src/app/(admin)/ajustes.tsx, mobile/src/app/(tabs)/ajustes.tsx, mobile/src/app/login.tsx (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #b861a29a"
+    },
+    "after": {
+      "nova_versao": "implementar alternador rapido de perfis admin e psicologo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(admin)/ajustes.tsx",
+      "mobile/src/app/(tabs)/ajustes.tsx",
+      "mobile/src/app/login.tsx",
+      "mobile/src/components/MobileHeader.tsx",
+      "mobile/src/components/ProfileSwitcherModal.tsx",
+      "mobile/src/contexts/AuthContext.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-3cb1849c",
     "date": "2026-11-07T17:56:45.000Z",
     "commit": "3cb1849c",

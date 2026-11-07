@@ -256,6 +256,7 @@ export default function AdminLayout() {
       <ProfileSwitcherModal
         visible={switcherVisible}
         onClose={() => setSwitcherVisible(false)}
+        currentRole="admin"
       />
     </>
   );
