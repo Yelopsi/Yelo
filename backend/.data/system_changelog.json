@@ -1,5 +1,58 @@
 [
   {
+    "id": "change-git-74d4ab34",
+    "date": "2026-11-07T16:54:29.000Z",
+    "commit": "74d4ab34",
+    "author": "Anderson",
+    "title": "Novo: Harmonizar todas as telas de admin com identidade visual e cores da Yelo (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "harmonizar todas as telas de admin com identidade visual e cores da Yelo",
+    "description": "Commit registrado no repositório: \"feat(mobile): harmonizar todas as telas de admin com identidade visual e cores da Yelo\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/_layout.tsx, mobile/src/app/(admin)/ajustes.tsx, mobile/src/app/(admin)/backlog-ajustes.tsx (+26 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #74d4ab34"
+    },
+    "after": {
+      "nova_versao": "harmonizar todas as telas de admin com identidade visual e cores da Yelo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(admin)/ajustes.tsx",
+      "mobile/src/app/(admin)/backlog-ajustes.tsx",
+      "mobile/src/app/(admin)/configuracoes.tsx",
+      "mobile/src/app/(admin)/conteudo.tsx",
+      "mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx",
+      "mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx",
+      "mobile/src/app/(admin)/crm-modulo/avaliacoes.tsx",
+      "mobile/src/app/(admin)/crm-modulo/avisos.tsx",
+      "mobile/src/app/(admin)/crm-modulo/caixa-entrada.tsx",
+      "mobile/src/app/(admin)/crm-modulo/cancelamentos.tsx",
+      "mobile/src/app/(admin)/crm-modulo/cmo-metrics.tsx",
+      "mobile/src/app/(admin)/crm-modulo/distribuicao.tsx",
+      "mobile/src/app/(admin)/crm-modulo/espera.tsx",
+      "mobile/src/app/(admin)/crm-modulo/followup.tsx",
+      "mobile/src/app/(admin)/crm-modulo/leads.tsx",
+      "mobile/src/app/(admin)/crm-modulo/pacientes.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "mobile/src/app/(admin)/crm-modulo/receita.tsx",
+      "mobile/src/app/(admin)/crm.tsx",
+      "mobile/src/app/(admin)/dados.tsx",
+      "mobile/src/app/(admin)/exportar.tsx",
+      "mobile/src/app/(admin)/gestao-conteudo.tsx",
+      "mobile/src/app/(admin)/historico-alteracoes.tsx",
+      "mobile/src/app/(admin)/index.tsx",
+      "mobile/src/app/(admin)/logs-sistema.tsx",
+      "mobile/src/app/(admin)/metricas-match.tsx",
+      "mobile/src/app/(admin)/perfil-admin.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-683095c8",
     "date": "2026-11-07T01:16:46.000Z",
     "commit": "683095c8",

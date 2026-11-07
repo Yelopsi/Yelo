@@ -126,6 +126,11 @@ export default function AdminCmoMetricsScreen() {
     return `${(Number(val) * 100).toFixed(1).replace('.', ',')}%`;
   };
 
+  const formatMonths = (val: any) => {
+    if (val === undefined || val === null || isNaN(Number(val))) return '0,0 Meses';
+    return `${Number(val).toFixed(1).replace('.', ',')} Meses`;
+  };
+
   // Trend Badge Helper
   const renderTrendBadge = (curr: number, prev: number, inverseGood: boolean = false) => {
     if (prev === null || prev === undefined || isNaN(prev) || isNaN(curr)) {
@@ -169,6 +174,88 @@ export default function AdminCmoMetricsScreen() {
       <View style={{ backgroundColor: color + '1a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
         <Text style={{ color, fontSize: 10, fontWeight: '700' }}>
           {arrow} {Math.abs(pct).toFixed(1)}%
+        </Text>
+      </View>
+    );
+  };
+
+  // Transparency Debug Card Helper
+  const renderDbgCard = (
+    title: string,
+    currVal: number,
+    prevVal: number,
+    formatType: 'currency' | 'number' | 'percent' | 'months',
+    inverseGood: boolean = false,
+    customNote?: string,
+    isAlertBg: boolean = false
+  ) => {
+    let currFormatted = '';
+    let prevFormatted = '';
+
+    if (formatType === 'currency') {
+      currFormatted = formatBRL(currVal);
+      prevFormatted = formatBRL(prevVal);
+    } else if (formatType === 'percent') {
+      currFormatted = formatPercent(currVal);
+      prevFormatted = formatPercent(prevVal);
+    } else if (formatType === 'number') {
+      currFormatted = formatNumber(currVal);
+      prevFormatted = formatNumber(prevVal);
+    } else if (formatType === 'months') {
+      currFormatted = formatMonths(currVal);
+      prevFormatted = formatMonths(prevVal);
+    }
+
+    return (
+      <View
+        key={title}
+        style={{
+          width: '48.5%',
+          backgroundColor: isAlertBg ? '#fff1f2' : '#ffffff',
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: isAlertBg ? '#fecdd3' : '#e2e8f0',
+          padding: 12,
+        }}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <Text
+            style={{
+              fontFamily: 'Inter_700Bold',
+              fontSize: 10,
+              color: isAlertBg ? '#991b1b' : '#64748b',
+              textTransform: 'uppercase',
+              flex: 1,
+            }}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+          {customNote ? null : renderTrendBadge(currVal, prevVal, inverseGood)}
+        </View>
+
+        <Text
+          style={{
+            fontFamily: 'Fraunces_700Bold',
+            fontSize: 17,
+            color: isAlertBg ? '#991b1b' : '#1e293b',
+            marginTop: 2,
+          }}
+          numberOfLines={1}
+        >
+          {currFormatted}
+        </Text>
+
+        <Text
+          style={{
+            fontFamily: 'Inter_400Regular',
+            fontSize: 10,
+            color: isAlertBg ? '#b91c1c' : '#94a3b8',
+            marginTop: 2,
+          }}
+          numberOfLines={1}
+        >
+          {customNote || `Anterior: ${prevFormatted}`}
         </Text>
       </View>
     );
@@ -324,6 +411,7 @@ export default function AdminCmoMetricsScreen() {
   }
 
   const decision = dashboardData?.decisionEngineMeta || dashboardData?.decision || {};
+  const prevDecision = dashboardData?.prevDecisionEngineMeta || {};
   const platform = dashboardData?.platform || {};
   const b2b = platform.b2b || {};
   const b2c = platform.b2c || {};
@@ -634,16 +722,17 @@ export default function AdminCmoMetricsScreen() {
           <View
             style={{
               flexDirection: 'row',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               justifyContent: 'space-between',
+              flexWrap: 'wrap',
               gap: 8,
-              marginBottom: 10,
-              paddingBottom: 8,
+              marginBottom: 12,
+              paddingBottom: 10,
               borderBottomWidth: 1,
               borderBottomColor: '#f1f5f9',
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 160 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 150 }}>
               <Text style={{ fontSize: 16 }}>⚡</Text>
               <Text
                 style={{
@@ -661,8 +750,11 @@ export default function AdminCmoMetricsScreen() {
               style={{
                 backgroundColor: '#e8f5e9',
                 paddingHorizontal: 10,
-                paddingVertical: 4.5,
+                paddingVertical: 5,
                 borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#c8e6c9',
+                alignSelf: 'flex-start',
                 flexShrink: 0,
               }}
             >
@@ -1274,26 +1366,52 @@ export default function AdminCmoMetricsScreen() {
 
           {/* Impressões Meta */}
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Impressões</Text>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b', marginTop: 3 }}>{formatNumber(metaImpressions)}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Impressões</Text>
+              {renderTrendBadge(metaImpressions, prevMetaImpressions, false)}
+            </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>{formatNumber(metaImpressions)}</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatNumber(prevMetaImpressions)}</Text>
           </View>
 
           {/* Cliques Meta */}
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Cliques</Text>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b', marginTop: 3 }}>{formatNumber(metaClicks)}</Text>
-          </View>
-
-          {/* CPC Meta */}
-          <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>CPC Médio</Text>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b', marginTop: 3 }}>{formatBRL(metaCpc)}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Cliques Meta</Text>
+              {renderTrendBadge(metaClicks, prevMetaClicks, false)}
+            </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>{formatNumber(metaClicks)}</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatNumber(prevMetaClicks)}</Text>
           </View>
 
           {/* Conversões Meta */}
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Conversões</Text>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b', marginTop: 3 }}>{formatNumber(metaConversions)}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Conversões</Text>
+              {renderTrendBadge(metaConversions, prevMetaConversions, false)}
+            </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#10b981' }}>{formatNumber(metaConversions)}</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatNumber(prevMetaConversions)}</Text>
+          </View>
+
+          {/* CPC Meta */}
+          <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>CPC Médio</Text>
+              {renderTrendBadge(metaCpc, prevMetaCpc, true)}
+            </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>{formatBRL(metaCpc)}</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatBRL(prevMetaCpc)}</Text>
+          </View>
+
+          {/* Custo/Conv. Meta (CPA) */}
+          <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Custo/Conv. (CPA)</Text>
+              {renderTrendBadge(metaCpa, prevMetaCpa, true)}
+            </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>{formatBRL(metaCpa)}</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatBRL(prevMetaCpa)}</Text>
           </View>
         </View>
 
@@ -1357,14 +1475,52 @@ export default function AdminCmoMetricsScreen() {
 
           {/* Impressões Google */}
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Impressões</Text>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b', marginTop: 3 }}>{formatNumber(googleImpressions)}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Impressões</Text>
+              {renderTrendBadge(googleImpressions, prevGoogleImpressions, false)}
+            </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>{formatNumber(googleImpressions)}</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatNumber(prevGoogleImpressions)}</Text>
+          </View>
+
+          {/* Cliques Google Totais */}
+          <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Cliques Google</Text>
+              {renderTrendBadge(googleAdClicks, prevGoogleAdClicks, false)}
+            </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>{formatNumber(googleAdClicks)}</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatNumber(prevGoogleAdClicks)}</Text>
+          </View>
+
+          {/* Conversões Google */}
+          <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Conversões Google</Text>
+              {renderTrendBadge(googleConversions, prevGoogleConversions, false)}
+            </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#10b981' }}>{formatNumber(googleConversions)}</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatNumber(prevGoogleConversions)}</Text>
           </View>
 
           {/* CPC Google */}
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>CPC Médio</Text>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b', marginTop: 3 }}>{formatBRL(googleCpc)}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>CPC Médio</Text>
+              {renderTrendBadge(googleCpc, prevGoogleCpc, true)}
+            </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>{formatBRL(googleCpc)}</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatBRL(prevGoogleCpc)}</Text>
+          </View>
+
+          {/* Custo/Conv. Google (CPA) */}
+          <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Custo/Conv. Google</Text>
+              {renderTrendBadge(googleCpa, prevGoogleCpa, true)}
+            </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>{formatBRL(googleCpa)}</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatBRL(prevGoogleCpa)}</Text>
           </View>
         </View>
 
@@ -1381,7 +1537,7 @@ export default function AdminCmoMetricsScreen() {
             </Text>
           </View>
           <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11.5, color: '#64748b' }}>
-            💡 <Text style={{ fontFamily: 'Inter_700Bold', color: '#475569' }}>Janela de 90 Dias:</Text> Médias históricas para suavizar variações amostrais.
+            💡 <Text style={{ fontFamily: 'Inter_700Bold', color: '#475569' }}>Janela Fixa de 90 Dias:</Text> Para evitar distorções de amostras pequenas, as médias consideram os últimos 3 meses.
           </Text>
         </View>
 
@@ -1398,7 +1554,7 @@ export default function AdminCmoMetricsScreen() {
               {globalEffort > 0 ? `${globalEffort.toFixed(1)} cliques / paciente` : 'N/A'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
-              Média global de cliques no WhatsApp necessários para fechar 1 paciente.
+              Média global: quantos cliques no WhatsApp são necessários para gerar 1 paciente fechado.
             </Text>
           </View>
 
@@ -1411,35 +1567,64 @@ export default function AdminCmoMetricsScreen() {
               Ads: {adsEffort !== null ? adsEffort.toFixed(1) : 'N/A'} | Org: {orgEffort !== null ? orgEffort.toFixed(1) : 'N/A'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
-              Cliques por paciente dividido entre tráfego pago e tráfego orgânico.
+              Média de cliques necessários para gerar 1 paciente, dividida entre tráfego pago (Ads) e orgânico (SEO).
             </Text>
           </View>
 
-          {/* Ticket Médio & TTFC em Linha */}
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1, backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
-              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
-                Ticket Top 20%
+          {/* Ticket Médio Top Performers */}
+          <View style={{ backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 14 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>
+                Ticket Médio Top Performers
               </Text>
-              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#10b981', marginTop: 2 }}>
-                {topTicket > 0 ? formatBRL(topTicket) : 'R$ 0,00'}
-              </Text>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
-                Valor médio sessão
-              </Text>
+              {renderTrendBadge(topTicket, prevTopTicket, false)}
             </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#10b981', marginTop: 4 }}>
+              {topTicket > 0 ? formatBRL(topTicket) : 'R$ 0,00'}
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
+              Valor médio da sessão cobrado pelos top 20% psicólogos que mais fecham pacientes.
+            </Text>
+          </View>
 
-            <View style={{ flex: 1, backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
-              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
-                1º Contato (TTFC)
+          {/* Tempo até o 1º Contato (TTFC) */}
+          <View style={{ backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 14 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>
+                Tempo até o 1º Contato (TTFC)
               </Text>
-              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1B4332', marginTop: 2 }}>
-                {ttfcMedian !== null ? `${ttfcMedian.toFixed(1)} dias` : 'N/A'}
-              </Text>
-              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
-                Até primeiro lead
-              </Text>
+              {renderTrendBadge(
+                ttfcMedian !== null ? ttfcMedian : 0,
+                prevEfficiency?.ttfcData?.median ? Number(prevEfficiency.ttfcData.median) : 0,
+                true
+              )}
             </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#1B4332', marginTop: 4 }}>
+              {ttfcMedian !== null ? `${ttfcMedian.toFixed(1)} dias` : 'N/A'}
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
+              Média: {efficiency.ttfcData?.mean ? `${Number(efficiency.ttfcData.mean).toFixed(1)} dias` : 'N/A'} · amostra: {efficiency.ttfcData?.sample ?? 0} profissionais
+            </Text>
+          </View>
+
+          {/* TTV (1º Paciente Iniciado) */}
+          <View style={{ backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 14 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>
+                TTV (1º Paciente Iniciado)
+              </Text>
+              {renderTrendBadge(
+                ttvMedian !== null ? ttvMedian : 0,
+                prevEfficiency?.ttvData?.median ? Number(prevEfficiency.ttvData.median) : 0,
+                true
+              )}
+            </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#1e293b', marginTop: 4 }}>
+              {ttvMedian !== null ? `${ttvMedian.toFixed(1)} dias` : 'N/A'}
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
+              Média: {efficiency.ttvData?.mean ? `${Number(efficiency.ttvData.mean).toFixed(1)} dias` : 'N/A'} · amostra: {efficiency.ttvData?.sample ?? 0} profissionais (PROXY)
+            </Text>
           </View>
         </View>
 
@@ -1522,10 +1707,10 @@ export default function AdminCmoMetricsScreen() {
         <View style={{ marginBottom: 12, marginTop: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <View style={{ width: 28, height: 28, borderRadius: 999, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' }}>
-              <Feather name="file-text" size={15} color="#475569" />
+              <Feather name="shield" size={15} color="#475569" />
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1e293b' }}>
-              Transparência da Inteligência
+              Dados Usados pela Inteligência (Transparência)
             </Text>
           </View>
           <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11.5, color: '#64748b' }}>
@@ -1533,48 +1718,51 @@ export default function AdminCmoMetricsScreen() {
           </Text>
         </View>
 
-        <View
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: 20,
-            borderWidth: 1,
-            borderColor: '#e2e8f0',
-            padding: 16,
-            marginBottom: 20,
-          }}
-        >
-          <View style={{ gap: 12 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#334155' }}>Gasto Meta Ads:</Text>
-              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: '#1e293b' }}>{formatBRL(metaSpend)}</Text>
-            </View>
-            <View style={{ height: 1, backgroundColor: '#f1f5f9' }} />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+          {/* B2B (Meta) */}
+          {renderDbgCard('Gasto Meta', metaSpend, prevMetaSpend, 'currency', true)}
+          {renderDbgCard('Trials (Meta Ads)', metaTrials, prevMetaTrials, 'number', false)}
+          {renderDbgCard('Assinantes (Meta)', metaPagantes, prevMetaPagantes, 'number', false)}
+          {renderDbgCard('CAC B2B', metaCac, prevMetaCac, 'currency', true)}
+          {renderDbgCard(
+            'Payback (Receita)',
+            decision.paybackMonths || 0,
+            prevDecision.paybackMonths || 0,
+            'months',
+            true
+          )}
+          {renderDbgCard(
+            'Churn (Meta Ads)',
+            b2b.meta_churn_rate || 0,
+            prevPlatform.b2b?.meta_churn_rate || 0,
+            'percent',
+            true
+          )}
+          {dashboardData?.simulator?.churn?.type === 'ASSUMED'
+            ? renderDbgCard(
+                'Churn Geral',
+                dashboardData.simulator.churn.value || 0.05,
+                0,
+                'percent',
+                true,
+                'Hipótese conservadora',
+                true
+              )
+            : renderDbgCard(
+                'Churn Geral',
+                b2b.global_churn_rate || 0,
+                prevPlatform.b2b?.global_churn_rate || 0,
+                'percent',
+                true,
+                undefined,
+                true
+              )}
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#334155' }}>Gasto Google Ads:</Text>
-              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: '#1e293b' }}>{formatBRL(googleSpend)}</Text>
-            </View>
-            <View style={{ height: 1, backgroundColor: '#f1f5f9' }} />
-
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#334155' }}>CAC Meta B2B:</Text>
-              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: '#1e293b' }}>{formatBRL(metaCac)}</Text>
-            </View>
-            <View style={{ height: 1, backgroundColor: '#f1f5f9' }} />
-
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#334155' }}>CPL Google B2C:</Text>
-              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: '#1e293b' }}>{formatBRL(googleCpl)}</Text>
-            </View>
-            <View style={{ height: 1, backgroundColor: '#f1f5f9' }} />
-
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#334155' }}>Churn Rate Global:</Text>
-              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: '#ef4444' }}>
-                {formatPercent(b2b.global_churn_rate || 0.05)}
-              </Text>
-            </View>
-          </View>
+          {/* B2C (Google) */}
+          {renderDbgCard('Gasto Google', googleSpend, prevGoogleSpend, 'currency', true)}
+          {renderDbgCard('Cliques WPP (Google)', googleClicks, prevGoogleClicks, 'number', false)}
+          {renderDbgCard('Pacientes Fechados', googleDeals, prevGoogleDeals, 'number', false)}
+          {renderDbgCard('CPL B2C', googleCpl, prevGoogleCpl, 'currency', true)}
         </View>
       </ScrollView>
 
