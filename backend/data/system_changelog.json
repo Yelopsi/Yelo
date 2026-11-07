@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-b17e21c0",
+    "date": "2026-11-07T17:51:02.000Z",
+    "commit": "b17e21c0",
+    "author": "Anderson",
+    "title": "Novo: Implementar bottom nav com capsula Verde Floresta e icone Dourado Yelo (Opcao 1) (ui)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "implementar bottom nav com capsula Verde Floresta e icone Dourado Yelo (Opcao 1)",
+    "description": "Commit registrado no repositório: \"feat(ui): implementar bottom nav com capsula Verde Floresta e icone Dourado Yelo (Opcao 1)\". Arquivos modificados: backend/data/system_changelog.json, mobile/src/app/(admin)/_layout.tsx, mobile/src/app/(paciente)/_layout.tsx, mobile/src/app/(tabs)/_layout.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #b17e21c0"
+    },
+    "after": {
+      "nova_versao": "implementar bottom nav com capsula Verde Floresta e icone Dourado Yelo (Opcao 1)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(paciente)/_layout.tsx",
+      "mobile/src/app/(tabs)/_layout.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-4f535042",
     "date": "2026-11-07T17:30:20.000Z",
     "commit": "4f535042",

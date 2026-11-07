@@ -70,27 +70,27 @@ const SairIcon = ({ color }: { color: any }) => (
   </View>
 );
 
-const TabCapsule = ({ focused, children }: { focused: boolean; children: React.ReactNode }) => (
-  <View
-    style={{
-      width: 44,
-      height: 28,
-      borderRadius: 14,
-      backgroundColor: focused ? '#1B4332' : 'transparent',
-      alignItems: 'center',
-      justifyContent: 'center',
-      ...(focused
-        ? {
-            shadowColor: '#1B4332',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 4,
-            elevation: 3,
-          }
-        : {}),
-    }}
-  >
-    {children}
+const TabLabelWithDot = ({ label, focused, color }: { label: string; focused: boolean; color?: string }) => (
+  <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+    <Text
+      style={{
+        fontSize: 9.5,
+        fontWeight: focused ? '700' : '500',
+        color: color || (focused ? '#1B4332' : '#9ca3af'),
+        textAlign: 'center',
+      }}
+    >
+      {label}
+    </Text>
+    <View
+      style={{
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: color ? (focused ? color : 'transparent') : (focused ? '#1B4332' : 'transparent'),
+        marginTop: 2,
+      }}
+    />
   </View>
 );
 
@@ -182,70 +182,40 @@ export default function TabLayout() {
           name="index"
           options={{
             title: 'Início',
-            tabBarIcon: ({ focused }) => (
-              <TabCapsule focused={focused}>
-                <HomeIcon color={focused ? '#FFEE8C' : '#9ca3af'} />
-              </TabCapsule>
-            ),
+            tabBarIcon: ({ focused }) => <HomeIcon color={focused ? '#1B4332' : '#9ca3af'} />,
+            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Início" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="clinica"
           options={{
             title: 'Clínica',
-            tabBarIcon: ({ focused }) => (
-              <TabCapsule focused={focused}>
-                <ClinicaIcon color={focused ? '#FFEE8C' : '#9ca3af'} />
-              </TabCapsule>
-            ),
+            tabBarIcon: ({ focused }) => <ClinicaIcon color={focused ? '#1B4332' : '#9ca3af'} />,
+            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Clínica" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="evolucao"
           options={{
             title: 'Evolução',
-            tabBarIcon: ({ focused }) => (
-              <TabCapsule focused={focused}>
-                <EvolucaoIcon color={focused ? '#FFEE8C' : '#9ca3af'} />
-              </TabCapsule>
-            ),
+            tabBarIcon: ({ focused }) => <EvolucaoIcon color={focused ? '#1B4332' : '#9ca3af'} />,
+            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Evolução" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="ajustes"
           options={{
             title: 'Ajustes',
-            tabBarIcon: ({ focused }) => (
-              <TabCapsule focused={focused}>
-                <AjustesIcon color={focused ? '#FFEE8C' : '#9ca3af'} />
-              </TabCapsule>
-            ),
+            tabBarIcon: ({ focused }) => <AjustesIcon color={focused ? '#1B4332' : '#9ca3af'} />,
+            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Ajustes" focused={focused} />,
           }}
         />
         <Tabs.Screen
           name="sair"
           options={{
             title: 'Sair',
-            tabBarIcon: () => (
-              <TabCapsule focused={false}>
-                <SairIcon color="#ef4444" />
-              </TabCapsule>
-            ),
-            tabBarLabel: () => (
-              <Text
-                style={{
-                  fontSize: 9,
-                  fontWeight: '600',
-                  color: '#ef4444',
-                  textAlign: 'center',
-                  marginTop: 2,
-                  marginBottom: 0,
-                  alignSelf: 'center',
-                }}
-              >
-                Sair
-              </Text>
-            ),
+            tabBarIcon: () => <SairIcon color="#ef4444" />,
+            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Sair" focused={focused} color="#ef4444" />,
           }}
           listeners={() => ({
             tabPress: (e) => {

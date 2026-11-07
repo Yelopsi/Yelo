@@ -32,29 +32,35 @@ export default function AdminLayout() {
   );
 
   const AdminTabIcon = ({ name, focused }: { name: keyof typeof Feather.glyphMap; focused: boolean }) => (
-    <View
-      style={{
-        width: 44,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: focused ? '#1B4332' : 'transparent',
-        alignItems: 'center',
-        justifyContent: 'center',
-        ...(focused
-          ? {
-              shadowColor: '#1B4332',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 4,
-              elevation: 3,
-            }
-          : {}),
-      }}
-    >
+    <View style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}>
       <Feather
         name={name}
-        size={18}
-        color={focused ? '#FFEE8C' : '#9ca3af'}
+        size={20}
+        color={focused ? '#1B4332' : '#9ca3af'}
+      />
+    </View>
+  );
+
+  const AdminTabLabel = ({ label, focused }: { label: string; focused: boolean }) => (
+    <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+      <Text
+        style={{
+          fontSize: 9.5,
+          fontWeight: focused ? '700' : '500',
+          color: focused ? '#1B4332' : '#9ca3af',
+          textAlign: 'center',
+        }}
+      >
+        {label}
+      </Text>
+      <View
+        style={{
+          width: 4,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: focused ? '#1B4332' : 'transparent',
+          marginTop: 2,
+        }}
       />
     </View>
   );
@@ -153,6 +159,7 @@ export default function AdminLayout() {
           options={{ 
             title: 'Início',
             tabBarIcon: ({ focused }) => <AdminTabIcon name="home" focused={focused} />,
+            tabBarLabel: ({ focused }) => <AdminTabLabel label="Início" focused={focused} />,
           }} 
         />
         <Tabs.Screen 
@@ -160,6 +167,7 @@ export default function AdminLayout() {
           options={{ 
             title: 'CRM',
             tabBarIcon: ({ focused }) => <AdminTabIcon name="users" focused={focused} />,
+            tabBarLabel: ({ focused }) => <AdminTabLabel label="CRM" focused={focused} />,
           }} 
         />
         <Tabs.Screen 
@@ -167,6 +175,7 @@ export default function AdminLayout() {
           options={{ 
             title: 'Conteúdo',
             tabBarIcon: ({ focused }) => <AdminTabIcon name="layout" focused={focused} />,
+            tabBarLabel: ({ focused }) => <AdminTabLabel label="Conteúdo" focused={focused} />,
           }} 
         />
         <Tabs.Screen 
@@ -174,6 +183,7 @@ export default function AdminLayout() {
           options={{ 
             title: 'Dados',
             tabBarIcon: ({ focused }) => <AdminTabIcon name="bar-chart-2" focused={focused} />,
+            tabBarLabel: ({ focused }) => <AdminTabLabel label="Dados" focused={focused} />,
           }} 
         />
         <Tabs.Screen 
@@ -181,6 +191,7 @@ export default function AdminLayout() {
           options={{ 
             title: 'Ajustes',
             tabBarIcon: ({ focused }) => <AdminTabIcon name="settings" focused={focused} />,
+            tabBarLabel: ({ focused }) => <AdminTabLabel label="Ajustes" focused={focused} />,
           }} 
         />
         <Tabs.Screen
