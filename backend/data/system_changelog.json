@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-267cbf9d",
+    "date": "2026-11-07T17:21:41.000Z",
+    "commit": "267cbf9d",
+    "author": "Anderson",
+    "title": "Correção: Alinha hub de conteúdo com layout da versão web mobile (conteudo)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "alinha hub de conteúdo com layout da versão web mobile",
+    "description": "Commit registrado no repositório: \"fix(conteudo): alinha hub de conteúdo com layout da versão web mobile\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/conteudo.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #267cbf9d"
+    },
+    "after": {
+      "nova_versao": "alinha hub de conteúdo com layout da versão web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/conteudo.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-f77424f8",
     "date": "2026-11-07T17:17:54.000Z",
     "commit": "f77424f8",

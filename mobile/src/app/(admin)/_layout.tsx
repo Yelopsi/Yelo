@@ -160,20 +160,9 @@ export default function AdminLayout() {
         <Tabs.Screen
           name="sair"
           options={{
-            title: 'Sair',
-            tabBarIcon: () => <Feather name="log-out" size={20} color="#e63946" />,
-            tabBarLabel: () => (
-              <Text style={{ fontSize: 9, fontWeight: '600', color: '#e63946', textAlign: 'center', marginTop: 2 }}>
-                Sair
-              </Text>
-            ),
+            tabBarButton: () => null,
+            tabBarItemStyle: { display: 'none' },
           }}
-          listeners={() => ({
-            tabPress: (e) => {
-              e.preventDefault();
-              handleLogout();
-            },
-          })}
         />
         
         <Tabs.Screen 
