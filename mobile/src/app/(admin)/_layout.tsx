@@ -31,6 +31,34 @@ export default function AdminLayout() {
     </TouchableOpacity>
   );
 
+  const AdminTabIcon = ({ name, focused }: { name: keyof typeof Feather.glyphMap; focused: boolean }) => (
+    <View
+      style={{
+        width: 44,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: focused ? '#1B4332' : 'transparent',
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...(focused
+          ? {
+              shadowColor: '#1B4332',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              elevation: 3,
+            }
+          : {}),
+      }}
+    >
+      <Feather
+        name={name}
+        size={18}
+        color={focused ? '#FFEE8C' : '#9ca3af'}
+      />
+    </View>
+  );
+
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-[#f9fafb]">
@@ -101,18 +129,16 @@ export default function AdminLayout() {
               <BlurView intensity={95} tint="light" style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.96)' }} />
             </View>
           ),
-          tabBarActiveBackgroundColor: '#f0fdf4',
+          tabBarActiveBackgroundColor: 'transparent',
           tabBarItemStyle: {
-            borderRadius: 24,
             marginVertical: 4,
-            marginHorizontal: 2,
+            marginHorizontal: 0,
             padding: 0,
             alignItems: 'center',
             justifyContent: 'center',
-            overflow: 'hidden',
           },
           tabBarLabelStyle: {
-            fontSize: 9,
+            fontSize: 9.5,
             fontWeight: '600',
             textAlign: 'center',
             marginTop: 2,
@@ -126,35 +152,35 @@ export default function AdminLayout() {
           name="index" 
           options={{ 
             title: 'Início',
-            tabBarIcon: ({ color }: { color: any }) => <Feather name="home" size={20} color={color} />,
+            tabBarIcon: ({ focused }) => <AdminTabIcon name="home" focused={focused} />,
           }} 
         />
         <Tabs.Screen 
           name="crm" 
           options={{ 
             title: 'CRM',
-            tabBarIcon: ({ color }: { color: any }) => <Feather name="users" size={20} color={color} />,
+            tabBarIcon: ({ focused }) => <AdminTabIcon name="users" focused={focused} />,
           }} 
         />
         <Tabs.Screen 
           name="conteudo" 
           options={{ 
             title: 'Conteúdo',
-            tabBarIcon: ({ color }: { color: any }) => <Feather name="layout" size={20} color={color} />,
+            tabBarIcon: ({ focused }) => <AdminTabIcon name="layout" focused={focused} />,
           }} 
         />
         <Tabs.Screen 
           name="dados" 
           options={{ 
             title: 'Dados',
-            tabBarIcon: ({ color }: { color: any }) => <Feather name="bar-chart-2" size={20} color={color} />,
+            tabBarIcon: ({ focused }) => <AdminTabIcon name="bar-chart-2" focused={focused} />,
           }} 
         />
         <Tabs.Screen 
           name="ajustes" 
           options={{ 
             title: 'Ajustes',
-            tabBarIcon: ({ color }: { color: any }) => <Feather name="settings" size={20} color={color} />,
+            tabBarIcon: ({ focused }) => <AdminTabIcon name="settings" focused={focused} />,
           }} 
         />
         <Tabs.Screen

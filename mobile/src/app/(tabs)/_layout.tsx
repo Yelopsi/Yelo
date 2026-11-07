@@ -70,6 +70,30 @@ const SairIcon = ({ color }: { color: any }) => (
   </View>
 );
 
+const TabCapsule = ({ focused, children }: { focused: boolean; children: React.ReactNode }) => (
+  <View
+    style={{
+      width: 44,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: focused ? '#1B4332' : 'transparent',
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...(focused
+        ? {
+            shadowColor: '#1B4332',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+            elevation: 3,
+          }
+        : {}),
+    }}
+  >
+    {children}
+  </View>
+);
+
 export default function TabLayout() {
   const { signOut } = useAuth();
   const router = useRouter();
@@ -135,18 +159,16 @@ export default function TabLayout() {
               <BlurView intensity={95} tint="light" style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.96)' }} />
             </View>
           ),
-          tabBarActiveBackgroundColor: '#f0fdf4',
+          tabBarActiveBackgroundColor: 'transparent',
           tabBarItemStyle: {
-            borderRadius: 24,
             marginVertical: 4,
-            marginHorizontal: 2,
+            marginHorizontal: 0,
             padding: 0,
             alignItems: 'center',
             justifyContent: 'center',
-            overflow: 'hidden',
           },
           tabBarLabelStyle: {
-            fontSize: 9,
+            fontSize: 9.5,
             fontWeight: '600',
             textAlign: 'center',
             marginTop: 2,
@@ -160,35 +182,55 @@ export default function TabLayout() {
           name="index"
           options={{
             title: 'Início',
-            tabBarIcon: ({ color }) => <HomeIcon color={color} />,
+            tabBarIcon: ({ focused }) => (
+              <TabCapsule focused={focused}>
+                <HomeIcon color={focused ? '#FFEE8C' : '#9ca3af'} />
+              </TabCapsule>
+            ),
           }}
         />
         <Tabs.Screen
           name="clinica"
           options={{
             title: 'Clínica',
-            tabBarIcon: ({ color }) => <ClinicaIcon color={color} />,
+            tabBarIcon: ({ focused }) => (
+              <TabCapsule focused={focused}>
+                <ClinicaIcon color={focused ? '#FFEE8C' : '#9ca3af'} />
+              </TabCapsule>
+            ),
           }}
         />
         <Tabs.Screen
           name="evolucao"
           options={{
             title: 'Evolução',
-            tabBarIcon: ({ color }) => <EvolucaoIcon color={color} />,
+            tabBarIcon: ({ focused }) => (
+              <TabCapsule focused={focused}>
+                <EvolucaoIcon color={focused ? '#FFEE8C' : '#9ca3af'} />
+              </TabCapsule>
+            ),
           }}
         />
         <Tabs.Screen
           name="ajustes"
           options={{
             title: 'Ajustes',
-            tabBarIcon: ({ color }) => <AjustesIcon color={color} />,
+            tabBarIcon: ({ focused }) => (
+              <TabCapsule focused={focused}>
+                <AjustesIcon color={focused ? '#FFEE8C' : '#9ca3af'} />
+              </TabCapsule>
+            ),
           }}
         />
         <Tabs.Screen
           name="sair"
           options={{
             title: 'Sair',
-            tabBarIcon: () => <SairIcon color="#ef4444" />,
+            tabBarIcon: () => (
+              <TabCapsule focused={false}>
+                <SairIcon color="#ef4444" />
+              </TabCapsule>
+            ),
             tabBarLabel: () => (
               <Text
                 style={{

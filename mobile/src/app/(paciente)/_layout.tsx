@@ -75,10 +75,31 @@ export default function PacienteLayout() {
                   key={route.key}
                   activeOpacity={0.7}
                   onPress={onPress}
-                  className={`items-center justify-center flex-1 py-1.5 rounded-[20px] ${isFocused ? 'bg-[#f0fdf4]' : ''}`}
+                  className="items-center justify-center flex-1 py-1"
                 >
-                  <Feather name={iconName as any} size={20} color={isFocused ? "#1B4332" : "#999"} />
-                  <Text className={`font-sans font-${isFocused ? 'bold' : 'medium'} text-[10px] mt-0.5 ${isFocused ? 'text-[#1B4332]' : 'text-[#888]'}`}>
+                  <View
+                    style={{
+                      width: 44,
+                      height: 28,
+                      borderRadius: 14,
+                      backgroundColor: isFocused ? '#1B4332' : 'transparent',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 2,
+                      ...(isFocused
+                        ? {
+                            shadowColor: '#1B4332',
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 4,
+                            elevation: 3,
+                          }
+                        : {}),
+                    }}
+                  >
+                    <Feather name={iconName as any} size={18} color={isFocused ? "#FFEE8C" : "#9ca3af"} />
+                  </View>
+                  <Text className={`font-sans font-${isFocused ? 'bold' : 'medium'} text-[9.5px] ${isFocused ? 'text-[#1B4332]' : 'text-[#9ca3af]'}`}>
                     {label}
                   </Text>
                 </TouchableOpacity>
