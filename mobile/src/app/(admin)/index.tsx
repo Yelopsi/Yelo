@@ -597,7 +597,7 @@ export default function AdminVisaoGeralScreen() {
           {/* Candidatos na Lista de Espera */}
           <TouchableOpacity 
             activeOpacity={0.8}
-            onPress={() => router.push('/(admin)/crm')}
+            onPress={() => router.push('/(admin)/crm-modulo/espera')}
             className="flex-row items-center bg-[#fef3c7] border border-[#fde68a] rounded-[16px] p-3.5 mb-3"
           >
             <Text className="text-[22px] mr-3">⏳</Text>

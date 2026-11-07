@@ -47,8 +47,56 @@ export default function AdminDadosHubScreen() {
         </Text>
       </View>
 
+      {/* GRID DE CARDS EM ORDEM LÓGICA DE INTELIGÊNCIA E DADOS */}
       <View style={{ gap: 12 }}>
-        {/* Relatórios e Crescimento */}
+        {/* 1. Finanças & Bottom-Line: Receita e Assinaturas */}
+        <TouchableOpacity
+          onPress={() => router.push('/(admin)/crm-modulo/receita')}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            padding: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 4,
+            elevation: 1,
+          }}
+          activeOpacity={0.8}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              backgroundColor: '#ccfbf1',
+              borderRadius: 999,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 14,
+            }}
+          >
+            <Feather name="dollar-sign" size={20} color="#0d9488" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15 }}>
+                Receita e Assinaturas
+              </Text>
+              <View style={{ backgroundColor: '#ccfbf1', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', color: '#0d9488', fontSize: 9 }}>FINANCEIRO</Text>
+              </View>
+            </View>
+            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, lineHeight: 16 }}>
+              MRR, taxa de churn, LTV e faturas do Asaas.
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="#94a3b8" />
+        </TouchableOpacity>
+
+        {/* 2. Macro Negócio: Relatórios e Crescimento */}
         <TouchableOpacity
           onPress={() => router.push('/(admin)/crm-modulo/analytics-crescimento')}
           style={{
@@ -84,13 +132,13 @@ export default function AdminDadosHubScreen() {
               Relatórios e Crescimento
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, lineHeight: 16 }}>
-              Evolução histórica, novos assinantes e metas.
+              Evolução histórica, novos assinantes e metas da plataforma.
             </Text>
           </View>
           <Feather name="chevron-right" size={18} color="#94a3b8" />
         </TouchableOpacity>
 
-        {/* Analytics do Funil */}
+        {/* 3. Comportamento & Conversão: Analytics do Funil */}
         <TouchableOpacity
           onPress={() => router.push('/(admin)/crm-modulo/analytics-funil')}
           style={{
@@ -132,7 +180,7 @@ export default function AdminDadosHubScreen() {
           <Feather name="chevron-right" size={18} color="#94a3b8" />
         </TouchableOpacity>
 
-        {/* Métricas de Match */}
+        {/* 4. Demanda Clínica: Métricas de Match */}
         <TouchableOpacity
           onPress={() => router.push('/(admin)/metricas-match')}
           style={{
@@ -174,7 +222,7 @@ export default function AdminDadosHubScreen() {
           <Feather name="chevron-right" size={18} color="#94a3b8" />
         </TouchableOpacity>
 
-        {/* Downloads */}
+        {/* 5. Extração & Auditoria: Downloads e Exportação */}
         <TouchableOpacity
           onPress={() => router.push('/(admin)/exportar')}
           style={{

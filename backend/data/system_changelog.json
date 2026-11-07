@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-08f7a89b",
+    "date": "2026-11-07T17:23:59.000Z",
+    "commit": "08f7a89b",
+    "author": "Anderson",
+    "title": "Correção: Remove botao de sair da bottom nav (admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "remove botao de sair da bottom nav",
+    "description": "Commit registrado no repositório: \"fix(admin): remove botao de sair da bottom nav\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/_layout.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #08f7a89b"
+    },
+    "after": {
+      "nova_versao": "remove botao de sair da bottom nav"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/_layout.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-267cbf9d",
     "date": "2026-11-07T17:21:41.000Z",
     "commit": "267cbf9d",

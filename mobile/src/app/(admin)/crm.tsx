@@ -124,7 +124,7 @@ export default function AdminCRMHubScreen() {
         </Text>
       </LinearGradient>
 
-      {/* 2. SEÇÃO: GESTÃO DE ENTIDADES */}
+      {/* 2. SEÇÃO: GESTÃO DE ENTIDADES (FUNIL E OPERAÇÃO EM ORDEM LÓGICA) */}
       <View className="mb-6">
         <View className="flex-row items-center gap-2 mb-3 px-1">
           <Feather name="users" size={18} color="#1B4332" />
@@ -133,19 +133,7 @@ export default function AdminCRMHubScreen() {
           </Text>
         </View>
 
-        {/* Psicólogos */}
-        <CrmCard
-          title="Sucesso do Psicólogo"
-          description="Onboarding, performance de perfil e distribuição de leads."
-          badge="Oferta"
-          icon="activity"
-          iconColor="#1B4332"
-          iconBg="#e8f5e9"
-          borderColor="#1B4332"
-          onPress={() => handleNavigate('/(admin)/crm-modulo/psicologos')}
-        />
-
-        {/* Leads */}
+        {/* 1. Captação Ativa: Pipeline de Leads */}
         <CrmCard
           title="Pipeline de Leads"
           description="Gestão de prospecção, estágios do funil e contatos frios."
@@ -157,7 +145,7 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/leads')}
         />
 
-        {/* Inbound */}
+        {/* 2. Entrada / Inbound: Leads em Espera */}
         <CrmCard
           title="Leads Inbound (Espera)"
           description="Profissionais que iniciaram o cadastro mas não finalizaram."
@@ -169,7 +157,19 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/espera')}
         />
 
-        {/* Pacientes */}
+        {/* 3. Base Ativa: Sucesso do Psicólogo */}
+        <CrmCard
+          title="Sucesso do Psicólogo"
+          description="Onboarding, performance de perfil e distribuição de leads."
+          badge="Oferta"
+          icon="activity"
+          iconColor="#1B4332"
+          iconBg="#e8f5e9"
+          borderColor="#1B4332"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/psicologos')}
+        />
+
+        {/* 4. Demanda & Retenção: Visão 360° Pacientes */}
         <CrmCard
           title="Visão 360° Pacientes"
           description="Timeline, engajamento, abandono e histórico de match."
@@ -182,7 +182,7 @@ export default function AdminCRMHubScreen() {
         />
       </View>
 
-      {/* 3. SEÇÃO: INTELIGÊNCIA FINANCEIRA E ANALYTICS */}
+      {/* 3. SEÇÃO: INTELIGÊNCIA FINANCEIRA E ANALYTICS (MACRO -> MICRO EM ORDEM LÓGICA) */}
       <View className="mb-6">
         <View className="flex-row items-center gap-2 mb-3 px-1">
           <Feather name="trending-up" size={18} color="#1B4332" />
@@ -191,7 +191,21 @@ export default function AdminCRMHubScreen() {
           </Text>
         </View>
 
-        {/* Growth */}
+        {/* 1. Receita e Assinaturas (Bottom-Line Financeiro) */}
+        <CrmCard
+          title="Receita e Assinaturas"
+          description="MRR, taxa de Churn, Life Time Value (LTV) e faturas Asaas."
+          badge="Financeiro"
+          badgeBg="#ccfbf1"
+          badgeColor="#0d9488"
+          icon="dollar-sign"
+          iconColor="#0d9488"
+          iconBg="#ccfbf1"
+          borderColor="#14b8a6"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/receita')}
+        />
+
+        {/* 2. Growth (Crescimento Executivo e Metas) */}
         <CrmCard
           title="Growth 📈"
           description="Visão completa de aquisição, conversão, retenção e demanda do Yelo."
@@ -202,7 +216,7 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/analytics-crescimento')}
         />
 
-        {/* Painel do CMO */}
+        {/* 3. Painel do CMO (Alocação de Ads e CAC) */}
         <CrmCard
           title="Painel do CMO 🧠"
           description="Motor de Decisão Executiva de Ads cruzado com CAC e Churn."
@@ -216,7 +230,7 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/cmo-metrics')}
         />
 
-        {/* Analytics Funil */}
+        {/* 4. Analytics de Funil (Taxa de Conversão e UTMs) */}
         <CrmCard
           title="Analytics de Funil"
           description="Métricas em tempo real, conversão end-to-end e origens UTM."
@@ -227,18 +241,7 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/analytics-funil')}
         />
 
-        {/* Receita e Assinaturas */}
-        <CrmCard
-          title="Receita e Assinaturas"
-          description="MRR, taxa de Churn, Life Time Value (LTV) e faturas Asaas."
-          icon="dollar-sign"
-          iconColor="#14b8a6"
-          iconBg="#ccfbf1"
-          borderColor="#14b8a6"
-          onPress={() => handleNavigate('/(admin)/crm-modulo/receita')}
-        />
-
-        {/* Distribuição & Ads */}
+        {/* 5. Distribuição & Ads (Equidade da Rede) */}
         <CrmCard
           title="Distribuição & Ads"
           description="Análise de visibilidade de profissionais e sugestões de Ads."
@@ -249,7 +252,7 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/distribuicao')}
         />
 
-        {/* Copilot WhatsApp AI */}
+        {/* 6. Copilot WhatsApp AI (Assistente de Conversão) */}
         <CrmCard
           title="Copilot WhatsApp 💬"
           description="Cole conversas do WhatsApp e receba respostas personalizadas com o dossiê real do psicólogo."
@@ -273,7 +276,7 @@ export default function AdminCRMHubScreen() {
           </Text>
         </View>
 
-        {/* Avaliações (NPS) */}
+        {/* 1. Avaliações (Satisfação e Depoimentos) */}
         <CrmCard
           title="Avaliações (NPS)"
           description="Monitoramento de satisfação e depoimentos da plataforma."
@@ -284,7 +287,7 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/avaliacoes')}
         />
 
-        {/* Motivos de Cancelamento */}
+        {/* 2. Motivos de Cancelamento (Atrito e Churn) */}
         <CrmCard
           title="Motivos de Cancelamento"
           description="Análise de atrito e feedback deixado na exclusão da conta (Churn)."
@@ -296,7 +299,7 @@ export default function AdminCRMHubScreen() {
         />
       </View>
 
-      {/* 5. SEÇÃO: COMUNICAÇÃO OMNICHANNEL */}
+      {/* 5. SEÇÃO: COMUNICAÇÃO OMNICHANNEL (DIRETO -> BROADCAST EM ORDEM LÓGICA) */}
       <View className="mb-6">
         <View className="flex-row items-center gap-2 mb-3 px-1">
           <Feather name="message-square" size={18} color="#1B4332" />
@@ -305,7 +308,7 @@ export default function AdminCRMHubScreen() {
           </Text>
         </View>
 
-        {/* Caixa de Entrada */}
+        {/* 1. Atendimento 1-to-1 Imediato: Caixa de Entrada */}
         <CrmCard
           title="Caixa de Entrada (Chat)"
           description="Atendimento em tempo real a psicólogos e suporte."
@@ -316,18 +319,7 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/caixa-entrada')}
         />
 
-        {/* Mural de Avisos */}
-        <CrmCard
-          title="Mural de Avisos"
-          description="Notificações globais (Push) para os painéis dos profissionais."
-          icon="bell"
-          iconColor="#d97706"
-          iconBg="#fef3c7"
-          borderColor="#d97706"
-          onPress={() => handleNavigate('/(admin)/crm-modulo/avisos')}
-        />
-
-        {/* Follow-up WhatsApp */}
+        {/* 2. Reativação Direta: Follow-up WhatsApp */}
         <CrmCard
           title="Follow-up WhatsApp"
           description="Retomada de contato (Retenção) com pacientes perdidos."
@@ -336,6 +328,17 @@ export default function AdminCRMHubScreen() {
           iconBg="#ecfdf5"
           borderColor="#10b981"
           onPress={() => handleNavigate('/(admin)/crm-modulo/followup')}
+        />
+
+        {/* 3. Comunicação Massiva: Mural de Avisos */}
+        <CrmCard
+          title="Mural de Avisos"
+          description="Notificações globais (Push) para os painéis dos profissionais."
+          icon="bell"
+          iconColor="#d97706"
+          iconBg="#fef3c7"
+          borderColor="#d97706"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/avisos')}
         />
       </View>
     </ScrollView>

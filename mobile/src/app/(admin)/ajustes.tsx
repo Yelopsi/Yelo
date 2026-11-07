@@ -68,8 +68,93 @@ export default function AdminAjustesHubScreen() {
         </Text>
       </View>
 
+      {/* GRID DE CARDS EM ORDEM LÓGICA DE GESTÃO E OPERAÇÃO */}
       <View style={{ gap: 12 }}>
-        {/* Central de Ajustes (Notion Flow) */}
+        {/* 1. Identidade & Acesso: Meu Perfil Admin */}
+        <TouchableOpacity
+          onPress={() => router.push('/(admin)/perfil-admin')}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            padding: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 4,
+            elevation: 1,
+          }}
+          activeOpacity={0.8}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              backgroundColor: '#e8f5e9',
+              borderRadius: 999,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 14,
+            }}
+          >
+            <Feather name="user" size={20} color="#1B4332" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15, marginBottom: 2 }}>
+              Meu Perfil Admin
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, lineHeight: 16 }}>
+              Altere seu nome, foto e credenciais de acesso.
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="#94a3b8" />
+        </TouchableOpacity>
+
+        {/* 2. Regras de Negócio: Configurações Globais */}
+        <TouchableOpacity
+          onPress={() => router.push('/(admin)/configuracoes')}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            padding: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 4,
+            elevation: 1,
+          }}
+          activeOpacity={0.8}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              backgroundColor: '#f1f5f9',
+              borderRadius: 999,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 14,
+            }}
+          >
+            <Feather name="settings" size={20} color="#475569" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15, marginBottom: 2 }}>
+              Configurações Globais
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, lineHeight: 16 }}>
+              Preços, planos, termos e canais oficiais da Yelo.
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="#94a3b8" />
+        </TouchableOpacity>
+
+        {/* 3. Evolução de Produto: Central de Ajustes (Notion Flow) */}
         <TouchableOpacity
           onPress={() => router.push('/(admin)/backlog-ajustes')}
           style={{
@@ -116,133 +201,7 @@ export default function AdminAjustesHubScreen() {
           <Feather name="chevron-right" size={18} color="#94a3b8" />
         </TouchableOpacity>
 
-        {/* Configurações Globais */}
-        <TouchableOpacity
-          onPress={() => router.push('/(admin)/configuracoes')}
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: 20,
-            padding: 16,
-            flexDirection: 'row',
-            alignItems: 'center',
-            borderWidth: 1,
-            borderColor: '#e2e8f0',
-            shadowColor: '#000',
-            shadowOpacity: 0.02,
-            shadowRadius: 4,
-            elevation: 1,
-          }}
-          activeOpacity={0.8}
-        >
-          <View
-            style={{
-              width: 44,
-              height: 44,
-              backgroundColor: '#f1f5f9',
-              borderRadius: 999,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 14,
-            }}
-          >
-            <Feather name="settings" size={20} color="#475569" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15, marginBottom: 2 }}>
-              Configurações Globais
-            </Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, lineHeight: 16 }}>
-              Preços, planos, termos e canais oficiais da Yelo.
-            </Text>
-          </View>
-          <Feather name="chevron-right" size={18} color="#94a3b8" />
-        </TouchableOpacity>
-
-        {/* Meu Perfil Admin */}
-        <TouchableOpacity
-          onPress={() => router.push('/(admin)/perfil-admin')}
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: 20,
-            padding: 16,
-            flexDirection: 'row',
-            alignItems: 'center',
-            borderWidth: 1,
-            borderColor: '#e2e8f0',
-            shadowColor: '#000',
-            shadowOpacity: 0.02,
-            shadowRadius: 4,
-            elevation: 1,
-          }}
-          activeOpacity={0.8}
-        >
-          <View
-            style={{
-              width: 44,
-              height: 44,
-              backgroundColor: '#e8f5e9',
-              borderRadius: 999,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 14,
-            }}
-          >
-            <Feather name="user" size={20} color="#1B4332" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15, marginBottom: 2 }}>
-              Meu Perfil Admin
-            </Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, lineHeight: 16 }}>
-              Altere seu nome, foto e credenciais de acesso.
-            </Text>
-          </View>
-          <Feather name="chevron-right" size={18} color="#94a3b8" />
-        </TouchableOpacity>
-
-        {/* Monitoramento e Logs */}
-        <TouchableOpacity
-          onPress={() => router.push('/(admin)/logs-sistema')}
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: 20,
-            padding: 16,
-            flexDirection: 'row',
-            alignItems: 'center',
-            borderWidth: 1,
-            borderColor: '#e2e8f0',
-            shadowColor: '#000',
-            shadowOpacity: 0.02,
-            shadowRadius: 4,
-            elevation: 1,
-          }}
-          activeOpacity={0.8}
-        >
-          <View
-            style={{
-              width: 44,
-              height: 44,
-              backgroundColor: '#fef2f2',
-              borderRadius: 999,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 14,
-            }}
-          >
-            <Feather name="activity" size={20} color="#ef4444" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15, marginBottom: 2 }}>
-              Monitoramento e Logs
-            </Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, lineHeight: 16 }}>
-              Auditoria do sistema, exceções e histórico operacional.
-            </Text>
-          </View>
-          <Feather name="chevron-right" size={18} color="#94a3b8" />
-        </TouchableOpacity>
-
-        {/* Histórico de Alterações */}
+        {/* 4. Auditoria de Versões: Histórico de Alterações */}
         <TouchableOpacity
           onPress={() => router.push('/(admin)/historico-alteracoes')}
           style={{
@@ -284,7 +243,49 @@ export default function AdminAjustesHubScreen() {
           <Feather name="chevron-right" size={18} color="#94a3b8" />
         </TouchableOpacity>
 
-        {/* Card Sair */}
+        {/* 5. Saúde & Infra: Monitoramento e Logs */}
+        <TouchableOpacity
+          onPress={() => router.push('/(admin)/logs-sistema')}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            padding: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 4,
+            elevation: 1,
+          }}
+          activeOpacity={0.8}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              backgroundColor: '#fef2f2',
+              borderRadius: 999,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 14,
+            }}
+          >
+            <Feather name="activity" size={20} color="#ef4444" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15, marginBottom: 2 }}>
+              Monitoramento e Logs
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, lineHeight: 16 }}>
+              Auditoria do sistema, exceções e histórico operacional.
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="#94a3b8" />
+        </TouchableOpacity>
+
+        {/* 6. Encerramento de Sessão: Card Sair */}
         <TouchableOpacity
           onPress={handleLogout}
           style={{
