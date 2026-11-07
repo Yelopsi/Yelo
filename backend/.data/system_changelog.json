@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-f77424f8",
+    "date": "2026-11-07T17:17:54.000Z",
+    "commit": "f77424f8",
+    "author": "Anderson",
+    "title": "Novo: Sincroniza métricas e kpis financeiros da web mobile com o app (receita)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "sincroniza métricas e kpis financeiros da web mobile com o app",
+    "description": "Commit registrado no repositório: \"feat(receita): sincroniza métricas e kpis financeiros da web mobile com o app\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/receita.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #f77424f8"
+    },
+    "after": {
+      "nova_versao": "sincroniza métricas e kpis financeiros da web mobile com o app"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/receita.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-c9c27f3c",
     "date": "2026-11-07T17:11:07.000Z",
     "commit": "c9c27f3c",
