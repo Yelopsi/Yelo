@@ -136,6 +136,7 @@ export default function LoginScreen() {
           nome: response.data.nome,
           email: response.data.email,
           type: userType,
+          isAdmin: response.data.isAdmin || userType === 'admin',
           slug: response.data.slug,
           fotoUrl: response.data.fotoUrl
         };

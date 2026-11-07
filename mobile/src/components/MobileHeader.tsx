@@ -6,12 +6,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { resolvePhotoUrl } from '../utils/imageUrl';
 import api from '../services/api';
+import ProfileSwitcherModal from './ProfileSwitcherModal';
 
 export default function MobileHeader() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, canAccessAdmin } = useAuth();
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [switcherVisible, setSwitcherVisible] = useState(false);
   const fotoUri = resolvePhotoUrl(user?.fotoUrl);
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export default function MobileHeader() {
   }, []);
 
   return (
+    <>
     <View 
       className="flex-row items-center bg-white border-b border-[#e0e0e0]"
       style={{ 
@@ -86,9 +89,30 @@ export default function MobileHeader() {
         </View>
       </View>
 
+      {/* ALTERNADOR DE PERFIL ADMIN (se tiver permissão) */}
+      {canAccessAdmin && (
+        <TouchableOpacity 
+          activeOpacity={0.8}
+          onPress={() => setSwitcherVisible(true)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#1B4332',
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 999,
+            marginRight: 6,
+            gap: 4,
+          }}
+        >
+          <Feather name="shield" size={12} color="#FFEE8C" />
+          <Text style={{ fontFamily: 'Inter_700Bold', color: '#FFEE8C', fontSize: 11 }}>Admin</Text>
+        </TouchableOpacity>
+      )}
+
       {/* NOTIFICAÇÕES (Últimos Avisos) */}
       <TouchableOpacity 
-        className="ml-auto p-1.5 rounded-full items-center justify-center relative"
+        className="p-1.5 rounded-full items-center justify-center relative"
         onPress={() => router.navigate('/(tabs)/avisos')}
         activeOpacity={0.7}
       >
@@ -101,5 +125,10 @@ export default function MobileHeader() {
         )}
       </TouchableOpacity>
     </View>
+    <ProfileSwitcherModal
+      visible={switcherVisible}
+      onClose={() => setSwitcherVisible(false)}
+    />
+    </>
   );
 }

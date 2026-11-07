@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Tabs, Redirect, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -7,11 +7,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { resolvePhotoUrl } from '../../utils/imageUrl';
 import { StatusBar } from 'expo-status-bar';
+import ProfileSwitcherModal from '../../components/ProfileSwitcherModal';
 
 export default function AdminLayout() {
   const insets = useSafeAreaInsets();
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
+  const [switcherVisible, setSwitcherVisible] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -78,7 +80,11 @@ export default function AdminLayout() {
   }
 
   const HeaderLeft = () => (
-    <View className="flex-row items-center ml-[20px] gap-2">
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={() => setSwitcherVisible(true)}
+      style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 20, gap: 8 }}
+    >
       {user?.fotoUrl ? (
         <Image 
           source={{ uri: resolvePhotoUrl(user.fotoUrl) }} 
@@ -91,10 +97,33 @@ export default function AdminLayout() {
           <Text style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 13 }}>AD</Text>
         </View>
       )}
-      <View className="bg-[#e8f5e9] border border-[#c8e6c9] px-[10px] py-[4px] rounded-[50px]">
-        <Text className="text-[#1B4332] font-sans font-bold text-[12px]">🛡️ Admin</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#e8f5e9', borderWidth: 1, borderColor: '#c8e6c9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 50, gap: 4 }}>
+        <Text style={{ color: '#1B4332', fontFamily: 'Inter_700Bold', fontSize: 12 }}>🛡️ Admin</Text>
+        <Feather name="chevron-down" size={13} color="#1B4332" />
       </View>
-    </View>
+    </TouchableOpacity>
+  );
+
+  const HeaderRight = () => (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={() => setSwitcherVisible(true)}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f0fdf4',
+        borderColor: '#bbf7d0',
+        borderWidth: 1,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 999,
+        marginRight: 16,
+        gap: 5,
+      }}
+    >
+      <Feather name="repeat" size={12} color="#1B4332" />
+      <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 11 }}>Ver como Psi</Text>
+    </TouchableOpacity>
   );
 
   return (
@@ -110,6 +139,7 @@ export default function AdminLayout() {
           headerShadowVisible: false,
           headerTitle: "",
           headerLeft: () => <HeaderLeft />,
+          headerRight: () => <HeaderRight />,
           tabBarActiveTintColor: '#1B4332',
           tabBarInactiveTintColor: '#9ca3af',
           tabBarStyle: {
@@ -223,6 +253,10 @@ export default function AdminLayout() {
         <Tabs.Screen name="backlog-ajustes" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerShown: true, headerLeft: () => <BackButton /> }} />
         <Tabs.Screen name="historico-alteracoes" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' }, headerShown: true, headerLeft: () => <BackButton /> }} />
       </Tabs>
+      <ProfileSwitcherModal
+        visible={switcherVisible}
+        onClose={() => setSwitcherVisible(false)}
+      />
     </>
   );
 }

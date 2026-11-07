@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
+import ProfileSwitcherModal from '../../components/ProfileSwitcherModal';
 
 export default function AdminAjustesHubScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
+  const [switcherVisible, setSwitcherVisible] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -70,6 +72,53 @@ export default function AdminAjustesHubScreen() {
 
       {/* GRID DE CARDS EM ORDEM LÓGICA DE GESTÃO E OPERAÇÃO */}
       <View style={{ gap: 12 }}>
+        {/* Destaque: Alternador Rápido de Perfil */}
+        <TouchableOpacity
+          onPress={() => setSwitcherVisible(true)}
+          style={{
+            backgroundColor: '#f0fdf4',
+            borderRadius: 20,
+            padding: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1.5,
+            borderColor: '#86efac',
+            shadowColor: '#16a34a',
+            shadowOpacity: 0.06,
+            shadowRadius: 6,
+            elevation: 2,
+          }}
+          activeOpacity={0.8}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              backgroundColor: '#1B4332',
+              borderRadius: 999,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 14,
+            }}
+          >
+            <Feather name="refresh-cw" size={20} color="#FFEE8C" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#14532d', fontSize: 15 }}>
+                Alternar Perfil
+              </Text>
+              <View style={{ backgroundColor: '#15803d', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 9.5 }}>RÁPIDO ⚡</Text>
+              </View>
+            </View>
+            <Text style={{ fontFamily: 'Inter_400Regular', color: '#166534', fontSize: 12, lineHeight: 16 }}>
+              Mude instantaneamente para o Painel do Psicólogo ou conecte outra conta.
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="#15803d" />
+        </TouchableOpacity>
+
         {/* 1. Identidade & Acesso: Meu Perfil Admin */}
         <TouchableOpacity
           onPress={() => router.push('/(admin)/perfil-admin')}
@@ -323,6 +372,10 @@ export default function AdminAjustesHubScreen() {
           </View>
         </TouchableOpacity>
       </View>
+      <ProfileSwitcherModal
+        visible={switcherVisible}
+        onClose={() => setSwitcherVisible(false)}
+      />
     </ScrollView>
   );
 }

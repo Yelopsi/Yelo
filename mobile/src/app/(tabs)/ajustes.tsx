@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Feather } from '@expo/vector-icons';
 import { useRouter, useNavigation } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
+import ProfileSwitcherModal from '../../components/ProfileSwitcherModal';
 import {
   checkBiometricsCapability,
   isBiometricsActive,
@@ -15,9 +16,10 @@ import {
 } from '../../services/biometrics';
 
 export default function AjustesScreen() {
-  const { user, token, signOut } = useAuth();
+  const { user, token, signOut, canAccessAdmin } = useAuth();
   const router = useRouter();
   const navigation = useNavigation<any>();
+  const [switcherVisible, setSwitcherVisible] = useState(false);
 
   const [biometricCap, setBiometricCap] = useState<BiometricCapability>({
     hasHardware: false,
@@ -160,6 +162,31 @@ export default function AjustesScreen() {
           {/* GRID DE CARDS (HUB) EM ORDEM LÓGICA DE UX */}
           <View className="px-6 pb-32">
             
+            {/* DESTAQUE: Painel do Administrador & Troca de Perfil */}
+            {canAccessAdmin && (
+              <TouchableOpacity 
+                onPress={() => setSwitcherVisible(true)} 
+                className="bg-[#f0fdf4] border-2 border-[#86efac] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(22,163,74,0.06)] mb-5"
+                activeOpacity={0.8}
+              >
+                <View className="w-[55px] h-[55px] rounded-[16px] bg-[#1B4332] items-center justify-center mr-5">
+                  <Feather name="shield" size={24} color="#FFEE8C" />
+                </View>
+                <View className="flex-1">
+                  <View className="flex-row items-center gap-2 mb-1">
+                    <Text className="font-title text-[#1B4332] text-[19px]">Painel do Administrador</Text>
+                    <View className="bg-[#1B4332] px-2 py-0.5 rounded-full">
+                      <Text className="text-[#FFEE8C] text-[10px] font-bold">ACESSO 🛡️</Text>
+                    </View>
+                  </View>
+                  <Text className="font-sans text-[14px] text-[#2d6a4f] leading-snug">
+                    Alternar para a gestão global do sistema ou trocar de perfil.
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={20} color="#1B4332" />
+              </TouchableOpacity>
+            )}
+
             {/* 1. PERFIL: Meu Perfil */}
             <TouchableOpacity 
               onPress={() => navigateTo('meu_perfil')} 
@@ -306,6 +333,10 @@ export default function AjustesScreen() {
           </View>
         </YeloScrollView>
       </View>
+      <ProfileSwitcherModal
+        visible={switcherVisible}
+        onClose={() => setSwitcherVisible(false)}
+      />
     </View>
   );
 }

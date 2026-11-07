@@ -1,5 +1,30 @@
 [
   {
+    "id": "change-git-3cb1849c",
+    "date": "2026-11-07T17:56:45.000Z",
+    "commit": "3cb1849c",
+    "author": "Anderson",
+    "title": "Interface: Alinhar margens e estilo da bottom nav com dot indicator no dashboard do psicologo",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "alinhar margens e estilo da bottom nav com dot indicator no dashboard do psicologo",
+    "description": "Commit registrado no repositório: \"style(psi): alinhar margens e estilo da bottom nav com dot indicator no dashboard do psicologo\". Arquivos modificados: backend/data/system_changelog.json, mobile/src/app/(tabs)/_layout.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #3cb1849c"
+    },
+    "after": {
+      "nova_versao": "alinhar margens e estilo da bottom nav com dot indicator no dashboard do psicologo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/_layout.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-70a33904",
     "date": "2026-11-07T17:53:39.000Z",
     "commit": "70a33904",
