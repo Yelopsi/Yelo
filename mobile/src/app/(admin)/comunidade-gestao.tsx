@@ -14,7 +14,7 @@ export default function ComunidadeGestaoScreen() {
     try {
       const [resBanner, resLinks] = await Promise.all([
         api.get('/api/admin/community-event').catch(() => ({ data: {} })),
-        api.get('/api/admin/community-resources').catch(() => ({ data: {} }))
+        api.get('/api/admin/community-resources').catch(() => ({ data: {} })),
       ]);
       setBannerForm(resBanner.data || { title: '', subtitle: '', date_time: '', format: '', action_link: '', action_text: '', is_active: false });
       setLinksForm(resLinks.data || { intervisao: '', grupo_wpp: '', suporte: '' });
@@ -52,99 +52,327 @@ export default function ComunidadeGestaoScreen() {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-[#f9fafb]">
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 60 }}>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: 130,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <View className="mb-[25px]">
-          <Text className="font-title text-[#1e1b4b] text-[24px]">Gestão da Comunidade</Text>
-          <Text className="font-sans text-[#666] text-[14px]">Configure o banner e os recursos úteis.</Text>
+        <View style={{ marginBottom: 20 }}>
+          <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 22, color: '#1e293b' }}>
+            Gestão da Comunidade 💬
+          </Text>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: '#64748b', marginTop: 2 }}>
+            Configure o banner de eventos e os links dos recursos úteis.
+          </Text>
         </View>
 
         {/* Banner da Comunidade */}
-        <View className="bg-white rounded-[16px] p-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#f0f0f0] mb-[20px]">
-          <View className="border-b border-[#e9ecef] pb-[10px] mb-[15px] flex-row justify-between items-center">
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            padding: 16,
+            marginBottom: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.03,
+            shadowRadius: 6,
+            elevation: 1,
+          }}
+        >
+          <View style={{ borderBottomWidth: 1, borderBottomColor: '#f1f5f9', paddingBottom: 10, marginBottom: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View>
-              <Text className="font-title text-[#1B4332] text-[18px]">Banner da Comunidade</Text>
-              <Text className="font-sans text-[#666] text-[12px]">Destaque principal no topo do Fórum.</Text>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1B4332' }}>
+                Banner da Comunidade
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#64748b', marginTop: 1 }}>
+                Destaque principal no topo do Fórum dos Psicólogos.
+              </Text>
             </View>
           </View>
 
-          <View pointerEvents={isBannerEditable ? "auto" : "none"} style={{ opacity: isBannerEditable ? 1 : 0.6 }}>
-            <View className="mb-[15px]">
-              <Text className="font-title text-[#333] text-[12px] mb-[5px]">Título do Evento</Text>
-              <TextInput value={bannerForm.title} onChangeText={t => setBannerForm({...bannerForm, title: t})} className="border border-[#cbd5e1] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]" />
+          <View pointerEvents={isBannerEditable ? "auto" : "none"} style={{ opacity: isBannerEditable ? 1 : 0.7 }}>
+            <View style={{ marginBottom: 12 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', marginBottom: 4, textTransform: 'uppercase' }}>
+                Título do Evento
+              </Text>
+              <TextInput
+                value={bannerForm.title}
+                onChangeText={t => setBannerForm({ ...bannerForm, title: t })}
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#cbd5e1',
+                  borderRadius: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 9,
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 13.5,
+                  color: '#1e293b',
+                  backgroundColor: '#f8fafc',
+                }}
+              />
             </View>
-            <View className="mb-[15px]">
-              <Text className="font-title text-[#333] text-[12px] mb-[5px]">Subtítulo</Text>
-              <TextInput value={bannerForm.subtitle} onChangeText={t => setBannerForm({...bannerForm, subtitle: t})} className="border border-[#cbd5e1] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]" />
+
+            <View style={{ marginBottom: 12 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', marginBottom: 4, textTransform: 'uppercase' }}>
+                Subtítulo
+              </Text>
+              <TextInput
+                value={bannerForm.subtitle}
+                onChangeText={t => setBannerForm({ ...bannerForm, subtitle: t })}
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#cbd5e1',
+                  borderRadius: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 9,
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 13.5,
+                  color: '#1e293b',
+                  backgroundColor: '#f8fafc',
+                }}
+              />
             </View>
-            <View className="flex-row gap-[10px] mb-[15px]">
-              <View className="flex-1">
-                <Text className="font-title text-[#333] text-[12px] mb-[5px]">Data e Hora</Text>
-                <TextInput value={bannerForm.date_time} onChangeText={t => setBannerForm({...bannerForm, date_time: t})} className="border border-[#cbd5e1] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]" />
+
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', marginBottom: 4, textTransform: 'uppercase' }}>
+                  Data e Hora
+                </Text>
+                <TextInput
+                  value={bannerForm.date_time}
+                  onChangeText={t => setBannerForm({ ...bannerForm, date_time: t })}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    borderRadius: 12,
+                    paddingHorizontal: 12,
+                    paddingVertical: 9,
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: 13.5,
+                    color: '#1e293b',
+                    backgroundColor: '#f8fafc',
+                  }}
+                />
               </View>
-              <View className="flex-1">
-                <Text className="font-title text-[#333] text-[12px] mb-[5px]">Formato</Text>
-                <TextInput value={bannerForm.format} onChangeText={t => setBannerForm({...bannerForm, format: t})} className="border border-[#cbd5e1] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]" />
+
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', marginBottom: 4, textTransform: 'uppercase' }}>
+                  Formato
+                </Text>
+                <TextInput
+                  value={bannerForm.format}
+                  onChangeText={t => setBannerForm({ ...bannerForm, format: t })}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    borderRadius: 12,
+                    paddingHorizontal: 12,
+                    paddingVertical: 9,
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: 13.5,
+                    color: '#1e293b',
+                    backgroundColor: '#f8fafc',
+                  }}
+                />
               </View>
             </View>
-            <View className="flex-row gap-[10px] mb-[15px]">
-              <View className="flex-1">
-                <Text className="font-title text-[#333] text-[12px] mb-[5px]">Link de Ação</Text>
-                <TextInput value={bannerForm.action_link} onChangeText={t => setBannerForm({...bannerForm, action_link: t})} className="border border-[#cbd5e1] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]" />
+
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', marginBottom: 4, textTransform: 'uppercase' }}>
+                  Link de Ação
+                </Text>
+                <TextInput
+                  value={bannerForm.action_link}
+                  onChangeText={t => setBannerForm({ ...bannerForm, action_link: t })}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    borderRadius: 12,
+                    paddingHorizontal: 12,
+                    paddingVertical: 9,
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: 13.5,
+                    color: '#1e293b',
+                    backgroundColor: '#f8fafc',
+                  }}
+                />
               </View>
-              <View className="flex-1">
-                <Text className="font-title text-[#333] text-[12px] mb-[5px]">Texto do Botão</Text>
-                <TextInput value={bannerForm.action_text} onChangeText={t => setBannerForm({...bannerForm, action_text: t})} className="border border-[#cbd5e1] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]" />
+
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', marginBottom: 4, textTransform: 'uppercase' }}>
+                  Texto do Botão
+                </Text>
+                <TextInput
+                  value={bannerForm.action_text}
+                  onChangeText={t => setBannerForm({ ...bannerForm, action_text: t })}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    borderRadius: 12,
+                    paddingHorizontal: 12,
+                    paddingVertical: 9,
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: 13.5,
+                    color: '#1e293b',
+                    backgroundColor: '#f8fafc',
+                  }}
+                />
               </View>
             </View>
-            
-            <View className="flex-row items-center mt-[5px]">
-              <Switch 
-                value={bannerForm.is_active} 
-                onValueChange={v => setBannerForm({...bannerForm, is_active: v})}
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+              <Switch
+                value={bannerForm.is_active}
+                onValueChange={v => setBannerForm({ ...bannerForm, is_active: v })}
                 trackColor={{ false: "#cbd5e1", true: "#10b981" }}
                 disabled={!isBannerEditable}
               />
-              <Text className="font-title text-[#333] text-[14px] ml-[10px]">Exibir Banner</Text>
+              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 13, color: '#1e293b', marginLeft: 10 }}>
+                Exibir Banner no Fórum
+              </Text>
             </View>
           </View>
 
-          <TouchableOpacity onPress={toggleBannerEdit} className={`mt-[20px] py-[12px] rounded-[10px] items-center flex-row justify-center ${isBannerEditable ? 'bg-[#10b981]' : 'bg-[#1B4332]'}`}>
-            <Feather name={isBannerEditable ? 'save' : 'edit-2'} size={16} color="white" />
-            <Text className="text-white font-title text-[14px] ml-[8px]">{isBannerEditable ? 'Salvar Banner' : 'Editar Banner'}</Text>
+          <TouchableOpacity
+            onPress={toggleBannerEdit}
+            style={{
+              marginTop: 18,
+              paddingVertical: 11,
+              borderRadius: 999, // Botão em formato de pílula
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              backgroundColor: isBannerEditable ? '#10b981' : '#1B4332',
+              gap: 8,
+            }}
+            activeOpacity={0.8}
+          >
+            <Feather name={isBannerEditable ? 'save' : 'edit-2'} size={15} color="#ffffff" />
+            <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 13 }}>
+              {isBannerEditable ? 'Salvar Banner' : 'Editar Banner'}
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* Links dos Recursos */}
-        <View className="bg-white rounded-[16px] p-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#f0f0f0] mb-[20px]">
-          <View className="border-b border-[#e9ecef] pb-[10px] mb-[15px]">
-            <Text className="font-title text-[#1B4332] text-[18px]">Links dos Recursos</Text>
-            <Text className="font-sans text-[#666] text-[12px]">Botões inferiores de acesso rápido.</Text>
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            padding: 16,
+            marginBottom: 20,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.03,
+            shadowRadius: 6,
+            elevation: 1,
+          }}
+        >
+          <View style={{ borderBottomWidth: 1, borderBottomColor: '#f1f5f9', paddingBottom: 10, marginBottom: 14 }}>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#0284C7' }}>
+              Links dos Recursos Úteis
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#64748b', marginTop: 1 }}>
+              Atalhos de acesso rápido para os profissionais na barra lateral.
+            </Text>
           </View>
 
-          <View pointerEvents={isLinksEditable ? "auto" : "none"} style={{ opacity: isLinksEditable ? 1 : 0.6 }}>
-            <View className="mb-[15px]">
-              <Text className="font-title text-[#333] text-[12px] mb-[5px]">Link Intervisão</Text>
-              <TextInput value={linksForm.intervisao} onChangeText={t => setLinksForm({...linksForm, intervisao: t})} className="border border-[#cbd5e1] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]" />
+          <View pointerEvents={isLinksEditable ? "auto" : "none"} style={{ opacity: isLinksEditable ? 1 : 0.7 }}>
+            <View style={{ marginBottom: 12 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', marginBottom: 4, textTransform: 'uppercase' }}>
+                Link da Intervisão Clínica
+              </Text>
+              <TextInput
+                value={linksForm.intervisao}
+                onChangeText={t => setLinksForm({ ...linksForm, intervisao: t })}
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#cbd5e1',
+                  borderRadius: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 9,
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 13.5,
+                  color: '#1e293b',
+                  backgroundColor: '#f8fafc',
+                }}
+              />
             </View>
-            <View className="mb-[15px]">
-              <Text className="font-title text-[#333] text-[12px] mb-[5px]">Link Grupo WhatsApp</Text>
-              <TextInput value={linksForm.grupo_wpp} onChangeText={t => setLinksForm({...linksForm, grupo_wpp: t})} className="border border-[#cbd5e1] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]" />
+
+            <View style={{ marginBottom: 12 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', marginBottom: 4, textTransform: 'uppercase' }}>
+                Link Grupo VIP WhatsApp
+              </Text>
+              <TextInput
+                value={linksForm.grupo_wpp}
+                onChangeText={t => setLinksForm({ ...linksForm, grupo_wpp: t })}
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#cbd5e1',
+                  borderRadius: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 9,
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 13.5,
+                  color: '#1e293b',
+                  backgroundColor: '#f8fafc',
+                }}
+              />
             </View>
-            <View className="mb-[15px]">
-              <Text className="font-title text-[#333] text-[12px] mb-[5px]">Link Suporte</Text>
-              <TextInput value={linksForm.suporte} onChangeText={t => setLinksForm({...linksForm, suporte: t})} className="border border-[#cbd5e1] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]" />
+
+            <View style={{ marginBottom: 12 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', marginBottom: 4, textTransform: 'uppercase' }}>
+                Link Suporte ao Psicólogo
+              </Text>
+              <TextInput
+                value={linksForm.suporte}
+                onChangeText={t => setLinksForm({ ...linksForm, suporte: t })}
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#cbd5e1',
+                  borderRadius: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 9,
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 13.5,
+                  color: '#1e293b',
+                  backgroundColor: '#f8fafc',
+                }}
+              />
             </View>
           </View>
 
-          <TouchableOpacity onPress={toggleLinksEdit} className={`mt-[10px] py-[12px] rounded-[10px] items-center flex-row justify-center ${isLinksEditable ? 'bg-[#10b981]' : 'bg-[#1B4332]'}`}>
-            <Feather name={isLinksEditable ? 'save' : 'edit-2'} size={16} color="white" />
-            <Text className="text-white font-title text-[14px] ml-[8px]">{isLinksEditable ? 'Salvar Links' : 'Editar Links'}</Text>
+          <TouchableOpacity
+            onPress={toggleLinksEdit}
+            style={{
+              marginTop: 18,
+              paddingVertical: 11,
+              borderRadius: 999, // Botão em formato de pílula
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              backgroundColor: isLinksEditable ? '#10b981' : '#0284C7',
+              gap: 8,
+            }}
+            activeOpacity={0.8}
+          >
+            <Feather name={isLinksEditable ? 'save' : 'edit-2'} size={15} color="#ffffff" />
+            <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 13 }}>
+              {isLinksEditable ? 'Salvar Links' : 'Editar Links'}
+            </Text>
           </TouchableOpacity>
         </View>
-
-        <View className="h-[120px]" />
       </ScrollView>
     </KeyboardAvoidingView>
   );

@@ -4,7 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import api from '../../services/api';
 
 export default function GestaoConteudoScreen() {
-  const [activeTab, setActiveTab] = useState('blog');
+  const [activeTab, setActiveTab] = useState<'blog' | 'forum' | 'qna'>('blog');
   const [pendingQna, setPendingQna] = useState<any[]>([]);
   const [loadingQna, setLoadingQna] = useState(true);
 
@@ -35,46 +35,152 @@ export default function GestaoConteudoScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#f9fafb]">
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 60 }}>
+    <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: 130,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <View className="mb-[25px]">
-          <Text className="font-title text-[#1e1b4b] text-[24px]">Gestão de Conteúdo</Text>
-          <Text className="font-sans text-[#666] text-[14px]">Modere avaliações, perguntas e páginas estáticas.</Text>
+        <View style={{ marginBottom: 20 }}>
+          <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 22, color: '#1e293b' }}>
+            Gestão de Conteúdo 📄
+          </Text>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: '#64748b', marginTop: 2 }}>
+            Modere perguntas públicas, artigos de blog e páginas institucionais.
+          </Text>
         </View>
 
         {/* Q&A Pendentes */}
-        <View className="bg-white rounded-[16px] p-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#f0f0f0] mb-[20px]">
-          <View className="flex-row justify-between items-center mb-[15px] border-b border-[#e9ecef] pb-[10px]">
-            <Text className="font-title text-[#333] text-[16px]">Moderação de Perguntas (Q&A)</Text>
-            <TouchableOpacity onPress={fetchPendingQna} className="p-[5px]">
-              <Feather name="refresh-cw" size={14} color="#64748b" />
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            padding: 16,
+            marginBottom: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.03,
+            shadowRadius: 6,
+            elevation: 1,
+          }}
+        >
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', paddingBottom: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Feather name="help-circle" size={16} color="#7E22CE" />
+              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b' }}>
+                Perguntas Pendentes (Q&A)
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={fetchPendingQna}
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 999,
+                backgroundColor: '#f8fafc',
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              activeOpacity={0.7}
+            >
+              <Feather name="refresh-cw" size={13} color="#64748b" />
             </TouchableOpacity>
           </View>
-          
+
           {loadingQna ? (
-            <ActivityIndicator size="small" color="#1e1b4b" />
+            <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color="#1B4332" />
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#64748b', marginTop: 8 }}>
+                Carregando perguntas...
+              </Text>
+            </View>
           ) : pendingQna.length === 0 ? (
-            <View className="items-center py-[10px]">
-              <Text className="text-[24px] mb-[10px]">🎉</Text>
-              <Text className="font-sans text-[#888] text-[14px]">Nenhuma pergunta pendente.</Text>
+            <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+              <Text style={{ fontSize: 26, marginBottom: 6 }}>🎉</Text>
+              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#1e293b' }}>
+                Tudo em dia!
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                Nenhuma pergunta aguardando moderação no momento.
+              </Text>
             </View>
           ) : (
-            <View className="gap-[15px]">
+            <View style={{ gap: 12 }}>
               {pendingQna.map((q, idx) => (
-                <View key={q.id || idx} className="border border-[#e2e8f0] rounded-[12px] p-[15px]">
-                  <View className="flex-row justify-between mb-[8px]">
-                    <Text className="font-sans text-[#64748b] text-[12px]">Pergunta Anônima</Text>
-                    <Text className="font-sans text-[#64748b] text-[12px]">{q.createdAt ? new Date(q.createdAt).toLocaleDateString('pt-BR') : ''}</Text>
+                <View
+                  key={q.id || idx}
+                  style={{
+                    backgroundColor: '#f8fafc',
+                    borderRadius: 14,
+                    borderWidth: 1,
+                    borderColor: '#e2e8f0',
+                    padding: 14,
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <View style={{ backgroundColor: '#f3e8ff', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#7e22ce' }}>
+                        Pergunta Anônima
+                      </Text>
+                    </View>
+                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10.5, color: '#94a3b8' }}>
+                      {q.createdAt ? new Date(q.createdAt).toLocaleDateString('pt-BR') : ''}
+                    </Text>
                   </View>
-                  <Text className="font-title text-[#333] text-[14px] mb-[4px]">{q.title}</Text>
-                  <Text className="font-sans text-[#666] text-[13px] mb-[15px]">{q.content}</Text>
-                  <View className="flex-row gap-[10px]">
-                    <TouchableOpacity onPress={() => handleModerateQna(q.id, 'approved')} className="flex-1 bg-[#10b981] flex-row justify-center py-[8px] rounded-[6px]">
-                      <Text className="font-title text-white text-[12px]">Aprovar</Text>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 14, color: '#1e293b', marginBottom: 4 }}>
+                    {q.title}
+                  </Text>
+                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: '#475569', lineHeight: 18, marginBottom: 12 }}>
+                    {q.content}
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TouchableOpacity
+                      onPress={() => handleModerateQna(q.id, 'approved')}
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#10b981',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: 6,
+                        paddingVertical: 9,
+                        borderRadius: 999, // Botão em pílula
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Feather name="check" size={13} color="#ffffff" />
+                      <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 12 }}>
+                        Aprovar
+                      </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleModerateQna(q.id, 'rejected')} className="flex-1 bg-[#fee2e2] flex-row justify-center py-[8px] rounded-[6px]">
-                      <Text className="font-title text-[#ef4444] text-[12px]">Rejeitar</Text>
+                    <TouchableOpacity
+                      onPress={() => handleModerateQna(q.id, 'rejected')}
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#fee2e2',
+                        borderWidth: 1,
+                        borderColor: '#fca5a5',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: 6,
+                        paddingVertical: 9,
+                        borderRadius: 999, // Botão em pílula
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Feather name="x" size={13} color="#b91c1c" />
+                      <Text style={{ fontFamily: 'Inter_700Bold', color: '#b91c1c', fontSize: 12 }}>
+                        Rejeitar
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -83,53 +189,131 @@ export default function GestaoConteudoScreen() {
           )}
         </View>
 
-        {/* Central de Remoção */}
-        <View className="bg-white rounded-[16px] p-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#f0f0f0] mb-[20px]">
-          <Text className="font-title text-[#333] text-[16px] mb-[15px] border-b border-[#e9ecef] pb-[10px]">Central de Remoção de Conteúdo</Text>
-          
-          <View className="flex-row border-b border-[#eee] mb-[15px]">
-            <TouchableOpacity onPress={() => setActiveTab('blog')} className={`flex-1 items-center pb-[10px] ${activeTab === 'blog' ? 'border-b-2 border-[#1B4332]' : ''}`}>
-              <Text className={`font-title text-[14px] ${activeTab === 'blog' ? 'text-[#1B4332]' : 'text-[#666]'}`}>Blogs</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setActiveTab('forum')} className={`flex-1 items-center pb-[10px] ${activeTab === 'forum' ? 'border-b-2 border-[#1B4332]' : ''}`}>
-              <Text className={`font-title text-[14px] ${activeTab === 'forum' ? 'text-[#1B4332]' : 'text-[#666]'}`}>Fórum</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setActiveTab('qna')} className={`flex-1 items-center pb-[10px] ${activeTab === 'qna' ? 'border-b-2 border-[#1B4332]' : ''}`}>
-              <Text className={`font-title text-[14px] ${activeTab === 'qna' ? 'text-[#1B4332]' : 'text-[#666]'}`}>Perguntas</Text>
-            </TouchableOpacity>
+        {/* Central de Remoção de Conteúdo */}
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            padding: 16,
+            marginBottom: 16,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', paddingBottom: 10 }}>
+            <Feather name="trash-2" size={16} color="#ef4444" />
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b' }}>
+              Central de Remoção de Conteúdo
+            </Text>
           </View>
 
-          <View className="items-center py-[20px]">
-            <Text className="font-sans text-[#888] text-[14px]">Nenhum item selecionado para remoção nesta aba.</Text>
+          {/* Abas em Pílula */}
+          <View style={{ flexDirection: 'row', gap: 6, marginBottom: 14 }}>
+            {[
+              { id: 'blog', label: 'Blogs' },
+              { id: 'forum', label: 'Fórum' },
+              { id: 'qna', label: 'Perguntas' },
+            ].map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <TouchableOpacity
+                  key={tab.id}
+                  onPress={() => setActiveTab(tab.id as any)}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 7,
+                    borderRadius: 999,
+                    backgroundColor: isActive ? '#1B4332' : '#f1f5f9',
+                    alignItems: 'center',
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={{
+                      fontFamily: isActive ? 'Inter_700Bold' : 'Inter_500Medium',
+                      fontSize: 12,
+                      color: isActive ? '#ffffff' : '#64748b',
+                    }}
+                  >
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View style={{ alignItems: 'center', paddingVertical: 18 }}>
+            <Feather name="check-circle" size={20} color="#94a3b8" />
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#64748b', textAlign: 'center', marginTop: 6 }}>
+              Nenhum item marcado para remoção nesta aba.
+            </Text>
           </View>
         </View>
 
         {/* Gestão de Páginas Estáticas */}
-        <View className="bg-white rounded-[16px] p-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#f0f0f0] mb-[20px]">
-          <Text className="font-title text-[#333] text-[16px] mb-[15px] border-b border-[#e9ecef] pb-[10px]">Gestão de Páginas Estáticas</Text>
-          <View className="gap-[10px]">
-            <View className="flex-row justify-between items-center py-[10px] border-b border-[#f0f0f0]">
-              <Text className="font-sans text-[#333] text-[14px]">termos-de-uso</Text>
-              <TouchableOpacity onPress={() => Alert.alert('Aviso', 'Abrindo editor HTML...')} className="bg-[#f8f9fa] px-[12px] py-[6px] rounded-[6px] border border-[#e2e8f0]">
-                <Text className="font-title text-[#333] text-[12px]">Editar</Text>
-              </TouchableOpacity>
-            </View>
-            <View className="flex-row justify-between items-center py-[10px] border-b border-[#f0f0f0]">
-              <Text className="font-sans text-[#333] text-[14px]">politica-de-privacidade</Text>
-              <TouchableOpacity onPress={() => Alert.alert('Aviso', 'Abrindo editor HTML...')} className="bg-[#f8f9fa] px-[12px] py-[6px] rounded-[6px] border border-[#e2e8f0]">
-                <Text className="font-title text-[#333] text-[12px]">Editar</Text>
-              </TouchableOpacity>
-            </View>
-            <View className="flex-row justify-between items-center py-[10px]">
-              <Text className="font-sans text-[#333] text-[14px]">sobre-nos</Text>
-              <TouchableOpacity onPress={() => Alert.alert('Aviso', 'Abrindo editor HTML...')} className="bg-[#f8f9fa] px-[12px] py-[6px] rounded-[6px] border border-[#e2e8f0]">
-                <Text className="font-title text-[#333] text-[12px]">Editar</Text>
-              </TouchableOpacity>
-            </View>
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            padding: 16,
+            marginBottom: 20,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', paddingBottom: 10 }}>
+            <Feather name="file" size={16} color="#0284C7" />
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b' }}>
+              Páginas Institucionais & Legais
+            </Text>
+          </View>
+
+          <View style={{ gap: 8 }}>
+            {[
+              { slug: 'termos-de-uso', label: 'Termos de Uso', icon: 'shield' },
+              { slug: 'politica-de-privacidade', label: 'Política de Privacidade', icon: 'lock' },
+              { slug: 'sobre-nos', label: 'Sobre Nós', icon: 'info' },
+            ].map((p) => (
+              <View
+                key={p.slug}
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  backgroundColor: '#f8fafc',
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: '#e2e8f0',
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Feather name={p.icon as any} size={14} color="#64748b" />
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12.5, color: '#1e293b' }}>
+                    {p.label}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => Alert.alert('Editor de Páginas', `O editor de "${p.label}" está disponível no painel web para formatação HTML completa.`)}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    borderWidth: 1,
+                    borderColor: '#cbd5e1',
+                    paddingHorizontal: 12,
+                    paddingVertical: 5,
+                    borderRadius: 999, // Botão em pílula
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#1B4332' }}>
+                    Visualizar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
         </View>
-
-        <View className="h-[120px]" />
       </ScrollView>
     </View>
   );

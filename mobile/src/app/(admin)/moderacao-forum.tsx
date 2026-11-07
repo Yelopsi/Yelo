@@ -11,14 +11,13 @@ export default function ModeracaoForumScreen() {
     try {
       setLoading(true);
       const res = await api.get('/api/admin/forum/posts');
-      // A API pode retornar res.data como array ou { success: true, data: [...] }
       let postsArray = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       if (!Array.isArray(postsArray)) postsArray = [];
       const pendingPosts = postsArray.filter((p: any) => p.status === 'pending');
       setPosts(pendingPosts);
     } catch (error) {
       console.log('Erro ao buscar posts:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os posts.');
+      Alert.alert('Erro', 'Não foi possível carregar os posts do fórum.');
     } finally {
       setLoading(false);
     }
@@ -33,7 +32,7 @@ export default function ModeracaoForumScreen() {
       await api.put('/api/admin/forum/moderate', {
         contentType: 'post',
         contentId,
-        action
+        action,
       });
       Alert.alert('Sucesso', `Post ${action === 'approve' ? 'aprovado' : 'removido'} com sucesso!`);
       fetchPosts();
@@ -41,60 +40,171 @@ export default function ModeracaoForumScreen() {
       Alert.alert('Erro', 'Ocorreu um erro ao moderar.');
     }
   };
+
   return (
-    <View className="flex-1 bg-[#f9fafb]">
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 60 }}>
+    <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: 130,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <View className="flex-row justify-between items-start mb-[25px]">
-          <View className="flex-1 mr-[10px]">
-            <Text className="font-title text-[#1e1b4b] text-[24px]">Moderação do Fórum</Text>
-            <Text className="font-sans text-[#666] text-[14px]">Aprove, edite ou remova tópicos.</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 22, color: '#1e293b' }}>
+              Moderação do Fórum 🛡️
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: '#64748b', marginTop: 2 }}>
+              Aprove tópicos da comunidade ou gerencie denúncias.
+            </Text>
           </View>
-          <TouchableOpacity onPress={fetchPosts} className="bg-[#1B4332] flex-row items-center px-[12px] py-[8px] rounded-[8px]">
-            <Feather name="refresh-cw" size={14} color="white" />
-            <Text className="font-title text-white text-[12px] ml-[6px]">Atualizar</Text>
+          <TouchableOpacity
+            onPress={fetchPosts}
+            style={{
+              backgroundColor: '#1B4332',
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 999, // Botão em pílula
+              gap: 6,
+            }}
+            activeOpacity={0.8}
+          >
+            <Feather name="refresh-cw" size={13} color="#ffffff" />
+            <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 12 }}>
+              Atualizar
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* Lista de Posts */}
-        <View className="gap-[15px]">
+        <View style={{ gap: 14 }}>
           {loading ? (
-            <ActivityIndicator size="large" color="#1e1b4b" />
+            <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color="#1B4332" />
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#64748b', marginTop: 8 }}>
+                Verificando tópicos do fórum...
+              </Text>
+            </View>
           ) : posts.length === 0 ? (
-            <View className="items-center py-[40px]">
-              <Text className="text-[40px] mb-[15px]">🧐</Text>
-              <Text className="font-sans text-[#888] text-[16px] text-center">Nenhuma discussão pendente no fórum.</Text>
+            <View
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                padding: 30,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 36, marginBottom: 10 }}>🎉</Text>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1e293b', textAlign: 'center' }}>
+                Fórum Limpo e Seguro
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: '#64748b', textAlign: 'center', marginTop: 4, lineHeight: 18 }}>
+                Nenhuma publicação ou denúncia pendente de moderação no momento.
+              </Text>
             </View>
           ) : (
             posts.map((post, index) => (
-              <View key={post.id || index} className="bg-white rounded-[16px] p-[15px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#f0f0f0]">
-                <View className="flex-row justify-between items-start mb-[10px]">
-                  <Text className="font-title text-[#333] text-[16px] flex-1 mr-[10px]">{post.title || post.content}</Text>
-                  <View className="bg-[#fef3c7] px-[8px] py-[4px] rounded-[6px]">
-                    <Text className="font-title text-[#d97706] text-[10px]">Pendente</Text>
+              <View
+                key={post.id || index}
+                style={{
+                  backgroundColor: '#ffffff',
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: '#e2e8f0',
+                  padding: 16,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.03,
+                  shadowRadius: 6,
+                  elevation: 1,
+                }}
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#1e293b', flex: 1, marginRight: 8 }}>
+                    {post.title || post.content}
+                  </Text>
+                  <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#b45309' }}>
+                      Pendente
+                    </Text>
                   </View>
                 </View>
-                <View className="flex-row items-center mb-[15px]">
-                  <Feather name="user" size={14} color="#64748b" />
-                  <Text className="font-sans text-[#64748b] text-[12px] ml-[4px] mr-[15px]">{post.Psychologist?.nome || 'Anônimo'}</Text>
-                  <Feather name="tag" size={14} color="#64748b" />
-                  <Text className="font-sans text-[#64748b] text-[12px] ml-[4px]">{post.category || 'Geral'}</Text>
+
+                {post.title && post.content ? (
+                  <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: '#475569', lineHeight: 18, marginBottom: 12 }}>
+                    {post.content}
+                  </Text>
+                ) : null}
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Feather name="user" size={12} color="#64748b" />
+                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#64748b' }}>
+                      {post.Psychologist?.nome || 'Anônimo'}
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Feather name="tag" size={12} color="#64748b" />
+                    <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#64748b' }}>
+                      {post.category || 'Geral'}
+                    </Text>
+                  </View>
                 </View>
-                <View className="flex-row gap-[10px]">
-                  <TouchableOpacity onPress={() => handleModerate(post.id, 'approve')} className="flex-1 bg-[#10b981] flex-row items-center justify-center py-[10px] rounded-[8px]">
-                    <Feather name="check" size={14} color="white" />
-                    <Text className="font-title text-white text-[13px] ml-[5px]">Aprovar</Text>
+
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TouchableOpacity
+                    onPress={() => handleModerate(post.id, 'approve')}
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#10b981',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      paddingVertical: 9,
+                      borderRadius: 999, // Botão em pílula
+                      gap: 6,
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Feather name="check" size={14} color="#ffffff" />
+                    <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 12 }}>
+                      Aprovar
+                    </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleModerate(post.id, 'reject')} className="bg-[#fee2e2] px-[15px] flex-row items-center justify-center rounded-[8px]">
+
+                  <TouchableOpacity
+                    onPress={() => handleModerate(post.id, 'reject')}
+                    style={{
+                      backgroundColor: '#fee2e2',
+                      borderWidth: 1,
+                      borderColor: '#fca5a5',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      paddingHorizontal: 16,
+                      paddingVertical: 9,
+                      borderRadius: 999, // Botão em pílula
+                      gap: 6,
+                    }}
+                    activeOpacity={0.8}
+                  >
                     <Feather name="trash-2" size={14} color="#ef4444" />
+                    <Text style={{ fontFamily: 'Inter_700Bold', color: '#b91c1c', fontSize: 12 }}>
+                      Rejeitar
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
             ))
           )}
         </View>
-
-        <View className="h-[120px]" />
       </ScrollView>
     </View>
   );

@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-6965aebd",
+    "date": "2026-11-07T00:53:29.000Z",
+    "commit": "6965aebd",
+    "author": "Anderson",
+    "title": "Novo: Add missing PLG KPIs, trend comparisons and circular avatars (analytics-funil)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "add missing PLG KPIs, trend comparisons and circular avatars",
+    "description": "Commit registrado no repositório: \"feat(analytics-funil): add missing PLG KPIs, trend comparisons and circular avatars\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/adminController.js, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #6965aebd"
+    },
+    "after": {
+      "nova_versao": "add missing PLG KPIs, trend comparisons and circular avatars"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminController.js",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-4f06e4ed",
     "date": "2026-11-07T00:42:23.000Z",
     "commit": "4f06e4ed",
