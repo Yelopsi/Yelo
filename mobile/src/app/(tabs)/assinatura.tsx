@@ -33,7 +33,7 @@ export default function AssinaturaScreen() {
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
 
   // Modal Centralizado Unificado (1 Único Modal Nativo para evitar congelamento de toques no iOS)
-  const [activeModal, setActiveModal] = useState<'NONE' | 'IOS_FEE_CHOICE' | 'CHECKOUT' | 'COMMUNITY'>('NONE');
+  const [activeModal, setActiveModal] = useState<'NONE' | 'IOS_FEE_CHOICE' | 'CHECKOUT'>('NONE');
 
   // Keyboard state for native iOS bottom-sheet handling
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -174,10 +174,6 @@ export default function AssinaturaScreen() {
       setPaymentMethod('PIX');
       setActiveModal('CHECKOUT');
     }
-  };
-
-  const handleAssinarComunidade = () => {
-    setActiveModal('COMMUNITY');
   };
 
   // Ações de Checkout Nativo
@@ -478,94 +474,6 @@ export default function AssinaturaScreen() {
             </View>
           </View>
 
-          {/* CARD 2: PLANO COMUNIDADE */}
-          <View className="bg-white border border-[#e5e7eb] rounded-[24px] py-6 px-5 shadow-sm mb-6 relative">
-            <View className="absolute -top-3.5 self-center bg-[#d1fae5] px-4 py-1 rounded-full shadow-sm border border-[#a7f3d0]">
-              <Text className="font-sans font-bold text-[#065f46] text-[11px] tracking-wide">🌱 100% GRATUITO</Text>
-            </View>
-
-            <Text className="font-title text-[#1B4332] text-[22px] text-center mb-3 mt-1">Plano Comunidade</Text>
-            
-            <View className="items-center mb-4">
-              <View className="flex-row items-end justify-center mb-1">
-                <Text className="font-title text-[#1B4332] text-[36px] leading-[36px]">Grátis</Text>
-              </View>
-              <Text className="font-sans font-medium text-[#6b7280] text-[12px] text-center">
-                Sem mensalidades • Acesso vitalício a todas as ferramentas clínicas
-              </Text>
-            </View>
-
-            {/* BENEFÍCIOS DO COMUNIDADE */}
-            <View className="flex-col gap-2.5 mb-6">
-              {/* ÚNICA DIFERENÇA DESTACADA CLARAMENTE */}
-              <View className="flex-row items-start gap-2.5 bg-[#fef2f2] p-2.5 rounded-[12px] border border-[#fee2e2]">
-                <Text className="text-[15px]">❌</Text>
-                <Text className="font-sans font-medium text-[#b91c1c] text-[13px] flex-1">
-                  Não recebe contatos de novos pacientes pelo Match <Text className="text-[#991b1b] font-bold">(Única diferença)</Text>
-                </Text>
-              </View>
-
-              <View className="flex-row items-start gap-2.5">
-                <Text className="text-[15px]">✅</Text>
-                <Text className="font-sans font-medium text-[#495057] text-[14px] flex-1">
-                  Acesso integral à agenda e gestão de sessões
-                </Text>
-              </View>
-              <View className="flex-row items-start gap-2.5">
-                <Text className="text-[15px]">✅</Text>
-                <Text className="font-sans font-medium text-[#495057] text-[14px] flex-1">
-                  Prontuário eletrônico seguro e evolução de pacientes
-                </Text>
-              </View>
-              <View className="flex-row items-start gap-2.5">
-                <Text className="text-[15px]">✅</Text>
-                <Text className="font-sans font-medium text-[#495057] text-[14px] flex-1">
-                  Controle financeiro clínico completo
-                </Text>
-              </View>
-              <View className="flex-row items-start gap-2.5">
-                <Text className="text-[15px]">✅</Text>
-                <Text className="font-sans font-medium text-[#495057] text-[14px] flex-1">
-                  Métricas de mercado, demanda e inteligência clínica
-                </Text>
-              </View>
-              <View className="flex-row items-start gap-2.5">
-                <Text className="text-[15px]">✅</Text>
-                <Text className="font-sans font-medium text-[#495057] text-[14px] flex-1">
-                  Acesso irrestrito a debates no Fórum da Comunidade
-                </Text>
-              </View>
-              <View className="flex-row items-start gap-2.5">
-                <Text className="text-[15px]">✅</Text>
-                <Text className="font-sans font-medium text-[#495057] text-[14px] flex-1">
-                  Leitura e publicação de artigos autorais no Blog Yelo
-                </Text>
-              </View>
-              <View className="flex-row items-start gap-2.5">
-                <Text className="text-[15px]">✅</Text>
-                <Text className="font-sans font-medium text-[#495057] text-[14px] flex-1">
-                  Avisos, suporte e melhorias contínuas da plataforma
-                </Text>
-              </View>
-            </View>
-
-            {/* BOTÃO ASSINAR PLANO COMUNIDADE */}
-            <TouchableOpacity 
-              onPress={handleAssinarComunidade}
-              className="bg-[#1B4332] w-full py-4 rounded-[50px] items-center shadow-sm mb-3"
-              activeOpacity={0.85}
-            >
-              <Text className="font-sans font-bold text-white text-[15px]">
-                Assinar Plano Comunidade
-              </Text>
-            </TouchableOpacity>
-
-            <View className="flex-row items-center justify-center gap-1.5 mt-1">
-              <Feather name="check-circle" size={12} color="#166534" />
-              <Text className="font-sans font-medium text-[#166534] text-[12px]">Sem custo • Não requer cartão de crédito</Text>
-            </View>
-          </View>
-
         </View>
 
       </YeloScrollView>
@@ -723,72 +631,7 @@ export default function AssinaturaScreen() {
           )}
 
           {/* ========================================================= */}
-          {/* CASO 2: PLANO COMUNIDADE ATIVADO */}
-          {/* ========================================================= */}
-          {activeModal === 'COMMUNITY' && (
-            <View className="bg-white rounded-t-[36px] px-6 pt-3 pb-9 w-full shadow-2xl border-t border-[#f0f0f0]">
-              <View className="w-12 h-1.5 bg-[#d1d5db] rounded-full self-center mb-4" />
-
-              <View className="items-center mb-4">
-                <View className="self-center bg-[#ecfdf5] border border-[#a7f3d0] px-3.5 py-1.5 rounded-full mb-3 flex-row items-center gap-1.5">
-                  <Text className="text-[12px]">🌱</Text>
-                  <Text className="font-sans font-bold text-[#059669] text-[11px] tracking-wide uppercase">100% Gratuito & Vitalício</Text>
-                </View>
-                <Text className="font-title text-[#1B4332] text-[22px] text-center mb-1">
-                  Plano Comunidade Yelo
-                </Text>
-                <Text className="font-sans text-[#64748b] text-[13px] text-center leading-snug px-2">
-                  Você tem acesso irrestrito a todas as ferramentas clínicas da plataforma sem custo algum.
-                </Text>
-              </View>
-
-              <View className="bg-[#f8fafc] border border-[#e2e8f0] p-4 rounded-[20px] mb-4">
-                <View className="flex-row items-center gap-2 mb-2">
-                  <Text className="text-[14px]">✅</Text>
-                  <Text className="font-sans text-[#334155] text-[13px]">Agenda, prontuários eletrônicos e finanças liberados</Text>
-                </View>
-                <View className="flex-row items-center gap-2 mb-2">
-                  <Text className="text-[14px]">✅</Text>
-                  <Text className="font-sans text-[#334155] text-[13px]">Acesso aos debates no Fórum e publicações no Blog</Text>
-                </View>
-                
-                <View className="h-[1px] bg-[#e2e8f0] my-2" />
-
-                <View className="flex-row items-start gap-2">
-                  <Text className="text-[14px]">ℹ️</Text>
-                  <Text className="font-sans text-[#b91c1c] text-[12.5px] leading-[18px] flex-1 font-medium">
-                    <Text className="font-bold">Única diferença:</Text> seu perfil não receberá novos pacientes pelo Match. Você pode migrar para o Essencial a qualquer momento.
-                  </Text>
-                </View>
-              </View>
-
-              <TouchableOpacity 
-                onPress={() => {
-                  setActiveModal('NONE');
-                  router.navigate('/(tabs)/forum');
-                }}
-                className="bg-[#1B4332] w-full py-3.5 rounded-[50px] items-center shadow-sm mb-2.5"
-                activeOpacity={0.85}
-              >
-                <Text className="font-sans font-bold text-white text-[14px]">
-                  Acessar Fórum & Comunidade
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                onPress={() => setActiveModal('NONE')}
-                className="py-2 items-center"
-                activeOpacity={0.7}
-              >
-                <Text className="font-sans font-semibold text-[#94a3b8] text-[13px]">
-                  Permanecer nos Planos
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* ========================================================= */}
-          {/* CASO 3: CHECKOUT NATIVO NO APP (PIX OU CARTÃO) */}
+          {/* CASO 2: CHECKOUT NATIVO NO APP (PIX OU CARTÃO) */}
           {/* ========================================================= */}
           {activeModal === 'CHECKOUT' && (
             <View 

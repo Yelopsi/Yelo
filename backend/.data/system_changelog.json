@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-2ed10da1",
+    "date": "2026-11-07T18:39:33.000Z",
+    "commit": "2ed10da1",
+    "author": "Anderson",
+    "title": "Novo: Equalizar KPIs e analise de tentativas em Logs do Sistema com a versao web (admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "equalizar KPIs e analise de tentativas em Logs do Sistema com a versao web",
+    "description": "Commit registrado no repositório: \"feat(admin): equalizar KPIs e analise de tentativas em Logs do Sistema com a versao web\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/logs-sistema.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2ed10da1"
+    },
+    "after": {
+      "nova_versao": "equalizar KPIs e analise de tentativas em Logs do Sistema com a versao web"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/logs-sistema.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-37b961e7",
     "date": "2026-11-07T18:27:17.000Z",
     "commit": "37b961e7",
