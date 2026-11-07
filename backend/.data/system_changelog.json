@@ -1,5 +1,33 @@
 [
   {
+    "id": "change-git-4f535042",
+    "date": "2026-11-07T17:30:20.000Z",
+    "commit": "4f535042",
+    "author": "Anderson",
+    "title": "Novo: Organizar cards das páginas de hub por ordem lógica de UX e operação (admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "organizar cards das páginas de hub por ordem lógica de UX e operação",
+    "description": "Commit registrado no repositório: \"feat(admin): organizar cards das páginas de hub por ordem lógica de UX e operação\". Arquivos modificados: backend/data/system_changelog.json, mobile/src/app/(admin)/ajustes.tsx, mobile/src/app/(admin)/crm.tsx, mobile/src/app/(admin)/dados.tsx, mobile/src/app/(admin)/index.tsx (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4f535042"
+    },
+    "after": {
+      "nova_versao": "organizar cards das páginas de hub por ordem lógica de UX e operação"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/ajustes.tsx",
+      "mobile/src/app/(admin)/crm.tsx",
+      "mobile/src/app/(admin)/dados.tsx",
+      "mobile/src/app/(admin)/index.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-08f7a89b",
     "date": "2026-11-07T17:23:59.000Z",
     "commit": "08f7a89b",
