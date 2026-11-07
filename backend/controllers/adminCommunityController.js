@@ -405,14 +405,34 @@ exports.getCommunityResources = async (req, res) => {
 
 exports.updateCommunityResources = async (req, res) => {
     try {
-        const { whatsapp_group_link, guides_folder_link } = req.body;
-        const payload = { whatsapp_group_link, guides_folder_link };
+        const {
+            link_intervisao,
+            link_biblioteca,
+            link_cursos,
+            intervisao,
+            biblioteca,
+            cursos,
+            whatsapp_group_link,
+            guides_folder_link
+        } = req.body;
+
+        const payload = {
+            link_intervisao: link_intervisao ?? intervisao,
+            link_biblioteca: link_biblioteca ?? biblioteca,
+            link_cursos: link_cursos ?? cursos
+        };
+
+        // Remove undefined keys
+        Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
 
         let resources = await db.CommunityResource.findOne();
         if (resources) await resources.update(payload);
         else await db.CommunityResource.create(payload);
-        res.json({ success: true });
-    } catch (error) { res.status(500).json({ error: "Erro ao salvar recursos" }); }
+        res.json({ success: true, resources });
+    } catch (error) {
+        console.error("Erro ao atualizar recursos da comunidade:", error);
+        res.status(500).json({ error: "Erro ao salvar recursos" });
+    }
 };
 
 // --- GESTÃO DA COMUNIDADE ---
@@ -426,14 +446,29 @@ exports.getCommunityEvent = async (req, res) => {
 
 exports.updateCommunityEvent = async (req, res) => {
     try {
-        const { titulo, subtitulo, data_hora, tipo, link_acao, texto_botao, ativo } = req.body;
-        const payload = { titulo, subtitulo, data_hora, tipo, link_acao, texto_botao, ativo };
+        const {
+            titulo, subtitulo, data_hora, tipo, link_acao, texto_botao, ativo,
+            title, subtitle, date_time, format, action_link, action_text, is_active
+        } = req.body;
+
+        const payload = {
+            titulo: titulo ?? title,
+            subtitulo: subtitulo ?? subtitle,
+            data_hora: data_hora ?? date_time,
+            tipo: tipo ?? format ?? 'Online',
+            link_acao: link_acao ?? action_link,
+            texto_botao: texto_botao ?? action_text,
+            ativo: ativo !== undefined ? ativo : (is_active !== undefined ? is_active : true)
+        };
         
         let event = await db.CommunityEvent.findOne({ order: [['updatedAt', 'DESC']] });
         if (event) await event.update(payload);
         else event = await db.CommunityEvent.create(payload);
         res.json({ success: true, event });
-    } catch (error) { res.status(500).json({ error: "Erro ao salvar" }); }
+    } catch (error) {
+        console.error("Erro ao atualizar evento da comunidade:", error);
+        res.status(500).json({ error: "Erro ao salvar" });
+    }
 };
 
 // --- GESTÃO DE BLOG E FÓRUM GERAL ---

@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-10463cdc",
+    "date": "2026-11-07T01:11:45.000Z",
+    "commit": "10463cdc",
+    "author": "Anderson",
+    "title": "Novo: Bring full parity with web moderation dashboard and Yelo standards (admin-moderacao-forum)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "bring full parity with web moderation dashboard and Yelo standards",
+    "description": "Commit registrado no repositório: \"feat(admin-moderacao-forum): bring full parity with web moderation dashboard and Yelo standards\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/moderacao-forum.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #10463cdc"
+    },
+    "after": {
+      "nova_versao": "bring full parity with web moderation dashboard and Yelo standards"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/moderacao-forum.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-40b5186a",
     "date": "2026-11-07T01:07:59.000Z",
     "commit": "40b5186a",
