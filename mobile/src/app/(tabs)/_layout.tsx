@@ -139,7 +139,7 @@ export default function TabLayout() {
           tabBarStyle: {
             position: 'absolute',
             bottom: Platform.OS === 'ios' ? 24 : 20,
-            marginHorizontal: 20,
+            marginHorizontal: 16,
             backgroundColor: 'transparent',
             borderRadius: 50,
             elevation: 10,
