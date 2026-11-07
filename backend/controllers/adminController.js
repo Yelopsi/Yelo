@@ -516,7 +516,7 @@ exports.getPsiRanking = async (req, res) => {
                 isAdmin: { [Op.ne]: true },
                 status: 'active' // Limpa expostos, inativos, pendentes ou soft deletes
             },
-            attributes: ['id', 'nome', 'status'],
+            attributes: ['id', 'nome', 'status', 'fotoUrl'],
             raw: true
         });
 
@@ -531,7 +531,7 @@ exports.getPsiRanking = async (req, res) => {
             const aparicoesBusca = psiApps.filter(a => a.type === 'profile_click_funnel').reduce((acc, curr) => acc + parseInt(curr.total_aparicoes), 0);
             const visitasDiretas = psiApps.filter(a => a.type !== 'profile_click_funnel').reduce((acc, curr) => acc + parseInt(curr.total_aparicoes), 0);
             
-            return { id: psi.id, nome: psi.nome, cliquesWpp, fechamentos, aparicoesBusca, visitasDiretas };
+            return { id: psi.id, nome: psi.nome, fotoUrl: psi.fotoUrl, cliquesWpp, fechamentos, aparicoesBusca, visitasDiretas };
         });
 
         // 5. Ordena o Ranking: Primeiro quem tem + Cliques, depois quem tem + Visitas/Aparições Totais

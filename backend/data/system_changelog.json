@@ -1,5 +1,39 @@
 [
   {
+    "id": "change-git-4f06e4ed",
+    "date": "2026-11-07T00:42:23.000Z",
+    "commit": "4f06e4ed",
+    "author": "Anderson",
+    "title": "Correção: Replace horizontal pill scrolling with native dropdown selectors and resolve badge overflow in CMO panel (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "replace horizontal pill scrolling with native dropdown selectors and resolve badge overflow in CMO panel",
+    "description": "Commit registrado no repositório: \"fix(mobile): replace horizontal pill scrolling with native dropdown selectors and resolve badge overflow in CMO panel\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx, mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx, mobile/src/app/(admin)/crm-modulo/cancelamentos.tsx (+7 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4f06e4ed"
+    },
+    "after": {
+      "nova_versao": "replace horizontal pill scrolling with native dropdown selectors and resolve badge overflow in CMO panel"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx",
+      "mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx",
+      "mobile/src/app/(admin)/crm-modulo/cancelamentos.tsx",
+      "mobile/src/app/(admin)/crm-modulo/cmo-metrics.tsx",
+      "mobile/src/app/(admin)/crm-modulo/espera.tsx",
+      "mobile/src/app/(admin)/crm-modulo/followup.tsx",
+      "mobile/src/app/(admin)/crm-modulo/leads.tsx",
+      "mobile/src/app/(admin)/crm-modulo/pacientes.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-51fc8dbe",
     "date": "2026-11-07T00:01:27.000Z",
     "commit": "51fc8dbe",
