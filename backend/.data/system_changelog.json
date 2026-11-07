@@ -1,5 +1,33 @@
 [
   {
+    "id": "change-git-40b5186a",
+    "date": "2026-11-07T01:07:59.000Z",
+    "commit": "40b5186a",
+    "author": "Anderson",
+    "title": "Novo: Align content management screen with web mobile features (admin-gestao-conteudo)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "align content management screen with web mobile features",
+    "description": "Commit registrado no repositório: \"feat(admin-gestao-conteudo): align content management screen with web mobile features\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/qnaController.js, backend/data/system_changelog.json, backend/routes/adminRoutes.js, mobile/src/app/(admin)/gestao-conteudo.tsx (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #40b5186a"
+    },
+    "after": {
+      "nova_versao": "align content management screen with web mobile features"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/qnaController.js",
+      "backend/data/system_changelog.json",
+      "backend/routes/adminRoutes.js",
+      "mobile/src/app/(admin)/gestao-conteudo.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-10f8b29b",
     "date": "2026-11-07T01:01:45.000Z",
     "commit": "10f8b29b",
