@@ -13,6 +13,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import api from '../../../services/api';
 import YeloToast from '../../../components/YeloToast';
+import NativeSelectMenu from '../../../components/NativeSelectMenu';
 
 export default function AdminFollowupScreen() {
   const [isLoading, setIsLoading] = useState(true);
@@ -162,33 +163,65 @@ export default function AdminFollowupScreen() {
           ) : null}
         </View>
 
-        {/* STATUS FILTER PILLS */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-          <View className="flex-row gap-2">
-            {[
-              { id: 'all', label: 'Todos' },
-              { id: 'pending', label: 'Pendentes' },
-              { id: 'scheduled', label: 'Agendados ✅' },
-              { id: 'not_scheduled', label: 'Não Agendou ⚠️' },
-            ].map(tab => (
-              <TouchableOpacity
-                key={tab.id}
-                onPress={() => setStatusFilter(tab.id as any)}
-                className={`px-3.5 py-1.5 rounded-full border ${
-                  statusFilter === tab.id
-                    ? 'bg-[#1B4332] border-[#1B4332]'
-                    : 'bg-white border-[#e2e8f0]'
-                }`}
-              >
-                <Text className={`font-sans text-[12px] font-bold ${
-                  statusFilter === tab.id ? 'text-white' : 'text-[#64748b]'
-                }`}>
-                  {tab.label}
+        {/* STATUS FILTER DROPDOWN */}
+        <View className="mb-4">
+          <NativeSelectMenu
+            title="Filtrar por Status de Follow-up"
+            options={[
+              { label: 'Todos os Follow-ups', value: 'all' },
+              { label: 'Apenas Pendentes', value: 'pending' },
+              { label: 'Sessão Agendada ✅', value: 'scheduled' },
+              { label: 'Não Agendou ⚠️', value: 'not_scheduled' },
+            ]}
+            selectedValue={statusFilter}
+            onSelect={(val) => setStatusFilter(val as any)}
+            style={{ width: '100%' }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.03,
+                shadowRadius: 3,
+                elevation: 1,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                <Feather name="filter" size={15} color="#1B4332" />
+                <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 12 }}>
+                  Status:
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
+                <Text
+                  style={{
+                    fontFamily: 'Inter_700Bold',
+                    color: '#1B4332',
+                    fontSize: 13,
+                    flex: 1,
+                  }}
+                  numberOfLines={1}
+                >
+                  {statusFilter === 'all'
+                    ? 'Todos os Follow-ups'
+                    : statusFilter === 'pending'
+                    ? 'Pendentes'
+                    : statusFilter === 'scheduled'
+                    ? 'Agendados ✅'
+                    : 'Não Agendou ⚠️'}
+                </Text>
+              </View>
+              <Feather name="chevron-down" size={16} color="#1B4332" />
+            </View>
+          </NativeSelectMenu>
+        </View>
 
         {/* LISTA DE FOLLOW-UP */}
         <View className="gap-3">

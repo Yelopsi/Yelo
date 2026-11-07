@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import api from '../../../services/api';
+import NativeSelectMenu from '../../../components/NativeSelectMenu';
 
 // Máscara de Telefone
 function mascaraTelefone(tel: string): string {
@@ -225,7 +226,7 @@ export default function AdminCRMListaEsperaScreen() {
       <ScrollView
         className="flex-1 px-4"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 130 }}
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 150 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
       >
         {/* Barra de Navegação Superior (Voltar ao CRM Hub + Badge Admin) */}
@@ -319,17 +320,23 @@ export default function AdminCRMListaEsperaScreen() {
             <TouchableOpacity
               onPress={() => setActiveFilter(activeFilter === 'pending' ? 'all' : 'pending')}
               activeOpacity={0.8}
-              className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#f59e0b] border border-[#e2e8f0] ${
-                activeFilter === 'pending' ? 'bg-amber-50/80 border-[#f59e0b]' : ''
-              }`}
               style={{
+                flex: 1,
+                backgroundColor: activeFilter === 'pending' ? '#fffbeb' : '#ffffff',
+                borderRadius: 16,
+                padding: 14,
+                borderWidth: 1,
+                borderColor: activeFilter === 'pending' ? '#f59e0b' : '#e2e8f0',
+                overflow: 'hidden',
+                position: 'relative',
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
+                shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.04,
-                shadowRadius: 6,
-                elevation: 2,
+                shadowRadius: 3,
+                elevation: 1,
               }}
             >
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#f59e0b' }} />
               <View className="flex-row items-center gap-1.5 mb-1">
                 <Feather name="clock" size={13} color="#f59e0b" />
                 <Text className="font-sans font-bold text-[#475569] text-[11px]">Pendentes</Text>
@@ -342,17 +349,23 @@ export default function AdminCRMListaEsperaScreen() {
             <TouchableOpacity
               onPress={() => setActiveFilter(activeFilter === 'invited' ? 'all' : 'invited')}
               activeOpacity={0.8}
-              className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#10b981] border border-[#e2e8f0] ${
-                activeFilter === 'invited' ? 'bg-emerald-50/80 border-[#10b981]' : ''
-              }`}
               style={{
+                flex: 1,
+                backgroundColor: activeFilter === 'invited' ? '#ecfdf5' : '#ffffff',
+                borderRadius: 16,
+                padding: 14,
+                borderWidth: 1,
+                borderColor: activeFilter === 'invited' ? '#10b981' : '#e2e8f0',
+                overflow: 'hidden',
+                position: 'relative',
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
+                shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.04,
-                shadowRadius: 6,
-                elevation: 2,
+                shadowRadius: 3,
+                elevation: 1,
               }}
             >
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#10b981' }} />
               <View className="flex-row items-center gap-1.5 mb-1">
                 <Feather name="check-circle" size={13} color="#10b981" />
                 <Text className="font-sans font-bold text-[#475569] text-[11px]">Convidados</Text>
@@ -365,17 +378,23 @@ export default function AdminCRMListaEsperaScreen() {
             <TouchableOpacity
               onPress={() => setActiveFilter('all')}
               activeOpacity={0.8}
-              className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#1B4332] border border-[#e2e8f0] ${
-                activeFilter === 'all' ? 'bg-emerald-50/50 border-[#1B4332]' : ''
-              }`}
               style={{
+                flex: 1,
+                backgroundColor: activeFilter === 'all' ? '#ecfdf5' : '#ffffff',
+                borderRadius: 16,
+                padding: 14,
+                borderWidth: 1,
+                borderColor: activeFilter === 'all' ? '#1B4332' : '#e2e8f0',
+                overflow: 'hidden',
+                position: 'relative',
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
+                shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.04,
-                shadowRadius: 6,
-                elevation: 2,
+                shadowRadius: 3,
+                elevation: 1,
               }}
             >
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#1B4332' }} />
               <View className="flex-row items-center gap-1.5 mb-1">
                 <Feather name="users" size={13} color="#1B4332" />
                 <Text className="font-sans font-bold text-[#475569] text-[11px]">Total Fila</Text>
@@ -387,40 +406,65 @@ export default function AdminCRMListaEsperaScreen() {
         </View>
 
         {/* ========================================================= */}
-        {/* 3. ABAS DO FUNIL (PILLS HORIZONTAIS)                      */}
+        {/* 3. FILTRO DE STATUS DA FILA (DROPDOWN NATIVO)             */}
         {/* ========================================================= */}
-        <View className="mb-3.5 -mx-4">
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+        <View className="mb-3.5">
+          <NativeSelectMenu
+            title="Filtrar Lista de Espera"
+            options={[
+              { label: 'Todos os Leads da Fila', value: 'all' },
+              { label: 'Apenas Pendentes (Aguardando Convite)', value: 'pending' },
+              { label: 'Já Contatados / Convidados', value: 'invited' },
+            ]}
+            selectedValue={activeFilter}
+            onSelect={(val) => {
+              setActiveFilter(val);
+              setCurrentPage(1);
+            }}
+            style={{ width: '100%' }}
           >
-            {[
-              { id: 'all', label: 'Todos os Leads' },
-              { id: 'pending', label: 'Apenas Pendentes' },
-              { id: 'invited', label: 'Já Contatados' },
-            ].map((tab) => {
-              const isActive = activeFilter === tab.id;
-              return (
-                <TouchableOpacity
-                  key={tab.id}
-                  onPress={() => setActiveFilter(tab.id)}
-                  activeOpacity={0.8}
-                  className={`px-4 py-2 rounded-full border ${
-                    isActive ? 'bg-[#1B4332] border-[#1B4332]' : 'bg-white border-[#e2e8f0]'
-                  }`}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 11,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 3,
+                elevation: 1,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                <Feather name="filter" size={15} color="#1B4332" />
+                <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 12 }}>
+                  Visualizando:
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: 'Inter_700Bold',
+                    color: '#1B4332',
+                    fontSize: 13,
+                    flex: 1,
+                  }}
+                  numberOfLines={1}
                 >
-                  <Text
-                    className={`font-sans font-semibold text-[13px] ${
-                      isActive ? 'text-white' : 'text-[#64748b]'
-                    }`}
-                  >
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                  {activeFilter === 'pending'
+                    ? 'Apenas Pendentes'
+                    : activeFilter === 'invited'
+                    ? 'Já Contatados'
+                    : 'Todos os Leads da Fila'}
+                </Text>
+              </View>
+              <Feather name="chevron-down" size={16} color="#1B4332" />
+            </View>
+          </NativeSelectMenu>
         </View>
 
         {/* ========================================================= */}
@@ -483,13 +527,18 @@ export default function AdminCRMListaEsperaScreen() {
               return (
                 <View
                   key={lead.id}
-                  className="bg-white rounded-2xl p-4 mb-3 border border-[#e2e8f0]"
                   style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: 16,
+                    padding: 16,
+                    marginBottom: 12,
+                    borderWidth: 1,
+                    borderColor: '#e2e8f0',
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 8,
-                    elevation: 2,
+                    shadowOpacity: 0.04,
+                    shadowRadius: 6,
+                    elevation: 1,
                   }}
                 >
                   {/* Topo do Card: Avatar + Nome + Status */}

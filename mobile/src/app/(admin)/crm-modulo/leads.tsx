@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import api from '../../../services/api';
+import NativeSelectMenu from '../../../components/NativeSelectMenu';
 
 // -------------------------------------------------------------
 // Dicionário de Copys Outbound (Espelho de admin_crm_leads.js)
@@ -630,43 +631,74 @@ export default function AdminCRMLeadsScreen() {
         </View>
 
         {/* ========================================================= */}
-        {/* 3. ABAS DO FUNIL (PILLS HORIZONTAIS)                      */}
+        {/* 3. FILTRO DE ESTÁGIO DO PIPELINE (DROPDOWN NATIVO)        */}
         {/* ========================================================= */}
-        <View className="mb-3.5 -mx-4">
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+        <View className="mb-3.5">
+          <NativeSelectMenu
+            title="Filtrar por Estágio do Funil"
+            options={[
+              { label: 'Pipeline Ativo (Todos em Andamento)', value: 'ativos' },
+              { label: 'Oportunidades Frias (Sem Abordagem)', value: 'pendentes' },
+              { label: '1º Contato Feito', value: 'contatados' },
+              { label: 'Em Negociação', value: 'aguardando' },
+              { label: 'Novos Assinantes (Convertidos)', value: 'cadastrados' },
+              { label: 'Histórico Completo (Todos os Leads)', value: 'todos' },
+            ]}
+            selectedValue={activeFilter}
+            onSelect={(val) => {
+              setActiveFilter(val);
+              setCurrentPage(1);
+            }}
+            style={{ width: '100%' }}
           >
-            {[
-              { id: 'ativos', label: 'Pipeline Ativo' },
-              { id: 'pendentes', label: 'Frios' },
-              { id: 'contatados', label: 'Contatados' },
-              { id: 'aguardando', label: 'Em Negociação' },
-              { id: 'cadastrados', label: 'Convertidos' },
-              { id: 'todos', label: 'Histórico (Todos)' },
-            ].map((tab) => {
-              const isActive = activeFilter === tab.id;
-              return (
-                <TouchableOpacity
-                  key={tab.id}
-                  onPress={() => setActiveFilter(tab.id)}
-                  activeOpacity={0.8}
-                  className={`px-4 py-2 rounded-full border ${
-                    isActive ? 'bg-[#1B4332] border-[#1B4332]' : 'bg-white border-[#e2e8f0]'
-                  }`}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 11,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 3,
+                elevation: 1,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                <Feather name="filter" size={15} color="#1B4332" />
+                <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 12 }}>
+                  Estágio:
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: 'Inter_700Bold',
+                    color: '#1B4332',
+                    fontSize: 13,
+                    flex: 1,
+                  }}
+                  numberOfLines={1}
                 >
-                  <Text
-                    className={`font-sans font-semibold text-[13px] ${
-                      isActive ? 'text-white' : 'text-[#64748b]'
-                    }`}
-                  >
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                  {activeFilter === 'ativos'
+                    ? 'Pipeline Ativo'
+                    : activeFilter === 'pendentes'
+                    ? 'Oportunidades Frias'
+                    : activeFilter === 'contatados'
+                    ? '1º Contato Feito'
+                    : activeFilter === 'aguardando'
+                    ? 'Em Negociação'
+                    : activeFilter === 'cadastrados'
+                    ? 'Convertidos'
+                    : 'Histórico (Todos)'}
+                </Text>
+              </View>
+              <Feather name="chevron-down" size={16} color="#1B4332" />
+            </View>
+          </NativeSelectMenu>
         </View>
 
         {/* ========================================================= */}

@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import api from '../../../services/api';
 import YeloToast from '../../../components/YeloToast';
+import NativeSelectMenu from '../../../components/NativeSelectMenu';
 
 type FunilTab = 'funil' | 'conversoes' | 'ranking' | 'auditoria' | 'v6';
 
@@ -584,53 +585,69 @@ export default function AdminAnalyticsFunilScreen() {
         </LinearGradient>
 
         {/* ========================================================= */}
-        {/* NAVEGAÇÃO POR ABAS (PÍLULAS DESLIZÁVEIS)                   */}
+        {/* NAVEGAÇÃO POR SEÇÃO (SELETOR DROPDOWN NATIVO)             */}
         {/* ========================================================= */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 6, marginBottom: 16 }}
-        >
-          {[
-            { id: 'funil', label: '🎯 Funil End-to-End' },
-            { id: 'conversoes', label: '🤝 Conversões (PLG)' },
-            { id: 'ranking', label: '🏆 Ranking de Psis' },
-            { id: 'auditoria', label: '🔎 Auditoria (Período)' },
-            { id: 'v6', label: '⚖️ Monitor de Justiça V6' },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                onPress={() => setActiveTab(tab.id as FunilTab)}
-                style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 999,
-                  backgroundColor: isActive ? '#1B4332' : '#ffffff',
-                  borderWidth: 1,
-                  borderColor: isActive ? '#1B4332' : '#e2e8f0',
-                  shadowColor: '#000',
-                  shadowOpacity: isActive ? 0.08 : 0.02,
-                  shadowRadius: 3,
-                  shadowOffset: { width: 0, height: 1 },
-                  elevation: 1,
-                }}
-                activeOpacity={0.8}
-              >
+        <View style={{ marginBottom: 16 }}>
+          <NativeSelectMenu
+            title="Selecionar Seção do Funil"
+            options={[
+              { label: '🎯 Funil End-to-End', value: 'funil' },
+              { label: '🤝 Conversões (PLG)', value: 'conversoes' },
+              { label: '🏆 Ranking de Psis', value: 'ranking' },
+              { label: '🔎 Auditoria (Período)', value: 'auditoria' },
+              { label: '⚖️ Monitor de Justiça V6', value: 'v6' },
+            ]}
+            selectedValue={activeTab}
+            onSelect={(val) => setActiveTab(val as FunilTab)}
+            style={{ width: '100%' }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 11,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 3,
+                elevation: 1,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                <Feather name="layers" size={15} color="#1B4332" />
+                <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 12 }}>
+                  Seção Ativa:
+                </Text>
                 <Text
                   style={{
-                    fontFamily: isActive ? 'Inter_700Bold' : 'Inter_600SemiBold',
-                    fontSize: 12,
-                    color: isActive ? '#ffffff' : '#475569',
+                    fontFamily: 'Inter_700Bold',
+                    color: '#1B4332',
+                    fontSize: 13,
+                    flex: 1,
                   }}
+                  numberOfLines={1}
                 >
-                  {tab.label}
+                  {activeTab === 'funil'
+                    ? '🎯 Funil End-to-End'
+                    : activeTab === 'conversoes'
+                    ? '🤝 Conversões (PLG)'
+                    : activeTab === 'ranking'
+                    ? '🏆 Ranking de Psis'
+                    : activeTab === 'auditoria'
+                    ? '🔎 Auditoria (Período)'
+                    : '⚖️ Monitor de Justiça V6'}
                 </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+              </View>
+              <Feather name="chevron-down" size={16} color="#1B4332" />
+            </View>
+          </NativeSelectMenu>
+        </View>
 
         {/* ========================================================= */}
         {/* ABA 1: FUNIL END-TO-END                                   */}
@@ -1072,41 +1089,67 @@ export default function AdminAnalyticsFunilScreen() {
                   />
                 </View>
 
-                {/* Filtro em pílulas */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-                  {[
-                    { id: 'todos', label: 'Todos' },
-                    { id: 'cobrar_agora', label: 'Cobrar Agora' },
-                    { id: 'pendente', label: 'Pendente' },
-                    { id: 'respondido', label: 'Respondido' },
-                    { id: 'fechou', label: 'Fechou' },
-                    { id: 'nao_recebeu', label: 'Não Recebeu' },
-                  ].map((f) => {
-                    const isSel = wppStatusFilter === f.id;
-                    return (
-                      <TouchableOpacity
-                        key={f.id}
-                        onPress={() => {
-                          setWppStatusFilter(f.id);
-                          setWppPage(1);
-                        }}
+                {/* Filtro de Status via Dropdown */}
+                <NativeSelectMenu
+                  title="Filtrar por Status de Cobrança"
+                  options={[
+                    { label: 'Todos os Feedbacks', value: 'todos' },
+                    { label: 'Cobrar Agora (Atrasados)', value: 'cobrar_agora' },
+                    { label: 'Pendente', value: 'pendente' },
+                    { label: 'Respondido', value: 'respondido' },
+                    { label: 'Fechou Terapia', value: 'fechou' },
+                    { label: 'Não Recebeu Contato', value: 'nao_recebeu' },
+                  ]}
+                  selectedValue={wppStatusFilter}
+                  onSelect={(val) => {
+                    setWppStatusFilter(val);
+                    setWppPage(1);
+                  }}
+                  style={{ width: '100%' }}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      backgroundColor: '#f8fafc',
+                      borderWidth: 1,
+                      borderColor: '#e2e8f0',
+                      borderRadius: 999,
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                      <Feather name="filter" size={13} color="#1B4332" />
+                      <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 11.5 }}>
+                        Status:
+                      </Text>
+                      <Text
                         style={{
-                          paddingHorizontal: 12,
-                          paddingVertical: 5,
-                          borderRadius: 999,
-                          backgroundColor: isSel ? '#1B4332' : '#f1f5f9',
-                          borderWidth: 1,
-                          borderColor: isSel ? '#1B4332' : '#e2e8f0',
+                          fontFamily: 'Inter_700Bold',
+                          color: '#1B4332',
+                          fontSize: 12,
+                          flex: 1,
                         }}
-                        activeOpacity={0.8}
+                        numberOfLines={1}
                       >
-                        <Text style={{ fontFamily: isSel ? 'Inter_700Bold' : 'Inter_500Medium', fontSize: 11, color: isSel ? '#ffffff' : '#475569' }}>
-                          {f.label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
+                        {wppStatusFilter === 'todos'
+                          ? 'Todos'
+                          : wppStatusFilter === 'cobrar_agora'
+                          ? 'Cobrar Agora'
+                          : wppStatusFilter === 'pendente'
+                          ? 'Pendente'
+                          : wppStatusFilter === 'respondido'
+                          ? 'Respondido'
+                          : wppStatusFilter === 'fechou'
+                          ? 'Fechou'
+                          : 'Não Recebeu'}
+                      </Text>
+                    </View>
+                    <Feather name="chevron-down" size={14} color="#1B4332" />
+                  </View>
+                </NativeSelectMenu>
               </View>
 
               {/* Lista de Cards de Feedback */}

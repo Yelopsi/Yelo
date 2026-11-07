@@ -1,5 +1,36 @@
 [
   {
+    "id": "change-git-51fc8dbe",
+    "date": "2026-11-07T00:01:27.000Z",
+    "commit": "51fc8dbe",
+    "author": "Anderson",
+    "title": "Correção: Resolve visual card leaks, black borders, font clipping and tab padding across CRM screens (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "resolve visual card leaks, black borders, font clipping and tab padding across CRM screens",
+    "description": "Commit registrado no repositório: \"fix(mobile): resolve visual card leaks, black borders, font clipping and tab padding across CRM screens\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/_layout.tsx, mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx, mobile/src/app/(admin)/crm-modulo/copilot-wpp.tsx (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #51fc8dbe"
+    },
+    "after": {
+      "nova_versao": "resolve visual card leaks, black borders, font clipping and tab padding across CRM screens"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx",
+      "mobile/src/app/(admin)/crm-modulo/copilot-wpp.tsx",
+      "mobile/src/app/(admin)/crm-modulo/leads.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "mobile/src/app/_layout.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-d7562622",
     "date": "2026-11-06T23:42:23.000Z",
     "commit": "d7562622",

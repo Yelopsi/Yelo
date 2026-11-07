@@ -18,6 +18,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../../services/api';
+import NativeSelectMenu from '../../../components/NativeSelectMenu';
 
 // Tipagens dos dados retornados pelas APIs de Growth
 interface OverviewData {
@@ -597,54 +598,68 @@ export default function AnalyticsCrescimentoScreen() {
         </LinearGradient>
 
         {/* ========================================================= */}
-        {/* SELETOR DE PERÍODO HORIZONTAL (7D, 30D, 90D, 180D, 365D) */}
+        {/* SELETOR DE PERÍODO VIA DROPDOWN (SEM SCROLL HORIZONTAL)   */}
         {/* ========================================================= */}
         <View style={{ marginBottom: 16 }}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8 }}
+          <NativeSelectMenu
+            title="Selecionar Período de Análise"
+            options={[
+              { label: 'Últimos 7 dias', value: '7' },
+              { label: 'Últimos 30 dias (Padrão)', value: '30' },
+              { label: 'Últimos 3 meses (90 dias)', value: '90' },
+              { label: 'Últimos 6 meses (180 dias)', value: '180' },
+              { label: 'Últimos 12 meses (1 ano)', value: '365' },
+            ]}
+            selectedValue={String(selectedPeriod)}
+            onSelect={(val) => setSelectedPeriod(Number(val))}
+            style={{ width: '100%' }}
           >
-            {[
-              { id: 7, label: '7 dias' },
-              { id: 30, label: '30 dias' },
-              { id: 90, label: '3 meses' },
-              { id: 180, label: '6 meses' },
-              { id: 365, label: '12 meses' },
-            ].map((p) => {
-              const isActive = selectedPeriod === p.id;
-              return (
-                <TouchableOpacity
-                  key={p.id}
-                  onPress={() => setSelectedPeriod(p.id)}
-                  activeOpacity={0.8}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.03,
+                shadowRadius: 3,
+                elevation: 1,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                <Feather name="clock" size={15} color="#1B4332" />
+                <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 12 }}>
+                  Janela de Análise:
+                </Text>
+                <Text
                   style={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    borderRadius: 999,
-                    backgroundColor: isActive ? '#1B4332' : '#ffffff',
-                    borderWidth: 1,
-                    borderColor: isActive ? '#1B4332' : '#e2e8f0',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: isActive ? 0.08 : 0.02,
-                    shadowRadius: 3,
-                    elevation: isActive ? 2 : 1,
+                    fontFamily: 'Inter_700Bold',
+                    color: '#1B4332',
+                    fontSize: 13,
+                    flex: 1,
                   }}
+                  numberOfLines={1}
                 >
-                  <Text
-                    style={{
-                      fontFamily: 'Inter_700Bold',
-                      fontSize: 12,
-                      color: isActive ? '#ffffff' : '#64748b',
-                    }}
-                  >
-                    {p.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                  {selectedPeriod === 7
+                    ? '7 dias'
+                    : selectedPeriod === 30
+                    ? '30 dias'
+                    : selectedPeriod === 90
+                    ? '3 meses'
+                    : selectedPeriod === 180
+                    ? '6 meses'
+                    : '12 meses'}
+                </Text>
+              </View>
+              <Feather name="chevron-down" size={16} color="#1B4332" />
+            </View>
+          </NativeSelectMenu>
         </View>
 
         {/* ========================================================= */}

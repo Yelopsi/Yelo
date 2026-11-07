@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import api from '../../../services/api';
+import NativeSelectMenu from '../../../components/NativeSelectMenu';
 
 // -------------------------------------------------------------
 // Helper: Cálculo de Força do Perfil (espelha calculateProfileHealth do Admin Web)
@@ -1252,57 +1253,86 @@ export default function AdminCRMPsicologosScreen() {
         </View>
 
         {/* ========================================================= */}
-        {/* 5. ABAS DO FUNIL (PILLS HORIZONTAIS)                      */}
+        {/* 5. FILTRO DE STATUS DA BASE (SELETOR DROPDOWN NATIVO)     */}
         {/* ========================================================= */}
-        <View className="mb-3 -mx-4">
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+        <View className="mb-3.5">
+          <NativeSelectMenu
+            title="Filtrar Psicólogos por Status"
+            options={[
+              { label: 'Todos os Psicólogos', value: '' },
+              { label: 'Follow-ups Prioritários 📞', value: 'pending_actions' },
+              { label: 'Assinantes Pagantes', value: 'active_paying' },
+              { label: 'Em Período Trial', value: 'active_trial' },
+              { label: 'Churn Pagante no Mês 📉', value: 'churn_month' },
+              { label: 'Perfis Pendentes / Incompletos', value: 'pending' },
+              { label: 'Inativos / Cancelados', value: 'inactive' },
+              { label: 'Profissionais VIP (Isentos)', value: 'vip' },
+              { label: 'Fila CS (Não Analisados) ✨', value: 'not_analyzed' },
+              { label: 'Lixeira 🗑️', value: 'deleted' },
+            ]}
+            selectedValue={activeFilter}
+            onSelect={(val) => {
+              setActiveFilter(val);
+              setCurrentPage(1);
+            }}
+            style={{ width: '100%' }}
           >
-            {[
-              { id: '', label: 'Todos' },
-              { id: 'pending_actions', label: 'Follow-ups 📞' },
-              { id: 'active_paying', label: 'Pagantes' },
-              { id: 'active_trial', label: 'Trials' },
-              { id: 'churn_month', label: 'Churn Pagante 📉' },
-              { id: 'pending', label: 'Pendentes' },
-              { id: 'inactive', label: 'Inativos' },
-              { id: 'vip', label: 'VIPs' },
-              { id: 'not_analyzed', label: 'Fila CS ✨' },
-              { id: 'deleted', label: 'Lixeira 🗑️' },
-            ].map((tab) => {
-              const isActive = activeFilter === tab.id;
-              const isFollowupTab = tab.id === 'pending_actions';
-
-              return (
-                <TouchableOpacity
-                  key={tab.id}
-                  onPress={() => setActiveFilter(tab.id)}
-                  activeOpacity={0.8}
-                  className={`px-4 py-2 rounded-full border ${
-                    isActive
-                      ? 'bg-[#1B4332] border-[#1B4332]'
-                      : isFollowupTab
-                      ? 'bg-blue-50 border-[#3b82f6]'
-                      : 'bg-white border-[#e2e8f0]'
-                  }`}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 11,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 3,
+                elevation: 1,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                <Feather name="filter" size={15} color="#1B4332" />
+                <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 12 }}>
+                  Filtrar Categoria:
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: 'Inter_700Bold',
+                    color: '#1B4332',
+                    fontSize: 13,
+                    flex: 1,
+                  }}
+                  numberOfLines={1}
                 >
-                  <Text
-                    className={`font-sans font-semibold text-[13px] ${
-                      isActive
-                        ? 'text-white'
-                        : isFollowupTab
-                        ? 'text-[#2563eb]'
-                        : 'text-[#64748b]'
-                    }`}
-                  >
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                  {activeFilter === 'pending_actions'
+                    ? 'Follow-ups 📞'
+                    : activeFilter === 'active_paying'
+                    ? 'Pagantes'
+                    : activeFilter === 'active_trial'
+                    ? 'Em Trial'
+                    : activeFilter === 'churn_month'
+                    ? 'Churn no Mês 📉'
+                    : activeFilter === 'pending'
+                    ? 'Pendentes'
+                    : activeFilter === 'inactive'
+                    ? 'Inativos'
+                    : activeFilter === 'vip'
+                    ? 'VIPs'
+                    : activeFilter === 'not_analyzed'
+                    ? 'Fila CS ✨'
+                    : activeFilter === 'deleted'
+                    ? 'Lixeira 🗑️'
+                    : 'Todos os Psicólogos'}
+                </Text>
+              </View>
+              <Feather name="chevron-down" size={16} color="#1B4332" />
+            </View>
+          </NativeSelectMenu>
         </View>
 
         {/* ========================================================= */}

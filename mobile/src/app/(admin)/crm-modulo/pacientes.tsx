@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import api from '../../../services/api';
+import NativeSelectMenu from '../../../components/NativeSelectMenu';
 
 export default function AdminCRMPacientesScreen() {
   const [modalVisible, setModalVisible] = useState(false);
@@ -150,19 +151,59 @@ export default function AdminCRMPacientesScreen() {
               className="flex-1 ml-[10px] font-sans text-[14px] text-[#333]"
             />
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View className="flex-row gap-[10px]">
-              <TouchableOpacity onPress={() => setActiveFilter('todos')} className={activeFilter === 'todos' ? "bg-[#1e1b4b] px-[16px] py-[8px] rounded-[20px]" : "bg-[#f1f5f9] px-[16px] py-[8px] rounded-[20px] border border-[#e2e8f0]"}>
-                <Text className={activeFilter === 'todos' ? "text-white font-sans font-bold text-[12px]" : "text-[#64748b] font-sans font-bold text-[12px]"}>Todos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setActiveFilter('active')} className={activeFilter === 'active' ? "bg-[#1e1b4b] px-[16px] py-[8px] rounded-[20px]" : "bg-[#f1f5f9] px-[16px] py-[8px] rounded-[20px] border border-[#e2e8f0]"}>
-                <Text className={activeFilter === 'active' ? "text-white font-sans font-bold text-[12px]" : "text-[#64748b] font-sans font-bold text-[12px]"}>Pacientes Ativos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setActiveFilter('deleted')} className={activeFilter === 'deleted' ? "bg-[#ef4444] px-[16px] py-[8px] rounded-[20px]" : "bg-[#fef2f2] px-[16px] py-[8px] rounded-[20px] border border-[#fecaca]"}>
-                <Text className={activeFilter === 'deleted' ? "text-white font-sans font-bold text-[12px]" : "text-[#ef4444] font-sans font-bold text-[12px]"}>Lixeira 🗑️</Text>
-              </TouchableOpacity>
+          <NativeSelectMenu
+            title="Filtrar Pacientes"
+            options={[
+              { label: 'Todos os Pacientes', value: 'todos' },
+              { label: 'Pacientes Ativos', value: 'active' },
+              { label: 'Lixeira (Excluídos) 🗑️', value: 'deleted' },
+            ]}
+            selectedValue={activeFilter}
+            onSelect={(val) => setActiveFilter(val)}
+            style={{ width: '100%' }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.03,
+                shadowRadius: 3,
+                elevation: 1,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                <Feather name="filter" size={15} color="#1B4332" />
+                <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 12 }}>
+                  Visualizando:
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: 'Inter_700Bold',
+                    color: '#1B4332',
+                    fontSize: 13,
+                    flex: 1,
+                  }}
+                  numberOfLines={1}
+                >
+                  {activeFilter === 'active'
+                    ? 'Pacientes Ativos'
+                    : activeFilter === 'deleted'
+                    ? 'Lixeira (Excluídos) 🗑️'
+                    : 'Todos os Pacientes'}
+                </Text>
+              </View>
+              <Feather name="chevron-down" size={16} color="#1B4332" />
             </View>
-          </ScrollView>
+          </NativeSelectMenu>
         </View>
 
         {/* Lista de Pacientes (Cards) */}

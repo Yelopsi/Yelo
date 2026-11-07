@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import api from '../../../services/api';
+import NativeSelectMenu from '../../../components/NativeSelectMenu';
 
 export default function CancelamentosScreen() {
   const [filterReason, setFilterReason] = useState('Todos');
@@ -77,20 +78,60 @@ export default function CancelamentosScreen() {
 
         <Text className="font-title text-[#1e293b] text-[18px] mb-[15px]">Histórico de Feedbacks</Text>
 
-        {/* Filtros */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-[15px] max-h-[40px]">
-          <View className="flex-row gap-[10px]">
-            {['Todos', 'Financeiro', 'Plataforma', 'Suporte', 'Baixa Demanda'].map((f) => (
-              <TouchableOpacity 
-                key={f}
-                onPress={() => setFilterReason(f)}
-                className={`px-[16px] h-[34px] justify-center rounded-full border ${filterReason === f ? 'bg-[#1e1b4b] border-[#1e1b4b]' : 'bg-white border-[#e2e8f0]'}`}
-              >
-                <Text className={`font-sans text-[12px] ${filterReason === f ? 'text-white font-bold' : 'text-[#64748b]'}`}>{f}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
+        {/* Filtro via Dropdown */}
+        <View className="mb-[15px]">
+          <NativeSelectMenu
+            title="Filtrar Motivo de Cancelamento"
+            options={[
+              { label: 'Todos os Motivos', value: 'Todos' },
+              { label: 'Motivo Financeiro', value: 'Financeiro' },
+              { label: 'Dificuldades na Plataforma', value: 'Plataforma' },
+              { label: 'Atendimento / Suporte', value: 'Suporte' },
+              { label: 'Baixa Demanda de Pacientes', value: 'Baixa Demanda' },
+            ]}
+            selectedValue={filterReason}
+            onSelect={(val) => setFilterReason(val)}
+            style={{ width: '100%' }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.03,
+                shadowRadius: 3,
+                elevation: 1,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                <Feather name="filter" size={15} color="#1B4332" />
+                <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 12 }}>
+                  Motivo:
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: 'Inter_700Bold',
+                    color: '#1B4332',
+                    fontSize: 13,
+                    flex: 1,
+                  }}
+                  numberOfLines={1}
+                >
+                  {filterReason === 'Todos' ? 'Todos os Motivos' : filterReason}
+                </Text>
+              </View>
+              <Feather name="chevron-down" size={16} color="#1B4332" />
+            </View>
+          </NativeSelectMenu>
+        </View>
 
         {/* Lista de Churns */}
         <View className="gap-[15px]">

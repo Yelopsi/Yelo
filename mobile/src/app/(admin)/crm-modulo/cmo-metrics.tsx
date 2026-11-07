@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import api from '../../../services/api';
 import YeloToast from '../../../components/YeloToast';
+import NativeSelectMenu from '../../../components/NativeSelectMenu';
 
 interface MonthOption {
   label: string;
@@ -551,8 +552,8 @@ export default function AdminCmoMetricsScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Seletor de Meses em Scroll Horizontal */}
-          <View style={{ marginTop: 6 }}>
+          {/* Seletor de Meses via Dropdown Nativo (Sem scroll horizontal) */}
+          <View style={{ marginTop: 8 }}>
             <Text
               style={{
                 fontFamily: 'Inter_700Bold',
@@ -560,41 +561,52 @@ export default function AdminCmoMetricsScreen() {
                 color: 'rgba(255,255,255,0.65)',
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
-                marginBottom: 8,
+                marginBottom: 6,
               }}
             >
               Mês de Análise (Gastos e Transparência)
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-              {monthOptions.slice(0, 6).map((opt, idx) => {
-                const isActive = selectedMonthIndex === idx;
-                return (
-                  <TouchableOpacity
-                    key={opt.start}
-                    onPress={() => setSelectedMonthIndex(idx)}
+            <NativeSelectMenu
+              title="Selecionar Mês de Análise"
+              options={monthOptions.map((opt, idx) => ({
+                label: opt.label,
+                value: String(idx),
+              }))}
+              selectedValue={String(selectedMonthIndex)}
+              onSelect={(val) => setSelectedMonthIndex(Number(val))}
+              style={{ width: '100%' }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: 'rgba(255,255,255,0.14)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.25)',
+                  borderRadius: 999,
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  width: '100%',
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                  <Feather name="calendar" size={15} color="#ffffff" />
+                  <Text
                     style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 6,
-                      borderRadius: 999,
-                      backgroundColor: isActive ? '#ffffff' : 'rgba(255,255,255,0.12)',
-                      borderWidth: 1,
-                      borderColor: isActive ? '#ffffff' : 'rgba(255,255,255,0.2)',
+                      fontFamily: 'Inter_600SemiBold',
+                      color: '#ffffff',
+                      fontSize: 13,
+                      flex: 1,
                     }}
-                    activeOpacity={0.8}
+                    numberOfLines={1}
                   >
-                    <Text
-                      style={{
-                        fontFamily: isActive ? 'Inter_700Bold' : 'Inter_500Medium',
-                        fontSize: 11.5,
-                        color: isActive ? '#1e3a8a' : '#ffffff',
-                      }}
-                    >
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+                    {selectedPeriod?.label || 'Selecionar Mês'}
+                  </Text>
+                </View>
+                <Feather name="chevron-down" size={16} color="#ffffff" />
+              </View>
+            </NativeSelectMenu>
           </View>
         </LinearGradient>
 
@@ -609,6 +621,7 @@ export default function AdminCmoMetricsScreen() {
             borderColor: '#bfdbfe',
             padding: 16,
             marginBottom: 20,
+            overflow: 'hidden',
             shadowColor: '#1e3a8a',
             shadowOpacity: 0.04,
             shadowRadius: 8,
@@ -621,20 +634,44 @@ export default function AdminCmoMetricsScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
+              gap: 8,
               marginBottom: 10,
               paddingBottom: 8,
               borderBottomWidth: 1,
               borderBottomColor: '#f1f5f9',
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 160 }}>
               <Text style={{ fontSize: 16 }}>⚡</Text>
-              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e3a8a', fontSize: 15 }}>
+              <Text
+                style={{
+                  fontFamily: 'Fraunces_700Bold',
+                  color: '#1e3a8a',
+                  fontSize: 14,
+                  flexShrink: 1,
+                }}
+                numberOfLines={2}
+              >
                 Decisão da Inteligência Executiva
               </Text>
             </View>
-            <View style={{ backgroundColor: '#dbeafe', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }}>
-              <Text style={{ fontFamily: 'Inter_700Bold', color: '#1e40af', fontSize: 10, textTransform: 'uppercase' }}>
+            <View
+              style={{
+                backgroundColor: '#dbeafe',
+                paddingHorizontal: 10,
+                paddingVertical: 4.5,
+                borderRadius: 999,
+                flexShrink: 0,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: 'Inter_700Bold',
+                  color: '#1e40af',
+                  fontSize: 10,
+                  textTransform: 'uppercase',
+                }}
+              >
                 {decision.action || 'EQUILÍBRIO'}
               </Text>
             </View>
