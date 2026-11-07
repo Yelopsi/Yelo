@@ -328,7 +328,6 @@ export default function AdminCRMListaEsperaScreen() {
                 borderWidth: 1,
                 borderColor: activeFilter === 'pending' ? '#f59e0b' : '#e2e8f0',
                 overflow: 'hidden',
-                position: 'relative',
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.04,
@@ -336,7 +335,6 @@ export default function AdminCRMListaEsperaScreen() {
                 elevation: 1,
               }}
             >
-              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#f59e0b' }} />
               <View className="flex-row items-center gap-1.5 mb-1">
                 <Feather name="clock" size={13} color="#f59e0b" />
                 <Text className="font-sans font-bold text-[#475569] text-[11px]">Pendentes</Text>
@@ -357,7 +355,6 @@ export default function AdminCRMListaEsperaScreen() {
                 borderWidth: 1,
                 borderColor: activeFilter === 'invited' ? '#10b981' : '#e2e8f0',
                 overflow: 'hidden',
-                position: 'relative',
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.04,
@@ -365,7 +362,6 @@ export default function AdminCRMListaEsperaScreen() {
                 elevation: 1,
               }}
             >
-              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#10b981' }} />
               <View className="flex-row items-center gap-1.5 mb-1">
                 <Feather name="check-circle" size={13} color="#10b981" />
                 <Text className="font-sans font-bold text-[#475569] text-[11px]">Convidados</Text>
@@ -386,7 +382,6 @@ export default function AdminCRMListaEsperaScreen() {
                 borderWidth: 1,
                 borderColor: activeFilter === 'all' ? '#1B4332' : '#e2e8f0',
                 overflow: 'hidden',
-                position: 'relative',
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.04,
@@ -394,7 +389,6 @@ export default function AdminCRMListaEsperaScreen() {
                 elevation: 1,
               }}
             >
-              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#1B4332' }} />
               <View className="flex-row items-center gap-1.5 mb-1">
                 <Feather name="users" size={13} color="#1B4332" />
                 <Text className="font-sans font-bold text-[#475569] text-[11px]">Total Fila</Text>

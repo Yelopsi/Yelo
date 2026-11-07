@@ -879,7 +879,6 @@ export default function AdminCRMPsicologosScreen() {
                   borderWidth: 1,
                   borderColor: activeFilter === 'active_paying' ? '#10b981' : '#e2e8f0',
                   overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -887,7 +886,6 @@ export default function AdminCRMPsicologosScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#10b981' }} />
                 <View className="flex-row items-center justify-between mb-1">
                   <View className="flex-row items-center gap-1.5">
                     <Feather name="dollar-sign" size={13} color="#10b981" />
@@ -923,7 +921,6 @@ export default function AdminCRMPsicologosScreen() {
                   borderWidth: 1,
                   borderColor: activeFilter === 'active_trial' ? '#3b82f6' : '#e2e8f0',
                   overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -931,7 +928,6 @@ export default function AdminCRMPsicologosScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#3b82f6' }} />
                 <View className="flex-row items-center justify-between mb-1">
                   <View className="flex-row items-center gap-1.5">
                     <Feather name="clock" size={13} color="#3b82f6" />
@@ -970,7 +966,6 @@ export default function AdminCRMPsicologosScreen() {
                   borderWidth: 1,
                   borderColor: activeFilter === 'churn_month' ? '#ef4444' : '#e2e8f0',
                   overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -978,7 +973,6 @@ export default function AdminCRMPsicologosScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#ef4444' }} />
                 <View className="flex-row items-center justify-between mb-1">
                   <View className="flex-row items-center gap-1.5">
                     <Feather name="user-x" size={13} color="#ef4444" />
@@ -1014,7 +1008,6 @@ export default function AdminCRMPsicologosScreen() {
                   borderWidth: 1,
                   borderColor: activeFilter === 'pending' ? '#f59e0b' : '#e2e8f0',
                   overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -1022,7 +1015,6 @@ export default function AdminCRMPsicologosScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#f59e0b' }} />
                 <View className="flex-row items-center justify-between mb-1">
                   <View className="flex-row items-center gap-1.5">
                     <Feather name="alert-circle" size={13} color="#f59e0b" />
@@ -1059,7 +1051,6 @@ export default function AdminCRMPsicologosScreen() {
                 borderWidth: 1,
                 borderColor: activeFilter === 'inactive' ? '#ef4444' : '#e2e8f0',
                 overflow: 'hidden',
-                position: 'relative',
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -1070,7 +1061,6 @@ export default function AdminCRMPsicologosScreen() {
                 elevation: 1,
               }}
             >
-              <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 4, backgroundColor: '#ef4444' }} />
               <View className="flex-row items-center gap-2.5">
                 <View className="w-8 h-8 rounded-full bg-red-100 items-center justify-center">
                   <Feather name="slash" size={14} color="#ef4444" />
@@ -1108,7 +1098,6 @@ export default function AdminCRMPsicologosScreen() {
                   borderWidth: 1,
                   borderColor: activeFilter === 'utm_whatsapp' ? '#10b981' : '#e2e8f0',
                   overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -1116,7 +1105,6 @@ export default function AdminCRMPsicologosScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#10b981' }} />
                 <Text className="font-sans font-bold text-[#10b981] text-[11px] uppercase tracking-wider mb-0.5">
                   WhatsApp
                 </Text>
@@ -1137,7 +1125,6 @@ export default function AdminCRMPsicologosScreen() {
                   borderWidth: 1,
                   borderColor: activeFilter === 'utm_meta' ? '#3b82f6' : '#e2e8f0',
                   overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -1145,7 +1132,6 @@ export default function AdminCRMPsicologosScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#3b82f6' }} />
                 <Text className="font-sans font-bold text-[#3b82f6] text-[11px] uppercase tracking-wider mb-0.5">
                   Meta / Ads
                 </Text>
@@ -1169,7 +1155,6 @@ export default function AdminCRMPsicologosScreen() {
                   borderWidth: 1,
                   borderColor: activeFilter === 'utm_google' ? '#f59e0b' : '#e2e8f0',
                   overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -1177,7 +1162,6 @@ export default function AdminCRMPsicologosScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#f59e0b' }} />
                 <Text className="font-sans font-bold text-[#f59e0b] text-[11px] uppercase tracking-wider mb-0.5">
                   Google
                 </Text>
@@ -1200,7 +1184,6 @@ export default function AdminCRMPsicologosScreen() {
                   borderWidth: 1,
                   borderColor: activeFilter === 'utm_instagram_bio' ? '#ec4899' : '#e2e8f0',
                   overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -1208,7 +1191,6 @@ export default function AdminCRMPsicologosScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#ec4899' }} />
                 <Text className="font-sans font-bold text-[#ec4899] text-[11px] uppercase tracking-wider mb-0.5">
                   Instagram Bio
                 </Text>
@@ -1230,7 +1212,6 @@ export default function AdminCRMPsicologosScreen() {
                 borderWidth: 1,
                 borderColor: activeFilter === 'utm_outros' ? '#64748b' : '#e2e8f0',
                 overflow: 'hidden',
-                position: 'relative',
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -1241,7 +1222,6 @@ export default function AdminCRMPsicologosScreen() {
                 elevation: 1,
               }}
             >
-              <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 4, backgroundColor: '#64748b' }} />
               <Text className="font-sans font-bold text-[#475569] text-[12px] uppercase tracking-wider">
                 Direto / Outros
               </Text>
@@ -1425,10 +1405,10 @@ export default function AdminCRMPsicologosScreen() {
                   badgeText = 'Análise Pronta';
                 } else if (item.actionType === 'low_performance') {
                   btnLabel = 'Diagnóstico (IA)';
-                  btnGradient = ['#7c3aed', '#6d28d9'];
+                  btnGradient = ['#1B4332', '#2D6A4F'];
                   btnIcon = 'cpu';
-                  badgeBg = '#f3e8ff';
-                  badgeColor = '#7c3aed';
+                  badgeBg = '#e8f5e9';
+                  badgeColor = '#1B4332';
                   badgeText = 'Análise (IA)';
                 } else if (item.actionType === 'expiring_trial') {
                   btnLabel = 'Converter Plano (IA)';
@@ -1467,10 +1447,10 @@ export default function AdminCRMPsicologosScreen() {
                   badgeText = 'Perfil Incompleto';
                 } else if (item.actionType === 'negotiation') {
                   btnLabel = 'Acompanhar Negociação';
-                  btnGradient = ['#4f46e5', '#4338ca'];
+                  btnGradient = ['#1B4332', '#2D6A4F'];
                   btnIcon = 'users';
-                  badgeBg = '#ffedd5';
-                  badgeColor = '#c2410c';
+                  badgeBg = '#e8f5e9';
+                  badgeColor = '#1B4332';
                   badgeText = 'Em Negociação';
                 }
 
@@ -1572,14 +1552,11 @@ export default function AdminCRMPsicologosScreen() {
                             backgroundColor: '#f8fafc',
                             borderRadius: 12,
                             padding: 10,
-                            paddingLeft: 14,
                             borderWidth: 1,
                             borderColor: '#e2e8f0',
                             overflow: 'hidden',
-                            position: 'relative',
                           }}
                         >
-                          <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: 4, backgroundColor: '#3b82f6' }} />
                           <Text className="font-sans text-[#1e293b] text-[13px] leading-5">
                             {item.reason}
                           </Text>
@@ -2064,11 +2041,11 @@ export default function AdminCRMPsicologosScreen() {
             {/* Cabeçalho do Drawer */}
             <View className="bg-white px-5 py-3.5 border-b border-slate-200 flex-row justify-between items-center">
               <View className="flex-row items-center gap-2.5">
-                <View className="w-9 h-9 rounded-xl bg-purple-100 items-center justify-center">
-                  <Feather name="activity" size={18} color="#7c3aed" />
+                <View className="w-9 h-9 rounded-full bg-[#e8f5e9] items-center justify-center">
+                  <Feather name="activity" size={18} color="#1B4332" />
                 </View>
                 <View>
-                  <Text className="font-title text-[#1e293b] text-[17px] font-bold">Visão de CS (360º)</Text>
+                  <Text className="font-title text-[#1B4332] text-[17px] font-bold">Visão de CS (360º)</Text>
                   <Text className="font-sans text-[#64748b] text-[11px]">Dossiê completo do psicólogo</Text>
                 </View>
               </View>
@@ -2294,7 +2271,7 @@ export default function AdminCRMPsicologosScreen() {
                           <TouchableOpacity
                             onPress={() => handleGenerateAiDiagnosis(psy)}
                             disabled={aiDiagnosisLoading}
-                            className="flex-1 bg-[#7c3aed] py-[10px] px-[14px] rounded-full items-center justify-center flex-row gap-[6px]"
+                            className="flex-1 bg-[#1B4332] py-[10px] px-[14px] rounded-full items-center justify-center flex-row gap-[6px]"
                           >
                             {aiDiagnosisLoading ? (
                               <ActivityIndicator size="small" color="#fff" />

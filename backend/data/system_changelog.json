@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-683095c8",
+    "date": "2026-11-07T01:16:46.000Z",
+    "commit": "683095c8",
+    "author": "Anderson",
+    "title": "Novo: Bring full parity with web community management and live banner preview (admin-comunidade-gestao)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "bring full parity with web community management and live banner preview",
+    "description": "Commit registrado no repositório: \"feat(admin-comunidade-gestao): bring full parity with web community management and live banner preview\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/adminCommunityController.js, backend/data/system_changelog.json, mobile/src/app/(admin)/comunidade-gestao.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #683095c8"
+    },
+    "after": {
+      "nova_versao": "bring full parity with web community management and live banner preview"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminCommunityController.js",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/comunidade-gestao.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-10463cdc",
     "date": "2026-11-07T01:11:45.000Z",
     "commit": "10463cdc",

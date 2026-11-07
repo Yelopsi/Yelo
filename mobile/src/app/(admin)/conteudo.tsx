@@ -59,24 +59,12 @@ function HubContentCard({
         elevation: 2,
       }}
     >
-      {/* Barra de destaque superior Apple-style */}
-      <View
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3.5,
-          backgroundColor: accentColor,
-        }}
-      />
-
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <View
           style={{
             width: 48,
             height: 48,
-            borderRadius: 14,
+            borderRadius: 999,
             backgroundColor: iconBg,
             alignItems: 'center',
             justifyContent: 'center',
@@ -129,7 +117,7 @@ function HubContentCard({
         style={{
           fontFamily: 'Fraunces_700Bold',
           fontSize: 18,
-          color: '#1e293b',
+          color: '#1B4332',
           marginBottom: 4,
         }}
       >
@@ -306,18 +294,16 @@ export default function AdminConteudoHubScreen() {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: 'rgba(255,255,255,0.15)',
-              paddingHorizontal: 10,
-              paddingVertical: 5,
+              backgroundColor: '#FFEE8C',
+              paddingHorizontal: 12,
+              paddingVertical: 6,
               borderRadius: 999,
               gap: 4,
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.25)',
             }}
             activeOpacity={0.8}
           >
-            <Feather name="refresh-cw" size={11} color="#ffffff" />
-            <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#ffffff', fontSize: 11 }}>
+            <Feather name="refresh-cw" size={11} color="#1B4332" />
+            <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 11 }}>
               Atualizar
             </Text>
           </TouchableOpacity>
@@ -352,7 +338,7 @@ export default function AdminConteudoHubScreen() {
       <View style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
           <Feather name="activity" size={15} color="#1B4332" />
-          <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 15, color: '#1e293b' }}>
+          <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 15, color: '#1B4332' }}>
             Status da Moderação
           </Text>
         </View>
@@ -367,11 +353,9 @@ export default function AdminConteudoHubScreen() {
               borderWidth: 1,
               borderColor: '#e2e8f0',
               padding: 12,
-              position: 'relative',
               overflow: 'hidden',
             }}
           >
-            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, backgroundColor: '#7E22CE' }} />
             <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
               Q&A Pendentes
             </Text>
@@ -392,11 +376,9 @@ export default function AdminConteudoHubScreen() {
               borderWidth: 1,
               borderColor: '#e2e8f0',
               padding: 12,
-              position: 'relative',
               overflow: 'hidden',
             }}
           >
-            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, backgroundColor: '#1B4332' }} />
             <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
               Posts do Fórum
             </Text>
@@ -417,11 +399,9 @@ export default function AdminConteudoHubScreen() {
               borderWidth: 1,
               borderColor: '#e2e8f0',
               padding: 12,
-              position: 'relative',
               overflow: 'hidden',
             }}
           >
-            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, backgroundColor: '#0284C7' }} />
             <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
               Banner Evento
             </Text>
@@ -441,7 +421,7 @@ export default function AdminConteudoHubScreen() {
       <View style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
           <Feather name="grid" size={15} color="#1B4332" />
-          <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 15, color: '#1e293b' }}>
+          <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 15, color: '#1B4332' }}>
             Módulos de Gestão
           </Text>
         </View>
@@ -451,13 +431,13 @@ export default function AdminConteudoHubScreen() {
           title="Gestão de Conteúdo"
           description="Moderação de avaliações, Q&A e Blogs."
           icon="file-text"
-          iconColor="#7E22CE"
-          iconBg="#F3E8FF"
-          accentColor="#7E22CE"
+          iconColor="#1B4332"
+          iconBg="#E8F5E9"
+          accentColor="#1B4332"
           tags={['Perguntas (Q&A)', 'Artigos de Blog', 'Páginas Estáticas', 'Avaliações']}
           badge={(pendingQnaCount || 0) > 0 ? `${pendingQnaCount} pendente(s)` : 'Moderação'}
-          badgeBg={(pendingQnaCount || 0) > 0 ? '#fef3c7' : '#f3e8ff'}
-          badgeColor={(pendingQnaCount || 0) > 0 ? '#b45309' : '#7e22ce'}
+          badgeBg={(pendingQnaCount || 0) > 0 ? '#fef3c7' : '#e8f5e9'}
+          badgeColor={(pendingQnaCount || 0) > 0 ? '#b45309' : '#1B4332'}
           onPress={() => handleNavigate('/(admin)/gestao-conteudo')}
         />
 
@@ -507,10 +487,9 @@ export default function AdminConteudoHubScreen() {
           overflow: 'hidden',
         }}
       >
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#10b981' }} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
           <Text style={{ fontSize: 16 }}>🌿</Text>
-          <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 15, color: '#1e293b' }}>
+          <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 15, color: '#1B4332' }}>
             Diretrizes de Conteúdo & Moderação
           </Text>
         </View>

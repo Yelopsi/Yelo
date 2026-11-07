@@ -25,16 +25,16 @@ export default function AdminLayout() {
   };
 
   const BackButton = () => (
-    <TouchableOpacity onPress={() => router.back()} className="flex-row items-center ml-[20px] bg-[#f1f5f9] px-[12px] py-[6px] rounded-[50px]">
-      <Feather name="arrow-left" size={16} color="#1e1b4b" />
-      <Text className="font-sans font-bold text-[#1e1b4b] text-[12px] ml-[4px]">Voltar</Text>
+    <TouchableOpacity onPress={() => router.back()} className="flex-row items-center ml-[20px] bg-[#e8f5e9] px-[12px] py-[6px] rounded-full">
+      <Feather name="arrow-left" size={16} color="#1B4332" />
+      <Text className="font-sans font-bold text-[#1B4332] text-[12px] ml-[4px]">Voltar</Text>
     </TouchableOpacity>
   );
 
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-[#f9fafb]">
-        <ActivityIndicator size="large" color="#8b5cf6" />
+        <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
   }
@@ -133,14 +133,7 @@ export default function AdminLayout() {
           name="crm" 
           options={{ 
             title: 'CRM',
-            tabBarActiveTintColor: '#8b5cf6',
-            tabBarActiveBackgroundColor: '#f3e8ff',
-            tabBarIcon: ({ focused }: { focused: boolean }) => <Feather name="users" size={20} color={focused ? '#8b5cf6' : '#8b5cf6'} />,
-            tabBarLabel: ({ focused }: { focused: boolean }) => (
-              <Text style={{ fontSize: 9, fontWeight: focused ? '700' : '600', color: '#8b5cf6', textAlign: 'center', marginTop: 2 }}>
-                CRM
-              </Text>
-            ),
+            tabBarIcon: ({ color }: { color: any }) => <Feather name="users" size={20} color={color} />,
           }} 
         />
         <Tabs.Screen 

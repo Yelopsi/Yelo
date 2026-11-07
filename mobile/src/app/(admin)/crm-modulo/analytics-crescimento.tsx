@@ -694,17 +694,17 @@ export default function AnalyticsCrescimentoScreen() {
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                backgroundColor: '#f5f3ff',
+                backgroundColor: '#e8f5e9',
                 borderWidth: 1,
-                borderColor: '#ddd6fe',
+                borderColor: '#c8e6c9',
                 paddingHorizontal: 12,
                 paddingVertical: 4,
                 borderRadius: 999,
                 gap: 4,
               }}
             >
-              <Feather name="zap" size={11} color="#7c3aed" />
-              <Text style={{ fontFamily: 'Inter_700Bold', color: '#7c3aed', fontSize: 11 }}>IA Deep Dive</Text>
+              <Feather name="zap" size={11} color="#1B4332" />
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 11 }}>IA Deep Dive</Text>
             </TouchableOpacity>
           </View>
 
@@ -759,8 +759,6 @@ export default function AnalyticsCrescimentoScreen() {
                 borderWidth: 1,
                 borderColor: '#e2e8f0',
                 padding: 16,
-                paddingLeft: 20,
-                position: 'relative',
                 overflow: 'hidden',
                 shadowColor: '#000',
                 shadowOpacity: 0.03,
@@ -769,16 +767,6 @@ export default function AnalyticsCrescimentoScreen() {
                 elevation: 1,
               }}
             >
-              <View
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 5,
-                  backgroundColor: '#10b981',
-                }}
-              />
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   Crescimento (MRR)
@@ -808,8 +796,6 @@ export default function AnalyticsCrescimentoScreen() {
                 borderWidth: 1,
                 borderColor: '#e2e8f0',
                 padding: 16,
-                paddingLeft: 20,
-                position: 'relative',
                 overflow: 'hidden',
                 shadowColor: '#000',
                 shadowOpacity: 0.03,
@@ -818,16 +804,6 @@ export default function AnalyticsCrescimentoScreen() {
                 elevation: 1,
               }}
             >
-              <View
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 5,
-                  backgroundColor: '#3b82f6',
-                }}
-              />
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   Aquisição
@@ -851,13 +827,11 @@ export default function AnalyticsCrescimentoScreen() {
             {/* 3. Health Rate (Com Demanda) */}
             <View
               style={{
-                backgroundColor: '#faf5ff',
+                backgroundColor: '#ffffff',
                 borderRadius: 16,
                 borderWidth: 1,
-                borderColor: '#e9d5ff',
+                borderColor: '#e2e8f0',
                 padding: 16,
-                paddingLeft: 20,
-                position: 'relative',
                 overflow: 'hidden',
                 shadowColor: '#000',
                 shadowOpacity: 0.03,
@@ -866,31 +840,21 @@ export default function AnalyticsCrescimentoScreen() {
                 elevation: 1,
               }}
             >
-              <View
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 5,
-                  backgroundColor: '#8b5cf6',
-                }}
-              />
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                <Text style={{ fontFamily: 'Inter_700Bold', color: '#6d28d9', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   Health Rate (% com demanda)
                 </Text>
-                <Feather name="activity" size={14} color="#8b5cf6" />
+                <Feather name="activity" size={14} color="#1B4332" />
               </View>
-              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#6d28d9', fontSize: 24, marginVertical: 2 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 24, marginVertical: 2 }}>
                 {(overview?.pctDemanda || 0).toFixed(1)}%
               </Text>
-              <View style={{ height: 1, backgroundColor: 'rgba(216,180,254,0.4)', marginVertical: 8 }} />
+              <View style={{ height: 1, backgroundColor: '#f1f5f9', marginVertical: 8 }} />
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#581c87' }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#1B4332' }}>
                   {overview?.pagantesComDemandaCount || 0} de {overview?.totalAtivos || 0} com contatos
                 </Text>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#6b21a8' }}>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b' }}>
                   Mediana: {acquisition?.timeToFirstContact?.medianDays !== null && acquisition?.timeToFirstContact?.medianDays !== undefined ? `${acquisition.timeToFirstContact.medianDays}d` : 'N/D'}
                 </Text>
               </View>
@@ -906,8 +870,6 @@ export default function AnalyticsCrescimentoScreen() {
                 borderWidth: 1,
                 borderColor: '#e2e8f0',
                 padding: 16,
-                paddingLeft: 20,
-                position: 'relative',
                 overflow: 'hidden',
                 shadowColor: '#000',
                 shadowOpacity: 0.03,
@@ -916,16 +878,6 @@ export default function AnalyticsCrescimentoScreen() {
                 elevation: 1,
               }}
             >
-              <View
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 5,
-                  backgroundColor: '#f59e0b',
-                }}
-              />
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', color: '#b45309', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -959,8 +911,6 @@ export default function AnalyticsCrescimentoScreen() {
                 borderWidth: 1,
                 borderColor: '#e2e8f0',
                 padding: 16,
-                paddingLeft: 20,
-                position: 'relative',
                 overflow: 'hidden',
                 shadowColor: '#000',
                 shadowOpacity: 0.03,
@@ -969,16 +919,6 @@ export default function AnalyticsCrescimentoScreen() {
                 elevation: 1,
               }}
             >
-              <View
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 5,
-                  backgroundColor: '#ef4444',
-                }}
-              />
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   Retenção (Churn Financeiro)
@@ -1532,7 +1472,7 @@ export default function AnalyticsCrescimentoScreen() {
               <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 10, textTransform: 'uppercase' }}>
                 LTV Projetado
               </Text>
-              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#8b5cf6', fontSize: 18, marginTop: 4 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 18, marginTop: 4 }}>
                 {marketing?.ltvProjetado ? formatBRL(marketing.ltvProjetado) : 'N/D'}
               </Text>
               <Text style={{ fontFamily: 'Inter_400Regular', color: '#94a3b8', fontSize: 10, marginTop: 4 }}>
@@ -1757,14 +1697,14 @@ export default function AnalyticsCrescimentoScreen() {
 
             {aiLoading ? (
               <View style={{ padding: 40, alignItems: 'center', justifyContent: 'center' }}>
-                <ActivityIndicator size="large" color="#8b5cf6" />
+                <ActivityIndicator size="large" color="#1B4332" />
                 <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 13, marginTop: 12 }}>
                   Cruzando dados de funil, CAC e retenção com o modelo de IA...
                 </Text>
               </View>
             ) : (
               <ScrollView style={{ padding: 20 }} showsVerticalScrollIndicator={false}>
-                <View style={{ backgroundColor: '#faf5ff', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#e9d5ff', marginBottom: 16 }}>
+                <View style={{ backgroundColor: '#f0fdf4', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#bbf7d0', marginBottom: 16 }}>
                   <Text style={{ fontFamily: 'Inter_400Regular', color: '#334155', fontSize: 13, lineHeight: 20 }}>
                     {aiInsightsText}
                   </Text>

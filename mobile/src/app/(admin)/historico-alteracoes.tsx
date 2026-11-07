@@ -13,6 +13,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import api from '../../services/api';
 import YeloToast from '../../components/YeloToast';
+import NativeSelectMenu from '../../components/NativeSelectMenu';
 
 export default function AdminHistoricoAlteracoesScreen() {
   const router = useRouter();
@@ -126,7 +127,7 @@ export default function AdminHistoricoAlteracoesScreen() {
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 18, paddingBottom: 110 }}
+        contentContainerStyle={{ padding: 18, paddingBottom: 130 }}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
       >
         {/* HEADER */}
@@ -183,10 +184,10 @@ export default function AdminHistoricoAlteracoesScreen() {
         </View>
 
         {/* ABAS */}
-        <View className="flex-row bg-[#e2e8f0]/60 p-1 rounded-2xl mb-4">
+        <View className="flex-row bg-[#e2e8f0]/60 p-1 rounded-full mb-4">
           <TouchableOpacity
             onPress={() => setActiveTab('cataloged')}
-            className={`flex-1 py-2.5 rounded-xl items-center justify-center ${
+            className={`flex-1 py-2.5 rounded-full items-center justify-center ${
               activeTab === 'cataloged' ? 'bg-[#1B4332] shadow-sm' : 'bg-transparent'
             }`}
           >
@@ -199,7 +200,7 @@ export default function AdminHistoricoAlteracoesScreen() {
 
           <TouchableOpacity
             onPress={() => setActiveTab('git')}
-            className={`flex-1 py-2.5 rounded-xl items-center justify-center ${
+            className={`flex-1 py-2.5 rounded-full items-center justify-center ${
               activeTab === 'git' ? 'bg-[#1B4332] shadow-sm' : 'bg-transparent'
             }`}
           >
@@ -212,7 +213,7 @@ export default function AdminHistoricoAlteracoesScreen() {
         </View>
 
         {/* SEARCH BAR */}
-        <View className="bg-white border border-[#e2e8f0] rounded-[16px] px-3.5 py-2.5 flex-row items-center gap-2 mb-3 shadow-xs">
+        <View className="bg-white border border-[#e2e8f0] rounded-full px-4 py-2.5 flex-row items-center gap-2 mb-3 shadow-xs">
           <Feather name="search" size={17} color="#94a3b8" />
           <TextInput
             value={searchQuery}
@@ -228,31 +229,58 @@ export default function AdminHistoricoAlteracoesScreen() {
           ) : null}
         </View>
 
-        {/* CATEGORY PILLS (quando na aba cataloged) */}
+        {/* CATEGORY DROPDOWN (NATIVO - SEM SCROLL HORIZONTAL) */}
         {activeTab === 'cataloged' && categories.length > 2 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-            <View className="flex-row gap-2">
-              {categories.map((cat: any) => (
-                <TouchableOpacity
-                  key={cat}
-                  onPress={() => setCategoryFilter(cat)}
-                  className={`px-3.5 py-1.5 rounded-full border ${
-                    categoryFilter === cat
-                      ? 'bg-[#1B4332] border-[#1B4332]'
-                      : 'bg-white border-[#e2e8f0]'
-                  }`}
-                >
-                  <Text
-                    className={`font-sans text-[11.5px] font-bold ${
-                      categoryFilter === cat ? 'text-white' : 'text-[#64748b]'
-                    }`}
-                  >
-                    {cat === 'all' ? 'Todas Categorias' : cat}
+          <View className="mb-4">
+            <NativeSelectMenu
+              title="Filtrar por Categoria"
+              options={categories.map(cat => ({
+                label: cat === 'all' ? 'Todas as Categorias' : cat,
+                value: cat,
+              }))}
+              selectedValue={categoryFilter}
+              onSelect={(val) => setCategoryFilter(val)}
+              style={{ width: '100%' }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: '#ffffff',
+                  borderWidth: 1,
+                  borderColor: '#e2e8f0',
+                  borderRadius: 999,
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.03,
+                  shadowRadius: 3,
+                  elevation: 1,
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                  <Feather name="tag" size={15} color="#1B4332" />
+                  <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 12 }}>
+                    Categoria:
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
+                  <Text
+                    style={{
+                      fontFamily: 'Inter_700Bold',
+                      color: '#1B4332',
+                      fontSize: 13,
+                      flex: 1,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {categoryFilter === 'all' ? 'Todas as Categorias' : categoryFilter}
+                  </Text>
+                </View>
+                <Feather name="chevron-down" size={16} color="#1B4332" />
+              </View>
+            </NativeSelectMenu>
+          </View>
         )}
 
         {/* CONTEÚDO DA ABA 1: ALTERAÇÕES CATALOGADAS */}

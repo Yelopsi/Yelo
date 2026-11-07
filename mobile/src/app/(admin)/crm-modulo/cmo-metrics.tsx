@@ -312,8 +312,8 @@ export default function AdminCmoMetricsScreen() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: '#f8fafc', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <ActivityIndicator size="large" color="#1e3a8a" />
-        <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#1e3a8a', fontSize: 16, marginTop: 14 }}>
+        <ActivityIndicator size="large" color="#1B4332" />
+        <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#1B4332', fontSize: 16, marginTop: 14 }}>
           Carregando Painel do CMO...
         </Text>
         <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 13, marginTop: 4, textAlign: 'center' }}>
@@ -421,8 +421,8 @@ export default function AdminCmoMetricsScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            tintColor="#1e3a8a"
-            colors={['#1e3a8a']}
+            tintColor="#1B4332"
+            colors={['#1B4332']}
           />
         }
       >
@@ -435,12 +435,12 @@ export default function AdminCmoMetricsScreen() {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: '#ffffff',
+              backgroundColor: '#e8f5e9',
               paddingHorizontal: 14,
               paddingVertical: 8,
               borderRadius: 999,
               borderWidth: 1,
-              borderColor: '#e2e8f0',
+              borderColor: '#c8e6c9',
               shadowColor: '#000',
               shadowOpacity: 0.03,
               shadowRadius: 4,
@@ -449,8 +449,8 @@ export default function AdminCmoMetricsScreen() {
             }}
             activeOpacity={0.7}
           >
-            <Feather name="arrow-left" size={16} color="#1e3a8a" />
-            <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#1e3a8a', fontSize: 12, marginLeft: 6 }}>
+            <Feather name="arrow-left" size={16} color="#1B4332" />
+            <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#1B4332', fontSize: 12, marginLeft: 6 }}>
               CRM Hub
             </Text>
           </TouchableOpacity>
@@ -459,33 +459,33 @@ export default function AdminCmoMetricsScreen() {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: '#eff6ff',
+              backgroundColor: '#e8f5e9',
               paddingHorizontal: 12,
               paddingVertical: 6,
               borderRadius: 999,
               borderWidth: 1,
-              borderColor: '#bfdbfe',
+              borderColor: '#c8e6c9',
               gap: 4,
             }}
           >
             <Text style={{ fontSize: 11 }}>🛡️</Text>
-            <Text style={{ fontFamily: 'Inter_700Bold', color: '#1e40af', fontSize: 11 }}>Admin CMO</Text>
+            <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 11 }}>Admin CMO</Text>
           </View>
         </View>
 
         {/* ========================================================= */}
-        {/* HERO CARD AZUL ESCURO COM GRADIENTE E BORDAS ARREDONDADAS  */}
+        {/* HERO CARD VERDE FLORESTA YELO COM GRADIENTE               */}
         {/* ========================================================= */}
         <LinearGradient
-          colors={['#1e3a8a', '#0f172a']}
+          colors={['#1B4332', '#2D6A4F']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{
             borderRadius: 24,
             padding: 22,
             marginBottom: 16,
-            shadowColor: '#1e3a8a',
-            shadowOpacity: 0.2,
+            shadowColor: '#1B4332',
+            shadowOpacity: 0.15,
             shadowRadius: 25,
             shadowOffset: { width: 0, height: 8 },
             elevation: 5,
@@ -502,7 +502,7 @@ export default function AdminCmoMetricsScreen() {
               width: 180,
               height: 180,
               borderRadius: 90,
-              backgroundColor: 'rgba(255,255,255,0.05)',
+              backgroundColor: 'rgba(255,255,255,0.06)',
             }}
             pointerEvents="none"
           />
@@ -535,20 +535,22 @@ export default function AdminCmoMetricsScreen() {
             <TouchableOpacity
               onPress={fetchData}
               style={{
-                backgroundColor: 'rgba(255,255,255,0.15)',
+                backgroundColor: '#FFEE8C',
                 paddingHorizontal: 12,
                 paddingVertical: 7,
                 borderRadius: 999,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 5,
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.25)',
+                shadowColor: '#000',
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 2,
               }}
               activeOpacity={0.8}
             >
-              <Feather name="refresh-cw" size={12} color="#ffffff" />
-              <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#ffffff', fontSize: 11 }}>Atualizar</Text>
+              <Feather name="refresh-cw" size={12} color="#1B4332" />
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 11 }}>Atualizar</Text>
             </TouchableOpacity>
           </View>
 
@@ -558,7 +560,7 @@ export default function AdminCmoMetricsScreen() {
               style={{
                 fontFamily: 'Inter_700Bold',
                 fontSize: 10,
-                color: 'rgba(255,255,255,0.65)',
+                color: 'rgba(255,255,255,0.7)',
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
                 marginBottom: 6,
@@ -618,12 +620,12 @@ export default function AdminCmoMetricsScreen() {
             backgroundColor: '#ffffff',
             borderRadius: 20,
             borderWidth: 1,
-            borderColor: '#bfdbfe',
+            borderColor: '#e2e8f0',
             padding: 16,
             marginBottom: 20,
             overflow: 'hidden',
-            shadowColor: '#1e3a8a',
-            shadowOpacity: 0.04,
+            shadowColor: '#000',
+            shadowOpacity: 0.03,
             shadowRadius: 8,
             shadowOffset: { width: 0, height: 2 },
             elevation: 2,
@@ -646,7 +648,7 @@ export default function AdminCmoMetricsScreen() {
               <Text
                 style={{
                   fontFamily: 'Fraunces_700Bold',
-                  color: '#1e3a8a',
+                  color: '#1B4332',
                   fontSize: 14,
                   flexShrink: 1,
                 }}
@@ -657,7 +659,7 @@ export default function AdminCmoMetricsScreen() {
             </View>
             <View
               style={{
-                backgroundColor: '#dbeafe',
+                backgroundColor: '#e8f5e9',
                 paddingHorizontal: 10,
                 paddingVertical: 4.5,
                 borderRadius: 999,
@@ -667,7 +669,7 @@ export default function AdminCmoMetricsScreen() {
               <Text
                 style={{
                   fontFamily: 'Inter_700Bold',
-                  color: '#1e40af',
+                  color: '#1B4332',
                   fontSize: 10,
                   textTransform: 'uppercase',
                 }}
@@ -698,7 +700,7 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
                 LTV / CAC
               </Text>
-              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1e3a8a', marginTop: 2 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1B4332', marginTop: 2 }}>
                 {decision.ltvCacRatio ? `${Number(decision.ltvCacRatio).toFixed(1)}x` : '3.8x'}
               </Text>
               <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 9.5, color: '#16a34a', marginTop: 2 }}>
@@ -720,7 +722,7 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
                 CAC B2B Médio
               </Text>
-              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1e3a8a', marginTop: 2 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1B4332', marginTop: 2 }}>
                 {formatBRL(metaCac || decision.cac || 80)}
               </Text>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
@@ -742,7 +744,7 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
                 LTV Estimado
               </Text>
-              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1e3a8a', marginTop: 2 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1B4332', marginTop: 2 }}>
                 {formatBRL(simulationResults?.projectedLTV || decision.ltv || 389.0)}
               </Text>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
@@ -779,8 +781,8 @@ export default function AdminCmoMetricsScreen() {
         {/* ========================================================= */}
         <View style={{ marginBottom: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <View style={{ width: 28, height: 28, borderRadius: 999, backgroundColor: '#f3e8ff', alignItems: 'center', justifyContent: 'center' }}>
-              <Feather name="trending-up" size={15} color="#8b5cf6" />
+            <View style={{ width: 28, height: 28, borderRadius: 999, backgroundColor: '#e8f5e9', alignItems: 'center', justifyContent: 'center' }}>
+              <Feather name="trending-up" size={15} color="#1B4332" />
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1e293b' }}>
               Simulador de Escala (Engenharia Reversa)
@@ -813,8 +815,8 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', textTransform: 'uppercase' }}>
                 % Reinvestimento da Sobra
               </Text>
-              <View style={{ backgroundColor: '#f3e8ff', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
-                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#7e22ce' }}>{reinvestRate}%</Text>
+              <View style={{ backgroundColor: '#e8f5e9', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#1B4332' }}>{reinvestRate}%</Text>
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -828,9 +830,9 @@ export default function AdminCmoMetricsScreen() {
                       flex: 1,
                       paddingVertical: 7,
                       borderRadius: 999,
-                      backgroundColor: isSelected ? '#8b5cf6' : '#f8fafc',
+                      backgroundColor: isSelected ? '#1B4332' : '#f8fafc',
                       borderWidth: 1,
-                      borderColor: isSelected ? '#8b5cf6' : '#cbd5e1',
+                      borderColor: isSelected ? '#1B4332' : '#cbd5e1',
                       alignItems: 'center',
                     }}
                     activeOpacity={0.8}
@@ -899,11 +901,11 @@ export default function AdminCmoMetricsScreen() {
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              backgroundColor: includeOrganic ? '#faf5ff' : '#f8fafc',
+              backgroundColor: includeOrganic ? '#f0fdf4' : '#f8fafc',
               padding: 10,
-              borderRadius: 12,
+              borderRadius: 999,
               borderWidth: 1,
-              borderColor: includeOrganic ? '#d8b4fe' : '#e2e8f0',
+              borderColor: includeOrganic ? '#86efac' : '#e2e8f0',
               marginBottom: 14,
             }}
             activeOpacity={0.7}
@@ -912,10 +914,10 @@ export default function AdminCmoMetricsScreen() {
               style={{
                 width: 18,
                 height: 18,
-                borderRadius: 4,
-                backgroundColor: includeOrganic ? '#8b5cf6' : '#ffffff',
+                borderRadius: 999,
+                backgroundColor: includeOrganic ? '#1B4332' : '#ffffff',
                 borderWidth: 1,
-                borderColor: includeOrganic ? '#8b5cf6' : '#cbd5e1',
+                borderColor: includeOrganic ? '#1B4332' : '#cbd5e1',
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 8,
@@ -951,9 +953,9 @@ export default function AdminCmoMetricsScreen() {
                       flex: 1,
                       paddingVertical: 7,
                       borderRadius: 999,
-                      backgroundColor: isSelected ? '#1e3a8a' : '#f8fafc',
+                      backgroundColor: isSelected ? '#1B4332' : '#f8fafc',
                       borderWidth: 1,
-                      borderColor: isSelected ? '#1e3a8a' : '#cbd5e1',
+                      borderColor: isSelected ? '#1B4332' : '#cbd5e1',
                       alignItems: 'center',
                     }}
                     activeOpacity={0.8}
@@ -975,20 +977,17 @@ export default function AdminCmoMetricsScreen() {
         </View>
 
         {/* ========================================================= */}
-        {/* OS 7 CARDS DO SIMULADOR (COM STRIPES INTERNAS SEM LEAKS)   */}
+        {/* OS 7 CARDS DO SIMULADOR (PADRÃO PREMIUM YELO SEM BORDAS VAZANDO) */}
         {/* ========================================================= */}
         <View style={{ gap: 10, marginBottom: 20 }}>
           {/* CARD 1: MRR */}
           <View
             style={{
               backgroundColor: '#ffffff',
-              borderRadius: 18,
+              borderRadius: 20,
               borderWidth: 1,
               borderColor: '#e2e8f0',
               padding: 16,
-              paddingLeft: 20,
-              position: 'relative',
-              overflow: 'hidden',
               shadowColor: '#000',
               shadowOpacity: 0.02,
               shadowRadius: 4,
@@ -996,17 +995,16 @@ export default function AdminCmoMetricsScreen() {
               elevation: 1,
             }}
           >
-            <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, backgroundColor: '#3b82f6' }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <View style={{ width: 24, height: 24, borderRadius: 6, backgroundColor: '#eff6ff', alignItems: 'center', justifyContent: 'center' }}>
-                  <Feather name="dollar-sign" size={13} color="#3b82f6" />
+                <View style={{ width: 28, height: 28, borderRadius: 999, backgroundColor: '#eff6ff', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="dollar-sign" size={14} color="#2563eb" />
                 </View>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>
                   MRR Projetado ({selectedSimHorizon}M)
                 </Text>
               </View>
-              <View style={{ backgroundColor: '#eff6ff', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
+              <View style={{ backgroundColor: '#eff6ff', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#2563eb' }}>Receita</Text>
               </View>
             </View>
@@ -1022,13 +1020,10 @@ export default function AdminCmoMetricsScreen() {
           <View
             style={{
               backgroundColor: '#ffffff',
-              borderRadius: 18,
+              borderRadius: 20,
               borderWidth: 1,
               borderColor: '#e2e8f0',
               padding: 16,
-              paddingLeft: 20,
-              position: 'relative',
-              overflow: 'hidden',
               shadowColor: '#000',
               shadowOpacity: 0.02,
               shadowRadius: 4,
@@ -1036,18 +1031,17 @@ export default function AdminCmoMetricsScreen() {
               elevation: 1,
             }}
           >
-            <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, backgroundColor: '#8b5cf6' }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <View style={{ width: 24, height: 24, borderRadius: 6, backgroundColor: '#f5f3ff', alignItems: 'center', justifyContent: 'center' }}>
-                  <Feather name="users" size={13} color="#8b5cf6" />
+                <View style={{ width: 28, height: 28, borderRadius: 999, backgroundColor: '#e8f5e9', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="users" size={14} color="#1B4332" />
                 </View>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>
                   Base Projetada ({selectedSimHorizon}M)
                 </Text>
               </View>
-              <View style={{ backgroundColor: '#f5f3ff', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
-                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#7c3aed' }}>Assinantes</Text>
+              <View style={{ backgroundColor: '#e8f5e9', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#1B4332' }}>Assinantes</Text>
               </View>
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 24, color: '#0f172a', marginVertical: 4 }}>
@@ -1062,13 +1056,10 @@ export default function AdminCmoMetricsScreen() {
           <View
             style={{
               backgroundColor: '#ffffff',
-              borderRadius: 18,
+              borderRadius: 20,
               borderWidth: 1,
               borderColor: '#e2e8f0',
               padding: 16,
-              paddingLeft: 20,
-              position: 'relative',
-              overflow: 'hidden',
               shadowColor: '#000',
               shadowOpacity: 0.02,
               shadowRadius: 4,
@@ -1076,17 +1067,16 @@ export default function AdminCmoMetricsScreen() {
               elevation: 1,
             }}
           >
-            <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, backgroundColor: '#10b981' }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <View style={{ width: 24, height: 24, borderRadius: 6, backgroundColor: '#ecfdf5', alignItems: 'center', justifyContent: 'center' }}>
-                  <Feather name="target" size={13} color="#10b981" />
+                <View style={{ width: 28, height: 28, borderRadius: 999, backgroundColor: '#ecfdf5', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="target" size={14} color="#10b981" />
                 </View>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>
                   Meta Ads Recomendado ({selectedSimHorizon}M)
                 </Text>
               </View>
-              <View style={{ backgroundColor: '#ecfdf5', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
+              <View style={{ backgroundColor: '#ecfdf5', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#059669' }}>Aquisição B2B</Text>
               </View>
             </View>
@@ -1102,13 +1092,10 @@ export default function AdminCmoMetricsScreen() {
           <View
             style={{
               backgroundColor: '#ffffff',
-              borderRadius: 18,
+              borderRadius: 20,
               borderWidth: 1,
               borderColor: '#e2e8f0',
               padding: 16,
-              paddingLeft: 20,
-              position: 'relative',
-              overflow: 'hidden',
               shadowColor: '#000',
               shadowOpacity: 0.02,
               shadowRadius: 4,
@@ -1116,17 +1103,16 @@ export default function AdminCmoMetricsScreen() {
               elevation: 1,
             }}
           >
-            <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, backgroundColor: '#f59e0b' }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <View style={{ width: 24, height: 24, borderRadius: 6, backgroundColor: '#fffbeb', alignItems: 'center', justifyContent: 'center' }}>
-                  <Feather name="search" size={13} color="#f59e0b" />
+                <View style={{ width: 28, height: 28, borderRadius: 999, backgroundColor: '#fffbeb', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="search" size={14} color="#f59e0b" />
                 </View>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>
                   Custo Google ({selectedSimHorizon}M)
                 </Text>
               </View>
-              <View style={{ backgroundColor: '#fffbeb', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
+              <View style={{ backgroundColor: '#fffbeb', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#d97706' }}>Demanda B2C</Text>
               </View>
             </View>
@@ -1145,16 +1131,12 @@ export default function AdminCmoMetricsScreen() {
               style={{
                 flex: 1,
                 backgroundColor: '#ffffff',
-                borderRadius: 16,
+                borderRadius: 18,
                 borderWidth: 1,
                 borderColor: '#e2e8f0',
-                padding: 12,
-                paddingLeft: 16,
-                position: 'relative',
-                overflow: 'hidden',
+                padding: 14,
               }}
             >
-              <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: '#ec4899' }} />
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: '#64748b', textTransform: 'uppercase' }}>
                 LTV Contribuição
               </Text>
@@ -1171,16 +1153,12 @@ export default function AdminCmoMetricsScreen() {
               style={{
                 flex: 1,
                 backgroundColor: '#ffffff',
-                borderRadius: 16,
+                borderRadius: 18,
                 borderWidth: 1,
                 borderColor: '#e2e8f0',
-                padding: 12,
-                paddingLeft: 16,
-                position: 'relative',
-                overflow: 'hidden',
+                padding: 14,
               }}
             >
-              <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: '#6366f1' }} />
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: '#64748b', textTransform: 'uppercase' }}>
                 CAC Payback
               </Text>
@@ -1197,16 +1175,12 @@ export default function AdminCmoMetricsScreen() {
           <View
             style={{
               backgroundColor: '#ffffff',
-              borderRadius: 16,
+              borderRadius: 18,
               borderWidth: 1,
               borderColor: '#e2e8f0',
-              padding: 12,
-              paddingLeft: 16,
-              position: 'relative',
-              overflow: 'hidden',
+              padding: 14,
             }}
           >
-            <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: '#64748b' }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
                 Extrapolação Meta Ads
@@ -1223,7 +1197,7 @@ export default function AdminCmoMetricsScreen() {
           {/* Motor Status Banner */}
           <View
             style={{
-              backgroundColor: '#f0fdfa',
+              backgroundColor: '#f0fdf4',
               borderRadius: 14,
               borderWidth: 1,
               borderColor: '#ccfbf1',
@@ -1294,7 +1268,7 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>CAC B2B</Text>
               {renderTrendBadge(metaCac, prevMetaCac, true)}
             </View>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#8b5cf6' }}>{formatBRL(metaCac)}</Text>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1B4332' }}>{formatBRL(metaCac)}</Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatBRL(prevMetaCac)}</Text>
           </View>
 
@@ -1377,7 +1351,7 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>CPL (Lead WPP)</Text>
               {renderTrendBadge(googleCpl, prevGoogleCpl, true)}
             </View>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#8b5cf6' }}>{formatBRL(googleCpl)}</Text>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1B4332' }}>{formatBRL(googleCpl)}</Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatBRL(prevGoogleCpl)}</Text>
           </View>
 
@@ -1399,8 +1373,8 @@ export default function AdminCmoMetricsScreen() {
         {/* ========================================================= */}
         <View style={{ marginBottom: 12, marginTop: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <View style={{ width: 28, height: 28, borderRadius: 999, backgroundColor: '#f5f3ff', alignItems: 'center', justifyContent: 'center' }}>
-              <Feather name="activity" size={15} color="#8b5cf6" />
+            <View style={{ width: 28, height: 28, borderRadius: 999, backgroundColor: '#e8f5e9', alignItems: 'center', justifyContent: 'center' }}>
+              <Feather name="activity" size={15} color="#1B4332" />
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1e293b' }}>
               Eficiência Comercial B2C
@@ -1459,7 +1433,7 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
                 1º Contato (TTFC)
               </Text>
-              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#8b5cf6', marginTop: 2 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1B4332', marginTop: 2 }}>
                 {ttfcMedian !== null ? `${ttfcMedian.toFixed(1)} dias` : 'N/A'}
               </Text>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
@@ -1533,7 +1507,7 @@ export default function AdminCmoMetricsScreen() {
             <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
               Posição Média
             </Text>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#8b5cf6' }}>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1B4332' }}>
               {gsc ? `${Number(gsc.position || 0).toFixed(1)}º` : '0º'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#64748b', marginTop: 2 }}>

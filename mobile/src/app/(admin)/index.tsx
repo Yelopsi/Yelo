@@ -536,9 +536,9 @@ export default function AdminVisaoGeralScreen() {
               <Text className="font-title text-[#1e293b] text-[15px] font-bold">
                 Marcos Estratégicos (Pagantes)
               </Text>
-              <View className="bg-[#f1f5f9] px-2.5 py-0.5 rounded-full">
-                <Text className="font-sans text-[11px] font-bold text-[#64748b]">
-                  Atual: <Text className="text-[#6366f1]">{currentPaying}</Text>
+              <View className="bg-[#e8f5e9] px-2.5 py-0.5 rounded-full">
+                <Text className="font-sans text-[11px] font-bold text-[#1B4332]">
+                  Atual: <Text className="text-[#1B4332] font-extrabold">{currentPaying}</Text>
                 </Text>
               </View>
             </View>
@@ -546,7 +546,7 @@ export default function AdminVisaoGeralScreen() {
             {/* Single Progress Bar com altura fixa em pixels */}
             <View style={{ height: 16, backgroundColor: '#e2e8f0', borderRadius: 999, overflow: 'hidden', marginBottom: 14, width: '100%' }}>
               <LinearGradient
-                colors={['#6366f1', '#8b5cf6']}
+                colors={['#1B4332', '#10b981']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={{ width: `${Math.max(2, Math.min(100, progressPercent))}%`, height: 16, borderRadius: 999 }}
@@ -566,8 +566,8 @@ export default function AdminVisaoGeralScreen() {
               </View>
 
               {/* Saída MEI */}
-              <View style={{ flex: 1, backgroundColor: '#f5f3ff', borderWidth: 1, borderColor: '#ddd6fe', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' }}>
-                <Text className="font-sans font-bold text-[#6d28d9] text-[11px]">Saída MEI</Text>
+              <View style={{ flex: 1, backgroundColor: '#ecfdf5', borderWidth: 1, borderColor: '#a7f3d0', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' }}>
+                <Text className="font-sans font-bold text-[#047857] text-[11px]">Saída MEI</Text>
                 <Text className="font-title font-bold text-[#1e293b] text-[17px] my-0.5">70</Text>
                 <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, borderWidth: 1, borderColor: '#e2e8f0' }}>
                   <Text className="font-sans font-semibold text-[#64748b] text-[9px]">{proj70.text}</Text>
@@ -616,18 +616,18 @@ export default function AdminVisaoGeralScreen() {
           <TouchableOpacity 
             activeOpacity={0.8}
             onPress={() => router.push('/(admin)/gestao-conteudo')}
-            className="flex-row items-center bg-[#f3e8ff] border border-[#e9d5ff] rounded-[16px] p-3.5"
+            className="flex-row items-center bg-[#e8f5e9] border border-[#c8e6c9] rounded-[16px] p-3.5"
           >
             <Text className="text-[22px] mr-3">⭐</Text>
             <View className="flex-1">
               <Text className="font-sans text-[#333] text-[13px]">
-                <Text className="font-bold text-[#6d28d9]">{stats?.pendingReviewsCount || 0} Avaliações</Text> para Moderação.
+                <Text className="font-bold text-[#1B4332]">{stats?.pendingReviewsCount || 0} Avaliações</Text> para Moderação.
               </Text>
-              <Text className="font-sans font-bold text-[#6d28d9] text-[11px] mt-0.5">
+              <Text className="font-sans font-bold text-[#1B4332] text-[11px] mt-0.5">
                 Revisar agora →
               </Text>
             </View>
-            <Feather name="chevron-right" size={16} color="#6d28d9" />
+            <Feather name="chevron-right" size={16} color="#1B4332" />
           </TouchableOpacity>
         </View>
 

@@ -34,15 +34,22 @@ function CrmCard({
       activeOpacity={0.7}
       onPress={onPress}
       style={{
-        borderTopWidth: 4,
-        borderTopColor: borderColor,
+        backgroundColor: '#ffffff',
+        borderRadius: 20,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 6,
+        elevation: 1,
       }}
-      className="bg-white rounded-[18px] p-4 border border-[#e2e8f0] shadow-sm mb-3"
     >
       <View className="flex-row justify-between items-center mb-3">
         <View 
-          style={{ backgroundColor: iconBg }} 
-          className="w-[42px] h-[42px] rounded-[12px] items-center justify-center"
+          style={{ backgroundColor: iconBg, width: 42, height: 42, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }} 
         >
           <Feather name={icon} size={20} color={iconColor} />
         </View>
@@ -63,7 +70,7 @@ function CrmCard({
           <Feather name="chevron-right" size={18} color="#cbd5e1" />
         </View>
       </View>
-      <Text className="font-title text-[#1e293b] text-[16px] font-bold mb-1">
+      <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 16, marginBottom: 4 }}>
         {title}
       </Text>
       <Text className="font-sans text-[#64748b] text-[13px] leading-[18px]">
@@ -132,9 +139,9 @@ export default function AdminCRMHubScreen() {
           description="Onboarding, performance de perfil e distribuição de leads."
           badge="Oferta"
           icon="activity"
-          iconColor="#8b5cf6"
-          iconBg="#f5f3ff"
-          borderColor="#8b5cf6"
+          iconColor="#1B4332"
+          iconBg="#e8f5e9"
+          borderColor="#1B4332"
           onPress={() => handleNavigate('/(admin)/crm-modulo/psicologos')}
         />
 
@@ -190,8 +197,8 @@ export default function AdminCRMHubScreen() {
           description="Visão completa de aquisição, conversão, retenção e demanda do Yelo."
           icon="trending-up"
           iconColor="#10b981"
-          iconBg="#111827"
-          borderColor="#111827"
+          iconBg="#ecfdf5"
+          borderColor="#10b981"
           onPress={() => handleNavigate('/(admin)/crm-modulo/analytics-crescimento')}
         />
 
@@ -200,10 +207,12 @@ export default function AdminCRMHubScreen() {
           title="Painel do CMO 🧠"
           description="Motor de Decisão Executiva de Ads cruzado com CAC e Churn."
           badge="Inteligência AI"
+          badgeBg="#e8f5e9"
+          badgeColor="#1B4332"
           icon="cpu"
-          iconColor="#1e40af"
-          iconBg="#dbeafe"
-          borderColor="#1e3a8a"
+          iconColor="#1B4332"
+          iconBg="#e8f5e9"
+          borderColor="#1B4332"
           onPress={() => handleNavigate('/(admin)/crm-modulo/cmo-metrics')}
         />
 
@@ -312,9 +321,9 @@ export default function AdminCRMHubScreen() {
           title="Mural de Avisos"
           description="Notificações globais (Push) para os painéis dos profissionais."
           icon="bell"
-          iconColor="#8b5cf6"
-          iconBg="#f5f3ff"
-          borderColor="#8b5cf6"
+          iconColor="#d97706"
+          iconBg="#fef3c7"
+          borderColor="#d97706"
           onPress={() => handleNavigate('/(admin)/crm-modulo/avisos')}
         />
 

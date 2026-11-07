@@ -17,6 +17,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import api from '../../services/api';
 import YeloToast from '../../components/YeloToast';
+import NativeSelectMenu from '../../components/NativeSelectMenu';
 
 export default function AdminBacklogAjustesScreen() {
   const router = useRouter();
@@ -170,7 +171,7 @@ export default function AdminBacklogAjustesScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 bg-[#f8fafc] items-center justify-center p-6">
-        <ActivityIndicator size="large" color="#4f46e5" />
+        <ActivityIndicator size="large" color="#1B4332" />
         <Text className="font-sans text-[#64748b] mt-3">Carregando backlog de ajustes...</Text>
       </View>
     );
@@ -181,15 +182,15 @@ export default function AdminBacklogAjustesScreen() {
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 18, paddingBottom: 110 }}
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#4f46e5" />}
+        contentContainerStyle={{ padding: 18, paddingBottom: 130 }}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
       >
         {/* HEADER */}
-        <View className="bg-gradient-to-r bg-[#1e1b4b] rounded-[24px] p-5 mb-5 shadow-sm relative overflow-hidden">
+        <View className="bg-[#1B4332] rounded-[24px] p-5 mb-5 shadow-sm relative overflow-hidden">
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center gap-2">
               <View className="w-10 h-10 rounded-full bg-white/10 items-center justify-center">
-                <Feather name="check-square" size={20} color="#818cf8" />
+                <Feather name="check-square" size={20} color="#FFEE8C" />
               </View>
               <View>
                 <Text className="font-title text-white text-[22px]">Central de Ajustes</Text>
@@ -199,11 +200,11 @@ export default function AdminBacklogAjustesScreen() {
 
             <TouchableOpacity
               onPress={() => setShowNewModal(true)}
-              className="bg-[#6366f1] px-3.5 py-2 rounded-full flex-row items-center gap-1.5 shadow-sm"
+              className="bg-[#FFEE8C] px-3.5 py-2 rounded-full flex-row items-center gap-1.5 shadow-sm"
               activeOpacity={0.8}
             >
-              <Feather name="plus" size={16} color="white" />
-              <Text className="font-sans font-bold text-white text-[12px]">Novo</Text>
+              <Feather name="plus" size={16} color="#1B4332" />
+              <Text className="font-sans font-bold text-[#1B4332] text-[12px]">Novo</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -245,35 +246,65 @@ export default function AdminBacklogAjustesScreen() {
           ) : null}
         </View>
 
-        {/* STATUS FILTER PILLS */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-          <View className="flex-row gap-2">
-            {[
-              { id: 'all', label: 'Todos' },
-              { id: 'pendente', label: 'Pendentes' },
-              { id: 'em_andamento', label: 'Em Andamento' },
-              { id: 'concluido', label: 'Concluídos' }
-            ].map(tab => (
-              <TouchableOpacity
-                key={tab.id}
-                onPress={() => setStatusFilter(tab.id as any)}
-                className={`px-3.5 py-1.5 rounded-full border ${
-                  statusFilter === tab.id
-                    ? 'bg-[#4f46e5] border-[#4f46e5]'
-                    : 'bg-white border-[#e2e8f0]'
-                }`}
-              >
-                <Text
-                  className={`font-sans text-[12px] font-bold ${
-                    statusFilter === tab.id ? 'text-white' : 'text-[#64748b]'
-                  }`}
-                >
-                  {tab.label}
+        {/* STATUS FILTER DROPDOWN (NATIVO - SEM SCROLL HORIZONTAL) */}
+        <View className="mb-4">
+          <NativeSelectMenu
+            title="Filtrar por Status do Ajuste"
+            options={[
+              { label: 'Todos os Status', value: 'all' },
+              { label: 'Pendentes', value: 'pendente' },
+              { label: 'Em Andamento', value: 'em_andamento' },
+              { label: 'Concluídos', value: 'concluido' },
+            ]}
+            selectedValue={statusFilter}
+            onSelect={(val) => setStatusFilter(val as any)}
+            style={{ width: '100%' }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.03,
+                shadowRadius: 3,
+                elevation: 1,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                <Feather name="filter" size={15} color="#1B4332" />
+                <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 12 }}>
+                  Filtrar Status:
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
+                <Text
+                  style={{
+                    fontFamily: 'Inter_700Bold',
+                    color: '#1B4332',
+                    fontSize: 13,
+                    flex: 1,
+                  }}
+                  numberOfLines={1}
+                >
+                  {statusFilter === 'all'
+                    ? 'Todos'
+                    : statusFilter === 'pendente'
+                    ? 'Pendentes'
+                    : statusFilter === 'em_andamento'
+                    ? 'Em Andamento'
+                    : 'Concluídos'}
+                </Text>
+              </View>
+              <Feather name="chevron-down" size={16} color="#1B4332" />
+            </View>
+          </NativeSelectMenu>
+        </View>
 
         {/* AGRUPAMENTO POR PÁGINAS (NOTION STYLE) */}
         {filteredGroups.length === 0 ? (
@@ -487,7 +518,7 @@ export default function AdminBacklogAjustesScreen() {
                       onPress={() => setNewEnvironment(env)}
                       className={`flex-1 py-2 rounded-xl items-center border ${
                         newEnvironment === env
-                          ? 'bg-[#4f46e5] border-[#4f46e5]'
+                          ? 'bg-[#1B4332] border-[#1B4332]'
                           : 'bg-[#f8fafc] border-[#cbd5e1]'
                       }`}
                     >

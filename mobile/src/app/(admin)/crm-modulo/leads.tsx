@@ -317,8 +317,8 @@ export default function AdminCRMLeadsScreen() {
         );
       case 'Aguardando':
         return (
-          <View className="bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-full">
-            <Text className="font-sans font-bold text-purple-700 text-[11px]">Em Negociação</Text>
+          <View className="bg-[#e8f5e9] border border-[#c8e6c9] px-2.5 py-0.5 rounded-full">
+            <Text className="font-sans font-bold text-[#1B4332] text-[11px]">Em Negociação</Text>
           </View>
         );
       case 'Cadastrado':
@@ -449,8 +449,6 @@ export default function AdminCRMLeadsScreen() {
                   padding: 14,
                   borderWidth: 1,
                   borderColor: activeFilter === 'pendentes' ? '#f59e0b' : '#e2e8f0',
-                  overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -458,7 +456,6 @@ export default function AdminCRMLeadsScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#f59e0b' }} />
                 <View className="flex-row items-center gap-1.5 mb-1">
                   <Feather name="clock" size={13} color="#f59e0b" />
                   <Text className="font-sans font-bold text-[#475569] text-[11px]">Oport. Frias</Text>
@@ -478,8 +475,6 @@ export default function AdminCRMLeadsScreen() {
                   padding: 14,
                   borderWidth: 1,
                   borderColor: activeFilter === 'contatados' ? '#3b82f6' : '#e2e8f0',
-                  overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -487,7 +482,6 @@ export default function AdminCRMLeadsScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#3b82f6' }} />
                 <View className="flex-row items-center gap-1.5 mb-1">
                   <Feather name="phone-call" size={13} color="#3b82f6" />
                   <Text className="font-sans font-bold text-[#475569] text-[11px]">1º Contato</Text>
@@ -505,13 +499,11 @@ export default function AdminCRMLeadsScreen() {
                 activeOpacity={0.8}
                 style={{
                   flex: 1,
-                  backgroundColor: activeFilter === 'aguardando' ? '#f5f3ff' : '#ffffff',
+                  backgroundColor: activeFilter === 'aguardando' ? '#e8f5e9' : '#ffffff',
                   borderRadius: 16,
                   padding: 14,
                   borderWidth: 1,
-                  borderColor: activeFilter === 'aguardando' ? '#8b5cf6' : '#e2e8f0',
-                  overflow: 'hidden',
-                  position: 'relative',
+                  borderColor: activeFilter === 'aguardando' ? '#1B4332' : '#e2e8f0',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -519,13 +511,12 @@ export default function AdminCRMLeadsScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#8b5cf6' }} />
                 <View className="flex-row items-center gap-1.5 mb-1">
-                  <Feather name="file-text" size={13} color="#8b5cf6" />
+                  <Feather name="file-text" size={13} color="#1B4332" />
                   <Text className="font-sans font-bold text-[#475569] text-[11px]">Negociação</Text>
                 </View>
-                <Text className="font-title text-[#8b5cf6] text-[24px] mt-1">{kpis.aguardando}</Text>
-                <Text className="font-sans text-purple-600 font-medium text-[11px] mt-0.5">Quase fechando</Text>
+                <Text className="font-title text-[#1B4332] text-[24px] mt-1">{kpis.aguardando}</Text>
+                <Text className="font-sans text-emerald-800 font-medium text-[11px] mt-0.5">Quase fechando</Text>
               </TouchableOpacity>
 
               {/* Novos Assinantes */}
@@ -539,8 +530,6 @@ export default function AdminCRMLeadsScreen() {
                   padding: 14,
                   borderWidth: 1,
                   borderColor: activeFilter === 'cadastrados' ? '#10b981' : '#e2e8f0',
-                  overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -548,7 +537,6 @@ export default function AdminCRMLeadsScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#10b981' }} />
                 <View className="flex-row items-center gap-1.5 mb-1">
                   <Feather name="check-circle" size={13} color="#10b981" />
                   <Text className="font-sans font-bold text-[#475569] text-[11px]">Convertidos</Text>
@@ -569,8 +557,6 @@ export default function AdminCRMLeadsScreen() {
                   padding: 14,
                   borderWidth: 1,
                   borderColor: '#e2e8f0',
-                  overflow: 'hidden',
-                  position: 'relative',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
@@ -578,7 +564,6 @@ export default function AdminCRMLeadsScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#25d366' }} />
                 <View className="flex-row items-center gap-1.5 mb-1">
                   <Feather name="message-circle" size={13} color="#25d366" />
                   <Text className="font-sans font-bold text-[#475569] text-[11px]">Via WhatsApp</Text>
@@ -606,8 +591,6 @@ export default function AdminCRMLeadsScreen() {
                   padding: 14,
                   borderWidth: 1,
                   borderColor: '#e2e8f0',
-                  overflow: 'hidden',
-                  position: 'relative',
                   justifyContent: 'space-between',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -616,7 +599,6 @@ export default function AdminCRMLeadsScreen() {
                   elevation: 1,
                 }}
               >
-                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#1B4332' }} />
                 <View>
                   <View className="flex-row items-center gap-1.5 mb-1">
                     <Feather name="bar-chart-2" size={13} color="#1B4332" />
@@ -828,8 +810,8 @@ export default function AdminCRMLeadsScreen() {
                           {lead.nome || 'Sem Nome'}
                         </Text>
                         {lead.isInbound && (
-                          <View className="bg-purple-100 border border-purple-300 px-1.5 py-0.5 rounded-md">
-                            <Text className="font-sans font-bold text-[9px] text-purple-800">Inbound</Text>
+                          <View className="bg-[#fef3c7] border border-[#fde68a] px-2 py-0.5 rounded-full">
+                            <Text className="font-sans font-bold text-[9px] text-[#b45309]">Inbound</Text>
                           </View>
                         )}
                       </View>

@@ -422,13 +422,13 @@ export default function GestaoConteudoScreen() {
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <View
                       style={{
-                        backgroundColor: '#f3e8ff',
+                        backgroundColor: '#e8f5e9',
                         paddingHorizontal: 10,
                         paddingVertical: 3,
                         borderRadius: 999,
                       }}
                     >
-                      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10.5, color: '#7e22ce' }}>
+                      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10.5, color: '#1B4332' }}>
                         Pergunta Anônima
                       </Text>
                     </View>

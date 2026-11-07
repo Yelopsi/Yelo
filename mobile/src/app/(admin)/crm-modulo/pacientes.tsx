@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import api from '../../../services/api';
 import NativeSelectMenu from '../../../components/NativeSelectMenu';
 
 export default function AdminCRMPacientesScreen() {
+  const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [pacientes, setPacientes] = useState<any[]>([]);
@@ -32,7 +34,10 @@ export default function AdminCRMPacientesScreen() {
   const handleDeletePatient = (id: number, name: string) => {
     Alert.alert('Mover para Lixeira', `Tem certeza que deseja mover o paciente ${name} para a lixeira?`, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Mover', style: 'destructive', onPress: async () => {
+      {
+        text: 'Mover',
+        style: 'destructive',
+        onPress: async () => {
           try {
             await api.delete(`/api/admin/patients/${id}`);
             setModalVisible(false);
@@ -40,14 +45,17 @@ export default function AdminCRMPacientesScreen() {
           } catch (e) {
             Alert.alert('Erro', 'Não foi possível remover o paciente.');
           }
-      }}
+        },
+      },
     ]);
   };
 
   const handleRestorePatient = (id: number, name: string) => {
     Alert.alert('Restaurar Paciente', `Deseja restaurar o paciente ${name} da lixeira?`, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Restaurar', onPress: async () => {
+      {
+        text: 'Restaurar',
+        onPress: async () => {
           try {
             await api.put(`/api/admin/patients/${id}/status`, { status: 'active' });
             setModalVisible(false);
@@ -55,14 +63,18 @@ export default function AdminCRMPacientesScreen() {
           } catch (e) {
             Alert.alert('Erro', 'Não foi possível restaurar o paciente.');
           }
-      }}
+        },
+      },
     ]);
   };
 
   const handleForceDeletePatient = (id: number, name: string) => {
     Alert.alert('Excluir PERMANENTEMENTE', `Esta ação é irreversível. Tem certeza que deseja apagar todos os dados do paciente ${name}?`, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Excluir', style: 'destructive', onPress: async () => {
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: async () => {
           try {
             await api.delete(`/api/admin/patients/${id}/force`);
             setModalVisible(false);
@@ -70,14 +82,14 @@ export default function AdminCRMPacientesScreen() {
           } catch (e) {
             Alert.alert('Erro', 'Não foi possível excluir permanentemente o paciente.');
           }
-      }}
+        },
+      },
     ]);
   };
 
   const fetchPacientes = async () => {
     try {
       setOfflineMode(false);
-      
       const params: any = {};
       if (activeFilter === 'active') params.status = 'active';
       if (activeFilter === 'deleted') params.status = 'deleted';
@@ -109,48 +121,131 @@ export default function AdminCRMPacientesScreen() {
 
   if (loading && pacientes.length === 0) {
     return (
-      <View className="flex-1 justify-center items-center bg-[#f9fafb]">
-        <ActivityIndicator size="large" color="#8b5cf6" />
-        <Text className="mt-4 font-sans text-[#666]">Carregando pacientes...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+        <ActivityIndicator size="large" color="#1B4332" />
+        <Text style={{ marginTop: 16, fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 13 }}>
+          Carregando pacientes...
+        </Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-[#f9fafb]">
-      <ScrollView 
-        contentContainerStyle={{ padding: 20 }}
+    <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 130 }}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#8b5cf6" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1B4332']} tintColor="#1B4332" />
         }
       >
         {/* Banner de Modo Offline */}
         {offlineMode && (
-          <View className="bg-[#fef3c7] p-[12px] rounded-[12px] mb-[15px] border border-[#fde68a] flex-row items-center">
-            <Feather name="wifi-off" size={16} color="#d97706" style={{ marginRight: 10 }} />
-            <Text className="font-sans text-[#b45309] text-[12px] flex-1">
-              Modo Offline: Mostrando dados de demonstração.
+          <View
+            style={{
+              backgroundColor: '#fef3c7',
+              padding: 12,
+              borderRadius: 14,
+              marginBottom: 14,
+              borderWidth: 1,
+              borderColor: '#fde68a',
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+          >
+            <Feather name="wifi-off" size={16} color="#d97706" style={{ marginRight: 8 }} />
+            <Text style={{ fontFamily: 'Inter_500Medium', color: '#b45309', fontSize: 12, flex: 1 }}>
+              Modo Offline ativado (conectando aos servidores Yelo...).
             </Text>
           </View>
         )}
-        {/* Header Descritivo */}
-        <View className="mb-[20px]">
-          <Text className="font-title text-[#1e1b4b] text-[24px]">Visão 360° Pacientes</Text>
-          <Text className="font-sans text-[#666] text-[14px]">Gestão completa da jornada, retenção e histórico de match.</Text>
+
+        {/* Header com Identidade Yelo */}
+        <View
+          style={{
+            backgroundColor: '#1B4332',
+            borderRadius: 20,
+            padding: 20,
+            marginBottom: 20,
+            borderWidth: 1,
+            borderColor: '#2D6A4F',
+            shadowColor: '#1B4332',
+            shadowOpacity: 0.15,
+            shadowRadius: 10,
+            shadowOffset: { width: 0, height: 4 },
+          }}
+        >
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <View style={{ flex: 1, paddingRight: 10 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#ffffff', fontSize: 22 }}>
+                Visão 360° Pacientes 👥
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 4 }}>
+                Gestão da jornada, retenção e histórico de match na Yelo.
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => (router.canGoBack() ? router.back() : router.replace('/(admin)/crm'))}
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 999,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+              }}
+              activeOpacity={0.8}
+            >
+              <Feather name="arrow-left" size={14} color="#ffffff" />
+              <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#ffffff', fontSize: 11 }}>CRM Hub</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Busca e Filtros */}
-        <View className="bg-white rounded-[16px] p-[15px] mb-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-          <View className="flex-row bg-[#f1f5f9] rounded-[12px] px-[15px] py-[10px] items-center mb-[15px]">
-            <Feather name="search" size={18} color="#64748b" />
-            <TextInput 
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            padding: 16,
+            marginBottom: 20,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 4,
+            elevation: 1,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: '#f8fafc',
+              borderRadius: 999,
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+              alignItems: 'center',
+              borderWidth: 1,
+              borderColor: '#e2e8f0',
+              marginBottom: 12,
+            }}
+          >
+            <Feather name="search" size={16} color="#64748b" />
+            <TextInput
               placeholder="Buscar paciente por nome, email ou ID..."
               placeholderTextColor="#94a3b8"
               value={searchTerm}
               onChangeText={setSearchTerm}
-              className="flex-1 ml-[10px] font-sans text-[14px] text-[#333]"
+              style={{ flex: 1, marginLeft: 8, fontFamily: 'Inter_400Regular', fontSize: 13, color: '#1e293b' }}
             />
+            {searchTerm.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchTerm('')}>
+                <Feather name="x" size={14} color="#94a3b8" />
+              </TouchableOpacity>
+            )}
           </View>
+
           <NativeSelectMenu
             title="Filtrar Pacientes"
             options={[
@@ -173,11 +268,6 @@ export default function AdminCRMPacientesScreen() {
                 borderRadius: 999,
                 paddingHorizontal: 16,
                 paddingVertical: 10,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.03,
-                shadowRadius: 3,
-                elevation: 1,
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
@@ -207,141 +297,278 @@ export default function AdminCRMPacientesScreen() {
         </View>
 
         {/* Lista de Pacientes (Cards) */}
-        <View className="gap-[15px]">
-          {pacientes.map((paciente, index) => {
-            const initials = paciente.nome ? paciente.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'PA';
-            
-            // Tratamento de Status
-            let statusColor = '#64748b';
-            let statusBg = '#f1f5f9';
-            let statusText = paciente.status || 'Desconhecido';
-            
-            if (paciente.status === 'active' || paciente.status === 'ativo') {
-              statusColor = '#2563eb'; statusBg = '#eff6ff'; statusText = 'Em Terapia';
-            } else if (paciente.status === 'deleted' || paciente.status === 'excluído') {
-              statusColor = '#991b1b'; statusBg = '#fee2e2'; statusText = 'Excluído';
-            }
+        <View style={{ gap: 12 }}>
+          {pacientes.length === 0 ? (
+            <View style={{ backgroundColor: '#ffffff', borderRadius: 20, padding: 30, alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0' }}>
+              <Text style={{ fontSize: 24, marginBottom: 6 }}>👥</Text>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 16 }}>Nenhum paciente encontrado</Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, marginTop: 4 }}>
+                Não foram encontrados pacientes com os filtros atuais.
+              </Text>
+            </View>
+          ) : (
+            pacientes.map((paciente, index) => {
+              const initials = paciente.nome
+                ? paciente.nome
+                    .split(' ')
+                    .map((n: string) => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase()
+                : 'PA';
 
-            return (
-              <TouchableOpacity 
-                key={paciente.id || index}
-                onPress={() => {
-                  setSelectedPatient(paciente);
-                  setPatient360(null);
-                  setModalVisible(true);
-                  fetchPatient360(paciente.id);
-                }}
-                className="bg-white rounded-[16px] p-[16px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#f0f0f0]"
-              >
-                <View className="flex-row justify-between items-start mb-[10px]">
-                  <View className="flex-row items-center flex-1">
-                    <View className="w-[40px] h-[40px] bg-[#ecfdf5] rounded-full items-center justify-center mr-[12px]">
-                      <Text className="font-title text-[#10b981] text-[16px]">{initials}</Text>
+              let statusColor = '#64748b';
+              let statusBg = '#f1f5f9';
+              let statusText = paciente.status || 'Desconhecido';
+
+              if (paciente.status === 'active' || paciente.status === 'ativo') {
+                statusColor = '#10b981';
+                statusBg = '#ecfdf5';
+                statusText = 'Em Terapia';
+              } else if (paciente.status === 'deleted' || paciente.status === 'excluído') {
+                statusColor = '#ef4444';
+                statusBg = '#fee2e2';
+                statusText = 'Excluído';
+              }
+
+              return (
+                <TouchableOpacity
+                  key={paciente.id || index}
+                  onPress={() => {
+                    setSelectedPatient(paciente);
+                    setPatient360(null);
+                    setModalVisible(true);
+                    fetchPatient360(paciente.id);
+                  }}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: 20,
+                    padding: 16,
+                    borderWidth: 1,
+                    borderColor: '#e2e8f0',
+                    shadowColor: '#000',
+                    shadowOpacity: 0.02,
+                    shadowRadius: 4,
+                    elevation: 1,
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 8 }}>
+                      <View
+                        style={{
+                          width: 42,
+                          height: 42,
+                          borderRadius: 999,
+                          backgroundColor: '#e8f5e9',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginRight: 12,
+                          borderWidth: 1,
+                          borderColor: '#c8e6c9',
+                        }}
+                      >
+                        <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 15 }}>{initials}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15 }} numberOfLines={1}>
+                          {paciente.nome || 'Sem Nome'}
+                        </Text>
+                        <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, marginTop: 1 }} numberOfLines={1}>
+                          {paciente.email}
+                        </Text>
+                      </View>
                     </View>
-                    <View>
-                      <Text className="font-title text-[#1e293b] text-[16px]">{paciente.nome || 'Sem Nome'}</Text>
-                      <Text className="font-sans text-[#64748b] text-[12px]">{paciente.email}</Text>
+                    <View style={{ backgroundColor: statusBg, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 }}>
+                      <Text style={{ fontFamily: 'Inter_700Bold', color: statusColor, fontSize: 10, textTransform: 'uppercase' }}>
+                        {statusText}
+                      </Text>
                     </View>
                   </View>
-                  <View className={`px-[8px] py-[4px] rounded-[8px]`} style={{ backgroundColor: statusBg }}>
-                    <Text className={`font-sans font-bold text-[10px] uppercase`} style={{ color: statusColor }}>{statusText}</Text>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 10 }}>
+                    <Text style={{ fontFamily: 'Inter_500Medium', color: '#94a3b8', fontSize: 11 }}>
+                      ID: {paciente.internalId || `YL-${paciente.id || '0000'}`}
+                    </Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: '#e8f5e9',
+                        paddingHorizontal: 12,
+                        paddingVertical: 5,
+                        borderRadius: 999,
+                      }}
+                    >
+                      <Feather name="layers" size={13} color="#1B4332" />
+                      <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 11.5, marginLeft: 5 }}>
+                        Dossiê 360
+                      </Text>
+                    </View>
                   </View>
-              </View>
-              
-              <View className="flex-row items-center justify-between border-t border-[#f1f5f9] pt-[10px]">
-                <Text className="font-sans text-[#94a3b8] text-[11px]">ID: {paciente.internalId || `YL-${paciente.id || '0000'}`}</Text>
-                <View className="flex-row items-center bg-[#f3e8ff] px-[12px] py-[6px] rounded-[8px]">
-                  <Feather name="layers" size={14} color="#7e22ce" />
-                  <Text className="text-[#7e22ce] font-sans font-bold text-[12px] ml-[6px]">Dossiê 360</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          );
-          })}
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
-        <View className="h-[120px]" />
       </ScrollView>
 
       {/* Modal Dossiê 360 (Timeline) */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="bg-white rounded-t-[24px] h-[85%] p-[20px]">
-            <View className="flex-row justify-between items-center mb-[20px] border-b border-[#f1f5f9] pb-[15px]">
-              <Text className="font-title text-[#1e293b] text-[18px]">Dossiê 360º</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)} className="p-[5px]">
-                <Feather name="x" size={24} color="#64748b" />
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View style={{ backgroundColor: '#ffffff', borderTopLeftRadius: 24, borderTopRightRadius: 24, height: '85%', padding: 20 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', paddingBottom: 12 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 18 }}>Dossiê 360º do Paciente</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)} style={{ padding: 6, borderRadius: 999, backgroundColor: '#f1f5f9' }}>
+                <Feather name="x" size={20} color="#64748b" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Basic Info */}
-              {modalLoading ? <ActivityIndicator size="large" color="#1e1b4b" style={{ marginTop: 50 }} /> : (
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+              {modalLoading ? (
+                <ActivityIndicator size="large" color="#1B4332" style={{ marginTop: 50 }} />
+              ) : (
                 <View>
-                  <View className="bg-[#f8f9fa] rounded-[16px] p-[20px] mb-[20px]">
-                    <View className="flex-row items-center gap-[15px] mb-[15px]">
-                      <View className="w-[60px] h-[60px] rounded-full bg-[#ecfdf5] items-center justify-center">
-                        <Text className="font-title text-[#10b981] text-[24px]">
-                          {selectedPatient?.nome ? selectedPatient.nome.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'PA'}
+                  <View style={{ backgroundColor: '#f8fafc', borderRadius: 20, padding: 18, marginBottom: 20, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+                      <View
+                        style={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: 999,
+                          backgroundColor: '#e8f5e9',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: 1,
+                          borderColor: '#c8e6c9',
+                        }}
+                      >
+                        <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 20 }}>
+                          {selectedPatient?.nome
+                            ? selectedPatient.nome
+                                .split(' ')
+                                .map((n: string) => n[0])
+                                .join('')
+                                .substring(0, 2)
+                                .toUpperCase()
+                            : 'PA'}
                         </Text>
                       </View>
-                      <View>
-                        <Text className="font-title text-[#1e293b] text-[20px]">{selectedPatient?.nome || 'Sem Nome'}</Text>
-                        <Text className="font-sans text-[#64748b] text-[14px]">{selectedPatient?.email}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 18 }}>
+                          {selectedPatient?.nome || 'Sem Nome'}
+                        </Text>
+                        <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 13, marginTop: 2 }}>
+                          {selectedPatient?.email}
+                        </Text>
                       </View>
                     </View>
-                    <View className="flex-row flex-wrap gap-[8px]">
-                      <Text className="bg-white px-[12px] py-[6px] rounded-full text-[#475569] font-sans text-[12px] border border-[#e2e8f0]">ID: {selectedPatient?.internalId || `YL-${selectedPatient?.id || '0000'}`}</Text>
-                      <Text className="bg-white px-[12px] py-[6px] rounded-full text-[#475569] font-sans text-[12px] border border-[#e2e8f0]">
+
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                      <Text style={{ backgroundColor: '#ffffff', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, color: '#475569', fontFamily: 'Inter_500Medium', fontSize: 11, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                        ID: {selectedPatient?.internalId || `YL-${selectedPatient?.id || '0000'}`}
+                      </Text>
+                      <Text style={{ backgroundColor: '#ffffff', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, color: '#475569', fontFamily: 'Inter_500Medium', fontSize: 11, borderWidth: 1, borderColor: '#e2e8f0' }}>
                         Cadastrado: {selectedPatient?.createdAt ? new Date(selectedPatient.createdAt).toLocaleDateString('pt-BR') : 'Desconhecido'}
                       </Text>
                     </View>
-                    
-                    {/* Botões de Ação Rápida */}
-                    <View className="flex-row mt-[15px] border-t border-[#e2e8f0] pt-[15px]">
+
+                    {/* Botões de Ação Rápida Pílula */}
+                    <View style={{ flexDirection: 'row', marginTop: 14, borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 14, gap: 10 }}>
                       {selectedPatient?.status === 'deleted' ? (
                         <>
-                          <TouchableOpacity onPress={() => handleRestorePatient(selectedPatient.id, selectedPatient.nome)} className="flex-row items-center bg-[#ecfdf5] px-[12px] py-[8px] rounded-[8px] mr-[10px]">
-                            <Feather name="refresh-ccw" size={14} color="#10b981" />
-                            <Text className="text-[#10b981] font-sans font-bold text-[12px] ml-[6px]">Restaurar</Text>
+                          <TouchableOpacity
+                            onPress={() => handleRestorePatient(selectedPatient.id, selectedPatient.nome)}
+                            style={{
+                              flex: 1,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: '#ecfdf5',
+                              paddingVertical: 9,
+                              borderRadius: 999,
+                              borderWidth: 1,
+                              borderColor: '#bbf7d0',
+                              gap: 6,
+                            }}
+                            activeOpacity={0.8}
+                          >
+                            <Feather name="refresh-ccw" size={13} color="#10b981" />
+                            <Text style={{ color: '#10b981', fontFamily: 'Inter_700Bold', fontSize: 12 }}>Restaurar</Text>
                           </TouchableOpacity>
-                          <TouchableOpacity onPress={() => handleForceDeletePatient(selectedPatient.id, selectedPatient.nome)} className="flex-row items-center bg-[#fef2f2] px-[12px] py-[8px] rounded-[8px]">
-                            <Feather name="trash-2" size={14} color="#ef4444" />
-                            <Text className="text-[#ef4444] font-sans font-bold text-[12px] ml-[6px]">Apagar Definitivo</Text>
+                          <TouchableOpacity
+                            onPress={() => handleForceDeletePatient(selectedPatient.id, selectedPatient.nome)}
+                            style={{
+                              flex: 1,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: '#fef2f2',
+                              paddingVertical: 9,
+                              borderRadius: 999,
+                              borderWidth: 1,
+                              borderColor: '#fecaca',
+                              gap: 6,
+                            }}
+                            activeOpacity={0.8}
+                          >
+                            <Feather name="trash-2" size={13} color="#ef4444" />
+                            <Text style={{ color: '#ef4444', fontFamily: 'Inter_700Bold', fontSize: 12 }}>Apagar Definitivo</Text>
                           </TouchableOpacity>
                         </>
                       ) : (
-                        <TouchableOpacity onPress={() => handleDeletePatient(selectedPatient.id, selectedPatient.nome)} className="flex-row items-center bg-[#fef2f2] px-[12px] py-[8px] rounded-[8px]">
-                          <Feather name="trash" size={14} color="#ef4444" />
-                          <Text className="text-[#ef4444] font-sans font-bold text-[12px] ml-[6px]">Mover p/ Lixeira</Text>
+                        <TouchableOpacity
+                          onPress={() => handleDeletePatient(selectedPatient.id, selectedPatient.nome)}
+                          style={{
+                            flex: 1,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: '#fef2f2',
+                            paddingVertical: 9,
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: '#fecaca',
+                            gap: 6,
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Feather name="trash" size={13} color="#ef4444" />
+                          <Text style={{ color: '#ef4444', fontFamily: 'Inter_700Bold', fontSize: 12 }}>Mover p/ Lixeira</Text>
                         </TouchableOpacity>
                       )}
                     </View>
                   </View>
 
                   {/* Timeline Jornada */}
-                  <View className="px-[10px]">
-                    <Text className="font-title text-[#1e293b] text-[16px] mb-[15px]">Jornada na Plataforma</Text>
-                    
-                    {patient360?.jornada && patient360.jornada.length > 0 ? patient360.jornada.map((evento: any, idx: number) => (
-                      <View key={idx} className="flex-row mb-[20px]">
-                        <View className="items-center mr-[15px]">
-                          <View className="w-[12px] h-[12px] rounded-full bg-[#10b981]" />
-                          {idx < patient360.jornada.length - 1 && <View className="w-[2px] h-full bg-[#e2e8f0] mt-[5px]" />}
+                  <View style={{ paddingHorizontal: 6 }}>
+                    <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 16, marginBottom: 14 }}>
+                      Jornada na Plataforma
+                    </Text>
+
+                    {patient360?.jornada && patient360.jornada.length > 0 ? (
+                      patient360.jornada.map((evento: any, idx: number) => (
+                        <View key={idx} style={{ flexDirection: 'row', marginBottom: 18 }}>
+                          <View style={{ alignItems: 'center', marginRight: 14 }}>
+                            <View style={{ width: 12, height: 12, borderRadius: 999, backgroundColor: '#10b981' }} />
+                            {idx < patient360.jornada.length - 1 && (
+                              <View style={{ width: 2, flex: 1, backgroundColor: '#e2e8f0', marginTop: 4 }} />
+                            )}
+                          </View>
+                          <View style={{ flex: 1, paddingBottom: 4 }}>
+                            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 14 }}>{evento.acao}</Text>
+                            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, marginTop: 2 }}>{evento.detalhe}</Text>
+                            <Text style={{ fontFamily: 'Inter_500Medium', color: '#94a3b8', fontSize: 10, marginTop: 4 }}>{evento.data}</Text>
+                          </View>
                         </View>
-                        <View className="flex-1 pb-[5px]">
-                          <Text className="font-title text-[#333] text-[14px]">{evento.acao}</Text>
-                          <Text className="font-sans text-[#64748b] text-[12px] mt-[2px]">{evento.detalhe}</Text>
-                          <Text className="font-sans text-[#94a3b8] text-[10px] mt-[4px]">{evento.data}</Text>
-                        </View>
-                      </View>
-                    )) : (
-                      <Text className="font-sans text-[#64748b] text-[12px]">Nenhum histórico disponível.</Text>
+                      ))
+                    ) : (
+                      <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12 }}>Nenhum histórico disponível.</Text>
                     )}
                   </View>
                 </View>
               )}
             </ScrollView>
-
           </View>
         </View>
       </Modal>

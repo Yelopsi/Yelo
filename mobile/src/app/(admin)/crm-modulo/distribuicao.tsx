@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   ActivityIndicator, 
   RefreshControl, 
-  TextInput
+  TextInput,
+  Image
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import api from '../../../services/api';
@@ -103,7 +104,7 @@ export default function AdminDistribuicaoScreen() {
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 18, paddingBottom: 110 }}
+        contentContainerStyle={{ padding: 18, paddingBottom: 130 }}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
       >
         {/* HEADER */}
@@ -119,7 +120,7 @@ export default function AdminDistribuicaoScreen() {
           </View>
         </View>
 
-        {/* SELETOR DE PERÍODO */}
+        {/* SELETOR DE PERÍODO (PÍLULAS) */}
         <View className="flex-row gap-2 mb-4">
           {[
             { days: 7, label: '7 Dias' },
@@ -129,11 +130,12 @@ export default function AdminDistribuicaoScreen() {
             <TouchableOpacity
               key={p.days}
               onPress={() => setPeriodDays(p.days)}
-              className={`flex-1 py-2 rounded-xl items-center border ${
+              className={`flex-1 py-2.5 rounded-full items-center border ${
                 periodDays === p.days
                   ? 'bg-[#1B4332] border-[#1B4332]'
                   : 'bg-white border-[#e2e8f0]'
               }`}
+              activeOpacity={0.8}
             >
               <Text className={`font-sans font-bold text-[12px] ${
                 periodDays === p.days ? 'text-white' : 'text-[#64748b]'
@@ -210,19 +212,45 @@ export default function AdminDistribuicaoScreen() {
             </View>
           ) : (
             filteredPsys.map((psy: any) => {
+              const initials = psy.nome ? psy.nome.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'PS';
               return (
                 <View 
                   key={psy.id} 
                   className="bg-white rounded-[20px] border border-[#e2e8f0] p-4 shadow-xs"
                 >
-                  <View className="flex-row items-center justify-between mb-2">
-                    <View className="flex-1 mr-2">
-                      <Text className="font-title text-[#1e293b] text-[15.5px]">
-                        {psy.nome}
-                      </Text>
-                      <Text className="font-sans text-[#64748b] text-[11.5px]">
-                        CRP: {psy.crp || 'Não inf.'} • {psy.plano || 'Sem Plano'}
-                      </Text>
+                  <View className="flex-row items-center justify-between mb-3">
+                    <View className="flex-row items-center flex-1 mr-2 gap-3">
+                      {psy.fotoUrl ? (
+                        <Image
+                          source={{ uri: psy.fotoUrl }}
+                          style={{ width: 42, height: 42, borderRadius: 999 }}
+                        />
+                      ) : (
+                        <View
+                          style={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: 999,
+                            backgroundColor: '#ecfdf5',
+                            borderWidth: 1,
+                            borderColor: '#a7f3d0',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text className="font-title text-[#166534] text-[15px] font-bold">
+                            {initials}
+                          </Text>
+                        </View>
+                      )}
+                      <View className="flex-1">
+                        <Text className="font-title text-[#1e293b] text-[15.5px]">
+                          {psy.nome}
+                        </Text>
+                        <Text className="font-sans text-[#64748b] text-[11.5px]">
+                          CRP: {psy.crp || 'Não inf.'} • {psy.plano || 'Sem Plano'}
+                        </Text>
+                      </View>
                     </View>
 
                     <View className="bg-[#f0fdf4] border border-[#bbf7d0] px-2.5 py-1 rounded-full">

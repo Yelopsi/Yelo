@@ -110,7 +110,7 @@ export default function AdminFollowupScreen() {
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 18, paddingBottom: 110 }}
+        contentContainerStyle={{ padding: 18, paddingBottom: 130 }}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
       >
         {/* HEADER */}
@@ -276,11 +276,11 @@ export default function AdminFollowupScreen() {
                     Buscava atendimento com: <Text className="font-bold text-[#1B4332]">{psiName}</Text>
                   </Text>
 
-                  {/* Ações: Status rápido + WhatsApp */}
+                  {/* Ações: Status rápido + WhatsApp (Botões em Formato Pílula) */}
                   <View className="flex-row gap-2 pt-2 border-t border-[#f1f5f9]">
                     <TouchableOpacity
                       onPress={() => handleUpdateStatus(item, isScheduled ? 'pending' : 'scheduled')}
-                      className={`flex-1 py-2 rounded-xl items-center border ${
+                      className={`flex-1 py-2.5 rounded-full items-center border ${
                         isScheduled ? 'bg-[#f0fdf4] border-[#bbf7d0]' : 'bg-[#f8fafc] border-[#cbd5e1]'
                       }`}
                       activeOpacity={0.7}
@@ -293,7 +293,7 @@ export default function AdminFollowupScreen() {
                     {targetPhone ? (
                       <TouchableOpacity
                         onPress={() => handleOpenWhatsApp(targetPhone, targetName, psiName)}
-                        className="bg-[#25d366] px-3.5 py-2 rounded-xl flex-row items-center gap-1.5 shadow-xs"
+                        className="bg-[#25d366] px-4 py-2.5 rounded-full flex-row items-center gap-1.5 shadow-xs"
                         activeOpacity={0.85}
                       >
                         <Feather name="message-circle" size={14} color="white" />
