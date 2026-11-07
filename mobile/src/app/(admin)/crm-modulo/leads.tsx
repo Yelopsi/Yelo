@@ -341,7 +341,7 @@ export default function AdminCRMLeadsScreen() {
       <ScrollView
         className="flex-1 px-4"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 130 }}
+        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 150 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
       >
         {/* Barra de Navegação Superior (Voltar ao CRM Hub + Badge Admin) */}
@@ -441,17 +441,23 @@ export default function AdminCRMLeadsScreen() {
               <TouchableOpacity
                 onPress={() => setActiveFilter(activeFilter === 'pendentes' ? 'todos' : 'pendentes')}
                 activeOpacity={0.8}
-                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#f59e0b] border border-[#e2e8f0] ${
-                  activeFilter === 'pendentes' ? 'bg-amber-50/80 border-[#f59e0b]' : ''
-                }`}
                 style={{
+                  flex: 1,
+                  backgroundColor: activeFilter === 'pendentes' ? '#fffbeb' : '#ffffff',
+                  borderRadius: 16,
+                  padding: 14,
+                  borderWidth: 1,
+                  borderColor: activeFilter === 'pendentes' ? '#f59e0b' : '#e2e8f0',
+                  overflow: 'hidden',
+                  position: 'relative',
                   shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
+                  shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
-                  shadowRadius: 6,
-                  elevation: 2,
+                  shadowRadius: 3,
+                  elevation: 1,
                 }}
               >
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#f59e0b' }} />
                 <View className="flex-row items-center gap-1.5 mb-1">
                   <Feather name="clock" size={13} color="#f59e0b" />
                   <Text className="font-sans font-bold text-[#475569] text-[11px]">Oport. Frias</Text>
@@ -464,17 +470,23 @@ export default function AdminCRMLeadsScreen() {
               <TouchableOpacity
                 onPress={() => setActiveFilter(activeFilter === 'contatados' ? 'todos' : 'contatados')}
                 activeOpacity={0.8}
-                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#3b82f6] border border-[#e2e8f0] ${
-                  activeFilter === 'contatados' ? 'bg-blue-50/80 border-[#3b82f6]' : ''
-                }`}
                 style={{
+                  flex: 1,
+                  backgroundColor: activeFilter === 'contatados' ? '#eff6ff' : '#ffffff',
+                  borderRadius: 16,
+                  padding: 14,
+                  borderWidth: 1,
+                  borderColor: activeFilter === 'contatados' ? '#3b82f6' : '#e2e8f0',
+                  overflow: 'hidden',
+                  position: 'relative',
                   shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
+                  shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
-                  shadowRadius: 6,
-                  elevation: 2,
+                  shadowRadius: 3,
+                  elevation: 1,
                 }}
               >
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#3b82f6' }} />
                 <View className="flex-row items-center gap-1.5 mb-1">
                   <Feather name="phone-call" size={13} color="#3b82f6" />
                   <Text className="font-sans font-bold text-[#475569] text-[11px]">1º Contato</Text>
@@ -490,17 +502,23 @@ export default function AdminCRMLeadsScreen() {
               <TouchableOpacity
                 onPress={() => setActiveFilter(activeFilter === 'aguardando' ? 'todos' : 'aguardando')}
                 activeOpacity={0.8}
-                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#8b5cf6] border border-[#e2e8f0] ${
-                  activeFilter === 'aguardando' ? 'bg-purple-50/80 border-[#8b5cf6]' : ''
-                }`}
                 style={{
+                  flex: 1,
+                  backgroundColor: activeFilter === 'aguardando' ? '#f5f3ff' : '#ffffff',
+                  borderRadius: 16,
+                  padding: 14,
+                  borderWidth: 1,
+                  borderColor: activeFilter === 'aguardando' ? '#8b5cf6' : '#e2e8f0',
+                  overflow: 'hidden',
+                  position: 'relative',
                   shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
+                  shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
-                  shadowRadius: 6,
-                  elevation: 2,
+                  shadowRadius: 3,
+                  elevation: 1,
                 }}
               >
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#8b5cf6' }} />
                 <View className="flex-row items-center gap-1.5 mb-1">
                   <Feather name="file-text" size={13} color="#8b5cf6" />
                   <Text className="font-sans font-bold text-[#475569] text-[11px]">Negociação</Text>
@@ -513,17 +531,23 @@ export default function AdminCRMLeadsScreen() {
               <TouchableOpacity
                 onPress={() => setActiveFilter(activeFilter === 'cadastrados' ? 'todos' : 'cadastrados')}
                 activeOpacity={0.8}
-                className={`flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#10b981] border border-[#e2e8f0] ${
-                  activeFilter === 'cadastrados' ? 'bg-emerald-50/80 border-[#10b981]' : ''
-                }`}
                 style={{
+                  flex: 1,
+                  backgroundColor: activeFilter === 'cadastrados' ? '#ecfdf5' : '#ffffff',
+                  borderRadius: 16,
+                  padding: 14,
+                  borderWidth: 1,
+                  borderColor: activeFilter === 'cadastrados' ? '#10b981' : '#e2e8f0',
+                  overflow: 'hidden',
+                  position: 'relative',
                   shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
+                  shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
-                  shadowRadius: 6,
-                  elevation: 2,
+                  shadowRadius: 3,
+                  elevation: 1,
                 }}
               >
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#10b981' }} />
                 <View className="flex-row items-center gap-1.5 mb-1">
                   <Feather name="check-circle" size={13} color="#10b981" />
                   <Text className="font-sans font-bold text-[#475569] text-[11px]">Convertidos</Text>
@@ -537,15 +561,23 @@ export default function AdminCRMLeadsScreen() {
             <View className="flex-row gap-2.5">
               {/* Cadastros via WPP com sub-breakdown */}
               <View
-                className="flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#25d366] border border-[#e2e8f0]"
                 style={{
+                  flex: 1,
+                  backgroundColor: '#ffffff',
+                  borderRadius: 16,
+                  padding: 14,
+                  borderWidth: 1,
+                  borderColor: '#e2e8f0',
+                  overflow: 'hidden',
+                  position: 'relative',
                   shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
+                  shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
-                  shadowRadius: 6,
-                  elevation: 2,
+                  shadowRadius: 3,
+                  elevation: 1,
                 }}
               >
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#25d366' }} />
                 <View className="flex-row items-center gap-1.5 mb-1">
                   <Feather name="message-circle" size={13} color="#25d366" />
                   <Text className="font-sans font-bold text-[#475569] text-[11px]">Via WhatsApp</Text>
@@ -566,15 +598,24 @@ export default function AdminCRMLeadsScreen() {
 
               {/* Taxa de Conversão */}
               <View
-                className="flex-1 bg-white rounded-2xl p-3.5 border-t-4 border-t-[#1B4332] border border-[#e2e8f0] justify-between"
                 style={{
+                  flex: 1,
+                  backgroundColor: '#ffffff',
+                  borderRadius: 16,
+                  padding: 14,
+                  borderWidth: 1,
+                  borderColor: '#e2e8f0',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  justifyContent: 'space-between',
                   shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
+                  shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.04,
-                  shadowRadius: 6,
-                  elevation: 2,
+                  shadowRadius: 3,
+                  elevation: 1,
                 }}
               >
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3.5, backgroundColor: '#1B4332' }} />
                 <View>
                   <View className="flex-row items-center gap-1.5 mb-1">
                     <Feather name="bar-chart-2" size={13} color="#1B4332" />
@@ -715,13 +756,18 @@ export default function AdminCRMLeadsScreen() {
               return (
                 <View
                   key={lead.id}
-                  className="bg-white rounded-2xl p-4 mb-3 border border-[#e2e8f0]"
                   style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: 16,
+                    padding: 16,
+                    marginBottom: 12,
+                    borderWidth: 1,
+                    borderColor: '#e2e8f0',
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 8,
-                    elevation: 2,
+                    shadowOpacity: 0.04,
+                    shadowRadius: 6,
+                    elevation: 1,
                   }}
                 >
                   {/* Topo do Card: Avatar + Nome + Badge */}
@@ -892,7 +938,20 @@ export default function AdminCRMLeadsScreen() {
         {/* 6. PAGINAÇÃO                                               */}
         {/* ========================================================= */}
         {filteredLeads.length > LEADS_PER_PAGE && (
-          <View className="bg-white rounded-[16px] p-[16px] border border-[#e2e8f0] flex-row justify-between items-center mt-[10px] mb-4 shadow-xs">
+          <View
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: '#e2e8f0',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: 10,
+              marginBottom: 16,
+            }}
+          >
             <Text className="font-sans text-[#64748b] text-[13px]">
               Mostrando {Math.min((currentPage - 1) * LEADS_PER_PAGE + 1, filteredLeads.length)}–
               {Math.min(currentPage * LEADS_PER_PAGE, filteredLeads.length)} de {filteredLeads.length}

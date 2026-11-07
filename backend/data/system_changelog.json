@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-d7562622",
+    "date": "2026-11-06T23:42:23.000Z",
+    "commit": "d7562622",
+    "author": "Anderson",
+    "title": "Novo: Implement complete patient funnel analytics dashboard mirroring web mobile",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "implement complete patient funnel analytics dashboard mirroring web mobile",
+    "description": "Commit registrado no repositório: \"feat(mobile): implement complete patient funnel analytics dashboard mirroring web mobile\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/_layout.tsx, mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #d7562622"
+    },
+    "after": {
+      "nova_versao": "implement complete patient funnel analytics dashboard mirroring web mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-e8e71da2",
     "date": "2026-11-06T23:35:31.000Z",
     "commit": "e8e71da2",

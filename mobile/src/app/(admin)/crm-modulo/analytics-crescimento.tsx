@@ -429,7 +429,7 @@ export default function AnalyticsCrescimentoScreen() {
         contentContainerStyle={{
           paddingTop: insets.top + 8,
           paddingHorizontal: 16,
-          paddingBottom: 130, // respiro premium para a bottom nav fixa
+          paddingBottom: 150, // respiro premium para a bottom nav fixa
         }}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -522,7 +522,7 @@ export default function AnalyticsCrescimentoScreen() {
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
             <View style={{ flex: 1, paddingRight: 10 }}>
-              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#ffffff', fontSize: 24, lineHeight: 30, marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#ffffff', fontSize: 24, lineHeight: 32, paddingTop: 4, marginBottom: 4 }}>
                 Growth 📈
               </Text>
               <Text style={{ fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.85)', fontSize: 12, lineHeight: 18 }}>

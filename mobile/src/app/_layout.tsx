@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { AuthProvider } from '../contexts/AuthContext';
 import { useFonts } from 'expo-font';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_900Black } from '@expo-google-fonts/inter';
+import { Fraunces_600SemiBold, Fraunces_700Bold } from '@expo-google-fonts/fraunces';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { View, Platform } from 'react-native';
@@ -33,6 +34,8 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
     Inter_900Black,
+    Fraunces_600SemiBold,
+    Fraunces_700Bold,
     'NewKansas-Regular': require('../../assets/fonts/newkansas-regular.ttf'),
     'NewKansas-Medium': require('../../assets/fonts/newkansas-medium.ttf'),
     'NewKansas-Bold': require('../../assets/fonts/newkansas-bold.ttf'),

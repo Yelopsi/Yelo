@@ -46,7 +46,7 @@ export default function CRMLayout() {
       <ExpoStack.Screen name="analytics-funil" options={{ headerShown: false, title: "Analytics de Funil" }} />
       <ExpoStack.Screen name="receita" options={{ title: "Receita e Assinaturas" }} />
       <ExpoStack.Screen name="distribuicao" options={{ title: "Distribuição & Ads" }} />
-      <ExpoStack.Screen name="copilot-wpp" options={{ title: "Copilot WhatsApp 💬" }} />
+      <ExpoStack.Screen name="copilot-wpp" options={{ headerShown: false, title: "Copilot WhatsApp 💬" }} />
       <ExpoStack.Screen name="avaliacoes" options={{ title: "Avaliações (NPS)" }} />
       <ExpoStack.Screen name="cancelamentos" options={{ title: "Motivos de Cancelamento" }} />
       <ExpoStack.Screen name="caixa-entrada" options={{ title: "Caixa de Entrada (Chat)" }} />
