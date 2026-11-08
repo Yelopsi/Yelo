@@ -2983,7 +2983,7 @@ export default function AdminCRMPsicologosScreen() {
                         <TouchableOpacity
                           onPress={() => {
                             const slug = psy.slug || psy.id;
-                            Linking.openURL(`https://www.yelopsi.com.br/psicologo/${slug}`);
+                            Linking.openURL(`https://www.yelopsi.com.br/${slug}`);
                           }}
                           activeOpacity={0.8}
                           style={{
