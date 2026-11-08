@@ -56,18 +56,18 @@ export default function EvolucaoScreen() {
               </View>
             </TouchableOpacity>
 
-            {/* 2. ATRAÇÃO & PACIENTES: Perguntas da Comunidade */}
+            {/* 2. NETWORKING ENTRE PARES: Fórum de Discussão */}
             <TouchableOpacity 
-              onPress={() => navigateTo('comunidade')} 
+              onPress={() => navigateTo('forum')} 
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
               activeOpacity={0.8}
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
-                <Text className="text-[24px]">❓</Text>
+                <Text className="text-[24px]">💬</Text>
               </View>
               <View className="flex-1">
-                <Text className="font-title text-[#1B4332] text-[19px] mb-1">Perguntas da Comunidade</Text>
-                <Text className="font-sans text-[14px] text-[#888] leading-snug">Responda dúvidas de pacientes e atraia novos atendimentos.</Text>
+                <Text className="font-title text-[#1B4332] text-[19px] mb-1">Fórum de Discussão</Text>
+                <Text className="font-sans text-[14px] text-[#888] leading-snug">Intervisão clínica, debates e troca com outros psicólogos.</Text>
               </View>
             </TouchableOpacity>
 
@@ -86,18 +86,18 @@ export default function EvolucaoScreen() {
               </View>
             </TouchableOpacity>
 
-            {/* 4. NETWORKING ENTRE PARES: Fórum de Discussão */}
+            {/* 4. ATRAÇÃO & PACIENTES: Perguntas da Comunidade */}
             <TouchableOpacity 
-              onPress={() => navigateTo('forum')} 
+              onPress={() => navigateTo('comunidade')} 
               className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
               activeOpacity={0.8}
             >
               <View className="w-[55px] h-[55px] rounded-[16px] bg-[#f0fdf4] items-center justify-center mr-5">
-                <Text className="text-[24px]">💬</Text>
+                <Text className="text-[24px]">❓</Text>
               </View>
               <View className="flex-1">
-                <Text className="font-title text-[#1B4332] text-[19px] mb-1">Fórum de Discussão</Text>
-                <Text className="font-sans text-[14px] text-[#888] leading-snug">Intervisão clínica, debates e troca com outros psicólogos.</Text>
+                <Text className="font-title text-[#1B4332] text-[19px] mb-1">Perguntas da Comunidade</Text>
+                <Text className="font-sans text-[14px] text-[#888] leading-snug">Responda dúvidas de pacientes e atraia novos atendimentos.</Text>
               </View>
             </TouchableOpacity>
 

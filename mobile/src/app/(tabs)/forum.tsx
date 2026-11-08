@@ -16,11 +16,15 @@ import {
   StyleSheet,
   Keyboard,
   Dimensions,
+  Animated,
+  Easing,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import * as SecureStore from 'expo-secure-store';
 import YeloScrollView from '../../components/YeloScrollView';
+import NativeSelectMenu from '../../components/NativeSelectMenu';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import api, { getBaseUrl } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -137,6 +141,11 @@ function insertReply(
 
 export default function ForumScreen() {
   const router = useRouter();
+  const { postId: paramPostId, commentId: paramCommentId, t: paramTrigger } = useLocalSearchParams<{
+    postId?: string;
+    commentId?: string;
+    t?: string;
+  }>();
   const { user } = useAuth();
   const isUserAdmin = Boolean((user as any)?.isAdmin || user?.email === 'pix@yelopsi.com.br');
 
@@ -146,6 +155,25 @@ export default function ForumScreen() {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [showRules, setShowRules] = useState(true);
+
+  const RULES_COLLAPSED_KEY = 'Yelo_forum_rules_collapsed_v1';
+
+  useEffect(() => {
+    SecureStore.getItemAsync(RULES_COLLAPSED_KEY)
+      .then((val) => {
+        if (val === 'true') setShowRules(false);
+        else if (val === 'false') setShowRules(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleToggleRules = () => {
+    setShowRules((prev) => {
+      const next = !prev;
+      SecureStore.setItemAsync(RULES_COLLAPSED_KEY, next ? 'false' : 'true').catch(() => {});
+      return next;
+    });
+  };
 
   // Estados da Listagem de Discussões
   const [posts, setPosts] = useState<any[]>([]);
@@ -187,6 +215,9 @@ export default function ForumScreen() {
   const keyboardHeightRef = useRef(0);
   const scrollOffsetRef = useRef(0);
   const scrollRef = useRef<any>(null);
+  const formScrollRef = useRef<any>(null);
+  const BOTTOM_SHEET_PADDING = Platform.OS === 'ios' ? 24 : 16;
+  const sheetBottomAnim = useRef(new Animated.Value(BOTTOM_SHEET_PADDING)).current;
   const composerRef = useRef<MainComposerHandle>(null);
   const activeReplyRef = useRef<React.RefObject<any> | null>(null);
   const commentsRef = useRef<ForumComment[]>([]);
@@ -502,6 +533,13 @@ export default function ForumScreen() {
       const h = e.endCoordinates?.height || 0;
       keyboardHeightRef.current = h;
       setKeyboardHeight(h);
+      const targetPadding = Platform.OS === 'ios' ? (h || 300) : 16;
+      Animated.timing(sheetBottomAnim, {
+        toValue: targetPadding,
+        duration: Platform.OS === 'ios' ? (e?.duration || 250) : 180,
+        easing: Easing.bezier(0.33, 1, 0.68, 1),
+        useNativeDriver: false,
+      }).start();
       if (activeReplyRef.current) {
         setTimeout(() => {
           ensureVisible(activeReplyRef.current!);
@@ -509,9 +547,15 @@ export default function ForumScreen() {
       }
     };
 
-    const onHide = () => {
+    const onHide = (e?: any) => {
       keyboardHeightRef.current = 0;
       setKeyboardHeight(0);
+      Animated.timing(sheetBottomAnim, {
+        toValue: BOTTOM_SHEET_PADDING,
+        duration: Platform.OS === 'ios' ? (e?.duration || 250) : 180,
+        easing: Easing.bezier(0.33, 1, 0.68, 1),
+        useNativeDriver: false,
+      }).start();
     };
 
     const s1 = Keyboard.addListener(showEvt, onShow);
@@ -593,6 +637,15 @@ export default function ForumScreen() {
       Alert.alert('Aviso', 'Não foi possível abrir a discussão.');
     }
   };
+
+  useEffect(() => {
+    if (paramPostId) {
+      const numericId = Number(paramPostId);
+      if (!isNaN(numericId) && numericId > 0) {
+        openPostById(numericId);
+      }
+    }
+  }, [paramPostId, paramCommentId, paramTrigger]);
 
   const reloadComments = async () => {
     if (!activePost) return;
@@ -890,7 +943,7 @@ export default function ForumScreen() {
   const threadContext = useMemo<ThreadContextValue>(() => ({
     isAdmin: isUserAdmin,
     closed: isDiscussionClosed,
-    userPhoto: (user as any)?.photo || null,
+    userPhoto: user?.fotoUrl || (user as any)?.photo || null,
     expanded: expandedMap,
     activeReplyId,
     replyPrefill,
@@ -1181,19 +1234,20 @@ export default function ForumScreen() {
         <View style={styles.guidelinesBox}>
           {/* Header das Regras */}
           <View style={styles.guidelinesHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, flex: 1 }}>
-              <Text style={{ fontSize: 17 }}>🛡️</Text>
-              <Text style={styles.guidelinesTitle} numberOfLines={1}>
-                Regras e Boas Práticas da Comunidade
-              </Text>
-            </View>
-
-            <View style={styles.guidelinesBadge}>
-              <Text style={styles.guidelinesBadgeText}>ESPAÇO ÉTICO</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+              <Text style={{ fontSize: 18 }}>🛡️</Text>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={styles.guidelinesTitle}>
+                  Regras e Boas Práticas da Comunidade
+                </Text>
+                <View style={styles.guidelinesBadge}>
+                  <Text style={styles.guidelinesBadgeText}>ESPAÇO ÉTICO</Text>
+                </View>
+              </View>
             </View>
 
             <TouchableOpacity 
-              onPress={() => setShowRules(prev => !prev)}
+              onPress={handleToggleRules}
               style={styles.guidelinesToggleBtn}
               activeOpacity={0.7}
             >
@@ -1205,7 +1259,7 @@ export default function ForumScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Lista das 5 Regras Oficiais */}
+          {/* Lista das 6 Regras Oficiais */}
           {showRules && (
             <View style={styles.guidelinesList}>
               <View style={styles.guidelineItem}>
@@ -1229,6 +1283,14 @@ export default function ForumScreen() {
                 <Text style={styles.guidelineText}>
                   <Text style={styles.guidelineBold}>Conteúdo construtivo: </Text>
                   Evite autopromoção direta e spam. O foco é a troca mútua de conhecimento técnico e suporte profissional.
+                </Text>
+              </View>
+
+              <View style={styles.guidelineItem}>
+                <Text style={styles.guidelineDot}>•</Text>
+                <Text style={styles.guidelineText}>
+                  <Text style={styles.guidelineBold}>Evite tópicos repetidos e interaja: </Text>
+                  Ao criar um novo post, verifique se já não existe um anterior com o mesmo tema e, após publicar, interaja com os colegas que interagirem com ele.
                 </Text>
               </View>
 
@@ -1300,17 +1362,20 @@ export default function ForumScreen() {
             )}
           </View>
 
-          {/* Seletor Dropdown de Categorias */}
-          <TouchableOpacity 
-            onPress={() => setIsCategoryModalOpen(true)}
-            style={styles.categoryDropdownBtn}
-            activeOpacity={0.8}
+          {/* Seletor Dropdown Nativo de Categorias */}
+          <NativeSelectMenu
+            options={FORUM_CATEGORIES.map((cat) => ({ label: cat, value: cat }))}
+            selectedValue={selectedCategory}
+            onSelect={(val) => setSelectedCategory(val)}
+            style={{ width: '100%', marginBottom: 12 }}
           >
-            <Text style={styles.categoryDropdownText} numberOfLines={1}>
-              {selectedCategory}
-            </Text>
-            <Feather name="chevron-down" size={16} color="#64748b" />
-          </TouchableOpacity>
+            <View style={[styles.categoryDropdownBtn, { marginBottom: 0 }]}>
+              <Text style={styles.categoryDropdownText} numberOfLines={1}>
+                {selectedCategory}
+              </Text>
+              <Feather name="chevron-down" size={16} color="#64748b" />
+            </View>
+          </NativeSelectMenu>
 
           {/* Segmented Control das 3 Abas: Recentes / Populares / Meus Posts */}
           <View style={styles.segmentedControl}>
@@ -1560,127 +1625,73 @@ export default function ForumScreen() {
       )}
 
       {/* ======================================================== */}
-      {/* MODAL BOTTOM SHEET: SELETOR DE CATEGORIAS */}
-      {/* ======================================================== */}
-      <Modal
-        visible={isCategoryModalOpen}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setIsCategoryModalOpen(false)}
-      >
-        <Pressable 
-          style={styles.modalBackdrop}
-          onPress={() => setIsCategoryModalOpen(false)}
-        >
-          <Pressable 
-            style={styles.categoryBottomSheetCard}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={styles.sheetDragHandle} />
-            <View style={styles.categoryModalHeader}>
-              <Text style={styles.categoryModalTitle}>Filtrar por Categoria</Text>
-              <TouchableOpacity 
-                onPress={() => setIsCategoryModalOpen(false)}
-                style={styles.modalCloseBtn}
-              >
-                <Feather name="x" size={16} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 360 }}>
-              {FORUM_CATEGORIES.map((cat) => {
-                const isSelected = selectedCategory === cat;
-                const catStyle = getCategoryStyle(cat);
-                return (
-                  <TouchableOpacity
-                    key={cat}
-                    onPress={() => {
-                      setSelectedCategory(cat);
-                      setIsCategoryModalOpen(false);
-                    }}
-                    style={[
-                      styles.categoryOptionItem,
-                      isSelected && styles.categoryOptionItemActive
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                      {cat !== 'Todas as Categorias' && (
-                        <View style={[
-                          styles.categoryPillDot, 
-                          { backgroundColor: catStyle.text }
-                        ]} />
-                      )}
-                      <Text style={[
-                        styles.categoryOptionText,
-                        isSelected && styles.categoryOptionTextActive
-                      ]}>
-                        {cat}
-                      </Text>
-                    </View>
-                    {isSelected && (
-                      <Feather name="check" size={18} color="#1B4332" />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* ======================================================== */}
-      {/* MODAL: NOVA DISCUSSÃO (BOTTOM SHEET YELO) */}
+      {/* MODAL: NOVA DISCUSSÃO (BOTTOM SHEET YELO IGUAL AO BLOG) */}
       {/* ======================================================== */}
       <Modal
         visible={modalVisible}
-        animationType="slide"
         transparent={true}
-        onRequestClose={() => setModalVisible(false)}
+        animationType="fade"
+        onRequestClose={() => {
+          Keyboard.dismiss();
+          setModalVisible(false);
+        }}
       >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.modalBackdrop}
-        >
-          <Pressable 
-            style={StyleSheet.absoluteFill} 
-            onPress={() => setModalVisible(false)} 
+        <View style={styles.modalBackdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => {
+              Keyboard.dismiss();
+              setModalVisible(false);
+            }}
           />
-          <View style={styles.createModalCard}>
-            <View style={styles.sheetDragHandle} />
-            
-            {/* Header Modal Criar */}
-            <View style={styles.createModalHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                <View style={styles.createModalIconBox}>
-                  <Text style={{ fontSize: 18 }}>💬</Text>
+          <Animated.View
+            style={[
+              styles.createModalCard,
+              { paddingBottom: sheetBottomAnim }
+            ]}
+          >
+            {/* Header do Modal */}
+            <Pressable onPress={() => Keyboard.dismiss()} style={styles.createModalHeaderWrap}>
+              <View style={styles.sheetDragHandle} />
+              <View style={styles.createModalHeader}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                  <View style={styles.createModalIconBox}>
+                    <Text style={{ fontSize: 18 }}>💬</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.createModalTitle}>Nova Discussão</Text>
+                    <Text style={styles.createModalSubtitle} numberOfLines={1}>
+                      Troque conhecimentos respeitando o sigilo ético.
+                    </Text>
+                  </View>
                 </View>
-                <View>
-                  <Text style={styles.createModalTitle}>Nova Discussão</Text>
-                  <Text style={styles.createModalSubtitle}>
-                    Troque conhecimentos respeitando o sigilo ético.
-                  </Text>
-                </View>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setModalVisible(false);
+                  }}
+                  style={styles.modalCloseBtn}
+                  activeOpacity={0.7}
+                >
+                  <Feather name="x" size={18} color="#64748b" />
+                </TouchableOpacity>
               </View>
+            </Pressable>
 
-              <TouchableOpacity 
-                onPress={() => setModalVisible(false)}
-                style={styles.modalCloseBtn}
-              >
-                <Feather name="x" size={18} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView 
-              showsVerticalScrollIndicator={false}
+            {/* Scroll do Formulário com altura responsiva */}
+            <ScrollView
+              ref={formScrollRef}
               keyboardShouldPersistTaps="handled"
-              style={{ maxHeight: 420 }}
-              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 }}
+              keyboardDismissMode="interactive"
+              showsVerticalScrollIndicator={false}
+              style={{ flexGrow: 0, flexShrink: 1 }}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 12 }}
             >
               {/* Campo: Título */}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>TÍTULO DA DISCUSSÃO *</Text>
-                <TextInput 
+                <TextInput
                   placeholder="Ex: Como conduzir impasse terapêutico em caso de ansiedade?"
                   placeholderTextColor="#94a3b8"
                   value={newTitle}
@@ -1688,55 +1699,58 @@ export default function ForumScreen() {
                   maxLength={150}
                   style={styles.formInput}
                 />
+                <Text
+                  style={[
+                    styles.charCounter,
+                    newTitle.length >= 150 ? { color: '#e63946', fontWeight: 'bold' } : {},
+                  ]}
+                >
+                  {newTitle.length}/150 caracteres
+                </Text>
               </View>
 
-              {/* Campo: Categoria */}
+              {/* Campo: Categoria (Dropdown Nativo do OS) */}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>CATEGORIA *</Text>
-                <View style={styles.categoryChipsGrid}>
-                  {FORUM_CATEGORIES.filter(c => c !== 'Todas as Categorias').map((cat) => {
-                    const isSelected = newCategory === cat;
-                    const catStyle = getCategoryStyle(cat);
-                    return (
-                      <TouchableOpacity
-                        key={cat}
-                        onPress={() => setNewCategory(cat)}
-                        style={[
-                          styles.categoryChipBtn,
-                          isSelected 
-                            ? { backgroundColor: '#1B4332', borderColor: '#1B4332' } 
-                            : { backgroundColor: catStyle.bg, borderColor: catStyle.border }
-                        ]}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[
-                          styles.categoryChipBtnText,
-                          isSelected ? { color: '#ffffff', fontWeight: 'bold' } : { color: catStyle.text }
-                        ]}>
-                          {cat}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+                <NativeSelectMenu
+                  options={FORUM_CATEGORIES.filter(c => c !== 'Todas as Categorias').map((cat) => ({
+                    label: cat,
+                    value: cat,
+                  }))}
+                  selectedValue={newCategory}
+                  onSelect={(val) => setNewCategory(val)}
+                  style={{ width: '100%' }}
+                >
+                  <View style={styles.modalCategorySelectBtn}>
+                    <Text style={styles.modalCategorySelectText} numberOfLines={1}>
+                      {newCategory}
+                    </Text>
+                    <Feather name="chevron-down" size={16} color="#64748b" />
+                  </View>
+                </NativeSelectMenu>
               </View>
 
               {/* Campo: Relato / Conteúdo */}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>RELATO CLÍNICO / DÚVIDA *</Text>
-                <TextInput 
+                <TextInput
                   multiline
                   numberOfLines={5}
                   placeholder="Descreva a demanda, contexto e o ponto em que você busca apoio técnico dos colegas..."
                   placeholderTextColor="#94a3b8"
                   value={newContent}
                   onChangeText={setNewContent}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      formScrollRef.current?.scrollToEnd({ animated: true });
+                    }, 100);
+                  }}
                   style={styles.formTextArea}
                 />
               </View>
 
               {/* Checkbox: Publicar Anonimamente */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setIsAnonymous(!isAnonymous)}
                 style={styles.anonymousCheckboxRow}
                 activeOpacity={0.8}
@@ -1751,33 +1765,36 @@ export default function ForumScreen() {
                   Publicar anonimamente (seu nome e foto não serão exibidos aos colegas)
                 </Text>
               </TouchableOpacity>
-
-              {/* Botões do Rodapé do Formulário */}
-              <View style={styles.modalFormFooter}>
-                <TouchableOpacity
-                  onPress={() => setModalVisible(false)}
-                  style={styles.btnFormCancel}
-                  activeOpacity={0.75}
-                >
-                  <Text style={styles.btnFormCancelText}>Cancelar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={handleCreatePost}
-                  disabled={isSubmittingPost}
-                  style={styles.btnFormSubmit}
-                  activeOpacity={0.85}
-                >
-                  {isSubmittingPost ? (
-                    <ActivityIndicator size="small" color="#ffffff" />
-                  ) : (
-                    <Text style={styles.btnFormSubmitText}>Publicar no Fórum</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
             </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
+
+            {/* Ações do Rodapé: FIXAS NA BASE DO MODAL EM LINHA ÚNICA (IGUAL AO BLOG) */}
+            <View style={styles.modalFormFooter}>
+              <TouchableOpacity
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setModalVisible(false);
+                }}
+                style={styles.btnFormCancel}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.btnFormCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleCreatePost}
+                disabled={isSubmittingPost}
+                style={styles.btnFormSubmit}
+                activeOpacity={0.85}
+              >
+                {isSubmittingPost ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={styles.btnFormSubmitText}>Publicar no Fórum</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </View>
       </Modal>
 
       {/* Notificação Flutuante em Pílula (Estilo WhatsApp) */}
@@ -1845,19 +1862,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
   },
   guidelinesTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#1B4332',
-    flex: 1,
+    lineHeight: 18,
   },
   guidelinesBadge: {
     backgroundColor: '#dcfce7',
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 2.5,
     borderRadius: 50,
-    marginRight: 6,
+    alignSelf: 'flex-start',
   },
   guidelinesBadgeText: {
     fontSize: 9.5,
@@ -2028,7 +2046,6 @@ const styles = StyleSheet.create({
     borderColor: '#e2e8f0',
     borderRadius: 20,
     padding: 18,
-    marginHorizontal: 16,
     marginBottom: 14,
     shadowColor: '#000',
     shadowOpacity: 0.04,
@@ -2269,26 +2286,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // MODAL CRIAR
+  // MODAL CRIAR (ESTILO BOTTOM SHEET NATIVO YELO IGUAL AO BLOG)
   createModalCard: {
     backgroundColor: '#ffffff',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: '90%',
-    paddingTop: 12,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    maxHeight: '94%',
+    flexShrink: 1,
     shadowColor: '#000',
     shadowOpacity: 0.15,
     shadowRadius: 16,
+    shadowOffset: { width: 0, height: -4 },
     elevation: 8,
+  },
+  createModalHeaderWrap: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    paddingTop: 10,
   },
   createModalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    paddingBottom: 10,
   },
   createModalIconBox: {
     width: 40,
@@ -2327,6 +2348,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1e293b',
   },
+  charCounter: {
+    fontSize: 11,
+    color: '#6b7280',
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  modalCategorySelectBtn: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  modalCategorySelectText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1B4332',
+    flex: 1,
+  },
   formTextArea: {
     backgroundColor: '#f8fafc',
     borderWidth: 1,
@@ -2336,28 +2380,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 14,
     color: '#1e293b',
-    minHeight: 110,
+    minHeight: 120,
     textAlignVertical: 'top',
-  },
-  categoryChipsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  categoryChipBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  categoryChipBtnText: {
-    fontSize: 11.5,
   },
   anonymousCheckboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 18,
+    marginBottom: 8,
   },
   checkboxSquare: {
     width: 20,
@@ -2383,9 +2413,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     gap: 10,
+    paddingHorizontal: 20,
     paddingTop: 10,
+    paddingBottom: 10,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
+    backgroundColor: '#ffffff',
   },
   btnFormCancel: {
     paddingHorizontal: 16,
@@ -2613,26 +2646,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: 6,
-    backgroundColor: '#FFF1F2',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#FECDD3',
+    borderColor: '#E2E8F0',
     borderRadius: 50,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
   supportBtnOn: {
-    backgroundColor: '#FFE4E6',
-    borderColor: '#FDA4AF',
+    backgroundColor: '#FFF1F2',
+    borderColor: '#FECDD3',
   },
   supportCount: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#BE123C',
+    color: '#475569',
   },
   supportLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#BE123C',
+    color: '#475569',
   },
   commentsHeader: {
     flexDirection: 'row',

@@ -1,6 +1,36 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import api from '../services/api';
+import api, { clearServerAuthCookie } from '../services/api';
+
+function decodeJwtPayload(tokenStr: string): { id?: number; type?: string; role?: string } | null {
+  try {
+    const parts = tokenStr.split('.');
+    if (parts.length < 2) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    let output = '';
+    for (let bc = 0, bs = 0, buffer, i = 0; (buffer = padded.charAt(i++)); ) {
+      buffer = chars.indexOf(buffer);
+      if (~buffer) {
+        bs = bc % 4 ? bs * 64 + buffer : buffer;
+        if (bc++ % 4) {
+          output += String.fromCharCode(255 & (bs >> ((-2 * bc) & 6)));
+        }
+      }
+    }
+    const jsonStr = decodeURIComponent(
+      output
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonStr);
+  } catch {
+    return null;
+  }
+}
 
 export type UserData = {
   id: number;
@@ -61,30 +91,119 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const storedUserRaw = await SecureStore.getItemAsync('Yelo_user');
       if (!storedToken) return null;
 
+      await clearServerAuthCookie();
+
+      const jwtPayload = decodeJwtPayload(storedToken);
+      let parsedCurrent: UserData | null = null;
       if (storedUserRaw) {
         try {
-          const parsedCurrent: UserData = JSON.parse(storedUserRaw);
-          // Contas de Admin (tabela Admins) ou Paciente (tabela Patients) NÃO devem consultar /api/psychologists/me
-          // pois o ID 1 de Admins colide com o ID 1 de Psychologists!
-          if (parsedCurrent.type === 'admin' || parsedCurrent.isAdmin || parsedCurrent.type === 'patient') {
-            return parsedCurrent;
-          }
+          parsedCurrent = JSON.parse(storedUserRaw);
         } catch (_) { }
       }
 
-      const res = await api.get('/api/psychologists/me').catch(() => null);
+      const effectiveType =
+        jwtPayload?.type ||
+        jwtPayload?.role ||
+        parsedCurrent?.type ||
+        (parsedCurrent?.slug === 'admin' ? 'admin' : 'psychologist');
+
+      if (effectiveType === 'patient') {
+        return parsedCurrent;
+      }
+
+      // Contas de Admin consultam /api/admin/me com o Bearer token de admin
+      if (effectiveType === 'admin' || parsedCurrent?.slug === 'admin') {
+        const adminRes = await api
+          .get('/api/admin/me', {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          })
+          .catch(() => null);
+
+        if (adminRes?.data) {
+          const adm = adminRes.data;
+          if (jwtPayload?.id && adm.id && Number(adm.id) !== Number(jwtPayload.id)) {
+            return parsedCurrent;
+          }
+          let updatedAdmin: UserData | null = null;
+          setUser((prev) => {
+            if (prev && prev.type && prev.type !== 'admin' && prev.slug !== 'admin') {
+              return prev;
+            }
+            const merged: UserData = {
+              id: adm.id ?? jwtPayload?.id ?? prev?.id ?? 1,
+              nome: adm.nome || prev?.nome || 'Administrador',
+              email: adm.email || prev?.email || 'admin@yelopsi.com.br',
+              slug: 'admin',
+              fotoUrl: adm.fotoUrl ?? undefined,
+              type: 'admin',
+              isAdmin: true,
+            };
+            updatedAdmin = merged;
+            SecureStore.setItemAsync('Yelo_user', JSON.stringify(merged)).catch(() => { });
+            return merged;
+          });
+
+          if (updatedAdmin) {
+            const finalAdmin = updatedAdmin as UserData;
+            setSavedAccounts((prevAccounts) => {
+              const idx = prevAccounts.findIndex((a) => {
+                const p = decodeJwtPayload(a.token);
+                if (p?.type === 'admin' && (!p.id || Number(p.id) === Number(finalAdmin.id))) {
+                  return true;
+                }
+                return (
+                  a.user.type === 'admin' &&
+                  a.user.email.toLowerCase() === finalAdmin.email.toLowerCase()
+                );
+              });
+              if (idx >= 0) {
+                const clone = [...prevAccounts];
+                clone[idx] = { token: storedToken, user: finalAdmin };
+                SecureStore.setItemAsync(ACCOUNTS_STORAGE_KEY, JSON.stringify(clone)).catch(() => { });
+                return clone;
+              }
+              return prevAccounts;
+            });
+          }
+
+          return updatedAdmin || parsedCurrent;
+        }
+        return parsedCurrent;
+      }
+
+      // Contas de Psicólogo consultam /api/psychologists/me com o Bearer token da conta
+      const res = await api
+        .get('/api/psychologists/me', {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        })
+        .catch(() => null);
+
       if (res?.data) {
         const p = res.data;
+        // Garante que a resposta pertence exatamente ao ID do token atual (evita colisão por cookie)
+        if (jwtPayload?.id && p.id && Number(p.id) !== Number(jwtPayload.id)) {
+          return parsedCurrent;
+        }
+
         let updatedUser: UserData | null = null;
         setUser((prev) => {
-          const isAdminFlag = prev?.isAdmin ?? (p.isAdmin || prev?.type === 'admin' || false);
+          // Se o usuário já alternou para Admin enquanto a requisição estava em trânsito, ignora
+          if (prev && (prev.type === 'admin' || prev.slug === 'admin')) {
+            return prev;
+          }
+          if (prev && prev.id && p.id && Number(prev.id) !== Number(p.id)) {
+            return prev;
+          }
+          const isAdminFlag = Boolean(p.isAdmin);
           const merged: UserData = prev
             ? {
               ...prev,
+              id: p.id || prev.id,
               nome: p.nome || prev.nome,
               email: p.email || prev.email,
               slug: p.slug || prev.slug,
               fotoUrl: p.fotoUrl || prev.fotoUrl,
+              type: 'psychologist',
               isAdmin: isAdminFlag,
             }
             : {
@@ -101,12 +220,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return merged;
         });
 
-        // Sincroniza também na lista de contas salvas
+        // Sincroniza também na lista de contas salvas (apenas na conta de psicólogo correspondente)
         if (updatedUser) {
           const finalUser = updatedUser as UserData;
           setSavedAccounts((prevAccounts) => {
             const idx = prevAccounts.findIndex(
-              (a) => a.user.email.toLowerCase() === finalUser.email.toLowerCase()
+              (a) =>
+                a.user.type !== 'admin' &&
+                (Number(a.user.id) === Number(finalUser.id) ||
+                  a.user.email.toLowerCase() === finalUser.email.toLowerCase())
             );
             if (idx >= 0) {
               const clone = [...prevAccounts];
@@ -140,6 +262,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     async function loadStorageData() {
       try {
+        // Limpa o cookie nativo logo na inicialização para garantir uso do Bearer token
+        await clearServerAuthCookie();
+
         // Limpa chaves legadas para garantir que contas antigas não apareçam sem terem sido conectadas
         await SecureStore.deleteItemAsync('Yelo_saved_accounts').catch(() => { });
         await SecureStore.deleteItemAsync('Yelo_connected_accounts_v3').catch(() => { });
@@ -155,13 +280,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } catch (_) { }
         }
 
+        // Repara cada conta salva de acordo com o payload real do seu JWT
+        accounts = accounts.map((acc) => {
+          const p = decodeJwtPayload(acc.token);
+          const tokenType = p?.type || p?.role;
+          if (tokenType === 'admin' || acc.user.type === 'admin') {
+            const repairedUser: UserData = {
+              ...acc.user,
+              id: p?.id ?? acc.user.id,
+              type: 'admin',
+              isAdmin: true,
+              slug: 'admin',
+            };
+            if (
+              repairedUser.email === 'costa@anderson.com' ||
+              repairedUser.nome === 'Anderson Costaa' ||
+              (Number(repairedUser.id) !== 94 &&
+                (repairedUser.email?.toLowerCase() === 'pix@yelopsi.com.br' ||
+                  repairedUser.fotoUrl?.includes('profile-94')))
+            ) {
+              repairedUser.nome = 'Administrador';
+              repairedUser.email = 'admin@yelopsi.com.br';
+              repairedUser.fotoUrl = undefined;
+            }
+            return { token: acc.token, user: repairedUser };
+          }
+          return acc;
+        });
+
         if (storedToken && storedUser) {
+          api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
           setToken(storedToken);
           const parsed: UserData = JSON.parse(storedUser);
-          if (parsed.type === 'admin') {
+          const currentJwt = decodeJwtPayload(storedToken);
+          const currentTokenType = currentJwt?.type || currentJwt?.role;
+
+          if (currentTokenType === 'admin' || parsed.type === 'admin') {
+            parsed.type = 'admin';
             parsed.isAdmin = true;
-            // Repara caso a sessão atual de Admin tenha sido sobrescrita pelo ID 1 de Psychologists (Anderson Costaa)
-            if (parsed.email === 'costa@anderson.com' || parsed.nome === 'Anderson Costaa') {
+            parsed.slug = 'admin';
+            if (currentJwt?.id) parsed.id = currentJwt.id;
+
+            // Repara caso a sessão atual de Admin tenha sido sobrescrita por dados de Psicólogo
+            if (
+              parsed.email === 'costa@anderson.com' ||
+              parsed.nome === 'Anderson Costaa' ||
+              (Number(parsed.id) !== 94 &&
+                (parsed.email?.toLowerCase() === 'pix@yelopsi.com.br' ||
+                  parsed.fotoUrl?.includes('profile-94')))
+            ) {
               parsed.nome = 'Administrador';
               parsed.email = 'admin@yelopsi.com.br';
               parsed.fotoUrl = undefined;
@@ -176,12 +343,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await SecureStore.setItemAsync(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
           } else {
             const exists = accounts.some(
-              (a) => a.user.email.toLowerCase() === parsed.email.toLowerCase()
+              (a) =>
+                a.token === storedToken ||
+                (a.user.type === parsed.type &&
+                  a.user.email.toLowerCase() === parsed.email.toLowerCase())
             );
             if (!exists) {
               accounts.push({ token: storedToken, user: parsed });
-              await SecureStore.setItemAsync(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
             }
+            await SecureStore.setItemAsync(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
           }
         } else {
           accounts = [];
@@ -212,6 +382,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       await SecureStore.setItemAsync('Yelo_token', newToken);
       await SecureStore.setItemAsync('Yelo_user', JSON.stringify(userData));
+      api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+      await clearServerAuthCookie();
+
       setToken(newToken);
       setUser(userData);
 
@@ -220,7 +393,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const accountsRaw = await SecureStore.getItemAsync(ACCOUNTS_STORAGE_KEY);
         accounts = accountsRaw ? JSON.parse(accountsRaw) : [];
         accounts = accounts.filter(
-          (a) => a.user.email.toLowerCase() !== userData.email.toLowerCase()
+          (a) =>
+            !(
+              a.user.type === userData.type &&
+              a.user.email.toLowerCase() === userData.email.toLowerCase()
+            )
         );
       }
       accounts.push({ token: newToken, user: userData });
@@ -235,6 +412,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      await clearServerAuthCookie();
+      delete api.defaults.headers.common['Authorization'];
       await SecureStore.deleteItemAsync('Yelo_token');
       await SecureStore.deleteItemAsync('Yelo_user');
       await SecureStore.deleteItemAsync('Yelo_saved_accounts').catch(() => { });
@@ -250,6 +429,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Alterna o MODO / PAPEL (Admin <-> Psicólogo) na mesma conta autenticada
   const switchRole = async (targetRole: 'admin' | 'psychologist'): Promise<string> => {
     if (!user) return '/login';
+
+    await clearServerAuthCookie();
 
     const updatedUser: UserData = {
       ...user,
@@ -285,8 +466,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await SecureStore.setItemAsync('Yelo_token', target.token);
     await SecureStore.setItemAsync('Yelo_user', JSON.stringify(target.user));
     api.defaults.headers.common['Authorization'] = `Bearer ${target.token}`;
+    await clearServerAuthCookie();
+
     setToken(target.token);
     setUser(target.user);
+
+    // Sincroniza dados reais da conta selecionada em background
+    refreshUser();
 
     const dest =
       target.user.type === 'admin'

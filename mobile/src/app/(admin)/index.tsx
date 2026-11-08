@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -89,6 +89,7 @@ export default function AdminVisaoGeralScreen() {
 
       if (statsRes?.data) {
         setStats(statsRes.data);
+        setOfflineMode(false);
       } else if (!stats) {
         setStats(emptyStats);
         setOfflineMode(true);
@@ -107,6 +108,14 @@ export default function AdminVisaoGeralScreen() {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.type === 'admin' || user?.isAdmin) {
+        fetchStats();
+      }
+    }, [token, user?.email, user?.type, user?.isAdmin])
+  );
+
   useEffect(() => {
     if (user?.type !== 'admin' && !user?.isAdmin) return;
     fetchStats();
@@ -115,7 +124,7 @@ export default function AdminVisaoGeralScreen() {
       fetchStats();
     }, 60000);
     return () => clearInterval(interval);
-  }, [token, user?.email, user?.type]);
+  }, [token, user?.email, user?.type, user?.isAdmin]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

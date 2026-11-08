@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Image, Dimensions, ActivityIndicator, Modal, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import YeloScrollView from '../components/YeloScrollView';
@@ -15,6 +15,12 @@ const DEFAULT_BLOG_IMAGE = 'https://images.unsplash.com/photo-1544717305-2782549
 
 export default function BlogScreen() {
   const router = useRouter();
+  const { postId: paramPostId, slug: paramSlug, title: paramTitle, t: paramTrigger } = useLocalSearchParams<{
+    postId?: string;
+    slug?: string;
+    title?: string;
+    t?: string;
+  }>();
   const [isScrolled, setIsScrolled] = useState(false);
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +44,22 @@ export default function BlogScreen() {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  useEffect(() => {
+    if (posts.length === 0) return;
+    if (!paramPostId && !paramSlug && !paramTitle) return;
+
+    const matched = posts.find((p) => {
+      if (paramPostId && String(p.id) === String(paramPostId)) return true;
+      if (paramSlug && p.slug && String(p.slug).toLowerCase() === String(paramSlug).toLowerCase()) return true;
+      if (paramTitle && p.titulo && p.titulo.trim().toLowerCase() === paramTitle.trim().toLowerCase()) return true;
+      return false;
+    });
+
+    if (matched) {
+      setReadingPost(matched);
+    }
+  }, [posts, paramPostId, paramSlug, paramTitle, paramTrigger]);
 
   // Formatador de data
   const formatDate = (dateString?: string) => {

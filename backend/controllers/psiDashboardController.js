@@ -504,7 +504,7 @@ exports.getAnnouncements = async (req, res) => {
         if (forumPostIds.size > 0 && db.ForumPost) {
             const posts = await db.ForumPost.findAll({
                 where: { id: Array.from(forumPostIds) },
-                attributes: ['id', 'status', 'PsychologistId']
+                attributes: ['id', 'status', 'PsychologistId', 'content']
             });
             posts.forEach(p => activeForumPostsMap.set(p.id, p));
         }
@@ -513,7 +513,7 @@ exports.getAnnouncements = async (req, res) => {
         if (blogPostIds.size > 0 && db.Post) {
             const bPosts = await db.Post.findAll({
                 where: { id: Array.from(blogPostIds) },
-                attributes: ['id', 'psychologistId']
+                attributes: ['id', 'psychologistId', 'conteudo', 'resumo']
             });
             bPosts.forEach(bp => activeBlogPostsMap.set(bp.id, bp));
         }
@@ -582,7 +582,38 @@ exports.getAnnouncements = async (req, res) => {
         }
 
         const responseData = validAvisos.map(aviso => {
-            const avisoObj = aviso.toJSON ? aviso.toJSON() : aviso;
+            const avisoObj = aviso.toJSON ? aviso.toJSON() : { ...aviso };
+            let contentStr = avisoObj.content || '';
+
+            if (/acabamos de publicar/i.test(contentStr)) {
+                let rawBody = '';
+                const fMatch = contentStr.match(/data-post-id="(\d+)"/) || contentStr.match(/postId=(\d+)/);
+                if (fMatch && fMatch[1]) {
+                    const fPost = activeForumPostsMap.get(parseInt(fMatch[1], 10));
+                    if (fPost && fPost.content) rawBody = fPost.content;
+                }
+                if (!rawBody) {
+                    const bMatch = contentStr.match(/data-blog-id="(\d+)"/);
+                    if (bMatch && bMatch[1]) {
+                        const bPost = activeBlogPostsMap.get(parseInt(bMatch[1], 10));
+                        if (bPost) rawBody = bPost.conteudo || bPost.resumo || '';
+                    }
+                }
+                const cleanBody = String(rawBody || '')
+                    .replace(/<[^>]*>?/gm, ' ')
+                    .replace(/&nbsp;/gi, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                if (cleanBody) {
+                    const excerpt = cleanBody.length > 180 ? `${cleanBody.substring(0, 180).trim()}...` : cleanBody;
+                    contentStr = contentStr.replace(
+                        /Ei!\s*Acabamos de publicar um conteúdo novo que pode te interessar\.\s*Vá dar uma olhada e interaja com a comunidade!/i,
+                        `"${excerpt}"`
+                    );
+                    avisoObj.content = contentStr;
+                }
+            }
+
             return { ...avisoObj, read: lidosIds.has(avisoObj.id) };
         });
         res.status(200).json(responseData);

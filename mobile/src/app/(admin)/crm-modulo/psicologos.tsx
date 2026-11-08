@@ -21,6 +21,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import api from '../../../services/api';
 import NativeSelectMenu from '../../../components/NativeSelectMenu';
+import { resolvePhotoUrl } from '../../../utils/imageUrl';
 
 // -------------------------------------------------------------
 // Helper: Cálculo de Força do Perfil (espelha calculateProfileHealth do Admin Web)
@@ -130,8 +131,8 @@ export default function AdminCRMPsicologosScreen() {
   const [founderMetrics, setFounderMetrics] = useState<any>({});
   const [stats, setStats] = useState<any>({});
 
-  // Filtros & Paginação
-  const [activeFilter, setActiveFilter] = useState(''); // '' = Todos
+  // Filtros & Paginação (Inicia em Follow-ups 📞 como na versão web)
+  const [activeFilter, setActiveFilter] = useState('pending_actions');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -174,13 +175,15 @@ export default function AdminCRMPsicologosScreen() {
   });
 
   // -------------------------------------------------------------
-  // Carga das Métricas de Topo (MRR, Ativação, Pós-Trial, Renovação)
+  // Carga das Métricas de Topo (MRR, Ativação, Pós-Trial, Renovação + Contadores de Pendências/KPIs)
   // -------------------------------------------------------------
   const loadHeaderMetrics = async () => {
     try {
-      const [founderRes, statsRes] = await Promise.all([
-        api.get('/api/admin/founder-metrics'),
-        api.get('/api/admin/stats'),
+      const [founderRes, statsRes, kpiRes, pendingRes] = await Promise.all([
+        api.get('/api/admin/founder-metrics').catch(() => ({ data: {} })),
+        api.get('/api/admin/stats').catch(() => ({ data: {} })),
+        api.get('/api/admin/psychologists', { params: { page: 1, limit: 1 } }).catch(() => ({ data: {} })),
+        api.get('/api/admin/pending-actions').catch(() => ({ data: [] })),
       ]);
       if (founderRes.data?.metrics) {
         setFounderMetrics(founderRes.data.metrics);
@@ -188,6 +191,18 @@ export default function AdminCRMPsicologosScreen() {
       if (statsRes.data) {
         setStats(statsRes.data);
       }
+      const actionsArray: any[] = pendingRes.data?.pendingActions || (Array.isArray(pendingRes.data) ? pendingRes.data : []);
+      const countExpiring = actionsArray.filter((a) => a.actionType === 'expiring_trial').length;
+      const countPaidChurn = actionsArray.filter((a) => ['paid_churn', 'billing_feedback', 'churn'].includes(a.actionType)).length;
+      const countIncomplete = actionsArray.filter((a) => a.actionType === 'incomplete').length;
+
+      setKpis((prev: any) => ({
+        ...prev,
+        ...(kpiRes.data?.kpis || {}),
+        pending_expiring_trial: countExpiring,
+        pending_paid_churn: countPaidChurn,
+        pending_incomplete: countIncomplete,
+      }));
     } catch (e) {
       console.log('Erro ao buscar métricas de topo:', e);
     }
@@ -208,7 +223,19 @@ export default function AdminCRMPsicologosScreen() {
 
       if (isPendingFilter) {
         const res = await api.get('/api/admin/pending-actions');
-        let actions: any[] = res.data?.pendingActions || res.data || [];
+        const allActions: any[] = res.data?.pendingActions || (Array.isArray(res.data) ? res.data : []);
+
+        const countExpiring = allActions.filter((a) => a.actionType === 'expiring_trial').length;
+        const countPaidChurn = allActions.filter((a) => ['paid_churn', 'billing_feedback', 'churn'].includes(a.actionType)).length;
+        const countIncomplete = allActions.filter((a) => a.actionType === 'incomplete').length;
+        setKpis((prev: any) => ({
+          ...prev,
+          pending_expiring_trial: countExpiring,
+          pending_paid_churn: countPaidChurn,
+          pending_incomplete: countIncomplete,
+        }));
+
+        let actions = [...allActions];
 
         if (activeFilter === 'pending_paid_churn') {
           actions = actions.filter((a) =>
@@ -234,6 +261,22 @@ export default function AdminCRMPsicologosScreen() {
         setTotalItems(actions.length);
         setCurrentPage(1);
         setTotalPages(1);
+      } else if (activeFilter === 'low_performance') {
+        const res = await api.get('/api/admin/psychologists/low-performance');
+        let data: any[] = res.data?.psychologists || [];
+        if (searchTerm.trim()) {
+          const term = searchTerm.toLowerCase();
+          data = data.filter(
+            (a) =>
+              (a.nome && a.nome.toLowerCase().includes(term)) ||
+              (a.email && a.email.toLowerCase().includes(term)) ||
+              (a.telefone && a.telefone.includes(term))
+          );
+        }
+        setPsychologists(data);
+        setTotalPages(1);
+        setCurrentPage(1);
+        setTotalItems(data.length);
       } else {
         const params: any = {
           page,
@@ -254,7 +297,12 @@ export default function AdminCRMPsicologosScreen() {
         const res = await api.get('/api/admin/psychologists', { params });
         const data = res.data?.data || res.data || [];
         setPsychologists(data);
-        if (res.data?.kpis) setKpis(res.data.kpis);
+        if (res.data?.kpis) {
+          setKpis((prev: any) => ({
+            ...prev,
+            ...res.data.kpis,
+          }));
+        }
         setTotalPages(res.data?.totalPages || 1);
         setCurrentPage(res.data?.currentPage || page);
         setTotalItems(res.data?.totalItems || data.length);
@@ -306,7 +354,7 @@ export default function AdminCRMPsicologosScreen() {
   };
 
   // -------------------------------------------------------------
-  // Envio de Ação / Mensagem WhatsApp (espelha sendWhatsAppAction)
+  // Envio de Ação / Mensagem WhatsApp (espelha sendWhatsAppAction da versão web)
   // -------------------------------------------------------------
   const handleSendAction = async (item: any, customActionType?: string) => {
     const actionType = customActionType || item.actionType || 'analysis';
@@ -314,21 +362,16 @@ export default function AdminCRMPsicologosScreen() {
     const name = item.nome || 'Colega';
     const firstName = name.split(' ')[0];
     const phone = item.telefone || '';
+    const metrics = item.metrics || {};
+    const patientName = item.patientName || '';
+    const feedbackToken = item.feedbackToken || '';
 
     setActionLoadingId(`${id}_${actionType}`);
 
     try {
       let msg = '';
 
-      if (actionType === 'conversion_failure') {
-        try {
-          const res = await api.post(`/api/admin/psychologists/${id}/ai-conversion-failure`);
-          if (res.data?.whatsappCopy) msg = res.data.whatsappCopy;
-        } catch (_) {}
-        if (!msg) {
-          msg = `Olá, ${firstName}! Tudo bem?\n\nEstava acompanhando as métricas do seu perfil na Yelo e é muito bom ver que a sua página está gerando interesse e atraindo cliques no WhatsApp! Notei, porém, que os últimos contatos acabaram ainda não avançando para o agendamento.\n\nQuando o paciente clica no WhatsApp, os primeiros minutos de acolhimento e a forma de conduzir a conversa até o valor da sessão fazem toda a diferença. Recomendo dar uma olhada na ferramenta *Clínica > Manual de Conversão* lá no seu painel — preparamos roteiros práticos justamente para evitar que o paciente deixe no vácuo.\n\nQualquer dúvida ou se quiser trocar uma ideia sobre a abordagem inicial, estou por aqui! 🌿`;
-        }
-      } else if (actionType === 'analysis') {
+      if (actionType === 'analysis') {
         try {
           const res = await api.get(`/api/admin/psychologists/${id}/analyze`);
           if (res.data?.message) {
@@ -336,36 +379,285 @@ export default function AdminCRMPsicologosScreen() {
             api.put(`/api/admin/psychologists/${id}/analyzed`, { isProfileAnalyzed: true }).catch(() => {});
           }
         } catch (_) {}
+
         if (!msg) {
-          msg = `Olá, ${firstName}! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise que fizemos do seu perfil agora que você iniciou sua trajetória na plataforma!\n\nAnalisamos a sua página e achamos excelente a sua iniciativa de construir sua vitrine por aqui. Percebemos, no entanto, que a sua *biografia profissional ainda não foi preenchida*.\n\nPara quem busca terapia, a bio é o elemento mais decisivo: é através dela que o paciente compreende como funciona o seu acolhimento e se sente seguro para te chamar no WhatsApp. Sem ela, o perfil perde grande parte do potencial de conversão.\n\nPara deixar sua página completa e pronta para receber contatos, acesse seu painel em *Ajustes > Meu Perfil* e adicione um texto de apresentação simples explicando sua condução clínica.\n\nSe quiser, nossa equipe pode te ajudar com ideias para estruturar esse texto. Estamos totalmente à disposição por aqui! 🚀`;
+          const cleanBio = item.bio ? String(item.bio).replace(/<[^>]*>/g, '').trim() : '';
+          const hasBio = cleanBio.length >= 30;
+          const hasPrice =
+            (item.valor_sessao_numero !== null && item.valor_sessao_numero !== undefined && Number(item.valor_sessao_numero) > 0) ||
+            (item.valorSessao !== null && item.valorSessao !== undefined && Number(item.valorSessao) > 0);
+
+          if (hasBio) {
+            const pendenciasBlock = !hasPrice
+              ? `Para darmos o próximo passo juntos e acelerar a chegada dos primeiros contatos no seu WhatsApp, recomendamos:\n\n• Definir um valor de referência para a sessão em *Ajustes > Meu Perfil* (percebemos que valores visíveis reduzem a hesitação do paciente antes do primeiro contato);\n• Compartilhar seu link com 1 ou 2 pacientes de confiança para inaugurar a seção de avaliações do seu perfil.`
+              : `Como a sua apresentação e valor já estão muito bem configurados, o próximo passo de maior impacto é conquistar suas primeiras avaliações de pacientes, que funcionam como prova social e aumentam muito a conversão de visitas em mensagens.\n\n• Onde ir: *Evolução > Solicitar Avaliações*\n• O que fazer: compartilhe seu link de avaliação com 1 ou 2 pacientes ou ex-pacientes de confiança.`;
+
+            msg = `Olá, ${firstName}! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise que fizemos do seu perfil agora que você iniciou sua trajetória na plataforma!\n\nLemos a sua biografia e gostamos muito da clareza e do tom acolhedor que você trouxe. A forma como você contextualizou a sua abordagem transmite muita segurança para o paciente que visita a sua página.\n\n${pendenciasBlock}\n\nSe quiser, nossa equipe pode te ajudar com ideias para estruturar sua página. Estamos totalmente à disposição por aqui! 🚀`;
+          } else {
+            msg = `Olá, ${firstName}! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise que fizemos do seu perfil agora que você iniciou sua trajetória na plataforma!\n\nAnalisamos a sua página e achamos excelente a sua iniciativa de construir sua vitrine por aqui. Percebemos, no entanto, que a sua *biografia profissional ainda não foi preenchida*.\n\nPara quem busca terapia, a bio é o elemento mais decisivo: é através dela que o paciente compreende como funciona o seu acolhimento e se sente seguro para te chamar no WhatsApp. Sem ela, o perfil perde grande parte do potencial de conversão.\n\nPara deixar sua página completa e pronta para receber contatos, acesse seu painel em *Ajustes > Meu Perfil* e adicione um texto de apresentação simples explicando sua condução clínica.\n\nSe quiser, nossa equipe pode te ajudar com ideias para estruturar esse texto. Estamos totalmente à disposição por aqui! 🚀`;
+          }
+        }
+      } else if (actionType === 'incomplete') {
+        msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 7 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas. Se precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
+      } else if (actionType === 'expired_pix_fomo') {
+        const m = metrics || {};
+        const approach = m.approach || 'Psicologia';
+
+        let performanceText = '';
+        if (m.startedTherapyCount > 0 || m.negotiatingCount > 0) {
+          const statusDetails: string[] = [];
+          if (m.startedTherapyCount > 0) {
+            statusDetails.push(`*${m.startedTherapyCount} paciente(s) já iniciou(aram) terapia*`);
+          }
+          if (m.negotiatingCount > 0) {
+            statusDetails.push(`*${m.negotiatingCount} ainda está(ão) em negociação*`);
+          }
+          performanceText = `alcançando *${m.appearances || 0} aparições em buscas*, *${m.views || 0} visualizações na sua página* e *${m.clicks || 0} cliques para o seu WhatsApp*. Desses contatos, sabemos que ${statusDetails.join(' e ')} com você!`;
+        } else if (m.clicks > 0) {
+          performanceText = `alcançando *${m.appearances || 0} aparições em buscas* e *${m.clicks || 0} pacientes chegaram a te chamar no WhatsApp* para negociar.`;
+        } else {
+          performanceText = `alcançando *${m.appearances || 0} aparições em buscas de pacientes*.`;
+        }
+
+        let potentialText = '';
+        if (m.dealClosed) {
+          potentialText = `A sua apresentação focada na *${approach}* tem um potencial gigante para continuar atraindo os pacientes certos para a sua clínica.`;
+        } else if (m.clicks > 0) {
+          potentialText = `A sua apresentação focada na *${approach}* tem um potencial gigante e é só questão de tempo até convertermos esses contatos em pacientes reais para a sua clínica.`;
+        } else {
+          potentialText = `A sua apresentação focada na *${approach}* tem um diferencial enorme e o algoritmo estava justamente aprendendo o seu perfil para te ranquear melhor.`;
+        }
+
+        msg = `Bom dia, ${firstName}! Como vai?\n\nPassando por aqui com um aviso importante: a sua assinatura da Yelo venceu ontem e, por conta disso, o seu perfil acabou entrando em pausa no sistema e saiu do ar temporariamente.\n\nComo acompanho de perto a sua trajetória, não queria deixar você perder a ótima tração que construímos juntos. O seu perfil vinha com uma visibilidade excelente — ${performanceText}\n\n${potentialText}\n\nPara o seu perfil voltar ao ar imediatamente e não quebrarmos o ritmo que o algoritmo já gerou para você, basta regularizar a assinatura.\n\nÉ bem simples: basta acessar a sua conta, ir no menu *Ajustes > Assinaturas e Planos* e atualizar a forma de pagamento.\n\nSe precisar de qualquer ajuda com o acesso, sigo totalmente à disposição. 🌿`;
+      } else if (actionType === 'paid_churn') {
+        const m = metrics || {};
+        const churnType = item.churnType || m.churnType || 'expired_cycle';
+
+        let X = m.clicks || item.whatsapp_clicks || 0;
+        let Y = m.dealClosedCount || 0;
+        let VALOR = m.sessionPrice
+          ? String(m.sessionPrice).replace('.', ',')
+          : item.valor_sessao_numero
+          ? String(item.valor_sessao_numero).replace('.', ',')
+          : '150,00';
+        let approach =
+          m.approach ||
+          (Array.isArray(item.abordagens_tecnicas) && item.abordagens_tecnicas[0]) ||
+          'Psicologia Clínica';
+
+        try {
+          const res = await api.get(`/api/admin/psychologists/${id}/full-details`);
+          if (res.data) {
+            const data = res.data;
+            if (Array.isArray(data.whatsappLogs)) {
+              const now = new Date();
+              const currentMonthLogs = data.whatsappLogs.filter((log: any) => {
+                const logDate = new Date(log.createdAt);
+                return (
+                  logDate.getMonth() === now.getMonth() &&
+                  logDate.getFullYear() === now.getFullYear()
+                );
+              });
+              if (currentMonthLogs.length > 0) {
+                X = Math.max(X, currentMonthLogs.length);
+                Y = currentMonthLogs.filter(
+                  (log: any) => log.status === 'fechou' || log.dealClosed === 'yes'
+                ).length;
+              }
+            }
+            const psy = data.psychologist || data;
+            if (psy.valorSessao || psy.valor_sessao_numero) {
+              const rawVal = parseFloat(psy.valorSessao || psy.valor_sessao_numero);
+              if (!isNaN(rawVal) && rawVal > 0) {
+                VALOR = rawVal.toFixed(2).replace('.', ',');
+              }
+            }
+            if (Array.isArray(psy.abordagens_tecnicas) && psy.abordagens_tecnicas.length > 0) {
+              approach = psy.abordagens_tecnicas[0];
+            }
+          }
+        } catch (_) {}
+
+        const contatoStr = X === 1 ? 'contato de paciente' : 'contatos de pacientes';
+        const pacienteStr = Y === 1 ? 'paciente novo' : 'pacientes novos';
+
+        let perfSnippet = '';
+        if (Y > 0) {
+          perfSnippet = `Dei uma olhada nos seus resultados recentes e vi que você recebeu ${X} ${contatoStr} e fechou com ${Y} ${pacienteStr} pela Yelo (o que a R$ ${VALOR} por sessão já pagou a sua assinatura com muita folga!). 🚀`;
+        } else if (X > 0) {
+          perfSnippet = `Dei uma olhada nos seus números e vi que você já recebeu ${X} ${contatoStr} pelo WhatsApp. O seu perfil com foco em *${approach}* estava ganhando uma tração bem legal! 🚀`;
+        } else {
+          perfSnippet = `O seu perfil voltado para *${approach}* tem um diferencial excelente e o algoritmo da plataforma já estava começando a posicionar você melhor nas buscas! 🌱`;
+        }
+
+        if (churnType === 'card_declined') {
+          msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nEstou passando para te dar um toque rápido e super importante sobre a sua conta: o nosso sistema tentou renovar automaticamente a sua assinatura mensal, mas a operadora do seu cartão recusou a cobrança (geralmente é só limite do mês virando ou um bloqueio preventivo do banco para pagamentos recorrentes online).\n\nPor conta disso, o seu perfil entrou em pausa temporária para novos pacientes.\n\n${perfSnippet}\n\nNão quero de forma alguma que você saia do ar e perca o embalo de novos agendamentos que estamos construindo juntos.\n\nPara o seu perfil voltar ao ar imediatamente, é super simples: basta acessar sua conta na Yelo, ir na aba *"Ajustes" > "Assinaturas e Planos"* e atualizar o seu cartão ou emitir um Pix.\n\nSe preferir, posso te enviar a chave Pix direto por aqui também. Qualquer dúvida, estou à disposição! 🌿`;
+        } else if (churnType === 'pix_expired') {
+          msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando rapidinho para te avisar que o código Pix de renovação da sua mensalidade da Yelo acabou vencendo e expirou no sistema.\n\nPor conta disso, o seu perfil entrou em pausa automática nas buscas de pacientes.\n\n${perfSnippet}\n\nComo não quero que você perca os pacientes que estão procurando atendimento na sua especialidade, quer que eu te envie um novo código Pix copia-e-cola direto por aqui para você reativar em 1 minuto?\n\n*(Dica: se preferir não ter que se preocupar com datas todo mês, você também pode cadastrar um cartão de crédito no seu painel em Ajustes > Assinaturas e Planos).*\n\nSigo à disposição por aqui! Um abraço. 🌿`;
+        } else if (churnType === 'voluntary_refund') {
+          msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nVi aqui no sistema que você optou por encerrar a sua assinatura e o seu plano foi desativado.\n\nQueria te mandar essa mensagem primeiro para agradecer pelo período em que estivemos juntos e, principalmente, para te ouvir com sinceridade. Como estamos sempre aprimorando a Yelo para os psicólogos clínicos, seu feedback é precioso pra gente:\n\n${perfSnippet}\n\nO que mais pesou na sua decisão de não continuar neste momento? Faltou algum suporte nosso, o retorno de pacientes foi diferente do esperado ou foi uma questão de momento pessoal/financeiro?\n\nFico super aberto para entender e, caso queira conversar, as portas da Yelo estarão sempre abertas para você. Um grande abraço! 🌱`;
+        } else {
+          msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando para te dar um toque sobre a sua assinatura da Yelo: o seu ciclo mensal chegou ao fim e o seu perfil entrou em pausa para novas buscas.\n\n${perfSnippet}\n\nPara não quebrar a consistência que o algoritmo já gerou para você e manter o seu consultório virtual ativo recebendo pacientes, basta renovar o plano.\n\nÉ bem prático: acesse seu painel na Yelo, vá em *"Ajustes" > "Assinaturas e Planos"* e escolha o pagamento via Cartão ou Pix.\n\nSe precisar de qualquer ajuda com o acesso, estou à disposição! 🌿`;
+        }
+      } else if (actionType === 'churn') {
+        try {
+          const res = await api.post(`/api/admin/psychologists/${id}/ai-churn-message`);
+          if (res.data?.whatsappCopy) msg = res.data.whatsappCopy;
+        } catch (_) {}
+
+        if (!msg) {
+          const matchesCount = metrics.appearances ?? item.profile_appearances ?? 0;
+          const viewsCount = metrics.views ?? 0;
+          const clicksCount = metrics.clicks ?? item.whatsapp_clicks ?? 0;
+          const dealYes = metrics.closedDealsCount ?? metrics.dealClosedCount ?? 0;
+          const valSessao = Number(item.valor_sessao_numero || metrics.sessionPrice || 0);
+
+          let metricsText = '';
+          let feedbackText = '';
+          if (clicksCount > 0) {
+            const contatoStr =
+              clicksCount === 1
+                ? '1 paciente te chamou no WhatsApp'
+                : `${clicksCount} pacientes te chamaram no WhatsApp`;
+            metricsText = `Durante os testes, o seu perfil obteve:\n\n* *${matchesCount} aparições* nos resultados de matches\n* *${viewsCount} visualizações* na sua página\n* *${contatoStr}*`;
+            feedbackText =
+              dealYes > 0
+                ? `E vimos pelo seu feedback que você já conseguiu agendar com ${dealYes} paciente(s)! 🎉`
+                : `O fluxo de contatos já estava começando a ganhar tração! Com a continuidade do perfil no ar e pequenos ajustes na conversa, os agendamentos acontecem naturalmente.`;
+          } else {
+            metricsText = `Durante os testes, o seu perfil obteve:\n\n* *${matchesCount} aparições* nos resultados de buscas\n* *${viewsCount} visualizações* diretas na sua página`;
+            feedbackText = `O seu perfil já começou a ganhar relevância nas buscas e visitas de potenciais pacientes. O próximo passo natural é a conversão dessas visitas em conversas no WhatsApp. Nossa equipe pode te ajudar a dar uma revisada rápida na apresentação para destravarmos esses contatos!`;
+          }
+
+          let mathText = '';
+          if (valSessao > 0) {
+            if (valSessao >= 99) {
+              mathText = `Como a sua sessão é de R$ ${valSessao}, realizar apenas 1 atendimento no mês inteiro já cobre a plataforma com folga e ainda te deixa com lucro direto.`;
+            } else {
+              mathText = `Como a sua sessão é de R$ ${valSessao}, fechar com apenas 1 paciente no mês (que costuma realizar de 2 a 4 atendimentos, somando entre R$ ${valSessao * 2} e R$ ${valSessao * 4}) já cobre a mensalidade de R$ 99 com folga e se transforma em lucro líquido para você.`;
+            }
+          } else {
+            mathText = `Como você atende com valor a combinar diretamente com o paciente no WhatsApp, você tem total autonomia na sua precificação e 100% de tudo o que acordar nos atendimentos fica no seu consultório, sem nenhuma taxa ou comissão da nossa parte.`;
+          }
+
+          msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da equipe da Yelo. 🌿\n\nPassamos para agradecer por você ter testado a plataforma com a gente nesses últimos dias! O seu período gratuito encerrou, mas nós estávamos analisando as suas métricas e os resultados foram muito positivos.\n\n${metricsText}\n\n${feedbackText}\n\nPensando pelo seu lado financeiro: a assinatura da Yelo tem um valor fixo de R$ 99,00 mensais. ${mathText}\n\nFaria sentido para você reativarmos a sua página para não perder esse fluxo de pacientes que já estão te encontrando? Caso queira manter seu perfil no ar, basta acessar a sua conta na Yelo, ir em "Ajustes" e depois em "Assinaturas e Planos". Estamos totalmente à disposição!`;
         }
       } else if (actionType === 'expiring_trial') {
         try {
           const res = await api.post(`/api/admin/psychologists/${id}/ai-expiring-trial-message`);
           if (res.data?.whatsappCopy) msg = res.data.whatsappCopy;
         } catch (_) {}
-      } else if (actionType === 'churn') {
-        try {
-          const res = await api.post(`/api/admin/psychologists/${id}/ai-churn-message`);
-          if (res.data?.whatsappCopy) msg = res.data.whatsappCopy;
-        } catch (_) {}
-      } else if (actionType === 'paid_churn') {
-        try {
-          const res = await api.post(`/api/admin/psychologists/${id}/ai-paid-churn-message`);
-          if (res.data?.whatsappCopy) msg = res.data.whatsappCopy;
-        } catch (_) {}
+
         if (!msg) {
-          msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nEstou passando para te dar um toque rápido e super importante sobre a sua conta: o nosso sistema tentou renovar automaticamente a sua assinatura mensal, mas a operadora do seu cartão recusou a cobrança.\n\nPor conta disso, o seu perfil entrou em pausa temporária para novos pacientes.\n\nNão quero de forma alguma que você saia do ar e perca o embalo de novos agendamentos que estamos construindo juntos.\n\nPara o seu perfil voltar ao ar imediatamente, acesse sua conta na Yelo, vá na aba *"Ajustes" > "Assinaturas e Planos"* e atualize seu cartão ou emita um Pix.\n\nQualquer dúvida, estou à disposição! 🌿`;
+          const matchesCount = metrics.appearances ?? item.profile_appearances ?? 0;
+          const viewsCount = metrics.views ?? 0;
+          const clicksCount = metrics.clicks ?? item.whatsapp_clicks ?? 0;
+          const dealYes = metrics.closedDealsCount ?? (metrics.dealClosed ? 1 : 0);
+          const isToday = metrics.isToday ?? (item.reason && String(item.reason).includes('horas'));
+          const expiryPhrase = isToday ? 'expira nas próximas horas' : 'expirará amanhã';
+          const valSessao = Number(item.valor_sessao_numero || metrics.sessionPrice || 0);
+
+          let metricsText = '';
+          let feedbackText = '';
+          if (clicksCount > 0) {
+            const contatoStr =
+              clicksCount === 1
+                ? '1 paciente te chamou no WhatsApp'
+                : `${clicksCount} pacientes te chamaram no WhatsApp`;
+            metricsText = `Seu perfil obteve nestes 7 dias:\n\n* *${matchesCount} aparições* nos resultados de busca\n* *${viewsCount} visitas* diretas na sua página\n* *${contatoStr}*`;
+            feedbackText =
+              dealYes > 0
+                ? `Notamos que você conseguiu fechar com ${dealYes} paciente(s)! 🎉 Isso comprova na prática que a sua vitrine já está gerando pacientes reais.`
+                : `Como o nosso algoritmo leva alguns dias para calibrar o perfil e as primeiras conversas já começaram a chegar, acreditamos que manter o seu consultório virtual ativo é essencial para dar continuidade a esse ritmo.`;
+          } else {
+            metricsText = `Seu perfil obteve nestes 7 dias:\n\n* *${matchesCount} aparições* nos resultados de busca\n* *${viewsCount} visitas* diretas na sua página`;
+            feedbackText = `Como o nosso algoritmo de distribuição leva alguns dias para calibrar o seu público ideal e o seu perfil já começou a ganhar visibilidade e visitas, o próximo passo natural é a chegada dos primeiros contatos no WhatsApp. Acreditamos que manter a sua vitrine ativa é fundamental para não perder essa tração inicial.`;
+          }
+
+          let mathText = '';
+          if (valSessao > 0) {
+            if (valSessao >= 99) {
+              mathText = `Pensando no lado financeiro: a assinatura da Yelo é de apenas R$ 99 mensais. Como a sua sessão é R$ ${valSessao}, realizar apenas 1 atendimento no mês inteiro já cobre a plataforma com folga e ainda te deixa com lucro direto.`;
+            } else {
+              mathText = `Pensando no lado financeiro: a assinatura da Yelo é de apenas R$ 99 mensais e nós não cobramos nenhuma taxa ou comissão sobre os seus atendimentos. Como a sua sessão é R$ ${valSessao}, fechar com apenas 1 paciente no mês (que costuma realizar acompanhamento de 2 a 4 consultas, somando entre R$ ${valSessao * 2} e R$ ${valSessao * 4}) já cobre a mensalidade de R$ 99 com muita folga e se transforma em lucro líquido para você.`;
+            }
+          } else {
+            mathText = `Pensando no lado financeiro: a assinatura da Yelo tem um valor fixo de R$ 99 mensais e nós *não cobramos nenhuma taxa ou comissão* sobre as suas consultas. Como você atende com valor a combinar diretamente com o paciente no WhatsApp, você tem total autonomia na sua precificação e 100% de tudo o que acordar nos atendimentos fica no seu consultório.`;
+          }
+
+          msg = `Olá, ${firstName}! Como vai?\n\nNotamos que o seu período de teste gratuito na Yelo ${expiryPhrase}, e passamos para compartilhar um panorama do seu perfil nesses primeiros 7 dias.\n\n${metricsText}\n\n${feedbackText}\n\n${mathText}\n\nFaz sentido para você mantermos a sua página ativa para continuar recebendo os pacientes que chegam pela plataforma?\n\nPara renovar, basta acessar o seu painel em *Ajustes > Assinaturas e Planos*. Estamos à disposição caso precise de qualquer apoio com o acesso! 🌿`;
         }
-      } else if (actionType === 'incomplete') {
-        msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil.\n\nPassei só para te lembrar que os seus 7 dias de teste gratuito só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nSe precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
+      } else if (actionType === 'billing_feedback') {
+        const linkFeedback = feedbackToken
+          ? `https://www.yelopsi.com.br/magic-feedback?token=${feedbackToken}`
+          : `https://www.yelopsi.com.br/psi/dashboard`;
+
+        const pendingCount = metrics.pendingCount || 1;
+        const isFirst = metrics.isFirstFeedbackRequest !== false;
+
+        if (isFirst) {
+          let introText = '';
+          if (pendingCount > 1) {
+            introText = `Alguns pacientes entraram`;
+          } else if (
+            patientName &&
+            patientName.toLowerCase() !== 'visitante' &&
+            patientName.toLowerCase() !== 'um paciente'
+          ) {
+            introText = `O(a) paciente ${patientName} entrou`;
+          } else {
+            introText = `Um paciente entrou`;
+          }
+
+          msg = `Olá, ${firstName}! Tudo bem?\n\n${introText} em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
+        } else {
+          let introTextRecorrente = '';
+          if (pendingCount > 1) {
+            introTextRecorrente = `mais alguns pacientes tentaram`;
+          } else if (
+            patientName &&
+            patientName.toLowerCase() !== 'visitante' &&
+            patientName.toLowerCase() !== 'um paciente'
+          ) {
+            introTextRecorrente = `o(a) paciente ${patientName} tentou`;
+          } else {
+            introTextRecorrente = `mais um paciente tentou`;
+          }
+
+          msg = `Olá, ${firstName}! Tudo bem?\n\nO seu perfil continua gerando resultados na Yelo! ✨\nPercebemos que ${introTextRecorrente} entrar em contato com você recentemente.\n\nPara mantermos o seu perfil forte e continuarmos te indicando no nosso ranking, precisamos apenas da sua confirmação rápida. Acesse o link abaixo e nos conte:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto!\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nMuito obrigado pela parceria! 🌿`;
+        }
       } else if (actionType === 'low_performance') {
+        if (item.preGeneratedCopy) {
+          msg = item.preGeneratedCopy;
+        } else {
+          try {
+            const res = await api.post(`/api/admin/psychologists/${id}/ai-diagnosis`);
+            if (res.data?.whatsappCopy) msg = res.data.whatsappCopy;
+          } catch (_) {}
+        }
+
+        if (!msg) {
+          const matchesCount = item.matches_14d ?? item.matches_30d ?? item.profile_appearances ?? 0;
+          const viewsCount = item.views_14d ?? item.views_30d ?? 0;
+          const clicksCount = item.clicks_14d ?? item.clicks_30d ?? item.whatsapp_clicks ?? 0;
+          msg = `Olá, ${firstName}! Tudo bem? Fiz uma análise detalhada da sua performance nos últimos dias e trouxe alguns pontos para potencializarmos seus resultados: você teve *${matchesCount} aparições* em resultados de matches, *${viewsCount} visitas* no perfil e *${clicksCount} cliques* no WhatsApp.\n\nEstive acompanhando as métricas do seu perfil nesta semana e vejo uma oportunidade excelente para aumentarmos os seus contatos no WhatsApp.\n\nPara atrair mais pacientes de forma prática, recomendo:\n1. Adicionar temas de dores reais na sua bio (como ansiedade e estresse) em *Ajustes > Meu Perfil*;\n2. Solicitar 2 avaliações de pacientes antigos via *Evolução > Solicitar Avaliações*;\n3. Responder a uma dúvida recente de paciente no nosso Fórum.\n\nEsses pequenos ajustes costumam destravar a agenda de muitos profissionais por aqui. Qualquer dúvida sobre como aplicar isso, é só me chamar. Estamos juntos nessa jornada para encher a sua clínica! 🌿`;
+        }
+      } else if (actionType === 'conversion_failure') {
         try {
-          const res = await api.post(`/api/admin/psychologists/${id}/ai-diagnosis`);
+          const res = await api.post(`/api/admin/psychologists/${id}/ai-conversion-failure`);
           if (res.data?.whatsappCopy) msg = res.data.whatsappCopy;
         } catch (_) {}
+
+        if (!msg) {
+          const hasBeenSentBefore = metrics.hasBeenSentBefore === true;
+          msg = hasBeenSentBefore
+            ? `Olá, ${firstName}! Tudo bem?\n\nVi por aqui que novos contatos chegaram recentemente pelo seu perfil na Yelo, mas acabaram ainda não avançando para o agendamento.\n\nVocê chegou a testar as estratégias lá do *Manual de Conversão*? Queria entender com você: sente que o principal obstáculo tem sido o valor da sessão, o tempo até a resposta ou os pacientes param de responder depois da primeira mensagem?\n\nSe quiser, podemos analisar juntos como foi a última abordagem para destravar esses fechamentos! 🌿`
+            : `Olá, ${firstName}! Tudo bem?\n\nEstava acompanhando as métricas do seu perfil na Yelo e é muito bom ver que a sua página está gerando interesse e atraindo cliques no WhatsApp! Notei, porém, que os últimos contatos acabaram ainda não avançando para o agendamento.\n\nQuando o paciente clica no WhatsApp, os primeiros minutos de acolhimento e a forma de conduzir a conversa até o valor da sessão fazem toda a diferença. Recomendo dar uma olhada na ferramenta *Clínica > Manual de Conversão* lá no seu painel — preparamos roteiros práticos justamente para evitar que o paciente deixe no vácuo.\n\nQualquer dúvida ou se quiser trocar uma ideia sobre a abordagem inicial, estou por aqui! 🌿`;
+        }
       } else if (actionType === 'negotiation') {
-        msg = `Olá, ${firstName}. Como vai?\n\nPreciso da sua ajuda com um retorno rápido sobre as negociações com pacientes pela Yelo.\n\n• Conseguiram conversar novamente?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nPara responder, acesse sua conta na Yelo e vá até a opção *Evolução > Histórico de Contatos*.\n\nObrigado! 🌿`;
+        const dataNeg = metrics.dataNeg || 'alguns dias';
+        const pName = patientName || 'um paciente';
+        msg = `Olá, ${firstName}. Como vai?\n\nPreciso da sua ajuda com um retorno rápido.\n\nVocê estava em negociação com ${pName} desde ${dataNeg}:\n\n• Conseguiram conversar novamente?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nPara responder, acesse sua conta na Yelo e vá até a opção *Evolução > Histórico de Contatos* e mude o status "⏳ Em negociação".\n\nObrigado! 🌿`;
       } else {
         msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando para acompanhar sua experiência na plataforma e saber se precisa de algum suporte no seu perfil.\n\nSigo à disposição!`;
       }
@@ -844,7 +1136,7 @@ export default function AdminCRMPsicologosScreen() {
               </View>
               <View className="items-end">
                 <Text className="font-title text-[#16a34a] text-[28px] leading-tight">
-                  {kpis.pending || 0}
+                  {kpis.pending_incomplete ?? kpis.pending ?? 0}
                 </Text>
                 <View className="flex-row items-center mt-0.5">
                   <Text className="font-sans text-[11px] text-[#15803d] font-semibold">Filtrar</Text>
@@ -1248,6 +1540,7 @@ export default function AdminCRMPsicologosScreen() {
               { label: 'Inativos / Cancelados', value: 'inactive' },
               { label: 'Profissionais VIP (Isentos)', value: 'vip' },
               { label: 'Fila CS (Não Analisados) ✨', value: 'not_analyzed' },
+              { label: '🤖 Consultor IA (Baixa Performance)', value: 'low_performance' },
               { label: 'Lixeira 🗑️', value: 'deleted' },
             ]}
             selectedValue={activeFilter}
@@ -1291,6 +1584,12 @@ export default function AdminCRMPsicologosScreen() {
                 >
                   {activeFilter === 'pending_actions'
                     ? 'Follow-ups 📞'
+                    : activeFilter === 'pending_expiring_trial'
+                    ? 'Trials Acabando ⏳'
+                    : activeFilter === 'pending_paid_churn'
+                    ? 'Pagamentos Falhados 🚨'
+                    : activeFilter === 'pending_incomplete'
+                    ? 'Perfis Incompletos ⚠️'
                     : activeFilter === 'active_paying'
                     ? 'Pagantes'
                     : activeFilter === 'active_trial'
@@ -1305,6 +1604,8 @@ export default function AdminCRMPsicologosScreen() {
                     ? 'VIPs'
                     : activeFilter === 'not_analyzed'
                     ? 'Fila CS ✨'
+                    : activeFilter === 'low_performance'
+                    ? '🤖 Consultor IA'
                     : activeFilter === 'deleted'
                     ? 'Lixeira 🗑️'
                     : 'Todos os Psicólogos'}
@@ -1400,15 +1701,15 @@ export default function AdminCRMPsicologosScreen() {
                   btnLabel = 'Enviar Análise (IA)';
                   btnGradient = ['#2563eb', '#1d4ed8'];
                   btnIcon = 'award';
-                  badgeBg = '#dbeafe';
-                  badgeColor = '#1d4ed8';
+                  badgeBg = '#dcfce7';
+                  badgeColor = '#15803d';
                   badgeText = 'Análise Pronta';
                 } else if (item.actionType === 'low_performance') {
                   btnLabel = 'Diagnóstico (IA)';
                   btnGradient = ['#1B4332', '#2D6A4F'];
                   btnIcon = 'cpu';
-                  badgeBg = '#e8f5e9';
-                  badgeColor = '#1B4332';
+                  badgeBg = '#f3e8ff';
+                  badgeColor = '#7c3aed';
                   badgeText = 'Análise (IA)';
                 } else if (item.actionType === 'expiring_trial') {
                   btnLabel = 'Converter Plano (IA)';
@@ -1421,8 +1722,8 @@ export default function AdminCRMPsicologosScreen() {
                   btnLabel = 'Resgate Trial (IA)';
                   btnGradient = ['#ea580c', '#c2410c'];
                   btnIcon = 'life-buoy';
-                  badgeBg = '#ffedd5';
-                  badgeColor = '#c2410c';
+                  badgeBg = '#fee2e2';
+                  badgeColor = '#b91c1c';
                   badgeText = 'Churn Trial';
                 } else if (item.actionType === 'paid_churn') {
                   btnLabel = 'Recuperar Assinante';
@@ -1449,16 +1750,37 @@ export default function AdminCRMPsicologosScreen() {
                   btnLabel = 'Acompanhar Negociação';
                   btnGradient = ['#1B4332', '#2D6A4F'];
                   btnIcon = 'users';
-                  badgeBg = '#e8f5e9';
-                  badgeColor = '#1B4332';
+                  badgeBg = '#ffedd5';
+                  badgeColor = '#c2410c';
                   badgeText = 'Em Negociação';
+                } else if (item.actionType === 'expired_pix_fomo') {
+                  btnLabel = 'Recuperar Assinatura';
+                  btnGradient = ['#d97706', '#b45309'];
+                  btnIcon = 'clock';
+                  badgeBg = '#fef3c7';
+                  badgeColor = '#b45309';
+                  badgeText = 'FOMO Assinatura';
                 }
 
-                const dateStr = item.planExpiresAt
-                  ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR')
-                  : item.createdAt
-                  ? new Date(item.createdAt).toLocaleDateString('pt-BR')
+                const dateStr =
+                  item.actionType === 'expiring_trial' && item.planExpiresAt
+                    ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR')
+                    : item.createdAt
+                    ? new Date(item.createdAt).toLocaleDateString('pt-BR')
+                    : item.planExpiresAt
+                    ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR')
+                    : '-';
+
+                const planoLabel = item.plano
+                  ? item.plano.charAt(0).toUpperCase() + item.plano.slice(1).toLowerCase()
                   : '-';
+
+                const hasAiDiagSent =
+                  item.actionType === 'low_performance' &&
+                  Array.isArray(item.aiOptimizationHistory) &&
+                  item.aiOptimizationHistory.some((h: any) => h.action === 'whatsapp_ai_diagnosis');
+
+                const itemFotoUri = item.fotoUrl ? resolvePhotoUrl(item.fotoUrl) : null;
 
                 return (
                   <View
@@ -1479,9 +1801,9 @@ export default function AdminCRMPsicologosScreen() {
                   >
                     {/* Topo do Card */}
                     <View className="flex-row items-center gap-3 pb-3 border-b border-[#f1f5f9]">
-                      {item.fotoUrl ? (
+                      {itemFotoUri ? (
                         <Image
-                          source={{ uri: item.fotoUrl }}
+                          source={{ uri: itemFotoUri }}
                           style={{
                             width: 56,
                             height: 56,
@@ -1514,6 +1836,7 @@ export default function AdminCRMPsicologosScreen() {
                         <TouchableOpacity onPress={() => openCSDrawer(item)}>
                           <Text className="font-title text-[#1B4332] text-[17px] font-bold">
                             {item.nome || 'Sem Nome'}
+                            {hasAiDiagSent ? ' 🤖📱' : ''}
                           </Text>
                         </TouchableOpacity>
                         <Text className="font-sans text-[#64748b] text-[12px] mt-0.5">
@@ -1579,7 +1902,7 @@ export default function AdminCRMPsicologosScreen() {
                           Plano
                         </Text>
                         <Text className="font-sans font-semibold text-[#1e293b] text-[13px]">
-                          {item.plano ? item.plano.toUpperCase() : '-'}
+                          {planoLabel}
                         </Text>
                       </View>
                     </View>
@@ -1736,7 +2059,7 @@ export default function AdminCRMPsicologosScreen() {
                     <View className="flex-row items-center gap-3 pb-3 border-b border-[#f1f5f9]">
                       {psy.fotoUrl ? (
                         <Image
-                          source={{ uri: psy.fotoUrl }}
+                          source={{ uri: resolvePhotoUrl(psy.fotoUrl) }}
                           style={{
                             width: 56,
                             height: 56,
@@ -2109,7 +2432,7 @@ export default function AdminCRMPsicologosScreen() {
                         <View className="flex-row items-center gap-3.5 mb-3">
                           {psy.fotoUrl ? (
                             <Image
-                              source={{ uri: psy.fotoUrl }}
+                              source={{ uri: resolvePhotoUrl(psy.fotoUrl) }}
                               style={{
                                 width: 60,
                                 height: 60,

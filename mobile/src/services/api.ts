@@ -44,11 +44,46 @@ const api = axios.create({
   timeout: 15000,
 });
 
+let cookieClearedOnce = false;
+let clearingPromise: Promise<void> | null = null;
+
+/**
+ * Limpa o cookie HttpOnly 'token' no jar nativo do sistema (NSURLSession no iOS / OkHttp no Android).
+ * No servidor em produção, req.cookies.token tem prioridade sobre o header Authorization: Bearer.
+ * Ao limpar o cookie nativo, garantimos que o backend sempre utilize o Bearer token da conta ativa no app.
+ */
+export const clearServerAuthCookie = async (): Promise<void> => {
+  if (clearingPromise) return clearingPromise;
+  const baseUrl = getBaseUrl();
+  clearingPromise = axios
+    .get(`${baseUrl}/logout`, {
+      timeout: 4000,
+      headers: {
+        'x-yelo-client': 'mobile',
+      },
+    })
+    .then(() => {
+      cookieClearedOnce = true;
+    })
+    .catch(() => {
+      // Ignora erro caso sem conexão no momento
+    })
+    .finally(() => {
+      clearingPromise = null;
+    });
+  return clearingPromise;
+};
+
 api.interceptors.request.use(
   async (config) => {
     try {
+      const reqUrl = config.url || '';
+      if (!cookieClearedOnce && !reqUrl.includes('/logout') && !reqUrl.includes('/login')) {
+        await clearServerAuthCookie();
+      }
+
       const token = await SecureStore.getItemAsync('Yelo_token');
-      if (token) {
+      if (token && !config.headers?.Authorization) {
         config.headers.Authorization = `Bearer ${token}`;
       }
       const baseUrl = config.baseURL || getBaseUrl();
@@ -70,12 +105,54 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  async (response) => {
+    const reqUrl = response.config?.url || '';
+    if (
+      reqUrl.includes('/login') ||
+      reqUrl.includes('/register') ||
+      reqUrl.includes('/auth/google')
+    ) {
+      // O backend define Set-Cookie: token=... ao autenticar.
+      // Removemos imediatamente o cookie do jar nativo para que a troca rápida de contas
+      // use exclusivamente o header Authorization: Bearer <token>.
+      await clearServerAuthCookie();
+    }
+    return response;
+  },
   async (error) => {
     if (error.response) {
-      console.warn(`API [${error.response.status}] ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, error.response.data);
-      // Se a sessão expirou no backend (Token inválido/expirado)
-      if (error.response.status === 401 && error.config?.url !== '/api/psychologists/login' && error.config?.url !== '/api/patients/login') {
+      const status = error.response.status;
+      const reqConfig = error.config;
+      const reqUrl = reqConfig?.url || '';
+
+      // Se uma rota retornar 403 ou 401 por interferência de cookie residual de outra conta no jar nativo,
+      // limpa o cookie via /logout e repete a requisição uma única vez com o Bearer token atual.
+      if (
+        (status === 403 || status === 401) &&
+        reqConfig &&
+        !reqConfig._retriedAfterCookieClear &&
+        !reqUrl.includes('/login') &&
+        !reqUrl.includes('/register') &&
+        !reqUrl.includes('/logout')
+      ) {
+        reqConfig._retriedAfterCookieClear = true;
+        await clearServerAuthCookie();
+        const freshToken = await SecureStore.getItemAsync('Yelo_token');
+        if (freshToken) {
+          reqConfig.headers = reqConfig.headers || {};
+          reqConfig.headers.Authorization = `Bearer ${freshToken}`;
+          return api.request(reqConfig);
+        }
+      }
+
+      console.warn(`API [${status}] ${reqConfig?.method?.toUpperCase()} ${reqUrl}:`, error.response.data);
+      // Se a sessão realmente expirou no backend (Token inválido/expirado)
+      const errMsg = String(error.response.data?.error || '');
+      if (
+        status === 401 &&
+        !reqUrl.includes('/login') &&
+        (errMsg.includes('token inválido') || errMsg.includes('nenhum token'))
+      ) {
         try {
           await SecureStore.deleteItemAsync('Yelo_token');
           await SecureStore.deleteItemAsync('Yelo_user');

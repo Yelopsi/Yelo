@@ -17,10 +17,10 @@ export default function MobileHeader() {
   const fotoUri = resolvePhotoUrl(user?.fotoUrl);
 
   useEffect(() => {
-    if (!user?.fotoUrl) {
+    if (user && user.type === 'psychologist' && !user.fotoUrl) {
       refreshUser();
     }
-  }, [user?.fotoUrl, refreshUser]);
+  }, [user?.type, user?.fotoUrl, refreshUser]);
 
   useEffect(() => {
     let isMounted = true;

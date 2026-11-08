@@ -133,7 +133,19 @@ export default function AdminCRMHubScreen() {
           </Text>
         </View>
 
-        {/* 1. Captação Ativa: Pipeline de Leads */}
+        {/* 1. Base Ativa: Sucesso do Psicólogo */}
+        <CrmCard
+          title="Sucesso do Psicólogo"
+          description="Onboarding, performance de perfil e distribuição de leads."
+          badge="Oferta"
+          icon="activity"
+          iconColor="#1B4332"
+          iconBg="#e8f5e9"
+          borderColor="#1B4332"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/psicologos')}
+        />
+
+        {/* 2. Captação Ativa: Pipeline de Leads */}
         <CrmCard
           title="Pipeline de Leads"
           description="Gestão de prospecção, estágios do funil e contatos frios."
@@ -145,7 +157,7 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/leads')}
         />
 
-        {/* 2. Entrada / Inbound: Leads em Espera */}
+        {/* 3. Entrada / Inbound: Leads em Espera */}
         <CrmCard
           title="Leads Inbound (Espera)"
           description="Profissionais que iniciaram o cadastro mas não finalizaram."
@@ -155,18 +167,6 @@ export default function AdminCRMHubScreen() {
           iconBg="#fffbeb"
           borderColor="#f59e0b"
           onPress={() => handleNavigate('/(admin)/crm-modulo/espera')}
-        />
-
-        {/* 3. Base Ativa: Sucesso do Psicólogo */}
-        <CrmCard
-          title="Sucesso do Psicólogo"
-          description="Onboarding, performance de perfil e distribuição de leads."
-          badge="Oferta"
-          icon="activity"
-          iconColor="#1B4332"
-          iconBg="#e8f5e9"
-          borderColor="#1B4332"
-          onPress={() => handleNavigate('/(admin)/crm-modulo/psicologos')}
         />
 
         {/* 4. Demanda & Retenção: Visão 360° Pacientes */}
@@ -191,32 +191,7 @@ export default function AdminCRMHubScreen() {
           </Text>
         </View>
 
-        {/* 1. Receita e Assinaturas (Bottom-Line Financeiro) */}
-        <CrmCard
-          title="Receita e Assinaturas"
-          description="MRR, taxa de Churn, Life Time Value (LTV) e faturas Asaas."
-          badge="Financeiro"
-          badgeBg="#ccfbf1"
-          badgeColor="#0d9488"
-          icon="dollar-sign"
-          iconColor="#0d9488"
-          iconBg="#ccfbf1"
-          borderColor="#14b8a6"
-          onPress={() => handleNavigate('/(admin)/crm-modulo/receita')}
-        />
-
-        {/* 2. Growth (Crescimento Executivo e Metas) */}
-        <CrmCard
-          title="Growth 📈"
-          description="Visão completa de aquisição, conversão, retenção e demanda do Yelo."
-          icon="trending-up"
-          iconColor="#10b981"
-          iconBg="#ecfdf5"
-          borderColor="#10b981"
-          onPress={() => handleNavigate('/(admin)/crm-modulo/analytics-crescimento')}
-        />
-
-        {/* 3. Painel do CMO (Alocação de Ads e CAC) */}
+        {/* 1. Painel do CMO (Alocação de Ads e CAC) */}
         <CrmCard
           title="Painel do CMO 🧠"
           description="Motor de Decisão Executiva de Ads cruzado com CAC e Churn."
@@ -230,7 +205,7 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/cmo-metrics')}
         />
 
-        {/* 4. Analytics de Funil (Taxa de Conversão e UTMs) */}
+        {/* 2. Analytics de Funil (Taxa de Conversão e UTMs) */}
         <CrmCard
           title="Analytics de Funil"
           description="Métricas em tempo real, conversão end-to-end e origens UTM."
@@ -241,18 +216,32 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/analytics-funil')}
         />
 
-        {/* 5. Distribuição & Ads (Equidade da Rede) */}
+        {/* 3. Receita e Assinaturas (Bottom-Line Financeiro) */}
         <CrmCard
-          title="Distribuição & Ads"
-          description="Análise de visibilidade de profissionais e sugestões de Ads."
-          icon="pie-chart"
-          iconColor="#d93025"
-          iconBg="#fce8e6"
-          borderColor="#d93025"
-          onPress={() => handleNavigate('/(admin)/crm-modulo/distribuicao')}
+          title="Receita e Assinaturas"
+          description="MRR, taxa de Churn, Life Time Value (LTV) e faturas Asaas."
+          badge="Financeiro"
+          badgeBg="#ccfbf1"
+          badgeColor="#0d9488"
+          icon="dollar-sign"
+          iconColor="#0d9488"
+          iconBg="#ccfbf1"
+          borderColor="#14b8a6"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/receita')}
         />
 
-        {/* 6. Copilot WhatsApp AI (Assistente de Conversão) */}
+        {/* 4. Growth (Crescimento Executivo e Metas) */}
+        <CrmCard
+          title="Growth 📈"
+          description="Visão completa de aquisição, conversão, retenção e demanda do Yelo."
+          icon="trending-up"
+          iconColor="#10b981"
+          iconBg="#ecfdf5"
+          borderColor="#10b981"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/analytics-crescimento')}
+        />
+
+        {/* 5. Copilot WhatsApp AI (Assistente de Conversão) */}
         <CrmCard
           title="Copilot WhatsApp 💬"
           description="Cole conversas do WhatsApp e receba respostas personalizadas com o dossiê real do psicólogo."
@@ -264,6 +253,17 @@ export default function AdminCRMHubScreen() {
           iconBg="#dcfce7"
           borderColor="#25d366"
           onPress={() => handleNavigate('/(admin)/crm-modulo/copilot-wpp')}
+        />
+
+        {/* 6. Distribuição & Ads (Equidade da Rede) */}
+        <CrmCard
+          title="Distribuição & Ads"
+          description="Análise de visibilidade de profissionais e sugestões de Ads."
+          icon="pie-chart"
+          iconColor="#d93025"
+          iconBg="#fce8e6"
+          borderColor="#d93025"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/distribuicao')}
         />
       </View>
 
