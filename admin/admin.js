@@ -134,7 +134,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Salva a página atual no navegador para manter em caso de refresh
-        if (pageUrlWithParams) sessionStorage.setItem('yelo_last_admin_page', pageUrlWithParams);
+        if (pageUrlWithParams) {
+            sessionStorage.setItem('yelo_last_admin_page', pageUrlWithParams);
+            if (window.location.hash.replace(/^#\/?/, '') !== pageUrlWithParams) {
+                try {
+                    history.replaceState(null, '', `#${pageUrlWithParams}`);
+                } catch (e) {}
+            }
+        }
 
         // Se for a caixa de entrada, remove a badge
         if (pageUrl === 'admin_caixa_entrada.html') {
@@ -332,7 +339,20 @@ document.addEventListener('DOMContentLoaded', function() {
             sessionStorage.removeItem('yelo_last_admin_page');
         }
 
-        window.loadPage(lastPage || 'admin_visao_geral.html'); // Carrega a última página visitada ou a home por padrão
+        // Suporte a abertura direta via Hash (ex: #admin_detalhes_psicologo.html?id=123)
+        let hashPage = null;
+        if (window.location.hash) {
+            hashPage = window.location.hash.replace(/^#\/?/, '').trim();
+        }
+
+        window.loadPage(hashPage || lastPage || 'admin_visao_geral.html'); // Carrega a página do hash, última visitada ou home por padrão
+
+        window.addEventListener('hashchange', () => {
+            const currentHash = window.location.hash.replace(/^#\/?/, '').trim();
+            if (currentHash && currentHash !== window.currentAdminPageUrl) {
+                window.loadPage(currentHash);
+            }
+        });
 
         allNavItems.forEach(link => {
             link.addEventListener('click', function (e) {

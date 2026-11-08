@@ -879,12 +879,14 @@ export default function AdminCRMPsicologosScreen() {
   };
 
   // -------------------------------------------------------------
-  // Abrir Dossiê Completo (Paridade Web)
+  // Abrir Dossiê Completo (Navegação Nativa no App)
   // -------------------------------------------------------------
   const handleOpenDossier = (psy: any) => {
-    const url = `https://www.yelopsi.com.br/admin.html#admin_detalhes_psicologo.html?id=${psy.id}`;
-    Linking.openURL(url).catch(() => {
-      Alert.alert('Erro', 'Não foi possível abrir o link do dossiê.');
+    if (!psy) return;
+    setDrawerVisible(false);
+    router.push({
+      pathname: '/(admin)/crm-modulo/detalhes-psicologo' as any,
+      params: { id: String(psy.id), name: psy.nome || '' },
     });
   };
 
