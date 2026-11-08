@@ -157,7 +157,6 @@ export default function ProfileSwitcherModal({
     const accEmail = (a.user.email || '').trim().toLowerCase();
     if (!accEmail) return false;
     if (currentEmail && accEmail === currentEmail) return false;
-    if (currentId && a.user.id === currentId) return false;
     return true;
   });
 
@@ -225,8 +224,8 @@ export default function ProfileSwitcherModal({
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 24 }}
               >
-                {/* 1. SEÇÃO DE MODOS (Admin vs Psicólogo) PARA USUÁRIOS COM AMBOS OS PAPÉIS */}
-                {(canAccessAdmin || canAccessPsychologist) && (
+                {/* 1. CONTA ATUALMENTE LOGADA */}
+                {user && (
                   <View style={{ marginBottom: 20 }}>
                     <Text
                       style={{
@@ -238,41 +237,37 @@ export default function ProfileSwitcherModal({
                         marginBottom: 10,
                       }}
                     >
-                      Modos de Acesso Disponíveis
+                      Conta Ativa no Momento
                     </Text>
 
-                    {/* Card: Modo Administrador */}
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      onPress={() => handleSelectRole('admin')}
+                    <View
                       style={{
                         padding: 16,
                         borderRadius: 20,
-                        marginBottom: 12,
-                        borderWidth: isCurrentlyAdmin ? 2 : 1,
-                        borderColor: isCurrentlyAdmin ? '#1B4332' : '#e2e8f0',
-                        backgroundColor: isCurrentlyAdmin ? '#f0fdf4' : '#ffffff',
+                        borderWidth: 2,
+                        borderColor: '#1B4332',
+                        backgroundColor: '#f0fdf4',
                         flexDirection: 'row',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        shadowColor: isCurrentlyAdmin ? '#1B4332' : '#000',
-                        shadowOpacity: isCurrentlyAdmin ? 0.08 : 0.02,
+                        shadowColor: '#1B4332',
+                        shadowOpacity: 0.08,
                         shadowRadius: 6,
                         shadowOffset: { width: 0, height: 2 },
-                        elevation: isCurrentlyAdmin ? 2 : 1,
+                        elevation: 2,
                       }}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
                         <View style={{ position: 'relative', width: 44, height: 44, marginRight: 14 }}>
-                          {user?.fotoUrl ? (
+                          {user.fotoUrl ? (
                             <Image
                               source={{ uri: resolvePhotoUrl(user.fotoUrl) }}
                               style={{
                                 width: 44,
                                 height: 44,
                                 borderRadius: 14,
-                                borderWidth: isCurrentlyAdmin ? 2 : 1,
-                                borderColor: isCurrentlyAdmin ? '#1B4332' : '#cbd5e1',
+                                borderWidth: 2,
+                                borderColor: '#1B4332',
                               }}
                             />
                           ) : (
@@ -286,7 +281,11 @@ export default function ProfileSwitcherModal({
                                 justifyContent: 'center',
                               }}
                             >
-                              <Feather name="shield" size={20} color="#FFEE8C" />
+                              {isCurrentlyAdmin ? (
+                                <Feather name="shield" size={20} color="#FFEE8C" />
+                              ) : (
+                                <Feather name="user" size={20} color="#FFEE8C" />
+                              )}
                             </View>
                           )}
                           <View
@@ -304,12 +303,16 @@ export default function ProfileSwitcherModal({
                               borderColor: '#ffffff',
                             }}
                           >
-                            <Feather name="shield" size={10} color="#FFEE8C" />
+                            {isCurrentlyAdmin ? (
+                              <Feather name="shield" size={10} color="#FFEE8C" />
+                            ) : (
+                              <Text style={{ fontSize: 9 }}>🧠</Text>
+                            )}
                           </View>
                         </View>
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 16 }}>
-                            Painel do Administrador
+                            {isCurrentlyAdmin ? 'Painel do Administrador' : (user.nome || 'Painel do Psicólogo')}
                           </Text>
                           <Text
                             style={{
@@ -320,179 +323,35 @@ export default function ProfileSwitcherModal({
                               marginTop: 2,
                             }}
                           >
-                            CRM, finanças, moderação e métricas globais da Yelo.
+                            {user.email} • {isCurrentlyAdmin ? '🛡️ Admin' : '🧠 Psicólogo'}
                           </Text>
                         </View>
                       </View>
 
-                      {isCurrentlyAdmin ? (
-                        <View
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          backgroundColor: '#1B4332',
+                          paddingHorizontal: 10,
+                          paddingVertical: 5,
+                          borderRadius: 999,
+                          gap: 4,
+                        }}
+                      >
+                        <Feather name="check" size={12} color="#FFEE8C" />
+                        <Text
                           style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#1B4332',
-                            paddingHorizontal: 10,
-                            paddingVertical: 5,
-                            borderRadius: 999,
-                            gap: 4,
+                            fontFamily: 'Inter_700Bold',
+                            color: '#FFEE8C',
+                            fontSize: 10.5,
+                            textTransform: 'uppercase',
                           }}
                         >
-                          <Feather name="check" size={12} color="#FFEE8C" />
-                          <Text
-                            style={{
-                              fontFamily: 'Inter_700Bold',
-                              color: '#FFEE8C',
-                              fontSize: 10.5,
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            Em uso
-                          </Text>
-                        </View>
-                      ) : (
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#f1f5f9',
-                            paddingHorizontal: 12,
-                            paddingVertical: 6,
-                            borderRadius: 999,
-                            gap: 4,
-                          }}
-                        >
-                          <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 11.5 }}>
-                            Acessar →
-                          </Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-
-                    {/* Card: Modo Psicólogo */}
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      onPress={() => handleSelectRole('psychologist')}
-                      style={{
-                        padding: 16,
-                        borderRadius: 20,
-                        borderWidth: isCurrentlyPsi ? 2 : 1,
-                        borderColor: isCurrentlyPsi ? '#1B4332' : '#e2e8f0',
-                        backgroundColor: isCurrentlyPsi ? '#f0fdf4' : '#ffffff',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        shadowColor: isCurrentlyPsi ? '#1B4332' : '#000',
-                        shadowOpacity: isCurrentlyPsi ? 0.08 : 0.02,
-                        shadowRadius: 6,
-                        shadowOffset: { width: 0, height: 2 },
-                        elevation: isCurrentlyPsi ? 2 : 1,
-                      }}
-                    >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
-                        <View style={{ position: 'relative', width: 44, height: 44, marginRight: 14 }}>
-                          {user?.fotoUrl ? (
-                            <Image
-                              source={{ uri: resolvePhotoUrl(user.fotoUrl) }}
-                              style={{
-                                width: 44,
-                                height: 44,
-                                borderRadius: 14,
-                                borderWidth: isCurrentlyPsi ? 2 : 1,
-                                borderColor: isCurrentlyPsi ? '#1B4332' : '#cbd5e1',
-                              }}
-                            />
-                          ) : (
-                            <View
-                              style={{
-                                width: 44,
-                                height: 44,
-                                borderRadius: 14,
-                                backgroundColor: '#e8f5e9',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              <Feather name="user" size={20} color="#1B4332" />
-                            </View>
-                          )}
-                          <View
-                            style={{
-                              position: 'absolute',
-                              bottom: -3,
-                              right: -3,
-                              backgroundColor: '#1B4332',
-                              borderRadius: 999,
-                              width: 18,
-                              height: 18,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderWidth: 1.5,
-                              borderColor: '#ffffff',
-                            }}
-                          >
-                            <Text style={{ fontSize: 9 }}>🧠</Text>
-                          </View>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 16 }}>
-                            Painel do Psicólogo
-                          </Text>
-                          <Text
-                            style={{
-                              fontFamily: 'Inter_400Regular',
-                              color: '#64748b',
-                              fontSize: 12,
-                              lineHeight: 16,
-                              marginTop: 2,
-                            }}
-                          >
-                            Sua clínica, pacientes, agenda, evolução e artigos.
-                          </Text>
-                        </View>
+                          Em uso
+                        </Text>
                       </View>
-
-                      {isCurrentlyPsi ? (
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#1B4332',
-                            paddingHorizontal: 10,
-                            paddingVertical: 5,
-                            borderRadius: 999,
-                            gap: 4,
-                          }}
-                        >
-                          <Feather name="check" size={12} color="#FFEE8C" />
-                          <Text
-                            style={{
-                              fontFamily: 'Inter_700Bold',
-                              color: '#FFEE8C',
-                              fontSize: 10.5,
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            Em uso
-                          </Text>
-                        </View>
-                      ) : (
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: '#f1f5f9',
-                            paddingHorizontal: 12,
-                            paddingVertical: 6,
-                            borderRadius: 999,
-                            gap: 4,
-                          }}
-                        >
-                          <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 11.5 }}>
-                            Acessar →
-                          </Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
+                    </View>
                   </View>
                 )}
 

@@ -45,13 +45,23 @@ const protect = async (req, res, next) => {
         }
     }
 
-    // 1. Fonte primária: Cookie HttpOnly (Proteção LGPD-2 / XSS), com fallback para Header Authorization (Bearer)
-    let token = req.cookies && req.cookies.token ? req.cookies.token : null;
-    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    // 1. No cliente mobile (x-yelo-client: mobile), o Bearer token explícito do SecureStore tem prioridade
+    // sobre o Cookie jar nativo do iOS/Android (evita conflito ao alternar contas no app).
+    // Na Web, mantém Cookie HttpOnly como fonte primária com fallback para Header Authorization (Bearer).
+    let token = null;
+    const isMobileClient = req.headers['x-yelo-client'] === 'mobile';
+    let bearerToken = null;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
         const candidateToken = req.headers.authorization.split(' ')[1];
         if (candidateToken && candidateToken !== 'cookie_auth_active' && candidateToken !== 'null' && candidateToken !== 'undefined') {
-            token = candidateToken;
+            bearerToken = candidateToken;
         }
+    }
+
+    if (isMobileClient && bearerToken) {
+        token = bearerToken;
+    } else {
+        token = (req.cookies && req.cookies.token) ? req.cookies.token : bearerToken;
     }
 
     if (token) {

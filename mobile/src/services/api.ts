@@ -16,11 +16,12 @@ export const getBaseUrl = (): string => {
     return process.env.EXPO_PUBLIC_API_URL.replace(/\/$/, '');
   }
 
-  if (!__DEV__) {
+  const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest2?.extra?.expoClient?.hostUri;
+
+  if (!__DEV__ || (hostUri && (hostUri.includes('expo.dev') || hostUri.includes('exp.host')))) {
     return 'https://www.yelopsi.com.br';
   }
 
-  const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest2?.extra?.expoClient?.hostUri;
   if (hostUri) {
     const ip = hostUri.split(':')[0];
     if (ip && ip !== 'localhost' && ip !== '127.0.0.1') {

@@ -14,6 +14,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import api from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 const emptyStats = {
   mrr: 0,
@@ -42,6 +43,7 @@ const emptyStats = {
 
 export default function AdminVisaoGeralScreen() {
   const router = useRouter();
+  const { token, user } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [cmoData, setCmoData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -106,13 +108,14 @@ export default function AdminVisaoGeralScreen() {
   };
 
   useEffect(() => {
+    if (user?.type !== 'admin' && !user?.isAdmin) return;
     fetchStats();
     // Auto-refresh a cada 60 segundos (igual à web)
     const interval = setInterval(() => {
       fetchStats();
     }, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [token, user?.email, user?.type]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

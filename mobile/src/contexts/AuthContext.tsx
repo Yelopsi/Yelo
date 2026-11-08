@@ -43,11 +43,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const ACCOUNTS_STORAGE_KEY = 'Yelo_connected_accounts_v4';
+
   // Helper para persistir contas salvas de forma segura
   const persistSavedAccounts = async (accounts: SavedAccount[]) => {
     try {
       setSavedAccounts(accounts);
-      await SecureStore.setItemAsync('Yelo_saved_accounts', JSON.stringify(accounts));
+      await SecureStore.setItemAsync(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
     } catch (err) {
       console.warn('Erro ao salvar lista de contas conectadas:', err);
     }
@@ -56,7 +58,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = useCallback(async (): Promise<UserData | null> => {
     try {
       const storedToken = await SecureStore.getItemAsync('Yelo_token');
+      const storedUserRaw = await SecureStore.getItemAsync('Yelo_user');
       if (!storedToken) return null;
+
+      if (storedUserRaw) {
+        try {
+          const parsedCurrent: UserData = JSON.parse(storedUserRaw);
+          // Contas de Admin (tabela Admins) ou Paciente (tabela Patients) NÃO devem consultar /api/psychologists/me
+          // pois o ID 1 de Admins colide com o ID 1 de Psychologists!
+          if (parsedCurrent.type === 'admin' || parsedCurrent.isAdmin || parsedCurrent.type === 'patient') {
+            return parsedCurrent;
+          }
+        } catch (_) { }
+      }
 
       const res = await api.get('/api/psychologists/me').catch(() => null);
       if (res?.data) {
@@ -66,24 +80,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const isAdminFlag = prev?.isAdmin ?? (p.isAdmin || prev?.type === 'admin' || false);
           const merged: UserData = prev
             ? {
-                ...prev,
-                nome: p.nome || prev.nome,
-                email: p.email || prev.email,
-                slug: p.slug || prev.slug,
-                fotoUrl: p.fotoUrl || prev.fotoUrl,
-                isAdmin: isAdminFlag,
-              }
+              ...prev,
+              nome: p.nome || prev.nome,
+              email: p.email || prev.email,
+              slug: p.slug || prev.slug,
+              fotoUrl: p.fotoUrl || prev.fotoUrl,
+              isAdmin: isAdminFlag,
+            }
             : {
-                id: p.id,
-                nome: p.nome,
-                email: p.email,
-                slug: p.slug,
-                fotoUrl: p.fotoUrl,
-                type: 'psychologist',
-                isAdmin: isAdminFlag,
-              };
+              id: p.id,
+              nome: p.nome,
+              email: p.email,
+              slug: p.slug,
+              fotoUrl: p.fotoUrl,
+              type: 'psychologist',
+              isAdmin: isAdminFlag,
+            };
           updatedUser = merged;
-          SecureStore.setItemAsync('Yelo_user', JSON.stringify(merged)).catch(() => {});
+          SecureStore.setItemAsync('Yelo_user', JSON.stringify(merged)).catch(() => { });
           return merged;
         });
 
@@ -97,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (idx >= 0) {
               const clone = [...prevAccounts];
               clone[idx] = { token: storedToken, user: finalUser };
-              SecureStore.setItemAsync('Yelo_saved_accounts', JSON.stringify(clone)).catch(() => {});
+              SecureStore.setItemAsync(ACCOUNTS_STORAGE_KEY, JSON.stringify(clone)).catch(() => { });
               return clone;
             }
             return prevAccounts;
@@ -126,15 +140,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     async function loadStorageData() {
       try {
+        // Limpa chaves legadas para garantir que contas antigas não apareçam sem terem sido conectadas
+        await SecureStore.deleteItemAsync('Yelo_saved_accounts').catch(() => { });
+        await SecureStore.deleteItemAsync('Yelo_connected_accounts_v3').catch(() => { });
+
         const storedToken = await SecureStore.getItemAsync('Yelo_token');
         const storedUser = await SecureStore.getItemAsync('Yelo_user');
-        const storedAccountsRaw = await SecureStore.getItemAsync('Yelo_saved_accounts');
+        const storedAccountsRaw = await SecureStore.getItemAsync(ACCOUNTS_STORAGE_KEY);
 
         let accounts: SavedAccount[] = [];
         if (storedAccountsRaw) {
           try {
             accounts = JSON.parse(storedAccountsRaw);
-          } catch (_) {}
+          } catch (_) { }
         }
 
         if (storedToken && storedUser) {
@@ -142,17 +160,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const parsed: UserData = JSON.parse(storedUser);
           if (parsed.type === 'admin') {
             parsed.isAdmin = true;
+            // Repara caso a sessão atual de Admin tenha sido sobrescrita pelo ID 1 de Psychologists (Anderson Costaa)
+            if (parsed.email === 'costa@anderson.com' || parsed.nome === 'Anderson Costaa') {
+              parsed.nome = 'Administrador';
+              parsed.email = 'admin@yelopsi.com.br';
+              parsed.fotoUrl = undefined;
+              await SecureStore.setItemAsync('Yelo_user', JSON.stringify(parsed)).catch(() => { });
+            }
           }
           setUser(parsed);
 
-          // Garante que a conta ativa está presente em savedAccounts
-          const exists = accounts.some(
-            (a) => a.user.email.toLowerCase() === parsed.email.toLowerCase()
-          );
-          if (!exists) {
-            accounts.push({ token: storedToken, user: parsed });
-            await SecureStore.setItemAsync('Yelo_saved_accounts', JSON.stringify(accounts));
+          // Se não havia contas salvas na v4, inicia apenas com a conta logada no momento
+          if (accounts.length === 0) {
+            accounts = [{ token: storedToken, user: parsed }];
+            await SecureStore.setItemAsync(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+          } else {
+            const exists = accounts.some(
+              (a) => a.user.email.toLowerCase() === parsed.email.toLowerCase()
+            );
+            if (!exists) {
+              accounts.push({ token: storedToken, user: parsed });
+              await SecureStore.setItemAsync(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+            }
           }
+        } else {
+          accounts = [];
+          await SecureStore.deleteItemAsync(ACCOUNTS_STORAGE_KEY).catch(() => { });
         }
         setSavedAccounts(accounts);
       } catch (err) {
@@ -168,7 +201,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loadStorageData();
   }, [refreshUser]);
 
-  const signIn = async (newToken: string, userData: UserData) => {
+  // signIn: Login principal na tela /login — inicia apenas com a conta logada
+  // (ou adiciona se keepExistingAccounts=true ao conectar conta secundária no modal)
+  const signIn = async (newToken: string, userData: UserData, keepExistingAccounts = false) => {
     try {
       // Se for admin, garante a flag isAdmin
       if (userData.type === 'admin') {
@@ -180,12 +215,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setToken(newToken);
       setUser(userData);
 
-      // Salva ou atualiza a conta no histórico de contas conectadas
-      const accountsRaw = await SecureStore.getItemAsync('Yelo_saved_accounts');
-      let accounts: SavedAccount[] = accountsRaw ? JSON.parse(accountsRaw) : [];
-      accounts = accounts.filter(
-        (a) => a.user.email.toLowerCase() !== userData.email.toLowerCase()
-      );
+      let accounts: SavedAccount[] = [];
+      if (keepExistingAccounts) {
+        const accountsRaw = await SecureStore.getItemAsync(ACCOUNTS_STORAGE_KEY);
+        accounts = accountsRaw ? JSON.parse(accountsRaw) : [];
+        accounts = accounts.filter(
+          (a) => a.user.email.toLowerCase() !== userData.email.toLowerCase()
+        );
+      }
       accounts.push({ token: newToken, user: userData });
       await persistSavedAccounts(accounts);
 
@@ -200,8 +237,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await SecureStore.deleteItemAsync('Yelo_token');
       await SecureStore.deleteItemAsync('Yelo_user');
+      await SecureStore.deleteItemAsync('Yelo_saved_accounts').catch(() => { });
+      await SecureStore.deleteItemAsync(ACCOUNTS_STORAGE_KEY).catch(() => { });
       setToken(null);
       setUser(null);
+      setSavedAccounts([]);
     } catch (err) {
       console.error('Erro ao remover sessão local:', err);
     }
@@ -252,8 +292,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       target.user.type === 'admin'
         ? '/(admin)'
         : target.user.type === 'patient'
-        ? '/(paciente)'
-        : '/(tabs)';
+          ? '/(paciente)'
+          : '/(tabs)';
     return dest;
   };
 
@@ -291,18 +331,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const status = err.response?.status;
         const errText = err.response?.data?.error || '';
         if (status === 401 && (errText.includes('não encontrado') || errText.includes('inválido'))) {
-          const pRes = await api.post('/api/patients/login', {
-            email: cleanEmail,
-            password: passwordInput,
-          });
-          resToken = pRes.data.token;
-          resUser = {
-            id: pRes.data.id,
-            nome: pRes.data.nome,
-            email: pRes.data.email,
-            type: 'patient',
-          };
-          targetRoute = '/(paciente)';
+          try {
+            const pRes = await api.post('/api/patients/login', {
+              email: cleanEmail,
+              password: passwordInput,
+            });
+            resToken = pRes.data.token;
+            resUser = {
+              id: pRes.data.id,
+              nome: pRes.data.nome,
+              email: pRes.data.email,
+              type: 'patient',
+            };
+            targetRoute = '/(paciente)';
+          } catch {
+            return {
+              success: false,
+              error: errText || 'E-mail não encontrado neste ambiente.',
+            };
+          }
         } else {
           return {
             success: false,
@@ -315,8 +362,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { success: false, error: 'Falha na autenticação do servidor.' };
       }
 
-      // Adiciona à lista e ativa a nova conta
-      await signIn(resToken, resUser);
+      // Adiciona à lista mantendo a conta atual e ativa a nova conta conectada
+      await signIn(resToken, resUser, true);
       return { success: true, route: targetRoute };
     } catch (e: any) {
       return { success: false, error: e.message || 'Erro ao conectar conta.' };

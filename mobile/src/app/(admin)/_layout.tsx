@@ -122,7 +122,7 @@ export default function AdminLayout() {
       }}
     >
       <Feather name="repeat" size={12} color="#1B4332" />
-      <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 11 }}>Ver como Psi</Text>
+      <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 11 }}>Alternar Perfil</Text>
     </TouchableOpacity>
   );
 
