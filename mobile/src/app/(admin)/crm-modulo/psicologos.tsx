@@ -12,6 +12,7 @@ import {
   Alert,
   Linking,
   Image,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -149,6 +150,9 @@ export default function AdminCRMPsicologosScreen() {
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [selectedPsi, setSelectedPsi] = useState<any>(null);
   const [drawerData, setDrawerData] = useState<any>(null);
+  const [healthExpanded, setHealthExpanded] = useState(false);
+  const [isExtendingTrial, setIsExtendingTrial] = useState(false);
+  const [copiedAnalysisId, setCopiedAnalysisId] = useState<number | null>(null);
 
   // Consultor IA no Drawer
   const [aiDiagnosis, setAiDiagnosis] = useState<{ diagnosis?: string; copy?: string } | null>(null);
@@ -341,6 +345,8 @@ export default function AdminCRMPsicologosScreen() {
     setDrawerVisible(true);
     setDrawerLoading(true);
     setAiDiagnosis(null);
+    setHealthExpanded(false);
+    setCopiedAnalysisId(null);
 
     try {
       const res = await api.get(`/api/admin/psychologists/${psy.id}/full-details`);
@@ -658,6 +664,14 @@ export default function AdminCRMPsicologosScreen() {
         const dataNeg = metrics.dataNeg || 'alguns dias';
         const pName = patientName || 'um paciente';
         msg = `Olá, ${firstName}. Como vai?\n\nPreciso da sua ajuda com um retorno rápido.\n\nVocê estava em negociação com ${pName} desde ${dataNeg}:\n\n• Conseguiram conversar novamente?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nPara responder, acesse sua conta na Yelo e vá até a opção *Evolução > Histórico de Contatos* e mude o status "⏳ Em negociação".\n\nObrigado! 🌿`;
+      } else if (actionType === 'standard_contact') {
+        if (item.status === 'pending') {
+          msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 7 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar *depois* que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas! Para continuar de onde parou, basta entrar na sua conta por aqui:\nhttps://yelopsi.com.br/login\n\nSe precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
+        } else if (item.status === 'inactive' && item.plano && item.plano !== 'nenhum') {
+          msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nEstou passando para te dar um toque rápido sobre a sua assinatura. Dei uma olhada no seu perfil e vi que ele tem muito potencial para atrair pacientes na plataforma! 🌱\n\nComo o algoritmo de distribuição da plataforma está aprendendo sobre o seu perfil, não quero que você saia do ar agora e perca o histórico que já estamos construindo.\n\nPara regularizar e manter seu consultório virtual ativo recebendo pacientes, é só acessar a sua conta na Yelo, ir na aba "Ajustes" > "Assinaturas e Planos" e atualizar o seu cartão ou emitir um novo Pix.\n\nSe precisar de alguma ajuda ou tiver qualquer dificuldade no painel, me dá um alô aqui. Um abraço! 🌿`;
+        } else {
+          msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando para acompanhar sua experiência na plataforma e saber se precisa de algum suporte no seu perfil.\n\nSigo à disposição!`;
+        }
       } else {
         msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando para acompanhar sua experiência na plataforma e saber se precisa de algum suporte no seu perfil.\n\nSigo à disposição!`;
       }
@@ -801,18 +815,77 @@ export default function AdminCRMPsicologosScreen() {
   const handleGenerateAiDiagnosis = async (psy: any) => {
     setAiDiagnosisLoading(true);
     try {
-      const res = await api.post(`/api/admin/psychologists/${psy.id}/ai-diagnosis`);
+      const isChurn = psy.status === 'inactive' && psy.planExpiresAt && new Date(psy.planExpiresAt) < new Date();
+      const endpoint = isChurn ? 'ai-churn-message' : 'ai-diagnosis';
+      const res = await api.post(`/api/admin/psychologists/${psy.id}/${endpoint}`);
       if (res.data) {
         setAiDiagnosis({
-          diagnosis: res.data.diagnosis || res.data.analise || 'Diagnóstico concluído.',
+          diagnosis: res.data.diagnosis || res.data.analise || 'Diagnóstico de desempenho e ROI concluídos.',
           copy: res.data.whatsappCopy || res.data.mensagem || '',
         });
       }
     } catch (e: any) {
-      Alert.alert('Erro', e.message || 'Erro ao gerar diagnóstico de IA.');
+      Alert.alert('Erro', e.response?.data?.error || e.message || 'Erro ao gerar diagnóstico de IA.');
     } finally {
       setAiDiagnosisLoading(false);
     }
+  };
+
+  // -------------------------------------------------------------
+  // Estender Período Grátis (Paridade Web)
+  // -------------------------------------------------------------
+  const handleExtendTrial = (psy: any, days = 7) => {
+    Alert.alert(
+      'Estender Período Grátis 🎁',
+      `Deseja adicionar ${days} dias extras de período de teste para ${psy.nome || 'este profissional'}?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: `Estender ${days} dias`,
+          onPress: async () => {
+            try {
+              setIsExtendingTrial(true);
+              const res = await api.post(`/api/admin/psychologists/${psy.id}/extend-trial`, { days });
+              if (res.data?.success) {
+                const newDateStr = res.data.newExpirationDate
+                  ? new Date(res.data.newExpirationDate).toLocaleDateString('pt-BR')
+                  : 'Atualizado';
+                setDrawerData((prev: any) => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    planExpiresAt: res.data.newExpirationDate,
+                    status: 'active',
+                  };
+                });
+                setPsychologists((prev) =>
+                  prev.map((p) =>
+                    p.id === psy.id
+                      ? { ...p, planExpiresAt: res.data.newExpirationDate, status: 'active' }
+                      : p
+                  )
+                );
+                Alert.alert('Sucesso! 🎁', `Período grátis estendido em ${days} dias!\nNovo vencimento: ${newDateStr}`);
+              }
+            } catch (e: any) {
+              Alert.alert('Erro', e.response?.data?.error || e.message || 'Não foi possível estender o período.');
+            } finally {
+              setIsExtendingTrial(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // -------------------------------------------------------------
+  // Abrir Dossiê Completo (Paridade Web)
+  // -------------------------------------------------------------
+  const handleOpenDossier = (psy: any) => {
+    const url = `https://www.yelopsi.com.br/admin.html#admin_detalhes_psicologo.html?id=${psy.id}`;
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Erro', 'Não foi possível abrir o link do dossiê.');
+    });
   };
 
   // Render Diff Badge para Header (+X.X%, -X.X%, = 0.0%)
@@ -2500,12 +2573,12 @@ export default function AdminCRMPsicologosScreen() {
                         </View>
                       </View>
 
-                      {/* Saúde do Perfil */}
+                      {/* Saúde do Perfil (Colapsável) */}
                       <View
                         style={{
                           backgroundColor: '#ffffff',
                           borderRadius: 16,
-                          padding: 18,
+                          padding: 16,
                           borderWidth: 1,
                           borderColor: '#e2e8f0',
                           shadowColor: '#000',
@@ -2515,117 +2588,260 @@ export default function AdminCRMPsicologosScreen() {
                           elevation: 1,
                         }}
                       >
-                        <View className="flex-row justify-between items-center mb-[10px]">
-                          <Text className="font-title text-[#1e293b] text-[16px]">Saúde do Perfil</Text>
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => setHealthExpanded((prev) => !prev)}
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: 8,
+                          }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text className="font-title text-[#1e293b] text-[16px]">Saúde do Perfil</Text>
+                            <Feather
+                              name={healthExpanded ? 'chevron-up' : 'chevron-down'}
+                              size={18}
+                              color="#64748b"
+                            />
+                          </View>
                           <Text
                             className="font-title text-[18px]"
                             style={{ color: scoreColor }}
                           >
                             {score}%
                           </Text>
-                        </View>
+                        </TouchableOpacity>
 
-                        <View style={{ width: '100%', height: 8, backgroundColor: '#e2e8f0', borderRadius: 999, overflow: 'hidden', marginBottom: 14 }}>
+                        <View style={{ width: '100%', height: 8, backgroundColor: '#e2e8f0', borderRadius: 999, overflow: 'hidden' }}>
                           <View
                             style={{ width: `${Math.max(4, Math.min(100, score))}%`, height: 8, backgroundColor: scoreColor, borderRadius: 999 }}
                           />
                         </View>
 
-                        {/* Checklist dos 19 itens */}
-                        <View className="gap-[8px]">
-                          {checks.map((chk, i) => (
-                            <View key={i} className="flex-row items-center gap-[8px]">
-                              <Feather
-                                name={chk.ok ? 'check-circle' : 'circle'}
-                                size={15}
-                                color={chk.ok ? '#10b981' : '#cbd5e1'}
-                              />
-                              <Text
-                                className={`font-sans text-[13px] ${
-                                  chk.ok ? 'text-[#334155]' : 'text-[#94a3b8]'
-                                }`}
-                              >
-                                {chk.text}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      </View>
-
-                      {/* Consultor IA (Performance) */}
-                      <LinearGradient
-                        colors={['#f3e8ff', '#e0e7ff']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        className="rounded-[16px] p-[18px] border border-[#c4b5fd]"
-                      >
-                        <View className="flex-row items-center gap-[8px] mb-[6px]">
-                          <Feather name="cpu" size={18} color="#4c1d95" />
-                          <Text className="font-title text-[#4c1d95] text-[16px]">
-                            Consultor IA (Performance)
+                        {/* Botão de Toggle Informativo */}
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => setHealthExpanded((prev) => !prev)}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginTop: 10,
+                            paddingTop: 8,
+                            borderTopWidth: 1,
+                            borderTopColor: '#f1f5f9',
+                          }}
+                        >
+                          <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', color: '#64748b', fontSize: 12 }}>
+                            {healthExpanded
+                              ? 'Ocultar checklist completo'
+                              : `Ver checklist (${checks.filter((c) => c.ok).length}/${checks.length} concluídos)`}
                           </Text>
-                        </View>
-                        <Text className="font-sans text-[#5b21b6] text-[13px] mb-[14px]">
-                          Gere um dossiê automático de desempenho cruzando os acessos com as ferramentas
-                          que o psicólogo não utiliza.
-                        </Text>
+                          <Feather
+                            name={healthExpanded ? 'chevron-up' : 'chevron-down'}
+                            size={14}
+                            color="#94a3b8"
+                          />
+                        </TouchableOpacity>
 
-                        {aiDiagnosis && (
-                          <View className="bg-white/80 p-[14px] rounded-[12px] mb-[14px] border border-[#a5b4fc]">
-                            <Text className="font-title text-[#4338ca] text-[13px] mb-1">
-                              Diagnóstico:
-                            </Text>
-                            <Text className="font-sans text-[#3730a3] text-[12px] mb-2 leading-5">
-                              {aiDiagnosis.diagnosis}
-                            </Text>
-
-                            <Text className="font-title text-[#4338ca] text-[13px] mb-1">
-                              Mensagem Sugerida:
-                            </Text>
-                            <View className="bg-white p-[10px] rounded-[8px] border border-dashed border-[#a5b4fc]">
-                              <Text className="font-mono text-[#1e293b] text-[11px] leading-4">
-                                {aiDiagnosis.copy}
-                              </Text>
-                            </View>
+                        {/* Checklist dos 19 itens (Apenas se expandido) */}
+                        {healthExpanded && (
+                          <View style={{ gap: 8, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#f1f5f9' }}>
+                            {checks.map((chk, i) => (
+                              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <Feather
+                                  name={chk.ok ? 'check-circle' : 'circle'}
+                                  size={15}
+                                  color={chk.ok ? '#10b981' : '#cbd5e1'}
+                                />
+                                <Text
+                                  className={`font-sans text-[13px] ${
+                                    chk.ok ? 'text-[#334155]' : 'text-[#94a3b8]'
+                                  }`}
+                                >
+                                  {chk.text}
+                                </Text>
+                              </View>
+                            ))}
                           </View>
                         )}
+                      </View>
 
-                        <View className="flex-row gap-[10px]">
-                          <TouchableOpacity
-                            onPress={() => handleGenerateAiDiagnosis(psy)}
-                            disabled={aiDiagnosisLoading}
-                            className="flex-1 bg-[#1B4332] py-[10px] px-[14px] rounded-full items-center justify-center flex-row gap-[6px]"
-                          >
-                            {aiDiagnosisLoading ? (
-                              <ActivityIndicator size="small" color="#fff" />
-                            ) : (
-                              <>
-                                <Feather name="play" size={14} color="#fff" />
-                                <Text className="font-sans font-bold text-white text-[13px]">
-                                  Gerar Diagnóstico
-                                </Text>
-                              </>
-                            )}
-                          </TouchableOpacity>
+                      {/* Consultor IA (Performance) - Formatado com Bordas Arredondadas e Layout Premium */}
+                      <View
+                        style={{
+                          borderRadius: 16,
+                          overflow: 'hidden',
+                          borderWidth: 1,
+                          borderColor: '#c4b5fd',
+                          backgroundColor: '#f5f3ff',
+                          shadowColor: '#7c3aed',
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.08,
+                          shadowRadius: 8,
+                          elevation: 2,
+                        }}
+                      >
+                        <LinearGradient
+                          colors={['#f3e8ff', '#ede9fe', '#e0e7ff']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={{ padding: 18 }}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                            <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(124, 58, 237, 0.12)', alignItems: 'center', justifyContent: 'center' }}>
+                              <Feather name="cpu" size={17} color="#6d28d9" />
+                            </View>
+                            <Text className="font-title text-[#4c1d95] text-[16px]">
+                              Consultor IA (Performance)
+                            </Text>
+                          </View>
 
-                          {aiDiagnosis?.copy && (
-                            <TouchableOpacity
-                              onPress={() => {
-                                handleSendAction({
-                                  ...psy,
-                                  actionType: 'low_performance',
-                                });
+                          <Text className="font-sans text-[#5b21b6] text-[13px] leading-5 mb-[14px]">
+                            Gere um dossiê automático de desempenho cruzando os acessos com as ferramentas que o psicólogo não utiliza.
+                          </Text>
+
+                          {aiDiagnosis && (
+                            <View
+                              style={{
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                padding: 14,
+                                borderRadius: 12,
+                                marginBottom: 14,
+                                borderWidth: 1,
+                                borderColor: '#c7d2fe',
+                                shadowColor: '#000',
+                                shadowOffset: { width: 0, height: 1 },
+                                shadowOpacity: 0.05,
+                                shadowRadius: 3,
+                                elevation: 1,
                               }}
-                              className="bg-[#10b981] py-[10px] px-[14px] rounded-full items-center justify-center flex-row gap-[6px]"
                             >
-                              <Feather name="send" size={14} color="#fff" />
-                              <Text className="font-sans font-bold text-white text-[13px]">
-                                WhatsApp
+                              <Text style={{ fontFamily: 'Cinzel_700Bold', color: '#4338ca', fontSize: 13, marginBottom: 4 }}>
+                                Diagnóstico:
                               </Text>
-                            </TouchableOpacity>
+                              <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', color: '#3730a3', fontSize: 12.5, lineHeight: 18, marginBottom: 12 }}>
+                                {aiDiagnosis.diagnosis}
+                              </Text>
+
+                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                <Text style={{ fontFamily: 'Cinzel_700Bold', color: '#4338ca', fontSize: 13 }}>
+                                  Mensagem Sugerida:
+                                </Text>
+                                <TouchableOpacity
+                                  activeOpacity={0.7}
+                                  onPress={async () => {
+                                    if (aiDiagnosis.copy) {
+                                      await Clipboard.setStringAsync(aiDiagnosis.copy);
+                                      Alert.alert('Copiado! 📋', 'Mensagem sugerida copiada para a área de transferência.');
+                                    }
+                                  }}
+                                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: '#ede9fe' }}
+                                >
+                                  <Feather name="copy" size={12} color="#6d28d9" />
+                                  <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#6d28d9', fontSize: 11 }}>Copiar</Text>
+                                </TouchableOpacity>
+                              </View>
+
+                              <View
+                                style={{
+                                  backgroundColor: '#ffffff',
+                                  padding: 12,
+                                  borderRadius: 8,
+                                  borderWidth: 1,
+                                  borderColor: '#c7d2fe',
+                                  borderStyle: 'dashed',
+                                }}
+                              >
+                                <Text
+                                  style={{
+                                    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+                                    color: '#1e293b',
+                                    fontSize: 11.5,
+                                    lineHeight: 16,
+                                  }}
+                                >
+                                  {aiDiagnosis.copy}
+                                </Text>
+                              </View>
+                            </View>
                           )}
-                        </View>
-                      </LinearGradient>
+
+                          <View style={{ flexDirection: 'row', gap: 10 }}>
+                            <TouchableOpacity
+                              onPress={() => handleGenerateAiDiagnosis(psy)}
+                              disabled={aiDiagnosisLoading}
+                              activeOpacity={0.8}
+                              style={{
+                                flex: 1,
+                                backgroundColor: '#7c3aed',
+                                height: 44,
+                                paddingHorizontal: 16,
+                                borderRadius: 999,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexDirection: 'row',
+                                gap: 8,
+                                shadowColor: '#7c3aed',
+                                shadowOffset: { width: 0, height: 2 },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 4,
+                                elevation: 3,
+                              }}
+                            >
+                              {aiDiagnosisLoading ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                              ) : (
+                                <>
+                                  <Feather name="play-circle" size={16} color="#fff" />
+                                  <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#ffffff', fontSize: 13.5 }}>
+                                    {psy.status === 'inactive' && psy.planExpiresAt && new Date(psy.planExpiresAt) < new Date()
+                                      ? (aiDiagnosis ? '✨ Resgate Atualizado' : 'Gerar Resgate de Churn')
+                                      : (aiDiagnosis ? '✨ Diagnóstico Atualizado' : 'Gerar Diagnóstico')}
+                                  </Text>
+                                </>
+                              )}
+                            </TouchableOpacity>
+
+                            {aiDiagnosis?.copy && (
+                              <TouchableOpacity
+                                onPress={async () => {
+                                  if (aiDiagnosis.copy) {
+                                    await Clipboard.setStringAsync(aiDiagnosis.copy);
+                                  }
+                                  handleSendAction({
+                                    ...psy,
+                                    actionType: 'low_performance',
+                                  });
+                                }}
+                                activeOpacity={0.8}
+                                style={{
+                                  backgroundColor: '#10b981',
+                                  height: 44,
+                                  paddingHorizontal: 16,
+                                  borderRadius: 999,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexDirection: 'row',
+                                  gap: 6,
+                                  shadowColor: '#10b981',
+                                  shadowOffset: { width: 0, height: 2 },
+                                  shadowOpacity: 0.25,
+                                  shadowRadius: 4,
+                                  elevation: 3,
+                                }}
+                              >
+                                <Feather name="send" size={15} color="#fff" />
+                                <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#ffffff', fontSize: 13.5 }}>
+                                  WhatsApp
+                                </Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        </LinearGradient>
+                      </View>
 
                       {/* Assinatura */}
                       <View
@@ -2664,7 +2880,7 @@ export default function AdminCRMPsicologosScreen() {
                         </View>
                       </View>
 
-                      {/* Ações de CS */}
+                      {/* Ações de CS - Paridade 100% com a Versão Web */}
                       <View
                         style={{
                           backgroundColor: '#ffffff',
@@ -2684,60 +2900,176 @@ export default function AdminCRMPsicologosScreen() {
                           Ações de CS
                         </Text>
 
-                        {/* WhatsApp */}
+                        {/* 1. WhatsApp */}
                         <TouchableOpacity
                           onPress={() => handleSendAction(psy, 'standard_contact')}
-                          className="bg-[#10b981] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
+                          activeOpacity={0.8}
+                          style={{
+                            backgroundColor: '#10b981',
+                            paddingVertical: 13,
+                            borderRadius: 999,
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            gap: 8,
+                          }}
                         >
-                          <Feather name="message-circle" size={16} color="#fff" />
-                          <Text className="font-sans font-bold text-white text-[14px]">
+                          <Feather name="message-circle" size={17} color="#fff" />
+                          <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#fff', fontSize: 14 }}>
                             Chamar no WhatsApp 📱
                           </Text>
                         </TouchableOpacity>
 
-                        {/* Análise de Perfil (IA) */}
+                        {/* 2. Análise de Perfil (IA) */}
                         <TouchableOpacity
-                          onPress={() => handleSendAction(psy, 'analysis')}
-                          className="bg-[#fef08a] border border-[#fde047] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
+                          onPress={async () => {
+                            await handleSendAction(psy, 'analysis');
+                            setCopiedAnalysisId(psy.id);
+                          }}
+                          activeOpacity={0.8}
+                          style={{
+                            backgroundColor: copiedAnalysisId === psy.id ? '#dcfce7' : '#fef08a',
+                            borderWidth: 1,
+                            borderColor: copiedAnalysisId === psy.id ? '#bbf7d0' : '#fde047',
+                            paddingVertical: 13,
+                            borderRadius: 999,
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            gap: 8,
+                          }}
                         >
-                          <Feather name="award" size={16} color="#b45309" />
-                          <Text className="font-sans font-bold text-[#b45309] text-[14px]">
-                            ✨ Análise de Perfil (IA)
+                          <Feather
+                            name={copiedAnalysisId === psy.id ? 'check' : 'award'}
+                            size={17}
+                            color={copiedAnalysisId === psy.id ? '#166534' : '#b45309'}
+                          />
+                          <Text
+                            style={{
+                              fontFamily: 'PlusJakartaSans_700Bold',
+                              color: copiedAnalysisId === psy.id ? '#166534' : '#b45309',
+                              fontSize: 14,
+                            }}
+                          >
+                            {copiedAnalysisId === psy.id ? '✨ Análise Copiada ✅' : '✨ Análise de Perfil (IA)'}
                           </Text>
                         </TouchableOpacity>
 
-                        {/* Ver Perfil Público */}
+                        {/* 3. Ver Dossiê Completo (Web Parity) */}
+                        <TouchableOpacity
+                          onPress={() => handleOpenDossier(psy)}
+                          activeOpacity={0.8}
+                          style={{
+                            backgroundColor: '#f8fafc',
+                            borderWidth: 1,
+                            borderColor: '#cbd5e1',
+                            paddingVertical: 13,
+                            borderRadius: 999,
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            gap: 8,
+                          }}
+                        >
+                          <Feather name="folder" size={17} color="#334155" />
+                          <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#334155', fontSize: 14 }}>
+                            Ver Dossiê Completo 🗂️
+                          </Text>
+                        </TouchableOpacity>
+
+                        {/* 4. Ver Perfil Público */}
                         <TouchableOpacity
                           onPress={() => {
                             const slug = psy.slug || psy.id;
                             Linking.openURL(`https://www.yelopsi.com.br/psicologo/${slug}`);
                           }}
-                          className="bg-[#f0fdf4] border border-[#bbf7d0] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
+                          activeOpacity={0.8}
+                          style={{
+                            backgroundColor: '#f0fdf4',
+                            borderWidth: 1,
+                            borderColor: '#bbf7d0',
+                            paddingVertical: 13,
+                            borderRadius: 999,
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            gap: 8,
+                          }}
                         >
-                          <Feather name="external-link" size={16} color="#166534" />
-                          <Text className="font-sans font-bold text-[#166534] text-[14px]">
+                          <Feather name="external-link" size={17} color="#166534" />
+                          <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#166534', fontSize: 14 }}>
                             Ver Perfil Público 🔗
                           </Text>
                         </TouchableOpacity>
 
-                        {/* Gerenciar VIP */}
+                        {/* 5. Estender Período Grátis (Web Parity) */}
+                        <TouchableOpacity
+                          onPress={() => handleExtendTrial(psy, 7)}
+                          disabled={isExtendingTrial}
+                          activeOpacity={0.8}
+                          style={{
+                            backgroundColor: '#f0fdf4',
+                            borderWidth: 1,
+                            borderColor: '#86efac',
+                            paddingVertical: 13,
+                            borderRadius: 999,
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            gap: 8,
+                          }}
+                        >
+                          {isExtendingTrial ? (
+                            <ActivityIndicator size="small" color="#166534" />
+                          ) : (
+                            <>
+                              <Feather name="gift" size={17} color="#166534" />
+                              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#166534', fontSize: 14 }}>
+                                Estender Período Grátis 🎁
+                              </Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+
+                        {/* 6. Conceder / Remover Isenção VIP */}
                         <TouchableOpacity
                           onPress={() => handleToggleVip(psy)}
-                          className="bg-[#1B4332] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
+                          activeOpacity={0.8}
+                          style={{
+                            backgroundColor: '#1B4332',
+                            paddingVertical: 13,
+                            borderRadius: 999,
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            gap: 8,
+                          }}
                         >
-                          <Feather name="star" size={16} color="#fff" />
-                          <Text className="font-sans font-bold text-white text-[14px]">
+                          <Feather name="star" size={17} color="#fff" />
+                          <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#fff', fontSize: 14 }}>
                             {isVip ? 'Remover Isenção VIP' : 'Conceder Isenção VIP ⭐'}
                           </Text>
                         </TouchableOpacity>
 
-                        {/* Expirar Perfil */}
+                        {/* 7. Expirar Perfil */}
                         <TouchableOpacity
                           onPress={() => handleExpireProfile(psy)}
-                          className="bg-[#fef2f2] border border-[#fecaca] py-[12px] rounded-full items-center flex-row justify-center gap-[6px] mt-2"
+                          activeOpacity={0.8}
+                          style={{
+                            backgroundColor: '#fef2f2',
+                            borderWidth: 1,
+                            borderColor: '#fecaca',
+                            paddingVertical: 13,
+                            borderRadius: 999,
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            gap: 8,
+                            marginTop: 4,
+                          }}
                         >
-                          <Feather name="alert-circle" size={16} color="#991b1b" />
-                          <Text className="font-sans font-bold text-[#991b1b] text-[14px]">
+                          <Feather name="alert-circle" size={17} color="#991b1b" />
+                          <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#991b1b', fontSize: 14 }}>
                             Expirar Perfil (Inativo) ⚠️
                           </Text>
                         </TouchableOpacity>
