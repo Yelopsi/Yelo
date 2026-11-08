@@ -328,6 +328,8 @@ const startServer = async () => {
             console.log('🛠️ [DB FIX] Injetando coluna evaluationEmailSent na tabela Psychologists...');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "evaluationEmailSent" BOOLEAN DEFAULT false;');
             await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "msg_paid_churn_sent_at" TIMESTAMP WITH TIME ZONE NULL;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "appReminderMinutesBefore" INTEGER DEFAULT 15;');
+            await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "notificationPreferences" JSONB DEFAULT \'{"new_blog_post":true,"new_forum_post":true,"post_comment":true,"comment_reply":true,"community_questions":true,"payments":true}\';');
 
             console.log('🛠️ [DB FIX] Injetando colunas faltantes na tabela Questions...');
             
@@ -345,6 +347,12 @@ const startServer = async () => {
 
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS title VARCHAR(255);');
             await db.sequelize.query('ALTER TABLE questions ADD COLUMN IF NOT EXISTS slug VARCHAR(255) UNIQUE;');
+
+            // Colunas leves para recorrência infinita na agenda (estilo iOS Calendar / RRULE)
+            await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "recurrence" VARCHAR(32) DEFAULT \'none\';');
+            await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "recurrenceUntil" TIMESTAMP WITH TIME ZONE NULL;');
+            await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "recurrenceExceptions" TEXT DEFAULT \'[]\';');
+            await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "seriesId" INTEGER NULL;');
         } catch(e) {
             console.warn('⚠️ Aviso ao tentar criar colunas manualmente (podem já existir ou banco travado):', e.message);
         }

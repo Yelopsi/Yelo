@@ -28,6 +28,10 @@ exports.createPreference = async (req, res) => {
         localPsychologist = await db.Psychologist.findByPk(psychologistId);
         if (!localPsychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
+        const rawPlan = (planType || '').toUpperCase();
+        const isIosFee = req.body.isIos === true || req.body.platform === 'ios' || rawPlan === 'ESSENTIAL_IOS';
+        const normalizedPlan = (rawPlan === 'ESSENTIAL_IOS' || rawPlan === 'ESSENCIAL') ? 'ESSENTIAL' : rawPlan;
+
         // --- TRAVA DE INADIMPLÊNCIA / PERMISSÃO DE REASSINATURA ---
         const overduePayments = await db.Payment.findAll({
             where: { psychologistId, status: 'OVERDUE' }
@@ -138,8 +142,8 @@ exports.createPreference = async (req, res) => {
         }
 
         let value;
-        switch (planType.toUpperCase()) {
-            case 'ESSENTIAL': value = 99.00; break;
+        switch (normalizedPlan) {
+            case 'ESSENTIAL': value = isIosFee ? 129.90 : 99.00; break;
             case 'CLINICAL': value = 159.00; break;
             case 'REFERENCE': value = 259.00; break;
             default: 
@@ -153,6 +157,10 @@ exports.createPreference = async (req, res) => {
         if (phone.length < 10) {
              const psiPhone = localPsychologist.telefone ? localPsychologist.telefone.replace(/\D/g, '') : '';
              if (psiPhone.length >= 10) phone = psiPhone;
+        }
+        // Asaas rejeita números com todos os dígitos idênticos (ex: 11999999999) ou menores que 10 dígitos
+        if (!phone || phone.length < 10 || /^(\d)\1+$/.test(phone)) {
+             phone = '11987654321';
         }
 
         const cleanCpfCnpj = (creditCard && creditCard.holderCpf) ? creditCard.holderCpf.replace(/\D/g, '') : (localPsychologist.cpf || localPsychologist.cnpj || '');
@@ -283,7 +291,7 @@ exports.createPreference = async (req, res) => {
                 value: value,
                 nextDueDate: nextDueDate,
                 cycle: 'MONTHLY',
-                description: `Assinatura Yelo - Plano ${planType}`,
+                description: isIosFee ? `Assinatura Yelo - Plano ${normalizedPlan} (iOS)` : `Assinatura Yelo - Plano ${normalizedPlan}`,
                 externalReference: String(psychologistId),
                 retryPolicy: 'ALLOW_THREE_IN_SEVEN_DAYS',
             };
@@ -296,7 +304,7 @@ exports.createPreference = async (req, res) => {
                 value: value,
                 nextDueDate: nextDueDate,
                 cycle: 'MONTHLY',
-                description: `Assinatura Yelo - Plano ${planType}`,
+                description: isIosFee ? `Assinatura Yelo - Plano ${normalizedPlan} (iOS)` : `Assinatura Yelo - Plano ${normalizedPlan}`,
                 externalReference: String(psychologistId),
                 softDescriptor: 'Yelo Saude',
                 creditCard: {
@@ -424,7 +432,7 @@ exports.createPreference = async (req, res) => {
                 id: subscriptionData.id,
                 psychologistId: psychologistId,
                 asaasCustomerId: customerIdAsaas,
-                plan: planType,
+                plan: normalizedPlan,
                 status: subscriptionData.status || 'ACTIVE'
             });
 
@@ -451,7 +459,7 @@ exports.createPreference = async (req, res) => {
             // Atualiza o Psychologist
             const updateData = {
                 subscriptionId: subscriptionData.id,
-                plano: planType,
+                plano: normalizedPlan,
                 planExpiresAt: newPlanExpiresAt,
                 cancelAtPeriodEnd: false,
                 canceledAt: null
@@ -546,6 +554,10 @@ exports.getPendingPix = async (req, res) => {
                 headers: { 'access_token': ASAAS_API_KEY }
             })
         ]);
+        if (!overdueRes.ok || !pendingRes.ok) {
+            return res.status(502).json({ error: 'Não foi possível confirmar o status da fatura no gateway.' });
+        }
+
         const overdueData = await overdueRes.json().catch(() => ({ data: [] }));
         const pendingData = await pendingRes.json().catch(() => ({ data: [] }));
         

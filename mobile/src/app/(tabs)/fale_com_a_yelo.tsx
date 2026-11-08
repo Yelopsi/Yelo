@@ -1,13 +1,24 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Linking, Alert } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
+import NativeSelectMenu from '../../components/NativeSelectMenu';
 
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
+const SUPORTE_ASSUNTOS = [
+  { label: 'Dúvida sobre a plataforma', value: 'Dúvida sobre a plataforma' },
+  { label: 'Suporte técnico', value: 'Suporte técnico' },
+  { label: 'Financeiro e assinatura', value: 'Financeiro e assinatura' },
+  { label: 'Sugestão de melhoria', value: 'Sugestão de melhoria' },
+  { label: 'Outro assunto', value: 'Outro assunto' },
+];
+
 export default function FaleComAYeloScreen() {
   const router = useRouter();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [assunto, setAssunto] = useState('Dúvida sobre a plataforma');
+  const [mensagem, setMensagem] = useState('');
 
   const toggleFaq = (index: number) => {
     setActiveFaq(activeFaq === index ? null : index);
@@ -106,10 +117,32 @@ export default function FaleComAYeloScreen() {
 
             <View className="w-full mb-4">
               <Text className="font-sans font-bold text-[#333] text-[14px] mb-2">Assunto</Text>
-              <View className="bg-white border border-[#ccc] rounded-[12px] px-4 py-3.5 flex-row justify-between items-center">
-                <Text className="font-sans text-[#333] text-[15px]">Dúvida sobre a plataforma</Text>
-                <Feather name="chevron-down" size={16} color="#666" />
-              </View>
+              <NativeSelectMenu
+                options={SUPORTE_ASSUNTOS}
+                selectedValue={assunto}
+                onSelect={(val) => setAssunto(val)}
+                style={{ width: '100%' }}
+              >
+                <View
+                  style={{
+                    backgroundColor: '#ffffff',
+                    borderWidth: 1,
+                    borderColor: '#cccccc',
+                    borderRadius: 999,
+                    paddingHorizontal: 18,
+                    paddingVertical: 14,
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    width: '100%',
+                  }}
+                >
+                  <Text className="font-sans text-[#333] text-[15px] flex-1 mr-2" numberOfLines={1}>
+                    {assunto}
+                  </Text>
+                  <Feather name="chevron-down" size={16} color="#666" />
+                </View>
+              </NativeSelectMenu>
             </View>
 
             <View className="w-full mb-4">
@@ -118,12 +151,24 @@ export default function FaleComAYeloScreen() {
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
+                value={mensagem}
+                onChangeText={setMensagem}
                 placeholder="Descreva sua questão..."
-                className="bg-white border border-[#ccc] rounded-[12px] p-4 font-sans text-[15px] text-[#333] min-h-[120px]"
+                className="bg-white border border-[#ccc] rounded-[16px] p-4 font-sans text-[15px] text-[#333] min-h-[120px]"
               />
             </View>
 
-            <TouchableOpacity className="bg-[#1B4332] py-4 px-8 rounded-[50px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] mt-2">
+            <TouchableOpacity
+              onPress={() => {
+                if (!mensagem.trim()) {
+                  Alert.alert('Atenção', 'Escreva sua mensagem antes de enviar.');
+                  return;
+                }
+                setMensagem('');
+                Alert.alert('Mensagem Enviada', 'Nossa equipe recebeu sua solicitação e responderá em breve!');
+              }}
+              className="bg-[#1B4332] py-4 px-8 rounded-[50px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] mt-2"
+            >
               <Text className="font-sans font-bold text-white text-[15px]">Enviar Mensagem</Text>
             </TouchableOpacity>
           </View>

@@ -308,6 +308,9 @@ router.get('/privacidade', (req, res) => res.render('privacidade'));
 router.get('/termos', (req, res) => res.render('termos'));
 router.get('/contato', (req, res) => res.render('contato'));
 
+// --- REDIRECIONAMENTO DE ASSINATURA & PLANOS ---
+router.get(['/assinatura', '/planos'], (req, res) => res.redirect('/psi/psi_dashboard.html?page=psi_assinatura.html'));
+
 // --- MAPA DO SITE HTML (SEO) ---
 router.get('/mapa-do-site', async (req, res) => {
     try {

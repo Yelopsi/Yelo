@@ -153,7 +153,7 @@ export default function RodaDaVida() {
                 const y = center + r * Math.sin(angle);
                 
                 // Align text based on x position
-                let textAnchor = "middle";
+                let textAnchor: "start" | "middle" | "end" = "middle";
                 if (Math.abs(Math.cos(angle)) > 0.1) {
                     textAnchor = Math.cos(angle) > 0 ? "start" : "end";
                     x = center + (maxRadius + 10) * Math.cos(angle);

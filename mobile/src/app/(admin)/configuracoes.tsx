@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Switch, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 export default function ConfiguracoesScreen() {
+  const router = useRouter();
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [allowRegistrations, setAllowRegistrations] = useState(true);
 
@@ -17,10 +19,10 @@ export default function ConfiguracoesScreen() {
     if (val) {
       Alert.alert(
         "Atenção: Modo Manutenção",
-        "Ativar o modo manutenção derrubará a plataforma para todos os usuários imediatamente (exceto administradores). Tem certeza?",
+        "Ativar o modo manutenção suspenderá o acesso de psicólogos e pacientes imediatamente (exceto administradores). Confirmar?",
         [
           { text: "Cancelar", style: "cancel", onPress: () => setMaintenanceMode(false) },
-          { text: "Sim, Tirar do Ar", style: "destructive", onPress: () => setMaintenanceMode(true) }
+          { text: "Sim, Ativar Manutenção", style: "destructive", onPress: () => setMaintenanceMode(true) }
         ]
       );
     } else {
@@ -33,117 +35,280 @@ export default function ConfiguracoesScreen() {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-[#f9fafb]">
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 60 }}>
-        {/* Header */}
-        <View className="mb-[20px]">
-          <Text className="font-title text-[#1e1b4b] text-[24px]">Configurações Globais</Text>
-          <Text className="font-sans text-[#666] text-[14px]">Preços, Manutenção e Contatos Yelo.</Text>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 130 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header com Identidade Yelo */}
+        <View
+          style={{
+            backgroundColor: '#1B4332',
+            borderRadius: 20,
+            padding: 20,
+            marginBottom: 20,
+            borderWidth: 1,
+            borderColor: '#2D6A4F',
+            shadowColor: '#1B4332',
+            shadowOpacity: 0.15,
+            shadowRadius: 10,
+            shadowOffset: { width: 0, height: 4 },
+          }}
+        >
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <View style={{ flex: 1, paddingRight: 10 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#ffffff', fontSize: 22 }}>
+                Configurações Globais ⚙️
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.85)', fontSize: 13, marginTop: 4 }}>
+                Preços de planos, modo manutenção e canais oficiais da Yelo.
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => (router.canGoBack() ? router.back() : router.replace('/(admin)/ajustes'))}
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.15)',
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 999,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+              }}
+              activeOpacity={0.8}
+            >
+              <Feather name="arrow-left" size={14} color="#ffffff" />
+              <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#ffffff', fontSize: 11 }}>Voltar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Bloco: Estado da Plataforma */}
-        <View className="bg-white rounded-[16px] p-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#f0f0f0] mb-[20px]">
-          <View className="flex-row items-center mb-[15px]">
-            <Text className="text-[18px] mr-[8px]">🚦</Text>
-            <Text className="font-title text-[#333] text-[16px]">Estado da Plataforma</Text>
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            padding: 18,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 4,
+            elevation: 1,
+            marginBottom: 16,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 8 }}>
+            <Text style={{ fontSize: 18 }}>🚦</Text>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 16 }}>Estado da Plataforma</Text>
           </View>
-          
-          <View className="flex-row justify-between items-center py-[10px] border-b border-[#f1f5f9]">
-            <View className="flex-1 mr-[15px]">
-              <Text className="font-title text-[#333] text-[14px] mb-[2px]">Modo Manutenção</Text>
-              <Text className="font-sans text-[#64748b] text-[12px]">Bloqueia o acesso de usuários (exceto admins).</Text>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
+            <View style={{ flex: 1, marginRight: 14 }}>
+              <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#1e293b', fontSize: 14 }}>Modo Manutenção</Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, marginTop: 2 }}>
+                Bloqueia o acesso público e webapp (exceto administradores).
+              </Text>
             </View>
-            <Switch 
+            <Switch
               value={maintenanceMode}
               onValueChange={toggleMaintenance}
               trackColor={{ false: '#e2e8f0', true: '#ef4444' }}
-              thumbColor={'#fff'}
+              thumbColor={'#ffffff'}
             />
           </View>
 
-          <View className="flex-row justify-between items-center py-[10px] mt-[5px]">
-            <View className="flex-1 mr-[15px]">
-              <Text className="font-title text-[#333] text-[14px] mb-[2px]">Novos Cadastros</Text>
-              <Text className="font-sans text-[#64748b] text-[12px]">Permitir que novos pacientes/psis se registrem.</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 }}>
+            <View style={{ flex: 1, marginRight: 14 }}>
+              <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#1e293b', fontSize: 14 }}>Novos Cadastros</Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, marginTop: 2 }}>
+                Permitir que novos psicólogos e pacientes se registrem.
+              </Text>
             </View>
-            <Switch 
+            <Switch
               value={allowRegistrations}
               onValueChange={setAllowRegistrations}
               trackColor={{ false: '#e2e8f0', true: '#10b981' }}
-              thumbColor={'#fff'}
+              thumbColor={'#ffffff'}
             />
           </View>
         </View>
 
         {/* Bloco: Tabela de Preços */}
-        <View className="bg-white rounded-[16px] p-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#f0f0f0] mb-[20px]">
-          <View className="flex-row items-center mb-[15px]">
-            <Text className="text-[18px] mr-[8px]">💰</Text>
-            <Text className="font-title text-[#333] text-[16px]">Tabela de Preços (Mensal)</Text>
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            padding: 18,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 4,
+            elevation: 1,
+            marginBottom: 16,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 8 }}>
+            <Text style={{ fontSize: 18 }}>💰</Text>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 16 }}>Tabela de Planos (Mensal)</Text>
           </View>
-          
-          <View className="mb-[15px]">
-            <Text className="font-title text-[#333] text-[12px] mb-[5px]">Plano Essencial (R$)</Text>
-            <TextInput 
+
+          <View style={{ marginBottom: 14 }}>
+            <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#64748b', fontSize: 11, textTransform: 'uppercase', marginBottom: 6 }}>
+              Plano Essencial (R$)
+            </Text>
+            <TextInput
               value={priceEssencial}
               onChangeText={setPriceEssencial}
               keyboardType="numeric"
-              className="border border-[#e2e8f0] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]"
+              style={{
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                fontFamily: 'Inter_500Medium',
+                fontSize: 14,
+                color: '#1e293b',
+                backgroundColor: '#f8fafc',
+              }}
             />
           </View>
-          <View className="mb-[15px]">
-            <Text className="font-title text-[#333] text-[12px] mb-[5px]">Plano Clínico (R$)</Text>
-            <TextInput 
+
+          <View style={{ marginBottom: 14 }}>
+            <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#64748b', fontSize: 11, textTransform: 'uppercase', marginBottom: 6 }}>
+              Plano Clínico (R$)
+            </Text>
+            <TextInput
               value={priceClinico}
               onChangeText={setPriceClinico}
               keyboardType="numeric"
-              className="border border-[#e2e8f0] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]"
+              style={{
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                fontFamily: 'Inter_500Medium',
+                fontSize: 14,
+                color: '#1e293b',
+                backgroundColor: '#f8fafc',
+              }}
             />
           </View>
-          <View className="mb-[5px]">
-            <Text className="font-title text-[#333] text-[12px] mb-[5px]">Plano Referência (VIP) (R$)</Text>
-            <TextInput 
+
+          <View style={{ marginBottom: 6 }}>
+            <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#64748b', fontSize: 11, textTransform: 'uppercase', marginBottom: 6 }}>
+              Plano Referência VIP (R$)
+            </Text>
+            <TextInput
               value={priceReferencia}
               onChangeText={setPriceReferencia}
               keyboardType="numeric"
-              className="border border-[#e2e8f0] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]"
+              style={{
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                fontFamily: 'Inter_500Medium',
+                fontSize: 14,
+                color: '#1e293b',
+                backgroundColor: '#f8fafc',
+              }}
             />
           </View>
         </View>
 
         {/* Bloco: Contato Suporte */}
-        <View className="bg-white rounded-[16px] p-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-[#f0f0f0] mb-[20px]">
-          <View className="flex-row items-center mb-[15px]">
-            <Text className="text-[18px] mr-[8px]">📞</Text>
-            <Text className="font-title text-[#333] text-[16px]">Contato Visível (Usuários)</Text>
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            padding: 18,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 4,
+            elevation: 1,
+            marginBottom: 20,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 8 }}>
+            <Text style={{ fontSize: 18 }}>📞</Text>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 16 }}>Canais Oficiais de Suporte</Text>
           </View>
-          
-          <View className="mb-[15px]">
-            <Text className="font-title text-[#333] text-[12px] mb-[5px]">WhatsApp Oficial</Text>
-            <TextInput 
+
+          <View style={{ marginBottom: 14 }}>
+            <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#64748b', fontSize: 11, textTransform: 'uppercase', marginBottom: 6 }}>
+              WhatsApp Oficial de Atendimento
+            </Text>
+            <TextInput
               value={whatsapp}
               onChangeText={setWhatsapp}
               keyboardType="phone-pad"
-              className="border border-[#e2e8f0] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]"
+              style={{
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                fontFamily: 'Inter_500Medium',
+                fontSize: 14,
+                color: '#1e293b',
+                backgroundColor: '#f8fafc',
+              }}
             />
           </View>
-          <View className="mb-[5px]">
-            <Text className="font-title text-[#333] text-[12px] mb-[5px]">E-mail de Suporte</Text>
-            <TextInput 
+
+          <View style={{ marginBottom: 6 }}>
+            <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#64748b', fontSize: 11, textTransform: 'uppercase', marginBottom: 6 }}>
+              E-mail de Suporte ao Usuário
+            </Text>
+            <TextInput
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
-              className="border border-[#e2e8f0] rounded-[8px] p-[10px] font-sans text-[#333] text-[14px] bg-[#f8f9fa]"
+              autoCapitalize="none"
+              style={{
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderRadius: 999,
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                fontFamily: 'Inter_500Medium',
+                fontSize: 14,
+                color: '#1e293b',
+                backgroundColor: '#f8fafc',
+              }}
             />
           </View>
         </View>
 
-        <TouchableOpacity onPress={handleSave} className="bg-[#1B4332] py-[15px] rounded-[12px] items-center flex-row justify-center mt-[10px] shadow-[0_4px_15px_rgba(27,67,50,0.2)]">
-          <Feather name="save" size={18} color="white" />
-          <Text className="text-white font-title text-[16px] ml-[10px]">Salvar Alterações</Text>
+        <TouchableOpacity
+          onPress={handleSave}
+          style={{
+            backgroundColor: '#1B4332',
+            paddingVertical: 14,
+            borderRadius: 999,
+            alignItems: 'center',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            gap: 8,
+            shadowColor: '#1B4332',
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            elevation: 2,
+          }}
+          activeOpacity={0.8}
+        >
+          <Feather name="check" size={16} color="#FFEE8C" />
+          <Text style={{ color: '#ffffff', fontFamily: 'Inter_700Bold', fontSize: 14 }}>
+            Salvar Configurações
+          </Text>
         </TouchableOpacity>
-
-        <View className="h-[120px]" />
       </ScrollView>
     </KeyboardAvoidingView>
   );

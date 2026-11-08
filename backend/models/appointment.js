@@ -23,7 +23,11 @@ module.exports = (sequelize, DataTypes) => {
         status: { type: DataTypes.STRING, defaultValue: 'scheduled' },
         value: { type: DataTypes.FLOAT, defaultValue: 0 },
         psychologistId: DataTypes.INTEGER,
-        patientId: DataTypes.INTEGER
+        patientId: DataTypes.INTEGER,
+        recurrence: { type: DataTypes.STRING, defaultValue: 'none' },
+        recurrenceUntil: { type: DataTypes.DATE, allowNull: true },
+        recurrenceExceptions: { type: DataTypes.TEXT, defaultValue: '[]' },
+        seriesId: { type: DataTypes.INTEGER, allowNull: true }
     }, {
         sequelize,
         modelName: 'Appointment',

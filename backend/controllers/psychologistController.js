@@ -169,7 +169,7 @@ exports.updatePsychologistProfile = async (req, res) => {
             temas_atuacao, abordagens_tecnicas, modalidade,
             publico_alvo, estilo_terapia, praticas_inclusivas, // NOVOS CAMPOS
             valor_sessao_numero, disponibilidade_periodo, genero_identidade,
-            dailySummaryTime, reminderHoursBefore, // NOVOS CAMPOS DE NOTIFICAÇÃO
+            dailySummaryTime, reminderHoursBefore, appReminderMinutesBefore, notificationPreferences, // NOVOS CAMPOS DE NOTIFICAÇÃO
             linkedin_url, instagram_url, facebook_url, tiktok_url, x_url,
             slug, // <--- AGORA ESTAMOS LENDO O CAMPO SLUG QUE VEM DO FORMULÁRIO
             cpf, // <--- ADICIONADO: Extraindo o CPF enviado pelo frontend
@@ -304,6 +304,23 @@ exports.updatePsychologistProfile = async (req, res) => {
         if (data_nascimento !== undefined) updatePayload.data_nascimento = data_nascimento || null;
         if (dailySummaryTime !== undefined) updatePayload.dailySummaryTime = dailySummaryTime || '08:00';
         if (reminderHoursBefore !== undefined) updatePayload.reminderHoursBefore = reminderHoursBefore ? parseInt(reminderHoursBefore) : 24;
+        if (appReminderMinutesBefore !== undefined) {
+            updatePayload.appReminderMinutesBefore = appReminderMinutesBefore === null ? -1 : parseInt(appReminderMinutesBefore, 10);
+        }
+        if (notificationPreferences !== undefined) {
+            let parsed = notificationPreferences;
+            if (typeof parsed === 'string') {
+                try { parsed = JSON.parse(parsed); } catch (e) { parsed = {}; }
+            }
+            updatePayload.notificationPreferences = {
+                new_blog_post: parsed?.new_blog_post !== false,
+                new_forum_post: parsed?.new_forum_post !== false,
+                post_comment: parsed?.post_comment !== false,
+                comment_reply: parsed?.comment_reply !== false,
+                community_questions: parsed?.community_questions !== false,
+                payments: parsed?.payments !== false,
+            };
+        }
         if (linkedin_url !== undefined) updatePayload.linkedin_url = linkedin_url;
         if (instagram_url !== undefined) updatePayload.instagram_url = instagram_url;
         if (facebook_url !== undefined) updatePayload.facebook_url = facebook_url;

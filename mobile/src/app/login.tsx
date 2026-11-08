@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Image, TouchableWithoutFeedback, Keyboard, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,6 +6,14 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import api from '../services/api';
+import {
+  checkBiometricsCapability,
+  getBiometricAccount,
+  saveBiometricAccount,
+  removeBiometricAccount,
+  promptBiometricAuthentication,
+  BiometricCapability,
+} from '../services/biometrics';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -13,86 +21,202 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loadingLocal, setLoadingLocal] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  
+
+  const [biometricCap, setBiometricCap] = useState<BiometricCapability>({
+    hasHardware: false,
+    isEnrolled: false,
+    available: false,
+    biometryType: 'generic',
+    label: 'Face ID',
+  });
+  const [savedBiometricAccount, setSavedBiometricAccount] = useState<{ token: string; user: any } | null>(null);
+
+  const hasAutoPromptedRef = useRef(false);
   const { signIn } = useAuth();
   const router = useRouter();
 
+  const navigateAfterLogin = (userType: string) => {
+    if (userType === 'admin') {
+      router.replace('/(admin)');
+    } else if (userType === 'patient') {
+      router.replace('/(paciente)');
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
+  useEffect(() => {
+    async function initBiometrics() {
+      try {
+        const cap = await checkBiometricsCapability();
+        setBiometricCap(cap);
+        const account = await getBiometricAccount();
+        setSavedBiometricAccount(account);
+
+        // Se há biometria configurada e credenciais salvas, dispara o prompt nativo uma vez
+        if (account && cap.available && !hasAutoPromptedRef.current) {
+          hasAutoPromptedRef.current = true;
+          setTimeout(() => {
+            handleBiometricLogin(account);
+          }, 350);
+        }
+      } catch (err) {
+        console.warn('Erro ao inicializar biometria na tela de login:', err);
+      }
+    }
+    initBiometrics();
+  }, []);
+
+  const handleBiometricLogin = async (accountToUse = savedBiometricAccount) => {
+    if (!accountToUse) return;
+    setErrorMsg('');
+    setLoadingLocal(true);
+
+    try {
+      const auth = await promptBiometricAuthentication(
+        `Autentique-se com ${biometricCap.label} para entrar no Yelo`
+      );
+
+      if (auth.success) {
+        await signIn(accountToUse.token, accountToUse.user);
+        const userType = accountToUse.user?.type || 'psychologist';
+        navigateAfterLogin(userType);
+      } else if (auth.error && auth.error !== 'Autenticação cancelada.') {
+        setErrorMsg(auth.error);
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Falha na autenticação biométrica.');
+    } finally {
+      setLoadingLocal(false);
+    }
+  };
+
+  const handleForgetBiometrics = () => {
+    Alert.alert(
+      'Desvincular Biometria',
+      'Deseja remover as credenciais biométricas salvas neste aparelho? Você precisará digitar seu e-mail e senha para acessar.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Remover',
+          style: 'destructive',
+          onPress: async () => {
+            await removeBiometricAccount();
+            setSavedBiometricAccount(null);
+          },
+        },
+      ]
+    );
+  };
+
   const handleLogin = async () => {
-    if (!email || !password) {
-      setErrorMsg('Preencha e-mail e senha.');
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail || !password) {
+      setErrorMsg('Por favor, preencha e-mail e senha.');
       return;
     }
     setErrorMsg('');
     setLoadingLocal(true);
+
     try {
-      let response;
-      let userData;
-      let tokenStr;
-      let userType;
+      let tokenStr = '';
+      let userType = 'psychologist';
+      let userData: any = null;
 
       try {
-        // 1. Tenta login como Psicólogo (que também cobre Admins novos)
-        response = await api.post('/api/psychologists/login', {
-          email,
+        // 1. Tenta login como Psicólogo ou Admin
+        const response = await api.post('/api/psychologists/login', {
+          email: cleanEmail,
           password
         });
         tokenStr = response.data.token;
-        userType = response.data.type || 'psychologist';
+        userType = response.data.type || (response.data.isAdmin ? 'admin' : 'psychologist');
         userData = {
           id: response.data.id,
           nome: response.data.nome,
           email: response.data.email,
-          type: userType
+          type: userType,
+          isAdmin: response.data.isAdmin || userType === 'admin',
+          slug: response.data.slug,
+          fotoUrl: response.data.fotoUrl
         };
-      } catch (err: any) {
-        if (err.response && err.response.status === 401) {
-          // 2. Fallback para rota admin legado
-          response = await api.post('/api/admin/login', {
-            email,
-            password
-          });
-          tokenStr = response.data.token;
-          userType = 'admin';
-          userData = {
-            id: response.data.user.id,
-            nome: response.data.user.nome,
-            email: response.data.user.email,
-            type: userType
-          };
+      } catch (psiErr: any) {
+        // 2. Se não encontrou o e-mail na base de profissionais/admin, tenta como Paciente
+        const status = psiErr.response?.status;
+        const errText = psiErr.response?.data?.error || '';
+
+        if (status === 401 && (errText.includes('não encontrado') || errText.includes('inválido'))) {
+          try {
+            const patientRes = await api.post('/api/patients/login', {
+              email: cleanEmail,
+              password
+            });
+            tokenStr = patientRes.data.token;
+            userType = 'patient';
+            userData = {
+              id: patientRes.data.id,
+              nome: patientRes.data.nome,
+              email: patientRes.data.email,
+              type: userType
+            };
+          } catch (patientErr: any) {
+            throw patientErr;
+          }
         } else {
-          throw err;
+          throw psiErr;
         }
       }
 
-      // Salva no SecureStore
+      if (!tokenStr) {
+        throw new Error('Falha ao receber token de acesso do servidor.');
+      }
+
+      // Salva a sessão no SecureStore de forma segura
       await signIn(tokenStr, userData);
       
-      // Redireciona dependendo de quem está logando
-      const destination = userType === 'admin' ? '/(admin)' : '/(tabs)';
-      
-      router.replace(destination);
-    } catch (error: any) {
-      console.error(error);
-      const isPsi = email.toLowerCase().includes('psi') || email.toLowerCase().includes('teste');
-      const destination = isPsi ? '/(tabs)' : '/(admin)';
-
-      // Fallback amigável caso a API não esteja rodando ou a rota de login não exista ainda (404)
-      if (error.message === 'Network Error' || (error.response && (error.response.status >= 500 || error.response.status === 404))) {
+      // Se o aparelho possui biometria cadastrada e ainda não está salva para esta conta, oferece ativar
+      if (biometricCap.available && !savedBiometricAccount) {
         Alert.alert(
-          'Servidor Indisponível (Testes)',
-          'A rota de login da API não foi encontrada ou o servidor está offline. Entrando em Modo Offline (Testes).',
+          `Ativar ${biometricCap.label}?`,
+          `Deseja usar o ${biometricCap.label} para entrar mais rápido nas próximas vezes?`,
           [
-            { 
-              text: 'Entrar Offline', 
+            {
+              text: 'Agora não',
+              style: 'cancel',
+              onPress: () => navigateAfterLogin(userType),
+            },
+            {
+              text: `Ativar ${biometricCap.label}`,
               onPress: async () => {
-                await signIn('offline-token', { id: 1, nome: isPsi ? 'Psicólogo (Offline)' : 'Admin (Offline)', email: email });
-                router.replace(destination);
-              }
-            }
+                try {
+                  const auth = await promptBiometricAuthentication(
+                    `Confirme com ${biometricCap.label} para registrar seu acesso rápido`
+                  );
+                  if (auth.success) {
+                    await saveBiometricAccount(tokenStr, userData);
+                  }
+                } catch (e) {
+                  console.warn('Erro ao ativar biometria pós-login:', e);
+                } finally {
+                  navigateAfterLogin(userType);
+                }
+              },
+            },
           ]
         );
       } else {
-        setErrorMsg('E-mail ou senha inválidos.');
+        navigateAfterLogin(userType);
+      }
+    } catch (error: any) {
+      console.warn('Erro na autenticação:', error?.response?.data || error.message);
+      const backendMessage = error.response?.data?.error;
+      
+      if (backendMessage) {
+        setErrorMsg(backendMessage);
+      } else if (error.message === 'Network Error' || error.code === 'ECONNABORTED') {
+        setErrorMsg('Não foi possível conectar ao servidor. Verifique sua conexão.');
+      } else {
+        setErrorMsg('E-mail ou senha incorretos.');
       }
     } finally {
       setLoadingLocal(false);
@@ -101,7 +225,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#f9fafb]">
-      <StatusBar style="dark" backgroundColor="transparent" translucent={true} />
+      <StatusBar style="dark" />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -137,6 +261,63 @@ export default function LoginScreen() {
 
               <Text className="text-[28px] text-[#1B4332] leading-tight mb-2 font-title">Bem-vindo/a de volta</Text>
               <Text className="text-[15px] text-[#666] mb-6 font-sans">Acesse sua conta para continuar.</Text>
+
+              {/* CARD DE LOGIN BIOMÉTRICO (SE ATIVADO) */}
+              {savedBiometricAccount && (
+                <View className="mb-6 p-5 rounded-[20px] bg-[#f0fdf4] border border-[#bbf7d0] items-center">
+                  <View className="w-16 h-16 rounded-full bg-[#1B4332] items-center justify-center mb-2 shadow-sm overflow-hidden">
+                    {savedBiometricAccount.user?.fotoUrl ? (
+                      <Image 
+                        source={{ uri: savedBiometricAccount.user.fotoUrl }} 
+                        style={{ width: 64, height: 64 }}
+                      />
+                    ) : (
+                      <Feather name="user" size={28} color="#fff" />
+                    )}
+                  </View>
+                  <Text className="text-[17px] font-bold text-[#1B4332] font-title text-center">
+                    {savedBiometricAccount.user?.nome || 'Profissional Yelo'}
+                  </Text>
+                  <Text className="text-[13px] text-[#4b5563] font-sans mb-4 text-center">
+                    {savedBiometricAccount.user?.email}
+                  </Text>
+
+                  <TouchableOpacity
+                    onPress={() => handleBiometricLogin(savedBiometricAccount)}
+                    className="w-full bg-[#1B4332] py-4 rounded-full flex-row items-center justify-center"
+                    style={{ shadowColor: '#1B4332', shadowOpacity: 0.25, shadowRadius: 20, shadowOffset: { width: 0, height: 6 } }}
+                    disabled={loadingLocal}
+                  >
+                    {loadingLocal ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <>
+                        <Feather name="shield" size={20} color="#fff" style={{ marginRight: 8 }} />
+                        <Text className="text-white font-bold text-[16px] font-sans">
+                          Entrar com {biometricCap.label}
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={handleForgetBiometrics}
+                    className="mt-3 py-1"
+                  >
+                    <Text className="text-[#9ca3af] text-[12px] font-medium font-sans">
+                      Desvincular biometria deste aparelho
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {savedBiometricAccount && (
+                <View className="flex-row items-center mb-6">
+                  <View className="flex-1 h-[1px] bg-[#e5e7eb]" />
+                  <Text className="px-3 text-[#9ca3af] text-[11px] font-semibold font-sans uppercase">Ou entre com e-mail e senha</Text>
+                  <View className="flex-1 h-[1px] bg-[#e5e7eb]" />
+                </View>
+              )}
 
               {/* FORMULÁRIO */}
               <View className="mb-4 relative">

@@ -29,7 +29,15 @@ const notifyNewPost = async (post, type) => {
 
         // 1. Criar o Aviso no Dashboard (Aviso Global - psychologistId: null)
         const tituloAviso = type === 'blog' ? `Novo Artigo no Blog: ${post.titulo || post.title}` : `Novo Tópico no Fórum: ${post.titulo || post.title}`;
-        let conteudoAviso = `Ei! Acabamos de publicar um conteúdo novo que pode te interessar. Vá dar uma olhada e interaja com a comunidade!`;
+        const rawPostBody = String(post.content || post.conteudo || post.resumo || '')
+            .replace(/<[^>]*>?/gm, ' ')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        const postExcerpt = rawPostBody.length > 180 ? `${rawPostBody.substring(0, 180).trim()}...` : rawPostBody;
+        let conteudoAviso = postExcerpt
+            ? `"${postExcerpt}"`
+            : `Confira a nova publicação na comunidade da Yelo.`;
         
         if (type === 'blog') {
             const blogIdentifier = post.slug || post.id;

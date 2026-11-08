@@ -1,14 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '../contexts/AuthContext';
+import { resolvePhotoUrl } from '../utils/imageUrl';
+import api from '../services/api';
+import ProfileSwitcherModal from './ProfileSwitcherModal';
 
 export default function MobileHeader() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user, refreshUser, canAccessAdmin } = useAuth();
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [switcherVisible, setSwitcherVisible] = useState(false);
+  const fotoUri = resolvePhotoUrl(user?.fotoUrl);
+
+  useEffect(() => {
+    if (user && user.type === 'psychologist' && !user.fotoUrl) {
+      refreshUser();
+    }
+  }, [user?.type, user?.fotoUrl, refreshUser]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUnread = async () => {
+      try {
+        const res = await api.get(`/api/psychologists/me/announcements?t=${Date.now()}`);
+        if (isMounted && Array.isArray(res.data)) {
+          const unread = res.data.filter((a: any) => !a.read).length;
+          setUnreadCount(unread);
+        }
+      } catch {
+        // Silencioso
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 60000); // Atualiza periodicamente
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
+    <>
     <View 
       className="flex-row items-center bg-white border-b border-[#e0e0e0]"
       style={{ 
@@ -18,10 +56,11 @@ export default function MobileHeader() {
       }}
     >
       {/* AVATAR */}
-      <TouchableOpacity onPress={() => router.push('/ajustes')} className="relative mr-2">
+      <TouchableOpacity onPress={() => router.navigate('/(tabs)/meu_perfil')} className="relative mr-2" activeOpacity={0.7}>
         <Image 
-          source={{ uri: 'https://res.cloudinary.com/dzqmypviz/image/upload/v1779824708/yelo/profiles/profile-94.jpg' }} 
-          className="w-[36px] h-[36px] rounded-full border-2 border-[#1B4332]"
+          key={fotoUri}
+          source={{ uri: fotoUri }} 
+          className="w-[36px] h-[36px] rounded-full border-2 border-[#1B4332] bg-[#e8f5e9]"
         />
       </TouchableOpacity>
 
@@ -50,13 +89,47 @@ export default function MobileHeader() {
         </View>
       </View>
 
-      {/* NOTIFICAÇÕES */}
+      {/* ALTERNADOR DE PERFIL ADMIN (se tiver permissão) */}
+      {canAccessAdmin && (
+        <TouchableOpacity 
+          activeOpacity={0.8}
+          onPress={() => setSwitcherVisible(true)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#1B4332',
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 999,
+            marginRight: 6,
+            gap: 4,
+          }}
+        >
+          <Feather name="shield" size={12} color="#FFEE8C" />
+          <Text style={{ fontFamily: 'Inter_700Bold', color: '#FFEE8C', fontSize: 11 }}>Admin</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* NOTIFICAÇÕES (Últimos Avisos) */}
       <TouchableOpacity 
-        className="ml-auto p-1 rounded-full items-center justify-center"
-        onPress={() => console.log('Ir para Avisos')}
+        className="p-1.5 rounded-full items-center justify-center relative"
+        onPress={() => router.navigate('/(tabs)/avisos')}
+        activeOpacity={0.7}
       >
         <Feather name="bell" size={22} color="#1B4332" />
+        {unreadCount > 0 && (
+          <View 
+            className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#e63946] border border-white"
+            style={{ minWidth: 10, minHeight: 10 }}
+          />
+        )}
       </TouchableOpacity>
     </View>
+    <ProfileSwitcherModal
+      visible={switcherVisible}
+      onClose={() => setSwitcherVisible(false)}
+      currentRole="psychologist"
+    />
+    </>
   );
 }

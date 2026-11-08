@@ -507,7 +507,9 @@ exports.getAllQuestions = async (req, res) => {
 exports.moderateQuestion = async (req, res) => {
     try {
         const { questionId } = req.params;
-        const { action, title, content } = req.body; // 'approve' ou 'reject'
+        const rawAction = req.body.action || req.body.status;
+        const action = (rawAction === 'approved' ? 'approve' : rawAction === 'rejected' ? 'reject' : rawAction);
+        const { title, content } = req.body; // 'approve' ou 'reject'
 
         const question = await db.Question.findByPk(questionId);
         if (!question) {

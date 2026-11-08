@@ -791,6 +791,10 @@ exports.fixFinancialTables = async (req, res) => {
         await db.sequelize.query(`CREATE TABLE IF NOT EXISTS "Expenses" ( "id" SERIAL PRIMARY KEY, "description" VARCHAR(255), "value" FLOAT, "date" DATE, "psychologistId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`);
         await db.sequelize.query(`CREATE TABLE IF NOT EXISTS "Appointments" ( "id" SERIAL PRIMARY KEY, "title" VARCHAR(255), "start" TIMESTAMP WITH TIME ZONE, "end" TIMESTAMP WITH TIME ZONE, "status" VARCHAR(255) DEFAULT 'scheduled', "value" FLOAT DEFAULT 0, "psychologistId" INTEGER, "patientId" INTEGER, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`);
         try { await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "patientId" INTEGER;'); } catch (e) {}
+        try { await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "recurrence" VARCHAR(32) DEFAULT \'none\';'); } catch (e) {}
+        try { await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "recurrenceUntil" TIMESTAMP WITH TIME ZONE NULL;'); } catch (e) {}
+        try { await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "recurrenceExceptions" TEXT DEFAULT \'[]\';'); } catch (e) {}
+        try { await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "seriesId" INTEGER NULL;'); } catch (e) {}
         await db.sequelize.query('ALTER TABLE "Expenses" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;');
         await db.sequelize.query('ALTER TABLE "Expenses" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;');
         res.send("✅ Tabelas Financeiras verificadas e corrigidas.");

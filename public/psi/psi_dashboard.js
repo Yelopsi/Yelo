@@ -532,24 +532,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (trialPremiumBanner) trialPremiumBanner.style.display = 'none'; // Esconde o banner de trial por padrão
         if (bannerAnterior) bannerAnterior.remove();
 
-        // Usuários VIP/Isentos nunca são bloqueados
-        if (psychologistData.is_exempt) return;
-
-        // 2. Aplica o Paywall se estiver inativo e em página restrita
-        if (estaInativo && !paginasPermitidas.includes(url)) {
-            mainEl.classList.add('blocked-view');
-
-            if (paywallOverlay) {
-                paywallOverlay.style.display = 'flex';
-            } else {
-                // Fallback caso o paywall HTML fixo não exista na página
-                mainEl.classList.add('restricted-mode');
-                const banner = document.createElement('div');
-                banner.className = 'restriction-floating-banner';
-                banner.innerHTML = `<span>🔒 Seu período de teste expirou. Ative o Plano Essencial para continuar.</span><button onclick="window.loadPage('psi_assinatura.html')">Assinar Agora</button>`;
-                document.body.appendChild(banner);
-            }
-        } else if (psychologistData.showTrialBanner && trialPremiumBanner) {
+        // Usuários com período de teste finalizado continuam com acesso livre no Plano Grátis (Comunidade)
+        // Sem bloqueio de tela ou modal de paywall.
+        if (psychologistData.showTrialBanner && trialPremiumBanner) {
             // Exibe o banner de trial premium se a flag do backend for true
             trialPremiumBanner.style.display = 'flex';
             const titleEl = document.getElementById('trial-premium-title');

@@ -174,12 +174,11 @@
                 return;
             }
             const sessions = Math.ceil(99 / val);
-            
-            if (sessions === 1) {
-                roiBubbleText.innerHTML = `🚀 1 sessão paga a Yelo. O resto é 100% lucro!`;
-            } else {
-                roiBubbleText.innerHTML = `💡 ${sessions} sessões pagam sua mensalidade na Yelo!`;
-            }
+            const tipoSelecionado = document.querySelector('input[name="tipo_cobranca"]:checked')?.value || 'sessao';
+            const unidade = tipoSelecionado === 'sessao'
+                ? (sessions === 1 ? 'sessão' : 'sessões')
+                : (sessions === 1 ? 'mensalidade' : 'mensalidades');
+            roiBubbleText.innerHTML = `Com ${sessions} ${unidade} a Yelo se paga. O restante é seu lucro!`;
             roiSpeechBubble.style.display = 'block';
         }
 

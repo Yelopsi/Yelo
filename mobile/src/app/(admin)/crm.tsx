@@ -1,183 +1,346 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+
+interface CrmCardProps {
+  title: string;
+  description: string;
+  badge?: string;
+  badgeBg?: string;
+  badgeColor?: string;
+  icon: keyof typeof Feather.glyphMap;
+  iconColor: string;
+  iconBg: string;
+  borderColor: string;
+  onPress: () => void;
+}
+
+function CrmCard({
+  title,
+  description,
+  badge,
+  badgeBg = '#f1f5f9',
+  badgeColor = '#64748b',
+  icon,
+  iconColor,
+  iconBg,
+  borderColor,
+  onPress,
+}: CrmCardProps) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={{
+        backgroundColor: '#ffffff',
+        borderRadius: 20,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 6,
+        elevation: 1,
+      }}
+    >
+      <View className="flex-row justify-between items-center mb-3">
+        <View 
+          style={{ backgroundColor: iconBg, width: 42, height: 42, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }} 
+        >
+          <Feather name={icon} size={20} color={iconColor} />
+        </View>
+        <View className="flex-row items-center gap-1.5">
+          {badge && (
+            <View 
+              style={{ backgroundColor: badgeBg }}
+              className="px-2.5 py-1 rounded-full"
+            >
+              <Text 
+                style={{ color: badgeColor }} 
+                className="font-sans font-bold text-[10px] uppercase tracking-wider"
+              >
+                {badge}
+              </Text>
+            </View>
+          )}
+          <Feather name="chevron-right" size={18} color="#cbd5e1" />
+        </View>
+      </View>
+      <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 16, marginBottom: 4 }}>
+        {title}
+      </Text>
+      <Text className="font-sans text-[#64748b] text-[13px] leading-[18px]">
+        {description}
+      </Text>
+    </TouchableOpacity>
+  );
+}
 
 export default function AdminCRMHubScreen() {
   const router = useRouter();
+
+  const handleNavigate = (path: any) => {
+    try {
+      router.push(path);
+    } catch (_) {
+      router.navigate(path);
+    }
+  };
+
   return (
-    <ScrollView className="flex-1 bg-[#f9fafb]" contentContainerStyle={{ padding: 20 }}>
-      {/* Cabeçalho do Hub */}
-      <View className="bg-[#1e1b4b] rounded-[24px] p-[24px] mb-[25px] shadow-[0_4px_20px_rgba(30,27,75,0.15)] relative overflow-hidden">
-        <View className="absolute top-[-20px] right-[-20px] w-[120px] h-[120px] bg-white/5 rounded-full" />
-        <Text className="font-title text-white text-[28px] mb-[4px]">CRM Yelo</Text>
-        <Text className="font-sans text-white/80 text-[14px]">Central de Vendas, Relacionamento, Dados e Retenção.</Text>
+    <ScrollView 
+      className="flex-1 bg-[#f8f9fa] px-4 pt-4" 
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 130 }}
+    >
+      {/* 1. CABEÇALHO DO HUB — Gradiente Verde Floresta idêntico à Web */}
+      <LinearGradient
+        colors={['#1B4332', '#0f2b20']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          borderRadius: 24,
+          padding: 24,
+          marginBottom: 24,
+          shadowColor: '#1B4332',
+          shadowOpacity: 0.12,
+          shadowRadius: 25,
+          shadowOffset: { width: 0, height: 8 },
+          elevation: 4,
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <View className="absolute -top-[30px] -right-[30px] w-[140px] h-[140px] bg-white/5 rounded-full pointer-events-none" />
+        <Text className="font-title text-white text-[28px] font-bold mb-1">
+          CRM Yelo
+        </Text>
+        <Text className="font-sans text-white/80 text-[14px] leading-5">
+          Central de Vendas, Relacionamento, Dados e Retenção.
+        </Text>
+      </LinearGradient>
+
+      {/* 2. SEÇÃO: GESTÃO DE ENTIDADES (FUNIL E OPERAÇÃO EM ORDEM LÓGICA) */}
+      <View className="mb-6">
+        <View className="flex-row items-center gap-2 mb-3 px-1">
+          <Feather name="users" size={18} color="#1B4332" />
+          <Text className="font-title text-[#1B4332] text-[18px] font-bold">
+            Gestão de Entidades
+          </Text>
+        </View>
+
+        {/* 1. Base Ativa: Sucesso do Psicólogo */}
+        <CrmCard
+          title="Sucesso do Psicólogo"
+          description="Onboarding, performance de perfil e distribuição de leads."
+          badge="Oferta"
+          icon="activity"
+          iconColor="#1B4332"
+          iconBg="#e8f5e9"
+          borderColor="#1B4332"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/psicologos')}
+        />
+
+        {/* 2. Captação Ativa: Pipeline de Leads */}
+        <CrmCard
+          title="Pipeline de Leads"
+          description="Gestão de prospecção, estágios do funil e contatos frios."
+          badge="Captação"
+          icon="target"
+          iconColor="#3b82f6"
+          iconBg="#eff6ff"
+          borderColor="#3b82f6"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/leads')}
+        />
+
+        {/* 3. Entrada / Inbound: Leads em Espera */}
+        <CrmCard
+          title="Leads Inbound (Espera)"
+          description="Profissionais que iniciaram o cadastro mas não finalizaram."
+          badge="Inbound"
+          icon="file-text"
+          iconColor="#f59e0b"
+          iconBg="#fffbeb"
+          borderColor="#f59e0b"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/espera')}
+        />
+
+        {/* 4. Demanda & Retenção: Visão 360° Pacientes */}
+        <CrmCard
+          title="Visão 360° Pacientes"
+          description="Timeline, engajamento, abandono e histórico de match."
+          badge="Retenção"
+          icon="heart"
+          iconColor="#10b981"
+          iconBg="#ecfdf5"
+          borderColor="#10b981"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/pacientes')}
+        />
       </View>
 
-      {/* 1. Gestão de Entidades */}
-      <View className="mb-[25px]">
-        <View className="flex-row items-center mb-[15px]">
-          <Feather name="users" size={20} color="#1e1b4b" />
-          <Text className="font-title text-[#1e1b4b] text-[18px] ml-[8px]">Gestão de Entidades</Text>
+      {/* 3. SEÇÃO: INTELIGÊNCIA FINANCEIRA E ANALYTICS (MACRO -> MICRO EM ORDEM LÓGICA) */}
+      <View className="mb-6">
+        <View className="flex-row items-center gap-2 mb-3 px-1">
+          <Feather name="trending-up" size={18} color="#1B4332" />
+          <Text className="font-title text-[#1B4332] text-[18px] font-bold">
+            Inteligência Financeira e Analytics
+          </Text>
         </View>
 
-        <View className="gap-[10px]">
-          {/* Sucesso do Psicólogo */}
-          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/psicologos')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-            <View className="w-[45px] h-[45px] bg-[#f3e8ff] rounded-[12px] items-center justify-center mr-[15px]">
-              <Feather name="user-check" size={20} color="#8b5cf6" />
-            </View>
-            <View className="flex-1">
-              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Sucesso do Psicólogo</Text>
-              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Onboarding, performance de perfil e distribuição.</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
+        {/* 1. Painel do CMO (Alocação de Ads e CAC) */}
+        <CrmCard
+          title="Painel do CMO 🧠"
+          description="Motor de Decisão Executiva de Ads cruzado com CAC e Churn."
+          badge="Inteligência AI"
+          badgeBg="#e8f5e9"
+          badgeColor="#1B4332"
+          icon="cpu"
+          iconColor="#1B4332"
+          iconBg="#e8f5e9"
+          borderColor="#1B4332"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/cmo-metrics')}
+        />
 
-          {/* Pipeline de Leads */}
-          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/leads')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-            <View className="w-[45px] h-[45px] bg-[#e0f2fe] rounded-[12px] items-center justify-center mr-[15px]">
-              <Feather name="target" size={20} color="#0ea5e9" />
-            </View>
-            <View className="flex-1">
-              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Pipeline de Leads</Text>
-              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Gestão de prospecção e contatos frios.</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
+        {/* 2. Analytics de Funil (Taxa de Conversão e UTMs) */}
+        <CrmCard
+          title="Analytics de Funil"
+          description="Métricas em tempo real, conversão end-to-end e origens UTM."
+          icon="filter"
+          iconColor="#f59e0b"
+          iconBg="#fffbeb"
+          borderColor="#f59e0b"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/analytics-funil')}
+        />
 
-          {/* Leads Inbound (Espera) */}
-          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/espera')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-            <View className="w-[45px] h-[45px] bg-[#fef3c7] rounded-[12px] items-center justify-center mr-[15px]">
-              <Feather name="clock" size={20} color="#d97706" />
-            </View>
-            <View className="flex-1">
-              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Leads Inbound (Espera)</Text>
-              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Profissionais que iniciaram cadastro mas não finalizaram.</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
+        {/* 3. Receita e Assinaturas (Bottom-Line Financeiro) */}
+        <CrmCard
+          title="Receita e Assinaturas"
+          description="MRR, taxa de Churn, Life Time Value (LTV) e faturas Asaas."
+          badge="Financeiro"
+          badgeBg="#ccfbf1"
+          badgeColor="#0d9488"
+          icon="dollar-sign"
+          iconColor="#0d9488"
+          iconBg="#ccfbf1"
+          borderColor="#14b8a6"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/receita')}
+        />
 
-          {/* Visão 360 Pacientes */}
-          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/pacientes')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-            <View className="w-[45px] h-[45px] bg-[#dcfce7] rounded-[12px] items-center justify-center mr-[15px]">
-              <Feather name="heart" size={20} color="#22c55e" />
-            </View>
-            <View className="flex-1">
-              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Visão 360° Pacientes</Text>
-              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Timeline, engajamento e abandono.</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
-        </View>
+        {/* 4. Growth (Crescimento Executivo e Metas) */}
+        <CrmCard
+          title="Growth 📈"
+          description="Visão completa de aquisição, conversão, retenção e demanda do Yelo."
+          icon="trending-up"
+          iconColor="#10b981"
+          iconBg="#ecfdf5"
+          borderColor="#10b981"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/analytics-crescimento')}
+        />
+
+        {/* 5. Copilot WhatsApp AI (Assistente de Conversão) */}
+        <CrmCard
+          title="Copilot WhatsApp 💬"
+          description="Cole conversas do WhatsApp e receba respostas personalizadas com o dossiê real do psicólogo."
+          badge="Inteligência AI"
+          badgeBg="#dcfce7"
+          badgeColor="#16a34a"
+          icon="message-circle"
+          iconColor="#16a34a"
+          iconBg="#dcfce7"
+          borderColor="#25d366"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/copilot-wpp')}
+        />
+
+        {/* 6. Distribuição & Ads (Equidade da Rede) */}
+        <CrmCard
+          title="Distribuição & Ads"
+          description="Análise de visibilidade de profissionais e sugestões de Ads."
+          icon="pie-chart"
+          iconColor="#d93025"
+          iconBg="#fce8e6"
+          borderColor="#d93025"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/distribuicao')}
+        />
       </View>
 
-      {/* 2. Inteligência Financeira e Analytics */}
-      <View className="mb-[25px]">
-        <View className="flex-row items-center mb-[15px]">
-          <Feather name="bar-chart-2" size={20} color="#1e1b4b" />
-          <Text className="font-title text-[#1e1b4b] text-[18px] ml-[8px]">Inteligência Financeira</Text>
+      {/* 4. SEÇÃO: QUALIDADE E EXPERIÊNCIA DO CLIENTE */}
+      <View className="mb-6">
+        <View className="flex-row items-center gap-2 mb-3 px-1">
+          <Feather name="thumbs-up" size={18} color="#1B4332" />
+          <Text className="font-title text-[#1B4332] text-[18px] font-bold">
+            Qualidade e Experiência do Cliente
+          </Text>
         </View>
-        <View className="gap-[10px]">
-          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/analytics-crescimento')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-            <View className="w-[45px] h-[45px] bg-[#fef3c7] rounded-[12px] items-center justify-center mr-[15px]">
-              <Feather name="trending-up" size={20} color="#d97706" />
-            </View>
-            <View className="flex-1">
-              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Analytics de Crescimento</Text>
-              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Conversão end-to-end e origens UTM.</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/receita')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-            <View className="w-[45px] h-[45px] bg-[#ccfbf1] rounded-[12px] items-center justify-center mr-[15px]">
-              <Feather name="dollar-sign" size={20} color="#0d9488" />
-            </View>
-            <View className="flex-1">
-              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Receita e Assinaturas</Text>
-              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">MRR, Churn, LTV e faturas Asaas.</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
-        </View>
+        {/* 1. Avaliações (Satisfação e Depoimentos) */}
+        <CrmCard
+          title="Avaliações (NPS)"
+          description="Monitoramento de satisfação e depoimentos da plataforma."
+          icon="star"
+          iconColor="#f59e0b"
+          iconBg="#fffbeb"
+          borderColor="#f59e0b"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/avaliacoes')}
+        />
+
+        {/* 2. Motivos de Cancelamento (Atrito e Churn) */}
+        <CrmCard
+          title="Motivos de Cancelamento"
+          description="Análise de atrito e feedback deixado na exclusão da conta (Churn)."
+          icon="user-x"
+          iconColor="#ef4444"
+          iconBg="#fef2f2"
+          borderColor="#ef4444"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/cancelamentos')}
+        />
       </View>
 
-      {/* 3. Qualidade e Retenção */}
-      <View className="mb-[25px]">
-        <View className="flex-row items-center mb-[15px]">
-          <Feather name="star" size={20} color="#1e1b4b" />
-          <Text className="font-title text-[#1e1b4b] text-[18px] ml-[8px]">Qualidade e Retenção</Text>
+      {/* 5. SEÇÃO: COMUNICAÇÃO OMNICHANNEL (DIRETO -> BROADCAST EM ORDEM LÓGICA) */}
+      <View className="mb-6">
+        <View className="flex-row items-center gap-2 mb-3 px-1">
+          <Feather name="message-square" size={18} color="#1B4332" />
+          <Text className="font-title text-[#1B4332] text-[18px] font-bold">
+            Comunicação Omnichannel
+          </Text>
         </View>
-        <View className="gap-[10px]">
-          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/avaliacoes')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-            <View className="w-[45px] h-[45px] bg-[#fef3c7] rounded-[12px] items-center justify-center mr-[15px]">
-              <Feather name="thumbs-up" size={20} color="#d97706" />
-            </View>
-            <View className="flex-1">
-              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Avaliações (NPS)</Text>
-              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Satisfação e depoimentos.</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/cancelamentos')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-            <View className="w-[45px] h-[45px] bg-[#fee2e2] rounded-[12px] items-center justify-center mr-[15px]">
-              <Feather name="alert-circle" size={20} color="#ef4444" />
-            </View>
-            <View className="flex-1">
-              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Motivos de Cancelamento</Text>
-              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Análise de atrito e exclusão de conta (Churn).</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
-        </View>
+        {/* 1. Atendimento 1-to-1 Imediato: Caixa de Entrada */}
+        <CrmCard
+          title="Caixa de Entrada (Chat)"
+          description="Atendimento em tempo real a psicólogos e suporte."
+          icon="inbox"
+          iconColor="#3b82f6"
+          iconBg="#eff6ff"
+          borderColor="#3b82f6"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/caixa-entrada')}
+        />
+
+        {/* 2. Reativação Direta: Follow-up WhatsApp */}
+        <CrmCard
+          title="Follow-up WhatsApp"
+          description="Retomada de contato (Retenção) com pacientes perdidos."
+          icon="phone-call"
+          iconColor="#10b981"
+          iconBg="#ecfdf5"
+          borderColor="#10b981"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/followup')}
+        />
+
+        {/* 3. Comunicação Massiva: Mural de Avisos */}
+        <CrmCard
+          title="Mural de Avisos"
+          description="Notificações globais (Push) para os painéis dos profissionais."
+          icon="bell"
+          iconColor="#d97706"
+          iconBg="#fef3c7"
+          borderColor="#d97706"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/avisos')}
+        />
       </View>
-
-      {/* 4. Comunicação Omnichannel */}
-      <View className="mb-[25px]">
-        <View className="flex-row items-center mb-[15px]">
-          <Feather name="message-circle" size={20} color="#1e1b4b" />
-          <Text className="font-title text-[#1e1b4b] text-[18px] ml-[8px]">Comunicação Omnichannel</Text>
-        </View>
-        <View className="gap-[10px]">
-          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/caixa-entrada')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-            <View className="w-[45px] h-[45px] bg-[#e0f2fe] rounded-[12px] items-center justify-center mr-[15px]">
-              <Feather name="inbox" size={20} color="#0ea5e9" />
-            </View>
-            <View className="flex-1">
-              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Caixa de Entrada (Chat)</Text>
-              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Atendimento em tempo real a psicólogos.</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => router.push('/(admin)/(crm)/avisos')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-            <View className="w-[45px] h-[45px] bg-[#f3e8ff] rounded-[12px] items-center justify-center mr-[15px]">
-              <Feather name="bell" size={20} color="#8b5cf6" />
-            </View>
-            <View className="flex-1">
-              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Avisos e Broadcast (Push)</Text>
-              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Envie notificações e alertas globais.</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => Alert.alert('Aviso', 'Módulo em construção.')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-            <View className="w-[45px] h-[45px] bg-[#dcfce7] rounded-[12px] items-center justify-center mr-[15px]">
-              <Feather name="message-square" size={20} color="#22c55e" />
-            </View>
-            <View className="flex-1">
-              <Text className="font-title text-[#333] text-[16px] mb-[2px]">Follow-up WhatsApp</Text>
-              <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Retomada de contato com pacientes perdidos.</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#ccc" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Padding para a bottom nav */}
-      <View className="h-[120px]" />
     </ScrollView>
   );
 }

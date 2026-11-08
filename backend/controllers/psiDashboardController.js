@@ -508,7 +508,7 @@ exports.getAnnouncements = async (req, res) => {
         if (forumPostIds.size > 0 && db.ForumPost) {
             const posts = await db.ForumPost.findAll({
                 where: { id: Array.from(forumPostIds) },
-                attributes: ['id', 'status', 'PsychologistId']
+                attributes: ['id', 'status', 'PsychologistId', 'content']
             });
             posts.forEach(p => activeForumPostsMap.set(p.id, p));
         }
@@ -517,7 +517,7 @@ exports.getAnnouncements = async (req, res) => {
         if (blogPostIds.size > 0 && db.Post) {
             const bPosts = await db.Post.findAll({
                 where: { id: Array.from(blogPostIds) },
-                attributes: ['id', 'psychologistId']
+                attributes: ['id', 'psychologistId', 'conteudo', 'resumo']
             });
             bPosts.forEach(bp => activeBlogPostsMap.set(bp.id, bp));
         }
@@ -586,7 +586,38 @@ exports.getAnnouncements = async (req, res) => {
         }
 
         const responseData = validAvisos.map(aviso => {
-            const avisoObj = aviso.toJSON ? aviso.toJSON() : aviso;
+            const avisoObj = aviso.toJSON ? aviso.toJSON() : { ...aviso };
+            let contentStr = avisoObj.content || '';
+
+            if (/acabamos de publicar/i.test(contentStr)) {
+                let rawBody = '';
+                const fMatch = contentStr.match(/data-post-id="(\d+)"/) || contentStr.match(/postId=(\d+)/);
+                if (fMatch && fMatch[1]) {
+                    const fPost = activeForumPostsMap.get(parseInt(fMatch[1], 10));
+                    if (fPost && fPost.content) rawBody = fPost.content;
+                }
+                if (!rawBody) {
+                    const bMatch = contentStr.match(/data-blog-id="(\d+)"/);
+                    if (bMatch && bMatch[1]) {
+                        const bPost = activeBlogPostsMap.get(parseInt(bMatch[1], 10));
+                        if (bPost) rawBody = bPost.conteudo || bPost.resumo || '';
+                    }
+                }
+                const cleanBody = String(rawBody || '')
+                    .replace(/<[^>]*>?/gm, ' ')
+                    .replace(/&nbsp;/gi, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                if (cleanBody) {
+                    const excerpt = cleanBody.length > 180 ? `${cleanBody.substring(0, 180).trim()}...` : cleanBody;
+                    contentStr = contentStr.replace(
+                        /Ei!\s*Acabamos de publicar um conteúdo novo que pode te interessar\.\s*Vá dar uma olhada e interaja com a comunidade!/i,
+                        `"${excerpt}"`
+                    );
+                    avisoObj.content = contentStr;
+                }
+            }
+
             return { ...avisoObj, read: lidosIds.has(avisoObj.id) };
         });
         res.status(200).json(responseData);
@@ -670,5 +701,85 @@ exports.getAiInsights = async (req, res) => {
     } catch (error) {
         console.error("Erro em getAiInsights:", error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+};
+
+exports.getFavoritesProfile = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
+        if (!psychologistId) {
+            return res.status(401).json({ error: 'Psicólogo não autenticado.' });
+        }
+
+        const [patients] = await db.sequelize.query(`
+            SELECT 
+                pt."id",
+                pt."temas_buscados",
+                pt."valor_sessao_faixa",
+                pt."identidade_genero"
+            FROM "PatientFavorites" pf
+            JOIN "Patients" pt ON pf."PatientId" = pt."id"
+            WHERE pf."PsychologistId" = :psychologistId 
+              AND pf."deletedAt" IS NULL 
+              AND pt."deletedAt" IS NULL
+        `, { replacements: { psychologistId } });
+
+        if (!patients || patients.length === 0) {
+            return res.json({ total: 0, temas: {}, faixaValor: {}, genero: {} });
+        }
+
+        const total = patients.length;
+        const temasCount = {};
+        const faixaValorCount = {};
+        const generoCount = {};
+
+        for (const p of patients) {
+            // Temas buscados
+            if (Array.isArray(p.temas_buscados)) {
+                for (const t of p.temas_buscados) {
+                    if (t) {
+                        const tema = t.trim();
+                        temasCount[tema] = (temasCount[tema] || 0) + 1;
+                    }
+                }
+            } else if (typeof p.temas_buscados === 'string') {
+                try {
+                    const parsed = JSON.parse(p.temas_buscados);
+                    if (Array.isArray(parsed)) {
+                        for (const t of parsed) {
+                            if (t) {
+                                const tema = t.trim();
+                                temasCount[tema] = (temasCount[tema] || 0) + 1;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    const tema = p.temas_buscados.trim();
+                    if (tema) temasCount[tema] = (temasCount[tema] || 0) + 1;
+                }
+            }
+
+            // Faixa de valor
+            if (p.valor_sessao_faixa) {
+                const faixa = p.valor_sessao_faixa.trim();
+                if (faixa) faixaValorCount[faixa] = (faixaValorCount[faixa] || 0) + 1;
+            }
+
+            // Gênero
+            if (p.identidade_genero) {
+                const genero = p.identidade_genero.trim();
+                if (genero) generoCount[genero] = (generoCount[genero] || 0) + 1;
+            }
+        }
+
+        res.json({
+            total,
+            temas: temasCount,
+            faixaValor: faixaValorCount,
+            genero: generoCount
+        });
+    } catch (error) {
+        console.error("Erro em getFavoritesProfile:", error);
+        res.status(500).json({ error: 'Erro ao buscar perfil de favoritos.' });
     }
 };

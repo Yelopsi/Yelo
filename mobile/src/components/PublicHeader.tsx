@@ -20,7 +20,7 @@ export default function PublicHeader({ isScrolled = false, alwaysLight = false }
 
   return (
     <>
-      <StatusBar style={isLight ? "dark" : "light"} backgroundColor="transparent" translucent={true} />
+      <StatusBar style={isLight ? "dark" : "light"} />
       <View style={{ overflow: 'hidden', paddingBottom: 30, marginBottom: -30, zIndex: 50 }}>
         <View 
           className={`${bgColor} pb-2 pt-2`} 

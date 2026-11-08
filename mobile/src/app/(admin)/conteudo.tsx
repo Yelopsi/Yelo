@@ -1,57 +1,195 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+
+interface HubCardProps {
+  title: string;
+  description: string;
+  icon: keyof typeof Feather.glyphMap;
+  iconColor: string;
+  iconBg: string;
+  onPress: () => void;
+}
+
+function HubCard({
+  title,
+  description,
+  icon,
+  iconColor,
+  iconBg,
+  onPress,
+}: HubCardProps) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={{
+        backgroundColor: '#ffffff',
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        borderRadius: 16,
+        padding: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+        marginBottom: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 6,
+        elevation: 1,
+      }}
+    >
+      <View
+        style={{
+          width: 52,
+          height: 52,
+          borderRadius: 16,
+          backgroundColor: iconBg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Feather name={icon} size={22} color={iconColor} />
+      </View>
+
+      <View style={{ flex: 1 }}>
+        <Text
+          style={{
+            fontFamily: 'Fraunces_700Bold',
+            fontSize: 16,
+            color: '#1B4332',
+            marginBottom: 3,
+          }}
+        >
+          {title}
+        </Text>
+        <Text
+          style={{
+            fontFamily: 'Inter_400Regular',
+            fontSize: 12.5,
+            color: '#64748b',
+            lineHeight: 18,
+          }}
+        >
+          {description}
+        </Text>
+      </View>
+
+      <Feather name="chevron-right" size={18} color="#94a3b8" />
+    </TouchableOpacity>
+  );
+}
 
 export default function AdminConteudoHubScreen() {
   const router = useRouter();
+
   return (
-    <ScrollView className="flex-1 bg-[#f9fafb]" contentContainerStyle={{ padding: 20 }}>
-      {/* Cabeçalho do Hub */}
-      <View className="bg-[#1e1b4b] rounded-[24px] p-[24px] mb-[25px] shadow-[0_4px_20px_rgba(30,27,75,0.15)] relative overflow-hidden">
-        <View className="absolute top-[-20px] right-[-20px] w-[120px] h-[120px] bg-white/5 rounded-full" />
-        <Text className="font-title text-white text-[28px] mb-[4px]">Conteúdo e Comunidade</Text>
-        <Text className="font-sans text-white/80 text-[14px]">Modere conteúdos, fórum e avaliações.</Text>
-      </View>
+    <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      <StatusBar style="dark" />
 
-      <View className="gap-[15px]">
-        {/* Gestão de Conteúdo */}
-        <TouchableOpacity onPress={() => router.push('/(admin)/gestao-conteudo')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-          <View className="w-[45px] h-[45px] bg-[#f3e8ff] rounded-[12px] items-center justify-center mr-[15px]">
-            <Feather name="layout" size={20} color="#7e22ce" />
-          </View>
-          <View className="flex-1">
-            <Text className="font-title text-[#333] text-[16px] mb-[2px]">Gestão de Conteúdo</Text>
-            <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Moderação de avaliações, Q&A e Blogs.</Text>
-          </View>
-          <Feather name="chevron-right" size={20} color="#ccc" />
-        </TouchableOpacity>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: 130, // respiro premium para a barra de navegação inferior
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ========================================================= */}
+        {/* CABEÇALHO DO HUB: CONTEÚDO E COMUNIDADE                   */}
+        {/* ========================================================= */}
+        <LinearGradient
+          colors={['#1B4332', '#2D6A4F']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            borderRadius: 24,
+            padding: 22,
+            marginBottom: 20,
+            shadowColor: '#1B4332',
+            shadowOpacity: 0.15,
+            shadowRadius: 20,
+            shadowOffset: { width: 0, height: 6 },
+            elevation: 4,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <View
+            style={{
+              position: 'absolute',
+              top: -30,
+              right: -30,
+              width: 140,
+              height: 140,
+              borderRadius: 70,
+              backgroundColor: 'rgba(255,255,255,0.06)',
+            }}
+            pointerEvents="none"
+          />
+          <Text
+            style={{
+              fontFamily: 'Fraunces_700Bold',
+              fontSize: 24,
+              color: '#ffffff',
+              marginBottom: 4,
+            }}
+          >
+            Conteúdo e Comunidade
+          </Text>
+          <Text
+            style={{
+              fontFamily: 'Inter_400Regular',
+              fontSize: 13,
+              color: 'rgba(255,255,255,0.85)',
+              lineHeight: 18,
+            }}
+          >
+            Modere conteúdos, fórum e avaliações.
+          </Text>
+        </LinearGradient>
 
-        {/* Moderação do Fórum */}
-        <TouchableOpacity onPress={() => router.push('/(admin)/moderacao-forum')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-          <View className="w-[45px] h-[45px] bg-[#e8f5e9] rounded-[12px] items-center justify-center mr-[15px]">
-            <Feather name="message-square" size={20} color="#1b4332" />
-          </View>
-          <View className="flex-1">
-            <Text className="font-title text-[#333] text-[16px] mb-[2px]">Moderação do Fórum</Text>
-            <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Gerencie denúncias e posts da comunidade.</Text>
-          </View>
-          <Feather name="chevron-right" size={20} color="#ccc" />
-        </TouchableOpacity>
+        {/* ========================================================= */}
+        {/* GRID DOS 3 CARDS IDÊNTICOS À VERSÃO WEB MOBILE            */}
+        {/* ========================================================= */}
+        <View>
+          {/* Card 1: Gestão de Conteúdo */}
+          <HubCard
+            title="Gestão de Conteúdo"
+            description="Moderação de avaliações, Q&A e Blogs."
+            icon="file-text"
+            iconColor="#7E22CE"
+            iconBg="#F3E8FF"
+            onPress={() => router.push('/(admin)/gestao-conteudo')}
+          />
 
-        {/* Gestão da Comunidade */}
-        <TouchableOpacity onPress={() => router.push('/(admin)/comunidade-gestao')} className="bg-white rounded-[16px] p-[16px] flex-row items-center border border-[#f0f0f0]">
-          <View className="w-[45px] h-[45px] bg-[#e0f2fe] rounded-[12px] items-center justify-center mr-[15px]">
-            <Feather name="users" size={20} color="#0284c7" />
-          </View>
-          <View className="flex-1">
-            <Text className="font-title text-[#333] text-[16px] mb-[2px]">Gestão da Comunidade</Text>
-            <Text className="font-sans text-[#666] text-[12px] leading-[16px]">Edite banners e links de recursos úteis.</Text>
-          </View>
-          <Feather name="chevron-right" size={20} color="#ccc" />
-        </TouchableOpacity>
-      </View>
-      <View className="h-[120px]" />
-    </ScrollView>
+          {/* Card 2: Moderação do Fórum */}
+          <HubCard
+            title="Moderação do Fórum"
+            description="Gerencie denúncias e posts da comunidade."
+            icon="shield"
+            iconColor="#1B4332"
+            iconBg="#E8F5E9"
+            onPress={() => router.push('/(admin)/moderacao-forum')}
+          />
+
+          {/* Card 3: Gestão da Comunidade */}
+          <HubCard
+            title="Gestão da Comunidade"
+            description="Edite banners e links de recursos úteis."
+            icon="message-circle"
+            iconColor="#0284C7"
+            iconBg="#E0F2FE"
+            onPress={() => router.push('/(admin)/comunidade-gestao')}
+          />
+        </View>
+      </ScrollView>
+    </View>
   );
 }

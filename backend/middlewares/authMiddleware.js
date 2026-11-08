@@ -17,36 +17,51 @@ const protect = async (req, res, next) => {
         const allowedHosts = ['www.yelopsi.com.br', 'yelopsi.com.br', 'localhost', '127.0.0.1'];
         
         if (!origin && !referer) {
-            console.warn(`⚠️ [CSRF BLOQUEADO] Requisição mutável sem Origin e sem Referer`);
-            return res.status(403).json({ error: 'CSRF Blocked: Missing Origin/Referer' });
-        }
-
-        try {
-            const checkUrl = origin || referer;
-            const parsedHost = new URL(checkUrl).hostname;
-            
-            // Permite hosts oficiais, same-host direto e IPs de rede local (Wi-Fi para testes mobile: 192.168.x.x, 10.x.x.x, 172.16-31.x.x)
-            const isLocalIp = /^192\.168\.\d+\.\d+$|^10\.\d+\.\d+\.\d+$|^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(parsedHost);
-            const isSameHost = parsedHost === req.hostname;
-            const isAllowed = allowedHosts.includes(parsedHost) || isSameHost || isLocalIp;
-
-            if (!isAllowed) {
-                console.warn(`⚠️ [CSRF BLOQUEADO] Host não permitido: ${parsedHost}`);
-                return res.status(403).json({ error: 'CSRF Blocked: Host mismatch' });
+            // Se for requisição autenticada do app mobile nativo com Bearer token e header x-yelo-client
+            if (req.headers['x-yelo-client'] === 'mobile' && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+                // Cliente mobile nativo verificado (não sujeito a CSRF de cookies de navegadores)
+            } else {
+                console.warn(`⚠️ [CSRF BLOQUEADO] Requisição mutável sem Origin e sem Referer`);
+                return res.status(403).json({ error: 'CSRF Blocked: Missing Origin/Referer' });
             }
-        } catch (e) {
-            console.warn(`⚠️ [CSRF BLOQUEADO] URL de Origin/Referer malformada`);
-            return res.status(403).json({ error: 'CSRF Blocked: Invalid URL' });
+        } else {
+            try {
+                const checkUrl = origin || referer;
+                const parsedHost = new URL(checkUrl).hostname;
+                
+                // Permite hosts oficiais, same-host direto e IPs de rede local (Wi-Fi para testes mobile: 192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+                const isLocalIp = /^192\.168\.\d+\.\d+$|^10\.\d+\.\d+\.\d+$|^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(parsedHost);
+                const isSameHost = parsedHost === req.hostname;
+                const isAllowed = allowedHosts.includes(parsedHost) || isSameHost || isLocalIp;
+
+                if (!isAllowed) {
+                    console.warn(`⚠️ [CSRF BLOQUEADO] Host não permitido: ${parsedHost}`);
+                    return res.status(403).json({ error: 'CSRF Blocked: Host mismatch' });
+                }
+            } catch (e) {
+                console.warn(`⚠️ [CSRF BLOQUEADO] URL de Origin/Referer malformada`);
+                return res.status(403).json({ error: 'CSRF Blocked: Invalid URL' });
+            }
         }
     }
 
-    // 1. Fonte primária: Cookie HttpOnly (Proteção LGPD-2 / XSS), com fallback para Header Authorization (Bearer)
-    let token = req.cookies && req.cookies.token ? req.cookies.token : null;
-    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    // 1. No cliente mobile (x-yelo-client: mobile), o Bearer token explícito do SecureStore tem prioridade
+    // sobre o Cookie jar nativo do iOS/Android (evita conflito ao alternar contas no app).
+    // Na Web, mantém Cookie HttpOnly como fonte primária com fallback para Header Authorization (Bearer).
+    let token = null;
+    const isMobileClient = req.headers['x-yelo-client'] === 'mobile';
+    let bearerToken = null;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
         const candidateToken = req.headers.authorization.split(' ')[1];
         if (candidateToken && candidateToken !== 'cookie_auth_active' && candidateToken !== 'null' && candidateToken !== 'undefined') {
-            token = candidateToken;
+            bearerToken = candidateToken;
         }
+    }
+
+    if (isMobileClient && bearerToken) {
+        token = bearerToken;
+    } else {
+        token = (req.cookies && req.cookies.token) ? req.cookies.token : bearerToken;
     }
 
     if (token) {
