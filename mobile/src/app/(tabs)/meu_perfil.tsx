@@ -44,6 +44,56 @@ const formatCPFOrCNPJ = (text: string) => {
     .slice(0, 18);
 };
 
+const isValidCPF = (cpf: string) => {
+  const clean = cpf.replace(/\D/g, '');
+  if (clean.length !== 11 || /^(\d)\1{10}$/.test(clean)) return false;
+  let sum = 0;
+  for (let i = 1; i <= 9; i++) sum += parseInt(clean.substring(i - 1, i), 10) * (11 - i);
+  let rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  if (rest !== parseInt(clean.substring(9, 10), 10)) return false;
+  sum = 0;
+  for (let i = 1; i <= 10; i++) sum += parseInt(clean.substring(i - 1, i), 10) * (12 - i);
+  rest = (sum * 10) % 11;
+  if (rest === 10 || rest === 11) rest = 0;
+  if (rest !== parseInt(clean.substring(10, 11), 10)) return false;
+  return true;
+};
+
+const isValidCNPJ = (cnpj: string) => {
+  const clean = cnpj.replace(/\D/g, '');
+  if (clean.length !== 14 || /^(\d)\1{13}$/.test(clean)) return false;
+  let size = clean.length - 2;
+  let numbers = clean.substring(0, size);
+  const digits = clean.substring(size);
+  let sum = 0;
+  let pos = size - 7;
+  for (let i = size; i >= 1; i--) {
+    sum += parseInt(numbers.charAt(size - i), 10) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (result !== parseInt(digits.charAt(0), 10)) return false;
+  size = size + 1;
+  numbers = clean.substring(0, size);
+  sum = 0;
+  pos = size - 7;
+  for (let i = size; i >= 1; i--) {
+    sum += parseInt(numbers.charAt(size - i), 10) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (result !== parseInt(digits.charAt(1), 10)) return false;
+  return true;
+};
+
+const isValidDocument = (doc: string) => {
+  const clean = (doc || '').replace(/\D/g, '');
+  if (clean.length === 11) return isValidCPF(clean);
+  if (clean.length === 14) return isValidCNPJ(clean);
+  return false;
+};
+
 const formatPhone = (text: string) => {
   const digits = text.replace(/\D/g, '');
   if (digits.length <= 10) {
@@ -294,7 +344,7 @@ export default function MeuPerfilScreen() {
       { key: 'nome', label: 'Nome de Exibição', done: !!form.nome.trim() },
       { key: 'crp', label: 'Número do CRP', done: !!form.crp.trim() },
       { key: 'telefone', label: 'WhatsApp', done: !!form.telefone.trim() },
-      { key: 'cpf', label: 'Documento (CPF/CNPJ)', done: !!form.cpf.trim() },
+      { key: 'cpf', label: 'Documento (CPF/CNPJ)', done: isValidDocument(form.cpf) },
       { key: 'abordagens_tecnicas', label: 'Abordagens e Técnicas', done: !!form.abordagens_tecnicas },
       { key: 'temas_atuacao', label: 'Temas de Atuação', done: form.temas_atuacao.length > 0 },
       { key: 'publico_alvo', label: 'Público-Alvo', done: form.publico_alvo.length > 0 },
@@ -467,11 +517,17 @@ export default function MeuPerfilScreen() {
       const payload: any = {};
 
       if (blockKey === 'personal') {
+        const cleanDoc = (form.cpf || '').replace(/\D/g, '');
+        if (cleanDoc.length > 0 && !isValidDocument(cleanDoc)) {
+          Alert.alert('Documento Inválido', 'O CPF ou CNPJ informado é inválido. Por favor, confira os números digitados.');
+          setIsSaving(false);
+          return;
+        }
         payload.nome = form.nome;
         payload.crp = form.crp;
         payload.email = form.email;
         payload.telefone = form.telefone;
-        payload.cpf = form.cpf;
+        payload.cpf = cleanDoc;
         payload.razao_social = form.razao_social;
         payload.data_nascimento = form.data_nascimento;
       } else if (blockKey === 'location') {

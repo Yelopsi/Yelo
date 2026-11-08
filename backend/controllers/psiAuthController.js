@@ -7,6 +7,7 @@ const { sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailS
 const gamificationService = require('../services/gamificationService');
 const { verifyGoogleToken } = require('./authController');
 const metaService = require('../services/metaService');
+const { isValidDocument } = require('../utils/documentValidator');
 
 // ----------------------------------------------------------------------
 // Função Auxiliar: Gera o Token JWT para Psicólogo
@@ -69,8 +70,11 @@ exports.registerPsychologist = async (req, res) => {
             if (!/^[A-Za-z0-9\/\-\s]+$/.test(cleanCrp)) return res.status(400).json({ error: 'Formato de CRP inválido. Use apenas números, letras, barras e hifens.' });
         }
 
-        // REVERTIDO: Limpeza simples de CPF
+        // REVERTIDO: Limpeza simples de CPF com validação algorítmica
         const cleanCpf = cpf ? cpf.replace(/\D/g, '') : null;
+        if (cleanCpf && !isValidDocument(cleanCpf)) {
+            return res.status(400).json({ error: 'O CPF ou CNPJ informado é inválido. Por favor, confira os números digitados.' });
+        }
 
         // --- 3. VERIFICAÇÃO DE DUPLICIDADE ---
         // Monta a query dinamicamente para não buscar por null

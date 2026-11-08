@@ -263,6 +263,56 @@ export default function AssinaturaScreen() {
   }, []);
 
   // Máscaras de Formatação (CPF até 11 dígitos, transição dinâmica automática para CNPJ até 14 dígitos)
+  const isValidCPF = (cpf: string) => {
+    const clean = cpf.replace(/\D/g, '');
+    if (clean.length !== 11 || /^(\d)\1{10}$/.test(clean)) return false;
+    let sum = 0;
+    for (let i = 1; i <= 9; i++) sum += parseInt(clean.substring(i - 1, i), 10) * (11 - i);
+    let rest = (sum * 10) % 11;
+    if (rest === 10 || rest === 11) rest = 0;
+    if (rest !== parseInt(clean.substring(9, 10), 10)) return false;
+    sum = 0;
+    for (let i = 1; i <= 10; i++) sum += parseInt(clean.substring(i - 1, i), 10) * (12 - i);
+    rest = (sum * 10) % 11;
+    if (rest === 10 || rest === 11) rest = 0;
+    if (rest !== parseInt(clean.substring(10, 11), 10)) return false;
+    return true;
+  };
+
+  const isValidCNPJ = (cnpj: string) => {
+    const clean = cnpj.replace(/\D/g, '');
+    if (clean.length !== 14 || /^(\d)\1{13}$/.test(clean)) return false;
+    let size = clean.length - 2;
+    let numbers = clean.substring(0, size);
+    const digits = clean.substring(size);
+    let sum = 0;
+    let pos = size - 7;
+    for (let i = size; i >= 1; i--) {
+      sum += parseInt(numbers.charAt(size - i), 10) * pos--;
+      if (pos < 2) pos = 9;
+    }
+    let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    if (result !== parseInt(digits.charAt(0), 10)) return false;
+    size = size + 1;
+    numbers = clean.substring(0, size);
+    sum = 0;
+    pos = size - 7;
+    for (let i = size; i >= 1; i--) {
+      sum += parseInt(numbers.charAt(size - i), 10) * pos--;
+      if (pos < 2) pos = 9;
+    }
+    result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+    if (result !== parseInt(digits.charAt(1), 10)) return false;
+    return true;
+  };
+
+  const isValidDocument = (doc: string) => {
+    const clean = (doc || '').replace(/\D/g, '');
+    if (clean.length === 11) return isValidCPF(clean);
+    if (clean.length === 14) return isValidCNPJ(clean);
+    return false;
+  };
+
   const maskCpfCnpj = (v: string) => {
     const digits = (v || '').replace(/\D/g, '').slice(0, 14);
     if (digits.length <= 11) {
@@ -467,9 +517,9 @@ export default function AssinaturaScreen() {
     const rawDoc = (pixCpfInput || psiData?.cpf || psiData?.cnpj || '').replace(/\D/g, '');
     addDebugLog(`2. Documento informado: ${rawDoc || 'VAZIO'} (${rawDoc.length} dígitos)`);
 
-    if (!rawDoc || (rawDoc.length !== 11 && rawDoc.length !== 14)) {
-      addDebugLog(`❌ Validação falhou: Documento com ${rawDoc.length} dígitos`);
-      setModalError("Por favor, informe um CPF válido (11 dígitos) ou CNPJ (14 dígitos).");
+    if (!rawDoc || (rawDoc.length !== 11 && rawDoc.length !== 14) || !isValidDocument(rawDoc)) {
+      addDebugLog(`❌ Validação falhou: Documento inválido`);
+      setModalError("Por favor, informe um CPF válido ou CNPJ válido.");
       return;
     }
 
@@ -647,9 +697,9 @@ export default function AssinaturaScreen() {
       setModalError("Informe o código de segurança (CVV) do verso do cartão.");
       return;
     }
-    if (!rawDoc || (rawDoc.length !== 11 && rawDoc.length !== 14)) {
+    if (!rawDoc || (rawDoc.length !== 11 && rawDoc.length !== 14) || !isValidDocument(rawDoc)) {
       addDebugLog(`❌ Validação: Documento inválido (${rawDoc.length} dígitos)`);
-      setModalError("Informe um CPF válido (11 dígitos) ou CNPJ (14 dígitos).");
+      setModalError("Informe um CPF ou CNPJ válido do titular do cartão.");
       return;
     }
 

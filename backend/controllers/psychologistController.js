@@ -8,6 +8,7 @@ const gamificationService = require('../services/gamificationService'); // Impor
 const subscriptionController = require('./subscriptionController');
 const seoService = require('../services/seoService'); // Importa a Inteligência Artificial
 const GoogleBusinessService = require('../services/googleBusinessService');
+const { isValidDocument } = require('../utils/documentValidator');
 
 // --- CONFIGURAÇÃO DO CLOUDINARY ---
 const cloudinary = require('cloudinary').v2;
@@ -113,7 +114,7 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             : "⚠️ Atenção: Seu perfil não aparecerá nos Matches para os pacientes enquanto não tiver uma Foto de Perfil e uma Biografia detalhada (mínimo 150 caracteres). Complete seus dados para receber contatos.";
 
         // --- NOVO: LÓGICA PARA O BANNER DE TRIAL PREMIUM (CPF) ---
-        const hasValidCpf = !!(psychologist.cpf && psychologist.cpf.replace(/\D/g, '').length >= 11);
+        const hasValidCpf = !!(psychologist.cpf && isValidDocument(psychologist.cpf));
         responseData.showTrialBanner = (psychologist.status === 'pending' && !hasValidCpf);
         responseData.trialBannerMessage = responseData.showTrialBanner
             ? "Complete seu CPF no perfil para liberar seus 7 dias Premium grátis."
@@ -298,7 +299,17 @@ exports.updatePsychologistProfile = async (req, res) => {
         if (valor_mensal_numero !== undefined) updatePayload.valor_mensal_numero = valor_mensal_numero ? parseFloat(valor_mensal_numero) : null;
         if (valor_sessao_numero !== undefined) updatePayload.valor_sessao_numero = valor_sessao_numero ? parseFloat(valor_sessao_numero) : null;
         if (genero_identidade !== undefined) updatePayload.genero_identidade = genero_identidade;
-        if (cpf !== undefined) updatePayload.cpf = cpf;
+        if (cpf !== undefined && cpf !== null) {
+            const cleanDoc = String(cpf).replace(/\D/g, '');
+            if (cleanDoc.length > 0) {
+                if (!isValidDocument(cleanDoc)) {
+                    return res.status(400).json({ error: 'O CPF ou CNPJ informado é inválido. Por favor, confira os números digitados.' });
+                }
+                updatePayload.cpf = cleanDoc;
+            } else {
+                updatePayload.cpf = null;
+            }
+        }
         if (razao_social !== undefined) updatePayload.razao_social = razao_social;
         if (ano_inicio_experiencia !== undefined) updatePayload.ano_inicio_experiencia = ano_inicio_experiencia ? parseInt(ano_inicio_experiencia, 10) : null;
         if (data_nascimento !== undefined) updatePayload.data_nascimento = data_nascimento || null;

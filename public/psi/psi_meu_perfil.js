@@ -48,6 +48,87 @@
     }
 
     // --- COMPONENTES ---
+
+    function isValidCPF(cpf) {
+        cpf = String(cpf || '').replace(/\D/g, '');
+        if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+        let sum = 0;
+        for (let i = 1; i <= 9; i++) sum += parseInt(cpf.substring(i - 1, i), 10) * (11 - i);
+        let rest = (sum * 10) % 11;
+        if (rest === 10 || rest === 11) rest = 0;
+        if (rest !== parseInt(cpf.substring(9, 10), 10)) return false;
+        sum = 0;
+        for (let i = 1; i <= 10; i++) sum += parseInt(cpf.substring(i - 1, i), 10) * (12 - i);
+        rest = (sum * 10) % 11;
+        if (rest === 10 || rest === 11) rest = 0;
+        if (rest !== parseInt(cpf.substring(10, 11), 10)) return false;
+        return true;
+    }
+
+    function isValidCNPJ(cnpj) {
+        cnpj = String(cnpj || '').replace(/\D/g, '');
+        if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
+        let size = cnpj.length - 2;
+        let numbers = cnpj.substring(0, size);
+        let digits = cnpj.substring(size);
+        let sum = 0, pos = size - 7;
+        for (let i = size; i >= 1; i--) {
+            sum += parseInt(numbers.charAt(size - i), 10) * pos--;
+            if (pos < 2) pos = 9;
+        }
+        let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+        if (result !== parseInt(digits.charAt(0), 10)) return false;
+        size = size + 1;
+        numbers = cnpj.substring(0, size);
+        sum = 0; pos = size - 7;
+        for (let i = size; i >= 1; i--) {
+            sum += parseInt(numbers.charAt(size - i), 10) * pos--;
+            if (pos < 2) pos = 9;
+        }
+        result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+        if (result !== parseInt(digits.charAt(1), 10)) return false;
+        return true;
+    }
+
+    function isValidDocument(doc) {
+        const clean = String(doc || '').replace(/\D/g, '');
+        if (clean.length === 11) return isValidCPF(clean);
+        if (clean.length === 14) return isValidCNPJ(clean);
+        return false;
+    }
+
+    function validateDocumentField() {
+        const inputDoc = document.getElementById('cpf');
+        const feedback = document.getElementById('cpf-feedback');
+        if (!inputDoc) return true;
+        const clean = inputDoc.value.replace(/\D/g, '');
+        if (!clean) {
+            if (feedback) feedback.style.display = 'none';
+            inputDoc.style.borderColor = '';
+            return true;
+        }
+        if (clean.length < 11) {
+            if (feedback) {
+                feedback.textContent = 'Documento incompleto';
+                feedback.style.display = 'block';
+            }
+            inputDoc.style.borderColor = '#e63946';
+            return false;
+        }
+        const valid = isValidDocument(clean);
+        if (!valid) {
+            if (feedback) {
+                feedback.textContent = clean.length > 11 ? 'CNPJ inválido. Verifique os dígitos.' : 'CPF inválido. Verifique os dígitos.';
+                feedback.style.display = 'block';
+            }
+            inputDoc.style.borderColor = '#e63946';
+            return false;
+        } else {
+            if (feedback) feedback.style.display = 'none';
+            inputDoc.style.borderColor = '';
+            return true;
+        }
+    }
  
     function setupDocumentMask() {
         if (typeof IMask === 'undefined') return;
@@ -59,7 +140,15 @@
         inputDoc.maskRef = documentMaskInstance;
         documentMaskInstance.on('accept', () => {
             if (groupRazao) groupRazao.classList.toggle('hidden', documentMaskInstance.unmaskedValue.length <= 11);
+            if (documentMaskInstance.unmaskedValue.length >= 11) {
+                validateDocumentField();
+            } else {
+                const feedback = document.getElementById('cpf-feedback');
+                if (feedback) feedback.style.display = 'none';
+                inputDoc.style.borderColor = '';
+            }
         });
+        inputDoc.addEventListener('blur', validateDocumentField);
     }
     function setupMasks() {
         if (typeof IMask === 'undefined') return;
@@ -368,7 +457,7 @@
                 { key: 'nome', label: 'Nome de Exibição' },
                 { key: 'crp', label: 'Número do CRP' },
                 { key: 'telefone', label: 'WhatsApp' },
-                { key: 'cpf', label: 'Documento (CPF/CNPJ)', condition: (v, data) => !!(data.cpf || data.cnpj || data.document_number) },
+                { key: 'cpf', label: 'Documento (CPF/CNPJ)', condition: (v, data) => isValidDocument(data.cpf || data.cnpj || data.document_number) },
                 { key: 'cep', label: 'Localização (CEP)' },
                 { key: 'slug', label: 'Link Personalizado' },
                 { key: 'bio', label: 'Biografia', condition: (v) => v && String(v).trim().length >= 10 },
@@ -555,9 +644,13 @@
             block.querySelectorAll('input, textarea, select').forEach(el => {
                 // Impede edição de dados sensíveis ou controlados por API
                 if (el.id !== 'email' && el.id !== 'cidade' && el.id !== 'estado') {
-                    // Bloqueia edição do CPF/CNPJ caso já esteja preenchido e seja válido (maior que 10 dígitos)
-                    if (el.id === 'cpf' && originalProfileData.cpf && originalProfileData.cpf.length >= 11) {
-                        return; // Sai deste loop e mantém o disabled no input de documento
+                    // Bloqueia edição do CPF/CNPJ caso já esteja preenchido E seja um documento válido
+                    if (el.id === 'cpf' && originalProfileData.cpf) {
+                        const cleanSavedDoc = String(originalProfileData.cpf).replace(/\D/g, '');
+                        if (isValidDocument(cleanSavedDoc)) {
+                            return; // Mantém o disabled no input de documento caso seja válido
+                        }
+                        // Se o documento no banco for inválido, libera a edição para o psicólogo corrigir!
                     }
                     el.disabled = false;
                     if (el.tomselect) el.tomselect.enable();
@@ -626,6 +719,13 @@
         }
 
         async function saveBlockData(block) {
+            if (block.dataset.blockId === 'personal') {
+                if (!validateDocumentField()) {
+                    showToast('O CPF ou CNPJ informado é inválido. Por favor, confira os números.', 'error');
+                    setBlockState(block, 'error', 'Documento inválido');
+                    return;
+                }
+            }
             setBlockState(block, 'saving');
             const payload = getBlockData(block);
             if (block.dataset.blockId === 'google-reviews') {
@@ -665,7 +765,7 @@
                     const globalData = window.getPsychologistData();
                     if (globalData) {
                         const newGlobalData = { ...globalData, ...payload, ...resData };
-                        if (newGlobalData.cpf && String(newGlobalData.cpf).replace(/\D/g, '').length >= 11) {
+                        if (newGlobalData.cpf && isValidDocument(newGlobalData.cpf)) {
                             newGlobalData.showTrialBanner = false;
                             const banner = document.getElementById('trial-premium-banner');
                             if (banner) banner.style.display = 'none';
@@ -770,6 +870,19 @@
 
                 if (allDirtyData.cpf && allDirtyData.cpf.length <= 11) allDirtyData.razao_social = '';
 
+                if (allDirtyData.cpf !== undefined && allDirtyData.cpf !== null) {
+                    const cleanDoc = String(allDirtyData.cpf).replace(/\D/g, '');
+                    if (cleanDoc.length > 0 && !isValidDocument(cleanDoc)) {
+                        showToast('O CPF ou CNPJ informado é inválido. Por favor, confira os números.', 'error');
+                        newBtn.disabled = false;
+                        if (btnText) btnText.classList.remove('hidden');
+                        if (spinner) spinner.classList.add('hidden');
+                        const personalBlock = profileContainer.querySelector('[data-block-id="personal"]');
+                        if (personalBlock) setBlockState(personalBlock, 'error', 'Documento inválido');
+                        return;
+                    }
+                }
+
                 try {
                     const res = await apiFetch(`${API_BASE_URL}/api/psychologists/me`, {
                         method: 'PUT',
@@ -795,7 +908,7 @@
                         const globalData = window.getPsychologistData();
                         if (globalData) {
                             const newGlobalData = { ...globalData, ...allDirtyData, ...resData };
-                            if (newGlobalData.cpf && String(newGlobalData.cpf).replace(/\D/g, '').length >= 11) {
+                            if (newGlobalData.cpf && isValidDocument(newGlobalData.cpf)) {
                                 newGlobalData.showTrialBanner = false;
                                 const banner = document.getElementById('trial-premium-banner');
                                 if (banner) banner.style.display = 'none';

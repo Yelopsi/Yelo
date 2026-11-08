@@ -6,6 +6,54 @@
     let btnReativacaoAtual = null;
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
 
+    function isValidCPF(cpf) {
+        cpf = String(cpf || '').replace(/\D/g, '');
+        if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+        let sum = 0;
+        for (let i = 1; i <= 9; i++) sum += parseInt(cpf.substring(i - 1, i), 10) * (11 - i);
+        let rest = (sum * 10) % 11;
+        if (rest === 10 || rest === 11) rest = 0;
+        if (rest !== parseInt(cpf.substring(9, 10), 10)) return false;
+        sum = 0;
+        for (let i = 1; i <= 10; i++) sum += parseInt(cpf.substring(i - 1, i), 10) * (12 - i);
+        rest = (sum * 10) % 11;
+        if (rest === 10 || rest === 11) rest = 0;
+        if (rest !== parseInt(cpf.substring(10, 11), 10)) return false;
+        return true;
+    }
+
+    function isValidCNPJ(cnpj) {
+        cnpj = String(cnpj || '').replace(/\D/g, '');
+        if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
+        let size = cnpj.length - 2;
+        let numbers = cnpj.substring(0, size);
+        let digits = cnpj.substring(size);
+        let sum = 0, pos = size - 7;
+        for (let i = size; i >= 1; i--) {
+            sum += parseInt(numbers.charAt(size - i), 10) * pos--;
+            if (pos < 2) pos = 9;
+        }
+        let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+        if (result !== parseInt(digits.charAt(0), 10)) return false;
+        size = size + 1;
+        numbers = cnpj.substring(0, size);
+        sum = 0; pos = size - 7;
+        for (let i = size; i >= 1; i--) {
+            sum += parseInt(numbers.charAt(size - i), 10) * pos--;
+            if (pos < 2) pos = 9;
+        }
+        result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+        if (result !== parseInt(digits.charAt(1), 10)) return false;
+        return true;
+    }
+
+    function isValidDocument(doc) {
+        const clean = String(doc || '').replace(/\D/g, '');
+        if (clean.length === 11) return isValidCPF(clean);
+        if (clean.length === 14) return isValidCNPJ(clean);
+        return false;
+    }
+
     // --- INICIALIZAÇÃO DOS LISTENERS GLOBAIS DO MODAL DE PAGAMENTO ---
     document.addEventListener('DOMContentLoaded', () => {
         const btnCloseX = document.getElementById('btn-close-modal-x');
@@ -130,7 +178,8 @@
         btnSelectCard.onclick = () => setTab('CREDIT_CARD');
         btnSelectPix.onclick = async () => {
             currentMethod = 'PIX';
-            const hasCpf = psychologistData && (psychologistData.cpf || psychologistData.cnpj);
+            const cleanDoc = psychologistData ? String(psychologistData.cpf || psychologistData.cnpj || '').replace(/\D/g, '') : '';
+            const hasCpf = !!(cleanDoc && isValidDocument(cleanDoc));
             if (!hasCpf) {
                 setTab('PIX');
                 document.getElementById('card-holder-name').value = psychologistData ? psychologistData.nome : '';
@@ -262,6 +311,17 @@
                 addressNumber: document.getElementById('card-holder-number').value, addressComplement: document.getElementById('card-holder-complement').value,
                 addressStreet: document.getElementById('card-holder-street').value, addressNeighborhood: document.getElementById('card-holder-neighborhood').value
             };
+
+            const docToCheck = cardData.holderCpf || cleanDoc;
+            if (docToCheck && !isValidDocument(docToCheck)) {
+                if (msgDiv) {
+                    msgDiv.textContent = "O CPF informado é inválido. Por favor, confira os números digitados.";
+                    msgDiv.classList.remove('hidden');
+                }
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = currentMethod === 'PIX' ? "Gerar PIX" : "Assinar com Cartão";
+                return;
+            }
             
             if (currentMethod === 'CREDIT_CARD') {
                 cardData.number = document.getElementById('card-number').value.replace(/\D/g, '');
