@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-61689b92",
+    "date": "2026-11-07T18:44:04.000Z",
+    "commit": "61689b92",
+    "author": "Anderson",
+    "title": "Novo: Remover opcao de plano gratuito e manter exclusivamente o Plano Essencial (mobile)",
+    "category": "Planos & Trial",
+    "badgeColor": "#f59e0b",
+    "status": "Em Produção",
+    "summary": "remover opcao de plano gratuito e manter exclusivamente o Plano Essencial",
+    "description": "Commit registrado no repositório: \"feat(mobile): remover opcao de plano gratuito e manter exclusivamente o Plano Essencial\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/assinatura.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #61689b92"
+    },
+    "after": {
+      "nova_versao": "remover opcao de plano gratuito e manter exclusivamente o Plano Essencial"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-2ed10da1",
     "date": "2026-11-07T18:39:33.000Z",
     "commit": "2ed10da1",

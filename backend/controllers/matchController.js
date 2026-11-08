@@ -355,7 +355,7 @@ exports.getProfileBySlug = async (req, res) => {
         }
     }
     
-    if (status !== 'active') {
+    if (status !== 'active' || psychologist.profile_paused) {
         return res.status(404).json({ error: 'Perfil indisponível no momento.' });
     }
 

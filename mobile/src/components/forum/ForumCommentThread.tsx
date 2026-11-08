@@ -293,6 +293,7 @@ export const CommentNode = React.memo(function CommentNode({ comment, depth }: {
   const ctx = useThread();
   const [shown, setShown] = useState(REPLY_BATCH_SIZE);
   const [editing, setEditing] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
 
   const isRoot = depth === 0;
   const avatarSize = isRoot ? 36 : 28;
@@ -408,18 +409,52 @@ export const CommentNode = React.memo(function CommentNode({ comment, depth }: {
           )}
 
           <View style={styles.secondaryActions}>
-            {comment.isMine && !editing && (
-              <ActionPill compact onPress={() => (ctx.closed ? Alert.alert('Discussão encerrada', 'Esta discussão está encerrada para edições.') : setEditing(true))} disabled={ctx.closed}>
-                <EditIcon size={14} color="#64748B" />
-              </ActionPill>
+            {actionsOpen && (
+              <>
+                {comment.isMine && !editing && (
+                  <ActionPill
+                    compact
+                    onPress={() => {
+                      setActionsOpen(false);
+                      if (ctx.closed) {
+                        Alert.alert('Discussão encerrada', 'Esta discussão está encerrada para edições.');
+                      } else {
+                        setEditing(true);
+                      }
+                    }}
+                    disabled={ctx.closed}
+                  >
+                    <EditIcon size={14} color="#64748B" />
+                  </ActionPill>
+                )}
+                {comment.isMine && (
+                  <ActionPill
+                    compact
+                    onPress={() => {
+                      setActionsOpen(false);
+                      ctx.onDelete(comment.id);
+                    }}
+                  >
+                    <TrashIcon size={14} color="#DC2626" />
+                  </ActionPill>
+                )}
+                <ActionPill
+                  compact
+                  onPress={() => {
+                    setActionsOpen(false);
+                    ctx.onReport(comment);
+                  }}
+                >
+                  <FlagIcon size={14} color="#64748B" />
+                </ActionPill>
+              </>
             )}
-            {comment.isMine && (
-              <ActionPill compact onPress={() => ctx.onDelete(comment.id)}>
-                <TrashIcon size={14} color="#DC2626" />
-              </ActionPill>
-            )}
-            <ActionPill compact onPress={() => ctx.onReport(comment)}>
-              <FlagIcon size={14} color="#64748B" />
+            <ActionPill compact onPress={() => setActionsOpen((prev) => !prev)}>
+              {actionsOpen ? (
+                <ThreadCollapseIcon size={16} color="#64748B" />
+              ) : (
+                <ThreadExpandIcon size={16} color="#64748B" />
+              )}
             </ActionPill>
           </View>
         </View>
@@ -592,13 +627,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 4,
   },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 3,
     minHeight: 26,
     borderRadius: 6,

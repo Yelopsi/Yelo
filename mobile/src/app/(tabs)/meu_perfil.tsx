@@ -160,6 +160,8 @@ export default function MeuPerfilScreen() {
   const { user, updateUser } = useAuth();
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [statusPerfil, setStatusPerfil] = useState<string>('active');
+  const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
+  const [isExempt, setIsExempt] = useState<boolean>(false);
   const [googleReviewsData, setGoogleReviewsData] = useState<any>(null);
   const [isQualityCardExpanded, setIsQualityCardExpanded] = useState(false);
 
@@ -259,6 +261,8 @@ export default function MeuPerfilScreen() {
         });
         setFotoUrl(p.fotoUrl || null);
         setStatusPerfil(p.status || 'active');
+        setPlanExpiresAt(p.planExpiresAt || null);
+        setIsExempt(p.is_exempt === true || String(p.is_exempt).toLowerCase() === 'true' || p.is_exempt === 1);
         setGoogleReviewsData(p.google_reviews_data || null);
 
         // Sincroniza foto e nome com o Header e contexto global
@@ -418,12 +422,42 @@ export default function MeuPerfilScreen() {
     }
   };
 
+  // Verifica se assinatura está ativa e dentro da validade (mesma regra da Web em psi_meu_perfil.js)
+  const isAtivoEValido = useMemo(() => {
+    const hoje = new Date();
+    const validade = planExpiresAt ? new Date(planExpiresAt) : null;
+    return statusPerfil === 'active' && (isExempt || !!(validade && validade > hoje));
+  }, [statusPerfil, isExempt, planExpiresAt]);
+
+  const isPublicProfileBlocked = statusPerfil === 'pending' || !isAtivoEValido || form.profile_paused;
+
   // Copiar link do perfil público
   const handleCopyProfileLink = async () => {
+    if (isPublicProfileBlocked) {
+      const msg =
+        statusPerfil === 'pending'
+          ? 'Complete seu perfil (incluindo CPF) para liberar sua URL pública.'
+          : 'Seu perfil está inativo ou pausado. Reative sua assinatura para liberar sua página pública.';
+      showToast(msg);
+      return;
+    }
     if (!form.slug) return;
     const url = `https://yelopsi.com.br/${form.slug}`;
     await Clipboard.setStringAsync(url);
     showToast('Link do perfil copiado com sucesso! 🔗');
+  };
+
+  // Abrir perfil público (bloqueado se assinatura expirada/inativa ou perfil pausado)
+  const handleOpenPublicProfileHero = () => {
+    if (isPublicProfileBlocked) {
+      const msg =
+        statusPerfil === 'pending'
+          ? 'Complete seu perfil (incluindo CPF) para liberar sua URL pública.'
+          : 'Seu perfil está inativo ou pausado. Reative sua assinatura para liberar sua página pública.';
+      showToast(msg);
+      return;
+    }
+    if (form.slug) router.push(`/${form.slug}` as any);
   };
 
   // Salvar bloco específico
@@ -875,6 +909,61 @@ export default function MeuPerfilScreen() {
             <Text style={styles.backBtnText}>Voltar</Text>
           </TouchableOpacity>
 
+          {/* BANNER DE AVISO QUANDO PERFIL BLOQUEADO / ASSINATURA EXPIRADA (Paridade com #profile-warning-banner-container da Web) */}
+          {!isAtivoEValido && statusPerfil !== 'pending' && (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push('/(tabs)/assinatura' as any)}
+              style={{
+                backgroundColor: '#FEF2F2',
+                borderWidth: 1,
+                borderColor: '#FECACA',
+                borderRadius: 14,
+                padding: 14,
+                marginBottom: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <Text style={{ fontSize: 20 }}>🔴</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13.5, fontWeight: '800', color: '#991B1B', marginBottom: 2 }}>
+                  Perfil Público Bloqueado (Assinatura Inativa)
+                </Text>
+                <Text style={{ fontSize: 12.5, color: '#B91C1C', lineHeight: 17 }}>
+                  Seu perfil está oculto nas buscas e sua URL pública está desativada. Toque aqui para reativar sua assinatura.
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {statusPerfil === 'pending' && (
+            <View
+              style={{
+                backgroundColor: '#FFFBEB',
+                borderWidth: 1,
+                borderColor: '#FDE68A',
+                borderRadius: 14,
+                padding: 14,
+                marginBottom: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <Text style={{ fontSize: 20 }}>⚠️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13.5, fontWeight: '800', color: '#92400E', marginBottom: 2 }}>
+                  Cadastro Pendente
+                </Text>
+                <Text style={{ fontSize: 12.5, color: '#B45309', lineHeight: 17 }}>
+                  Complete seus dados obrigatórios (incluindo CPF/CNPJ) para liberar sua URL pública.
+                </Text>
+              </View>
+            </View>
+          )}
+
           {/* 1. HERO PROFILE MODERN */}
           <View style={styles.heroProfileCard}>
             <View style={styles.heroTopRow}>
@@ -907,16 +996,30 @@ export default function MeuPerfilScreen() {
                 <View
                   style={[
                     styles.heroStatusBadge,
-                    form.profile_paused ? styles.heroStatusPaused : styles.heroStatusActive,
+                    !isAtivoEValido
+                      ? styles.heroStatusInactive
+                      : form.profile_paused || statusPerfil === 'pending'
+                      ? styles.heroStatusPaused
+                      : styles.heroStatusActive,
                   ]}
                 >
                   <Text
                     style={[
                       styles.heroStatusBadgeText,
-                      form.profile_paused ? styles.heroStatusPausedText : styles.heroStatusActiveText,
+                      !isAtivoEValido
+                        ? styles.heroStatusInactiveText
+                        : form.profile_paused || statusPerfil === 'pending'
+                        ? styles.heroStatusPausedText
+                        : styles.heroStatusActiveText,
                     ]}
                   >
-                    {form.profile_paused ? '⏸️ Perfil Pausado' : '🟢 Perfil Ativo'}
+                    {!isAtivoEValido
+                      ? '🔴 Perfil Inativo'
+                      : statusPerfil === 'pending'
+                      ? '🟡 Perfil Pendente'
+                      : form.profile_paused
+                      ? '⏸️ Perfil Pausado'
+                      : '🟢 Perfil Ativo'}
                   </Text>
                 </View>
 
@@ -931,17 +1034,15 @@ export default function MeuPerfilScreen() {
               <TouchableOpacity
                 activeOpacity={0.75}
                 onPress={handleCopyProfileLink}
-                style={styles.btnSecondaryHero}
+                style={[styles.btnSecondaryHero, isPublicProfileBlocked && { opacity: 0.5 }]}
               >
                 <Text style={styles.btnSecondaryHeroText}>Copiar Link</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 activeOpacity={0.75}
-                onPress={() => {
-                  if (form.slug) router.push(`/${form.slug}` as any);
-                }}
-                style={styles.btnPrimaryHero}
+                onPress={handleOpenPublicProfileHero}
+                style={[styles.btnPrimaryHero, isPublicProfileBlocked && { opacity: 0.5 }]}
               >
                 <Text style={styles.btnPrimaryHeroText}>Ver Perfil Público</Text>
               </TouchableOpacity>
@@ -1809,6 +1910,16 @@ const styles = StyleSheet.create({
   },
   heroStatusPausedText: {
     color: '#92400E',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  heroStatusInactive: {
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  heroStatusInactiveText: {
+    color: '#991B1B',
     fontSize: 11,
     fontWeight: '700',
   },

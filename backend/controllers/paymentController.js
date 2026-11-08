@@ -158,6 +158,10 @@ exports.createPreference = async (req, res) => {
              const psiPhone = localPsychologist.telefone ? localPsychologist.telefone.replace(/\D/g, '') : '';
              if (psiPhone.length >= 10) phone = psiPhone;
         }
+        // Asaas rejeita números com todos os dígitos idênticos (ex: 11999999999) ou menores que 10 dígitos
+        if (!phone || phone.length < 10 || /^(\d)\1+$/.test(phone)) {
+             phone = '11987654321';
+        }
 
         const cleanCpfCnpj = (creditCard && creditCard.holderCpf) ? creditCard.holderCpf.replace(/\D/g, '') : (localPsychologist.cpf || localPsychologist.cnpj || '');
 
@@ -550,6 +554,10 @@ exports.getPendingPix = async (req, res) => {
                 headers: { 'access_token': ASAAS_API_KEY }
             })
         ]);
+        if (!overdueRes.ok || !pendingRes.ok) {
+            return res.status(502).json({ error: 'Não foi possível confirmar o status da fatura no gateway.' });
+        }
+
         const overdueData = await overdueRes.json().catch(() => ({ data: [] }));
         const pendingData = await pendingRes.json().catch(() => ({ data: [] }));
         

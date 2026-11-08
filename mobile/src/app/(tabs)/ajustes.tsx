@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Feather } from '@expo/vector-icons';
 import { useRouter, useNavigation } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
+import api from '../../services/api';
 import ProfileSwitcherModal from '../../components/ProfileSwitcherModal';
 import {
   checkBiometricsCapability,
@@ -133,7 +134,57 @@ export default function AjustesScreen() {
     );
   };
 
-  const handleOpenPublicProfile = () => {
+  const handleOpenPublicProfile = async () => {
+    try {
+      const res = await api.get('/api/psychologists/me');
+      const p = res.data;
+      if (p) {
+        const hoje = new Date();
+        const validade = p.planExpiresAt ? new Date(p.planExpiresAt) : null;
+        const isVip = p.is_exempt === true || String(p.is_exempt).toLowerCase() === 'true' || p.is_exempt === 1;
+        const isAtivoEValido = p.status === 'active' && (isVip || !!(validade && validade > hoje));
+
+        if (p.status === 'pending') {
+          Alert.alert(
+            'Perfil Pendente',
+            'Complete seu perfil (incluindo CPF/CNPJ) para liberar sua página pública.',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              { text: 'Ir para Meu Perfil', onPress: () => navigateTo('meu_perfil') },
+            ]
+          );
+          return;
+        }
+
+        if (!isAtivoEValido || p.profile_paused) {
+          Alert.alert(
+            'Perfil Público Bloqueado',
+            p.profile_paused
+              ? 'Seu perfil está pausado no momento. Reative a exibição em Meu Perfil para visualizar sua página pública.'
+              : 'Seu perfil está inativo porque sua assinatura expirou. Reative sua assinatura para liberar sua página pública.',
+            [
+              { text: 'Cancelar', style: 'cancel' },
+              {
+                text: p.profile_paused ? 'Ir para Meu Perfil' : 'Ver Assinatura',
+                onPress: () => navigateTo(p.profile_paused ? 'meu_perfil' : 'assinatura'),
+              },
+            ]
+          );
+          return;
+        }
+
+        const targetSlug = p.slug || user?.slug;
+        if (targetSlug) {
+          router.push(`/${targetSlug}` as any);
+        } else {
+          navigateTo('meu_perfil');
+        }
+        return;
+      }
+    } catch {
+      // Fallback caso offline
+    }
+
     if (user?.slug) {
       router.push(`/${user.slug}` as any);
     } else {

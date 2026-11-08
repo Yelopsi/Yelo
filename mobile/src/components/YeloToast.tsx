@@ -23,6 +23,8 @@ export default function YeloToast({
   duration = 3200,
 }: YeloToastProps) {
   const anim = useRef(new Animated.Value(0)).current;
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
 
   useEffect(() => {
     if (message) {
@@ -42,7 +44,7 @@ export default function YeloToast({
           duration: 280,
           useNativeDriver: true,
         }).start(() => {
-          if (onDismiss) onDismiss();
+          if (onDismissRef.current) onDismissRef.current();
         });
       }, duration);
 
@@ -50,7 +52,7 @@ export default function YeloToast({
     } else {
       anim.setValue(0);
     }
-  }, [message, duration, anim, onDismiss]);
+  }, [message, duration, anim]);
 
   if (!message) return null;
 
