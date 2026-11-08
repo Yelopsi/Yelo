@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import api from '../../../services/api';
+import NativeSelectMenu, { type NativeSelectOption } from '../../../components/NativeSelectMenu';
 
 // -------------------------------------------------------------
 // Formatadores e Utilitários
@@ -663,74 +664,139 @@ export default function AdminDetalhesPsicologoScreen() {
         </View>
 
         {/* ------------------------------------------------------------- */}
-        {/* ABAS (TABS HORIZONTAIS)                                       */}
+        {/* MENU DROPDOWN NATIVO NO ESTILO DO DISPOSITIVO                 */}
         {/* ------------------------------------------------------------- */}
-        <View style={{ marginTop: 20 }}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+        <View style={{ marginHorizontal: 16, marginTop: 18, marginBottom: 2 }}>
+          <Text
+            style={{
+              fontFamily: 'PlusJakartaSans_700Bold',
+              fontSize: 12,
+              color: '#64748b',
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+              marginBottom: 8,
+            }}
           >
-            {[
-              { key: 'timeline', label: 'Linha do Tempo', icon: 'clock', count: timelineEvents.length },
-              { key: 'payments', label: 'Pagamentos', icon: 'credit-card', count: payments.length },
-              { key: 'blog', label: 'Blog & Artigos', icon: 'book-open', count: blogPosts.length },
-              { key: 'forum', label: 'Fórum', icon: 'message-circle', count: forumPosts.length + forumComments.length },
-              { key: 'reviews', label: 'Avaliações', icon: 'star', count: reviews.length },
-              { key: 'whatsapp', label: 'Leads WhatsApp', icon: 'phone-call', count: whatsappLogs.length },
-            ].map(tab => {
-              const active = activeTab === tab.key;
-              return (
-                <TouchableOpacity
-                  key={tab.key}
-                  onPress={() => setActiveTab(tab.key as TabType)}
-                  activeOpacity={0.8}
+            Seção do Dossiê
+          </Text>
+
+          <NativeSelectMenu
+            title="Selecione a Seção do Dossiê"
+            options={[
+              { label: `Linha do Tempo (${timelineEvents.length})`, value: 'timeline' },
+              { label: `Pagamentos & Assinatura (${payments.length})`, value: 'payments' },
+              { label: `Blog & Artigos (${blogPosts.length})`, value: 'blog' },
+              { label: `Atividade no Fórum (${forumPosts.length + forumComments.length})`, value: 'forum' },
+              { label: `Avaliações & Feedback (${reviews.length})`, value: 'reviews' },
+              { label: `Leads WhatsApp (${whatsappLogs.length})`, value: 'whatsapp' },
+            ]}
+            selectedValue={activeTab}
+            onSelect={(val) => setActiveTab(val as TabType)}
+            style={{ width: '100%' }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#cbd5e1',
+                borderRadius: 16,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 4,
+                elevation: 2,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 }}>
+                <View
                   style={{
-                    backgroundColor: active ? '#1B4332' : '#ffffff',
-                    borderWidth: 1,
-                    borderColor: active ? '#1B4332' : '#cbd5e1',
-                    paddingHorizontal: 14,
-                    paddingVertical: 9,
-                    borderRadius: 999,
-                    flexDirection: 'row',
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    backgroundColor: '#1B4332',
                     alignItems: 'center',
-                    gap: 6,
+                    justifyContent: 'center',
                   }}
                 >
-                  <Feather name={tab.icon as any} size={14} color={active ? '#fff' : '#64748b'} />
+                  <Feather
+                    name={
+                      activeTab === 'timeline'
+                        ? 'clock'
+                        : activeTab === 'payments'
+                        ? 'credit-card'
+                        : activeTab === 'blog'
+                        ? 'book-open'
+                        : activeTab === 'forum'
+                        ? 'message-circle'
+                        : activeTab === 'reviews'
+                        ? 'star'
+                        : 'phone-call'
+                    }
+                    size={16}
+                    color="#ffffff"
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      fontFamily: 'PlusJakartaSans_700Bold',
+                      fontSize: 15,
+                      color: '#0f172a',
+                    }}
+                  >
+                    {activeTab === 'timeline'
+                      ? 'Linha do Tempo'
+                      : activeTab === 'payments'
+                      ? 'Pagamentos & Assinatura'
+                      : activeTab === 'blog'
+                      ? 'Blog & Artigos'
+                      : activeTab === 'forum'
+                      ? 'Atividade no Fórum'
+                      : activeTab === 'reviews'
+                      ? 'Avaliações & Feedback'
+                      : 'Leads WhatsApp'}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    backgroundColor: '#f1f5f9',
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: '#e2e8f0',
+                  }}
+                >
                   <Text
                     style={{
                       fontFamily: 'PlusJakartaSans_700Bold',
-                      color: active ? '#ffffff' : '#334155',
-                      fontSize: 13,
+                      color: '#475569',
+                      fontSize: 11,
                     }}
                   >
-                    {tab.label}
+                    {activeTab === 'timeline'
+                      ? timelineEvents.length
+                      : activeTab === 'payments'
+                      ? payments.length
+                      : activeTab === 'blog'
+                      ? blogPosts.length
+                      : activeTab === 'forum'
+                      ? forumPosts.length + forumComments.length
+                      : activeTab === 'reviews'
+                      ? reviews.length
+                      : whatsappLogs.length}
                   </Text>
-                  {tab.count !== undefined ? (
-                    <View
-                      style={{
-                        backgroundColor: active ? 'rgba(255,255,255,0.25)' : '#f1f5f9',
-                        paddingHorizontal: 6,
-                        paddingVertical: 2,
-                        borderRadius: 999,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontFamily: 'PlusJakartaSans_700Bold',
-                          color: active ? '#fff' : '#64748b',
-                          fontSize: 10,
-                        }}
-                      >
-                        {tab.count}
-                      </Text>
-                    </View>
-                  ) : null}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                </View>
+              </View>
+              <Feather name="chevron-down" size={18} color="#1B4332" />
+            </View>
+          </NativeSelectMenu>
         </View>
 
         {/* ------------------------------------------------------------- */}
