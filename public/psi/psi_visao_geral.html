@@ -7,6 +7,32 @@
 </style>
 
 <div class="modern-dashboard-layout">
+    <!-- BANNER DISMISSÍVEL: COMECE AQUI (ONBOARDING) -->
+    <div id="ca-onboarding-welcome-banner" class="fade-in-up" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1.5px solid #86efac; border-radius: 18px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.08);">
+        <div style="display: flex; align-items: center; gap: 14px; flex-grow: 1;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: #1B4332; color: #FFEE8C; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(27,67,50,0.2);">🌿</div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <strong style="color: #14532d; font-size: 0.98rem;">Novo na Yelo? Conheça a Bússola do Consultório</strong>
+                    <span style="background: #166534; color: #ffffff; font-size: 0.68rem; font-weight: 800; padding: 2px 7px; border-radius: 20px; text-transform: uppercase;">Comece Aqui</span>
+                </div>
+                <p style="margin: 3px 0 0 0; color: #166534; font-size: 0.88rem; line-height: 1.4;">Descubra como o algoritmo conecta você a pacientes qualificados, como funciona a captação sem comissão e como usar cada ferramenta para crescer sua clínica particular.</p>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button onclick="if(window.loadPage) window.loadPage('psi_comece_aqui.html')" style="background: #1B4332; color: #ffffff; border: none; padding: 9px 18px; border-radius: 50px; font-size: 0.86rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(27,67,50,0.18); transition: transform 0.2s;">
+                <span>Abrir Guia do Psicólogo</span> →
+            </button>
+            <button onclick="document.getElementById('ca-onboarding-welcome-banner').style.display='none'; localStorage.setItem('ca_banner_dismissed', 'true')" style="background: transparent; border: none; color: #166534; font-size: 1.3rem; cursor: pointer; padding: 4px 8px; line-height: 1;" title="Dispensar">✕</button>
+        </div>
+    </div>
+    <script>
+        if (localStorage.getItem('ca_banner_dismissed') === 'true') {
+            const b = document.getElementById('ca-onboarding-welcome-banner');
+            if (b) b.style.display = 'none';
+        }
+    </script>
+
     <!-- BLOCO 0: HERO (Banner de Desempenho) -->
     <div class="modern-hero-card fade-in-up">
         <div class="modern-hero-header">

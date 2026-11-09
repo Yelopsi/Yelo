@@ -1,0 +1,1871 @@
+<!-- PÁGINA: COMECE AQUI - GUIA DE SUCESSO DO PSICÓLOGO NA YELO -->
+<script>
+    // Se acessado diretamente fora do dashboard, encapsula dentro do container principal
+    if (!document.getElementById('dashboard-container') && window.location.pathname.endsWith('psi_comece_aqui.html')) {
+        window.location.replace('/psi/psi_dashboard.html?page=psi_comece_aqui.html');
+    }
+</script>
+
+<style>
+    /* ==========================================================================
+       DESIGN SYSTEM "COMECE AQUI" - YELO
+       Mobile-first, App-like, Floresta Yelo, Acordeão Orgânico, 100% Responsivo
+       ========================================================================== */
+
+    .comece-aqui-wrapper {
+        width: 100%;
+        max-width: 1400px; /* Preenche elegantemente telas desktop */
+        margin: 0 auto;
+        padding: 0 12px 90px 12px;
+        font-family: var(--font-principal, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif);
+        color: #1e293b;
+        box-sizing: border-box;
+    }
+
+    /* Animação suave de entrada */
+    .ca-fade-in {
+        animation: caFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes caFadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Top Bar / Botão Voltar */
+    .ca-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        gap: 12px;
+    }
+    .ca-btn-back {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        padding: 8px 18px;
+        border-radius: 50px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--verde-escuro, #1B4332);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        text-decoration: none;
+    }
+    .ca-btn-back:hover {
+        background: #f8fafc;
+        transform: translateX(-2px);
+        border-color: #cbd5e1;
+    }
+    .ca-btn-back:active {
+        transform: scale(0.97);
+    }
+
+    /* HERO CARD PRINCIPAL */
+    .ca-hero {
+        background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 65%, #153928 100%);
+        border-radius: 24px;
+        padding: 36px 32px;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 12px 32px -8px rgba(27, 67, 50, 0.28);
+        margin-bottom: 24px;
+    }
+    .ca-hero-bg-art {
+        position: absolute;
+        right: -25px;
+        bottom: -35px;
+        font-size: 12rem;
+        opacity: 0.07;
+        pointer-events: none;
+        user-select: none;
+        line-height: 1;
+    }
+    .ca-hero-pill-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 238, 140, 0.18);
+        color: #FFEE8C;
+        border: 1px solid rgba(255, 238, 140, 0.35);
+        padding: 5px 14px;
+        border-radius: 50px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+    }
+    .ca-hero-title {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: 2.25rem;
+        line-height: 1.2;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0 0 14px 0;
+    }
+    .ca-hero-desc {
+        font-size: 1.08rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.92);
+        max-width: 860px;
+        margin: 0 0 24px 0;
+    }
+
+    /* 3 Pilares no Hero */
+    .ca-hero-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 10px;
+    }
+    .ca-hero-stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 18px;
+        padding: 18px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .ca-hero-stat-val {
+        font-size: 1.28rem;
+        font-weight: 800;
+        color: #FFEE8C;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .ca-hero-stat-lbl {
+        font-size: 0.88rem;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1.45;
+    }
+
+    /* ==========================================================================
+       BARRA DE NAVEGAÇÃO & BUSCA (EM FORMATO DE CÁPSULA 50px)
+       ========================================================================== */
+    .ca-nav-search-bar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Dropdown em formato de cápsula */
+    .ca-dropdown-wrapper {
+        flex: 1 1 340px;
+        position: relative;
+    }
+    .ca-select-custom-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 50px;
+        padding: 2px 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        transition: all 0.2s ease;
+    }
+    .ca-select-custom-wrapper:focus-within {
+        border-color: var(--verde-escuro, #1B4332);
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.12);
+    }
+    .ca-select-icon {
+        padding-left: 14px;
+        font-size: 1.25rem;
+        pointer-events: none;
+        user-select: none;
+    }
+    .ca-native-select {
+        width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background: transparent;
+        border: none;
+        padding: 12px 38px 12px 10px;
+        font-size: 0.98rem;
+        font-weight: 700;
+        color: #1e293b;
+        cursor: pointer;
+        font-family: inherit;
+        outline: none;
+    }
+    @media (min-width: 992px) {
+        .ca-native-select {
+            font-size: 1.05rem;
+            padding: 14px 44px 14px 12px;
+        }
+    }
+    .ca-select-arrow {
+        position: absolute;
+        right: 18px;
+        pointer-events: none;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    /* Campo de busca em formato de cápsula */
+    .ca-search-wrapper {
+        flex: 2 1 380px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 50px;
+        padding: 2px 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        transition: all 0.2s ease;
+    }
+    .ca-search-wrapper:focus-within {
+        border-color: var(--verde-escuro, #1B4332);
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.12);
+    }
+    .ca-search-icon {
+        padding-left: 14px;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        pointer-events: none;
+    }
+    .ca-search-input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        padding: 12px 36px 12px 10px;
+        font-size: 0.98rem;
+        color: #0f172a;
+        font-family: inherit;
+        outline: none;
+    }
+    @media (min-width: 992px) {
+        .ca-search-input {
+            font-size: 1.05rem;
+            padding: 14px 40px 14px 12px;
+        }
+    }
+    .ca-clear-search {
+        position: absolute;
+        right: 14px;
+        background: #f1f5f9;
+        border: none;
+        color: #64748b;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        font-size: 0.8rem;
+        font-weight: 800;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .ca-clear-search:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    /* ==========================================================================
+       CHECKLIST AUTOMÁTICA (4 PASSOS DECISIVOS)
+       ========================================================================== */
+    .ca-checklist-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 28px 30px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+    .ca-checklist-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .ca-checklist-title-group h2 {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: 1.55rem;
+        margin: 0 0 6px 0;
+        color: var(--verde-escuro, #1B4332);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .ca-checklist-title-group p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: #64748b;
+        line-height: 1.5;
+    }
+    .ca-progress-badge {
+        background: #e8f5e9;
+        color: #166534;
+        font-size: 0.88rem;
+        font-weight: 800;
+        padding: 6px 16px;
+        border-radius: 20px;
+        border: 1px solid #bbf7d0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .ca-progress-bar-bg {
+        width: 100%;
+        height: 10px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 22px;
+    }
+    .ca-progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        border-radius: 10px;
+        transition: width 0.5s ease;
+        width: 0%;
+    }
+
+    .ca-checklist-items {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .ca-checklist-item {
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+        border-radius: 16px;
+        padding: 18px 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        transition: all 0.2s ease;
+    }
+    .ca-checklist-item.completed {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+
+    .ca-status-badge-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        user-select: none;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    .ca-status-badge-indicator.pending {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+    .ca-status-badge-indicator.completed {
+        background: #dcfce7;
+        color: #15803d;
+        border: 1px solid #86efac;
+    }
+
+    .ca-checklist-content {
+        flex-grow: 1;
+    }
+    .ca-checklist-title {
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: #1e293b;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .ca-checklist-item.completed .ca-checklist-title {
+        color: #166534;
+    }
+    .ca-checklist-desc {
+        font-size: 0.9rem;
+        color: #475569;
+        line-height: 1.55;
+        margin-bottom: 12px;
+    }
+    .ca-item-action-btn {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 50px;
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: var(--verde-escuro, #1B4332);
+        padding: 7px 18px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    .ca-item-action-btn:hover {
+        background: var(--verde-escuro, #1B4332);
+        color: #ffffff;
+        border-color: var(--verde-escuro, #1B4332);
+    }
+
+    /* ==========================================================================
+       SEÇÃO: COMO FUNCIONA O ALGORITMO DE MATCH & CAPTAÇÃO
+       ========================================================================== */
+    .ca-algorithm-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 30px 32px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+    .ca-algo-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+        margin: 22px 0;
+    }
+    @media (max-width: 768px) {
+        .ca-algo-grid { grid-template-columns: 1fr; }
+    }
+    .ca-algo-item {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    .ca-algo-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #dcfce7;
+        color: #166534;
+        font-size: 1.35rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .ca-algo-content h3 {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: 1.18rem;
+        color: var(--verde-escuro, #1B4332);
+        margin: 0 0 6px 0;
+        font-weight: 700;
+    }
+    .ca-algo-content p {
+        margin: 0;
+        font-size: 0.91rem;
+        color: #475569;
+        line-height: 1.6;
+    }
+    .ca-algo-feedback-highlight {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        border: 1.5px solid #86efac;
+        border-radius: 18px;
+        padding: 22px 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin-top: 20px;
+    }
+    .ca-algo-feedback-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: var(--verde-escuro, #1B4332);
+        color: #FFEE8C;
+        font-size: 1.35rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .ca-algo-feedback-text h4 {
+        margin: 0 0 6px 0;
+        font-size: 1.08rem;
+        font-weight: 800;
+        color: #14532d;
+    }
+    .ca-algo-feedback-text p {
+        margin: 0;
+        font-size: 0.93rem;
+        color: #166534;
+        line-height: 1.6;
+    }
+
+    /* ==========================================================================
+       ALINHAMENTO DE EXPECTATIVAS (CARDS LADO A LADO NO DESKTOP)
+       ========================================================================== */
+    .ca-comparison-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+    .ca-comp-card {
+        border-radius: 20px;
+        padding: 26px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .ca-comp-card.positive {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+    }
+    .ca-comp-card.neutral {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+    }
+    .ca-comp-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .ca-comp-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+    .ca-comp-card.positive .ca-comp-icon { background: #dcfce7; color: #166534; }
+    .ca-comp-card.neutral .ca-comp-icon { background: #fef3c7; color: #92400e; }
+    .ca-comp-title {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: 1.35rem;
+        margin: 0;
+        font-weight: 700;
+    }
+    .ca-comp-card.positive .ca-comp-title { color: #166534; }
+    .ca-comp-card.neutral .ca-comp-title { color: #92400e; }
+    .ca-comp-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .ca-comp-list li {
+        font-size: 0.92rem;
+        line-height: 1.55;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .ca-comp-card.positive .ca-comp-list li { color: #14532d; }
+    .ca-comp-card.neutral .ca-comp-list li { color: #78350f; }
+
+    /* ==========================================================================
+       MAPA DE FUNCIONALIDADES (4 COLUNAS NO DESKTOP, SEM ESPAÇO VAZIO)
+       ========================================================================== */
+    .ca-features-section {
+        margin-bottom: 28px;
+    }
+    .ca-section-header {
+        margin-bottom: 18px;
+    }
+    .ca-section-header h2 {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: 1.6rem;
+        color: var(--verde-escuro, #1B4332);
+        margin: 0 0 6px 0;
+    }
+    .ca-section-header p {
+        margin: 0;
+        font-size: 0.96rem;
+        color: #64748b;
+        line-height: 1.5;
+    }
+
+    .ca-features-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+    @media (max-width: 1200px) {
+        .ca-features-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 900px) {
+        .ca-features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+        .ca-features-grid { grid-template-columns: 1fr; }
+    }
+
+    .ca-feature-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 22px 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .ca-feature-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(27, 67, 50, 0.08);
+        border-color: #cbd5e1;
+    }
+    .ca-feature-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .ca-feature-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #f0fdf4;
+        color: #166534;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+    .ca-feature-title {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: 1.15rem;
+        color: #0f172a;
+        margin: 0 0 2px 0;
+        font-weight: 700;
+    }
+    .ca-feature-tag {
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #166534;
+        background: #dcfce7;
+        padding: 2px 8px;
+        border-radius: 10px;
+        display: inline-block;
+    }
+    .ca-feature-desc {
+        font-size: 0.88rem;
+        color: #475569;
+        line-height: 1.55;
+        margin: 0 0 16px 0;
+        flex-grow: 1;
+    }
+    .ca-feature-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 12px;
+        border-top: 1px solid #f1f5f9;
+    }
+    .ca-feature-link {
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: var(--verde-escuro, #1B4332);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: gap 0.2s;
+    }
+    .ca-feature-link:hover {
+        gap: 8px;
+        color: #10b981;
+    }
+
+    /* ==========================================================================
+       LINHA DO TEMPO: O CICLO DA SUA CLÍNICA
+       ========================================================================== */
+    .ca-timeline-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 28px 30px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+    .ca-timeline-flow {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-top: 24px;
+        position: relative;
+    }
+    @media (max-width: 992px) {
+        .ca-timeline-flow {
+            grid-template-columns: 1fr;
+            padding-left: 28px;
+            gap: 18px;
+        }
+        .ca-timeline-flow::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 8px;
+            bottom: 8px;
+            width: 2px;
+            background: #cbd5e1;
+        }
+    }
+    .ca-timeline-step {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 18px 20px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .ca-timeline-dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--verde-escuro, #1B4332);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 800;
+        margin-bottom: 6px;
+        box-shadow: 0 2px 6px rgba(27,67,50,0.2);
+    }
+    @media (max-width: 992px) {
+        .ca-timeline-step { background: transparent; border: none; padding: 0; }
+        .ca-timeline-dot {
+            position: absolute;
+            left: -28px;
+            top: 2px;
+            margin-bottom: 0;
+            box-shadow: 0 0 0 4px #f8fafc;
+        }
+    }
+    .ca-timeline-title {
+        font-weight: 700;
+        font-size: 1.02rem;
+        color: #0f172a;
+    }
+    .ca-timeline-desc {
+        font-size: 0.88rem;
+        color: #64748b;
+        line-height: 1.55;
+        margin: 0;
+    }
+
+    /* ==========================================================================
+       FAQ ORGÂNICO (PARIDADE ESTÉTICA COM VIEWS/FAQ.EJS & COLAPSAMENTO PERFEITO)
+       ========================================================================== */
+    .ca-faq-section {
+        margin-bottom: 28px;
+    }
+    .ca-acordeao-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .ca-acordeao-item {
+        border: 1px solid rgba(0,0,0,0.04) !important;
+        background-color: #F8F3ED; /* Creme default Yelo */
+        border-radius: 24px 60px 24px 60px !important;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        overflow: hidden;
+        cursor: pointer;
+    }
+    .ca-acordeao-item:nth-child(2n) {
+        background-color: #E6F4F1; /* Verde suave */
+        border-radius: 60px 24px 60px 24px !important;
+    }
+    .ca-acordeao-item:nth-child(3n) {
+        background-color: #FFF8E1; /* Amarelo suave */
+        border-radius: 24px 60px 24px 60px !important;
+    }
+    .ca-acordeao-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+    .ca-acordeao-titulo {
+        background: transparent !important;
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        color: var(--verde-escuro, #1B4332);
+        font-weight: 700;
+        font-size: 1.08rem;
+        padding: 22px 30px !important;
+        width: 100%;
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: none;
+        cursor: pointer;
+        line-height: 1.4;
+        user-select: none;
+    }
+    .ca-acordeao-titulo::after {
+        content: '+';
+        font-size: 1.6rem;
+        font-weight: 400;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--verde-escuro, #1B4332);
+        line-height: 1;
+        margin-left: 14px;
+        flex-shrink: 0;
+    }
+    .ca-acordeao-item.ativo .ca-acordeao-titulo::after {
+        transform: rotate(45deg);
+    }
+
+    .ca-acordeao-conteudo {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+        opacity: 0;
+    }
+    .ca-acordeao-item.ativo .ca-acordeao-conteudo {
+        max-height: 500px;
+        opacity: 1;
+    }
+    .ca-acordeao-conteudo p {
+        padding: 0 30px 26px 30px !important;
+        color: #555;
+        margin: 0;
+        line-height: 1.65;
+        font-size: 0.95rem;
+    }
+
+    .ca-faq-cta-wrapper {
+        text-align: center;
+        margin-top: 24px;
+    }
+    .ca-btn-link-faq {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 26px;
+        background: #ffffff;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 50px;
+        color: var(--verde-escuro, #1B4332);
+        font-weight: 700;
+        font-size: 0.92rem;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: all 0.2s ease;
+    }
+    .ca-btn-link-faq:hover {
+        background: #f8fafc;
+        border-color: var(--verde-escuro, #1B4332);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(27,67,50,0.08);
+    }
+
+    /* ==========================================================================
+       CANAL DE SUPORTE HUMANIZADO (WHATSAPP DIRETO)
+       ========================================================================== */
+    .ca-support-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #f0fdf4 100%);
+        border: 2px solid #bbf7d0;
+        border-radius: 20px;
+        padding: 28px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 20px;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.08);
+    }
+    .ca-support-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    .ca-support-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #1B4332;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.7rem;
+        box-shadow: 0 4px 10px rgba(27, 67, 50, 0.2);
+        flex-shrink: 0;
+    }
+    .ca-support-text h3 {
+        font-family: var(--font-titulos, 'New Kansas', serif);
+        font-size: 1.35rem;
+        color: #1B4332;
+        margin: 0 0 4px 0;
+    }
+    .ca-support-text p {
+        margin: 0;
+        font-size: 0.92rem;
+        color: #475569;
+        line-height: 1.5;
+    }
+
+    .ca-support-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .ca-btn-action-twin {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 13px 28px;
+        border-radius: 50px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        box-sizing: border-box;
+        min-height: 48px;
+        border: none;
+    }
+    .ca-btn-action-twin.whatsapp {
+        background: #25D366;
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(37, 211, 102, 0.28);
+    }
+    .ca-btn-action-twin.whatsapp:hover {
+        background: #20bd5a;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(37, 211, 102, 0.38);
+    }
+    .ca-btn-action-twin:active {
+        transform: scale(0.97);
+    }
+
+    /* ==========================================================================
+       RESPONSIVIDADE MOBILE FIRST
+       ========================================================================== */
+    @media (max-width: 768px) {
+        .ca-hero {
+            padding: 26px 20px;
+            border-radius: 20px;
+        }
+        .ca-hero-title {
+            font-size: 1.75rem;
+        }
+        .ca-hero-desc {
+            font-size: 0.98rem;
+        }
+        .ca-hero-stats {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .ca-nav-search-bar {
+            flex-direction: column;
+            gap: 10px;
+        }
+        .ca-dropdown-wrapper, .ca-search-wrapper {
+            width: 100%;
+            flex: 1 1 100%;
+        }
+        .ca-comparison-grid {
+            grid-template-columns: 1fr;
+        }
+        .ca-support-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .ca-support-actions {
+            width: 100%;
+        }
+        .ca-btn-action-twin {
+            width: 100%;
+        }
+        .ca-acordeao-titulo {
+            padding: 18px 20px !important;
+            font-size: 1rem;
+        }
+        .ca-acordeao-conteudo p {
+            padding: 0 20px 20px 20px !important;
+        }
+    }
+</style>
+
+<div class="comece-aqui-wrapper ca-fade-in">
+    
+    <!-- TOP BAR: BOTÃO VOLTAR -->
+    <div class="ca-topbar">
+        <a href="#" onclick="event.preventDefault(); if(window.loadPage) window.loadPage('psi_visao_geral.html');" class="ca-btn-back">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <span>Voltar ao Painel</span>
+        </a>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button onclick="window.compartilharGuia()" class="ca-btn-back" style="padding: 8px 14px;" title="Copiar link do guia">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                <span class="d-none-sm">Compartilhar Guia</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- HERO PRINCIPAL DE BOAS-VINDAS -->
+    <div class="ca-hero">
+        <div class="ca-hero-bg-art">🌱</div>
+        
+        <span class="ca-hero-pill-badge">
+            <span>🌿</span> Bússola do Psicólogo Parceiro
+        </span>
+
+        <h1 class="ca-hero-title">Construa sua clínica particular com autonomia, ética e previsibilidade.</h1>
+        <p class="ca-hero-desc">
+            Viver do consultório particular é a meta de quase todo psicólogo, mas o caminho costuma vir acompanhado de isolamento, medo de infringir o Código de Ética e a frustração com convênios que pagam pouco ou plataformas que cobram comissões abusivas. A Yelo existe para mudar essa história: conectamos você a pacientes com real intenção de terapia e garantimos que <strong>100% dos seus honorários fiquem com você</strong>. Este guia é o seu ponto de partida para entender como nosso ecossistema funciona e como cada ferramenta acelera seus resultados.
+        </p>
+
+        <!-- 3 Compromissos Fundamentais da Yelo com Você -->
+        <div class="ca-hero-stats">
+            <div class="ca-hero-stat-card">
+                <span class="ca-hero-stat-val">100% dos seus honorários 💰</span>
+                <span class="ca-hero-stat-lbl">Você define o valor da consulta e recebe direto no seu Pix ou conta. A Yelo não retém nenhuma porcentagem das suas sessões.</span>
+            </div>
+            <div class="ca-hero-stat-card">
+                <span class="ca-hero-stat-val">WhatsApp Direto 📲</span>
+                <span class="ca-hero-stat-lbl">O paciente passa por um questionário de triagem e fala diretamente com você. Sem chats travados nem intermediários.</span>
+            </div>
+            <div class="ca-hero-stat-card">
+                <span class="ca-hero-stat-val">Autonomia Clínica ⚖️</span>
+                <span class="ca-hero-stat-lbl">Você decide sua abordagem, seus horários e suas regras de remarcação com total liberdade e respaldo ético do CFP.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- BARRA DE NAVEGAÇÃO & BUSCA (EM FORMATO DE CÁPSULA 50px) -->
+    <div class="ca-nav-search-bar">
+        <!-- Dropdown com visual nativo do dispositivo -->
+        <div class="ca-dropdown-wrapper">
+            <div class="ca-select-custom-wrapper">
+                <span class="ca-select-icon">🧭</span>
+                <select id="ca-section-selector" class="ca-native-select" onchange="window.scrollToSection(this.value)">
+                    <option value="sec-checklist" selected>🎯 Os 4 Ajustes Decisivos no Seu Perfil</option>
+                    <option value="sec-algoritmo">⚙️ Como Funciona o Algoritmo de Captação</option>
+                    <option value="sec-modelo">⚖️ O Que Esperar: Parceria de Mão Dupla</option>
+                    <option value="sec-funcionalidades">🧭 Para Que Serve Cada Ferramenta</option>
+                    <option value="sec-jornada">📈 O Ciclo Real da Sua Clínica na Yelo</option>
+                    <option value="sec-faq">❓ Perguntas Frequentes de Psicólogos</option>
+                    <option value="sec-suporte">🎧 Falar com o Nosso Suporte</option>
+                </select>
+                <span class="ca-select-arrow">▼</span>
+            </div>
+        </div>
+
+        <!-- Campo de busca interativo ao lado -->
+        <div class="ca-search-wrapper">
+            <span class="ca-search-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </span>
+            <input type="search" id="ca-search-input" class="ca-search-input" placeholder="Buscar no guia (ex: WhatsApp, valor, prontuário, Google, blog)..." oninput="window.handleGuiaSearch(this.value)">
+            <button id="ca-clear-search" class="ca-clear-search" onclick="window.clearGuiaSearch()" style="display: none;" title="Limpar busca">✕</button>
+        </div>
+    </div>
+
+    <!-- Feedback dinâmico de busca -->
+    <div id="ca-search-feedback" style="display: none; margin-bottom: 20px; font-size: 0.92rem; color: #166534; font-weight: 700; padding: 10px 16px; background: #dcfce7; border-radius: 12px; border: 1px solid #bbf7d0;"></div>
+
+    <!-- SEÇÃO 1: CHECKLIST DE ATIVAÇÃO AUTOMÁTICA (4 PASSOS DECISIVOS) -->
+    <div id="sec-checklist" class="ca-checklist-card">
+        <div class="ca-checklist-header">
+            <div class="ca-checklist-title-group">
+                <h2><span>🎯</span> Os 4 Ajustes Decisivos no Seu Perfil</h2>
+                <p>Antes de recomendar você nas buscas e no questionário de triagem, nosso sistema avalia se a sua vitrine transmite a segurança que alguém em sofrimento emocional precisa para pedir ajuda. Estes 4 itens são verificados automaticamente conforme você configura seu consultório:</p>
+            </div>
+            <div class="ca-progress-badge">
+                <span id="ca-progress-percent">0%</span> Pronto
+            </div>
+        </div>
+
+        <div class="ca-progress-bar-bg">
+            <div id="ca-progress-bar" class="ca-progress-bar-fill"></div>
+        </div>
+
+        <div class="ca-checklist-items" id="ca-checklist-container">
+            <!-- Item 1: Foto e CRP -->
+            <div class="ca-checklist-item" id="item-step-foto">
+                <div class="ca-status-badge-indicator pending" id="badge-step-foto">
+                    <span>○ Pendente</span>
+                </div>
+                <div class="ca-checklist-content">
+                    <div class="ca-checklist-title">
+                        <span>1. Foto Profissional Acolhedora & CRP Regularizado</span>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 2px 6px; border-radius: 8px;">Primeira Impressão</span>
+                    </div>
+                    <div class="ca-checklist-desc">
+                        Na psicoterapia, o vínculo terapêutico começa no olhar. Uma fotografia nítida, com boa iluminação e semblante acolhedor (olhar direto e postura serena) reduz a apreensão natural de quem está vulnerável. Junto ao seu CRP ativo e verificado, você assegura a conformidade ética exigida pelo paciente e pelo Conselho.
+                    </div>
+                    <button onclick="if(window.loadPage) window.loadPage('psi_meu_perfil.html')" class="ca-item-action-btn">
+                        <span>Configurar Foto & CRP</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Item 2: Biografia Focada no Paciente -->
+            <div class="ca-checklist-item" id="item-step-bio">
+                <div class="ca-status-badge-indicator pending" id="badge-step-bio">
+                    <span>○ Pendente</span>
+                </div>
+                <div class="ca-checklist-content">
+                    <div class="ca-checklist-title">
+                        <span>2. Biografia Focada na Dor de Quem Busca Ajuda</span>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 2px 6px; border-radius: 8px;">Conexão Humana</span>
+                    </div>
+                    <div class="ca-checklist-desc">
+                        Quem procura terapia raramente compreende siglas acadêmicas ou jargões teóricos. O paciente busca alívio para o que está sentindo: angústia persistente, insônia, conflitos de relacionamento, luto ou sobrecarga profissional. Descreva com sensibilidade as situações que você acolhe para que a pessoa se sinta compreendida já no primeiro parágrafo.
+                    </div>
+                    <button onclick="if(window.loadPage) window.loadPage('psi_meu_perfil.html')" class="ca-item-action-btn">
+                        <span>Ajustar Minha Biografia</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Item 3: Conectar Google Meu Negócio -->
+            <div class="ca-checklist-item" id="item-step-gmb">
+                <div class="ca-status-badge-indicator pending" id="badge-step-gmb">
+                    <span>○ Pendente</span>
+                </div>
+                <div class="ca-checklist-content">
+                    <div class="ca-checklist-title">
+                        <span>3. Conectar suas Avaliações do Google Meu Negócio / Maps</span>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: #854d0e; background: #fef9c3; padding: 2px 6px; border-radius: 8px;">Credibilidade Pública ⭐️</span>
+                    </div>
+                    <div class="ca-checklist-desc">
+                        A desconfiança é o principal obstáculo para alguém agendar a primeira consulta online. Conectar a sua ficha do Google Maps traz suas notas e avaliações públicas diretamente para o seu perfil na Yelo, conferindo respaldo social imediato e tranquilizando o paciente antes de mandar a primeira mensagem.
+                    </div>
+                    <button onclick="if(window.loadPage) window.loadPage('psi_meu_perfil.html')" class="ca-item-action-btn">
+                        <span>Vincular Google Maps</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Item 4: Divulgue seu Link Yelo -->
+            <div class="ca-checklist-item" id="item-step-link">
+                <div class="ca-status-badge-indicator pending" id="badge-step-link">
+                    <span>○ Pendente</span>
+                </div>
+                <div class="ca-checklist-content">
+                    <div class="ca-checklist-title">
+                        <span>4. Divulgue seu Endereço Profissional Oficial (`yelopsi.com.br/seu-nome`)</span>
+                        <span style="font-size: 0.72rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 2px 6px; border-radius: 8px;">Sua Vitrine</span>
+                    </div>
+                    <div class="ca-checklist-desc">
+                        O seu perfil na Yelo é o seu site profissional: limpo, veloz e estruturado especificamente para celulares. Adicione esse endereço na bio do seu Instagram, no status do WhatsApp Business e na assinatura de e-mail. Ter uma vitrine oficial transmite uma imagem de solidez superior a qualquer link genérico.
+                    </div>
+                    <button onclick="window.copiarLinkPublico()" class="ca-item-action-btn" id="ca-btn-copy-link">
+                        <span>Copiar Meu Link Oficial</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEÇÃO: COMO FUNCIONA O NOSSO ALGORITMO DE MATCH & CAPTAÇÃO -->
+    <div id="sec-algoritmo" class="ca-algorithm-card searchable-item">
+        <div class="ca-section-header">
+            <span class="ca-hero-pill-badge" style="background: rgba(27, 67, 50, 0.08); color: var(--verde-escuro, #1B4332); border-color: rgba(27, 67, 50, 0.2);">
+                <span>⚙️</span> Bastidores da Plataforma
+            </span>
+            <h2>Como a Yelo Conecta Pacientes Qualificados ao Seu Perfil</h2>
+            <p>A captação na Yelo não é uma lista telefônica estática nem um leilão de quem paga mais. Entenda como o nosso ecossistema trabalha ativamente para direcionar pacientes alinhados à sua abordagem:</p>
+        </div>
+
+        <div class="ca-algo-grid">
+            <!-- 1. Mídia Paga e Orgânica -->
+            <div class="ca-algo-item">
+                <div class="ca-algo-icon">🎯</div>
+                <div class="ca-algo-content">
+                    <h3>1. Campanhas Focadas em Alta Intenção Terapêutica</h3>
+                    <p>
+                        A Yelo investe continuamente em mecanismos de busca e redes sociais para pessoas que estão pesquisando ativamente por termos clínicos específicos (ex: <em>"psicólogo especialista em ansiedade"</em>, <em>"terapia de casal presencial"</em>, <em>"tratamento para burnout"</em>). Não trazemos curiosos: direcionamos quem já tomou a decisão consciente de iniciar acompanhamento psicoterapêutico.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2. Questionário de Match -->
+            <div class="ca-algo-item">
+                <div class="ca-algo-icon">📋</div>
+                <div class="ca-algo-content">
+                    <h3>2. Triagem pelo Questionário de Match Clínico</h3>
+                    <p>
+                        Antes de visualizar qualquer profissional, o paciente responde a uma triagem de preferências: queixas e sintomas principais, abordagem terapêutica desejada (se houver preferência), modalidade (online ou presencial na sua cidade), disponibilidade de turnos e orçamento pretendido. O sistema cruza essas respostas de forma precisa com as especialidades cadastradas no seu perfil.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 3. Dezenas de Variáveis Combinadas -->
+            <div class="ca-algo-item">
+                <div class="ca-algo-icon">⚖️</div>
+                <div class="ca-algo-content">
+                    <h3>3. O Que Determina Quem Aparece Primeiro</h3>
+                    <p>
+                        O algoritmo prioriza consultórios completos: <strong>Saúde do Perfil em 100%</strong> (foto humanizada, biografia acolhedora e CRP validado), avaliações conectadas do Google Maps e prontidão no retorno. Não existe taxa para "subir no ranking": o que manda é a completude da sua vitrine e o seu comprometimento com o paciente.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 4. Calibragem Contínua por Interações -->
+            <div class="ca-algo-item">
+                <div class="ca-algo-icon">📈</div>
+                <div class="ca-algo-content">
+                    <h3>4. Consultórios Vivos Têm Maior Relevância</h3>
+                    <p>
+                        A plataforma valoriza profissionais presentes. Produzir artigos educativos no blog da Yelo, interagir com colegas no fórum clínico e manter seu cadastro atualizado aumentam continuamente o peso do seu perfil nas pesquisas orgânicas do Google e nas buscas da sua região.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Destaque: Feedback Pós-Contato -->
+        <div class="ca-algo-feedback-highlight">
+            <div class="ca-algo-feedback-icon">💬</div>
+            <div class="ca-algo-feedback-text">
+                <h4>A Resposta de Feedback é o Pulso do Nosso Algoritmo</h4>
+                <p>
+                    Toda vez que um paciente clica para falar no seu WhatsApp, o painel da Yelo exibe uma pergunta rápida e confidencial: <em>"O paciente entrou em contato? Houve agendamento?"</em>. Responder a essa pergunta leva menos de 5 segundos, mas é o que calibra seus próximos encaminhamentos. Se você sinaliza que agendou, o algoritmo entende que aquele perfil de paciente é ideal para você e passa a priorizar casos semelhantes. Se você avisa que o paciente buscava outra área ou desistiu por preço, o sistema ajusta os filtros para não encaminhar pessoas fora do seu escopo.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEÇÃO: O QUE ESPERAR (PARCERIA DE MÃO DUPLA) -->
+    <div id="sec-modelo" class="ca-comparison-grid">
+        <!-- O QUE A YELO É -->
+        <div class="ca-comp-card positive searchable-item">
+            <div class="ca-comp-header">
+                <div class="ca-comp-icon">🌱</div>
+                <h3 class="ca-comp-title">O Que a Yelo Entrega para o Seu Consultório</h3>
+            </div>
+            <ul class="ca-comp-list">
+                <li>
+                    <strong>✅ Pacientes com Intenção Real de Terapia:</strong> Pessoas que passaram pelo questionário de triagem e procuram acompanhamento estruturado.
+                </li>
+                <li>
+                    <strong>✅ Zero Comissão sobre as Consultas:</strong> Todo o valor cobrado pelas suas sessões é 100% seu, pago diretamente pelo paciente no seu Pix ou conta bancária.
+                </li>
+                <li>
+                    <strong>✅ Total Autonomia Clínica:</strong> Ninguém interfere na sua abordagem, nos valores das suas consultas, nas suas políticas de cancelamento ou na duração do tratamento.
+                </li>
+                <li>
+                    <strong>✅ Infraestrutura Profissional:</strong> Prontuário eletrônico sigiloso alinhado ao CFP, calculadora de honorários e publicação de artigos no blog oficial para posicionamento no Google.
+                </li>
+            </ul>
+        </div>
+
+        <!-- O QUE NÃO ESPERAR (ALINHAMENTO REALISTA) -->
+        <div class="ca-comp-card neutral searchable-item">
+            <div class="ca-comp-header">
+                <div class="ca-comp-icon">💡</div>
+                <h3 class="ca-comp-title">O Que Depende do Seu Cuidado Clínico</h3>
+            </div>
+            <ul class="ca-comp-list">
+                <li>
+                    <strong>⏳ Agilidade no Retorno do WhatsApp:</strong> Quem busca psicólogo na internet muitas vezes tomou a decisão em um momento de angústia. Responder em até 15 minutos acolhe a urgência de quem procura ajuda e dobra a chance de marcar a consulta inicial.
+                </li>
+                <li>
+                    <strong>✨ Acolhimento Humano Antes do Preço:</strong> Quando a primeira resposta a uma mensagem é apenas uma tabela de valores fria, o paciente se sente mercantilizado. Demonstrar escuta atenta antes de apresentar os honorários transforma o contato em vínculo.
+                </li>
+                <li>
+                    <strong>📝 Vitrine Profissional Impecável:</strong> Manter foto acolhedora, biografia humanizada e dados de atendimento sempre atualizados transmite a maturidade que o paciente fragilizado busca.
+                </li>
+                <li>
+                    <strong>🤝 Paciência e Consistência Clínica:</strong> A consolidação de uma clínica particular sólida leva algumas semanas de calibragem. A constância no atendimento gera pacientes recorrentes que sustentam sua previsibilidade de renda.
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SEÇÃO: MAPA DE FUNCIONALIDADES -->
+    <div id="sec-funcionalidades" class="ca-features-section">
+        <div class="ca-section-header">
+            <h2><span>🧭</span> Para Que Serve Cada Ferramenta do Seu Painel</h2>
+            <p>Cada recurso da Yelo foi concebido para resolver uma dor real do psicólogo autônomo. Veja como tirar o melhor proveito de cada ferramenta:</p>
+        </div>
+
+        <div class="ca-features-grid" id="ca-features-grid">
+            
+            <!-- Card 1: Perfil Público -->
+            <div class="ca-feature-card searchable-item" data-keywords="perfil publico vitrine pagina link slug site">
+                <div>
+                    <div class="ca-feature-top">
+                        <div class="ca-feature-icon">👁️</div>
+                        <div>
+                            <h3 class="ca-feature-title">Perfil Público</h3>
+                            <span class="ca-feature-tag">Sua Vitrine</span>
+                        </div>
+                    </div>
+                    <p class="ca-feature-desc">
+                        Sua página profissional oficial com endereço exclusivo (<code>yelopsi.com.br/seu-nome</code>). É onde o paciente descobre sua abordagem, lê sua história, vê suas avaliações do Google e clica para falar diretamente no seu WhatsApp sem distrações.
+                    </p>
+                </div>
+                <div class="ca-feature-footer">
+                    <span style="font-size: 0.78rem; color: #64748b;">Captação Ética</span>
+                    <a href="#" onclick="event.preventDefault(); window.verPerfilPublico()" class="ca-feature-link">
+                        <span>Ver meu perfil</span> →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 2: Métricas de Acesso -->
+            <div class="ca-feature-card searchable-item" data-keywords="metricas cliques acessos visualizacoes conversao whatsapp">
+                <div>
+                    <div class="ca-feature-top">
+                        <div class="ca-feature-icon" style="background: #eff6ff; color: #1d4ed8;">📊</div>
+                        <div>
+                            <h3 class="ca-feature-title">Métricas de Acesso</h3>
+                            <span class="ca-feature-tag" style="background: #dbeafe; color: #1e40af;">Desempenho</span>
+                        </div>
+                    </div>
+                    <p class="ca-feature-desc">
+                        Acompanhe quantas pessoas visitaram sua página e quantas avançaram para conversar no seu WhatsApp. Se você recebe muitas visitas mas poucos cliques, é sinal de que sua biografia ou foto precisam de mais acolhimento.
+                    </p>
+                </div>
+                <div class="ca-feature-footer">
+                    <span style="font-size: 0.78rem; color: #64748b;">Visão Real</span>
+                    <a href="#" onclick="event.preventDefault(); if(window.loadPage) window.loadPage('psi_visao_geral.html')" class="ca-feature-link">
+                        <span>Ver métricas</span> →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 3: Meus Pacientes & Prontuários -->
+            <div class="ca-feature-card searchable-item" data-keywords="pacientes prontuario prontuarios evolucao sessoes agenda sigilo">
+                <div>
+                    <div class="ca-feature-top">
+                        <div class="ca-feature-icon" style="background: #fef2f2; color: #b91c1c;">👥</div>
+                        <div>
+                            <h3 class="ca-feature-title">Meus Pacientes</h3>
+                            <span class="ca-feature-tag" style="background: #fee2e2; color: #991b1b;">Sigilo & CFP</span>
+                        </div>
+                    </div>
+                    <p class="ca-feature-desc">
+                        Prontuário eletrônico confidencial com criptografia ponta a ponta, em total acordo com a Resolução CFP nº 001/2009 e a LGPD. Mantenha as anotações de evolução de cada sessão protegidas e organizadas em qualquer dispositivo.
+                    </p>
+                </div>
+                <div class="ca-feature-footer">
+                    <span style="font-size: 0.78rem; color: #64748b;">Sigilo Total</span>
+                    <a href="#" onclick="event.preventDefault(); if(window.loadPage) window.loadPage('psi_pacientes.html')" class="ca-feature-link">
+                        <span>Acessar pacientes</span> →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 4: Calculadora de Honorários -->
+            <div class="ca-feature-card searchable-item" data-keywords="calculadora honorarios preco valor sessao custos financeiro">
+                <div>
+                    <div class="ca-feature-top">
+                        <div class="ca-feature-icon" style="background: #fffbeb; color: #b45309;">🧮</div>
+                        <div>
+                            <h3 class="ca-feature-title">Calculadora</h3>
+                            <span class="ca-feature-tag" style="background: #fef3c7; color: #92400e;">Precificação</span>
+                        </div>
+                    </div>
+                    <p class="ca-feature-desc">
+                        Descubra matematicamente quanto cobrar por consulta para atingir sua meta financeira líquida. Considera custos do consultório, horas de supervisão, impostos e férias remuneradas, evitando que você desvalorize seu trabalho.
+                    </p>
+                </div>
+                <div class="ca-feature-footer">
+                    <span style="font-size: 0.78rem; color: #64748b;">Valor Justo</span>
+                    <a href="#" onclick="event.preventDefault(); if(window.loadPage) window.loadPage('psi_calculadora_honorarios.html')" class="ca-feature-link">
+                        <span>Calcular honorários</span> →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 5: Blog Yelo -->
+            <div class="ca-feature-card searchable-item" data-keywords="blog artigos postagens seo autoridade google texto">
+                <div>
+                    <div class="ca-feature-top">
+                        <div class="ca-feature-icon" style="background: #f0fdfa; color: #0f766e;">✍️</div>
+                        <div>
+                            <h3 class="ca-feature-title">Blog Yelo</h3>
+                            <span class="ca-feature-tag" style="background: #ccfbf1; color: #115e59;">Presença no Google</span>
+                        </div>
+                    </div>
+                    <p class="ca-feature-desc">
+                        Publique reflexões e artigos educativos sobre suas áreas de especialidade. Seus textos são publicados no Blog oficial da Yelo e ranqueiam no Google, atraindo pacientes qualificados que já estão pesquisando sobre o assunto.
+                    </p>
+                </div>
+                <div class="ca-feature-footer">
+                    <span style="font-size: 0.78rem; color: #64748b;">Autoridade Digital</span>
+                    <a href="#" onclick="event.preventDefault(); if(window.loadPage) window.loadPage('psi_blog.html')" class="ca-feature-link">
+                        <span>Escrever artigo</span> →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 6: Fórum & Trocas -->
+            <div class="ca-feature-card searchable-item" data-keywords="forum comunidade trocas colegas intervisao casos supervisao">
+                <div>
+                    <div class="ca-feature-top">
+                        <div class="ca-feature-icon" style="background: #fdf4ff; color: #a21caf;">💬</div>
+                        <div>
+                            <h3 class="ca-feature-title">Fórum & Trocas</h3>
+                            <span class="ca-feature-tag" style="background: #fae8ff; color: #86198f;">Comunidade</span>
+                        </div>
+                    </div>
+                    <p class="ca-feature-desc">
+                        Espaço privativo e seguro entre psicólogos para debater casos clínicos (sob rigoroso sigilo ético), pedir encaminhamentos de pacientes de outras abordagens e trocar literatura científica com colegas de profissão.
+                    </p>
+                </div>
+                <div class="ca-feature-footer">
+                    <span style="font-size: 0.78rem; color: #64748b;">Intervisão</span>
+                    <a href="#" onclick="event.preventDefault(); if(window.loadPage) window.loadPage('psi_forum.html')" class="ca-feature-link">
+                        <span>Entrar no fórum</span> →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 7: Manual de Conversão -->
+            <div class="ca-feature-card searchable-item" data-keywords="manual conversao roteiro scripts whatsapp primeiro contato atendimento">
+                <div>
+                    <div class="ca-feature-top">
+                        <div class="ca-feature-icon" style="background: #ecfdf5; color: #047857;">📘</div>
+                        <div>
+                            <h3 class="ca-feature-title">Manual de Acolhimento</h3>
+                            <span class="ca-feature-tag" style="background: #d1fae5; color: #065f46;">Scripts Éticos</span>
+                        </div>
+                    </div>
+                    <p class="ca-feature-desc">
+                        Roteiros e orientações práticas para conduzir o primeiro contato com o paciente pelo WhatsApp. Ensina como responder com empatia, sanar dúvidas sobre o processo psicoterapêutico e apresentar seus honorários com naturalidade.
+                    </p>
+                </div>
+                <div class="ca-feature-footer">
+                    <span style="font-size: 0.78rem; color: #64748b;">Atendimento</span>
+                    <a href="#" onclick="event.preventDefault(); if(window.loadPage) window.loadPage('psi_manual_conversao.html')" class="ca-feature-link">
+                        <span>Ver roteiros</span> →
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SEÇÃO: LINHA DO TEMPO (O CICLO REAL DA SUA CLÍNICA NA YELO) -->
+    <div id="sec-jornada" class="ca-timeline-card searchable-item">
+        <div class="ca-section-header">
+            <h2><span>📈</span> O Ciclo Real de Crescimento da Sua Clínica</h2>
+            <p>Construir uma carteira de pacientes particulares é um processo com etapas claras. Veja o que esperar em cada fase:</p>
+        </div>
+
+        <div class="ca-timeline-flow">
+            <!-- Fase 1: Primeiros 7 Dias -->
+            <div class="ca-timeline-step">
+                <div class="ca-timeline-dot">1</div>
+                <div class="ca-timeline-title">Primeiros 7 Dias: Configuração & Primeiras Indexações</div>
+                <p class="ca-timeline-desc">
+                    Você preenche seu perfil, valida seu CRP e conecta suas avaliações do Google. Seu consultório passa a aparecer nas buscas e no questionário de match, sendo perfeitamente comum receber contatos logo nesta primeira semana.
+                </p>
+            </div>
+
+            <!-- Fase 2 -->
+            <div class="ca-timeline-step">
+                <div class="ca-timeline-dot">2</div>
+                <div class="ca-timeline-title">Dias 8 a 30: Primeiros Contatos no WhatsApp & Primeiras Sessões</div>
+                <p class="ca-timeline-desc">
+                    Pacientes interessados iniciam conversas. O foco nesta etapa é acolher com agilidade e aplicar as orientações do <em>Manual de Acolhimento</em> para agendar as primeiras consultas de avaliação.
+                </p>
+            </div>
+
+            <!-- Fase 3 -->
+            <div class="ca-timeline-step">
+                <div class="ca-timeline-dot">3</div>
+                <div class="ca-timeline-title">Mês 2 a 3: Formação da Carteira Recorrente</div>
+                <p class="ca-timeline-desc">
+                    Seus primeiros pacientes evoluem para atendimentos psicoterapêuticos contínuos e semanais. Você começa a ter previsibilidade de honorários e pode usar a calculadora para expandir seus horários com segurança.
+                </p>
+            </div>
+
+            <!-- Fase 4 -->
+            <div class="ca-timeline-step">
+                <div class="ca-timeline-dot">4</div>
+                <div class="ca-timeline-title">Mês 4 em Diante: Consultório Consolidado & Autonomia</div>
+                <p class="ca-timeline-desc">
+                    Agenda equilibrada, receita previsível e total independência de planos de saúde que pagam pouco. Você tem controle da sua rotina e mantém 100% dos seus honorários preservados.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEÇÃO: PERGUNTAS FREQUENTES (FAQ ORGÂNICO) -->
+    <div id="sec-faq" class="ca-faq-section">
+        <div class="ca-section-header">
+            <h2><span>❓</span> Perguntas Frequentes de Novos Psicólogos</h2>
+            <p>Respostas diretas e transparentes sobre a rotina na plataforma:</p>
+        </div>
+
+        <div class="ca-acordeao-container">
+            <!-- FAQ 1 -->
+            <div class="ca-acordeao-item ativo searchable-item" onclick="window.toggleAcordeao(this, event)">
+                <div class="ca-acordeao-titulo">
+                    A Yelo realmente não cobra nenhuma porcentagem sobre as consultas que realizo?
+                </div>
+                <div class="ca-acordeao-conteudo">
+                    <p>
+                        <strong>Não, absolutamente zero.</strong> A Yelo não retém nenhuma porcentagem dos seus honorários. Nosso modelo é baseado exclusivamente em uma assinatura mensal fixa pelo uso da plataforma e das ferramentas de gestão. O valor da consulta é 100% seu, pago diretamente pelo paciente pelo meio que você preferir (Pix, transferência, cartão ou dinheiro).
+                    </p>
+                </div>
+            </div>
+
+            <!-- FAQ 2 -->
+            <div class="ca-acordeao-item searchable-item" onclick="window.toggleAcordeao(this, event)">
+                <div class="ca-acordeao-titulo">
+                    Como o paciente entra em contato comigo?
+                </div>
+                <div class="ca-acordeao-conteudo">
+                    <p>
+                        Diretamente pelo seu WhatsApp. Ao visitar o seu perfil público na Yelo, o paciente clica no botão "Falar no WhatsApp" e abre imediatamente uma conversa no aplicativo dele direcionada para o seu número. Não há intermediários nem chats engessados: o contato terapêutico é estabelecido diretamente com você.
+                    </p>
+                </div>
+            </div>
+
+            <!-- FAQ 3 -->
+            <div class="ca-acordeao-item searchable-item" onclick="window.toggleAcordeao(this, event)">
+                <div class="ca-acordeao-titulo">
+                    O que acontece se o paciente mandar mensagem e não responder mais no WhatsApp?
+                </div>
+                <div class="ca-acordeao-conteudo">
+                    <p>
+                        Isso é comum na internet: muitas vezes o paciente toma a iniciativa em um momento de pico de angústia e depois hesita por vergonha ou medo. Por isso, recomendamos responder nos primeiros minutos com um acolhimento caloroso e sem pressão comercial. Caso ele não responda, você pode marcar o status no painel para que o algoritmo continue buscando outros contatos para você.
+                    </p>
+                </div>
+            </div>
+
+            <!-- FAQ 4 -->
+            <div class="ca-acordeao-item searchable-item" onclick="window.toggleAcordeao(this, event)">
+                <div class="ca-acordeao-titulo">
+                    As anotações de evolução e prontuários de pacientes são realmente sigilosas?
+                </div>
+                <div class="ca-acordeao-conteudo">
+                    <p>
+                        Sim, com total rigor ético e legal. O sistema de prontuários da Yelo foi desenvolvido respeitando a Resolução CFP nº 001/2009 e a LGPD. Seus dados e notas clínicas são protegidos por criptografia de ponta a ponta e acessíveis exclusivamente pelo seu login individual com senha. Nenhum membro da equipe da Yelo tem acesso às suas anotações terapêuticas.
+                    </p>
+                </div>
+            </div>
+
+            <!-- FAQ 5 -->
+            <div class="ca-acordeao-item searchable-item" onclick="window.toggleAcordeao(this, event)">
+                <div class="ca-acordeao-titulo">
+                    Posso usar a Yelo para atender online e também no meu consultório físico?
+                </div>
+                <div class="ca-acordeao-conteudo">
+                    <p>
+                        Com certeza! No cadastro do seu perfil, você pode indicar se atende online para todo o Brasil, se atende presencialmente na sua cidade (indicando o endereço do seu consultório) ou em ambos os formatos. O questionário de match filtra pacientes da sua região geográfica para atendimentos presenciais.
+                    </p>
+                </div>
+            </div>
+
+            <!-- FAQ 6 -->
+            <div class="ca-acordeao-item searchable-item" onclick="window.toggleAcordeao(this, event)">
+                <div class="ca-acordeao-titulo">
+                    Como funciona o período de testes (Trial) e o cancelamento da assinatura?
+                </div>
+                <div class="ca-acordeao-conteudo">
+                    <p>
+                        Você experimenta a Yelo com acesso completo a todas as funcionalidades de captação, prontuários e ferramentas clínicas. Não existem multas nem contratos de fidelidade: você decide se deseja continuar e gerencia sua assinatura com total autonomia direto no painel.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botão com Link Direto para a Página Oficial de FAQ -->
+        <div class="ca-faq-cta-wrapper">
+            <a href="/faq" target="_blank" class="ca-btn-link-faq">
+                <span>Acessar a Central de Ajuda & FAQ Completo</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+            </a>
+        </div>
+    </div>
+
+    <!-- SEÇÃO: CANAL DE SUPORTE HUMANIZADO (WHATSAPP DIRETO) -->
+    <div id="sec-suporte" class="ca-support-card">
+        <div class="ca-support-info">
+            <div class="ca-support-avatar">🎧</div>
+            <div class="ca-support-text">
+                <h3>Precisa de Apoio nos Primeiros Passos?</h3>
+                <p>Nossa equipe de Sucesso do Psicólogo está à disposição para tirar dúvidas sobre seu perfil, analisar sua biografia ou ajudar com a configuração técnica do seu consultório.</p>
+            </div>
+        </div>
+        <div class="ca-support-actions">
+            <!-- Botão WhatsApp Suporte -->
+            <button onclick="window.abrirWhatsAppSuporte()" class="ca-btn-action-twin whatsapp">
+                <svg width="19" height="19" viewBox="0 0 448 512" fill="currentColor"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-23.2-115-65.1-157zM223.9 414.8c-33.2 0-65.8-8.9-94-25.7l-6.7-4-69.8 18.3L72 334.1l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 54.3 0 105.4 21.2 143.8 59.6 38.4 38.4 59.6 89.4 59.6 143.8 0 101.7-82.8 184.5-184.6 184.5zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-2.1-3.6 2.1-3.2 7.6-14.1 1.4-2.8 2.8-5.2 1.4-7.6-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>
+                <span>Falar com o Suporte no WhatsApp</span>
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- SCRIPT DE LÓGICA E INTERATIVIDADE -->
+<script>
+(function() {
+    // 1. Rola suavemente até a seção desejada a partir do dropdown
+    window.scrollToSection = function(sectionId) {
+        if (!sectionId) return;
+        const el = document.getElementById(sectionId);
+        if (el) {
+            const offset = 80;
+            const bodyRect = document.body.getBoundingClientRect().top;
+            const elementRect = el.getBoundingClientRect().top;
+            const elementPosition = elementRect - bodyRect;
+            const offsetPosition = elementPosition - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    // 2. Acordeão Orgânico
+    window.toggleAcordeao = function(itemEl, e) {
+        if (!itemEl) return;
+        if (e && e.target && e.target.closest('.ca-acordeao-conteudo') && e.target.tagName !== 'DIV') {
+            return;
+        }
+
+        const isAtivo = itemEl.classList.contains('ativo');
+        
+        document.querySelectorAll('.ca-acordeao-item').forEach(it => {
+            it.classList.remove('ativo');
+        });
+
+        if (!isAtivo) {
+            itemEl.classList.add('ativo');
+        }
+    };
+
+    // 3. Campo de Busca Interativo no Guia
+    window.handleGuiaSearch = function(query) {
+        const q = (query || '').toLowerCase().trim();
+        const clearBtn = document.getElementById('ca-clear-search');
+        const feedback = document.getElementById('ca-search-feedback');
+
+        if (clearBtn) clearBtn.style.display = q.length > 0 ? 'flex' : 'none';
+
+        if (!q) {
+            if (feedback) feedback.style.display = 'none';
+            document.querySelectorAll('.searchable-item').forEach(el => el.style.display = '');
+            return;
+        }
+
+        let matchCount = 0;
+        document.querySelectorAll('.searchable-item').forEach(el => {
+            const text = (el.innerText || '').toLowerCase();
+            const keywords = (el.getAttribute('data-keywords') || '').toLowerCase();
+            
+            if (text.includes(q) || keywords.includes(q)) {
+                el.style.display = '';
+                matchCount++;
+            } else {
+                el.style.display = 'none';
+            }
+        });
+
+        if (feedback) {
+            feedback.style.display = 'block';
+            feedback.innerHTML = `🔍 <strong>${matchCount}</strong> resultado${matchCount === 1 ? '' : 's'} encontrado${matchCount === 1 ? '' : 's'} para "<em>${query}</em>"`;
+        }
+    };
+
+    window.clearGuiaSearch = function() {
+        const input = document.getElementById('ca-search-input');
+        if (input) input.value = '';
+        window.handleGuiaSearch('');
+    };
+
+    // 4. Verificação Automática da Checklist (4 Passos)
+    function verificarStatusAutomatico() {
+        let psiData = null;
+        if (typeof window.getPsychologistData === 'function') {
+            psiData = window.getPsychologistData();
+        }
+
+        if (!psiData) {
+            const token = localStorage.getItem('token') || localStorage.getItem('psi_token');
+            const apiBase = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
+            if (token) {
+                fetch(`${apiBase}/api/psychologists/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data) {
+                        if (typeof window.setPsychologistData === 'function') window.setPsychologistData(data);
+                        aplicarStatusChecklist(data);
+                    }
+                })
+                .catch(() => aplicarStatusChecklist({}));
+                return;
+            }
+        }
+
+        aplicarStatusChecklist(psiData || {});
+    }
+
+    function aplicarStatusChecklist(psi) {
+        const id = psi.id || 'me';
+
+        // Passo 1: Foto e CRP
+        const hasPhoto = Boolean(psi.fotoUrl && !psi.fotoUrl.includes('placehold.co') && !psi.fotoUrl.includes('avatar-default'));
+        const hasCrp = Boolean(psi.crp && psi.crp.trim().length > 2);
+        const step1Done = hasPhoto && hasCrp;
+
+        // Passo 2: Biografia Humanizada
+        const bioText = (psi.biografia || psi.bio || '').trim();
+        const step2Done = bioText.length >= 25;
+
+        // Passo 3: Google Meu Negócio / Avaliações
+        const step3Done = Boolean(psi.googleBusinessUrl || psi.googleBusinessPlaceId || (psi.googleReviews && psi.googleReviews.length > 0));
+
+        // Passo 4: Compartilhou link
+        const step4Done = Boolean(localStorage.getItem('yelo_link_shared_' + id) === 'true' || (psi.slug && localStorage.getItem('yelo_link_copied') === 'true'));
+
+        const statusMap = {
+            'step-foto': step1Done,
+            'step-bio': step2Done,
+            'step-gmb': step3Done,
+            'step-link': step4Done
+        };
+
+        let completedCount = 0;
+        const total = 4;
+
+        Object.keys(statusMap).forEach(key => {
+            const isDone = statusMap[key];
+            const itemEl = document.getElementById(`item-${key}`);
+            const badgeEl = document.getElementById(`badge-${key}`);
+
+            if (isDone) {
+                completedCount++;
+                if (itemEl) itemEl.classList.add('completed');
+                if (badgeEl) {
+                    badgeEl.className = 'ca-status-badge-indicator completed';
+                    badgeEl.innerHTML = `
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Pronto</span>
+                    `;
+                }
+            } else {
+                if (itemEl) itemEl.classList.remove('completed');
+                if (badgeEl) {
+                    badgeEl.className = 'ca-status-badge-indicator pending';
+                    badgeEl.innerHTML = `<span>○ Pendente</span>`;
+                }
+            }
+        });
+
+        const percent = Math.round((completedCount / total) * 100);
+        const bar = document.getElementById('ca-progress-bar');
+        const txt = document.getElementById('ca-progress-percent');
+
+        if (bar) bar.style.width = percent + '%';
+        if (txt) txt.textContent = percent + '%';
+
+        if (percent === 100 && !sessionStorage.getItem('yelo_celebrated_guide') && typeof confetti === 'function') {
+            sessionStorage.setItem('yelo_celebrated_guide', 'true');
+            confetti({
+                particleCount: 90,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+            if (window.showToast) window.showToast('🎉 Parabéns! Seu consultório está 100% pronto para receber pacientes!', 'success');
+        }
+    }
+
+    // 5. Ação: Copiar Link Público
+    window.copiarLinkPublico = function() {
+        let slug = '';
+        let psiId = 'me';
+        if (typeof window.getPsychologistData === 'function') {
+            const data = window.getPsychologistData();
+            slug = data?.slug || '';
+            psiId = data?.id || 'me';
+        }
+        const url = slug ? `https://www.yelopsi.com.br/${slug}` : 'https://www.yelopsi.com.br';
+
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = document.getElementById('ca-btn-copy-link');
+                if (btn) btn.innerHTML = '<span>Link Copiado!</span> ✅';
+                if (window.showToast) window.showToast('Link copiado para a área de transferência!', 'success');
+                
+                localStorage.setItem('yelo_link_shared_' + psiId, 'true');
+                localStorage.setItem('yelo_link_copied', 'true');
+                verificarStatusAutomatico();
+
+                setTimeout(() => {
+                    if (btn) btn.innerHTML = '<span>Copiar Meu Link Oficial</span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+                }, 2500);
+            });
+        }
+    };
+
+    // 6. Ver Perfil Público
+    window.verPerfilPublico = function() {
+        let slug = '';
+        if (typeof window.getPsychologistData === 'function') {
+            const data = window.getPsychologistData();
+            slug = data?.slug || '';
+        }
+        const url = slug ? `https://www.yelopsi.com.br/${slug}` : 'https://www.yelopsi.com.br';
+        window.open(url, '_blank');
+    };
+
+    // 7. Compartilhar Guia
+    window.compartilharGuia = function() {
+        const url = window.location.origin + '/comece-aqui';
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url).then(() => {
+                if (window.showToast) window.showToast('Link do Guia copiado!', 'info');
+            });
+        }
+    };
+
+    // 8. Abrir WhatsApp do Suporte Yelo
+    window.abrirWhatsAppSuporte = function() {
+        const msg = encodeURIComponent("Olá! Sou psicólogo na Yelo e gostaria de tirar uma dúvida sobre os meus primeiros passos.");
+        const phone = "5511999999999";
+        window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+    };
+
+    // Inicialização ao carregar
+    verificarStatusAutomatico();
+})();
+</script>

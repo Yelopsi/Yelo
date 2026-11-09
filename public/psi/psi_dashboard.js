@@ -734,6 +734,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (typeof window.carregarAvisosBackground === 'function') {
                     window.carregarAvisosBackground();
                 }
+
+                // Injeta o guia contextual da tela no padrão Airbnb + Notion
+                if (typeof window.atualizarGuiaContextual === 'function') {
+                    window.atualizarGuiaContextual(url);
+                }
             })
             .catch(e => mainContent.innerHTML = `<p>Erro ao carregar: ${e}</p>`);
 

@@ -311,6 +311,9 @@ router.get('/contato', (req, res) => res.render('contato'));
 // --- REDIRECIONAMENTO DE ASSINATURA & PLANOS ---
 router.get(['/assinatura', '/planos'], (req, res) => res.redirect('/psi/psi_dashboard.html?page=psi_assinatura.html'));
 
+// --- GUIA DE SUCESSO / COMECE AQUI ---
+router.get(['/comece-aqui', '/psi/comece-aqui', '/guia-psicologo'], (req, res) => res.redirect('/psi/psi_dashboard.html?page=psi_comece_aqui.html'));
+
 // --- MAPA DO SITE HTML (SEO) ---
 router.get('/mapa-do-site', async (req, res) => {
     try {
