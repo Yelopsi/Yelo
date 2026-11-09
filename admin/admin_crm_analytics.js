@@ -436,14 +436,32 @@ window.initializePage = function() {
             if (weeklyCtx && data.weeklyCashFlow) {
                 // Obter os 2 meses mais recentes (lembrando que cashFlow está ordenado do mais recente pro mais antigo)
                 if (cashFlow.length >= 2) {
-                    const currentMonthStr = cashFlow[0].monthYear; // ex: "2026-10"
-                    const previousMonthStr = cashFlow[1].monthYear; // ex: "2026-09"
+                    const currentMonthStr = cashFlow[0].monthYear; // ex: "2026-11"
+                    const previousMonthStr = cashFlow[1].monthYear; // ex: "2026-10"
                     
                     const currentData = data.weeklyCashFlow[currentMonthStr] || { 1:0, 2:0, 3:0, 4:0, 5:0 };
                     const previousData = data.weeklyCashFlow[previousMonthStr] || { 1:0, 2:0, 3:0, 4:0, 5:0 };
                     
                     const [cYear, cMonth] = currentMonthStr.split('-');
                     const [pYear, pMonth] = previousMonthStr.split('-');
+
+                    const currentTotal = cashFlow[0].count;
+                    const previousTotal = cashFlow[1].count;
+
+                    // Badges com totais consolidados no cabeçalho
+                    const badgesContainer = document.getElementById('weekly-chart-summary-badges');
+                    if (badgesContainer) {
+                        badgesContainer.innerHTML = `
+                            <span style="background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                                <span style="width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6;"></span>
+                                ${cMonth}/${cYear}: ${currentTotal} pagamentos total
+                            </span>
+                            <span style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                                <span style="width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
+                                ${pMonth}/${pYear}: ${previousTotal} pagamentos total
+                            </span>
+                        `;
+                    }
                     
                     if (window.weeklyPaymentsChartInstance) {
                         window.weeklyPaymentsChartInstance.destroy();
@@ -459,7 +477,7 @@ window.initializePage = function() {
                             labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4', 'Semana 5'],
                             datasets: [
                                 {
-                                    label: `Mês Atual (${cMonth}/${cYear})`,
+                                    label: `Mês Atual (${cMonth}/${cYear}) — ${currentTotal} total`,
                                     data: [currentData[1], currentData[2], currentData[3], currentData[4], currentData[5]],
                                     borderColor: '#8b5cf6',
                                     backgroundColor: gradient,
@@ -473,7 +491,7 @@ window.initializePage = function() {
                                     tension: 0.4
                                 },
                                 {
-                                    label: `Mês Anterior (${pMonth}/${pYear})`,
+                                    label: `Mês Anterior (${pMonth}/${pYear}) — ${previousTotal} total`,
                                     data: [previousData[1], previousData[2], previousData[3], previousData[4], previousData[5]],
                                     borderColor: '#94a3b8',
                                     backgroundColor: 'transparent',
@@ -500,7 +518,13 @@ window.initializePage = function() {
                                     backgroundColor: '#1f2937',
                                     padding: 12,
                                     titleFont: { size: 13, family: 'Inter' },
-                                    bodyFont: { size: 14, family: 'Inter', weight: 'bold' }
+                                    bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.dataset.label ? context.dataset.label.split(' — ')[0] : '';
+                                            return ` ${label}: ${context.parsed.y} pagamentos nesta semana`;
+                                        }
+                                    }
                                 }
                             },
                             scales: {
