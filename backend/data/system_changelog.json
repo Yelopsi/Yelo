@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-2685d7bd",
+    "date": "2026-11-10T02:04:21.000Z",
+    "commit": "2685d7bd",
+    "author": "Anderson",
+    "title": "Correção: Corrigir ordenacao e datas de faturas recentes e proximos pagamentos (finance)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "corrigir ordenacao e datas de faturas recentes e proximos pagamentos",
+    "description": "Commit registrado no repositório: \"fix(finance): corrigir ordenacao e datas de faturas recentes e proximos pagamentos\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/adminDashboardController.js, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/receita.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2685d7bd"
+    },
+    "after": {
+      "nova_versao": "corrigir ordenacao e datas de faturas recentes e proximos pagamentos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminDashboardController.js",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/receita.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-a9f1b27f",
     "date": "2026-11-10T01:53:03.000Z",
     "commit": "a9f1b27f",

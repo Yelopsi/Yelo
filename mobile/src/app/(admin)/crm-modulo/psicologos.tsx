@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
   Linking,
   Image,
   Platform,
+  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -135,10 +137,29 @@ export default function AdminCRMPsicologosScreen() {
   // Filtros & Paginação (Inicia em Follow-ups 📞 como na versão web)
   const [activeFilter, setActiveFilter] = useState('pending_actions');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const limit = 20;
+
+  // Refs para controle suave de foco e teclado
+  const scrollViewRef = useRef<any>(null);
+  const searchBarYRef = useRef<number>(0);
+
+  // Auto-scroll ao abrir o teclado para não cobrir o campo de busca
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const sub = Keyboard.addListener(showEvent, () => {
+      if (isSearchFocused && searchBarYRef.current > 0) {
+        scrollViewRef.current?.scrollTo({
+          y: Math.max(0, searchBarYRef.current - (insets.top + 16)),
+          animated: true,
+        });
+      }
+    });
+    return () => sub.remove();
+  }, [isSearchFocused, insets.top]);
 
   // Estados de Carregamento
   const [loading, setLoading] = useState(true);
@@ -949,12 +970,19 @@ export default function AdminCRMPsicologosScreen() {
   return (
     <View className="flex-1 bg-[#f8fafc]">
       <StatusBar style="dark" />
-      <ScrollView
-        className="flex-1 px-4"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 150 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
       >
+        <ScrollView
+          ref={scrollViewRef}
+          className="flex-1 px-4"
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 160 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
+        >
         {/* Barra de Navegação Superior (Voltar ao CRM Hub + Badge Admin) */}
         <View className="mb-3.5 flex-row items-center justify-between">
           <TouchableOpacity
@@ -1694,25 +1722,49 @@ export default function AdminCRMPsicologosScreen() {
         {/* ========================================================= */}
         {/* 6. BUSCA                                                   */}
         {/* ========================================================= */}
-        <View className="mb-3.5">
+        <View
+          className="mb-3.5"
+          onLayout={(e) => {
+            searchBarYRef.current = e.nativeEvent.layout.y;
+          }}
+        >
           <View
             style={{
               backgroundColor: '#ffffff',
               borderRadius: 999,
               paddingHorizontal: 16,
               paddingVertical: 10,
-              borderWidth: 1,
-              borderColor: '#e2e8f0',
+              borderWidth: 1.5,
+              borderColor: isSearchFocused ? '#1B4332' : '#e2e8f0',
               flexDirection: 'row',
               alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: isSearchFocused ? 0.08 : 0.03,
+              shadowRadius: 3,
+              elevation: 1,
             }}
           >
-            <Feather name="search" size={17} color="#94a3b8" />
+            <Feather name="search" size={17} color={isSearchFocused ? '#1B4332' : '#94a3b8'} />
             <TextInput
               placeholder="Buscar por nome, e-mail ou CRP..."
               placeholderTextColor="#94a3b8"
               value={searchTerm}
               onChangeText={setSearchTerm}
+              onFocus={() => {
+                setIsSearchFocused(true);
+                setTimeout(() => {
+                  if (searchBarYRef.current > 0) {
+                    scrollViewRef.current?.scrollTo({
+                      y: Math.max(0, searchBarYRef.current - (insets.top + 16)),
+                      animated: true,
+                    });
+                  }
+                }, 100);
+              }}
+              onBlur={() => setIsSearchFocused(false)}
+              returnKeyType="search"
+              onSubmitEditing={Keyboard.dismiss}
               className="flex-1 ml-2.5 font-sans text-[14px] text-[#1e293b]"
               autoCapitalize="none"
               autoCorrect={false}
@@ -2405,6 +2457,7 @@ export default function AdminCRMPsicologosScreen() {
           </View>
         )}
       </ScrollView>
+    </KeyboardAvoidingView>
 
       {/* ========================================================= */}
       {/* 9. DRAWER / MODAL VISÃO 360 CS (MODERN BOTTOM SHEET)       */}
