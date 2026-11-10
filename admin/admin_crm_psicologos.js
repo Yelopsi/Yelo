@@ -179,6 +179,19 @@ window.initializePage = function () {
 
     window.currentCrmPage = 1;
 
+    // Período padrão: histórico completo do ano (evita cortar assinantes e reduzir MRR)
+    const startInput = document.getElementById('crm-date-start');
+    const endInput = document.getElementById('crm-date-end');
+    if (startInput && !startInput.value) {
+        startInput.value = '2026-01-01';
+        if (startInput._flatpickr) startInput._flatpickr.setDate('2026-01-01', false);
+    }
+    if (endInput && !endInput.value) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        endInput.value = todayStr;
+        if (endInput._flatpickr) endInput._flatpickr.setDate(todayStr, false);
+    }
+
     document.getElementById('crm-per-page')?.addEventListener('change', () => fetchAndRenderPsis(1));
     document.getElementById('crm-date-start')?.addEventListener('change', () => fetchAndRenderPsis(1));
     document.getElementById('crm-date-end')?.addEventListener('change', () => fetchAndRenderPsis(1));
