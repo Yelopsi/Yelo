@@ -1,5 +1,178 @@
 [
   {
+    "id": "change-git-31b29f72",
+    "date": "2026-11-10T01:35:10.000Z",
+    "commit": "31b29f72",
+    "author": "Anderson",
+    "title": "Correção: Exibir badges corretos de feedback no dossie do psicologo (nao contatou, agendou, nao agendou) (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "exibir badges corretos de feedback no dossie do psicologo (nao contatou, agendou, nao agendou)",
+    "description": "Commit registrado no repositório: \"fix(mobile): exibir badges corretos de feedback no dossie do psicologo (nao contatou, agendou, nao agendou)\". Arquivos modificados: mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx, mobile/src/app/(admin)/crm-modulo/psicologos.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #31b29f72"
+    },
+    "after": {
+      "nova_versao": "exibir badges corretos de feedback no dossie do psicologo (nao contatou, agendou, nao agendou)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx"
+    ]
+  },
+  {
+    "id": "change-git-081b5465",
+    "date": "2026-11-08T23:00:48.000Z",
+    "commit": "081b5465",
+    "author": "Anderson",
+    "title": "Novo: Espelhar gestao de conteudo com versao web e editor de paginas (admin)",
+    "category": "Admin & Plataforma",
+    "badgeColor": "#0284c7",
+    "status": "Em Produção",
+    "summary": "espelhar gestao de conteudo com versao web e editor de paginas",
+    "description": "Commit registrado no repositório: \"feat(admin): espelhar gestao de conteudo com versao web e editor de paginas\". Arquivos modificados: mobile/src/app/(admin)/gestao-conteudo.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #081b5465"
+    },
+    "after": {
+      "nova_versao": "espelhar gestao de conteudo com versao web e editor de paginas"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/gestao-conteudo.tsx"
+    ]
+  },
+  {
+    "id": "change-git-6c014dce",
+    "date": "2026-11-08T22:51:43.000Z",
+    "commit": "6c014dce",
+    "author": "Anderson",
+    "title": "Correção: Url do perfil publico no drawer para yelopsi.com.br/slug (admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "url do perfil publico no drawer para yelopsi.com.br/slug",
+    "description": "Commit registrado no repositório: \"fix(admin): url do perfil publico no drawer para yelopsi.com.br/slug\". Arquivos modificados: mobile/src/app/(admin)/crm-modulo/psicologos.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #6c014dce"
+    },
+    "after": {
+      "nova_versao": "url do perfil publico no drawer para yelopsi.com.br/slug"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx"
+    ]
+  },
+  {
+    "id": "change-git-ec917d87",
+    "date": "2026-11-08T22:39:33.000Z",
+    "commit": "ec917d87",
+    "author": "Anderson",
+    "title": "Novo: Dropdown nativo no estilo do dispositivo para secoes do dossie (admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "dropdown nativo no estilo do dispositivo para secoes do dossie",
+    "description": "Commit registrado no repositório: \"feat(admin): dropdown nativo no estilo do dispositivo para secoes do dossie\". Arquivos modificados: mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ec917d87"
+    },
+    "after": {
+      "nova_versao": "dropdown nativo no estilo do dispositivo para secoes do dossie"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx"
+    ]
+  },
+  {
+    "id": "change-git-b45d6562",
+    "date": "2026-11-08T22:31:38.000Z",
+    "commit": "b45d6562",
+    "author": "Anderson",
+    "title": "Novo: Tela nativa do dossie completo do psicologo e navegacao no drawer (admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "tela nativa do dossie completo do psicologo e navegacao no drawer",
+    "description": "Commit registrado no repositório: \"feat(admin): tela nativa do dossie completo do psicologo e navegacao no drawer\". Arquivos modificados: admin/admin.html, admin/admin.js, admin/admin_detalhes_psicologo.html, mobile/src/app/(admin)/crm-modulo/_layout.tsx, mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #b45d6562"
+    },
+    "after": {
+      "nova_versao": "tela nativa do dossie completo do psicologo e navegacao no drawer"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin.html",
+      "admin/admin.js",
+      "admin/admin_detalhes_psicologo.html",
+      "mobile/src/app/(admin)/crm-modulo/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx"
+    ]
+  },
+  {
+    "id": "change-git-84a16974",
+    "date": "2026-11-08T22:14:44.000Z",
+    "commit": "84a16974",
+    "author": "Anderson",
+    "title": "Novo: Saude colapsavel, formatacao consultor ia e acoes completas de cs na visao 360 (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "saude colapsavel, formatacao consultor ia e acoes completas de cs na visao 360",
+    "description": "Commit registrado no repositório: \"feat(mobile): saude colapsavel, formatacao consultor ia e acoes completas de cs na visao 360\". Arquivos modificados: mobile/src/app/(admin)/crm-modulo/psicologos.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #84a16974"
+    },
+    "after": {
+      "nova_versao": "saude colapsavel, formatacao consultor ia e acoes completas de cs na visao 360"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx"
+    ]
+  },
+  {
+    "id": "change-git-56eeb59f",
+    "date": "2026-11-08T19:58:08.000Z",
+    "commit": "56eeb59f",
+    "author": "Anderson",
+    "title": "Novo: Implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)",
+    "category": "Segurança & Autenticação",
+    "badgeColor": "#0ea5e9",
+    "status": "Em Produção",
+    "summary": "implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)",
+    "description": "Commit registrado no repositório: \"feat: implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)\". Arquivos modificados: backend/controllers/psiAuthController.js, backend/controllers/psychologistController.js, backend/utils/documentValidator.js, mobile/src/app/(tabs)/assinatura.tsx, mobile/src/app/(tabs)/meu_perfil.tsx (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #56eeb59f"
+    },
+    "after": {
+      "nova_versao": "implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/psiAuthController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/utils/documentValidator.js",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "mobile/src/app/(tabs)/meu_perfil.tsx",
+      "public/psi/psi_assinatura.js",
+      "public/psi/psi_meu_perfil.js"
+    ]
+  },
+  {
     "id": "change-git-773aa5c9",
     "date": "2026-11-08T19:23:15.000Z",
     "commit": "773aa5c9",

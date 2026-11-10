@@ -304,7 +304,9 @@ export default function MeuPerfilScreen() {
           publico_alvo: Array.isArray(p.publico_alvo) ? p.publico_alvo : [],
           praticas_inclusivas: Array.isArray(p.praticas_inclusivas) ? p.praticas_inclusivas : [],
           genero_identidade: p.genero_identidade || '',
-          abordagens_tecnicas: p.abordagens_tecnicas || '',
+          abordagens_tecnicas: Array.isArray(p.abordagens_tecnicas)
+            ? (p.abordagens_tecnicas[0] || '')
+            : (typeof p.abordagens_tecnicas === 'string' ? p.abordagens_tecnicas : ''),
           modalidade: Array.isArray(p.modalidade) ? p.modalidade : [],
           disponibilidade_periodo: Array.isArray(p.disponibilidade_periodo) ? p.disponibilidade_periodo : [],
           profile_paused: p.profile_paused === true,
@@ -345,7 +347,13 @@ export default function MeuPerfilScreen() {
       { key: 'crp', label: 'Número do CRP', done: !!form.crp.trim() },
       { key: 'telefone', label: 'WhatsApp', done: !!form.telefone.trim() },
       { key: 'cpf', label: 'Documento (CPF/CNPJ)', done: isValidDocument(form.cpf) },
-      { key: 'abordagens_tecnicas', label: 'Abordagens e Técnicas', done: !!form.abordagens_tecnicas },
+      {
+        key: 'abordagens_tecnicas',
+        label: 'Abordagens e Técnicas',
+        done: typeof form.abordagens_tecnicas === 'string'
+          ? !!form.abordagens_tecnicas.trim()
+          : (Array.isArray(form.abordagens_tecnicas) ? (form.abordagens_tecnicas as string[]).length > 0 : !!form.abordagens_tecnicas),
+      },
       { key: 'temas_atuacao', label: 'Temas de Atuação', done: form.temas_atuacao.length > 0 },
       { key: 'publico_alvo', label: 'Público-Alvo', done: form.publico_alvo.length > 0 },
       { key: 'modalidade', label: 'Modalidade', done: form.modalidade.length > 0 },
@@ -570,7 +578,9 @@ export default function MeuPerfilScreen() {
         payload.publico_alvo = form.publico_alvo;
         payload.praticas_inclusivas = form.praticas_inclusivas;
         payload.genero_identidade = form.genero_identidade;
-        payload.abordagens_tecnicas = form.abordagens_tecnicas;
+        payload.abordagens_tecnicas = form.abordagens_tecnicas
+          ? (Array.isArray(form.abordagens_tecnicas) ? form.abordagens_tecnicas : [form.abordagens_tecnicas])
+          : [];
         payload.modalidade = form.modalidade;
         payload.disponibilidade_periodo = form.disponibilidade_periodo;
       } else if (blockKey === 'visibility') {
@@ -1254,14 +1264,27 @@ export default function MeuPerfilScreen() {
                   <View style={styles.specialtySection}>
                     <Text style={styles.specialtySectionTitle}>Abordagens e Técnicas *</Text>
                     <View style={styles.chipsRow}>
-                      {ABORDAGENS_OPCOES.map((ab) =>
-                        renderChip(
+                      {ABORDAGENS_OPCOES.map((ab) => {
+                        const isSelected = Array.isArray(form.abordagens_tecnicas)
+                          ? (form.abordagens_tecnicas as string[]).includes(ab)
+                          : form.abordagens_tecnicas === ab;
+
+                        return renderChip(
                           ab,
-                          form.abordagens_tecnicas === ab,
-                          () => setForm((p) => ({ ...p, abordagens_tecnicas: ab })),
+                          isSelected,
+                          () =>
+                            setForm((p) => {
+                              const currentlySelected = Array.isArray(p.abordagens_tecnicas)
+                                ? (p.abordagens_tecnicas as string[]).includes(ab)
+                                : p.abordagens_tecnicas === ab;
+                              return {
+                                ...p,
+                                abordagens_tecnicas: currentlySelected ? '' : ab,
+                              };
+                            }),
                           editMode['specialties']
-                        )
-                      )}
+                        );
+                      })}
                     </View>
                   </View>
 

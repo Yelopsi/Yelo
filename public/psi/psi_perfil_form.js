@@ -81,7 +81,8 @@ window.PsiPerfilFormUI = (function() {
                 const el = document.getElementById(id);
                 if (el) {
                     if (el.tomselect) {
-                        el.tomselect.setValue(values, true);
+                        const valToSet = (!el.multiple && Array.isArray(values)) ? (values[0] || '') : values;
+                        el.tomselect.setValue(valToSet, true);
                     } else {
                         const valuesArray = Array.isArray(values) ? values : (values ? [values] : []);
                         Array.from(el.options).forEach(opt => {
