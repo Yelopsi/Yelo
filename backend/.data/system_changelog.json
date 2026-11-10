@@ -1,5 +1,89 @@
 [
   {
+    "id": "change-git-037c0c55",
+    "date": "2026-11-10T00:20:09.000Z",
+    "commit": "037c0c55",
+    "author": "Anderson",
+    "title": "Novo: Priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11 (match)",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11",
+    "description": "Commit registrado no repositório: \"feat(match): priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11\". Arquivos modificados: admin/admin_visao_geral.html, admin/admin_visao_geral.js, backend/controllers/matchController.js, backend/data/system_changelog.json, backend/jobs/scheduler.js (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #037c0c55"
+    },
+    "after": {
+      "nova_versao": "priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_visao_geral.html",
+      "admin/admin_visao_geral.js",
+      "backend/controllers/matchController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/scheduler.js",
+      "backend/services/matchService.js",
+      "backend/services/metaAdsService.js",
+      "public/js/questionario.js",
+      "public/js/resultados.js"
+    ]
+  },
+  {
+    "id": "change-git-258fda5a",
+    "date": "2026-11-09T00:46:11.000Z",
+    "commit": "258fda5a",
+    "author": "Anderson",
+    "title": "Correção: Detalhamento semanal e totais consolidados no comparativo Asaas (admin)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "detalhamento semanal e totais consolidados no comparativo Asaas",
+    "description": "Commit registrado no repositório: \"fix(admin): detalhamento semanal e totais consolidados no comparativo Asaas\". Arquivos modificados: admin/admin_crm_analytics.html, admin/admin_crm_analytics.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #258fda5a"
+    },
+    "after": {
+      "nova_versao": "detalhamento semanal e totais consolidados no comparativo Asaas"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_analytics.html",
+      "admin/admin_crm_analytics.js"
+    ]
+  },
+  {
+    "id": "change-git-56eeb59f",
+    "date": "2026-11-08T19:58:08.000Z",
+    "commit": "56eeb59f",
+    "author": "Anderson",
+    "title": "Novo: Implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)",
+    "category": "Segurança & Autenticação",
+    "badgeColor": "#0ea5e9",
+    "status": "Em Produção",
+    "summary": "implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)",
+    "description": "Commit registrado no repositório: \"feat: implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)\". Arquivos modificados: backend/controllers/psiAuthController.js, backend/controllers/psychologistController.js, backend/utils/documentValidator.js, mobile/src/app/(tabs)/assinatura.tsx, mobile/src/app/(tabs)/meu_perfil.tsx (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #56eeb59f"
+    },
+    "after": {
+      "nova_versao": "implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/psiAuthController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/utils/documentValidator.js",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "mobile/src/app/(tabs)/meu_perfil.tsx",
+      "public/psi/psi_assinatura.js",
+      "public/psi/psi_meu_perfil.js"
+    ]
+  },
+  {
     "id": "change-git-773aa5c9",
     "date": "2026-11-08T19:23:15.000Z",
     "commit": "773aa5c9",

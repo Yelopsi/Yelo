@@ -1,37 +1,189 @@
 [
   {
-    "id": "change-1794267896253",
-    "date": "2026-11-09T23:44:56.253Z",
-    "commit": "match-v6-1",
-    "author": "Anderson Costa",
-    "title": "Novo: Priorização de Tráfego Pago no Motor V6.1, Capping da Késia e Cron 24/11",
-    "category": "Motor de Match & Growth",
-    "badgeColor": "#10b981",
+    "id": "change-git-037c0c55",
+    "date": "2026-11-10T00:20:09.000Z",
+    "commit": "037c0c55",
+    "author": "Anderson",
+    "title": "Novo: Priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11 (match)",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
     "status": "Em Produção",
-    "summary": "Motor V6.1: tráfego pago do Google Ads prioriza 100% assinantes pagantes; capping rigoroso de 1 clique/mês para Késia Lopes; automação da escalada de Meta Ads (Degraus 2 e 3) e alerta de reavaliação para 24/11.",
-    "description": "Implementada proteção de receita no matchService: tráfego Google Ads aloca as 3 vagas exclusivamente para psicólogos pagantes ativos. Capping de 1 clique/mês implementado para Késia (ID 106). Scheduler configurado com rotina de escalada Meta Ads (13/11 R$ 29, 17/11 R$ 35) e alerta no Dashboard Admin para o dia 24/11/2026.",
-    "rationale": "Blindagem da retenção de assinantes pagantes e execução do plano de ação de tráfego pago definido para novembro de 2026.",
+    "summary": "priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11",
+    "description": "Commit registrado no repositório: \"feat(match): priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11\". Arquivos modificados: admin/admin_visao_geral.html, admin/admin_visao_geral.js, backend/controllers/matchController.js, backend/data/system_changelog.json, backend/jobs/scheduler.js (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
     "before": {
-      "motor_anterior": "Tráfego pago misturado entre pagantes e trials; sem capping específico para Késia; sem rotina de reavaliação agendada."
+      "estado_anterior": "Versão anterior ao commit #037c0c55"
     },
     "after": {
-      "motor_v6_1": "Google Ads 100% focado em assinantes pagantes ativos; Késia limitada a 1 clique/mês; escalada e alerta de 24/11 automatizados no Scheduler e Admin."
+      "nova_versao": "priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11"
     },
-    "metricsToCompare": [
-      "CAC B2B",
-      "Cliques WhatsApp por Assinante",
-      "Retenção no 2º Mês",
-      "Taxa de Conversão Google Ads"
-    ],
+    "metricsToCompare": [],
     "filesChanged": [
-      "backend/services/matchService.js",
-      "backend/controllers/matchController.js",
-      "backend/services/metaAdsService.js",
-      "backend/jobs/scheduler.js",
       "admin/admin_visao_geral.html",
       "admin/admin_visao_geral.js",
+      "backend/controllers/matchController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/scheduler.js",
+      "backend/services/matchService.js",
+      "backend/services/metaAdsService.js",
       "public/js/questionario.js",
       "public/js/resultados.js"
+    ]
+  },
+  {
+    "id": "change-git-258fda5a",
+    "date": "2026-11-09T00:46:11.000Z",
+    "commit": "258fda5a",
+    "author": "Anderson",
+    "title": "Correção: Detalhamento semanal e totais consolidados no comparativo Asaas (admin)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "detalhamento semanal e totais consolidados no comparativo Asaas",
+    "description": "Commit registrado no repositório: \"fix(admin): detalhamento semanal e totais consolidados no comparativo Asaas\". Arquivos modificados: admin/admin_crm_analytics.html, admin/admin_crm_analytics.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #258fda5a"
+    },
+    "after": {
+      "nova_versao": "detalhamento semanal e totais consolidados no comparativo Asaas"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_analytics.html",
+      "admin/admin_crm_analytics.js"
+    ]
+  },
+  {
+    "id": "change-git-56eeb59f",
+    "date": "2026-11-08T19:58:08.000Z",
+    "commit": "56eeb59f",
+    "author": "Anderson",
+    "title": "Novo: Implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)",
+    "category": "Segurança & Autenticação",
+    "badgeColor": "#0ea5e9",
+    "status": "Em Produção",
+    "summary": "implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)",
+    "description": "Commit registrado no repositório: \"feat: implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)\". Arquivos modificados: backend/controllers/psiAuthController.js, backend/controllers/psychologistController.js, backend/utils/documentValidator.js, mobile/src/app/(tabs)/assinatura.tsx, mobile/src/app/(tabs)/meu_perfil.tsx (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #56eeb59f"
+    },
+    "after": {
+      "nova_versao": "implementa validacao algoritmica oficial de CPF e CNPJ (modulo 11) no perfil, checkout e registro (web e mobile)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/psiAuthController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/utils/documentValidator.js",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "mobile/src/app/(tabs)/meu_perfil.tsx",
+      "public/psi/psi_assinatura.js",
+      "public/psi/psi_meu_perfil.js"
+    ]
+  },
+  {
+    "id": "change-git-773aa5c9",
+    "date": "2026-11-08T19:23:15.000Z",
+    "commit": "773aa5c9",
+    "author": "Anderson",
+    "title": "Novo: Finalizar follow-ups crm, ordenacao hub crm, avisos e ajustes gerais (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "finalizar follow-ups crm, ordenacao hub crm, avisos e ajustes gerais",
+    "description": "Commit registrado no repositório: \"feat(mobile): finalizar follow-ups crm, ordenacao hub crm, avisos e ajustes gerais\". Arquivos modificados: backend/controllers/psiDashboardController.js, backend/services/notificationService.js, mobile/src/app/(admin)/crm-modulo/psicologos.tsx, mobile/src/app/(admin)/crm.tsx, mobile/src/app/(admin)/index.tsx (+9 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #773aa5c9"
+    },
+    "after": {
+      "nova_versao": "finalizar follow-ups crm, ordenacao hub crm, avisos e ajustes gerais"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/psiDashboardController.js",
+      "backend/services/notificationService.js",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "mobile/src/app/(admin)/crm.tsx",
+      "mobile/src/app/(admin)/index.tsx",
+      "mobile/src/app/(tabs)/avisos.tsx",
+      "mobile/src/app/(tabs)/evolucao.tsx",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "mobile/src/app/blog.tsx",
+      "mobile/src/components/MobileHeader.tsx",
+      "mobile/src/contexts/AuthContext.tsx",
+      "mobile/src/services/api.ts",
+      "mobile/src/utils/imageUrl.ts",
+      "public/psi/psi_forum.html"
+    ]
+  },
+  {
+    "id": "change-git-526d84f3",
+    "date": "2026-11-08T15:15:56.000Z",
+    "commit": "526d84f3",
+    "author": "Anderson",
+    "title": "Novo: Configurar eas update, corrigir alternador de contas e prioridade de token mobile",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "configurar eas update, corrigir alternador de contas e prioridade de token mobile",
+    "description": "Commit registrado no repositório: \"feat(mobile): configurar eas update, corrigir alternador de contas e prioridade de token mobile\". Arquivos modificados: backend/middlewares/authMiddleware.js, mobile/.expo/types/router.d.ts, mobile/app.json, mobile/eas.json, mobile/package-lock.json (+7 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #526d84f3"
+    },
+    "after": {
+      "nova_versao": "configurar eas update, corrigir alternador de contas e prioridade de token mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/middlewares/authMiddleware.js",
+      "mobile/.expo/types/router.d.ts",
+      "mobile/app.json",
+      "mobile/eas.json",
+      "mobile/package-lock.json",
+      "mobile/package.json",
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(admin)/index.tsx",
+      "mobile/src/components/ProfileSwitcherModal.tsx",
+      "mobile/src/contexts/AuthContext.tsx",
+      "mobile/src/services/api.ts",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-bf54b8b7",
+    "date": "2026-11-08T13:26:57.000Z",
+    "commit": "bf54b8b7",
+    "author": "Anderson",
+    "title": "Novo: Paridade completa de assinatura, bloqueio de perfil expirado e menu expansivel no forum (mobile)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "paridade completa de assinatura, bloqueio de perfil expirado e menu expansivel no forum",
+    "description": "Commit registrado no repositório: \"feat(mobile): paridade completa de assinatura, bloqueio de perfil expirado e menu expansivel no forum\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/matchController.js, backend/controllers/paymentController.js, backend/data/system_changelog.json, backend/routes/paymentRoutes.js (+6 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #bf54b8b7"
+    },
+    "after": {
+      "nova_versao": "paridade completa de assinatura, bloqueio de perfil expirado e menu expansivel no forum"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/matchController.js",
+      "backend/controllers/paymentController.js",
+      "backend/data/system_changelog.json",
+      "backend/routes/paymentRoutes.js",
+      "mobile/src/app/(tabs)/ajustes.tsx",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "mobile/src/app/(tabs)/meu_perfil.tsx",
+      "mobile/src/components/YeloToast.tsx",
+      "mobile/src/components/forum/ForumCommentThread.tsx",
+      "security/reports/gate_report.json"
     ]
   },
   {
