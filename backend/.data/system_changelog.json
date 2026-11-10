@@ -1,5 +1,29 @@
 [
   {
+    "id": "change-git-8e500eb2",
+    "date": "2026-11-10T00:25:02.000Z",
+    "commit": "8e500eb2",
+    "author": "Anderson",
+    "title": "Detalhar alteração do motor v6.1, capping Kesia e escala de tráfego (changelog)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "detalhar alteração do motor v6.1, capping Kesia e escala de tráfego",
+    "description": "Commit registrado no repositório: \"docs(changelog): detalhar alteração do motor v6.1, capping Kesia e escala de tráfego\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8e500eb2"
+    },
+    "after": {
+      "nova_versao": "detalhar alteração do motor v6.1, capping Kesia e escala de tráfego"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json"
+    ]
+  },
+  {
     "id": "change-git-1a56499b",
     "date": "2026-11-10T00:20:52.000Z",
     "commit": "1a56499b",
