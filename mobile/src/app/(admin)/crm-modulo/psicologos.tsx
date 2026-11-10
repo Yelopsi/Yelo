@@ -467,7 +467,7 @@ export default function AdminCRMPsicologosScreen() {
               if (currentMonthLogs.length > 0) {
                 X = Math.max(X, currentMonthLogs.length);
                 Y = currentMonthLogs.filter(
-                  (log: any) => log.status === 'fechou' || log.dealClosed === 'yes'
+                  (log: any) => log.status === 'fechou' || log.dealClosed === 'yes' || log.dealClosed === 'started'
                 ).length;
               }
             }

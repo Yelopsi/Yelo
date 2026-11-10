@@ -1270,26 +1270,63 @@ export default function AdminDetalhesPsicologoScreen() {
               ) : (
                 <View style={{ gap: 10 }}>
                   {whatsappLogs.map((log: any, idx: number) => {
-                    const isClosed = log.dealClosed === 'yes' || log.dealClosed === 'started';
-                    const isTalking = log.dealClosed === 'talking';
-                    const isNotClosed = ['no', 'not_started', 'ghosted'].includes(log.dealClosed);
+                    const hasFeedback = Boolean(log.feedbackGiven);
+                    const isClosed = hasFeedback && (log.dealClosed === 'yes' || log.dealClosed === 'started');
+                    const isTalking = hasFeedback && log.dealClosed === 'talking';
+                    const isNoContact = hasFeedback && (
+                      log.contactReceived === false ||
+                      log.dealClosed === 'no_contact' ||
+                      log.dealClosed === 'wpp_issue' ||
+                      log.dealClosed === 'unknown'
+                    );
+                    const isNotClosed = hasFeedback && (
+                      ['no', 'not_started', 'ghosted'].includes(log.dealClosed) ||
+                      (typeof log.dealClosed === 'string' && log.dealClosed.startsWith('not_started_')) ||
+                      (Boolean(log.dealClosed) && Boolean(log.contactReceived))
+                    );
 
                     let badgeColor = '#64748b';
                     let badgeBg = '#f1f5f9';
-                    let badgeLabel = 'Sem feedback';
+                    let badgeLabel = '⏳ Sem feedback';
 
-                    if (isClosed) {
-                      badgeColor = '#166534';
-                      badgeBg = '#dcfce7';
-                      badgeLabel = '✅ Agendou';
-                    } else if (isTalking) {
-                      badgeColor = '#c2410c';
-                      badgeBg = '#ffedd5';
-                      badgeLabel = '⏳ Em negociação';
-                    } else if (isNotClosed) {
+                    if (hasFeedback) {
+                      if (isClosed) {
+                        badgeColor = '#166534';
+                        badgeBg = '#dcfce7';
+                        badgeLabel = '✅ Agendou';
+                      } else if (isTalking) {
+                        badgeColor = '#c2410c';
+                        badgeBg = '#ffedd5';
+                        badgeLabel = '⏳ Em negociação';
+                      } else if (isNoContact) {
+                        badgeColor = '#991b1b';
+                        badgeBg = '#fee2e2';
+                        badgeLabel = '❌ Não contatou';
+                      } else if (isNotClosed) {
+                        badgeColor = '#854d0e';
+                        badgeBg = '#fef9c3';
+                        if (log.dealClosed === 'not_started_price') {
+                          badgeLabel = '💬 Não agendou (Preço)';
+                        } else if (log.dealClosed === 'not_started_schedule') {
+                          badgeLabel = '💬 Não agendou (Horário)';
+                        } else if (log.dealClosed === 'ghosted') {
+                          badgeLabel = '💬 Não agendou (Sumiu)';
+                        } else {
+                          badgeLabel = '💬 Não agendou';
+                        }
+                      } else {
+                        badgeColor = '#0369a1';
+                        badgeBg = '#e0f2fe';
+                        badgeLabel = '✅ Respondido';
+                      }
+                    } else if (log.adminWppReminderSentAt) {
                       badgeColor = '#854d0e';
                       badgeBg = '#fef9c3';
-                      badgeLabel = '💬 Não agendou';
+                      badgeLabel = '⚠️ Cobrado';
+                    } else {
+                      badgeColor = '#64748b';
+                      badgeBg = '#f1f5f9';
+                      badgeLabel = '⏳ Sem feedback';
                     }
 
                     return (
@@ -1317,9 +1354,25 @@ export default function AdminDetalhesPsicologoScreen() {
                               </Text>
                             </View>
                           </View>
-                          <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#94a3b8', marginTop: 4 }}>
-                            {formatDateTimeBR(log.createdAt)}
-                          </Text>
+
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+                            <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#94a3b8' }}>
+                              {formatDateTimeBR(log.createdAt)}
+                            </Text>
+                            {log.utmSource && (
+                              <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                                <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 9.5, color: '#475569' }}>
+                                  {String(log.utmSource).toUpperCase()}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+
+                          {log.dealClosedNotes && (
+                            <Text style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 11, color: '#64748b', fontStyle: 'italic', marginTop: 3 }}>
+                              "{log.dealClosedNotes}"
+                            </Text>
+                          )}
                         </View>
 
                         {log.guestPhone && (
