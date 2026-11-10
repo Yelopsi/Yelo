@@ -113,6 +113,37 @@ export default function ReceitaScreen() {
     return `${Number(val).toFixed(1).replace('.', ',')}%`;
   };
 
+  const formatDateBR = (dateVal?: string | Date | null): string => {
+    if (!dateVal) return '-';
+    if (typeof dateVal === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateVal.trim())) {
+      const [y, m, d] = dateVal.trim().split('-');
+      return `${d}/${m}/${y}`;
+    }
+    try {
+      const d = typeof dateVal === 'string' ? new Date(dateVal) : dateVal;
+      if (isNaN(d.getTime())) return '-';
+      return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    } catch {
+      return '-';
+    }
+  };
+
+  const getRelativeDateLabel = (dateVal?: string | Date | null): string => {
+    if (!dateVal) return 'Isento';
+    const d = typeof dateVal === 'string' ? new Date(dateVal) : dateVal;
+    if (isNaN(d.getTime())) return 'N/D';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const compareDate = new Date(d);
+    compareDate.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((compareDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Vence hoje';
+    if (diffDays === 1) return 'Vence amanhã';
+    if (diffDays > 1 && diffDays <= 7) return `Vence em ${diffDays} dias`;
+    return `Vence: ${formatDateBR(dateVal)}`;
+  };
+
   // Trend Badge Helper
   const renderTrendBadge = (curr: number, prev: number, inverseGood: boolean = false) => {
     if (prev === null || prev === undefined || isNaN(prev) || isNaN(curr)) {
@@ -742,7 +773,7 @@ export default function ReceitaScreen() {
 
                   {financials.recentInvoices && financials.recentInvoices.length > 0 ? (
                     <View style={{ gap: 8 }}>
-                      {financials.recentInvoices.slice(0, 5).map((inv: any, idx: number) => {
+                      {financials.recentInvoices.slice(0, 10).map((inv: any, idx: number) => {
                         const isPaid = inv.status === 'Paga';
                         const isLate = inv.status === 'Atrasada';
                         const statusBg = isPaid ? '#ecfdf5' : isLate ? '#fef2f2' : '#f8fafc';
@@ -767,7 +798,7 @@ export default function ReceitaScreen() {
                                 {inv.psychologistName || 'Psicólogo'}
                               </Text>
                               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
-                                {inv.date ? new Date(inv.date).toLocaleDateString('pt-BR') : ''}
+                                {formatDateBR(inv.date)}
                               </Text>
                             </View>
 
@@ -811,7 +842,7 @@ export default function ReceitaScreen() {
 
                   {financials.activePlans && financials.activePlans.length > 0 ? (
                     <View style={{ gap: 8 }}>
-                      {financials.activePlans.slice(0, 5).map((plan: any, idx: number) => (
+                      {financials.activePlans.slice(0, 10).map((plan: any, idx: number) => (
                         <View
                           key={idx}
                           style={{
@@ -836,8 +867,8 @@ export default function ReceitaScreen() {
                             <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11.5, color: '#1B4332' }}>
                               MRR: {formatBRL(plan.mrr)}
                             </Text>
-                            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b' }}>
-                              Vence: {plan.nextBilling ? new Date(plan.nextBilling).toLocaleDateString('pt-BR') : 'N/D'}
+                            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#475569' }}>
+                              {getRelativeDateLabel(plan.nextBilling)}
                             </Text>
                           </View>
                         </View>

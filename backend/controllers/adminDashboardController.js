@@ -790,16 +790,16 @@ exports.getFinancials = async (req, res) => {
         let recentInvoices = [];
         if (process.env.ASAAS_API_KEY) {
             try {
-                const response = await fetch(`${process.env.ASAAS_API_URL}/payments?limit=30&order=desc`, {
+                const response = await fetch(`${process.env.ASAAS_API_URL}/payments?limit=100`, {
                     headers: { 'access_token': process.env.ASAAS_API_KEY }
                 });
                 if (response.ok) {
                     const data = await response.json();
                     if (data.data) {
-                        const filteredData = data.data.filter(p => p.status !== 'PENDING').slice(0, 8);
+                        const filteredData = data.data.filter(p => p.status !== 'PENDING');
                         
                         let overdueCount = 0;
-                        recentInvoices = await Promise.all(filteredData.map(async (payment) => {
+                        recentInvoices = await Promise.all(filteredData.slice(0, 30).map(async (payment) => {
                             if (payment.status === 'OVERDUE') overdueCount++;
                             let psiName = 'Cliente Externo';
                             let psiId = null;
@@ -813,20 +813,30 @@ exports.getFinancials = async (req, res) => {
                             else if (payment.status === 'OVERDUE') translatedStatus = 'Atrasada';
                             else if (['REFUNDED', 'CHARGEBACK_REQUESTED'].includes(payment.status)) translatedStatus = 'Cancelada';
 
+                            const effectiveDate = payment.paymentDate || payment.confirmedDate || payment.clientPaymentDate || payment.dueDate || payment.dateCreated;
+
                             return {
                                 psychologistName: psiName,
                                 psiId: psiId,
-                                date: payment.paymentDate || payment.dueDate || payment.dateCreated,
+                                date: effectiveDate,
                                 dueDate: payment.dueDate,
                                 amount: payment.value,
                                 status: translatedStatus
                             };
                         }));
+
+                        // Ordena por data decrescente (mais recente primeiro)
+                        recentInvoices.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                        recentInvoices = recentInvoices.slice(0, 15);
+
                         if (overdueCount > 0) insights.push({ type: 'warning', text: `Existem ${overdueCount} faturas recentes atrasadas.` });
                     }
                 }
             } catch (err) {}
         }
+
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
         let activePlans = activePsychologists.map(psy => {
             const hasSub = !!psy.subscriptionId || (psy.subscription_payments_count && psy.subscription_payments_count > 0);
@@ -840,16 +850,19 @@ exports.getFinancials = async (req, res) => {
             };
         });
         
-        // Sort active plans by nearest nextBilling (to populate upcoming payments table)
-        activePlans.sort((a,b) => {
-            if(!a.nextBilling) return 1; if(!b.nextBilling) return -1;
-            return a.nextBilling.getTime() - b.nextBilling.getTime();
+        // Próximos pagamentos: filtra vencimentos a partir de hoje
+        const upcomingPlans = activePlans.filter(p => {
+            if (!p.nextBilling) return false;
+            return p.nextBilling >= startOfToday;
         });
+
+        // Ordena por vencimentos mais próximos (crescente)
+        upcomingPlans.sort((a,b) => a.nextBilling.getTime() - b.nextBilling.getTime());
 
         res.json({ 
             kpis, 
             recentInvoices, 
-            activePlans: activePlans.slice(0, 10), // Limit upcoming payments to 10
+            activePlans: upcomingPlans.slice(0, 15), // Limita a 15 próximos vencimentos reais
             sparklines: { newUsers: sparkPaidNewUsers, paidChurns: sparkPaidChurns, trialChurns: sparkTrialChurns, mrr: sparkMrr },
             insights,
             planDistribution: activePsychologists.filter(p => {

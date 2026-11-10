@@ -1,5 +1,57 @@
 [
   {
+    "id": "change-git-a9f1b27f",
+    "date": "2026-11-10T01:53:03.000Z",
+    "commit": "a9f1b27f",
+    "author": "Anderson",
+    "title": "Correção: Renderizar bio formatada com paragrafos e negrito no perfil publico e resultados (mobile)",
+    "category": "Performance & Cache",
+    "badgeColor": "#059669",
+    "status": "Em Produção",
+    "summary": "renderizar bio formatada com paragrafos e negrito no perfil publico e resultados",
+    "description": "Commit registrado no repositório: \"fix(mobile): renderizar bio formatada com paragrafos e negrito no perfil publico e resultados\". Arquivos modificados: mobile/src/app/[slug].tsx, mobile/src/app/resultados.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a9f1b27f"
+    },
+    "after": {
+      "nova_versao": "renderizar bio formatada com paragrafos e negrito no perfil publico e resultados"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/[slug].tsx",
+      "mobile/src/app/resultados.tsx"
+    ]
+  },
+  {
+    "id": "change-git-3ae05a9f",
+    "date": "2026-11-10T01:46:57.000Z",
+    "commit": "3ae05a9f",
+    "author": "Anderson",
+    "title": "Correção: Corrigir selecao e exibicao da tag de abordagens e tecnicas no perfil",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir selecao e exibicao da tag de abordagens e tecnicas no perfil",
+    "description": "Commit registrado no repositório: \"fix: corrigir selecao e exibicao da tag de abordagens e tecnicas no perfil\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/meu_perfil.tsx, public/psi/psi_meu_perfil.js, public/psi/psi_perfil_form.js (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #3ae05a9f"
+    },
+    "after": {
+      "nova_versao": "corrigir selecao e exibicao da tag de abordagens e tecnicas no perfil"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/meu_perfil.tsx",
+      "public/psi/psi_meu_perfil.js",
+      "public/psi/psi_perfil_form.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-31b29f72",
     "date": "2026-11-10T01:35:10.000Z",
     "commit": "31b29f72",
