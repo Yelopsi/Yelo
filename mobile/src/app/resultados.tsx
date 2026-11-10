@@ -17,6 +17,22 @@ import PublicHeader from '../components/PublicHeader';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
+function cleanHtmlBio(html?: string | null): string {
+  if (!html) return '';
+  return html
+    .replace(/<br\s*[\/]?>/gi, ' ')
+    .replace(/<\/p>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export default function ResultadosScreen() {
   const { answers } = useLocalSearchParams();
   const { user, token } = useAuth();
@@ -260,7 +276,7 @@ export default function ResultadosScreen() {
                       {/* Bio resumida */}
                       {profile.bio ? (
                         <Text className="font-sans text-[#555] text-[14px] leading-5 mb-[20px]" numberOfLines={3}>
-                          {profile.bio}
+                          {cleanHtmlBio(profile.bio)}
                         </Text>
                       ) : null}
 

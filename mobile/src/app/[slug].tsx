@@ -27,6 +27,59 @@ const VerifiedBadge = () => (
   </Svg>
 );
 
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&mdash;/g, '—')
+    .replace(/&ndash;/g, '–');
+}
+
+function renderFormattedBio(html?: string | null) {
+  if (!html) return null;
+
+  let text = html
+    .replace(/<br\s*[\/]?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<li[^>]*>/gi, '• ')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<\/?(p|div|ul|ol|span)[^>]*>/gi, '')
+    .trim();
+
+  text = text.replace(/\n{3,}/g, '\n\n');
+
+  const regex = /(<strong\b[^>]*>[\s\S]*?<\/strong>|<b\b[^>]*>[\s\S]*?<\/b>|<em\b[^>]*>[\s\S]*?<\/em>|<i\b[^>]*>[\s\S]*?<\/i>|<u\b[^>]*>[\s\S]*?<\/u>)/gi;
+  const tokens = text.split(regex);
+
+  return tokens.map((token, idx) => {
+    if (!token) return null;
+    const isBold = /^<(strong|b)\b/i.test(token);
+    const isItalic = /^<(em|i)\b/i.test(token);
+    const isUnderline = /^<u\b/i.test(token);
+    const raw = token.replace(/<[^>]+>/g, '');
+    const cleanText = decodeHtmlEntities(raw);
+
+    return (
+      <Text
+        key={idx}
+        style={{
+          fontFamily: isBold ? 'Inter_700Bold' : undefined,
+          fontWeight: isBold ? '700' : '400',
+          fontStyle: isItalic ? 'italic' : 'normal',
+          textDecorationLine: isUnderline ? 'underline' : 'none',
+          color: isBold ? '#1B4332' : '#444444',
+        }}
+      >
+        {cleanText}
+      </Text>
+    );
+  });
+}
+
 export default function PerfilPublicoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -318,12 +371,12 @@ export default function PerfilPublicoScreen() {
               </Text>
               <View className="bg-[#f9fafb] p-4 rounded-[16px] border border-[#f0f0f0]">
                 <Text
-                  className="font-sans text-[#444] text-[15px] leading-[23px] text-left"
-                  numberOfLines={isBioExpanded ? undefined : 5}
+                  className="font-sans text-[#444] text-[15px] leading-[24px] text-left"
+                  numberOfLines={isBioExpanded ? undefined : 6}
                 >
-                  {psicologo.bio}
+                  {renderFormattedBio(psicologo.bio)}
                 </Text>
-                {psicologo.bio.length > 250 && (
+                {psicologo.bio.replace(/<[^>]*>?/gm, '').trim().length > 200 && (
                   <TouchableOpacity onPress={() => setIsBioExpanded(!isBioExpanded)} className="mt-3">
                     <Text className="font-sans font-bold text-[#1B4332] text-[14px] underline">
                       {isBioExpanded ? 'Mostrar menos' : 'Ler mais sobre mim'}
