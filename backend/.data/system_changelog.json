@@ -1,23 +1,53 @@
 [
   {
+    "id": "change-git-1a56499b",
+    "date": "2026-11-10T00:20:52.000Z",
+    "commit": "1a56499b",
+    "author": "Anderson",
+    "title": "Sincronizar gate report e changelog",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar gate report e changelog",
+    "description": "Commit registrado no repositório: \"docs(changelog): sincronizar gate report e changelog\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1a56499b"
+    },
+    "after": {
+      "nova_versao": "sincronizar gate report e changelog"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-037c0c55",
     "date": "2026-11-10T00:20:09.000Z",
     "commit": "037c0c55",
     "author": "Anderson",
-    "title": "Novo: Priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11 (match)",
+    "title": "Novo: Priorização de Tráfego Pago no Motor V6.1, Capping da Késia e Cron 24/11",
     "category": "Motor de Match",
-    "badgeColor": "#3b82f6",
+    "badgeColor": "#10b981",
     "status": "Em Produção",
-    "summary": "priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11",
-    "description": "Commit registrado no repositório: \"feat(match): priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11\". Arquivos modificados: admin/admin_visao_geral.html, admin/admin_visao_geral.js, backend/controllers/matchController.js, backend/data/system_changelog.json, backend/jobs/scheduler.js (+4 arquivos).",
-    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "summary": "Motor V6.1: tráfego pago do Google Ads prioriza 100% assinantes pagantes ativos; capping rigoroso de 1 clique/mês para Késia Lopes; automação da escalada de Meta Ads (Degraus 2 e 3) e alerta no Dashboard Admin para 24/11.",
+    "description": "Implementada proteção de receita no matchService: tráfego pago do Google Ads aloca as 3 vagas de match prioritariamente para psicólogos pagantes ativos. Capping estrito de 1 clique/mês para Késia Barbosa Lopes (ID 106). Scheduler configurado com rotina de escalada Meta Ads (Degrau 2 em 13/11 R$ 29/dia, Degrau 3 em 17/11 R$ 35/dia) e alerta visual dinâmico no Dashboard Admin com rotina cron para a Reavaliação Estratégica em 24/11/2026.",
+    "rationale": "Blindagem do retorno financeiro dos assinantes pagantes e execução do plano de ação de tráfego pago para novembro de 2026.",
     "before": {
-      "estado_anterior": "Versão anterior ao commit #037c0c55"
+      "motor_anterior": "Tráfego pago do Google Ads misturava pagantes e trials; sem capping de cliques para Késia; sem escalada e cron de reavaliação agendados."
     },
     "after": {
-      "nova_versao": "priorizar tráfego pago para pagantes, capping Kesia Lopes e automação de escala e cron 24/11"
+      "motor_v6_1": "Google Ads 100% focado em assinantes pagantes ativos; Késia limitada a 1 clique/mês; escalada e alerta de 24/11 automatizados no Scheduler e Admin."
     },
-    "metricsToCompare": [],
+    "metricsToCompare": [
+      "CAC B2B",
+      "Cliques WhatsApp por Assinante",
+      "Retenção no 2º Mês",
+      "Taxa de Conversão Google Ads"
+    ],
     "filesChanged": [
       "admin/admin_visao_geral.html",
       "admin/admin_visao_geral.js",
