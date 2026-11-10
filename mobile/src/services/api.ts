@@ -2,23 +2,38 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import * as Updates from 'expo-updates';
+
+let fallbackToCloud = false;
 
 /**
  * Determina dinamicamente a URL base do backend Yelo:
  * - Em produção (__DEV__ === false): https://www.yelopsi.com.br
+ * - Em builds EAS Update (nuvem Expo): https://www.yelopsi.com.br
+ * - Sem servidor Metro local conectado: https://www.yelopsi.com.br
  * - Em variável de ambiente: EXPO_PUBLIC_API_URL
- * - No Expo Go / Celular físico: extrai o IP da máquina local via Metro hostUri
+ * - No Expo Go conectado ao Metro local: extrai o IP da máquina local via Metro hostUri
  * - No Emulador Android: 10.0.2.2:3001
  * - No Simulador iOS / Web: localhost:3001
  */
 export const getBaseUrl = (): string => {
+  if (fallbackToCloud) {
+    return 'https://www.yelopsi.com.br';
+  }
+
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL.replace(/\/$/, '');
   }
 
+  try {
+    if (Updates.updateId) {
+      return 'https://www.yelopsi.com.br';
+    }
+  } catch (_) {}
+
   const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest2?.extra?.expoClient?.hostUri;
 
-  if (!__DEV__ || (hostUri && (hostUri.includes('expo.dev') || hostUri.includes('exp.host')))) {
+  if (!__DEV__ || !hostUri || hostUri.includes('expo.dev') || hostUri.includes('exp.host') || hostUri.includes('u.expo.dev')) {
     return 'https://www.yelopsi.com.br';
   }
 
@@ -160,6 +175,29 @@ api.interceptors.response.use(
       }
     } else {
       console.warn(`API Network/Timeout Error ${error.config?.url}:`, error.message);
+
+      // Se a requisição falhar por erro de rede/timeout contra um servidor local (computador desligado / fora da rede Wi-Fi),
+      // faz fallback automático para o servidor em nuvem da Yelo em produção e tenta novamente
+      const reqConfig = error.config;
+      if (reqConfig && !reqConfig._retriedCloudFallback) {
+        const currentBase = reqConfig.baseURL || getBaseUrl();
+        const isLocal =
+          currentBase.includes('localhost') ||
+          currentBase.includes('127.0.0.1') ||
+          currentBase.includes('10.0.2.2') ||
+          currentBase.includes('192.168.') ||
+          currentBase.includes('172.') ||
+          currentBase.includes('10.');
+
+        if (isLocal) {
+          console.warn(`[API] Servidor local (${currentBase}) inacessível. Alternando automaticamente para https://www.yelopsi.com.br`);
+          fallbackToCloud = true;
+          api.defaults.baseURL = 'https://www.yelopsi.com.br';
+          reqConfig._retriedCloudFallback = true;
+          reqConfig.baseURL = 'https://www.yelopsi.com.br';
+          return api.request(reqConfig);
+        }
+      }
     }
     return Promise.reject(error);
   }

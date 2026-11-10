@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-92e6a379",
+    "date": "2026-11-10T02:34:50.000Z",
+    "commit": "92e6a379",
+    "author": "Anderson",
+    "title": "Correção: Restaurar periodo anual nas datas do crm e nivelar altura do campo de busca",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "restaurar periodo anual nas datas do crm e nivelar altura do campo de busca",
+    "description": "Commit registrado no repositório: \"fix(crm): restaurar periodo anual nas datas do crm e nivelar altura do campo de busca\". Arquivos modificados: admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #92e6a379"
+    },
+    "after": {
+      "nova_versao": "restaurar periodo anual nas datas do crm e nivelar altura do campo de busca"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-ee793afa",
     "date": "2026-11-10T02:25:50.000Z",
     "commit": "ee793afa",
