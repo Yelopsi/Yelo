@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs, useRouter, useSegments, usePathname } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   Text,
@@ -97,7 +97,71 @@ const TabLabelWithDot = ({ label, focused, color }: { label: string; focused: bo
 export default function TabLayout() {
   const { signOut } = useAuth();
   const router = useRouter();
+  const segments = useSegments();
+  const pathname = usePathname();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Identifica o Hub ativo para manter a bolinha (dot) acesa mesmo ao abrir páginas internas do hub
+  const getActiveHub = () => {
+    const segList = segments as string[];
+    const tabsIdx = segList.indexOf('(tabs)');
+    const current = tabsIdx !== -1 && segList.length > tabsIdx + 1 ? segList[tabsIdx + 1] : segList[0];
+
+    // Hub Clínica e todas as suas páginas internas
+    const clinicaRoutes = [
+      'clinica',
+      'pacientes',
+      'financeiro',
+      'analytics',
+      'favoritos-analytics',
+      'calculadora',
+      'manual-conversao',
+    ];
+    if (
+      clinicaRoutes.includes(current) ||
+      clinicaRoutes.some((r) => pathname.includes(`/${r}`))
+    ) {
+      return 'clinica';
+    }
+
+    // Hub Evolução e todas as suas páginas internas
+    const evolucaoRoutes = [
+      'evolucao',
+      'historico_contatos',
+      'forum',
+      'blog',
+      'comunidade',
+      'comunidade_yelo',
+      'jornada',
+    ];
+    if (
+      evolucaoRoutes.includes(current) ||
+      evolucaoRoutes.some((r) => pathname.includes(`/${r}`))
+    ) {
+      return 'evolucao';
+    }
+
+    // Hub Ajustes e todas as suas páginas internas
+    const ajustesRoutes = [
+      'ajustes',
+      'meu_perfil',
+      'assinatura',
+      'notificacoes',
+      'avisos',
+      'fale_com_a_yelo',
+      'novidades',
+    ];
+    if (
+      ajustesRoutes.includes(current) ||
+      ajustesRoutes.some((r) => pathname.includes(`/${r}`))
+    ) {
+      return 'ajustes';
+    }
+
+    return 'index';
+  };
+
+  const activeHub = getActiveHub();
 
   useEffect(() => {
     syncSessionNotifications();
@@ -182,32 +246,32 @@ export default function TabLayout() {
           name="index"
           options={{
             title: 'Início',
-            tabBarIcon: ({ focused }) => <HomeIcon color={focused ? '#1B4332' : '#9ca3af'} />,
-            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Início" focused={focused} />,
+            tabBarIcon: ({ focused }) => <HomeIcon color={focused || activeHub === 'index' ? '#1B4332' : '#9ca3af'} />,
+            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Início" focused={focused || activeHub === 'index'} />,
           }}
         />
         <Tabs.Screen
           name="clinica"
           options={{
             title: 'Clínica',
-            tabBarIcon: ({ focused }) => <ClinicaIcon color={focused ? '#1B4332' : '#9ca3af'} />,
-            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Clínica" focused={focused} />,
+            tabBarIcon: ({ focused }) => <ClinicaIcon color={focused || activeHub === 'clinica' ? '#1B4332' : '#9ca3af'} />,
+            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Clínica" focused={focused || activeHub === 'clinica'} />,
           }}
         />
         <Tabs.Screen
           name="evolucao"
           options={{
             title: 'Evolução',
-            tabBarIcon: ({ focused }) => <EvolucaoIcon color={focused ? '#1B4332' : '#9ca3af'} />,
-            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Evolução" focused={focused} />,
+            tabBarIcon: ({ focused }) => <EvolucaoIcon color={focused || activeHub === 'evolucao' ? '#1B4332' : '#9ca3af'} />,
+            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Evolução" focused={focused || activeHub === 'evolucao'} />,
           }}
         />
         <Tabs.Screen
           name="ajustes"
           options={{
             title: 'Ajustes',
-            tabBarIcon: ({ focused }) => <AjustesIcon color={focused ? '#1B4332' : '#9ca3af'} />,
-            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Ajustes" focused={focused} />,
+            tabBarIcon: ({ focused }) => <AjustesIcon color={focused || activeHub === 'ajustes' ? '#1B4332' : '#9ca3af'} />,
+            tabBarLabel: ({ focused }) => <TabLabelWithDot label="Ajustes" focused={focused || activeHub === 'ajustes'} />,
           }}
         />
         <Tabs.Screen

@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-acab0589",
+    "date": "2026-11-10T02:13:47.000Z",
+    "commit": "acab0589",
+    "author": "Anderson",
+    "title": "Correção: Adicionar KeyboardAvoidingView e auto-scroll no campo de pesquisa do CRM psicologos (mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "adicionar KeyboardAvoidingView e auto-scroll no campo de pesquisa do CRM psicologos",
+    "description": "Commit registrado no repositório: \"fix(mobile): adicionar KeyboardAvoidingView e auto-scroll no campo de pesquisa do CRM psicologos\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/psicologos.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #acab0589"
+    },
+    "after": {
+      "nova_versao": "adicionar KeyboardAvoidingView e auto-scroll no campo de pesquisa do CRM psicologos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-2685d7bd",
     "date": "2026-11-10T02:04:21.000Z",
     "commit": "2685d7bd",

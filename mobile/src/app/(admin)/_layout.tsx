@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, ActivityIndicator, Alert, Platform } from 'react-native';
-import { Tabs, Redirect, useRouter } from 'expo-router';
+import { Tabs, Redirect, useRouter, useSegments, usePathname } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +13,74 @@ export default function AdminLayout() {
   const insets = useSafeAreaInsets();
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
+  const segments = useSegments();
+  const pathname = usePathname();
   const [switcherVisible, setSwitcherVisible] = useState(false);
+
+  // Identifica o Hub ativo para manter a bolinha (dot) acesa mesmo ao entrar em páginas internas
+  const getActiveHub = () => {
+    const segList = segments as string[];
+    const adminIdx = segList.indexOf('(admin)');
+    const current = adminIdx !== -1 && segList.length > adminIdx + 1 ? segList[adminIdx + 1] : segList[0];
+
+    // Hub CRM: crm e todas as subpáginas de crm-modulo
+    if (
+      current === 'crm' ||
+      current === 'crm-modulo' ||
+      pathname.includes('/crm') ||
+      pathname.includes('/crm-modulo')
+    ) {
+      return 'crm';
+    }
+
+    // Hub Conteúdo: conteudo e subpáginas
+    if (
+      current === 'conteudo' ||
+      current === 'gestao-conteudo' ||
+      current === 'moderacao-forum' ||
+      current === 'comunidade-gestao' ||
+      pathname.includes('/conteudo') ||
+      pathname.includes('/gestao-conteudo') ||
+      pathname.includes('/moderacao-forum') ||
+      pathname.includes('/comunidade-gestao')
+    ) {
+      return 'conteudo';
+    }
+
+    // Hub Dados: dados e subpáginas
+    if (
+      current === 'dados' ||
+      current === 'metricas-match' ||
+      current === 'exportar' ||
+      pathname.includes('/dados') ||
+      pathname.includes('/metricas-match') ||
+      pathname.includes('/exportar')
+    ) {
+      return 'dados';
+    }
+
+    // Hub Ajustes: ajustes e subpáginas
+    if (
+      current === 'ajustes' ||
+      current === 'configuracoes' ||
+      current === 'perfil-admin' ||
+      current === 'backlog-ajustes' ||
+      current === 'historico-alteracoes' ||
+      current === 'logs-sistema' ||
+      pathname.includes('/ajustes') ||
+      pathname.includes('/configuracoes') ||
+      pathname.includes('/perfil-admin') ||
+      pathname.includes('/backlog-ajustes') ||
+      pathname.includes('/historico-alteracoes') ||
+      pathname.includes('/logs-sistema')
+    ) {
+      return 'ajustes';
+    }
+
+    return 'index';
+  };
+
+  const activeHub = getActiveHub();
 
   const handleLogout = () => {
     Alert.alert(
@@ -188,40 +255,40 @@ export default function AdminLayout() {
           name="index" 
           options={{ 
             title: 'Início',
-            tabBarIcon: ({ focused }) => <AdminTabIcon name="home" focused={focused} />,
-            tabBarLabel: ({ focused }) => <AdminTabLabel label="Início" focused={focused} />,
+            tabBarIcon: ({ focused }) => <AdminTabIcon name="home" focused={focused || activeHub === 'index'} />,
+            tabBarLabel: ({ focused }) => <AdminTabLabel label="Início" focused={focused || activeHub === 'index'} />,
           }} 
         />
         <Tabs.Screen 
           name="crm" 
           options={{ 
             title: 'CRM',
-            tabBarIcon: ({ focused }) => <AdminTabIcon name="users" focused={focused} />,
-            tabBarLabel: ({ focused }) => <AdminTabLabel label="CRM" focused={focused} />,
+            tabBarIcon: ({ focused }) => <AdminTabIcon name="users" focused={focused || activeHub === 'crm'} />,
+            tabBarLabel: ({ focused }) => <AdminTabLabel label="CRM" focused={focused || activeHub === 'crm'} />,
           }} 
         />
         <Tabs.Screen 
           name="conteudo" 
           options={{ 
             title: 'Conteúdo',
-            tabBarIcon: ({ focused }) => <AdminTabIcon name="layout" focused={focused} />,
-            tabBarLabel: ({ focused }) => <AdminTabLabel label="Conteúdo" focused={focused} />,
+            tabBarIcon: ({ focused }) => <AdminTabIcon name="layout" focused={focused || activeHub === 'conteudo'} />,
+            tabBarLabel: ({ focused }) => <AdminTabLabel label="Conteúdo" focused={focused || activeHub === 'conteudo'} />,
           }} 
         />
         <Tabs.Screen 
           name="dados" 
           options={{ 
             title: 'Dados',
-            tabBarIcon: ({ focused }) => <AdminTabIcon name="bar-chart-2" focused={focused} />,
-            tabBarLabel: ({ focused }) => <AdminTabLabel label="Dados" focused={focused} />,
+            tabBarIcon: ({ focused }) => <AdminTabIcon name="bar-chart-2" focused={focused || activeHub === 'dados'} />,
+            tabBarLabel: ({ focused }) => <AdminTabLabel label="Dados" focused={focused || activeHub === 'dados'} />,
           }} 
         />
         <Tabs.Screen 
           name="ajustes" 
           options={{ 
             title: 'Ajustes',
-            tabBarIcon: ({ focused }) => <AdminTabIcon name="settings" focused={focused} />,
-            tabBarLabel: ({ focused }) => <AdminTabLabel label="Ajustes" focused={focused} />,
+            tabBarIcon: ({ focused }) => <AdminTabIcon name="settings" focused={focused || activeHub === 'ajustes'} />,
+            tabBarLabel: ({ focused }) => <AdminTabLabel label="Ajustes" focused={focused || activeHub === 'ajustes'} />,
           }} 
         />
         <Tabs.Screen
