@@ -172,17 +172,29 @@ const applyFairness = (scoredCandidates, fairShare) => {
 
             // Identificação precisa do perfil (Trial vs Pagante) alinhada com o KPI do sistema
             const isVip = c.is_exempt === true || String(c.is_exempt).toLowerCase() === 'true';
-            const hasSub = !!(c.subscriptionId) || (c.subscription_payments_count > 0);
+            const hasSub = !!(c.subscriptionId) || (parseInt(c.subscription_payments_count || 0, 10) > 0);
             const isPaid = isVip || hasSub; 
             const isTrial = !isPaid && (c.planExpiresAt && new Date(c.planExpiresAt) > new Date());
 
             const conversoes = c.conversoes30d || 0;
             const leads = c.leads30d || 0;
+            const clicks = c.clicks30d || 0;
 
             let isCapped = false; // FLAG PARA O CAPPED FALLBACK DA VAGA 1
 
+            // --- CAPPING CUSTOMIZADO POR PERFIL ---
+            // Késia Barbosa Lopes (ID 106): cota estrita de no máximo 1 clique / mês (30 dias)
+            const isSingleClickCap = (c.id === 106 || (c.nome && c.nome.toLowerCase().includes('késia barbosa lopes')));
+
             // --- NOVO SISTEMA DE CAPPING (MATCH V6) ---
-            if (isTrial) {
+            if (isSingleClickCap) {
+                if (clicks >= 1 || leads >= 1 || conversoes >= 1) {
+                    finalScore *= 0.01; 
+                    isCapped = true;
+                } else {
+                    finalScore += 20;
+                }
+            } else if (isTrial) {
                 if (leads >= 1 || conversoes >= 1) {
                     // Atingiu a cota de 1 clique do Trial de 7 dias (ou teve a sorte de fechar).
                     finalScore *= 0.10; 
@@ -223,7 +235,7 @@ const applyFairness = (scoredCandidates, fairShare) => {
 
             if (isNaN(finalScore) || finalScore < 0) finalScore = c.rawMatchScore || 1;
 
-            return { ...c, finalScore, isCapped };
+            return { ...c, finalScore, isCapped, isPaid };
         } catch(e) {
             console.error("🔥 [MATCH ENGINE] Erro no applyFairness:", e.message);
             return { ...c, finalScore: c.rawMatchScore || 1 };
@@ -284,6 +296,7 @@ exports.calculateMatches = async (preferences = {}) => {
         const logs30d = await db.sequelize.query(`
             SELECT 
                 "psychologistId", 
+                COUNT(*) as total_clicks,
                 SUM(CASE WHEN "dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as conversoes,
                 COUNT(*) - SUM(CASE WHEN "contactReceived" = false OR "dealClosed" IN ('no_contact', 'ghosted', 'wpp_issue') THEN 1 ELSE 0 END) as valid_leads
             FROM "WhatsAppClickLogs" 
@@ -296,10 +309,11 @@ exports.calculateMatches = async (preferences = {}) => {
         
         logs30d.forEach(log => {
             const pid = log.psychologistId;
+            const totalClicks = parseInt(log.total_clicks || 0, 10);
             const conversoes = parseInt(log.conversoes || 0, 10);
             const validLeads = parseInt(log.valid_leads || 0, 10);
             
-            psyStats[pid] = { leads: validLeads, conversoes: conversoes };
+            psyStats[pid] = { clicks: totalClicks, leads: validLeads, conversoes: conversoes };
             totalConversoes += conversoes;
         });
 
@@ -316,12 +330,13 @@ exports.calculateMatches = async (preferences = {}) => {
             const { rawMatchScore, explainability } = calculateSimilarity(psy, preferences, priceRange);
             const psyJSON = psy.toJSON ? psy.toJSON() : psy;
             
-            const stats = psyStats[psyJSON.id] || { leads: 0, conversoes: 0 };
+            const stats = psyStats[psyJSON.id] || { clicks: 0, leads: 0, conversoes: 0 };
             
-            debugLog.push(`   - ID: ${psyJSON.id} | Score Clínico: ${rawMatchScore.toFixed(2)} | Leads 30d: ${stats.leads} | Fechados 30d: ${stats.conversoes}`);
+            debugLog.push(`   - ID: ${psyJSON.id} | Score Clínico: ${rawMatchScore.toFixed(2)} | Cliques 30d: ${stats.clicks} | Leads 30d: ${stats.leads} | Fechados 30d: ${stats.conversoes}`);
             
             return { 
                 ...psyJSON, 
+                clicks30d: stats.clicks,
                 leads30d: stats.leads,
                 conversoes30d: stats.conversoes,
                 rawMatchScore, 
@@ -356,29 +371,63 @@ exports.calculateMatches = async (preferences = {}) => {
             debugLog.push(`   ⚠️ Apenas ${nonCappedEligible.length} não-cappados. Mantendo a base inteira para garantir preenchimento das 3 vagas.`);
         }
 
+        // --- MATCH V6.1: PRIORIZAÇÃO DE TRÁFEGO PAGO (GOOGLE ADS / B2C) ---
+        // Se a busca vem de tráfego pago (Google Ads / CPC), o lead deve ser alocado prioritariamente para psicólogos
+        // pagantes ativos, garantindo o retorno da assinatura e blindando a retenção da base.
+        const utmSource = String(preferences.utm_source || preferences.utmSource || '').toLowerCase().trim();
+        const isPaidTraffic = utmSource.includes('google') || utmSource.includes('adwords') || utmSource.includes('cpc') || utmSource === 'gads';
+
+        if (isPaidTraffic) {
+            debugLog.push(`[${Date.now() - startTime}ms] 💰 Tráfego Pago Google Ads detectado (UTM: "${utmSource}").`);
+            const paidEligible = eligibleForSlots.filter(c => c.isPaid);
+            if (paidEligible.length >= 3) {
+                debugLog.push(`   💎 ${paidEligible.length} assinantes pagantes ativos encontrados. Slots 100% restritos a assinantes pagantes.`);
+                eligibleForSlots = paidEligible;
+            } else if (paidEligible.length > 0) {
+                debugLog.push(`   ⚠️ Apenas ${paidEligible.length} pagantes ativos disponíveis. Pagantes ocuparão as primeiras vagas; trials preencherão o restante.`);
+                const remainingTrials = eligibleForSlots.filter(c => !c.isPaid);
+                eligibleForSlots = [...paidEligible, ...remainingTrials];
+            }
+        }
+
         const results = [];
 
         // --- VAGA 1: MAIOR MÉRITO CLÍNICO ---
-        let slot1Candidates = [...eligibleForSlots].sort((a, b) => b.rawMatchScore - a.rawMatchScore);
+        let slot1Candidates = [...eligibleForSlots];
+        if (isPaidTraffic) {
+            const paidInPool = slot1Candidates.filter(c => c.isPaid);
+            if (paidInPool.length > 0) slot1Candidates = paidInPool;
+        }
+        slot1Candidates.sort((a, b) => b.rawMatchScore - a.rawMatchScore);
         if (slot1Candidates.length > 0) {
             results.push(slot1Candidates[0]);
-            debugLog.push(`   🥇 Vaga 1 (Maior Score Clínico): ID ${slot1Candidates[0].id} (Score: ${slot1Candidates[0].rawMatchScore})`);
+            debugLog.push(`   🥇 Vaga 1 (Maior Score Clínico): ID ${slot1Candidates[0].id} (Score: ${slot1Candidates[0].rawMatchScore}) | Pagante: ${!!slot1Candidates[0].isPaid}`);
             eligibleForSlots = eligibleForSlots.filter(c => c.id !== slot1Candidates[0].id);
         }
 
         // --- VAGA 2: O MAIS OCIOSO (Justiça) ---
         if (eligibleForSlots.length > 0) {
-            // Ordenado pelo Bônus Total (finalScore), que já tem bônus para quem tem 0 conversões.
-            let slot2Candidates = [...eligibleForSlots].sort((a, b) => b.finalScore - a.finalScore);
+            let slot2Candidates = [...eligibleForSlots];
+            if (isPaidTraffic) {
+                const paidInPool = slot2Candidates.filter(c => c.isPaid);
+                if (paidInPool.length > 0) slot2Candidates = paidInPool;
+            }
+            slot2Candidates.sort((a, b) => b.finalScore - a.finalScore);
             results.push(slot2Candidates[0]);
-            debugLog.push(`   ⚖️ Vaga 2 (Justiça/Ocioso): ID ${slot2Candidates[0].id} (Score Final c/ Bônus: ${slot2Candidates[0].finalScore})`);
+            debugLog.push(`   ⚖️ Vaga 2 (Justiça/Ocioso): ID ${slot2Candidates[0].id} (Score Final c/ Bônus: ${slot2Candidates[0].finalScore}) | Pagante: ${!!slot2Candidates[0].isPaid}`);
             eligibleForSlots = eligibleForSlots.filter(c => c.id !== slot2Candidates[0].id);
         }
 
         // --- VAGA 3: SORTEIO LINEAR C/ HARD COOLDOWN ---
         if (eligibleForSlots.length > 0) {
+            let slot3Pool = [...eligibleForSlots];
+            if (isPaidTraffic) {
+                const paidInPool = slot3Pool.filter(c => c.isPaid);
+                if (paidInPool.length > 0) slot3Pool = paidInPool;
+            }
+
             // Elimina quem já apareceu na vitrine nas últimas 3 horas (180 mins)
-            let slot3Eligible = eligibleForSlots.filter(c => {
+            let slot3Eligible = slot3Pool.filter(c => {
                 if (!c.last_shown_match_at) return true;
                 const mins = (new Date() - new Date(c.last_shown_match_at)) / 60000;
                 return mins > 180;
@@ -386,7 +435,7 @@ exports.calculateMatches = async (preferences = {}) => {
 
             if (slot3Eligible.length === 0) {
                 debugLog.push(`   ⚠️ Todos da base estão em cooldown < 3h. Relaxando regra da Vaga 3.`);
-                slot3Eligible = eligibleForSlots;
+                slot3Eligible = slot3Pool;
             }
 
             const totalWeight = slot3Eligible.reduce((acc, val) => acc + (val.finalScore || 1), 0);
@@ -403,7 +452,7 @@ exports.calculateMatches = async (preferences = {}) => {
             if (!winner3) winner3 = slot3Eligible[0]; // Fallback
             
             results.push(winner3);
-            debugLog.push(`   🎲 Vaga 3 (Sorteio): ID ${winner3.id} (Peso de Sorteio Linear: ${winner3.finalScore})`);
+            debugLog.push(`   🎲 Vaga 3 (Sorteio): ID ${winner3.id} (Peso de Sorteio Linear: ${winner3.finalScore}) | Pagante: ${!!winner3.isPaid}`);
         }
 
         debugLog.push(`[${Date.now() - startTime}ms] ✅ Seleção de Slots concluída!`);

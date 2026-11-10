@@ -298,15 +298,23 @@ exports.getPsychologistFullDetails = async (req, res) => {
                 if (paymentsRes.status === 'fulfilled' && paymentsRes.value && paymentsRes.value.ok) {
                     const asaasData = await paymentsRes.value.json().catch(() => null);
                     if (asaasData && Array.isArray(asaasData.data) && asaasData.data.length > 0) {
-                        // Encontra falha se houver
-                        const failedPmt = asaasData.data.find(p => p.status === 'OVERDUE' || p.status === 'REFUNDED');
-                        if (failedPmt) {
-                            let failReason = failedPmt.creditCard?.returnMessage || failedPmt.description;
+                        // Só considera falha real e ativa se a cobrança do ciclo estiver OVERDUE,
+                        // e não houver pagamento posterior já RECEBIDO/CONFIRMADO nem plano ainda ativo
+                        const isPlanCurrentlyActive = psychologist.planExpiresAt && new Date(psychologist.planExpiresAt) > new Date();
+                        
+                        // Ignora cobranças futuras PENDING e estornos históricos REFUNDED (não são falhas ativas)
+                        const pastDueOrDuePayments = asaasData.data.filter(p => p.status !== 'PENDING' && p.status !== 'REFUNDED');
+                        const latestPastPayment = pastDueOrDuePayments[0]; // Mais recente já processada
+
+                        if (latestPastPayment && latestPastPayment.status === 'OVERDUE' && !isPlanCurrentlyActive) {
+                            let failReason = latestPastPayment.creditCard?.returnMessage;
                             if (!failReason) {
-                                failReason = failedPmt.billingType === 'PIX' ? 'Prazo de pagamento expirado ou não concluído.' : 'Transação recusada pelo emissor do cartão.';
+                                failReason = latestPastPayment.billingType === 'PIX' 
+                                    ? 'Prazo de pagamento do Pix expirado sem confirmação.' 
+                                    : 'Transação recusada pelo emissor do cartão de crédito.';
                             }
                             responsePayload.asaasFailedReason = failReason;
-                            responsePayload.asaasFailedBillingType = failedPmt.billingType || 'CREDIT_CARD';
+                            responsePayload.asaasFailedBillingType = latestPastPayment.billingType || 'CREDIT_CARD';
                         }
 
                         // Mescla ou enriquece lista de pagamentos com dados ricos do Asaas (invoiceUrl, etc)
@@ -545,7 +553,7 @@ exports.getAllPsychologists = async (req, res) => {
             }
         }
         
-        if (startDate && endDate) {
+        if (startDate && endDate && !search) {
             whereClause.createdAt = {
                 [Op.between]: [new Date(startDate + 'T00:00:00.000Z'), new Date(endDate + 'T23:59:59.999Z')]
             };
@@ -728,7 +736,7 @@ exports.getAllPatients = async (req, res) => {
             }
         }
         
-        if (startDate && endDate) {
+        if (startDate && endDate && !search) {
             whereClause.createdAt = {
                 [Op.between]: [new Date(startDate + 'T00:00:00.000Z'), new Date(endDate + 'T23:59:59.999Z')]
             };

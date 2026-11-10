@@ -62,6 +62,9 @@ const validateAndSanitizeMatchPreferences = (prefs) => {
         idade: sanitizeString(prefs.idade),
         modalidade_atendimento: sanitizeString(prefs.modalidade_atendimento),
         abordagem_ideal: sanitizeArray(prefs.abordagem_ideal),
+        utm_source: sanitizeString(prefs.utm_source || prefs.utmSource),
+        utm_campaign: sanitizeString(prefs.utm_campaign || prefs.utmCampaign),
+        utm_medium: sanitizeString(prefs.utm_medium || prefs.utmMedium),
         excludeIds: Array.isArray(prefs.excludeIds) ? prefs.excludeIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id)) : []
     };
 };

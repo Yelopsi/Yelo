@@ -223,6 +223,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (pendingAnswers) {
             const userAnswers = JSON.parse(pendingAnswers);
+            if (!userAnswers.utm_source) {
+                try {
+                    const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
+                    if (globalUtms.utm_source) userAnswers.utm_source = globalUtms.utm_source;
+                    if (globalUtms.utm_campaign) userAnswers.utm_campaign = globalUtms.utm_campaign;
+                    if (globalUtms.utm_medium) userAnswers.utm_medium = globalUtms.utm_medium;
+                } catch(e) {}
+            }
             fetch(`${BASE_URL}/api/psychologists/match`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

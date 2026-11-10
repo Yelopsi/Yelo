@@ -1617,17 +1617,21 @@ function runGrowthSimulationMath(p) {
 
         const effectiveHistSpend = p.histMetaMonthlySpendAvg || 0;
 
+        // Sob o Motor V6.1, o tráfego pago do Google Ads é 100% blindado e entregue exclusivamente
+        // para psicólogos pagantes com assinatura ativa. Trials e perfis gratuitos não consomem cliques
+        // pagos do Google Ads (giram unicamente na demanda orgânica da plataforma).
+        // Portanto, o custo de Google Ads para subsidiar trials no tráfego pago é ZERO.
         const trialsPerPaid = 1 / p.trialConversionRate;
         const trialDurationFraction = 7 / 30;
-        const trialContactDemand = p.contactsPerPaidPsiMonth * trialDurationFraction;
-        const avgGoogleCostPerTrial = trialContactDemand * currentCplGoogle;
+        const trialContactDemand = 0; // Motor V6.1: trials não consomem Google Ads pago
+        const avgGoogleCostPerTrial = 0;
 
-        const trialGoogleCostPerPaid = trialsPerPaid * avgGoogleCostPerTrial;
+        const trialGoogleCostPerPaid = 0;
 
-        // Custo de trial dos orgânicos
+        // Custo de trial dos orgânicos no Google Ads pago
         let projectedOrganicPaidAdditions = p.newOrganicActive || 0;
         const organicTrialsCount = projectedOrganicPaidAdditions * trialsPerPaid;
-        const organicTrialCost = organicTrialsCount * avgGoogleCostPerTrial;
+        const organicTrialCost = 0; // Motor V6.1: demanda orgânica atende trials sem custo de Google pago
 
         const organicCostCoveredByGrowth = Math.min(growthFund, organicTrialCost);
         const organicCostDeficit = Math.max(0, organicTrialCost - growthFund);
@@ -2013,39 +2017,30 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
     const theoreticalMetaMonthly = simResult.actionMetaSpend || 0;
     const extrapolationMultiple = theoreticalMetaMonthly / (metaCurrentMonthlyContext || 1);
 
-    let metaRecommendedMonthlyBudget = theoreticalMetaMonthly;
-    let nextStepScaleStatus = 'HOLD';
+    // Estratégia de Escala Gradual Meta Ads (Degraus: 24 -> 29 -> 35)
+    let metaRecommendedDailyBudget = 24.00;
+    let actionRecommendation = 'MANTER';
     let nextStepMessage = '';
 
-    if (extrapolationMultiple <= 1.5) {
-        metaRecommendedMonthlyBudget = theoreticalMetaMonthly;
-        nextStepScaleStatus = 'SCALE';
-        nextStepMessage = 'Escala próxima do orçamento/gasto atual.';
-    } else if (extrapolationMultiple > 1.5 && extrapolationMultiple <= 3) {
-        metaRecommendedMonthlyBudget = metaCurrentMonthlyContext * 1.25;
-        nextStepScaleStatus = 'SCALE';
-        nextStepMessage = 'Escala acima do atual; avance gradualmente.';
-    } else if (extrapolationMultiple > 3 && extrapolationMultiple <= 10) {
-        metaRecommendedMonthlyBudget = metaCurrentMonthlyContext * 1.25;
-        nextStepScaleStatus = 'SCALE';
-        nextStepMessage = 'Escala elevada; valide novos degraus e públicos.';
+    if (metaConfiguredDailyBudget < 23) {
+        metaRecommendedDailyBudget = 24.00;
+        actionRecommendation = 'AUMENTAR (DEGRAU 1)';
+        nextStepMessage = 'Avance para o Degrau 1 (R$ 24,00/dia) do plano de escala gradual.';
+    } else if (metaConfiguredDailyBudget >= 23 && metaConfiguredDailyBudget < 28) {
+        metaRecommendedDailyBudget = 29.00;
+        actionRecommendation = 'MANTER (DEGRAU 1 ATIVO)';
+        nextStepMessage = 'Degrau 1 (R$ 24,00/dia) em maturação. Próxima escala para R$ 29,00/dia (Degrau 2) programada para 13/11.';
+    } else if (metaConfiguredDailyBudget >= 28 && metaConfiguredDailyBudget < 34) {
+        metaRecommendedDailyBudget = 35.00;
+        actionRecommendation = 'MANTER (DEGRAU 2 ATIVO)';
+        nextStepMessage = 'Degrau 2 (R$ 29,00/dia) em maturação. Próxima escala para R$ 35,00/dia (Degrau 3 - Meta Final) programada para 17/11.';
     } else {
-        metaRecommendedMonthlyBudget = metaCurrentMonthlyContext * 1.25;
-        nextStepScaleStatus = 'HOLD';
-        nextStepMessage = 'Potencial econômico muito acima da capacidade já observada. Não aplicar o orçamento integral na audiência atual. Expanda e valide a aquisição por etapas.';
+        metaRecommendedDailyBudget = 35.00;
+        actionRecommendation = 'MANTER (META FINAL)';
+        nextStepMessage = 'Meta final de escala atingida (R$ 35,00/dia). Manter estável até a reavaliação de 24/11.';
     }
 
-    if (metaCurrentMonthlyContext === 0 && theoreticalMetaMonthly > 0) {
-        metaRecommendedMonthlyBudget = Math.min(theoreticalMetaMonthly, 1500); // R$ 50/day start
-    } else if (metaRecommendedMonthlyBudget < metaCurrentMonthlyContext) {
-        metaRecommendedMonthlyBudget = metaCurrentMonthlyContext;
-    }
-
-    const metaRecommendedDailyBudget = metaRecommendedMonthlyBudget / 30.44;
-
-    let actionRecommendation = 'MANTER';
-    if (metaRecommendedMonthlyBudget > metaCurrentMonthlyContext * 1.05) actionRecommendation = 'AUMENTAR';
-    else if (metaRecommendedMonthlyBudget < metaCurrentMonthlyContext * 0.95) actionRecommendation = 'REDUZIR';
+    const metaRecommendedMonthlyBudget = metaRecommendedDailyBudget * 30.44;
 
     const safeProfitTarget = 3000;
     const safeProfitGap = Math.max(0, safeProfitTarget - safeProfit);
@@ -2126,28 +2121,48 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
     const googleRecentSpendTotal = (typeof data.ads?.google?.spend === 'object' ? data.ads.google.spend.value : data.ads?.google?.spend) || 0;
     const googleRecentDailySpend = googleRecentSpendTotal / daysInPeriod;
 
+    // Sob o Motor V6.1, o Google Ads tem papel exclusivo de Manutenção dos Pagantes.
+    // Trials não recebem tráfego pago do Google Ads (giram no orgânico).
     const googleMaintenance = simResult.actionGoogleMaintenance || 0;
-    const googleGrowth = simResult.actionTrialGoogleSpend || 0;
-    const googleRecommendedTotalMonthly = googleMaintenance + googleGrowth;
+    const googleGrowth = 0; // Motor V6.1: tráfego pago exclusivo para pagantes
+    const googleRecommendedTotalMonthly = googleMaintenance;
     const googleRecommendedDailyBudget = googleRecommendedTotalMonthly / 30.44;
 
     const googleCurrentMonthlyContext = googleConfiguredDailyBudget > 0 ? (googleConfiguredDailyBudget * 30.44) : (googleRecentDailySpend * 30.44);
-
-    let googleActionRecommendation = 'MANTER';
-    if (googleRecommendedTotalMonthly > googleCurrentMonthlyContext * 1.05) googleActionRecommendation = 'AUMENTAR';
-    else if (googleRecommendedTotalMonthly < googleCurrentMonthlyContext * 0.95) googleActionRecommendation = 'REDUZIR';
 
     const currentCplObj = data.ads?.google?.cpl;
     const currentCpl = (typeof currentCplObj === 'object' ? currentCplObj.value : currentCplObj) || 0;
     const prevCplObj = data.prevAds?.google?.cpl;
     const prevCpl = (typeof prevCplObj === 'object' ? prevCplObj.value : prevCplObj) || 0;
+    const cplDeteriorated = (currentCpl > prevCpl * 1.15) && (prevCpl > 0);
 
-    let googleReason = `A base projetada exige ${formatBRL(googleMaintenance)}/mês em manutenção.`;
-    if (googleGrowth > 0) {
-        googleReason = `A base projetada exige ${formatBRL(googleMaintenance)}/mês em manutenção e aloca ${formatBRL(googleGrowth)}/mês para crescimento B2C.`;
-    }
-    if (currentCpl > prevCpl * 1.2 && prevCpl > 0) {
-        googleReason += ` Atenção: CPL subiu >20% (de ${formatBRL(prevCpl)} para ${formatBRL(currentCpl)}).`;
+    let googleActionRecommendation = 'MANTER';
+    let googleReason = '';
+
+    if (cplDeteriorated) {
+        // Regra de ouro da gestão de tráfego: se CPL subiu >15-20%, JAMAIS aumentar o teto em leilão inflacionado
+        if (googleConfiguredDailyBudget > 95) {
+            googleActionRecommendation = 'REDUZIR';
+            googleReason = `CPL subiu ${( ((currentCpl / prevCpl) - 1) * 100 ).toFixed(1)}% (de ${formatBRL(prevCpl)} para ${formatBRL(currentCpl)}). Sob leilão inflacionado, reduza o teto diário para R$ 90,00/dia. Com o Motor V6.1 ativo, 100% dos cliques pagos vão exclusivamente para assinantes pagantes, garantindo proteção da base sem queimar caixa.`;
+        } else {
+            googleActionRecommendation = 'MANTER / OTIMIZAR';
+            googleReason = `CPL subiu ${( ((currentCpl / prevCpl) - 1) * 100 ).toFixed(1)}% (de ${formatBRL(prevCpl)} para ${formatBRL(currentCpl)}). Mantenha o teto disciplinado em R$ 90,00/dia. O Motor V6.1 já canaliza 100% dos cliques apenas para psicólogos pagantes. Foque em negativar termos e aumentar taxa de conversão em vez de aumentar verba.`;
+        }
+    } else if (googleRecentDailySpend < googleConfiguredDailyBudget * 0.75 && googleConfiguredDailyBudget > 0) {
+        googleActionRecommendation = 'MANTER';
+        googleReason = `O ritmo recente de gasto (${formatBRL(googleRecentDailySpend)}/dia) está abaixo do teto configurado (${formatBRL(googleConfiguredDailyBudget)}/dia). Não aumente o teto; otimize os lances e termos de busca.`;
+    } else if (googleConfiguredDailyBudget > 95) {
+        googleActionRecommendation = 'REDUZIR';
+        googleReason = `Alinhe o teto diário ao limite estratégico de R$ 90,00/dia para manter disciplina de capital sob o Motor V6.1.`;
+    } else if (googleConfiguredDailyBudget >= 85 && googleConfiguredDailyBudget <= 95) {
+        googleActionRecommendation = 'MANTER';
+        googleReason = `Teto disciplinado de R$ 90,00/dia ativo e adequado à manutenção dos psicólogos pagantes pelo Motor V6.1.`;
+    } else if (googleRecommendedTotalMonthly < googleCurrentMonthlyContext * 0.9) {
+        googleActionRecommendation = 'REDUZIR';
+        googleReason = `A demanda de manutenção da base pagante atual (${formatBRL(googleRecommendedTotalMonthly)}/mês) permite reduzir o orçamento diário para evitar desperdício.`;
+    } else {
+        googleActionRecommendation = 'MANTER';
+        googleReason = `Orçamento configurado em linha com a manutenção da base pagante pelo Motor V6.1.`;
     }
 
     let googleExecHtml = '';
@@ -2172,9 +2187,9 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
                     <div style="grid-column: 1 / -1; background: #fff; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin-top: 5px;">
                         <strong style="color: #0f172a;">Composição Operacional Recomendada:</strong><br>
                         <span style="font-size: 0.95rem;">Manutenção da base (recorrente): <strong>${formatBRL(googleMaintenance)}/mês</strong></span><br>
-                        <span style="font-size: 0.95rem;">Crescimento B2C (novos pacientes): <strong>${formatBRL(googleGrowth)}/mês</strong></span>
+                        <span style="font-size: 0.95rem;">Crescimento B2C (trials): <strong>R$ 0,00/mês</strong> <small style="color: #059669; font-weight: 600;">(Motor V6.1: 100% para pagantes)</small></span>
                         <br><br>
-                        <strong>AÇÃO:</strong> <span style="font-weight: 800; color: ${googleActionRecommendation === 'AUMENTAR' ? '#059669' : (googleActionRecommendation === 'REDUZIR' ? '#dc2626' : '#b45309')}">${googleActionRecommendation}</span><br>
+                        <strong>AÇÃO:</strong> <span style="font-weight: 800; color: ${googleActionRecommendation.includes('AUMENTAR') ? '#059669' : (googleActionRecommendation.includes('REDUZIR') ? '#dc2626' : '#2563eb')}">${googleActionRecommendation}</span><br>
                         <strong>Motivo:</strong> ${googleReason}
                     </div>
                 </div>
@@ -2197,9 +2212,9 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
     let actionText = `Neste cenário, do ponto de vista teórico, o motor alocaria <strong>${formatBRL(totalSources)}</strong> neste ciclo.`;
     actionText += `<br><br>Distribuição Teórica de Longo Prazo:<br>`;
     actionText += `<ul style="margin-top: 10px; padding-left: 20px;">`;
-    actionText += `<li><strong>${formatBRL(acquisitionDestination)}</strong> capacidade de aquisição total;</li>`;
-    if (metaSpend > 0) actionText += `<li>desse valor, <strong>${formatBRL(metaSpend)}</strong> seria o teto para Meta Ads;</li>`;
-    if (trialSpend > 0) actionText += `<li><strong>${formatBRL(trialSpend)}</strong> para aquisição via Google;</li>`;
+    actionText += `<li><strong>${formatBRL(acquisitionDestination)}</strong> capacidade de aquisição total (100% Meta Ads B2B via Motor V6.1);</li>`;
+    if (metaSpend > 0) actionText += `<li>desse valor, <strong>${formatBRL(metaSpend)}</strong> seria o teto para Meta Ads (B2B);</li>`;
+    actionText += `<li><strong>R$ 0,00</strong> para aquisição via Google Ads (Motor V6.1: tráfego pago exclusivo para retenção de pagantes);</li>`;
     if (organicFunding > 0) actionText += `<li><strong>${formatBRL(organicFunding)}</strong> cobertos pelo crescimento orgânico;</li>`;
     actionText += `<li><strong>${formatBRL(retainedDestination)}</strong> retidos no negócio.</li>`;
 

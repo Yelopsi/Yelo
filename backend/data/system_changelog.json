@@ -1,5 +1,58 @@
 [
   {
+<<<<<<< HEAD
+    "id": "change-git-92e6a379",
+    "date": "2026-11-10T02:34:50.000Z",
+    "commit": "92e6a379",
+    "author": "Anderson",
+    "title": "Correção: Restaurar periodo anual nas datas do crm e nivelar altura do campo de busca",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "restaurar periodo anual nas datas do crm e nivelar altura do campo de busca",
+    "description": "Commit registrado no repositório: \"fix(crm): restaurar periodo anual nas datas do crm e nivelar altura do campo de busca\". Arquivos modificados: admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #92e6a379"
+    },
+    "after": {
+      "nova_versao": "restaurar periodo anual nas datas do crm e nivelar altura do campo de busca"
+=======
+    "id": "change-git-1bb2ab0a",
+    "date": "2026-11-10T01:16:09.000Z",
+    "commit": "1bb2ab0a",
+    "author": "Anderson",
+    "title": "Correção: Corrigir falso positivo de gateway, atualizar LTV e harmonizar filtros de data e busca (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "corrigir falso positivo de gateway, atualizar LTV e harmonizar filtros de data e busca",
+    "description": "Commit registrado no repositório: \"fix(crm): corrigir falso positivo de gateway, atualizar LTV e harmonizar filtros de data e busca\". Arquivos modificados: admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, admin/admin_detalhes_psicologo.js, backend/.data/system_changelog.json, backend/controllers/adminUsersController.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1bb2ab0a"
+    },
+    "after": {
+      "nova_versao": "corrigir falso positivo de gateway, atualizar LTV e harmonizar filtros de data e busca"
+>>>>>>> main
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+<<<<<<< HEAD
+      "backend/.data/system_changelog.json",
+=======
+      "admin/admin_detalhes_psicologo.js",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminUsersController.js",
+>>>>>>> main
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+<<<<<<< HEAD
     "id": "change-git-ee793afa",
     "date": "2026-11-10T02:25:50.000Z",
     "commit": "ee793afa",
@@ -23,10 +76,35 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(admin)/_layout.tsx",
       "mobile/src/app/(tabs)/_layout.tsx",
+=======
+    "id": "change-git-9c53b912",
+    "date": "2026-11-10T00:38:02.000Z",
+    "commit": "9c53b912",
+    "author": "Anderson",
+    "title": "Correção: Alinhar Founder Decision com Motor V6.1 e escala gradual de tráfego (cmo)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "alinhar Founder Decision com Motor V6.1 e escala gradual de tráfego",
+    "description": "Commit registrado no repositório: \"fix(cmo): alinhar Founder Decision com Motor V6.1 e escala gradual de tráfego\". Arquivos modificados: admin/admin_cmo_metrics.js, backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9c53b912"
+    },
+    "after": {
+      "nova_versao": "alinhar Founder Decision com Motor V6.1 e escala gradual de tráfego"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+>>>>>>> main
       "security/reports/gate_report.json"
     ]
   },
   {
+<<<<<<< HEAD
     "id": "change-git-acab0589",
     "date": "2026-11-10T02:13:47.000Z",
     "commit": "acab0589",
@@ -43,16 +121,62 @@
     },
     "after": {
       "nova_versao": "adicionar KeyboardAvoidingView e auto-scroll no campo de pesquisa do CRM psicologos"
+=======
+    "id": "change-git-8e500eb2",
+    "date": "2026-11-10T00:25:02.000Z",
+    "commit": "8e500eb2",
+    "author": "Anderson",
+    "title": "Detalhar alteração do motor v6.1, capping Kesia e escala de tráfego (changelog)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "detalhar alteração do motor v6.1, capping Kesia e escala de tráfego",
+    "description": "Commit registrado no repositório: \"docs(changelog): detalhar alteração do motor v6.1, capping Kesia e escala de tráfego\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8e500eb2"
+    },
+    "after": {
+      "nova_versao": "detalhar alteração do motor v6.1, capping Kesia e escala de tráfego"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json"
+    ]
+  },
+  {
+    "id": "change-git-1a56499b",
+    "date": "2026-11-10T00:20:52.000Z",
+    "commit": "1a56499b",
+    "author": "Anderson",
+    "title": "Sincronizar gate report e changelog",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar gate report e changelog",
+    "description": "Commit registrado no repositório: \"docs(changelog): sincronizar gate report e changelog\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1a56499b"
+    },
+    "after": {
+      "nova_versao": "sincronizar gate report e changelog"
+>>>>>>> main
     },
     "metricsToCompare": [],
     "filesChanged": [
       "backend/.data/system_changelog.json",
       "backend/data/system_changelog.json",
+<<<<<<< HEAD
       "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+=======
+>>>>>>> main
       "security/reports/gate_report.json"
     ]
   },
   {
+<<<<<<< HEAD
     "id": "change-git-2685d7bd",
     "date": "2026-11-10T02:04:21.000Z",
     "commit": "2685d7bd",
@@ -273,6 +397,65 @@
     "metricsToCompare": [],
     "filesChanged": [
       "mobile/src/app/(admin)/crm-modulo/psicologos.tsx"
+=======
+    "id": "change-git-037c0c55",
+    "date": "2026-11-10T00:20:09.000Z",
+    "commit": "037c0c55",
+    "author": "Anderson",
+    "title": "Novo: Priorização de Tráfego Pago no Motor V6.1, Capping da Késia e Cron 24/11",
+    "category": "Motor de Match",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "Motor V6.1: tráfego pago do Google Ads prioriza 100% assinantes pagantes ativos; capping rigoroso de 1 clique/mês para Késia Lopes; automação da escalada de Meta Ads (Degraus 2 e 3) e alerta no Dashboard Admin para 24/11.",
+    "description": "Implementada proteção de receita no matchService: tráfego pago do Google Ads aloca as 3 vagas de match prioritariamente para psicólogos pagantes ativos. Capping estrito de 1 clique/mês para Késia Barbosa Lopes (ID 106). Scheduler configurado com rotina de escalada Meta Ads (Degrau 2 em 13/11 R$ 29/dia, Degrau 3 em 17/11 R$ 35/dia) e alerta visual dinâmico no Dashboard Admin com rotina cron para a Reavaliação Estratégica em 24/11/2026.",
+    "rationale": "Blindagem do retorno financeiro dos assinantes pagantes e execução do plano de ação de tráfego pago para novembro de 2026.",
+    "before": {
+      "motor_anterior": "Tráfego pago do Google Ads misturava pagantes e trials; sem capping de cliques para Késia; sem escalada e cron de reavaliação agendados."
+    },
+    "after": {
+      "motor_v6_1": "Google Ads 100% focado em assinantes pagantes ativos; Késia limitada a 1 clique/mês; escalada e alerta de 24/11 automatizados no Scheduler e Admin."
+    },
+    "metricsToCompare": [
+      "CAC B2B",
+      "Cliques WhatsApp por Assinante",
+      "Retenção no 2º Mês",
+      "Taxa de Conversão Google Ads"
+    ],
+    "filesChanged": [
+      "admin/admin_visao_geral.html",
+      "admin/admin_visao_geral.js",
+      "backend/controllers/matchController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/scheduler.js",
+      "backend/services/matchService.js",
+      "backend/services/metaAdsService.js",
+      "public/js/questionario.js",
+      "public/js/resultados.js"
+    ]
+  },
+  {
+    "id": "change-git-258fda5a",
+    "date": "2026-11-09T00:46:11.000Z",
+    "commit": "258fda5a",
+    "author": "Anderson",
+    "title": "Correção: Detalhamento semanal e totais consolidados no comparativo Asaas (admin)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "detalhamento semanal e totais consolidados no comparativo Asaas",
+    "description": "Commit registrado no repositório: \"fix(admin): detalhamento semanal e totais consolidados no comparativo Asaas\". Arquivos modificados: admin/admin_crm_analytics.html, admin/admin_crm_analytics.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #258fda5a"
+    },
+    "after": {
+      "nova_versao": "detalhamento semanal e totais consolidados no comparativo Asaas"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_analytics.html",
+      "admin/admin_crm_analytics.js"
+>>>>>>> main
     ]
   },
   {
