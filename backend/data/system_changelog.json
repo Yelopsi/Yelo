@@ -1,5 +1,40 @@
 [
   {
+    "id": "change-1794267896253",
+    "date": "2026-11-09T23:44:56.253Z",
+    "commit": "match-v6-1",
+    "author": "Anderson Costa",
+    "title": "Novo: Priorização de Tráfego Pago no Motor V6.1, Capping da Késia e Cron 24/11",
+    "category": "Motor de Match & Growth",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "Motor V6.1: tráfego pago do Google Ads prioriza 100% assinantes pagantes; capping rigoroso de 1 clique/mês para Késia Lopes; automação da escalada de Meta Ads (Degraus 2 e 3) e alerta de reavaliação para 24/11.",
+    "description": "Implementada proteção de receita no matchService: tráfego Google Ads aloca as 3 vagas exclusivamente para psicólogos pagantes ativos. Capping de 1 clique/mês implementado para Késia (ID 106). Scheduler configurado com rotina de escalada Meta Ads (13/11 R$ 29, 17/11 R$ 35) e alerta no Dashboard Admin para o dia 24/11/2026.",
+    "rationale": "Blindagem da retenção de assinantes pagantes e execução do plano de ação de tráfego pago definido para novembro de 2026.",
+    "before": {
+      "motor_anterior": "Tráfego pago misturado entre pagantes e trials; sem capping específico para Késia; sem rotina de reavaliação agendada."
+    },
+    "after": {
+      "motor_v6_1": "Google Ads 100% focado em assinantes pagantes ativos; Késia limitada a 1 clique/mês; escalada e alerta de 24/11 automatizados no Scheduler e Admin."
+    },
+    "metricsToCompare": [
+      "CAC B2B",
+      "Cliques WhatsApp por Assinante",
+      "Retenção no 2º Mês",
+      "Taxa de Conversão Google Ads"
+    ],
+    "filesChanged": [
+      "backend/services/matchService.js",
+      "backend/controllers/matchController.js",
+      "backend/services/metaAdsService.js",
+      "backend/jobs/scheduler.js",
+      "admin/admin_visao_geral.html",
+      "admin/admin_visao_geral.js",
+      "public/js/questionario.js",
+      "public/js/resultados.js"
+    ]
+  },
+  {
     "id": "change-git-61689b92",
     "date": "2026-11-07T18:44:04.000Z",
     "commit": "61689b92",

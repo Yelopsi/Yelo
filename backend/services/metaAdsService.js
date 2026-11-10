@@ -148,6 +148,68 @@ class MetaAdsService {
         }
     }
 
+    /**
+     * Atualiza o orçamento diário da campanha ou conjuntos de anúncio Meta Ads.
+     * @param {number} newBudgetReais - Novo orçamento diário em Reais (ex: 29.00 ou 35.00)
+     */
+    async updateCampaignDailyBudget(newBudgetReais) {
+        try {
+            if (!this.accessToken || this.accessToken === 'MOCK_META_TOKEN') {
+                return { success: false, reason: 'MOCK_TOKEN', message: 'Token Meta Ads mock ou não configurado.' };
+            }
+
+            const budgetCents = Math.round(newBudgetReais * 100);
+            const campaignId = process.env.META_CAMPAIGN_ID || '120251213168140531';
+
+            // 1. Tentar atualizar a campanha diretamente (caso utilize CBO)
+            try {
+                const response = await axios.post(`${this.graphApiUrl}/${campaignId}`, {
+                    daily_budget: budgetCents
+                }, {
+                    params: { access_token: this.accessToken }
+                });
+
+                if (response.data && response.data.success) {
+                    this.cache.delete('campaignBudgets');
+                    console.log(`[MetaAdsService] Orçamento da campanha ${campaignId} atualizado para R$ ${newBudgetReais}/dia.`);
+                    return { success: true, target: 'campaign', budgetReais: newBudgetReais };
+                }
+            } catch (campErr) {
+                console.log(`[MetaAdsService] Atualização CBO no nível de campanha não aplicável ou falhou: ${campErr.message}. Tentando adsets...`);
+            }
+
+            // 2. Tentar atualizar no nível dos conjuntos de anúncio (AdSets) ativos
+            const adsetsRes = await axios.get(`${this.graphApiUrl}/act_${this.adAccountId}/adsets`, {
+                params: {
+                    access_token: this.accessToken,
+                    fields: 'id,campaign_id,status,daily_budget',
+                    effective_status: "['ACTIVE']"
+                }
+            });
+
+            const activeAdsets = (adsetsRes.data?.data || []).filter(a => a.campaign_id === campaignId || !campaignId);
+            if (activeAdsets.length > 0) {
+                const budgetPerAdset = Math.round(budgetCents / activeAdsets.length);
+                for (const adset of activeAdsets) {
+                    await axios.post(`${this.graphApiUrl}/${adset.id}`, {
+                        daily_budget: budgetPerAdset
+                    }, {
+                        params: { access_token: this.accessToken }
+                    });
+                }
+                this.cache.delete('campaignBudgets');
+                console.log(`[MetaAdsService] Orçamento de ${activeAdsets.length} adsets atualizado para R$ ${newBudgetReais}/dia.`);
+                return { success: true, target: 'adsets', budgetReais: newBudgetReais };
+            }
+
+            return { success: false, reason: 'NO_ACTIVE_ADSETS', message: 'Nenhum conjunto de anúncios ativo encontrado.' };
+        } catch (error) {
+            const errorMsg = error.response?.data?.error?.message || error.message;
+            console.error('[MetaAdsService] Falha ao atualizar orçamento Meta Ads:', errorMsg);
+            return { success: false, error: errorMsg };
+        }
+    }
+
     mockAccountSpend() {
         return {
             spend: 1450.50,

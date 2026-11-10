@@ -83,6 +83,12 @@ document.addEventListener('DOMContentLoaded', () => {
             demandAnswers.utm_campaign = utms.utm_campaign;
             demandAnswers.utm_content = utms.utm_content;
 
+            // [NOVO] Vincula UTMs ao payload de respostas do Motor de Match
+            userAnswers.utm_source = demandAnswers.utm_source;
+            userAnswers.utm_medium = demandAnswers.utm_medium;
+            userAnswers.utm_campaign = demandAnswers.utm_campaign;
+            userAnswers.utm_content = demandAnswers.utm_content;
+
             // [NOVO] Salva o telefone para usar no clique do WhatsApp (mesmo se não logar)
 
 

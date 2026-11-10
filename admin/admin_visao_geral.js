@@ -42,6 +42,55 @@ window.initializePage = function() {
         }
     }
 
+    function updateTrafficReviewAlert() {
+        const targetDate = new Date('2026-11-24T00:00:00-03:00');
+        const now = new Date();
+        const diffMs = targetDate.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+        const card = document.getElementById('card-alert-traffic-review');
+        const daysEl = document.getElementById('traffic-review-days');
+        const titleEl = document.getElementById('traffic-review-title');
+        const actionEl = document.getElementById('traffic-review-action');
+
+        if (!card || !daysEl || !titleEl) return;
+
+        if (diffDays > 1) {
+            daysEl.textContent = `Faltam ${diffDays} dias (24/11)`;
+            if (actionEl) {
+                actionEl.textContent = 'Ver métricas do CMO';
+                actionEl.style.color = '#2563eb';
+            }
+            card.style.borderLeftColor = '#3b82f6';
+            card.style.background = '#eff6ff';
+        } else if (diffDays === 1) {
+            daysEl.textContent = 'Amanhã (24/11)!';
+            card.style.borderLeftColor = '#f59e0b';
+            card.style.background = '#fffbeb';
+            if (actionEl) {
+                actionEl.textContent = 'Preparar análise no CMO';
+                actionEl.style.color = '#d97706';
+            }
+        } else if (diffDays === 0) {
+            titleEl.innerHTML = '<strong>🚨 Hoje é o dia da Reavaliação Estratégica!</strong> Janela de 14 dias concluída. Reavalie Google Ads, Meta Ads e Motor V6.1.';
+            card.style.borderLeftColor = '#ef4444';
+            card.style.background = '#fef2f2';
+            if (actionEl) {
+                actionEl.textContent = 'Reavaliar agora no CMO';
+                actionEl.style.color = '#dc2626';
+            }
+        } else {
+            const daysAgo = Math.abs(diffDays);
+            titleEl.innerHTML = `<strong>⚠️ Reavaliação Estratégica Pendente (${daysAgo} dia${daysAgo > 1 ? 's' : ''} atrás):</strong> A janela encerrou em 24/11.`;
+            card.style.borderLeftColor = '#ef4444';
+            card.style.background = '#fef2f2';
+            if (actionEl) {
+                actionEl.textContent = 'Reavaliar agora no CMO';
+                actionEl.style.color = '#dc2626';
+            }
+        }
+    }
+
     // Listas de IDs para animação de carregamento
     const bigKpis = [
         'kpi-mrr', 'kpi-new-patients', 'kpi-new-psychologists', 'kpi-questionnaires-today',
@@ -499,6 +548,7 @@ window.initializePage = function() {
         }
 
         // Busca os dados imediatamente na primeira vez (com animação)
+        updateTrafficReviewAlert();
         fetchAndRenderStats(true);
         renderNewUsersChart();
         if(window.loadClicksChartData) window.loadClicksChartData();
