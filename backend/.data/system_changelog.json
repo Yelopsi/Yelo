@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-1bb2ab0a",
+    "date": "2026-11-10T01:16:09.000Z",
+    "commit": "1bb2ab0a",
+    "author": "Anderson",
+    "title": "Correção: Corrigir falso positivo de gateway, atualizar LTV e harmonizar filtros de data e busca (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "corrigir falso positivo de gateway, atualizar LTV e harmonizar filtros de data e busca",
+    "description": "Commit registrado no repositório: \"fix(crm): corrigir falso positivo de gateway, atualizar LTV e harmonizar filtros de data e busca\". Arquivos modificados: admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, admin/admin_detalhes_psicologo.js, backend/.data/system_changelog.json, backend/controllers/adminUsersController.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1bb2ab0a"
+    },
+    "after": {
+      "nova_versao": "corrigir falso positivo de gateway, atualizar LTV e harmonizar filtros de data e busca"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "admin/admin_detalhes_psicologo.js",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminUsersController.js",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-9c53b912",
     "date": "2026-11-10T00:38:02.000Z",
     "commit": "9c53b912",
