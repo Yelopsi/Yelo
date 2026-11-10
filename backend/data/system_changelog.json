@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-9c53b912",
+    "date": "2026-11-10T00:38:02.000Z",
+    "commit": "9c53b912",
+    "author": "Anderson",
+    "title": "Correção: Alinhar Founder Decision com Motor V6.1 e escala gradual de tráfego (cmo)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "alinhar Founder Decision com Motor V6.1 e escala gradual de tráfego",
+    "description": "Commit registrado no repositório: \"fix(cmo): alinhar Founder Decision com Motor V6.1 e escala gradual de tráfego\". Arquivos modificados: admin/admin_cmo_metrics.js, backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9c53b912"
+    },
+    "after": {
+      "nova_versao": "alinhar Founder Decision com Motor V6.1 e escala gradual de tráfego"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-8e500eb2",
     "date": "2026-11-10T00:25:02.000Z",
     "commit": "8e500eb2",

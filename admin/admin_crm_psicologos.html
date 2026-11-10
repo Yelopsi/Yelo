@@ -754,6 +754,71 @@
             flex: 1 1 100% !important; /* Stack vertically on very small screens */
         }
     }
+
+    /* Harmonização da Barra de Filtros: Mesma Altura e Alinhamento Perfeito */
+    .date-filters {
+        display: flex !important;
+        gap: 8px !important;
+        align-items: center !important;
+    }
+    .date-filters input.form-control.input,
+    .date-filters input.form-control.input[readonly],
+    .date-filters input[type="date"],
+    .date-filters input.flatpickr-input {
+        height: 40px !important;
+        min-height: 40px !important;
+        max-height: 40px !important;
+        line-height: 38px !important;
+        padding: 0 14px !important;
+        border-radius: 50px !important;
+        border: 1px solid #cbd5e1 !important;
+        font-size: 0.88rem !important;
+        color: #334155 !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
+        width: 130px !important;
+        text-align: center !important;
+        cursor: pointer !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+    }
+    .date-filters input.form-control.input:focus,
+    .date-filters input.form-control.input[readonly]:focus,
+    .date-filters input[type="date"]:focus {
+        border-color: #10b981 !important;
+        outline: none !important;
+    }
+    .date-filters span {
+        color: #64748b !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+    }
+    .search-wrapper {
+        position: relative !important;
+        width: 300px !important;
+        max-width: 100% !important;
+        height: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    #crm-search-psi {
+        height: 40px !important;
+        min-height: 40px !important;
+        max-height: 40px !important;
+        line-height: 38px !important;
+        padding: 0 16px 0 42px !important;
+        border-radius: 50px !important;
+        border: 1px solid #cbd5e1 !important;
+        font-size: 0.88rem !important;
+        color: #334155 !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+    }
+    #crm-search-psi:focus {
+        border-color: #10b981 !important;
+        outline: none !important;
+    }
 </style>
 
 <div class="modern-dashboard-layout" style="padding-bottom: 120px;">
@@ -887,16 +952,16 @@
             </div>
             <input type="hidden" id="crm-status-psi" value="">
             
-            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                <div class="date-filters" style="display: flex; gap: 10px; align-items: center;">
-                    <input type="date" id="crm-date-start" class="campo-busca" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem;">
-                    <span style="color: #64748b;">até</span>
-                    <input type="date" id="crm-date-end" class="campo-busca" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem;">
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <div class="date-filters">
+                    <input type="date" id="crm-date-start" class="campo-busca" placeholder="Data inicial" title="Data inicial">
+                    <span>até</span>
+                    <input type="date" id="crm-date-end" class="campo-busca" placeholder="Data final" title="Data final">
                 </div>
                 
-                <div class="search-wrapper" style="position: relative; width: 300px; max-width: 100%;">
+                <div class="search-wrapper">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" id="crm-search-psi" class="campo-busca" placeholder="Buscar psicólogo..." style="width: 100%; padding-left: 42px; border-radius: 50px;">
+                    <input type="text" id="crm-search-psi" class="campo-busca" placeholder="Buscar psicólogo...">
                 </div>
             </div>
         </div>

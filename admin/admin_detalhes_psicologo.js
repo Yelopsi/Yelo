@@ -602,7 +602,7 @@ function renderPaymentKpis(p, sub, asaasSub, payments, expiryInfo) {
     const ciclosCount = p.subscription_payments_count || faturasPagasCount;
 
     // 6. LTV
-    const ltvFinal = p.lifetimeRevenue && p.lifetimeRevenue > 0 ? p.lifetimeRevenue : totalPagoSoma;
+    const ltvFinal = Math.max(parseFloat(p.lifetimeRevenue || 0), totalPagoSoma);
     const ltvFormatado = parseFloat(ltvFinal || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const dataPrimeiroPgto = p.firstPaidAt ? formatDateBR(p.firstPaidAt) : (p.subscribedAt ? formatDateBR(p.subscribedAt) : '-');
 

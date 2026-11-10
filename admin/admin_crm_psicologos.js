@@ -179,6 +179,43 @@ window.initializePage = function () {
 
     window.currentCrmPage = 1;
 
+    // Define período padrão de 30 dias (de 30 dias atrás até hoje)
+    const endDef = new Date();
+    const startDef = new Date();
+    startDef.setDate(endDef.getDate() - 30);
+    const fmtYMD = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const defaultStartDate = fmtYMD(startDef);
+    const defaultEndDate = fmtYMD(endDef);
+
+    const inputStart = document.getElementById('crm-date-start');
+    const inputEnd = document.getElementById('crm-date-end');
+
+    if (inputStart && !inputStart.value) {
+        inputStart.value = defaultStartDate;
+    }
+    if (inputEnd && !inputEnd.value) {
+        inputEnd.value = defaultEndDate;
+    }
+
+    function syncCrmDatePickers() {
+        if (inputStart) {
+            if (!inputStart.value) inputStart.value = defaultStartDate;
+            if (inputStart._flatpickr && (!inputStart._flatpickr.selectedDates || inputStart._flatpickr.selectedDates.length === 0)) {
+                inputStart._flatpickr.setDate(inputStart.value || defaultStartDate, false);
+            }
+        }
+        if (inputEnd) {
+            if (!inputEnd.value) inputEnd.value = defaultEndDate;
+            if (inputEnd._flatpickr && (!inputEnd._flatpickr.selectedDates || inputEnd._flatpickr.selectedDates.length === 0)) {
+                inputEnd._flatpickr.setDate(inputEnd.value || defaultEndDate, false);
+            }
+        }
+    }
+    syncCrmDatePickers();
+    setTimeout(syncCrmDatePickers, 100);
+    setTimeout(syncCrmDatePickers, 300);
+    setTimeout(syncCrmDatePickers, 600);
+
     document.getElementById('crm-per-page')?.addEventListener('change', () => fetchAndRenderPsis(1));
     document.getElementById('crm-date-start')?.addEventListener('change', () => fetchAndRenderPsis(1));
     document.getElementById('crm-date-end')?.addEventListener('change', () => fetchAndRenderPsis(1));
