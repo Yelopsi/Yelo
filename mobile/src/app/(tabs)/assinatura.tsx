@@ -128,6 +128,90 @@ export default function AssinaturaScreen() {
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
+  const [couponStatus, setCouponStatus] = useState<{ valid: boolean; text: string } | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+  const handleValidateCoupon = async () => {
+    const code = cardData.cupom.trim().toUpperCase();
+    if (!code) {
+      setCouponStatus(null);
+      return;
+    }
+    try {
+      setValidatingCoupon(true);
+      const res = await api.post('/api/payments/validate-coupon', {
+        cupom: code,
+        planType: 'ESSENTIAL',
+        isIos: Platform.OS === 'ios',
+        platform: Platform.OS,
+      });
+      if (res.data?.valid) {
+        setCardData(prev => ({ ...prev, cupom: res.data.code || code }));
+        setCouponStatus({
+          valid: true,
+          text: `${res.data.title || 'Cupom aplicado!'}${res.data.subtitle ? ' — ' + res.data.subtitle : ''}`,
+        });
+      }
+    } catch (e: any) {
+      setCouponStatus({
+        valid: false,
+        text: e.response?.data?.error || 'Cupom inválido ou não elegível para este perfil.',
+      });
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const renderCouponField = (marginBottom = 16) => (
+    <View style={{ marginBottom }}>
+      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#475569', marginBottom: 6, marginLeft: 8 }}>
+        Cupom de Desconto (opcional)
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <TextInput
+          value={cardData.cupom}
+          onChangeText={(t) => {
+            setCardData(prev => ({ ...prev, cupom: t.toUpperCase() }));
+            if (couponStatus) setCouponStatus(null);
+          }}
+          placeholder="Ex: BLACK2X1"
+          placeholderTextColor="#94a3b8"
+          autoCapitalize="characters"
+          returnKeyType="done"
+          onSubmitEditing={Keyboard.dismiss}
+          style={{ flex: 1, backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 999, paddingHorizontal: 18, paddingVertical: 13, color: '#1e293b', fontFamily: 'Inter_400Regular', fontSize: 14 }}
+        />
+        <TouchableOpacity
+          onPress={handleValidateCoupon}
+          disabled={validatingCoupon}
+          activeOpacity={0.8}
+          style={{ backgroundColor: '#1B4332', paddingHorizontal: 16, paddingVertical: 13, borderRadius: 999, justifyContent: 'center', alignItems: 'center' }}
+        >
+          <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 13 }}>
+            {validatingCoupon ? '...' : 'Aplicar'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      {couponStatus && (
+        <View
+          style={{
+            marginTop: 8,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 12,
+            backgroundColor: couponStatus.valid ? '#f0fdf4' : '#fef2f2',
+            borderWidth: 1,
+            borderColor: couponStatus.valid ? '#bbf7d0' : '#fecaca',
+          }}
+        >
+          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: couponStatus.valid ? '#166534' : '#b91c1c', lineHeight: 17 }}>
+            {couponStatus.valid ? '✅ ' : '❌ '}
+            {couponStatus.text}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
 
   const fetchStatus = async () => {
     try {
@@ -1853,23 +1937,7 @@ export default function AssinaturaScreen() {
                           </View>
 
                           {/* Cupom opcional (oculto no modo Alterar Forma de Pagamento igual à Web) */}
-                          {!isUpdatePaymentMethodMode && (
-                            <View style={{ marginBottom: 20 }}>
-                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#475569', marginBottom: 6, marginLeft: 8 }}>
-                                Cupom de Desconto (opcional)
-                              </Text>
-                              <TextInput
-                                value={cardData.cupom}
-                                onChangeText={(t) => setCardData(prev => ({ ...prev, cupom: t.toUpperCase() }))}
-                                placeholder="DIGITE SEU CUPOM"
-                                placeholderTextColor="#94a3b8"
-                                autoCapitalize="characters"
-                                returnKeyType="done"
-                                onSubmitEditing={Keyboard.dismiss}
-                                style={{ backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 999, paddingHorizontal: 20, paddingVertical: 14, color: '#1e293b', fontFamily: 'Inter_400Regular', fontSize: 14 }}
-                              />
-                            </View>
-                          )}
+                          {!isUpdatePaymentMethodMode && renderCouponField(20)}
 
                           {/* Botão Gerar PIX com Acionamento Confiável */}
                           <TouchableOpacity
@@ -2182,23 +2250,7 @@ export default function AssinaturaScreen() {
                       </View>
 
                       {/* Cupom (oculto no modo Alterar Forma de Pagamento igual à Web) */}
-                      {!isUpdatePaymentMethodMode && (
-                        <View style={{ marginBottom: 16 }}>
-                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#475569', marginBottom: 6, marginLeft: 8 }}>
-                            Cupom de Desconto (opcional)
-                          </Text>
-                          <TextInput
-                            value={cardData.cupom}
-                            onChangeText={(t) => setCardData(prev => ({ ...prev, cupom: t.toUpperCase() }))}
-                            placeholder="DIGITE SEU CUPOM"
-                            placeholderTextColor="#94a3b8"
-                            autoCapitalize="characters"
-                            returnKeyType="done"
-                            onSubmitEditing={Keyboard.dismiss}
-                            style={{ backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 999, paddingHorizontal: 20, paddingVertical: 14, color: '#1e293b', fontFamily: 'Inter_400Regular', fontSize: 14 }}
-                          />
-                        </View>
-                      )}
+                      {!isUpdatePaymentMethodMode && renderCouponField(16)}
 
                       <View style={{ backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
                         <Feather name="shield" size={13} color="#166534" />

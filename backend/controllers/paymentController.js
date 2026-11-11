@@ -2,6 +2,7 @@
 const db = require('../models');
 const emailService = require('../services/emailService');
 const gamificationService = require('../services/gamificationService');
+const promoCouponService = require('../services/promoCouponService');
 
 // Configurações do Asaas
 // Limpeza robusta da URL (remove espaços e barras finais)
@@ -16,6 +17,29 @@ ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
 
 const { v4: uuidv4 } = require('uuid');
+
+// 0. VALIDA CUPOM PROMOCIONAL ANTES DO CHECKOUT
+exports.validateCoupon = async (req, res) => {
+    try {
+        const { cupom, planType, isIos, platform } = req.body || {};
+        const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
+        if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+
+        const rawPlan = String(planType || 'ESSENTIAL').toUpperCase();
+        const isIosFee = isIos === true || platform === 'ios' || rawPlan === 'ESSENTIAL_IOS';
+        const normalizedPlan = (rawPlan === 'ESSENTIAL_IOS' || rawPlan === 'ESSENCIAL') ? 'ESSENTIAL' : rawPlan;
+
+        const result = await promoCouponService.validateCouponForPsychologist(cupom, psychologist, normalizedPlan, { isIosFee });
+        if (!result.valid) {
+            return res.status(400).json({ valid: false, error: result.reason });
+        }
+
+        return res.json(result);
+    } catch (error) {
+        console.error('[PROMO] Erro ao validar cupom:', error);
+        return res.status(500).json({ valid: false, error: 'Não foi possível validar o cupom no momento.' });
+    }
+};
 
 // 1. CRIA A ASSINATURA NO ASAAS (Checkout Transparente com Intent e Idempotência)
 exports.createPreference = async (req, res) => {
@@ -111,18 +135,26 @@ exports.createPreference = async (req, res) => {
             throw e;
         }
 
-        // Lógica do Cupom VIP (Agora depende do .env para segurança)
-        const validCoupon = process.env.VIP_COUPON;
-        if (cupom && validCoupon && cupom.toUpperCase() === validCoupon.toUpperCase()) {
-            await localPsychologist.update({ 
-                  status: 'active',
-                  plano: 'VIP',
-                  planExpiresAt: new Date('2099-12-31T23:59:59Z'),
-                  cancelAtPeriodEnd: false,
-                  subscriptionId: null
-              });
-            await intent.update({ status: 'CANCELED' }); // Cancela a intenção pois usou cupom
-            return res.json({ couponSuccess: true, message: 'Cupom VIP aplicado!' });
+        // Lógica de Cupons (VIP e Campanhas Promocionais como Black Friday BLACK2X1)
+        let activePromoCoupon = null;
+        if (cupom && String(cupom).trim() !== '') {
+            const couponResult = await promoCouponService.validateCouponForPsychologist(cupom, localPsychologist, normalizedPlan, { isIosFee });
+            if (!couponResult.valid) {
+                await intent.update({ status: 'FAILED_LOCAL' });
+                return res.status(400).json({ error: couponResult.reason || 'Cupom inválido ou não elegível.' });
+            }
+            if (couponResult.isVip) {
+                await localPsychologist.update({ 
+                      status: 'active',
+                      plano: 'VIP',
+                      planExpiresAt: new Date('2099-12-31T23:59:59Z'),
+                      cancelAtPeriodEnd: false,
+                      subscriptionId: null
+                  });
+                await intent.update({ status: 'CANCELED' }); // Cancela a intenção pois usou cupom
+                return res.json({ couponSuccess: true, message: 'Cupom VIP aplicado!' });
+            }
+            activePromoCoupon = couponResult;
         }
 
         // Validação de dados do titular e do cartão (Apenas se não for PIX)
@@ -283,6 +315,9 @@ exports.createPreference = async (req, res) => {
             await localPsychologist.update(payload);
         }
 
+        const subDescriptionBase = isIosFee ? `Assinatura Yelo - Plano ${normalizedPlan} (iOS)` : `Assinatura Yelo - Plano ${normalizedPlan}`;
+        const subDescription = activePromoCoupon ? `${subDescriptionBase} [${activePromoCoupon.code}]` : subDescriptionBase;
+
         let subscriptionPayload;
         if (billingType === 'PIX') {
             subscriptionPayload = {
@@ -291,7 +326,7 @@ exports.createPreference = async (req, res) => {
                 value: value,
                 nextDueDate: nextDueDate,
                 cycle: 'MONTHLY',
-                description: isIosFee ? `Assinatura Yelo - Plano ${normalizedPlan} (iOS)` : `Assinatura Yelo - Plano ${normalizedPlan}`,
+                description: subDescription,
                 externalReference: String(psychologistId),
                 retryPolicy: 'ALLOW_THREE_IN_SEVEN_DAYS',
             };
@@ -304,7 +339,7 @@ exports.createPreference = async (req, res) => {
                 value: value,
                 nextDueDate: nextDueDate,
                 cycle: 'MONTHLY',
-                description: isIosFee ? `Assinatura Yelo - Plano ${normalizedPlan} (iOS)` : `Assinatura Yelo - Plano ${normalizedPlan}`,
+                description: subDescription,
                 externalReference: String(psychologistId),
                 softDescriptor: 'Yelo Saude',
                 creditCard: {
@@ -440,20 +475,37 @@ exports.createPreference = async (req, res) => {
             const parsedNextDueDate = new Date(nextDueDate + 'T12:00:00Z'); // Força meio-dia para evitar fuso
             const now = new Date();
             let newPlanExpiresAt = parsedNextDueDate;
+            const wasExpiredOrInactive = promoCouponService.isPsychologistExpiredOrInactive(localPsychologist, now);
             
             // Para Cartão de Crédito, a cobrança é imediata e síncrona
             if (billingType === 'CREDIT_CARD') {
-                if (parsedNextDueDate <= now) {
+                if (activePromoCoupon && activePromoCoupon.type === 'EXTRA_MONTHS') {
+                    newPlanExpiresAt = promoCouponService.addMonthsWithMinDays(now, activePromoCoupon.totalMonths, activePromoCoupon.minDays);
+                } else if (parsedNextDueDate <= now) {
                     newPlanExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
                 }
             } else {
                 // Para PIX/Boleto: se já possui validade futura (ex: trial ativo), preserva
-                // Se for vencimento imediato (sem trial), só ganha 30 dias após pagar (via webhook/processPaymentSuccess)
+                // Se for vencimento imediato (sem trial), só ganha validade após pagar (via webhook/processPaymentSuccess)
                 if (parsedNextDueDate <= now) {
                     newPlanExpiresAt = (localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > now)
                         ? localPsychologist.planExpiresAt
                         : now;
                 }
+            }
+
+            if (activePromoCoupon && db.SystemLog) {
+                await db.SystemLog.create({
+                    level: 'info',
+                    message: `[PROMO_SUB_PENDING] ${activePromoCoupon.code} | sub:${subscriptionData.id} | psi:${psychologistId}`,
+                    meta: {
+                        coupon: activePromoCoupon.code,
+                        subscriptionId: subscriptionData.id,
+                        psychologistId,
+                        totalMonths: activePromoCoupon.totalMonths,
+                        minDays: activePromoCoupon.minDays
+                    }
+                }).catch(() => {});
             }
 
             // Atualiza o Psychologist
@@ -469,6 +521,9 @@ exports.createPreference = async (req, res) => {
             if (billingType === 'CREDIT_CARD') {
                 updateData.status = 'active';
                 updateData.is_exempt = false;
+                if (wasExpiredOrInactive || activePromoCoupon) {
+                    updateData.reactivatedAt = now;
+                }
             }
 
             await localPsychologist.update(updateData);

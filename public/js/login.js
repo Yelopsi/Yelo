@@ -66,10 +66,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // --- NOVO: PREENCHIMENTO AUTOMÁTICO DE E-MAIL (PÓS-CADASTRO) ---
+    // --- NOVO: PREENCHIMENTO AUTOMÁTICO DE E-MAIL E CUPOM PROMOCIONAL ---
     const emailParam = params.get('email');
     if (emailParam && emailInput) {
         emailInput.value = emailParam;
+    }
+    const cupomParam = params.get('cupom');
+    if (cupomParam && cupomParam.trim()) {
+        localStorage.setItem('yelo_promo_coupon', cupomParam.trim().toUpperCase());
     }
 
     if (loginForm) {
@@ -228,7 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Se tiver um redirect na URL (ex: veio do perfil), volta pra lá
                             window.location.href = decodeURIComponent(redirectParam);
                         } else if (finalUserType === 'psychologist') {
-                            window.location.href = '/psi/psi_dashboard.html'; 
+                            const hasPromoCoupon = localStorage.getItem('yelo_promo_coupon');
+                            window.location.href = hasPromoCoupon ? '/psi/psi_dashboard.html?page=psi_assinatura.html' : '/psi/psi_dashboard.html'; 
                         } else {
                             window.location.href = '/patient/patient_dashboard';
                         }

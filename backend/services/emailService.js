@@ -1030,3 +1030,132 @@ exports.sendForumReplyEmail = async (targetUser, senderName, commentContent, pos
     }));
 };
 
+/**
+ * E-mails humanizados e mercadológicos para a Campanha de Recuperação (Black Friday: 2 meses por R$ 99)
+ * @param {Object} user Objeto do psicólogo ({ nome, email, whatsapp_clicks })
+ * @param {'ex_payer'|'trial_with_clicks'|'trial_no_clicks'|'bf_last_call'} variant Caso do destinatário
+ * @param {Object} options { recipientEmailOverride, subjectPrefix, couponCode, deadlineLabel }
+ */
+exports.sendBlackFridayEmail = async (user, variant = 'ex_payer', options = {}) => {
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
+    const psiName = getPsiFirstName(user);
+    const couponCode = options.couponCode || 'BLACK2X1';
+    const deadlineLabel = options.deadlineLabel || '30/11';
+    const clicks = parseInt(user?.whatsapp_clicks || 0, 10);
+    const toEmail = options.recipientEmailOverride || user.email;
+    const prefix = options.subjectPrefix ? `${options.subjectPrefix} ` : '';
+    const ctaUrl = `${frontendUrl}/login?email=${encodeURIComponent(user.email || toEmail || '')}&cupom=${encodeURIComponent(couponCode)}`;
+
+    let subject = '';
+    let title = '';
+    let tagText = '💛 Black Friday Yelo • 2 meses por R$ 99';
+    let tagColor = '#FEF3C7';
+    let introHtml = '';
+    let whyNowHtml = '';
+
+    if (variant === 'ex_payer') {
+        subject = `${prefix}Seu consultório na Yelo mudou — volte com 2 meses por R$ 99 💛`;
+        title = 'Muita coisa evoluiu por aqui desde a sua última passagem';
+        introHtml = `
+            <p>Olá, <strong>${psiName}</strong>! Tudo bem por aí?</p>
+            <p>Como você já fez parte da Yelo em outro momento, quero te contar de forma direta e transparente o que amadureceu na nossa casa nos últimos meses.</p>
+            <p>Ouvimos muito os psicólogos que passaram por aqui e entendemos o que realmente faz diferença no consultório: <strong>constância nas indicações, pacientes alinhados ao seu jeito de atender e equilíbrio real de visibilidade entre quem mantém o perfil ativo.</strong></p>
+        `;
+        whyNowHtml = `
+            <p style="margin: 0 0 8px 0;"><strong>O que muda na prática ao reativar hoje:</strong></p>
+            <ul style="margin: 0; padding-left: 18px; color: #4A5568; font-size: 14px; line-height: 1.65;">
+                <li><strong>Vitrine e agenda organizadas para quem está ativo:</strong> concentramos a entrega de novos pacientes em quem mantém o consultório ativo, garantindo espaço justo e mais previsibilidade.</li>
+                <li><strong>Seu perfil já está pronto:</strong> sua foto, biografia, especialidades e link profissional seguem guardados — você volta ao ar em segundos, sem retrabalho.</li>
+                <li><strong>Consultório completo, sem comissão por sessão:</strong> gestão de pacientes, agenda e comunidade clínica, mantendo 100% do valor das suas consultas com você.</li>
+            </ul>
+        `;
+    } else if (variant === 'trial_with_clicks') {
+        subject = `${prefix}Pacientes já buscaram seu perfil na Yelo — volte com 2 meses por R$ 99 ✨`;
+        title = 'Você já despertou interesse real por aqui — que tal retomar com calma?';
+        const clicksMention = clicks > 1
+            ? `Durante os dias em que seu consultório esteve no ar conosco, <strong>${clicks} pessoas</strong> chegaram a clicar para conversar com você no WhatsApp.`
+            : 'Durante os dias em que seu consultório esteve no ar conosco, você já chegou a atrair interesse real de paciente no seu WhatsApp.';
+        introHtml = `
+            <p>Olá, <strong>${psiName}</strong>! Tudo bem?</p>
+            <p>${clicksMention} Isso mostra que a sua apresentação e abordagem conversam diretamente com quem procura terapia na Yelo.</p>
+            <p>Sabemos que 7 dias de teste passam rápido na correria clínica — e, de lá para cá, amadurecemos bastante a forma como conectamos pacientes aos psicólogos parceiros para que quem está ativo colha resultados de forma mais constante.</p>
+        `;
+        whyNowHtml = `
+            <p style="margin: 0 0 8px 0;"><strong>Por que este momento é ideal para voltar:</strong></p>
+            <ul style="margin: 0; padding-left: 18px; color: #4A5568; font-size: 14px; line-height: 1.65;">
+                <li><strong>Direcionamento mais maduro:</strong> hoje as recomendações dão prioridade e equilíbrio real aos profissionais ativos, evitando dispersão.</li>
+                <li><strong>Tempo real para construir vínculo:</strong> com <strong>60 dias completos</strong> por apenas R$ 99, você acompanha dois meses inteiros de agenda com tranquilidade.</li>
+                <li><strong>Tudo salvo, zero burocracia:</strong> basta reativar e seu perfil volta imediatamente às buscas com 0% de taxa por sessão.</li>
+            </ul>
+        `;
+    } else if (variant === 'trial_no_clicks') {
+        subject = `${prefix}7 dias foi pouco — teste a nova fase da Yelo por 60 dias pagando R$ 99 🌿`;
+        title = 'Uma semana passa rápido demais na rotina clínica';
+        introHtml = `
+            <p>Olá, <strong>${psiName}</strong>! Tudo bem com você?</p>
+            <p>Olhando para os profissionais que já preencheram o perfil com carinho na Yelo, percebemos algo importante: <strong>7 dias muitas vezes não dão fôlego suficiente para acompanhar o ritmo natural de quem busca terapia</strong> — especialmente enquanto nossa vitrine ainda estava em amadurecimento.</p>
+            <p>Nos últimos meses, reorganizamos nossa casa para gerar mais previsibilidade e constância a quem está ativo: hoje os pacientes passam por um direcionamento mais cuidadoso e os atendimentos são distribuídos com muito mais equilíbrio para cada especialidade.</p>
+        `;
+        whyNowHtml = `
+            <p style="margin: 0 0 8px 0;"><strong>Queremos te dar tempo real para ver funcionando:</strong></p>
+            <ul style="margin: 0; padding-left: 18px; color: #4A5568; font-size: 14px; line-height: 1.65;">
+                <li><strong>60 dias de consultório no ar pelo preço de 1 mês:</strong> em vez de 7 dias corridos, você garante 2 meses completos por R$ 99,00 (equivalente a R$ 49,50/mês).</li>
+                <li><strong>Retorno simples:</strong> com apenas 1 paciente que iniciar acompanhamento com você, o investimento dos dois meses já se paga com folga.</li>
+                <li><strong>Seu perfil já está pronto:</strong> é só entrar, ativar e voltar a aparecer para quem busca sua abordagem.</li>
+            </ul>
+        `;
+    } else {
+        // 'bf_last_call'
+        subject = `${prefix}Últimos dias: 2 meses de consultório na Yelo por R$ 99 ⏳`;
+        title = 'Última oportunidade para garantir 2 meses pelo valor de 1';
+        tagText = '⏳ Encerrando • 2 meses por R$ 99';
+        introHtml = `
+            <p>Olá, <strong>${psiName}</strong>!</p>
+            <p>Passando apenas para lembrar com carinho que a nossa condição especial de Black Friday vai até <strong>${deadlineLabel}</strong>.</p>
+            <p>Se você vem pensando em fortalecer a chegada de novos pacientes particulares sem depender só de redes sociais e sem pagar comissão por sessão, essa é a condição mais leve que já abrimos na Yelo: <strong>você paga R$ 99,00 uma única vez agora e fica 60 dias completos com seu consultório ativo.</strong></p>
+        `;
+        whyNowHtml = `
+            <p style="margin: 0; font-size: 14px; color: #4A5568; line-height: 1.65;">
+                Seu perfil continua salvo esperando por você. Basta clicar abaixo que o seu benefício já estará pré-aplicado — a próxima renovação acontece só daqui a 60 dias (e você pode cancelar quando quiser, sem fidelidade).
+            </p>
+        `;
+    }
+
+    const content = `
+        ${introHtml}
+
+        <div style="background-color: #1B4332; border-radius: 16px; padding: 22px; margin: 24px 0; color: #FFFFFF; text-align: center;">
+            <span style="display: inline-block; background-color: #FFEE8C; color: #1B4332; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;">
+                Condição Black Friday • 50% OFF
+            </span>
+            <h2 style="margin: 0 0 6px 0; color: #FFFFFF !important; font-family: Georgia, serif; font-size: 22px;">
+                2 meses pelo preço de 1: R$ 99,00
+            </h2>
+            <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.9) !important; font-size: 14px !important; line-height: 1.5 !important;">
+                Você ativa hoje por R$ 99,00 e garante <strong>60 dias completos</strong> no Plano Essencial.<br>
+                Após os 2 meses, a renovação segue no valor normal de R$ 99/mês (cancele quando quiser).
+            </p>
+            <div style="display: inline-block; background: rgba(255,255,255,0.12); border: 1px dashed #FFEE8C; padding: 8px 18px; border-radius: 10px; font-size: 13px; color: #FFEE8C; font-weight: 700; letter-spacing: 1px;">
+                CUPOM APLICADO NO LINK: ${couponCode}
+            </div>
+        </div>
+
+        <div style="background-color: #F8FAF7; border: 1px solid #E2EADF; border-radius: 16px; padding: 20px 22px; margin: 20px 0;">
+            ${whyNowHtml}
+        </div>
+
+        ${emailCtaBtn(ctaUrl, 'Reativar por R$ 99 (2 meses)')}
+
+        <p style="font-size: 12px !important; color: #718096 !important; text-align: center; margin-top: 8px !important;">
+            Condição válida até <strong>${deadlineLabel}</strong> exclusivamente para perfis inativos/expirados. Zero comissão por atendimento.
+        </p>
+    `;
+
+    await sendEmail(toEmail, subject, getBaseTemplate(title, content, {
+        tagText,
+        tagColor,
+        toEmail
+    }));
+};
+
+

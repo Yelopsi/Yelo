@@ -1,6 +1,7 @@
 const db = require('../models');
 const emailService = require('./emailService');
 const gamificationService = require('./gamificationService');
+const promoCouponService = require('./promoCouponService');
 
 class PaymentStateService {
     /**
@@ -653,6 +654,8 @@ class PaymentStateService {
         if (description.includes('CLINICAL')) planType = 'CLINICAL';
         if (description.includes('REFERENCE')) planType = 'REFERENCE';
 
+        let promoSyncPending = null;
+
         await db.sequelize.transaction(async (t) => {
             const lockedPsi = await db.Psychologist.findOne({
                 where: { id: psi.id },
@@ -666,6 +669,31 @@ class PaymentStateService {
                 return;
             }
 
+            // Detecta se esta fatura pertence a uma assinatura criada com o cupom promocional BLACK2X1 (2 meses por R$ 99)
+            let isPromo2x1 = description.includes('[BLACK2X1]');
+            if (!isPromo2x1 && payment.subscription && db.SystemLog) {
+                const pendingPromoLog = await db.SystemLog.findOne({
+                    where: {
+                        message: { [db.Sequelize.Op.like]: `[PROMO_SUB_PENDING] BLACK2X1 | sub:${payment.subscription}%` }
+                    },
+                    transaction: t
+                }).catch(() => null);
+                if (pendingPromoLog) isPromo2x1 = true;
+            }
+
+            let shouldGrantPromoBonus = false;
+            if (isPromo2x1) {
+                const alreadyConsumed = await db.SystemLog.findOne({
+                    where: {
+                        message: { [db.Sequelize.Op.like]: `[PROMO_CONSUMED] BLACK2X1 | psi:${lockedPsi.id}%` }
+                    },
+                    transaction: t
+                }).catch(() => null);
+                if (!alreadyConsumed) {
+                    shouldGrantPromoBonus = true;
+                }
+            }
+
             // Contagem idempotente e exata de pagamentos confirmados
             const confirmedPaymentsCount = await db.Payment.count({
                 where: {
@@ -677,22 +705,17 @@ class PaymentStateService {
             const currentPayments = Math.max(confirmedPaymentsCount, 1);
             
             // Cada fatura do Asaas corresponde a um ciclo de cobrança.
-            // O pagamento cobre até 1 mês após o dueDate (ou paymentDate se dueDate ausente).
+            // O pagamento padrão cobre 1 mês; com cupom BLACK2X1, cobre 2 meses (mínimo 60 dias).
             const payDueDateStr = payment.dueDate || payment.paymentDate || payment.clientPaymentDate;
             const payDueDate = payDueDateStr ? new Date(payDueDateStr + (String(payDueDateStr).includes('T') ? '' : 'T12:00:00Z')) : new Date();
             
-            let cycleExpiry = new Date(payDueDate.getTime());
-            const targetMonth = cycleExpiry.getMonth() + 1;
-            cycleExpiry.setMonth(targetMonth);
-            if (cycleExpiry.getMonth() !== targetMonth % 12) {
-                cycleExpiry.setDate(0); // Recua para o último dia do mês correto
-            }
-
-            // Garante no mínimo 30 dias a partir da data em que o pagamento foi EFETIVAMENTE realizado pelo cliente
-            // (evita usar Date.now() para que webhooks processados em atraso não distorçam o calendário)
+            const monthsToGrant = shouldGrantPromoBonus ? 2 : 1;
+            const minDaysToGrant = shouldGrantPromoBonus ? 60 : 30;
             const payEffectiveDateStr = payment.clientPaymentDate || payment.confirmedDate || payment.paymentDate || payDueDateStr;
             const payEffectiveDate = payEffectiveDateStr ? new Date(payEffectiveDateStr + (String(payEffectiveDateStr).includes('T') ? '' : 'T12:00:00Z')) : new Date();
-            const minExpiry = new Date(payEffectiveDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+            let cycleExpiry = promoCouponService.addMonthsWithMinDays(payDueDate, monthsToGrant, minDaysToGrant);
+            const minExpiry = new Date(payEffectiveDate.getTime() + minDaysToGrant * 24 * 60 * 60 * 1000);
             if (cycleExpiry < minExpiry) {
                 cycleExpiry = minExpiry;
             }
@@ -764,6 +787,12 @@ class PaymentStateService {
 
             const isNewSubscription = !lockedPsi.subscriptionId || (payment.subscription && lockedPsi.subscriptionId !== payment.subscription);
 
+            const wasExpiredOrReturning =
+                shouldGrantPromoBonus ||
+                lockedPsi.status === 'inactive' ||
+                lockedPsi.status === 'vencido' ||
+                Boolean(lockedPsi.firstPaidAt && lockedPsi.status !== 'active');
+
             const updatePayload = {
                 status: 'active',
                 planExpiresAt: novaValidade,
@@ -771,6 +800,12 @@ class PaymentStateService {
                 subscriptionId: payment.subscription,
                 subscription_payments_count: currentPayments
             };
+
+            if (wasExpiredOrReturning && !lockedPsi.reactivatedAt) {
+                updatePayload.reactivatedAt = new Date();
+            } else if (wasExpiredOrReturning && isNewSubscription) {
+                updatePayload.reactivatedAt = new Date();
+            }
 
             // Só reativa cancelAtPeriodEnd se for uma nova assinatura contratada
             // Se o psicólogo já havia agendado o cancelamento desta assinatura, seu cancelamento é estritamente preservado
@@ -809,6 +844,28 @@ class PaymentStateService {
                 }).catch(() => {});
             }
 
+            if (shouldGrantPromoBonus && db.SystemLog) {
+                await db.SystemLog.create({
+                    level: 'info',
+                    message: `[PROMO_CONSUMED] BLACK2X1 | psi:${lockedPsi.id} | sub:${payment.subscription || 'none'}`,
+                    meta: {
+                        coupon: 'BLACK2X1',
+                        psychologistId: lockedPsi.id,
+                        subscriptionId: payment.subscription || null,
+                        paymentId: payment.id,
+                        grantedUntil: novaValidade.toISOString()
+                    }
+                }, { transaction: t });
+
+                if (payment.subscription) {
+                    promoSyncPending = {
+                        subscriptionId: payment.subscription,
+                        nextDueDateStr: novaValidade.toISOString().split('T')[0],
+                        planType
+                    };
+                }
+            }
+
             if (db.SystemLog) {
                 await db.SystemLog.create({
                     level: 'info',
@@ -817,6 +874,45 @@ class PaymentStateService {
                 }, { transaction: t });
             }
         });
+
+        // Sincroniza próxima cobrança no Asaas para 60 dias (pula 1 ciclo mantendo renovação regular de R$ 99/mês)
+        if (promoSyncPending && promoSyncPending.subscriptionId) {
+            try {
+                const ASAAS_API_URL = PaymentStateService.getAsaasApiUrl();
+                const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+                if (ASAAS_API_KEY) {
+                    await fetch(`${ASAAS_API_URL}/subscriptions/${promoSyncPending.subscriptionId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                        body: JSON.stringify({
+                            nextDueDate: promoSyncPending.nextDueDateStr,
+                            description: `Assinatura Yelo - Plano ${promoSyncPending.planType}`,
+                            updatePendingPayments: false
+                        })
+                    });
+
+                    // Remove qualquer fatura PENDING intermediária gerada antes da data bônus de 2 meses
+                    const pendingRes = await fetch(`${ASAAS_API_URL}/subscriptions/${promoSyncPending.subscriptionId}/payments?status=PENDING`, {
+                        headers: { 'access_token': ASAAS_API_KEY }
+                    });
+                    if (pendingRes.ok) {
+                        const pendingData = await pendingRes.json().catch(() => ({ data: [] }));
+                        for (const p of (pendingData.data || [])) {
+                            if (p.dueDate && p.dueDate < promoSyncPending.nextDueDateStr) {
+                                await fetch(`${ASAAS_API_URL}/payments/${p.id}`, {
+                                    method: 'DELETE',
+                                    headers: { 'access_token': ASAAS_API_KEY }
+                                }).catch(() => {});
+                                await db.Payment.update({ status: 'CANCELED' }, { where: { id: p.id } }).catch(() => {});
+                            }
+                        }
+                    }
+                    console.log(`🎁 [PROMO BLACK2X1] Próximo vencimento da assinatura ${promoSyncPending.subscriptionId} ajustado para ${promoSyncPending.nextDueDateStr}.`);
+                }
+            } catch (promoErr) {
+                console.error(`⚠️ [PROMO BLACK2X1] Erro ao empurrar nextDueDate no Asaas (${promoSyncPending.subscriptionId}):`, promoErr.message);
+            }
+        }
 
         // Background / Gamification
         gamificationService.assignPioneerBadge(psi.id).catch(() => {});

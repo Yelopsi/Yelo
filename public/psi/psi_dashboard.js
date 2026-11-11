@@ -1284,6 +1284,9 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             const urlParams = new URLSearchParams(window.location.search);
             const intentPost = localStorage.getItem('yelo_intent_post');
+            if (urlParams.has('cupom') && urlParams.get('cupom').trim()) {
+                localStorage.setItem('yelo_promo_coupon', urlParams.get('cupom').trim().toUpperCase());
+            }
 
             if (urlParams.has('status')) {
                 loadPage('psi_assinatura.html');

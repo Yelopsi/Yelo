@@ -18,7 +18,8 @@ router.get('/mock-pix-qr', async (req, res) => {
     }
 });
 
-// Rota protegida: Cria assinatura no Asaas (Checkout Transparente)
+// Rota protegida: Valida cupom promocional (Black Friday, etc.) e cria assinatura no Asaas
+router.post('/validate-coupon', protect, paymentController.validateCoupon);
 router.post('/create-preference', protect, paymentController.createPreference);
 
 // Rotas protegidas para PIX e Atualização de Assinatura

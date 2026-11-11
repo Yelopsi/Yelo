@@ -54,6 +54,58 @@
         return false;
     }
 
+    async function validarCupomPromoModal(cupomRaw, planType = 'ESSENTIAL') {
+        const feedbackEl = document.getElementById('modal-cupom-feedback');
+        const cupomInput = document.getElementById('modal-cupom-input');
+        const cupomVal = String(cupomRaw || cupomInput?.value || '').trim().toUpperCase();
+        if (cupomInput && cupomVal) cupomInput.value = cupomVal;
+
+        if (!cupomVal) {
+            if (feedbackEl) {
+                feedbackEl.style.display = 'none';
+                feedbackEl.textContent = '';
+            }
+            return null;
+        }
+
+        try {
+            const res = await window.apiFetch(`${API_BASE_URL}/api/payments/validate-coupon`, {
+                method: 'POST',
+                body: JSON.stringify({ cupom: cupomVal, planType })
+            });
+            const data = await res.json();
+            if (res.ok && data.valid) {
+                localStorage.setItem('yelo_promo_coupon', data.code || cupomVal);
+                if (feedbackEl) {
+                    feedbackEl.style.display = 'block';
+                    feedbackEl.style.background = '#f0fdf4';
+                    feedbackEl.style.border = '1px solid #bbf7d0';
+                    feedbackEl.style.color = '#166534';
+                    feedbackEl.innerHTML = `✅ <strong>${data.title || 'Cupom aplicado!'}</strong><br>${data.subtitle || ''}`;
+                }
+                return data;
+            } else {
+                if (feedbackEl) {
+                    feedbackEl.style.display = 'block';
+                    feedbackEl.style.background = '#fef2f2';
+                    feedbackEl.style.border = '1px solid #fecaca';
+                    feedbackEl.style.color = '#b91c1c';
+                    feedbackEl.textContent = `❌ ${data.error || 'Cupom inválido ou não elegível.'}`;
+                }
+                return null;
+            }
+        } catch (err) {
+            if (feedbackEl) {
+                feedbackEl.style.display = 'block';
+                feedbackEl.style.background = '#fef2f2';
+                feedbackEl.style.border = '1px solid #fecaca';
+                feedbackEl.style.color = '#b91c1c';
+                feedbackEl.textContent = '❌ Erro ao validar cupom.';
+            }
+            return null;
+        }
+    }
+
     // --- INICIALIZAÇÃO DOS LISTENERS GLOBAIS DO MODAL DE PAGAMENTO ---
     document.addEventListener('DOMContentLoaded', () => {
         const btnCloseX = document.getElementById('btn-close-modal-x');
@@ -71,14 +123,15 @@
             btnAplicarModal.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const cupomVal = document.getElementById('modal-cupom-input')?.value;
-                if(!cupomVal || !currentPlanAttempt) return;
+                if (!cupomVal) return;
 
                 btnAplicarModal.textContent = "...";
+                btnAplicarModal.disabled = true;
                 try {
-                    await window.iniciarPagamento(currentPlanAttempt, { textContent: '', tagName: 'BUTTON' }, cupomVal);
-                } catch (err) {
+                    await validarCupomPromoModal(cupomVal, currentPlanAttempt || 'ESSENTIAL');
                 } finally {
                     btnAplicarModal.textContent = "Aplicar";
+                    btnAplicarModal.disabled = false;
                 }
             });
         }
@@ -258,7 +311,23 @@
         
         btnBackMethod.onclick = () => { form.style.display = 'none'; stepMethod.style.display = 'block'; if(msgDiv) msgDiv.classList.add('hidden'); };
         
-        if(cupomPreenchido) { const cupomInput = document.getElementById('modal-cupom-input'); if (cupomInput) cupomInput.value = cupomPreenchido; }
+        const cupomArea = document.getElementById('cupom-area');
+        if (cupomArea) {
+            cupomArea.style.display = window.isUpdatePaymentMethodMode ? 'none' : 'block';
+        }
+        const cupomInput = document.getElementById('modal-cupom-input');
+        const cupomFeedback = document.getElementById('modal-cupom-feedback');
+        if (cupomFeedback) {
+            cupomFeedback.style.display = 'none';
+            cupomFeedback.textContent = '';
+        }
+        const promoToLoad = window.isUpdatePaymentMethodMode
+            ? ''
+            : (cupomPreenchido || localStorage.getItem('yelo_promo_coupon') || '');
+        if (cupomInput) cupomInput.value = promoToLoad;
+        if (promoToLoad && !window.isUpdatePaymentMethodMode) {
+            validarCupomPromoModal(promoToLoad, planType || 'ESSENTIAL');
+        }
 
         if (psychologistData) {
             const elCpf = document.getElementById('card-holder-cpf'); const elCep = document.getElementById('card-holder-cep'); const elPhone = document.getElementById('card-holder-phone');
@@ -378,6 +447,7 @@
                             setTimeout(() => window.location.reload(), 1500);
                         };
                     } else {
+                        localStorage.removeItem('yelo_promo_coupon');
                         window.showToast(window.isUpdatePaymentMethodMode ? 'Forma de pagamento atualizada!' : 'Assinatura realizada com sucesso!', 'success');
                         modal.style.setProperty('display', 'none', 'important');
                         setTimeout(() => window.location.reload(), 1500); // Força um reload para garantir a busca dos dados atualizados
@@ -392,10 +462,60 @@
         };
     }
 
+    async function setupBlackFridayBanner() {
+        const bfBanner = document.getElementById('black-friday-banner');
+        const btnBf = document.getElementById('btn-bf-assinar-agora');
+        if (!bfBanner) return;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlCoupon = urlParams.get('cupom');
+        if (urlCoupon && urlCoupon.trim()) {
+            localStorage.setItem('yelo_promo_coupon', urlCoupon.trim().toUpperCase());
+        }
+
+        const savedCoupon = localStorage.getItem('yelo_promo_coupon');
+        if (!savedCoupon) {
+            bfBanner.style.display = 'none';
+            return;
+        }
+
+        try {
+            const res = await window.apiFetch(`${API_BASE_URL}/api/payments/validate-coupon`, {
+                method: 'POST',
+                body: JSON.stringify({ cupom: savedCoupon, planType: 'ESSENTIAL' })
+            });
+            const data = await res.json();
+            if (res.ok && data.valid && !data.isVip) {
+                bfBanner.style.display = 'flex';
+                const titleEl = document.getElementById('bf-banner-title');
+                const codeEl = document.getElementById('bf-banner-code');
+                if (titleEl && data.title) titleEl.textContent = data.title;
+                if (codeEl && data.code) codeEl.textContent = data.code;
+                if (btnBf) {
+                    btnBf.onclick = (e) => {
+                        e.preventDefault();
+                        if (window.iniciarPagamento) {
+                            window.iniciarPagamento('ESSENTIAL', btnBf, data.code);
+                        }
+                    };
+                }
+            } else {
+                bfBanner.style.display = 'none';
+                if (res.status === 400) {
+                    localStorage.removeItem('yelo_promo_coupon');
+                }
+            }
+        } catch (err) {
+            bfBanner.style.display = 'none';
+        }
+    }
+
     window.inicializarAssinatura = function() {
         const psychologistData = window.getPsychologistData();
         const cardResumo = document.getElementById('card-resumo-assinatura');
         const areaCancelamento = document.getElementById('area-cancelamento');
+
+        setupBlackFridayBanner();
         
         const temPlano = psychologistData && psychologistData.plano;
         const hasSubscription = psychologistData && (psychologistData.stripeSubscriptionId || psychologistData.subscriptionId);
