@@ -85,7 +85,35 @@ module.exports = {
                 return res.status(403).json({ error: "Você precisa preencher seu CPF no perfil para publicar no blog." });
             }
 
+            // Validação editorial: mínimo de 300 caracteres úteis no corpo do artigo
+            const plainContent = String(conteudo)
+                .replace(/<[^>]*>?/gm, ' ')
+                .replace(/&nbsp;/gi, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            if (plainContent.length < 300) {
+                if (req.file) try { await fs.unlink(req.file.path); } catch(e){}
+                return res.status(400).json({ error: "Escreva um artigo com pelo menos 300 caracteres de conteúdo para publicar no blog." });
+            }
+
             const userId = req.psychologist?.id || req.user?.id || req.userId;
+
+            // Ritmo editorial: 1 publicação por dia (fuso de Brasília) para evitar enxurrada no feed público do Blog
+            const isEditorialExempt = Boolean(req.psychologist?.isAdmin || req.user?.isAdmin || req.psychologist?.status === 'content_creator');
+            if (!isEditorialExempt) {
+                const startOfDayBRT = gamificationService.getStartOfDayBRT();
+                const postsToday = await Post.count({
+                    where: {
+                        psychologistId: userId,
+                        createdAt: { [db.Sequelize.Op.gte]: startOfDayBRT }
+                    }
+                });
+                if (postsToday >= 1) {
+                    if (req.file) try { await fs.unlink(req.file.path); } catch(e){}
+                    return res.status(429).json({ error: "Você já publicou seu artigo de hoje! Para manter o feed do Blog equilibrado para todos os colegas, é permitido publicar 1 artigo por dia." });
+                }
+            }
+
             let finalImageUrl = imagem_url;
 
             if (req.file) {
@@ -153,7 +181,7 @@ module.exports = {
                 console.error("Falha ao contatar seoService.generateSEO:", err.message);
             });
 
-            gamificationService.processAction(userId, 'blog_post').catch(err => console.error("Gamification hook error:", err));
+            gamificationService.processAction(userId, 'blog_post', { postId: novoPost.id }).catch(err => console.error("Gamification hook error:", err));
 
             return res.status(201).json(novoPost);
         } catch (error) {
@@ -252,7 +280,7 @@ module.exports = {
             // --- GAMIFICATION ROLLBACK ---
             let pointsDeducted = 0;
             try {
-                const rollbackResult = await gamificationService.rollbackAction(userId, 'blog_post');
+                const rollbackResult = await gamificationService.rollbackAction(userId, 'blog_post', id);
                 if (rollbackResult && rollbackResult.pointsDeducted) {
                     pointsDeducted = rollbackResult.pointsDeducted;
                 }

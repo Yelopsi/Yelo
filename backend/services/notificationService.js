@@ -47,20 +47,38 @@ const notifyNewPost = async (post, type) => {
         }
         
         if (db.Aviso) {
-            const novoAviso = await db.Aviso.create({
-                title: tituloAviso,
-                content: conteudoAviso,
-                author: 'Equipe Yelo',
-                status: 'published',
-                psychologistId: null // Aviso global
-            });
-            console.log(`[NotificationService] Aviso global criado com sucesso no dashboard.`);
+            let shouldCreateAviso = true;
+            if (type === 'blog' && authorId) {
+                const gamificationService = require('./gamificationService');
+                const startOfDayBRT = gamificationService.getStartOfDayBRT();
+                const alreadyNotifiedToday = await db.Aviso.count({
+                    where: {
+                        title: { [Op.like]: 'Novo Artigo no Blog:%' },
+                        createdAt: { [Op.gte]: startOfDayBRT },
+                        content: { [Op.like]: `%data-author-id="${authorId}"%` }
+                    }
+                }).catch(() => 0);
+                if (alreadyNotifiedToday > 0) {
+                    shouldCreateAviso = false;
+                }
+            }
 
-            // Marca previamente como lido para o autor
-            if (authorId && db.AvisoLido) {
-                await db.AvisoLido.findOrCreate({
-                    where: { avisoId: novoAviso.id, psychologistId: authorId }
-                }).catch(() => {});
+            if (shouldCreateAviso) {
+                const novoAviso = await db.Aviso.create({
+                    title: tituloAviso,
+                    content: conteudoAviso,
+                    author: 'Equipe Yelo',
+                    status: 'published',
+                    psychologistId: null // Aviso global
+                });
+                console.log(`[NotificationService] Aviso global criado com sucesso no dashboard.`);
+
+                // Marca previamente como lido para o autor
+                if (authorId && db.AvisoLido) {
+                    await db.AvisoLido.findOrCreate({
+                        where: { avisoId: novoAviso.id, psychologistId: authorId }
+                    }).catch(() => {});
+                }
             }
         }
 

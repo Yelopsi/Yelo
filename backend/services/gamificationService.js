@@ -7,12 +7,24 @@ const PIONEER_PLATFORM_LIMIT = 500;
 // --- Helper para saber quanto falta para o próximo nível ---
 const getNextLevelXP = (currentXP) => { const next = LEVELS.find(l => l.min > currentXP); return next ? next.min : currentXP; };
 
+// --- Helper para início do dia no fuso horário oficial de Brasília (America/Sao_Paulo) ---
+const getStartOfDayBRT = (referenceDate = new Date()) => {
+    const brtDateStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(referenceDate);
+    return new Date(`${brtDateStr}T00:00:00-03:00`);
+};
+
 // --- TABELA DE PONTUAÇÃO ---
 const SCORING_RULES = {
     'profile_complete': { points: 500, limit: 1, type: 'unique' }, // Único
     'forum_post':       { points: 25,  limit: 2, type: 'daily' }, // Criar post no fórum
     'blog_post':        { points: 50,  limit: 1, type: 'daily' }, // 1x por dia
     'forum_reply':      { points: 20,  limit: 5, type: 'daily' }, // 5x por dia
+    'qna_answer':       { points: 15,  limit: 5, type: 'daily' }, // Responder pergunta da comunidade (5x por dia)
     'whatsapp_click':   { points: 10,  limit: 0, type: 'unlimited' },
     'receive_like':     { points: 5,   limit: 0, type: 'unlimited' },
     'login':            { points: 1,   limit: 1, type: 'daily' }
@@ -159,14 +171,17 @@ async function calculateBadges(psychologistId) {
 
 /**
  * Processa uma ação de gamificação.
+ * @param {number} psychologistId O ID do psicólogo.
+ * @param {string} actionType O tipo de ação (ex: 'blog_post', 'forum_post', 'qna_answer').
+ * @param {Object|null} metadata Metadados opcionais para vínculo de origem (ex: { postId }).
  */
-async function processAction(psychologistId, actionType) {
+async function processAction(psychologistId, actionType, metadata = null) {
     try {
         const rule = SCORING_RULES[actionType];
         if (!rule) return null;
 
         const now = new Date();
-        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfDay = getStartOfDayBRT(now);
 
         if (rule.limit > 0) {
             const where = { psychologistId, actionType };
@@ -177,8 +192,13 @@ async function processAction(psychologistId, actionType) {
             if (count >= rule.limit) return null;
         }
 
-        await db.GamificationLog.create({ psychologistId, actionType, points: rule.points });
+        const logPayload = { psychologistId, actionType, points: rule.points };
+        if (metadata && typeof metadata === 'object') {
+            logPayload.metadata = metadata;
+        }
+        await db.GamificationLog.create(logPayload);
         const psi = await db.Psychologist.findByPk(psychologistId);
+        if (!psi) return null;
         const newXP = (psi.xp || 0) + rule.points;
 
         let newLevel = psi.authority_level;
@@ -214,26 +234,42 @@ async function checkProfileCompletion(psychologistId) {
  * Desfaz uma ação de gamificação (remove XP) e recalcula as badges.
  * @param {number} psychologistId O ID do psicólogo.
  * @param {string} actionType O tipo de ação (ex: 'blog_post', 'forum_post').
+ * @param {number|string|null} itemId ID do conteúdo excluído (para evitar remover XP de outro item que gerou pontos).
  */
-async function rollbackAction(psychologistId, actionType) {
+async function rollbackAction(psychologistId, actionType, itemId = null) {
     try {
         const rule = SCORING_RULES[actionType];
         if (!rule) return null;
 
-        // Busca o último ganho de XP dessa ação para cancelar (evita XP negativo se já tinha estourado o limite)
-        const lastLog = await db.GamificationLog.findOne({
-            where: { psychologistId, actionType },
-            order: [['createdAt', 'DESC']]
-        });
+        let logToDestroy = null;
+        if (itemId !== null && itemId !== undefined) {
+            const recentLogs = await db.GamificationLog.findAll({
+                where: { psychologistId, actionType },
+                order: [['createdAt', 'DESC']],
+                limit: 50
+            });
+            logToDestroy = recentLogs.find(
+                (l) => l.metadata && (String(l.metadata.postId || '') === String(itemId) || String(l.metadata.itemId || '') === String(itemId))
+            ) || null;
+            if (!logToDestroy) {
+                // Fallback seguro apenas para logs legados sem metadata vinculada a outro item
+                logToDestroy = recentLogs.find((l) => !l.metadata || (!l.metadata.postId && !l.metadata.itemId)) || null;
+            }
+        } else {
+            logToDestroy = await db.GamificationLog.findOne({
+                where: { psychologistId, actionType },
+                order: [['createdAt', 'DESC']]
+            });
+        }
 
         const psi = await db.Psychologist.findByPk(psychologistId);
         if (!psi) return null;
 
         let pointsDeducted = 0;
 
-        if (lastLog) {
-            await lastLog.destroy();
-            pointsDeducted = rule.points;
+        if (logToDestroy) {
+            pointsDeducted = logToDestroy.points || rule.points;
+            await logToDestroy.destroy();
             
             const newXP = Math.max(0, (psi.xp || 0) - pointsDeducted);
             
@@ -264,6 +300,7 @@ module.exports = {
     rollbackAction,
     calculateBadges,
     checkProfileCompletion,
+    getStartOfDayBRT,
     SCORING_RULES, // Exportados para uso externo (ex: Admin Panel)
     LEVELS,
     BADGE_THRESHOLDS

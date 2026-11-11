@@ -353,11 +353,20 @@
                 return;
             }
 
+            const id = document.getElementById('blog-id').value;
+            const rawHtml = quill ? quill.root.innerHTML : '';
+            const plainText = (quill ? quill.getText() : rawHtml.replace(/<[^>]*>?/gm, ' ')).replace(/\s+/g, ' ').trim();
+            if (!id && plainText.length < 300) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast(`Escreva pelo menos 300 caracteres para publicar um artigo completo (atual: ${plainText.length}).`, 'error');
+                }
+                return;
+            }
+
             const btn = document.getElementById('btn-salvar-artigo');
             const originalText = btn.innerHTML;
             btn.innerHTML = "⏳ Salvando..."; btn.disabled = true;
             try {
-                const id = document.getElementById('blog-id').value;
                 const method = id ? 'PUT' : 'POST';
                 const url = id ? `${API_BASE_URL}/api/psychologists/me/posts/${id}` : `${API_BASE_URL}/api/psychologists/me/posts`;
                 
