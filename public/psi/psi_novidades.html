@@ -37,24 +37,19 @@
     </div>
 
     <!-- BARRA DE FILTROS E BUSCA -->
-    <div class="novidades-filter-bar" style="background: #fff; border-radius: 16px; padding: 16px 20px; border: 1px solid #e5e7eb; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+    <div class="novidades-filter-bar">
         
-        <!-- Categorias Dinâmicas Desktop (Pílulas) -->
-        <div class="novidades-cat-pills" id="novidades-cat-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="novidade-pill active" data-cat="all">Todas <span class="pill-count" id="count-all">...</span></button>
-        </div>
-
-        <!-- Menu Suspenso Mobile (Pílula com Menu Nativo do Sistema) -->
+        <!-- Filtro de Categoria (Dropdown nativo padrão do dispositivo) -->
         <div class="novidades-cat-select-wrap">
-            <select id="novidades-cat-select" class="novidades-cat-select-pill" aria-label="Filtrar por categoria">
+            <select id="novidades-cat-select" class="novidades-cat-select-native" aria-label="Filtrar por categoria">
                 <option value="all">Todas as Categorias</option>
             </select>
         </div>
 
         <!-- Busca Rápida -->
-        <div class="novidades-search-wrap" style="position: relative; min-width: 220px; flex-grow: 1; max-width: 320px;">
+        <div class="novidades-search-wrap">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="novidades-search-input" placeholder="Buscar melhoria..." style="width: 100%; box-sizing: border-box; padding: 9px 14px 9px 36px; border-radius: 50px; border: 1px solid #d1d5db; font-size: 0.88rem; outline: none; transition: border-color 0.2s;">
+            <input type="text" id="novidades-search-input" placeholder="Buscar melhoria...">
         </div>
     </div>
 
@@ -67,13 +62,16 @@
         </div>
     </div>
 
+    <!-- PAGINAÇÃO DAS EDIÇÕES -->
+    <div id="novidades-pagination" class="novidades-pagination" style="display: none;"></div>
+
     <!-- ESTADO VAZIO -->
     <div id="novidades-empty" style="display: none; text-align: center; padding: 60px 20px; background: #fff; border-radius: 16px; border: 1.5px dashed #d1d5db; margin-top: 10px;">
         <span style="font-size: 2.8rem; display: block; margin-bottom: 10px;">🌿</span>
-        <h3 style="color: #1B4332; font-family: var(--font-titulos); margin: 0 0 6px;">Nenhuma melhoria encontrada nesta categoria</h3>
-        <p style="color: #6b7280; font-size: 0.92rem; margin: 0 auto 18px; max-width: 420px;">Selecione "Todas" para visualizar a lista completa de melhorias e novos recursos da Yelo.</p>
-        <button onclick="document.querySelector('.novidade-pill[data-cat=\'all\']').click()" style="background: #1B4332; color: #FFEE8C; font-weight: 700; border: none; padding: 10px 22px; border-radius: 50px; cursor: pointer; font-size: 0.88rem;">
-            Ver Todas as Melhorias
+        <h3 style="color: #1B4332; font-family: var(--font-titulos); margin: 0 0 6px;">Nenhuma melhoria encontrada</h3>
+        <p style="color: #6b7280; font-size: 0.92rem; margin: 0 auto 18px; max-width: 420px;">Selecione "Todas as Categorias" ou limpe a busca para visualizar as melhorias da Yelo.</p>
+        <button type="button" id="btn-novidades-reset" style="background: #1B4332; color: #FFEE8C; font-weight: 700; border: none; padding: 10px 22px; border-radius: 50px; cursor: pointer; font-size: 0.88rem;">
+            Ver Últimas Melhorias
         </button>
     </div>
 
@@ -334,35 +332,127 @@
         margin: 0;
     }
 
-    .novidades-cat-select-wrap {
-        display: none;
-        position: relative;
-        width: 100%;
+    .novidades-filter-bar {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 16px 20px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
     }
-    .novidades-cat-select-pill {
+
+    .novidades-cat-select-wrap {
+        display: block;
+        flex: 1 1 220px;
+        max-width: 340px;
+    }
+
+    .novidades-cat-select-native {
         width: 100%;
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        background-color: #F8FAFC;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231B4332' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 16px center;
-        border: 1.5px solid #1B4332;
-        border-radius: 50px;
-        padding: 10px 42px 10px 18px;
+        height: 40px;
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background-color: #ffffff;
+        color: #1f2937;
         font-family: inherit;
         font-size: 0.9rem;
-        font-weight: 600;
-        color: #1B4332;
-        box-shadow: 0 2px 6px rgba(27,67,50,0.08);
-        outline: none;
+        font-weight: 500;
         cursor: pointer;
         box-sizing: border-box;
     }
-    .novidades-cat-select-pill:focus {
-        border-color: var(--verde-escuro);
-        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.15);
+
+    .novidades-cat-select-native:focus {
+        outline: none;
+        border-color: #1B4332;
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.12);
+    }
+
+    .novidades-search-wrap {
+        position: relative;
+        flex: 1 1 220px;
+        max-width: 340px;
+    }
+
+    .novidades-search-wrap input {
+        width: 100%;
+        height: 40px;
+        box-sizing: border-box;
+        padding: 8px 14px 8px 36px;
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .novidades-search-wrap input:focus {
+        border-color: #1B4332;
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.12);
+    }
+
+    /* Paginação */
+    .novidades-pagination {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+        margin-bottom: 12px;
+    }
+    .novidades-page-info {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #64748b;
+        text-align: center;
+    }
+    .novidades-page-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .novidades-page-btn,
+    .novidades-page-num {
+        height: 36px;
+        min-width: 36px;
+        padding: 0 12px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #1B4332;
+        font-size: 0.84rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.18s ease;
+    }
+    .novidades-page-btn:hover:not(:disabled),
+    .novidades-page-num:hover:not(.active) {
+        border-color: #1B4332;
+        background: #f0fdf4;
+    }
+    .novidades-page-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+    .novidades-page-num.active {
+        background: #1B4332;
+        color: #FFEE8C;
+        border-color: #1B4332;
+    }
+    .novidades-page-ellipsis {
+        color: #94a3b8;
+        font-weight: 700;
+        padding: 0 4px;
     }
 
     @media (max-width: 768px) {
@@ -373,18 +463,17 @@
             padding: 12px 14px !important;
             flex-direction: column !important;
             align-items: stretch !important;
-            gap: 12px !important;
-        }
-        .novidades-cat-pills {
-            display: none !important;
+            gap: 10px !important;
         }
         .novidades-cat-select-wrap {
-            display: block !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            flex: none !important;
         }
         .novidades-search-wrap {
             max-width: 100% !important;
             width: 100% !important;
-            min-width: 100% !important;
+            flex: none !important;
         }
         .novidades-timeline {
             --timeline-indent: 26px;
@@ -436,6 +525,7 @@
     let allUpdates = [];
     let activeCategory = 'all';
     let searchQuery = '';
+    let currentPage = 1;
 
     function normalizeStr(str) {
         return (str || '')
@@ -531,10 +621,9 @@
             });
     }
 
-    function renderCategoryPills() {
-        const pillGroup = document.getElementById('novidades-cat-group');
-        const selectMobile = document.getElementById('novidades-cat-select');
-        if (!pillGroup) return;
+    function renderCategoryDropdown() {
+        const selectEl = document.getElementById('novidades-cat-select');
+        if (!selectEl) return;
 
         const categoriesMap = new Map();
         allUpdates.forEach(u => {
@@ -549,51 +638,86 @@
             'Novidades da Plataforma': '🌟'
         };
 
-        let html = `
-            <button class="novidade-pill ${activeCategory === 'all' ? 'active' : ''}" data-cat="all">
-                Todas <span class="pill-count">${allUpdates.length}</span>
-            </button>
-        `;
-
         let selectHtml = `
             <option value="all" ${activeCategory === 'all' ? 'selected' : ''}>Todas as Categorias (${allUpdates.length})</option>
         `;
 
         categoriesMap.forEach((count, cat) => {
             const icon = catIcons[cat] || '✨';
-            const isActive = activeCategory === cat ? 'active' : '';
-            html += `
-                <button class="novidade-pill ${isActive}" data-cat="${cat}">
-                    ${icon} ${cat} <span class="pill-count">${count}</span>
-                </button>
-            `;
             selectHtml += `
                 <option value="${cat}" ${activeCategory === cat ? 'selected' : ''}>${icon} ${cat} (${count})</option>
             `;
         });
 
-        pillGroup.innerHTML = html;
-        if (selectMobile) selectMobile.innerHTML = selectHtml;
+        selectEl.innerHTML = selectHtml;
+        selectEl.onchange = (e) => {
+            activeCategory = e.target.value || 'all';
+            currentPage = 1;
+            renderUpdates();
+        };
+    }
 
-        pillGroup.querySelectorAll('.novidade-pill').forEach(btn => {
-            btn.onclick = () => {
-                pillGroup.querySelectorAll('.novidade-pill').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                activeCategory = btn.getAttribute('data-cat');
-                if (selectMobile) selectMobile.value = activeCategory;
-                renderUpdates();
-            };
+    function scrollToNovidadesTop() {
+        const anchor = document.querySelector('.novidades-filter-bar') || document.querySelector('.novidades-page-container');
+        if (anchor && typeof anchor.scrollIntoView === 'function') {
+            anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function buildPageItems(totalPages, current) {
+        if (totalPages <= 5) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+        const pages = [1];
+        if (current > 3) pages.push('...');
+        const start = Math.max(2, current - 1);
+        const end = Math.min(totalPages - 1, current + 1);
+        for (let i = start; i <= end; i++) pages.push(i);
+        if (current < totalPages - 2) pages.push('...');
+        pages.push(totalPages);
+        return pages;
+    }
+
+    function renderPagination(totalPages, currentEdition) {
+        const pagEl = document.getElementById('novidades-pagination');
+        if (!pagEl) return;
+
+        if (totalPages <= 1) {
+            pagEl.style.display = 'none';
+            pagEl.innerHTML = '';
+            return;
+        }
+
+        pagEl.style.display = 'flex';
+        const dateLabel = currentEdition ? (currentEdition.formattedDate || formatDateFriendly(currentEdition.date)) : '';
+        const badgeLabel = currentPage === 1 ? 'Mais recente' : `Edição anterior`;
+        const pageItems = buildPageItems(totalPages, currentPage);
+
+        let html = `<div class="novidades-page-info">Edição ${currentPage} de ${totalPages} • ${badgeLabel}${dateLabel ? ` (${dateLabel})` : ''}</div>`;
+        html += `<div class="novidades-page-controls">`;
+        html += `<button type="button" class="novidades-page-btn" data-page="${currentPage - 1}" ${currentPage <= 1 ? 'disabled' : ''}>← Mais recente</button>`;
+
+        pageItems.forEach(item => {
+            if (item === '...') {
+                html += `<span class="novidades-page-ellipsis">…</span>`;
+            } else {
+                html += `<button type="button" class="novidades-page-num ${item === currentPage ? 'active' : ''}" data-page="${item}">${item}</button>`;
+            }
         });
 
-        if (selectMobile) {
-            selectMobile.onchange = (e) => {
-                activeCategory = e.target.value;
-                pillGroup.querySelectorAll('.novidade-pill').forEach(b => {
-                    b.classList.toggle('active', b.getAttribute('data-cat') === activeCategory);
-                });
+        html += `<button type="button" class="novidades-page-btn" data-page="${currentPage + 1}" ${currentPage >= totalPages ? 'disabled' : ''}>Mais antiga →</button>`;
+        html += `</div>`;
+
+        pagEl.innerHTML = html;
+        pagEl.querySelectorAll('button[data-page]').forEach(btn => {
+            btn.onclick = () => {
+                const targetPage = Number(btn.getAttribute('data-page'));
+                if (!targetPage || targetPage === currentPage || targetPage < 1 || targetPage > totalPages) return;
+                currentPage = targetPage;
                 renderUpdates();
+                scrollToNovidadesTop();
             };
-        }
+        });
     }
 
     function renderUpdates() {
@@ -606,10 +730,8 @@
         // Remove cards anteriores
         container.querySelectorAll('.novidade-card').forEach(el => el.remove());
 
-        let visibleEditionsCount = 0;
-
-        allEditions.forEach((edition, edIdx) => {
-            // Filtra os itens desta sexta-feira de acordo com categoria e busca
+        const filteredEditions = [];
+        allEditions.forEach((edition) => {
             const matchingItems = (edition.items || []).filter(item => {
                 const matchCat = (activeCategory === 'all') || (item.category === activeCategory);
                 const textToSearch = normalizeStr(`${item.title || ''} ${item.summary || ''} ${item.category || ''} ${item.impactBadge || ''}`);
@@ -617,11 +739,28 @@
                 return matchCat && matchQuery;
             });
 
-            if (matchingItems.length === 0) {
-                return; // Se nenhum item atende aos filtros, oculta a edição
+            if (matchingItems.length > 0) {
+                filteredEditions.push({ edition, matchingItems });
             }
+        });
 
-            visibleEditionsCount++;
+        if (filteredEditions.length === 0) {
+            renderPagination(0, null);
+            if (emptyEl) emptyEl.style.display = 'block';
+            return;
+        }
+
+        if (emptyEl) emptyEl.style.display = 'none';
+
+        const totalPages = filteredEditions.length;
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        // Exibe sempre apenas 1 edição por vez (página 1 = mais recente) para manter a página enxuta
+        const { edition, matchingItems } = filteredEditions[currentPage - 1];
+        renderPagination(totalPages, edition);
+
+        [ { edition, matchingItems } ].forEach(({ edition, matchingItems }) => {
 
             // Card principal da Edição de Sexta-feira (UM POST SÓ)
             const card = document.createElement('div');
@@ -736,12 +875,6 @@
             card.appendChild(listContainer);
             container.appendChild(card);
         });
-
-        if (visibleEditionsCount === 0) {
-            if (emptyEl) emptyEl.style.display = 'block';
-        } else {
-            if (emptyEl) emptyEl.style.display = 'none';
-        }
     }
 
     async function fetchPlatformUpdates() {
@@ -760,8 +893,9 @@
             allEditions = (data.editions && data.editions.length > 0)
                 ? data.editions
                 : groupUpdatesIntoMondayEditions(allUpdates);
+            currentPage = 1;
 
-            renderCategoryPills();
+            renderCategoryDropdown();
             renderUpdates();
         } catch (e) {
             console.warn('Erro ao buscar novidades da plataforma:', e);
@@ -780,8 +914,22 @@
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(() => {
                     searchQuery = searchInput.value.trim();
+                    currentPage = 1;
                     renderUpdates();
                 }, 180);
+            };
+        }
+
+        const resetBtn = document.getElementById('btn-novidades-reset');
+        if (resetBtn) {
+            resetBtn.onclick = () => {
+                activeCategory = 'all';
+                searchQuery = '';
+                currentPage = 1;
+                const selectEl = document.getElementById('novidades-cat-select');
+                if (selectEl) selectEl.value = 'all';
+                if (searchInput) searchInput.value = '';
+                renderUpdates();
             };
         }
     }
