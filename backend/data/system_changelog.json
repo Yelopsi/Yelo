@@ -1,5 +1,29 @@
 [
   {
+    "id": "change-git-7b727297",
+    "date": "2026-11-12T02:35:56.000Z",
+    "commit": "7b727297",
+    "author": "Anderson",
+    "title": "Novo: Personalizar saudacao da moderacao por nome e genero registrado (forum-mediator)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "personalizar saudacao da moderacao por nome e genero registrado",
+    "description": "Commit registrado no repositório: \"feat(forum-mediator): personalizar saudacao da moderacao por nome e genero registrado\". Arquivos modificados: backend/services/forumMediatorService.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #7b727297"
+    },
+    "after": {
+      "nova_versao": "personalizar saudacao da moderacao por nome e genero registrado"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/services/forumMediatorService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-236c2e8b",
     "date": "2026-11-12T02:29:56.000Z",
     "commit": "236c2e8b",
