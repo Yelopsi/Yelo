@@ -231,7 +231,14 @@ export default function AdminAnalyticsFunilScreen() {
       csv += `4. Perfis Visualizados;${funnelData.profileViews || 0}\n`;
       csv += `5. Pacientes Conquistados (Unicos);${funnelData.whatsappUnique || 0}\n`;
       csv += `Leads Distribuidos (Total Cliques);${funnelData.whatsappClicks || 0}\n`;
-      csv += `Desqualificados (Menores/Regras);${funnelData.desqualificados || 0}\n\n`;
+      csv += `Desqualificados (Menores/Regras);${funnelData.desqualificados || 0}\n`;
+      csv += `Questionarios Concluidos por Psicologos (Excluidos de Pacientes);${funnelData.psicologosCompletaram || 0}\n`;
+      csv += `Questionarios Iniciados por Psicologos (Excluidos de Pacientes);${funnelData.psicologosIniciaram || 0}\n`;
+      const descCsv = funnelData.descartadosProfissionais || {};
+      if (descCsv.totalEventos) {
+        csv += `Total Eventos Descartados (Pros);${descCsv.totalEventos.total || 0} (Logados: ${descCsv.totalEventos.logados || 0} | Nao Logados: ${descCsv.totalEventos.naoLogados || 0})\n`;
+      }
+      csv += `\n`;
 
       if (funnelData.abandonos && funnelData.abandonos.length > 0) {
         csv += `--- ONDE ELES DESISTEM (ABANDONOS) ---\n`;
@@ -332,6 +339,23 @@ export default function AdminAnalyticsFunilScreen() {
   const whatsappClicks = Number(funnelData?.whatsappClicks || 0);
   const desqualificados = Number(funnelData?.desqualificados || 0);
   const prevDesqualificados = Number(funnelData?.prevDesqualificados || 0);
+  const descMap = funnelData?.descartadosProfissionais || {};
+  const stageDiscarded = (key: string) => {
+    const raw = descMap[key] || {};
+    const logados = Number(raw.logados || 0);
+    const naoLogados = Number(raw.naoLogados || 0);
+    const total = Number(raw.total ?? logados + naoLogados);
+    const prevTotal = Number(raw.prevTotal || 0);
+    return { total, logados, naoLogados, prevTotal };
+  };
+  const totalDesc = stageDiscarded('totalEventos');
+  const discardedStageRows = [
+    { key: 'visitas', label: '1. Acessaram o Site', valid: visitas },
+    { key: 'iniciaram', label: '2. Iniciaram Questionário', valid: iniciaram },
+    { key: 'completaram', label: '3. Resultados', valid: completaram },
+    { key: 'profileViews', label: '4. Perfis Visualizados', valid: profileViews },
+    { key: 'whatsapp', label: '5. Cliques no WhatsApp', valid: whatsappClicks },
+  ];
 
   const taxaInicio = visitas > 0 ? ((iniciaram / visitas) * 100).toFixed(1) : '0';
   const taxaCompletaram = iniciaram > 0 ? ((completaram / iniciaram) * 100).toFixed(1) : '0';
@@ -769,6 +793,74 @@ export default function AdminAnalyticsFunilScreen() {
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#ef4444' }}>{formatNumber(desqualificados)}</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#94a3b8', marginTop: 2 }}>Menores de idade</Text>
               </View>
+
+              {/* Descartados por Profissionais */}
+              <View style={{ width: '100%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#6366f1', padding: 12 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Descartados (Pros)</Text>
+                  {renderTrendBadge(totalDesc.total, totalDesc.prevTotal, false)}
+                </View>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#6366f1' }}>{formatNumber(totalDesc.total)}</Text>
+                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                  {formatNumber(totalDesc.logados)} logados | {formatNumber(totalDesc.naoLogados)} não logados — excluídos do funil
+                </Text>
+              </View>
+            </View>
+
+            {/* BREAKDOWN POR ETAPA DE EVENTOS DESCARTADOS POR PROFISSIONAIS */}
+            <View
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                borderLeftWidth: 4,
+                borderLeftColor: '#6366f1',
+                padding: 16,
+                marginBottom: 16,
+              }}
+            >
+              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 15, color: '#1e293b', marginBottom: 2 }}>
+                🛡️ Indicadores Descartados (Logados vs. Não Logados)
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginBottom: 12 }}>
+                Eventos separados dos pacientes reais em cada etapa do funil.
+              </Text>
+
+              <View style={{ gap: 8 }}>
+                {discardedStageRows.map((row) => {
+                  const st = stageDiscarded(row.key);
+                  const gross = row.valid + st.total;
+                  const pctGross = gross > 0 ? ((st.total / gross) * 100).toFixed(1) : '0.0';
+                  return (
+                    <View
+                      key={row.key}
+                      style={{
+                        backgroundColor: '#f8fafc',
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: '#e2e8f0',
+                        padding: 10,
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#1e293b' }}>{row.label}</Text>
+                        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#4338ca' }}>
+                          {formatNumber(st.total)} ({pctGross}% bruto)
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10.5, color: '#64748b' }}>
+                          Pacientes: {formatNumber(row.valid)}
+                        </Text>
+                        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10.5, color: '#15803d' }}>
+                          Logados: {formatNumber(st.logados)} · Não log.: <Text style={{ color: '#c2410c' }}>{formatNumber(st.naoLogados)}</Text>
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
             </View>
 
             {/* FUNIL VISUAL END-TO-END */}
@@ -791,15 +883,16 @@ export default function AdminAnalyticsFunilScreen() {
 
               <View style={{ gap: 10 }}>
                 {[
-                  { icon: '👁️', bg: '#e0f2fe', color: '#0284c7', label: '1. Acessaram o Site', val: visitas, prevVal: prevVisitas, parent: visitas, desc: 'Visualizações no Período' },
-                  { icon: '🚀', bg: '#e8f5e9', color: '#1B4332', label: '2. Iniciaram Questionário', val: iniciaram, prevVal: prevIniciaram, parent: visitas, desc: 'Clicaram em Começar' },
-                  { icon: '📋', bg: '#fef3c7', color: '#d97706', label: '3. Finalizaram Matches', val: completaram, prevVal: prevCompletaram, parent: iniciaram, desc: 'Chegaram aos Resultados' },
-                  { icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Visualizações de Perfis', val: profileViews, prevVal: prevProfileViews, parent: completaram, desc: 'Acessos detalhados' },
-                  { icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp', val: whatsappUnique, prevVal: prevWhatsappUnique, parent: profileViews, desc: `${whatsappClicks} cliques totais` },
+                  { discKey: 'visitas', icon: '👁️', bg: '#e0f2fe', color: '#0284c7', label: '1. Acessaram o Site', val: visitas, prevVal: prevVisitas, parent: visitas, desc: 'Visualizações no Período' },
+                  { discKey: 'iniciaram', icon: '🚀', bg: '#e8f5e9', color: '#1B4332', label: '2. Iniciaram Questionário', val: iniciaram, prevVal: prevIniciaram, parent: visitas, desc: 'Clicaram em Começar' },
+                  { discKey: 'completaram', icon: '📋', bg: '#fef3c7', color: '#d97706', label: '3. Finalizaram Matches', val: completaram, prevVal: prevCompletaram, parent: iniciaram, desc: 'Chegaram aos Resultados' },
+                  { discKey: 'profileViews', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Visualizações de Perfis', val: profileViews, prevVal: prevProfileViews, parent: completaram, desc: 'Acessos detalhados' },
+                  { discKey: 'whatsapp', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp', val: whatsappUnique, prevVal: prevWhatsappUnique, parent: profileViews, desc: `${whatsappClicks} cliques totais` },
                 ].map((step, idx) => {
                   const rate = step.parent > 0 ? ((step.val / step.parent) * 100).toFixed(1) : '0';
                   const maxVal = visitas > 0 ? visitas : 1;
                   const fillPct = Math.min(100, Math.max(5, (step.val / maxVal) * 100));
+                  const stDisc = stageDiscarded(step.discKey);
 
                   return (
                     <View
@@ -833,7 +926,10 @@ export default function AdminAnalyticsFunilScreen() {
                           </View>
                           <View style={{ flex: 1 }}>
                             <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#1e293b' }}>{step.label}</Text>
-                            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b' }}>{step.desc}</Text>
+                            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b' }}>
+                              {step.desc}
+                              {stDisc.total > 0 ? ` · 🛡️ ${formatNumber(stDisc.total)} desc. (${formatNumber(stDisc.logados)} log. / ${formatNumber(stDisc.naoLogados)} não log.)` : ''}
+                            </Text>
                           </View>
                         </View>
 
