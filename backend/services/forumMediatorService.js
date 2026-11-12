@@ -148,7 +148,8 @@ async function analyzePostWithAI(post, contextPosts = [], options = {}) {
 
     const candidateMap = new Map();
     const hubsLines = [];
-    const activeLines = [];
+    const sameCategoryLines = [];
+    const otherCategoryLines = [];
 
     for (const c of contextPosts) {
         if (!c || c.id === post.id) continue;
@@ -156,10 +157,14 @@ async function analyzePostWithAI(post, contextPosts = [], options = {}) {
             continue;
         }
         candidateMap.set(Number(c.id), c);
-        const line = `[ID: ${c.id}]${c.isPinned ? ' [FIXADO/OFICIAL]' : ''} | Comentários: ${Number(c.commentCount || 0)} | Categoria: "${c.category}" | Título: "${c.title}" | Resumo: "${stripHtmlAndCompact(c.content, 110)}"`;
+        const snippetLen = 90;
+        const line = `[ID: ${c.id}]${c.isPinned ? ' [FIXADO/OFICIAL]' : ''}${c.hasIncomingRedirects ? ' [HUB]' : ''} | Comentários: ${Number(c.commentCount || 0)} | Categoria: "${c.category}" | Título: "${c.title}" | Resumo: "${stripHtmlAndCompact(c.content, snippetLen)}"`;
         if (c.isPinned) hubsLines.push(line);
-        else activeLines.push(line);
+        else if (c.category === post.category) sameCategoryLines.push(line);
+        else otherCategoryLines.push(line);
     }
+
+    const activeLines = [...sameCategoryLines, ...otherCategoryLines];
 
     if (options.virtualPresentationHub && options.virtualPresentationHub.id && !candidateMap.has(Number(options.virtualPresentationHub.id))) {
         const vh = options.virtualPresentationHub;
@@ -185,13 +190,13 @@ ${FORUM_CATEGORIES.map((c, idx) => `${idx + 1}. ${c}`).join('\n')}
 TÓPICOS OFICIAIS FIXADOS / HUBS:
 ${hubsLines.length > 0 ? hubsLines.join('\n') : '(Nenhum tópico oficial fixado além da lista geral abaixo)'}${virtualIntroHubNote}
 
-OUTRAS DISCUSSÕES ATIVAS RECENTES:
-${activeLines.slice(0, 35).join('\n') || '(Nenhuma outra discussão ativa)'}
+OUTRAS DISCUSSÕES ATIVAS NO FÓRUM (TODAS AS ATIVAS CONSIDERADAS):
+${activeLines.slice(0, 150).join('\n') || '(Nenhuma outra discussão ativa)'}
 
 REGRAS DE MEDIAÇÃO (SIGA ESTRITAMENTE):
 1. "APPROVE": O post pertence ao fórum, trata de 1 tema coerente, está na categoria certa e não duplica tópico oficial/ativo relevante. Discussões reflexivas ou casos em "Sala de Café" que sejam claramente desabafos pessoais sem pergunta clínica também podem ficar em "Sala de Café" se fizer sentido.
-2. "REDIRECT_DUPLICATE": Use SOMENTE quando o objetivo principal do post for uma apresentação pessoal/boas-vindas solta (em vez de usar o tópico oficial de apresentações) OU quando for pergunta/debate repetido idêntico a outro tópico aberto listado acima. Se o autor disser apenas "sou nova por aqui" em uma frase e passar a uma pergunta específica (ex.: captação de pacientes), avalie pelo assunto principal (ou use MULTI_TOPIC_SPLIT se estiver misturando dois assuntos grandes). Informe "targetPostId" com o ID exato da lista acima e escreva um comentário cordial citando o título do tópico principal.
-3. "MOVE_CATEGORY": O tema pertence ao fórum e é único, mas foi postado na categoria errada (ex.: relato de caso clínico em "Sala de Café", dúvida de CRP/documentos em "Sala de Café", dúvida de captação em "Indicações", ferramenta/prontuário em "Sala de Café"). Escolha "targetCategory" dentre as 6 categorias oficiais e escreva um comentário simpático avisando que movemos o tópico para a categoria correta para alcançar os colegas certos.
+2. "REDIRECT_DUPLICATE": VERIFIQUE ESTA REGRA ANTES DE MOVE_CATEGORY. Use quando o objetivo principal do post for uma apresentação pessoal/boas-vindas solta (em vez de usar o tópico oficial de apresentações) OU quando fizer a MESMA dúvida/debate prático de outro tópico aberto listado acima, mesmo com título diferente ou em categoria diferente (ex.: "Em quanto tempo aparece o primeiro paciente na Yelo?" vs "Nos 7 dias grátis já aparecem pacientes?"; "Indicação de psiquiatra" vs "Psiquiatria"; "Instagram / Redes sociais" vs "Produção de conteúdo para redes sociais"). Se já houver tópico marcado com [HUB] sobre o mesmo assunto, redirecione preferencialmente para ele. Se o autor disser apenas "sou nova por aqui" em uma frase e passar a uma pergunta específica (ex.: captação de pacientes), avalie pelo assunto principal — e unifique se essa pergunta já existir acima! Informe "targetPostId" com o ID exato da lista acima e escreva um comentário cordial citando o título do tópico principal.
+3. "MOVE_CATEGORY": Use somente se o tema for único, NÃO duplicar tópico equivalente listado acima e tiver sido postado na categoria errada (ex.: relato de caso clínico em "Sala de Café", dúvida de CRP/documentos em "Sala de Café", dúvida de captação em "Indicações", ferramenta/prontuário em "Sala de Café"). Escolha "targetCategory" dentre as 6 categorias oficiais e escreva um comentário simpático avisando que movemos o tópico para a categoria correta para alcançar os colegas certos.
 4. "MULTI_TOPIC_SPLIT": O texto mistura 2 ou mais assuntos independentes que merecem threads diferentes (ex.: apresentação pessoal detalhada + dúvida jurídica de CRP + pergunta de precificação no mesmo texto). Escreva um comentário acolhedor listando cada assunto separado, sugerindo criar um tópico específico para cada tema (e usar o tópico oficial se um dos temas for apresentação), e avisando gentilmente que este post foi encerrado para manter os debates organizados.
 5. "CLOSE_OFF_SCOPE": O post NÃO pertence ao fórum aberto da comunidade (ex.: suporte técnico individual de conta/pagamento que deve ir na Central de Ajuda/Suporte, manifestação político-partidária fora do escopo da psicologia, propaganda comercial externa, ou mensagem vazia/teste). Escreva um comentário respeitoso direcionando para o canal correto e informando o encerramento deste tópico.
 
@@ -243,10 +248,10 @@ Responda ESTRITAMENTE em JSON puro (sem markdown):
                 reasonSummary: 'Post já atua como tópico principal de redirecionamentos existentes; mantido ativo.'
             };
         }
-        // Quando há duplicata, preserva o tópico com mais comentários humanos ativo (evitando fechar debate respondido)
+        // Quando há duplicata, preserva o tópico com mais comentários humanos ativo (a menos que o destino já seja fixado ou hub com redirecionamentos)
         if (decision.action === 'REDIRECT_DUPLICATE') {
             const targetCandidate = candidateMap.get(Number(decision.targetPostId));
-            if (targetCandidate && !targetCandidate.isPinned && Number(post.commentCount || 0) > Number(targetCandidate.commentCount || 0)) {
+            if (targetCandidate && !targetCandidate.isPinned && !targetCandidate.hasIncomingRedirects && Number(post.commentCount || 0) > Number(targetCandidate.commentCount || 0)) {
                 return {
                     ...decision,
                     action: 'APPROVE',
@@ -480,7 +485,7 @@ async function runMediatorBatch(options = {}) {
     let targets = formattedPool.filter(p => !p.isPinned && !protectedAuthorIds.has(Number(p.PsychologistId)));
     if (singlePostId) {
         targets = targets.filter(p => p.id === singlePostId);
-    } else {
+    } else if (!options.recheck) {
         targets = targets.filter(p => !reviewedIds.has(p.id));
     }
     targets = targets.slice(0, limit);

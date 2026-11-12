@@ -1334,9 +1334,11 @@
                 if (redirectBtnFull) {
                     if (post.isMine || isUserAdmin) {
                         redirectBtnFull.classList.remove('hidden');
+                        redirectBtnFull.style.setProperty('display', 'inline-flex', 'important');
                         redirectBtnFull.onclick = () => openRedirectModal(post);
                     } else {
                         redirectBtnFull.classList.add('hidden');
+                        redirectBtnFull.style.setProperty('display', 'none', 'important');
                     }
                 }
 

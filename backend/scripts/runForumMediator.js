@@ -61,6 +61,7 @@ async function run() {
             limit,
             postId,
             includeBackfill: Boolean(args.backfill),
+            recheck: Boolean(args.recheck),
             virtualPresentationHub
         });
 
