@@ -797,6 +797,29 @@
     flex-wrap: wrap; 
 }
 
+.post-card-status-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.post-card-status-badges.hidden {
+    display: none !important;
+}
+
+.post-card-status-badges .post-pinned-pill {
+    margin-bottom: 0 !important;
+    white-space: nowrap;
+}
+
+.post-card-status-badges .post-closed-pill {
+    white-space: nowrap;
+    flex-shrink: 0;
+    line-height: 1.3;
+}
+
 .post-author-avatar { 
     width: 30px; 
     height: 30px; 

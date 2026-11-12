@@ -198,6 +198,17 @@
             return isFounderPinEmail(psiData?.email);
         }
 
+        function syncCardStatusBadges(card) {
+            if (!card) return;
+            const statusGroup = card.querySelector('.post-card-status-badges');
+            if (!statusGroup) return;
+            const hasVisiblePill = Array.from(
+                statusGroup.querySelectorAll('.post-pinned-pill, .post-closed-pill')
+            ).some(el => !el.classList.contains('hidden') && el.style.display !== 'none');
+            statusGroup.classList.toggle('hidden', !hasVisiblePill);
+            statusGroup.style.display = hasVisiblePill ? 'inline-flex' : 'none';
+        }
+
         function syncPinnedVisuals(containerEl, pinBtn, isPinned, isFullView = false) {
             if (containerEl) {
                 const pill = containerEl.querySelector('.post-pinned-pill');
@@ -207,6 +218,9 @@
                     if (isFullView) {
                         pill.style.display = isPinned ? 'inline-flex' : 'none';
                     }
+                }
+                if (!isFullView) {
+                    syncCardStatusBadges(containerEl);
                 }
             }
             if (pinBtn) {
@@ -1041,6 +1055,7 @@
                     closedPill.style.display = 'none';
                 }
             }
+            syncCardStatusBadges(card);
             card.querySelector('.post-title').textContent = post.title;
 
             const catEl = card.querySelector('.post-category');
