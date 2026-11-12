@@ -299,6 +299,92 @@ async function notifyAuthorQuietly(db, post, mediatorCommentText, mediatorAction
     }).catch(() => {});
 }
 
+const OFFICIAL_INTRO_TOPIC = {
+    title: '👋 Apresente-se aqui! Bem-vindo(a) à Comunidade Yelo',
+    category: 'Sala de Café (Off-topic)',
+    content: [
+        'Sejam muito bem-vindos/as à nossa comunidade! 🌿',
+        '',
+        'Para mantermos o Fórum organizado e garantirmos que todos os colegas consigam conhecer quem está chegando, este é o nosso espaço oficial e único para apresentações.',
+        '',
+        'Se você é novo(a) por aqui, deixe um comentário contando um pouco sobre você:',
+        '• De qual cidade/estado você atende (ou se atende online);',
+        '• Qual é a sua abordagem e principais temas clínicos;',
+        '• O que você mais busca trocar com outros psicólogos aqui na Yelo.',
+        '',
+        'Se tiver alguma dúvida técnica de caso clínico, CRP ou divulgação do consultório, sinta-se à vontade para abrir um tópico específico na categoria correspondente! 👇'
+    ].join('\n')
+};
+
+/**
+ * Garante a existência do Tópico Oficial Fixado de Apresentações (sem disparar e-mail em massa).
+ */
+async function ensureOfficialIntroTopic(db = defaultDb, options = {}) {
+    const dryRun = options.dryRun === true;
+    const existing = await db.ForumPost.findOne({
+        where: {
+            isPinned: true,
+            title: { [Op.iLike]: '%apresente-se%' },
+            [Op.or]: [
+                { status: null },
+                { status: { [Op.notIn]: ['hidden_by_admin', 'hidden', 'deleted'] } }
+            ]
+        },
+        order: [['id', 'ASC']]
+    });
+
+    if (existing) {
+        return { created: false, post: existing };
+    }
+
+    if (dryRun) {
+        return { created: false, dryRun: true, post: { id: null, ...OFFICIAL_INTRO_TOPIC, isPinned: true } };
+    }
+
+    let authorId = options.authorPsychologistId || null;
+    if (!authorId) {
+        const preferredEmails = [
+            process.env.FORUM_INTRO_AUTHOR_EMAIL,
+            'pix@yelopsi.com.br',
+            'anderson@yelopsi.com.br'
+        ].filter(Boolean);
+
+        for (const email of preferredEmails) {
+            const found = await db.Psychologist.findOne({
+                where: { email },
+                attributes: ['id']
+            }).catch(() => null);
+            if (found?.id) {
+                authorId = found.id;
+                break;
+            }
+        }
+        if (!authorId) {
+            const fallbackAdmin = await db.Psychologist.findOne({
+                where: { isAdmin: true },
+                attributes: ['id']
+            }).catch(() => null);
+            authorId = fallbackAdmin?.id || null;
+        }
+        if (!authorId) {
+            const mediator = await ensureMediatorAccount(db, false);
+            authorId = mediator.id;
+        }
+    }
+
+    const post = await db.ForumPost.create({
+        title: OFFICIAL_INTRO_TOPIC.title,
+        content: OFFICIAL_INTRO_TOPIC.content,
+        category: OFFICIAL_INTRO_TOPIC.category,
+        isAnonymous: false,
+        isPinned: true,
+        status: 'active',
+        PsychologistId: authorId
+    });
+
+    return { created: true, post };
+}
+
 /**
  * Avalia (e opcionalmente executa) a mediação em lote nos posts elegíveis.
  * Em dryRun=true: ZERO escritas em banco, retorna apenas o diagnóstico e plano detalhado.
@@ -511,10 +597,12 @@ function scheduleBackgroundReview(postId) {
 
 module.exports = {
     FORUM_CATEGORIES,
+    OFFICIAL_INTRO_TOPIC,
     stripHtmlAndCompact,
     normalizeAiDecision,
     analyzePostWithAI,
     ensureMediatorAccount,
+    ensureOfficialIntroTopic,
     runMediatorBatch,
     scheduleBackgroundReview
 };

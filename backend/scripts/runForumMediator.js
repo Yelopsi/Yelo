@@ -47,6 +47,14 @@ async function run() {
         : null;
 
     try {
+        if (args['ensure-intro-hub']) {
+            const introRes = await forumMediatorService.ensureOfficialIntroTopic(undefined, { dryRun: Boolean(args['dry-run']) });
+            console.log(`📌 Tópico Oficial de Apresentações: ${introRes.created ? 'CRIADO E FIXADO' : 'JÁ EXISTIA'} -> ID #${introRes.post?.id} ("${introRes.post?.title}")`);
+            if (!args.backfill && !args['post-id']) {
+                process.exit(0);
+            }
+        }
+
         console.log(`\n🛡️ Mediador IA do Fórum (${isLive ? 'EXECUÇÃO REAL' : 'DRY-RUN SOMENTE LEITURA'}) | Limite: ${limit}${postId ? ` | Post #${postId}` : ''}`);
         const res = await forumMediatorService.runMediatorBatch({
             dryRun: !isLive,
