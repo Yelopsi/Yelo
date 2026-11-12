@@ -667,7 +667,7 @@ export default function JornadaScreen() {
             }}
           >
             <Text style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#166534', lineHeight: 18 }}>
-              🛡️ <Text style={{ fontWeight: 'bold' }}>Equilíbrio e Transparência:</Text> Todas as ações seguem limites diários justos (no Blog é permitido 1 artigo por dia para preservar a vitrine). Seu XP fortalece sua autoridade sem alterar o equilíbrio clínico do Match.
+              🛡️ <Text style={{ fontWeight: 'bold' }}>Equilíbrio e Transparência:</Text> Todas as ações seguem limites diários justos (no Blog é permitido 1 artigo por dia para preservar a página do Blog). Seu XP fortalece sua autoridade sem alterar o equilíbrio clínico do Match.
             </Text>
           </View>
         </View>

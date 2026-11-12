@@ -1064,7 +1064,7 @@ exports.sendBlackFridayEmail = async (user, variant = 'ex_payer', options = {}) 
         whyNowHtml = `
             <p style="margin: 0 0 8px 0;"><strong>O que muda na prática ao reativar hoje:</strong></p>
             <ul style="margin: 0; padding-left: 18px; color: #4A5568; font-size: 14px; line-height: 1.65;">
-                <li><strong>Vitrine e agenda organizadas para quem está ativo:</strong> concentramos a entrega de novos pacientes em quem mantém o consultório ativo, garantindo espaço justo e mais previsibilidade.</li>
+                <li><strong>Página e agenda organizadas para quem está ativo:</strong> concentramos a entrega de novos pacientes em quem mantém o consultório ativo, garantindo espaço justo e mais previsibilidade.</li>
                 <li><strong>Seu perfil já está pronto:</strong> sua foto, biografia, especialidades e link profissional seguem guardados — você volta ao ar em segundos, sem retrabalho.</li>
                 <li><strong>Consultório completo, sem comissão por sessão:</strong> gestão de pacientes, agenda e comunidade clínica, mantendo 100% do valor das suas consultas com você.</li>
             </ul>
@@ -1093,7 +1093,7 @@ exports.sendBlackFridayEmail = async (user, variant = 'ex_payer', options = {}) 
         title = 'Uma semana passa rápido demais na rotina clínica';
         introHtml = `
             <p>Olá, <strong>${psiName}</strong>! Tudo bem com você?</p>
-            <p>Olhando para os profissionais que já preencheram o perfil com carinho na Yelo, percebemos algo importante: <strong>7 dias muitas vezes não dão fôlego suficiente para acompanhar o ritmo natural de quem busca terapia</strong> — especialmente enquanto nossa vitrine ainda estava em amadurecimento.</p>
+            <p>Olhando para os profissionais que já preencheram o perfil com carinho na Yelo, percebemos algo importante: <strong>7 dias muitas vezes não dão fôlego suficiente para acompanhar o ritmo natural de quem busca terapia</strong> — especialmente enquanto nossa página e a distribuição de pacientes ainda estavam em amadurecimento.</p>
             <p>Nos últimos meses, reorganizamos nossa casa para gerar mais previsibilidade e constância a quem está ativo: hoje os pacientes passam por um direcionamento mais cuidadoso e os atendimentos são distribuídos com muito mais equilíbrio para cada especialidade.</p>
         `;
         whyNowHtml = `

@@ -27,5 +27,9 @@ Sempre que qualquer ajuste for feito em uma tela ou fluxo voltado ao psicólogo,
 2. **Checagem Pós-Edição:** Após qualquer mudança em arquivos da tabela acima, rode:
    - `npm run parity:check` para conferir se algum par Web ↔ Mobile ficou descoberto no diff;
    - `cd mobile && npx tsc --noEmit` sempre que arquivos `.ts`/`.tsx` forem alterados.
-3. **Atualização Automática de Changelog Público:** Ao implementar melhorias relevantes para psicólogos/pacientes, rode `npm run novidades:curate` (ou certifique-se de que não haja termos técnicos/internos vazando para `psi_novidades.html` / `novidades.tsx`).
+3. **Sincronização entre Branches Sem Misturar Deploys:**
+   - **Nunca misturar nem fazer merge completo da branch do app (`feat/mobile-app`) dentro da branch de deploy web** (e vice-versa) quando uma delas estiver com funcionalidades exclusivas em andamento.
+   - Aplique o ajuste espelhado apenas nos arquivos equivalentes da outra plataforma (`mobile/src/` ↔ `public/` + `admin/`) mantendo os deploys independentes.
+4. **Atualização Automática de Changelog Público (`psi_novidades.html`):**
+   - Exiba **exclusivamente** melhorias reais percebidas pelo psicólogo na versão já publicada, nunca commits internos (`crm`, `admin`, `ads`, `black-friday`, `security`) ou ajustes exclusivos do App Mobile antes do lançamento oficial do app.
 

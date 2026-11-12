@@ -2238,7 +2238,7 @@ Se houver histórico acima:
                 analisePreenchido = `Lemos a sua biografia e gostamos muito da clareza e do tom acolhedor que você trouxe. A forma como você contextualizou a sua abordagem transmite muita segurança para o paciente que visita a sua página.`;
                 
                 if (!hasPrice) {
-                    pendenciasBlock = `Para darmos o próximo passo juntos e acelerar a chegada dos primeiros contatos no seu WhatsApp, recomendamos:\n\n• Definir um valor de referência para a sessão em *Ajustes > Meu Perfil* (percebemos que valores visíveis reduzem a hesitação do paciente antes do primeiro contato);\n• Nessa mesma página (*Ajustes > Meu Perfil*), clicar em *Copiar Link* no topo e compartilhar sua vitrine com 1 ou 2 pacientes de confiança para inaugurar as suas avaliações, ou conectar seu *Google Meu Negócio*.`;
+                    pendenciasBlock = `Para darmos o próximo passo juntos e acelerar a chegada dos primeiros contatos no seu WhatsApp, recomendamos:\n\n• Definir um valor de referência para a sessão em *Ajustes > Meu Perfil* (percebemos que valores visíveis reduzem a hesitação do paciente antes do primeiro contato);\n• Nessa mesma página (*Ajustes > Meu Perfil*), clicar em *Copiar Link* no topo e compartilhar sua página com 1 ou 2 pacientes de confiança para inaugurar as suas avaliações, ou conectar seu *Google Meu Negócio*.`;
                 } else if (reviewsCount === 0) {
                     pendenciasBlock = `Como a sua apresentação e valor já estão muito bem configurados, o próximo passo de maior impacto é conquistar suas primeiras avaliações de pacientes, que funcionam como prova social e aumentam muito a conversão de visitas em mensagens.\n\n• Onde ir: No seu painel, acesse *Ajustes > Meu Perfil*\n• O que fazer: No topo da página, clique no botão *Copiar Link* e envie a sua página para 1 ou 2 pacientes ou ex-pacientes de confiança para que deixem um depoimento. Caso já tenha avaliações no Google Meu Negócio, você também pode sincronizá-las diretamente nessa mesma página!`;
                 } else {
@@ -2249,7 +2249,7 @@ Se houver histórico acima:
                 if (hasApproaches || hasTopics) {
                     analisePreenchido = `Analisamos a sua página e achamos excelente a forma como você selecionou suas abordagens e temas de atuação. Essa segmentação é fundamental para o nosso sistema entender o seu público ideal.`;
                 } else {
-                    analisePreenchido = `Analisamos o seu perfil e ficamos muito felizes em ver você dando os primeiros passos para estruturar a sua vitrine clínica na Yelo.`;
+                    analisePreenchido = `Analisamos o seu perfil e ficamos muito felizes em ver você dando os primeiros passos para estruturar a sua página clínica na Yelo.`;
                 }
 
                 pendenciasBlock = `Percebemos, no entanto, que a sua *biografia profissional ainda não foi preenchida*.\n\nPara quem busca terapia, a bio é o elemento mais decisivo: é através dela que o paciente compreende como funciona o seu acolhimento, cria identificação com a sua postura clínica e se sente seguro para dar o passo de te chamar no WhatsApp. Sem ela, o perfil perde grande parte do potencial de conversão.\n\nPara deixar sua página completa e pronta para receber contatos, sugerimos:\n\n• Onde ir: No seu painel, acesse *Ajustes > Meu Perfil*\n• O que incluir: Um texto simples em parágrafos curtos, explicando como você conduz as sessões e quais demandas você mais acolhe no consultório.`;
@@ -2265,7 +2265,7 @@ Se houver histórico acima:
         console.error("Erro em analyzeProfile:", error);
         // Fallback preventivo contra 500 para garantir que o Admin consiga enviar a mensagem
         try {
-            const fallbackMsg = `Olá! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise inicial da sua vitrine na plataforma!\n\nAnalisamos o seu cadastro e o passo mais importante agora é garantir que a sua bio explique com clareza o seu acolhimento em *Ajustes > Meu Perfil*, além de manter os valores transparentes para reduzir dúvidas dos pacientes antes do primeiro contato no WhatsApp.\n\nNossa equipe está à disposição caso queira apoio para estruturar o texto! 🚀`;
+            const fallbackMsg = `Olá! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise inicial da sua página na plataforma!\n\nAnalisamos o seu cadastro e o passo mais importante agora é garantir que a sua bio explique com clareza o seu acolhimento em *Ajustes > Meu Perfil*, além de manter os valores transparentes para reduzir dúvidas dos pacientes antes do primeiro contato no WhatsApp.\n\nNossa equipe está à disposição caso queira apoio para estruturar o texto! 🚀`;
             return res.json({ message: formatForWhatsApp(fallbackMsg), isFallback: true });
         } catch (_) {
             return res.status(500).json({ error: error.message || 'Erro interno ao gerar análise.' });

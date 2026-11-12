@@ -815,30 +815,37 @@ function isUserFacingChangelogEntry(entry) {
     const rawText = `${entry.title || ''} ${entry.summary || ''} ${entry.description || ''}`.toLowerCase();
     const files = Array.isArray(entry.filesChanged) ? entry.filesChanged.map(f => String(f).toLowerCase()) : [];
 
-    // Rejeita escopos ou assuntos estritamente internos / comerciais / segurança
+    // Rejeita escopos ou assuntos estritamente internos / comerciais / segurança / infra
     const internalPatterns = [
         /\(admin\)/i, /\(cmo\)/i, /\(crm\)/i, /\(changelog\)/i, /\(security\)/i,
         /\(black-friday\)/i, /black.?friday/i, /black2x1/i, /google\s*ads/i, /meta\s*ads/i,
         /k[eé]sia/i, /capping/i, /motor\s*v6/i, /tr[aá]fego\s*pago/i, /gate\s*report/i,
-        /sincronizar\s*changelog/i, /dependency/i, /eslint/i, /asaas/i, /l[tv]+/i, /cac\b/i
+        /sincronizar\s*changelog/i, /dependency/i, /eslint/i, /asaas/i, /ltv/i, /cac\b/i,
+        /recall\s*de\s*churn/i, /helper\s*idempotente/i, /paridade/i, /eas\s*update/i
     ];
     if (internalPatterns.some(rx => rx.test(rawText))) {
         return false;
     }
 
-    const userFacingFilePatterns = [
+    // Só publica novidades Web/Compartilhadas reais percebidas pelo psicólogo (ignora commits só de telas Mobile ainda em dev)
+    const webUserFacingPatterns = [
         /^public\/psi\//,
-        /^mobile\/src\/app\/\(tabs\)\//,
-        /^mobile\/src\/app\/\[slug\]\.tsx$/,
-        /^mobile\/src\/app\/resultados\.tsx$/,
+        /^public\/js\//,
         /^views\//,
-        /blogcontroller/, /forumcontroller/, /forummediator/,
+        /blogcontroller/, /forumcontroller/, /forummediatorservice/,
         /gamificationservice/, /googlebusinessservice/, /reviewscontroller/,
         /documentvalidator/, /psiauthcontroller/
     ];
 
-    const touchesUserFacing = files.some(f => userFacingFilePatterns.some(rx => rx.test(f)));
-    return touchesUserFacing;
+    const hasWebOrSharedUserImpact = files.some(f => webUserFacingPatterns.some(rx => rx.test(f)));
+    const isOnlyMobileOrAdmin = files.length > 0 && files.every(f =>
+        f.startsWith('mobile/') ||
+        f.startsWith('admin/') ||
+        f.startsWith('security/') ||
+        f.includes('system_changelog.json')
+    );
+
+    return hasWebOrSharedUserImpact && !isOnlyMobileOrAdmin;
 }
 
 function inferPsiTopicBucket(entry) {

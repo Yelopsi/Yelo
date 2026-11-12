@@ -79,10 +79,8 @@
       "backend/services/forumMediatorService.js",
       "security/reports/gate_report.json"
     ],
-    "publishedToPsi": true,
+    "publishedToPsi": false,
     "psiCurated": true,
-    "psiTitle": "Aprimoramentos no Fórum da Comunidade",
-    "psiSummary": "Refinamos o funcionamento do nosso espaço de apresentações para garantir que o tópico oficial esteja sempre disponível e organizado. Com esse ajuste, buscamos facilitar a recepção de novos colegas e tornar a experiência de acolhimento na nossa comunidade ainda mais fluida e intuitiva.",
     "psiCategory": "Fórum & Comunidade",
     "impactBadge": "Aprimoramento 🚀",
     "scheduledMonday": "2026-11-16T15:00:00.000Z",
@@ -119,7 +117,14 @@
       "public/psi/psi_forum.js",
       "security/reports/gate_report.json"
     ],
-    "psiCurated": true
+    "psiCurated": true,
+    "publishedToPsi": true,
+    "psiTitle": "Fórum mais organizado com espaço oficial de Apresentações",
+    "psiSummary": "Criamos um tópico fixado exclusivo para boas-vindas e apresentações, além de novas sinalizações de organização para concentrar cada debate no tema certo.",
+    "psiCategory": "Fórum & Comunidade",
+    "impactBadge": "Novo Recurso ✨",
+    "scheduledMonday": "2026-11-16T10:00:00.000Z",
+    "scheduledFriday": "2026-11-16T10:00:00.000Z"
   },
   {
     "id": "change-git-1a3c5363",
@@ -226,12 +231,12 @@
     ],
     "publishedToPsi": true,
     "psiCurated": true,
-    "psiTitle": "Aprimoramentos na Jornada e Conteúdo",
-    "psiSummary": "Refinamos a experiência de compartilhamento de artigos e interações no fórum para garantir um fluxo mais fluido e enriquecedor. Com esses ajustes, a sua participação na comunidade e o acompanhamento da sua jornada ganham ainda mais estabilidade e precisão no registro das suas conquistas.",
+    "psiTitle": "Equilíbrio no Blog e mais XP na Comunidade",
+    "psiSummary": "Adicionamos pontuação diária por respostas na Comunidade (+15 XP) e organizamos o ritmo do Blog (1 publicação por dia) para dar visibilidade justa aos textos de todos os profissionais na página.",
     "psiCategory": "Fórum & Comunidade",
-    "impactBadge": "Melhoria Contínua 🌟",
-    "scheduledMonday": "2026-11-16T15:00:00.000Z",
-    "scheduledFriday": "2026-11-16T15:00:00.000Z",
+    "impactBadge": "Aprimoramento 🚀",
+    "scheduledMonday": "2026-11-16T10:00:00.000Z",
+    "scheduledFriday": "2026-11-16T10:00:00.000Z",
     "updatedAt": "2026-11-12T01:09:48.947Z"
   },
   {
@@ -563,10 +568,8 @@
       "mobile/src/components/forum/ForumCommentThread.tsx",
       "security/reports/gate_report.json"
     ],
-    "publishedToPsi": true,
+    "publishedToPsi": false,
     "psiCurated": true,
-    "psiTitle": "Aprimoramentos em gestão e na experiência mobile",
-    "psiSummary": "Refinamos o sistema de assinaturas para garantir maior precisão no acompanhamento do seu plano e otimizamos a interface do fórum no mobile para facilitar sua navegação. Essas atualizações trazem mais estabilidade e fluidez para o seu dia a dia na plataforma.",
     "psiCategory": "Consultório & Gestão",
     "impactBadge": "Aprimoramento 🚀",
     "scheduledMonday": "2026-11-09T15:00:00.000Z",
@@ -712,10 +715,8 @@
       "mobile/src/app/(tabs)/_layout.tsx",
       "security/reports/gate_report.json"
     ],
-    "publishedToPsi": true,
+    "publishedToPsi": false,
     "psiCurated": true,
-    "psiTitle": "Aprimoramentos na experiência mobile",
-    "psiSummary": "Refinamos o visual do seu dashboard para garantir uma navegação ainda mais fluida e intuitiva. Com esse ajuste no layout, a transição entre as abas está mais harmoniosa, proporcionando um ambiente de trabalho mais organizado para o seu dia a dia.",
     "psiCategory": "Consultório & Gestão",
     "impactBadge": "Melhoria de Usabilidade 📱",
     "scheduledMonday": "2026-11-09T15:00:00.000Z",
@@ -1863,10 +1864,8 @@
       "public/psi/psi_meu_perfil.js",
       "security/reports/gate_report.json"
     ],
-    "publishedToPsi": true,
+    "publishedToPsi": false,
     "psiCurated": true,
-    "psiTitle": "Aprimoramentos na gestão de assinaturas e pagamentos",
-    "psiSummary": "Refinamos o processo de gestão do seu consultório para tornar a experiência de pagamento mais fluida e intuitiva. Estas atualizações garantem maior estabilidade e consistência na sua área administrativa, tanto no computador quanto em dispositivos móveis.",
     "psiCategory": "Consultório & Gestão",
     "impactBadge": "Aprimoramento 🚀",
     "scheduledMonday": "2026-11-09T15:00:00.000Z",
@@ -2085,10 +2084,8 @@
       "mobile/src/app/(tabs)/blog.tsx",
       "security/reports/gate_report.json"
     ],
-    "publishedToPsi": true,
+    "publishedToPsi": false,
     "psiCurated": true,
-    "psiTitle": "Aprimoramentos na experiência mobile",
-    "psiSummary": "Refinamos a visualização das janelas de interação em seu dispositivo móvel, garantindo um layout mais limpo e uma resposta ao toque ainda mais precisa. Essas atualizações tornam a navegação no seu consultório digital mais fluida e intuitiva.",
     "psiCategory": "Consultório & Gestão",
     "impactBadge": "Melhoria de Usabilidade 📱",
     "scheduledMonday": "2026-11-02T15:00:00.000Z",
@@ -2175,10 +2172,8 @@
       "mobile/src/app/(tabs)/jornada.tsx",
       "security/reports/gate_report.json"
     ],
-    "publishedToPsi": true,
+    "publishedToPsi": false,
     "psiCurated": true,
-    "psiTitle": "Aprimoramentos na visualização da jornada",
-    "psiSummary": "Refinamos a forma como os indicadores de progresso são exibidos na sua jornada, garantindo que o design esteja sempre nítido e fluido. Estas melhorias asseguram uma experiência de navegação mais harmoniosa e consistente em toda a plataforma.",
     "psiCategory": "Consultório & Gestão",
     "impactBadge": "Melhoria de Usabilidade 📱",
     "scheduledMonday": "2026-11-02T15:00:00.000Z",
@@ -2238,10 +2233,8 @@
       "mobile/src/app/(tabs)/manual-conversao.tsx",
       "security/reports/gate_report.json"
     ],
-    "publishedToPsi": true,
+    "publishedToPsi": false,
     "psiCurated": true,
-    "psiTitle": "Aprimoramentos na visualização de dados financeiros",
-    "psiSummary": "Refinamos a forma como você visualiza seus indicadores financeiros e as sugestões do seu Copilot. Agora, as informações carregam de forma mais fluida e direta, garantindo que você tenha acesso rápido aos números essenciais para a gestão do seu consultório.",
     "psiCategory": "Consultório & Gestão",
     "impactBadge": "Otimização ⚡",
     "scheduledMonday": "2026-11-02T15:00:00.000Z",
@@ -4278,10 +4271,10 @@
     ],
     "publishedToPsi": true,
     "psiCurated": true,
-    "psiTitle": "Aprimoramentos no Fórum e Comunidade",
-    "psiSummary": "Refinamos a performance ao compartilhar suas experiências e interagir no Fórum da Comunidade. Além disso, aprimoramos o suporte da nossa IA para que suas dúvidas e trocas sejam respondidas com ainda mais fluidez e qualidade.",
+    "psiTitle": "Mais agilidade ao publicar e responder no Fórum",
+    "psiSummary": "Otimizamos o envio e a edição de tópicos e respostas no Fórum e nas Perguntas da Comunidade para tornar suas trocas com colegas e pacientes ainda mais rápidas e fluidas.",
     "psiCategory": "Fórum & Comunidade",
-    "impactBadge": "Inteligência Artificial 🧠",
+    "impactBadge": "Otimização ⚡",
     "scheduledMonday": "2026-10-26T15:00:00.000Z",
     "scheduledFriday": "2026-10-26T15:00:00.000Z",
     "updatedAt": "2026-11-12T01:10:14.752Z"
@@ -4733,14 +4726,13 @@
       "admin/admin_crm_psicologos.js",
       "backend/controllers/adminUsersController.js"
     ],
-    "publishedToPsi": true,
+    "publishedToPsi": false,
     "updatedAt": "2026-10-24T16:05:17.110Z",
     "scheduledFriday": "2026-10-23T15:00:00.000Z",
     "authorizedAt": "2026-10-24T16:05:17.110Z",
-    "psiTitle": "Ajustes de usabilidade no consultório",
-    "psiSummary": "Aprimoramentos práticos no acompanhamento de contatos e na organização da sua rotina clínica.",
     "psiCategory": "Consultório & Gestão",
-    "impactBadge": "Aprimoramento 🚀"
+    "impactBadge": "Aprimoramento 🚀",
+    "psiCurated": true
   },
   {
     "id": "change-git-e3c6f92c",
@@ -4766,14 +4758,15 @@
       "public/js/psi_perfil_publico.js",
       "views/psi_perfil_publico.ejs"
     ],
-    "publishedToPsi": true,
+    "publishedToPsi": false,
     "updatedAt": "2026-10-23T23:36:56.021Z",
     "scheduledFriday": "2026-10-23T15:00:00.000Z",
     "authorizedAt": "2026-10-23T23:36:56.021Z",
     "psiTitle": "Aprimoramentos nas avaliações do perfil",
     "psiSummary": "Aprimoramos a experiência e a estabilidade do envio de avaliações e depoimentos no perfil público, garantindo funcionamento fluido e intuitivo para os pacientes em qualquer smartphone.",
     "psiCategory": "Perfil & Pacientes",
-    "impactBadge": "Aprimoramento 🚀"
+    "impactBadge": "Aprimoramento 🚀",
+    "psiCurated": true
   },
   {
     "id": "change-feat-crm-patient-history",
@@ -4932,14 +4925,13 @@
       "backend/data/system_changelog.json",
       "security/reports/gate_report.json"
     ],
-    "publishedToPsi": true,
+    "publishedToPsi": false,
     "updatedAt": "2026-10-23T23:32:25.139Z",
     "scheduledFriday": "2026-10-23T15:00:00.000Z",
     "authorizedAt": "2026-10-23T23:32:25.140Z",
-    "psiTitle": "Outros ajustes de usabilidade",
-    "psiSummary": "Ajustes contínuos de estabilidade, usabilidade e navegação para manter sua experiência impecável na Yelo.",
     "psiCategory": "Novidades da Plataforma",
-    "impactBadge": "Melhoria Contínua 🌟"
+    "impactBadge": "Melhoria Contínua 🌟",
+    "psiCurated": true
   },
   {
     "id": "change-git-caec5ac6",
