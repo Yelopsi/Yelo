@@ -1,5 +1,31 @@
 [
   {
+    "id": "change-git-97539bfb",
+    "date": "2026-11-12T02:10:47.000Z",
+    "commit": "97539bfb",
+    "author": "Anderson",
+    "title": "Correção: Corrigir coluna resumo em anuncios e ativar flags Black Friday/Mediador com trava diaria em producao",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "corrigir coluna resumo em anuncios e ativar flags Black Friday/Mediador com trava diaria em producao",
+    "description": "Commit registrado no repositório: \"fix(prod): corrigir coluna resumo em anuncios e ativar flags Black Friday/Mediador com trava diaria em producao\". Arquivos modificados: backend/controllers/psiDashboardController.js, backend/jobs/scheduler.js, backend/services/forumMediatorService.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #97539bfb"
+    },
+    "after": {
+      "nova_versao": "corrigir coluna resumo em anuncios e ativar flags Black Friday/Mediador com trava diaria em producao"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/psiDashboardController.js",
+      "backend/jobs/scheduler.js",
+      "backend/services/forumMediatorService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-7ebacf6c",
     "date": "2026-11-12T02:07:07.000Z",
     "commit": "7ebacf6c",
