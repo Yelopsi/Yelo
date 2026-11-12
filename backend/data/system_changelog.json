@@ -1,5 +1,38 @@
 [
   {
+    "id": "change-git-8d7827b3",
+    "date": "2026-11-12T01:20:14.000Z",
+    "commit": "8d7827b3",
+    "author": "Anderson",
+    "title": "Manutenção: Manter paridade, copia pagina sem vitrine e novidades relevantes aos psicologos (web-cleanup)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "manter paridade, copia pagina sem vitrine e novidades relevantes aos psicologos",
+    "description": "Commit registrado no repositório: \"chore(web-cleanup): manter paridade, copia pagina sem vitrine e novidades relevantes aos psicologos\". Arquivos modificados: .agent/rules/web-mobile-parity.md, .github/workflows/sync-mobile-branch.yml, backend/.data/system_changelog.json, backend/controllers/adminController.js, backend/controllers/adminPerformanceController.js (+6 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8d7827b3"
+    },
+    "after": {
+      "nova_versao": "manter paridade, copia pagina sem vitrine e novidades relevantes aos psicologos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      ".agent/rules/web-mobile-parity.md",
+      ".github/workflows/sync-mobile-branch.yml",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminController.js",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/data/system_changelog.json",
+      "backend/services/changelogSyncService.js",
+      "backend/services/emailService.js",
+      "mobile/src/app/(tabs)/jornada.tsx",
+      "public/psi/psi_jornada.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-a1c35e29",
     "date": "2026-11-12T01:12:17.000Z",
     "commit": "a1c35e29",
