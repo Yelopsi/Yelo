@@ -32,6 +32,112 @@ function stripHtmlAndCompact(text, maxLen = 600) {
     return clean.length > maxLen ? `${clean.slice(0, maxLen).trim()}...` : clean;
 }
 
+function extractAuthorFirstName(fullName) {
+    const clean = String(fullName || '').replace(/\s+/g, ' ').trim();
+    if (!clean) return '';
+    const tokens = clean.split(' ').filter(Boolean);
+    let first = tokens[0] || '';
+    if (/^(dr\.?|dra\.?)$/i.test(first) && tokens[1]) {
+        first = tokens[1];
+    }
+    first = first.replace(/[^\p{L}\p{M}'-]/gu, '');
+    if (!first) return '';
+    return first.charAt(0).toUpperCase() + first.slice(1);
+}
+
+/**
+ * Resolve nome e saudação inclusiva baseada no gênero registrado do profissional:
+ * - Masculino -> "bem-vindo"
+ * - Feminino -> "bem-vinda"
+ * - Outro / Não-binário / demais registrados -> "bem-vinde"
+ * - Não registrado ou post anônimo -> "bem-vindo(a)"
+ */
+function resolveAuthorGenderProfile(post = {}) {
+    if (post?.isAnonymous) {
+        return {
+            firstName: '',
+            genderKey: 'unknown',
+            welcomeForm: 'bem-vindo(a)',
+            greetingLine: 'Olá!'
+        };
+    }
+
+    const firstName = extractAuthorFirstName(post.authorName || post.Psychologist?.nome || post.psychologist?.nome);
+    const rawGender = String(post.authorGender ?? post.genero_identidade ?? post.Psychologist?.genero_identidade ?? '').trim().toLowerCase();
+
+    let genderKey = 'unknown';
+    let welcomeForm = 'bem-vindo(a)';
+
+    if (
+        rawGender &&
+        !rawGender.includes('prefiro não') &&
+        !rawGender.includes('prefiro nao') &&
+        !rawGender.includes('não inform') &&
+        !rawGender.includes('nao inform')
+    ) {
+        if (rawGender === 'masculino' || rawGender.startsWith('masc') || rawGender.startsWith('homem')) {
+            genderKey = 'masculino';
+            welcomeForm = 'bem-vindo';
+        } else if (rawGender === 'feminino' || rawGender.startsWith('fem') || rawGender.startsWith('mulher')) {
+            genderKey = 'feminino';
+            welcomeForm = 'bem-vinda';
+        } else {
+            genderKey = 'outro';
+            welcomeForm = 'bem-vinde';
+        }
+    }
+
+    return {
+        firstName,
+        genderKey,
+        welcomeForm,
+        greetingLine: firstName ? `Olá, ${firstName}.` : 'Olá!'
+    };
+}
+
+function personalizeMediatorMessage(message, postOrCtx = {}) {
+    let out = String(message || '').trim();
+    if (!out) return '';
+
+    const ctx = postOrCtx && typeof postOrCtx.welcomeForm === 'string'
+        ? postOrCtx
+        : resolveAuthorGenderProfile(postOrCtx);
+
+    if (ctx.firstName) {
+        const escapedName = ctx.firstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const greetingPattern = new RegExp(
+            `^ol[áa](?:\\s*,\\s*(?:colega|psic[óo]log[oa](?:\\(a\\))?|${escapedName}))?[!.,:\\s]*`,
+            'i'
+        );
+        if (greetingPattern.test(out)) {
+            out = out.replace(greetingPattern, `Olá, ${ctx.firstName}. `);
+        } else {
+            out = `Olá, ${ctx.firstName}. ${out}`;
+        }
+    } else {
+        out = out.replace(/^ol[áa](?:\s*,\s*[^.!?\n]{1,30})?[!.,:\s]*/i, 'Olá! ');
+    }
+
+    out = out.replace(/\bbem[-\s]?vind(?:o\s*\(\s*a\s*\)|o\s*\/\s*a|[oae]\b)/gi, ctx.welcomeForm);
+
+    if (ctx.genderKey !== 'unknown') {
+        const suffixMap = {
+            masculino: { o: 'o', obg: 'obrigado', caro: 'caro', amigo: 'amigo' },
+            feminino: { o: 'a', obg: 'obrigada', caro: 'cara', amigo: 'amiga' },
+            outro: { o: 'e', obg: 'obrigade', caro: 'care', amigo: 'amigue' }
+        }[ctx.genderKey];
+        if (suffixMap) {
+            out = out
+                .replace(/\bobrigad[oa]\s*\(\s*a\s*\)/gi, suffixMap.obg)
+                .replace(/\bcar[oa]\s*\(\s*a\s*\)/gi, suffixMap.caro)
+                .replace(/\bamig[oa]\s*\(\s*a\s*\)/gi, suffixMap.amigo)
+                .replace(/\bnov[oa]\s*\(\s*[ao]\s*\)/gi, `nov${suffixMap.o}`);
+        }
+    }
+
+    return out.replace(/\s{2,}/g, ' ').trim();
+}
+
 async function callGeminiMediator(prompt) {
     if (!process.env.GEMINI_API_KEY) {
         throw new Error('GEMINI_API_KEY não configurada');
@@ -173,6 +279,7 @@ async function analyzePostWithAI(post, contextPosts = [], options = {}) {
     }
 
     const virtualIntroHubNote = '';
+    const authorProfile = resolveAuthorGenderProfile(post);
 
     const prompt = `Você é o Mediador Oficial da Comunidade Yelo Psi (fórum exclusivo de psicólogos clínicos no Brasil).
 Analise a publicação abaixo e decida com bom senso clínico, ética e acolhimento se ela deve permanecer como está ou se precisa de organização.
@@ -181,6 +288,8 @@ POST EM ANÁLISE:
 - ID: ${post.id}
 - Título: "${post.title}"
 - Categoria atual: "${post.category}"
+- Autor(a): ${authorProfile.firstName ? authorProfile.firstName : 'Anônimo(a) — NÃO cite nome'}
+- Forma de boas-vindas conforme gênero registrado: "${authorProfile.welcomeForm}"
 - Comentários existentes: ${Number(post.commentCount || 0)}
 - Conteúdo: "${stripHtmlAndCompact(post.content, 1200)}"
 
@@ -201,7 +310,8 @@ REGRAS DE MEDIAÇÃO (SIGA ESTRITAMENTE):
 5. "CLOSE_OFF_SCOPE": O post NÃO pertence ao fórum aberto da comunidade (ex.: suporte técnico individual de conta/pagamento que deve ir na Central de Ajuda/Suporte, manifestação político-partidária fora do escopo da psicologia, propaganda comercial externa, ou mensagem vazia/teste). Escreva um comentário respeitoso direcionando para o canal correto e informando o encerramento deste tópico.
 
 TRAVAS IMPORTANTES:
-- Seja acolhedor, humano e colegial ("Olá! Que bom te ver por aqui..."). Nunca soe punitivo ou robótico.
+- SAUDAÇÃO PERSONALIZADA OBRIGATÓRIA: ${authorProfile.firstName ? `Comece "commentMessage" com "Olá, ${authorProfile.firstName}."` : 'Como o post é anônimo ou sem nome, comece com "Olá!" e NÃO cite nome.'} Ao dar boas-vindas, use exatamente "${authorProfile.welcomeForm}" (masculino = "bem-vindo", feminino = "bem-vinda", demais gêneros registrados = "bem-vinde", e "bem-vindo(a)" SOMENTE se o gênero não tiver sido registrado ou se o post for anônimo).
+- Seja acolhedor, humano e colegial. Nunca soe punitivo ou robótico.
 - NUNCA escreva IDs numéricos técnicos como "(ID: 123)", "[ID 123]" ou "#999999" dentro de "commentMessage" — cite apenas o nome/título do tópico, porque a plataforma já exibe automaticamente o botão clicável de redirecionamento.
 - Discussões clínicas legítimas que façam sentido na categoria NÃO devem ser fechadas — use "APPROVE".
 - Só retorne "confidence" >= 0.85 quando tiver certeza clara da regra aplicada. Caso contrário use confidence < 0.80.
@@ -218,6 +328,9 @@ Responda ESTRITAMENTE em JSON puro (sem markdown):
 
     const rawText = await aiRunner(prompt);
     const decision = normalizeAiDecision(rawText, post, candidateMap);
+    if (decision.commentMessage) {
+        decision.commentMessage = personalizeMediatorMessage(decision.commentMessage, authorProfile);
+    }
 
     if (decision.action !== 'APPROVE' && decision.action !== 'DEFER_INVALID_TARGET' && decision.action !== 'DEFER_EMPTY_COMMENT') {
         if (decision.confidence < minConfidence) {
@@ -440,20 +553,40 @@ async function runMediatorBatch(options = {}) {
         if (rp.redirectPostId) redirectTargetsSet.add(Number(rp.redirectPostId));
     }
 
-    const formattedPool = allOpenPosts.map(p => ({
-        id: p.id,
-        title: p.title,
-        content: p.content,
-        category: p.category,
-        status: p.status || 'active',
-        isPinned: Boolean(p.isPinned),
-        redirectPostId: p.redirectPostId || null,
-        hasIncomingRedirects: redirectTargetsSet.has(p.id),
-        PsychologistId: p.PsychologistId,
-        commentCount: Array.isArray(p.ForumComments) ? p.ForumComments.length : Number(p.commentCount || 0),
-        createdAt: p.createdAt,
-        _model: p
-    }));
+    const authorMap = new Map();
+    if (typeof db.Psychologist?.findAll === 'function') {
+        const authorIds = Array.from(new Set(allOpenPosts.filter(p => !p.isAnonymous && p.PsychologistId).map(p => Number(p.PsychologistId))));
+        if (authorIds.length > 0) {
+            const authorRows = await db.Psychologist.findAll({
+                where: { id: { [Op.in]: authorIds } },
+                attributes: ['id', 'nome', 'genero_identidade']
+            }).catch(() => []);
+            for (const ar of authorRows) {
+                if (ar?.id) authorMap.set(Number(ar.id), ar);
+            }
+        }
+    }
+
+    const formattedPool = allOpenPosts.map(p => {
+        const authorRow = !p.isAnonymous && p.PsychologistId ? authorMap.get(Number(p.PsychologistId)) : null;
+        return {
+            id: p.id,
+            title: p.title,
+            content: p.content,
+            category: p.category,
+            status: p.status || 'active',
+            isAnonymous: Boolean(p.isAnonymous),
+            isPinned: Boolean(p.isPinned),
+            redirectPostId: p.redirectPostId || null,
+            hasIncomingRedirects: redirectTargetsSet.has(p.id),
+            PsychologistId: p.PsychologistId,
+            authorName: p.isAnonymous ? null : (authorRow?.nome || p.Psychologist?.nome || null),
+            authorGender: p.isAnonymous ? null : (authorRow?.genero_identidade || p.Psychologist?.genero_identidade || null),
+            commentCount: Array.isArray(p.ForumComments) ? p.ForumComments.length : Number(p.commentCount || 0),
+            createdAt: p.createdAt,
+            _model: p
+        };
+    });
 
     const reviewedLogs = (!singlePostId && db.SystemLog)
         ? await db.SystemLog.findAll({
@@ -666,6 +799,9 @@ module.exports = {
     OFFICIAL_INTRO_TOPIC,
     isForumMediatorEnabled,
     stripHtmlAndCompact,
+    extractAuthorFirstName,
+    resolveAuthorGenderProfile,
+    personalizeMediatorMessage,
     normalizeAiDecision,
     analyzePostWithAI,
     ensureMediatorAccount,
