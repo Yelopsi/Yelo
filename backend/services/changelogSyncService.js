@@ -254,7 +254,7 @@ function syncGitToChangelog(options = { maxCommits: 30, force: false }) {
             files = [];
         }
 
-        if (files.length === 1 && files[0].includes('system_changelog.json')) {
+        if (files.length > 0 && files.every(f => f.includes('system_changelog.json'))) {
             continue;
         }
 
