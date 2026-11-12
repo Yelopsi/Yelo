@@ -1,5 +1,38 @@
 [
   {
+    "id": "change-git-45ee8a75",
+    "date": "2026-11-12T01:10:39.000Z",
+    "commit": "45ee8a75",
+    "author": "Anderson",
+    "title": "Novo: Curadoria automatica semanal em psi_novidades e regra/checagem de paridade Web <-> Mobile (novidades-parity)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "curadoria automatica semanal em psi_novidades e regra/checagem de paridade Web <-> Mobile",
+    "description": "Commit registrado no repositório: \"feat(novidades-parity): curadoria automatica semanal em psi_novidades e regra/checagem de paridade Web <-> Mobile\". Arquivos modificados: .agent/rules/web-mobile-parity.md, .github/workflows/sync-mobile-branch.yml, backend/.data/system_changelog.json, backend/data/system_changelog.json, backend/jobs/scheduler.js (+6 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #45ee8a75"
+    },
+    "after": {
+      "nova_versao": "curadoria automatica semanal em psi_novidades e regra/checagem de paridade Web <-> Mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      ".agent/rules/web-mobile-parity.md",
+      ".github/workflows/sync-mobile-branch.yml",
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "backend/jobs/scheduler.js",
+      "backend/scripts/checkWebMobileParity.js",
+      "backend/scripts/syncPsiNovidades.js",
+      "backend/services/changelogSyncService.js",
+      "package.json",
+      "security/gate.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-2f887665",
     "date": "2026-11-12T01:03:18.000Z",
     "commit": "2f887665",
