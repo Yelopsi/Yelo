@@ -1,5 +1,28 @@
 [
   {
+    "id": "change-git-a1c35e29",
+    "date": "2026-11-12T01:12:17.000Z",
+    "commit": "a1c35e29",
+    "author": "Anderson",
+    "title": "Correção: Ignorar commits que alteram apenas arquivos system_changelog",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "ignorar commits que alteram apenas arquivos system_changelog",
+    "description": "Commit registrado no repositório: \"fix(changelog): ignorar commits que alteram apenas arquivos system_changelog\". Arquivos modificados: backend/services/changelogSyncService.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a1c35e29"
+    },
+    "after": {
+      "nova_versao": "ignorar commits que alteram apenas arquivos system_changelog"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/services/changelogSyncService.js"
+    ]
+  },
+  {
     "id": "change-git-45ee8a75",
     "date": "2026-11-12T01:10:39.000Z",
     "commit": "45ee8a75",
