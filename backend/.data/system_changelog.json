@@ -1,5 +1,29 @@
 [
   {
+    "id": "change-git-4d29318f",
+    "date": "2026-11-12T01:40:10.000Z",
+    "commit": "4d29318f",
+    "author": "Anderson",
+    "title": "Correção: Evitar redirecionamento mutuo no mesmo lote e preservar topico com comentarios (forum-mediator)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "evitar redirecionamento mutuo no mesmo lote e preservar topico com comentarios",
+    "description": "Commit registrado no repositório: \"fix(forum-mediator): evitar redirecionamento mutuo no mesmo lote e preservar topico com comentarios\". Arquivos modificados: backend/services/forumMediatorService.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4d29318f"
+    },
+    "after": {
+      "nova_versao": "evitar redirecionamento mutuo no mesmo lote e preservar topico com comentarios"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/services/forumMediatorService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-a7d6bff4",
     "date": "2026-11-12T01:33:04.000Z",
     "commit": "a7d6bff4",
