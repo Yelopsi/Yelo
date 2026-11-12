@@ -1,5 +1,61 @@
 [
   {
+    "id": "change-git-a7d6bff4",
+    "date": "2026-11-12T01:33:04.000Z",
+    "commit": "a7d6bff4",
+    "author": "Anderson",
+    "title": "Novo: Permitir fixar e desfixar posts exclusivamente para pix@yelopsi.com.br (forum)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "permitir fixar e desfixar posts exclusivamente para pix@yelopsi.com.br",
+    "description": "Commit registrado no repositório: \"feat(forum): permitir fixar e desfixar posts exclusivamente para pix@yelopsi.com.br\". Arquivos modificados: backend/controllers/forumController.js, backend/routes/forumRoutes.js, mobile/src/app/(tabs)/forum.tsx, public/css/forum-community.css, public/css/psi_dashboard.css (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a7d6bff4"
+    },
+    "after": {
+      "nova_versao": "permitir fixar e desfixar posts exclusivamente para pix@yelopsi.com.br"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/forumController.js",
+      "backend/routes/forumRoutes.js",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "public/css/forum-community.css",
+      "public/css/psi_dashboard.css",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_forum.html",
+      "public/psi/psi_forum.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-5675864a",
+    "date": "2026-11-12T01:23:15.000Z",
+    "commit": "5675864a",
+    "author": "Anderson",
+    "title": "Correção: Leitura dinamica de env em GoogleAdsService e MetaAdsService para priorizar variaveis do Render",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "leitura dinamica de env em GoogleAdsService e MetaAdsService para priorizar variaveis do Render",
+    "description": "Commit registrado no repositório: \"fix(ads): leitura dinamica de env em GoogleAdsService e MetaAdsService para priorizar variaveis do Render\". Arquivos modificados: backend/services/googleAdsService.js, backend/services/metaAdsService.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5675864a"
+    },
+    "after": {
+      "nova_versao": "leitura dinamica de env em GoogleAdsService e MetaAdsService para priorizar variaveis do Render"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/services/googleAdsService.js",
+      "backend/services/metaAdsService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-8d7827b3",
     "date": "2026-11-12T01:20:14.000Z",
     "commit": "8d7827b3",
