@@ -1284,11 +1284,9 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             const urlParams = new URLSearchParams(window.location.search);
             const intentPost = localStorage.getItem('yelo_intent_post');
-            if (urlParams.has('cupom') && urlParams.get('cupom').trim()) {
-                localStorage.setItem('yelo_promo_coupon', urlParams.get('cupom').trim().toUpperCase());
-            }
+            localStorage.removeItem('yelo_promo_coupon');
 
-            if (urlParams.has('status')) {
+            if (urlParams.has('status') || urlParams.get('bf') === '1') {
                 loadPage('psi_assinatura.html');
                 if (urlParams.get('status') === 'approved') {
                     showToast('Pagamento Aprovado!', 'success');

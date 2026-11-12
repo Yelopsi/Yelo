@@ -18,7 +18,25 @@ const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim
 
 const { v4: uuidv4 } = require('uuid');
 
-// 0. VALIDA CUPOM PROMOCIONAL ANTES DO CHECKOUT
+// 0. VERIFICA ELEGIBILIDADE DE OFERTA PROMOCIONAL VINCULADA AO E-MAIL DO PROFISSIONAL
+exports.getPromoEligibility = async (req, res) => {
+    try {
+        const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
+        if (!psychologist) return res.status(404).json({ eligible: false, error: 'Psicólogo não encontrado.' });
+
+        const rawPlan = String(req.query.planType || 'ESSENTIAL').toUpperCase();
+        const isIosFee = req.query.isIos === 'true' || req.query.platform === 'ios' || rawPlan === 'ESSENTIAL_IOS';
+        const normalizedPlan = (rawPlan === 'ESSENTIAL_IOS' || rawPlan === 'ESSENCIAL') ? 'ESSENTIAL' : rawPlan;
+
+        const result = await promoCouponService.getActiveOfferForPsychologist(psychologist, normalizedPlan, { isIosFee });
+        return res.json(result);
+    } catch (error) {
+        console.error('[PROMO] Erro ao verificar elegibilidade por e-mail:', error);
+        return res.status(500).json({ eligible: false, error: 'Não foi possível verificar condições especiais no momento.' });
+    }
+};
+
+// 0.1 VALIDA CUPOM INTERNO (VIP_COUPON)
 exports.validateCoupon = async (req, res) => {
     try {
         const { cupom, planType, isIos, platform } = req.body || {};
@@ -135,7 +153,8 @@ exports.createPreference = async (req, res) => {
             throw e;
         }
 
-        // Lógica de Cupons (VIP e Campanhas Promocionais como Black Friday BLACK2X1)
+        // 1) Cupom VIP interno (apenas se fornecido explicitamente)
+        // 2) Condicao promocional Black Friday vinculada exclusivamente ao e-mail convidado (sem cupom)
         let activePromoCoupon = null;
         if (cupom && String(cupom).trim() !== '') {
             const couponResult = await promoCouponService.validateCouponForPsychologist(cupom, localPsychologist, normalizedPlan, { isIosFee });
@@ -151,10 +170,14 @@ exports.createPreference = async (req, res) => {
                       cancelAtPeriodEnd: false,
                       subscriptionId: null
                   });
-                await intent.update({ status: 'CANCELED' }); // Cancela a intenção pois usou cupom
+                await intent.update({ status: 'CANCELED' }); // Cancela a intenção pois usou cupom VIP
                 return res.json({ couponSuccess: true, message: 'Cupom VIP aplicado!' });
             }
-            activePromoCoupon = couponResult;
+        }
+
+        const emailOffer = await promoCouponService.getActiveOfferForPsychologist(localPsychologist, normalizedPlan, { isIosFee });
+        if (emailOffer && emailOffer.eligible) {
+            activePromoCoupon = emailOffer;
         }
 
         // Validação de dados do titular e do cartão (Apenas se não for PIX)
@@ -495,11 +518,13 @@ exports.createPreference = async (req, res) => {
             }
 
             if (activePromoCoupon && db.SystemLog) {
+                const emailLower = promoCouponService.normalizeEmail(localPsychologist.email);
                 await db.SystemLog.create({
                     level: 'info',
-                    message: `[PROMO_SUB_PENDING] ${activePromoCoupon.code} | sub:${subscriptionData.id} | psi:${psychologistId}`,
+                    message: `[PROMO_SUB_PENDING] ${activePromoCoupon.code} | sub:${subscriptionData.id} | psi:${psychologistId} | email:${emailLower}`,
                     meta: {
-                        coupon: activePromoCoupon.code,
+                        offerCode: activePromoCoupon.code,
+                        email: emailLower,
                         subscriptionId: subscriptionData.id,
                         psychologistId,
                         totalMonths: activePromoCoupon.totalMonths,

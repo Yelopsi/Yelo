@@ -45,8 +45,7 @@ class GoogleAdsService {
         }
     }
 
-    async queryGoogleAds(query, accessToken) {
-        const customerIdRaw = this.customerId.replace(/-/g, '');
+    _buildHeaders(accessToken) {
         const headers = {
             'Authorization': `Bearer ${accessToken}`
         };
@@ -56,6 +55,12 @@ class GoogleAdsService {
         if (process.env.GOOGLE_LOGIN_CUSTOMER_ID) {
             headers['login-customer-id'] = process.env.GOOGLE_LOGIN_CUSTOMER_ID.replace(/-/g, '');
         }
+        return headers;
+    }
+
+    async queryGoogleAds(query, accessToken) {
+        const customerIdRaw = this.customerId.replace(/-/g, '');
+        const headers = this._buildHeaders(accessToken);
 
         const response = await axios.post(
             `https://googleads.googleapis.com/v25/customers/${customerIdRaw}/googleAds:search`,
@@ -189,6 +194,157 @@ class GoogleAdsService {
             const err = new Error(`[ERRO GOOGLE] ${cleanMsg}`);
             err.code = 'GOOGLE_ADS_API_ERROR';
             throw err;
+        }
+    }
+
+    /**
+     * Retorna detalhes da campanha ativa incluindo resource_name do budget e impression share perdido por orçamento.
+     */
+    async getActiveCampaignDetails(dateStart, dateEnd) {
+        if (!this.isConfigured()) {
+            const err = new Error('GOOGLE_ADS_CONFIGURATION_MISSING');
+            err.code = 'GOOGLE_ADS_CONFIGURATION_MISSING';
+            throw err;
+        }
+
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) {
+            const err = new Error('Sem Access Token');
+            err.code = 'GOOGLE_ADS_AUTH_FAILED';
+            throw err;
+        }
+
+        const dateClause = (dateStart && dateEnd)
+            ? `AND segments.date >= '${dateStart}' AND segments.date <= '${dateEnd}'`
+            : 'AND segments.date DURING LAST_7_DAYS';
+
+        const query = `
+            SELECT
+                campaign.id,
+                campaign.name,
+                campaign.status,
+                campaign_budget.resource_name,
+                campaign_budget.amount_micros,
+                metrics.cost_micros,
+                metrics.impressions,
+                metrics.clicks,
+                metrics.conversions,
+                metrics.search_impression_share,
+                metrics.search_budget_lost_impression_share,
+                metrics.search_rank_lost_impression_share
+            FROM campaign
+            WHERE campaign.status = 'ENABLED' ${dateClause}
+            ORDER BY metrics.cost_micros DESC
+        `;
+
+        const result = await this.queryGoogleAds(query, accessToken);
+        const rows = result.results || [];
+        return rows.map(row => ({
+            id: String(row.campaign?.id || ''),
+            campaign_name: row.campaign?.name || '',
+            status: row.campaign?.status || 'UNKNOWN',
+            budgetResourceName: row.campaignBudget?.resourceName || null,
+            dailyBudgetReais: Number(((Number(row.campaignBudget?.amountMicros || 0)) / 1000000).toFixed(2)),
+            spend: Number(((Number(row.metrics?.costMicros || 0)) / 1000000).toFixed(2)),
+            impressions: Number(row.metrics?.impressions || 0),
+            clicks: Number(row.metrics?.clicks || 0),
+            conversions: Number(row.metrics?.conversions || 0),
+            searchImpressionShare: Number(row.metrics?.searchImpressionShare || 0),
+            searchBudgetLostImpressionShare: Number(row.metrics?.searchBudgetLostImpressionShare || 0),
+            searchRankLostImpressionShare: Number(row.metrics?.searchRankLostImpressionShare || 0)
+        }));
+    }
+
+    /**
+     * Atualiza o orçamento diário da campanha Google Ads dentro dos limites seguros [R$ 90, R$ 200].
+     * @param {number} newBudgetReais Valor diário desejado em R$
+     * @param {Object} options { validateOnly, dryRun, budgetResourceName, minBudgetReais, maxBudgetReais }
+     */
+    async updateCampaignDailyBudget(newBudgetReais, options = {}) {
+        const minBudget = Number.isFinite(Number(options.minBudgetReais)) ? Number(options.minBudgetReais) : 90;
+        const maxBudget = Number.isFinite(Number(options.maxBudgetReais)) ? Number(options.maxBudgetReais) : 200;
+        const numericTarget = Number(newBudgetReais);
+        if (!Number.isFinite(numericTarget)) {
+            return { success: false, reason: 'INVALID_BUDGET', message: 'Valor de orçamento inválido.' };
+        }
+
+        const clampedReais = Math.round(Math.min(maxBudget, Math.max(minBudget, numericTarget)) * 100) / 100;
+        const amountMicros = String(Math.round(clampedReais * 1000000));
+        const validateOnly = Boolean(options.validateOnly || options.dryRun);
+
+        if (!this.isConfigured()) {
+            return {
+                success: false,
+                reason: 'GOOGLE_ADS_CONFIGURATION_MISSING',
+                clampedReais,
+                validateOnly
+            };
+        }
+
+        try {
+            const accessToken = await this.getAccessToken();
+            if (!accessToken) {
+                return { success: false, reason: 'GOOGLE_ADS_AUTH_FAILED', clampedReais, validateOnly };
+            }
+
+            let budgetResourceName = options.budgetResourceName || process.env.GOOGLE_CAMPAIGN_BUDGET_RESOURCE || null;
+            let previousBudgetReais = null;
+
+            if (!budgetResourceName) {
+                const details = await this.getActiveCampaignDetails();
+                const primary = details[0];
+                if (!primary || !primary.budgetResourceName) {
+                    return { success: false, reason: 'NO_ENABLED_CAMPAIGN_BUDGET', clampedReais, validateOnly };
+                }
+                budgetResourceName = primary.budgetResourceName;
+                previousBudgetReais = primary.dailyBudgetReais;
+            }
+
+            const customerIdRaw = this.customerId.replace(/-/g, '');
+            const headers = this._buildHeaders(accessToken);
+
+            const payload = {
+                operations: [
+                    {
+                        updateMask: 'amountMicros',
+                        update: {
+                            resourceName: budgetResourceName,
+                            amountMicros
+                        }
+                    }
+                ],
+                validateOnly
+            };
+
+            const response = await axios.post(
+                `https://googleads.googleapis.com/v25/customers/${customerIdRaw}/campaignBudgets:mutate`,
+                payload,
+                { headers }
+            );
+
+            if (!validateOnly) {
+                this.cache.clear();
+            }
+
+            return {
+                success: true,
+                validateOnly,
+                budgetResourceName,
+                previousBudgetReais,
+                appliedBudgetReais: clampedReais,
+                amountMicros,
+                apiResponse: response.data || {}
+            };
+        } catch (error) {
+            const detail = error.response?.data?.error?.message || error.response?.data?.[0]?.error?.message || error.message;
+            console.error('[GoogleAdsService] Falha em updateCampaignDailyBudget:', detail);
+            return {
+                success: false,
+                validateOnly,
+                clampedReais,
+                reason: 'GOOGLE_ADS_MUTATE_FAILED',
+                error: detail
+            };
         }
     }
 

@@ -2,24 +2,25 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const db = require('../models');
-const { Op } = require('sequelize');
 const emailService = require('../services/emailService');
+const promoCouponService = require('../services/promoCouponService');
+const blackFridayGrowthService = require('../services/blackFridayGrowthService');
 
 /**
- * Script de Campanha Black Friday (2 meses por R$ 99 - Cupom BLACK2X1) em etapas.
+ * Script de Campanha Black Friday (2 meses por R$ 99 vinculados ao e-mail, sem cupom) + Escala Inteligente de Tráfego.
  *
  * Modos de uso:
- *   1) Preview para o fundador (não toca em usuários reais):
+ *   1) Preview atualizado (sem cupom) para o fundador:
  *      node backend/scripts/sendBlackFridayCampaign.js --preview-email=andehrson@gmail.com
  *
- *   2) Simulação por ondas (Dry-run - apenas conta e lista resumo):
+ *   2) Simulação do motor adaptativo (lê base + Google Ads, calcula tamanho de lote & teto R$ 200 sem mutar nada):
+ *      node backend/scripts/sendBlackFridayCampaign.js --auto-step --dry-run
+ *
+ *   3) Simulação da fila completa segmentada:
  *      node backend/scripts/sendBlackFridayCampaign.js --dry-run
  *
- *   3) Disparo real controlado por onda (requer --send explícito):
- *      node backend/scripts/sendBlackFridayCampaign.js --wave=1 --limit=65 --send
- *      node backend/scripts/sendBlackFridayCampaign.js --wave=2 --limit=80 --send
- *      node backend/scripts/sendBlackFridayCampaign.js --wave=3 --limit=50 --send
- *      node backend/scripts/sendBlackFridayCampaign.js --wave=4 --limit=100 --send
+ *   4) Execução real do motor adaptativo (libera convites por e-mail + envia micro-lote + ajusta Google Ads se justificável):
+ *      node backend/scripts/sendBlackFridayCampaign.js --auto-step --send --apply-ads-budget --pause-meta
  */
 
 function parseArgs(argv) {
@@ -33,36 +34,8 @@ function parseArgs(argv) {
     return args;
 }
 
-function classifyExpiredCandidate(psi) {
-    const wasPayer = Boolean(
-        Number(psi.subscription_payments_count || 0) > 0 ||
-        psi.subscriptionId ||
-        psi.firstPaidAt ||
-        Number(psi.lifetimeRevenue || 0) > 0
-    );
-    const hasPhoto = Boolean(psi.fotoUrl && String(psi.fotoUrl).trim() !== '' && !String(psi.fotoUrl).includes('placehold.co'));
-    const hasBio = Boolean(psi.bio && String(psi.bio).trim().length >= 10);
-    const hasCpf = Boolean(psi.cpf && String(psi.cpf).trim() !== '');
-    const matchReady = hasPhoto && hasBio && hasCpf;
-    const clicks = parseInt(psi.whatsapp_clicks || 0, 10);
-
-    if (wasPayer) {
-        return { wave: 1, variant: 'ex_payer', priority: 1, matchReady, clicks };
-    }
-    if (matchReady && clicks >= 2) {
-        return { wave: 1, variant: 'trial_with_clicks', priority: 2, matchReady, clicks };
-    }
-    if (matchReady && clicks === 1) {
-        return { wave: 2, variant: 'trial_with_clicks', priority: 3, matchReady, clicks };
-    }
-    if (matchReady && clicks === 0) {
-        return { wave: 3, variant: 'trial_no_clicks', priority: 4, matchReady, clicks };
-    }
-    return { wave: 0, variant: null, priority: 99, matchReady, clicks };
-}
-
 async function sendPreviewBatch(targetEmail) {
-    console.log(`📧 Enviando 4 e-mails de preview (um de cada caso) para: ${targetEmail}...`);
+    console.log(`📧 Enviando 4 e-mails de preview (sem cupom — vinculados ao e-mail) para: ${targetEmail}...`);
 
     const cases = [
         {
@@ -91,93 +64,11 @@ async function sendPreviewBatch(targetEmail) {
         await emailService.sendBlackFridayEmail(c.user, c.variant, {
             recipientEmailOverride: targetEmail,
             subjectPrefix: c.prefix,
-            couponCode: 'BLACK2X1',
             deadlineLabel: '30/11'
         });
         console.log(`   ✅ Enviado: ${c.prefix}`);
     }
-    console.log('🏁 Todos os 4 previews foram enviados com sucesso!');
-}
-
-async function getEligibleCandidates(waveFilter = null) {
-    const now = new Date();
-
-    const rawExpired = await db.Psychologist.findAll({
-        where: {
-            deletedAt: null,
-            isAdmin: { [Op.or]: [false, null] },
-            is_exempt: { [Op.or]: [false, null] },
-            email: { [Op.ne]: null },
-            status: { [Op.ne]: 'content_creator' },
-            [Op.or]: [
-                { status: { [Op.in]: ['inactive', 'vencido'] } },
-                {
-                    status: { [Op.in]: ['active', 'trial'] },
-                    planExpiresAt: { [Op.lte]: now }
-                }
-            ]
-        },
-        attributes: [
-            'id', 'nome', 'email', 'status', 'planExpiresAt', 'subscriptionId',
-            'subscription_payments_count', 'firstPaidAt', 'lifetimeRevenue',
-            'fotoUrl', 'bio', 'cpf', 'whatsapp_clicks', 'valor_sessao_numero'
-        ]
-    });
-
-    // Respeita opt-outs em NewsletterSubscriptions
-    const unsubRows = db.NewsletterSubscription
-        ? await db.NewsletterSubscription.findAll({ where: { status: 'unsubscribed' }, attributes: ['email'] }).catch(() => [])
-        : [];
-    const unsubSet = new Set(unsubRows.map((u) => String(u.email || '').trim().toLowerCase()));
-
-    // Evita reenviar a mesma etapa usando SystemLog
-    const sentLogs = db.SystemLog
-        ? await db.SystemLog.findAll({
-              where: { message: { [Op.like]: '[BF2026_SENT]%' } },
-              attributes: ['message']
-          }).catch(() => [])
-        : [];
-    const sentInitialSet = new Set();
-    const sentLastCallSet = new Set();
-    for (const log of sentLogs) {
-        const msg = String(log.message || '');
-        const match = msg.match(/psi:(\d+)/);
-        if (!match) continue;
-        if (msg.includes('wave:4')) sentLastCallSet.add(match[1]);
-        else sentInitialSet.add(match[1]);
-    }
-
-    const candidates = [];
-    for (const psi of rawExpired) {
-        const emailClean = String(psi.email || '').trim().toLowerCase();
-        if (!emailClean || unsubSet.has(emailClean)) continue;
-
-        const cls = classifyExpiredCandidate(psi);
-        if (cls.wave === 0) continue; // Perfis incompletos não entram na oferta paga
-
-        const pidStr = String(psi.id);
-        if (Number(waveFilter) === 4) {
-            if (sentLastCallSet.has(pidStr)) continue;
-            candidates.push({ psi, wave: 4, variant: 'bf_last_call', priority: cls.priority, matchReady: cls.matchReady });
-        } else {
-            if (sentInitialSet.has(pidStr)) continue;
-            if (waveFilter && cls.wave !== Number(waveFilter)) continue;
-            candidates.push({ psi, ...cls });
-        }
-    }
-
-    // Prioriza quem cobra até R$ 120/sessão dentro da mesma prioridade (maior aderência à demanda do Match)
-    candidates.sort((a, b) => {
-        if (a.priority !== b.priority) return a.priority - b.priority;
-        const priceA = Number(a.psi.valor_sessao_numero || 999);
-        const priceB = Number(b.psi.valor_sessao_numero || 999);
-        const affordableA = priceA <= 120 ? 0 : 1;
-        const affordableB = priceB <= 120 ? 0 : 1;
-        if (affordableA !== affordableB) return affordableA - affordableB;
-        return (b.psi.whatsapp_clicks || 0) - (a.psi.whatsapp_clicks || 0);
-    });
-
-    return candidates;
+    console.log('🏁 Todos os 4 previews atualizados (sem cupom) foram enviados com sucesso!');
 }
 
 async function run() {
@@ -189,28 +80,55 @@ async function run() {
             process.exit(0);
         }
 
+        if (args['auto-step']) {
+            const isLiveRun = Boolean(args.send && !args['dry-run']);
+            const res = await blackFridayGrowthService.runAdaptiveStep({
+                dryRun: !isLiveRun,
+                applyGoogleBudget: Boolean(args['apply-ads-budget']),
+                sendEmails: Boolean(args.send || args['dry-run']),
+                pauseMetaAds: Boolean(args['pause-meta']),
+                limit: args.limit ? Number(args.limit) : null
+            });
+
+            console.log('\n📊 Snapshot de Demanda & Capacidade (Orgânico + Google Ads):');
+            console.table([res.snapshot]);
+            console.log('\n🧠 Métricas Calculadas:');
+            console.table([res.decision.metrics]);
+            console.log('\n📈 Decisão Google Ads (Máx R$ 200/dia se justificável):');
+            console.log(JSON.stringify(res.decision.googleAdsDecision, null, 2));
+            console.log('\n📬 Decisão Disparo Adaptativo de E-mails:');
+            console.log(JSON.stringify(res.decision.emailDecision, null, 2));
+            console.log(`\n👥 Lote planejado (${res.plannedBatchPreview.length} perfis):`);
+            if (res.plannedBatchPreview.length > 0) {
+                console.table(res.plannedBatchPreview.slice(0, 15));
+            }
+            console.log('\n⚙️ Actions Log:');
+            console.log(JSON.stringify(res.actionsLog, null, 2));
+            process.exit(0);
+        }
+
         const waveFilter = args.wave ? Number(args.wave) : null;
-        const limit = args.limit ? Number(args.limit) : 50;
-        const candidates = await getEligibleCandidates(waveFilter);
+        const limit = args.limit ? Number(args.limit) : 20;
+        const { queue: candidates } = await blackFridayGrowthService.getOrderedEligibleRecipients(db, { waveFilter });
 
         const summary = {
-            wave1_ex_payer: candidates.filter((c) => c.wave === 1 && c.variant === 'ex_payer').length,
-            wave1_trial_hot_2plus: candidates.filter((c) => c.wave === 1 && c.variant === 'trial_with_clicks').length,
-            wave2_trial_warm_1click: candidates.filter((c) => c.wave === 2).length,
-            wave3_trial_cold_ready: candidates.filter((c) => c.wave === 3).length,
+            wave1_ex_payer: candidates.filter((c) => c.waveKey === 'wave1_ex_payer').length,
+            wave1_trial_hot_2plus: candidates.filter((c) => c.waveKey === 'wave1_trial_hot_2plus').length,
+            wave2_trial_warm_1click: candidates.filter((c) => c.waveKey === 'wave2_trial_warm_1click').length,
+            wave3_trial_cold_ready: candidates.filter((c) => c.waveKey === 'wave3_trial_cold_ready').length,
             total_eligible: candidates.length
         };
 
-        console.log('📊 Resumo de Elegíveis (Black Friday 2026 - BLACK2X1):');
+        console.log('📊 Resumo de Elegíveis (Black Friday 2026 - Vinculado ao E-mail, Sem Cupom):');
         console.table([summary]);
 
         if (!args.send || args['dry-run']) {
-            console.log('ℹ️ Modo simulação (--dry-run). Nenhum e-mail real foi enviado.');
+            console.log('ℹ️ Modo simulação (--dry-run). Nenhum e-mail real foi enviado nem oferta liberada.');
             process.exit(0);
         }
 
         if (!waveFilter || ![1, 2, 3, 4].includes(waveFilter)) {
-            console.error('❌ Para disparar de verdade, informe --wave=1|2|3|4 junto com --send.');
+            console.error('❌ Para disparar por onda manual, informe --wave=1|2|3|4 junto com --send (ou use --auto-step).');
             process.exit(1);
         }
 
@@ -220,19 +138,22 @@ async function run() {
         let sentCount = 0;
         for (const item of batch) {
             try {
+                await promoCouponService.grantBlackFridayOffer(item.psi, {
+                    db,
+                    wave: `wave:${item.wave}`
+                });
                 await emailService.sendBlackFridayEmail(item.psi, item.variant, {
-                    couponCode: 'BLACK2X1',
                     deadlineLabel: '30/11'
                 });
                 if (db.SystemLog) {
+                    const emailLower = promoCouponService.normalizeEmail(item.psi.email);
                     await db.SystemLog.create({
                         level: 'info',
-                        message: `[BF2026_SENT] wave:${item.wave} | variant:${item.variant} | psi:${item.psi.id}`,
-                        meta: { psychologistId: item.psi.id, email: item.psi.email, wave: item.wave, variant: item.variant }
+                        message: `[BF2026_SENT] wave:${item.wave} | variant:${item.variant} | psi:${item.psi.id} | email:${emailLower}`,
+                        meta: { psychologistId: item.psi.id, email: emailLower, wave: item.wave, variant: item.variant }
                     }).catch(() => {});
                 }
                 sentCount++;
-                // Pequeno intervalo para preservar reputação SMTP
                 await new Promise((r) => setTimeout(r, 350));
             } catch (err) {
                 console.error(`❌ Falha ao enviar para psi ${item.psi.id} (${item.psi.email}):`, err.message);

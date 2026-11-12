@@ -1031,20 +1031,20 @@ exports.sendForumReplyEmail = async (targetUser, senderName, commentContent, pos
 };
 
 /**
- * E-mails humanizados e mercadológicos para a Campanha de Recuperação (Black Friday: 2 meses por R$ 99)
+ * E-mails humanizados e mercadológicos para a Campanha de Recuperação (Black Friday: 2 meses por R$ 99, vinculada ao e-mail)
  * @param {Object} user Objeto do psicólogo ({ nome, email, whatsapp_clicks })
  * @param {'ex_payer'|'trial_with_clicks'|'trial_no_clicks'|'bf_last_call'} variant Caso do destinatário
- * @param {Object} options { recipientEmailOverride, subjectPrefix, couponCode, deadlineLabel }
+ * @param {Object} options { recipientEmailOverride, subjectPrefix, deadlineLabel }
  */
 exports.sendBlackFridayEmail = async (user, variant = 'ex_payer', options = {}) => {
     const frontendUrl = process.env.FRONTEND_URL || 'https://www.yelopsi.com.br';
     const psiName = getPsiFirstName(user);
-    const couponCode = options.couponCode || 'BLACK2X1';
+    const accountEmail = String(user?.email || options.recipientEmailOverride || '').trim().toLowerCase();
     const deadlineLabel = options.deadlineLabel || '30/11';
     const clicks = parseInt(user?.whatsapp_clicks || 0, 10);
     const toEmail = options.recipientEmailOverride || user.email;
     const prefix = options.subjectPrefix ? `${options.subjectPrefix} ` : '';
-    const ctaUrl = `${frontendUrl}/login?email=${encodeURIComponent(user.email || toEmail || '')}&cupom=${encodeURIComponent(couponCode)}`;
+    const ctaUrl = `${frontendUrl}/login?email=${encodeURIComponent(accountEmail)}&bf=1`;
 
     let subject = '';
     let title = '';
@@ -1116,7 +1116,7 @@ exports.sendBlackFridayEmail = async (user, variant = 'ex_payer', options = {}) 
         `;
         whyNowHtml = `
             <p style="margin: 0; font-size: 14px; color: #4A5568; line-height: 1.65;">
-                Seu perfil continua salvo esperando por você. Basta clicar abaixo que o seu benefício já estará pré-aplicado — a próxima renovação acontece só daqui a 60 dias (e você pode cancelar quando quiser, sem fidelidade).
+                Seu perfil continua salvo esperando por você. Basta clicar abaixo e entrar com o seu e-mail cadastrado que a condição especial já estará liberada — a próxima renovação acontece só daqui a 60 dias (e você pode cancelar quando quiser, sem fidelidade).
             </p>
         `;
     }
@@ -1131,12 +1131,14 @@ exports.sendBlackFridayEmail = async (user, variant = 'ex_payer', options = {}) 
             <h2 style="margin: 0 0 6px 0; color: #FFFFFF !important; font-family: Georgia, serif; font-size: 22px;">
                 2 meses pelo preço de 1: R$ 99,00
             </h2>
-            <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.9) !important; font-size: 14px !important; line-height: 1.5 !important;">
+            <p style="margin: 0 0 14px 0; color: rgba(255,255,255,0.9) !important; font-size: 14px !important; line-height: 1.5 !important;">
                 Você ativa hoje por R$ 99,00 e garante <strong>60 dias completos</strong> no Plano Essencial.<br>
                 Após os 2 meses, a renovação segue no valor normal de R$ 99/mês (cancele quando quiser).
             </p>
-            <div style="display: inline-block; background: rgba(255,255,255,0.12); border: 1px dashed #FFEE8C; padding: 8px 18px; border-radius: 10px; font-size: 13px; color: #FFEE8C; font-weight: 700; letter-spacing: 1px;">
-                CUPOM APLICADO NO LINK: ${couponCode}
+            <div style="display: inline-block; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,238,140,0.65); padding: 10px 18px; border-radius: 12px; font-size: 13px; color: #FFEE8C; font-weight: 700; line-height: 1.45;">
+                BENEFÍCIO LIBERADO AUTOMATICAMENTE PARA:<br>
+                <span style="color: #FFFFFF; font-size: 14px;">${accountEmail}</span><br>
+                <span style="color: rgba(255,255,255,0.85); font-weight: 400; font-size: 12px;">Sem necessidade de código ou cupom — exclusivo para este e-mail.</span>
             </div>
         </div>
 
@@ -1147,7 +1149,7 @@ exports.sendBlackFridayEmail = async (user, variant = 'ex_payer', options = {}) 
         ${emailCtaBtn(ctaUrl, 'Reativar por R$ 99 (2 meses)')}
 
         <p style="font-size: 12px !important; color: #718096 !important; text-align: center; margin-top: 8px !important;">
-            Condição válida até <strong>${deadlineLabel}</strong> exclusivamente para perfis inativos/expirados. Zero comissão por atendimento.
+            Condição pessoal, intransferível e válida até <strong>${deadlineLabel}</strong> exclusivamente para o e-mail ${accountEmail}. Zero comissão por atendimento.
         </p>
     `;
 

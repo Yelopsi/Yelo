@@ -288,14 +288,9 @@
             <!-- TELA 1: SELEÇÃO DE MÉTODO -->
             <div id="step-payment-method" style="display: block;">
                 
-                <!-- ÁREA DE CUPOM PROMOCIONAL -->
-                <div id="cupom-area" style="margin-bottom: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 14px;">
-                    <label for="modal-cupom-input" style="display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 6px;">Cupom Promocional (opcional)</label>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="text" id="modal-cupom-input" placeholder="Ex: BLACK2X1" style="flex: 1; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; text-transform: uppercase; background: #fff; color: #0f172a; box-sizing: border-box;">
-                        <button type="button" id="btn-aplicar-cupom-modal" style="padding: 9px 16px; background: #1B4332; color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">Aplicar</button>
-                    </div>
-                    <div id="modal-cupom-feedback" style="display: none; margin-top: 8px; font-size: 0.82rem; line-height: 1.4; border-radius: 8px; padding: 8px 10px;"></div>
+                <!-- BANNER AUTOMÁTICO DE CONDIÇÃO EXCLUSIVA POR E-MAIL (SEM CUPOM) -->
+                <div id="modal-promo-auto-banner" style="display: none; margin-bottom: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 12px 14px; color: #166534; font-size: 0.84rem; line-height: 1.45;">
+                    ✅ <strong>Condição Exclusiva Ativa:</strong> 2 meses por R$ 99,00 liberado automaticamente para <strong id="modal-promo-email"></strong>.
                 </div>
 
                 <button type="button" id="btn-select-card" style="width: 100%; padding: 18px 20px; margin-bottom: 15px; border: 1px solid #e0e0e0; border-radius: 16px; background: #fff; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">

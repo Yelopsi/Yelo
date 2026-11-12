@@ -210,6 +210,62 @@ class MetaAdsService {
         }
     }
 
+    async getCampaignStatus(campaignId = null) {
+        const targetId = campaignId || process.env.META_CAMPAIGN_ID || '120251213168140531';
+        if (!this.accessToken || this.accessToken === 'MOCK_META_TOKEN') {
+            return { success: false, reason: 'MOCK_TOKEN', campaignId: targetId };
+        }
+        try {
+            const response = await axios.get(`${this.graphApiUrl}/${targetId}`, {
+                params: {
+                    access_token: this.accessToken,
+                    fields: 'id,name,status,effective_status,daily_budget'
+                }
+            });
+            return {
+                success: true,
+                campaignId: response.data?.id || targetId,
+                name: response.data?.name || '',
+                status: response.data?.status || null,
+                effectiveStatus: response.data?.effective_status || null,
+                dailyBudgetReais: response.data?.daily_budget ? parseInt(response.data.daily_budget, 10) / 100 : null
+            };
+        } catch (error) {
+            return {
+                success: false,
+                campaignId: targetId,
+                error: error.response?.data?.error?.message || error.message
+            };
+        }
+    }
+
+    async pauseCampaign(campaignId = null, options = {}) {
+        const targetId = campaignId || process.env.META_CAMPAIGN_ID || '120251213168140531';
+        if (options.dryRun) {
+            return { success: true, dryRun: true, campaignId: targetId, targetStatus: 'PAUSED' };
+        }
+        if (!this.accessToken || this.accessToken === 'MOCK_META_TOKEN') {
+            return { success: false, reason: 'MOCK_TOKEN', campaignId: targetId, message: 'Token Meta Ads não configurado.' };
+        }
+        try {
+            const response = await axios.post(`${this.graphApiUrl}/${targetId}`, {
+                status: 'PAUSED'
+            }, {
+                params: { access_token: this.accessToken }
+            });
+            this.cache.delete('campaignBudgets');
+            return {
+                success: Boolean(response.data?.success),
+                campaignId: targetId,
+                status: 'PAUSED'
+            };
+        } catch (error) {
+            const errorMsg = error.response?.data?.error?.message || error.message;
+            console.error('[MetaAdsService] Falha ao pausar campanha Meta Ads:', errorMsg);
+            return { success: false, campaignId: targetId, error: errorMsg };
+        }
+    }
+
     mockAccountSpend() {
         return {
             spend: 1450.50,

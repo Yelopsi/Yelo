@@ -18,7 +18,8 @@ router.get('/mock-pix-qr', async (req, res) => {
     }
 });
 
-// Rota protegida: Valida cupom promocional (Black Friday, etc.) e cria assinatura no Asaas
+// Rotas protegidas: Verifica elegibilidade de oferta por e-mail, valida cupom VIP interno e cria assinatura no Asaas
+router.get('/promo-eligibility', protect, paymentController.getPromoEligibility);
 router.post('/validate-coupon', protect, paymentController.validateCoupon);
 router.post('/create-preference', protect, paymentController.createPreference);
 

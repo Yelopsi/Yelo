@@ -66,14 +66,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // --- NOVO: PREENCHIMENTO AUTOMÁTICO DE E-MAIL E CUPOM PROMOCIONAL ---
+    // --- PREENCHIMENTO AUTOMÁTICO DE E-MAIL E REDIRECIONAMENTO BLACK FRIDAY ---
     const emailParam = params.get('email');
     if (emailParam && emailInput) {
         emailInput.value = emailParam;
     }
-    const cupomParam = params.get('cupom');
-    if (cupomParam && cupomParam.trim()) {
-        localStorage.setItem('yelo_promo_coupon', cupomParam.trim().toUpperCase());
+    localStorage.removeItem('yelo_promo_coupon');
+    const bfParam = params.get('bf');
+    if (bfParam === '1') {
+        sessionStorage.setItem('yelo_bf_redirect', '1');
     }
 
     if (loginForm) {
@@ -232,8 +233,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Se tiver um redirect na URL (ex: veio do perfil), volta pra lá
                             window.location.href = decodeURIComponent(redirectParam);
                         } else if (finalUserType === 'psychologist') {
-                            const hasPromoCoupon = localStorage.getItem('yelo_promo_coupon');
-                            window.location.href = hasPromoCoupon ? '/psi/psi_dashboard.html?page=psi_assinatura.html' : '/psi/psi_dashboard.html'; 
+                            const hasBfRedirect = sessionStorage.getItem('yelo_bf_redirect') === '1';
+                            sessionStorage.removeItem('yelo_bf_redirect');
+                            window.location.href = hasBfRedirect ? '/psi/psi_dashboard.html?page=psi_assinatura.html' : '/psi/psi_dashboard.html'; 
                         } else {
                             window.location.href = '/patient/patient_dashboard';
                         }

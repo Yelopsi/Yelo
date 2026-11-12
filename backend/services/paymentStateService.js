@@ -669,12 +669,17 @@ class PaymentStateService {
                 return;
             }
 
-            // Detecta se esta fatura pertence a uma assinatura criada com o cupom promocional BLACK2X1 (2 meses por R$ 99)
-            let isPromo2x1 = description.includes('[BLACK2X1]');
+            // Detecta se esta fatura pertence a uma assinatura criada com oferta de reativação vinculada ao e-mail (BF2026_EMAIL)
+            let isPromo2x1 = description.includes('[BF2026_EMAIL]') || description.includes('[BLACK2X1]');
             if (!isPromo2x1 && payment.subscription && db.SystemLog) {
                 const pendingPromoLog = await db.SystemLog.findOne({
                     where: {
-                        message: { [db.Sequelize.Op.like]: `[PROMO_SUB_PENDING] BLACK2X1 | sub:${payment.subscription}%` }
+                        message: {
+                            [db.Sequelize.Op.or]: [
+                                { [db.Sequelize.Op.like]: `[PROMO_SUB_PENDING] BF2026_EMAIL | sub:${payment.subscription}%` },
+                                { [db.Sequelize.Op.like]: `[PROMO_SUB_PENDING] BLACK2X1 | sub:${payment.subscription}%` }
+                            ]
+                        }
                     },
                     transaction: t
                 }).catch(() => null);
@@ -683,13 +688,16 @@ class PaymentStateService {
 
             let shouldGrantPromoBonus = false;
             if (isPromo2x1) {
-                const alreadyConsumed = await db.SystemLog.findOne({
-                    where: {
-                        message: { [db.Sequelize.Op.like]: `[PROMO_CONSUMED] BLACK2X1 | psi:${lockedPsi.id}%` }
-                    },
-                    transaction: t
-                }).catch(() => null);
-                if (!alreadyConsumed) {
+                const alreadyConsumed = await promoCouponService.hasConsumedPromo(
+                    lockedPsi.id,
+                    promoCouponService.BF_OFFER_CODE,
+                    { db, transaction: t }
+                );
+                // Garante defesa em profundidade: o benefício BF2026_EMAIL só é efetivado se existir convite para (psi.id, email)
+                const hasEmailGrant = description.includes('[BLACK2X1]')
+                    ? true
+                    : Boolean(await promoCouponService.findGrantForPsychologist(lockedPsi, { db, transaction: t }));
+                if (!alreadyConsumed && hasEmailGrant) {
                     shouldGrantPromoBonus = true;
                 }
             }
@@ -845,11 +853,13 @@ class PaymentStateService {
             }
 
             if (shouldGrantPromoBonus && db.SystemLog) {
+                const emailLower = promoCouponService.normalizeEmail(lockedPsi.email);
                 await db.SystemLog.create({
                     level: 'info',
-                    message: `[PROMO_CONSUMED] BLACK2X1 | psi:${lockedPsi.id} | sub:${payment.subscription || 'none'}`,
+                    message: `[PROMO_CONSUMED] BF2026_EMAIL | psi:${lockedPsi.id} | email:${emailLower} | sub:${payment.subscription || 'none'}`,
                     meta: {
-                        coupon: 'BLACK2X1',
+                        offerCode: promoCouponService.BF_OFFER_CODE,
+                        email: emailLower,
                         psychologistId: lockedPsi.id,
                         subscriptionId: payment.subscription || null,
                         paymentId: payment.id,
