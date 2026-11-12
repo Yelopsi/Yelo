@@ -2,17 +2,16 @@ const axios = require('axios');
 
 class GoogleAdsService {
     constructor() {
-        // Nível de acesso (Explorer/Basic) depende do GCP Project OAuth vinculado a estas credenciais.
-        // O developer-token é opcional na API moderna (set/2026).
-        this.developerToken = process.env.GOOGLE_DEVELOPER_TOKEN;
-        this.clientId = process.env.GOOGLE_ADS_CLIENT_ID;
-        this.clientSecret = process.env.GOOGLE_ADS_CLIENT_SECRET;
-        this.refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
-        this.customerId = process.env.GOOGLE_CUSTOMER_ID;
-        
         this.cache = new Map();
         this.cacheTTL = 30 * 60 * 1000; // 30 minutos
     }
+
+    // Lê sempre em tempo real do ambiente (Render em produção, .env apenas se não estiver definido no ambiente)
+    get developerToken() { return process.env.GOOGLE_DEVELOPER_TOKEN; }
+    get clientId() { return process.env.GOOGLE_ADS_CLIENT_ID; }
+    get clientSecret() { return process.env.GOOGLE_ADS_CLIENT_SECRET; }
+    get refreshToken() { return process.env.GOOGLE_REFRESH_TOKEN; }
+    get customerId() { return process.env.GOOGLE_CUSTOMER_ID; }
 
     _getCache(key) {
         const item = this.cache.get(key);

@@ -2,12 +2,14 @@ const axios = require('axios');
 
 class MetaAdsService {
     constructor() {
-        this.accessToken = process.env.META_ACCESS_TOKEN || 'MOCK_META_TOKEN';
-        this.adAccountId = process.env.META_AD_ACCOUNT_ID || 'MOCK_ACCOUNT_ID';
         this.graphApiUrl = 'https://graph.facebook.com/v19.0';
         this.cache = new Map();
         this.cacheTTL = 30 * 60 * 1000; // 30 minutos
     }
+
+    // Lê sempre em tempo real do ambiente (Render em produção, .env apenas se não estiver definido no ambiente)
+    get accessToken() { return process.env.META_ACCESS_TOKEN || 'MOCK_META_TOKEN'; }
+    get adAccountId() { return process.env.META_AD_ACCOUNT_ID || 'MOCK_ACCOUNT_ID'; }
 
     _getCache(key) {
         const item = this.cache.get(key);
