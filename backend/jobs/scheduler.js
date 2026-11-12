@@ -130,12 +130,16 @@ async function checkAndExecuteTrafficScalingJobs() {
 
         console.log(`[CRON TRAFFIC] Verificando rotinas de tráfego pago para data: ${brtDateStr}...`);
 
+        const isProdRuntime = process.env.NODE_ENV === 'production';
+        const isMetaPauseEnabled = process.env.AUTO_PAUSE_META_ADS === 'true' || (isProdRuntime && process.env.AUTO_PAUSE_META_ADS !== 'false');
+        const isBlackFridayAutoEnabled = process.env.ENABLE_BLACK_FRIDAY_AUTO === 'true' || (isProdRuntime && process.env.ENABLE_BLACK_FRIDAY_AUTO !== 'false');
+
         // 1. Pausa da campanha Meta Ads B2B (Degraus 2 e 3 desativados permanentemente)
         const existingMetaPause = await db.AdminAdjustment.findOne({
             where: { title: { [db.Sequelize.Op.like]: '%[Meta Ads] Campanha B2B Pausada%' } }
         }).catch(() => null);
 
-        if (!existingMetaPause && process.env.AUTO_PAUSE_META_ADS === 'true') {
+        if (!existingMetaPause && isMetaPauseEnabled) {
             const pauseRes = await metaAdsService.pauseCampaign(null, { dryRun: false });
             if (pauseRes.success) {
                 await db.AdminAdjustment.create({
@@ -167,17 +171,38 @@ async function checkAndExecuteTrafficScalingJobs() {
             }
         }
 
-        // 2. Balanceamento Adaptativo Black Friday + Google Ads (habilitado apenas quando ENABLE_BLACK_FRIDAY_AUTO === 'true')
-        if (process.env.ENABLE_BLACK_FRIDAY_AUTO === 'true') {
-            const stepResult = await blackFridayGrowthService.runAdaptiveStep({
-                dryRun: false,
-                applyGoogleBudget: true,
-                sendEmails: true,
-                pauseMetaAds: false
-            });
-            console.log(
-                `🤖 [CRON BF-GROWTH] Google Ads: ${stepResult.decision.googleAdsDecision.action} (R$ ${stepResult.decision.googleAdsDecision.recommendedBudgetReais}/dia) | E-mails enviados: ${stepResult.actionsLog.emailsDispatched.length}`
-            );
+        // 2. Balanceamento Adaptativo Black Friday + Google Ads (em produção fica ativo por padrão; use ENABLE_BLACK_FRIDAY_AUTO=false para desligar)
+        if (isBlackFridayAutoEnabled) {
+            const bfRunTag = `[BF2026_AUTO_RUN] ${brtDateStr}`;
+            const alreadyRanToday = db.SystemLog
+                ? await db.SystemLog.findOne({ where: { message: bfRunTag } }).catch(() => null)
+                : null;
+
+            if (alreadyRanToday) {
+                console.log(`ℹ️ [CRON BF-GROWTH] Ciclo automático de ${brtDateStr} já executado hoje; aguardando próximo dia.`);
+            } else {
+                const stepResult = await blackFridayGrowthService.runAdaptiveStep({
+                    dryRun: false,
+                    applyGoogleBudget: true,
+                    sendEmails: true,
+                    pauseMetaAds: false
+                });
+                if (db.SystemLog) {
+                    await db.SystemLog.create({
+                        level: 'info',
+                        message: bfRunTag,
+                        meta: {
+                            date: brtDateStr,
+                            googleAdsAction: stepResult.decision.googleAdsDecision.action,
+                            recommendedBudgetReais: stepResult.decision.googleAdsDecision.recommendedBudgetReais,
+                            emailsDispatchedCount: stepResult.actionsLog.emailsDispatched.length
+                        }
+                    }).catch(() => {});
+                }
+                console.log(
+                    `🤖 [CRON BF-GROWTH] Google Ads: ${stepResult.decision.googleAdsDecision.action} (R$ ${stepResult.decision.googleAdsDecision.recommendedBudgetReais}/dia) | E-mails enviados: ${stepResult.actionsLog.emailsDispatched.length}`
+                );
+            }
         }
 
         // 3. Reavaliação Estratégica: 24/11/2026 (Janela de 14 dias)
@@ -221,12 +246,12 @@ setTimeout(() => {
 
 /**
  * Tarefa 9: Mediador IA do Fórum (Assíncrono / Zero Impacto na Latência)
- * Roda a cada 15 minutos revisando novos posts em background quando ENABLE_FORUM_MEDIATOR === 'true'.
+ * Roda a cada 15 minutos revisando novos posts em background (ativo por padrão em produção; use ENABLE_FORUM_MEDIATOR=false para pausar).
  */
 cron.schedule('*/15 * * * *', async () => {
-    if (process.env.ENABLE_FORUM_MEDIATOR !== 'true') return;
+    const forumMediatorService = require('../services/forumMediatorService');
+    if (!forumMediatorService.isForumMediatorEnabled()) return;
     try {
-        const forumMediatorService = require('../services/forumMediatorService');
         const res = await forumMediatorService.runMediatorBatch({ dryRun: false, limit: 10 });
         if (res.evaluatedCount > 0) {
             const acted = res.results.filter(r => r.applied).length;

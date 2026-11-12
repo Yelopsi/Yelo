@@ -636,10 +636,19 @@ async function runMediatorBatch(options = {}) {
 }
 
 /**
+ * Verifica se a mediação automática está habilitada (em produção vem ligada por padrão, podendo ser desligada via =false).
+ */
+function isForumMediatorEnabled() {
+    if (process.env.ENABLE_FORUM_MEDIATOR === 'true') return true;
+    if (process.env.ENABLE_FORUM_MEDIATOR === 'false') return false;
+    return process.env.NODE_ENV === 'production';
+}
+
+/**
  * Agenda avaliação em background após criação do post sem impactar o tempo de resposta HTTP.
  */
 function scheduleBackgroundReview(postId) {
-    if (process.env.ENABLE_FORUM_MEDIATOR !== 'true' || !postId) return;
+    if (!isForumMediatorEnabled() || !postId) return;
     const timer = setTimeout(() => {
         runMediatorBatch({ dryRun: false, postId: Number(postId), limit: 1 })
             .catch(err => console.error(`[ForumMediator] Erro em scheduleBackgroundReview (#${postId}):`, err.message));
@@ -650,6 +659,7 @@ function scheduleBackgroundReview(postId) {
 module.exports = {
     FORUM_CATEGORIES,
     OFFICIAL_INTRO_TOPIC,
+    isForumMediatorEnabled,
     stripHtmlAndCompact,
     normalizeAiDecision,
     analyzePostWithAI,

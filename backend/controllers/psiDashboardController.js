@@ -517,7 +517,7 @@ exports.getAnnouncements = async (req, res) => {
         if (blogPostIds.size > 0 && db.Post) {
             const bPosts = await db.Post.findAll({
                 where: { id: Array.from(blogPostIds) },
-                attributes: ['id', 'psychologistId', 'conteudo', 'resumo']
+                attributes: ['id', 'psychologistId', 'conteudo', 'meta_description']
             });
             bPosts.forEach(bp => activeBlogPostsMap.set(bp.id, bp));
         }
@@ -600,7 +600,7 @@ exports.getAnnouncements = async (req, res) => {
                     const bMatch = contentStr.match(/data-blog-id="(\d+)"/);
                     if (bMatch && bMatch[1]) {
                         const bPost = activeBlogPostsMap.get(parseInt(bMatch[1], 10));
-                        if (bPost) rawBody = bPost.conteudo || bPost.resumo || '';
+                        if (bPost) rawBody = bPost.conteudo || bPost.meta_description || '';
                     }
                 }
                 const cleanBody = String(rawBody || '')
