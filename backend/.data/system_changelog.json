@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-236c2e8b",
+    "date": "2026-11-12T02:29:56.000Z",
+    "commit": "236c2e8b",
+    "author": "Anderson",
+    "title": "Novo: Considerar todos os posts ativos (150), priorizar duplicidades e garantir exibicao redirect/pin (forum-mediator)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "considerar todos os posts ativos (150), priorizar duplicidades e garantir exibicao redirect/pin",
+    "description": "Commit registrado no repositório: \"feat(forum-mediator): considerar todos os posts ativos (150), priorizar duplicidades e garantir exibicao redirect/pin\". Arquivos modificados: backend/scripts/runForumMediator.js, backend/services/forumMediatorService.js, public/psi/psi_dashboard.html, public/psi/psi_forum.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #236c2e8b"
+    },
+    "after": {
+      "nova_versao": "considerar todos os posts ativos (150), priorizar duplicidades e garantir exibicao redirect/pin"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/scripts/runForumMediator.js",
+      "backend/services/forumMediatorService.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_forum.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-97539bfb",
     "date": "2026-11-12T02:10:47.000Z",
     "commit": "97539bfb",
