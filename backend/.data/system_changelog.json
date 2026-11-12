@@ -1,5 +1,209 @@
 [
   {
+    "id": "change-git-2f887665",
+    "date": "2026-11-12T01:03:18.000Z",
+    "commit": "2f887665",
+    "author": "Anderson",
+    "title": "Novo: Helper idempotente para criar e fixar topico oficial de apresentacoes (forum-mediator)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "helper idempotente para criar e fixar topico oficial de apresentacoes",
+    "description": "Commit registrado no repositório: \"feat(forum-mediator): helper idempotente para criar e fixar topico oficial de apresentacoes\". Arquivos modificados: backend/scripts/runForumMediator.js, backend/services/forumMediatorService.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2f887665"
+    },
+    "after": {
+      "nova_versao": "helper idempotente para criar e fixar topico oficial de apresentacoes"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/scripts/runForumMediator.js",
+      "backend/services/forumMediatorService.js",
+      "security/reports/gate_report.json"
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos no Fórum da Comunidade",
+    "psiSummary": "Refinamos o funcionamento do nosso espaço de apresentações para garantir que o tópico oficial esteja sempre disponível e organizado. Com esse ajuste, buscamos facilitar a recepção de novos colegas e tornar a experiência de acolhimento na nossa comunidade ainda mais fluida e intuitiva.",
+    "psiCategory": "Fórum & Comunidade",
+    "impactBadge": "Aprimoramento 🚀",
+    "scheduledMonday": "2026-11-16T15:00:00.000Z",
+    "scheduledFriday": "2026-11-16T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:09:46.304Z"
+  },
+  {
+    "id": "change-git-f125526f",
+    "date": "2026-11-12T00:57:38.000Z",
+    "commit": "f125526f",
+    "author": "Anderson",
+    "title": "Novo: Mediador IA assincrono, trava/redirecionamento, backfill dry-run e cron 15min (forum-mediator)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "mediador IA assincrono, trava/redirecionamento, backfill dry-run e cron 15min",
+    "description": "Commit registrado no repositório: \"feat(forum-mediator): mediador IA assincrono, trava/redirecionamento, backfill dry-run e cron 15min\". Arquivos modificados: backend/controllers/forumController.js, backend/jobs/scheduler.js, backend/models/ForumPost.js, backend/scripts/runForumMediator.js, backend/services/forumMediatorService.js (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #f125526f"
+    },
+    "after": {
+      "nova_versao": "mediador IA assincrono, trava/redirecionamento, backfill dry-run e cron 15min"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/forumController.js",
+      "backend/jobs/scheduler.js",
+      "backend/models/ForumPost.js",
+      "backend/scripts/runForumMediator.js",
+      "backend/services/forumMediatorService.js",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "public/psi/psi_forum.html",
+      "public/psi/psi_forum.js",
+      "security/reports/gate_report.json"
+    ],
+    "psiCurated": true
+  },
+  {
+    "id": "change-git-1a3c5363",
+    "date": "2026-11-12T00:33:49.000Z",
+    "commit": "1a3c5363",
+    "author": "Anderson",
+    "title": "Novo: Oferta vinculada ao e-mail sem cupom, escala google ads (R$ 90-200) e pausa meta ads (black-friday)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "oferta vinculada ao e-mail sem cupom, escala google ads (R$ 90-200) e pausa meta ads",
+    "description": "Commit registrado no repositório: \"feat(black-friday): oferta vinculada ao e-mail sem cupom, escala google ads (R$ 90-200) e pausa meta ads\". Arquivos modificados: backend/controllers/paymentController.js, backend/jobs/scheduler.js, backend/routes/paymentRoutes.js, backend/scripts/sendBlackFridayCampaign.js, backend/services/blackFridayGrowthService.js (+12 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1a3c5363"
+    },
+    "after": {
+      "nova_versao": "oferta vinculada ao e-mail sem cupom, escala google ads (R$ 90-200) e pausa meta ads"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/paymentController.js",
+      "backend/jobs/scheduler.js",
+      "backend/routes/paymentRoutes.js",
+      "backend/scripts/sendBlackFridayCampaign.js",
+      "backend/services/blackFridayGrowthService.js",
+      "backend/services/emailService.js",
+      "backend/services/googleAdsService.js",
+      "backend/services/metaAdsService.js",
+      "backend/services/paymentStateService.js",
+      "backend/services/promoCouponService.js",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "public/js/login.js",
+      "public/psi/psi_assinatura.html",
+      "public/psi/psi_assinatura.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-3f29c201",
+    "date": "2026-11-11T23:35:02.000Z",
+    "commit": "3f29c201",
+    "author": "Anderson",
+    "title": "Novo: Cupom BLACK2X1 (2 meses por R$ 99), validacao checkout web/app e e-mails humanizados (black-friday)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "cupom BLACK2X1 (2 meses por R$ 99), validacao checkout web/app e e-mails humanizados",
+    "description": "Commit registrado no repositório: \"feat(black-friday): cupom BLACK2X1 (2 meses por R$ 99), validacao checkout web/app e e-mails humanizados\". Arquivos modificados: backend/controllers/paymentController.js, backend/routes/paymentRoutes.js, backend/scripts/sendBlackFridayCampaign.js, backend/services/emailService.js, backend/services/paymentStateService.js (+8 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #3f29c201"
+    },
+    "after": {
+      "nova_versao": "cupom BLACK2X1 (2 meses por R$ 99), validacao checkout web/app e e-mails humanizados"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/paymentController.js",
+      "backend/routes/paymentRoutes.js",
+      "backend/scripts/sendBlackFridayCampaign.js",
+      "backend/services/emailService.js",
+      "backend/services/paymentStateService.js",
+      "backend/services/promoCouponService.js",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "public/js/login.js",
+      "public/psi/psi_assinatura.html",
+      "public/psi/psi_assinatura.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-7010cff0",
+    "date": "2026-11-11T23:34:52.000Z",
+    "commit": "7010cff0",
+    "author": "Anderson",
+    "title": "Correção: Trava de 1 artigo por dia, minimo 300 chars, qna_answer +15xp, fuso BRT e alinhamento convite/jornada (xp-blog)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "trava de 1 artigo por dia, minimo 300 chars, qna_answer +15xp, fuso BRT e alinhamento convite/jornada",
+    "description": "Commit registrado no repositório: \"fix(xp-blog): trava de 1 artigo por dia, minimo 300 chars, qna_answer +15xp, fuso BRT e alinhamento convite/jornada\". Arquivos modificados: backend/controllers/blogController.js, backend/services/gamificationService.js, backend/services/notificationService.js, mobile/src/app/(tabs)/blog.tsx, mobile/src/app/(tabs)/jornada.tsx (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #7010cff0"
+    },
+    "after": {
+      "nova_versao": "trava de 1 artigo por dia, minimo 300 chars, qna_answer +15xp, fuso BRT e alinhamento convite/jornada"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/blogController.js",
+      "backend/services/gamificationService.js",
+      "backend/services/notificationService.js",
+      "mobile/src/app/(tabs)/blog.tsx",
+      "mobile/src/app/(tabs)/jornada.tsx",
+      "public/psi/psi_blog.js",
+      "public/psi/psi_jornada.html",
+      "views/convite.ejs"
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos na Jornada e Conteúdo",
+    "psiSummary": "Refinamos a experiência de compartilhamento de artigos e interações no fórum para garantir um fluxo mais fluido e enriquecedor. Com esses ajustes, a sua participação na comunidade e o acompanhamento da sua jornada ganham ainda mais estabilidade e precisão no registro das suas conquistas.",
+    "psiCategory": "Fórum & Comunidade",
+    "impactBadge": "Melhoria Contínua 🌟",
+    "scheduledMonday": "2026-11-16T15:00:00.000Z",
+    "scheduledFriday": "2026-11-16T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:09:48.947Z"
+  },
+  {
+    "id": "change-git-13b5bd4c",
+    "date": "2026-11-10T01:19:09.000Z",
+    "commit": "13b5bd4c",
+    "author": "Anderson",
+    "title": "Manutenção: Sincronizar changelog pós-deploy",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "sincronizar changelog pós-deploy",
+    "description": "Commit registrado no repositório: \"chore: sincronizar changelog pós-deploy\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #13b5bd4c"
+    },
+    "after": {
+      "nova_versao": "sincronizar changelog pós-deploy"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-1bb2ab0a",
     "date": "2026-11-10T01:16:09.000Z",
     "commit": "1bb2ab0a",
@@ -190,7 +394,16 @@
       "mobile/src/app/(tabs)/meu_perfil.tsx",
       "public/psi/psi_assinatura.js",
       "public/psi/psi_meu_perfil.js"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Mais segurança no seu cadastro e gestão",
+    "psiSummary": "Aprimoramos o sistema de validação de documentos para garantir que as informações do seu perfil e do seu consultório estejam sempre precisas. Com esse ajuste, proporcionamos mais estabilidade e confiabilidade em todos os processos de assinatura e registro na Yelo.",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Melhoria Contínua 🌟",
+    "scheduledMonday": "2026-11-09T15:00:00.000Z",
+    "scheduledFriday": "2026-11-09T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:09:52.065Z"
   },
   {
     "id": "change-git-773aa5c9",
@@ -293,7 +506,16 @@
       "mobile/src/components/YeloToast.tsx",
       "mobile/src/components/forum/ForumCommentThread.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos em gestão e na experiência mobile",
+    "psiSummary": "Refinamos o sistema de assinaturas para garantir maior precisão no acompanhamento do seu plano e otimizamos a interface do fórum no mobile para facilitar sua navegação. Essas atualizações trazem mais estabilidade e fluidez para o seu dia a dia na plataforma.",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Aprimoramento 🚀",
+    "scheduledMonday": "2026-11-09T15:00:00.000Z",
+    "scheduledFriday": "2026-11-09T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:09:53.251Z"
   },
   {
     "id": "change-git-61689b92",
@@ -319,7 +541,8 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/assinatura.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-2ed10da1",
@@ -432,7 +655,16 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/_layout.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos na experiência mobile",
+    "psiSummary": "Refinamos o visual do seu dashboard para garantir uma navegação ainda mais fluida e intuitiva. Com esse ajuste no layout, a transição entre as abas está mais harmoniosa, proporcionando um ambiente de trabalho mais organizado para o seu dia a dia.",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Melhoria de Usabilidade 📱",
+    "scheduledMonday": "2026-11-09T15:00:00.000Z",
+    "scheduledFriday": "2026-11-09T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:09:55.258Z"
   },
   {
     "id": "change-git-70a33904",
@@ -1574,7 +1806,16 @@
       "public/psi/psi_meu_perfil.html",
       "public/psi/psi_meu_perfil.js",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos na gestão de assinaturas e pagamentos",
+    "psiSummary": "Refinamos o processo de gestão do seu consultório para tornar a experiência de pagamento mais fluida e intuitiva. Estas atualizações garantem maior estabilidade e consistência na sua área administrativa, tanto no computador quanto em dispositivos móveis.",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Aprimoramento 🚀",
+    "scheduledMonday": "2026-11-09T15:00:00.000Z",
+    "scheduledFriday": "2026-11-09T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:09:59.393Z"
   },
   {
     "id": "change-git-54c80c0a",
@@ -1599,7 +1840,8 @@
       "backend/middlewares/authMiddleware.js",
       "mobile/src/app/(tabs)/forum.tsx",
       "mobile/src/services/api.ts"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-42438bcb",
@@ -1624,7 +1866,8 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/forum.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-340bb2e7",
@@ -1649,7 +1892,8 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/blog.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-89981f16",
@@ -1674,7 +1918,8 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/forum.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-5d3037ff",
@@ -1700,7 +1945,8 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/blog.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-0d4c0801",
@@ -1726,7 +1972,8 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/manual-conversao.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-9cf0ca66",
@@ -1752,7 +1999,8 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/blog.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-6c139fd1",
@@ -1780,7 +2028,16 @@
       "mobile/package.json",
       "mobile/src/app/(tabs)/blog.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos na experiência mobile",
+    "psiSummary": "Refinamos a visualização das janelas de interação em seu dispositivo móvel, garantindo um layout mais limpo e uma resposta ao toque ainda mais precisa. Essas atualizações tornam a navegação no seu consultório digital mais fluida e intuitiva.",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Melhoria de Usabilidade 📱",
+    "scheduledMonday": "2026-11-02T15:00:00.000Z",
+    "scheduledFriday": "2026-11-02T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:10:01.951Z"
   },
   {
     "id": "change-git-8d3f037c",
@@ -1806,7 +2063,8 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/blog.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-f86e35bf",
@@ -1860,7 +2118,16 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/jornada.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos na visualização da jornada",
+    "psiSummary": "Refinamos a forma como os indicadores de progresso são exibidos na sua jornada, garantindo que o design esteja sempre nítido e fluido. Estas melhorias asseguram uma experiência de navegação mais harmoniosa e consistente em toda a plataforma.",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Melhoria de Usabilidade 📱",
+    "scheduledMonday": "2026-11-02T15:00:00.000Z",
+    "scheduledFriday": "2026-11-02T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:10:06.404Z"
   },
   {
     "id": "change-git-6f84ca56",
@@ -1886,7 +2153,8 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/jornada.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-eed15641",
@@ -1913,7 +2181,16 @@
       "mobile/src/app/(tabs)/financeiro.tsx",
       "mobile/src/app/(tabs)/manual-conversao.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos na visualização de dados financeiros",
+    "psiSummary": "Refinamos a forma como você visualiza seus indicadores financeiros e as sugestões do seu Copilot. Agora, as informações carregam de forma mais fluida e direta, garantindo que você tenha acesso rápido aos números essenciais para a gestão do seu consultório.",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Otimização ⚡",
+    "scheduledMonday": "2026-11-02T15:00:00.000Z",
+    "scheduledFriday": "2026-11-02T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:10:07.994Z"
   },
   {
     "id": "change-git-52bfe2b7",
@@ -1969,7 +2246,8 @@
       "mobile/src/app/(tabs)/financeiro.tsx",
       "mobile/src/components/NativeSelectMenu.ios.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-c7362241",
@@ -2073,7 +2351,8 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/manual-conversao.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-a14d3bc4",
@@ -2099,7 +2378,8 @@
       "backend/data/system_changelog.json",
       "mobile/src/app/(tabs)/calculadora.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-86363bc0",
@@ -2122,7 +2402,8 @@
     "metricsToCompare": [],
     "filesChanged": [
       "mobile/src/app/(tabs)/financeiro.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-8eb59dd9",
@@ -2145,7 +2426,8 @@
     "metricsToCompare": [],
     "filesChanged": [
       "mobile/src/app/(tabs)/analytics.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-ef930e31",
@@ -2172,7 +2454,8 @@
       "mobile/package-lock.json",
       "mobile/package.json",
       "mobile/src/app/(tabs)/financeiro.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-8f7a641c",
@@ -2200,7 +2483,8 @@
       "mobile/src/app/(tabs)/ajustes.tsx",
       "mobile/src/app/login.tsx",
       "mobile/src/services/biometrics.ts"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-884ccced",
@@ -2223,7 +2507,8 @@
     "metricsToCompare": [],
     "filesChanged": [
       "mobile/src/app/(tabs)/_layout.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-0524aa91",
@@ -2249,7 +2534,8 @@
       "mobile/src/app/(tabs)/notificacoes.tsx",
       "mobile/src/app/_layout.tsx",
       "mobile/src/services/sessionNotifications.ts"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-1edf183c",
@@ -2312,7 +2598,8 @@
       "mobile/src/app/(tabs)/pacientes/index.tsx",
       "mobile/src/components/MobileHeader.tsx",
       "mobile/src/services/sessionNotifications.ts"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-f7810275",
@@ -2344,7 +2631,8 @@
       "mobile/src/app/(tabs)/pacientes/index.tsx",
       "mobile/src/components/NativeTimePicker.shared.ts",
       "mobile/src/utils/recurrenceExpander.ts"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-9715ce8c",
@@ -2399,7 +2687,8 @@
       "mobile/src/components/NativeTimePicker.android.tsx",
       "mobile/src/components/NativeTimePicker.ios.tsx",
       "mobile/src/components/NativeTimePicker.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-0033becb",
@@ -2425,7 +2714,8 @@
       "mobile/src/app/(tabs)/fale_com_a_yelo.tsx",
       "mobile/src/app/(tabs)/financeiro.tsx",
       "mobile/src/app/contato.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-2af2421d",
@@ -2452,7 +2742,8 @@
       "mobile/src/components/NativeSelectMenu.android.tsx",
       "mobile/src/components/NativeSelectMenu.ios.tsx",
       "mobile/src/components/NativeSelectMenu.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-551331d6",
@@ -2475,7 +2766,8 @@
     "metricsToCompare": [],
     "filesChanged": [
       "mobile/src/app/(tabs)/pacientes/index.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-e4c188e4",
@@ -2499,7 +2791,8 @@
     "filesChanged": [
       "mobile/src/app/(tabs)/pacientes/[id].tsx",
       "mobile/src/app/(tabs)/pacientes/index.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-5d8b632a",
@@ -2523,7 +2816,8 @@
     "filesChanged": [
       "mobile/src/app/(tabs)/pacientes/[id].tsx",
       "mobile/src/app/(tabs)/pacientes/index.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-be7e0bc0",
@@ -2546,7 +2840,8 @@
     "metricsToCompare": [],
     "filesChanged": [
       "mobile/src/app/(tabs)/pacientes/index.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-77373cb4",
@@ -2570,7 +2865,8 @@
     "filesChanged": [
       "backend/routes/appointmentRoutes.js",
       "mobile/src/app/(tabs)/pacientes/index.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-2049f0f5",
@@ -2593,7 +2889,8 @@
     "metricsToCompare": [],
     "filesChanged": [
       "mobile/src/app/(tabs)/pacientes/index.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-187bb345",
@@ -2616,7 +2913,8 @@
     "metricsToCompare": [],
     "filesChanged": [
       "mobile/src/app/(tabs)/pacientes/index.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-dd14d588",
@@ -2639,7 +2937,8 @@
     "metricsToCompare": [],
     "filesChanged": [
       "mobile/src/app/(tabs)/pacientes/index.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-884f372a",
@@ -2672,7 +2971,8 @@
       "mobile/src/app/(tabs)/pacientes/index.tsx",
       "mobile/src/components/MobileHeader.tsx",
       "mobile/src/components/SwipeEdgeNavigator.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-eff0f302",
@@ -2697,7 +2997,8 @@
       "mobile/src/app/(tabs)/_layout.tsx",
       "mobile/src/app/(tabs)/financeiro.tsx",
       "mobile/src/app/(tabs)/pacientes/index.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-fe5a292d",
@@ -2725,7 +3026,8 @@
       "mobile/src/app/(tabs)/evolucao.tsx",
       "mobile/src/app/(tabs)/index.tsx",
       "mobile/src/components/MobileHeader.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-e5d38392",
@@ -2778,7 +3080,8 @@
       "mobile/src/app/(tabs)/index.tsx",
       "public/css/components/psi_dashboard_cards.css",
       "public/css/components/psi_modern_dashboard.css"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-57d2562d",
@@ -2801,7 +3104,8 @@
     "metricsToCompare": [],
     "filesChanged": [
       "mobile/src/app/(tabs)/ajustes.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-c1e898d5",
@@ -2984,7 +3288,8 @@
       "mobile/src/app/(tabs)/_layout.tsx",
       "mobile/src/app/(tabs)/index.tsx",
       "mobile/src/components/MobileHeader.tsx"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-76315bcf",
@@ -3065,7 +3370,8 @@
       "mobile/src/app/(tabs)/index.tsx",
       "mobile/src/app/(tabs)/meu_perfil.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-f8b7fedc",
@@ -3122,7 +3428,8 @@
       "mobile/src/app/(tabs)/assinatura.tsx",
       "mobile/src/app/(tabs)/meu_perfil.tsx",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-9de45946",
@@ -3385,7 +3692,16 @@
       "backend/routes/viewRoutes.js",
       "security/reports/gate_report.json",
       "views/psi_perfil_publico.ejs"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos nas avaliações do perfil",
+    "psiSummary": "Refinamos a forma como as avaliações são exibidas, priorizando depoimentos com relatos escritos para dar mais destaque à voz dos seus pacientes. Também realizamos ajustes de interface para tornar a leitura mais fluida e confortável em qualquer dispositivo.",
+    "psiCategory": "Perfil & Pacientes",
+    "impactBadge": "Aprimoramento 🚀",
+    "scheduledMonday": "2026-11-02T15:00:00.000Z",
+    "scheduledFriday": "2026-11-02T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:10:10.078Z"
   },
   {
     "id": "change-git-8ecfb285",
@@ -3520,7 +3836,16 @@
       "public/psi/psi_forum.js",
       "public/psi/psi_forum_modern.css",
       "public/psi/psi_forum_modern.js"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos na interação no Fórum",
+    "psiSummary": "Refinamos a experiência visual no nosso Fórum da Comunidade. Agora, o botão de interação ('gostei') apresenta um comportamento mais intuitivo, garantindo que o feedback de apoio aos seus colegas psicólogos seja exibido com clareza e precisão.",
+    "psiCategory": "Fórum & Comunidade",
+    "impactBadge": "Melhoria de Usabilidade 📱",
+    "scheduledMonday": "2026-11-02T15:00:00.000Z",
+    "scheduledFriday": "2026-11-02T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:10:11.376Z"
   },
   {
     "id": "change-git-c9d14f45",
@@ -3543,7 +3868,16 @@
     "metricsToCompare": [],
     "filesChanged": [
       "public/psi/psi_meu_perfil.js"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos na edição do seu perfil",
+    "psiSummary": "Refinamos a forma como o editor da sua biografia carrega ao navegar pela plataforma. Com esse ajuste, garantimos uma experiência de escrita mais fluida e estável sempre que você precisar atualizar as informações do seu perfil.",
+    "psiCategory": "Perfil & Pacientes",
+    "impactBadge": "Otimização ⚡",
+    "scheduledMonday": "2026-11-02T15:00:00.000Z",
+    "scheduledFriday": "2026-11-02T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:10:12.610Z"
   },
   {
     "id": "change-git-c721f2d3",
@@ -3631,7 +3965,8 @@
       "public/psi/psi_dashboard.html",
       "public/psi/psi_dashboard.js",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-f68953d2",
@@ -3686,7 +4021,8 @@
       "public/psi/psi_meu_perfil.html",
       "public/psi/psi_meu_perfil.js",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "psiCurated": true
   },
   {
     "id": "change-git-bbea7d70",
@@ -3883,7 +4219,16 @@
       "public/psi/psi_forum.js",
       "security/reports/gate_report.json",
       "views/psi_comunidade.ejs"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos no Fórum e Comunidade",
+    "psiSummary": "Refinamos a performance ao compartilhar suas experiências e interagir no Fórum da Comunidade. Além disso, aprimoramos o suporte da nossa IA para que suas dúvidas e trocas sejam respondidas com ainda mais fluidez e qualidade.",
+    "psiCategory": "Fórum & Comunidade",
+    "impactBadge": "Inteligência Artificial 🧠",
+    "scheduledMonday": "2026-10-26T15:00:00.000Z",
+    "scheduledFriday": "2026-10-26T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:10:14.752Z"
   },
   {
     "id": "change-git-790e7e73",
@@ -3989,7 +4334,16 @@
       "public/psi/psi_meu_perfil.html",
       "public/psi/psi_meu_perfil.js",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Aprimoramentos na segurança e gestão da conta",
+    "psiSummary": "Refinamos a fluidez e a organização visual das configurações do seu perfil, incluindo os blocos de visibilidade, acesso Google, alteração de senha e preferências. Tudo para que você gerencie sua conta com ainda mais tranquilidade, praticidade e segurança no dia a dia.",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Melhoria Contínua 🌟",
+    "scheduledMonday": "2026-10-26T15:00:00.000Z",
+    "scheduledFriday": "2026-10-26T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:10:16.459Z"
   },
   {
     "id": "change-git-f4c161a3",
@@ -4017,7 +4371,16 @@
       "public/psi/psi_dashboard.js",
       "public/psi/psi_meu_perfil.js",
       "security/reports/gate_report.json"
-    ]
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Dicas para fortalecer sua presença no Google",
+    "psiSummary": "Implementamos um novo lembrete prático em seu dashboard para facilitar a configuração do seu perfil no Google Meu Negócio. Queremos garantir que você tenha todas as ferramentas necessárias para ser encontrado com mais facilidade por novos pacientes.",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Novo Recurso ✨",
+    "scheduledMonday": "2026-10-26T15:00:00.000Z",
+    "scheduledFriday": "2026-10-26T15:00:00.000Z",
+    "updatedAt": "2026-11-12T01:10:20.281Z"
   },
   {
     "id": "change-git-1634a990",

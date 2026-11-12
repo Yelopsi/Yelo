@@ -114,6 +114,14 @@ runScanner('Payload Hardening (JSON Bomb Protection)', 'node security/tests/hard
 runScanner('Log Security (PII Sanitization)', 'node security/tests/hardening/log_sanitization.test.js', 'test_log_sanitization');
 runScanner('Upload Security (Magic Bytes Check)', 'node security/tests/hardening/upload_security.test.js', 'test_upload_security');
 
+// 6. Auditoria informativa de Paridade Web <-> Mobile
+try {
+    const parityOut = execSync('node backend/scripts/checkWebMobileParity.js', { encoding: 'utf-8', stdio: 'pipe', timeout: 10000 });
+    console.log('\n🔄 PARIDADE WEB ↔ MOBILE:\n' + parityOut.trim());
+} catch (parityErr) {
+    if (parityErr.stdout) console.log(parityErr.stdout);
+}
+
 const securityTokenPath = path.join(__dirname, '../.security_passed');
 
 // Invalida o token antigo ao iniciar o gate

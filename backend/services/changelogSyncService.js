@@ -24,12 +24,11 @@ const REPO_ROOT = path.resolve(__dirname, '../../');
 
 function saveChangelogFile(changes) {
     try {
-        fs.writeFileSync(PRIMARY_CHANGELOG_PATH, JSON.stringify(changes, null, 2), 'utf8');
-        if (process.env.NODE_ENV === 'production') {
-            try {
-                fs.writeFileSync(FALLBACK_CHANGELOG_PATH, JSON.stringify(changes, null, 2), 'utf8');
-            } catch (e) {}
-        }
+        const serialized = JSON.stringify(changes, null, 2);
+        fs.writeFileSync(PRIMARY_CHANGELOG_PATH, serialized, 'utf8');
+        try {
+            fs.writeFileSync(FALLBACK_CHANGELOG_PATH, serialized, 'utf8');
+        } catch (e) {}
     } catch (err) {
         console.error('Erro ao salvar system_changelog.json:', err);
         throw err;
@@ -68,8 +67,10 @@ function syncFromDatabaseIfAvailable() {
                             let modified = false;
                             localChanges.forEach(item => {
                                 const dbItem = dbMap.get(String(item.id));
-                                if (dbItem && dbItem.publishedToPsi !== undefined && dbItem.publishedToPsi !== item.publishedToPsi) {
+                                const dbIsNewer = dbItem?.updatedAt && (!item.updatedAt || new Date(dbItem.updatedAt) > new Date(item.updatedAt));
+                                if (dbItem && dbItem.publishedToPsi !== undefined && dbItem.publishedToPsi !== item.publishedToPsi && (dbIsNewer || item.publishedToPsi === undefined)) {
                                     item.publishedToPsi = dbItem.publishedToPsi;
+                                    if (dbItem.scheduledMonday) item.scheduledMonday = dbItem.scheduledMonday;
                                     if (dbItem.scheduledFriday) item.scheduledFriday = dbItem.scheduledFriday;
                                     if (dbItem.psiTitle) item.psiTitle = dbItem.psiTitle;
                                     if (dbItem.psiSummary) item.psiSummary = dbItem.psiSummary;
@@ -644,7 +645,7 @@ Responda ESTRITAMENTE em formato JSON puro, sem markdown nem crases:
   "impactBadge": "..."
 }`;
 
-        const candidateModels = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-1.5-flash"];
+        const candidateModels = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-2.5-flash"];
         let rawText = '';
         for (const modelName of candidateModels) {
             try {
@@ -805,6 +806,158 @@ function getPsychologistGroupedEditions() {
     return editions;
 }
 
+/**
+ * Identifica se um commit técnico deve entrar nas Novidades públicas para psicólogos (psi_novidades).
+ * Exclui commits puramente internos (admin, cmo, ads, segurança, black-friday, scripts).
+ */
+function isUserFacingChangelogEntry(entry) {
+    if (!entry) return false;
+    const rawText = `${entry.title || ''} ${entry.summary || ''} ${entry.description || ''}`.toLowerCase();
+    const files = Array.isArray(entry.filesChanged) ? entry.filesChanged.map(f => String(f).toLowerCase()) : [];
+
+    // Rejeita escopos ou assuntos estritamente internos / comerciais / segurança
+    const internalPatterns = [
+        /\(admin\)/i, /\(cmo\)/i, /\(crm\)/i, /\(changelog\)/i, /\(security\)/i,
+        /\(black-friday\)/i, /black.?friday/i, /black2x1/i, /google\s*ads/i, /meta\s*ads/i,
+        /k[eé]sia/i, /capping/i, /motor\s*v6/i, /tr[aá]fego\s*pago/i, /gate\s*report/i,
+        /sincronizar\s*changelog/i, /dependency/i, /eslint/i, /asaas/i, /l[tv]+/i, /cac\b/i
+    ];
+    if (internalPatterns.some(rx => rx.test(rawText))) {
+        return false;
+    }
+
+    const userFacingFilePatterns = [
+        /^public\/psi\//,
+        /^mobile\/src\/app\/\(tabs\)\//,
+        /^mobile\/src\/app\/\[slug\]\.tsx$/,
+        /^mobile\/src\/app\/resultados\.tsx$/,
+        /^views\//,
+        /blogcontroller/, /forumcontroller/, /forummediator/,
+        /gamificationservice/, /googlebusinessservice/, /reviewscontroller/,
+        /documentvalidator/, /psiauthcontroller/
+    ];
+
+    const touchesUserFacing = files.some(f => userFacingFilePatterns.some(rx => rx.test(f)));
+    return touchesUserFacing;
+}
+
+function inferPsiTopicBucket(entry) {
+    const text = `${entry.title || ''} ${entry.summary || ''} ${(entry.filesChanged || []).join(' ')}`.toLowerCase();
+    if (text.includes('blog')) return 'blog';
+    if (text.includes('forum') || text.includes('fórum')) return 'forum';
+    if (text.includes('jornada') || text.includes('gamification') || text.includes('xp')) return 'jornada';
+    if (text.includes('review') || text.includes('avali') || text.includes('google')) return 'reviews';
+    if (text.includes('assinatura') || text.includes('cpf') || text.includes('cnpj')) return 'assinatura';
+    if (text.includes('match')) return 'match';
+    if (text.includes('perfil') || text.includes('slug')) return 'perfil';
+    return 'geral';
+}
+
+/**
+ * Curadoria automática semanal de novidades para psicólogos:
+ * - Seleciona melhorias recentes relevantes aos profissionais (sem itens internos/admin)
+ * - Agrupa temas repetidos na mesma semana (Segunda-feira)
+ * - Gera texto acolhedor em UX Writing e marca publishedToPsi = true
+ */
+async function autoCuratePsiChangelog(options = {}) {
+    const dryRun = options.dryRun === true;
+    const useAi = options.useAi !== false && Boolean(process.env.GEMINI_API_KEY);
+    const sinceDate = options.sinceDate ? new Date(options.sinceDate) : new Date(Date.now() - 21 * 24 * 60 * 60 * 1000);
+    const maxNewItems = Number(options.maxNewItems || 10);
+
+    syncGitToChangelog({ maxCommits: 60, force: true });
+
+    let changes = [];
+    if (fs.existsSync(CHANGELOG_PATH)) {
+        try {
+            changes = JSON.parse(fs.readFileSync(CHANGELOG_PATH, 'utf8'));
+        } catch (e) {
+            changes = [];
+        }
+    }
+
+    const publishedKeys = new Set();
+    const weekBuckets = new Set();
+    for (const c of changes) {
+        if (c.publishedToPsi) {
+            const monKey = String(c.scheduledMonday || c.scheduledFriday || c.date || '').slice(0, 10);
+            const titleKey = (c.psiTitle || c.title || '').toLowerCase().trim();
+            publishedKeys.add(`${monKey}::${titleKey}`);
+            weekBuckets.add(`${monKey}::${inferPsiTopicBucket(c)}`);
+        }
+    }
+
+    const candidates = changes.filter(item => {
+        if (!item || item.publishedToPsi === true || item.psiCurated === true) return false;
+        if (item.date && new Date(item.date) < sinceDate) return false;
+        return isUserFacingChangelogEntry(item);
+    });
+
+    const curated = [];
+    for (const item of candidates) {
+        if (curated.length >= maxNewItems) break;
+
+        const scheduledMonday = getWeeklyMondayReleaseDate(new Date(item.date || Date.now()));
+        const monKey = scheduledMonday.slice(0, 10);
+        const bucketKey = `${monKey}::${inferPsiTopicBucket(item)}`;
+        if (weekBuckets.has(bucketKey)) {
+            if (!dryRun) item.psiCurated = true;
+            continue;
+        }
+
+        const baseCopy = useAi
+            ? await generateAiPsiCopy(item)
+            : getFriendlyPsiCopyForFix(item);
+
+        const dedupKey = `${monKey}::${String(baseCopy.psiTitle || '').toLowerCase().trim()}`;
+
+        if (publishedKeys.has(dedupKey)) {
+            if (!dryRun) item.psiCurated = true;
+            continue;
+        }
+        publishedKeys.add(dedupKey);
+        weekBuckets.add(bucketKey);
+
+        if (!dryRun) {
+            item.publishedToPsi = true;
+            item.psiCurated = true;
+            item.psiTitle = baseCopy.psiTitle;
+            item.psiSummary = baseCopy.psiSummary;
+            item.psiCategory = baseCopy.psiCategory;
+            item.impactBadge = baseCopy.impactBadge;
+            item.scheduledMonday = scheduledMonday;
+            item.scheduledFriday = scheduledMonday;
+            item.updatedAt = new Date().toISOString();
+        }
+
+        curated.push({
+            id: item.id,
+            commit: item.commit,
+            scheduledMonday: monKey,
+            psiTitle: baseCopy.psiTitle,
+            psiCategory: baseCopy.psiCategory,
+            impactBadge: baseCopy.impactBadge,
+            psiSummary: baseCopy.psiSummary
+        });
+
+        if (useAi) {
+            await new Promise(r => setTimeout(r, 400));
+        }
+    }
+
+    if (!dryRun && curated.length > 0) {
+        saveChangelogFile(changes);
+        cachedData = null;
+        cachedETag = null;
+    }
+
+    return {
+        dryRun,
+        curatedCount: curated.length,
+        curated
+    };
+}
+
 module.exports = {
     syncGitToChangelog,
     getCachedOrFreshChangelog,
@@ -815,6 +968,8 @@ module.exports = {
     generateAiPsiCopy,
     getPsychologistChangelog,
     getPsychologistGroupedEditions,
+    isUserFacingChangelogEntry,
+    autoCuratePsiChangelog,
     saveChangelogFile,
     CHANGELOG_PATH
 };

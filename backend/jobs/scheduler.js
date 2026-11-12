@@ -240,6 +240,25 @@ cron.schedule('*/15 * * * *', async () => {
     timezone: "America/Sao_Paulo"
 });
 
+/**
+ * Tarefa 10: Curadoria Automática das Novidades para Psicólogos (psi_novidades.html + Mobile novidades.tsx)
+ * Roda toda segunda-feira às 07h30 BRT para publicar o compilado semanal automaticamente.
+ */
+cron.schedule('30 7 * * 1', async () => {
+    try {
+        const { autoCuratePsiChangelog } = require('../services/changelogSyncService');
+        const res = await autoCuratePsiChangelog({ dryRun: false, maxNewItems: 10 });
+        if (res.curatedCount > 0) {
+            console.log(`🚀 [CRON NOVIDADES] +${res.curatedCount} melhorias semanais publicadas para psicólogos.`);
+        }
+    } catch (err) {
+        console.error('❌ [CRON NOVIDADES] Erro na curadoria semanal:', err.message);
+    }
+}, {
+    scheduled: true,
+    timezone: "America/Sao_Paulo"
+});
+
 
 // --- LÓGICA PARA TESTE MANUAL (EXECUTAR SOB DEMANDA) ---
 

@@ -1,0 +1,36 @@
+name: Sync Main into Mobile Branch
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-feat-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge main into feat/mobile-app or open PR
+        run: |
+          if ! git show-ref --verify --quiet refs/remotes/origin/feat/mobile-app; then
+            echo "Branch feat/mobile-app não encontrada."
+            exit 0
+          fi
+          git config user.name "Yelo Sync Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git checkout -B feat/mobile-app origin/feat/mobile-app
+          if git merge --no-edit origin/main; then
+            git push origin feat/mobile-app
+          else
+            git merge --abort
+            echo "::warning::Conflito automático ao sincronizar main em feat/mobile-app. Resolva manualmente."
+          fi
+

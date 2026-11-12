@@ -14,6 +14,8 @@
     "postinstall": "cd backend && npm install && cd .. && npx puppeteer browsers install chrome && npm run security:gate",
     "lint": "eslint .",
     "changelog:sync": "node scripts/sync_git_to_changelog.js",
+    "novidades:curate": "node backend/scripts/syncPsiNovidades.js --curate --apply",
+    "parity:check": "node backend/scripts/checkWebMobileParity.js",
     "investigate-psychologist": "node scripts/investigate_psychologist_charge.js"
   },
   "keywords": [
