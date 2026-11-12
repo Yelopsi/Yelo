@@ -36,13 +36,14 @@ function extractAuthorFirstName(fullName) {
     const clean = String(fullName || '').replace(/\s+/g, ' ').trim();
     if (!clean) return '';
     const tokens = clean.split(' ').filter(Boolean);
-    let first = tokens[0] || '';
-    if (/^(dr\.?|dra\.?)$/i.test(first) && tokens[1]) {
-        first = tokens[1];
+    let idx = 0;
+    while (idx < tokens.length - 1 && /^(dr\.?|dra\.?|psic[óo]log[oa]|psi\.?)$/i.test(tokens[idx])) {
+        idx += 1;
     }
+    let first = tokens[idx] || '';
     first = first.replace(/[^\p{L}\p{M}'-]/gu, '');
     if (!first) return '';
-    return first.charAt(0).toUpperCase() + first.slice(1);
+    return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
 }
 
 /**
@@ -95,8 +96,36 @@ function resolveAuthorGenderProfile(post = {}) {
     };
 }
 
+function sanitizeModeratorCopy(text) {
+    let out = String(text || '').trim();
+    if (!out) return '';
+
+    // Remove travessões (em-dash, en-dash ou hífen isolado com espaços), preservando hífens lexicais (bem-vindo, off-topic).
+    out = out
+        .replace(/\s*([,;:.!?])\s*(?:[\u2014\u2013]+|-)\s+/g, '$1 ')
+        .replace(/\s*(?:[\u2014\u2013]+)\s*([,;:.!?])/g, '$1')
+        .replace(/\s+-\s+([,;:.!?])/g, '$1')
+        .replace(/\s*[\u2014\u2013]+\s*/g, ', ')
+        .replace(/\s+-\s+/g, ', ')
+        .replace(/,\s*,+/g, ',')
+        .replace(/([.!?:;])\s*,/g, '$1');
+
+    // O botão/banner de redirecionamento aparece acima da lista de comentários, nunca abaixo.
+    out = out
+        .replace(
+            /\b((?:cliqu(?:e|em)|clicando|bot[ãa]o|card|aviso|link|faixa|quadro|atalho|acesse|veja|confira|siga|continue|dispon[íi]vel|exibid[oa]|mostrad[oa]|indicad[oa]|logo)\s+(?:logo\s+)?)abaixo\b/gi,
+            '$1acima'
+        )
+        .replace(
+            /\babaixo(\s+(?:para\s+(?:acompanhar|acessar|continuar|ver|conferir|ir|participar)|e\s+(?:acompanhe|acesse|continue)))/gi,
+            'acima$1'
+        );
+
+    return out.replace(/\s{2,}/g, ' ').trim();
+}
+
 function personalizeMediatorMessage(message, postOrCtx = {}) {
-    let out = String(message || '').trim();
+    let out = sanitizeModeratorCopy(message);
     if (!out) return '';
 
     const ctx = postOrCtx && typeof postOrCtx.welcomeForm === 'string'
@@ -118,7 +147,27 @@ function personalizeMediatorMessage(message, postOrCtx = {}) {
         out = out.replace(/^ol[áa](?:\s*,\s*[^.!?\n]{1,30})?[!.,:\s]*/i, 'Olá! ');
     }
 
-    out = out.replace(/\bbem[-\s]?vind(?:o\s*\(\s*a\s*\)|o\s*\/\s*a|[oae]\b)/gi, ctx.welcomeForm);
+    // Preserva o título literal do tópico oficial de apresentações para não alterar a citação entre aspas.
+    const introTokens = [];
+    out = out.replace(
+        /Apresente-se aqui!\s*Bem-vind(?:o\s*\(\s*a\s*\)|o\s*\/\s*a|[oae])\s+à\s+Comunidade\s+Yelo/gi,
+        () => {
+            const token = `__YELO_INTRO_HUB_TITLE_${introTokens.length}__`;
+            introTokens.push('Apresente-se aqui! Bem-vindo(a) à Comunidade Yelo');
+            return token;
+        }
+    );
+
+    out = out.replace(/\bbem[-\s]?vind(?:o\s*\(\s*a\s*\)|o\s*\/\s*a|[oae]\b)/gi, (match) => {
+        if (match.charAt(0) === 'B') {
+            return ctx.welcomeForm.charAt(0).toUpperCase() + ctx.welcomeForm.slice(1);
+        }
+        return ctx.welcomeForm;
+    });
+
+    introTokens.forEach((titleText, idx) => {
+        out = out.replace(`__YELO_INTRO_HUB_TITLE_${idx}__`, titleText);
+    });
 
     if (ctx.genderKey !== 'unknown') {
         const suffixMap = {
@@ -135,7 +184,7 @@ function personalizeMediatorMessage(message, postOrCtx = {}) {
         }
     }
 
-    return out.replace(/\s{2,}/g, ' ').trim();
+    return sanitizeModeratorCopy(out);
 }
 
 async function callGeminiMediator(prompt) {
@@ -288,7 +337,7 @@ POST EM ANÁLISE:
 - ID: ${post.id}
 - Título: "${post.title}"
 - Categoria atual: "${post.category}"
-- Autor(a): ${authorProfile.firstName ? authorProfile.firstName : 'Anônimo(a) — NÃO cite nome'}
+- Autor(a): ${authorProfile.firstName ? authorProfile.firstName : 'Anônimo(a) (NÃO cite nome)'}
 - Forma de boas-vindas conforme gênero registrado: "${authorProfile.welcomeForm}"
 - Comentários existentes: ${Number(post.commentCount || 0)}
 - Conteúdo: "${stripHtmlAndCompact(post.content, 1200)}"
@@ -304,16 +353,18 @@ ${activeLines.slice(0, 150).join('\n') || '(Nenhuma outra discussão ativa)'}
 
 REGRAS DE MEDIAÇÃO (SIGA ESTRITAMENTE):
 1. "APPROVE": O post pertence ao fórum, trata de 1 tema coerente, está na categoria certa e não duplica tópico oficial/ativo relevante. Discussões reflexivas ou casos em "Sala de Café" que sejam claramente desabafos pessoais sem pergunta clínica também podem ficar em "Sala de Café" se fizer sentido.
-2. "REDIRECT_DUPLICATE": VERIFIQUE ESTA REGRA ANTES DE MOVE_CATEGORY. Use quando o objetivo principal do post for uma apresentação pessoal/boas-vindas solta (em vez de usar o tópico oficial de apresentações) OU quando fizer a MESMA dúvida/debate prático de outro tópico aberto listado acima, mesmo com título diferente ou em categoria diferente (ex.: "Em quanto tempo aparece o primeiro paciente na Yelo?" vs "Nos 7 dias grátis já aparecem pacientes?"; "Indicação de psiquiatra" vs "Psiquiatria"; "Instagram / Redes sociais" vs "Produção de conteúdo para redes sociais"). Se já houver tópico marcado com [HUB] sobre o mesmo assunto, redirecione preferencialmente para ele. Se o autor disser apenas "sou nova por aqui" em uma frase e passar a uma pergunta específica (ex.: captação de pacientes), avalie pelo assunto principal — e unifique se essa pergunta já existir acima! Informe "targetPostId" com o ID exato da lista acima e escreva um comentário cordial citando o título do tópico principal.
-3. "MOVE_CATEGORY": Use somente se o tema for único, NÃO duplicar tópico equivalente listado acima e tiver sido postado na categoria errada (ex.: relato de caso clínico em "Sala de Café", dúvida de CRP/documentos em "Sala de Café", dúvida de captação em "Indicações", ferramenta/prontuário em "Sala de Café"). Escolha "targetCategory" dentre as 6 categorias oficiais e escreva um comentário simpático avisando que movemos o tópico para a categoria correta para alcançar os colegas certos.
-4. "MULTI_TOPIC_SPLIT": O texto mistura 2 ou mais assuntos independentes que merecem threads diferentes (ex.: apresentação pessoal detalhada + dúvida jurídica de CRP + pergunta de precificação no mesmo texto). Escreva um comentário acolhedor listando cada assunto separado, sugerindo criar um tópico específico para cada tema (e usar o tópico oficial se um dos temas for apresentação), e avisando gentilmente que este post foi encerrado para manter os debates organizados.
-5. "CLOSE_OFF_SCOPE": O post NÃO pertence ao fórum aberto da comunidade (ex.: suporte técnico individual de conta/pagamento que deve ir na Central de Ajuda/Suporte, manifestação político-partidária fora do escopo da psicologia, propaganda comercial externa, ou mensagem vazia/teste). Escreva um comentário respeitoso direcionando para o canal correto e informando o encerramento deste tópico.
+2. "REDIRECT_DUPLICATE": VERIFIQUE ESTA REGRA ANTES DE MOVE_CATEGORY. Use quando o objetivo principal do post for uma apresentação pessoal/boas-vindas solta (em vez de usar o tópico oficial de apresentações) OU quando fizer a MESMA dúvida/debate prático de outro tópico aberto listado acima, mesmo com título diferente ou em categoria diferente (ex.: "Em quanto tempo aparece o primeiro paciente na Yelo?" vs "Nos 7 dias grátis já aparecem pacientes?"; "Indicação de psiquiatra" vs "Psiquiatria"; "Instagram / Redes sociais" vs "Produção de conteúdo para redes sociais"). Se já houver tópico marcado com [HUB] sobre o mesmo assunto, redirecione preferencialmente para ele. Se o autor disser apenas "sou nova por aqui" em uma frase e passar a uma pergunta específica (ex.: captação de pacientes), avalie pelo assunto principal e unifique se essa pergunta já existir acima! Informe "targetPostId" com o ID exato da lista acima e escreva um comentário cordial e sucinto citando o título do tópico principal.
+3. "MOVE_CATEGORY": Use somente se o tema for único, NÃO duplicar tópico equivalente listado acima e tiver sido postado na categoria errada (ex.: relato de caso clínico em "Sala de Café", dúvida de CRP/documentos em "Sala de Café", dúvida de captação em "Indicações", ferramenta/prontuário em "Sala de Café"). Escolha "targetCategory" dentre as 6 categorias oficiais e escreva um comentário simpático e curto avisando que movemos o tópico para a categoria correta.
+4. "MULTI_TOPIC_SPLIT": O texto mistura 2 ou mais assuntos independentes que merecem threads diferentes (ex.: apresentação pessoal detalhada + dúvida jurídica de CRP + pergunta de precificação no mesmo texto). Escreva um comentário acolhedor e sucinto listando cada assunto separado, sugerindo criar um tópico específico para cada tema (e usar o tópico oficial se um dos temas for apresentação) e avisando que este post foi encerrado para manter os debates organizados.
+5. "CLOSE_OFF_SCOPE": O post NÃO pertence ao fórum aberto da comunidade (ex.: suporte técnico individual de conta/pagamento que deve ir na Central de Ajuda/Suporte, manifestação político-partidária fora do escopo da psicologia, propaganda comercial externa, ou mensagem vazia/teste). Escreva um comentário respeitoso e breve direcionando para o canal correto e informando o encerramento deste tópico.
 
 TRAVAS IMPORTANTES:
 - SAUDAÇÃO PERSONALIZADA OBRIGATÓRIA: ${authorProfile.firstName ? `Comece "commentMessage" com "Olá, ${authorProfile.firstName}."` : 'Como o post é anônimo ou sem nome, comece com "Olá!" e NÃO cite nome.'} Ao dar boas-vindas, use exatamente "${authorProfile.welcomeForm}" (masculino = "bem-vindo", feminino = "bem-vinda", demais gêneros registrados = "bem-vinde", e "bem-vindo(a)" SOMENTE se o gênero não tiver sido registrado ou se o post for anônimo).
-- Seja acolhedor, humano e colegial. Nunca soe punitivo ou robótico.
-- NUNCA escreva IDs numéricos técnicos como "(ID: 123)", "[ID 123]" ou "#999999" dentro de "commentMessage" — cite apenas o nome/título do tópico, porque a plataforma já exibe automaticamente o botão clicável de redirecionamento.
-- Discussões clínicas legítimas que façam sentido na categoria NÃO devem ser fechadas — use "APPROVE".
+- SEJA SUCINTO: escreva no máximo 2 frases curtas e diretas em "commentMessage" (idealmente entre 110 e 210 caracteres), com tom acolhedor e humano, sem rodeios ou frases repetitivas.
+- PROIBIDO TRAVESSÃO: NUNCA use travessão (meia-risca, travessão longo ou hífen isolado com espaços " - ") em "commentMessage". Use apenas vírgula ou ponto final (hífens internos de palavras como "bem-vindo" ou "off-topic" são permitidos).
+- POSIÇÃO DO BOTÃO: se orientar a clicar no botão ou card de redirecionamento, diga sempre que ele fica ACIMA dos comentários (ex.: "clique no botão acima"). NUNCA escreva "abaixo".
+- NUNCA escreva IDs numéricos técnicos como "(ID: 123)", "[ID 123]" ou "#999999" dentro de "commentMessage": cite apenas o título do tópico, pois a plataforma já exibe automaticamente o botão clicável de redirecionamento acima dos comentários.
+- Discussões clínicas legítimas que façam sentido na categoria NÃO devem ser fechadas; use "APPROVE".
 - Só retorne "confidence" >= 0.85 quando tiver certeza clara da regra aplicada. Caso contrário use confidence < 0.80.
 
 Responda ESTRITAMENTE em JSON puro (sem markdown):
@@ -347,7 +398,7 @@ Responda ESTRITAMENTE em JSON puro (sem markdown):
                 ...decision,
                 originalAction: decision.action,
                 action: 'DEFER_ACTIVE_DISCUSSION',
-                reasonSummary: `Tópico já possui ${post.commentCount} comentários humanos — mantido aberto para revisão manual.`
+                reasonSummary: `Tópico já possui ${post.commentCount} comentários humanos; mantido aberto para revisão manual.`
             };
         }
         // Protege posts que já são destino de redirecionamento de outros tópicos contra redirecionamento em cadeia
@@ -801,6 +852,7 @@ module.exports = {
     stripHtmlAndCompact,
     extractAuthorFirstName,
     resolveAuthorGenderProfile,
+    sanitizeModeratorCopy,
     personalizeMediatorMessage,
     normalizeAiDecision,
     analyzePostWithAI,
