@@ -1,5 +1,52 @@
 [
   {
+    "id": "change-git-7ebacf6c",
+    "date": "2026-11-12T02:07:07.000Z",
+    "commit": "7ebacf6c",
+    "author": "Anderson",
+    "title": "Correção: Proteger posts do fundador e mediador contra intervencao automatica (forum-mediator)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "proteger posts do fundador e mediador contra intervencao automatica",
+    "description": "Commit registrado no repositório: \"fix(forum-mediator): proteger posts do fundador e mediador contra intervencao automatica\". Arquivos modificados: backend/services/forumMediatorService.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #7ebacf6c"
+    },
+    "after": {
+      "nova_versao": "proteger posts do fundador e mediador contra intervencao automatica"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/services/forumMediatorService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-c69afbe4",
+    "date": "2026-11-12T01:41:42.000Z",
+    "commit": "c69afbe4",
+    "author": "Anderson",
+    "title": "Manutenção: Atualizar gate_report pre-deploy (security)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "atualizar gate_report pre-deploy",
+    "description": "Commit registrado no repositório: \"chore(security): atualizar gate_report pre-deploy\". Arquivos modificados: security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #c69afbe4"
+    },
+    "after": {
+      "nova_versao": "atualizar gate_report pre-deploy"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-4d29318f",
     "date": "2026-11-12T01:40:10.000Z",
     "commit": "4d29318f",
