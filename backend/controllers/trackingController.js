@@ -1,4 +1,5 @@
 const db = require('../models');
+const { resolveActor } = require('../utils/actorClassifier');
 
 /**
  * Rota: POST /api/tracking/visit
@@ -45,6 +46,10 @@ exports.registerVisit = async (req, res) => {
 exports.registerQuestionnaireStep = async (req, res) => {
     try {
         const { searchId, step, utms } = req.body;
+        const actor = resolveActor(req, req.body || {});
+        if (!actor.isPatient) {
+            return res.status(200).json({ success: true, ignored: true, actorType: actor.actorType });
+        }
         
         await db.sequelize.query(`
             CREATE TABLE IF NOT EXISTS "TrackingLogs" (

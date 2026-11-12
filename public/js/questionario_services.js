@@ -79,8 +79,8 @@ window.QuestionarioService = (function() {
         },
 
         trackStep: function(stepIndex, questionId, searchId) {
-            // Trava para não rastrear psicólogos/admins logados nos pixels e drop-offs do funil B2C
-            const { isNonPatient } = getSessionMeta();
+            // Trava para não rastrear psicólogos/admins (logados ou conhecidos) nos pixels e drop-offs do funil B2C
+            const { isNonPatient, headers, rawType, rawKnownPro } = getSessionMeta();
             if (isNonPatient) {
                 return;
             }
@@ -99,8 +99,15 @@ window.QuestionarioService = (function() {
                     const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
                     fetch(`${getBaseUrl()}/api/tracking/questionario-step`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ searchId: searchId, step: questionId, utms: globalUtms })
+                        credentials: 'include',
+                        headers,
+                        body: JSON.stringify({
+                            searchId: searchId,
+                            step: questionId,
+                            utms: globalUtms,
+                            user_type: rawType || undefined,
+                            known_pro: rawKnownPro || undefined
+                        })
                     }).catch(() => {});
                 } catch(e) {}
             }
