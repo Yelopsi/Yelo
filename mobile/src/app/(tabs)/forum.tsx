@@ -1491,6 +1491,13 @@ export default function ForumScreen() {
                           <Text style={styles.pinnedPillText}>Fixado</Text>
                         </View>
                       )}
+                      {(post.isClosed || post.redirectPostId) && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
+                          <Text style={{ fontSize: 10.5, fontFamily: 'Inter_700Bold', color: '#475569' }}>
+                            {post.redirectPostId ? '↪ Redirecionado' : '🔒 Encerrado'}
+                          </Text>
+                        </View>
+                      )}
                       <View style={[
                         styles.categoryPill,
                         { backgroundColor: catStyle.bg, borderColor: catStyle.border }

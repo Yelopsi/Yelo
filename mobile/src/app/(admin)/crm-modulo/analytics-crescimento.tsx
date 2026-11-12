@@ -256,7 +256,7 @@ export default function AnalyticsCrescimentoScreen() {
     }
     const cleanPhone = psi.telefone.replace(/\D/g, '');
     const texto = encodeURIComponent(
-      `Olá, ${psi.nome}! Tudo bem?\n\nAqui é da equipe de Sucesso da Yelo. Estou acompanhando os resultados da sua vitrine na plataforma e notei que você ainda não recebeu novos contatos de pacientes nos últimos dias. Gostaria de te ajudar a calibrar suas tags e fotos para maximizar suas indicações!`
+      `Olá, ${psi.nome}! Tudo bem?\n\nAqui é da equipe de Sucesso da Yelo. Estou acompanhando os resultados da sua página na plataforma e notei que você ainda não recebeu novos contatos de pacientes nos últimos dias. Gostaria de te ajudar a calibrar suas tags e fotos para maximizar suas indicações!`
     );
     Linking.openURL(`https://wa.me/55${cleanPhone}?text=${texto}`);
   };

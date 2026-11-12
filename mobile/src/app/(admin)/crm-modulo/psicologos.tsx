@@ -421,7 +421,7 @@ export default function AdminCRMPsicologosScreen() {
 
             msg = `Olá, ${firstName}! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise que fizemos do seu perfil agora que você iniciou sua trajetória na plataforma!\n\nLemos a sua biografia e gostamos muito da clareza e do tom acolhedor que você trouxe. A forma como você contextualizou a sua abordagem transmite muita segurança para o paciente que visita a sua página.\n\n${pendenciasBlock}\n\nSe quiser, nossa equipe pode te ajudar com ideias para estruturar sua página. Estamos totalmente à disposição por aqui! 🚀`;
           } else {
-            msg = `Olá, ${firstName}! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise que fizemos do seu perfil agora que você iniciou sua trajetória na plataforma!\n\nAnalisamos a sua página e achamos excelente a sua iniciativa de construir sua vitrine por aqui. Percebemos, no entanto, que a sua *biografia profissional ainda não foi preenchida*.\n\nPara quem busca terapia, a bio é o elemento mais decisivo: é através dela que o paciente compreende como funciona o seu acolhimento e se sente seguro para te chamar no WhatsApp. Sem ela, o perfil perde grande parte do potencial de conversão.\n\nPara deixar sua página completa e pronta para receber contatos, acesse seu painel em *Ajustes > Meu Perfil* e adicione um texto de apresentação simples explicando sua condução clínica.\n\nSe quiser, nossa equipe pode te ajudar com ideias para estruturar esse texto. Estamos totalmente à disposição por aqui! 🚀`;
+            msg = `Olá, ${firstName}! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise que fizemos do seu perfil agora que você iniciou sua trajetória na plataforma!\n\nAnalisamos a sua página e achamos excelente a sua iniciativa de construir sua página por aqui. Percebemos, no entanto, que a sua *biografia profissional ainda não foi preenchida*.\n\nPara quem busca terapia, a bio é o elemento mais decisivo: é através dela que o paciente compreende como funciona o seu acolhimento e se sente seguro para te chamar no WhatsApp. Sem ela, o perfil perde grande parte do potencial de conversão.\n\nPara deixar sua página completa e pronta para receber contatos, acesse seu painel em *Ajustes > Meu Perfil* e adicione um texto de apresentação simples explicando sua condução clínica.\n\nSe quiser, nossa equipe pode te ajudar com ideias para estruturar esse texto. Estamos totalmente à disposição por aqui! 🚀`;
           }
         }
       } else if (actionType === 'incomplete') {
@@ -594,11 +594,11 @@ export default function AdminCRMPsicologosScreen() {
             metricsText = `Seu perfil obteve nestes 7 dias:\n\n* *${matchesCount} aparições* nos resultados de busca\n* *${viewsCount} visitas* diretas na sua página\n* *${contatoStr}*`;
             feedbackText =
               dealYes > 0
-                ? `Notamos que você conseguiu fechar com ${dealYes} paciente(s)! 🎉 Isso comprova na prática que a sua vitrine já está gerando pacientes reais.`
+                ? `Notamos que você conseguiu fechar com ${dealYes} paciente(s)! 🎉 Isso comprova na prática que a sua página já está gerando pacientes reais.`
                 : `Como o nosso algoritmo leva alguns dias para calibrar o perfil e as primeiras conversas já começaram a chegar, acreditamos que manter o seu consultório virtual ativo é essencial para dar continuidade a esse ritmo.`;
           } else {
             metricsText = `Seu perfil obteve nestes 7 dias:\n\n* *${matchesCount} aparições* nos resultados de busca\n* *${viewsCount} visitas* diretas na sua página`;
-            feedbackText = `Como o nosso algoritmo de distribuição leva alguns dias para calibrar o seu público ideal e o seu perfil já começou a ganhar visibilidade e visitas, o próximo passo natural é a chegada dos primeiros contatos no WhatsApp. Acreditamos que manter a sua vitrine ativa é fundamental para não perder essa tração inicial.`;
+            feedbackText = `Como o nosso algoritmo de distribuição leva alguns dias para calibrar o seu público ideal e o seu perfil já começou a ganhar visibilidade e visitas, o próximo passo natural é a chegada dos primeiros contatos no WhatsApp. Acreditamos que manter a sua página ativa é fundamental para não perder essa tração inicial.`;
           }
 
           let mathText = '';

@@ -332,6 +332,10 @@ export default function BlogScreen() {
       Alert.alert('Aviso', 'Por favor, escreva o conteúdo do post.');
       return;
     }
+    if (!editingPostId && plain.length < 300) {
+      Alert.alert('Conteúdo muito curto', `Escreva pelo menos 300 caracteres para publicar um artigo completo no blog (atual: ${plain.length}).`);
+      return;
+    }
 
     try {
       setIsSubmitting(true);

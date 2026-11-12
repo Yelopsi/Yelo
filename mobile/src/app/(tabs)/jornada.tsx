@@ -656,6 +656,20 @@ export default function JornadaScreen() {
               </View>
             ))}
           </View>
+          <View
+            style={{
+              backgroundColor: '#f0fdf4',
+              borderWidth: 1,
+              borderColor: '#bbf7d0',
+              borderRadius: 14,
+              padding: 12,
+              marginTop: 4,
+            }}
+          >
+            <Text style={{ fontFamily: 'sans-serif', fontSize: 12, color: '#166534', lineHeight: 18 }}>
+              🛡️ <Text style={{ fontWeight: 'bold' }}>Equilíbrio e Transparência:</Text> Todas as ações seguem limites diários justos (no Blog é permitido 1 artigo por dia para preservar a página do Blog). Seu XP fortalece sua autoridade sem alterar o equilíbrio clínico do Match.
+            </Text>
+          </View>
         </View>
 
         {/* WIDGET 4: CONQUISTAS (TODAS AS 5 BADGES OFICIAIS) */}

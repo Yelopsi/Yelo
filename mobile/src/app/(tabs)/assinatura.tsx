@@ -123,11 +123,65 @@ export default function AssinaturaScreen() {
     holderPhone: '',
     postalCode: '',
     addressNumber: '',
-    cupom: ''
   });
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
+  const [promoOffer, setPromoOffer] = useState<{
+    eligible?: boolean;
+    eligibleOtherPlatform?: boolean;
+    email?: string;
+    title?: string;
+    subtitle?: string;
+    reason?: string;
+  } | null>(null);
+
+  const renderAutoPromoBanner = (marginBottom = 16) => {
+    if (!promoOffer) return null;
+    if (promoOffer.eligible) {
+      return (
+        <View
+          style={{
+            marginBottom,
+            backgroundColor: '#f0fdf4',
+            borderWidth: 1,
+            borderColor: '#bbf7d0',
+            borderRadius: 16,
+            padding: 14,
+          }}
+        >
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#166534', marginBottom: 4 }}>
+            🎉 {promoOffer.title || 'Condição Exclusiva: 2 meses por R$ 99,00'}
+          </Text>
+          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#15803d', lineHeight: 17 }}>
+            Benefício automático e intransferível liberado para {promoOffer.email || psiData?.email}. Sem precisar de cupom.
+          </Text>
+        </View>
+      );
+    }
+    if (promoOffer.eligibleOtherPlatform) {
+      return (
+        <View
+          style={{
+            marginBottom,
+            backgroundColor: '#fefce8',
+            borderWidth: 1,
+            borderColor: '#fde68a',
+            borderRadius: 16,
+            padding: 14,
+          }}
+        >
+          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: '#854d0e', marginBottom: 4 }}>
+            ✨ Condição especial disponível no site
+          </Text>
+          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#713f12', lineHeight: 17 }}>
+            {promoOffer.reason || 'Seu e-mail possui 2 meses por R$ 99,00 liberados pelo navegador em yelopsi.com.br.'}
+          </Text>
+        </View>
+      );
+    }
+    return null;
+  };
 
   const fetchStatus = async () => {
     try {
@@ -227,6 +281,14 @@ export default function AssinaturaScreen() {
           postalCode: prev.postalCode || res.data.cep || '',
           addressNumber: prev.addressNumber || res.data.numero || ''
         }));
+
+        // Verifica condição promocional vinculada automaticamente ao e-mail
+        try {
+          const promoRes = await api.get(`/api/payments/promo-eligibility?planType=ESSENTIAL&isIos=${Platform.OS === 'ios'}&platform=${Platform.OS}`);
+          setPromoOffer(promoRes.data || null);
+        } catch (_promoErr) {
+          setPromoOffer(null);
+        }
 
         // Busca fatura pendente (#alert-pix-pending igual à versão Web)
         if (res.data.subscriptionId || res.data.stripeSubscriptionId) {
@@ -569,7 +631,6 @@ export default function AssinaturaScreen() {
           planType: isIosCheckout ? 'ESSENTIAL_IOS' : 'ESSENTIAL',
           billingType: 'PIX',
           isIos: isIosCheckout,
-          cupom: cardData.cupom.trim(),
           creditCard: {
             holderName: psiData?.nome || 'Psicólogo Yelo',
             holderCpf: rawDoc,
@@ -759,7 +820,6 @@ export default function AssinaturaScreen() {
           planType: isIosCheckout ? 'ESSENTIAL_IOS' : 'ESSENTIAL',
           billingType: 'CREDIT_CARD',
           isIos: isIosCheckout,
-          cupom: cardData.cupom.trim(),
           creditCard: creditCardObj
         };
 
@@ -856,6 +916,7 @@ export default function AssinaturaScreen() {
         {/* RESUMO DO PLANO ATUAL (#card-resumo-assinatura da versão Web) OU BANNER   */}
         {/* ========================================================================= */}
         <View style={{ paddingHorizontal: 16, marginBottom: 20 }}>
+          {!isActive && renderAutoPromoBanner(16)}
           {hasSubscription || isExempt ? (
             <View
               style={{
@@ -1852,24 +1913,8 @@ export default function AssinaturaScreen() {
                             />
                           </View>
 
-                          {/* Cupom opcional (oculto no modo Alterar Forma de Pagamento igual à Web) */}
-                          {!isUpdatePaymentMethodMode && (
-                            <View style={{ marginBottom: 20 }}>
-                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#475569', marginBottom: 6, marginLeft: 8 }}>
-                                Cupom de Desconto (opcional)
-                              </Text>
-                              <TextInput
-                                value={cardData.cupom}
-                                onChangeText={(t) => setCardData(prev => ({ ...prev, cupom: t.toUpperCase() }))}
-                                placeholder="DIGITE SEU CUPOM"
-                                placeholderTextColor="#94a3b8"
-                                autoCapitalize="characters"
-                                returnKeyType="done"
-                                onSubmitEditing={Keyboard.dismiss}
-                                style={{ backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 999, paddingHorizontal: 20, paddingVertical: 14, color: '#1e293b', fontFamily: 'Inter_400Regular', fontSize: 14 }}
-                              />
-                            </View>
-                          )}
+                          {/* Banner automático de condição especial por e-mail (oculto no modo Alterar Forma de Pagamento) */}
+                          {!isUpdatePaymentMethodMode && renderAutoPromoBanner(20)}
 
                           {/* Botão Gerar PIX com Acionamento Confiável */}
                           <TouchableOpacity
@@ -2181,24 +2226,8 @@ export default function AssinaturaScreen() {
                         </View>
                       </View>
 
-                      {/* Cupom (oculto no modo Alterar Forma de Pagamento igual à Web) */}
-                      {!isUpdatePaymentMethodMode && (
-                        <View style={{ marginBottom: 16 }}>
-                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#475569', marginBottom: 6, marginLeft: 8 }}>
-                            Cupom de Desconto (opcional)
-                          </Text>
-                          <TextInput
-                            value={cardData.cupom}
-                            onChangeText={(t) => setCardData(prev => ({ ...prev, cupom: t.toUpperCase() }))}
-                            placeholder="DIGITE SEU CUPOM"
-                            placeholderTextColor="#94a3b8"
-                            autoCapitalize="characters"
-                            returnKeyType="done"
-                            onSubmitEditing={Keyboard.dismiss}
-                            style={{ backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 999, paddingHorizontal: 20, paddingVertical: 14, color: '#1e293b', fontFamily: 'Inter_400Regular', fontSize: 14 }}
-                          />
-                        </View>
-                      )}
+                      {/* Banner automático de condição especial por e-mail (oculto no modo Alterar Forma de Pagamento) */}
+                      {!isUpdatePaymentMethodMode && renderAutoPromoBanner(16)}
 
                       <View style={{ backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
                         <Feather name="shield" size={13} color="#166534" />
