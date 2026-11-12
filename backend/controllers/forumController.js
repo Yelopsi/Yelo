@@ -4,6 +4,19 @@ const { Op } = require('sequelize');
 
 const gamificationService = require('../services/gamificationService');
 const emailService = require('../services/emailService'); // Importação do serviço de e-mail
+
+function computePostClosed(post) {
+    if (!post) return false;
+    const status = String(post.status || '').toLowerCase();
+    return Boolean(
+        post.redirectPostId ||
+        status === 'archived' ||
+        status === 'closed' ||
+        status === 'encerrada' ||
+        status === 'hidden_by_admin' ||
+        status === 'deleted'
+    );
+}
 exports.getAllPosts = async (req, res) => {
     try {
         const psychologistId = req.user.id;
@@ -104,7 +117,10 @@ exports.getAllPosts = async (req, res) => {
                 category: post.category,
                 isAnonymous: post.isAnonymous,
                 createdAt: post.createdAt,
+                status: post.status || 'active',
                 isPinned: post.dataValues.isPinned,
+                redirectPostId: post.redirectPostId || null,
+                isClosed: computePostClosed(post),
                 votes: post.votes,
                 authorBadges: post.isAnonymous ? {} : post.Psychologist?.badges, // Passa as badges para o front
                 authorLevel: post.isAnonymous ? null : post.Psychologist?.authority_level, // Passa o nível
@@ -484,6 +500,11 @@ exports.createPost = async (req, res) => {
         notificationService.notifyNewPost(post, 'forum').catch(err => console.error("Notification hook error (createPost):", err));
 
         res.json(post);
+
+        // Disparo assíncrono não-bloqueante do Mediador IA (zero latência ao publicar)
+        try {
+            require('../services/forumMediatorService').scheduleBackgroundReview(post.id);
+        } catch (medErr) {}
     } catch (error) {
         res.status(500).json({ error: 'Erro ao criar post' });
     }
@@ -541,10 +562,12 @@ exports.getPostDetails = async (req, res) => {
             category: post.category,
             votes: post.votes,
             createdAt: post.createdAt,
+            status: post.status || 'active',
             isAnonymous: post.isAnonymous,
             isPinned: post.isPinned,
             redirectPostId: post.redirectPostId || null,
             redirectPost: redirectPost,
+            isClosed: computePostClosed(post),
             authorName: post.isAnonymous ? 'Anônimo' : (post.Psychologist ? post.Psychologist.nome : 'Usuário'),
             authorPhoto: post.isAnonymous ? null : (post.Psychologist ? post.Psychologist.fotoUrl : null),
             authorBadges: post.isAnonymous ? {} : (post.Psychologist ? post.Psychologist.badges : {}),
@@ -696,7 +719,7 @@ exports.createComment = async (req, res) => {
                 redirectPostId: post.redirectPostId
             });
         }
-        if (post.status === 'archived' || post.status === 'hidden_by_admin' || post.status === 'deleted') {
+        if (post.status === 'archived' || post.status === 'closed' || post.status === 'encerrada' || post.status === 'hidden_by_admin' || post.status === 'deleted') {
             return res.status(403).json({ error: 'Esta discussão está encerrada para novos comentários.' });
         }
 
@@ -1696,10 +1719,11 @@ exports.checkDuplicateAi = async (req, res) => {
             where: baseWhere,
             attributes: ['id', 'title', 'category', 'content'],
             order: [
+                [db.Sequelize.literal('COALESCE("ForumPost"."isPinned", false)'), 'DESC'],
                 ['votes', 'DESC'],
                 ['createdAt', 'DESC']
             ],
-            limit: 12
+            limit: 15
         });
 
         recentPosts.forEach(p => {

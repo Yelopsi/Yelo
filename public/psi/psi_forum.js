@@ -960,6 +960,20 @@
                 card.classList.remove('pinned');
                 if (pinnedPill) pinnedPill.classList.add('hidden');
             }
+            const closedPill = card.querySelector('.post-closed-pill');
+            if (closedPill) {
+                const closedTextEl = closedPill.querySelector('.post-closed-pill-text');
+                if (post.isClosed || post.redirectPostId) {
+                    closedPill.classList.remove('hidden');
+                    closedPill.style.display = 'inline-flex';
+                    if (closedTextEl) {
+                        closedTextEl.textContent = post.redirectPostId ? 'Redirecionado' : 'Encerrado';
+                    }
+                } else {
+                    closedPill.classList.add('hidden');
+                    closedPill.style.display = 'none';
+                }
+            }
             card.querySelector('.post-title').textContent = post.title;
 
             const catEl = card.querySelector('.post-category');

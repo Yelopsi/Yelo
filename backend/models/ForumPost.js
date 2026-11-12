@@ -28,6 +28,10 @@ module.exports = (sequelize, DataTypes) => {
           type: DataTypes.BOOLEAN,
           defaultValue: false
       },
+      isPinned: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false
+      },
       votes: {
           type: DataTypes.INTEGER,
           defaultValue: 0

@@ -219,6 +219,27 @@ setTimeout(() => {
     checkAndExecuteTrafficScalingJobs().catch(e => console.error("Erro no check inicial de tráfego:", e));
 }, 10000);
 
+/**
+ * Tarefa 9: Mediador IA do Fórum (Assíncrono / Zero Impacto na Latência)
+ * Roda a cada 15 minutos revisando novos posts em background quando ENABLE_FORUM_MEDIATOR === 'true'.
+ */
+cron.schedule('*/15 * * * *', async () => {
+    if (process.env.ENABLE_FORUM_MEDIATOR !== 'true') return;
+    try {
+        const forumMediatorService = require('../services/forumMediatorService');
+        const res = await forumMediatorService.runMediatorBatch({ dryRun: false, limit: 10 });
+        if (res.evaluatedCount > 0) {
+            const acted = res.results.filter(r => r.applied).length;
+            console.log(`🛡️ [CRON FORUM-MEDIATOR] Avaliados: ${res.evaluatedCount} | Ações aplicadas: ${acted}`);
+        }
+    } catch (err) {
+        console.error('❌ [CRON FORUM-MEDIATOR] Erro:', err.message);
+    }
+}, {
+    scheduled: true,
+    timezone: "America/Sao_Paulo"
+});
+
 
 // --- LÓGICA PARA TESTE MANUAL (EXECUTAR SOB DEMANDA) ---
 
