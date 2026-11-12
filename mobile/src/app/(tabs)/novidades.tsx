@@ -8,12 +8,12 @@ import {
   ActivityIndicator,
   StyleSheet,
   Platform,
-  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import YeloScrollView from '../../components/YeloScrollView';
+import NativeSelectMenu, { type NativeSelectOption } from '../../components/NativeSelectMenu';
 import api from '../../services/api';
 
 interface UpdateItem {
@@ -51,6 +51,7 @@ export default function NovidadesScreen() {
   const [allUpdates, setAllUpdates] = useState<UpdateItem[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   // Normaliza strings para busca insensível a acentos
   const normalizeStr = (str: string) => {
@@ -195,6 +196,23 @@ export default function NovidadesScreen() {
     return '✨';
   };
 
+  const categoryOptions: NativeSelectOption[] = useMemo(() => {
+    const opts: NativeSelectOption[] = [
+      { label: `Todas as Categorias (${allUpdates.length})`, value: 'all' },
+    ];
+    categoryCounts.forEach((count, cat) => {
+      opts.push({ label: `${getCategoryIcon(cat)} ${cat} (${count})`, value: cat });
+    });
+    return opts;
+  }, [allUpdates.length, categoryCounts]);
+
+  const selectedCategoryLabel = useMemo(() => {
+    return (
+      categoryOptions.find((o) => o.value === activeCategory)?.label ||
+      `Todas as Categorias (${allUpdates.length})`
+    );
+  }, [categoryOptions, activeCategory, allUpdates.length]);
+
   // Filtragem das edições e itens de acordo com categoria e busca
   const filteredEditions = useMemo(() => {
     return allEditions
@@ -216,6 +234,17 @@ export default function NovidadesScreen() {
       })
       .filter((edition) => edition.filteredItems.length > 0);
   }, [allEditions, activeCategory, searchQuery]);
+
+  const totalPages = filteredEditions.length;
+  const safePage = totalPages > 0 ? Math.min(Math.max(1, currentPage), totalPages) : 1;
+  const visibleEditions = useMemo(() => {
+    if (filteredEditions.length === 0) return [];
+    return [filteredEditions[safePage - 1]];
+  }, [filteredEditions, safePage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory, searchQuery]);
 
   // Navegação inteligente para os CTAs
   const handleNavigateCta = (ctaLink?: string | null) => {
@@ -293,95 +322,45 @@ export default function NovidadesScreen() {
 
         {/* BARRA DE FILTROS E BUSCA */}
         <View style={styles.filterBarContainer}>
-          {/* Pílulas de Categoria (Scroll Horizontal) */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryPillsScroll}
+          {/* Dropdown Nativo no Padrão do Dispositivo */}
+          <NativeSelectMenu
+            options={categoryOptions}
+            selectedValue={activeCategory}
+            onSelect={(val) => {
+              setActiveCategory(val || 'all');
+              setCurrentPage(1);
+            }}
+            style={{ width: '100%' }}
           >
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setActiveCategory('all')}
-              style={[
-                styles.categoryPill,
-                activeCategory === 'all' && styles.categoryPillActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.categoryPillText,
-                  activeCategory === 'all' && styles.categoryPillTextActive,
-                ]}
-              >
-                Todas
+            <View style={styles.categoryDropdownBtn}>
+              <Text style={styles.categoryDropdownText} numberOfLines={1}>
+                {selectedCategoryLabel}
               </Text>
-              <View
-                style={[
-                  styles.pillCountBadge,
-                  activeCategory === 'all' && styles.pillCountBadgeActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.pillCountText,
-                    activeCategory === 'all' && styles.pillCountTextActive,
-                  ]}
-                >
-                  {allUpdates.length}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {Array.from(categoryCounts.entries()).map(([cat, count]) => {
-              const isActive = activeCategory === cat;
-              return (
-                <TouchableOpacity
-                  key={cat}
-                  activeOpacity={0.8}
-                  onPress={() => setActiveCategory(cat)}
-                  style={[styles.categoryPill, isActive && styles.categoryPillActive]}
-                >
-                  <Text style={{ marginRight: 4 }}>{getCategoryIcon(cat)}</Text>
-                  <Text
-                    style={[
-                      styles.categoryPillText,
-                      isActive && styles.categoryPillTextActive,
-                    ]}
-                  >
-                    {cat}
-                  </Text>
-                  <View
-                    style={[
-                      styles.pillCountBadge,
-                      isActive && styles.pillCountBadgeActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.pillCountText,
-                        isActive && styles.pillCountTextActive,
-                      ]}
-                    >
-                      {count}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+              <Feather name="chevron-down" size={16} color="#475569" />
+            </View>
+          </NativeSelectMenu>
 
           {/* Input de Busca */}
           <View style={styles.searchContainer}>
             <Feather name="search" size={16} color="#94A3B8" style={styles.searchIcon} />
             <TextInput
               value={searchQuery}
-              onChangeText={setSearchQuery}
+              onChangeText={(txt) => {
+                setSearchQuery(txt);
+                setCurrentPage(1);
+              }}
               placeholder="Buscar melhoria..."
               placeholderTextColor="#94A3B8"
               style={styles.searchInput}
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearchBtn}>
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchQuery('');
+                  setCurrentPage(1);
+                }}
+                style={styles.clearSearchBtn}
+              >
                 <Feather name="x" size={14} color="#64748B" />
               </TouchableOpacity>
             )}
@@ -402,7 +381,7 @@ export default function NovidadesScreen() {
             {/* Linha vertical contínua da timeline */}
             <View style={styles.timelineVerticalLine} />
 
-            {filteredEditions.map((edition) => (
+            {visibleEditions.map((edition) => (
               <View key={edition.id} style={styles.editionCardWrapper}>
                 {/* Bolinha cravada na linha da timeline */}
                 <View style={styles.timelineDot} />
@@ -491,6 +470,63 @@ export default function NovidadesScreen() {
                 </View>
               </View>
             ))}
+          </View>
+        )}
+
+        {/* PAGINAÇÃO DAS EDIÇÕES */}
+        {!isLoading && totalPages > 1 && (
+          <View style={styles.paginationContainer}>
+            <Text style={styles.paginationInfoText}>
+              Edição {safePage} de {totalPages} •{' '}
+              {safePage === 1 ? 'Mais recente' : 'Edição anterior'} (
+              {visibleEditions[0]?.formattedDate || formatDateFriendly(visibleEditions[0]?.date)})
+            </Text>
+            <View style={styles.paginationControlsRow}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                disabled={safePage <= 1}
+                onPress={() => setCurrentPage(safePage - 1)}
+                style={[styles.paginationBtn, safePage <= 1 && styles.paginationBtnDisabled]}
+              >
+                <Text style={styles.paginationBtnText}>← Mais recente</Text>
+              </TouchableOpacity>
+
+              {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((pageNum) => {
+                const isActive = pageNum === safePage;
+                return (
+                  <TouchableOpacity
+                    key={pageNum}
+                    activeOpacity={0.8}
+                    onPress={() => setCurrentPage(pageNum)}
+                    style={[
+                      styles.paginationPageNum,
+                      isActive && styles.paginationPageNumActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.paginationPageNumText,
+                        isActive && styles.paginationPageNumTextActive,
+                      ]}
+                    >
+                      {pageNum}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                disabled={safePage >= totalPages}
+                onPress={() => setCurrentPage(safePage + 1)}
+                style={[
+                  styles.paginationBtn,
+                  safePage >= totalPages && styles.paginationBtnDisabled,
+                ]}
+              >
+                <Text style={styles.paginationBtnText}>Mais antiga →</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -676,51 +712,23 @@ const styles = StyleSheet.create({
     elevation: 2,
     gap: 12,
   },
-  categoryPillsScroll: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 2,
-  },
-  categoryPill: {
+  categoryDropdownBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 50,
-  },
-  categoryPillActive: {
-    backgroundColor: '#1B4332',
-    borderColor: '#1B4332',
-  },
-  categoryPillText: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  categoryPillTextActive: {
-    color: '#FFEE8C',
-    fontWeight: '700',
-  },
-  pillCountBadge: {
-    marginLeft: 6,
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    borderColor: '#CBD5E1',
     borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 40,
   },
-  pillCountBadgeActive: {
-    backgroundColor: 'rgba(255, 238, 140, 0.25)',
-  },
-  pillCountText: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#64748B',
-  },
-  pillCountTextActive: {
-    color: '#FFEE8C',
+  categoryDropdownText: {
+    flex: 1,
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginRight: 8,
   },
 
   // Input de Busca
@@ -730,8 +738,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 50,
-    paddingHorizontal: 14,
+    borderRadius: 10,
+    paddingHorizontal: 12,
     height: 40,
   },
   searchIcon: {
@@ -986,6 +994,68 @@ const styles = StyleSheet.create({
     color: '#FFEE8C',
     fontSize: 13,
     fontWeight: '700',
+  },
+
+  // Paginação
+  paginationContainer: {
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  paginationInfoText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+    textAlign: 'center',
+  },
+  paginationControlsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  paginationBtn: {
+    height: 36,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paginationBtnDisabled: {
+    opacity: 0.45,
+  },
+  paginationBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#1B4332',
+  },
+  paginationPageNum: {
+    height: 36,
+    minWidth: 36,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paginationPageNumActive: {
+    backgroundColor: '#1B4332',
+    borderColor: '#1B4332',
+  },
+  paginationPageNumText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#1B4332',
+  },
+  paginationPageNumTextActive: {
+    color: '#FFEE8C',
   },
 
   // Card de Sugestões da Comunidade
