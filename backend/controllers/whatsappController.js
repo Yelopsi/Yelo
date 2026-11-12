@@ -1,6 +1,6 @@
 const db = require('../models');
-const jwt = require('jsonwebtoken');
 const gamificationService = require('../services/gamificationService');
+const { resolveActor, recordDiscardedEvent } = require('../utils/actorClassifier');
 
 /**
  * Endpoint unificado para o Teste A/B de WhatsApp.
@@ -24,17 +24,18 @@ exports.getWhatsAppLink = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Psicólogo ou telefone não encontrado.' });
         }
 
-        // 2. Proteção Anti Auto-Clique (psicólogo clicando em si mesmo)
-        const authHeader = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
-        if (authHeader && authHeader !== 'null' && authHeader !== 'cookie_auth_active') {
-            try {
-                const decoded = jwt.verify(authHeader, process.env.JWT_SECRET);
-                if (decoded.id === psi.id) {
-                    console.log(`[A/B] Auto-clique ignorado: Psicólogo ${psi.id}`);
-                    const numLimpo = psi.telefone.replace(/\D/g, '');
-                    return res.json({ success: true, url: `https://wa.me/55${numLimpo}`, variant: null, skipped: true });
-                }
-            } catch (e) { /* Token inválido — continua como visitante */ }
+        // 2. Descarta cliques de profissionais ou admins (logados ou não logados no mesmo navegador)
+        const actor = resolveActor(req, req.query || {});
+        if (!actor.isPatient) {
+            await recordDiscardedEvent(db, {
+                stage: 'whatsapp',
+                actorType: actor.actorType,
+                targetId: psi.id,
+                searchId: req.query.searchId || null,
+                source: 'ab_link'
+            });
+            const numLimpo = psi.telefone.replace(/\D/g, '');
+            return res.json({ success: true, url: `https://wa.me/55${numLimpo}`, variant: null, skipped: true });
         }
 
         // 3. Proteção de Idempotência (Cookie de 24h — bloqueia duplo-clique)

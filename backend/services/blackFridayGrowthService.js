@@ -260,31 +260,51 @@ function evaluateTrafficAndCapacity(snapshot = {}, userConfig = {}) {
 }
 
 function classifyExpiredCandidate(psi) {
-    const wasPayer = Boolean(
-        Number(psi.subscription_payments_count || 0) > 0 ||
-        psi.subscriptionId ||
+    const expDate = psi.planExpiresAt ? new Date(psi.planExpiresAt) : null;
+    const hasModernExpiration = Boolean(expDate && !Number.isNaN(expDate.getTime()) && expDate.getFullYear() >= 2020);
+    const hasRealPaymentEvidence = Boolean(
         psi.firstPaidAt ||
-        Number(psi.lifetimeRevenue || 0) > 0
+        Number(psi.lifetimeRevenue || 0) > 0 ||
+        (Number(psi.subscription_payments_count || 0) > 0 && hasModernExpiration)
     );
     const hasPhoto = Boolean(psi.fotoUrl && String(psi.fotoUrl).trim() !== '' && !String(psi.fotoUrl).includes('placehold.co'));
     const hasBio = Boolean(psi.bio && String(psi.bio).trim().length >= 10);
     const hasCpf = Boolean(psi.cpf && String(psi.cpf).trim() !== '');
     const matchReady = hasPhoto && hasBio && hasCpf;
     const clicks = parseInt(psi.whatsapp_clicks || 0, 10);
+    const appearances = parseInt(psi.profile_appearances || 0, 10);
+    const recencyMs = Math.max(
+        psi.firstPaidAt ? new Date(psi.firstPaidAt).getTime() : 0,
+        hasModernExpiration ? expDate.getTime() : 0
+    );
 
-    if (wasPayer) {
-        return { wave: 1, waveKey: 'wave1_ex_payer', variant: 'ex_payer', priority: 1, matchReady, clicks };
+    const isLegacyGhostEpoch = Boolean(
+        expDate &&
+        !Number.isNaN(expDate.getTime()) &&
+        expDate.getFullYear() < 2020 &&
+        !psi.firstPaidAt &&
+        clicks === 0 &&
+        appearances === 0
+    );
+
+    // Exige perfil completo para Match evitando queimar convites em contas incompletas/fantasmas (ex: 1970-01-01 sem pagamento real)
+    if (!matchReady || isLegacyGhostEpoch) {
+        return { wave: 0, waveKey: null, variant: null, priority: 99, matchReady, clicks, appearances, recencyMs };
     }
-    if (matchReady && clicks >= 2) {
-        return { wave: 1, waveKey: 'wave1_trial_hot_2plus', variant: 'trial_with_clicks', priority: 2, matchReady, clicks };
+
+    if (hasRealPaymentEvidence && (clicks > 0 || appearances > 0 || psi.firstPaidAt || hasModernExpiration)) {
+        return { wave: 1, waveKey: 'wave1_ex_payer', variant: 'ex_payer', priority: 1, matchReady, clicks, appearances, recencyMs };
     }
-    if (matchReady && clicks === 1) {
-        return { wave: 2, waveKey: 'wave2_trial_warm_1click', variant: 'trial_with_clicks', priority: 3, matchReady, clicks };
+    if (clicks >= 2) {
+        return { wave: 1, waveKey: 'wave1_trial_hot_2plus', variant: 'trial_with_clicks', priority: 2, matchReady, clicks, appearances, recencyMs };
     }
-    if (matchReady && clicks === 0) {
-        return { wave: 3, waveKey: 'wave3_trial_cold_ready', variant: 'trial_no_clicks', priority: 4, matchReady, clicks };
+    if (clicks === 1) {
+        return { wave: 2, waveKey: 'wave2_trial_warm_1click', variant: 'trial_with_clicks', priority: 3, matchReady, clicks, appearances, recencyMs };
     }
-    return { wave: 0, waveKey: null, variant: null, priority: 99, matchReady, clicks };
+    if (clicks === 0) {
+        return { wave: 3, waveKey: 'wave3_trial_cold_ready', variant: 'trial_no_clicks', priority: 4, matchReady, clicks, appearances, recencyMs };
+    }
+    return { wave: 0, waveKey: null, variant: null, priority: 99, matchReady, clicks, appearances, recencyMs };
 }
 
 /**
@@ -356,7 +376,7 @@ async function getOrderedEligibleRecipients(db = defaultDb, options = {}) {
 
         if (waveFilter === 4) {
             if (sentLastCallIds.has(psi.id)) continue;
-            queue.push({ psi, wave: 4, waveKey: 'wave4_last_call', variant: 'bf_last_call', priority: cls.priority, clicks: cls.clicks, matchReady: cls.matchReady });
+            queue.push({ psi, wave: 4, waveKey: 'wave4_last_call', variant: 'bf_last_call', priority: cls.priority, clicks: cls.clicks, appearances: cls.appearances, recencyMs: cls.recencyMs, matchReady: cls.matchReady });
         } else {
             if (alreadyInvitedIds.has(psi.id)) continue;
             if (waveFilter && cls.wave !== waveFilter) continue;
@@ -366,12 +386,14 @@ async function getOrderedEligibleRecipients(db = defaultDb, options = {}) {
 
     queue.sort((a, b) => {
         if (a.priority !== b.priority) return a.priority - b.priority;
+        if (b.clicks !== a.clicks) return b.clicks - a.clicks;
+        if ((b.appearances || 0) !== (a.appearances || 0)) return (b.appearances || 0) - (a.appearances || 0);
+        if ((b.recencyMs || 0) !== (a.recencyMs || 0)) return (b.recencyMs || 0) - (a.recencyMs || 0);
         const priceA = Number(a.psi.valor_sessao_numero || 999);
         const priceB = Number(b.psi.valor_sessao_numero || 999);
         const affordableA = priceA <= 120 ? 0 : 1;
         const affordableB = priceB <= 120 ? 0 : 1;
-        if (affordableA !== affordableB) return affordableA - affordableB;
-        return b.clicks - a.clicks;
+        return affordableA - affordableB;
     });
 
     return {

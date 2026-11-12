@@ -24,7 +24,14 @@
             if (token) {
                 // Salva o token e dados do usuário
                 localStorage.setItem('Yelo_token', token); 
-                if (type) localStorage.setItem('Yelo_user_type', type);
+                if (type) {
+                    localStorage.setItem('Yelo_user_type', type);
+                    if (type === 'psychologist' || type === 'psi' || type === 'admin') {
+                        const proRole = type === 'admin' ? 'admin' : 'psychologist';
+                        localStorage.setItem('yelo_known_pro', proRole);
+                        document.cookie = `yelo_known_pro=${proRole}; path=/; max-age=31536000; SameSite=Lax`;
+                    }
+                }
                 if (name) localStorage.setItem('Yelo_user_name', name);
                 
                 // Redireciona com pequeno delay para garantir gravação

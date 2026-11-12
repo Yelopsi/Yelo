@@ -219,8 +219,21 @@
                 if (res.ok) {
                     localStorage.setItem('Yelo_token', data.token);
                     localStorage.setItem('Yelo_user', JSON.stringify(data.user));
+                    if (data.user && data.user.type) {
+                        localStorage.setItem('Yelo_user_type', data.user.type);
+                        if (data.user.type === 'psychologist' || data.user.type === 'psi' || data.user.type === 'admin') {
+                            const proRole = data.user.type === 'admin' ? 'admin' : 'psychologist';
+                            localStorage.setItem('yelo_known_pro', proRole);
+                            document.cookie = `yelo_known_pro=${proRole}; path=/; max-age=31536000; SameSite=Lax`;
+                        }
+                    }
                     if (window.showToast) window.showToast('Entrando...', 'success');
-                    setTimeout(() => { window.location.href = data.redirect; }, 600);
+                    const hasBfRedirect = sessionStorage.getItem('yelo_bf_redirect') === '1';
+                    sessionStorage.removeItem('yelo_bf_redirect');
+                    const targetUrl = (data.user && data.user.type === 'psychologist' && hasBfRedirect)
+                        ? '/psi/psi_dashboard.html?page=psi_assinatura.html'
+                        : data.redirect;
+                    setTimeout(() => { window.location.href = targetUrl; }, 600);
                 } else {
                     if (window.showToast) window.showToast(data.error || 'Erro ao entrar com Google.', 'error');
                     else alert(data.error || 'Erro ao entrar com Google.');
@@ -237,6 +250,9 @@
             // 1. Tenta ler os parâmetros da URL
             const urlParams = new URLSearchParams(window.location.search);
             const emailAuto = urlParams.get('email');
+            if (urlParams.get('bf') === '1') {
+                sessionStorage.setItem('yelo_bf_redirect', '1');
+            }
 
             // 2. Se houver um e-mail na URL, preenche o campo
             if (emailAuto) {

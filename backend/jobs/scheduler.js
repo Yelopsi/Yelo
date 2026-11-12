@@ -231,6 +231,15 @@ async function checkAndExecuteTrafficScalingJobs() {
     }
 }
 
+function getBrtTimeHHMM(now = new Date()) {
+    return now.toLocaleTimeString('en-GB', {
+        timeZone: 'America/Sao_Paulo',
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
 cron.schedule('30 8 * * *', () => {
     console.log('Executando tarefa agendada: checkAndExecuteTrafficScalingJobs');
     checkAndExecuteTrafficScalingJobs();
@@ -239,8 +248,13 @@ cron.schedule('30 8 * * *', () => {
     timezone: "America/Sao_Paulo"
 });
 
-// Executa verificação inicial após boot
+// Executa verificação inicial após boot apenas na janela diurna (>= 08:30 BRT) para não disparar e-mails de madrugada
 setTimeout(() => {
+    const brtHHMM = getBrtTimeHHMM();
+    if (brtHHMM < '08:30') {
+        console.log(`⏸️ [CRON TRAFFIC] Boot às ${brtHHMM} BRT (< 08:30); disparo diário aguardará o cron das 08:30 BRT.`);
+        return;
+    }
     checkAndExecuteTrafficScalingJobs().catch(e => console.error("Erro no check inicial de tráfego:", e));
 }, 10000);
 

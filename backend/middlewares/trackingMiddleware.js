@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const db = require('../models');
+const { isProOrAdminPath, setKnownProCookie, resolveActor } = require('../utils/actorClassifier');
 
 const staticFileRegex = /\.(css|js|json|ico|png|jpg|jpeg|webp|svg|woff|woff2|ttf|eot)$/i;
 
@@ -12,6 +13,12 @@ const sessionMiddleware = async (req, res, next) => {
     if (!sessionId) {
         sessionId = crypto.randomBytes(16).toString('hex');
         res.cookie('yelo_session', sessionId, { maxAge: 365 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' });
+    }
+
+    // Marca dispositivo/navegador como profissional/admin (persiste mesmo após logout)
+    const actor = resolveActor(req, { page: req.path });
+    if (!actor.isPatient && (actor.isLogged || isProOrAdminPath(req.path) || (req.path === '/login' && req.query?.bf === '1'))) {
+        setKnownProCookie(res, actor.category);
     }
 
     db.sequelize.query(

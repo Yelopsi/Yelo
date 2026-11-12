@@ -8,6 +8,10 @@ module.exports = (sequelize, DataTypes) => {
         page: {
             type: DataTypes.STRING,
             defaultValue: 'home' // Pode ser 'home', 'blog', 'search'
+        },
+        actor_type: {
+            type: DataTypes.STRING,
+            defaultValue: 'patient'
         }
         // createdAt é gerado automaticamente, é ele que usaremos para saber o dia/hora
     }, {

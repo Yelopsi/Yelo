@@ -224,6 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- DEBUG: RESPOSTA DO SERVIDOR ---
 
             if (response.ok) {
+                localStorage.setItem('yelo_known_pro', 'psychologist');
+                document.cookie = 'yelo_known_pro=psychologist; path=/; max-age=31536000; SameSite=Lax';
                 // Se não for admin, limpa o cache. Se for admin, não precisa limpar nada.
                 if (modeParam !== 'admin') {
                     localStorage.removeItem('psi_questionario_respostas');

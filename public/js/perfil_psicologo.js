@@ -55,15 +55,27 @@ const initProfilePage = async () => {
                                     } catch(e) {}
                                 }
 
-                                // Recupera dados do visitante se houver
+                                // Recupera dados do visitante e sinais de sessão pro/admin se houver
                                 const guestPhone = localStorage.getItem('yelo_guest_phone');
                                 const guestName = localStorage.getItem('yelo_guest_name') || 'Visitante';
+                                const userType = localStorage.getItem('Yelo_user_type') || '';
+                                const knownPro = localStorage.getItem('yelo_known_pro') || '';
+                                const trackHeaders = { 'Content-Type': 'application/json' };
+                                if (userType) trackHeaders['X-Yelo-User-Type'] = userType;
+                                if (knownPro) trackHeaders['X-Yelo-Known-Pro'] = knownPro;
 
                                 // Não esperamos o fetch terminar para não atrasar o usuário
                                 fetch(`${BASE_URL}/api/psychologists/${profile.slug}/whatsapp-click`, {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ patientId, guestPhone, guestName })
+                                    credentials: 'include',
+                                    headers: trackHeaders,
+                                    body: JSON.stringify({
+                                        patientId,
+                                        guestPhone,
+                                        guestName,
+                                        user_type: userType || undefined,
+                                        known_pro: knownPro || undefined
+                                    })
                                 }).catch(() => {});
                                 
                                 // --- Tracking específico para o Modal PLG de Conversão ---
@@ -75,8 +87,15 @@ const initProfilePage = async () => {
                                 
                                 fetch(`${BASE_URL}/api/public/whatsapp-click-log`, {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ psychologistId: profile.id, guestName, utmSource })
+                                    credentials: 'include',
+                                    headers: trackHeaders,
+                                    body: JSON.stringify({
+                                        psychologistId: profile.id,
+                                        guestName,
+                                        utmSource,
+                                        user_type: userType || undefined,
+                                        known_pro: knownPro || undefined
+                                    })
                                 }).catch(() => {});
                                 
                             } catch (err) {
@@ -446,10 +465,20 @@ const initProfilePage = async () => {
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const source = urlParams.get('ref') === 'match' ? 'profile_click_funnel' : 'direct_view';
+            const userType = localStorage.getItem('Yelo_user_type') || '';
+            const knownPro = localStorage.getItem('yelo_known_pro') || '';
+            const headers = { 'Content-Type': 'application/json' };
+            if (userType) headers['X-Yelo-User-Type'] = userType;
+            if (knownPro) headers['X-Yelo-Known-Pro'] = knownPro;
             fetch(`${BASE_URL}/api/psychologists/${profileData.id}/appearance`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: source })
+                credentials: 'include',
+                headers,
+                body: JSON.stringify({
+                    type: source,
+                    user_type: userType || undefined,
+                    known_pro: knownPro || undefined
+                })
             }).catch(() => {});
         } catch(e) {}
 

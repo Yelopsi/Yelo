@@ -1,20 +1,45 @@
 const db = require('../models');
 const { Op } = require('sequelize');
+const { resolveActor } = require('../utils/actorClassifier');
+
+const NON_PATIENT_TYPES = new Set([
+    'psychologist',
+    'psychologist_logged',
+    'psychologist_unlogged',
+    'psi',
+    'admin',
+    'admin_logged',
+    'admin_unlogged'
+]);
+
+function normalizeRespondentType(rawType) {
+    const val = String(rawType || '').trim().toLowerCase();
+    if (NON_PATIENT_TYPES.has(val)) return val;
+    return 'patient';
+}
+
+function resolveRespondentType(req, fallbackBody = {}) {
+    return resolveActor(req, fallbackBody).actorType;
+}
 
 /**
  * Inicia o rastreamento de um questionário (Status: started)
  */
 exports.startSearch = async (req, res) => {
     try {
-        // Cria um registro, salvando o status dentro do JSON para consistência
+        const body = (req.body && typeof req.body === 'object') ? req.body : {};
+        const respondentType = resolveRespondentType(req, body);
+
+        // Cria um registro, salvando o status e tipo de respondente dentro do JSON para consistência
         const search = await db.DemandSearch.create({
             searchParams: { 
                 status: 'started', // Salva o status no JSON
-                startedAt: new Date().toISOString() 
+                startedAt: new Date().toISOString(),
+                respondent_type: respondentType
             }
         });
         // Retorna o ID para o Frontend salvar na sessão
-        res.status(201).json({ searchId: search.id });
+        res.status(201).json({ searchId: search.id, respondent_type: respondentType });
     } catch (error) {
         console.error('Erro ao iniciar rastreamento:', error);
         res.status(500).json({ error: 'Erro ao iniciar.' });
@@ -27,13 +52,17 @@ exports.startSearch = async (req, res) => {
 exports.recordSearch = async (req, res) => {
     try {
         let data = req.body;
-        const searchId = data.searchId; 
 
         if (typeof data === 'string') {
             try { data = JSON.parse(data); } catch (e) { return res.status(400).json({ error: "Formato inválido" }); }
         }
+        data = (data && typeof data === 'object') ? data : {};
+        const searchId = data.searchId;
+        const resolvedType = resolveRespondentType(req, data);
+
         const finalPayload = { ...data };
-        delete finalPayload.searchId; 
+        delete finalPayload.searchId;
+        delete finalPayload.user_type;
 
         // [CORREÇÃO] Força 'organico' para qualquer usuário sem UTM
         if (!finalPayload.utm_source) {
@@ -46,9 +75,22 @@ exports.recordSearch = async (req, res) => {
         }
 
         if (searchId) {
-            // CENÁRIO A: Atualiza o rascunho existente
+            // CENÁRIO A: Atualiza o rascunho existente preservando metadados (ex: respondent_type)
+            const existing = await db.DemandSearch.findByPk(searchId, { attributes: ['id', 'searchParams'] }).catch(() => null);
+            const existingParams = (existing && existing.searchParams && typeof existing.searchParams === 'object')
+                ? existing.searchParams
+                : {};
+            const existingType = normalizeRespondentType(existingParams.respondent_type);
+            const finalRespondentType = NON_PATIENT_TYPES.has(resolvedType)
+                ? resolvedType
+                : (NON_PATIENT_TYPES.has(existingType) ? existingType : 'patient');
+
             await db.DemandSearch.update({
-                searchParams: finalPayload,
+                searchParams: {
+                    ...existingParams,
+                    ...finalPayload,
+                    respondent_type: finalRespondentType
+                },
                 completedAt: new Date(), // [ESTRATÉGICO] Salva data exata da conclusão para cálculo de duração
                 status: 'completed' // <--- CORREÇÃO: Atualiza a coluna de status
             }, {
@@ -57,7 +99,10 @@ exports.recordSearch = async (req, res) => {
         } else {
             // CENÁRIO B: Fallback (Cria novo se perdeu o ID)
             await db.DemandSearch.create({
-                searchParams: finalPayload,
+                searchParams: {
+                    ...finalPayload,
+                    respondent_type: resolvedType
+                },
                 completedAt: new Date(),
                 status: 'completed' // <--- CORREÇÃO: Já cria como concluído
             });
@@ -120,14 +165,12 @@ exports.getRatings = async (req, res) => {
  */
 exports.recordVisit = async (req, res) => {
     try {
-        // [ESTRATÉGICO] Captura metadados ricos para igualar ao middleware do server.js
-        const userAgent = req.headers['user-agent'] || 'Unknown';
-        const referrer = req.headers['referer'] || null;
-        
+        const page = req.body?.page || 'home';
+        const actor = resolveActor(req, { ...(req.body || {}), page });
+
         await db.SiteVisit.create({ 
-            page: req.body.page || 'home',
-            userAgent: userAgent,
-            referrer: referrer
+            page,
+            actor_type: actor.actorType
         });
         res.status(200).send('ok'); // Resposta leve e rápida
     } catch (error) {

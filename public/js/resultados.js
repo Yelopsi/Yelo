@@ -539,11 +539,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.disabled = true;
 
                 try {
+                    const userType = localStorage.getItem('Yelo_user_type') || '';
+                    const knownPro = localStorage.getItem('yelo_known_pro') || '';
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (userType) headers['X-Yelo-User-Type'] = userType;
+                    if (knownPro) headers['X-Yelo-Known-Pro'] = knownPro;
                     await fetch(`${BASE_URL}/api/demand/searches`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        headers,
                         body: JSON.stringify({
                             searchId: sessionStorage.getItem('currentSearchId') || null,
+                            user_type: userType || undefined,
+                            known_pro: knownPro || undefined,
                             avaliacao_ux: { rating: ratingValue, feedback: feedbackText }
                         })
                     });

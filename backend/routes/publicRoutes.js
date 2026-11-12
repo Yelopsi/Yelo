@@ -6,7 +6,7 @@ const gamificationService = require('../services/gamificationService');
 const whatsappClickController = require('../controllers/whatsappClickController');
 const whatsappController = require('../controllers/whatsappController');
 const { emailSpamLimiter, clickLimiter } = require('../middlewares/rateLimiters');
-const jwt = require('jsonwebtoken');
+const { resolveActor } = require('../utils/actorClassifier');
 
 // Rotas de Magic Link de Feedback (PLG)
 router.get('/feedback/:token', whatsappClickController.getPublicFeedbackByToken);
@@ -22,16 +22,10 @@ router.post('/psychologists/:slug/whatsapp-click', clickLimiter, async (req, res
         const psychologist = await db.Psychologist.findOne({ where: { slug } });
         if (!psychologist) return res.status(404).send('Psicólogo não encontrado.');
 
-        // --- PROTEÇÃO ANTI-AUTO-CLIQUE (Psicólogo clicando em si mesmo) ---
-        let token = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
-        if (token && token !== 'null' && token !== 'cookie_auth_active') {
-            try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                if (decoded.id === psychologist.id) {
-                    console.log(`[Segurança] Auto-clique ignorado: Psicólogo ${psychologist.id}`);
-                    return res.status(200).json({ message: 'Auto-clique ignorado' });
-                }
-            } catch (e) { /* Token inválido, continua como visitante */ }
+        // --- PROTEÇÃO CONTRA CLIQUES DE PROFISSIONAIS/ADMINS ---
+        const actor = resolveActor(req, req.body || {});
+        if (!actor.isPatient) {
+            return res.status(200).json({ message: 'Clique de profissional/admin ignorado' });
         }
 
         // --- PROTEÇÃO DE IDEMPOTÊNCIA (Cookie de 24h) ---
@@ -75,11 +69,15 @@ router.post('/psychologists/:slug/whatsapp-click', clickLimiter, async (req, res
 router.post('/psychologists/:id/appearance', async (req, res) => {
     try {
         const { id } = req.params;
+        const source = req.body?.type || 'direct_view';
+        const actor = resolveActor(req, req.body || {});
         const psychologist = await db.Psychologist.findByPk(id);
         if (!psychologist) return res.status(404).send('Psicólogo não encontrado.');
+        await db.sequelize.query(`ALTER TABLE "ProfileAppearanceLogs" ADD COLUMN IF NOT EXISTS "source" VARCHAR(50);`).catch(() => {});
+        await db.sequelize.query(`ALTER TABLE "ProfileAppearanceLogs" ADD COLUMN IF NOT EXISTS "actor_type" VARCHAR(50) DEFAULT 'patient';`).catch(() => {});
         await db.sequelize.query(
-            `INSERT INTO "ProfileAppearanceLogs" ("psychologistId", "createdAt", "updatedAt") VALUES (:id, NOW(), NOW())`,
-            { replacements: { id: psychologist.id } }
+            `INSERT INTO "ProfileAppearanceLogs" ("psychologistId", "source", "actor_type", "createdAt", "updatedAt") VALUES (:id, :source, :actorType, NOW(), NOW())`,
+            { replacements: { id: psychologist.id, source, actorType: actor.actorType } }
         );
         res.status(200).send('Aparição registrada com sucesso.');
     } catch (error) { res.status(500).send('Erro interno do servidor.'); }

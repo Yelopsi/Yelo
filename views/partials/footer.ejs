@@ -413,11 +413,21 @@
 
 <script nonce="<%= nonce %>">
     document.addEventListener("DOMContentLoaded", () => {
-        // Analytics simples
+        // Analytics simples (envia sinal de profissional conhecido se existir para evitar poluir funil B2C)
+        const userType = localStorage.getItem('Yelo_user_type') || '';
+        const knownPro = localStorage.getItem('yelo_known_pro') || '';
+        const visitHeaders = { 'Content-Type': 'application/json' };
+        if (userType) visitHeaders['X-Yelo-User-Type'] = userType;
+        if (knownPro) visitHeaders['X-Yelo-Known-Pro'] = knownPro;
         fetch('/api/demand/visit', { 
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ page: window.location.pathname })
+            credentials: 'include',
+            headers: visitHeaders,
+            body: JSON.stringify({
+                page: window.location.pathname,
+                user_type: userType || undefined,
+                known_pro: knownPro || undefined
+            })
         }).catch(err => console.log('Analytics offline'));
 
         // Redirecionamento da Barra de XP (Dashboard Visão Geral -> Jornada)

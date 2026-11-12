@@ -748,7 +748,45 @@
                     <p class="kpi-numero" id="kpi-desqualificados" style="color: #ef4444;">0</p>
                     <span class="kpi-delta" style="color: #ef4444;">Não seguiram no funil</span>
                 </div>
+
+                <div class="kpi-card" style="border-top-color: #6366f1;">
+                    <h4 style="display: flex; align-items: center; gap: 5px;">Descartados (Pros) <span class="info-tooltip" data-tooltip="Eventos descartados de todas as etapas (visitas, questionários, perfis e WhatsApp) por serem de psicólogos ou admins, logados ou não logados.">i</span></h4>
+                    <p class="kpi-numero" id="kpi-psicologos-questionarios" style="color: #6366f1;">0</p>
+                    <p id="kpi-psicologos-detalhe" style="font-size: 0.78rem; color: #64748b; margin-top: 4px; font-weight: 500;">0 logados | 0 não logados</p>
+                </div>
             </div>
+
+            <!-- DETALHAMENTO DE EVENTOS DESCARTADOS POR PROFISSIONAIS -->
+            <div class="widget" style="margin-bottom: 24px; border-left: 4px solid #6366f1;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <div>
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                            🛡️ Indicadores Descartados (Profissionais Logados vs. Não Logados)
+                            <span class="info-tooltip" data-tooltip="Mostra em cada indicador quantos eventos foram separados dos pacientes reais por terem sido gerados por profissionais/admins logados ou identificados sem login ativo.">i</span>
+                        </h3>
+                        <p style="color: #64748b; font-size: 0.85rem; margin: 4px 0 0 0;">Separação aplicada em todas as etapas do funil para manter os indicadores B2C puros.</p>
+                    </div>
+                    <div id="discarded-summary-badges" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #e2e8f0; text-align: left; color: #475569; font-size: 0.76rem; text-transform: uppercase;">
+                                <th style="padding: 10px 8px;">Indicador do Funil</th>
+                                <th style="padding: 10px 8px; text-align: right;">Pacientes Válidos</th>
+                                <th style="padding: 10px 8px; text-align: right;">Total Descartado</th>
+                                <th style="padding: 10px 8px; text-align: right;">Logados</th>
+                                <th style="padding: 10px 8px; text-align: right;">Não Logados</th>
+                                <th style="padding: 10px 8px; text-align: right;">% do Bruto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="discarded-breakdown-body">
+                            <tr><td colspan="6" style="padding: 12px 8px; color: #94a3b8; text-align: center;">Carregando detalhamento...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- FUNIL VISUAL DE ALTA CONVERSÃO -->
             <div class="widget" style="margin-bottom: 24px;">
                 <h3 style="display: flex; align-items: center; gap: 8px;">Jornada do Paciente (Funil End-to-End) <span class="info-tooltip" data-tooltip="Mostra as 5 etapas da conversão. Acompanhe a retenção para saber onde os usuários desistem.">i</span></h3>

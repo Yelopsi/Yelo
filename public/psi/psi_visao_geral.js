@@ -26,6 +26,23 @@
         try {
             const resStats = await apiFetch(`${API_BASE_URL}/api/psychologists/me/stats?period=all_time&t=${new Date().getTime()}`);
             const stats = resStats.ok ? await resStats.json() : {};
+
+            // Banner discreto de oferta Black Friday (quando elegível pelo e-mail)
+            (async () => {
+                try {
+                    const bfBanner = document.getElementById('bf-visao-geral-banner');
+                    if (!bfBanner) return;
+                    const resPromo = await apiFetch(`${API_BASE_URL}/api/payments/promo-eligibility?planType=ESSENTIAL`);
+                    const promo = resPromo.ok ? await resPromo.json() : null;
+                    if (promo && promo.eligible) {
+                        const titleEl = document.getElementById('bf-visao-geral-title');
+                        if (titleEl && promo.title) titleEl.textContent = promo.title;
+                        bfBanner.style.display = 'flex';
+                        const cta = document.getElementById('btn-bf-visao-geral-cta');
+                        if (cta) cta.onclick = () => window.loadPage('psi_assinatura.html');
+                    }
+                } catch (e) {}
+            })();
             
             // Inicializa visualizações sem log no console
 

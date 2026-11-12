@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { sendWelcomeEmail } = require('../services/emailService');
 const { Op } = require('sequelize');
+const { setKnownProCookie } = require('../utils/actorClassifier');
 
 if (!process.env.JWT_SECRET) {
     throw new Error('CRITICAL SECURITY ERROR: JWT_SECRET environment variable is not defined. The application cannot start safely.');
@@ -104,6 +105,7 @@ exports.unifiedGoogleLogin = async (req, res) => {
                 maxAge: 30 * 24 * 60 * 60 * 1000
             , sameSite: 'lax' 
         });
+            setKnownProCookie(res, psychologist.isAdmin ? 'admin' : 'psychologist');
 
             return res.status(200).json({
                 user: {
@@ -166,7 +168,6 @@ exports.unifiedGoogleLogin = async (req, res) => {
                 maxAge: 30 * 24 * 60 * 60 * 1000
             , sameSite: 'lax' 
         });
-
             return res.status(200).json({
                 user: { id: patient.id, nome: patient.nome, email: patient.email, type: 'patient' },
                 token: tokenJwt,
@@ -297,6 +298,9 @@ exports.loginWithPassword = async (req, res) => {
         }
 
         const token = generateToken(user.id, userType);
+        if (userType === 'psychologist' || userType === 'admin') {
+            setKnownProCookie(res, userType);
+        }
         res.status(200).json({ token, user, type: userType });
 
     } catch (error) {

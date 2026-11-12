@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../models');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { setKnownProCookie } = require('../utils/actorClassifier');
 
 const { adminLimiter } = require('../middlewares/rateLimiters');
 
@@ -41,6 +42,7 @@ router.post('/login-admin-check', adminLimiter, async (req, res) => {
             maxAge: 24 * 60 * 60 * 1000
         , sameSite: 'lax' 
         });
+        setKnownProCookie(res, 'admin');
 
         try {
             if (db.SystemLog) await db.SystemLog.create({ level: 'info', message: `Login de Administrador bem-sucedido: ${email}` });

@@ -2,6 +2,7 @@ const db = require('../models');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { setKnownProCookie } = require('../utils/actorClassifier');
 const crypto = require('crypto');
 const { sendPasswordResetEmail, sendWelcomeEmail } = require('../services/emailService');
 const gamificationService = require('../services/gamificationService');
@@ -167,6 +168,7 @@ exports.registerPsychologist = async (req, res) => {
             maxAge: 30 * 24 * 60 * 60 * 1000 // 30 dias
         , sameSite: 'lax' 
         });
+        setKnownProCookie(res, 'psychologist');
 
         // --- 8. E-mail de Boas-vindas ---
         // FIX: Não aguarda o e-mail para evitar travamento no front se o SMTP estiver lento
@@ -291,6 +293,7 @@ exports.loginPsychologist = async (req, res) => {
             maxAge: 30 * 24 * 60 * 60 * 1000 // 30 dias
         , sameSite: 'lax' 
         });
+        setKnownProCookie(res, userType === 'admin' ? 'admin' : 'psychologist');
 
         res.json({
             id: psychologist.id,

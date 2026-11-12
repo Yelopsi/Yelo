@@ -1,5 +1,10 @@
 const db = require('../models');
 const { Op } = require('sequelize');
+const {
+    LOGGED_NON_PATIENT_TYPES,
+    UNLOGGED_NON_PATIENT_TYPES,
+    B2B_OR_PRO_PAGE_SQL
+} = require('../utils/actorClassifier');
 
 // Configurações do Asaas (Extraídas de adminController)
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
@@ -1004,6 +1009,105 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
 /**
  * Rota: GET /api/admin/analytics/funnel
  */
+const toSqlInList = (set) => Array.from(set).map((v) => `'${v}'`).join(', ');
+const LOGGED_ACTOR_LIST_SQL = toSqlInList(LOGGED_NON_PATIENT_TYPES);
+const UNLOGGED_ACTOR_LIST_SQL = toSqlInList(UNLOGGED_NON_PATIENT_TYPES);
+const ALL_NON_PATIENT_LIST_SQL = `${LOGGED_ACTOR_LIST_SQL}, ${UNLOGGED_ACTOR_LIST_SQL}`;
+
+const SEARCH_RESPONDENT_EXPR = `COALESCE("searchParams"->>'respondent_type', 'patient')`;
+const PATIENT_SEARCH_SQL = `${SEARCH_RESPONDENT_EXPR} NOT IN (${ALL_NON_PATIENT_LIST_SQL})`;
+
+const fetchFunnelPeriodMetrics = async (rangeStart, rangeEnd) => {
+    const queryOne = (sql) => db.sequelize.query(sql, {
+        replacements: { start: rangeStart, end: rangeEnd },
+        type: db.sequelize.QueryTypes.SELECT
+    }).then((rows) => rows[0] || {});
+
+    const [visitsRow, searchesRow, disqualifiedRow, viewsRow, waRow, waDiscardedRow] = await Promise.all([
+        queryOne(`
+            SELECT
+                COUNT(*) FILTER (
+                    WHERE COALESCE("actor_type", 'patient') NOT IN (${ALL_NON_PATIENT_LIST_SQL})
+                      AND NOT ${B2B_OR_PRO_PAGE_SQL}
+                ) AS patient_count,
+                COUNT(*) FILTER (
+                    WHERE COALESCE("actor_type", 'patient') IN (${LOGGED_ACTOR_LIST_SQL})
+                ) AS logged_count,
+                COUNT(*) FILTER (
+                    WHERE COALESCE("actor_type", 'patient') IN (${UNLOGGED_ACTOR_LIST_SQL})
+                       OR (COALESCE("actor_type", 'patient') NOT IN (${LOGGED_ACTOR_LIST_SQL}) AND ${B2B_OR_PRO_PAGE_SQL})
+                ) AS unlogged_count
+            FROM "SiteVisits"
+            WHERE "createdAt" BETWEEN :start AND :end
+        `).catch(() => ({ patient_count: 0, logged_count: 0, unlogged_count: 0 })),
+
+        queryOne(`
+            SELECT
+                COUNT(*) FILTER (WHERE ${PATIENT_SEARCH_SQL}) AS iniciaram,
+                COUNT(*) FILTER (WHERE ${PATIENT_SEARCH_SQL} AND status IN ('completed', 'matched')) AS completaram,
+                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${LOGGED_ACTOR_LIST_SQL})) AS init_logged,
+                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${UNLOGGED_ACTOR_LIST_SQL})) AS init_unlogged,
+                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${LOGGED_ACTOR_LIST_SQL}) AND status IN ('completed', 'matched')) AS comp_logged,
+                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${UNLOGGED_ACTOR_LIST_SQL}) AND status IN ('completed', 'matched')) AS comp_unlogged
+            FROM "DemandSearches"
+            WHERE "deletedAt" IS NULL AND "createdAt" BETWEEN :start AND :end
+        `).catch(() => ({})),
+
+        queryOne(`
+            SELECT COUNT(*) AS count
+            FROM "DemandSearches"
+            WHERE "deletedAt" IS NULL AND "createdAt" BETWEEN :start AND :end
+              AND ${PATIENT_SEARCH_SQL}
+              AND "is_disqualified" = true
+        `).catch(() => ({ count: 0 })),
+
+        queryOne(`
+            SELECT
+                COUNT(*) FILTER (WHERE COALESCE("actor_type", 'patient') NOT IN (${ALL_NON_PATIENT_LIST_SQL})) AS patient_count,
+                COUNT(*) FILTER (WHERE COALESCE("actor_type", 'patient') IN (${LOGGED_ACTOR_LIST_SQL})) AS logged_count,
+                COUNT(*) FILTER (WHERE COALESCE("actor_type", 'patient') IN (${UNLOGGED_ACTOR_LIST_SQL})) AS unlogged_count
+            FROM "ProfileAppearanceLogs"
+            WHERE "createdAt" BETWEEN :start AND :end
+              AND "source" = 'profile_click_funnel'
+        `).catch(() => ({ patient_count: 0, logged_count: 0, unlogged_count: 0 })),
+
+        queryOne(`
+            SELECT
+                COUNT(*) AS clicks,
+                COUNT(DISTINCT COALESCE(CAST("searchId" AS VARCHAR), CAST("id" AS VARCHAR))) AS unique_clicks
+            FROM "WhatsAppClickLogs"
+            WHERE "createdAt" BETWEEN :start AND :end
+        `).catch(() => ({ clicks: 0, unique_clicks: 0 })),
+
+        queryOne(`
+            SELECT
+                COUNT(*) FILTER (WHERE COALESCE("actor_type", 'patient') IN (${LOGGED_ACTOR_LIST_SQL})) AS logged_count,
+                COUNT(*) FILTER (WHERE COALESCE("actor_type", 'patient') IN (${UNLOGGED_ACTOR_LIST_SQL})) AS unlogged_count
+            FROM "FunnelDiscardedEvents"
+            WHERE "createdAt" BETWEEN :start AND :end
+              AND "stage" = 'whatsapp'
+        `).catch(() => ({ logged_count: 0, unlogged_count: 0 }))
+    ]);
+
+    const toInt = (val) => parseInt(val || 0, 10);
+    return {
+        visitas: toInt(visitsRow.patient_count),
+        iniciaram: toInt(searchesRow.iniciaram),
+        completaram: toInt(searchesRow.completaram),
+        desqualificados: toInt(disqualifiedRow.count),
+        profileViews: toInt(viewsRow.patient_count),
+        whatsappClicks: toInt(waRow.clicks),
+        whatsappUnique: toInt(waRow.unique_clicks),
+        discarded: {
+            visitas: { logados: toInt(visitsRow.logged_count), naoLogados: toInt(visitsRow.unlogged_count) },
+            iniciaram: { logados: toInt(searchesRow.init_logged), naoLogados: toInt(searchesRow.init_unlogged) },
+            completaram: { logados: toInt(searchesRow.comp_logged), naoLogados: toInt(searchesRow.comp_unlogged) },
+            profileViews: { logados: toInt(viewsRow.logged_count), naoLogados: toInt(viewsRow.unlogged_count) },
+            whatsapp: { logados: toInt(waDiscardedRow.logged_count), naoLogados: toInt(waDiscardedRow.unlogged_count) }
+        }
+    };
+};
+
 exports.getFunnelAnalytics = async (req, res) => {
     try {
         const parseDateBRT = (dateString, isEnd = false) => {
@@ -1027,65 +1131,74 @@ exports.getFunnelAnalytics = async (req, res) => {
         const prevStart = new Date(start.getTime() - msDiff);
         const prevEnd = new Date(start.getTime() - 1);
 
-        const visitsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
-        const visitas = parseInt(visitsResult[0]?.count || 0);
+        const [current, prev] = await Promise.all([
+            fetchFunnelPeriodMetrics(start, end),
+            fetchFunnelPeriodMetrics(prevStart, prevEnd)
+        ]);
 
-        const iniciaram = await db.DemandSearch.count({ where: { createdAt: { [Op.between]: [start, end] } } }).catch(() => 0);
-        const completaram = await db.DemandSearch.count({ where: { status: { [Op.in]: ['completed', 'matched'] }, createdAt: { [Op.between]: [start, end] } } }).catch(() => 0);
+        const buildStageBreakdown = (stageKey) => {
+            const cur = current.discarded[stageKey];
+            const prv = prev.discarded[stageKey];
+            return {
+                total: cur.logados + cur.naoLogados,
+                logados: cur.logados,
+                naoLogados: cur.naoLogados,
+                prevTotal: prv.logados + prv.naoLogados
+            };
+        };
 
-        const profileViewsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "createdAt" BETWEEN :start AND :end AND "source" = 'profile_click_funnel'`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
-        const profileViews = parseInt(profileViewsResult[0]?.count || 0);
+        const stages = ['visitas', 'iniciaram', 'completaram', 'profileViews', 'whatsapp'];
+        const descartadosProfissionais = {};
+        let sumTotal = 0;
+        let sumLogados = 0;
+        let sumNaoLogados = 0;
+        let sumPrevTotal = 0;
 
-        const whatsappClicksResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
-        const whatsappClicks = parseInt(whatsappClicksResult[0]?.count || 0);
+        for (const stageKey of stages) {
+            const item = buildStageBreakdown(stageKey);
+            descartadosProfissionais[stageKey] = item;
+            sumTotal += item.total;
+            sumLogados += item.logados;
+            sumNaoLogados += item.naoLogados;
+            sumPrevTotal += item.prevTotal;
+        }
+        descartadosProfissionais.totalEventos = {
+            total: sumTotal,
+            logados: sumLogados,
+            naoLogados: sumNaoLogados,
+            prevTotal: sumPrevTotal
+        };
 
-        const whatsappUniqueResult = await db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE(CAST("searchId" AS VARCHAR), CAST("id" AS VARCHAR))) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
-        const whatsappUnique = parseInt(whatsappUniqueResult[0]?.count || 0);
+        const dropoffQuery = `
+            SELECT t.step, COUNT(*) as count
+            FROM "TrackingLogs" t
+            LEFT JOIN "DemandSearches" d ON t."searchId" = CAST(d.id AS VARCHAR)
+            WHERE t."type" = 'questionario_dropoff'
+              AND t."createdAt" BETWEEN :start AND :end
+              AND (
+                d.id IS NULL
+                OR (
+                  d."deletedAt" IS NULL
+                  AND COALESCE(d.status, '') NOT IN ('completed', 'matched')
+                  AND COALESCE(d."is_disqualified", false) = false
+                  AND COALESCE(d."searchParams"->>'respondent_type', 'patient') NOT IN (${ALL_NON_PATIENT_LIST_SQL})
+                )
+              )
+            GROUP BY t.step ORDER BY count DESC
+        `;
 
-        const desqualificadosResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "DemandSearches" WHERE "is_disqualified" = true AND "createdAt" BETWEEN :start AND :end`, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
-        const desqualificados = parseInt(desqualificadosResult[0]?.count || 0);
+        const abandonos = await db.sequelize.query(dropoffQuery, { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
+        const prevAbandonos = await db.sequelize.query(dropoffQuery, { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []);
 
-        // Previous Period Metrics
-        const prevVisitsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
-        const prevVisitas = parseInt(prevVisitsResult[0]?.count || 0);
-        const prevIniciaram = await db.DemandSearch.count({ where: { createdAt: { [Op.between]: [prevStart, prevEnd] } } }).catch(() => 0);
-        const prevCompletaram = await db.DemandSearch.count({ where: { status: { [Op.in]: ['completed', 'matched'] }, createdAt: { [Op.between]: [prevStart, prevEnd] } } }).catch(() => 0);
-        const prevProfileViewsResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "ProfileAppearanceLogs" WHERE "createdAt" BETWEEN :start AND :end AND "source" = 'profile_click_funnel'`, { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
-        const prevProfileViews = parseInt(prevProfileViewsResult[0]?.count || 0);
-        const prevWhatsappClicksResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
-        const prevWhatsappClicks = parseInt(prevWhatsappClicksResult[0]?.count || 0);
-        const prevWhatsappUniqueResult = await db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE(CAST("searchId" AS VARCHAR), CAST("id" AS VARCHAR))) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
-        const prevWhatsappUnique = parseInt(prevWhatsappUniqueResult[0]?.count || 0);
-        const prevDesqualificadosResult = await db.sequelize.query(`SELECT COUNT(*) as count FROM "DemandSearches" WHERE "is_disqualified" = true AND "createdAt" BETWEEN :start AND :end`, { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
-        const prevDesqualificados = parseInt(prevDesqualificadosResult[0]?.count || 0);
-
-        const abandonos = await db.sequelize.query(
-            `SELECT t.step, COUNT(*) as count 
-             FROM "TrackingLogs" t
-             LEFT JOIN "DemandSearches" d ON t."searchId" = CAST(d.id AS VARCHAR) AND (d.status = 'completed' OR d.is_disqualified = true)
-             WHERE t."type" = 'questionario_dropoff' AND t."createdAt" BETWEEN :start AND :end AND d.id IS NULL
-             GROUP BY t.step ORDER BY count DESC`,
-            { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => []);
-
-        const prevAbandonos = await db.sequelize.query(
-            `SELECT t.step, COUNT(*) as count 
-             FROM "TrackingLogs" t
-             LEFT JOIN "DemandSearches" d ON t."searchId" = CAST(d.id AS VARCHAR) AND (d.status = 'completed' OR d.is_disqualified = true)
-             WHERE t."type" = 'questionario_dropoff' AND t."createdAt" BETWEEN :start AND :end AND d.id IS NULL
-             GROUP BY t.step ORDER BY count DESC`,
-            { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => []);
-
-        // Busca origens a partir dos questionários preenchidos, em vez da tabela de pacientes
+        // Busca origens a partir dos questionários preenchidos por pacientes
         const jsonColUtm = 'CAST("searchParams" AS JSONB)';
         const origens = await db.sequelize.query(
-            `SELECT ${jsonColUtm}->>'utm_source' as source, COUNT(*) as count FROM "DemandSearches" WHERE "createdAt" BETWEEN :start AND :end AND ${jsonColUtm}->>'utm_source' IS NOT NULL AND ${jsonColUtm}->>'utm_source' != '' GROUP BY source ORDER BY count DESC`,
+            `SELECT ${jsonColUtm}->>'utm_source' as source, COUNT(*) as count FROM "DemandSearches" WHERE "deletedAt" IS NULL AND "createdAt" BETWEEN :start AND :end AND ${PATIENT_SEARCH_SQL} AND ${jsonColUtm}->>'utm_source' IS NOT NULL AND ${jsonColUtm}->>'utm_source' != '' GROUP BY source ORDER BY count DESC`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
         const prevOrigens = await db.sequelize.query(
-            `SELECT ${jsonColUtm}->>'utm_source' as source, COUNT(*) as count FROM "DemandSearches" WHERE "createdAt" BETWEEN :start AND :end AND ${jsonColUtm}->>'utm_source' IS NOT NULL AND ${jsonColUtm}->>'utm_source' != '' GROUP BY source ORDER BY count DESC`,
+            `SELECT ${jsonColUtm}->>'utm_source' as source, COUNT(*) as count FROM "DemandSearches" WHERE "deletedAt" IS NULL AND "createdAt" BETWEEN :start AND :end AND ${PATIENT_SEARCH_SQL} AND ${jsonColUtm}->>'utm_source' IS NOT NULL AND ${jsonColUtm}->>'utm_source' != '' GROUP BY source ORDER BY count DESC`,
             { replacements: { start: prevStart, end: prevEnd }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
@@ -1093,30 +1206,35 @@ exports.getFunnelAnalytics = async (req, res) => {
         const jsonCol = 'CAST("searchParams" AS JSONB)';
         
         const topTemas = await db.sequelize.query(
-            `SELECT value, COUNT(*) as count FROM "DemandSearches", jsonb_array_elements_text(${jsonCol}->'temas') as value WHERE status IN ('completed', 'matched') AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->'temas' IS NOT NULL AND jsonb_typeof(${jsonCol}->'temas') = 'array' GROUP BY value ORDER BY count DESC LIMIT 10`,
+            `SELECT value, COUNT(*) as count FROM "DemandSearches", jsonb_array_elements_text(${jsonCol}->'temas') as value WHERE "deletedAt" IS NULL AND status IN ('completed', 'matched') AND "createdAt" BETWEEN :start AND :end AND ${PATIENT_SEARCH_SQL} AND ${jsonCol}->'temas' IS NOT NULL AND jsonb_typeof(${jsonCol}->'temas') = 'array' GROUP BY value ORDER BY count DESC LIMIT 10`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
         const faixaValor = await db.sequelize.query(
-            `SELECT ${jsonCol}->>'faixa_valor' as value, COUNT(*) as count FROM "DemandSearches" WHERE status IN ('completed', 'matched') AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->>'faixa_valor' IS NOT NULL GROUP BY value ORDER BY count DESC`,
+            `SELECT ${jsonCol}->>'faixa_valor' as value, COUNT(*) as count FROM "DemandSearches" WHERE "deletedAt" IS NULL AND status IN ('completed', 'matched') AND "createdAt" BETWEEN :start AND :end AND ${PATIENT_SEARCH_SQL} AND ${jsonCol}->>'faixa_valor' IS NOT NULL GROUP BY value ORDER BY count DESC`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
         const modalidades = await db.sequelize.query(
-            `SELECT ${jsonCol}->>'modalidade_atendimento' as value, COUNT(*) as count FROM "DemandSearches" WHERE status IN ('completed', 'matched') AND "createdAt" BETWEEN :start AND :end AND ${jsonCol}->>'modalidade_atendimento' IS NOT NULL GROUP BY value ORDER BY count DESC`,
+            `SELECT ${jsonCol}->>'modalidade_atendimento' as value, COUNT(*) as count FROM "DemandSearches" WHERE "deletedAt" IS NULL AND status IN ('completed', 'matched') AND "createdAt" BETWEEN :start AND :end AND ${PATIENT_SEARCH_SQL} AND ${jsonCol}->>'modalidade_atendimento' IS NOT NULL GROUP BY value ORDER BY count DESC`,
             { replacements: { start, end }, type: db.sequelize.QueryTypes.SELECT }
         ).catch(() => []);
 
         res.json({ 
-            visitas, prevVisitas, 
-            iniciaram, prevIniciaram, 
-            completaram, prevCompletaram, 
-            profileViews, prevProfileViews,
-            whatsappClicks, prevWhatsappClicks,
-            whatsappUnique, prevWhatsappUnique, 
+            visitas: current.visitas, prevVisitas: prev.visitas, 
+            iniciaram: current.iniciaram, prevIniciaram: prev.iniciaram, 
+            completaram: current.completaram, prevCompletaram: prev.completaram, 
+            profileViews: current.profileViews, prevProfileViews: prev.profileViews,
+            whatsappClicks: current.whatsappClicks, prevWhatsappClicks: prev.whatsappClicks,
+            whatsappUnique: current.whatsappUnique, prevWhatsappUnique: prev.whatsappUnique, 
             abandonos, prevAbandonos, 
             origens, prevOrigens, 
-            desqualificados, prevDesqualificados, 
+            desqualificados: current.desqualificados, prevDesqualificados: prev.desqualificados,
+            psicologosIniciaram: descartadosProfissionais.iniciaram.total,
+            prevPsicologosIniciaram: descartadosProfissionais.iniciaram.prevTotal,
+            psicologosCompletaram: descartadosProfissionais.completaram.total,
+            prevPsicologosCompletaram: descartadosProfissionais.completaram.prevTotal,
+            descartadosProfissionais,
             inteligencia: { topTemas, faixaValor, modalidades } 
         });
     } catch (error) {

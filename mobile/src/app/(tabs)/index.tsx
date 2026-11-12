@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Image, Share } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Image, Share, Platform } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,17 +21,22 @@ export default function HomeScreen() {
   const [isOffline, setIsOffline] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [copiedReview, setCopiedReview] = useState(false);
+  const [promoOffer, setPromoOffer] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, apptsRes, finRes, meRes, aiRes] = await Promise.all([
+        const [statsRes, apptsRes, finRes, meRes, aiRes, promoRes] = await Promise.all([
           api.get('/api/psychologists/me/stats?period=all_time').catch(() => ({ data: null })),
           api.get('/api/appointments').catch(() => ({ data: [] })),
           api.get('/api/financials/dashboard?period=current').catch(() => ({ data: { appointments: [] } })),
           api.get('/api/psychologists/me').catch(() => ({ data: null })),
           api.post('/api/psychologists/me/ai-insights', {}).catch(() => ({ data: null })),
+          api.get(`/api/payments/promo-eligibility?planType=ESSENTIAL&isIos=${Platform.OS === 'ios'}&platform=${Platform.OS}`).catch(() => ({ data: null })),
         ]);
+        if (promoRes?.data?.eligible) {
+          setPromoOffer(promoRes.data);
+        }
 
         if (meRes.data) {
           setPsiData(meRes.data);
@@ -415,6 +420,41 @@ export default function HomeScreen() {
             </View>
           )}
         </LinearGradient>
+
+        {/* BANNER DISCRETO DE CONDIÇÃO PROMOCIONAL (espelho de #bf-visao-geral-banner da web) */}
+        {promoOffer?.eligible && (
+          <View
+            style={{
+              backgroundColor: '#1B4332',
+              borderWidth: 1.5,
+              borderColor: '#F4D35E',
+              borderRadius: 18,
+              padding: 16,
+              marginBottom: 20,
+            }}
+          >
+            <View style={{ backgroundColor: '#FFEE8C', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, marginBottom: 6 }}>
+              <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 10, color: '#1B4332', textTransform: 'uppercase' }}>
+                Condição Especial Liberação Automática
+              </Text>
+            </View>
+            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#ffffff', marginBottom: 3 }}>
+              {promoOffer.title || '2 meses de consultório ativo por R$ 99,00'}
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: 'rgba(255,255,255,0.88)', lineHeight: 18, marginBottom: 12 }}>
+              Pague apenas 1 mês (R$ 99) e receba 60 dias completos no Plano Essencial, sem precisar de cupom.
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.navigate('/assinatura')}
+              style={{ backgroundColor: '#FFEE8C', alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999 }}
+            >
+              <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 12.5, color: '#1B4332' }}>
+                Ver condição →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* LEMBRETE DE INTERAÇÃO — id="interaction-reminder-card" da web */}
         {showReminder && (

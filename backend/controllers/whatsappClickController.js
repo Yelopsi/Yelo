@@ -1,6 +1,7 @@
 const db = require('../models');
 const { Op } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
+const { resolveActor, recordDiscardedEvent } = require('../utils/actorClassifier');
 
 // Variável e Promessa para garantir que a tabela seja sincronizada uma única vez sem conflitos
 let isTableSynced = false;
@@ -25,6 +26,18 @@ exports.registerClick = async (req, res) => {
 
         if (!psychologistId) {
             return res.status(400).json({ error: 'psychologistId é obrigatório.' });
+        }
+
+        const actor = resolveActor(req, req.body || {});
+        if (!actor.isPatient) {
+            await recordDiscardedEvent(db, {
+                stage: 'whatsapp',
+                actorType: actor.actorType,
+                targetId: psychologistId,
+                searchId: searchId || null,
+                source: 'profile_direct'
+            });
+            return res.status(200).json({ skipped: true, message: 'Clique de profissional/admin descartado.' });
         }
 
         const cookieName = `logged_psi_${psychologistId}`;

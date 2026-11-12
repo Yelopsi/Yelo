@@ -3,6 +3,7 @@
 const db = require('../models');
 const { Op } = require('sequelize');
 const gamificationService = require('../services/gamificationService');
+const { resolveActor } = require('../utils/actorClassifier');
 
 const normalizeTheme = (name) => {
     if (!name) return null;
@@ -293,17 +294,10 @@ exports.incrementWhatsappClick = async (req, res) => {
         const psychologist = await db.Psychologist.findOne({ where: { slug } });
 
         if (psychologist) {
-            const jwt = require('jsonwebtoken');
-
-            // --- PROTEÇÃO ANTI-AUTO-CLIQUE (Psicólogo clicando em si mesmo) ---
-            let token = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
-            if (token && token !== 'null' && token !== 'cookie_auth_active') {
-                try {
-                    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                    if (decoded.id === psychologist.id) {
-                        return res.status(200).json({ success: true, message: 'Auto-clique ignorado' });
-                    }
-                } catch (e) { /* Token inválido, continua como visitante */ }
+            // --- PROTEÇÃO CONTRA CLIQUES DE PROFISSIONAIS/ADMINS ---
+            const actor = resolveActor(req, req.body || {});
+            if (!actor.isPatient) {
+                return res.status(200).json({ success: true, message: 'Clique de profissional/admin ignorado' });
             }
 
             // --- PROTEÇÃO DE IDEMPOTÊNCIA (Cookie de 24h) ---
@@ -348,9 +342,16 @@ exports.incrementProfileAppearance = async (req, res) => {
     try {
         const { id } = req.params;
         const source = req.body.type || 'direct_view';
+        const actor = resolveActor(req, req.body || {});
         await db.sequelize.query(`ALTER TABLE "ProfileAppearanceLogs" ADD COLUMN IF NOT EXISTS "source" VARCHAR(50);`).catch(() => {});
-        await db.Psychologist.increment('profile_appearances', { where: { id } }).catch(() => {});
-        await db.sequelize.query(`INSERT INTO "ProfileAppearanceLogs" ("psychologistId", "source", "createdAt", "updatedAt") VALUES (:id, :source, NOW(), NOW())`, { replacements: { id, source }, type: db.sequelize.QueryTypes.INSERT }).catch(e => {});
+        await db.sequelize.query(`ALTER TABLE "ProfileAppearanceLogs" ADD COLUMN IF NOT EXISTS "actor_type" VARCHAR(50) DEFAULT 'patient';`).catch(() => {});
+        if (actor.isPatient) {
+            await db.Psychologist.increment('profile_appearances', { where: { id } }).catch(() => {});
+        }
+        await db.sequelize.query(
+            `INSERT INTO "ProfileAppearanceLogs" ("psychologistId", "source", "actor_type", "createdAt", "updatedAt") VALUES (:id, :source, :actorType, NOW(), NOW())`,
+            { replacements: { id, source, actorType: actor.actorType }, type: db.sequelize.QueryTypes.INSERT }
+        ).catch(e => {});
         res.status(200).json({ success: true });
     } catch (error) { res.status(200).json({ success: false }); }
 };

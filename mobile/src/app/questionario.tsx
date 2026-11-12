@@ -14,6 +14,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import YeloScrollView from '../components/YeloScrollView';
+import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   patientQuestions, 
   getAbordagemConfig, 
@@ -23,11 +25,30 @@ import {
 const { width } = Dimensions.get('window');
 
 export default function QuestionarioScreen() {
+  const auth = useAuth();
+  const rawUserType = String(auth?.user?.type || '').toLowerCase();
+  const respondentType = (rawUserType === 'psychologist' || rawUserType === 'psi')
+    ? 'psychologist_logged'
+    : (rawUserType === 'admin' || auth?.user?.isAdmin ? 'admin_logged' : 'patient');
+
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [showError, setShowError] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const searchIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    api.post('/api/demand/start', { respondent_type: respondentType })
+      .then((res) => {
+        if (active && res?.data?.searchId) {
+          searchIdRef.current = res.data.searchId;
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     slideAnim.setValue(0);
@@ -213,6 +234,14 @@ export default function QuestionarioScreen() {
   const finalize = (finalAnswers = answers, targetStep?: number) => {
     const finalIndex = targetStep ?? patientQuestions.findIndex(q => q.type === 'final');
     setCurrentStep(finalIndex);
+
+    api.post('/api/demand/searches', {
+      ...finalAnswers,
+      searchId: searchIdRef.current || undefined,
+      respondent_type: respondentType,
+      utm_source: 'app_mobile',
+      contact_consent: true,
+    }).catch(() => {});
 
     // Pequeno delay para que o usuário sinta o processamento do motor de inteligência
     setTimeout(() => {

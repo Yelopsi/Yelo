@@ -9,6 +9,7 @@ const adminUsersController = require('./adminUsersController');
 const adminMessagesController = require('./adminMessagesController');
 const { GoogleGenerativeAI } = require('@google/generative-ai'); // IA da Equipe de Growth
 const { formatForWhatsApp } = require('../utils/whatsappFormatter');
+const { setKnownProCookie } = require('../utils/actorClassifier');
 
 const generateAdminToken = (id) => {
     return jwt.sign({ id, type: 'admin' }, process.env.JWT_SECRET, {
@@ -71,6 +72,7 @@ exports.loginAdmin = async (req, res) => {
                 maxAge: 8 * 60 * 60 * 1000 // 8 horas
             , sameSite: 'lax' 
         });
+            setKnownProCookie(res, 'admin');
 
             res.status(200).json({ 
                 token: token,

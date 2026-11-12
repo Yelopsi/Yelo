@@ -313,7 +313,14 @@ async function checkLoginState() {
             }
             // Salva para a próxima vez
             if (userName) localStorage.setItem('Yelo_user_name', userName);
-            if (userType) localStorage.setItem('Yelo_user_type', userType);
+            if (userType) {
+                localStorage.setItem('Yelo_user_type', userType);
+                if (userType === 'psychologist' || userType === 'psi' || userType === 'admin') {
+                    const proRole = userType === 'admin' ? 'admin' : 'psychologist';
+                    localStorage.setItem('yelo_known_pro', proRole);
+                    document.cookie = `yelo_known_pro=${proRole}; path=/; max-age=31536000; SameSite=Lax`;
+                }
+            }
         } catch (e) { }
     }
 

@@ -26,8 +26,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSearchId = null; // Guarda o ID do rascunho
 
     function isTestUser() {
-        const type = localStorage.getItem('Yelo_user_type');
-        return type === 'psychologist' || type === 'admin' || type === 'psi';
+        const type = String(localStorage.getItem('Yelo_user_type') || '').toLowerCase();
+        const knownPro = String(localStorage.getItem('yelo_known_pro') || '').toLowerCase();
+        return (
+            type === 'psychologist' || type === 'admin' || type === 'psi' ||
+            knownPro === 'psychologist' || knownPro === 'admin' || knownPro === 'psi' ||
+            document.cookie.includes('yelo_known_pro=')
+        );
     }
 
     // Pré-carrega a página de resultados no cache do navegador para transição instantânea
@@ -100,9 +105,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 demandAnswers.searchId = currentSearchId;
             }
 
-            if (window.QuestionarioService && !isTestUser()) {
+            if (window.QuestionarioService) {
                 window.QuestionarioService.saveAnswers(demandAnswers).catch(e => console.error(e));
-                window.QuestionarioService.trackMatchCompleted();
+                if (!isTestUser()) {
+                    window.QuestionarioService.trackMatchCompleted();
+                }
             }
 
             // --- REDIRECIONAMENTO ---
@@ -447,8 +454,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (document.querySelector(`[data-index="0"]`)) {
             goToSlide(0);
-            // Dispara a criação do rascunho de busca imediatamente no carregamento da página
-            if (window.QuestionarioService && !isTestUser()) {
+            // Dispara a criação do rascunho de busca imediatamente (identifica paciente vs psicólogo/admin)
+            if (window.QuestionarioService) {
                 window.QuestionarioService.startSearch().then(id => { if (id) currentSearchId = id; });
             }
         } else {

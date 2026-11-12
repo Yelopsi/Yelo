@@ -222,7 +222,11 @@ const applyDatabaseFixes = async (db, sequelize) => {
             `CREATE TABLE IF NOT EXISTS "AdminAdjustments" ( "id" SERIAL PRIMARY KEY, "title" TEXT NOT NULL, "target_page" VARCHAR(255) NOT NULL DEFAULT 'Geral', "file_path" VARCHAR(255), "category" VARCHAR(100) NOT NULL DEFAULT 'Melhoria', "environment" VARCHAR(50) NOT NULL DEFAULT 'geral', "device" VARCHAR(50) NOT NULL DEFAULT 'todos', "image_url" TEXT, "priority" VARCHAR(50) NOT NULL DEFAULT 'media', "status" VARCHAR(50) NOT NULL DEFAULT 'pendente', "notes" TEXT, "order" INTEGER DEFAULT 0, "completedAt" TIMESTAMP WITH TIME ZONE, "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `ALTER TABLE "AdminAdjustments" ADD COLUMN IF NOT EXISTS "environment" VARCHAR(50) NOT NULL DEFAULT 'geral';`,
             `ALTER TABLE "AdminAdjustments" ADD COLUMN IF NOT EXISTS "device" VARCHAR(50) NOT NULL DEFAULT 'todos';`,
-            `ALTER TABLE "AdminAdjustments" ADD COLUMN IF NOT EXISTS "image_url" TEXT;`
+            `ALTER TABLE "AdminAdjustments" ADD COLUMN IF NOT EXISTS "image_url" TEXT;`,
+            `ALTER TABLE "SiteVisits" ADD COLUMN IF NOT EXISTS "actor_type" VARCHAR(50) DEFAULT 'patient';`,
+            `ALTER TABLE "ProfileAppearanceLogs" ADD COLUMN IF NOT EXISTS "actor_type" VARCHAR(50) DEFAULT 'patient';`,
+            `CREATE TABLE IF NOT EXISTS "FunnelDiscardedEvents" ( "id" SERIAL PRIMARY KEY, "stage" VARCHAR(50) NOT NULL, "actor_type" VARCHAR(50) NOT NULL, "target_id" INTEGER, "search_id" VARCHAR(255), "source" VARCHAR(100), "page" VARCHAR(255), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE INDEX IF NOT EXISTS "idx_funnel_discarded_created_stage" ON "FunnelDiscardedEvents" ("createdAt", "stage");`
         ];
 
         for (const sql of schemaQueries) {

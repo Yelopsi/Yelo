@@ -59,10 +59,20 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const source = urlParams.get('ref') === 'match' ? 'profile_click_funnel' : 'direct_view';
+            const userType = localStorage.getItem('Yelo_user_type') || '';
+            const knownPro = localStorage.getItem('yelo_known_pro') || '';
+            const headers = { 'Content-Type': 'application/json' };
+            if (userType) headers['X-Yelo-User-Type'] = userType;
+            if (knownPro) headers['X-Yelo-Known-Pro'] = knownPro;
             fetch(`${API_BASE_URL}/api/psychologists/${psi.id}/appearance`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: source })
+                credentials: 'include',
+                headers,
+                body: JSON.stringify({
+                    type: source,
+                    user_type: userType || undefined,
+                    known_pro: knownPro || undefined
+                })
             }).catch(() => {});
         } catch(e) {}
 
@@ -362,7 +372,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         const abQuery = abParams.toString() ? `?${abParams.toString()}` : '';
-                        const res = await fetch(`${API_BASE_URL}/api/public/whatsapp/link/${psi.id}${abQuery}`);
+                        const waHeaders = {};
+                        const userType = localStorage.getItem('Yelo_user_type') || '';
+                        const knownPro = localStorage.getItem('yelo_known_pro') || '';
+                        if (userType) waHeaders['X-Yelo-User-Type'] = userType;
+                        if (knownPro) waHeaders['X-Yelo-Known-Pro'] = knownPro;
+                        const res = await fetch(`${API_BASE_URL}/api/public/whatsapp/link/${psi.id}${abQuery}`, {
+                            credentials: 'include',
+                            headers: waHeaders
+                        });
                         const data = await res.json();
                         
                         if (data.success && data.url) {

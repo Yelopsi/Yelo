@@ -152,6 +152,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     const finalUserType = type || result.fallbackType;
                     localStorage.setItem('Yelo_user_type', finalUserType);
+                    if (finalUserType === 'psychologist' || finalUserType === 'psi' || finalUserType === 'admin') {
+                        const proRole = finalUserType === 'admin' ? 'admin' : 'psychologist';
+                        localStorage.setItem('yelo_known_pro', proRole);
+                        document.cookie = `yelo_known_pro=${proRole}; path=/; max-age=31536000; SameSite=Lax`;
+                    }
                     
                     if (finalUserType === 'admin' && token) {
                         localStorage.setItem('Yelo_token_admin', 'cookie_auth_active');
