@@ -198,6 +198,31 @@
             return isFounderPinEmail(psiData?.email);
         }
 
+        function closeFullPostToFeed({ refreshFeed = false } = {}) {
+            postView.classList.add('hidden');
+            postView.innerHTML = '';
+            feedView.classList.remove('hidden');
+            currentPostId = null;
+            currentPostData = null;
+
+            const mHeader = document.querySelector('.mobile-header');
+            if (mHeader) mHeader.style.display = '';
+            const mFab = document.getElementById('forum-mobile-fab');
+            if (mFab) mFab.classList.remove('hidden');
+
+            const dashboardMain = document.querySelector('.dashboard-main');
+            if (dashboardMain && window.innerWidth <= 992) {
+                dashboardMain.style.paddingTop = '';
+                dashboardMain.style.paddingLeft = '';
+                dashboardMain.style.paddingRight = '';
+            }
+
+            if (refreshFeed || feedNeedsPinRefresh) {
+                feedNeedsPinRefresh = false;
+                fetchAndRenderPosts(1, false);
+            }
+        }
+
         function syncCardStatusBadges(card) {
             if (!card) return;
             const statusGroup = card.querySelector('.post-card-status-badges');
@@ -1260,24 +1285,7 @@
                 });
 
                 postEl.querySelector('#forum-back-to-feed-btn').onclick = () => {
-                    postView.classList.add('hidden');
-                    feedView.classList.remove('hidden');
-                    currentPostId = null;
-                    currentPostData = null;
-                    const mHeader = document.querySelector('.mobile-header');
-                    if (mHeader) mHeader.style.display = '';
-                    const mFab = document.getElementById('forum-mobile-fab');
-                    if (mFab) mFab.classList.remove('hidden');
-                    const dashboardMain = document.querySelector('.dashboard-main');
-                    if (dashboardMain && window.innerWidth <= 992) {
-                        dashboardMain.style.paddingTop = ''; 
-                        dashboardMain.style.paddingLeft = ''; 
-                        dashboardMain.style.paddingRight = ''; 
-                    }
-                    if (feedNeedsPinRefresh) {
-                        feedNeedsPinRefresh = false;
-                        fetchAndRenderPosts(1, false);
-                    }
+                    closeFullPostToFeed();
                 };
 
                 postEl.querySelectorAll('.support-btn').forEach(supportBtn => {
@@ -1492,12 +1500,7 @@
                 const backBtn = postView.querySelector('#btn-err-back-to-feed');
                 if (backBtn) {
                     backBtn.onclick = () => {
-                        postView.classList.add('hidden');
-                        feedView.classList.remove('hidden');
-                        currentPostId = null;
-                        currentPostData = null;
-                        const mHeader = document.querySelector('.mobile-header');
-                        if (mHeader) mHeader.style.display = '';
+                        closeFullPostToFeed();
                     };
                 }
             }
@@ -2606,14 +2609,10 @@
                             else showToast('Discussão excluída.', 'success');
                             
                             if (isFullView) {
-                                postView.classList.add('hidden');
-                                feedView.classList.remove('hidden');
-                                currentPostId = null;
-                                currentPostData = null;
-                                const mHeader = document.querySelector('.mobile-header');
-                                if (mHeader) mHeader.style.display = '';
+                                closeFullPostToFeed({ refreshFeed: true });
+                            } else {
+                                fetchAndRenderPosts();
                             }
-                            fetchAndRenderPosts();
                         } else { showToast('Erro ao excluir discussão.', 'error'); }
                     } catch (err) { showToast('Erro ao excluir discussão.', 'error'); }
                 },

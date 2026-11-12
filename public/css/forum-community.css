@@ -2784,8 +2784,13 @@ div[data-placeholder="Escreva sua resposta..."] {
 }
 
 /* Responsividade Mobile para Tela de Post Aberto (100% Centralizado) */
+#forum-feed-view.hidden,
+#forum-post-view.hidden {
+    display: none !important;
+}
+
 @media (max-width: 992px) {
-    #forum-post-view {
+    #forum-post-view:not(.hidden) {
         width: 100% !important;
         display: flex !important;
         flex-direction: column !important;

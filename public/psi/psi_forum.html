@@ -9,7 +9,11 @@
             width: 100% !important;
             box-sizing: border-box !important;
         }
-        #forum-post-view {
+        #forum-feed-view.hidden,
+        #forum-post-view.hidden {
+            display: none !important;
+        }
+        #forum-post-view:not(.hidden) {
             width: 100% !important;
             box-sizing: border-box !important;
             padding: 0 0 40px 0 !important;
