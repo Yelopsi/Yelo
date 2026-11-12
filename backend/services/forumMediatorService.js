@@ -156,7 +156,7 @@ async function analyzePostWithAI(post, contextPosts = [], options = {}) {
             continue;
         }
         candidateMap.set(Number(c.id), c);
-        const line = `[ID: ${c.id}]${c.isPinned ? ' [FIXADO/OFICIAL]' : ''} | Categoria: "${c.category}" | Título: "${c.title}" | Resumo: "${stripHtmlAndCompact(c.content, 110)}"`;
+        const line = `[ID: ${c.id}]${c.isPinned ? ' [FIXADO/OFICIAL]' : ''} | Comentários: ${Number(c.commentCount || 0)} | Categoria: "${c.category}" | Título: "${c.title}" | Resumo: "${stripHtmlAndCompact(c.content, 110)}"`;
         if (c.isPinned) hubsLines.push(line);
         else activeLines.push(line);
     }
@@ -237,8 +237,25 @@ Responda ESTRITAMENTE em JSON puro (sem markdown):
             return {
                 ...decision,
                 action: 'APPROVE',
+                targetPostId: null,
+                targetCategory: null,
+                commentMessage: '',
                 reasonSummary: 'Post já atua como tópico principal de redirecionamentos existentes; mantido ativo.'
             };
+        }
+        // Quando há duplicata, preserva o tópico com mais comentários humanos ativo (evitando fechar debate respondido)
+        if (decision.action === 'REDIRECT_DUPLICATE') {
+            const targetCandidate = candidateMap.get(Number(decision.targetPostId));
+            if (targetCandidate && !targetCandidate.isPinned && Number(post.commentCount || 0) > Number(targetCandidate.commentCount || 0)) {
+                return {
+                    ...decision,
+                    action: 'APPROVE',
+                    targetPostId: null,
+                    targetCategory: null,
+                    commentMessage: '',
+                    reasonSummary: `Post possui mais comentários (${post.commentCount}) que o destino sugerido (${targetCandidate.commentCount || 0}); mantido ativo para receber o redirecionamento.`
+                };
+            }
         }
     }
 
@@ -500,19 +517,29 @@ async function runMediatorBatch(options = {}) {
                     entry.applied = true;
                     entry.oldCategory = oldCat;
                 } else if (action === 'REDIRECT_DUPLICATE') {
-                    postModel.redirectPostId = decision.targetPostId;
-                    postModel.status = 'closed';
-                    await postModel.save();
+                    const liveTarget = formattedPool.find(item => item.id === Number(decision.targetPostId));
+                    const isLiveTargetClosed = liveTarget && (
+                        liveTarget.redirectPostId ||
+                        ['archived', 'closed', 'encerrada', 'hidden_by_admin', 'deleted'].includes(String(liveTarget.status || '').toLowerCase())
+                    );
+                    if (isLiveTargetClosed) {
+                        entry.action = 'DEFER_TARGET_CLOSED';
+                        entry.reasonSummary = `Destino sugerido (#${decision.targetPostId}) já foi encerrado/redirecionado neste lote.`;
+                    } else {
+                        postModel.redirectPostId = decision.targetPostId;
+                        postModel.status = 'closed';
+                        await postModel.save();
 
-                    await db.ForumComment.create({
-                        content: decision.commentMessage,
-                        ForumPostId: post.id,
-                        PsychologistId: mediatorUser.id,
-                        isAnonymous: false,
-                        isPinned: true
-                    });
-                    await notifyAuthorQuietly(db, post, decision.commentMessage, action);
-                    entry.applied = true;
+                        await db.ForumComment.create({
+                            content: decision.commentMessage,
+                            ForumPostId: post.id,
+                            PsychologistId: mediatorUser.id,
+                            isAnonymous: false,
+                            isPinned: true
+                        });
+                        await notifyAuthorQuietly(db, post, decision.commentMessage, action);
+                        entry.applied = true;
+                    }
                 } else if (action === 'MULTI_TOPIC_SPLIT' || action === 'CLOSE_OFF_SCOPE') {
                     postModel.status = 'closed';
                     await postModel.save();
@@ -554,6 +581,18 @@ async function runMediatorBatch(options = {}) {
                         }
                     }).catch(() => {});
                 }
+            }
+
+            // Sincroniza estado em memória no pool para evitar redirecionamentos mútuos ou em cadeia no mesmo lote
+            if (entry.action === 'MOVE_CATEGORY') {
+                post.category = decision.targetCategory;
+            } else if (entry.action === 'REDIRECT_DUPLICATE') {
+                post.status = 'closed';
+                post.redirectPostId = decision.targetPostId;
+                const liveTarget = formattedPool.find(item => item.id === Number(decision.targetPostId));
+                if (liveTarget) liveTarget.hasIncomingRedirects = true;
+            } else if (entry.action === 'MULTI_TOPIC_SPLIT' || entry.action === 'CLOSE_OFF_SCOPE') {
+                post.status = 'closed';
             }
 
             results.push(entry);
