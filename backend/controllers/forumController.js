@@ -5,6 +5,12 @@ const { Op } = require('sequelize');
 const gamificationService = require('../services/gamificationService');
 const emailService = require('../services/emailService'); // Importação do serviço de e-mail
 
+const FOUNDER_PIN_EMAIL = 'pix@yelopsi.com.br';
+
+function isFounderPinEmail(email) {
+    return String(email || '').trim().toLowerCase() === FOUNDER_PIN_EMAIL;
+}
+
 function computePostClosed(post) {
     if (!post) return false;
     const status = String(post.status || '').toLowerCase();
@@ -97,6 +103,7 @@ exports.getAllPosts = async (req, res) => {
         });
 
         const agora = new Date();
+        const canPinPost = isFounderPinEmail(req.user?.email) || isFounderPinEmail(req.psychologist?.email);
         // Formata a resposta para o frontend
         const formattedPosts = posts.map(post => {
             let authorSlug = post.isAnonymous ? null : post.Psychologist?.slug;
@@ -119,6 +126,7 @@ exports.getAllPosts = async (req, res) => {
                 createdAt: post.createdAt,
                 status: post.status || 'active',
                 isPinned: post.dataValues.isPinned,
+                canPinPost,
                 redirectPostId: post.redirectPostId || null,
                 isClosed: computePostClosed(post),
                 votes: post.votes,
@@ -565,6 +573,7 @@ exports.getPostDetails = async (req, res) => {
             status: post.status || 'active',
             isAnonymous: post.isAnonymous,
             isPinned: post.isPinned,
+            canPinPost: isFounderPinEmail(req.user?.email) || isFounderPinEmail(req.psychologist?.email),
             redirectPostId: post.redirectPostId || null,
             redirectPost: redirectPost,
             isClosed: computePostClosed(post),
@@ -1337,6 +1346,57 @@ exports.togglePinComment = async (req, res) => {
     } catch (error) {
         console.error('Erro ao fixar/desafixar comentário do fórum:', error);
         res.status(500).json({ error: 'Erro interno ao processar a solicitação.' });
+    }
+};
+
+/**
+ * Rota: PUT /api/forum/posts/:id/pin
+ * Descrição: Fixa ou desfixa um tópico do fórum no topo do feed.
+ * Acesso exclusivo: pix@yelopsi.com.br (nem outros administradores têm acesso).
+ */
+exports.togglePinPost = async (req, res) => {
+    try {
+        if (req.user?.email && !isFounderPinEmail(req.user.email)) {
+            return res.status(403).json({
+                error: 'Acesso negado. Apenas pix@yelopsi.com.br pode fixar ou desfixar discussões.'
+            });
+        }
+        if (req.psychologist?.email && !isFounderPinEmail(req.psychologist.email)) {
+            return res.status(403).json({
+                error: 'Acesso negado. Apenas pix@yelopsi.com.br pode fixar ou desfixar discussões.'
+            });
+        }
+
+        const psychologist = req.user?.id
+            ? await Psychologist.findByPk(req.user.id, { attributes: ['id', 'email'] })
+            : null;
+        if (!psychologist || !isFounderPinEmail(psychologist.email)) {
+            return res.status(403).json({
+                error: 'Acesso negado. Apenas pix@yelopsi.com.br pode fixar ou desfixar discussões.'
+            });
+        }
+
+        const post = await ForumPost.findByPk(req.params.id); // BOLA-Safe: ação restrita ao e-mail fundador pix@yelopsi.com.br
+        if (!post || post.status === 'deleted' || post.status === 'hidden_by_admin') {
+            return res.status(404).json({ error: 'Discussão não encontrada ou indisponível.' });
+        }
+
+        const targetPinned = req.body && typeof req.body.isPinned === 'boolean'
+            ? req.body.isPinned
+            : !Boolean(post.isPinned);
+
+        // Mantém fixação independente por tópico (não desfixa os demais ao fixar um novo)
+        await post.update({ isPinned: targetPinned });
+
+        return res.json({
+            success: true,
+            message: targetPinned ? 'Discussão fixada no topo com sucesso!' : 'Discussão desfixada com sucesso!',
+            isPinned: targetPinned,
+            postId: post.id
+        });
+    } catch (error) {
+        console.error('Erro ao fixar/desfixar tópico do fórum:', error);
+        return res.status(500).json({ error: 'Erro interno ao processar a solicitação.' });
     }
 };
 

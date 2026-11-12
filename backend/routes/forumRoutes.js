@@ -11,6 +11,7 @@ router.post('/posts', forumController.createPost);
 router.get('/posts/search-similar', forumController.searchSimilarPosts); // Busca instantânea de duplicados
 router.post('/posts/check-duplicate-ai', forumController.checkDuplicateAi); // Checagem semântica com Gemini
 router.get('/posts/:id/snippet', forumController.getPostSnippet); // Dados rápidos para Card de citação
+router.put('/posts/:id/pin', forumController.togglePinPost); // Fixar/desfixar tópico (exclusivo pix@yelopsi.com.br)
 router.put('/posts/:id/redirect', forumController.setPostRedirect); // Redirecionamento oficial de tópico
 router.put('/posts/:id', forumController.updatePost); // Rota de edição de post
 router.get('/posts/:id', forumController.getPostDetails);

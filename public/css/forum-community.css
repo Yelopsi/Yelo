@@ -1833,6 +1833,7 @@
 .modern-icon-action-btn,
 .share-btn-full,
 .redirect-btn-full,
+.pin-btn-full,
 .edit-btn-full,
 .delete-btn-full,
 .report-btn {
@@ -1852,9 +1853,16 @@
     padding: 0 !important;
 }
 
+.modern-icon-action-btn.hidden,
+.pin-btn-full.hidden,
+.pin-post-btn.hidden {
+    display: none !important;
+}
+
 .modern-icon-action-btn svg,
 .share-btn-full svg,
 .redirect-btn-full svg,
+.pin-btn-full svg,
 .edit-btn-full svg,
 .delete-btn-full svg,
 .report-btn svg {
@@ -1865,11 +1873,24 @@
 .modern-icon-action-btn:hover,
 .share-btn-full:hover,
 .redirect-btn-full:hover,
+.pin-btn-full:hover,
 .edit-btn-full:hover {
     background: #F8FAFC !important;
     color: var(--yelo-text-main) !important;
     border-color: var(--yelo-emerald) !important;
     transform: translateY(-1px) !important;
+}
+
+.pin-btn-full.is-pinned,
+.pin-post-btn.is-pinned {
+    background: var(--yelo-mint-badge, #ECFDF5) !important;
+    color: #166534 !important;
+    border-color: var(--yelo-mint-border, #BBF7D0) !important;
+}
+
+.pin-btn-full.is-pinned svg,
+.pin-post-btn.is-pinned svg {
+    stroke: #166534 !important;
 }
 
 .modern-icon-action-btn.delete:hover,

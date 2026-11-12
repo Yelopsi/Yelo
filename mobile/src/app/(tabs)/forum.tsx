@@ -148,6 +148,9 @@ export default function ForumScreen() {
   }>();
   const { user } = useAuth();
   const isUserAdmin = Boolean((user as any)?.isAdmin || user?.email === 'pix@yelopsi.com.br');
+  const isFounderPinUser = String(user?.email || '').trim().toLowerCase() === 'pix@yelopsi.com.br';
+  const canPinPost = (post?: any) =>
+    typeof post?.canPinPost === 'boolean' ? post.canPinPost : isFounderPinUser;
 
   // Estados de Filtro e Busca
   const [activeTab, setActiveTab] = useState<'recentes' | 'populares' | 'meus_posts'>('recentes');
@@ -421,6 +424,30 @@ export default function ForumScreen() {
         }
       ]
     );
+  };
+
+  // Fixar / Desfixar Discussão (Exclusivo pix@yelopsi.com.br)
+  const handlePinPost = async (post: any) => {
+    if (!post?.id) return;
+    try {
+      const targetState = !Boolean(post.isPinned);
+      const res = await api.put(`/api/forum/posts/${post.id}/pin`, { isPinned: targetState });
+      const nextPinned = typeof res.data?.isPinned === 'boolean' ? res.data.isPinned : targetState;
+
+      setActivePost((prev: any) =>
+        prev && prev.id === post.id ? { ...prev, isPinned: nextPinned } : prev
+      );
+      setPosts(prev =>
+        prev.map(p => (p.id === post.id ? { ...p, isPinned: nextPinned } : p))
+      );
+      await fetchPosts(true);
+      showToast(res.data?.message || (nextPinned ? 'Discussão fixada no topo! 📌' : 'Discussão desfixada.'));
+    } catch (err: any) {
+      Alert.alert(
+        'Aviso',
+        err.response?.data?.error || 'Apenas a moderação principal (pix@yelopsi.com.br) pode fixar ou desfixar discussões.'
+      );
+    }
   };
 
   // Denúncia de Discussão
@@ -1081,6 +1108,16 @@ export default function ForumScreen() {
                       <TouchableOpacity onPress={() => handleSharePost(activePost)} style={styles.iconCircle} activeOpacity={0.7}>
                         <ShareIcon size={13} color="#64748B" />
                       </TouchableOpacity>
+                      {canPinPost(activePost) && (
+                        <TouchableOpacity
+                          onPress={() => handlePinPost(activePost)}
+                          style={[styles.iconCircle, activePost.isPinned && styles.iconCirclePinned]}
+                          activeOpacity={0.7}
+                          accessibilityLabel={activePost.isPinned ? 'Desfixar discussão' : 'Fixar discussão no topo'}
+                        >
+                          <PinIcon size={13} color={activePost.isPinned ? '#92400E' : '#64748B'} />
+                        </TouchableOpacity>
+                      )}
                       {activePost.isMine && (
                         <TouchableOpacity onPress={() => openEditPost(activePost)} style={styles.iconCircle} activeOpacity={0.7}>
                           <EditIcon size={13} color="#64748B" />
@@ -1574,6 +1611,18 @@ export default function ForumScreen() {
 
                     {/* Ações da Direita */}
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      {canPinPost(post) && (
+                        <TouchableOpacity
+                          onPress={() => handlePinPost(post)}
+                          style={[styles.postSmallActionBtn, post.isPinned && styles.postSmallActionBtnPinned]}
+                          activeOpacity={0.7}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          accessibilityLabel={post.isPinned ? 'Desfixar discussão' : 'Fixar discussão no topo'}
+                        >
+                          <PinIcon size={14} color={post.isPinned ? '#92400E' : '#94A3B8'} />
+                        </TouchableOpacity>
+                      )}
+
                       {post.isMine && (
                         <TouchableOpacity 
                           onPress={() => handleDeletePost(post)}
@@ -2183,6 +2232,12 @@ const styles = StyleSheet.create({
   postSmallActionBtn: {
     padding: 6,
   },
+  postSmallActionBtnPinned: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
 
   // BOTÃO MOSTRAR MAIS
   btnLoadMore: {
@@ -2625,6 +2680,10 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconCirclePinned: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
   },
   pfReportBtn: {
     padding: 6,

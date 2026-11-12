@@ -184,6 +184,73 @@
 
         let isLoadingMore = false;
         let isLoadingComments = false;
+        let feedNeedsPinRefresh = false;
+
+        function isFounderPinEmail(email) {
+            return String(email || '').trim().toLowerCase() === 'pix@yelopsi.com.br';
+        }
+
+        function canCurrentUserPinPost(post) {
+            if (post && typeof post.canPinPost === 'boolean') {
+                return post.canPinPost;
+            }
+            const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+            return isFounderPinEmail(psiData?.email);
+        }
+
+        function syncPinnedVisuals(containerEl, pinBtn, isPinned, isFullView = false) {
+            if (containerEl) {
+                const pill = containerEl.querySelector('.post-pinned-pill');
+                if (!isFullView) containerEl.classList.toggle('pinned', !!isPinned);
+                if (pill) {
+                    pill.classList.toggle('hidden', !isPinned);
+                    if (isFullView) {
+                        pill.style.display = isPinned ? 'inline-flex' : 'none';
+                    }
+                }
+            }
+            if (pinBtn) {
+                pinBtn.classList.toggle('is-pinned', !!isPinned);
+                pinBtn.title = isPinned ? 'Desfixar discussão' : 'Fixar discussão no topo';
+                pinBtn.setAttribute('aria-pressed', isPinned ? 'true' : 'false');
+            }
+        }
+
+        async function handleTogglePinPost(post, pinBtn, containerEl, isFullView = false) {
+            if (!post || !pinBtn || pinBtn.disabled) return;
+            pinBtn.disabled = true;
+            const targetState = !Boolean(post.isPinned);
+            try {
+                const res = await apiFetch(`${API_BASE_URL}/api/forum/posts/${post.id}/pin`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ isPinned: targetState })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    if (typeof showToast === 'function') {
+                        showToast(data.error || 'Sem permissão para fixar ou desfixar esta discussão.', 'error');
+                    }
+                    return;
+                }
+                post.isPinned = typeof data.isPinned === 'boolean' ? data.isPinned : targetState;
+                syncPinnedVisuals(containerEl, pinBtn, post.isPinned, isFullView);
+                if (typeof showToast === 'function') {
+                    showToast(data.message || (post.isPinned ? 'Discussão fixada no topo!' : 'Discussão desfixada.'), 'success');
+                }
+                if (isFullView) {
+                    feedNeedsPinRefresh = true;
+                } else {
+                    fetchAndRenderPosts(1, false);
+                }
+            } catch (err) {
+                console.error('Erro ao alternar fixação da discussão:', err);
+                if (typeof showToast === 'function') {
+                    showToast('Erro ao alternar fixação da discussão.', 'error');
+                }
+            } finally {
+                pinBtn.disabled = false;
+            }
+        }
 
         const DELETE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
         const EDIT_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-pencil"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path></svg>`;
@@ -1021,7 +1088,7 @@
                 if (e.target.closest('a') || e.target.closest('.forum-topic-mention-card') || e.target.closest('.forum-mention-pill')) {
                     return;
                 }
-                if (!e.target.closest('.support-btn') && !e.target.closest('.report-btn') && !e.target.closest('.share-btn') && !e.target.closest('.edit-btn') && !e.target.closest('.delete-btn')) {
+                if (!e.target.closest('.support-btn') && !e.target.closest('.report-btn') && !e.target.closest('.share-btn') && !e.target.closest('.edit-btn') && !e.target.closest('.delete-btn') && !e.target.closest('.pin-post-btn')) {
                     loadFullPost(post.id);
                 }
             });
@@ -1047,6 +1114,23 @@
                     e.stopPropagation();
                     toggleSupport(post.id, supportBtn);
                 };
+            }
+
+            const pinPostBtn = card.querySelector('.pin-post-btn');
+            if (pinPostBtn) {
+                if (canCurrentUserPinPost(post)) {
+                    pinPostBtn.classList.remove('hidden');
+                    pinPostBtn.style.setProperty('display', 'inline-flex', 'important');
+                    syncPinnedVisuals(card, pinPostBtn, post.isPinned, false);
+                    pinPostBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        handleTogglePinPost(post, pinPostBtn, card, false);
+                    };
+                } else {
+                    pinPostBtn.classList.add('hidden');
+                    pinPostBtn.style.setProperty('display', 'none', 'important');
+                    pinPostBtn.onclick = null;
+                }
             }
 
             const reportBtn = card.querySelector('.report-btn');
@@ -1175,6 +1259,10 @@
                         dashboardMain.style.paddingLeft = ''; 
                         dashboardMain.style.paddingRight = ''; 
                     }
+                    if (feedNeedsPinRefresh) {
+                        feedNeedsPinRefresh = false;
+                        fetchAndRenderPosts(1, false);
+                    }
                 };
 
                 postEl.querySelectorAll('.support-btn').forEach(supportBtn => {
@@ -1199,6 +1287,7 @@
                 const editBtnFull = postEl.querySelector('.edit-btn-full');
                 const deleteBtnFull = postEl.querySelector('.delete-btn-full');
                 const redirectBtnFull = postEl.querySelector('.redirect-btn-full');
+                const pinBtnFull = postEl.querySelector('.pin-btn-full');
 
                 const adminPsiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
                 const isUserAdmin = adminPsiData && (
@@ -1206,6 +1295,19 @@
                     adminPsiData.email === 'pix@yelopsi.com.br' || 
                     adminPsiData.email === 'pix@yeloposi.com.br'
                 );
+
+                if (pinBtnFull) {
+                    if (canCurrentUserPinPost(post)) {
+                        pinBtnFull.classList.remove('hidden');
+                        pinBtnFull.style.setProperty('display', 'inline-flex', 'important');
+                        syncPinnedVisuals(postEl, pinBtnFull, post.isPinned, true);
+                        pinBtnFull.onclick = () => handleTogglePinPost(post, pinBtnFull, postEl, true);
+                    } else {
+                        pinBtnFull.classList.add('hidden');
+                        pinBtnFull.style.setProperty('display', 'none', 'important');
+                        pinBtnFull.onclick = null;
+                    }
+                }
 
                 if (reportBtnFull) {
                     reportBtnFull.style.display = 'inline-flex';
