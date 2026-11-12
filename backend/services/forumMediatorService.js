@@ -464,7 +464,20 @@ async function runMediatorBatch(options = {}) {
         if (match) reviewedIds.add(Number(match[1]));
     }
 
-    let targets = formattedPool.filter(p => !p.isPinned);
+    // Protege publicações do fundador (pix@yelopsi.com.br) e do próprio mediador contra intervenção automática
+    const protectedAuthorIds = new Set();
+    if (typeof db.Psychologist?.findAll === 'function') {
+        const mediatorEmail = (process.env.FORUM_MEDIATOR_EMAIL || 'mediador@yelopsi.com.br').trim().toLowerCase();
+        const protectedRows = await db.Psychologist.findAll({
+            where: { email: { [Op.in]: ['pix@yelopsi.com.br', mediatorEmail] } },
+            attributes: ['id']
+        }).catch(() => []);
+        for (const pr of protectedRows) {
+            if (pr?.id) protectedAuthorIds.add(Number(pr.id));
+        }
+    }
+
+    let targets = formattedPool.filter(p => !p.isPinned && !protectedAuthorIds.has(Number(p.PsychologistId)));
     if (singlePostId) {
         targets = targets.filter(p => p.id === singlePostId);
     } else {
