@@ -96,6 +96,10 @@ class MetaAdsService {
                 }
                 return {
                     ...c,
+                    spend: parseFloat(c.spend) || 0,
+                    impressions: parseInt(c.impressions, 10) || 0,
+                    clicks: parseInt(c.clicks, 10) || 0,
+                    cpc: parseFloat(c.cpc) || 0,
                     conversions
                 };
             });

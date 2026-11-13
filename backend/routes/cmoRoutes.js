@@ -158,7 +158,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND "planExpiresAt" > NOW()
                     AND ("is_exempt" IS NULL OR "is_exempt" = false)
-                    AND "firstPaidAt" >= :dateStart AND "firstPaidAt" < :nextDayStr
+                    AND "firstPaidAt" >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                    AND "firstPaidAt" < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 ) as pagantes,
                 COUNT(*) FILTER (
                     WHERE ("subscriptionId" IS NULL AND "firstPaidAt" IS NULL)
@@ -166,17 +167,20 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     AND "planExpiresAt" > NOW()
                     AND ("fotoUrl" IS NOT NULL AND "fotoUrl" NOT LIKE '%placehold.co%')
                     AND ("bio" IS NOT NULL AND LENGTH("bio") >= 10)
-                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
+                    AND "createdAt" >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                    AND "createdAt" < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 ) as trials,
                 COUNT(*) FILTER (
                     WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND ("planExpiresAt" <= NOW() OR "status" = 'inactive')
-                    AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
+                    AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                    AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 ) as churned,
                 COUNT(*) FILTER (
                     WHERE ("firstPaidAt" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
                     AND "planExpiresAt" <= NOW()
-                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
+                    AND "createdAt" >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                    AND "createdAt" < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 ) as failed_trials
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
@@ -192,18 +196,21 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 COUNT(*) FILTER (
                     WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND ("is_exempt" IS NULL OR "is_exempt" = false)
-                    AND "firstPaidAt" >= :dateStart AND "firstPaidAt" < :nextDayStr
+                    AND "firstPaidAt" >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                    AND "firstPaidAt" < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 ) as pagantes,
                 COUNT(*) FILTER (
                     WHERE (is_exempt IS NULL OR is_exempt = false)
                     AND ("fotoUrl" IS NOT NULL AND "fotoUrl" NOT LIKE '%placehold.co%')
                     AND ("bio" IS NOT NULL AND LENGTH("bio") >= 10)
-                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
+                    AND "createdAt" >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                    AND "createdAt" < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 ) as trials,
                 COUNT(*) FILTER (
                     WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND ("planExpiresAt" <= NOW() OR "status" = 'inactive')
-                    AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
+                    AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                    AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 ) as churned
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
@@ -233,7 +240,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     AND "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND "planExpiresAt" > NOW()
                     AND (is_exempt IS NULL OR is_exempt = false)
-                    AND "firstPaidAt" >= :dateStart AND "firstPaidAt" < :nextDayStr
+                    AND "firstPaidAt" >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                    AND "firstPaidAt" < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 ) as total_new_pagantes,
                 COUNT(*) FILTER (
                     WHERE status IN ('pending', 'active')
@@ -241,7 +249,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     AND (is_exempt IS NULL OR is_exempt = false)
                     AND "planExpiresAt" > NOW()
                     AND ("fotoUrl" IS NOT NULL OR ("bio" IS NOT NULL AND "bio" != ''))
-                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
+                    AND "createdAt" >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                    AND "createdAt" < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 ) as total_new_trials
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
@@ -251,13 +260,15 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 COUNT(*) FILTER (
                     WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
                     AND (is_exempt IS NULL OR is_exempt = false)
-                    AND "firstPaidAt" >= :dateStart AND "firstPaidAt" < :nextDayStr
+                    AND "firstPaidAt" >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                    AND "firstPaidAt" < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 ) as total_new_pagantes,
                 COUNT(*) FILTER (
                     WHERE (is_exempt IS NULL OR is_exempt = false)
                     AND ("fotoUrl" IS NOT NULL AND "fotoUrl" NOT LIKE '%placehold.co%')
                     AND ("bio" IS NOT NULL AND LENGTH("bio") >= 10)
-                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
+                    AND "createdAt" >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                    AND "createdAt" < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 ) as total_new_trials
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
@@ -273,9 +284,10 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         const globalChurnQuery = `
             SELECT COUNT(*) as churned
             FROM "Psychologists"
-            WHERE status = 'inactive'
+            WHERE (status = 'inactive' OR ("planExpiresAt" <= NOW() AND "status" = 'active'))
             AND "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
-            AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
+            AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+            AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
             AND "deletedAt" IS NULL
         `;
         const [globalChurnRes] = await sequelize.query(globalChurnQuery, {
@@ -405,7 +417,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 SUM(CASE WHEN "dealClosed" IN ('no', 'no_reply', 'not_interested', 'did_not_reply') THEN 1 ELSE 0 END) as total_lost,
                 SUM(CASE WHEN "dealClosed" IS NULL OR "dealClosed" = 'pending' THEN 1 ELSE 0 END) as total_pending
             FROM "WhatsAppClickLogs"
-            WHERE "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
+            WHERE "createdAt" >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+              AND "createdAt" < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
         `;
 
         const [googleMetricsRes] = await sequelize.query(b2cQuery, {

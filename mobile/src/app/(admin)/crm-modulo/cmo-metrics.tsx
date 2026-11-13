@@ -141,7 +141,8 @@ export default function AdminCmoMetricsScreen() {
   };
 
   // Trend Badge Helper
-  const renderTrendBadge = (curr: number, prev: number, inverseGood: boolean = false, isRate: boolean = false) => {
+  const renderTrendBadge = (curr: number, prev: number, inverseGood: boolean | 'neutral' = false, isRate: boolean = false) => {
+    const isNeutralTrend = inverseGood === 'neutral';
     if (prev === null || prev === undefined || isNaN(prev) || isNaN(curr)) {
       return (
         <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
@@ -160,8 +161,9 @@ export default function AdminCmoMetricsScreen() {
         );
       }
       const isUp = diffPP > 0;
-      const isGood = inverseGood ? !isUp : isUp;
-      const color = isGood ? '#10b981' : '#ef4444';
+      const color = isNeutralTrend
+        ? (isUp ? '#2563eb' : '#64748b')
+        : ((inverseGood ? !isUp : isUp) ? '#10b981' : '#ef4444');
       const arrow = isUp ? '↑' : '↓';
       return (
         <View style={{ backgroundColor: color + '1a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
@@ -173,7 +175,7 @@ export default function AdminCmoMetricsScreen() {
     }
 
     if (prev === 0 && curr > 0) {
-      const color = inverseGood ? '#ef4444' : '#10b981';
+      const color = isNeutralTrend ? '#2563eb' : (inverseGood ? '#ef4444' : '#10b981');
       return (
         <View style={{ backgroundColor: color + '1a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
           <Text style={{ color, fontSize: 10, fontWeight: '700' }}>Novo</Text>
@@ -198,8 +200,9 @@ export default function AdminCmoMetricsScreen() {
     }
 
     const isUp = pct > 0;
-    const isGood = inverseGood ? !isUp : isUp;
-    const color = isGood ? '#10b981' : '#ef4444';
+    const color = isNeutralTrend
+      ? (isUp ? '#2563eb' : '#64748b')
+      : ((inverseGood ? !isUp : isUp) ? '#10b981' : '#ef4444');
     const arrow = isUp ? '↑' : '↓';
 
     return (
@@ -270,7 +273,7 @@ export default function AdminCmoMetricsScreen() {
     currVal: number,
     prevVal: number,
     formatType: 'currency' | 'number' | 'percent' | 'months',
-    inverseGood: boolean = false,
+    inverseGood: boolean | 'neutral' = false,
     customNote?: string,
     isAlertBg: boolean = false
   ) => {
@@ -1493,7 +1496,7 @@ export default function AdminCmoMetricsScreen() {
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Gasto Meta</Text>
-              {renderTrendBadge(metaSpend, prevMetaSpend, true)}
+              {renderTrendBadge(metaSpend, prevMetaSpend, 'neutral')}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>{formatBRL(metaSpend)}</Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatBRL(prevMetaSpend)}</Text>
@@ -1602,7 +1605,7 @@ export default function AdminCmoMetricsScreen() {
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Gasto Google</Text>
-              {renderTrendBadge(googleSpend, prevGoogleSpend, true)}
+              {renderTrendBadge(googleSpend, prevGoogleSpend, 'neutral')}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>{formatBRL(googleSpend)}</Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatBRL(prevGoogleSpend)}</Text>
@@ -1897,7 +1900,7 @@ export default function AdminCmoMetricsScreen() {
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
           {/* B2B (Meta) */}
-          {renderDbgCard('Gasto Meta', metaSpend, prevMetaSpend, 'currency', true)}
+          {renderDbgCard('Gasto Meta', metaSpend, prevMetaSpend, 'currency', 'neutral')}
           {renderDbgCard('Trials (Meta Ads)', metaTrials, prevMetaTrials, 'number', false)}
           {renderDbgCard('Assinantes (Meta)', metaPagantes, prevMetaPagantes, 'number', false)}
           {renderDbgCard('CAC B2B', metaCac, prevMetaCac, 'currency', true)}
@@ -1936,7 +1939,7 @@ export default function AdminCmoMetricsScreen() {
               )}
 
           {/* B2C (Google) */}
-          {renderDbgCard('Gasto Google', googleSpend, prevGoogleSpend, 'currency', true)}
+          {renderDbgCard('Gasto Google', googleSpend, prevGoogleSpend, 'currency', 'neutral')}
           {renderDbgCard('Cliques WPP (Google)', googleClicks, prevGoogleClicks, 'number', false)}
           {renderDbgCard('Pacientes Fechados', googleDeals, prevGoogleDeals, 'number', false)}
           {renderDbgCard('CPL B2C', googleCpl, prevGoogleCpl, 'currency', true)}
