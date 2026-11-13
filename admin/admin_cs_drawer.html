@@ -20,6 +20,57 @@
     .btn-close-drawer { background: none; border: none; cursor: pointer; color: #64748b; padding: 5px; display: flex; align-items: center; justify-content: center; transition: transform 0.3s ease; }
     .btn-close-drawer:hover { transform: rotate(90deg); color: #1e293b; }
 
+    #drawer-cs-overlay .btn-tabela {
+        border: 1px solid #cbd5e1;
+        padding: 11px 16px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        white-space: nowrap;
+        text-decoration: none;
+    }
+    #drawer-cs-overlay .btn-tabela:hover:not(:disabled) {
+        transform: translateY(-1px);
+        filter: brightness(0.97);
+    }
+    #drawer-cs-overlay .btn-tabela:disabled {
+        opacity: 0.65;
+        cursor: wait;
+    }
+
+    .cs-health-toggle {
+        cursor: pointer;
+        user-select: none;
+        display: block;
+    }
+    .cs-health-chevron {
+        color: #64748b;
+        transition: transform 0.2s ease;
+        flex-shrink: 0;
+    }
+    .cs-health-card.expanded .cs-health-chevron {
+        transform: rotate(180deg);
+    }
+    .cs-health-hint {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 10px;
+        padding-top: 8px;
+        border-top: 1px solid #f1f5f9;
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
     @media (max-width: 768px) {
         .drawer-content {
             width: 100% !important;
@@ -33,14 +84,15 @@
             transform: translateY(0) !important;
         }
         .drawer-header-mobile::before {
-            content: ''; display: block; width: 40px; height: 5px; background: #cbd5e1; border-radius: 5px; margin: 0 auto 15px auto;
+            content: ''; display: block; width: 40px; height: 5px; background: #cbd5e1; border-radius: 5px; margin: 0 calc(50% - 20px) 15px calc(50% - 20px);
         }
         .drawer-body-scroll {
             padding-bottom: 120px !important;
+            -webkit-overflow-scrolling: touch;
         }
     }
 </style>
-<div id="drawer-cs-overlay" class="drawer-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000; display: flex; justify-content: flex-end;">
+<div id="drawer-cs-overlay" class="drawer-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 150000; display: flex; justify-content: flex-end;">
     <div class="drawer-content" style="background: #f8f9fa; width: 100%; max-width: 500px; height: 100%; box-shadow: -5px 0 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
         
         <div class="drawer-header-mobile" style="background: white; padding: 20px 25px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; flex-wrap: wrap;">
@@ -48,7 +100,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #8b5cf6;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
                 Visão de CS (360º)
             </h2>
-            <button id="btn-close-cs-drawer" class="btn-close-drawer">
+            <button id="btn-close-cs-drawer" class="btn-close-drawer" aria-label="Fechar Visão 360">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
@@ -71,19 +123,26 @@
                 </div>
             </div>
 
-            <!-- Health Score -->
-            <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
-                <h4 style="margin: 0 0 15px 0; color: #1e293b; font-size: 1.05rem;">Saúde do Perfil</h4>
-                
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; color: #475569;">
-                    <span>Completude:</span>
-                    <strong id="cs-health-pct">0%</strong>
-                </div>
-                <div class="health-bar-bg" style="background: #e2e8f0; height: 8px; border-radius: 4px; width: 100%; overflow: hidden; margin-top: 5px;">
-                    <div id="cs-health-bar" class="health-bar-fill" style="width: 0%; background: #ef4444; height: 100%; transition: width 0.5s ease-out;"></div>
+            <!-- Health Score (Colapsado por padrão) -->
+            <div id="cs-health-card" class="cs-health-card" style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0;">
+                <div id="cs-health-toggle" class="cs-health-toggle" role="button" tabindex="0" aria-expanded="false">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <h4 style="margin: 0; color: #1e293b; font-size: 1.05rem;">Saúde do Perfil</h4>
+                            <svg class="cs-health-chevron" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <strong id="cs-health-pct" style="font-size: 1.05rem; color: #1e293b;">0%</strong>
+                    </div>
+                    <div class="health-bar-bg" style="background: #e2e8f0; height: 8px; border-radius: 4px; width: 100%; overflow: hidden;">
+                        <div id="cs-health-bar" class="health-bar-fill" style="width: 0%; background: #ef4444; height: 100%; transition: width 0.5s ease-out;"></div>
+                    </div>
+                    <div class="cs-health-hint">
+                        <span id="cs-health-hint-text">Ver checklist completo</span>
+                        <span style="font-size: 0.75rem; color: #94a3b8;">Clique para expandir</span>
+                    </div>
                 </div>
 
-                <ul style="list-style: none; padding: 0; margin: 15px 0 0 0; font-size: 0.85rem; color: #64748b; display: flex; flex-direction: column; gap: 8px;" id="cs-health-checks">
+                <ul style="list-style: none; padding: 12px 0 0 0; margin: 12px 0 0 0; border-top: 1px solid #f1f5f9; font-size: 0.85rem; color: #64748b; display: none; flex-direction: column; gap: 8px;" id="cs-health-checks">
                     <!-- Checks -->
                 </ul>
             </div>
@@ -117,11 +176,11 @@
                 <h4 style="margin: 0 0 15px 0; color: #1e293b; font-size: 1.05rem;">Assinatura</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                     <div>
-                        <span style="display: block; font-size: 0.8rem; color: #64748b;">Plano</span>
+                        <span style="display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 3px;">Plano</span>
                         <strong id="cs-plan" style="color: #1e293b;">-</strong>
                     </div>
                     <div>
-                        <span style="display: block; font-size: 0.8rem; color: #64748b;">Vencimento</span>
+                        <span id="cs-expire-label" style="display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 3px;">Vencimento</span>
                         <strong id="cs-expire" style="color: #1e293b;">-</strong>
                     </div>
                 </div>

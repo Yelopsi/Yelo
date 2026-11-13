@@ -53,10 +53,10 @@
         .drawer-header-mobile::before {
             content: ''; display: block; width: 40px; height: 5px; background: #cbd5e1; border-radius: 5px; margin: 0 auto 15px auto;
         }
-        }
         .drawer-body-scroll {
             padding-bottom: 120px !important;
         }
+    }
     .kpi-card { cursor: pointer; position: relative; transition: all 0.2s; border-radius: 12px; }
     .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 10; }
     .kpi-card[data-kpi="active_paying"].active { background: #ecfdf5; border-color: #10b981; }
@@ -207,8 +207,8 @@
         border: 1px solid #fecaca !important;
     }
 
-    /* Botões de Ação em Pílula */
-    .btn-tabela {
+    /* Botões de Ação em Pílula (escopados em #main-content para não colidir com o Drawer 360 global) */
+    #main-content .btn-tabela {
         background: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
         color: #1e293b !important;
@@ -224,18 +224,18 @@
         box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
         white-space: nowrap !important;
     }
-    .btn-tabela:hover {
+    #main-content .btn-tabela:hover {
         background: #f8fafc !important;
         border-color: #94a3b8 !important;
         color: #0f172a !important;
         transform: translateY(-1px) !important;
     }
-    .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar):not(.btn-tabela-conversion):not(.btn-tabela-analysis):not(.btn-tabela-lowperf):not(.btn-tabela-trial):not(.btn-tabela-churn):not(.btn-tabela-paidchurn):not(.btn-tabela-feedback):not(.btn-tabela-incomplete):not(.btn-tabela-negotiation) {
+    #main-content .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar):not(.btn-tabela-conversion):not(.btn-tabela-analysis):not(.btn-tabela-lowperf):not(.btn-tabela-trial):not(.btn-tabela-churn):not(.btn-tabela-paidchurn):not(.btn-tabela-feedback):not(.btn-tabela-incomplete):not(.btn-tabela-negotiation) {
         background: #f0fdf4 !important;
         border-color: #bbf7d0 !important;
         color: #166534 !important;
     }
-    .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar):not(.btn-tabela-conversion):not(.btn-tabela-analysis):not(.btn-tabela-lowperf):not(.btn-tabela-trial):not(.btn-tabela-churn):not(.btn-tabela-paidchurn):not(.btn-tabela-feedback):not(.btn-tabela-incomplete):not(.btn-tabela-negotiation):hover {
+    #main-content .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar):not(.btn-tabela-conversion):not(.btn-tabela-analysis):not(.btn-tabela-lowperf):not(.btn-tabela-trial):not(.btn-tabela-churn):not(.btn-tabela-paidchurn):not(.btn-tabela-feedback):not(.btn-tabela-incomplete):not(.btn-tabela-negotiation):hover {
         background: #dcfce7 !important;
         border-color: #86efac !important;
         color: #14532d !important;

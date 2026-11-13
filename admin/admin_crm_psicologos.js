@@ -7,16 +7,10 @@ window.initializePage = function () {
     const searchInput = document.getElementById('crm-search-psi');
     const statusInput = document.getElementById('crm-status-psi');
 
-    const drawerOverlay = document.getElementById('drawer-cs-overlay');
-    const btnCloseDrawer = document.getElementById('btn-close-cs-drawer');
-
     let searchTimeout;
     let psisDataCache = [];
     let isVipFilterActive = false;
     let isNotAnalyzedFilterActive = false;
-
-    const drawerContent = drawerOverlay ? drawerOverlay.querySelector('.drawer-content') : null;
-    const drawerHeader = drawerOverlay ? drawerOverlay.querySelector('.drawer-header-mobile') : null;
 
     // Renderiza a setinha e badge de comparação com os 30 dias anteriores (em pontos percentuais)
     function renderMetricDiff(el, diff, prevRate) {
@@ -131,20 +125,6 @@ window.initializePage = function () {
         }
     }
     loadAdvancedKpis();
-
-    // --- CONTROLES DO DRAWER ---
-    function closeDrawer() {
-        drawerOverlay.classList.remove('active');
-        if (drawerContent) {
-            setTimeout(() => {
-                drawerContent.style.removeProperty('transform');
-                drawerContent.style.removeProperty('transition');
-            }, 300);
-        }
-    }
-
-    if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeDrawer);
-    if (drawerOverlay) drawerOverlay.addEventListener('click', (e) => { if (e.target === drawerOverlay) closeDrawer(); });
 
     document.querySelectorAll('.crm-pill').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -286,36 +266,6 @@ window.initializePage = function () {
             });
 
             renderTable(psisDataCache);
-        });
-    }
-
-    // Lógica de Swipe Down APENAS NO CABEÇALHO (Para não travar o scroll do conteúdo)
-    let startY = 0;
-    let currentY = 0;
-
-    if (drawerHeader && drawerContent) {
-        drawerHeader.addEventListener('touchstart', (e) => {
-            if (window.innerWidth > 768) return;
-            startY = e.touches[0].clientY;
-            currentY = startY;
-            drawerContent.style.setProperty('transition', 'none', 'important');
-        }, { passive: true });
-        drawerHeader.addEventListener('touchmove', (e) => {
-            if (window.innerWidth > 768 || startY === 0) return;
-            currentY = e.touches[0].clientY;
-            const diffY = currentY - startY;
-            if (diffY > 0) {
-                drawerContent.style.setProperty('transform', `translateY(${diffY}px)`, 'important');
-                e.preventDefault();
-            }
-        }, { passive: false });
-        drawerHeader.addEventListener('touchend', (e) => {
-            if (window.innerWidth > 768 || startY === 0) return;
-            const diffY = currentY - startY;
-            drawerContent.style.setProperty('transition', 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)', 'important');
-            if (diffY > 80) { closeDrawer(); setTimeout(() => { drawerContent.style.removeProperty('transform'); drawerContent.style.removeProperty('transition'); }, 300); }
-            else { drawerContent.style.setProperty('transform', 'translateY(0)', 'important'); setTimeout(() => { drawerContent.style.removeProperty('transform'); drawerContent.style.removeProperty('transition'); }, 300); }
-            startY = 0; currentY = 0;
         });
     }
 
@@ -1190,10 +1140,14 @@ window.initializePage = function () {
     window.loadCrmPsisPage = function (p) { fetchAndRenderPsis(p); };
 
     // Ouvinte para quando um VIP for atualizado pelo modal global
-    window.addEventListener('vipStatusUpdated', () => { fetchAndRenderPsis(1); closeDrawer(); });
+    const onVipStatusUpdated = () => {
+        fetchAndRenderPsis(1);
+        if (typeof window.closeCSDrawer === 'function') window.closeCSDrawer();
+    };
+    window.addEventListener('vipStatusUpdated', onVipStatusUpdated);
 
     window.cleanupPage = function () {
-        window.removeEventListener('vipStatusUpdated', fetchAndRenderPsis);
+        window.removeEventListener('vipStatusUpdated', onVipStatusUpdated);
     };
 
     // ==============================================
