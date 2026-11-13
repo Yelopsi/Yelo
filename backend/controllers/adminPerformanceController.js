@@ -1,6 +1,7 @@
 const db = require('../models');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { formatForWhatsApp } = require('../utils/whatsappFormatter');
+const { getTrialExpiryTiming } = require('../utils/trialTiming');
 
 async function getStandardMetrics(psiId, psi) {
     const numericId = parseInt(psiId, 10);
@@ -730,15 +731,12 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
 
         const nowTime = new Date();
         const expDate = psi.planExpiresAt ? new Date(psi.planExpiresAt) : new Date(Date.now() + 24 * 60 * 60 * 1000);
-        const diffHours = (expDate.getTime() - nowTime.getTime()) / (1000 * 60 * 60);
-
-        const options = { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' };
-        const todayStr = nowTime.toLocaleDateString('pt-BR', options);
-        const expDateStr = expDate.toLocaleDateString('pt-BR', options);
-
-        const isToday = expDateStr === todayStr || diffHours <= 16;
-        const expiryPhrase = isToday ? 'expira nas próximas horas' : 'expirará amanhã';
-        const timingClosing = isToday ? 'nas próximas horas' : 'amanhã';
+        const {
+            isToday,
+            expiryPhrase,
+            promptTimingSituation,
+            promptTimingInstruction
+        } = getTrialExpiryTiming(expDate, nowTime);
 
         const hasValorSessao = psi.valor_sessao_numero && psi.valor_sessao_numero > 0;
         let instrucaoFinanceira = '';
@@ -796,7 +794,7 @@ Em vez disso:
         const prompt = `
 Você é Anderson, representante da equipe de Customer Success e Growth da Yelo. 
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}.
-Situação atual: O período de testes gratuito (Trial) de 7 dias deste profissional ${isToday ? 'expira HOJE, nas próximas horas' : 'expirará AMANHÃ'}.
+Situação atual: O período de testes gratuito (Trial) de 7 dias deste profissional ${promptTimingSituation}.
 
 Aja de forma humanizada, empática, consultiva e SEMPRE com tom e voz de EQUIPE ("nós vimos", "analisamos", "acreditamos", "percebemos", "nossa equipe"). NÃO seja agressivamente vendedor e não use gírias.
 NÃO se apresente ("Aqui é o Anderson..." ou similar) pois o psicólogo já conversa com você e já sabe quem você é.
@@ -813,9 +811,7 @@ ${performanceSection}
 [INSTRUÇÕES DA COPY (MENSAGEM)]
 1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\\n\\n).
 2. Vá direto ao ponto (cumprimente com um 'Olá [Nome], tudo bem?' ou 'Olá [Nome], como vai?' e avance em tom de equipe informando sobre o encerramento do teste):
-   ${isToday 
-     ? '- Como o período expira hoje/em breve, mencione que o período gratuito "expira nas próximas horas" ou "está encerrando nas próximas horas".' 
-     : '- Como o período expira amanhã, mencione que o período gratuito "expirará amanhã".'}
+   ${promptTimingInstruction}
    NUNCA use "restam X dias" ou "último dia (restam X dias)". Seja direto usando a referência temporal indicada.
 3. É OBRIGATÓRIO APRESENTAR AS MÉTRICAS EM TÓPICOS NATIVOS DO WHATSAPP com os números em negrito para evidenciar os números, exatamente neste formato:
 Seu perfil obteve:

@@ -448,7 +448,8 @@ window.initializePage = function () {
                 // Ativação: só sobrescreve se houver filtro customizado de data ativo no CRM
                 const activationEl = document.getElementById('crm-activation');
                 if ((startDate || endDate) && activationEl && kpis.total > 0) {
-                    const ativos = (parseInt(kpis.active_paying) || 0) + (parseInt(kpis.active_trial) || 0) + (parseInt(kpis.vip) || 0);
+                    const periodPaying = kpis.period_active_paying !== undefined ? parseInt(kpis.period_active_paying) : (parseInt(kpis.active_paying) || 0);
+                    const ativos = (periodPaying || 0) + (parseInt(kpis.active_trial) || 0) + (parseInt(kpis.vip) || 0);
                     const actPct = ((ativos / kpis.total) * 100).toFixed(1);
                     activationEl.innerText = `${actPct}%`;
                     const diffEl = document.getElementById('crm-activation-diff');
@@ -485,7 +486,7 @@ window.initializePage = function () {
 
             let dateStr = '-';
             if (item.actionType === 'expiring_trial' && item.planExpiresAt) {
-                dateStr = new Date(item.planExpiresAt).toLocaleDateString('pt-BR');
+                dateStr = new Date(item.planExpiresAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
             } else if (item.createdAt) {
                 dateStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
             }

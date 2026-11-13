@@ -2,6 +2,7 @@ const db = require('../models');
 const { Op } = require('sequelize');
 const gamificationService = require('../services/gamificationService');
 const PaymentStateService = require('../services/paymentStateService');
+const { getEndOfTomorrowSaoPaulo, getTrialExpiryTiming } = require('../utils/trialTiming');
 
 /**
  * Rota: GET /api/admin/verifications (NOVA)
@@ -498,13 +499,17 @@ exports.getAllPsychologists = async (req, res) => {
                 });
             } else if (status === 'pending_expiring_trial') {
                 const now = new Date();
-                const expirationUpperBound = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
-                const expirationLowerBound = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+                const expirationUpperBound = getEndOfTomorrowSaoPaulo(now);
                 whereClause.status = 'active';
                 whereClause.subscriptionId = null;
+                whereClause.is_exempt = { [Op.or]: [null, false] };
+                if (!whereClause[Op.and]) whereClause[Op.and] = [];
+                whereClause[Op.and].push({
+                    [Op.or]: [{ subscription_payments_count: null }, { subscription_payments_count: 0 }]
+                });
                 whereClause.planExpiresAt = {
-                    [Op.lte]: expirationUpperBound,
-                    [Op.gte]: expirationLowerBound
+                    [Op.gt]: now,
+                    [Op.lte]: expirationUpperBound
                 };
                 whereClause.admin_billing_sent_at = null;
                 whereClause.deletedAt = null;
@@ -553,7 +558,7 @@ exports.getAllPsychologists = async (req, res) => {
             }
         }
         
-        if (startDate && endDate && !search) {
+        if (startDate && endDate && !search && status !== 'active_paying') {
             whereClause.createdAt = {
                 [Op.between]: [new Date(startDate + 'T00:00:00.000Z'), new Date(endDate + 'T23:59:59.999Z')]
             };
@@ -646,7 +651,20 @@ exports.getAllPsychologists = async (req, res) => {
             ${dateFilterQuery}
         `;
         
+        const globalPayingQuery = `
+            SELECT
+                COUNT(*) as active_paying
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+              AND ("isAdmin" IS NULL OR "isAdmin" = false)
+              AND status = 'active'
+              AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+              AND (is_exempt IS NULL OR is_exempt = false)
+              AND "planExpiresAt" > NOW()
+        `;
+
         const [kpiResults] = await db.sequelize.query(kpisQuery, { type: db.sequelize.QueryTypes.SELECT, replacements });
+        const [globalPayingResult] = await db.sequelize.query(globalPayingQuery, { type: db.sequelize.QueryTypes.SELECT });
         const campaignsResult = await db.sequelize.query(campaignsQuery, { type: db.sequelize.QueryTypes.SELECT, replacements });
         const [b2cResult] = await db.sequelize.query(b2cQuery, { type: db.sequelize.QueryTypes.SELECT, replacements });
 
@@ -661,6 +679,10 @@ exports.getAllPsychologists = async (req, res) => {
         const totalPages = Math.ceil(count / limit);
         
         const kpisObj = kpiResults || { total: 0, active: 0, pending: 0, inactive: 0, vip: 0, fila_cs: 0 };
+        kpisObj.period_active_paying = kpisObj.active_paying || 0;
+        if (globalPayingResult && globalPayingResult.active_paying !== undefined) {
+            kpisObj.active_paying = globalPayingResult.active_paying;
+        }
         kpisObj.meta_campaigns = campaignsResult || [];
         
         res.status(200).json({
@@ -736,7 +758,7 @@ exports.getAllPatients = async (req, res) => {
             }
         }
         
-        if (startDate && endDate && !search) {
+        if (startDate && endDate && !search && status !== 'active_paying') {
             whereClause.createdAt = {
                 [Op.between]: [new Date(startDate + 'T00:00:00.000Z'), new Date(endDate + 'T23:59:59.999Z')]
             };
@@ -1197,13 +1219,15 @@ exports.getPendingActions = async (req, res) => {
             }
         }
 
-        // 5. Expirando Trial (Ativos em Trial, expirando entre agora e 48h no futuro)
-        const expirationUpperBound = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+        // 5. Expirando Trial (Ativos em Trial, expirando hoje ou amanhã no fuso America/Sao_Paulo — exatamente 1 dia antes)
+        const expirationUpperBound = getEndOfTomorrowSaoPaulo(now);
         
         const expiringCandidates = await db.Psychologist.findAll({
             where: {
                 status: 'active',
                 subscriptionId: null,
+                is_exempt: { [Op.or]: [null, false] },
+                [Op.or]: [{ subscription_payments_count: null }, { subscription_payments_count: 0 }],
                 planExpiresAt: {
                     [Op.gt]: now, // Garante que o perfil AINDA está ativo
                     [Op.lte]: expirationUpperBound
@@ -1261,13 +1285,7 @@ exports.getPendingActions = async (req, res) => {
                 if (profView) views = parseInt(profView.count, 10);
                 const clicks = (p.whatsapp_clicks || 0) + logs.length;
                 
-                const expDate = new Date(p.planExpiresAt);
-                const diffHours = (expDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-                const options = { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' };
-                const todayStr = now.toLocaleDateString('pt-BR', options);
-                const expDateStr = expDate.toLocaleDateString('pt-BR', options);
-                const isToday = expDateStr === todayStr || diffHours <= 16;
-                const reasonTiming = isToday ? 'Trial expira nas próximas horas' : 'Trial expira amanhã';
+                const { isToday, diffHours, reasonTiming } = getTrialExpiryTiming(p.planExpiresAt, now);
 
                 pendingList.push({
                     ...p.toJSON(),
