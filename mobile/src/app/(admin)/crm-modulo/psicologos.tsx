@@ -1891,11 +1891,15 @@ export default function AdminCRMPsicologosScreen() {
 
                 const dateStr =
                   item.actionType === 'expiring_trial' && item.planExpiresAt
-                    ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR')
+                    ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR', {
+                        timeZone: 'America/Sao_Paulo',
+                      })
                     : item.createdAt
                     ? new Date(item.createdAt).toLocaleDateString('pt-BR')
                     : item.planExpiresAt
-                    ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR')
+                    ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR', {
+                        timeZone: 'America/Sao_Paulo',
+                      })
                     : '-';
 
                 const planoLabel = item.plano
