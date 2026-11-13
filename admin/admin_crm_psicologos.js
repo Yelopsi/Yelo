@@ -18,7 +18,7 @@ window.initializePage = function () {
     const drawerContent = drawerOverlay ? drawerOverlay.querySelector('.drawer-content') : null;
     const drawerHeader = drawerOverlay ? drawerOverlay.querySelector('.drawer-header-mobile') : null;
 
-    // Renderiza a setinha e badge de comparação com o mês anterior
+    // Renderiza a setinha e badge de comparação com os 30 dias anteriores (em pontos percentuais)
     function renderMetricDiff(el, diff, prevRate) {
         if (!el) return;
         if (diff === undefined || diff === null || isNaN(diff)) {
@@ -29,26 +29,26 @@ window.initializePage = function () {
         const diffPct = (diff * 100).toFixed(1);
         const numDiff = parseFloat(diffPct);
         const prevPct = prevRate !== undefined && !isNaN(prevRate) ? (prevRate * 100).toFixed(1) : null;
-        const prevText = prevPct !== null ? ` (mês ant: ${prevPct}%)` : '';
+        const prevText = prevPct !== null ? ` (30d ant: ${prevPct}%)` : '';
 
         if (numDiff > 0) {
             el.innerHTML = `
-                <span style="background: rgba(52, 211, 153, 0.15); color: #34d399; padding: 2px 6px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;" title="Melhorou ${diffPct}% em relação aos 30 dias anteriores${prevText}">
+                <span style="background: rgba(52, 211, 153, 0.15); color: #34d399; padding: 2px 6px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;" title="Melhorou ${diffPct} p.p. em relação aos 30 dias anteriores${prevText}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                    +${diffPct}%
+                    +${diffPct} p.p.
                 </span>
             `;
         } else if (numDiff < 0) {
             el.innerHTML = `
-                <span style="background: rgba(248, 113, 113, 0.15); color: #f87171; padding: 2px 6px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;" title="Piorou ${Math.abs(numDiff)}% em relação aos 30 dias anteriores${prevText}">
+                <span style="background: rgba(248, 113, 113, 0.15); color: #f87171; padding: 2px 6px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;" title="Piorou ${Math.abs(numDiff)} p.p. em relação aos 30 dias anteriores${prevText}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    ${diffPct}%
+                    ${diffPct} p.p.
                 </span>
             `;
         } else {
             el.innerHTML = `
                 <span style="background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.7); padding: 2px 6px; border-radius: 6px; font-weight: 500; display: inline-flex; align-items: center; gap: 3px;" title="Estável em relação aos 30 dias anteriores${prevText}">
-                    <span style="font-weight: bold; line-height: 1;">=</span> 0.0%
+                    <span style="font-weight: bold; line-height: 1;">=</span> 0.0 p.p.
                 </span>
             `;
         }
@@ -420,6 +420,27 @@ window.initializePage = function () {
                 setText('kpi-google-psis', kpis.utm_google || 0);
                 setText('kpi-outros-psis', kpis.utm_outros || 0);
                 setText('kpi-alerta-pendentes', kpis.pending || 0);
+
+                const setTrendText = (id, text, cls) => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    el.textContent = text;
+                    el.className = `kpi-trend ${cls}`;
+                };
+                const newPayingMonth = parseInt(kpis.new_paying_month || 0, 10);
+                setTrendText('kpi-trend-pagantes', newPayingMonth > 0 ? `+${newPayingMonth} este mês` : 'Sem novas este mês', newPayingMonth > 0 ? 'positive' : 'neutral');
+
+                const newTrialsWeek = parseInt(kpis.new_trials_week || 0, 10);
+                setTrendText('kpi-trend-trial', newTrialsWeek > 0 ? `+${newTrialsWeek} esta semana` : 'Sem novos na semana', newTrialsWeek > 0 ? 'positive' : 'neutral');
+
+                const churnMonthCount = parseInt(kpis.churn_month || 0, 10);
+                setTrendText('kpi-trend-churn', churnMonthCount > 0 ? `${churnMonthCount} no mês atual` : 'Zero churn no mês', churnMonthCount > 0 ? 'negative' : 'positive');
+
+                const pendingOver3d = parseInt(kpis.pending_over_3d || 0, 10);
+                setTrendText('kpi-trend-pendentes', pendingOver3d > 0 ? `${pendingOver3d} há > 3 dias` : 'Em dia (< 3 dias)', pendingOver3d > 0 ? 'negative' : 'positive');
+
+                const newInactiveMonth = parseInt(kpis.new_inactive_month || 0, 10);
+                setTrendText('kpi-trend-inativos', newInactiveMonth > 0 ? `+${newInactiveMonth} neste mês` : 'Estável neste mês', newInactiveMonth > 0 ? 'negative' : 'neutral');
 
                 // Ativação: só sobrescreve se houver filtro customizado de data ativo no CRM
                 const activationEl = document.getElementById('crm-activation');

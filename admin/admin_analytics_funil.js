@@ -7,23 +7,39 @@ window.initializePage = function() {
     window.auditoriaData = null;
     let currentRankingSort = { column: 'posicao', direction: 'asc' }; // Estado da ordenação
 
-    // Renderiza a setinha e porcentagem de tendência em relação ao período anterior (aumentando, diminuindo ou mantendo)
-    const renderTrend = (current, previous, inverted = false) => {
+    // Renderiza a setinha e porcentagem de tendência em relação à janela anterior equivalente
+    const renderTrend = (current, previous, inverted = false, opts = {}) => {
         const cur = parseFloat(current) || 0;
         const prev = parseFloat(previous);
         if (isNaN(prev)) return '';
 
+        const isRate = !!opts.isRate;
+        const formatPrevVal = isRate ? `${prev.toFixed(1)}%` : prev.toLocaleString('pt-BR');
+
+        if (isRate) {
+            const diffPp = cur - prev;
+            if (Math.abs(diffPp) < 0.05) {
+                return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="Anterior: ${formatPrevVal} (estável em pontos percentuais)">▬ 0.0 p.p.</span>`;
+            }
+            let isGood = diffPp > 0;
+            if (inverted) isGood = !isGood;
+            const color = isGood ? '#10b981' : '#ef4444';
+            const icon = diffPp > 0 ? '▲' : '▼';
+            const sign = diffPp > 0 ? '+' : '';
+            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="Anterior: ${formatPrevVal} (${diffPp > 0 ? '+' : ''}${diffPp.toFixed(1)} p.p.)">${icon} ${sign}${diffPp.toFixed(1)} p.p.</span>`;
+        }
+
         if (prev === 0 && cur === 0) {
-            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="Sem alteração no período anterior">▬ 0.0%</span>`;
+            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="Anterior: 0 (sem alteração)">▬ 0.0%</span>`;
         }
         if (prev === 0 && cur > 0) {
             const color = inverted ? '#ef4444' : '#10b981';
-            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="Novo em relação ao período anterior">▲ Novo</span>`;
+            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="Anterior: 0 (novo no período)">▲ Novo</span>`;
         }
 
         const delta = ((cur - prev) / prev) * 100;
         if (Math.abs(delta) < 0.05) {
-            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="Mantendo em relação ao período anterior">▬ 0.0%</span>`;
+            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="Anterior: ${formatPrevVal} (estável)">▬ 0.0%</span>`;
         }
 
         let isGood = delta > 0;
@@ -31,26 +47,36 @@ window.initializePage = function() {
         const color = isGood ? '#10b981' : '#ef4444';
         const icon = delta > 0 ? '▲' : '▼';
         const sign = delta > 0 ? '+' : '';
-        return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="${delta > 0 ? 'Aumentou' : 'Diminuiu'} ${Math.abs(delta).toFixed(1)}% em relação ao período anterior">${icon} ${sign}${delta.toFixed(1)}%</span>`;
+        const lowSampleNote = prev > 0 && prev < 5 ? ' · base anterior pequena' : '';
+        return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="Anterior: ${formatPrevVal} (${delta > 0 ? '+' : ''}${delta.toFixed(1)}%${lowSampleNote})">${icon} ${sign}${delta.toFixed(1)}%</span>`;
+    };
+
+    const formatDateLocal = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+
+    const applyFunilPreset = (preset) => {
+        if (!startInput || !endInput) return;
+        const today = new Date();
+        const start = new Date(today);
+        if (preset === 'mtd') {
+            start.setDate(1);
+        } else {
+            const days = Math.max(1, parseInt(preset, 10) || 30);
+            start.setDate(today.getDate() - (days - 1));
+        }
+        startInput.value = formatDateLocal(start);
+        endInput.value = formatDateLocal(today);
     };
 
     // Inicializa as datas de filtro (últimos 30 dias por padrão)
     const startInput = document.getElementById('funil-start');
     const endInput = document.getElementById('funil-end');
     if (startInput && endInput) {
-        const today = new Date();
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(today.getDate() - 30);
-        
-        const formatDateLocal = (date) => {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        };
-
-        startInput.value = formatDateLocal(thirtyDaysAgo);
-        endInput.value = formatDateLocal(today);
+        applyFunilPreset('30');
     }
 
     // Dicionário com a pergunta exata e o rótulo de cada etapa do questionario.js
@@ -214,6 +240,16 @@ window.initializePage = function() {
 
             if (!res.ok) throw new Error("Falha ao buscar dados de funil");
             const data = await res.json();
+
+            const compLabelEl = document.getElementById('funil-comparison-label');
+            if (compLabelEl && data.comparisonPeriod) {
+                const fmtBr = (iso) => {
+                    const dt = new Date(iso);
+                    return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' });
+                };
+                const dCount = data.comparisonPeriod.days || '';
+                compLabelEl.textContent = `Comparando ${fmtBr(data.comparisonPeriod.start)}–${fmtBr(data.comparisonPeriod.end)} (${dCount}d) vs ${fmtBr(data.comparisonPeriod.prevStart)}–${fmtBr(data.comparisonPeriod.prevEnd)} (${dCount}d)`;
+            }
             
             let dataWpp = [];
             let prevWpp = [];
@@ -403,12 +439,12 @@ window.initializePage = function() {
                 }
                 
                 if (kpiTxDesistencia) {
-                    const trendTxDesistencia = prevTaxaDesistenciaPct !== null ? renderTrend(taxaDesistenciaPct, prevTaxaDesistenciaPct, true) : '';
+                    const trendTxDesistencia = prevTaxaDesistenciaPct !== null ? renderTrend(taxaDesistenciaPct, prevTaxaDesistenciaPct, true, { isRate: true }) : '';
                     kpiTxDesistencia.innerHTML = `${taxaDesistenciaPct}%${trendTxDesistencia}`;
                     kpiTxDesistencia.style.color = desistenciaColor; 
                 }
                 if (kpiTxDesistenciaGlobal) {
-                    kpiTxDesistenciaGlobal.innerHTML = `${taxaDesistenciaPct}%${prevTaxaDesistenciaPct !== null ? renderTrend(taxaDesistenciaPct, prevTaxaDesistenciaPct, true) : ''}`;
+                    kpiTxDesistenciaGlobal.innerHTML = `${taxaDesistenciaPct}%${prevTaxaDesistenciaPct !== null ? renderTrend(taxaDesistenciaPct, prevTaxaDesistenciaPct, true, { isRate: true }) : ''}`;
                     applyColorToKpi('kpi-tx-desistencia-global', desistenciaColor);
                 }
             } else {
@@ -1127,16 +1163,16 @@ window.initializePage = function() {
         if (elWppMediaDia) elWppMediaDia.innerHTML = `${mediaDia}${renderTrend(mediaDia, prevMediaDia)}`;
         if (elWppFant) elWppFant.innerHTML = `${fantasmas.toLocaleString()}${renderTrend(fantasmas, prevFantasmas, true)}`;
         if (elWppRec) elWppRec.innerHTML = `${recebidas.toLocaleString()}${renderTrend(recebidas, prevRecebidas)}`;
-        if (elWppTx) elWppTx.innerHTML = `${taxaResposta}%${renderTrend(taxaResposta, prevTaxaResposta)}`;
-        if (elWppTxNaoResp) elWppTxNaoResp.innerHTML = `${taxaNaoResposta}%${renderTrend(taxaNaoResposta, prevTaxaNaoResposta, true)}`;
+        if (elWppTx) elWppTx.innerHTML = `${taxaResposta}%${renderTrend(taxaResposta, prevTaxaResposta, false, { isRate: true })}`;
+        if (elWppTxNaoResp) elWppTxNaoResp.innerHTML = `${taxaNaoResposta}%${renderTrend(taxaNaoResposta, prevTaxaNaoResposta, true, { isRate: true })}`;
 
         // Linha 2: Fundo de Funil & Performance de Vendas
         if (elWppNeg) elWppNeg.innerHTML = `${negociacao.toLocaleString()}${renderTrend(negociacao, prevNegociacao)}`;
         if (elWppFec) elWppFec.innerHTML = `${fechados.toLocaleString()}${renderTrend(fechados, prevFechados)}`;
         if (elWppPerd) elWppPerd.innerHTML = `${perdidos.toLocaleString()}${renderTrend(perdidos, prevPerdidos, true)}`;
-        if (elWppTxContato) elWppTxContato.innerHTML = `${taxaContato}%${renderTrend(taxaContato, prevTaxaContato)}`;
-        if (elWppTxFec) elWppTxFec.innerHTML = `${taxaFechamento}%${renderTrend(taxaFechamento, prevTaxaFechamento)}`;
-        if (elWppTxNaoFec) elWppTxNaoFec.innerHTML = `${taxaNaoFechamento}%${renderTrend(taxaNaoFechamento, prevTaxaNaoFechamento, true)}`;
+        if (elWppTxContato) elWppTxContato.innerHTML = `${taxaContato}%${renderTrend(taxaContato, prevTaxaContato, false, { isRate: true })}`;
+        if (elWppTxFec) elWppTxFec.innerHTML = `${taxaFechamento}%${renderTrend(taxaFechamento, prevTaxaFechamento, false, { isRate: true })}`;
+        if (elWppTxNaoFec) elWppTxNaoFec.innerHTML = `${taxaNaoFechamento}%${renderTrend(taxaNaoFechamento, prevTaxaNaoFechamento, true, { isRate: true })}`;
 
         window.applyWppFilter(); // Já faz o filtro, paginação e renderização da tabela
     }
@@ -1242,6 +1278,20 @@ window.initializePage = function() {
     }
 
 
+
+    // Acopla chips de período rápido (7d / 14d / 30d / Este mês)
+    const funilPresetChips = document.querySelectorAll('.funil-period-chip');
+    funilPresetChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            funilPresetChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            applyFunilPreset(chip.getAttribute('data-funil-preset'));
+            carregarDadosFunil();
+        });
+    });
+
+    if (startInput) startInput.addEventListener('change', () => funilPresetChips.forEach(c => c.classList.remove('active')));
+    if (endInput) endInput.addEventListener('change', () => funilPresetChips.forEach(c => c.classList.remove('active')));
 
     // Acopla o botão
     const btnAtualizar = document.getElementById('btn-atualizar-funil');

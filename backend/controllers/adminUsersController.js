@@ -653,14 +653,38 @@ exports.getAllPsychologists = async (req, res) => {
         
         const globalPayingQuery = `
             SELECT
-                COUNT(*) as active_paying
+                COUNT(*) FILTER (
+                    WHERE status = 'active'
+                      AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+                      AND (is_exempt IS NULL OR is_exempt = false)
+                      AND "planExpiresAt" > NOW()
+                ) as active_paying,
+                COUNT(*) FILTER (
+                    WHERE status = 'active'
+                      AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+                      AND (is_exempt IS NULL OR is_exempt = false)
+                      AND "planExpiresAt" > NOW()
+                      AND "firstPaidAt" >= (DATE_TRUNC('month', NOW() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo')
+                ) as new_paying_month,
+                COUNT(*) FILTER (
+                    WHERE status = 'active'
+                      AND (is_exempt IS NULL OR is_exempt = false)
+                      AND "subscriptionId" IS NULL
+                      AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0)
+                      AND "planExpiresAt" > NOW()
+                      AND "createdAt" >= NOW() - INTERVAL '7 days'
+                ) as new_trials_week,
+                COUNT(*) FILTER (
+                    WHERE status = 'pending'
+                      AND "createdAt" <= NOW() - INTERVAL '3 days'
+                ) as pending_over_3d,
+                COUNT(*) FILTER (
+                    WHERE (status = 'inactive' OR ("status" = 'active' AND "planExpiresAt" < NOW()))
+                      AND "updatedAt" >= (DATE_TRUNC('month', NOW() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo')
+                ) as new_inactive_month
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
               AND ("isAdmin" IS NULL OR "isAdmin" = false)
-              AND status = 'active'
-              AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
-              AND (is_exempt IS NULL OR is_exempt = false)
-              AND "planExpiresAt" > NOW()
         `;
 
         const [kpiResults] = await db.sequelize.query(kpisQuery, { type: db.sequelize.QueryTypes.SELECT, replacements });
@@ -680,8 +704,12 @@ exports.getAllPsychologists = async (req, res) => {
         
         const kpisObj = kpiResults || { total: 0, active: 0, pending: 0, inactive: 0, vip: 0, fila_cs: 0 };
         kpisObj.period_active_paying = kpisObj.active_paying || 0;
-        if (globalPayingResult && globalPayingResult.active_paying !== undefined) {
-            kpisObj.active_paying = globalPayingResult.active_paying;
+        if (globalPayingResult) {
+            if (globalPayingResult.active_paying !== undefined) kpisObj.active_paying = globalPayingResult.active_paying;
+            kpisObj.new_paying_month = parseInt(globalPayingResult.new_paying_month || 0, 10);
+            kpisObj.new_trials_week = parseInt(globalPayingResult.new_trials_week || 0, 10);
+            kpisObj.pending_over_3d = parseInt(globalPayingResult.pending_over_3d || 0, 10);
+            kpisObj.new_inactive_month = parseInt(globalPayingResult.new_inactive_month || 0, 10);
         }
         kpisObj.meta_campaigns = campaignsResult || [];
         

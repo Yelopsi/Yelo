@@ -8,32 +8,63 @@ const db = require('../models');
 const matchService = require('../services/matchService');
 const { protect, admin } = require('../middlewares/authMiddleware');
 
+const getTodayBRT = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+
+const addDaysToDateStr = (dateStr, days) => {
+    const dt = new Date(`${dateStr}T00:00:00Z`);
+    dt.setUTCDate(dt.getUTCDate() + days);
+    return dt.toISOString().split('T')[0];
+};
+
+const diffDaysInclusive = (startStr, endStr) => {
+    const startMs = new Date(`${startStr}T00:00:00Z`).getTime();
+    const endMs = new Date(`${endStr}T00:00:00Z`).getTime();
+    return Math.max(1, Math.round((endMs - startMs) / 86400000) + 1);
+};
+
+// Resolve período efetivo sem comparar mês em andamento incompleto contra 30 dias fechados.
+const resolveCmoPeriodWindows = (reqDateStart, reqDateEnd) => {
+    const todayBRT = getTodayBRT();
+    const defaultStart = `${todayBRT.slice(0, 7)}-01`;
+    const dateStart = reqDateStart || defaultStart;
+    const requestedDateEnd = reqDateEnd || todayBRT;
+
+    const isPartialPeriod = dateStart <= todayBRT && requestedDateEnd > todayBRT;
+    const dateEnd = isPartialPeriod ? todayBRT : (requestedDateEnd < dateStart ? dateStart : requestedDateEnd);
+    const nextDayStr = addDaysToDateStr(dateEnd, 1);
+
+    const diffDays = diffDaysInclusive(dateStart, dateEnd);
+    const prevDateEnd = addDaysToDateStr(dateStart, -1);
+    const prevDateStart = addDaysToDateStr(prevDateEnd, -(diffDays - 1));
+    const prevNextDayStr = addDaysToDateStr(prevDateEnd, 1);
+
+    return {
+        dateStart,
+        dateEnd,
+        requestedDateEnd,
+        nextDayStr,
+        prevDateStart,
+        prevDateEnd,
+        prevNextDayStr,
+        diffDays,
+        isPartialPeriod
+    };
+};
+
 // Rota de dashboard principal do CMO
 router.get('/dashboard', protect, admin, async (req, res) => {
     try {
-        // Data default para o mes atual
-        const dateStart = req.query.dateStart || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-        const dateEnd = req.query.dateEnd || new Date().toISOString().split('T')[0];
-        const endDateObj = new Date(dateEnd);
-        endDateObj.setDate(endDateObj.getDate() + 1);
-        const nextDayStr = endDateObj.toISOString().split('T')[0];
-
-        // 1. Definição de Períodos (Atual e Anterior)
-        const start = new Date(dateStart + 'T00:00:00');
-        const end = new Date(dateEnd + 'T00:00:00');
-        const diffTime = Math.abs(end - start);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-        const prevEnd = new Date(start);
-        prevEnd.setDate(prevEnd.getDate() - 1);
-        const prevStart = new Date(prevEnd);
-        prevStart.setDate(prevStart.getDate() - diffDays + 1);
-
-        const prevDateStart = prevStart.toISOString().split('T')[0];
-        const prevDateEnd = prevEnd.toISOString().split('T')[0];
-        const prevEndDateObj = new Date(prevDateEnd);
-        prevEndDateObj.setDate(prevEndDateObj.getDate() + 1);
-        const prevNextDayStr = prevEndDateObj.toISOString().split('T')[0];
+        const {
+            dateStart,
+            dateEnd,
+            requestedDateEnd,
+            nextDayStr,
+            prevDateStart,
+            prevDateEnd,
+            prevNextDayStr,
+            diffDays,
+            isPartialPeriod
+        } = resolveCmoPeriodWindows(req.query.dateStart, req.query.dateEnd);
 
         // 2. Fetch de Ads Services (Atual, Anterior e Histórico via Campanhas Alvo)
         const getTargetSpend = (campaigns, targetNameOrId, isGoogle) => {
@@ -155,10 +186,37 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             )
         `;
 
-        const [metaMetricsRes] = await sequelize.query(b2bQuery, {
+        // Query simétrica para comparativos de aquisição por período (não apaga coortes anteriores quando expiram depois)
+        const b2bPeriodQuery = `
+            SELECT 
+                COUNT(*) FILTER (
+                    WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+                    AND ("is_exempt" IS NULL OR "is_exempt" = false)
+                    AND "firstPaidAt" >= :dateStart AND "firstPaidAt" < :nextDayStr
+                ) as pagantes,
+                COUNT(*) FILTER (
+                    WHERE (is_exempt IS NULL OR is_exempt = false)
+                    AND ("fotoUrl" IS NOT NULL AND "fotoUrl" NOT LIKE '%placehold.co%')
+                    AND ("bio" IS NOT NULL AND LENGTH("bio") >= 10)
+                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
+                ) as trials,
+                COUNT(*) FILTER (
+                    WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+                    AND ("planExpiresAt" <= NOW() OR "status" = 'inactive')
+                    AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
+                ) as churned
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+            AND (
+                utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
+                OR first_utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
+            )
+        `;
+
+        const [metaMetricsRes] = await sequelize.query(b2bPeriodQuery, {
             replacements: { dateStart, nextDayStr }, type: sequelize.QueryTypes.SELECT
         });
-        const [prevMetaMetricsRes] = await sequelize.query(b2bQuery, {
+        const [prevMetaMetricsRes] = await sequelize.query(b2bPeriodQuery, {
             replacements: { dateStart: prevDateStart, nextDayStr: prevNextDayStr }, type: sequelize.QueryTypes.SELECT
         });
 
@@ -188,7 +246,23 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL
         `;
-        const [globalB2BRes] = await sequelize.query(globalB2BQuery, {
+        const globalB2BPeriodQuery = `
+            SELECT 
+                COUNT(*) FILTER (
+                    WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+                    AND (is_exempt IS NULL OR is_exempt = false)
+                    AND "firstPaidAt" >= :dateStart AND "firstPaidAt" < :nextDayStr
+                ) as total_new_pagantes,
+                COUNT(*) FILTER (
+                    WHERE (is_exempt IS NULL OR is_exempt = false)
+                    AND ("fotoUrl" IS NOT NULL AND "fotoUrl" NOT LIKE '%placehold.co%')
+                    AND ("bio" IS NOT NULL AND LENGTH("bio") >= 10)
+                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
+                ) as total_new_trials
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+        `;
+        const [globalB2BRes] = await sequelize.query(globalB2BPeriodQuery, {
             replacements: { dateStart, nextDayStr }, type: sequelize.QueryTypes.SELECT
         });
         const totalNewPagantes = parseInt(globalB2BRes.total_new_pagantes || 0);
@@ -1187,7 +1261,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 organicActive: { value: simOrganicActive, type: 'OBSERVED', source: 'ORGANIC_ACTIVE_ROLLING_90D_AVG' }
             },
 
-            period: { dateStart, dateEnd, prevDateStart, prevDateEnd },
+            period: { dateStart, dateEnd, requestedDateEnd, prevDateStart, prevDateEnd, diffDays, isPartialPeriod },
             globalInsight: globalInsight,
             ads: {
                 meta: { ...metaSpend, spend: metaSpend.spend, cac: metaCac, marginalCac: metaMarginalCac },
@@ -1323,24 +1397,21 @@ router.delete('/manual-ads', protect, admin, async (req, res) => {
 // GET /api/cmo/traffic
 router.get('/traffic', protect, admin, async (req, res) => {
     try {
-        const dateStart = req.query.dateStart || moment().startOf('month').format('YYYY-MM-DD');
-        const dateEnd = req.query.dateEnd || moment().endOf('month').format('YYYY-MM-DD');
-        
-        // Define minimum start date like dashboard
         const START_OF_TIME = '2026-05-01';
-        let safeDateStart = moment(dateStart).isBefore(START_OF_TIME) ? START_OF_TIME : dateStart;
-
-        const duration = moment(dateEnd).diff(moment(safeDateStart), 'days') + 1;
-        const prevDateStart = moment(safeDateStart).subtract(duration, 'days').format('YYYY-MM-DD');
-        const prevDateEnd = moment(dateEnd).subtract(duration, 'days').format('YYYY-MM-DD');
-        let safePrevDateStart = moment(prevDateStart).isBefore(START_OF_TIME) ? START_OF_TIME : prevDateStart;
+        const resolved = resolveCmoPeriodWindows(req.query.dateStart, req.query.dateEnd);
+        const safeDateStart = resolved.dateStart < START_OF_TIME ? START_OF_TIME : resolved.dateStart;
+        const safeDateEnd = resolved.dateEnd < safeDateStart ? safeDateStart : resolved.dateEnd;
+        const safeDays = diffDaysInclusive(safeDateStart, safeDateEnd);
+        const prevDateEnd = addDaysToDateStr(safeDateStart, -1);
+        const rawPrevDateStart = addDaysToDateStr(prevDateEnd, -(safeDays - 1));
+        const safePrevDateStart = rawPrevDateStart < START_OF_TIME ? START_OF_TIME : rawPrevDateStart;
 
         const ga4Service = require('../services/googleAnalyticsService');
         const gscService = require('../services/googleSearchConsoleService');
 
         const [ga4Data, gscData, prevGa4Data, prevGscData] = await Promise.all([
-            ga4Service.getMetrics(safeDateStart, dateEnd),
-            gscService.getMetrics(safeDateStart, dateEnd),
+            ga4Service.getMetrics(safeDateStart, safeDateEnd),
+            gscService.getMetrics(safeDateStart, safeDateEnd),
             ga4Service.getMetrics(safePrevDateStart, prevDateEnd),
             gscService.getMetrics(safePrevDateStart, prevDateEnd)
         ]);
@@ -1351,7 +1422,15 @@ router.get('/traffic', protect, admin, async (req, res) => {
                 ga4: ga4Data,
                 gsc: gscData,
                 prevGa4: prevGa4Data,
-                prevGsc: prevGscData
+                prevGsc: prevGscData,
+                period: {
+                    dateStart: safeDateStart,
+                    dateEnd: safeDateEnd,
+                    prevDateStart: safePrevDateStart,
+                    prevDateEnd,
+                    diffDays: safeDays,
+                    isPartialPeriod: resolved.isPartialPeriod
+                }
             }
         });
     } catch (error) {

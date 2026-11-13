@@ -634,49 +634,84 @@ exports.getFinancials = async (req, res) => {
             'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
         };
 
-        const activePsychologists = await db.Psychologist.findAll({
-            where: { plano: { [Op.ne]: null }, status: 'active' },
-            attributes: ['id', 'nome', 'plano', 'updatedAt', 'is_exempt', 'planExpiresAt', 'subscriptionId', 'createdAt', 'subscription_payments_count'],
+        const allPaidCandidates = await db.Psychologist.findAll({
+            where: {
+                plano: { [Op.ne]: null },
+                [Op.or]: [
+                    { subscriptionId: { [Op.ne]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } },
+                    { firstPaidAt: { [Op.ne]: null } }
+                ]
+            },
+            attributes: ['id', 'nome', 'plano', 'status', 'updatedAt', 'is_exempt', 'planExpiresAt', 'subscriptionId', 'createdAt', 'subscribedAt', 'firstPaidAt', 'canceledAt', 'reactivatedAt', 'subscription_payments_count', 'deletedAt'],
             paranoid: false
         });
 
         const MetricsService = require('../services/metricsService');
 
+        const now = new Date();
         let start, end, prevStart, prevEnd;
         if (startDate && endDate) {
             start = new Date(`${startDate}T00:00:00-03:00`);
-            end = new Date(`${endDate}T23:59:59-03:00`);
-            const msDiff = end.getTime() - start.getTime();
+            const requestedEnd = new Date(`${endDate}T23:59:59-03:00`);
+            end = (start <= now && requestedEnd > now) ? now : requestedEnd;
+            const msDiff = Math.max(86400000, end.getTime() - start.getTime());
             prevStart = new Date(start.getTime() - msDiff);
             prevEnd = new Date(start.getTime() - 1);
         } else {
-            end = new Date();
-            start = new Date(new Date().setDate(end.getDate() - 30));
-            const sixtyDaysAgo = new Date(new Date().setDate(end.getDate() - 60));
-            prevStart = sixtyDaysAgo;
+            end = now;
+            start = new Date(now.getTime() - 30 * 86400000);
+            prevStart = new Date(now.getTime() - 60 * 86400000);
             prevEnd = new Date(start.getTime() - 1);
         }
 
         const metrics = await MetricsService.getMetrics(start, end);
         const prevMetrics = await MetricsService.getMetrics(prevStart, prevEnd);
-        
+
+        const resolvePlanKey = (plano) => {
+            if (!plano) return null;
+            const raw = plano.toLowerCase();
+            if (['essencial', 'essential'].includes(raw)) return 'essential';
+            if (['clínico', 'clinical'].includes(raw)) return 'clinical';
+            if (['sol', 'reference'].includes(raw)) return 'reference';
+            return null;
+        };
+
         let mrr = 0;
         let prevMrr = 0;
-        activePsychologists.forEach(p => {
-            const isExempt = p.is_exempt;
+        let prevTotalActive = 0;
+        allPaidCandidates.forEach(p => {
+            const isExempt = !!p.is_exempt;
             const hasSubscription = !!p.subscriptionId || (p.subscription_payments_count && p.subscription_payments_count > 0);
-            if (!isExempt && hasSubscription && p.plano) {
-                let planKey = p.plano.toLowerCase();
-                if (['essencial', 'essential'].includes(planKey)) planKey = 'essential';
-                else if (['clínico', 'clinical'].includes(planKey)) planKey = 'clinical';
-                else if (['sol', 'reference'].includes(planKey)) planKey = 'reference';
-                if (planPrices[planKey] && (!p.planExpiresAt || p.planExpiresAt > new Date())) {
-                    mrr += planPrices[planKey];
-                    // Para simplificar o prevMrr, caso não cancelado
-                    prevMrr += planPrices[planKey]; 
+            const planKey = resolvePlanKey(p.plano);
+            if (isExempt || !hasSubscription || !planKey || !planPrices[planKey]) return;
+
+            const isActiveNow = p.deletedAt === null && p.status === 'active' && (!p.planExpiresAt || new Date(p.planExpiresAt) > now);
+            if (isActiveNow) {
+                mrr += planPrices[planKey];
+            }
+
+            // Base e MRR históricos no fechamento do período anterior (prevEnd)
+            const startedAt = p.firstPaidAt || p.subscribedAt || p.createdAt;
+            if (!startedAt || new Date(startedAt) > prevEnd) return;
+            if (p.deletedAt && new Date(p.deletedAt) <= prevEnd) return;
+
+            const isDeactivatedByPrevEnd = (() => {
+                if (isActiveNow) return false;
+                const deactDate = p.canceledAt ? new Date(p.canceledAt) : (p.planExpiresAt && new Date(p.planExpiresAt) <= now ? new Date(p.planExpiresAt) : (p.updatedAt ? new Date(p.updatedAt) : null));
+                if (!deactDate || deactDate > prevEnd) return false;
+                if (p.reactivatedAt && new Date(p.reactivatedAt) <= prevEnd && new Date(p.reactivatedAt) > deactDate) {
+                    return false;
                 }
+                return true;
+            })();
+
+            if (!isDeactivatedByPrevEnd) {
+                prevMrr += planPrices[planKey];
+                prevTotalActive++;
             }
         });
+        const activePsychologists = allPaidCandidates.filter(p => p.status === 'active' && !p.deletedAt);
         const dateStart = start.toISOString();
         const nextDayStr = end.toISOString();
         const prevDateStart = prevStart.toISOString();
@@ -708,7 +743,8 @@ exports.getFinancials = async (req, res) => {
         const cmoPrevPaidChurnCount = parseInt(cmoPrevChurnRes.churned || 0);
 
         const paidChurnRate = (cmoTotalActive + cmoPaidChurnCount) > 0 ? (cmoPaidChurnCount / (cmoTotalActive + cmoPaidChurnCount)) * 100 : 0;
-        const prevPaidChurnRate = (cmoTotalActive + cmoPrevPaidChurnCount) > 0 ? (cmoPrevPaidChurnCount / (cmoTotalActive + cmoPrevPaidChurnCount)) * 100 : 0;
+        const prevChurnBase = prevTotalActive > 0 ? prevTotalActive : cmoTotalActive;
+        const prevPaidChurnRate = (prevChurnBase + cmoPrevPaidChurnCount) > 0 ? (cmoPrevPaidChurnCount / (prevChurnBase + cmoPrevPaidChurnCount)) * 100 : 0;
         
         const cmoTrialChurnQuery = `
             SELECT COUNT(*) as churned
@@ -761,16 +797,22 @@ exports.getFinancials = async (req, res) => {
         const currentProjectedLifetime = currentPaidChurnDecimal > 0 ? Math.min(1 / currentPaidChurnDecimal, 24) : 24;
         const currentLtvProjetado = arpu * currentProjectedLifetime;
 
+        const prevArpu = prevTotalActive > 0 ? (prevMrr / prevTotalActive) : prevMetrics.arpu;
+        const prevPaidChurnDecimal = prevPaidChurnRate / 100;
+        const prevProjectedLifetime = prevPaidChurnDecimal > 0 ? Math.min(1 / prevPaidChurnDecimal, 24) : 24;
+        const prevLtvProjetado = prevArpu * prevProjectedLifetime;
+
         const kpis = {
             mrr: { current: mrr, previous: prevMrr },
             paidChurnRate: { current: paidChurnRate, previous: prevPaidChurnRate },
             trialChurnCount: { current: trialChurnCount, previous: prevTrialChurnCount },
             paidChurnCount: { current: paidChurnCount, previous: cmoPrevPaidChurnCount },
             inadimplentesCount: { current: inadimplentesCount, previous: prevMetrics.inadimplentesCount },
-            ltv: { current: ltv, net: ltvNet, previous: prevLtv, projected: currentLtvProjetado },
-            arpu: { current: arpu, previous: prevMetrics.arpu },
+            ltv: { current: ltv, net: ltvNet, previous: prevLtv, projected: currentLtvProjetado, projectedPrevious: prevLtvProjetado },
+            arpu: { current: arpu, previous: prevArpu },
             proj30, proj60, proj90,
-            cacPayback: { current: metrics.cacPaybackMonths }
+            cacPayback: { current: metrics.cacPaybackMonths },
+            periodDays: Math.max(1, Math.round(periodDays))
         };
 
         // Insights Generator
@@ -835,7 +877,6 @@ exports.getFinancials = async (req, res) => {
             } catch (err) {}
         }
 
-        const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
         let activePlans = activePsychologists.map(psy => {
@@ -1025,6 +1066,7 @@ exports.getFunnelAnalytics = async (req, res) => {
             return new Date(`${dateString}T${time}-03:00`);
         };
 
+        const nowFunnel = new Date();
         let start = parseDateBRT(req.query.startDate, false);
         if (start && start < new Date(2026, 4, 1)) start.setTime(new Date(2026, 4, 1).getTime());
         let end = parseDateBRT(req.query.endDate, true);
@@ -1033,10 +1075,13 @@ exports.getFunnelAnalytics = async (req, res) => {
             start = new Date(); start.setHours(start.getHours() - 3); start.setDate(start.getDate() - 30); start.setUTCHours(3, 0, 0, 0);
         }
         if (!end) {
-            end = new Date(); end.setHours(end.getHours() - 3); end.setUTCHours(2, 59, 59, 999); end.setDate(end.getDate() + 1);
+            end = nowFunnel;
+        } else if (start <= nowFunnel && end > nowFunnel) {
+            // Evita comparar dias incompletos (ex: hoje até 23:59) contra janelas fechadas de 24h completas
+            end = nowFunnel;
         }
 
-        const msDiff = end.getTime() - start.getTime();
+        const msDiff = Math.max(3600000, end.getTime() - start.getTime());
         const prevStart = new Date(start.getTime() - msDiff);
         const prevEnd = new Date(start.getTime() - 1);
 
@@ -1130,6 +1175,13 @@ exports.getFunnelAnalytics = async (req, res) => {
             abandonos, prevAbandonos, 
             origens, prevOrigens, 
             desqualificados, prevDesqualificados, 
+            comparisonPeriod: {
+                start: start.toISOString(),
+                end: end.toISOString(),
+                prevStart: prevStart.toISOString(),
+                prevEnd: prevEnd.toISOString(),
+                days: Math.max(1, Math.round(msDiff / 86400000))
+            },
             inteligencia: { topTemas, faixaValor, modalidades } 
         });
     } catch (error) {
@@ -1145,14 +1197,16 @@ exports.getWhatsappFeedbacks = async (req, res) => {
         const { Op } = require('sequelize');
         const { startDate, endDate, includeComparison } = req.query;
 
+        const nowWpp = new Date();
         let start, end;
         if (startDate && endDate) {
             // Aplica o fuso horário correto (Brasília)
             start = new Date(`${startDate}T00:00:00-03:00`);
-            end = new Date(`${endDate}T23:59:59.999-03:00`);
+            const requestedEnd = new Date(`${endDate}T23:59:59.999-03:00`);
+            end = (start <= nowWpp && requestedEnd > nowWpp) ? nowWpp : requestedEnd;
         } else {
             // Otimização: Por padrão, carrega apenas os últimos 30 dias para poupar banda do servidor
-            end = new Date();
+            end = nowWpp;
             start = new Date();
             start.setDate(start.getDate() - 30);
             start.setHours(0, 0, 0, 0);
@@ -1562,7 +1616,34 @@ exports.getFounderMetrics = async (req, res) => {
                 ]
             }
         });
-        const payingPrev = payingUsers + churn30d;
+        // Desconta novos assinantes que começaram a pagar nos últimos 30 dias para apurar a base pagante real em thirtyDaysAgo
+        const newPayingSince30dRes = await db.sequelize.query(`
+            SELECT COUNT(*) as count
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+              AND ("is_exempt" IS NULL OR "is_exempt" = false)
+              AND status = 'active'
+              AND ("planExpiresAt" IS NULL OR "planExpiresAt" > NOW())
+              AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0 OR "subscribedAt" IS NOT NULL)
+              AND COALESCE("firstPaidAt", "subscribedAt", "createdAt") >= :thirtyDaysAgo
+        `, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
+        const newPayingSince30d = parseInt(newPayingSince30dRes[0]?.count || 0, 10);
+
+        const churnExisting30dRes = await db.sequelize.query(`
+            SELECT COUNT(*) as count
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+              AND ("is_exempt" IS NULL OR "is_exempt" = false)
+              AND ("subscribedAt" IS NOT NULL OR "subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+              AND COALESCE("firstPaidAt", "subscribedAt", "createdAt") < :thirtyDaysAgo
+              AND (
+                  "canceledAt" BETWEEN :thirtyDaysAgo AND :now
+                  OR (status = 'inactive' AND "updatedAt" BETWEEN :thirtyDaysAgo AND :now)
+              )
+        `, { replacements: { thirtyDaysAgo, now }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: churn30d }]);
+        const churnExisting30d = parseInt(churnExisting30dRes[0]?.count ?? churn30d, 10);
+
+        const payingPrev = Math.max(0, payingUsers - newPayingSince30d + churnExisting30d);
         const totalBasePrev = payingPrev + churnPrev;
         const postTrialRetentionRatePrev = totalBasePrev > 0 ? (payingPrev / totalBasePrev) : 0;
         const postTrialDiff = postTrialRetentionRate30d - postTrialRetentionRatePrev;

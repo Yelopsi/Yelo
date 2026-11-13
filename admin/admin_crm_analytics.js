@@ -110,15 +110,16 @@ window.initializePage = function() {
                         
                         // Update KPIs with variations
                         updateKpiCard('mrr', dataFin.kpis.mrr.current, dataFin.kpis.mrr.previous, formatBRL);
-                        updateKpiCard('paid-churn', dataFin.kpis.paidChurnRate.current, dataFin.kpis.paidChurnRate.previous, formatPerc, true); // inverted: lower is better
+                        updateKpiCard('paid-churn', dataFin.kpis.paidChurnRate.current, dataFin.kpis.paidChurnRate.previous, formatPerc, true, { isRate: true }); // inverted: lower is better
                         updateKpiCard('trial-churn', dataFin.kpis.trialChurnCount.current, dataFin.kpis.trialChurnCount.previous, formatNum, true); // inverted: lower is better
                         
                         if (dataFin.kpis.inadimplentesCount) {
                             updateKpiCard('inadimplentes', dataFin.kpis.inadimplentesCount.current, dataFin.kpis.inadimplentesCount.previous, formatNum, true);
                         }
 
+                        const ltvPrevComparable = dataFin.kpis.ltv.projectedPrevious ?? dataFin.kpis.ltv.previous;
                         if (dataFin.kpis.ltv.projected > 0) {
-                            updateKpiCard('ltv', dataFin.kpis.ltv.projected, dataFin.kpis.ltv.previous, formatBRL);
+                            updateKpiCard('ltv', dataFin.kpis.ltv.projected, ltvPrevComparable, formatBRL);
                         } else {
                             document.getElementById('kpi-ltv').innerText = 'N/D';
                             document.getElementById('kpi-ltv').title = 'Dados insuficientes';
@@ -139,6 +140,13 @@ window.initializePage = function() {
                         }
                         
                         updateKpiCard('arpu', dataFin.kpis.arpu.current, dataFin.kpis.arpu.previous, formatBRL);
+
+                        const pDays = dataFin.kpis.periodDays;
+                        if (pDays) {
+                            document.querySelectorAll('.kpi-compare').forEach(el => {
+                                el.textContent = `vs ${pDays}d anteriores`;
+                            });
+                        }
                         
                         document.getElementById('kpi-proj-30').innerText = formatBRL(dataFin.kpis.proj30 || 0);
                         document.getElementById('kpi-proj-60').innerText = formatBRL(dataFin.kpis.proj60 || 0);
@@ -168,17 +176,38 @@ window.initializePage = function() {
 
     // --- FUNÇÕES DE RENDERIZAÇÃO FINANCEIRO (PREMIUM) ---
 
-    function updateKpiCard(id, current, previous, formatter, lowerIsBetter = false) {
+    function updateKpiCard(id, current, previous, formatter, lowerIsBetter = false, opts = {}) {
         const valEl = document.getElementById(`kpi-${id}`);
         if (!valEl) return;
         valEl.innerText = formatter(current);
         const trendEl = document.getElementById(`trend-${id}`);
+        if (!trendEl) return;
         if(previous === 0 && current === 0) {
             trendEl.innerText = '-';
             trendEl.className = 'kpi-trend trend-neutral';
+            trendEl.title = 'Sem variação no período anterior';
             return;
         }
-        let diff = current - previous;
+        const diff = current - previous;
+        trendEl.title = `Período anterior: ${formatter(previous)}`;
+
+        if (opts.isRate) {
+            if (Math.abs(diff) < 0.05) {
+                trendEl.innerText = '▬ 0.0 p.p.';
+                trendEl.className = 'kpi-trend trend-neutral';
+                return;
+            }
+            const arrow = diff > 0 ? '↑' : '↓';
+            const sign = diff > 0 ? '+' : '-';
+            trendEl.innerText = `${arrow} ${sign}${Math.abs(diff).toFixed(1)} p.p.`;
+            if (diff > 0) {
+                trendEl.className = lowerIsBetter ? 'kpi-trend trend-down' : 'kpi-trend trend-up';
+            } else {
+                trendEl.className = lowerIsBetter ? 'kpi-trend trend-up' : 'kpi-trend trend-down';
+            }
+            return;
+        }
+
         let percent = previous > 0 ? (diff / previous) * 100 : (current > 0 ? 100 : 0);
         
         let arrow = percent > 0 ? '↑' : (percent < 0 ? '↓' : '');
