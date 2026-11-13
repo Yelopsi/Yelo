@@ -683,11 +683,18 @@
 
     <div class="filtros-container" style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
         <div class="crm-date-filter" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0; padding: 0; border: none; background: transparent;">
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="crm-pill funil-period-chip" data-funil-preset="7">7 dias</button>
+                <button type="button" class="crm-pill funil-period-chip" data-funil-preset="14">14 dias</button>
+                <button type="button" class="crm-pill active funil-period-chip" data-funil-preset="30">30 dias</button>
+                <button type="button" class="crm-pill funil-period-chip" data-funil-preset="mtd">Este mês</button>
+            </div>
             <div style="display:flex; align-items:center; gap:5px;"><span style="font-size:0.9rem; color:#666; font-weight: 500;">De:</span><input type="date" id="funil-start" class="crm-date-input" onclick="this.showPicker && this.showPicker()"></div>
             <div style="display:flex; align-items:center; gap:5px;"><span style="font-size:0.9rem; color:#666; font-weight: 500;">Até:</span><input type="date" id="funil-end" class="crm-date-input" onclick="this.showPicker && this.showPicker()"></div>
             <button id="btn-atualizar-funil" class="crm-pill active" style="display: flex; align-items: center; gap: 8px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-10.09l5.67-5.67"/></svg> Atualizar
             </button>
+            <span id="funil-comparison-label" style="font-size: 0.78rem; color: #64748b; font-weight: 500;"></span>
         </div>
         
         <button id="btn-export-csv" class="crm-pill" style="display: flex; align-items: center; gap: 8px;">

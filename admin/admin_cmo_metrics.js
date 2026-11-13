@@ -12,13 +12,13 @@ async function loadCMOMetrics() {
     let dateEnd = document.getElementById('cmo-date-end')?.value;
 
     if (!dateStart || !dateEnd) {
-        // Fallback rápido se ainda não inicializou o selector
+        // Fallback rápido se ainda não inicializou o selector (mês atual até hoje)
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
-        const endDay = new Date(year, now.getMonth() + 1, 0).getDate();
+        const todayDay = String(now.getDate()).padStart(2, '0');
         dateStart = `${year}-${month}-01`;
-        dateEnd = `${year}-${month}-${String(endDay).padStart(2, '0')}`;
+        dateEnd = `${year}-${month}-${todayDay}`;
     }
 
 
@@ -82,22 +82,23 @@ async function loadCMOMetrics() {
     }
 }
 
-function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = false, formatType = 'number') {
+function formatCmoMetricValue(value, formatType) {
+    if (typeof value !== 'number' || isNaN(value)) return String(value ?? '—');
+    if (formatType === 'currency') return `R$ ${(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (formatType === 'percent') return (value * 100).toFixed(1) + '%';
+    if (formatType === 'decimal') return value.toFixed(1);
+    if (formatType === 'days') return value.toFixed(1) + ' d';
+    return value.toLocaleString('pt-BR');
+}
+
+function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = false, formatType = 'number', periodHint = 'período anterior') {
     const el = document.getElementById(id);
     if (!el) return;
 
     currentValue = typeof currentValue === 'object' && currentValue !== null && currentValue.value !== undefined ? currentValue.value : currentValue;
     historicalValue = typeof historicalValue === 'object' && historicalValue !== null && historicalValue.value !== undefined ? historicalValue.value : historicalValue;
 
-    let formattedCurrent = currentValue;
-    if (typeof currentValue === 'number') {
-        if (formatType === 'currency') formattedCurrent = `R$ ${(currentValue || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        else if (formatType === 'percent') formattedCurrent = (currentValue * 100).toFixed(1) + '%';
-        else if (formatType === 'decimal') formattedCurrent = currentValue.toFixed(1);
-        else if (formatType === 'days') formattedCurrent = currentValue.toFixed(1) + ' d';
-        else formattedCurrent = currentValue.toLocaleString('pt-BR');
-    }
-    el.textContent = formattedCurrent;
+    el.textContent = typeof currentValue === 'number' ? formatCmoMetricValue(currentValue, formatType) : currentValue;
 
     let trendEl = document.getElementById(`trend-${id}`);
     if (!trendEl) {
@@ -136,29 +137,46 @@ function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = fa
     let color = '#64748b';
     let bgColor = '#f1f5f9';
     let text = '';
+    let tooltip = '';
+    const histFormatted = typeof historicalValue === 'number' ? formatCmoMetricValue(historicalValue, formatType) : String(historicalValue ?? '—');
 
     if (comparisonType === 'INCOMPLETE') {
         text = '—';
+        tooltip = `Sem base no ${periodHint}`;
     } else if (comparisonType === 'NEW_FROM_ZERO') {
         text = 'Novo';
         color = inverseGood ? '#ef4444' : '#10b981';
         bgColor = color + '1a';
+        tooltip = `Era 0 no ${periodHint}`;
     } else if (comparisonType === 'NO_CHANGE') {
         text = '0%';
+        tooltip = `Igual ao ${periodHint}: ${histFormatted}`;
     } else {
         let arrow = pct > 0 ? '↑' : '↓';
         color = (pct > 0) ? (inverseGood ? '#ef4444' : '#10b981') : (inverseGood ? '#10b981' : '#ef4444');
         bgColor = color + '1a';
         text = `${arrow} ${Math.abs(pct).toFixed(1)}%`;
+        tooltip = `Anterior (${periodHint}): ${histFormatted}`;
     }
 
     trendEl.textContent = text;
     trendEl.style.color = color;
     trendEl.style.backgroundColor = bgColor;
+    trendEl.title = tooltip;
 }
 
 function renderCMOMetrics(data) {
     const formatCurrency = (val) => `R$ ${(val || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+    const badge = document.getElementById('cmo-period-comparison-badge');
+    if (badge && data.period?.dateStart && data.period?.dateEnd && data.period?.prevDateStart && data.period?.prevDateEnd) {
+        const fmtBr = (iso) => {
+            const parts = String(iso).split('-');
+            return parts.length === 3 ? `${parts[2]}/${parts[1]}` : iso;
+        };
+        const daysLabel = data.period.diffDays ? `${data.period.diffDays}d` : '';
+        badge.textContent = `Comparando ${fmtBr(data.period.dateStart)}–${fmtBr(data.period.dateEnd)} (${daysLabel}) vs ${fmtBr(data.period.prevDateStart)}–${fmtBr(data.period.prevDateEnd)} (${daysLabel})`;
+    }
 
     // 1. Atualizar KPIs (B2B e B2C)
 
@@ -182,25 +200,25 @@ function renderCMOMetrics(data) {
 
             const currGlobal = parseFloatOrNA(data.efficiency.globalEffort);
             const prevGlobal = parseFloatOrNA(data.prevEfficiency?.globalEffort);
-            setKpiValueAndTrend('cmo-global-effort', currGlobal, prevGlobal, true, 'decimal');
+            setKpiValueAndTrend('cmo-global-effort', currGlobal, prevGlobal, true, 'decimal', '90d anteriores');
 
             const topTicketStr = data.efficiency.topTicket === 'N/A' || !data.efficiency.topTicket ? 'N/A' : `R$ ${data.efficiency.topTicket}`;
             const prevTopTicketStr = data.prevEfficiency?.topTicket === 'N/A' || !data.prevEfficiency?.topTicket ? 'N/A' : `R$ ${data.prevEfficiency?.topTicket}`;
             // For top ticket, it's currency and higher is better.
             const currTopTicket = data.efficiency.topTicket === 'N/A' || !data.efficiency.topTicket ? 'N/A' : parseFloat(data.efficiency.topTicket);
             const prevTopTicket = data.prevEfficiency?.topTicket === 'N/A' || !data.prevEfficiency?.topTicket ? 'N/A' : parseFloat(data.prevEfficiency.topTicket);
-            setKpiValueAndTrend('cmo-top-ticket', currTopTicket, prevTopTicket, false, 'currency');
+            setKpiValueAndTrend('cmo-top-ticket', currTopTicket, prevTopTicket, false, 'currency', '90d anteriores');
 
             if (data.efficiency.ttfcData) {
                 const currTtfc = parseFloatOrNA(data.efficiency.ttfcData.median);
                 const prevTtfc = parseFloatOrNA(data.prevEfficiency?.ttfcData?.median);
-                setKpiValueAndTrend('cmo-ttfc-median', currTtfc, prevTtfc, true, 'days');
+                setKpiValueAndTrend('cmo-ttfc-median', currTtfc, prevTtfc, true, 'days', '90d anteriores');
                 document.getElementById('cmo-ttfc-sub').textContent = `Média: ${data.efficiency.ttfcData.mean} dias · amostra: ${data.efficiency.ttfcData.sample} profissionais`;
             }
             if (data.efficiency.ttvData) {
                 const currTtv = parseFloatOrNA(data.efficiency.ttvData.median);
                 const prevTtv = parseFloatOrNA(data.prevEfficiency?.ttvData?.median);
-                setKpiValueAndTrend('cmo-ttv-median', currTtv, prevTtv, true, 'days');
+                setKpiValueAndTrend('cmo-ttv-median', currTtv, prevTtv, true, 'days', '90d anteriores');
                 document.getElementById('cmo-ttv-sub').textContent = `Média: ${data.efficiency.ttvData.mean} dias · amostra: ${data.efficiency.ttvData.sample} profissionais (PROXY)`;
             }
 
@@ -1330,10 +1348,11 @@ function initCMOMonthSelector() {
         const year = currentYear;
 
         const start = `${year}-${String(currentMonth + 1).padStart(2, '0')}-01`;
-        const endDay = new Date(year, currentMonth + 1, 0).getDate();
+        const endDay = i === 0 ? now.getDate() : new Date(year, currentMonth + 1, 0).getDate();
         const end = `${year}-${String(currentMonth + 1).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
+        const label = i === 0 ? `${monthName} ${year} (até dia ${endDay})` : `${monthName} ${year}`;
 
-        html += `<option value="${start}|${end}">${monthName} ${year}</option>`;
+        html += `<option value="${start}|${end}">${label}</option>`;
 
         currentMonth--;
         if (currentMonth < 0) {
