@@ -680,7 +680,32 @@ exports.getAllPsychologists = async (req, res) => {
                 ) as pending_over_3d,
                 COUNT(*) FILTER (
                     WHERE (status = 'inactive' OR ("status" = 'active' AND "planExpiresAt" < NOW()))
-                      AND "updatedAt" >= (DATE_TRUNC('month', NOW() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo')
+                      AND (
+                          ("canceledAt" IS NOT NULL AND "canceledAt" >= (DATE_TRUNC('month', NOW() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') AND "canceledAt" <= NOW())
+                          OR ("planExpiresAt" IS NOT NULL AND "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" >= (DATE_TRUNC('month', NOW() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo') AND "planExpiresAt" <= NOW())
+                          OR (
+                              "canceledAt" IS NULL
+                              AND ("planExpiresAt" IS NULL OR "planExpiresAt" < '2000-01-01')
+                              AND (
+                                  EXISTS (
+                                      SELECT 1 FROM "Payments" p
+                                      WHERE p."psychologistId" = "Psychologists"."id"
+                                        AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
+                                      GROUP BY p."psychologistId"
+                                      HAVING (MAX(p."paymentDate") + INTERVAL '30 days') >= (DATE_TRUNC('month', NOW() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo')
+                                         AND (MAX(p."paymentDate") + INTERVAL '30 days') <= NOW()
+                                  )
+                                  OR (
+                                      NOT EXISTS (
+                                          SELECT 1 FROM "Payments" p
+                                          WHERE p."psychologistId" = "Psychologists"."id"
+                                            AND p.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
+                                      )
+                                      AND "updatedAt" >= (DATE_TRUNC('month', NOW() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo')
+                                  )
+                              )
+                          )
+                      )
                 ) as new_inactive_month
             FROM "Psychologists"
             WHERE "deletedAt" IS NULL

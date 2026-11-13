@@ -48,6 +48,42 @@ window.initializePage = function () {
         }
     }
 
+    // Renderiza a setinha e badge de variação de MRR (em % vs 30 dias atrás)
+    function renderMrrDiff(el, mrrDiffRate, mrrDiff, prevMrr) {
+        if (!el) return;
+        if (mrrDiffRate === undefined || mrrDiffRate === null || isNaN(mrrDiffRate)) {
+            el.innerHTML = 'tempo real';
+            return;
+        }
+        const pctStr = (mrrDiffRate * 100).toFixed(1);
+        const numPct = parseFloat(pctStr);
+        const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const prevText = prevMrr !== undefined && !isNaN(prevMrr) ? ` (há 30d: ${fmt(prevMrr)})` : '';
+        const diffSign = mrrDiff > 0 ? '+' : '';
+
+        if (numPct > 0) {
+            el.innerHTML = `
+                <span style="background: rgba(52, 211, 153, 0.15); color: #34d399; padding: 2px 6px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;" title="Subiu ${diffSign}${fmt(mrrDiff)} em relação a 30 dias atrás${prevText}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    +${pctStr}%
+                </span>
+            `;
+        } else if (numPct < 0) {
+            el.innerHTML = `
+                <span style="background: rgba(248, 113, 113, 0.15); color: #f87171; padding: 2px 6px; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;" title="Caiu ${fmt(Math.abs(mrrDiff))} em relação a 30 dias atrás${prevText}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    ${pctStr}%
+                </span>
+            `;
+        } else {
+            el.innerHTML = `
+                <span style="background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.7); padding: 2px 6px; border-radius: 6px; font-weight: 500; display: inline-flex; align-items: center; gap: 3px;" title="Estável em relação a 30 dias atrás${prevText}">
+                    <span style="font-weight: bold; line-height: 1;">=</span> 0.0%
+                </span>
+            `;
+        }
+    }
+
     // Fetch Advanced KPIs for Header (MRR, Activation, Retention) nos últimos 30 dias com comparativo
     async function loadAdvancedKpis() {
         try {
@@ -60,6 +96,17 @@ window.initializePage = function () {
                 const data = await founderRes.json();
                 const metrics = data.metrics || {};
 
+                // 0. Variação de MRR vs 30 dias atrás
+                const mrrDiffEl = document.getElementById('crm-mrr-diff');
+                const mrrTooltip = document.getElementById('tooltip-mrr');
+                renderMrrDiff(mrrDiffEl, metrics.mrrDiffRate, metrics.mrrDiff, metrics.prevMRR);
+                if (mrrTooltip && metrics.prevMRR !== undefined) {
+                    const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    const diffVal = Number(metrics.mrrDiff || 0);
+                    const diffLabel = `${diffVal > 0 ? '+' : ''}${fmt(diffVal)}`;
+                    mrrTooltip.setAttribute('data-tooltip', `MRR em tempo real das assinaturas pagantes ativas. Há 30 dias: ${fmt(metrics.prevMRR)} (${diffLabel} nos últimos 30d).`);
+                }
+
                 // 1. Ativação (30 dias vs 30 dias anteriores)
                 const activationEl = document.getElementById('crm-activation');
                 const activationDiffEl = document.getElementById('crm-activation-diff');
@@ -70,7 +117,7 @@ window.initializePage = function () {
                     renderMetricDiff(activationDiffEl, metrics.activationDiff, metrics.prevActivationRate);
                     if (activationTooltip && metrics.activationTotal !== undefined) {
                         const prevPct = (metrics.prevActivationRate !== undefined) ? (metrics.prevActivationRate * 100).toFixed(1) : '0.0';
-                        activationTooltip.setAttribute('data-tooltip', `${metrics.activationActive || 0} de ${metrics.activationTotal || 0} psicólogos cadastrados nos últimos 30 dias (${actPct}%) ativaram o perfil. Mês anterior: ${prevPct}%.`);
+                        activationTooltip.setAttribute('data-tooltip', `${metrics.activationActive || 0} de ${metrics.activationTotal || 0} psicólogos cadastrados nos últimos 30 dias (${actPct}%) ativaram o perfil (exclui pendentes <24h). 30d anteriores: ${prevPct}%.`);
                     }
                 }
 
@@ -85,10 +132,11 @@ window.initializePage = function () {
                     retentionEl.innerText = `${postTrialPct}%`;
                     renderMetricDiff(retentionDiffEl, metrics.postTrialDiff, metrics.prevPostTrialRetentionRate);
                     if (postTrialTooltip) {
-                        const totalBase = metrics.postTrialTotal !== undefined ? metrics.postTrialTotal : ((metrics.payingUsers || 0) + (metrics.churnedUsers || 0));
+                        const totalBase = metrics.postTrialTotal !== undefined ? metrics.postTrialTotal : ((metrics.payingUsers || 0) + (metrics.postTrialChurn30d || 0));
                         const paying = metrics.postTrialPaying !== undefined ? metrics.postTrialPaying : (metrics.payingUsers || 0);
+                        const churn30 = metrics.postTrialChurn30d !== undefined ? metrics.postTrialChurn30d : Math.max(0, totalBase - paying);
                         const prevPct = (metrics.prevPostTrialRetentionRate !== undefined) ? (metrics.prevPostTrialRetentionRate * 100).toFixed(1) : '--';
-                        postTrialTooltip.setAttribute('data-tooltip', `${paying} de ${totalBase} psicólogos (${postTrialPct}%) continuam pagantes ativos após o trial nos últimos 30 dias. Mês anterior: ${prevPct}%.`);
+                        postTrialTooltip.setAttribute('data-tooltip', `${paying} de ${totalBase} pagantes expostos nos últimos 30 dias (${postTrialPct}%) seguem ativos (${churn30} saída(s) no período). 30d anteriores: ${prevPct}%.`);
                     }
                 }
 
@@ -104,7 +152,7 @@ window.initializePage = function () {
                     renderMetricDiff(renewalDiffEl, metrics.renewalDiff, metrics.prevRenewalRate);
                     if (renewalTooltip && metrics.eligibleForRenewal !== undefined) {
                         const prevPct = (metrics.prevRenewalRate !== undefined) ? (metrics.prevRenewalRate * 100).toFixed(1) : '--';
-                        renewalTooltip.setAttribute('data-tooltip', `${metrics.renewedUsers || 0} de ${metrics.eligibleForRenewal || 0} psicólogos elegíveis (${renewalPct}%) renovaram nos últimos 30 dias. Mês anterior: ${prevPct}%.`);
+                        renewalTooltip.setAttribute('data-tooltip', `${metrics.renewedUsers || 0} de ${metrics.eligibleForRenewal || 0} ciclos vencidos nos últimos 30 dias (${renewalPct}%) foram renovados. 30d anteriores: ${prevPct}%.`);
                     }
                 }
             }
@@ -330,7 +378,7 @@ window.initializePage = function () {
                 }
 
                 renderPendingActionsTable(actionsArray);
-                
+
                 const infoEl = document.getElementById('pagination-info');
                 if (infoEl) infoEl.textContent = `Mostrando ${actionsArray.length} ações`;
                 return;
@@ -347,15 +395,15 @@ window.initializePage = function () {
                 });
                 if (!response.ok) throw new Error('Falha ao buscar performance.');
                 const data = await response.json();
-                
+
                 const aiKpiEl = document.getElementById('kpi-ai-psis');
                 if (aiKpiEl) aiKpiEl.textContent = data.count || 0;
 
                 psisDataCache = data.psychologists || [];
                 renderTable(psisDataCache);
-                
+
                 const infoEl = document.getElementById('pagination-info');
-                if (infoEl) infoEl.textContent = `Mostrando ${psisDataCache.length} psicólogos para análise (Média: ${Math.round(data.platformAvgCtr*100)}% conversão | ${Math.round(data.platformAvgMatches)} aparições)`;
+                if (infoEl) infoEl.textContent = `Mostrando ${psisDataCache.length} psicólogos para análise (Média: ${Math.round(data.platformAvgCtr * 100)}% conversão | ${Math.round(data.platformAvgMatches)} aparições)`;
                 return;
             } catch (error) {
                 console.error(error);
@@ -474,7 +522,7 @@ window.initializePage = function () {
             else if (item.actionType === 'negotiation') actionBadge = '<span class="status" style="background:#ffedd5; color:#c2410c;">Em Negociação</span>';
 
             let nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; overflow-wrap: break-word; line-height: 1.35;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${item.nome}</strong>`;
-            
+
             if (item.actionType === 'low_performance' && item.aiOptimizationHistory) {
                 const history = Array.isArray(item.aiOptimizationHistory) ? item.aiOptimizationHistory : [];
                 if (history.some(h => h.action === 'whatsapp_ai_diagnosis')) {
@@ -584,7 +632,7 @@ window.initializePage = function () {
         );
     };
 
-    window.dismissAction = function(id, actionType) {
+    window.dismissAction = function (id, actionType) {
         if (window.openConfirmationModal) {
             window.openConfirmationModal('Descartar Ação', 'Deseja ignorar esta ação e removê-la da lista (nenhuma mensagem será enviada)?', async () => {
                 await performDismiss(id, actionType);
@@ -672,7 +720,7 @@ window.initializePage = function () {
                 if (popupWindow) {
                     popupWindow.document.write('<title>Yelo CRM - Gerando...</title><body style="background:#0f172a;color:#f8fafc;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;"><div style="text-align:center;"><p style="font-size:1.1rem;font-weight:600;margin-bottom:8px;">🌿 Gerando mensagem com IA...</p><p style="color:#94a3b8;font-size:0.9rem;">Abrindo WhatsApp em instantes...</p></div></body>');
                 }
-            } catch (_) {}
+            } catch (_) { }
         }
 
         try {
@@ -688,248 +736,248 @@ window.initializePage = function () {
                         headers: { 'Authorization': `Bearer ${tokenAdmin}` },
                         credentials: 'include'
                     });
-                if (resAnalise.ok) {
-                    const data = await resAnalise.json();
-                    if (data && data.message) {
-                        msg = data.message;
-                        await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/analyzed`, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tokenAdmin}` },
-                            credentials: 'include',
-                            body: JSON.stringify({ isProfileAnalyzed: true })
-                        }).catch(() => {});
-                    }
-                }
-            } catch (e) {
-                console.warn("Aviso ao buscar análise de perfil:", e);
-            }
-
-            if (!msg) {
-                msg = `Olá, ${firstName}! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise que fizemos do seu perfil agora que você iniciou sua trajetória na plataforma!\n\nAnalisamos a sua página e achamos excelente a sua iniciativa de construir sua vitrine por aqui. Percebemos, no entanto, que a sua *biografia profissional ainda não foi preenchida*.\n\nPara quem busca terapia, a bio é o elemento mais decisivo: é através dela que o paciente compreende como funciona o seu acolhimento e se sente seguro para te chamar no WhatsApp. Sem ela, o perfil perde grande parte do potencial de conversão.\n\nPara deixar sua página completa e pronta para receber contatos, acesse seu painel em *Ajustes > Meu Perfil* e adicione um texto de apresentação simples explicando sua condução clínica.\n\nSe quiser, nossa equipe pode te ajudar com ideias para estruturar esse texto. Estamos totalmente à disposição por aqui! 🚀`;
-            }
-        } else if (actionType === 'incomplete') {
-            msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 7 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas! Para continuar de onde parou, basta entrar na sua conta por aqui:\nhttps://yelopsi.com.br/login\n\nSe precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
-        
-        } else if (actionType === 'expired_pix_fomo') {
-            const m = metrics || {};
-            const approach = m.approach || 'Psicologia';
-            
-            let performanceText = '';
-            if (m.startedTherapyCount > 0 || m.negotiatingCount > 0) {
-                let statusDetails = [];
-                if (m.startedTherapyCount > 0) {
-                    statusDetails.push(`*${m.startedTherapyCount} paciente(s) já iniciou(aram) terapia*`);
-                }
-                if (m.negotiatingCount > 0) {
-                    statusDetails.push(`*${m.negotiatingCount} ainda está(ão) em negociação*`);
-                }
-                
-                performanceText = `alcançando *${m.appearances || 0} aparições em buscas*, *${m.views || 0} visualizações na sua página* e *${m.clicks || 0} cliques para o seu WhatsApp*. Desses contatos, sabemos que ${statusDetails.join(' e ')} com você!`;
-            } else if (m.clicks > 0) {
-                performanceText = `alcançando *${m.appearances || 0} aparições em buscas* e *${m.clicks || 0} pacientes chegaram a te chamar no WhatsApp* para negociar.`;
-            } else {
-                performanceText = `alcançando *${m.appearances || 0} aparições em buscas de pacientes*.`;
-            }
-
-            let potentialText = '';
-            if (m.dealClosed) {
-                potentialText = `A sua apresentação focada na *${approach}* tem um potencial gigante para continuar atraindo os pacientes certos para a sua clínica.`;
-            } else if (m.clicks > 0) {
-                potentialText = `A sua apresentação focada na *${approach}* tem um potencial gigante e é só questão de tempo até convertermos esses contatos em pacientes reais para a sua clínica.`;
-            } else {
-                potentialText = `A sua apresentação focada na *${approach}* tem um diferencial enorme e o algoritmo estava justamente aprendendo o seu perfil para te ranquear melhor.`;
-            }
-
-            msg = `Bom dia, ${firstName}! Como vai?\n\nPassando por aqui com um aviso importante: a sua assinatura da Yelo venceu ontem e, por conta disso, o seu perfil acabou entrando em pausa no sistema e saiu do ar temporariamente.\n\nComo acompanho de perto a sua trajetória, não queria deixar você perder a ótima tração que construímos juntos. O seu perfil vinha com uma visibilidade excelente — ${performanceText}\n\n${potentialText}\n\nPara o seu perfil voltar ao ar imediatamente e não quebrarmos o ritmo que o algoritmo já gerou para você, basta regularizar a assinatura.\n\nÉ bem simples: basta acessar a sua conta, ir no menu *Ajustes > Assinaturas e Planos* e atualizar a forma de pagamento.\n\nSe precisar de qualquer ajuda com o acesso, sigo totalmente à disposição. 🌿`;
-
-        } else if (actionType === 'paid_churn') {
-            const currentMonthName = new Date().toLocaleString('pt-BR', { month: 'long' });
-            const m = metrics || {};
-            const churnType = m.churnType || 'expired_cycle';
-            
-            let X = m.clicks || 0, Y = m.dealClosedCount || 0, VALOR = m.sessionPrice ? String(m.sessionPrice).replace('.', ',') : '150,00';
-            let approach = m.approach || 'Psicologia Clínica';
-            
-            try {
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
-                const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/full-details`, {
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.whatsappLogs) {
-                        const now = new Date();
-                        const currentMonthLogs = data.whatsappLogs.filter(log => {
-                            const logDate = new Date(log.createdAt);
-                            return logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
-                        });
-                        if (currentMonthLogs.length > 0) {
-                            X = currentMonthLogs.length;
-                            Y = currentMonthLogs.filter(log => log.status === 'fechou' || log.dealClosed === 'yes').length;
+                    if (resAnalise.ok) {
+                        const data = await resAnalise.json();
+                        if (data && data.message) {
+                            msg = data.message;
+                            await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/analyzed`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tokenAdmin}` },
+                                credentials: 'include',
+                                body: JSON.stringify({ isProfileAnalyzed: true })
+                            }).catch(() => { });
                         }
                     }
-                    const psy = data.psychologist || data;
-                    if (psy.valorSessao) VALOR = parseFloat(psy.valorSessao).toFixed(2).replace('.', ',');
-                    if (psy.abordagens_tecnicas && psy.abordagens_tecnicas.length > 0) approach = psy.abordagens_tecnicas[0];
+                } catch (e) {
+                    console.warn("Aviso ao buscar análise de perfil:", e);
                 }
-            } catch(e) { console.error('Erro ao buscar stats para churn', e); }
 
-            // Trava de segurança: só disponibilizar para quem recebeu ao menos 2 contatos de pacientes
-            if (X < 2) {
-                if (window.showToast) window.showToast('Ação de recall disponível apenas para profissionais com ao menos 2 contatos de pacientes.', 'warning');
-                return;
-            }
+                if (!msg) {
+                    msg = `Olá, ${firstName}! Como vai?\nAqui é o Anderson, da Yelo. 🌿\n\nPassamos para te desejar boas-vindas e compartilhar uma análise que fizemos do seu perfil agora que você iniciou sua trajetória na plataforma!\n\nAnalisamos a sua página e achamos excelente a sua iniciativa de construir sua vitrine por aqui. Percebemos, no entanto, que a sua *biografia profissional ainda não foi preenchida*.\n\nPara quem busca terapia, a bio é o elemento mais decisivo: é através dela que o paciente compreende como funciona o seu acolhimento e se sente seguro para te chamar no WhatsApp. Sem ela, o perfil perde grande parte do potencial de conversão.\n\nPara deixar sua página completa e pronta para receber contatos, acesse seu painel em *Ajustes > Meu Perfil* e adicione um texto de apresentação simples explicando sua condução clínica.\n\nSe quiser, nossa equipe pode te ajudar com ideias para estruturar esse texto. Estamos totalmente à disposição por aqui! 🚀`;
+                }
+            } else if (actionType === 'incomplete') {
+                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 7 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas! Para continuar de onde parou, basta entrar na sua conta por aqui:\nhttps://yelopsi.com.br/login\n\nSe precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
 
-            const contatoStr = X === 1 ? 'contato de paciente' : 'contatos de pacientes';
-            const pacienteStr = Y === 1 ? 'paciente novo' : 'pacientes novos';
+            } else if (actionType === 'expired_pix_fomo') {
+                const m = metrics || {};
+                const approach = m.approach || 'Psicologia';
 
-            let perfSnippet = '';
-            if (Y > 0) {
-                perfSnippet = `Dei uma olhada nos seus resultados recentes e vi que você recebeu ${X} ${contatoStr} e fechou com ${Y} ${pacienteStr} pela Yelo (o que a R$ ${VALOR} por sessão já pagou a sua assinatura com muita folga!). 🚀`;
-            } else if (X > 0) {
-                perfSnippet = `Dei uma olhada nos seus números e vi que você já recebeu ${X} ${contatoStr} pelo WhatsApp. O seu perfil com foco em *${approach}* estava ganhando uma tração bem legal! 🚀`;
-            } else {
-                perfSnippet = `O seu perfil voltado para *${approach}* tem um diferencial excelente e o algoritmo da plataforma já estava começando a posicionar você melhor nas buscas! 🌱`;
-            }
+                let performanceText = '';
+                if (m.startedTherapyCount > 0 || m.negotiatingCount > 0) {
+                    let statusDetails = [];
+                    if (m.startedTherapyCount > 0) {
+                        statusDetails.push(`*${m.startedTherapyCount} paciente(s) já iniciou(aram) terapia*`);
+                    }
+                    if (m.negotiatingCount > 0) {
+                        statusDetails.push(`*${m.negotiatingCount} ainda está(ão) em negociação*`);
+                    }
 
-            // CENÁRIO 1: CARTÃO DE CRÉDITO RECUSADO NA RENOVAÇÃO
-            if (churnType === 'card_declined') {
-                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nEstou passando para te dar um toque rápido e super importante sobre a sua conta: o nosso sistema tentou renovar automaticamente a sua assinatura mensal, mas a operadora do seu cartão recusou a cobrança (geralmente é só limite do mês virando ou um bloqueio preventivo do banco para pagamentos recorrentes online).\n\nPor conta disso, o seu perfil entrou em pausa temporária para novos pacientes.\n\n${perfSnippet}\n\nNão quero de forma alguma que você saia do ar e perca o embalo de novos agendamentos que estamos construindo juntos.\n\nPara o seu perfil voltar ao ar imediatamente, é super simples: basta acessar sua conta na Yelo, ir na aba *"Ajustes" > "Assinaturas e Planos"* e atualizar o seu cartão ou emitir um Pix.\n\nSe preferir, posso te enviar a chave Pix direto por aqui também. Qualquer dúvida, estou à disposição! 🌿`;
-
-            // CENÁRIO 2: PIX DE RENOVAÇÃO EXPIRADO
-            } else if (churnType === 'pix_expired') {
-                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando rapidinho para te avisar que o código Pix de renovação da sua mensalidade da Yelo acabou vencendo e expirou no sistema.\n\nPor conta disso, o seu perfil entrou em pausa automática nas buscas de pacientes.\n\n${perfSnippet}\n\nComo não quero que você perca os pacientes que estão procurando atendimento na sua especialidade, quer que eu te envie um novo código Pix copia-e-cola direto por aqui para você reativar em 1 minuto?\n\n*(Dica: se preferir não ter que se preocupar com datas todo mês, você também pode cadastrar um cartão de crédito no seu painel em Ajustes > Assinaturas e Planos).*\n\nSigo à disposição por aqui! Um abraço. 🌿`;
-
-            // CENÁRIO 3: CANCELAMENTO VOLUNTÁRIO / ESTORNO
-            } else if (churnType === 'voluntary_refund') {
-                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nVi aqui no sistema que você optou por encerrar a sua assinatura e o seu plano foi desativado.\n\nQueria te mandar essa mensagem primeiro para agradecer pelo período em que estivemos juntos e, principalmente, para te ouvir com sinceridade. Como estamos sempre aprimorando a Yelo para os psicólogos clínicos, seu feedback é precioso pra gente:\n\n${perfSnippet}\n\nO que mais pesou na sua decisão de não continuar neste momento? Faltou algum suporte nosso, o retorno de pacientes foi diferente do esperado ou foi uma questão de momento pessoal/financeiro?\n\nFico super aberto para entender e, caso queira conversar, as portas da Yelo estarão sempre abertas para você. Um grande abraço! 🌱`;
-
-            // CENÁRIO 4: TÉRMINO DE CICLO GERAL
-            } else {
-                msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando para te dar um toque sobre a sua assinatura da Yelo: o seu ciclo mensal chegou ao fim e o seu perfil entrou em pausa para novas buscas.\n\n${perfSnippet}\n\nPara não quebrar a consistência que o algoritmo já gerou para você e manter o seu consultório virtual ativo recebendo pacientes, basta renovar o plano.\n\nÉ bem prático: acesse seu painel na Yelo, vá em *"Ajustes" > "Assinaturas e Planos"* e escolha o pagamento via Cartão ou Pix.\n\nSe precisar de qualquer ajuda com o acesso, estou à disposição! 🌿`;
-            }
-} else if (actionType === 'churn') {
-            try {
-                if (window.showToast) window.showToast('Gerando copy de resgate com IA... Aguarde.', 'info');
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
-                const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-churn-message`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
-                    credentials: 'include'
-                });
-                const data = await resAi.json();
-                if (data.whatsappCopy) {
-                    msg = data.whatsappCopy;
+                    performanceText = `alcançando *${m.appearances || 0} aparições em buscas*, *${m.views || 0} visualizações na sua página* e *${m.clicks || 0} cliques para o seu WhatsApp*. Desses contatos, sabemos que ${statusDetails.join(' e ')} com você!`;
+                } else if (m.clicks > 0) {
+                    performanceText = `alcançando *${m.appearances || 0} aparições em buscas* e *${m.clicks || 0} pacientes chegaram a te chamar no WhatsApp* para negociar.`;
                 } else {
-                    if (window.showToast) window.showToast(data.error || "Erro ao gerar copy de resgate", "error");
+                    performanceText = `alcançando *${m.appearances || 0} aparições em buscas de pacientes*.`;
+                }
+
+                let potentialText = '';
+                if (m.dealClosed) {
+                    potentialText = `A sua apresentação focada na *${approach}* tem um potencial gigante para continuar atraindo os pacientes certos para a sua clínica.`;
+                } else if (m.clicks > 0) {
+                    potentialText = `A sua apresentação focada na *${approach}* tem um potencial gigante e é só questão de tempo até convertermos esses contatos em pacientes reais para a sua clínica.`;
+                } else {
+                    potentialText = `A sua apresentação focada na *${approach}* tem um diferencial enorme e o algoritmo estava justamente aprendendo o seu perfil para te ranquear melhor.`;
+                }
+
+                msg = `Bom dia, ${firstName}! Como vai?\n\nPassando por aqui com um aviso importante: a sua assinatura da Yelo venceu ontem e, por conta disso, o seu perfil acabou entrando em pausa no sistema e saiu do ar temporariamente.\n\nComo acompanho de perto a sua trajetória, não queria deixar você perder a ótima tração que construímos juntos. O seu perfil vinha com uma visibilidade excelente — ${performanceText}\n\n${potentialText}\n\nPara o seu perfil voltar ao ar imediatamente e não quebrarmos o ritmo que o algoritmo já gerou para você, basta regularizar a assinatura.\n\nÉ bem simples: basta acessar a sua conta, ir no menu *Ajustes > Assinaturas e Planos* e atualizar a forma de pagamento.\n\nSe precisar de qualquer ajuda com o acesso, sigo totalmente à disposição. 🌿`;
+
+            } else if (actionType === 'paid_churn') {
+                const currentMonthName = new Date().toLocaleString('pt-BR', { month: 'long' });
+                const m = metrics || {};
+                const churnType = m.churnType || 'expired_cycle';
+
+                let X = m.clicks || 0, Y = m.dealClosedCount || 0, VALOR = m.sessionPrice ? String(m.sessionPrice).replace('.', ',') : '150,00';
+                let approach = m.approach || 'Psicologia Clínica';
+
+                try {
+                    const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : token;
+                    const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/full-details`, {
+                        headers: { 'Authorization': `Bearer ${tokenAdmin}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.whatsappLogs) {
+                            const now = new Date();
+                            const currentMonthLogs = data.whatsappLogs.filter(log => {
+                                const logDate = new Date(log.createdAt);
+                                return logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
+                            });
+                            if (currentMonthLogs.length > 0) {
+                                X = currentMonthLogs.length;
+                                Y = currentMonthLogs.filter(log => log.status === 'fechou' || log.dealClosed === 'yes').length;
+                            }
+                        }
+                        const psy = data.psychologist || data;
+                        if (psy.valorSessao) VALOR = parseFloat(psy.valorSessao).toFixed(2).replace('.', ',');
+                        if (psy.abordagens_tecnicas && psy.abordagens_tecnicas.length > 0) approach = psy.abordagens_tecnicas[0];
+                    }
+                } catch (e) { console.error('Erro ao buscar stats para churn', e); }
+
+                // Trava de segurança: só disponibilizar para quem recebeu ao menos 2 contatos de pacientes
+                if (X < 2) {
+                    if (window.showToast) window.showToast('Ação de recall disponível apenas para profissionais com ao menos 2 contatos de pacientes.', 'warning');
                     return;
                 }
-            } catch (e) {
-                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
-                return;
-            }
-        } else if (actionType === 'expiring_trial') {
-            try {
-                if (window.showToast) window.showToast('Gerando mensagem consultiva com IA... Aguarde.', 'info');
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
-                const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-expiring-trial-message`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
-                    credentials: 'include'
-                });
-                const data = await resAi.json();
-                if (data.whatsappCopy) {
-                    msg = data.whatsappCopy;
+
+                const contatoStr = X === 1 ? 'contato de paciente' : 'contatos de pacientes';
+                const pacienteStr = Y === 1 ? 'paciente novo' : 'pacientes novos';
+
+                let perfSnippet = '';
+                if (Y > 0) {
+                    perfSnippet = `Dei uma olhada nos seus resultados recentes e vi que você recebeu ${X} ${contatoStr} e fechou com ${Y} ${pacienteStr} pela Yelo (o que a R$ ${VALOR} por sessão já pagou a sua assinatura com muita folga!). 🚀`;
+                } else if (X > 0) {
+                    perfSnippet = `Dei uma olhada nos seus números e vi que você já recebeu ${X} ${contatoStr} pelo WhatsApp. O seu perfil com foco em *${approach}* estava ganhando uma tração bem legal! 🚀`;
                 } else {
-                    if (window.showToast) window.showToast(data.error || "Erro ao gerar copy consultiva", "error");
+                    perfSnippet = `O seu perfil voltado para *${approach}* tem um diferencial excelente e o algoritmo da plataforma já estava começando a posicionar você melhor nas buscas! 🌱`;
+                }
+
+                // CENÁRIO 1: CARTÃO DE CRÉDITO RECUSADO NA RENOVAÇÃO
+                if (churnType === 'card_declined') {
+                    msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nEstou passando para te dar um toque rápido e super importante sobre a sua conta: o nosso sistema tentou renovar automaticamente a sua assinatura mensal, mas a operadora do seu cartão recusou a cobrança (geralmente é só limite do mês virando ou um bloqueio preventivo do banco para pagamentos recorrentes online).\n\nPor conta disso, o seu perfil entrou em pausa temporária para novos pacientes.\n\n${perfSnippet}\n\nNão quero de forma alguma que você saia do ar e perca o embalo de novos agendamentos que estamos construindo juntos.\n\nPara o seu perfil voltar ao ar imediatamente, é super simples: basta acessar sua conta na Yelo, ir na aba *"Ajustes" > "Assinaturas e Planos"* e atualizar o seu cartão ou emitir um Pix.\n\nSe preferir, posso te enviar a chave Pix direto por aqui também. Qualquer dúvida, estou à disposição! 🌿`;
+
+                    // CENÁRIO 2: PIX DE RENOVAÇÃO EXPIRADO
+                } else if (churnType === 'pix_expired') {
+                    msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando rapidinho para te avisar que o código Pix de renovação da sua mensalidade da Yelo acabou vencendo e expirou no sistema.\n\nPor conta disso, o seu perfil entrou em pausa automática nas buscas de pacientes.\n\n${perfSnippet}\n\nComo não quero que você perca os pacientes que estão procurando atendimento na sua especialidade, quer que eu te envie um novo código Pix copia-e-cola direto por aqui para você reativar em 1 minuto?\n\n*(Dica: se preferir não ter que se preocupar com datas todo mês, você também pode cadastrar um cartão de crédito no seu painel em Ajustes > Assinaturas e Planos).*\n\nSigo à disposição por aqui! Um abraço. 🌿`;
+
+                    // CENÁRIO 3: CANCELAMENTO VOLUNTÁRIO / ESTORNO
+                } else if (churnType === 'voluntary_refund') {
+                    msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nVi aqui no sistema que você optou por encerrar a sua assinatura e o seu plano foi desativado.\n\nQueria te mandar essa mensagem primeiro para agradecer pelo período em que estivemos juntos e, principalmente, para te ouvir com sinceridade. Como estamos sempre aprimorando a Yelo para os psicólogos clínicos, seu feedback é precioso pra gente:\n\n${perfSnippet}\n\nO que mais pesou na sua decisão de não continuar neste momento? Faltou algum suporte nosso, o retorno de pacientes foi diferente do esperado ou foi uma questão de momento pessoal/financeiro?\n\nFico super aberto para entender e, caso queira conversar, as portas da Yelo estarão sempre abertas para você. Um grande abraço! 🌱`;
+
+                    // CENÁRIO 4: TÉRMINO DE CICLO GERAL
+                } else {
+                    msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando para te dar um toque sobre a sua assinatura da Yelo: o seu ciclo mensal chegou ao fim e o seu perfil entrou em pausa para novas buscas.\n\n${perfSnippet}\n\nPara não quebrar a consistência que o algoritmo já gerou para você e manter o seu consultório virtual ativo recebendo pacientes, basta renovar o plano.\n\nÉ bem prático: acesse seu painel na Yelo, vá em *"Ajustes" > "Assinaturas e Planos"* e escolha o pagamento via Cartão ou Pix.\n\nSe precisar de qualquer ajuda com o acesso, estou à disposição! 🌿`;
+                }
+            } else if (actionType === 'churn') {
+                try {
+                    if (window.showToast) window.showToast('Gerando copy de resgate com IA... Aguarde.', 'info');
+                    const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
+                    const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-churn-message`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
+                        credentials: 'include'
+                    });
+                    const data = await resAi.json();
+                    if (data.whatsappCopy) {
+                        msg = data.whatsappCopy;
+                    } else {
+                        if (window.showToast) window.showToast(data.error || "Erro ao gerar copy de resgate", "error");
+                        return;
+                    }
+                } catch (e) {
+                    if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
                     return;
                 }
-            } catch (e) {
-                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
-                return;
-            }
-        } else if (actionType === 'billing_feedback') {
-            let baseUrlFeedback = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
-            let linkFeedback = feedbackToken ? `${baseUrlFeedback}/magic-feedback?token=${feedbackToken}` : `${baseUrlFeedback}/psi/dashboard`;
-            
-            const pendingCount = metrics.pendingCount || 1;
-            const isFirst = metrics.isFirstFeedbackRequest !== false;
-            
-            let introText = '';
-            
-            if (pendingCount > 1) {
-                introText = `Alguns pacientes entraram`;
-            } else {
-                if (patientName && patientName.toLowerCase() !== 'visitante' && patientName.toLowerCase() !== 'um paciente') {
-                    introText = `O(a) paciente ${patientName} entrou`;
-                } else {
-                    introText = `Um paciente entrou`;
+            } else if (actionType === 'expiring_trial') {
+                try {
+                    if (window.showToast) window.showToast('Gerando mensagem consultiva com IA... Aguarde.', 'info');
+                    const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
+                    const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-expiring-trial-message`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
+                        credentials: 'include'
+                    });
+                    const data = await resAi.json();
+                    if (data.whatsappCopy) {
+                        msg = data.whatsappCopy;
+                    } else {
+                        if (window.showToast) window.showToast(data.error || "Erro ao gerar copy consultiva", "error");
+                        return;
+                    }
+                } catch (e) {
+                    if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
+                    return;
                 }
-            }
+            } else if (actionType === 'billing_feedback') {
+                let baseUrlFeedback = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
+                let linkFeedback = feedbackToken ? `${baseUrlFeedback}/magic-feedback?token=${feedbackToken}` : `${baseUrlFeedback}/psi/dashboard`;
 
-            if (isFirst) {
-                msg = `Olá, ${firstName}! Tudo bem?\n\n${introText} em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
-            } else {
-                let introTextRecorrente = '';
+                const pendingCount = metrics.pendingCount || 1;
+                const isFirst = metrics.isFirstFeedbackRequest !== false;
+
+                let introText = '';
+
                 if (pendingCount > 1) {
-                    introTextRecorrente = `mais alguns pacientes tentaram`;
+                    introText = `Alguns pacientes entraram`;
                 } else {
                     if (patientName && patientName.toLowerCase() !== 'visitante' && patientName.toLowerCase() !== 'um paciente') {
-                        introTextRecorrente = `o(a) paciente ${patientName} tentou`;
+                        introText = `O(a) paciente ${patientName} entrou`;
                     } else {
-                        introTextRecorrente = `mais um paciente tentou`;
+                        introText = `Um paciente entrou`;
                     }
                 }
-                
-                msg = `Olá, ${firstName}! Tudo bem?\n\nO seu perfil continua gerando resultados na Yelo! ✨\nPercebemos que ${introTextRecorrente} entrar em contato com você recentemente.\n\nPara mantermos o seu perfil forte e continuarmos te indicando no nosso ranking, precisamos apenas da sua confirmação rápida. Acesse o link abaixo e nos conte:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto!\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nMuito obrigado pela parceria! 🌿`;
-            }
-        } else if (actionType === 'low_performance') {
-            try {
-                if (window.showToast) window.showToast('Gerando consultoria com IA... Aguarde.', 'info');
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
-                const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-diagnosis`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
-                    credentials: 'include'
-                });
-                const data = await resAi.json();
-                if (data.whatsappCopy) {
-                    msg = data.whatsappCopy;
+
+                if (isFirst) {
+                    msg = `Olá, ${firstName}! Tudo bem?\n\n${introText} em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
                 } else {
-                    if (window.showToast) window.showToast(data.error || "Erro ao gerar consultoria", "error");
+                    let introTextRecorrente = '';
+                    if (pendingCount > 1) {
+                        introTextRecorrente = `mais alguns pacientes tentaram`;
+                    } else {
+                        if (patientName && patientName.toLowerCase() !== 'visitante' && patientName.toLowerCase() !== 'um paciente') {
+                            introTextRecorrente = `o(a) paciente ${patientName} tentou`;
+                        } else {
+                            introTextRecorrente = `mais um paciente tentou`;
+                        }
+                    }
+
+                    msg = `Olá, ${firstName}! Tudo bem?\n\nO seu perfil continua gerando resultados na Yelo! ✨\nPercebemos que ${introTextRecorrente} entrar em contato com você recentemente.\n\nPara mantermos o seu perfil forte e continuarmos te indicando no nosso ranking, precisamos apenas da sua confirmação rápida. Acesse o link abaixo e nos conte:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto!\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nMuito obrigado pela parceria! 🌿`;
+                }
+            } else if (actionType === 'low_performance') {
+                try {
+                    if (window.showToast) window.showToast('Gerando consultoria com IA... Aguarde.', 'info');
+                    const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
+                    const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-diagnosis`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
+                        credentials: 'include'
+                    });
+                    const data = await resAi.json();
+                    if (data.whatsappCopy) {
+                        msg = data.whatsappCopy;
+                    } else {
+                        if (window.showToast) window.showToast(data.error || "Erro ao gerar consultoria", "error");
+                        return;
+                    }
+                } catch (e) {
+                    if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
                     return;
                 }
-            } catch (e) {
-                if (window.showToast) window.showToast("Erro na IA: " + e.message, "error");
-                return;
-            }
-        } else if (actionType === 'conversion_failure') {
-            try {
-                if (window.showToast) window.showToast('Analisando perfil para fundo de funil... Aguarde.', 'info');
-                const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
-                const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-conversion-failure`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
-                    credentials: 'include'
-                });
-                if (resAi.ok) {
-                    const data = await resAi.json();
-                    if (data && data.whatsappCopy) {
-                        msg = data.whatsappCopy;
+            } else if (actionType === 'conversion_failure') {
+                try {
+                    if (window.showToast) window.showToast('Analisando perfil para fundo de funil... Aguarde.', 'info');
+                    const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
+                    const resAi = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/ai-conversion-failure`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
+                        credentials: 'include'
+                    });
+                    if (resAi.ok) {
+                        const data = await resAi.json();
+                        if (data && data.whatsappCopy) {
+                            msg = data.whatsappCopy;
+                        }
                     }
+                } catch (e) {
+                    console.warn("Aviso ao buscar copy de conversão:", e);
                 }
-            } catch (e) {
-                console.warn("Aviso ao buscar copy de conversão:", e);
-            }
 
-            if (!msg) {
-                msg = `Olá, ${firstName}! Tudo bem?\n\nEstava acompanhando as métricas do seu perfil na Yelo e é muito bom ver que a sua página está gerando interesse e atraindo cliques no WhatsApp! Notei, porém, que os últimos contatos acabaram ainda não avançando para o agendamento.\n\nQuando o paciente clica no WhatsApp, os primeiros minutos de acolhimento e a forma de conduzir a conversa até o valor da sessão fazem toda a diferença. Recomendo dar uma olhada na ferramenta *Clínica > Manual de Conversão* lá no seu painel — preparamos roteiros práticos justamente para evitar que o paciente deixe no vácuo.\n\nQualquer dúvida ou se quiser trocar uma ideia sobre a abordagem inicial, estou por aqui! 🌿`;
+                if (!msg) {
+                    msg = `Olá, ${firstName}! Tudo bem?\n\nEstava acompanhando as métricas do seu perfil na Yelo e é muito bom ver que a sua página está gerando interesse e atraindo cliques no WhatsApp! Notei, porém, que os últimos contatos acabaram ainda não avançando para o agendamento.\n\nQuando o paciente clica no WhatsApp, os primeiros minutos de acolhimento e a forma de conduzir a conversa até o valor da sessão fazem toda a diferença. Recomendo dar uma olhada na ferramenta *Clínica > Manual de Conversão* lá no seu painel — preparamos roteiros práticos justamente para evitar que o paciente deixe no vácuo.\n\nQualquer dúvida ou se quiser trocar uma ideia sobre a abordagem inicial, estou por aqui! 🌿`;
+                }
+            } else if (actionType === 'negotiation') {
+                const metrics = metricsStr && metricsStr !== '{}' ? JSON.parse(decodeURIComponent(metricsStr)) : {};
+                const dataNeg = metrics.dataNeg || 'alguns dias';
+                msg = `Olá, ${firstName}. Como vai?\n\nPreciso da sua ajuda com um retorno rápido.\n\nVocê estava em negociação com ${patientName} desde ${dataNeg}:\n\n• Conseguiram conversar novamente?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nPara responder, acesse sua conta na Yelo e vá até a opção *Evolução > Histórico de Contatos* e mude o status "⏳ Em negociação".\n\nObrigado! 🌿`;
             }
-        } else if (actionType === 'negotiation') {
-            const metrics = metricsStr && metricsStr !== '{}' ? JSON.parse(decodeURIComponent(metricsStr)) : {};
-            const dataNeg = metrics.dataNeg || 'alguns dias';
-            msg = `Olá, ${firstName}. Como vai?\n\nPreciso da sua ajuda com um retorno rápido.\n\nVocê estava em negociação com ${patientName} desde ${dataNeg}:\n\n• Conseguiram conversar novamente?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nPara responder, acesse sua conta na Yelo e vá até a opção *Evolução > Histórico de Contatos* e mude o status "⏳ Em negociação".\n\nObrigado! 🌿`;
-        }
 
             // Formata e sanitiza para o parser nativo do WhatsApp não perder a formatação
             msg = formatForWhatsApp(msg);
@@ -1031,7 +1079,7 @@ window.initializePage = function () {
             // 🧠 Sincronização Híbrida: Lê do Banco de Dados (isProfileAnalyzed) ou do cache local do navegador
             const isCopied = psy.isProfileAnalyzed === true || copiedList.includes(String(psy.id));
             const copyBadge = isCopied ? '<span class="badge-copied" title="Análise Copiada" style="margin-left: 5px; font-size: 0.8rem;">✅</span>' : '';
-            
+
             const hasPlaybookSent = psy.msg_analysis_sent_at || psy.msg_incomplete_profile_sent_at || psy.msg_churn_followup_sent_at || psy.msg_paid_churn_sent_at || psy.admin_billing_sent_at || (psy.aiOptimizationHistory && psy.aiOptimizationHistory.length > 0);
             const pendingBadge = (hasPlaybookSent || pendingReminders.includes(String(psy.id))) ? '<span class="badge-pending" title="Playbook/Mensagem Enviada (Salvo no Banco de Dados)" style="margin-left: 5px; font-size: 0.8rem;">✉️</span>' : '';
             const dataInscricao = new Date(psy.createdAt).toLocaleDateString('pt-BR');
@@ -1082,7 +1130,7 @@ window.initializePage = function () {
                 else if (psy.utm_source === 'meta_ads' || psy.utm_source === 'facebook' || psy.utm_source === 'instagram') { badgeColor = '#3b82f6'; bgBadge = '#dbeafe'; }
                 else if (psy.utm_source === 'instagram_bio') { badgeColor = '#ec4899'; bgBadge = '#fce7f3'; }
                 else if (psy.utm_source === 'google') { badgeColor = '#f59e0b'; bgBadge = '#fef3c7'; }
-                
+
                 utmBadge = `<span class="utm-pill-tag" style="background: ${bgBadge}; color: ${badgeColor};">${psy.utm_source}</span>`;
                 if (psy.utm_medium) utmBadge += `<br><span style="font-size: 0.72rem; color: #64748b; margin-top: 3px; display: inline-block;">${psy.utm_medium}</span>`;
                 if (psy.utm_content) utmBadge += `<br><span style="font-size: 0.72rem; color: #94a3b8; font-style: italic; display: inline-block;">${psy.utm_content}</span>`;
@@ -1180,21 +1228,21 @@ window.initializePage = function () {
     async function loadPendingQuestions() {
         const tbody = document.getElementById('crm-qna-pending-body');
         if (!tbody) return;
-        
+
         try {
             const res = await fetch(`${API_BASE_URL}/api/admin/qna/pending`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) throw new Error('Falha ao buscar perguntas.');
-            
+
             const questions = await res.json();
             tbody.innerHTML = '';
-            
+
             if (questions.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #64748b;">Nenhuma pergunta pendente no momento.</td></tr>`;
                 return;
             }
-            
+
             questions.forEach(q => {
                 const tr = document.createElement('tr');
                 const dateStr = new Date(q.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -1222,16 +1270,16 @@ window.initializePage = function () {
         }
     }
 
-    window.moderateQuestion = async function(id, action) {
+    window.moderateQuestion = async function (id, action) {
         let title = undefined;
         let content = undefined;
-        
+
         if (action === 'approve') {
             const titleEl = document.getElementById(`edit-title-${id}`);
             const contentEl = document.getElementById(`edit-content-${id}`);
             if (titleEl) title = titleEl.value.trim();
             if (contentEl) content = contentEl.value.trim();
-            
+
             if (!content) {
                 if (window.showToast) window.showToast("O conteúdo da pergunta não pode estar vazio.", "error");
                 else alert("O conteúdo da pergunta não pode estar vazio.");
@@ -1242,13 +1290,13 @@ window.initializePage = function () {
         try {
             const res = await fetch(`${API_BASE_URL}/api/admin/qna/${id}/moderate`, {
                 method: 'PUT',
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ action, title, content })
             });
-            
+
             const data = await res.json();
             if (res.ok) {
                 if (window.showToast) window.showToast(data.message, 'success');
@@ -1261,15 +1309,15 @@ window.initializePage = function () {
             else alert(e.message);
         }
     };
-    
+
     loadPendingQuestions();
     // ==============================================
 
     // ==============================================
     // MODERAÇÃO DE IA (MOTOR EDITORIAL)
     // ==============================================
-    
-    window.toggleAiDrawer = function() {
+
+    window.toggleAiDrawer = function () {
         const drawer = document.getElementById('ai-drawer');
         if (drawer) {
             drawer.classList.toggle('active');
@@ -1282,30 +1330,30 @@ window.initializePage = function () {
     async function loadAiDrafts() {
         const listContainer = document.getElementById('ai-drafts-list');
         if (!listContainer) return;
-        
+
         listContainer.innerHTML = '<div style="text-align: center; color: #94a3b8; margin-top: 40px;">Carregando rascunhos...</div>';
-        
+
         try {
             const res = await fetch(`${API_BASE_URL}/api/admin/qna/ai-drafts`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const drafts = await res.json();
-            
+
             if (!res.ok) throw new Error(drafts.error || 'Erro ao carregar rascunhos da IA');
-            
+
             listContainer.innerHTML = '';
-            
+
             if (!drafts || drafts.length === 0) {
                 listContainer.innerHTML = '<div style="text-align: center; color: #94a3b8; margin-top: 40px; padding: 20px;">Nenhum rascunho de IA pendente no momento.</div>';
                 return;
             }
-            
+
             drafts.forEach(draft => {
                 const card = document.createElement('div');
                 card.style.cssText = "background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 10px;";
-                
+
                 const dateStr = new Date(draft.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-                
+
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <span style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; padding: 3px 8px; border-radius: 12px; font-weight: 600;">🤖 IA Gerador</span>
@@ -1322,22 +1370,22 @@ window.initializePage = function () {
                         <button onclick="window.moderateAiDraft(${draft.id}, 'approve')" style="flex: 1; padding: 8px; border: none; background: #1B4332; color: white; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;">✅ Aprovar (Gera SEO)</button>
                     </div>
                 `;
-                
+
                 listContainer.appendChild(card);
             });
-            
+
         } catch (error) {
             listContainer.innerHTML = `<div style="text-align: center; color: #ef4444; margin-top: 40px; padding: 20px;">Erro: ${error.message}</div>`;
         }
     }
 
-    window.moderateAiDraft = async function(id, action) {
+    window.moderateAiDraft = async function (id, action) {
         let content = '';
-        
+
         if (action === 'approve') {
             const contentEl = document.getElementById(`ai-content-${id}`);
             if (contentEl) content = contentEl.value.trim();
-            
+
             if (!content) {
                 if (window.showToast) window.showToast("O conteúdo não pode estar vazio.", "error");
                 else alert("O conteúdo não pode estar vazio.");
@@ -1348,16 +1396,16 @@ window.initializePage = function () {
         try {
             const method = action === 'approve' ? 'PUT' : 'DELETE';
             const url = action === 'approve' ? `${API_BASE_URL}/api/admin/qna/ai-drafts/${id}/approve` : `${API_BASE_URL}/api/admin/qna/ai-drafts/${id}`;
-            
+
             const res = await fetch(url, {
                 method,
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: action === 'approve' ? JSON.stringify({ content }) : undefined
             });
-            
+
             const data = await res.json();
             if (res.ok) {
                 if (window.showToast) window.showToast(data.message, 'success');
@@ -1371,19 +1419,19 @@ window.initializePage = function () {
         }
     };
 
-    window.forceAiGeneration = async function() {
+    window.forceAiGeneration = async function () {
         const btn = document.getElementById('btn-force-ai');
         if (btn) {
             btn.disabled = true;
             btn.innerHTML = '<span class="loading-spinner-sm" style="margin-right: 5px;"></span> Solicitando...';
         }
-        
+
         try {
             const res = await fetch(`${API_BASE_URL}/api/admin/qna/ai-drafts/generate-now`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
+
             const data = await res.json();
             if (res.ok) {
                 if (window.showToast) window.showToast(data.message, 'success');
@@ -1411,7 +1459,7 @@ window.initializePage = function () {
             if (response.ok) {
                 const pendingData = await response.json();
                 const actionsArray = pendingData.pendingActions || pendingData || [];
-                
+
                 const countExpiring = actionsArray.filter(a => a.actionType === 'expiring_trial').length;
                 const countPaidChurn = actionsArray.filter(a => ['paid_churn', 'billing_feedback', 'churn'].includes(a.actionType)).length;
                 const countIncomplete = actionsArray.filter(a => a.actionType === 'incomplete').length;
@@ -1420,11 +1468,11 @@ window.initializePage = function () {
                 const elChurn = document.getElementById('kpi-alerta-paid-churn');
                 const elInc = document.getElementById('kpi-alerta-pendentes');
 
-                if(elExp) elExp.textContent = countExpiring;
-                if(elChurn) elChurn.textContent = countPaidChurn;
-                if(elInc) elInc.textContent = countIncomplete;
+                if (elExp) elExp.textContent = countExpiring;
+                if (elChurn) elChurn.textContent = countPaidChurn;
+                if (elInc) elInc.textContent = countIncomplete;
             }
-        } catch(e) {
+        } catch (e) {
             console.error('Erro ao buscar badges de pendencias', e);
         }
     }
