@@ -543,7 +543,9 @@ export default function AdminCmoMetricsScreen() {
   const globalEffort = Number(efficiency.globalEffort || 0);
   const prevGlobalEffort = Number(prevEfficiency.globalEffort || 0);
   const adsEffort = efficiency.adsEffort !== 'N/A' && efficiency.adsEffort ? Number(efficiency.adsEffort) : null;
+  const prevAdsEffort = prevEfficiency.adsEffort !== 'N/A' && prevEfficiency.adsEffort ? Number(prevEfficiency.adsEffort) : null;
   const orgEffort = efficiency.orgEffort !== 'N/A' && efficiency.orgEffort ? Number(efficiency.orgEffort) : null;
+  const prevOrgEffort = prevEfficiency.orgEffort !== 'N/A' && prevEfficiency.orgEffort ? Number(prevEfficiency.orgEffort) : null;
   const topTicket = efficiency.topTicket !== 'N/A' && efficiency.topTicket ? Number(efficiency.topTicket) : 0;
   const prevTopTicket = prevEfficiency.topTicket !== 'N/A' && prevEfficiency.topTicket ? Number(prevEfficiency.topTicket) : 0;
   const ttfcMedian = efficiency.ttfcData?.median ? Number(efficiency.ttfcData.median) : null;
@@ -554,6 +556,8 @@ export default function AdminCmoMetricsScreen() {
   const prevGa4 = trafficData?.prevGa4;
   const gsc = trafficData?.gsc;
   const prevGsc = trafficData?.prevGsc;
+  const ga4EngagementRate = ga4 && Number(ga4.sessions || 0) > 0 ? (1 - Number(ga4.bounceRate || 0)) * 100 : 0;
+  const prevGa4EngagementRate = prevGa4 && Number(prevGa4.sessions || 0) > 0 ? (1 - Number(prevGa4.bounceRate || 0)) * 100 : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
@@ -1685,13 +1689,25 @@ export default function AdminCmoMetricsScreen() {
 
           {/* Eficiência por Canal */}
           <View style={{ backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 14 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
+            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>
               Eficiência por Canal
             </Text>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1e293b' }}>
-              Ads: {adsEffort !== null ? adsEffort.toFixed(1) : 'N/A'} | Org: {orgEffort !== null ? orgEffort.toFixed(1) : 'N/A'}
-            </Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b' }}>
+                  Ads: {adsEffort !== null ? adsEffort.toFixed(1) : 'N/A'}
+                </Text>
+                {adsEffort !== null && prevAdsEffort !== null ? renderTrendBadge(adsEffort, prevAdsEffort, true) : null}
+              </View>
+              <Text style={{ color: '#cbd5e1', fontSize: 14 }}>|</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b' }}>
+                  Org: {orgEffort !== null ? orgEffort.toFixed(1) : 'N/A'}
+                </Text>
+                {orgEffort !== null && prevOrgEffort !== null ? renderTrendBadge(orgEffort, prevOrgEffort, true) : null}
+              </View>
+            </View>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 4 }}>
               Média de cliques necessários para gerar 1 paciente, dividida entre tráfego pago (Ads) e orgânico (SEO).
             </Text>
           </View>
@@ -1775,7 +1791,7 @@ export default function AdminCmoMetricsScreen() {
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Sessões GA4</Text>
-              {renderTrendBadge(ga4?.sessions || 0, prevGa4?.sessions || 0, false)}
+              {prevGa4 ? renderTrendBadge(Number(ga4?.sessions || 0), Number(prevGa4?.sessions || 0), false) : null}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>
               {formatNumber(ga4?.sessions || 0)}
@@ -1787,11 +1803,14 @@ export default function AdminCmoMetricsScreen() {
 
           {/* Engajamento GA4 */}
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
-              Engajamento
-            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
+                Engajamento
+              </Text>
+              {prevGa4EngagementRate !== null ? renderTrendBadge(ga4EngagementRate, prevGa4EngagementRate, false) : null}
+            </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#10b981' }}>
-              {ga4 ? `${((1 - (ga4.bounceRate || 0)) * 100).toFixed(1)}%` : '0%'}
+              {ga4 ? `${ga4EngagementRate.toFixed(1).replace('.', ',')}%` : '0%'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#64748b', marginTop: 2 }}>
               Pageviews: {formatNumber(ga4?.pageviews || 0)}
@@ -1802,7 +1821,7 @@ export default function AdminCmoMetricsScreen() {
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Cliques GSC</Text>
-              {renderTrendBadge(gsc?.clicks || 0, prevGsc?.clicks || 0, false)}
+              {prevGsc ? renderTrendBadge(Number(gsc?.clicks || 0), Number(prevGsc?.clicks || 0), false) : null}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1e293b' }}>
               {formatNumber(gsc?.clicks || 0)}
@@ -1814,14 +1833,17 @@ export default function AdminCmoMetricsScreen() {
 
           {/* Posição Média GSC */}
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', marginBottom: 4 }}>
-              Posição Média
-            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
+                Posição Média
+              </Text>
+              {prevGsc ? renderTrendBadge(Number(gsc?.position || 0), Number(prevGsc?.position || 0), true) : null}
+            </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1B4332' }}>
-              {gsc ? `${Number(gsc.position || 0).toFixed(1)}º` : '0º'}
+              {gsc ? `${Number(gsc.position || 0).toFixed(1).replace('.', ',')}º` : '0º'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#64748b', marginTop: 2 }}>
-              CTR: {gsc ? `${(Number(gsc.ctr || 0) * 100).toFixed(1)}%` : '0%'}
+              CTR: {gsc ? `${(Number(gsc.ctr || 0) * 100).toFixed(2).replace('.', ',')}%` : '0%'}
             </Text>
           </View>
         </View>

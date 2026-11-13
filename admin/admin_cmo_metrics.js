@@ -258,16 +258,18 @@ function renderCMOMetrics(data) {
                     return null;
                 };
 
-                const getArrow = (pct) => {
+                const getArrow = (pct, prevVal) => {
+                    const prevStr = typeof prevVal === 'number' ? prevVal.toFixed(1) : 'N/A';
+                    const titleAttr = `title="Anterior (90d anteriores): ${prevStr}"`;
                     if (pct === null) return '';
-                    if (pct > 0) return ` <span style="color:#ef4444;font-size:0.85rem">↑${Math.abs(pct).toFixed(1)}%</span>`;
-                    if (pct < 0) return ` <span style="color:#10b981;font-size:0.85rem">↓${Math.abs(pct).toFixed(1)}%</span>`;
-                    return ` <span style="color:#64748b;font-size:0.85rem">−0%</span>`;
+                    if (Math.abs(pct) < 0.1) return ` <span ${titleAttr} style="color:#64748b;font-size:0.85rem">−0%</span>`;
+                    if (pct > 0) return ` <span ${titleAttr} style="color:#ef4444;font-size:0.85rem">↑${Math.abs(pct).toFixed(1)}%</span>`;
+                    return ` <span ${titleAttr} style="color:#10b981;font-size:0.85rem">↓${Math.abs(pct).toFixed(1)}%</span>`;
                 };
 
                 const strAds = currAds !== 'N/A' ? currAds.toFixed(1) : 'N/A';
                 const strOrg = currOrg !== 'N/A' ? currOrg.toFixed(1) : 'N/A';
-                elCh.innerHTML = `Ads: ${strAds}${getArrow(calcPct(currAds, prevAds))} | Org: ${strOrg}${getArrow(calcPct(currOrg, prevOrg))}`;
+                elCh.innerHTML = `Ads: ${strAds}${getArrow(calcPct(currAds, prevAds), prevAds)} | Org: ${strOrg}${getArrow(calcPct(currOrg, prevOrg), prevOrg)}`;
             }
         }
 
@@ -1522,38 +1524,57 @@ async function loadTrafficMetrics(dateStart, dateEnd, token) {
 
         const data = await response.json();
         if (data.success && data.data) {
-            const { ga4, gsc, prevGa4, prevGsc } = data.data;
+            const { ga4, gsc, prevGa4, prevGsc, period } = data.data;
+            let prevPeriodHint = 'período anterior';
+            if (period?.prevDateStart && period?.prevDateEnd) {
+                const fmtBr = (iso) => {
+                    const parts = String(iso).split('-');
+                    return parts.length === 3 ? `${parts[2]}/${parts[1]}` : iso;
+                };
+                const daysLabel = period.prevDays ? ` · ${period.prevDays}d` : (period.diffDays ? ` · ${period.diffDays}d` : '');
+                prevPeriodHint = `${fmtBr(period.prevDateStart)}–${fmtBr(period.prevDateEnd)}${daysLabel}`;
+            }
 
-            const formatTrend = (current, previous, isReversed = false) => {
-                if (!previous || previous === 0) return '';
+            const formatTrend = (current, previous, isReversed = false, prevFormatted = '') => {
+                if (previous === null || previous === undefined || isNaN(previous) || previous === 0) return '';
                 const diff = ((current - previous) / previous) * 100;
-                if (Math.abs(diff) < 0.1) return '';
+                const titleAttr = `title="Anterior (${prevPeriodHint}): ${prevFormatted || previous}"`;
+                if (Math.abs(diff) < 0.1) {
+                    return `<span ${titleAttr} style="font-size: 0.8rem; font-weight: bold; margin-left: 8px; color: #64748b;">− 0%</span>`;
+                }
                 let isPositive = diff > 0;
                 if (isReversed) isPositive = !isPositive;
 
                 const color = isPositive ? '#10b981' : '#ef4444';
                 const icon = diff > 0 ? '▲' : '▼';
-                return `<span style="font-size: 0.8rem; font-weight: bold; margin-left: 8px; color: ${color};">${icon} ${Math.abs(diff).toFixed(1).replace('.', ',')}%</span>`;
+                return `<span ${titleAttr} style="font-size: 0.8rem; font-weight: bold; margin-left: 8px; color: ${color};">${icon} ${Math.abs(diff).toFixed(1).replace('.', ',')}%</span>`;
             };
 
             // Update GA4
             if (ga4) {
-                document.getElementById('cmo-ga4-sessions').innerHTML = ga4.sessions.toLocaleString('pt-BR') + (prevGa4 ? formatTrend(ga4.sessions, prevGa4.sessions) : '');
-                document.getElementById('cmo-ga4-users').textContent = ga4.users.toLocaleString('pt-BR');
-                document.getElementById('cmo-ga4-pageviews').textContent = ga4.pageviews.toLocaleString('pt-BR');
+                const sessions = Number(ga4.sessions || 0);
+                const prevSessions = prevGa4 ? Number(prevGa4.sessions || 0) : null;
+                document.getElementById('cmo-ga4-sessions').innerHTML = sessions.toLocaleString('pt-BR') + (prevGa4 ? formatTrend(sessions, prevSessions, false, prevSessions.toLocaleString('pt-BR')) : '');
+                document.getElementById('cmo-ga4-users').textContent = Number(ga4.users || 0).toLocaleString('pt-BR');
+                document.getElementById('cmo-ga4-pageviews').textContent = Number(ga4.pageviews || 0).toLocaleString('pt-BR');
 
-                const engagementRate = ga4.sessions > 0 ? (1 - ga4.bounceRate) * 100 : 0;
-                const prevEngagementRate = prevGa4 && prevGa4.sessions > 0 ? (1 - prevGa4.bounceRate) * 100 : 0;
+                const engagementRate = sessions > 0 ? (1 - Number(ga4.bounceRate || 0)) * 100 : 0;
+                const prevEngagementRate = prevGa4 && Number(prevGa4.sessions || 0) > 0 ? (1 - Number(prevGa4.bounceRate || 0)) * 100 : 0;
 
-                document.getElementById('cmo-ga4-engagement').innerHTML = engagementRate.toFixed(1).replace('.', ',') + '%' + (prevGa4 ? formatTrend(engagementRate, prevEngagementRate) : '');
+                document.getElementById('cmo-ga4-engagement').innerHTML = engagementRate.toFixed(1).replace('.', ',') + '%' + (prevGa4 ? formatTrend(engagementRate, prevEngagementRate, false, `${prevEngagementRate.toFixed(1).replace('.', ',')}%`) : '');
             }
 
             // Update GSC
             if (gsc) {
-                document.getElementById('cmo-gsc-clicks').innerHTML = gsc.clicks.toLocaleString('pt-BR') + (prevGsc ? formatTrend(gsc.clicks, prevGsc.clicks) : '');
-                document.getElementById('cmo-gsc-impressions').textContent = gsc.impressions.toLocaleString('pt-BR');
-                document.getElementById('cmo-gsc-position').innerHTML = gsc.position.toFixed(1).replace('.', ',') + 'º' + (prevGsc ? formatTrend(gsc.position, prevGsc.position, true) : ''); // true for reversed logic (lower position is better)
-                document.getElementById('cmo-gsc-ctr').textContent = (gsc.ctr * 100).toFixed(2).replace('.', ',') + '%';
+                const clicks = Number(gsc.clicks || 0);
+                const prevClicks = prevGsc ? Number(prevGsc.clicks || 0) : null;
+                const position = Number(gsc.position || 0);
+                const prevPosition = prevGsc ? Number(prevGsc.position || 0) : null;
+
+                document.getElementById('cmo-gsc-clicks').innerHTML = clicks.toLocaleString('pt-BR') + (prevGsc ? formatTrend(clicks, prevClicks, false, prevClicks.toLocaleString('pt-BR')) : '');
+                document.getElementById('cmo-gsc-impressions').textContent = Number(gsc.impressions || 0).toLocaleString('pt-BR');
+                document.getElementById('cmo-gsc-position').innerHTML = position.toFixed(1).replace('.', ',') + 'º' + (prevGsc ? formatTrend(position, prevPosition, true, `${prevPosition.toFixed(1).replace('.', ',')}º`) : ''); // true for reversed logic (lower position is better)
+                document.getElementById('cmo-gsc-ctr').textContent = (Number(gsc.ctr || 0) * 100).toFixed(2).replace('.', ',') + '%';
             }
         }
     } catch (e) {
