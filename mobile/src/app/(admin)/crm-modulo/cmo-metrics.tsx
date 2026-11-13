@@ -179,6 +179,59 @@ export default function AdminCmoMetricsScreen() {
     );
   };
 
+  type SimTone = 'positive' | 'negative' | 'warning' | 'info' | 'neutral';
+  const renderSimBadgePill = (label: string, tone: SimTone = 'neutral') => {
+    const palette: Record<SimTone, { bg: string; color: string; border: string }> = {
+      positive: { bg: '#ecfdf5', color: '#059669', border: '#a7f3d0' },
+      negative: { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+      warning: { bg: '#fffbeb', color: '#d97706', border: '#fde68a' },
+      info: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' },
+      neutral: { bg: '#f1f5f9', color: '#64748b', border: '#e2e8f0' },
+    };
+    const p = palette[tone] || palette.neutral;
+    return (
+      <View
+        style={{
+          backgroundColor: p.bg,
+          borderColor: p.border,
+          borderWidth: 1,
+          paddingHorizontal: 8,
+          paddingVertical: 3,
+          borderRadius: 999,
+        }}
+      >
+        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: p.color }}>{label}</Text>
+      </View>
+    );
+  };
+
+  const renderSimPctBadge = (
+    currVal: number,
+    baseVal: number,
+    refLabel: string,
+    opts: { inverseGood?: boolean; neutralTrend?: boolean } = {}
+  ) => {
+    const { inverseGood = false, neutralTrend = false } = opts;
+    if (!isFinite(currVal) || !isFinite(baseVal) || baseVal <= 0) {
+      return renderSimBadgePill('—', 'neutral');
+    }
+    const pct = ((currVal - baseVal) / baseVal) * 100;
+    if (Math.abs(pct) < 0.1) {
+      return renderSimBadgePill(`= 0,0% ${refLabel}`, 'neutral');
+    }
+    const isUp = pct > 0;
+    const arrow = isUp ? '↑' : '↓';
+    const sign = isUp ? '+' : '-';
+    let tone: SimTone = 'neutral';
+    if (neutralTrend) {
+      tone = isUp ? 'info' : 'neutral';
+    } else {
+      const isGood = inverseGood ? !isUp : isUp;
+      tone = isGood ? 'positive' : 'negative';
+    }
+    return renderSimBadgePill(`${arrow} ${sign}${Math.abs(pct).toFixed(1).replace('.', ',')}% ${refLabel}`, tone);
+  };
+
   // Transparency Debug Card Helper
   const renderDbgCard = (
     title: string,
@@ -380,9 +433,11 @@ export default function AdminCmoMetricsScreen() {
 
     const targetIndex = Math.min(Math.max(1, selectedSimHorizon), 12) - 1;
     const targetProjection = monthProjections[targetIndex] || monthProjections[monthProjections.length - 1];
+    const m1Projection = monthProjections[0] || targetProjection;
 
     return {
       currentBase,
+      currentMrr: currentBase * arpu,
       targetMonth: selectedSimHorizon,
       projectedMRR: targetProjection.mrr,
       projectedBase: targetProjection.base,
@@ -391,6 +446,11 @@ export default function AdminCmoMetricsScreen() {
       projectedLTV: targetProjection.ltv,
       projectedPayback: targetProjection.payback,
       projectedExtrapolation: targetProjection.extrapolation,
+      m1Google: m1Projection.googleSpend,
+      m1Ltv: m1Projection.ltv,
+      m1Payback: m1Projection.payback,
+      monthlyChurn,
+      cacMeta,
       histMetaMonthlySpend,
       contactsPerPaidPsiMonth,
     };
@@ -697,6 +757,26 @@ export default function AdminCmoMetricsScreen() {
                 <Feather name="chevron-down" size={16} color="#ffffff" />
               </View>
             </NativeSelectMenu>
+            {dashboardData?.period?.dateStart && dashboardData?.period?.prevDateStart ? (
+              <Text
+                style={{
+                  fontFamily: 'Inter_500Medium',
+                  fontSize: 10.5,
+                  color: 'rgba(255,255,255,0.8)',
+                  marginTop: 8,
+                }}
+              >
+                {(() => {
+                  const fmtBr = (iso: string) => {
+                    const pts = String(iso).split('-');
+                    return pts.length === 3 ? `${pts[2]}/${pts[1]}` : iso;
+                  };
+                  const p = dashboardData.period;
+                  const dLbl = p.diffDays ? `${p.diffDays}d` : '';
+                  return `Comparando ${fmtBr(p.dateStart)}–${fmtBr(p.dateEnd)} (${dLbl}) vs ${fmtBr(p.prevDateStart)}–${fmtBr(p.prevDateEnd)} (${dLbl})`;
+                })()}
+              </Text>
+            ) : null}
           </View>
         </LinearGradient>
 
@@ -1096,15 +1176,13 @@ export default function AdminCmoMetricsScreen() {
                   MRR Projetado ({selectedSimHorizon}M)
                 </Text>
               </View>
-              <View style={{ backgroundColor: '#eff6ff', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
-                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#2563eb' }}>Receita</Text>
-              </View>
+              {renderSimPctBadge(simulationResults?.projectedMRR || 0, simulationResults?.currentMrr || 0, 'vs hoje')}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 24, color: '#0f172a', marginVertical: 4 }}>
               {formatBRL(simulationResults?.projectedMRR || 0)}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11.5, color: '#64748b', lineHeight: 16 }}>
-              Receita recorrente estimada para o Mês {selectedSimHorizon} com base nos novos clientes ativos.
+              Receita recorrente estimada para o Mês {selectedSimHorizon} (hoje: {formatBRL(simulationResults?.currentMrr || 0)}/mês).
             </Text>
           </View>
 
@@ -1132,9 +1210,7 @@ export default function AdminCmoMetricsScreen() {
                   Base Projetada ({selectedSimHorizon}M)
                 </Text>
               </View>
-              <View style={{ backgroundColor: '#e8f5e9', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
-                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#1B4332' }}>Assinantes</Text>
-              </View>
+              {renderSimPctBadge(Math.floor(simulationResults?.projectedBase || 0), simulationResults?.currentBase || 0, 'vs hoje')}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 24, color: '#0f172a', marginVertical: 4 }}>
               {Math.floor(simulationResults?.projectedBase || 0)} psicólogos
@@ -1168,9 +1244,9 @@ export default function AdminCmoMetricsScreen() {
                   Meta Ads Recomendado ({selectedSimHorizon}M)
                 </Text>
               </View>
-              <View style={{ backgroundColor: '#ecfdf5', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
-                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#059669' }}>Aquisição B2B</Text>
-              </View>
+              {(simulationResults?.projectedMeta || 0) <= 0
+                ? renderSimBadgePill('↓ Motor travado', 'negative')
+                : renderSimPctBadge(simulationResults?.projectedMeta || 0, simulationResults?.histMetaMonthlySpend || 0, 'vs hist. 30d', { neutralTrend: true })}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 24, color: '#0f172a', marginVertical: 4 }}>
               {formatBRL(simulationResults?.projectedMeta || 0)}
@@ -1204,9 +1280,17 @@ export default function AdminCmoMetricsScreen() {
                   Custo Google ({selectedSimHorizon}M)
                 </Text>
               </View>
-              <View style={{ backgroundColor: '#fffbeb', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
-                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#d97706' }}>Demanda B2C</Text>
-              </View>
+              {(() => {
+                const gCurr = simulationResults?.projectedGoogle || 0;
+                const gM1 = simulationResults?.m1Google || 0;
+                const mrrProj = simulationResults?.projectedMRR || 0;
+                const gShare = mrrProj > 0 ? (gCurr / mrrProj) * 100 : 0;
+                if (selectedSimHorizon === 1 || gM1 <= 0) {
+                  const gTone: SimTone = gShare <= 35 ? 'positive' : gShare <= 60 ? 'warning' : 'negative';
+                  return renderSimBadgePill(`${gShare.toFixed(1).replace('.', ',')}% do MRR`, gTone);
+                }
+                return renderSimPctBadge(gCurr, gM1, 'vs M1 (30d)', { inverseGood: true });
+              })()}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 24, color: '#0f172a', marginVertical: 4 }}>
               {formatBRL(simulationResults?.projectedGoogle || 0)}
@@ -1229,9 +1313,29 @@ export default function AdminCmoMetricsScreen() {
                 padding: 14,
               }}
             >
-              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: '#64748b', textTransform: 'uppercase' }}>
-                LTV Contribuição
-              </Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: '#64748b', textTransform: 'uppercase' }}>
+                  LTV Contribuição
+                </Text>
+                {(() => {
+                  const pLtv = simulationResults?.projectedLTV || 0;
+                  const m1Ltv = simulationResults?.m1Ltv || 0;
+                  const pPb = simulationResults?.projectedPayback || 0;
+                  const mCh = simulationResults?.monthlyChurn || 0;
+                  const cMeta = simulationResults?.cacMeta || 0;
+                  if (pLtv <= 0) return renderSimBadgePill('↓ Negativo', 'negative');
+                  if (selectedSimHorizon > 1 && m1Ltv > 0 && Math.abs((pLtv - m1Ltv) / m1Ltv) >= 0.001) {
+                    return renderSimPctBadge(pLtv, m1Ltv, 'vs M1');
+                  }
+                  const ratio = pPb > 0 && mCh > 0 ? 1 / (mCh * pPb) : cMeta > 0 ? pLtv / cMeta : null;
+                  if (ratio !== null && isFinite(ratio)) {
+                    const rTone: SimTone = ratio >= 3 ? 'positive' : ratio >= 1 ? 'warning' : 'negative';
+                    const rArrow = ratio >= 3 ? '↑' : ratio >= 1 ? '=' : '↓';
+                    return renderSimBadgePill(`${rArrow} ${ratio.toFixed(1).replace('.', ',')}× CAC`, rTone);
+                  }
+                  return null;
+                })()}
+              </View>
               <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#0f172a', marginTop: 2 }}>
                 {formatBRL(simulationResults?.projectedLTV || 0)}
               </Text>
@@ -1251,9 +1355,22 @@ export default function AdminCmoMetricsScreen() {
                 padding: 14,
               }}
             >
-              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: '#64748b', textTransform: 'uppercase' }}>
-                CAC Payback
-              </Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: '#64748b', textTransform: 'uppercase' }}>
+                  CAC Payback
+                </Text>
+                {(() => {
+                  const pPb = simulationResults?.projectedPayback || 0;
+                  const m1Pb = simulationResults?.m1Payback || 0;
+                  if (pPb <= 0) return renderSimBadgePill('↓ S/ retorno', 'negative');
+                  if (selectedSimHorizon > 1 && m1Pb > 0 && Math.abs((pPb - m1Pb) / m1Pb) >= 0.001) {
+                    return renderSimPctBadge(pPb, m1Pb, 'vs M1', { inverseGood: true });
+                  }
+                  if (pPb <= 12) return renderSimBadgePill('↓ ≤ 12m', 'positive');
+                  if (pPb <= 24) return renderSimBadgePill('↑ 12–24m', 'warning');
+                  return renderSimBadgePill('↑ > 24m', 'negative');
+                })()}
+              </View>
               <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#0f172a', marginTop: 2 }}>
                 {(simulationResults?.projectedPayback || 0).toFixed(1)} meses
               </Text>
@@ -1273,14 +1390,20 @@ export default function AdminCmoMetricsScreen() {
               padding: 14,
             }}
           >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
                 Extrapolação Meta Ads
               </Text>
-              <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 14, color: '#1e293b' }}>
-                {(simulationResults?.projectedExtrapolation || 1).toFixed(1).replace('.', ',')}x histórico
-              </Text>
+              {(() => {
+                const ext = simulationResults?.projectedExtrapolation || 1;
+                if (ext <= 2) return renderSimBadgePill('↓ Segura (≤ 2×)', 'positive');
+                if (ext <= 5) return renderSimBadgePill('↑ Atenção (2–5×)', 'warning');
+                return renderSimBadgePill('↑ Risco alto (> 5×)', 'negative');
+              })()}
             </View>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 15, color: '#1e293b' }}>
+              {(simulationResults?.projectedExtrapolation || 1).toFixed(1).replace('.', ',')}× histórico
+            </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
               Projetado: {formatBRL(simulationResults?.projectedMeta || 0)}/mês • Histórico: {formatBRL(simulationResults?.histMetaMonthlySpend || 0)}/mês
             </Text>

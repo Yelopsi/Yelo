@@ -327,7 +327,10 @@
                             </div>
                             <span class="info-tooltip" data-tooltip="Receita Recorrente Mensal estimada no mês selecionado. É calculada multiplicando o total de psicólogos pagantes ativos pelo valor da assinatura (ARPU).">i</span>
                         </div>
-                        <p id="sim-res-mrr-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                            <p id="sim-res-mrr-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                            <span id="sim-badge-1" class="sim-trend-badge"></span>
+                        </div>
                     </div>
                     <div style="margin-top: 15px; display: inline-flex; align-items: center; background: #f8fafc; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
                         <span id="sim-res-mrr-feedback" style="font-size: 0.8rem; color: #475569; font-weight: 600;">Aguardando cálculo...</span>
@@ -346,7 +349,10 @@
                             </div>
                             <span class="info-tooltip" data-tooltip="Total de psicólogos pagantes ativos previstos na plataforma ao final do mês, somando novas aquisições e descontando o churn (cancelamentos) estimado.">i</span>
                         </div>
-                        <p id="sim-res-subs-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                            <p id="sim-res-subs-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                            <span id="sim-badge-2" class="sim-trend-badge"></span>
+                        </div>
                     </div>
                     <p id="sim-res-subs-feedback" style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Psicólogos assinantes na plataforma.</p>
                 </div>
@@ -363,7 +369,10 @@
                             </div>
                             <span class="info-tooltip" data-tooltip="Verba mensal sugerida no Meta Ads (Instagram/Facebook) para adquirir os novos psicólogos previstos no plano, já considerando a escala e a taxa de conversão de trial.">i</span>
                         </div>
-                        <p id="sim-res-meta-budget-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                            <p id="sim-res-meta-budget-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                            <span id="sim-badge-3" class="sim-trend-badge"></span>
+                        </div>
                     </div>
                     <p id="sim-res-meta-feedback" style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Meta Ads recomendado — Mês 12.</p>
                 </div>
@@ -380,7 +389,10 @@
                             </div>
                             <span class="info-tooltip" data-tooltip="Investimento total projetado no Google Ads (Busca de Pacientes) para garantir o volume de contatos no WhatsApp prometido aos assinantes da base e sustentar a retenção.">i</span>
                         </div>
-                        <p id="sim-res-google-budget-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                            <p id="sim-res-google-budget-12m" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                            <span id="sim-badge-4" class="sim-trend-badge"></span>
+                        </div>
                     </div>
                     <p id="sim-res-google-feedback" style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Custo projetado de sustentação da base.</p>
                 </div>
@@ -397,7 +409,10 @@
                             </div>
                             <span class="info-tooltip" data-tooltip="Lifetime Value Real por Psicólogo: lucro líquido acumulado que um psicólogo deixa durante todo o seu ciclo de vida na Yelo, já descontando impostos, taxa do Asaas e o custo dos pacientes no Google.">i</span>
                         </div>
-                        <p id="sim-res-ltv" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                            <p id="sim-res-ltv" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                            <span id="sim-badge-5" class="sim-trend-badge"></span>
+                        </div>
                     </div>
                     <p id="sim-card-5-sub" style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Lucro LTV real por psi (já s/ OPEX e Google).</p>
                 </div>
@@ -414,7 +429,10 @@
                             </div>
                             <span class="info-tooltip" data-tooltip="Meses para recuperar o investimento (Break-even). Indica quantos meses de mensalidade são necessários para pagar o Custo Combinado de Aquisição (Meta Ads + Google Ads consumido nos trials).">i</span>
                         </div>
-                        <p id="sim-res-payback" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                            <p id="sim-res-payback" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                            <span id="sim-badge-6" class="sim-trend-badge"></span>
+                        </div>
                     </div>
                     <p id="sim-card-6-sub" style="font-size: 0.8rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Meses para retorno do investimento (Break-even).</p>
                 </div>
@@ -431,7 +449,10 @@
                             </div>
                             <span class="info-tooltip" data-tooltip="Mede quantas vezes o gasto projetado no Meta Ads supera o histórico real executado. Múltiplos altos alertam para incerteza na capacidade de escalar o público sem encarecer o CAC.">i</span>
                         </div>
-                        <p id="sim-res-extrapolation" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                            <p id="sim-res-extrapolation" style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px;">--</p>
+                            <span id="sim-badge-7" class="sim-trend-badge"></span>
+                        </div>
                     </div>
                     <p id="sim-res-extrapolation-desc" style="font-size: 0.75rem; color: #64748b; margin: 15px 0 0 0; line-height: 1.4;">Projetado: R$ 0 / mês · Histórico: R$ 0 / mês</p>
                 </div>
