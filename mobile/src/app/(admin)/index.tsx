@@ -163,7 +163,7 @@ export default function AdminVisaoGeralScreen() {
 
   const formatProjection = (target: number) => {
     const pct = target > 0 ? (currentPaying / target) * 100 : 0;
-    const pctBadge = pct >= 100 ? '✓ 100%' : `▲ ${pct.toFixed(1).replace('.', ',')}%`;
+    const pctBadge = pct >= 100 ? '✓ 100%' : `${pct.toFixed(1).replace('.', ',')}% da meta`;
 
     if (currentPaying >= target) return { text: 'Atingido', badge: pctBadge, achieved: true };
     if (netGrowthPerMonth <= 0) return { text: 'Estagnado', badge: pctBadge, achieved: false };
