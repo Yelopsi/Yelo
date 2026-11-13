@@ -924,17 +924,14 @@ router.get('/dashboard', protect, admin, async (req, res) => {
 
         try {
             const dateEnd90 = new Date();
-            const dateStart90 = new Date();
+            const dateStart90 = new Date(dateEnd90);
             dateStart90.setDate(dateStart90.getDate() - 90);
             
             const dateStart180 = new Date(dateStart90);
             dateStart180.setDate(dateStart180.getDate() - 90);
 
             const getEfficiencyMetrics = async (startDate, endDate) => {
-                const edObj = new Date(endDate);
-                edObj.setDate(edObj.getDate() + 1);
-                const nextDayStrEff = edObj.toISOString().split('T')[0];
-                const dateCondition = { createdAt: { [Op.gte]: startDate, [Op.lte]: endDate } };
+                const dateCondition = { createdAt: { [Op.gte]: startDate, [Op.lt]: endDate } };
                 const closedCondition = { dealClosed: { [Op.in]: ['yes', 'started'] } };
 
                 const totalClicks = await WhatsAppClickLog.count({ where: dateCondition });
@@ -961,10 +958,10 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     SELECT "psychologistId", COUNT(id) as "closedCount"
                     FROM "WhatsAppClickLogs"
                     WHERE "dealClosed" IN ('yes', 'started') AND "psychologistId" IS NOT NULL
-                    AND "createdAt" >= :dateStart AND "createdAt" < :nextDayStr
+                    AND "createdAt" >= :startDate AND "createdAt" < :endDate
                     GROUP BY "psychologistId"
                     ORDER BY "closedCount" DESC
-                `, { replacements: { dateStart: startDate, nextDayStr: nextDayStrEff }, type: sequelize.QueryTypes.SELECT });
+                `, { replacements: { startDate, endDate }, type: sequelize.QueryTypes.SELECT });
 
                 if (topPerformersQuery.length > 0) {
                     const top20PercentCount = Math.max(1, Math.ceil(topPerformersQuery.length * 0.20));
@@ -983,9 +980,9 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                         EXTRACT(EPOCH FROM (MIN(w."createdAt") - p."createdAt")) / 86400 as days_to_first_contact
                     FROM "Psychologists" p
                     JOIN "WhatsAppClickLogs" w ON p.id = w."psychologistId"
-                    WHERE w."createdAt" >= :dateStart AND w."createdAt" < :nextDayStr
+                    WHERE w."createdAt" >= :startDate AND w."createdAt" < :endDate
                     GROUP BY p.id, p."createdAt"
-                `, { replacements: { dateStart: startDate, nextDayStr: nextDayStrEff }, type: sequelize.QueryTypes.SELECT });
+                `, { replacements: { startDate, endDate }, type: sequelize.QueryTypes.SELECT });
                 if (ttfcQuery.length > 0) {
                     const validTtfcs = ttfcQuery.filter(q => q.days_to_first_contact >= 0).map(q => parseFloat(q.days_to_first_contact)).sort((a,b) => a-b);
                     if (validTtfcs.length > 0) {
@@ -1003,9 +1000,9 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                     FROM "Psychologists" p
                     JOIN "WhatsAppClickLogs" w ON p.id = w."psychologistId"
                     WHERE w."dealClosed" IN ('yes', 'started')
-                    AND w."createdAt" >= :dateStart AND w."createdAt" < :nextDayStr
+                    AND w."createdAt" >= :startDate AND w."createdAt" < :endDate
                     GROUP BY p.id, p."createdAt"
-                `, { replacements: { dateStart: startDate, nextDayStr: nextDayStrEff }, type: sequelize.QueryTypes.SELECT });
+                `, { replacements: { startDate, endDate }, type: sequelize.QueryTypes.SELECT });
                 if (ttvQuery.length > 0) {
                     const validTtvs = ttvQuery.filter(q => q.days_to_value >= 0).map(q => parseFloat(q.days_to_value)).sort((a,b) => a-b);
                     if (validTtvs.length > 0) {
@@ -1418,6 +1415,7 @@ router.get('/traffic', protect, admin, async (req, res) => {
         const safeDays = diffDaysInclusive(safeDateStart, safeDateEnd);
         const prevDateEnd = addDaysToDateStr(safeDateStart, -1);
         const rawPrevDateStart = addDaysToDateStr(prevDateEnd, -(safeDays - 1));
+        const hasValidPrevWindow = prevDateEnd >= START_OF_TIME;
         const safePrevDateStart = rawPrevDateStart < START_OF_TIME ? START_OF_TIME : rawPrevDateStart;
 
         const ga4Service = require('../services/googleAnalyticsService');
@@ -1426,8 +1424,8 @@ router.get('/traffic', protect, admin, async (req, res) => {
         const [ga4Data, gscData, prevGa4Data, prevGscData] = await Promise.all([
             ga4Service.getMetrics(safeDateStart, safeDateEnd),
             gscService.getMetrics(safeDateStart, safeDateEnd),
-            ga4Service.getMetrics(safePrevDateStart, prevDateEnd),
-            gscService.getMetrics(safePrevDateStart, prevDateEnd)
+            (hasValidPrevWindow && safePrevDateStart <= prevDateEnd) ? ga4Service.getMetrics(safePrevDateStart, prevDateEnd) : Promise.resolve(null),
+            (hasValidPrevWindow && safePrevDateStart <= prevDateEnd) ? gscService.getMetrics(safePrevDateStart, prevDateEnd) : Promise.resolve(null)
         ]);
 
         res.json({
@@ -1440,9 +1438,10 @@ router.get('/traffic', protect, admin, async (req, res) => {
                 period: {
                     dateStart: safeDateStart,
                     dateEnd: safeDateEnd,
-                    prevDateStart: safePrevDateStart,
-                    prevDateEnd,
+                    prevDateStart: (hasValidPrevWindow && safePrevDateStart <= prevDateEnd) ? safePrevDateStart : null,
+                    prevDateEnd: (hasValidPrevWindow && safePrevDateStart <= prevDateEnd) ? prevDateEnd : null,
                     diffDays: safeDays,
+                    prevDays: (hasValidPrevWindow && safePrevDateStart <= prevDateEnd) ? diffDaysInclusive(safePrevDateStart, prevDateEnd) : 0,
                     isPartialPeriod: resolved.isPartialPeriod
                 }
             }
