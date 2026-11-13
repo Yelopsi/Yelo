@@ -184,10 +184,16 @@ exports.getDashboardStats = async (req, res) => {
             
             const [churnedPaying90dRes] = await db.sequelize.query(`
                 SELECT COUNT(*) as count 
-                FROM "Psychologists" 
-                WHERE "updatedAt" >= NOW() - INTERVAL '90 days' 
-                AND status = 'inactive' 
-                AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+                FROM "Psychologists" p
+                WHERE p."deletedAt" IS NULL
+                AND (p."is_exempt" IS NULL OR p."is_exempt" = false)
+                AND NOT (p.status = 'active' AND (p."planExpiresAt" IS NULL OR p."planExpiresAt" > NOW()))
+                AND (p."subscriptionId" IS NOT NULL OR p."subscription_payments_count" > 0 OR p."firstPaidAt" IS NOT NULL)
+                AND COALESCE(
+                    p."canceledAt",
+                    CASE WHEN p."planExpiresAt" >= '2000-01-01' AND p."planExpiresAt" <= NOW() THEN p."planExpiresAt" ELSE NULL END,
+                    (SELECT MAX(COALESCE(pay."paymentDate", pay."createdAt")) + INTERVAL '30 days' FROM "Payments" pay WHERE pay."psychologistId" = p.id AND pay.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'))
+                ) >= NOW() - INTERVAL '90 days'
             `, { type: db.sequelize.QueryTypes.SELECT });
 
             const new90d = parseInt(newPaying90dRes?.count || 0, 10);
@@ -698,7 +704,9 @@ exports.getFinancials = async (req, res) => {
 
             const isDeactivatedByPrevEnd = (() => {
                 if (isActiveNow) return false;
-                const deactDate = p.canceledAt ? new Date(p.canceledAt) : (p.planExpiresAt && new Date(p.planExpiresAt) <= now ? new Date(p.planExpiresAt) : (p.updatedAt ? new Date(p.updatedAt) : null));
+                const expObj = p.planExpiresAt ? new Date(p.planExpiresAt) : null;
+                const validExp = expObj && !isNaN(expObj.getTime()) && expObj.getFullYear() >= 2000 && expObj <= now ? expObj : null;
+                const deactDate = p.canceledAt ? new Date(p.canceledAt) : (validExp || (p.updatedAt ? new Date(p.updatedAt) : null));
                 if (!deactDate || deactDate > prevEnd) return false;
                 if (p.reactivatedAt && new Date(p.reactivatedAt) <= prevEnd && new Date(p.reactivatedAt) > deactDate) {
                     return false;
@@ -730,11 +738,27 @@ exports.getFinancials = async (req, res) => {
 
         const cmoPaidChurnQuery = `
             SELECT COUNT(*) as churned
-            FROM "Psychologists"
-            WHERE status = 'inactive'
-            AND "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
-            AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
-            AND "deletedAt" IS NULL
+            FROM "Psychologists" p
+            WHERE p."deletedAt" IS NULL
+            AND (p."is_exempt" IS NULL OR p."is_exempt" = false)
+            AND NOT (p.status = 'active' AND (p."planExpiresAt" IS NULL OR p."planExpiresAt" > NOW()))
+            AND (p.status = 'inactive' OR (p."planExpiresAt" IS NOT NULL AND p."planExpiresAt" <= NOW()))
+            AND p."plano" IS NOT NULL
+            AND (
+                p."subscription_payments_count" > 0
+                OR p."firstPaidAt" IS NOT NULL
+                OR EXISTS (SELECT 1 FROM "Payments" pay WHERE pay."psychologistId" = p.id AND pay.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'))
+            )
+            AND COALESCE(
+                p."canceledAt",
+                CASE WHEN p."planExpiresAt" >= '2000-01-01' AND p."planExpiresAt" <= NOW() THEN p."planExpiresAt" ELSE NULL END,
+                (SELECT MAX(COALESCE(pay."paymentDate", pay."createdAt")) + INTERVAL '30 days' FROM "Payments" pay WHERE pay."psychologistId" = p.id AND pay.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'))
+            ) >= :dateStart
+            AND COALESCE(
+                p."canceledAt",
+                CASE WHEN p."planExpiresAt" >= '2000-01-01' AND p."planExpiresAt" <= NOW() THEN p."planExpiresAt" ELSE NULL END,
+                (SELECT MAX(COALESCE(pay."paymentDate", pay."createdAt")) + INTERVAL '30 days' FROM "Payments" pay WHERE pay."psychologistId" = p.id AND pay.status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'))
+            ) < :nextDayStr
         `;
         const [cmoChurnRes] = await db.sequelize.query(cmoPaidChurnQuery, { replacements: { dateStart, nextDayStr }, type: db.sequelize.QueryTypes.SELECT });
         const cmoPaidChurnCount = parseInt(cmoChurnRes.churned || 0);
@@ -749,9 +773,11 @@ exports.getFinancials = async (req, res) => {
         const cmoTrialChurnQuery = `
             SELECT COUNT(*) as churned
             FROM "Psychologists"
-            WHERE ("subscriptionId" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0))
+            WHERE ("subscriptionId" IS NULL AND ("subscription_payments_count" IS NULL OR "subscription_payments_count" = 0) AND "firstPaidAt" IS NULL)
+            AND ("is_exempt" IS NULL OR "is_exempt" = false)
+            AND "planExpiresAt" >= '2000-01-01'
             AND "planExpiresAt" <= NOW()
-            AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
+            AND "planExpiresAt" >= :dateStart AND "planExpiresAt" < :nextDayStr
             AND "deletedAt" IS NULL
         `;
         const [cmoTrialChurnRes] = await db.sequelize.query(cmoTrialChurnQuery, { replacements: { dateStart, nextDayStr }, type: db.sequelize.QueryTypes.SELECT });
@@ -1388,20 +1414,24 @@ exports.getFounderMetrics = async (req, res) => {
             const hasSub = !!(p.subscriptionId) || (p.subscription_payments_count > 0);
             
             let planEndsInFuture = false;
+            let hasValidExpDate = false;
             let expiredSundayKeepMonday = false;
 
             if (p.planExpiresAt) {
                 const expDate = new Date(p.planExpiresAt);
-                planEndsInFuture = expDate > now;
+                hasValidExpDate = !isNaN(expDate.getTime()) && expDate.getFullYear() >= 2000;
+                planEndsInFuture = hasValidExpDate && expDate > now;
                 
                 // Se expirou ontem e ontem era domingo, hoje é segunda, então mantemos no funil para cobrança no dia útil
-                if (!planEndsInFuture && expDate > yesterdayStart && expDate.getDay() === 0 && now.getDay() === 1) {
+                if (!planEndsInFuture && hasValidExpDate && expDate > yesterdayStart && expDate.getDay() === 0 && now.getDay() === 1) {
                     expiredSundayKeepMonday = true;
                 }
             }
 
-            if (hasSub && p.status === 'active') {
-                // Pagante
+            const isPayingActiveNow = hasSub && p.status === 'active' && (!p.planExpiresAt || planEndsInFuture);
+
+            if (isPayingActiveNow) {
+                // Pagante ativo (alinhado com getDashboardStats)
                 payingUsers++;
                 const planoKey = (p.plano || '').toLowerCase();
                 currentMRR += (planPrices[planoKey] || 0);
@@ -1516,226 +1546,253 @@ exports.getFounderMetrics = async (req, res) => {
         const totalStart = payingUsers + churnedUsers;
         const churnRate = totalStart > 0 ? (churnedUsers / totalStart) : 0;
 
-        // 4. INDICADORES DE 30 DIAS E COMPARATIVO COM MÊS ANTERIOR (30 DIAS ANTERIORES)
+        // 4. INDICADORES DE 30 DIAS E COMPARATIVO COM 30 DIAS ANTERIORES
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-        const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
         // --- 4.1 ATIVAÇÃO (Últimos 30 dias vs 30 dias anteriores) ---
-        const actTotal30d = await db.Psychologist.count({
-            where: {
-                deletedAt: null,
-                isAdmin: { [Op.or]: [false, null] },
-                createdAt: { [Op.between]: [thirtyDaysAgo, now] }
-            }
-        });
-        const actActive30d = await db.Psychologist.count({
-            where: {
-                deletedAt: null,
-                isAdmin: { [Op.or]: [false, null] },
-                createdAt: { [Op.between]: [thirtyDaysAgo, now] },
-                [Op.or]: [
-                    { status: 'active' },
-                    { is_exempt: true },
-                    { subscriptionId: { [Op.ne]: null } },
-                    { subscription_payments_count: { [Op.gt]: 0 } },
-                    { [Op.and]: [{ fotoUrl: { [Op.ne]: null } }, { bio: { [Op.ne]: null } }] }
-                ]
-            }
-        });
+        // Exclui do denominador atual apenas contas ainda 'pending' com menos de 24h de cadastro (viés de recém-chegados)
+        const [actCurrRes] = await db.sequelize.query(`
+            SELECT
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE
+                    status != 'pending'
+                    OR is_exempt = true
+                    OR "subscriptionId" IS NOT NULL
+                    OR "subscription_payments_count" > 0
+                    OR "planExpiresAt" IS NOT NULL
+                    OR (TRIM(COALESCE("fotoUrl", '')) <> '' AND LENGTH(TRIM(COALESCE(bio, ''))) >= 10)
+                ) as activated
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+              AND ("isAdmin" IS NULL OR "isAdmin" = false)
+              AND "createdAt" BETWEEN :thirtyDaysAgo AND :now
+              AND NOT (status = 'pending' AND "createdAt" > :oneDayAgo)
+        `, { replacements: { thirtyDaysAgo, now, oneDayAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ total: 0, activated: 0 }]);
+
+        const actTotal30d = parseInt(actCurrRes?.total || 0, 10);
+        const actActive30d = parseInt(actCurrRes?.activated || 0, 10);
         const activationRate30d = actTotal30d > 0 ? (actActive30d / actTotal30d) : 0;
 
-        const actTotalPrev = await db.Psychologist.count({
-            where: {
-                deletedAt: null,
-                isAdmin: { [Op.or]: [false, null] },
-                createdAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] }
-            }
-        });
-        const actActivePrev = await db.Psychologist.count({
-            where: {
-                deletedAt: null,
-                isAdmin: { [Op.or]: [false, null] },
-                createdAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] },
-                [Op.or]: [
-                    { status: 'active' },
-                    { is_exempt: true },
-                    { subscriptionId: { [Op.ne]: null } },
-                    { subscription_payments_count: { [Op.gt]: 0 } },
-                    { [Op.and]: [{ fotoUrl: { [Op.ne]: null } }, { bio: { [Op.ne]: null } }] }
-                ]
-            }
-        });
+        const [actPrevRes] = await db.sequelize.query(`
+            SELECT
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE
+                    status != 'pending'
+                    OR is_exempt = true
+                    OR "subscriptionId" IS NOT NULL
+                    OR "subscription_payments_count" > 0
+                    OR "planExpiresAt" IS NOT NULL
+                    OR (TRIM(COALESCE("fotoUrl", '')) <> '' AND LENGTH(TRIM(COALESCE(bio, ''))) >= 10)
+                ) as activated
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+              AND ("isAdmin" IS NULL OR "isAdmin" = false)
+              AND "createdAt" >= :sixtyDaysAgo AND "createdAt" < :thirtyDaysAgo
+        `, { replacements: { sixtyDaysAgo, thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ total: 0, activated: 0 }]);
+
+        const actTotalPrev = parseInt(actPrevRes?.total || 0, 10);
+        const actActivePrev = parseInt(actPrevRes?.activated || 0, 10);
         const activationRatePrev = actTotalPrev > 0 ? (actActivePrev / actTotalPrev) : 0;
         const activationDiff = activationRate30d - activationRatePrev;
 
-        // --- 4.2 RETENÇÃO PÓS-TRIAL (Últimos 30 dias vs 30 dias anteriores) ---
-        // Pagantes ativos hoje vs cancelamentos nos últimos 30 dias
-        const churn30d = await db.Psychologist.count({
+        // --- DADOS UNIFICADOS DE ASSINANTES & PAGAMENTOS PARA MRR 30D, PÓS-TRIAL E RENOVAÇÃO ---
+        const allCandidatePsis = await db.Psychologist.findAll({
             where: {
-                is_exempt: false,
-                deletedAt: null,
-                [Op.and]: [
-                    {
-                        [Op.or]: [
-                            { subscribedAt: { [Op.not]: null } },
-                            { subscriptionId: { [Op.ne]: null } },
-                            { subscription_payments_count: { [Op.gt]: 0 } }
-                        ]
-                    },
-                    {
-                        [Op.or]: [
-                            { canceledAt: { [Op.between]: [thirtyDaysAgo, now] } },
-                            { status: 'inactive', updatedAt: { [Op.between]: [thirtyDaysAgo, now] } }
-                        ]
-                    }
+                is_exempt: { [Op.or]: [false, null] },
+                isAdmin: { [Op.or]: [false, null] },
+                [Op.or]: [
+                    { subscriptionId: { [Op.ne]: null } },
+                    { subscription_payments_count: { [Op.gt]: 0 } },
+                    { firstPaidAt: { [Op.ne]: null } }
                 ]
-            }
+            },
+            attributes: ['id', 'plano', 'status', 'planExpiresAt', 'canceledAt', 'reactivatedAt', 'firstPaidAt', 'subscribedAt', 'createdAt', 'updatedAt', 'deletedAt', 'subscriptionId', 'subscription_payments_count'],
+            paranoid: false,
+            raw: true
         });
-        const totalBase30d = payingUsers + churn30d;
+
+        const validPaymentsRows = await db.Payment.findAll({
+            where: { status: { [Op.in]: ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'] } },
+            attributes: ['psychologistId', 'paymentDate', 'createdAt'],
+            raw: true
+        }).catch(() => []);
+
+        const paymentsByPsiMap = new Map();
+        for (const pay of validPaymentsRows) {
+            if (!pay.psychologistId) continue;
+            const d = new Date(pay.paymentDate || pay.createdAt);
+            if (isNaN(d.getTime())) continue;
+            if (!paymentsByPsiMap.has(pay.psychologistId)) paymentsByPsiMap.set(pay.psychologistId, []);
+            paymentsByPsiMap.get(pay.psychologistId).push(d);
+        }
+        for (const arr of paymentsByPsiMap.values()) {
+            arr.sort((a, b) => a.getTime() - b.getTime());
+        }
+
+        const getRealDeactivatedDate = (p, payDates) => {
+            if (p.canceledAt) {
+                const c = new Date(p.canceledAt);
+                if (!isNaN(c.getTime())) return c;
+            }
+            if (p.planExpiresAt) {
+                const exp = new Date(p.planExpiresAt);
+                if (!isNaN(exp.getTime()) && exp.getFullYear() >= 2000 && exp <= now) {
+                    return exp;
+                }
+            }
+            if (payDates && payDates.length > 0) {
+                const lastPay = payDates[payDates.length - 1];
+                return new Date(lastPay.getTime() + 30 * 24 * 60 * 60 * 1000);
+            }
+            return p.status === 'inactive' && p.updatedAt ? new Date(p.updatedAt) : null;
+        };
+
+        const isPaidAccount = (p, payDates) => {
+            return (p.subscription_payments_count && Number(p.subscription_payments_count) > 0) ||
+                !!p.firstPaidAt ||
+                (payDates && payDates.length > 0);
+        };
+
+        const isCurrentlyActivePayingRow = (p) => {
+            const hasSub = !!p.subscriptionId || (p.subscription_payments_count && Number(p.subscription_payments_count) > 0);
+            const exp = p.planExpiresAt ? new Date(p.planExpiresAt) : null;
+            const validFutureExp = !exp || (!isNaN(exp.getTime()) && exp.getFullYear() >= 2000 && exp > now);
+            return p.deletedAt === null && p.status === 'active' && hasSub && validFutureExp;
+        };
+
+        // --- MRR há 30 dias & Base Pagante há 30 dias ---
+        let prevMRR = 0;
+        let payingPrev = 0;
+        let realChurn30d = 0;
+        let realChurnPrev = 0;
+
+        for (const p of allCandidatePsis) {
+            const payDates = paymentsByPsiMap.get(p.id) || [];
+            const realPaid = isPaidAccount(p, payDates);
+            const activeNow = isCurrentlyActivePayingRow(p);
+            const deactDate = activeNow ? null : getRealDeactivatedDate(p, payDates);
+
+            // Data real de início da assinatura paga
+            const earliestPay = payDates.length > 0 ? payDates[0] : null;
+            const candidatesStart = [earliestPay, p.firstPaidAt ? new Date(p.firstPaidAt) : null, p.subscribedAt ? new Date(p.subscribedAt) : null]
+                .filter(d => d && !isNaN(d.getTime()));
+            const startedAt = candidatesStart.length > 0
+                ? new Date(Math.min(...candidatesStart.map(d => d.getTime())))
+                : new Date(p.createdAt);
+
+            // Estava ativo e pagante em thirtyDaysAgo?
+            const wasDeletedBefore30d = p.deletedAt && new Date(p.deletedAt) <= thirtyDaysAgo;
+            if (!wasDeletedBefore30d && startedAt <= thirtyDaysAgo) {
+                let wasActive30dAgo = false;
+                if (activeNow) {
+                    const reactivatedAfter = p.reactivatedAt && new Date(p.reactivatedAt) > thirtyDaysAgo;
+                    wasActive30dAgo = !reactivatedAfter;
+                } else {
+                    const deactivatedBeforeOrAt30d = deactDate && deactDate <= thirtyDaysAgo;
+                    const reactivatedBefore30d = p.reactivatedAt && new Date(p.reactivatedAt) <= thirtyDaysAgo && (!deactDate || new Date(p.reactivatedAt) > deactDate);
+                    wasActive30dAgo = !deactivatedBeforeOrAt30d || !!reactivatedBefore30d;
+                }
+
+                if (wasActive30dAgo && (!!p.subscriptionId || realPaid)) {
+                    payingPrev++;
+                    const pk = (p.plano || '').toLowerCase();
+                    prevMRR += (planPrices[pk] || 0);
+                }
+            }
+
+            // Churn real de pagantes (sem updatedAt fantasma!)
+            if (p.deletedAt === null && realPaid && !activeNow && deactDate) {
+                if (deactDate >= thirtyDaysAgo && deactDate <= now) {
+                    realChurn30d++;
+                } else if (deactDate >= sixtyDaysAgo && deactDate < thirtyDaysAgo) {
+                    realChurnPrev++;
+                }
+            }
+        }
+
+        const mrrDiff = currentMRR - prevMRR;
+        const mrrDiffRate = prevMRR > 0 ? (mrrDiff / prevMRR) : (currentMRR > 0 ? 1 : 0);
+
+        // --- 4.2 RETENÇÃO PÓS-TRIAL (Últimos 30 dias vs 30 dias anteriores) ---
+        const totalBase30d = payingUsers + realChurn30d;
         const postTrialRetentionRate30d = totalBase30d > 0 ? (payingUsers / totalBase30d) : 0;
 
-        const churnPrev = await db.Psychologist.count({
-            where: {
-                is_exempt: false,
-                deletedAt: null,
-                [Op.and]: [
-                    {
-                        [Op.or]: [
-                            { subscribedAt: { [Op.not]: null } },
-                            { subscriptionId: { [Op.ne]: null } },
-                            { subscription_payments_count: { [Op.gt]: 0 } }
-                        ]
-                    },
-                    {
-                        [Op.or]: [
-                            { canceledAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } },
-                            { status: 'inactive', updatedAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } }
-                        ]
-                    }
-                ]
-            }
-        });
-        // Desconta novos assinantes que começaram a pagar nos últimos 30 dias para apurar a base pagante real em thirtyDaysAgo
-        const newPayingSince30dRes = await db.sequelize.query(`
-            SELECT COUNT(*) as count
-            FROM "Psychologists"
-            WHERE "deletedAt" IS NULL
-              AND ("is_exempt" IS NULL OR "is_exempt" = false)
-              AND status = 'active'
-              AND ("planExpiresAt" IS NULL OR "planExpiresAt" > NOW())
-              AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0 OR "subscribedAt" IS NOT NULL)
-              AND COALESCE("firstPaidAt", "subscribedAt", "createdAt") >= :thirtyDaysAgo
-        `, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]);
-        const newPayingSince30d = parseInt(newPayingSince30dRes[0]?.count || 0, 10);
-
-        const churnExisting30dRes = await db.sequelize.query(`
-            SELECT COUNT(*) as count
-            FROM "Psychologists"
-            WHERE "deletedAt" IS NULL
-              AND ("is_exempt" IS NULL OR "is_exempt" = false)
-              AND ("subscribedAt" IS NOT NULL OR "subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
-              AND COALESCE("firstPaidAt", "subscribedAt", "createdAt") < :thirtyDaysAgo
-              AND (
-                  "canceledAt" BETWEEN :thirtyDaysAgo AND :now
-                  OR (status = 'inactive' AND "updatedAt" BETWEEN :thirtyDaysAgo AND :now)
-              )
-        `, { replacements: { thirtyDaysAgo, now }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: churn30d }]);
-        const churnExisting30d = parseInt(churnExisting30dRes[0]?.count ?? churn30d, 10);
-
-        const payingPrev = Math.max(0, payingUsers - newPayingSince30d + churnExisting30d);
-        const totalBasePrev = payingPrev + churnPrev;
+        const totalBasePrev = payingPrev + realChurnPrev;
         const postTrialRetentionRatePrev = totalBasePrev > 0 ? (payingPrev / totalBasePrev) : 0;
         const postTrialDiff = postTrialRetentionRate30d - postTrialRetentionRatePrev;
 
-        // --- 4.3 RENOVAÇÃO DE MENSALIDADE (Últimos 30 dias vs 30 dias anteriores) ---
-        let eligibleRenewal30d = await db.Psychologist.count({
-            where: {
-                is_exempt: false,
-                deletedAt: null,
-                subscription_payments_count: { [Op.gte]: 1 },
-                [Op.or]: [
-                    { subscribedAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } },
-                    { createdAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } }
-                ]
-            }
-        });
-        let renewed30d = await db.Psychologist.count({
-            where: {
-                is_exempt: false,
-                deletedAt: null,
-                subscription_payments_count: { [Op.gte]: 2 },
-                [Op.or]: [
-                    { subscribedAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } },
-                    { createdAt: { [Op.between]: [sixtyDaysAgo, thirtyDaysAgo] } }
-                ]
-            }
-        });
+        // --- 4.3 RENOVAÇÃO DE MENSALIDADE (Ciclos reais na tabela Payments) ---
+        const calcRenewalWindow = (wStart, wEnd) => {
+            let eligible = 0;
+            let renewed = 0;
 
-        try {
-            const paymentsRenewed30d = await db.sequelize.query(`
-                SELECT COUNT(DISTINCT "psychologistId") as count 
-                FROM "Payments" 
-                WHERE status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
-                  AND "paymentDate" BETWEEN :thirtyDaysAgo AND :now
-                  AND "psychologistId" IN (
-                      SELECT "psychologistId" FROM "Payments" 
-                      WHERE status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
-                        AND "paymentDate" < :thirtyDaysAgo
-                  )
-            `, { replacements: { thirtyDaysAgo, now }, type: db.sequelize.QueryTypes.SELECT }).then(r => parseInt(r[0]?.count || 0)).catch(() => 0);
-            
-            if (paymentsRenewed30d > renewed30d) {
-                renewed30d = paymentsRenewed30d;
-                if (eligibleRenewal30d < renewed30d) eligibleRenewal30d = renewed30d;
-            }
-        } catch(e) {}
+            for (const p of allCandidatePsis) {
+                if (p.deletedAt && new Date(p.deletedAt) <= wStart) continue;
+                const payDates = paymentsByPsiMap.get(p.id) || [];
+                if (payDates.length === 0) continue;
 
-        const renewalRate30d = eligibleRenewal30d > 0 ? (renewed30d / eligibleRenewal30d) : 0;
+                const paysBefore = payDates.filter(d => d < wStart);
+                if (paysBefore.length === 0) continue;
 
-        let eligibleRenewalPrev = await db.Psychologist.count({
-            where: {
-                is_exempt: false,
-                deletedAt: null,
-                subscription_payments_count: { [Op.gte]: 1 },
-                [Op.or]: [
-                    { subscribedAt: { [Op.between]: [ninetyDaysAgo, sixtyDaysAgo] } },
-                    { createdAt: { [Op.between]: [ninetyDaysAgo, sixtyDaysAgo] } }
-                ]
-            }
-        });
-        let renewedPrev = await db.Psychologist.count({
-            where: {
-                is_exempt: false,
-                deletedAt: null,
-                subscription_payments_count: { [Op.gte]: 2 },
-                [Op.or]: [
-                    { subscribedAt: { [Op.between]: [ninetyDaysAgo, sixtyDaysAgo] } },
-                    { createdAt: { [Op.between]: [ninetyDaysAgo, sixtyDaysAgo] } }
-                ]
-            }
-        });
+                const lastPayBefore = paysBefore[paysBefore.length - 1];
+                const paysInWindow = payDates.filter(d => d >= wStart && d <= wEnd);
 
-        try {
-            const paymentsRenewedPrev = await db.sequelize.query(`
-                SELECT COUNT(DISTINCT "psychologistId") as count 
-                FROM "Payments" 
-                WHERE status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
-                  AND "paymentDate" BETWEEN :sixtyDaysAgo AND :thirtyDaysAgo
-                  AND "psychologistId" IN (
-                      SELECT "psychologistId" FROM "Payments" 
-                      WHERE status IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
-                        AND "paymentDate" < :sixtyDaysAgo
-                  )
-            `, { replacements: { sixtyDaysAgo, thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).then(r => parseInt(r[0]?.count || 0)).catch(() => 0);
-            
-            if (paymentsRenewedPrev > renewedPrev) {
-                renewedPrev = paymentsRenewedPrev;
-                if (eligibleRenewalPrev < renewedPrev) eligibleRenewalPrev = renewedPrev;
-            }
-        } catch(e) {}
+                // Se houve pagamento confirmado dentro da janela, é elegível e renovado
+                if (paysInWindow.length > 0) {
+                    eligible++;
+                    renewed++;
+                    continue;
+                }
 
-        const renewalRatePrev = eligibleRenewalPrev > 0 ? (renewedPrev / eligibleRenewalPrev) : 0;
+                // Se já tinha saído antes do início da janela, não é elegível neste ciclo
+                const canceledAt = p.canceledAt ? new Date(p.canceledAt) : null;
+                if (canceledAt && canceledAt < wStart && (!p.reactivatedAt || new Date(p.reactivatedAt) < canceledAt)) {
+                    continue;
+                }
+                const expDate = p.planExpiresAt ? new Date(p.planExpiresAt) : null;
+                const hasValidExp = !!(expDate && !isNaN(expDate.getTime()) && expDate.getFullYear() >= 2000);
+                if (hasValidExp && expDate < wStart) {
+                    continue;
+                }
+                // Se já possui cobertura válida após o fim da janela (ex: plano anual/trimestral ou pago adiantado), não falhou renovação
+                if (hasValidExp && expDate > wEnd) {
+                    continue;
+                }
+
+                // Só conta como ciclo vencido (não renovado) se o último pagamento foi recente o bastante para pertencer à base ativa entrando na janela
+                // e o vencimento mensal (+32d com folga bancária) ou expiração/cancelamento caiu dentro da janela
+                const daysSinceLastPay = (wStart.getTime() - lastPayBefore.getTime()) / (24 * 60 * 60 * 1000);
+                if (daysSinceLastPay > 45) continue;
+
+                const expectedDueWithGrace = new Date(lastPayBefore.getTime() + 32 * 24 * 60 * 60 * 1000);
+                const canceledInWindow = !!(canceledAt && canceledAt >= wStart && canceledAt <= wEnd);
+                const expiredInWindow = !!(hasValidExp && expDate >= wStart && expDate <= wEnd);
+                const cycleDueInWindow = expectedDueWithGrace <= wEnd;
+
+                if (canceledInWindow || expiredInWindow || cycleDueInWindow) {
+                    eligible++;
+                }
+            }
+
+            return {
+                eligible,
+                renewed,
+                rate: eligible > 0 ? (renewed / eligible) : 0
+            };
+        };
+
+        const currRenewal = calcRenewalWindow(thirtyDaysAgo, now);
+        const prevRenewal = calcRenewalWindow(sixtyDaysAgo, thirtyDaysAgo);
+
+        const eligibleRenewal30d = currRenewal.eligible;
+        const renewed30d = currRenewal.renewed;
+        const renewalRate30d = currRenewal.rate;
+
+        const eligibleRenewalPrev = prevRenewal.eligible;
+        const renewedPrev = prevRenewal.renewed;
+        const renewalRatePrev = prevRenewal.rate;
         const renewalDiff = renewalRate30d - renewalRatePrev;
 
         // 5. FUNIL
@@ -1833,6 +1890,9 @@ exports.getFounderMetrics = async (req, res) => {
             goals,
             metrics: {
                 currentMRR,
+                prevMRR,
+                mrrDiff,
+                mrrDiffRate,
                 payingUsers,
                 churnedUsers,
                 activeTrialsCount,
@@ -1851,7 +1911,10 @@ exports.getFounderMetrics = async (req, res) => {
                 postTrialRetentionRate: postTrialRetentionRate30d,
                 postTrialPaying: payingUsers,
                 postTrialTotal: totalBase30d,
+                postTrialChurn30d: realChurn30d,
                 prevPostTrialRetentionRate: postTrialRetentionRatePrev,
+                postTrialPrevPaying: payingPrev,
+                postTrialPrevTotal: totalBasePrev,
                 postTrialDiff,
 
                 // Renovação 30d
@@ -1859,6 +1922,8 @@ exports.getFounderMetrics = async (req, res) => {
                 renewedUsers: renewed30d,
                 eligibleForRenewal: eligibleRenewal30d,
                 prevRenewalRate: renewalRatePrev,
+                prevRenewedUsers: renewedPrev,
+                prevEligibleForRenewal: eligibleRenewalPrev,
                 renewalDiff,
 
                 // Fallback histórico

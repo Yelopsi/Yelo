@@ -315,7 +315,7 @@ export default function AdminCRMPsicologosScreen() {
     visible: false,
     title: '',
     message: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   // Modal de Detalhes de Métrica (Tooltip)
@@ -539,9 +539,9 @@ export default function AdminCRMPsicologosScreen() {
           const res = await api.get(`/api/admin/psychologists/${id}/analyze`);
           if (res.data?.message) {
             msg = res.data.message;
-            api.put(`/api/admin/psychologists/${id}/analyzed`, { isProfileAnalyzed: true }).catch(() => {});
+            api.put(`/api/admin/psychologists/${id}/analyzed`, { isProfileAnalyzed: true }).catch(() => { });
           }
-        } catch (_) {}
+        } catch (_) { }
 
         if (!msg) {
           const cleanBio = item.bio ? String(item.bio).replace(/<[^>]*>/g, '').trim() : '';
@@ -601,8 +601,8 @@ export default function AdminCRMPsicologosScreen() {
         let VALOR = m.sessionPrice
           ? String(m.sessionPrice).replace('.', ',')
           : item.valor_sessao_numero
-          ? String(item.valor_sessao_numero).replace('.', ',')
-          : '150,00';
+            ? String(item.valor_sessao_numero).replace('.', ',')
+            : '150,00';
         let approach =
           m.approach ||
           (Array.isArray(item.abordagens_tecnicas) && item.abordagens_tecnicas[0]) ||
@@ -639,7 +639,7 @@ export default function AdminCRMPsicologosScreen() {
               approach = psy.abordagens_tecnicas[0];
             }
           }
-        } catch (_) {}
+        } catch (_) { }
 
         const contatoStr = X === 1 ? 'contato de paciente' : 'contatos de pacientes';
         const pacienteStr = Y === 1 ? 'paciente novo' : 'pacientes novos';
@@ -666,7 +666,7 @@ export default function AdminCRMPsicologosScreen() {
         try {
           const res = await api.post(`/api/admin/psychologists/${id}/ai-churn-message`);
           if (res.data?.whatsappCopy) msg = res.data.whatsappCopy;
-        } catch (_) {}
+        } catch (_) { }
 
         if (!msg) {
           const matchesCount = metrics.appearances ?? item.profile_appearances ?? 0;
@@ -709,7 +709,7 @@ export default function AdminCRMPsicologosScreen() {
         try {
           const res = await api.post(`/api/admin/psychologists/${id}/ai-expiring-trial-message`);
           if (res.data?.whatsappCopy) msg = res.data.whatsappCopy;
-        } catch (_) {}
+        } catch (_) { }
 
         if (!msg) {
           const matchesCount = metrics.appearances ?? item.profile_appearances ?? 0;
@@ -796,7 +796,7 @@ export default function AdminCRMPsicologosScreen() {
           try {
             const res = await api.post(`/api/admin/psychologists/${id}/ai-diagnosis`);
             if (res.data?.whatsappCopy) msg = res.data.whatsappCopy;
-          } catch (_) {}
+          } catch (_) { }
         }
 
         if (!msg) {
@@ -809,7 +809,7 @@ export default function AdminCRMPsicologosScreen() {
         try {
           const res = await api.post(`/api/admin/psychologists/${id}/ai-conversion-failure`);
           if (res.data?.whatsappCopy) msg = res.data.whatsappCopy;
-        } catch (_) {}
+        } catch (_) { }
 
         if (!msg) {
           const hasBeenSentBefore = metrics.hasBeenSentBefore === true;
@@ -872,7 +872,7 @@ export default function AdminCRMPsicologosScreen() {
             fetchData(currentPage);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     } catch (err: any) {
       Alert.alert('Erro', err.message || 'Erro ao processar mensagem.');
     } finally {
@@ -1047,8 +1047,8 @@ export default function AdminCRMPsicologosScreen() {
     });
   };
 
-  // Render Diff Badge para Header (+X.X p.p., -X.X p.p., = 0.0 p.p.)
-  const renderMetricDiff = (diff: number | undefined, prevRate?: number) => {
+  // Render Diff Badge para Header (+X.X p.p. ou +X.X%, -X.X, = 0.0)
+  const renderMetricDiff = (diff: number | undefined, prevRate?: number, unit: string = ' p.p.') => {
     if (diff === undefined || diff === null || isNaN(diff)) {
       return <Text className="font-sans text-white/50 text-[10px] mt-1">tempo real</Text>;
     }
@@ -1060,7 +1060,7 @@ export default function AdminCRMPsicologosScreen() {
 
     let badge = (
       <View className="bg-white/10 px-[6px] py-[2px] rounded-[4px] mt-1 self-start flex-row items-center">
-        <Text className="font-sans text-white/70 text-[10px]">= 0.0 p.p.</Text>
+        <Text className="font-sans text-white/70 text-[10px]">= 0.0{unit}</Text>
       </View>
     );
 
@@ -1068,14 +1068,14 @@ export default function AdminCRMPsicologosScreen() {
       badge = (
         <View className="bg-emerald-500/20 px-[6px] py-[2px] rounded-[4px] mt-1 self-start flex-row items-center">
           <Feather name="trending-up" size={10} color="#34d399" style={{ marginRight: 2 }} />
-          <Text className="font-sans font-bold text-[#34d399] text-[10px]">+{diffPct} p.p.</Text>
+          <Text className="font-sans font-bold text-[#34d399] text-[10px]">+{diffPct}{unit}</Text>
         </View>
       );
     } else if (num < 0) {
       badge = (
         <View className="bg-red-500/20 px-[6px] py-[2px] rounded-[4px] mt-1 self-start flex-row items-center">
           <Feather name="trending-down" size={10} color="#f87171" style={{ marginRight: 2 }} />
-          <Text className="font-sans font-bold text-[#f87171] text-[10px]">{diffPct} p.p.</Text>
+          <Text className="font-sans font-bold text-[#f87171] text-[10px]">{diffPct}{unit}</Text>
         </View>
       );
     }
@@ -1198,13 +1198,19 @@ export default function AdminCRMPsicologosScreen() {
             <View className="flex-row gap-2.5">
               {/* MRR */}
               <TouchableOpacity
-                onPress={() =>
+                onPress={() => {
+                  const fmt = (v: number) =>
+                    Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                  const prevStr =
+                    founderMetrics.prevMRR !== undefined
+                      ? `\n\nHá 30 dias: ${fmt(founderMetrics.prevMRR)}`
+                      : '';
                   setTooltipModal({
                     visible: true,
                     title: 'MRR',
-                    desc: 'Receita Mensal Recorrente estimada baseada nas assinaturas ativas em tempo real.',
-                  })
-                }
+                    desc: `Receita Mensal Recorrente em tempo real das assinaturas pagantes ativas. Variação comparada a 30 dias atrás.${prevStr}`,
+                  });
+                }}
                 activeOpacity={0.85}
                 className="flex-1 bg-white/10 rounded-2xl p-3 border border-white/15 justify-between"
               >
@@ -1215,7 +1221,7 @@ export default function AdminCRMPsicologosScreen() {
                   <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
                 </View>
                 <Text className="font-title text-white text-[20px]">{mrrFormatted}</Text>
-                <Text className="font-sans text-white/50 text-[10px] mt-0.5">tempo real</Text>
+                {renderMetricDiff(founderMetrics.mrrDiffRate, undefined, '%')}
               </TouchableOpacity>
 
               {/* Ativação */}
@@ -1224,7 +1230,7 @@ export default function AdminCRMPsicologosScreen() {
                   setTooltipModal({
                     visible: true,
                     title: 'Taxa de Ativação',
-                    desc: 'Percentual de psicólogos cadastrados nos últimos 30 dias que ativaram o perfil e estão prontos para atendimento.',
+                    desc: `${founderMetrics.activationActive ?? 0} de ${founderMetrics.activationTotal ?? 0} psicólogos cadastrados nos últimos 30 dias ativaram o perfil (exclui pendentes <24h). Comparado aos 30d anteriores (${founderMetrics.prevActivationRate !== undefined ? (founderMetrics.prevActivationRate * 100).toFixed(1) : '--'}%).`,
                   })
                 }
                 activeOpacity={0.85}
@@ -1249,7 +1255,7 @@ export default function AdminCRMPsicologosScreen() {
                   setTooltipModal({
                     visible: true,
                     title: 'Retenção Pós-Trial',
-                    desc: 'Percentual de psicólogos que continuam pagantes ativos após o trial nos últimos 30 dias.',
+                    desc: `${founderMetrics.postTrialPaying ?? 0} de ${founderMetrics.postTrialTotal ?? 0} pagantes expostos nos últimos 30 dias seguem ativos (${founderMetrics.postTrialChurn30d ?? 0} saída(s) no período). 30d anteriores: ${founderMetrics.prevPostTrialRetentionRate !== undefined ? (founderMetrics.prevPostTrialRetentionRate * 100).toFixed(1) : '--'}%.`,
                   })
                 }
                 activeOpacity={0.85}
@@ -1271,7 +1277,7 @@ export default function AdminCRMPsicologosScreen() {
                   setTooltipModal({
                     visible: true,
                     title: 'Renovação',
-                    desc: 'Percentual de psicólogos elegíveis que renovaram a mensalidade nos últimos 30 dias.',
+                    desc: `${founderMetrics.renewedUsers ?? 0} de ${founderMetrics.eligibleForRenewal ?? 0} ciclos vencidos nos últimos 30 dias foram renovados. 30d anteriores: ${founderMetrics.prevRenewalRate !== undefined ? (founderMetrics.prevRenewalRate * 100).toFixed(1) : '--'}%.`,
                   })
                 }
                 activeOpacity={0.85}
@@ -1316,11 +1322,10 @@ export default function AdminCRMPsicologosScreen() {
                 setActiveFilter(activeFilter === 'pending_expiring_trial' ? '' : 'pending_expiring_trial')
               }
               activeOpacity={0.85}
-              className={`p-4 rounded-2xl border flex-row items-center justify-between shadow-xs ${
-                activeFilter === 'pending_expiring_trial'
+              className={`p-4 rounded-2xl border flex-row items-center justify-between shadow-xs ${activeFilter === 'pending_expiring_trial'
                   ? 'bg-[#fef3c7] border-[#d97706]'
                   : 'bg-[#fffbeb] border-[#fde68a]'
-              }`}
+                }`}
             >
               <View className="flex-1 pr-3">
                 <Text className="font-title text-[#92400e] text-[16px]">Trials Acabando</Text>
@@ -1345,11 +1350,10 @@ export default function AdminCRMPsicologosScreen() {
                 setActiveFilter(activeFilter === 'pending_paid_churn' ? '' : 'pending_paid_churn')
               }
               activeOpacity={0.85}
-              className={`p-4 rounded-2xl border flex-row items-center justify-between shadow-xs ${
-                activeFilter === 'pending_paid_churn'
+              className={`p-4 rounded-2xl border flex-row items-center justify-between shadow-xs ${activeFilter === 'pending_paid_churn'
                   ? 'bg-[#fee2e2] border-[#dc2626]'
                   : 'bg-[#fef2f2] border-[#fecaca]'
-              }`}
+                }`}
             >
               <View className="flex-1 pr-3">
                 <Text className="font-title text-[#991b1b] text-[16px]">Pagamentos Falhados</Text>
@@ -1374,11 +1378,10 @@ export default function AdminCRMPsicologosScreen() {
                 setActiveFilter(activeFilter === 'pending_incomplete' ? '' : 'pending_incomplete')
               }
               activeOpacity={0.85}
-              className={`p-4 rounded-2xl border flex-row items-center justify-between shadow-xs ${
-                activeFilter === 'pending_incomplete'
+              className={`p-4 rounded-2xl border flex-row items-center justify-between shadow-xs ${activeFilter === 'pending_incomplete'
                   ? 'bg-[#dcfce7] border-[#16a34a]'
                   : 'bg-[#f0fdf4] border-[#bbf7d0]'
-              }`}
+                }`}
             >
               <View className="flex-1 pr-3">
                 <Text className="font-title text-[#166534] text-[16px]">Perfis Incompletos</Text>
@@ -1845,30 +1848,30 @@ export default function AdminCRMPsicologosScreen() {
                   {activeFilter === 'pending_actions'
                     ? 'Follow-ups 📞'
                     : activeFilter === 'pending_expiring_trial'
-                    ? 'Trials Acabando ⏳'
-                    : activeFilter === 'pending_paid_churn'
-                    ? 'Pagamentos Falhados 🚨'
-                    : activeFilter === 'pending_incomplete'
-                    ? 'Perfis Incompletos ⚠️'
-                    : activeFilter === 'active_paying'
-                    ? 'Pagantes'
-                    : activeFilter === 'active_trial'
-                    ? 'Em Trial'
-                    : activeFilter === 'churn_month'
-                    ? 'Churn no Mês 📉'
-                    : activeFilter === 'pending'
-                    ? 'Pendentes'
-                    : activeFilter === 'inactive'
-                    ? 'Inativos'
-                    : activeFilter === 'vip'
-                    ? 'VIPs'
-                    : activeFilter === 'not_analyzed'
-                    ? 'Fila CS ✨'
-                    : activeFilter === 'low_performance'
-                    ? '🤖 Consultor IA'
-                    : activeFilter === 'deleted'
-                    ? 'Lixeira 🗑️'
-                    : 'Todos os Psicólogos'}
+                      ? 'Trials Acabando ⏳'
+                      : activeFilter === 'pending_paid_churn'
+                        ? 'Pagamentos Falhados 🚨'
+                        : activeFilter === 'pending_incomplete'
+                          ? 'Perfis Incompletos ⚠️'
+                          : activeFilter === 'active_paying'
+                            ? 'Pagantes'
+                            : activeFilter === 'active_trial'
+                              ? 'Em Trial'
+                              : activeFilter === 'churn_month'
+                                ? 'Churn no Mês 📉'
+                                : activeFilter === 'pending'
+                                  ? 'Pendentes'
+                                  : activeFilter === 'inactive'
+                                    ? 'Inativos'
+                                    : activeFilter === 'vip'
+                                      ? 'VIPs'
+                                      : activeFilter === 'not_analyzed'
+                                        ? 'Fila CS ✨'
+                                        : activeFilter === 'low_performance'
+                                          ? '🤖 Consultor IA'
+                                          : activeFilter === 'deleted'
+                                            ? 'Lixeira 🗑️'
+                                            : 'Todos os Psicólogos'}
                 </Text>
               </View>
               <Feather name="chevron-down" size={16} color="#1B4332" />
@@ -2594,11 +2597,10 @@ export default function AdminCRMPsicologosScreen() {
               <TouchableOpacity
                 onPress={() => fetchData(currentPage - 1)}
                 disabled={currentPage <= 1}
-                className={`w-[36px] h-[36px] rounded-full items-center justify-center border ${
-                  currentPage <= 1
+                className={`w-[36px] h-[36px] rounded-full items-center justify-center border ${currentPage <= 1
                     ? 'border-[#e2e8f0] opacity-40'
                     : 'border-[#cbd5e1] bg-white'
-                }`}
+                  }`}
               >
                 <Feather name="chevron-left" size={18} color="#1e293b" />
               </TouchableOpacity>
@@ -2606,11 +2608,10 @@ export default function AdminCRMPsicologosScreen() {
               <TouchableOpacity
                 onPress={() => fetchData(currentPage + 1)}
                 disabled={currentPage >= totalPages}
-                className={`w-[36px] h-[36px] rounded-full items-center justify-center border ${
-                  currentPage >= totalPages
+                className={`w-[36px] h-[36px] rounded-full items-center justify-center border ${currentPage >= totalPages
                     ? 'border-[#e2e8f0] opacity-40'
                     : 'border-[#cbd5e1] bg-white'
-                }`}
+                  }`}
               >
                 <Feather name="chevron-right" size={18} color="#1e293b" />
               </TouchableOpacity>
@@ -2864,9 +2865,8 @@ export default function AdminCRMPsicologosScreen() {
                                   color={chk.ok ? '#10b981' : '#cbd5e1'}
                                 />
                                 <Text
-                                  className={`font-sans text-[13px] ${
-                                    chk.ok ? 'text-[#334155]' : 'text-[#94a3b8]'
-                                  }`}
+                                  className={`font-sans text-[13px] ${chk.ok ? 'text-[#334155]' : 'text-[#94a3b8]'
+                                    }`}
                                 >
                                   {chk.text}
                                 </Text>

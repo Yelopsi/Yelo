@@ -35,15 +35,34 @@ class MetricsService {
         return true;
     }
 
+    static getDeactivatedDate(psy, paymentsByPsy) {
+        if (psy.canceledAt) return new Date(psy.canceledAt);
+        const now = new Date();
+        if (psy.planExpiresAt) {
+            const exp = new Date(psy.planExpiresAt);
+            if (!isNaN(exp.getTime()) && exp.getFullYear() >= 2000 && exp <= now) {
+                return exp;
+            }
+        }
+        const validPays = (paymentsByPsy?.[psy.id] || [])
+            .filter(p => this.getValidStatuses().includes(p.status))
+            .sort((a, b) => new Date(b.paymentDate || b.dateCreated) - new Date(a.paymentDate || a.dateCreated));
+        if (validPays.length > 0) {
+            const lastPay = new Date(validPays[0].paymentDate || validPays[0].dateCreated);
+            return new Date(lastPay.getTime() + 30 * 24 * 60 * 60 * 1000);
+        }
+        return psy.status === 'inactive' && psy.updatedAt ? new Date(psy.updatedAt) : null;
+    }
+
     static wasEffectivelyPayingAt(psy, date, paymentsByPsy) {
         if (!this.hasPaidCustomer(psy, paymentsByPsy)) return false;
         
         const firstPaid = this.getFirstPaidAt(psy.id, paymentsByPsy);
         if (!firstPaid || firstPaid > date) return false;
         
-        const deactivatedDate = psy.canceledAt ? new Date(psy.canceledAt) : (psy.status === 'inactive' ? new Date(psy.updatedAt) : null);
+        const deactivatedDate = this.getDeactivatedDate(psy, paymentsByPsy);
         if (deactivatedDate && deactivatedDate <= date) {
-            if (psy.reactivatedAt && new Date(psy.reactivatedAt) <= date) {
+            if (psy.reactivatedAt && new Date(psy.reactivatedAt) <= date && new Date(psy.reactivatedAt) > deactivatedDate) {
                 return true; 
             }
             return false;
@@ -149,8 +168,8 @@ class MetricsService {
         let trialChurnCountNoPeriodo = 0;
 
         for (const psy of allPsychologists) {
-            const deactivatedDate = psy.canceledAt ? new Date(psy.canceledAt) : new Date(psy.updatedAt);
-            if (psy.status === 'inactive' || psy.canceledAt) {
+            const deactivatedDate = this.getDeactivatedDate(psy, paymentsByPsy);
+            if (deactivatedDate && (psy.status === 'inactive' || psy.canceledAt || (psy.planExpiresAt && new Date(psy.planExpiresAt) <= new Date()))) {
                 if (deactivatedDate >= start && deactivatedDate <= end && deactivatedDate <= new Date()) {
                     if (this.hasPaidCustomer(psy, paymentsByPsy)) {
                         paidChurnCountNoPeriodo++;
@@ -180,7 +199,7 @@ class MetricsService {
             for (const psy of allPsychologists) {
                 if (this.wasEffectivelyPayingAt(psy, monthExactStart, paymentsByPsy)) {
                     baseInicial++;
-                    const deactivatedDate = psy.canceledAt ? new Date(psy.canceledAt) : (psy.status === 'inactive' ? new Date(psy.updatedAt) : null);
+                    const deactivatedDate = this.getDeactivatedDate(psy, paymentsByPsy);
                     if (deactivatedDate) {
                         if (deactivatedDate >= monthStart && deactivatedDate <= monthEnd && deactivatedDate <= new Date()) {
                             churnNoMes++;

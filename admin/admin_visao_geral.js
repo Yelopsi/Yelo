@@ -250,7 +250,7 @@ window.initializePage = function() {
                         const pct = (currentPaying / target) * 100;
                         const pctSpan = pct >= 100 
                             ? `<span style="font-size: 0.75rem; font-weight: bold; color: #10b981; margin-left: 6px;">✓ 100%</span>`
-                            : `<span style="font-size: 0.75rem; font-weight: bold; color: #10b981; margin-left: 6px;">▲ ${pct.toFixed(1).replace('.', ',')}%</span>`;
+                            : `<span style="font-size: 0.75rem; font-weight: 600; color: #059669; margin-left: 6px;">${pct.toFixed(1).replace('.', ',')}% da meta</span>`;
 
                         if (currentPaying >= target) return `Atingido ${pctSpan}`;
                         
