@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import api from '../../../services/api';
 import NativeSelectMenu from '../../../components/NativeSelectMenu';
@@ -120,9 +120,134 @@ function formatForWhatsApp(text: string): string {
     .trim();
 }
 
+function formatPlanDisplayName(rawPlano: any): string | null {
+  if (!rawPlano) return null;
+  const norm = String(rawPlano).trim().toUpperCase();
+  if (!norm || norm === 'NENHUM' || norm === 'NULL' || norm === 'NONE') return null;
+  const map: Record<string, string> = {
+    ESSENTIAL: 'Essencial',
+    ESSENCIAL: 'Essencial',
+    CLINICAL: 'Clínico',
+    'CLÍNICO': 'Clínico',
+    CLINICO: 'Clínico',
+    REFERENCE: 'Referência',
+    'REFERÊNCIA': 'Referência',
+    REFERENCIA: 'Referência',
+    SOL: 'Referência',
+  };
+  if (map[norm]) return map[norm];
+  const clean = String(rawPlano).trim();
+  return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+}
+
+function formatPtBrDate(dateObj: Date): string {
+  try {
+    return dateObj.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  } catch (_) {
+    return dateObj.toLocaleDateString('pt-BR');
+  }
+}
+
+function getSubscriptionSummary(psy: any, fullData?: any) {
+  const now = new Date();
+  const isVip = psy?.is_exempt === true;
+  const planLabel = formatPlanDisplayName(psy?.plano);
+
+  const rawExp = psy?.planExpiresAt || fullData?.subscription?.nextDueDate || null;
+  const expDate = rawExp ? new Date(rawExp) : null;
+  const isEpochExpired = !!(expDate && !isNaN(expDate.getTime()) && expDate.getFullYear() < 2000);
+  const hasValidExp = !!(expDate && !isNaN(expDate.getTime()) && !isEpochExpired);
+  const formattedExpDate = hasValidExp && expDate ? formatPtBrDate(expDate) : null;
+
+  const payments = Array.isArray(fullData?.payments) ? fullData.payments : [];
+  const hasPaidPayments =
+    (psy?.subscription_payments_count && Number(psy.subscription_payments_count) > 0) ||
+    !!psy?.firstPaidAt ||
+    payments.some((p: any) =>
+      ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(String(p?.status || '').toUpperCase())
+    );
+  const hasPaidHistory = !!(
+    psy?.subscriptionId ||
+    fullData?.subscription?.id ||
+    fullData?.asaasSubscription?.id ||
+    hasPaidPayments
+  );
+
+  if (isVip) {
+    return {
+      planText: planLabel ? `${planLabel} (VIP)` : 'VIP (Isento)',
+      planColor: '#b45309',
+      expireLabel: 'Vencimento',
+      expireText: 'Vitalício (VIP)',
+      expireColor: '#d4af37',
+    };
+  }
+
+  const isExpiredByDate = !!(hasValidExp && expDate && expDate <= now);
+  const isExpired = psy?.status === 'inactive' || isExpiredByDate || isEpochExpired;
+
+  if (psy?.status === 'pending' && !hasPaidHistory && !hasValidExp && !isEpochExpired) {
+    return {
+      planText: 'Nenhum',
+      planColor: '#64748b',
+      expireLabel: 'Vencimento',
+      expireText: '-',
+      expireColor: '#64748b',
+    };
+  }
+
+  if (isExpired) {
+    let expiredPlanText = 'Expirado';
+    if (hasPaidHistory) {
+      expiredPlanText = planLabel ? `Expirado (${planLabel})` : 'Expirado';
+    } else if (planLabel || hasValidExp || isEpochExpired) {
+      expiredPlanText = planLabel ? `Trial Expirado (${planLabel})` : 'Trial Expirado';
+    }
+    return {
+      planText: expiredPlanText,
+      planColor: '#ef4444',
+      expireLabel: formattedExpDate ? 'Expirou em' : 'Expiração',
+      expireText: formattedExpDate || 'Expirado',
+      expireColor: '#ef4444',
+    };
+  }
+
+  if (psy?.status === 'active' && !hasPaidHistory) {
+    const diffHours = hasValidExp && expDate ? (expDate.getTime() - now.getTime()) / (1000 * 60 * 60) : null;
+    return {
+      planText: planLabel ? `Trial (${planLabel})` : 'Trial',
+      planColor: '#2563eb',
+      expireLabel: 'Expira em',
+      expireText: formattedExpDate || '-',
+      expireColor: diffHours !== null && diffHours <= 48 ? '#d97706' : '#1e293b',
+    };
+  }
+
+  if (psy?.status === 'active' && (hasPaidHistory || planLabel)) {
+    const cancelSuffix = psy?.cancelAtPeriodEnd ? ' (Cancelamento agendado)' : '';
+    return {
+      planText: `${planLabel || 'Ativo'}${cancelSuffix}`,
+      planColor: psy?.cancelAtPeriodEnd ? '#d97706' : '#166534',
+      expireLabel: psy?.cancelAtPeriodEnd ? 'Expira em' : 'Vencimento',
+      expireText: formattedExpDate || '-',
+      expireColor: '#1e293b',
+    };
+  }
+
+  return {
+    planText: planLabel || 'Nenhum',
+    planColor: planLabel ? '#1e293b' : '#64748b',
+    expireLabel: 'Vencimento',
+    expireText: formattedExpDate || '-',
+    expireColor: '#64748b',
+  };
+}
+
 export default function AdminCRMPsicologosScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { openId } = useLocalSearchParams<{ openId?: string }>();
+  const lastOpenedParamRef = useRef<string | null>(null);
 
   // Dados principais
   const [psychologists, setPsychologists] = useState<any[]>([]);
@@ -149,6 +274,8 @@ export default function AdminCRMPsicologosScreen() {
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [selectedPsi, setSelectedPsi] = useState<any>(null);
   const [drawerData, setDrawerData] = useState<any>(null);
+  const [drawerFullData, setDrawerFullData] = useState<any>(null);
+  const [healthExpanded, setHealthExpanded] = useState(false);
 
   // Consultor IA no Drawer
   const [aiDiagnosis, setAiDiagnosis] = useState<{ diagnosis?: string; copy?: string } | null>(null);
@@ -338,20 +465,31 @@ export default function AdminCRMPsicologosScreen() {
   // -------------------------------------------------------------
   const openCSDrawer = async (psy: any) => {
     setSelectedPsi(psy);
+    setDrawerFullData(null);
+    setHealthExpanded(false);
     setDrawerVisible(true);
     setDrawerLoading(true);
     setAiDiagnosis(null);
 
     try {
       const res = await api.get(`/api/admin/psychologists/${psy.id}/full-details`);
+      setDrawerFullData(res.data || null);
       setDrawerData(res.data?.psychologist || res.data || psy);
     } catch (e) {
       console.log('Erro ao buscar detalhes completos do psicólogo:', e);
+      setDrawerFullData(null);
       setDrawerData(psy);
     } finally {
       setDrawerLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (openId && String(openId) !== lastOpenedParamRef.current) {
+      lastOpenedParamRef.current = String(openId);
+      openCSDrawer({ id: openId });
+    }
+  }, [openId]);
 
   // -------------------------------------------------------------
   // Envio de Ação / Mensagem WhatsApp (espelha sendWhatsAppAction da versão web)
@@ -2396,21 +2534,13 @@ export default function AdminCRMPsicologosScreen() {
                   const psy = drawerData || selectedPsi || {};
                   const isVip = psy.is_exempt === true;
                   const { score, checks } = calculateProfileHealth(psy);
+                  const okCount = checks.filter((c) => c.ok).length;
 
                   let scoreColor = '#ef4444';
                   if (score >= 75) scoreColor = '#10b981';
                   else if (score >= 50) scoreColor = '#f59e0b';
 
-                  const planoName = psy.plano
-                    ? psy.plano.charAt(0).toUpperCase() + psy.plano.slice(1).toLowerCase()
-                    : 'Nenhum';
-
-                  let expireText = '-';
-                  if (isVip) {
-                    expireText = 'Vitalício (VIP)';
-                  } else if (psy.planExpiresAt) {
-                    expireText = new Date(psy.planExpiresAt).toLocaleDateString('pt-BR');
-                  }
+                  const subSummary = getSubscriptionSummary(psy, drawerFullData);
 
                   return (
                     <>
@@ -2500,7 +2630,7 @@ export default function AdminCRMPsicologosScreen() {
                         </View>
                       </View>
 
-                      {/* Saúde do Perfil */}
+                      {/* Saúde do Perfil (colapsado por padrão) */}
                       <View
                         style={{
                           backgroundColor: '#ffffff',
@@ -2515,41 +2645,75 @@ export default function AdminCRMPsicologosScreen() {
                           elevation: 1,
                         }}
                       >
-                        <View className="flex-row justify-between items-center mb-[10px]">
-                          <Text className="font-title text-[#1e293b] text-[16px]">Saúde do Perfil</Text>
-                          <Text
-                            className="font-title text-[18px]"
-                            style={{ color: scoreColor }}
-                          >
-                            {score}%
-                          </Text>
-                        </View>
-
-                        <View style={{ width: '100%', height: 8, backgroundColor: '#e2e8f0', borderRadius: 999, overflow: 'hidden', marginBottom: 14 }}>
-                          <View
-                            style={{ width: `${Math.max(4, Math.min(100, score))}%`, height: 8, backgroundColor: scoreColor, borderRadius: 999 }}
-                          />
-                        </View>
-
-                        {/* Checklist dos 19 itens */}
-                        <View className="gap-[8px]">
-                          {checks.map((chk, i) => (
-                            <View key={i} className="flex-row items-center gap-[8px]">
-                              <Feather
-                                name={chk.ok ? 'check-circle' : 'circle'}
-                                size={15}
-                                color={chk.ok ? '#10b981' : '#cbd5e1'}
-                              />
-                              <Text
-                                className={`font-sans text-[13px] ${
-                                  chk.ok ? 'text-[#334155]' : 'text-[#94a3b8]'
-                                }`}
-                              >
-                                {chk.text}
+                        <TouchableOpacity
+                          onPress={() => setHealthExpanded((prev) => !prev)}
+                          activeOpacity={0.7}
+                        >
+                          <View className="flex-row justify-between items-center mb-[10px]">
+                            <View className="flex-1 mr-2">
+                              <Text className="font-title text-[#1e293b] text-[16px]">Saúde do Perfil</Text>
+                              <Text className="font-sans text-[#64748b] text-[12px] mt-[2px]">
+                                {healthExpanded
+                                  ? 'Ocultar checklist completo'
+                                  : `Ver checklist (${okCount}/${checks.length} concluídos)`}
                               </Text>
                             </View>
-                          ))}
-                        </View>
+                            <View className="flex-row items-center gap-[8px]">
+                              <Text
+                                className="font-title text-[18px]"
+                                style={{ color: scoreColor }}
+                              >
+                                {score}%
+                              </Text>
+                              <View
+                                style={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 999,
+                                  backgroundColor: '#f8fafc',
+                                  borderWidth: 1,
+                                  borderColor: '#e2e8f0',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                <Feather
+                                  name={healthExpanded ? 'chevron-up' : 'chevron-down'}
+                                  size={16}
+                                  color="#64748b"
+                                />
+                              </View>
+                            </View>
+                          </View>
+
+                          <View style={{ width: '100%', height: 8, backgroundColor: '#e2e8f0', borderRadius: 999, overflow: 'hidden' }}>
+                            <View
+                              style={{ width: `${Math.max(4, Math.min(100, score))}%`, height: 8, backgroundColor: scoreColor, borderRadius: 999 }}
+                            />
+                          </View>
+                        </TouchableOpacity>
+
+                        {/* Checklist dos 19 itens */}
+                        {healthExpanded && (
+                          <View className="gap-[8px] mt-[14px] pt-[12px] border-t border-[#f1f5f9]">
+                            {checks.map((chk, i) => (
+                              <View key={i} className="flex-row items-center gap-[8px]">
+                                <Feather
+                                  name={chk.ok ? 'check-circle' : 'circle'}
+                                  size={15}
+                                  color={chk.ok ? '#10b981' : '#cbd5e1'}
+                                />
+                                <Text
+                                  className={`font-sans text-[13px] ${
+                                    chk.ok ? 'text-[#334155]' : 'text-[#94a3b8]'
+                                  }`}
+                                >
+                                  {chk.text}
+                                </Text>
+                              </View>
+                            ))}
+                          </View>
+                        )}
                       </View>
 
                       {/* Consultor IA (Performance) */}
@@ -2645,20 +2809,25 @@ export default function AdminCRMPsicologosScreen() {
                         <Text className="font-title text-[#1e293b] text-[16px] mb-[12px]">
                           Assinatura
                         </Text>
-                        <View className="flex-row justify-between">
-                          <View>
+                        <View className="flex-row justify-between gap-[12px]">
+                          <View className="flex-1">
                             <Text className="font-sans text-[#64748b] text-[12px]">Plano</Text>
-                            <Text className="font-title text-[#1e293b] text-[15px] mt-1">
-                              {planoName}
+                            <Text
+                              className="font-title text-[15px] mt-1"
+                              style={{ color: subSummary.planColor }}
+                            >
+                              {subSummary.planText}
                             </Text>
                           </View>
                           <View className="items-end">
-                            <Text className="font-sans text-[#64748b] text-[12px]">Vencimento</Text>
+                            <Text className="font-sans text-[#64748b] text-[12px]">
+                              {subSummary.expireLabel}
+                            </Text>
                             <Text
                               className="font-title text-[15px] mt-1"
-                              style={{ color: isVip ? '#d4af37' : '#1e293b' }}
+                              style={{ color: subSummary.expireColor }}
                             >
-                              {expireText}
+                              {subSummary.expireText}
                             </Text>
                           </View>
                         </View>
