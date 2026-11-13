@@ -923,6 +923,10 @@ function initGrowthSimulator(data) {
                 document.getElementById('sim-res-subs-12m').textContent = '0';
                 document.getElementById('sim-res-meta-budget-12m').textContent = formatBRL(0);
                 document.getElementById('sim-res-google-budget-12m').textContent = formatBRL(0);
+                for (let b = 1; b <= 7; b++) {
+                    const badgeEl = document.getElementById(`sim-badge-${b}`);
+                    if (badgeEl) badgeEl.innerHTML = '';
+                }
                 if (document.getElementById('sim-res-extrapolation')) {
                     document.getElementById('sim-res-extrapolation').textContent = '--';
                     document.getElementById('sim-res-extrapolation-desc').textContent = 'Indisponível';
@@ -986,40 +990,91 @@ function initGrowthSimulator(data) {
             cardsGrid.insertAdjacentHTML('beforebegin', sliderHTML);
         }
 
+        const renderSimBadgePill = (elId, text, tone = 'neutral', title = '') => {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            const tones = {
+                positive: { bg: '#ecfdf5', color: '#059669', border: '#a7f3d0' },
+                negative: { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+                warning: { bg: '#fffbeb', color: '#d97706', border: '#fde68a' },
+                info: { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' },
+                neutral: { bg: '#f1f5f9', color: '#64748b', border: '#e2e8f0' }
+            };
+            const t = tones[tone] || tones.neutral;
+            el.innerHTML = `<span title="${title}" style="display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; background:${t.bg}; color:${t.color}; border:1px solid ${t.border}; white-space:nowrap;">${text}</span>`;
+        };
+
+        const renderSimPctBadge = (elId, currVal, baseVal, labelRef, options = {}) => {
+            const { inverseGood = false, neutralTrend = false } = options;
+            if (currVal === null || currVal === undefined || !isFinite(currVal) || baseVal === null || baseVal === undefined || !isFinite(baseVal) || baseVal <= 0) {
+                renderSimBadgePill(elId, '—', 'neutral', 'Sem base comparável');
+                return;
+            }
+            const pct = ((currVal - baseVal) / baseVal) * 100;
+            if (Math.abs(pct) < 0.1) {
+                renderSimBadgePill(elId, `= 0,0% ${labelRef}`, 'neutral', `Sem variação em relação a ${labelRef}`);
+                return;
+            }
+            const isUp = pct > 0;
+            const arrow = isUp ? '↑' : '↓';
+            const sign = isUp ? '+' : '-';
+            let tone = 'neutral';
+            if (neutralTrend) {
+                tone = isUp ? 'info' : 'neutral';
+            } else {
+                const isGood = inverseGood ? !isUp : isUp;
+                tone = isGood ? 'positive' : 'negative';
+            }
+            renderSimBadgePill(
+                elId,
+                `${arrow} ${sign}${Math.abs(pct).toFixed(1).replace('.', ',')}% ${labelRef}`,
+                tone,
+                `Variação vs ${labelRef}`
+            );
+        };
+
         function updateCardsForMonth(m) {
+            const m1Index = retroMonths + 1;
             const index = retroMonths + m;
             const projectedMRR = simResult.dataRevenue[index];
             const projectedBase = simResult.dataExpectedBase[index];
             const projectedMeta = simResult.dataMetaBudget[index];
             const projectedGoogle = simResult.dataGoogleBudget[index];
-            const LTV = simResult.dataLTV[index];
-            const payback = simResult.dataPayback[index];
+            const m1Google = simResult.dataGoogleBudget[m1Index];
+            const projectedLTV = simResult.dataLTV[index] || 0;
+            const m1LTV = simResult.dataLTV[m1Index] || 0;
+            const projectedPayback = simResult.dataPayback[index] || 0;
+            const m1Payback = simResult.dataPayback[m1Index] || 0;
 
             const currentMrr = currentBase * arpu;
             const mrrMultiple = (projectedMRR / (currentMrr || 1)).toFixed(1);
 
             document.getElementById('sim-month-label').textContent = `Mês ${m}`;
 
-            // Card 1: MRR
+            // Card 1: MRR (projetado vs hoje)
             const card1Title = document.getElementById('sim-card-1-title');
             if (card1Title) card1Title.textContent = `MRR Projetado (${m}M)`;
             document.getElementById('sim-res-mrr-12m').textContent = formatBRL(projectedMRR);
             document.getElementById('sim-res-mrr-feedback').textContent =
                 `${mrrMultiple}x maior que hoje (${formatBRL(currentMrr)}/mês)`;
+            renderSimPctBadge('sim-badge-1', projectedMRR, currentMrr, 'vs hoje');
 
-            // Card 2: Base
-            const newSubs = Math.floor(projectedBase) - currentBase;
+            // Card 2: Base (projetada vs hoje)
+            const subsFloor = Math.floor(projectedBase);
+            const newSubs = subsFloor - currentBase;
+            const newSubsSigned = newSubs >= 0 ? `+${newSubs}` : `${newSubs}`;
             const avgPatientsPerPsi = contactsPerPaidPsiMonth || 2;
-            const totalPatientsServed = Math.floor(projectedBase) * avgPatientsPerPsi;
+            const totalPatientsServed = subsFloor * avgPatientsPerPsi;
             const card2Title = document.getElementById('sim-card-2-title');
             if (card2Title) card2Title.textContent = `Base Projetada (${m}M)`;
-            document.getElementById('sim-res-subs-12m').textContent = Math.floor(projectedBase);
+            document.getElementById('sim-res-subs-12m').textContent = subsFloor;
             const card2Sub = document.getElementById('sim-res-subs-feedback');
             if (card2Sub) {
-                card2Sub.textContent = `+${newSubs} assinantes líquidos na base em ${m} meses. Meta agregada de demanda: ~${totalPatientsServed.toLocaleString('pt-BR')} cliques no WhatsApp/mês.`;
+                card2Sub.textContent = `${newSubsSigned} assinantes líquidos na base em ${m} meses. Meta agregada de demanda: ~${totalPatientsServed.toLocaleString('pt-BR')} cliques no WhatsApp/mês.`;
             }
+            renderSimPctBadge('sim-badge-2', subsFloor, currentBase, 'vs hoje');
 
-            // Card 3: Meta
+            // Card 3: Meta Ads (30d projetado vs média mensal histórica 30d)
             const metaDaily = projectedMeta / 30;
             const card3Title = document.getElementById('sim-card-3-title');
             if (card3Title) card3Title.textContent = `Meta Ads (${m}M)`;
@@ -1028,8 +1083,13 @@ function initGrowthSimulator(data) {
             if (card3Sub) {
                 card3Sub.textContent = `≈ ${formatBRL(metaDaily)}/dia recomendados para Mês ${m}.`;
             }
+            if (projectedMeta <= 0) {
+                renderSimBadgePill('sim-badge-3', '↓ Motor travado', 'negative', 'Sem verba disponível para Meta Ads neste cenário');
+            } else {
+                renderSimPctBadge('sim-badge-3', projectedMeta, effectiveHistMetaSpend, 'vs hist. 30d', { neutralTrend: true });
+            }
 
-            // Card 4: Google
+            // Card 4: Google Ads (30d projetado vs Mês 1 cheio 30d; no M1 exibe % do MRR)
             const googleDaily = projectedGoogle / 30;
             const card4Title = document.getElementById('sim-card-4-title');
             if (card4Title) card4Title.textContent = `Custo Google (${m}M)`;
@@ -1038,11 +1098,15 @@ function initGrowthSimulator(data) {
             if (card4Sub) {
                 card4Sub.textContent = `Custo mensal projetado p/ Mês ${m} (≈ ${formatBRL(googleDaily)}/dia).`;
             }
+            const googleShareMrr = projectedMRR > 0 ? (projectedGoogle / projectedMRR) * 100 : 0;
+            if (m === 1 || !(m1Google > 0)) {
+                const gTone = googleShareMrr <= 35 ? 'positive' : (googleShareMrr <= 60 ? 'warning' : 'negative');
+                renderSimBadgePill('sim-badge-4', `${googleShareMrr.toFixed(1).replace('.', ',')}% do MRR`, gTone, 'Peso do Google Ads sobre o MRR projetado no Mês 1 (30d)');
+            } else {
+                renderSimPctBadge('sim-badge-4', projectedGoogle, m1Google, 'vs M1 (30d)', { inverseGood: true });
+            }
 
             // Card 5 & 6: LTV e Payback
-            const projectedLTV = simResult.dataLTV[index] || 0;
-            const projectedPayback = simResult.dataPayback[index] || 0;
-
             const card5Title = document.getElementById('sim-card-5-title');
             if (card5Title) card5Title.textContent = `LTV Contribuição (M${m})`;
 
@@ -1055,7 +1119,36 @@ function initGrowthSimulator(data) {
             if (elLTV) elLTV.textContent = projectedLTV > 0 ? formatBRL(projectedLTV) : '--';
             if (elPayback) elPayback.textContent = projectedPayback > 0 ? projectedPayback.toFixed(1) : '--';
 
-            // Card 7: Extrapolação Meta
+            if (projectedLTV <= 0) {
+                renderSimBadgePill('sim-badge-5', '↓ Margem negativa', 'negative', 'LTV de contribuição zerado ou negativo');
+            } else if (m > 1 && m1LTV > 0 && Math.abs((projectedLTV - m1LTV) / m1LTV) >= 0.001) {
+                renderSimPctBadge('sim-badge-5', projectedLTV, m1LTV, 'vs M1');
+            } else {
+                const ltvCacRatio = (projectedPayback > 0 && monthlyChurn > 0)
+                    ? (1 / (monthlyChurn * projectedPayback))
+                    : (effectiveCacMeta > 0 ? (projectedLTV / effectiveCacMeta) : null);
+                if (ltvCacRatio !== null && isFinite(ltvCacRatio)) {
+                    const rTone = ltvCacRatio >= 3 ? 'positive' : (ltvCacRatio >= 1 ? 'warning' : 'negative');
+                    const rArrow = ltvCacRatio >= 3 ? '↑' : (ltvCacRatio >= 1 ? '=' : '↓');
+                    renderSimBadgePill('sim-badge-5', `${rArrow} ${ltvCacRatio.toFixed(1).replace('.', ',')}× CAC`, rTone, 'Relação LTV / CAC combinado (saudável ≥ 3×)');
+                } else {
+                    renderSimBadgePill('sim-badge-5', '—', 'neutral');
+                }
+            }
+
+            if (projectedPayback <= 0) {
+                renderSimBadgePill('sim-badge-6', '↓ Sem retorno', 'negative', 'Margem insuficiente para recuperar o CAC');
+            } else if (m > 1 && m1Payback > 0 && Math.abs((projectedPayback - m1Payback) / m1Payback) >= 0.001) {
+                renderSimPctBadge('sim-badge-6', projectedPayback, m1Payback, 'vs M1', { inverseGood: true });
+            } else if (projectedPayback <= 12) {
+                renderSimBadgePill('sim-badge-6', '↓ Saudável (≤ 12m)', 'positive', 'Payback dentro da meta saudável de até 12 meses');
+            } else if (projectedPayback <= 24) {
+                renderSimBadgePill('sim-badge-6', '↑ Longo (12–24m)', 'warning', 'Retorno entre 12 e 24 meses');
+            } else {
+                renderSimBadgePill('sim-badge-6', '↑ Risco (> 24m)', 'negative', 'Tempo de retorno acima de 24 meses');
+            }
+
+            // Card 7: Extrapolação Meta (30d projetado vs média mensal histórica 30d)
             const projectedExtrapolation = simResult.dataMetaExtrapolationMultiple[index];
             const elExtrap = document.getElementById('sim-res-extrapolation');
             const elExtrapDesc = document.getElementById('sim-res-extrapolation-desc');
@@ -1065,9 +1158,17 @@ function initGrowthSimulator(data) {
                     elExtrap.textContent = `${projectedExtrapolation.toFixed(2).replace('.', ',')}× histórico`;
                     const histSourceLabel = metaDataSource === 'MANUAL_SCENARIO' ? 'Histórico do cenário manual' : 'Histórico';
                     elExtrapDesc.textContent = `Projetado: ${formatBRL(projectedMeta)} / mês · ${histSourceLabel}: ${formatBRL(effectiveHistMetaSpend)} / mês`;
+                    if (projectedExtrapolation <= 2) {
+                        renderSimBadgePill('sim-badge-7', '↓ Escala segura (≤ 2×)', 'positive', 'Dentro de 2× da média mensal histórica de 30d');
+                    } else if (projectedExtrapolation <= 5) {
+                        renderSimBadgePill('sim-badge-7', '↑ Atenção (2–5×)', 'warning', 'Escala moderada em relação à média mensal histórica de 30d');
+                    } else {
+                        renderSimBadgePill('sim-badge-7', '↑ Risco alto (> 5×)', 'negative', 'Acima de 5× da média mensal histórica de 30d');
+                    }
                 } else {
                     elExtrap.textContent = 'Indisponível';
                     elExtrapDesc.textContent = 'Sem baseline histórico válido para comparação.';
+                    renderSimBadgePill('sim-badge-7', '—', 'neutral');
                 }
             }
         }
