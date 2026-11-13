@@ -26,7 +26,13 @@ export default function AdminAnalyticsFunilScreen() {
   const insets = useSafeAreaInsets();
 
   const [activeTab, setActiveTab] = useState<FunilTab>('funil');
-  const [periodDays, setPeriodDays] = useState<number>(30);
+  const [periodPreset, setPeriodPreset] = useState<'7' | '14' | '30' | 'mtd' | '90'>('30');
+  const periodDays = useMemo(() => {
+    if (periodPreset === 'mtd') {
+      return Math.max(1, new Date().getDate());
+    }
+    return Number(periodPreset);
+  }, [periodPreset]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -73,15 +79,23 @@ export default function AdminAnalyticsFunilScreen() {
     return { label: formatted, question: formatted, isLegacy: false };
   };
 
+  const getPeriodRangeStrings = useCallback(() => {
+    const end = new Date();
+    const start = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    if (periodPreset === 'mtd') {
+      start.setDate(1);
+    } else {
+      start.setDate(end.getDate() - Number(periodPreset));
+    }
+    const fmt = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return { dStart: fmt(start), dEnd: fmt(end) };
+  }, [periodPreset]);
+
   // Carregar dados principais
   const fetchData = async () => {
     try {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - periodDays);
-
-      const dStart = start.toISOString().split('T')[0];
-      const dEnd = end.toISOString().split('T')[0];
+      const { dStart, dEnd } = getPeriodRangeStrings();
 
       const [funnelRes, wppRes, rankingRes, v6Res] = await Promise.all([
         api.get(`/api/admin/analytics/funnel?startDate=${dStart}&endDate=${dEnd}`),
@@ -126,23 +140,18 @@ export default function AdminAnalyticsFunilScreen() {
 
   useEffect(() => {
     fetchData();
-  }, [periodDays]);
+  }, [periodPreset]);
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true);
     fetchData();
-  }, [periodDays]);
+  }, [periodPreset]);
 
   // Carregar auditoria de leads sob demanda
   const fetchAuditoriaLeads = async () => {
     setIsAuditoriaLoading(true);
     try {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - periodDays);
-
-      const dStart = start.toISOString().split('T')[0];
-      const dEnd = end.toISOString().split('T')[0];
+      const { dStart, dEnd } = getPeriodRangeStrings();
 
       const res = await api.get(`/api/admin/leads-recentes?startDate=${dStart}&endDate=${dEnd}`);
       if (res.data) {
@@ -165,8 +174,26 @@ export default function AdminAnalyticsFunilScreen() {
     return Number(val).toLocaleString('pt-BR');
   };
 
+  const formatIsoShortBR = (iso?: string) => {
+    if (!iso) return '';
+    try {
+      return new Date(iso).toLocaleDateString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit',
+      });
+    } catch {
+      return '';
+    }
+  };
+
   // Trend Badge Helper
-  const renderTrendBadge = (curr: number | null | undefined, prev: number | null | undefined, inverseGood: boolean = false) => {
+  const renderTrendBadge = (
+    curr: number | null | undefined,
+    prev: number | null | undefined,
+    inverseGood: boolean = false,
+    isRate: boolean = false
+  ) => {
     if (prev === null || prev === undefined || curr === null || curr === undefined || isNaN(prev) || isNaN(curr)) {
       return (
         <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
@@ -174,6 +201,29 @@ export default function AdminAnalyticsFunilScreen() {
         </View>
       );
     }
+
+    if (isRate) {
+      const diffPP = curr - prev;
+      if (Math.abs(diffPP) < 0.05) {
+        return (
+          <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
+            <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '700' }}>0,0 p.p.</Text>
+          </View>
+        );
+      }
+      const isUp = diffPP > 0;
+      const isGood = inverseGood ? !isUp : isUp;
+      const color = isGood ? '#10b981' : '#ef4444';
+      const arrow = isUp ? '↑' : '↓';
+      return (
+        <View style={{ backgroundColor: color + '1a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
+          <Text style={{ color, fontSize: 10, fontWeight: '700' }}>
+            {arrow} {isUp ? '+' : '-'}{Math.abs(diffPP).toFixed(1)} p.p.
+          </Text>
+        </View>
+      );
+    }
+
     if (prev === 0 && curr > 0) {
       const color = inverseGood ? '#ef4444' : '#10b981';
       return (
@@ -203,11 +253,12 @@ export default function AdminAnalyticsFunilScreen() {
     const isGood = inverseGood ? !isUp : isUp;
     const color = isGood ? '#10b981' : '#ef4444';
     const arrow = isUp ? '↑' : '↓';
+    const smallBaseMark = prev > 0 && prev < 5 ? '*' : '';
 
     return (
       <View style={{ backgroundColor: color + '1a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
         <Text style={{ color, fontSize: 10, fontWeight: '700' }}>
-          {arrow} {Math.abs(pct).toFixed(1)}%
+          {arrow} {Math.abs(pct).toFixed(1)}%{smallBaseMark}
         </Text>
       </View>
     );
@@ -624,16 +675,17 @@ export default function AdminAnalyticsFunilScreen() {
           {/* Seletor de Período em Pílulas */}
           <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
             {[
-              { days: 7, label: '7 dias' },
-              { days: 30, label: '30 dias' },
-              { days: 90, label: '3 meses' },
-              { days: 365, label: '12 meses' },
+              { key: '7' as const, label: '7 dias' },
+              { key: '14' as const, label: '14 dias' },
+              { key: '30' as const, label: '30 dias' },
+              { key: 'mtd' as const, label: 'Este mês' },
+              { key: '90' as const, label: '3 meses' },
             ].map((p) => {
-              const isSelected = periodDays === p.days;
+              const isSelected = periodPreset === p.key;
               return (
                 <TouchableOpacity
-                  key={p.days}
-                  onPress={() => setPeriodDays(p.days)}
+                  key={p.key}
+                  onPress={() => setPeriodPreset(p.key)}
                   style={{
                     flex: 1,
                     paddingVertical: 6,
@@ -648,9 +700,10 @@ export default function AdminAnalyticsFunilScreen() {
                   <Text
                     style={{
                       fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_500Medium',
-                      fontSize: 11,
+                      fontSize: 10.5,
                       color: isSelected ? '#1B4332' : '#ffffff',
                     }}
+                    numberOfLines={1}
                   >
                     {p.label}
                   </Text>
@@ -658,6 +711,26 @@ export default function AdminAnalyticsFunilScreen() {
               );
             })}
           </View>
+
+          {funnelData?.comparisonPeriod ? (
+            <View
+              style={{
+                marginTop: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 10,
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Feather name="git-commit" size={12} color="#FFEE8C" />
+              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10.5, color: 'rgba(255,255,255,0.9)', flex: 1 }}>
+                {`Comparando ${formatIsoShortBR(funnelData.comparisonPeriod.start)}–${formatIsoShortBR(funnelData.comparisonPeriod.end)} vs ${formatIsoShortBR(funnelData.comparisonPeriod.prevStart)}–${formatIsoShortBR(funnelData.comparisonPeriod.prevEnd)} (${funnelData.comparisonPeriod.days}d)`}
+              </Text>
+            </View>
+          ) : null}
         </LinearGradient>
 
         {/* ========================================================= */}
@@ -776,12 +849,14 @@ export default function AdminAnalyticsFunilScreen() {
               <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Desistência</Text>
-                  {renderTrendBadge(Number(taxaDesistencia), Number(prevTaxaDesistencia), true)}
+                  {renderTrendBadge(Number(taxaDesistencia), prevTaxaDesistencia !== null ? Number(prevTaxaDesistencia) : null, true, true)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: Number(taxaDesistencia) > 30 ? '#ef4444' : '#10b981' }}>
                   {taxaDesistencia}%
                 </Text>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#94a3b8', marginTop: 2 }}>Meta: &lt; 30%</Text>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#94a3b8', marginTop: 2 }}>
+                  {prevTaxaDesistencia !== null ? `Ant: ${prevTaxaDesistencia}% · Meta: < 30%` : 'Meta: < 30%'}
+                </Text>
               </View>
 
               {/* Desqualificados */}
@@ -1220,7 +1295,7 @@ export default function AdminAnalyticsFunilScreen() {
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Taxa Resposta (Psi)
                   </Text>
-                  {renderTrendBadge(Number(taxaRespostaPsi), Number(prevTaxaRespostaPsi), false)}
+                  {renderTrendBadge(Number(taxaRespostaPsi), prevTaxaRespostaPsi !== null ? Number(prevTaxaRespostaPsi) : null, false, true)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#f59e0b', marginTop: 2 }}>{taxaRespostaPsi}%</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>{totalRespondidos} de {totalWppClicks} feedbacks</Text>
@@ -1232,7 +1307,7 @@ export default function AdminAnalyticsFunilScreen() {
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Taxa Não Resposta
                   </Text>
-                  {renderTrendBadge(Number(taxaNaoResposta), Number(prevTaxaNaoResposta), true)}
+                  {renderTrendBadge(Number(taxaNaoResposta), prevTaxaNaoResposta !== null ? Number(prevTaxaNaoResposta) : null, true, true)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#64748b', marginTop: 2 }}>{taxaNaoResposta}%</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Ignoraram ou fecharam</Text>
@@ -1292,7 +1367,7 @@ export default function AdminAnalyticsFunilScreen() {
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Troca Mensagens
                   </Text>
-                  {renderTrendBadge(Number(taxaTrocaMensagens), Number(prevTaxaTrocaMensagens), false)}
+                  {renderTrendBadge(Number(taxaTrocaMensagens), prevTaxaTrocaMensagens !== null ? Number(prevTaxaTrocaMensagens) : null, false, true)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#2563eb', marginTop: 2 }}>{taxaTrocaMensagens}%</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Dos respondidos, contato real</Text>
@@ -1304,7 +1379,7 @@ export default function AdminAnalyticsFunilScreen() {
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Iniciou Terapia
                   </Text>
-                  {renderTrendBadge(Number(taxaFechamento), Number(prevTaxaFechamento), false)}
+                  {renderTrendBadge(Number(taxaFechamento), prevTaxaFechamento !== null ? Number(prevTaxaFechamento) : null, false, true)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#10b981', marginTop: 2 }}>{taxaFechamento}%</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Taxa fechamento dos contatos</Text>
@@ -1316,7 +1391,7 @@ export default function AdminAnalyticsFunilScreen() {
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Não Fechamento
                   </Text>
-                  {renderTrendBadge(Number(taxaNaoFechamento), Number(prevTaxaNaoFechamento), true)}
+                  {renderTrendBadge(Number(taxaNaoFechamento), prevTaxaNaoFechamento !== null ? Number(prevTaxaNaoFechamento) : null, true, true)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#ef4444', marginTop: 2 }}>{taxaNaoFechamento}%</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Contatados que não fecharam</Text>

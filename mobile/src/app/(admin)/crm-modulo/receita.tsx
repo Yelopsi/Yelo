@@ -145,7 +145,7 @@ export default function ReceitaScreen() {
   };
 
   // Trend Badge Helper
-  const renderTrendBadge = (curr: number, prev: number, inverseGood: boolean = false) => {
+  const renderTrendBadge = (curr: number, prev: number, inverseGood: boolean = false, isRate: boolean = false) => {
     if (prev === null || prev === undefined || isNaN(prev) || isNaN(curr)) {
       return (
         <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
@@ -153,6 +153,29 @@ export default function ReceitaScreen() {
         </View>
       );
     }
+
+    if (isRate) {
+      const diffPP = curr - prev;
+      if (Math.abs(diffPP) < 0.05) {
+        return (
+          <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
+            <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '700' }}>0,0 p.p.</Text>
+          </View>
+        );
+      }
+      const isUp = diffPP > 0;
+      const isGood = inverseGood ? !isUp : isUp;
+      const color = isGood ? '#10b981' : '#ef4444';
+      const arrow = isUp ? '↑' : '↓';
+      return (
+        <View style={{ backgroundColor: color + '1a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
+          <Text style={{ color, fontSize: 10, fontWeight: '700' }}>
+            {arrow} {isUp ? '+' : '-'}{Math.abs(diffPP).toFixed(1)} p.p.
+          </Text>
+        </View>
+      );
+    }
+
     if (prev === 0 && curr > 0) {
       const color = inverseGood ? '#ef4444' : '#10b981';
       return (
@@ -453,7 +476,7 @@ export default function ReceitaScreen() {
                       {formatBRL(kpis.mrr?.current || 0)}
                     </Text>
                     <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
-                      Anterior: {formatBRL(kpis.mrr?.previous || 0)}
+                      {`Ant. (${kpis.periodDays || selectedDays}d): ${formatBRL(kpis.mrr?.previous || 0)}`}
                     </Text>
                   </View>
 
@@ -461,13 +484,13 @@ export default function ReceitaScreen() {
                   <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                       <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Churn Pagantes</Text>
-                      {renderTrendBadge(kpis.paidChurnRate?.current ?? 0, kpis.paidChurnRate?.previous ?? 0, true)}
+                      {renderTrendBadge(kpis.paidChurnRate?.current ?? 0, kpis.paidChurnRate?.previous ?? 0, true, true)}
                     </View>
                     <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: (kpis.paidChurnRate?.current || 0) > 10 ? '#ef4444' : '#1e293b' }}>
                       {formatPercent(kpis.paidChurnRate?.current || 0)}
                     </Text>
                     <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
-                      Saídas: {kpis.paidChurnCount?.current || 0} psis
+                      {`Saídas: ${kpis.paidChurnCount?.current || 0} · ant: ${formatPercent(kpis.paidChurnRate?.previous || 0)}`}
                     </Text>
                   </View>
 
@@ -495,7 +518,7 @@ export default function ReceitaScreen() {
                       {kpis.inadimplentesCount?.current || 0} psis
                     </Text>
                     <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
-                      Cartão/Pix expirado
+                      {`Ant.: ${kpis.inadimplentesCount?.previous || 0} psis`}
                     </Text>
                   </View>
 
@@ -503,13 +526,13 @@ export default function ReceitaScreen() {
                   <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                       <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>LTV Projetado</Text>
-                      {renderTrendBadge(kpis.ltv?.projected || 0, kpis.ltv?.previous || 0, false)}
+                      {renderTrendBadge(kpis.ltv?.projected || 0, kpis.ltv?.projectedPrevious ?? kpis.ltv?.previous ?? 0, false)}
                     </View>
                     <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#7c3aed' }}>
                       {formatBRL(kpis.ltv?.projected || 0)}
                     </Text>
                     <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#10b981', marginTop: 2 }}>
-                      Obs: {formatBRL(kpis.ltv?.current || 0)}
+                      {`Obs: ${formatBRL(kpis.ltv?.current || 0)} · ant: ${formatBRL(kpis.ltv?.projectedPrevious ?? kpis.ltv?.previous ?? 0)}`}
                     </Text>
                   </View>
 
@@ -523,7 +546,7 @@ export default function ReceitaScreen() {
                       {formatBRL(kpis.arpu?.current || 0)}
                     </Text>
                     <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
-                      ARPU por assinante
+                      {`Ant. (${kpis.periodDays || selectedDays}d): ${formatBRL(kpis.arpu?.previous || 0)}`}
                     </Text>
                   </View>
                 </View>

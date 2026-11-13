@@ -39,6 +39,7 @@ export default function AdminCmoMetricsScreen() {
       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
     ];
     const now = new Date();
+    const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const list: MonthOption[] = [];
     let y = now.getFullYear();
     let m = now.getMonth();
@@ -46,7 +47,8 @@ export default function AdminCmoMetricsScreen() {
     for (let i = 0; i < 12; i++) {
       const start = `${y}-${String(m + 1).padStart(2, '0')}-01`;
       const endDay = new Date(y, m + 1, 0).getDate();
-      const end = `${y}-${String(m + 1).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
+      const fullEnd = `${y}-${String(m + 1).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
+      const end = (i === 0 && todayIso < fullEnd) ? todayIso : fullEnd;
       list.push({
         label: `${months[m]} ${y}`,
         shortLabel: `${months[m].slice(0, 3)}/${String(y).slice(2)}`,
@@ -131,8 +133,15 @@ export default function AdminCmoMetricsScreen() {
     return `${Number(val).toFixed(1).replace('.', ',')} Meses`;
   };
 
+  const formatShortPeriodDate = (iso?: string) => {
+    if (!iso || typeof iso !== 'string') return '';
+    const parts = iso.split('-');
+    if (parts.length !== 3) return iso;
+    return `${parts[2]}/${parts[1]}`;
+  };
+
   // Trend Badge Helper
-  const renderTrendBadge = (curr: number, prev: number, inverseGood: boolean = false) => {
+  const renderTrendBadge = (curr: number, prev: number, inverseGood: boolean = false, isRate: boolean = false) => {
     if (prev === null || prev === undefined || isNaN(prev) || isNaN(curr)) {
       return (
         <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
@@ -140,6 +149,29 @@ export default function AdminCmoMetricsScreen() {
         </View>
       );
     }
+
+    if (isRate) {
+      const diffPP = curr - prev;
+      if (Math.abs(diffPP) < 0.05) {
+        return (
+          <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
+            <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '700' }}>0,0 p.p.</Text>
+          </View>
+        );
+      }
+      const isUp = diffPP > 0;
+      const isGood = inverseGood ? !isUp : isUp;
+      const color = isGood ? '#10b981' : '#ef4444';
+      const arrow = isUp ? '↑' : '↓';
+      return (
+        <View style={{ backgroundColor: color + '1a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
+          <Text style={{ color, fontSize: 10, fontWeight: '700' }}>
+            {arrow} {isUp ? '+' : '-'}{Math.abs(diffPP).toFixed(1)} p.p.
+          </Text>
+        </View>
+      );
+    }
+
     if (prev === 0 && curr > 0) {
       const color = inverseGood ? '#ef4444' : '#10b981';
       return (
@@ -231,7 +263,11 @@ export default function AdminCmoMetricsScreen() {
           >
             {title}
           </Text>
-          {customNote ? null : renderTrendBadge(currVal, prevVal, inverseGood)}
+          {customNote
+            ? null
+            : formatType === 'percent'
+              ? renderTrendBadge((currVal || 0) * 100, (prevVal || 0) * 100, inverseGood, true)
+              : renderTrendBadge(currVal, prevVal, inverseGood)}
         </View>
 
         <Text
@@ -697,6 +733,33 @@ export default function AdminCmoMetricsScreen() {
                 <Feather name="chevron-down" size={16} color="#ffffff" />
               </View>
             </NativeSelectMenu>
+
+            {dashboardData?.period ? (
+              <View
+                style={{
+                  marginTop: 8,
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 10,
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Feather name="git-commit" size={12} color="#FFEE8C" />
+                <Text
+                  style={{
+                    fontFamily: 'Inter_500Medium',
+                    fontSize: 10.5,
+                    color: 'rgba(255,255,255,0.9)',
+                    flex: 1,
+                  }}
+                >
+                  {`Comparando ${formatShortPeriodDate(dashboardData.period.dateStart)}–${formatShortPeriodDate(dashboardData.period.dateEnd)} vs ${formatShortPeriodDate(dashboardData.period.prevDateStart)}–${formatShortPeriodDate(dashboardData.period.prevDateEnd)} (${dashboardData.period.diffDays}d${dashboardData.period.isPartialPeriod ? ' · parcial' : ''})`}
+                </Text>
+              </View>
+            ) : null}
           </View>
         </LinearGradient>
 
@@ -1556,6 +1619,9 @@ export default function AdminCmoMetricsScreen() {
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
               Média global: quantos cliques no WhatsApp são necessários para gerar 1 paciente fechado.
             </Text>
+            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
+              {`90d anteriores: ${prevGlobalEffort > 0 ? `${prevGlobalEffort.toFixed(1)} cliques / paciente` : 'N/A'}`}
+            </Text>
           </View>
 
           {/* Eficiência por Canal */}
@@ -1585,6 +1651,9 @@ export default function AdminCmoMetricsScreen() {
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
               Valor médio da sessão cobrado pelos top 20% psicólogos que mais fecham pacientes.
             </Text>
+            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
+              {`90d anteriores: ${prevTopTicket > 0 ? formatBRL(prevTopTicket) : 'N/A'}`}
+            </Text>
           </View>
 
           {/* Tempo até o 1º Contato (TTFC) */}
@@ -1605,6 +1674,9 @@ export default function AdminCmoMetricsScreen() {
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
               Média: {efficiency.ttfcData?.mean ? `${Number(efficiency.ttfcData.mean).toFixed(1)} dias` : 'N/A'} · amostra: {efficiency.ttfcData?.sample ?? 0} profissionais
             </Text>
+            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
+              {`90d anteriores: ${prevEfficiency?.ttfcData?.median ? `${Number(prevEfficiency.ttfcData.median).toFixed(1)} dias` : 'N/A'}`}
+            </Text>
           </View>
 
           {/* TTV (1º Paciente Iniciado) */}
@@ -1624,6 +1696,9 @@ export default function AdminCmoMetricsScreen() {
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
               Média: {efficiency.ttvData?.mean ? `${Number(efficiency.ttvData.mean).toFixed(1)} dias` : 'N/A'} · amostra: {efficiency.ttvData?.sample ?? 0} profissionais (PROXY)
+            </Text>
+            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
+              {`90d anteriores: ${prevEfficiency?.ttvData?.median ? `${Number(prevEfficiency.ttvData.median).toFixed(1)} dias` : 'N/A'}`}
             </Text>
           </View>
         </View>

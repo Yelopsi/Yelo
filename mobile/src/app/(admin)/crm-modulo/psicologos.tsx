@@ -911,34 +911,47 @@ export default function AdminCRMPsicologosScreen() {
     });
   };
 
-  // Render Diff Badge para Header (+X.X%, -X.X%, = 0.0%)
-  const renderMetricDiff = (diff: number | undefined) => {
+  // Render Diff Badge para Header (+X.X p.p., -X.X p.p., = 0.0 p.p.)
+  const renderMetricDiff = (diff: number | undefined, prevRate?: number) => {
     if (diff === undefined || diff === null || isNaN(diff)) {
       return <Text className="font-sans text-white/50 text-[10px] mt-1">tempo real</Text>;
     }
     const diffPct = (diff * 100).toFixed(1);
     const num = parseFloat(diffPct);
+    const prevHint = prevRate !== undefined && prevRate !== null && !isNaN(prevRate)
+      ? `30d ant: ${(prevRate * 100).toFixed(1)}%`
+      : null;
+
+    let badge = (
+      <View className="bg-white/10 px-[6px] py-[2px] rounded-[4px] mt-1 self-start flex-row items-center">
+        <Text className="font-sans text-white/70 text-[10px]">= 0.0 p.p.</Text>
+      </View>
+    );
+
     if (num > 0) {
-      return (
-        <View className="bg-emerald-500/20 px-[6px] py-[2px] rounded-[4px] mt-1 flex-row items-center">
+      badge = (
+        <View className="bg-emerald-500/20 px-[6px] py-[2px] rounded-[4px] mt-1 self-start flex-row items-center">
           <Feather name="trending-up" size={10} color="#34d399" style={{ marginRight: 2 }} />
-          <Text className="font-sans font-bold text-[#34d399] text-[10px]">+{diffPct}%</Text>
+          <Text className="font-sans font-bold text-[#34d399] text-[10px]">+{diffPct} p.p.</Text>
         </View>
       );
     } else if (num < 0) {
-      return (
-        <View className="bg-red-500/20 px-[6px] py-[2px] rounded-[4px] mt-1 flex-row items-center">
+      badge = (
+        <View className="bg-red-500/20 px-[6px] py-[2px] rounded-[4px] mt-1 self-start flex-row items-center">
           <Feather name="trending-down" size={10} color="#f87171" style={{ marginRight: 2 }} />
-          <Text className="font-sans font-bold text-[#f87171] text-[10px]">{diffPct}%</Text>
-        </View>
-      );
-    } else {
-      return (
-        <View className="bg-white/10 px-[6px] py-[2px] rounded-[4px] mt-1 flex-row items-center">
-          <Text className="font-sans text-white/70 text-[10px]">= 0.0%</Text>
+          <Text className="font-sans font-bold text-[#f87171] text-[10px]">{diffPct} p.p.</Text>
         </View>
       );
     }
+
+    return (
+      <View>
+        {badge}
+        {prevHint ? (
+          <Text className="font-sans text-white/55 text-[9.5px] mt-0.5">{prevHint}</Text>
+        ) : null}
+      </View>
+    );
   };
 
   const isFollowupMode = [
@@ -1088,7 +1101,7 @@ export default function AdminCRMPsicologosScreen() {
                   <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
                 </View>
                 <Text className="font-title text-[#34d399] text-[20px]">{activationPct}</Text>
-                {renderMetricDiff(founderMetrics.activationDiff)}
+                {renderMetricDiff(founderMetrics.activationDiff, founderMetrics.prevActivationRate)}
               </TouchableOpacity>
             </View>
 
@@ -1113,7 +1126,7 @@ export default function AdminCRMPsicologosScreen() {
                   <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
                 </View>
                 <Text className="font-title text-[#60a5fa] text-[20px]">{postTrialPct}</Text>
-                {renderMetricDiff(founderMetrics.postTrialDiff)}
+                {renderMetricDiff(founderMetrics.postTrialDiff, founderMetrics.prevPostTrialRetentionRate)}
               </TouchableOpacity>
 
               {/* Renovação */}
@@ -1135,7 +1148,7 @@ export default function AdminCRMPsicologosScreen() {
                   <Feather name="info" size={12} color="rgba(255,255,255,0.6)" />
                 </View>
                 <Text className="font-title text-[#c084fc] text-[20px]">{renewalPct}</Text>
-                {renderMetricDiff(founderMetrics.renewalDiff)}
+                {renderMetricDiff(founderMetrics.renewalDiff, founderMetrics.prevRenewalRate)}
               </TouchableOpacity>
             </View>
           </View>
@@ -1301,7 +1314,9 @@ export default function AdminCRMPsicologosScreen() {
                 <Text className="font-title text-[#10b981] text-[24px] mt-1">
                   {kpis.active_paying || 0}
                 </Text>
-                <Text className="font-sans text-emerald-600 font-medium text-[11px] mt-0.5">+5 este mês</Text>
+                <Text className="font-sans text-emerald-600 font-medium text-[11px] mt-0.5">
+                  {`${kpis.new_paying_month || 0} novo(s) este mês`}
+                </Text>
               </TouchableOpacity>
 
               {/* Em Trial */}
@@ -1343,7 +1358,9 @@ export default function AdminCRMPsicologosScreen() {
                 <Text className="font-title text-[#3b82f6] text-[24px] mt-1">
                   {kpis.active_trial || 0}
                 </Text>
-                <Text className="font-sans text-[#64748b] font-medium text-[11px] mt-0.5">Mantido</Text>
+                <Text className="font-sans text-[#64748b] font-medium text-[11px] mt-0.5">
+                  {`${kpis.new_trials_week || 0} novo(s) esta semana`}
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -1388,7 +1405,7 @@ export default function AdminCRMPsicologosScreen() {
                 <Text className="font-title text-[#ef4444] text-[24px] mt-1">
                   {kpis.churn_month || 0}
                 </Text>
-                <Text className="font-sans text-[#ef4444] font-medium text-[11px] mt-0.5">Pagantes do mês</Text>
+                <Text className="font-sans text-[#ef4444] font-medium text-[11px] mt-0.5">Cancel./expirados no mês</Text>
               </TouchableOpacity>
 
               {/* Pendentes */}
@@ -1430,7 +1447,9 @@ export default function AdminCRMPsicologosScreen() {
                 <Text className="font-title text-[#f59e0b] text-[24px] mt-1">
                   {kpis.pending || 0}
                 </Text>
-                <Text className="font-sans text-[#b45309] font-medium text-[11px] mt-0.5">há &gt; 3 dias</Text>
+                <Text className="font-sans text-[#b45309] font-medium text-[11px] mt-0.5">
+                  {`${kpis.pending_over_3d || 0} há > 3 dias`}
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -1462,7 +1481,9 @@ export default function AdminCRMPsicologosScreen() {
                 </View>
                 <View>
                   <Text className="font-sans font-bold text-[#475569] text-[13px]">Inativos / Cancelados</Text>
-                  <Text className="font-sans text-[#ef4444] text-[11px]">Assinaturas canceladas ou expiradas</Text>
+                  <Text className="font-sans text-[#ef4444] text-[11px]">
+                    {`Assinaturas canceladas ou expiradas${kpis.new_inactive_month ? ` (+${kpis.new_inactive_month} no mês)` : ''}`}
+                  </Text>
                 </View>
               </View>
               <Text className="font-title text-[#ef4444] text-[22px]">
