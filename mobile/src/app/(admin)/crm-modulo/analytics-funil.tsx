@@ -1540,7 +1540,20 @@ export default function AdminAnalyticsFunilScreen() {
                                 </Text>
                               )}
                             </View>
-                            <View style={{ flex: 1 }}>
+                            <TouchableOpacity
+                              disabled={!(item.psychologistId || item.psychologist?.id)}
+                              activeOpacity={0.7}
+                              onPress={() => {
+                                const psiId = item.psychologistId || item.psychologist?.id;
+                                if (psiId) {
+                                  router.navigate({
+                                    pathname: '/(admin)/crm-modulo/psicologos',
+                                    params: { openId: String(psiId) },
+                                  });
+                                }
+                              }}
+                              style={{ flex: 1 }}
+                            >
                               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#1B4332' }} numberOfLines={1}>
                                 {psiName}
                               </Text>
@@ -1549,7 +1562,7 @@ export default function AdminAnalyticsFunilScreen() {
                                   {item.psychologist.email}
                                 </Text>
                               ) : null}
-                            </View>
+                            </TouchableOpacity>
                           </View>
                           <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#94a3b8' }}>{dataStr}</Text>
                         </View>
@@ -1775,7 +1788,18 @@ export default function AdminAnalyticsFunilScreen() {
                         }}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                          <TouchableOpacity
+                            disabled={!item.id}
+                            activeOpacity={0.7}
+                            onPress={() =>
+                              item.id &&
+                              router.navigate({
+                                pathname: '/(admin)/crm-modulo/psicologos',
+                                params: { openId: String(item.id) },
+                              })
+                            }
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}
+                          >
                             <View style={{ width: 24, height: 24, borderRadius: 999, backgroundColor: badgeBg, alignItems: 'center', justifyContent: 'center' }}>
                               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: badgeColor }}>#{pos}</Text>
                             </View>
@@ -1792,10 +1816,10 @@ export default function AdminAnalyticsFunilScreen() {
                                 </Text>
                               )}
                             </View>
-                            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#1e293b', flex: 1 }} numberOfLines={1}>
+                            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: item.id ? '#1B4332' : '#1e293b', flex: 1 }} numberOfLines={1}>
                               {item.nome}
                             </Text>
-                          </View>
+                          </TouchableOpacity>
                           <View style={{ backgroundColor: '#dcfce7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
                             <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#15803d' }}>
                               {item.cliquesWpp || 0} wpp

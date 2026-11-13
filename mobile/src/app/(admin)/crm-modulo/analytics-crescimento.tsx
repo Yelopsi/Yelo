@@ -1189,7 +1189,17 @@ export default function AnalyticsCrescimentoScreen() {
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 }}>
+                      <TouchableOpacity
+                        disabled={!psi.id}
+                        activeOpacity={0.7}
+                        onPress={() =>
+                          router.navigate({
+                            pathname: '/(admin)/crm-modulo/psicologos',
+                            params: { openId: String(psi.id) },
+                          })
+                        }
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 }}
+                      >
                         {/* Foto ou Avatar Redondo */}
                         <View
                           style={{
@@ -1215,7 +1225,7 @@ export default function AnalyticsCrescimentoScreen() {
                             {psi.telefone || 'Sem telefone'}
                           </Text>
                         </View>
-                      </View>
+                      </TouchableOpacity>
 
                       <View
                         style={{
@@ -1627,7 +1637,11 @@ export default function AnalyticsCrescimentoScreen() {
                         <TouchableOpacity
                           onPress={() => {
                             setDrilldownVisible(false);
-                            router.navigate('/(admin)/crm-modulo/psicologos');
+                            router.navigate(
+                              psi.id
+                                ? { pathname: '/(admin)/crm-modulo/psicologos', params: { openId: String(psi.id) } }
+                                : '/(admin)/crm-modulo/psicologos'
+                            );
                           }}
                           activeOpacity={0.8}
                           style={{

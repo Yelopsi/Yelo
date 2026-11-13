@@ -803,8 +803,17 @@ export default function ReceitaScreen() {
                         const statusColor = isPaid ? '#059669' : isLate ? '#dc2626' : '#64748b';
 
                         return (
-                          <View
+                          <TouchableOpacity
                             key={idx}
+                            disabled={!inv.psiId}
+                            activeOpacity={0.7}
+                            onPress={() =>
+                              inv.psiId &&
+                              router.navigate({
+                                pathname: '/(admin)/crm-modulo/psicologos',
+                                params: { openId: String(inv.psiId) },
+                              })
+                            }
                             style={{
                               flexDirection: 'row',
                               alignItems: 'center',
@@ -817,7 +826,7 @@ export default function ReceitaScreen() {
                             }}
                           >
                             <View style={{ flex: 1, paddingRight: 8 }}>
-                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: '#1e293b' }} numberOfLines={1}>
+                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: inv.psiId ? '#1B4332' : '#1e293b' }} numberOfLines={1}>
                                 {inv.psychologistName || 'Psicólogo'}
                               </Text>
                               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
@@ -835,7 +844,7 @@ export default function ReceitaScreen() {
                                 </Text>
                               </View>
                             </View>
-                          </View>
+                          </TouchableOpacity>
                         );
                       })}
                     </View>
@@ -866,8 +875,17 @@ export default function ReceitaScreen() {
                   {financials.activePlans && financials.activePlans.length > 0 ? (
                     <View style={{ gap: 8 }}>
                       {financials.activePlans.slice(0, 10).map((plan: any, idx: number) => (
-                        <View
+                        <TouchableOpacity
                           key={idx}
+                          disabled={!plan.psychologistId}
+                          activeOpacity={0.7}
+                          onPress={() =>
+                            plan.psychologistId &&
+                            router.navigate({
+                              pathname: '/(admin)/crm-modulo/psicologos',
+                              params: { openId: String(plan.psychologistId) },
+                            })
+                          }
                           style={{
                             padding: 12,
                             borderRadius: 14,
@@ -877,7 +895,7 @@ export default function ReceitaScreen() {
                           }}
                         >
                           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: '#1e293b' }} numberOfLines={1}>
+                            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: plan.psychologistId ? '#1B4332' : '#1e293b', flex: 1, paddingRight: 8 }} numberOfLines={1}>
                               {plan.psychologistName || 'Psicólogo'}
                             </Text>
                             <View style={{ backgroundColor: '#e0f2fe', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
@@ -894,7 +912,7 @@ export default function ReceitaScreen() {
                               {getRelativeDateLabel(plan.nextBilling)}
                             </Text>
                           </View>
-                        </View>
+                        </TouchableOpacity>
                       ))}
                     </View>
                   ) : (
