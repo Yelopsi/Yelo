@@ -95,8 +95,19 @@ function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = fa
     const el = document.getElementById(id);
     if (!el) return;
 
-    currentValue = typeof currentValue === 'object' && currentValue !== null && currentValue.value !== undefined ? currentValue.value : currentValue;
-    historicalValue = typeof historicalValue === 'object' && historicalValue !== null && historicalValue.value !== undefined ? historicalValue.value : historicalValue;
+    const normalizeVal = (raw) => {
+        const unwrapped = typeof raw === 'object' && raw !== null && raw.value !== undefined ? raw.value : raw;
+        if (typeof unwrapped === 'string') {
+            const trimmed = unwrapped.trim();
+            if (trimmed !== '' && trimmed !== 'N/A' && trimmed !== '—' && !isNaN(Number(trimmed))) {
+                return Number(trimmed);
+            }
+        }
+        return unwrapped;
+    };
+
+    currentValue = normalizeVal(currentValue);
+    historicalValue = normalizeVal(historicalValue);
 
     el.textContent = typeof currentValue === 'number' ? formatCmoMetricValue(currentValue, formatType) : currentValue;
 
@@ -134,6 +145,7 @@ function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = fa
         if (pct === 0) comparisonType = 'NO_CHANGE';
     }
 
+    const isNeutralTrend = inverseGood === 'neutral';
     let color = '#64748b';
     let bgColor = '#f1f5f9';
     let text = '';
@@ -142,18 +154,22 @@ function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = fa
 
     if (comparisonType === 'INCOMPLETE') {
         text = '—';
-        tooltip = `Sem base no ${periodHint}`;
+        tooltip = `Sem base (${periodHint})`;
     } else if (comparisonType === 'NEW_FROM_ZERO') {
         text = 'Novo';
-        color = inverseGood ? '#ef4444' : '#10b981';
+        color = isNeutralTrend ? '#2563eb' : (inverseGood ? '#ef4444' : '#10b981');
         bgColor = color + '1a';
-        tooltip = `Era 0 no ${periodHint}`;
+        tooltip = `Era 0 (${periodHint})`;
     } else if (comparisonType === 'NO_CHANGE') {
         text = '0%';
-        tooltip = `Igual ao ${periodHint}: ${histFormatted}`;
+        tooltip = `Igual (${periodHint}): ${histFormatted}`;
     } else {
         let arrow = pct > 0 ? '↑' : '↓';
-        color = (pct > 0) ? (inverseGood ? '#ef4444' : '#10b981') : (inverseGood ? '#10b981' : '#ef4444');
+        if (isNeutralTrend) {
+            color = (pct > 0) ? '#2563eb' : '#64748b';
+        } else {
+            color = (pct > 0) ? (inverseGood ? '#ef4444' : '#10b981') : (inverseGood ? '#10b981' : '#ef4444');
+        }
         bgColor = color + '1a';
         text = `${arrow} ${Math.abs(pct).toFixed(1)}%`;
         tooltip = `Anterior (${periodHint}): ${histFormatted}`;
@@ -168,14 +184,18 @@ function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = fa
 function renderCMOMetrics(data) {
     const formatCurrency = (val) => `R$ ${(val || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
 
+    let prevPeriodHint = 'período anterior';
     const badge = document.getElementById('cmo-period-comparison-badge');
-    if (badge && data.period?.dateStart && data.period?.dateEnd && data.period?.prevDateStart && data.period?.prevDateEnd) {
+    if (data.period?.dateStart && data.period?.dateEnd && data.period?.prevDateStart && data.period?.prevDateEnd) {
         const fmtBr = (iso) => {
             const parts = String(iso).split('-');
             return parts.length === 3 ? `${parts[2]}/${parts[1]}` : iso;
         };
         const daysLabel = data.period.diffDays ? `${data.period.diffDays}d` : '';
-        badge.textContent = `Comparando ${fmtBr(data.period.dateStart)}–${fmtBr(data.period.dateEnd)} (${daysLabel}) vs ${fmtBr(data.period.prevDateStart)}–${fmtBr(data.period.prevDateEnd)} (${daysLabel})`;
+        prevPeriodHint = `${fmtBr(data.period.prevDateStart)}–${fmtBr(data.period.prevDateEnd)}${daysLabel ? ` · ${daysLabel}` : ''}`;
+        if (badge) {
+            badge.textContent = `Comparando ${fmtBr(data.period.dateStart)}–${fmtBr(data.period.dateEnd)} (${daysLabel}) vs ${fmtBr(data.period.prevDateStart)}–${fmtBr(data.period.prevDateEnd)} (${daysLabel})`;
+        }
     }
 
     // 1. Atualizar KPIs (B2B e B2C)
@@ -183,16 +203,16 @@ function renderCMOMetrics(data) {
     // Popula Cards da Inteligência Algorítmica (Funil B2B)
     if (data.platform) {
         // B2B (Meta) KPIs
-        setKpiValueAndTrend('cmo-meta-spend', data.ads?.meta?.spend || 0, data.prevAds?.meta?.spend || 0, true, 'currency');
-        setKpiValueAndTrend('cmo-meta-trials', data.platform.b2b?.trials || 0, data.prevPlatform?.b2b?.trials || 0, false, 'number');
-        setKpiValueAndTrend('cmo-meta-pagantes', data.platform.b2b?.active || 0, data.prevPlatform?.b2b?.active || 0, false, 'number');
-        setKpiValueAndTrend('cmo-meta-cac', data.ads?.meta?.cac || 0, data.prevAds?.meta?.cac || 0, true, 'currency');
+        setKpiValueAndTrend('cmo-meta-spend', data.ads?.meta?.spend || 0, data.prevAds?.meta?.spend || 0, 'neutral', 'currency', prevPeriodHint);
+        setKpiValueAndTrend('cmo-meta-trials', data.platform.b2b?.trials || 0, data.prevPlatform?.b2b?.trials || 0, false, 'number', prevPeriodHint);
+        setKpiValueAndTrend('cmo-meta-pagantes', data.platform.b2b?.active || 0, data.prevPlatform?.b2b?.active || 0, false, 'number', prevPeriodHint);
+        setKpiValueAndTrend('cmo-meta-cac', data.ads?.meta?.cac || 0, data.prevAds?.meta?.cac || 0, true, 'currency', prevPeriodHint);
 
         // B2C (Google) KPIs
-        setKpiValueAndTrend('cmo-google-spend', data.ads?.google?.spend || 0, data.prevAds?.google?.spend || 0, true, 'currency');
-        setKpiValueAndTrend('cmo-google-clicks', data.platform.b2c?.wpp_clicks || 0, data.prevPlatform?.b2c?.wpp_clicks || 0, false, 'number');
-        setKpiValueAndTrend('cmo-google-deals', data.platform.b2c?.total_deals || 0, data.prevPlatform?.b2c?.total_deals || 0, false, 'number');
-        setKpiValueAndTrend('cmo-google-cpl', data.ads?.google?.cpl || 0, data.prevAds?.google?.cpl || 0, true, 'currency');
+        setKpiValueAndTrend('cmo-google-spend', data.ads?.google?.spend || 0, data.prevAds?.google?.spend || 0, 'neutral', 'currency', prevPeriodHint);
+        setKpiValueAndTrend('cmo-google-clicks', data.platform.b2c?.wpp_clicks || 0, data.prevPlatform?.b2c?.wpp_clicks || 0, false, 'number', prevPeriodHint);
+        setKpiValueAndTrend('cmo-google-deals', data.platform.b2c?.total_deals || 0, data.prevPlatform?.b2c?.total_deals || 0, false, 'number', prevPeriodHint);
+        setKpiValueAndTrend('cmo-google-cpl', data.ads?.google?.cpl || 0, data.prevAds?.google?.cpl || 0, true, 'currency', prevPeriodHint);
 
         // Eficiência Comercial B2C KPIs
         if (data.efficiency) {
@@ -288,10 +308,10 @@ function renderCMOMetrics(data) {
 
             if (pct > 0) {
                 arrow = '↑';
-                color = inverseGood ? '#ef4444' : '#10b981';
+                color = inverseGood === 'neutral' ? '#2563eb' : (inverseGood ? '#ef4444' : '#10b981');
             } else if (pct < 0) {
                 arrow = '↓';
-                color = inverseGood ? '#10b981' : '#ef4444';
+                color = inverseGood === 'neutral' ? '#64748b' : (inverseGood ? '#10b981' : '#ef4444');
             } else {
                 arrow = '−';
             }
@@ -309,7 +329,7 @@ function renderCMOMetrics(data) {
             el.style.gap = '2px';
             el.style.marginTop = '4px';
             el.innerHTML = `
-                <span style="color: #64748b; font-size: 0.75rem;">Período Anterior: <strong style="color: #1e293b; font-size: 1.05rem;">${histVal}</strong></span>
+                <span style="color: #64748b; font-size: 0.75rem;">Anterior (${prevPeriodHint}): <strong style="color: #1e293b; font-size: 1.05rem;">${histVal}</strong></span>
                 <span style="color: #64748b; font-size: 0.75rem; display: flex; align-items: center;">
                     <span>No Período: <strong style="color: #1e293b; font-size: 1.05rem;">${monthVal}</strong></span>
                     ${trendHtml}
@@ -317,7 +337,7 @@ function renderCMOMetrics(data) {
             `;
         };
 
-        setDbgHist('dbg-meta-spend',    data.prevAds?.meta?.spend || 0, data.ads?.meta?.spend || 0, 'currency', true);
+        setDbgHist('dbg-meta-spend',    data.prevAds?.meta?.spend || 0, data.ads?.meta?.spend || 0, 'currency', 'neutral');
         setDbgHist('dbg-meta-trials',   data.prevPlatform?.b2b?.trials || 0, data.platform.b2b?.trials || 0, 'number', false);
         setDbgHist('dbg-meta-pagantes', data.prevPlatform?.b2b?.active || 0, data.platform.b2b?.active || 0, 'number', false);
         setDbgHist('dbg-meta-cac',      data.prevAds?.meta?.cac || 0, data.ads?.meta?.cac || 0, 'currency', true);
@@ -333,7 +353,7 @@ function renderCMOMetrics(data) {
             setDbgHist('dbg-global-churn',  data.prevPlatform?.b2b?.global_churn_rate || 0, data.platform.b2b?.global_churn_rate || 0, 'percent', true);
         }
 
-        setDbgHist('dbg-google-spend',  data.prevAds?.google?.spend || 0, data.ads?.google?.spend || 0, 'currency', true);
+        setDbgHist('dbg-google-spend',  data.prevAds?.google?.spend || 0, data.ads?.google?.spend || 0, 'currency', 'neutral');
         setDbgHist('dbg-google-clicks', data.prevPlatform?.b2c?.wpp_clicks || 0, data.platform.b2c?.wpp_clicks || 0, 'number', false);
         setDbgHist('dbg-google-deals',  data.prevPlatform?.b2c?.total_deals || 0, data.platform.b2c?.total_deals || 0, 'number', false);
         setDbgHist('dbg-google-cpl',    (data.prevAds?.google?.cpl?.value || data.prevAds?.google?.cpl || 0), (data.ads?.google?.cpl?.value || data.ads?.google?.cpl || 0), 'currency', true);
@@ -346,23 +366,25 @@ function renderCMOMetrics(data) {
         const c = data.campaigns.meta.find(camp => (camp.campaign_id || camp.id) === targetId);
         const prevC = data.prevCampaigns?.meta?.find(camp => (camp.campaign_id || camp.id) === targetId) || {};
         if (c) {
-            const spend = c.spend || 0;
-            const clicks = c.clicks || 0;
-            const conversions = c.conversions || 0;
+            const spend = Number(c.spend) || 0;
+            const impressions = Number(c.impressions) || 0;
+            const clicks = Number(c.clicks) || 0;
+            const conversions = Number(c.conversions) || 0;
             const cpc = clicks > 0 ? (spend / clicks) : 0;
             const costPerConv = conversions > 0 ? (spend / conversions) : 0;
 
-            const prevSpend = prevC.spend || 0;
-            const prevClicks = prevC.clicks || 0;
-            const prevConversions = prevC.conversions || 0;
+            const prevSpend = Number(prevC.spend) || 0;
+            const prevImpressions = Number(prevC.impressions) || 0;
+            const prevClicks = Number(prevC.clicks) || 0;
+            const prevConversions = Number(prevC.conversions) || 0;
             const prevCpc = prevClicks > 0 ? (prevSpend / prevClicks) : 0;
             const prevCostPerConv = prevConversions > 0 ? (prevSpend / prevConversions) : 0;
 
-            setKpiValueAndTrend('cmo-meta-impressions-metric', c.impressions || 0, prevC.impressions || 0, false, 'number');
-            setKpiValueAndTrend('cmo-meta-clicks-metric', clicks, prevClicks, false, 'number');
-            setKpiValueAndTrend('cmo-meta-conversions-metric', conversions, prevConversions, false, 'number');
-            setKpiValueAndTrend('cmo-meta-cpc-metric', cpc, prevCpc, true, 'currency');
-            setKpiValueAndTrend('cmo-meta-cpa-metric', costPerConv, prevCostPerConv, true, 'currency');
+            setKpiValueAndTrend('cmo-meta-impressions-metric', impressions, prevImpressions, false, 'number', prevPeriodHint);
+            setKpiValueAndTrend('cmo-meta-clicks-metric', clicks, prevClicks, false, 'number', prevPeriodHint);
+            setKpiValueAndTrend('cmo-meta-conversions-metric', conversions, prevConversions, false, 'number', prevPeriodHint);
+            setKpiValueAndTrend('cmo-meta-cpc-metric', cpc, prevCpc, true, 'currency', prevPeriodHint);
+            setKpiValueAndTrend('cmo-meta-cpa-metric', costPerConv, prevCostPerConv, true, 'currency', prevPeriodHint);
         }
     }
 
@@ -371,23 +393,25 @@ function renderCMOMetrics(data) {
         const c = data.campaigns.google.find(camp => camp.campaign_name === 'Yelo MVP - Busca SP');
         const prevC = data.prevCampaigns?.google?.find(camp => camp.campaign_name === 'Yelo MVP - Busca SP') || {};
         if (c) {
-            const spend = c.spend || 0;
-            const clicks = c.clicks || 0;
-            const conversions = c.conversions || 0;
+            const spend = Number(c.spend) || 0;
+            const impressions = Number(c.impressions) || 0;
+            const clicks = Number(c.clicks) || 0;
+            const conversions = Number(c.conversions) || 0;
             const cpc = clicks > 0 ? (spend / clicks) : 0;
             const costPerConv = conversions > 0 ? (spend / conversions) : 0;
 
-            const prevSpend = prevC.spend || 0;
-            const prevClicks = prevC.clicks || 0;
-            const prevConversions = prevC.conversions || 0;
+            const prevSpend = Number(prevC.spend) || 0;
+            const prevImpressions = Number(prevC.impressions) || 0;
+            const prevClicks = Number(prevC.clicks) || 0;
+            const prevConversions = Number(prevC.conversions) || 0;
             const prevCpc = prevClicks > 0 ? (prevSpend / prevClicks) : 0;
             const prevCostPerConv = prevConversions > 0 ? (prevSpend / prevConversions) : 0;
 
-            setKpiValueAndTrend('cmo-google-impressions-metric', c.impressions || 0, prevC.impressions || 0, false, 'number');
-            setKpiValueAndTrend('cmo-google-clicks-metric', clicks, prevClicks, false, 'number');
-            setKpiValueAndTrend('cmo-google-conversions-metric', conversions, prevConversions, false, 'number');
-            setKpiValueAndTrend('cmo-google-cpc-metric', cpc, prevCpc, true, 'currency');
-            setKpiValueAndTrend('cmo-google-cpa-metric', costPerConv, prevCostPerConv, true, 'currency');
+            setKpiValueAndTrend('cmo-google-impressions-metric', impressions, prevImpressions, false, 'number', prevPeriodHint);
+            setKpiValueAndTrend('cmo-google-clicks-metric', clicks, prevClicks, false, 'number', prevPeriodHint);
+            setKpiValueAndTrend('cmo-google-conversions-metric', conversions, prevConversions, false, 'number', prevPeriodHint);
+            setKpiValueAndTrend('cmo-google-cpc-metric', cpc, prevCpc, true, 'currency', prevPeriodHint);
+            setKpiValueAndTrend('cmo-google-cpa-metric', costPerConv, prevCostPerConv, true, 'currency', prevPeriodHint);
         }
     }
 
