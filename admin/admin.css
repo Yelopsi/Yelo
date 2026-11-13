@@ -824,6 +824,7 @@ button,
 /* Esconde a bottom nav mobile quando qualquer modal de moderação ou overlay estiver aberto */
 body.mod-modal-open .mobile-bottom-nav,
 body.modal-open .mobile-bottom-nav,
+body:has(.drawer-overlay.active) .mobile-bottom-nav,
 body:has(#modal-preview-post[style*="display: flex"]) .mobile-bottom-nav,
 body:has(#modal-preview-post[style*="display: block"]) .mobile-bottom-nav,
 body:has(#modal-preview-post.active) .mobile-bottom-nav,

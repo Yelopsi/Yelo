@@ -1,3 +1,158 @@
+window.closeCSDrawer = function() {
+    const overlay = document.getElementById('drawer-cs-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    const drawerContent = overlay.querySelector('.drawer-content');
+    if (drawerContent) {
+        setTimeout(() => {
+            drawerContent.style.removeProperty('transform');
+            drawerContent.style.removeProperty('transition');
+        }, 300);
+    }
+};
+
+function setCSHealthExpanded(expanded, okCount, totalCount) {
+    const card = document.getElementById('cs-health-card');
+    const toggle = document.getElementById('cs-health-toggle');
+    const checksUl = document.getElementById('cs-health-checks');
+    const hintEl = document.getElementById('cs-health-hint-text');
+
+    if (card) card.classList.toggle('expanded', !!expanded);
+    if (toggle) toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    if (checksUl) checksUl.style.display = expanded ? 'flex' : 'none';
+    if (hintEl) {
+        if (expanded) {
+            hintEl.textContent = 'Ocultar checklist completo';
+        } else if (typeof okCount === 'number' && typeof totalCount === 'number' && totalCount > 0) {
+            hintEl.textContent = `Ver checklist (${okCount}/${totalCount} concluídos)`;
+        } else {
+            hintEl.textContent = 'Ver checklist completo';
+        }
+    }
+}
+
+function formatPlanDisplayName(rawPlano) {
+    if (!rawPlano) return null;
+    const norm = String(rawPlano).trim().toUpperCase();
+    if (!norm || norm === 'NENHUM' || norm === 'NULL' || norm === 'NONE') return null;
+    const map = {
+        ESSENTIAL: 'Essencial',
+        ESSENCIAL: 'Essencial',
+        CLINICAL: 'Clínico',
+        'CLÍNICO': 'Clínico',
+        CLINICO: 'Clínico',
+        REFERENCE: 'Referência',
+        'REFERÊNCIA': 'Referência',
+        REFERENCIA: 'Referência',
+        SOL: 'Referência'
+    };
+    if (map[norm]) return map[norm];
+    const clean = String(rawPlano).trim();
+    return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+}
+
+function getCSSubscriptionSummary(psy, fullData) {
+    const now = new Date();
+    const isVip = psy.is_exempt === true;
+    const planLabel = formatPlanDisplayName(psy.plano);
+
+    const rawExp = psy.planExpiresAt || fullData?.subscription?.nextDueDate || null;
+    const expDate = rawExp ? new Date(rawExp) : null;
+    const isEpochExpired = !!(expDate && !isNaN(expDate.getTime()) && expDate.getFullYear() < 2000);
+    const hasValidExp = !!(expDate && !isNaN(expDate.getTime()) && !isEpochExpired);
+    const formattedExpDate = hasValidExp
+        ? expDate.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+        : null;
+
+    const payments = Array.isArray(fullData?.payments) ? fullData.payments : [];
+    const hasPaidPayments =
+        (psy.subscription_payments_count && Number(psy.subscription_payments_count) > 0) ||
+        !!psy.firstPaidAt ||
+        payments.some((p) => ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(String(p.status || '').toUpperCase()));
+    const hasPaidHistory = !!(psy.subscriptionId || fullData?.subscription?.id || fullData?.asaasSubscription?.id || hasPaidPayments);
+
+    if (isVip) {
+        return {
+            planText: planLabel ? `${planLabel} (VIP)` : 'VIP (Isento)',
+            planColor: '#b45309',
+            expireLabel: 'Vencimento',
+            expireText: 'Vitalício (VIP)',
+            expireColor: '#d4af37',
+            isExpired: false,
+            isTrial: false
+        };
+    }
+
+    const isExpiredByDate = hasValidExp && expDate <= now;
+    const isExpired = psy.status === 'inactive' || isExpiredByDate || isEpochExpired;
+
+    if (psy.status === 'pending' && !hasPaidHistory && !hasValidExp && !isEpochExpired) {
+        return {
+            planText: 'Nenhum',
+            planColor: '#64748b',
+            expireLabel: 'Vencimento',
+            expireText: '-',
+            expireColor: '#64748b',
+            isExpired: false,
+            isTrial: false
+        };
+    }
+
+    if (isExpired) {
+        let expiredPlanText = 'Expirado';
+        if (hasPaidHistory) {
+            expiredPlanText = planLabel ? `Expirado (${planLabel})` : 'Expirado';
+        } else if (planLabel || hasValidExp || isEpochExpired) {
+            expiredPlanText = planLabel ? `Trial Expirado (${planLabel})` : 'Trial Expirado';
+        }
+        return {
+            planText: expiredPlanText,
+            planColor: '#ef4444',
+            expireLabel: formattedExpDate ? 'Expirou em' : 'Expiração',
+            expireText: formattedExpDate || 'Expirado',
+            expireColor: '#ef4444',
+            isExpired: true,
+            isTrial: !hasPaidHistory
+        };
+    }
+
+    if (psy.status === 'active' && !hasPaidHistory) {
+        const diffHours = hasValidExp ? (expDate.getTime() - now.getTime()) / (1000 * 60 * 60) : null;
+        return {
+            planText: planLabel ? `Trial (${planLabel})` : 'Trial',
+            planColor: '#2563eb',
+            expireLabel: 'Expira em',
+            expireText: formattedExpDate || '-',
+            expireColor: diffHours !== null && diffHours <= 48 ? '#d97706' : '#1e293b',
+            isExpired: false,
+            isTrial: true
+        };
+    }
+
+    if (psy.status === 'active' && (hasPaidHistory || planLabel)) {
+        const cancelSuffix = psy.cancelAtPeriodEnd ? ' (Cancelamento agendado)' : '';
+        return {
+            planText: `${planLabel || 'Ativo'}${cancelSuffix}`,
+            planColor: psy.cancelAtPeriodEnd ? '#d97706' : '#166534',
+            expireLabel: psy.cancelAtPeriodEnd ? 'Expira em' : 'Vencimento',
+            expireText: formattedExpDate || '-',
+            expireColor: '#1e293b',
+            isExpired: false,
+            isTrial: false
+        };
+    }
+
+    return {
+        planText: planLabel || 'Nenhum',
+        planColor: planLabel ? '#1e293b' : '#64748b',
+        expireLabel: 'Vencimento',
+        expireText: formattedExpDate || '-',
+        expireColor: '#64748b',
+        isExpired: false,
+        isTrial: false
+    };
+}
+
 window.openCSDrawer = async function(idStr) {
     const API_BASE_URL = window.API_BASE_URL || '';
     const token = localStorage.getItem('Yelo_token');
@@ -10,47 +165,112 @@ window.openCSDrawer = async function(idStr) {
     try {
         let overlay = document.getElementById('drawer-cs-overlay');
         if (!overlay) {
-            const htmlRes = await fetch('admin_cs_drawer.html');
+            const htmlRes = await fetch('admin_cs_drawer.html?v=2.0');
             const htmlText = await htmlRes.text();
             document.body.insertAdjacentHTML('beforeend', htmlText);
             overlay = document.getElementById('drawer-cs-overlay');
             
             // Bind close event once
             const btnClose = document.getElementById('btn-close-cs-drawer');
-            if(btnClose) {
-                btnClose.addEventListener('click', () => overlay.classList.remove('active'));
+            if (btnClose) {
+                btnClose.addEventListener('click', window.closeCSDrawer);
             }
             overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) overlay.classList.remove('active');
+                if (e.target === overlay) window.closeCSDrawer();
             });
+
+            if (!window.__csDrawerGlobalEventsBound) {
+                window.__csDrawerGlobalEventsBound = true;
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const activeOverlay = document.getElementById('drawer-cs-overlay');
+                        if (activeOverlay && activeOverlay.classList.contains('active')) {
+                            window.closeCSDrawer();
+                        }
+                    }
+                });
+                window.addEventListener('vipStatusUpdated', () => {
+                    window.closeCSDrawer();
+                });
+            }
+
+            // Toggle colapsável de Saúde do Perfil (inicia sempre colapsado)
+            const healthToggle = document.getElementById('cs-health-toggle');
+            if (healthToggle) {
+                const toggleHealth = () => {
+                    const card = document.getElementById('cs-health-card');
+                    const isExpanded = card ? card.classList.contains('expanded') : false;
+                    const checksCount = window.__csHealthChecksCount || { ok: 0, total: 0 };
+                    setCSHealthExpanded(!isExpanded, checksCount.ok, checksCount.total);
+                };
+                healthToggle.addEventListener('click', toggleHealth);
+                healthToggle.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleHealth();
+                    }
+                });
+            }
             
-            // Swipe to close
+            // Swipe down APENAS no cabeçalho no Mobile Web (para não bloquear scroll do corpo)
             const drawerContent = overlay.querySelector('.drawer-content');
+            const drawerHeader = overlay.querySelector('.drawer-header-mobile');
             let startY = 0, currentY = 0;
-            if(drawerContent) {
-                drawerContent.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive: true});
-                drawerContent.addEventListener('touchmove', e => {
-                    if(window.innerWidth > 768) return;
+            if (drawerHeader && drawerContent) {
+                drawerHeader.addEventListener('touchstart', e => {
+                    if (window.innerWidth > 768) return;
+                    startY = e.touches[0].clientY;
+                    currentY = startY;
+                    drawerContent.style.setProperty('transition', 'none', 'important');
+                }, { passive: true });
+                drawerHeader.addEventListener('touchmove', e => {
+                    if (window.innerWidth > 768 || startY === 0) return;
                     currentY = e.touches[0].clientY;
                     const diffY = currentY - startY;
-                    if(diffY > 0) drawerContent.style.transform = `translateY(${diffY}px)`;
-                }, {passive: true});
-                drawerContent.addEventListener('touchend', () => {
-                    if(window.innerWidth > 768) return;
+                    if (diffY > 0) {
+                        drawerContent.style.setProperty('transform', `translateY(${diffY}px)`, 'important');
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+                drawerHeader.addEventListener('touchend', () => {
+                    if (window.innerWidth > 768 || startY === 0) return;
                     const diffY = currentY - startY;
-                    if (diffY > 80) overlay.classList.remove('active');
-                    drawerContent.style.removeProperty('transform');
-                    startY = 0; currentY = 0;
+                    drawerContent.style.setProperty('transition', 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)', 'important');
+                    if (diffY > 80) {
+                        window.closeCSDrawer();
+                    } else {
+                        drawerContent.style.setProperty('transform', 'translateY(0)', 'important');
+                        setTimeout(() => {
+                            drawerContent.style.removeProperty('transform');
+                            drawerContent.style.removeProperty('transition');
+                        }, 300);
+                    }
+                    startY = 0;
+                    currentY = 0;
                 });
             }
         }
 
-        // Reset Drawer fields temporarily
+        // Reset Drawer fields temporarily e garante Saúde do Perfil colapsado
+        window.__csHealthChecksCount = { ok: 0, total: 0 };
+        setCSHealthExpanded(false);
         document.getElementById('cs-name').innerHTML = '<span class="loading-spinner-sm" style="border-width:2px;"></span>';
+        document.getElementById('cs-email').textContent = '';
+        document.getElementById('cs-phone').textContent = 'Tel: -';
+        document.getElementById('cs-crp').textContent = 'CRP: -';
+        document.getElementById('cs-date').textContent = 'Desde: -';
+        document.getElementById('cs-plan').textContent = '-';
+        document.getElementById('cs-plan').style.color = '#1e293b';
+        const expireLabelResetEl = document.getElementById('cs-expire-label');
+        if (expireLabelResetEl) expireLabelResetEl.textContent = 'Vencimento';
+        document.getElementById('cs-expire').textContent = '-';
+        document.getElementById('cs-expire').style.color = '#1e293b';
         document.getElementById('cs-health-pct').textContent = '0%';
         document.getElementById('cs-health-bar').style.width = '0%';
         document.getElementById('cs-health-checks').innerHTML = '';
         document.getElementById('cs-actions-container').innerHTML = '';
+        const bodyScroll = overlay.querySelector('.drawer-body-scroll');
+        if (bodyScroll) bodyScroll.scrollTop = 0;
         
         overlay.classList.add('active');
 
@@ -91,22 +311,22 @@ window.openCSDrawer = async function(idStr) {
         document.getElementById('cs-crp').textContent = `CRP: ${psy.crp || 'N/A'}`;
         document.getElementById('cs-date').textContent = `Desde: ${new Date(psy.createdAt).toLocaleDateString('pt-BR')}`;
 
-        const isVip = psy.is_exempt;
-        const planoName = psy.plano ? (psy.plano.charAt(0).toUpperCase() + psy.plano.slice(1).toLowerCase()) : 'Nenhum';
-        document.getElementById('cs-plan').textContent = planoName;
+        const isVip = psy.is_exempt === true;
+        const subSummary = getCSSubscriptionSummary(psy, data);
+        const planEl = document.getElementById('cs-plan');
+        const expireLabelEl = document.getElementById('cs-expire-label');
+        const expireEl = document.getElementById('cs-expire');
 
-        let expText = '-';
-        if (isVip) {
-            expText = 'Vitalício (VIP)';
-            document.getElementById('cs-expire').style.color = '#d4af37';
-        } else if (psy.planExpiresAt) {
-            const expDate = new Date(psy.planExpiresAt);
-            expText = expDate.toLocaleDateString('pt-BR');
-            document.getElementById('cs-expire').style.color = expDate < new Date() ? '#ef4444' : '#1e293b';
-        }
-        document.getElementById('cs-expire').textContent = expText;
+        planEl.textContent = subSummary.planText;
+        planEl.style.color = subSummary.planColor;
+        if (expireLabelEl) expireLabelEl.textContent = subSummary.expireLabel;
+        expireEl.textContent = subSummary.expireText;
+        expireEl.style.color = subSummary.expireColor;
 
         const health = calculateProfileHealth(psy);
+        const okChecksCount = health.checks.filter(c => c.ok).length;
+        window.__csHealthChecksCount = { ok: okChecksCount, total: health.checks.length };
+
         document.getElementById('cs-health-pct').textContent = `${health.score}%`;
         const bar = document.getElementById('cs-health-bar');
         bar.style.width = `${health.score}%`;
@@ -122,6 +342,7 @@ window.openCSDrawer = async function(idStr) {
             li.innerHTML = `<span>${c.text}</span> <strong style="color: ${c.ok ? '#10b981' : '#ef4444'};">${c.ok ? '✓' : '✗'}</strong>`;
             checksUl.appendChild(li);
         });
+        setCSHealthExpanded(false, okChecksCount, health.checks.length);
 
         // ACTIONS
         const actionsContainer = document.getElementById('cs-actions-container');
@@ -131,6 +352,7 @@ window.openCSDrawer = async function(idStr) {
         const btnVip = document.createElement('button');
         btnVip.className = 'btn-tabela';
         btnVip.style.width = '100%'; btnVip.style.justifyContent = 'center'; btnVip.style.padding = '12px'; btnVip.style.borderRadius = '50px';
+        btnVip.style.background = '#f0fdf4'; btnVip.style.color = '#166534'; btnVip.style.border = '1px solid #bbf7d0';
         btnVip.textContent = isVip ? 'Gerenciar Isenção VIP (Atual: VIP)' : 'Conceder Isenção VIP';
         btnVip.onclick = () => {
             if(window.openVipModal) window.openVipModal({ id: psy.id, nome: psy.nome, is_exempt: isVip, plano: psy.plano });
@@ -212,9 +434,11 @@ window.openCSDrawer = async function(idStr) {
                     }
                     
                     whatsappUrl += `?text=${encodeURIComponent(copyMsg)}`;
-                } else if (psy.status === 'inactive' && psy.plano && psy.plano !== 'nenhum') {
+                } else if (subSummary.isExpired || (psy.status === 'inactive' && psy.plano && psy.plano !== 'nenhum')) {
                     const firstName = psy.nome ? psy.nome.split(' ')[0] : 'Psicólogo(a)';
                     const currentMonthName = new Date().toLocaleString('pt-BR', { month: 'long' });
+                    const rawValor = psy.valor_sessao_numero || psy.valorSessao;
+                    const VALOR = rawValor ? parseFloat(rawValor).toFixed(2).replace('.', ',') : '150,00';
                     
                     let X = 0, Y = 0;
                     if (window.csDrawerDataCache && window.csDrawerDataCache.whatsappLogs) {
@@ -425,7 +649,7 @@ window.openCSDrawer = async function(idStr) {
         const aiCopyText = document.getElementById('ai-copy-text');
 
         if (btnGenAI) {
-            const isChurn = psy.status === 'inactive' && psy.planExpiresAt && new Date(psy.planExpiresAt) < new Date();
+            const isChurn = subSummary.isExpired || (psy.status === 'inactive' && psy.planExpiresAt && new Date(psy.planExpiresAt) < new Date());
 
             // Reset state
             btnGenAI.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg> ${isChurn ? 'Gerar Resgate de Churn' : 'Gerar Diagnóstico'}`;
