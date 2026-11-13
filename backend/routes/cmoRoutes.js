@@ -786,7 +786,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         const histGoogleCpl = histGoogleWppClicks > 0 ? (actualGoogleSpendHistorical / histGoogleWppClicks) : 0;
 
         const deltaGoogleSpend = actualGoogleSpend - actualPrevGoogleSpend;
-        const deltaGoogleClicks = wppClicks - parseInt(prevGoogleMetricsRes.wpp_clicks || 0);
+        const prevTotalWppClicks = parseInt(prevGoogleMetricsRes.wpp_clicks || 0);
+        const deltaGoogleClicks = googleWppClicks - prevGoogleWppClicks;
         const googleMarginalCpl = deltaGoogleClicks > 0 ? (deltaGoogleSpend / deltaGoogleClicks) : 0;
 
         // 5. Motor de Decisão (Meta/B2B)
@@ -842,8 +843,8 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             action: 'RECOLHENDO DADOS ⏳', confidence: 0, target: 8, // Target CPL B2C (Custo por Lead/Clique WPP)
             scaleCapacity: 'BAIXA', trend: (typeof googleCpl === 'number' && typeof prevGoogleCpl === 'number') ? googleCpl - prevGoogleCpl : null, warning: null, recommendation: 'Aguarde mais volume de cliques.'
         };
-        if (wppClicks < 10) {
-            decisionEngineGoogle.warning = `Amostra pequena (${wppClicks} cliques WPP). O custo por lead pode variar muito.`;
+        if (googleWppClicks < 10) {
+            decisionEngineGoogle.warning = `Amostra pequena (${googleWppClicks} cliques WPP Google). O custo por lead pode variar muito.`;
         }
 
         if (actualGoogleSpend === 'MISSING_INPUT') {
@@ -857,9 +858,9 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             const isCplHealthy = googleCpl <= decisionEngineGoogle.target;
             const isMarginalDangerous = googleMarginalCpl > (decisionEngineGoogle.target * 1.5);
 
-            if (isCplHealthy && !isMarginalDangerous && wppClicks >= 10) {
+            if (isCplHealthy && !isMarginalDangerous && googleWppClicks >= 10) {
                 decisionEngineGoogle.action = 'SINAL VERDE: AUMENTAR 🚀';
-                decisionEngineGoogle.confidence = wppClicks < 30 ? 65 : 90;
+                decisionEngineGoogle.confidence = googleWppClicks < 30 ? 65 : 90;
                 decisionEngineGoogle.scaleCapacity = 'ALTA';
                 decisionEngineGoogle.recommendation = `O Custo por Lead (CPL R$ ${googleCpl.toFixed(2)}) está excelente. Aumente o Google Ads para entregar mais contatos aos psicólogos.`;
             } else if (isCplHealthy && isMarginalDangerous) {
@@ -1288,7 +1289,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             prevCampaigns: { meta: prevMetaCampaigns, google: prevGoogleCampaigns.data || [] },
             prevPlatform: {
                 b2b: { active: prevMetaPagantes, trials: prevMetaTrials, meta_churn_rate: prevMetaChurnRate, global_churn_rate: prevGlobalChurnRate },
-                b2c: { wpp_clicks: prevGoogleWppClicks, total_deals: prevGoogleDeals }
+                b2c: { wpp_clicks: prevGoogleWppClicks, total_wpp_clicks: prevTotalWppClicks, total_deals: prevGoogleDeals }
             },
             prevAds: {
                 meta: { spend: prevMetaSpend.spend, cac: prevMetaCac },
@@ -1301,13 +1302,13 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 google: { spend: actualGoogleSpendHistorical, cpl: histGoogleCpl },
                 platform: {
                     b2b: { active: histMetaPagantes, trials: histMetaTrials, global_churn_rate: histGlobalChurnRate, past_base_history: pastBaseHistory },
-                    b2c: { wpp_clicks: histWppClicks, total_deals: histGoogleDeals }
+                    b2c: { wpp_clicks: histGoogleWppClicks, total_wpp_clicks: histWppClicks, total_deals: histGoogleDeals }
                 }
             },
             platform: {
                 pnl: pnlEngine,
                 b2b: { arpu: arpu, active: metaPagantes, trials: metaTrials, churned: metaChurned, global_churn: globalChurned, meta_churn_rate: metaChurnRate, global_churn_rate: globalChurnRate, total_active: totalActive, total_trials: totalTrials, organic_active: organicPagantes, organic_trials: organicTrials, total_new_active: totalNewPagantes, total_new_trials: totalNewTrials, clicks_vs_churn: { active: clicksChurnActive, inactive: clicksChurnInactive }, cashIn, renewableMRR },
-                b2c: { wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals, organic_wpp_clicks_30d: organicWppClicks30d, unattributed_wpp_clicks_30d: unattributedWppClicks30d }
+                b2c: { wpp_clicks: googleWppClicks, total_wpp_clicks: wppClicks, total_deals: googleDeals, pending_deals: pendingDeals, lost_deals: lostDeals, organic_wpp_clicks_30d: organicWppClicks30d, unattributed_wpp_clicks_30d: unattributedWppClicks30d }
             },
             decisionEngineMeta,
             prevDecisionEngineMeta: { paybackMonths: prevMetaPaybackMonths },

@@ -93,13 +93,14 @@ class GoogleAdsService {
             const result = await this.queryGoogleAds(query, accessToken);
             if (!result.results || result.results.length === 0) return { spend: 0, impressions: 0, clicks: 0, cpc: 0 };
 
-            const metrics = result.results[0].metrics;
-            const spend = (metrics.costMicros || 0) / 1000000;
-            const clicks = metrics.clicks || 0;
-            
+            const metrics = result.results[0].metrics || {};
+            const spend = Number(metrics.costMicros || 0) / 1000000;
+            const impressions = parseInt(metrics.impressions, 10) || 0;
+            const clicks = parseInt(metrics.clicks, 10) || 0;
+
             const cachedResult = {
                 spend: spend,
-                impressions: metrics.impressions || 0,
+                impressions: impressions,
                 clicks: clicks,
                 cpc: clicks > 0 ? (spend / clicks) : 0
             };
@@ -164,11 +165,11 @@ class GoogleAdsService {
             const resultMapped = result.results.map(row => ({
                 id: row.campaign.id,
                 campaign_name: row.campaign.name,
-                spend: (row.metrics.costMicros || 0) / 1000000,
-                daily_budget: (row.campaignBudget?.amountMicros || 0) / 1000000,
-                impressions: row.metrics.impressions || 0,
-                clicks: row.metrics.clicks || 0,
-                conversions: row.metrics.conversions || 0
+                spend: Number(row.metrics?.costMicros || 0) / 1000000,
+                daily_budget: Number(row.campaignBudget?.amountMicros || 0) / 1000000,
+                impressions: parseInt(row.metrics?.impressions, 10) || 0,
+                clicks: parseInt(row.metrics?.clicks, 10) || 0,
+                conversions: parseFloat(row.metrics?.conversions) || 0
             }));
             this._setCache(cacheKey, resultMapped);
             return resultMapped;
