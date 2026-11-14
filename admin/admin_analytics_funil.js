@@ -362,6 +362,60 @@ window.initializePage = function () {
             const kpiDesqualificados = document.getElementById('kpi-desqualificados');
             if (kpiDesqualificados) kpiDesqualificados.innerHTML = `${(data.desqualificados || 0).toLocaleString()}${renderTrend(data.desqualificados, data.prevDesqualificados, true)}`;
 
+            const desc = data.descartadosProfissionais || {};
+            const stageDiscarded = (key) => {
+                const raw = desc[key] || {};
+                const logados = parseInt(raw.logados || 0, 10);
+                const naoLogados = parseInt(raw.naoLogados || 0, 10);
+                const total = parseInt(raw.total ?? (logados + naoLogados), 10);
+                const prevTotal = parseInt(raw.prevTotal || 0, 10);
+                return { total, logados, naoLogados, prevTotal };
+            };
+
+            const totalDesc = stageDiscarded('totalEventos');
+            const kpiPsiQ = document.getElementById('kpi-psicologos-questionarios');
+            if (kpiPsiQ) kpiPsiQ.innerHTML = `${totalDesc.total.toLocaleString()}${renderTrend(totalDesc.total, totalDesc.prevTotal, false, { neutral: true })}`;
+            const kpiPsiDetalhe = document.getElementById('kpi-psicologos-detalhe');
+            if (kpiPsiDetalhe) {
+                kpiPsiDetalhe.textContent = `${totalDesc.logados.toLocaleString()} logados | ${totalDesc.naoLogados.toLocaleString()} não logados`;
+            }
+
+            const discardedRows = [
+                { key: 'visitas', label: '1. Acessaram o Site (Visitas)', valid: parseInt(data.visitas || 0, 10) },
+                { key: 'iniciaram', label: '2. Iniciaram Questionário', valid: parseInt(data.iniciaram || 0, 10) },
+                { key: 'completaram', label: '3. Chegaram aos Resultados', valid: parseInt(data.completaram || 0, 10) },
+                { key: 'profileViews', label: '4. Visualizações de Perfis', valid: parseInt(data.profileViews || 0, 10) },
+                { key: 'whatsapp', label: '5. Cliques no WhatsApp', valid: parseInt(data.whatsappClicks || 0, 10) }
+            ];
+
+            const badgesEl = document.getElementById('discarded-summary-badges');
+            if (badgesEl) {
+                badgesEl.innerHTML = `
+                    <span style="background: #eef2ff; color: #4338ca; padding: 5px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;">Total: ${totalDesc.total.toLocaleString()}</span>
+                    <span style="background: #f0fdf4; color: #166534; padding: 5px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;">Logados: ${totalDesc.logados.toLocaleString()}</span>
+                    <span style="background: #fff7ed; color: #c2410c; padding: 5px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;">Não logados: ${totalDesc.naoLogados.toLocaleString()}</span>
+                `;
+            }
+
+            const breakdownBody = document.getElementById('discarded-breakdown-body');
+            if (breakdownBody) {
+                breakdownBody.innerHTML = discardedRows.map((row) => {
+                    const st = stageDiscarded(row.key);
+                    const gross = row.valid + st.total;
+                    const pctGross = gross > 0 ? ((st.total / gross) * 100).toFixed(1) : '0.0';
+                    return `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 10px 8px; font-weight: 600; color: #1e293b;">${row.label}</td>
+                            <td style="padding: 10px 8px; text-align: right; color: #0f172a;">${row.valid.toLocaleString()}</td>
+                            <td style="padding: 10px 8px; text-align: right; font-weight: 700; color: #4338ca;">${st.total.toLocaleString()}</td>
+                            <td style="padding: 10px 8px; text-align: right; color: #15803d;">${st.logados.toLocaleString()}</td>
+                            <td style="padding: 10px 8px; text-align: right; color: #c2410c;">${st.naoLogados.toLocaleString()}</td>
+                            <td style="padding: 10px 8px; text-align: right; font-weight: 600; color: #64748b;">${pctGross}%</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
             const taxaInicio = data.visitas > 0 ? ((data.iniciaram / data.visitas) * 100).toFixed(1) : 0;
             const corTaxaInicio = getColorForGoal(taxaInicio, 15);
             const elTaxaInicio = document.getElementById('taxa-inicio');
@@ -385,12 +439,16 @@ window.initializePage = function () {
             // --- 2. RENDERIZA FUNIL VISUAL END-TO-END ---
             const maxFunnel = data.visitas > 0 ? data.visitas : 1; // Previne divisão por zero
             const funilHtml = [
-                { id: 'step-1', icon: '👁️', bg: '#e0f2fe', color: '#0284c7', label: '1. Acessaram o Site', value: data.visitas, prevValue: data.prevVisitas, parent: data.visitas, desc: 'Visualizações no Período' },
-                { id: 'step-2', icon: '🚀', bg: '#f3e8ff', color: '#7e22ce', label: '2. Iniciaram o Questionário', value: data.iniciaram, prevValue: data.prevIniciaram, parent: data.visitas, desc: 'Clicaram em Começar' },
-                { id: 'step-3', icon: '📋', bg: '#fef3c7', color: '#d97706', label: '3. Finalizaram Questionário (Leads)', value: data.completaram, prevValue: data.prevCompletaram, parent: data.iniciaram, desc: 'Chegaram aos Resultados' },
-                { id: 'step-4', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Visualizações de Perfis', value: data.profileViews, prevValue: data.prevProfileViews, parent: data.completaram, desc: 'Acessos detalhados aos resultados' },
-                { id: 'step-5', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp (Pacientes)', value: data.whatsappUnique, prevValue: data.prevWhatsappUnique, parent: data.profileViews, desc: `Gerou ${data.whatsappClicks} clicks totais` }
+                { id: 'step-1', discKey: 'visitas', icon: '👁️', bg: '#e0f2fe', color: '#0284c7', label: '1. Acessaram o Site', value: data.visitas, prevValue: data.prevVisitas, parent: data.visitas, desc: 'Visualizações no Período' },
+                { id: 'step-2', discKey: 'iniciaram', icon: '🚀', bg: '#f3e8ff', color: '#7e22ce', label: '2. Iniciaram o Questionário', value: data.iniciaram, prevValue: data.prevIniciaram, parent: data.visitas, desc: 'Clicaram em Começar' },
+                { id: 'step-3', discKey: 'completaram', icon: '📋', bg: '#fef3c7', color: '#d97706', label: '3. Finalizaram Questionário (Leads)', value: data.completaram, prevValue: data.prevCompletaram, parent: data.iniciaram, desc: 'Chegaram aos Resultados' },
+                { id: 'step-4', discKey: 'profileViews', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Visualizações de Perfis', value: data.profileViews, prevValue: data.prevProfileViews, parent: data.completaram, desc: 'Acessos detalhados aos resultados' },
+                { id: 'step-5', discKey: 'whatsapp', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp (Pacientes)', value: data.whatsappUnique, prevValue: data.prevWhatsappUnique, parent: data.profileViews, desc: `Gerou ${data.whatsappClicks} clicks totais` }
             ].map((step, i, arr) => {
+                const stDisc = stageDiscarded(step.discKey);
+                const discardedNote = stDisc.total > 0
+                    ? ` · <span style="color:#4338ca; font-weight:600;">🛡️ ${stDisc.total.toLocaleString()} descartado(s) (${stDisc.logados.toLocaleString()} log., ${stDisc.naoLogados.toLocaleString()} não log.)</span>`
+                    : '';
                 const rateToParentRaw = step.parent > 0 ? (step.value / step.parent) : 0;
                 const rateToParentPct = (rateToParentRaw * 100).toFixed(1);
 
@@ -414,7 +472,7 @@ window.initializePage = function () {
                             <div class="funnel-icon" style="background: ${step.bg}; color: ${step.color};">${step.icon}</div>
                             <div>
                                 <h4>${step.label}</h4>
-                                <p>${step.desc}</p>
+                                <p>${step.desc}${discardedNote}</p>
                             </div>
                         </div>
                         <div class="funnel-metrics">
@@ -696,6 +754,12 @@ window.initializePage = function () {
             csvContent += `--- RETENÇÃO E PERDAS ---\n`;
             csvContent += `Categoria;Quantidade\n`;
             csvContent += `Desqualificados (Menor de Idade / Regras de Negócio);${exportData.desqualificados || 0}\n`;
+            csvContent += `Questionários Concluídos por Psicólogos (Excluídos do Funil de Pacientes);${exportData.psicologosCompletaram || 0}\n`;
+            csvContent += `Questionários Iniciados por Psicólogos (Excluídos do Funil de Pacientes);${exportData.psicologosIniciaram || 0}\n`;
+            const descCsv = exportData.descartadosProfissionais || {};
+            if (descCsv.totalEventos) {
+                csvContent += `Total Eventos Descartados (Pros);${descCsv.totalEventos.total || 0} (Logados: ${descCsv.totalEventos.logados || 0} | Não Logados: ${descCsv.totalEventos.naoLogados || 0})\n`;
+            }
 
             if (exportData.abandonos && exportData.abandonos.length > 0) {
                 exportData.abandonos.forEach(a => {
