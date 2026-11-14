@@ -426,6 +426,20 @@ export default function AdminAnalyticsFunilScreen() {
   const prevAbandonosCount = Math.max(0, prevIniciaram - prevCompletaram - prevDesqualificados);
   const prevTaxaDesistencia = prevIniciaram > 0 ? ((prevAbandonosCount / prevIniciaram) * 100).toFixed(1) : null;
 
+  // Regra visual padronizada com a Web (admin_analytics_funil.js):
+  // verde >= 100% da meta | amarelo >= 60% da meta | vermelho < 60% da meta
+  const getColorForGoal = (currentPct: string | number, goalPct: number) => {
+    const val = parseFloat(String(currentPct));
+    if (val >= goalPct) return '#10b981';
+    if (val >= goalPct * 0.6) return '#f59e0b';
+    return '#ef4444';
+  };
+
+  const corTaxaInicio = visitas > 0 ? getColorForGoal(taxaInicio, 15) : '#64748b';
+  const corTaxaCompletaram = iniciaram > 0 ? getColorForGoal(taxaCompletaram, 65) : '#64748b';
+  const corTaxaGlobal = visitas > 0 ? getColorForGoal(taxaGlobal, 3) : '#64748b';
+  const corTaxaDesistencia = iniciaram > 0 ? (Number(taxaDesistencia) <= 30 ? '#10b981' : '#dc2626') : '#64748b';
+
   // --- DADOS ATUAIS (CONVERSÕES PLG) ---
   const totalWppClicks = wppData.length;
   const effectiveWppDays = wppDaysExact && wppDaysExact > 0 ? wppDaysExact : wppDays;
@@ -829,7 +843,7 @@ export default function AdminAnalyticsFunilScreen() {
             {/* 6 KPIs GERAIS */}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
               {/* Visitantes */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#3b82f6', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Visitantes</Text>
                   {renderTrendBadge(visitas, prevVisitas, false)}
@@ -839,59 +853,59 @@ export default function AdminAnalyticsFunilScreen() {
               </View>
 
               {/* Iniciaram Questionário */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: corTaxaInicio, padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Iniciaram</Text>
                   {renderTrendBadge(iniciaram, prevIniciaram, false)}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#1B4332' }}>{formatNumber(iniciaram)}</Text>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 9.5, color: '#1B4332', marginTop: 2 }}>{taxaInicio}% das visitas (Meta: 15%)</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: corTaxaInicio }}>{formatNumber(iniciaram)}</Text>
+                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 9.5, color: corTaxaInicio, marginTop: 2 }}>{taxaInicio}% das visitas (Meta: 15%)</Text>
               </View>
 
               {/* Concluíram Matches */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: corTaxaCompletaram, padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Resultados</Text>
                   {renderTrendBadge(completaram, prevCompletaram, false)}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#d97706' }}>{formatNumber(completaram)}</Text>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 9.5, color: '#d97706', marginTop: 2 }}>{taxaCompletaram}% concluíram (Meta: 65%)</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: corTaxaCompletaram }}>{formatNumber(completaram)}</Text>
+                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 9.5, color: corTaxaCompletaram, marginTop: 2 }}>{taxaCompletaram}% concluíram (Meta: 65%)</Text>
               </View>
 
               {/* Pacientes Conquistados */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: corTaxaGlobal, padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Conquistados</Text>
                   {renderTrendBadge(whatsappUnique, prevWhatsappUnique, false)}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#16a34a' }}>{formatNumber(whatsappUnique)}</Text>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 9.5, color: '#16a34a', marginTop: 2 }}>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: corTaxaGlobal }}>{formatNumber(whatsappUnique)}</Text>
+                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 9.5, color: corTaxaGlobal, marginTop: 2 }}>
                   {taxaGlobal}% do tráfego (Meta: 3%) · {whatsappClicks} cliques
                 </Text>
               </View>
 
               {/* Desistência */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: corTaxaDesistencia, padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Desistência</Text>
                   {renderTrendBadge(Number(taxaDesistencia), prevTaxaDesistencia !== null ? Number(prevTaxaDesistencia) : null, true, true)}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: Number(taxaDesistencia) > 30 ? '#ef4444' : '#10b981' }}>
-                  {taxaDesistencia}%
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: corTaxaDesistencia }}>
+                  {iniciaram > 0 ? `${taxaDesistencia}%` : '--%'}
                 </Text>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#94a3b8', marginTop: 2 }}>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
                   {prevTaxaDesistencia !== null ? `Ant: ${prevTaxaDesistencia}% · Meta: < 30%` : 'Meta: < 30%'}
                 </Text>
               </View>
 
               {/* Desqualificados */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#ef4444', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Desqualificados</Text>
                   {renderTrendBadge(desqualificados, prevDesqualificados, true)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#ef4444' }}>{formatNumber(desqualificados)}</Text>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#94a3b8', marginTop: 2 }}>Menores de idade</Text>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#ef4444', marginTop: 2 }}>Menores de idade</Text>
               </View>
 
               {/* Descartados por Profissionais */}
@@ -1310,43 +1324,43 @@ export default function AdminAnalyticsFunilScreen() {
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
               {/* 1. Cliques no WhatsApp */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#3498db', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Cliques no WhatsApp
                   </Text>
                   {renderTrendBadge(totalWppClicks, prevTotalWppClicks, false)}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#2563eb', marginTop: 2 }}>{formatNumber(totalWppClicks)}</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#3498db', marginTop: 2 }}>{formatNumber(totalWppClicks)}</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Total bruto de cliques</Text>
               </View>
 
               {/* 2. Média de Cliques / Dia */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#06b6d4', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Média Cliques / Dia
                   </Text>
                   {renderTrendBadge(Number(wppMediaDia), prevWppMediaDia !== null ? Number(prevWppMediaDia) : null, false)}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#0284c7', marginTop: 2 }}>{wppMediaDia}</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#06b6d4', marginTop: 2 }}>{wppMediaDia}</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Em {wppDays} dias analisados</Text>
               </View>
 
               {/* 3. Falhas de Conexão */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#f43f5e', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Falhas de Conexão
                   </Text>
                   {renderTrendBadge(fantasmas, prevFantasmas, true)}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#ef4444', marginTop: 2 }}>{formatNumber(fantasmas)}</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#f43f5e', marginTop: 2 }}>{formatNumber(fantasmas)}</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Fantasmas (sem mensagem)</Text>
               </View>
 
               {/* 4. Contatos Realizados */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#10b981', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Contatos Realizados
@@ -1358,7 +1372,7 @@ export default function AdminAnalyticsFunilScreen() {
               </View>
 
               {/* 5. Taxa de Resposta (Psi) */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#f59e0b', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Taxa Resposta (Psi)
@@ -1373,7 +1387,7 @@ export default function AdminAnalyticsFunilScreen() {
               </View>
 
               {/* 6. Taxa de Não Resposta */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#64748b', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Taxa Não Resposta
@@ -1399,31 +1413,31 @@ export default function AdminAnalyticsFunilScreen() {
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
               {/* 7. Em Negociação */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#eab308', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Em Negociação
                   </Text>
                   {renderTrendBadge(emNegociacao, prevEmNegociacao, 'neutral')}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#f59e0b', marginTop: 2 }}>{formatNumber(emNegociacao)}</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#eab308', marginTop: 2 }}>{formatNumber(emNegociacao)}</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Em conversa ativa</Text>
               </View>
 
               {/* 8. Negócios Fechados */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#16a34a', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Negócios Fechados
                   </Text>
                   {renderTrendBadge(fechados, prevFechados, false)}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#10b981', marginTop: 2 }}>{formatNumber(fechados)}</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#16a34a', marginTop: 2 }}>{formatNumber(fechados)}</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Pacientes pagantes reais</Text>
               </View>
 
               {/* 9. Negócios Perdidos */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#ef4444', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Negócios Perdidos
@@ -1435,38 +1449,38 @@ export default function AdminAnalyticsFunilScreen() {
               </View>
 
               {/* 10. Troca de Mensagens */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#3b82f6', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Troca Mensagens
                   </Text>
                   {renderTrendBadge(Number(taxaTrocaMensagens), prevTaxaTrocaMensagens !== null ? Number(prevTaxaTrocaMensagens) : null, false, true)}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#2563eb', marginTop: 2 }}>{taxaTrocaMensagens}%</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#3b82f6', marginTop: 2 }}>{taxaTrocaMensagens}%</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Dos respondidos, contato real</Text>
               </View>
 
               {/* 11. Iniciou Terapia */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#8b5cf6', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Iniciou Terapia
                   </Text>
                   {renderTrendBadge(Number(taxaFechamento), prevTaxaFechamento !== null ? Number(prevTaxaFechamento) : null, false, true)}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#10b981', marginTop: 2 }}>{taxaFechamento}%</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#8b5cf6', marginTop: 2 }}>{taxaFechamento}%</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Taxa fechamento dos contatos</Text>
               </View>
 
               {/* 12. Taxa de Não Fechamento */}
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#eab308', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Não Fechamento
                   </Text>
                   {renderTrendBadge(Number(taxaNaoFechamento), prevTaxaNaoFechamento !== null ? Number(prevTaxaNaoFechamento) : null, true, true)}
                 </View>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#ef4444', marginTop: 2 }}>{taxaNaoFechamento}%</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#eab308', marginTop: 2 }}>{taxaNaoFechamento}%</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Contatados que não fecharam</Text>
               </View>
             </View>
@@ -1779,29 +1793,29 @@ export default function AdminAnalyticsFunilScreen() {
           <View>
             {/* 4 KPIs DO RANKING */}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#8b5cf6', padding: 12 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Listados</Text>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#1B4332', marginTop: 2 }}>{rankingData.length}</Text>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#8b5cf6', marginTop: 2 }}>{rankingData.length}</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b' }}>Profissionais ativos</Text>
               </View>
 
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#f59e0b', padding: 12 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Busca (Matches)</Text>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#d97706', marginTop: 2 }}>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#f59e0b', marginTop: 2 }}>
                   {formatNumber(rankingData.reduce((acc, c) => acc + Number(c.aparicoesBusca || 0), 0))}
                 </Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b' }}>Aparições no Top 3</Text>
               </View>
 
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#3b82f6', padding: 12 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Visitas Diretas</Text>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#0284c7', marginTop: 2 }}>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#3b82f6', marginTop: 2 }}>
                   {formatNumber(rankingData.reduce((acc, c) => acc + Number(c.visitasDiretas || 0), 0))}
                 </Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b' }}>Acessos ao perfil</Text>
               </View>
 
-              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
+              <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#16a34a', padding: 12 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Conversões WPP</Text>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#16a34a', marginTop: 2 }}>
                   {formatNumber(rankingData.reduce((acc, c) => acc + Number(c.cliquesWpp || 0), 0))}
