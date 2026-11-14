@@ -2187,27 +2187,49 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
     const theoreticalMetaMonthly = simResult.actionMetaSpend || 0;
     const extrapolationMultiple = theoreticalMetaMonthly / (metaCurrentMonthlyContext || 1);
 
-    // Estratégia de Escala Gradual Meta Ads (Degraus: 24 -> 29 -> 35)
-    let metaRecommendedDailyBudget = 24.00;
+    const currentDailyBudget = metaConfiguredDailyBudget > 0 ? metaConfiguredDailyBudget : metaRecentDailySpend;
+    const theoreticalMetaDaily = theoreticalMetaMonthly / 30.44;
+    const currentMetaCacObj = data.ads?.meta?.cac;
+    const currentMetaCacVal = (typeof currentMetaCacObj === 'object' ? currentMetaCacObj.value : currentMetaCacObj) || 0;
+    const prevMetaCacObj = data.prevAds?.meta?.cac;
+    const prevMetaCacVal = (typeof prevMetaCacObj === 'object' ? prevMetaCacObj.value : prevMetaCacObj) || 0;
+    const metaCacWorsened = (currentMetaCacVal > prevMetaCacVal * 1.25) && (prevMetaCacVal > 0);
+    const metaDecisionAction = String(data.decisionEngineMeta?.action || '');
+    const isMetaEfficiencyBlocked = metaDecisionAction.includes('PAUSAR') || metaDecisionAction.includes('OTIMIZAR') || metaDecisionAction.includes('TETO') || metaCacWorsened;
+
+    const monthlyWppClicks = ((Number(data.platform?.b2c?.wpp_clicks || 0)) / daysInPeriod) * 30.44;
+    const clicksPerPaidPsiMonth = activePaidAccessBase > 0 ? (monthlyWppClicks / activePaidAccessBase) : 0;
+    const hasTightB2cDelivery = activePaidAccessBase > 0 && clicksPerPaidPsiMonth < 5;
+    const b2bTrialsInPeriod = Number(data.platform?.b2b?.trials || 0);
+
+    // Decisão orientada a dados reais (caixa, eficiência de CAC/LTV e entrega de pacientes B2C)
+    let metaRecommendedDailyBudget = currentDailyBudget;
     let actionRecommendation = 'MANTER';
     let nextStepMessage = '';
 
-    if (metaConfiguredDailyBudget < 23) {
-        metaRecommendedDailyBudget = 24.00;
-        actionRecommendation = 'AUMENTAR (DEGRAU 1)';
-        nextStepMessage = 'Avance para o Degrau 1 (R$ 24,00/dia) do plano de escala gradual.';
-    } else if (metaConfiguredDailyBudget >= 23 && metaConfiguredDailyBudget < 28) {
-        metaRecommendedDailyBudget = 29.00;
-        actionRecommendation = 'MANTER (DEGRAU 1 ATIVO)';
-        nextStepMessage = 'Degrau 1 (R$ 24,00/dia) em maturação. Próxima escala para R$ 29,00/dia (Degrau 2) programada para 13/11.';
-    } else if (metaConfiguredDailyBudget >= 28 && metaConfiguredDailyBudget < 34) {
-        metaRecommendedDailyBudget = 35.00;
-        actionRecommendation = 'MANTER (DEGRAU 2 ATIVO)';
-        nextStepMessage = 'Degrau 2 (R$ 29,00/dia) em maturação. Próxima escala para R$ 35,00/dia (Degrau 3 - Meta Final) programada para 17/11.';
+    if (unresolved || stabilityFundingDeficit > 0 || theoreticalMetaMonthly <= 0) {
+        metaRecommendedDailyBudget = currentDailyBudget > 0 ? currentDailyBudget : 0;
+        actionRecommendation = 'MANTER';
+        nextStepMessage = 'Caixa operacional comprometido com a retenção/estabilidade da base atual. Mantenha o Meta Ads sem aumentos.';
+    } else if (isMetaEfficiencyBlocked) {
+        metaRecommendedDailyBudget = currentDailyBudget;
+        actionRecommendation = 'MANTER / OTIMIZAR';
+        nextStepMessage = metaCacWorsened
+            ? `CAC subiu >25% no período (${formatBRL(prevMetaCacVal)} → ${formatBRL(currentMetaCacVal)}). Mantenha o orçamento e otimize criativos/público antes de escalar.`
+            : (data.decisionEngineMeta?.recommendation || 'Eficiência do Meta sem folga clara para aumento. Mantenha o orçamento atual e foque em conversão.');
+    } else if (hasTightB2cDelivery) {
+        metaRecommendedDailyBudget = currentDailyBudget;
+        actionRecommendation = 'MANTER';
+        nextStepMessage = `Meta segue captando no orçamento vigente (${b2bTrialsInPeriod} trials no período), mas a entrega B2C está em ${clicksPerPaidPsiMonth.toFixed(1).replace('.', ',')} cliques/mês por psi ativo. Mantenha o orçamento atual para não diluir pacientes da base e priorize aprovar/converter os trials em aberto.`;
+    } else if (currentDailyBudget > 0 && theoreticalMetaDaily > currentDailyBudget * 1.25 && metaDecisionAction.includes('AUMENTAR')) {
+        const stepUp = Math.min(theoreticalMetaDaily, currentDailyBudget * 1.20);
+        metaRecommendedDailyBudget = Math.round(stepUp * 100) / 100;
+        actionRecommendation = 'AUMENTAR';
+        nextStepMessage = `CAC lucrativo, caixa com folga e entrega B2C saudável (${clicksPerPaidPsiMonth.toFixed(1).replace('.', ',')} cliques/mês por psi). Escala gradual de até +20% liberada.`;
     } else {
-        metaRecommendedDailyBudget = 35.00;
-        actionRecommendation = 'MANTER (META FINAL)';
-        nextStepMessage = 'Meta final de escala atingida (R$ 35,00/dia). Manter estável até a reavaliação de 24/11.';
+        metaRecommendedDailyBudget = currentDailyBudget;
+        actionRecommendation = 'MANTER';
+        nextStepMessage = 'Orçamento atual alinhado ao ritmo de aquisição e à capacidade de entrega da base. Só aumente se a demanda de pacientes por psi subir com CAC saudável.';
     }
 
     const metaRecommendedMonthlyBudget = metaRecommendedDailyBudget * 30.44;
@@ -2235,11 +2257,11 @@ function buildFounderDecisionModel(simResult, p, activePaidAccessBase, data) {
                     </div>
                     <div style="grid-column: 1 / -1; background: #fff; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin-top: 5px;">
                         <strong style="color: #0f172a;">Próximo orçamento recomendado:</strong><br>
-                        <span style="font-size: 1.3rem; color: #0f172a; font-weight: 800;">${formatBRL(metaRecommendedDailyBudget)}/dia</span>
-                        <span style="font-size:0.85rem">≈ ${formatBRL(metaRecommendedMonthlyBudget)}/mês</span>
+                        <span style="font-size: 1.3rem; color: #0f172a; font-weight: 800;">${metaRecommendedDailyBudget > 0 ? formatBRL(metaRecommendedDailyBudget) + '/dia' : 'Manter atual'}</span>
+                        ${metaRecommendedDailyBudget > 0 ? `<span style="font-size:0.85rem">≈ ${formatBRL(metaRecommendedMonthlyBudget)}/mês</span>` : ''}
                         <br><br>
-                        <strong>AÇÃO:</strong> <span style="font-weight: 800; color: ${actionRecommendation === 'AUMENTAR' ? '#059669' : (actionRecommendation === 'REDUZIR' ? '#dc2626' : '#b45309')}">${actionRecommendation}</span><br>
-                        <strong>Motivo:</strong> ${nextStepMessage} Extrapolação de ${(extrapolationMultiple).toFixed(1)}x.
+                        <strong>AÇÃO:</strong> <span style="font-weight: 800; color: ${actionRecommendation.startsWith('AUMENTAR') ? '#059669' : (actionRecommendation.startsWith('REDUZIR') ? '#dc2626' : '#b45309')}">${actionRecommendation}</span><br>
+                        <strong>Motivo:</strong> ${nextStepMessage} Extrapolação teórica de ${(extrapolationMultiple).toFixed(1)}x.
                     </div>
                 </div>
             </div>

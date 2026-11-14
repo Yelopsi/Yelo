@@ -131,7 +131,8 @@ async function checkAndExecuteTrafficScalingJobs() {
         console.log(`[CRON TRAFFIC] Verificando rotinas de tráfego pago para data: ${brtDateStr}...`);
 
         const isProdRuntime = process.env.NODE_ENV === 'production';
-        const isMetaPauseEnabled = process.env.AUTO_PAUSE_META_ADS === 'true' || (isProdRuntime && process.env.AUTO_PAUSE_META_ADS !== 'false');
+        // Meta Ads B2B mantido ativo por decisão estratégica em 14/11/2026 (só pausa se AUTO_PAUSE_META_ADS='true' explícito)
+        const isMetaPauseEnabled = process.env.AUTO_PAUSE_META_ADS === 'true';
         const isBlackFridayAutoEnabled = process.env.ENABLE_BLACK_FRIDAY_AUTO === 'true' || (isProdRuntime && process.env.ENABLE_BLACK_FRIDAY_AUTO !== 'false');
 
         // 1. Pausa da campanha Meta Ads B2B (Degraus 2 e 3 desativados permanentemente)

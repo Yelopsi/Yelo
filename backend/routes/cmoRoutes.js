@@ -826,15 +826,26 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             decisionEngineMeta.warning = `Amostra pequena (${metaPagantes} pagantes). O LTV é estatisticamente volátil e qualquer cancelamento mudará a métrica.`;
         }
 
+        const monthlyWppClicksB2C = diffDays > 0 ? ((wppClicks / diffDays) * 30) : wppClicks;
+        const b2cClicksPerActivePsiMonth = totalActive > 0 ? (monthlyWppClicksB2C / totalActive) : 0;
+        const isB2cDemandLowForScale = totalActive > 0 && b2cClicksPerActivePsiMonth < 5;
+
         if (metaSpend.spend > 0) {
             const isScaleHealthy = metaLtvCacRatio >= 3;
             const isMarginalDangerous = metaMarginalCac > (decisionEngineMeta.target * 1.2);
 
             if (isScaleHealthy && !isMarginalDangerous && metaPagantes >= 5) {
-                decisionEngineMeta.action = 'SINAL VERDE: AUMENTAR 🚀';
-                decisionEngineMeta.confidence = metaPagantes < 15 ? 60 : 85;
-                decisionEngineMeta.scaleCapacity = 'ALTA';
-                decisionEngineMeta.recommendation = `O CAC está lucrativo (Ratio ${metaLtvCacRatio.toFixed(1)}x). Aumente o orçamento para Psicólogos com segurança.`;
+                if (isB2cDemandLowForScale) {
+                    decisionEngineMeta.action = 'MANTER ORÇAMENTO ⚖️';
+                    decisionEngineMeta.confidence = 80;
+                    decisionEngineMeta.scaleCapacity = 'CONCENTRAR NO B2C';
+                    decisionEngineMeta.recommendation = `O CAC B2B está saudável (Ratio ${metaLtvCacRatio.toFixed(1)}x), mas a entrega B2C está em ${b2cClicksPerActivePsiMonth.toFixed(1)} cliques/mês por psicólogo ativo. Mantenha o Meta e priorize pacientes antes de acelerar.`;
+                } else {
+                    decisionEngineMeta.action = 'SINAL VERDE: AUMENTAR 🚀';
+                    decisionEngineMeta.confidence = metaPagantes < 15 ? 60 : 85;
+                    decisionEngineMeta.scaleCapacity = 'ALTA';
+                    decisionEngineMeta.recommendation = `O CAC está lucrativo (Ratio ${metaLtvCacRatio.toFixed(1)}x). Aumente o orçamento para Psicólogos com segurança.`;
+                }
             } else if (isScaleHealthy && isMarginalDangerous) {
                 decisionEngineMeta.action = 'TETO DE EFICIÊNCIA ⚖️';
                 decisionEngineMeta.confidence = 75;
@@ -1109,6 +1120,50 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             const organicPagantes90d = Math.max(0, totalNewPagantes90d - metaPagantes90);
             simOrganicActive = Math.round(organicPagantes90d / 3);
 
+            // Conversão real de trial/cadastro → pagante em coortes maduras (> 14 dias de janela de maturação)
+            const matureTrial90dQuery = `
+                SELECT
+                    COUNT(*)::int AS total_mature,
+                    COUNT(*) FILTER (WHERE "firstPaidAt" IS NOT NULL OR COALESCE("subscription_payments_count", 0) > 0)::int AS converted_mature
+                FROM "Psychologists"
+                WHERE "deletedAt" IS NULL
+                  AND ("is_exempt" IS NULL OR "is_exempt" = false)
+                  AND "createdAt" < NOW() - INTERVAL '14 days'
+                  AND "createdAt" >= NOW() - INTERVAL '105 days'
+            `;
+            const [mature90dRes] = await sequelize.query(matureTrial90dQuery, { type: sequelize.QueryTypes.SELECT });
+            const mature90Total = parseInt(mature90dRes?.total_mature || 0);
+            const mature90Converted = parseInt(mature90dRes?.converted_mature || 0);
+
+            if (mature90Total >= 30 && mature90Converted > 0) {
+                simTrialConv = mature90Converted / mature90Total;
+                simTrialConvType = 'OBSERVED';
+                simTrialConvSource = 'OBSERVED_90D_MATURE_COHORT';
+            } else {
+                const matureAllQuery = `
+                    SELECT
+                        COUNT(*)::int AS total_mature,
+                        COUNT(*) FILTER (WHERE "firstPaidAt" IS NOT NULL OR COALESCE("subscription_payments_count", 0) > 0)::int AS converted_mature
+                    FROM "Psychologists"
+                    WHERE "deletedAt" IS NULL
+                      AND ("is_exempt" IS NULL OR "is_exempt" = false)
+                      AND "createdAt" < NOW() - INTERVAL '14 days'
+                `;
+                const [matureAllRes] = await sequelize.query(matureAllQuery, { type: sequelize.QueryTypes.SELECT });
+                const matureAllTotal = parseInt(matureAllRes?.total_mature || 0);
+                const matureAllConverted = parseInt(matureAllRes?.converted_mature || 0);
+
+                if (matureAllTotal >= 30 && matureAllConverted > 0) {
+                    simTrialConv = matureAllConverted / matureAllTotal;
+                    simTrialConvType = 'OBSERVED';
+                    simTrialConvSource = 'OBSERVED_ALL_TIME_MATURE_COHORT';
+                } else {
+                    simTrialConv = 0.1102;
+                    simTrialConvType = 'PROXY';
+                    simTrialConvSource = 'STRICT_14D_MATURE_COHORT_PROXY';
+                }
+            }
+
             if (isMetaApiError90) {
                 simMetaCac = null;
                 simMetaCacType = 'MISSING_INPUT';
@@ -1116,19 +1171,13 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 if (metaPagantes90 > 0 && metaSpend90 > 0) {
                     simMetaCac = metaSpend90 / metaPagantes90;
                 } else if (metaTrials90 > 0 && metaSpend90 > 0) {
-                    simMetaCac = metaSpend90 / metaTrials90 * (1 / 0.1102);
+                    simMetaCac = metaSpend90 / metaTrials90 * (1 / (simTrialConv || 0.1102));
                     simMetaCacType = 'PROXY'; // Because there are no pagantes, only trials
                 } else {
                     simMetaCac = histMetaCac; // Fallback to all-time historical CAC
                     simMetaCacType = 'PROXY';
                 }
             }
-
-            // The 7d trial cohort is not mature yet. 
-            // Fallback to strict conversion from mature 14d cohorts (11.02%)
-            simTrialConv = 0.1102;
-            simTrialConvType = 'PROXY';
-            simTrialConvSource = 'STRICT_14D_MATURE_COHORT_PROXY';
 
             const globalChurn90dQuery = `
                 SELECT COUNT(*) as churned
@@ -1160,20 +1209,19 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             const [activePaidRes] = await sequelize.query(activePaidQuery, { type: sequelize.QueryTypes.SELECT });
             knownScheduledChurn = parseInt(activePaidRes.scheduled_churn || 0);
 
-            // Churn recorrente observado. Usaremos a fórmula real se a base tiver maturidade/volume,
-            // caso contrário mantemos a trava conservadora.
-            const autoTransitionThreshold = 100; // 100 ativos é um marco seguro
-            
-            if (totalActive >= autoTransitionThreshold) {
-                // A partir de 100 ativos, assumimos o churn real dos últimos 90 dias anualizado/mensalizado,
-                // ou simplesmente a taxa dos últimos 90 dias como uma boa proxy.
-                // Como 90 dias é um trimestre, a taxa trimestral dividida por 3 dá uma ideia de churn mensal.
+            // Churn mensal observado nos últimos 90 dias. Com >= 30 pagantes expostos na janela
+            // e >= 5 eventos de churn, a amostra prática substitui a hipótese conservadora de 8,15%.
+            const exposedPaidBase90d = totalActive + churned90d;
+            const minExposedForObservedChurn = 30;
+            const minChurnedForObservedChurn = 5;
+
+            if (exposedPaidBase90d >= minExposedForObservedChurn && churned90d >= minChurnedForObservedChurn) {
                 const monthlyObservedChurn = churnRate90d / 3;
                 simChurn = monthlyObservedChurn > 0 ? monthlyObservedChurn : 0.05; // mínimo de 5% pra evitar infinito
                 simChurnType = 'OBSERVED';
                 simChurnSource = 'AUTO_OBSERVED_CHURN_RATE';
             } else {
-                // Hipótese conservadora de 8,15% para bases pequenas (projeta um LTV de aprox. 12 meses)
+                // Hipótese conservadora de 8,15% apenas enquanto a amostra ainda é muito pequena
                 simChurn = 0.0815;
                 simChurnType = 'ASSUMED';
                 simChurnSource = 'CONSERVATIVE_EARLY_STAGE_CHURN_ASSUMPTION';
