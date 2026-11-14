@@ -172,6 +172,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 ) as trials,
                 COUNT(*) FILTER (
                     WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+                    AND ("is_exempt" IS NULL OR "is_exempt" = false)
                     AND ("planExpiresAt" <= NOW() OR "status" = 'inactive')
                     AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
                     AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
@@ -208,6 +209,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
                 ) as trials,
                 COUNT(*) FILTER (
                     WHERE "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+                    AND ("is_exempt" IS NULL OR "is_exempt" = false)
                     AND ("planExpiresAt" <= NOW() OR "status" = 'inactive')
                     AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
                     AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
@@ -220,18 +222,34 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             )
         `;
 
+        const metaActiveBaseQuery = `
+            SELECT COUNT(*) as active_base
+            FROM "Psychologists"
+            WHERE "deletedAt" IS NULL
+            AND status = 'active'
+            AND ("is_exempt" IS NULL OR "is_exempt" = false)
+            AND "planExpiresAt" > NOW()
+            AND "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+            AND (
+                utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
+                OR first_utm_source IN ('facebook', 'instagram', 'ig', 'meta', 'fb', 'meta_ads')
+            )
+        `;
+
         const [metaMetricsRes] = await sequelize.query(b2bPeriodQuery, {
             replacements: { dateStart, nextDayStr }, type: sequelize.QueryTypes.SELECT
         });
         const [prevMetaMetricsRes] = await sequelize.query(b2bPeriodQuery, {
             replacements: { dateStart: prevDateStart, nextDayStr: prevNextDayStr }, type: sequelize.QueryTypes.SELECT
         });
+        const [metaActiveBaseRes] = await sequelize.query(metaActiveBaseQuery, { type: sequelize.QueryTypes.SELECT });
 
         const metaPagantes = parseInt(metaMetricsRes.pagantes || 0);
         const prevMetaPagantes = parseInt(prevMetaMetricsRes.pagantes || 0);
         const prevMetaTrials = parseInt(prevMetaMetricsRes.trials || 0);
         const metaTrials = parseInt(metaMetricsRes.trials || 0);
         const metaChurned = parseInt(metaMetricsRes.churned || 0);
+        const metaActiveBase = parseInt(metaActiveBaseRes.active_base || 0);
 
         const globalB2BQuery = `
             SELECT 
@@ -286,6 +304,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             FROM "Psychologists"
             WHERE (status = 'inactive' OR ("planExpiresAt" <= NOW() AND "status" = 'active'))
             AND "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
+            AND ("is_exempt" IS NULL OR "is_exempt" = false)
             AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
             AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
             AND "deletedAt" IS NULL
@@ -685,9 +704,12 @@ router.get('/dashboard', protect, admin, async (req, res) => {
         }
 
         const prevMetaChurned = parseInt(prevMetaMetricsRes.churned || 0);
-        const metaChurnRate = metaPagantes > 0 ? (metaChurned / (metaPagantes + metaChurned)) : 0.05;
-        const prevMetaChurnRate = prevMetaPagantes > 0 ? (prevMetaChurned / (prevMetaPagantes + prevMetaChurned)) : 0.05;
-        const prevGlobalChurnRate = (totalActive + prevGlobalChurned) > 0 ? (prevGlobalChurned / (totalActive + prevGlobalChurned)) : 0;
+        // Denominador deve usar a base ativa total do canal Meta (e não apenas os novos pagantes do período)
+        const metaChurnRate = (metaActiveBase + metaChurned) > 0 ? (metaChurned / (metaActiveBase + metaChurned)) : 0;
+        const prevMetaBaseApprox = Math.max(0, metaActiveBase - metaPagantes + metaChurned);
+        const prevMetaChurnRate = (prevMetaBaseApprox + prevMetaChurned) > 0 ? (prevMetaChurned / (prevMetaBaseApprox + prevMetaChurned)) : 0;
+        const prevGlobalBaseApprox = Math.max(0, totalActive - totalNewPagantes + globalChurned);
+        const prevGlobalChurnRate = (prevGlobalBaseApprox + prevGlobalChurned) > 0 ? (prevGlobalChurned / (prevGlobalBaseApprox + prevGlobalChurned)) : 0;
         const metaLtv = arpu / (metaChurnRate > 0 ? metaChurnRate : 0.05);
         const metaLtvCacRatio = metaCac > 0 ? (metaLtv / metaCac) : 0;
 
@@ -1111,9 +1133,11 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             const globalChurn90dQuery = `
                 SELECT COUNT(*) as churned
                 FROM "Psychologists"
-                WHERE status = 'inactive'
+                WHERE (status = 'inactive' OR ("planExpiresAt" <= NOW() AND "status" = 'active'))
                 AND "plano" IS NOT NULL AND ("subscriptionId" IS NOT NULL OR "subscription_payments_count" > 0)
-                AND "updatedAt" >= :dateStart AND "updatedAt" < :nextDayStr
+                AND ("is_exempt" IS NULL OR "is_exempt" = false)
+                AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) >= ((:dateStart)::date AT TIME ZONE 'America/Sao_Paulo')
+                AND COALESCE("canceledAt", CASE WHEN "planExpiresAt" >= '2000-01-01' AND "planExpiresAt" <= NOW() THEN "planExpiresAt" ELSE "updatedAt" END) < ((:nextDayStr)::date AT TIME ZONE 'America/Sao_Paulo')
                 AND "deletedAt" IS NULL
             `;
             const [globalChurn90dRes] = await sequelize.query(globalChurn90dQuery, {
