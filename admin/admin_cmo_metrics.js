@@ -182,7 +182,7 @@ function setKpiValueAndTrend(id, currentValue, historicalValue, inverseGood = fa
 }
 
 function renderCMOMetrics(data) {
-    const formatCurrency = (val) => `R$ ${(val || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    const formatCurrency = (val) => `R$ ${(Number(val) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     let prevPeriodHint = 'período anterior';
     const badge = document.getElementById('cmo-period-comparison-badge');
@@ -278,8 +278,13 @@ function renderCMOMetrics(data) {
             const el = document.getElementById(id);
             if (!el) return;
 
-            rawHist = typeof rawHist === 'object' && rawHist !== null && rawHist.value !== undefined ? rawHist.value : rawHist;
-            rawMonth = typeof rawMonth === 'object' && rawMonth !== null && rawMonth.value !== undefined ? rawMonth.value : rawMonth;
+            const unwrapNum = (v) => {
+                const u = typeof v === 'object' && v !== null && v.value !== undefined ? v.value : v;
+                const n = Number(u);
+                return Number.isFinite(n) ? n : 0;
+            };
+            rawHist = unwrapNum(rawHist);
+            rawMonth = unwrapNum(rawMonth);
 
             let histVal = rawHist;
             let monthVal = rawMonth;
@@ -288,8 +293,8 @@ function renderCMOMetrics(data) {
                 histVal = formatCurrency(rawHist);
                 monthVal = formatCurrency(rawMonth);
             } else if (formatType === 'percent') {
-                histVal = `${(rawHist * 100).toFixed(1)}%`;
-                monthVal = `${(rawMonth * 100).toFixed(1)}%`;
+                histVal = `${(rawHist * 100).toFixed(1).replace('.', ',')}%`;
+                monthVal = `${(rawMonth * 100).toFixed(1).replace('.', ',')}%`;
             } else if (formatType === 'number') {
                 histVal = (rawHist || 0).toLocaleString('pt-BR');
                 monthVal = (rawMonth || 0).toLocaleString('pt-BR');
@@ -319,10 +324,10 @@ function renderCMOMetrics(data) {
             }
 
             let trendHtml = '';
-            if (pct !== 0) {
+            if (Math.abs(pct) >= 0.1) {
                 trendHtml = `<span style="font-size: 0.85rem; font-weight: bold; color: ${color}; background-color: ${color}1a; padding: 2px 6px; border-radius: 4px; display: inline-block; align-self: flex-start; margin-left: auto;">${arrow} ${Math.abs(pct).toFixed(1)}%</span>`;
             } else {
-                trendHtml = `<span style="font-size: 0.85rem; font-weight: bold; color: #64748b; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; display: inline-block; align-self: flex-start; margin-left: auto;">${arrow} 0%</span>`;
+                trendHtml = `<span style="font-size: 0.85rem; font-weight: bold; color: #64748b; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; display: inline-block; align-self: flex-start; margin-left: auto;">− 0%</span>`;
             }
 
             el.style.fontSize = '1.05rem';
@@ -349,7 +354,7 @@ function renderCMOMetrics(data) {
         if (data.simulator?.churn && data.simulator.churn.type === 'ASSUMED') {
             const el = document.getElementById('dbg-global-churn');
             if (el) {
-                el.innerHTML = `${(data.simulator.churn.value * 100).toFixed(2)}% <span style="font-size:0.75rem; color:#64748b; font-weight:normal; margin-left:8px;">· Hipótese conservadora</span>`;
+                el.innerHTML = `${(Number(data.simulator.churn.value || 0) * 100).toFixed(2).replace('.', ',')}% <span style="font-size:0.75rem; color:#64748b; font-weight:normal; margin-left:8px;">· Hipótese conservadora</span>`;
             }
         } else {
             setDbgHist('dbg-global-churn',  data.prevPlatform?.b2b?.global_churn_rate || 0, data.platform.b2b?.global_churn_rate || 0, 'percent', true);
