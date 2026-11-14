@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -16,6 +15,11 @@ import { StatusBar } from 'expo-status-bar';
 import api from '../../../services/api';
 import YeloToast from '../../../components/YeloToast';
 import NativeSelectMenu from '../../../components/NativeSelectMenu';
+import {
+  computeCmoSimulatorSnapshot,
+  parseOptionalMetric,
+  SimulatorHorizonSnapshot,
+} from '../../../utils/cmoSimulator';
 
 interface MonthOption {
   label: string;
@@ -66,12 +70,15 @@ export default function AdminCmoMetricsScreen() {
 
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(0);
 
-  // Simulator Inputs
+  // Simulator Inputs (synced with /api/cmo/simulator-settings, defaults match Web)
   const [reinvestRate, setReinvestRate] = useState<number>(100);
   const [extraCash, setExtraCash] = useState<number>(0);
-  const [curiosityGoal, setCuriosityGoal] = useState<string>('');
-  const [includeOrganic, setIncludeOrganic] = useState<boolean>(true);
+  const [fixedOpex, setFixedOpex] = useState<number>(0);
+  const [taxRate, setTaxRate] = useState<number>(0);
+  const [otherVarRate, setOtherVarRate] = useState<number>(0);
+  const [includeOrganic, setIncludeOrganic] = useState<boolean>(false);
   const [selectedSimHorizon, setSelectedSimHorizon] = useState<number>(12); // 1, 3, 6, 12 months
+  const simSettingsLoadedRef = useRef<boolean>(false);
 
   // Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -79,12 +86,16 @@ export default function AdminCmoMetricsScreen() {
 
   const selectedPeriod = monthOptions[selectedMonthIndex] || monthOptions[0];
 
-  const fetchData = async () => {
+  const fetchData = async (forceReloadSimSettings: boolean = false) => {
     try {
       const { start, end } = selectedPeriod;
-      const [dashRes, trafficRes] = await Promise.all([
+      const shouldFetchSimSettings = !simSettingsLoadedRef.current || forceReloadSimSettings;
+      const [dashRes, trafficRes, simSettingsRes] = await Promise.all([
         api.get(`/api/cmo/dashboard?dateStart=${start}&dateEnd=${end}`),
         api.get(`/api/cmo/traffic?dateStart=${start}&dateEnd=${end}`).catch(() => ({ data: null })),
+        shouldFetchSimSettings
+          ? api.get('/api/cmo/simulator-settings').catch(() => ({ data: null }))
+          : Promise.resolve(null),
       ]);
 
       if (dashRes.data) {
@@ -92,6 +103,25 @@ export default function AdminCmoMetricsScreen() {
       }
       if (trafficRes?.data?.data) {
         setTrafficData(trafficRes.data.data);
+      }
+      if (simSettingsRes?.data?.success) {
+        const s = simSettingsRes.data;
+        if (s.reinvestRate !== undefined && s.reinvestRate !== null && Number.isFinite(Number(s.reinvestRate))) {
+          setReinvestRate(Number(s.reinvestRate));
+        }
+        if (s.extraCash !== undefined && s.extraCash !== null && Number.isFinite(Number(s.extraCash))) {
+          setExtraCash(Number(s.extraCash));
+        }
+        if (s.fixedOpex !== undefined && s.fixedOpex !== null && Number.isFinite(Number(s.fixedOpex))) {
+          setFixedOpex(Number(s.fixedOpex));
+        }
+        if (s.taxRate !== undefined && s.taxRate !== null && Number.isFinite(Number(s.taxRate))) {
+          setTaxRate(Number(s.taxRate));
+        }
+        if (s.otherVarRate !== undefined && s.otherVarRate !== null && Number.isFinite(Number(s.otherVarRate))) {
+          setOtherVarRate(Number(s.otherVarRate));
+        }
+        simSettingsLoadedRef.current = true;
       }
     } catch (err: any) {
       console.error('Erro ao carregar dados do CMO:', err);
@@ -104,12 +134,12 @@ export default function AdminCmoMetricsScreen() {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(false);
   }, [selectedMonthIndex]);
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true);
-    fetchData();
+    fetchData(true);
   }, [selectedMonthIndex]);
 
   // Formatter helpers
@@ -270,29 +300,25 @@ export default function AdminCmoMetricsScreen() {
   // Transparency Debug Card Helper
   const renderDbgCard = (
     title: string,
-    currVal: number,
-    prevVal: number,
+    currVal: number | null,
+    prevVal: number | null,
     formatType: 'currency' | 'number' | 'percent' | 'months',
     inverseGood: boolean | 'neutral' = false,
     customNote?: string,
-    isAlertBg: boolean = false
+    isAlertBg: boolean = false,
+    percentDecimals: number = 1
   ) => {
-    let currFormatted = '';
-    let prevFormatted = '';
+    const formatDbgVal = (v: number | null) => {
+      if (v === null || v === undefined || Number.isNaN(v)) return '—';
+      if (formatType === 'currency') return formatBRL(v);
+      if (formatType === 'percent') return `${(v * 100).toFixed(percentDecimals).replace('.', ',')}%`;
+      if (formatType === 'number') return formatNumber(v);
+      if (formatType === 'months') return formatMonths(v);
+      return String(v);
+    };
 
-    if (formatType === 'currency') {
-      currFormatted = formatBRL(currVal);
-      prevFormatted = formatBRL(prevVal);
-    } else if (formatType === 'percent') {
-      currFormatted = formatPercent(currVal);
-      prevFormatted = formatPercent(prevVal);
-    } else if (formatType === 'number') {
-      currFormatted = formatNumber(currVal);
-      prevFormatted = formatNumber(prevVal);
-    } else if (formatType === 'months') {
-      currFormatted = formatMonths(currVal);
-      prevFormatted = formatMonths(prevVal);
-    }
+    const currFormatted = formatDbgVal(currVal);
+    const prevFormatted = formatDbgVal(prevVal);
 
     return (
       <View
@@ -322,8 +348,13 @@ export default function AdminCmoMetricsScreen() {
           {customNote
             ? null
             : formatType === 'percent'
-              ? renderTrendBadge((currVal || 0) * 100, (prevVal || 0) * 100, inverseGood, true)
-              : renderTrendBadge(currVal, prevVal, inverseGood)}
+              ? renderTrendBadge(
+                  currVal !== null ? currVal * 100 : NaN,
+                  prevVal !== null ? prevVal * 100 : NaN,
+                  inverseGood,
+                  true
+                )
+              : renderTrendBadge(currVal ?? NaN, prevVal ?? NaN, inverseGood)}
         </View>
 
         <Text
@@ -354,146 +385,22 @@ export default function AdminCmoMetricsScreen() {
   };
 
   // =========================================================================
-  // SIMULATOR MATHEMATICAL ENGINE
+  // SIMULATOR MATHEMATICAL ENGINE (PARIDADE EXATA WEB MOTOR V6.1)
   // =========================================================================
-  const simulationResults = useMemo(() => {
-    if (!dashboardData) return null;
-
-    const sim = dashboardData.simulator || {};
-    const b2b = dashboardData.platform?.b2b || {};
-    const historical = dashboardData.historical || {};
-
-    const currentBase = Number(sim.currentPaidAccessBase || b2b.total_active || 0);
-    const arpu = Number(b2b.arpu || 99);
-    const contactsPerPaidPsiMonth = Number(sim.contactsPerPaidPsiMonth?.value || 2);
-    const cplGoogle = Number(sim.cpl?.value || dashboardData.ads?.google?.cpl?.value || 5.0);
-    const cacMeta = Number(sim.cac?.value || dashboardData.ads?.meta?.cac || 80.0);
-    const trialConversionRate = Number(sim.trialConv?.value || 0.25);
-    const monthlyChurn = Number(sim.churn?.value || b2b.global_churn_rate || 0.05);
-    const histMetaMonthlySpend = Number(historical.meta?.monthly_spend_avg?.value || dashboardData.ads?.meta?.spend || 500);
-
-    const verifiedOrganicContacts = includeOrganic ? Number(sim.organicContacts?.value || 0) : 0;
-    const organicActiveAdditions = includeOrganic ? Number(sim.organicActive?.value || 0) : 0;
-
-    const gatewayRate = 0.0265;
-    const taxRate = 0.0;
-    const varCostRate = 0.0;
-    const fixedOPEX = 0;
-    const metaScalePenalty = 0.20;
-
-    let rollingBase = Math.max(1, currentBase);
-    let cumulativeRevenue = 0;
-
-    const monthProjections: Array<{
-      m: number;
-      base: number;
-      mrr: number;
-      metaSpend: number;
-      googleSpend: number;
-      ltv: number;
-      payback: number;
-      extrapolation: number;
-    }> = [];
-
-    for (let m = 1; m <= 12; m++) {
-      const monthMrr = rollingBase * arpu;
-      cumulativeRevenue += monthMrr;
-
-      const operationalCash = monthMrr * (1 - gatewayRate - taxRate - varCostRate) - fixedOPEX;
-
-      // Google demand maintenance
-      const totalContactsNeeded = rollingBase * contactsPerPaidPsiMonth;
-      const paidContactsNeeded = Math.max(0, totalContactsNeeded - verifiedOrganicContacts);
-      const googleMaintenanceSpend = paidContactsNeeded * cplGoogle;
-
-      // Growth fund
-      const availableCash = Math.max(0, operationalCash - googleMaintenanceSpend);
-      const growthFund = (availableCash * (reinvestRate / 100)) + extraCash;
-
-      // Meta Paid acquisition calculation with scale penalty iteration
-      let newPaidActive = 0;
-      let actualMetaSpend = 0;
-      let trialGoogleSpend = 0;
-      let penalizedCacMeta = cacMeta;
-
-      const trialsNeededPerPaid = trialConversionRate > 0 ? (1 / trialConversionRate) : 4;
-      const trialGoogleCostPerPaid = trialsNeededPerPaid * 1 * cplGoogle; // 1 contact per trial
-
-      if (growthFund > 0 && cacMeta > 0) {
-        let iteratedCAC = cacMeta;
-        for (let iter = 0; iter < 10; iter++) {
-          const blendedCAC = iteratedCAC + trialGoogleCostPerPaid;
-          const candidatePaid = growthFund / blendedCAC;
-          const candidateMetaSpend = candidatePaid * iteratedCAC;
-          const scaleFactor = histMetaMonthlySpend > 0 ? Math.max(1, candidateMetaSpend / histMetaMonthlySpend) : 1;
-          const newCac = cacMeta * (1 + (scaleFactor - 1) * metaScalePenalty);
-          if (Math.abs(newCac - iteratedCAC) < 0.1) {
-            iteratedCAC = newCac;
-            break;
-          }
-          iteratedCAC = newCac;
-        }
-
-        penalizedCacMeta = iteratedCAC;
-        const finalBlendedCAC = penalizedCacMeta + trialGoogleCostPerPaid;
-        newPaidActive = growthFund / finalBlendedCAC;
-        actualMetaSpend = newPaidActive * penalizedCacMeta;
-        trialGoogleSpend = newPaidActive * trialGoogleCostPerPaid;
-      }
-
-      const totalGoogleSpend = googleMaintenanceSpend + trialGoogleSpend;
-
-      // Net customer margin & LTV/Payback
-      const netMonthlyMargin = (arpu * (1 - gatewayRate)) - (contactsPerPaidPsiMonth * cplGoogle);
-      const expectedLifetimeMonths = monthlyChurn > 0 ? Math.min(36, 1 / monthlyChurn) : 24;
-      const ltvContribution = Math.max(0, netMonthlyMargin * expectedLifetimeMonths);
-
-      const blendedAcquisitionCost = penalizedCacMeta + trialGoogleCostPerPaid;
-      const paybackMonths = netMonthlyMargin > 0 ? (blendedAcquisitionCost / netMonthlyMargin) : 0;
-
-      const extrapolationMultiple = histMetaMonthlySpend > 0 ? (actualMetaSpend / histMetaMonthlySpend) : 1;
-
-      // Base evolution
-      const churned = rollingBase * monthlyChurn;
-      const netNew = newPaidActive + organicActiveAdditions - churned;
-      rollingBase = Math.max(1, rollingBase + netNew);
-
-      monthProjections.push({
-        m,
-        base: rollingBase,
-        mrr: rollingBase * arpu,
-        metaSpend: actualMetaSpend,
-        googleSpend: totalGoogleSpend,
-        ltv: ltvContribution,
-        payback: paybackMonths,
-        extrapolation: extrapolationMultiple,
-      });
-    }
-
-    const targetIndex = Math.min(Math.max(1, selectedSimHorizon), 12) - 1;
-    const targetProjection = monthProjections[targetIndex] || monthProjections[monthProjections.length - 1];
-    const m1Projection = monthProjections[0] || targetProjection;
-
-    return {
-      currentBase,
-      currentMrr: currentBase * arpu,
-      targetMonth: selectedSimHorizon,
-      projectedMRR: targetProjection.mrr,
-      projectedBase: targetProjection.base,
-      projectedMeta: targetProjection.metaSpend,
-      projectedGoogle: targetProjection.googleSpend,
-      projectedLTV: targetProjection.ltv,
-      projectedPayback: targetProjection.payback,
-      projectedExtrapolation: targetProjection.extrapolation,
-      m1Google: m1Projection.googleSpend,
-      m1Ltv: m1Projection.ltv,
-      m1Payback: m1Projection.payback,
-      monthlyChurn,
-      cacMeta,
-      histMetaMonthlySpend,
-      contactsPerPaidPsiMonth,
-    };
-  }, [dashboardData, reinvestRate, extraCash, includeOrganic, selectedSimHorizon]);
+  const simulationResults = useMemo<SimulatorHorizonSnapshot | null>(() => {
+    return computeCmoSimulatorSnapshot(
+      dashboardData,
+      {
+        reinvestRate,
+        extraCash,
+        includeOrganic,
+        fixedOPEX: fixedOpex,
+        taxRate,
+        varCostRate: otherVarRate,
+      },
+      selectedSimHorizon
+    );
+  }, [dashboardData, reinvestRate, extraCash, includeOrganic, fixedOpex, taxRate, otherVarRate, selectedSimHorizon]);
 
   if (isLoading) {
     return (
@@ -520,6 +427,11 @@ export default function AdminCmoMetricsScreen() {
   const efficiency = dashboardData?.efficiency || {};
   const prevEfficiency = dashboardData?.prevEfficiency || {};
 
+  // Base Pagante Real (todos os pagantes ativos) vs Novos Pagantes Meta no Período
+  const paidAccessBase = Number(
+    b2b.total_active ?? dashboardData?.simulator?.currentPaidAccessBase ?? 0
+  );
+
   // Meta Campaign single details
   const metaCampaign = dashboardData?.campaigns?.meta?.find(
     (c: any) => (c.campaign_id || c.id) === '120251213168140531'
@@ -537,16 +449,26 @@ export default function AdminCmoMetricsScreen() {
   const metaCac = Number(ads.meta?.cac || 0);
   const prevMetaCac = Number(prevAds.meta?.cac || 0);
 
+  // Unit economics reais da Decisão Executiva (mesma fórmula de cmoRoutes.js L713-714)
+  const metaArpu = Number(b2b.arpu || 0);
+  const metaChurnRate = Number(b2b.meta_churn_rate || 0);
+  const decisionLtv: number | null =
+    metaArpu > 0 ? metaArpu / (metaChurnRate > 0 ? metaChurnRate : 0.05) : null;
+  const decisionLtvCacRatio: number | null =
+    metaCac > 0 && decisionLtv !== null ? decisionLtv / metaCac : null;
+
+  const metaCampaignSpend = Number(metaCampaign.spend || 0);
+  const prevMetaCampaignSpend = Number(prevMetaCampaign.spend || 0);
   const metaImpressions = Number(metaCampaign.impressions || 0);
   const prevMetaImpressions = Number(prevMetaCampaign.impressions || 0);
   const metaClicks = Number(metaCampaign.clicks || 0);
   const prevMetaClicks = Number(prevMetaCampaign.clicks || 0);
   const metaConversions = Number(metaCampaign.conversions || 0);
   const prevMetaConversions = Number(prevMetaCampaign.conversions || 0);
-  const metaCpc = metaClicks > 0 ? metaSpend / metaClicks : 0;
-  const prevMetaCpc = prevMetaClicks > 0 ? prevMetaSpend / prevMetaClicks : 0;
-  const metaCpa = metaConversions > 0 ? metaSpend / metaConversions : 0;
-  const prevMetaCpa = prevMetaConversions > 0 ? prevMetaSpend / prevMetaConversions : 0;
+  const metaCpc = metaClicks > 0 ? metaCampaignSpend / metaClicks : 0;
+  const prevMetaCpc = prevMetaClicks > 0 ? prevMetaCampaignSpend / prevMetaClicks : 0;
+  const metaCpa = metaConversions > 0 ? metaCampaignSpend / metaConversions : 0;
+  const prevMetaCpa = prevMetaConversions > 0 ? prevMetaCampaignSpend / prevMetaConversions : 0;
 
   // Google Campaign single details
   const googleCampaign = dashboardData?.campaigns?.google?.find(
@@ -562,31 +484,37 @@ export default function AdminCmoMetricsScreen() {
   const prevGoogleClicks = Number(prevPlatform.b2c?.wpp_clicks || 0);
   const googleDeals = Number(b2c.total_deals || 0);
   const prevGoogleDeals = Number(prevPlatform.b2c?.total_deals || 0);
-  const googleCpl = Number(ads.google?.cpl?.value ?? ads.google?.cpl ?? 0);
-  const prevGoogleCpl = Number(prevAds.google?.cpl?.value ?? prevAds.google?.cpl ?? 0);
+  const googleCpl = parseOptionalMetric(ads.google?.cpl);
+  const prevGoogleCpl = parseOptionalMetric(prevAds.google?.cpl);
 
+  const googleCampaignSpend = Number(googleCampaign.spend || 0);
+  const prevGoogleCampaignSpend = Number(prevGoogleCampaign.spend || 0);
   const googleImpressions = Number(googleCampaign.impressions || 0);
   const prevGoogleImpressions = Number(prevGoogleCampaign.impressions || 0);
   const googleAdClicks = Number(googleCampaign.clicks || 0);
   const prevGoogleAdClicks = Number(prevGoogleCampaign.clicks || 0);
   const googleConversions = Number(googleCampaign.conversions || 0);
   const prevGoogleConversions = Number(prevGoogleCampaign.conversions || 0);
-  const googleCpc = googleAdClicks > 0 ? googleSpend / googleAdClicks : 0;
-  const prevGoogleCpc = prevGoogleAdClicks > 0 ? prevGoogleSpend / prevGoogleAdClicks : 0;
-  const googleCpa = googleConversions > 0 ? googleSpend / googleConversions : 0;
-  const prevGoogleCpa = prevGoogleConversions > 0 ? prevGoogleSpend / prevGoogleConversions : 0;
+  const googleCpc = googleAdClicks > 0 ? googleCampaignSpend / googleAdClicks : 0;
+  const prevGoogleCpc = prevGoogleAdClicks > 0 ? prevGoogleCampaignSpend / prevGoogleAdClicks : 0;
+  const googleCpa = googleConversions > 0 ? googleCampaignSpend / googleConversions : 0;
+  const prevGoogleCpa = prevGoogleConversions > 0 ? prevGoogleCampaignSpend / prevGoogleConversions : 0;
 
-  // B2C Efficiency
-  const globalEffort = Number(efficiency.globalEffort || 0);
-  const prevGlobalEffort = Number(prevEfficiency.globalEffort || 0);
-  const adsEffort = efficiency.adsEffort !== 'N/A' && efficiency.adsEffort ? Number(efficiency.adsEffort) : null;
-  const prevAdsEffort = prevEfficiency.adsEffort !== 'N/A' && prevEfficiency.adsEffort ? Number(prevEfficiency.adsEffort) : null;
-  const orgEffort = efficiency.orgEffort !== 'N/A' && efficiency.orgEffort ? Number(efficiency.orgEffort) : null;
-  const prevOrgEffort = prevEfficiency.orgEffort !== 'N/A' && prevEfficiency.orgEffort ? Number(prevEfficiency.orgEffort) : null;
-  const topTicket = efficiency.topTicket !== 'N/A' && efficiency.topTicket ? Number(efficiency.topTicket) : 0;
-  const prevTopTicket = prevEfficiency.topTicket !== 'N/A' && prevEfficiency.topTicket ? Number(prevEfficiency.topTicket) : 0;
-  const ttfcMedian = efficiency.ttfcData?.median ? Number(efficiency.ttfcData.median) : null;
-  const ttvMedian = efficiency.ttvData?.median ? Number(efficiency.ttvData.median) : null;
+  // B2C Efficiency (90d)
+  const globalEffort = parseOptionalMetric(efficiency.globalEffort);
+  const prevGlobalEffort = parseOptionalMetric(prevEfficiency.globalEffort);
+  const adsEffort = parseOptionalMetric(efficiency.adsEffort);
+  const prevAdsEffort = parseOptionalMetric(prevEfficiency.adsEffort);
+  const orgEffort = parseOptionalMetric(efficiency.orgEffort);
+  const prevOrgEffort = parseOptionalMetric(prevEfficiency.orgEffort);
+  const topTicket = parseOptionalMetric(efficiency.topTicket);
+  const prevTopTicket = parseOptionalMetric(prevEfficiency.topTicket);
+  const ttfcMedian = parseOptionalMetric(efficiency.ttfcData?.median);
+  const prevTtfcMedian = parseOptionalMetric(prevEfficiency.ttfcData?.median);
+  const ttfcMean = parseOptionalMetric(efficiency.ttfcData?.mean);
+  const ttvMedian = parseOptionalMetric(efficiency.ttvData?.median);
+  const prevTtvMedian = parseOptionalMetric(prevEfficiency.ttvData?.median);
+  const ttvMean = parseOptionalMetric(efficiency.ttvData?.mean);
 
   // Traffic
   const ga4 = trafficData?.ga4;
@@ -724,7 +652,7 @@ export default function AdminCmoMetricsScreen() {
             </View>
 
             <TouchableOpacity
-              onPress={fetchData}
+              onPress={() => fetchData(true)}
               style={{
                 backgroundColor: '#FFEE8C',
                 paddingHorizontal: 12,
@@ -900,10 +828,29 @@ export default function AdminCmoMetricsScreen() {
             </View>
           </View>
 
-          <Text style={{ fontFamily: 'Inter_400Regular', color: '#334155', fontSize: 12.5, lineHeight: 18, marginBottom: 14 }}>
-            {decision.reason ||
-              'Tráfego pago operando com sustentação da base Google Ads e aquisição Meta alinhadas à capacidade de geração de demanda.'}
+          <Text style={{ fontFamily: 'Inter_400Regular', color: '#334155', fontSize: 12.5, lineHeight: 18, marginBottom: decision.warning ? 8 : 14 }}>
+            {decision.recommendation ||
+              decision.reason ||
+              'Aguarde mais conversões para recomendação definitiva.'}
           </Text>
+
+          {decision.warning ? (
+            <View
+              style={{
+                backgroundColor: '#fffbeb',
+                borderWidth: 1,
+                borderColor: '#fde68a',
+                borderRadius: 12,
+                paddingHorizontal: 10,
+                paddingVertical: 7,
+                marginBottom: 14,
+              }}
+            >
+              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#92400e', lineHeight: 15 }}>
+                ⚠️ {decision.warning}
+              </Text>
+            </View>
+          ) : null}
 
           {/* Quick Decision KPIs */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -922,10 +869,30 @@ export default function AdminCmoMetricsScreen() {
                 LTV / CAC
               </Text>
               <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1B4332', marginTop: 2 }}>
-                {decision.ltvCacRatio ? `${Number(decision.ltvCacRatio).toFixed(1)}x` : '3.8x'}
+                {decisionLtvCacRatio !== null ? `${decisionLtvCacRatio.toFixed(1)}x` : '—'}
               </Text>
-              <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 9.5, color: '#16a34a', marginTop: 2 }}>
-                Saudável (&gt; 3x)
+              <Text
+                style={{
+                  fontFamily: 'Inter_500Medium',
+                  fontSize: 9.5,
+                  color:
+                    decisionLtvCacRatio === null
+                      ? '#64748b'
+                      : decisionLtvCacRatio >= 3
+                        ? '#16a34a'
+                        : decisionLtvCacRatio >= 1
+                          ? '#d97706'
+                          : '#dc2626',
+                  marginTop: 2,
+                }}
+              >
+                {decisionLtvCacRatio === null
+                  ? 'Sem CAC no período'
+                  : decisionLtvCacRatio >= 3
+                    ? 'Saudável (> 3x)'
+                    : decisionLtvCacRatio >= 1
+                      ? 'Atenção (1–3x)'
+                      : 'Crítico (< 1x)'}
               </Text>
             </View>
 
@@ -944,7 +911,7 @@ export default function AdminCmoMetricsScreen() {
                 CAC B2B Médio
               </Text>
               <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1B4332', marginTop: 2 }}>
-                {formatBRL(metaCac || decision.cac || 80)}
+                {metaCac > 0 ? formatBRL(metaCac) : '—'}
               </Text>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
                 Custo de Aquisição
@@ -963,13 +930,13 @@ export default function AdminCmoMetricsScreen() {
               }}
             >
               <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
-                LTV Estimado
+                LTV Bruto (Meta)
               </Text>
               <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#1B4332', marginTop: 2 }}>
-                {formatBRL(simulationResults?.projectedLTV || decision.ltv || 389.0)}
+                {decisionLtv !== null ? formatBRL(decisionLtv) : '—'}
               </Text>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
-                Ciclo de Vida Real
+                {metaChurnRate > 0 ? 'Churn observado' : 'Hipótese 5% churn'}
               </Text>
             </View>
 
@@ -988,10 +955,13 @@ export default function AdminCmoMetricsScreen() {
                 Base Pagante
               </Text>
               <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 17, color: '#16a34a', marginTop: 2 }}>
-                {metaPagantes || simulationResults?.currentBase || 0} psis
+                {formatNumber(paidAccessBase)} psis
               </Text>
               <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 9.5, color: '#16a34a', marginTop: 2 }}>
-                Ativos na Plataforma
+                {simulationResults?.operationalForwardBase !== undefined &&
+                simulationResults.operationalForwardBase !== paidAccessBase
+                  ? `Ativos (${simulationResults.operationalForwardBase} elegíveis)`
+                  : 'Ativos na Plataforma'}
               </Text>
             </View>
           </View>
@@ -1040,36 +1010,39 @@ export default function AdminCmoMetricsScreen() {
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#1B4332' }}>{reinvestRate}%</Text>
               </View>
             </View>
-            <View style={{ flexDirection: 'row', gap: 6 }}>
-              {[50, 80, 100, 120].map((rate) => {
-                const isSelected = reinvestRate === rate;
-                return (
-                  <TouchableOpacity
-                    key={rate}
-                    onPress={() => setReinvestRate(rate)}
-                    style={{
-                      flex: 1,
-                      paddingVertical: 7,
-                      borderRadius: 999,
-                      backgroundColor: isSelected ? '#1B4332' : '#f8fafc',
-                      borderWidth: 1,
-                      borderColor: isSelected ? '#1B4332' : '#cbd5e1',
-                      alignItems: 'center',
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {Array.from(new Set([50, 80, 100, 120, reinvestRate]))
+                .sort((a, b) => a - b)
+                .map((rate) => {
+                  const isSelected = reinvestRate === rate;
+                  return (
+                    <TouchableOpacity
+                      key={rate}
+                      onPress={() => setReinvestRate(rate)}
                       style={{
-                        fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_600SemiBold',
-                        fontSize: 11.5,
-                        color: isSelected ? '#ffffff' : '#475569',
+                        flex: 1,
+                        minWidth: '20%',
+                        paddingVertical: 7,
+                        borderRadius: 999,
+                        backgroundColor: isSelected ? '#1B4332' : '#f8fafc',
+                        borderWidth: 1,
+                        borderColor: isSelected ? '#1B4332' : '#cbd5e1',
+                        alignItems: 'center',
                       }}
+                      activeOpacity={0.8}
                     >
-                      {rate}%
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                      <Text
+                        style={{
+                          fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_600SemiBold',
+                          fontSize: 11.5,
+                          color: isSelected ? '#ffffff' : '#475569',
+                        }}
+                      >
+                        {rate}%
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
             </View>
           </View>
 
@@ -1083,37 +1056,57 @@ export default function AdminCmoMetricsScreen() {
                 {formatBRL(extraCash)}
               </Text>
             </View>
-            <View style={{ flexDirection: 'row', gap: 6 }}>
-              {[0, 1000, 2500, 5000].map((cash) => {
-                const isSelected = extraCash === cash;
-                return (
-                  <TouchableOpacity
-                    key={cash}
-                    onPress={() => setExtraCash(cash)}
-                    style={{
-                      flex: 1,
-                      paddingVertical: 7,
-                      borderRadius: 999,
-                      backgroundColor: isSelected ? '#10b981' : '#f8fafc',
-                      borderWidth: 1,
-                      borderColor: isSelected ? '#10b981' : '#cbd5e1',
-                      alignItems: 'center',
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {Array.from(new Set([0, 1000, 2500, 5000, extraCash]))
+                .sort((a, b) => a - b)
+                .map((cash) => {
+                  const isSelected = extraCash === cash;
+                  return (
+                    <TouchableOpacity
+                      key={cash}
+                      onPress={() => setExtraCash(cash)}
                       style={{
-                        fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_600SemiBold',
-                        fontSize: 11,
-                        color: isSelected ? '#ffffff' : '#475569',
+                        flex: 1,
+                        minWidth: '20%',
+                        paddingVertical: 7,
+                        borderRadius: 999,
+                        backgroundColor: isSelected ? '#10b981' : '#f8fafc',
+                        borderWidth: 1,
+                        borderColor: isSelected ? '#10b981' : '#cbd5e1',
+                        alignItems: 'center',
                       }}
+                      activeOpacity={0.8}
                     >
-                      {cash === 0 ? 'R$ 0' : `+${cash >= 1000 ? `${cash / 1000}k` : cash}`}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                      <Text
+                        style={{
+                          fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_600SemiBold',
+                          fontSize: 11,
+                          color: isSelected ? '#ffffff' : '#475569',
+                        }}
+                      >
+                        {cash === 0 ? 'R$ 0' : cash >= 1000 && cash % 1000 === 0 ? `+${cash / 1000}k` : `+${cash}`}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
             </View>
+          </View>
+
+          {/* Parâmetros financeiros sincronizados da Web/DB */}
+          <View
+            style={{
+              backgroundColor: '#f8fafc',
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: '#e2e8f0',
+              paddingHorizontal: 10,
+              paddingVertical: 8,
+              marginBottom: 14,
+            }}
+          >
+            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#64748b', textAlign: 'center' }}>
+              {`OPEX: ${formatBRL(fixedOpex)} • Imp.: ${(taxRate * 100).toFixed(1).replace('.', ',')}% • Gateway: ${((simulationResults?.gatewayRate ?? 0.0265) * 100).toFixed(2).replace('.', ',')}% • Var.: ${(otherVarRate * 100).toFixed(1).replace('.', ',')}%`}
+            </Text>
           </View>
 
           {/* Toggle Orgânico */}
@@ -1225,10 +1218,12 @@ export default function AdminCmoMetricsScreen() {
                   MRR Projetado ({selectedSimHorizon}M)
                 </Text>
               </View>
-              {renderSimPctBadge(simulationResults?.projectedMRR || 0, simulationResults?.currentMrr || 0, 'vs hoje')}
+              {simulationResults?.isPossible
+                ? renderSimPctBadge(simulationResults.projectedMRR, simulationResults.currentMrr, 'vs hoje')
+                : renderSimBadgePill('—', 'neutral')}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 24, color: '#0f172a', marginVertical: 4 }}>
-              {formatBRL(simulationResults?.projectedMRR || 0)}
+              {simulationResults?.isPossible ? formatBRL(simulationResults.projectedMRR) : '--'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11.5, color: '#64748b', lineHeight: 16 }}>
               Receita recorrente estimada para o Mês {selectedSimHorizon} (hoje: {formatBRL(simulationResults?.currentMrr || 0)}/mês).
@@ -1259,13 +1254,26 @@ export default function AdminCmoMetricsScreen() {
                   Base Projetada ({selectedSimHorizon}M)
                 </Text>
               </View>
-              {renderSimPctBadge(Math.floor(simulationResults?.projectedBase || 0), simulationResults?.currentBase || 0, 'vs hoje')}
+              {simulationResults?.isPossible
+                ? renderSimPctBadge(
+                    Math.floor(simulationResults.projectedBase),
+                    simulationResults.operationalForwardBase,
+                    'vs hoje'
+                  )
+                : renderSimBadgePill('—', 'neutral')}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 24, color: '#0f172a', marginVertical: 4 }}>
-              {Math.floor(simulationResults?.projectedBase || 0)} psicólogos
+              {simulationResults?.isPossible ? `${Math.floor(simulationResults.projectedBase)} psicólogos` : '--'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11.5, color: '#64748b', lineHeight: 16 }}>
-              Total de psicólogos pagantes previstos na plataforma ao final do Mês {selectedSimHorizon}.
+              {simulationResults?.isPossible
+                ? (() => {
+                    const subsFloor = Math.floor(simulationResults.projectedBase);
+                    const deltaSubs = subsFloor - simulationResults.operationalForwardBase;
+                    const deltaSigned = deltaSubs >= 0 ? `+${deltaSubs}` : `${deltaSubs}`;
+                    return `${deltaSigned} assinantes líquidos em ${selectedSimHorizon}M (de ${simulationResults.operationalForwardBase} elegíveis).`;
+                  })()
+                : `Total de psicólogos pagantes previstos na plataforma ao final do Mês ${selectedSimHorizon}.`}
             </Text>
           </View>
 
@@ -1293,15 +1301,17 @@ export default function AdminCmoMetricsScreen() {
                   Meta Ads Recomendado ({selectedSimHorizon}M)
                 </Text>
               </View>
-              {(simulationResults?.projectedMeta || 0) <= 0
-                ? renderSimBadgePill('↓ Motor travado', 'negative')
-                : renderSimPctBadge(simulationResults?.projectedMeta || 0, simulationResults?.histMetaMonthlySpend || 0, 'vs hist. 30d', { neutralTrend: true })}
+              {!simulationResults?.isPossible
+                ? renderSimBadgePill('—', 'neutral')
+                : simulationResults.projectedMeta <= 0
+                  ? renderSimBadgePill('↓ Motor travado', 'negative')
+                  : renderSimPctBadge(simulationResults.projectedMeta, simulationResults.histMetaMonthlySpend, 'vs hist. 30d', { neutralTrend: true })}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 24, color: '#0f172a', marginVertical: 4 }}>
-              {formatBRL(simulationResults?.projectedMeta || 0)}
+              {simulationResults?.isPossible ? formatBRL(simulationResults.projectedMeta) : '--'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11.5, color: '#64748b', lineHeight: 16 }}>
-              ≈ {formatBRL((simulationResults?.projectedMeta || 0) / 30)}/dia para aquisição de psicólogos.
+              ≈ {simulationResults?.isPossible ? formatBRL(simulationResults.projectedMeta / 30) : 'R$ 0,00'}/dia para aquisição de psicólogos.
             </Text>
           </View>
 
@@ -1330,9 +1340,10 @@ export default function AdminCmoMetricsScreen() {
                 </Text>
               </View>
               {(() => {
-                const gCurr = simulationResults?.projectedGoogle || 0;
-                const gM1 = simulationResults?.m1Google || 0;
-                const mrrProj = simulationResults?.projectedMRR || 0;
+                if (!simulationResults?.isPossible) return renderSimBadgePill('—', 'neutral');
+                const gCurr = simulationResults.projectedGoogle || 0;
+                const gM1 = simulationResults.m1Google || 0;
+                const mrrProj = simulationResults.projectedMRR || 0;
                 const gShare = mrrProj > 0 ? (gCurr / mrrProj) * 100 : 0;
                 if (selectedSimHorizon === 1 || gM1 <= 0) {
                   const gTone: SimTone = gShare <= 35 ? 'positive' : gShare <= 60 ? 'warning' : 'negative';
@@ -1342,10 +1353,10 @@ export default function AdminCmoMetricsScreen() {
               })()}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 24, color: '#0f172a', marginVertical: 4 }}>
-              {formatBRL(simulationResults?.projectedGoogle || 0)}
+              {simulationResults?.isPossible ? formatBRL(simulationResults.projectedGoogle) : '--'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11.5, color: '#64748b', lineHeight: 16 }}>
-              ≈ {formatBRL((simulationResults?.projectedGoogle || 0) / 30)}/dia para sustentar contatos de pacientes no WhatsApp.
+              ≈ {simulationResults?.isPossible ? formatBRL(simulationResults.projectedGoogle / 30) : 'R$ 0,00'}/dia para sustentar contatos de pacientes no WhatsApp.
             </Text>
           </View>
 
@@ -1364,14 +1375,15 @@ export default function AdminCmoMetricsScreen() {
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 4, marginBottom: 2 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: '#64748b', textTransform: 'uppercase' }}>
-                  LTV Contribuição
+                  LTV Contrib. (M{selectedSimHorizon})
                 </Text>
                 {(() => {
-                  const pLtv = simulationResults?.projectedLTV || 0;
-                  const m1Ltv = simulationResults?.m1Ltv || 0;
-                  const pPb = simulationResults?.projectedPayback || 0;
-                  const mCh = simulationResults?.monthlyChurn || 0;
-                  const cMeta = simulationResults?.cacMeta || 0;
+                  if (!simulationResults?.isPossible) return renderSimBadgePill('—', 'neutral');
+                  const pLtv = simulationResults.projectedLTV || 0;
+                  const m1Ltv = simulationResults.m1Ltv || 0;
+                  const pPb = simulationResults.projectedPayback || 0;
+                  const mCh = simulationResults.monthlyChurn || 0;
+                  const cMeta = simulationResults.cacMeta || 0;
                   if (pLtv <= 0) return renderSimBadgePill('↓ Negativo', 'negative');
                   if (selectedSimHorizon > 1 && m1Ltv > 0 && Math.abs((pLtv - m1Ltv) / m1Ltv) >= 0.001) {
                     return renderSimPctBadge(pLtv, m1Ltv, 'vs M1');
@@ -1386,7 +1398,9 @@ export default function AdminCmoMetricsScreen() {
                 })()}
               </View>
               <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#0f172a', marginTop: 2 }}>
-                {formatBRL(simulationResults?.projectedLTV || 0)}
+                {simulationResults?.isPossible && simulationResults.projectedLTV > 0
+                  ? formatBRL(simulationResults.projectedLTV)
+                  : '--'}
               </Text>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
                 Lucro real por psi
@@ -1406,11 +1420,12 @@ export default function AdminCmoMetricsScreen() {
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 4, marginBottom: 2 }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: '#64748b', textTransform: 'uppercase' }}>
-                  CAC Payback
+                  Payback (M{selectedSimHorizon})
                 </Text>
                 {(() => {
-                  const pPb = simulationResults?.projectedPayback || 0;
-                  const m1Pb = simulationResults?.m1Payback || 0;
+                  if (!simulationResults?.isPossible) return renderSimBadgePill('—', 'neutral');
+                  const pPb = simulationResults.projectedPayback || 0;
+                  const m1Pb = simulationResults.m1Payback || 0;
                   if (pPb <= 0) return renderSimBadgePill('↓ S/ retorno', 'negative');
                   if (selectedSimHorizon > 1 && m1Pb > 0 && Math.abs((pPb - m1Pb) / m1Pb) >= 0.001) {
                     return renderSimPctBadge(pPb, m1Pb, 'vs M1', { inverseGood: true });
@@ -1421,7 +1436,9 @@ export default function AdminCmoMetricsScreen() {
                 })()}
               </View>
               <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#0f172a', marginTop: 2 }}>
-                {(simulationResults?.projectedPayback || 0).toFixed(1)} meses
+                {simulationResults?.isPossible && simulationResults.projectedPayback > 0
+                  ? `${simulationResults.projectedPayback.toFixed(1)} meses`
+                  : '--'}
               </Text>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
                 Break-even
@@ -1444,38 +1461,97 @@ export default function AdminCmoMetricsScreen() {
                 Extrapolação Meta Ads
               </Text>
               {(() => {
-                const ext = simulationResults?.projectedExtrapolation || 1;
+                if (!simulationResults?.isPossible || (simulationResults?.histMetaMonthlySpend || 0) <= 0) {
+                  return renderSimBadgePill('—', 'neutral');
+                }
+                const ext = simulationResults.projectedExtrapolation || 0;
                 if (ext <= 2) return renderSimBadgePill('↓ Segura (≤ 2×)', 'positive');
                 if (ext <= 5) return renderSimBadgePill('↑ Atenção (2–5×)', 'warning');
                 return renderSimBadgePill('↑ Risco alto (> 5×)', 'negative');
               })()}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 15, color: '#1e293b' }}>
-              {(simulationResults?.projectedExtrapolation || 1).toFixed(1).replace('.', ',')}× histórico
+              {simulationResults?.isPossible && (simulationResults?.histMetaMonthlySpend || 0) > 0
+                ? `${(simulationResults.projectedExtrapolation || 0).toFixed(2).replace('.', ',')}× histórico`
+                : 'Indisponível'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
-              Projetado: {formatBRL(simulationResults?.projectedMeta || 0)}/mês • Histórico: {formatBRL(simulationResults?.histMetaMonthlySpend || 0)}/mês
+              {simulationResults?.isPossible && (simulationResults?.histMetaMonthlySpend || 0) > 0
+                ? `Projetado: ${formatBRL(simulationResults.projectedMeta)}/mês • Histórico: ${formatBRL(simulationResults.histMetaMonthlySpend)}/mês`
+                : 'Sem baseline histórico válido para comparação.'}
             </Text>
           </View>
 
           {/* Motor Status Banner */}
-          <View
-            style={{
-              backgroundColor: '#f0fdf4',
-              borderRadius: 14,
-              borderWidth: 1,
-              borderColor: '#ccfbf1',
-              padding: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <Text style={{ fontSize: 15 }}>✅</Text>
-            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11.5, color: '#0f766e', flex: 1, lineHeight: 16 }}>
-              <Text style={{ fontFamily: 'Inter_700Bold' }}>Motor Ativo:</Text> Projeta a base de {simulationResults?.currentBase || 0} para {Math.floor(simulationResults?.projectedBase || 0)} assinantes em {selectedSimHorizon} meses com {reinvestRate}% de reinvestimento.
-            </Text>
-          </View>
+          {(() => {
+            if (!simulationResults?.isPossible) {
+              return (
+                <View
+                  style={{
+                    backgroundColor: '#fef2f2',
+                    borderRadius: 14,
+                    borderWidth: 1,
+                    borderColor: '#fecaca',
+                    padding: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <Text style={{ fontSize: 15 }}>⚠️</Text>
+                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11.5, color: '#991b1b', flex: 1, lineHeight: 16 }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold' }}>Projeção Bloqueada:</Text>{' '}
+                    {simulationResults?.blockReason === 'INSUFFICIENT_BASELINE'
+                      ? 'Base histórica de Meta Ads zerada para extrapolação matemática.'
+                      : simulationResults?.blockReason === 'INVALID_INPUT'
+                        ? 'Parâmetro matemático fora do domínio válido (ex: churn ≥ 100%).'
+                        : 'Aguardando métricas obrigatórias da API para executar o motor.'}
+                  </Text>
+                </View>
+              );
+            }
+            if ((simulationResults.metaBudgetAt12 || 0) <= 0) {
+              return (
+                <View
+                  style={{
+                    backgroundColor: '#fef2f2',
+                    borderRadius: 14,
+                    borderWidth: 1,
+                    borderColor: '#fecaca',
+                    padding: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <Text style={{ fontSize: 15 }}>⚠️</Text>
+                  <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11.5, color: '#991b1b', flex: 1, lineHeight: 16 }}>
+                    <Text style={{ fontFamily: 'Inter_700Bold' }}>Motor Travado:</Text> A taxa de reinvestimento ({reinvestRate}%) não cobre a retenção no Google Ads. Aumente a taxa ou o aporte adicional.
+                  </Text>
+                </View>
+              );
+            }
+            return (
+              <View
+                style={{
+                  backgroundColor: '#f0fdf4',
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: '#ccfbf1',
+                  padding: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <Text style={{ fontSize: 15 }}>✅</Text>
+                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11.5, color: '#0f766e', flex: 1, lineHeight: 16 }}>
+                  <Text style={{ fontFamily: 'Inter_700Bold' }}>Motor Girando:</Text>{' '}
+                  {`Hoje há ${simulationResults.currentPaidAccessBase} profissionais com acesso pago (${simulationResults.operationalForwardBase} na base elegível de projeção). Em 12M projeta ${Math.floor(simulationResults.baseAt12)} assinantes (${reinvestRate}% reinvestimento${extraCash > 0 ? ` + ${formatBRL(extraCash)}/mês` : ''}).`}
+                </Text>
+              </View>
+            );
+          })()}
         </View>
 
         {/* ========================================================= */}
@@ -1639,10 +1715,14 @@ export default function AdminCmoMetricsScreen() {
           <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>CPL (Lead WPP)</Text>
-              {renderTrendBadge(googleCpl, prevGoogleCpl, true)}
+              {renderTrendBadge(googleCpl ?? NaN, prevGoogleCpl ?? NaN, true)}
             </View>
-            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1B4332' }}>{formatBRL(googleCpl)}</Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>Anterior: {formatBRL(prevGoogleCpl)}</Text>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1B4332' }}>
+              {googleCpl !== null ? formatBRL(googleCpl) : '—'}
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
+              Anterior: {prevGoogleCpl !== null ? formatBRL(prevGoogleCpl) : '—'}
+            </Text>
           </View>
 
           {/* Impressões Google */}
@@ -1720,16 +1800,16 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>
                 Esforço de Fechamento
               </Text>
-              {renderTrendBadge(globalEffort, prevGlobalEffort, true)}
+              {renderTrendBadge(globalEffort ?? NaN, prevGlobalEffort ?? NaN, true)}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#1e293b', marginTop: 4 }}>
-              {globalEffort > 0 ? `${globalEffort.toFixed(1)} cliques / paciente` : 'N/A'}
+              {globalEffort !== null ? `${globalEffort.toFixed(1)} cliques / paciente` : 'N/A'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
               Média global: quantos cliques no WhatsApp são necessários para gerar 1 paciente fechado.
             </Text>
             <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
-              {`90d anteriores: ${prevGlobalEffort > 0 ? `${prevGlobalEffort.toFixed(1)} cliques / paciente` : 'N/A'}`}
+              {`90d anteriores: ${prevGlobalEffort !== null ? `${prevGlobalEffort.toFixed(1)} cliques / paciente` : 'N/A'}`}
             </Text>
           </View>
 
@@ -1764,16 +1844,16 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>
                 Ticket Médio Top Performers
               </Text>
-              {renderTrendBadge(topTicket, prevTopTicket, false)}
+              {renderTrendBadge(topTicket ?? NaN, prevTopTicket ?? NaN, false)}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#10b981', marginTop: 4 }}>
-              {topTicket > 0 ? formatBRL(topTicket) : 'R$ 0,00'}
+              {topTicket !== null ? formatBRL(topTicket) : 'N/A'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
               Valor médio da sessão cobrado pelos top 20% psicólogos que mais fecham pacientes.
             </Text>
             <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
-              {`90d anteriores: ${prevTopTicket > 0 ? formatBRL(prevTopTicket) : 'N/A'}`}
+              {`90d anteriores: ${prevTopTicket !== null ? formatBRL(prevTopTicket) : 'N/A'}`}
             </Text>
           </View>
 
@@ -1783,20 +1863,16 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>
                 Tempo até o 1º Contato (TTFC)
               </Text>
-              {renderTrendBadge(
-                ttfcMedian !== null ? ttfcMedian : 0,
-                prevEfficiency?.ttfcData?.median ? Number(prevEfficiency.ttfcData.median) : 0,
-                true
-              )}
+              {renderTrendBadge(ttfcMedian ?? NaN, prevTtfcMedian ?? NaN, true)}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#1B4332', marginTop: 4 }}>
               {ttfcMedian !== null ? `${ttfcMedian.toFixed(1)} dias` : 'N/A'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
-              Média: {efficiency.ttfcData?.mean ? `${Number(efficiency.ttfcData.mean).toFixed(1)} dias` : 'N/A'} · amostra: {efficiency.ttfcData?.sample ?? 0} profissionais
+              Média: {ttfcMean !== null ? `${ttfcMean.toFixed(1)} dias` : 'N/A'} · amostra: {efficiency.ttfcData?.sample ?? 0} profissionais
             </Text>
             <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
-              {`90d anteriores: ${prevEfficiency?.ttfcData?.median ? `${Number(prevEfficiency.ttfcData.median).toFixed(1)} dias` : 'N/A'}`}
+              {`90d anteriores: ${prevTtfcMedian !== null ? `${prevTtfcMedian.toFixed(1)} dias` : 'N/A'}`}
             </Text>
           </View>
 
@@ -1806,20 +1882,16 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#64748b', textTransform: 'uppercase' }}>
                 TTV (1º Paciente Iniciado)
               </Text>
-              {renderTrendBadge(
-                ttvMedian !== null ? ttvMedian : 0,
-                prevEfficiency?.ttvData?.median ? Number(prevEfficiency.ttvData.median) : 0,
-                true
-              )}
+              {renderTrendBadge(ttvMedian ?? NaN, prevTtvMedian ?? NaN, true)}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#1e293b', marginTop: 4 }}>
               {ttvMedian !== null ? `${ttvMedian.toFixed(1)} dias` : 'N/A'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
-              Média: {efficiency.ttvData?.mean ? `${Number(efficiency.ttvData.mean).toFixed(1)} dias` : 'N/A'} · amostra: {efficiency.ttvData?.sample ?? 0} profissionais (PROXY)
+              Média: {ttvMean !== null ? `${ttvMean.toFixed(1)} dias` : 'N/A'} · amostra: {efficiency.ttvData?.sample ?? 0} profissionais (PROXY)
             </Text>
             <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
-              {`90d anteriores: ${prevEfficiency?.ttvData?.median ? `${Number(prevEfficiency.ttvData.median).toFixed(1)} dias` : 'N/A'}`}
+              {`90d anteriores: ${prevTtvMedian !== null ? `${prevTtvMedian.toFixed(1)} dias` : 'N/A'}`}
             </Text>
           </View>
         </View>
@@ -1892,7 +1964,9 @@ export default function AdminCmoMetricsScreen() {
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>
                 Posição Média
               </Text>
-              {prevGsc ? renderTrendBadge(Number(gsc?.position || 0), Number(prevGsc?.position || 0), true) : null}
+              {prevGsc && Number(prevGsc.position || 0) > 0 && Number(gsc?.position || 0) > 0
+                ? renderTrendBadge(Number(gsc.position), Number(prevGsc.position), true)
+                : null}
             </View>
             <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#1B4332' }}>
               {gsc ? `${Number(gsc.position || 0).toFixed(1).replace('.', ',')}º` : '0º'}
@@ -1943,12 +2017,13 @@ export default function AdminCmoMetricsScreen() {
           {dashboardData?.simulator?.churn?.type === 'ASSUMED'
             ? renderDbgCard(
                 'Churn Geral',
-                dashboardData.simulator.churn.value || 0.05,
-                0,
+                parseOptionalMetric(dashboardData.simulator.churn.value) ?? 0.05,
+                null,
                 'percent',
                 true,
                 'Hipótese conservadora',
-                true
+                true,
+                2
               )
             : renderDbgCard(
                 'Churn Geral',
