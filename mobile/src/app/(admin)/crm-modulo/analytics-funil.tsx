@@ -65,6 +65,18 @@ export default function AdminAnalyticsFunilScreen() {
     nome: { label: 'Preenchimento do Nome', question: 'Qual é o seu nome? (Etapa legada)', isLegacy: true },
     contato: { label: 'Preenchimento do Contato', question: 'Contato final (Etapa legada)', isLegacy: true },
     intro: { label: 'Página Inicial (Introdução)', question: 'Introdução do questionário (Etapa legada)', isLegacy: true },
+    motivo: { label: 'Motivo da Busca', question: 'O que te traz aqui? (Etapa legada)', isLegacy: true },
+    abordagem: { label: 'Estilo de Terapia', question: 'Abordagem clínica (Etapa legada)', isLegacy: true },
+    publico: { label: 'Perfil / Público Alvo', question: 'Perfil do paciente (Etapa legada)', isLegacy: true },
+    valor: { label: 'Faixa de Preço', question: 'Faixa de valor (Etapa legada)', isLegacy: true },
+    identidade: { label: 'Preferência de Profissional', question: 'Identidade (Etapa legada)', isLegacy: true },
+  };
+
+  const formatDateLocal = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   };
 
   const getStepInfo = (stepId: string) => {
@@ -77,11 +89,10 @@ export default function AdminAnalyticsFunilScreen() {
   const fetchData = async () => {
     try {
       const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - periodDays);
+      const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - Math.max(0, periodDays - 1));
 
-      const dStart = start.toISOString().split('T')[0];
-      const dEnd = end.toISOString().split('T')[0];
+      const dStart = formatDateLocal(start);
+      const dEnd = formatDateLocal(end);
 
       const [funnelRes, wppRes, rankingRes, v6Res] = await Promise.all([
         api.get(`/api/admin/analytics/funnel?startDate=${dStart}&endDate=${dEnd}`),
@@ -138,11 +149,10 @@ export default function AdminAnalyticsFunilScreen() {
     setIsAuditoriaLoading(true);
     try {
       const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - periodDays);
+      const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - Math.max(0, periodDays - 1));
 
-      const dStart = start.toISOString().split('T')[0];
-      const dEnd = end.toISOString().split('T')[0];
+      const dStart = formatDateLocal(start);
+      const dEnd = formatDateLocal(end);
 
       const res = await api.get(`/api/admin/leads-recentes?startDate=${dStart}&endDate=${dEnd}`);
       if (res.data) {
@@ -165,8 +175,13 @@ export default function AdminAnalyticsFunilScreen() {
     return Number(val).toLocaleString('pt-BR');
   };
 
-  // Trend Badge Helper
-  const renderTrendBadge = (curr: number | null | undefined, prev: number | null | undefined, inverseGood: boolean = false) => {
+  // Trend Badge Helper (suporta modo normal, invertido, 'neutral' e pontos percentuais p.p.)
+  const renderTrendBadge = (
+    curr: number | null | undefined,
+    prev: number | null | undefined,
+    inverseGood: boolean | 'neutral' = false,
+    isRate: boolean = false
+  ) => {
     if (prev === null || prev === undefined || curr === null || curr === undefined || isNaN(prev) || isNaN(curr)) {
       return (
         <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
@@ -174,8 +189,33 @@ export default function AdminAnalyticsFunilScreen() {
         </View>
       );
     }
+
+    const isNeutral = inverseGood === 'neutral';
+
+    if (isRate) {
+      const diffPp = curr - prev;
+      if (Math.abs(diffPp) < 0.05) {
+        return (
+          <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
+            <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '700' }}>0.0 p.p.</Text>
+          </View>
+        );
+      }
+      const isUp = diffPp > 0;
+      const isGood = inverseGood === true ? !isUp : isUp;
+      const color = isNeutral ? (isUp ? '#2563eb' : '#64748b') : (isGood ? '#10b981' : '#ef4444');
+      const arrow = isUp ? '↑' : '↓';
+      return (
+        <View style={{ backgroundColor: color + '1a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
+          <Text style={{ color, fontSize: 10, fontWeight: '700' }}>
+            {arrow} {Math.abs(diffPp).toFixed(1)} p.p.
+          </Text>
+        </View>
+      );
+    }
+
     if (prev === 0 && curr > 0) {
-      const color = inverseGood ? '#ef4444' : '#10b981';
+      const color = isNeutral ? '#2563eb' : (inverseGood === true ? '#ef4444' : '#10b981');
       return (
         <View style={{ backgroundColor: color + '1a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
           <Text style={{ color, fontSize: 10, fontWeight: '700' }}>Novo</Text>
@@ -200,8 +240,8 @@ export default function AdminAnalyticsFunilScreen() {
     }
 
     const isUp = pct > 0;
-    const isGood = inverseGood ? !isUp : isUp;
-    const color = isGood ? '#10b981' : '#ef4444';
+    const isGood = inverseGood === true ? !isUp : isUp;
+    const color = isNeutral ? (isUp ? '#2563eb' : '#64748b') : (isGood ? '#10b981' : '#ef4444');
     const arrow = isUp ? '↑' : '↓';
 
     return (
@@ -437,20 +477,28 @@ export default function AdminAnalyticsFunilScreen() {
   const prevTaxaFechamento = (hasPrevWpp && (prevContatosRealizados || 0) > 0) ? ((prevFechados! / prevContatosRealizados!) * 100).toFixed(1) : null;
   const prevTaxaNaoFechamento = (hasPrevWpp && (prevContatosRealizados || 0) > 0) ? ((prevPerdidos! / prevContatosRealizados!) * 100).toFixed(1) : null;
 
-  // Origens de Tráfego Agrupadas
+  // Origens de Tráfego Agrupadas (mapeamento estrito espelhando a Web)
   const canaisOrigem = (() => {
-    const counts: Record<string, number> = { 'Google Ads': 0, 'Meta Ads': 0, 'Orgânico/Direto': 0, 'Outros': 0 };
+    const counts: Record<string, number> = { 'Google Ads': 0, 'Meta/Insta Ads': 0, 'Orgânico/Direto': 0, 'Outros': 0 };
+    const prevCounts: Record<string, number> = { 'Google Ads': 0, 'Meta/Insta Ads': 0, 'Orgânico/Direto': 0, 'Outros': 0 };
+    const classifySource = (raw: string) => {
+      const src = (raw || '').toLowerCase();
+      if (src === 'google' || src === 'google_ads' || src === 'gads' || src === 'google ads') return 'Google Ads';
+      if (src === 'fb' || src === 'facebook' || src === 'ig' || src === 'instagram' || src === 'meta' || src === 'fb_ads' || src === 'meta_ads') return 'Meta/Insta Ads';
+      if (src === 'direto' || src === 'organico' || src === 'organic' || src === '') return 'Orgânico/Direto';
+      return 'Outros';
+    };
     let total = 0;
     (funnelData?.origens || []).forEach((o: any) => {
-      const src = (o.source || '').toLowerCase();
       const c = Number(o.count || 0);
       total += c;
-      if (src.includes('google') || src.includes('gads')) counts['Google Ads'] += c;
-      else if (src.includes('fb') || src.includes('meta') || src.includes('instagram') || src.includes('ig')) counts['Meta Ads'] += c;
-      else if (src === 'direto' || src === 'organico' || src === 'organic' || src === '') counts['Orgânico/Direto'] += c;
-      else counts['Outros'] += c;
+      counts[classifySource(o.source)] += c;
     });
-    return { counts, total };
+    const hasPrevOrigens = Array.isArray(funnelData?.prevOrigens);
+    (funnelData?.prevOrigens || []).forEach((o: any) => {
+      prevCounts[classifySource(o.source)] += Number(o.count || 0);
+    });
+    return { counts, prevCounts, hasPrevOrigens, total };
   })();
 
   return (
@@ -769,14 +817,16 @@ export default function AdminAnalyticsFunilScreen() {
                   {renderTrendBadge(whatsappUnique, prevWhatsappUnique, false)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#16a34a' }}>{formatNumber(whatsappUnique)}</Text>
-                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 9.5, color: '#16a34a', marginTop: 2 }}>{whatsappClicks} cliques distribuídos</Text>
+                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 9.5, color: '#16a34a', marginTop: 2 }}>
+                  {taxaGlobal}% do tráfego (Meta: 3%) · {whatsappClicks} cliques
+                </Text>
               </View>
 
               {/* Desistência */}
               <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Desistência</Text>
-                  {renderTrendBadge(Number(taxaDesistencia), Number(prevTaxaDesistencia), true)}
+                  {renderTrendBadge(Number(taxaDesistencia), prevTaxaDesistencia !== null ? Number(prevTaxaDesistencia) : null, true, true)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: Number(taxaDesistencia) > 30 ? '#ef4444' : '#10b981' }}>
                   {taxaDesistencia}%
@@ -798,7 +848,7 @@ export default function AdminAnalyticsFunilScreen() {
               <View style={{ width: '100%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', borderTopWidth: 3, borderTopColor: '#6366f1', padding: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Descartados (Pros)</Text>
-                  {renderTrendBadge(totalDesc.total, totalDesc.prevTotal, false)}
+                  {renderTrendBadge(totalDesc.total, totalDesc.prevTotal, 'neutral')}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#6366f1' }}>{formatNumber(totalDesc.total)}</Text>
                 <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#64748b', marginTop: 2 }}>
@@ -889,7 +939,10 @@ export default function AdminAnalyticsFunilScreen() {
                   { discKey: 'profileViews', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Visualizações de Perfis', val: profileViews, prevVal: prevProfileViews, parent: completaram, desc: 'Acessos detalhados' },
                   { discKey: 'whatsapp', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp', val: whatsappUnique, prevVal: prevWhatsappUnique, parent: profileViews, desc: `${whatsappClicks} cliques totais` },
                 ].map((step, idx) => {
-                  const rate = step.parent > 0 ? ((step.val / step.parent) * 100).toFixed(1) : '0';
+                  const rateNum = step.parent > 0 ? Math.min(100, (step.val / step.parent) * 100) : 0;
+                  const rate = rateNum.toFixed(1);
+                  const rateBg = rateNum >= 70 ? '#dcfce7' : (rateNum >= 40 ? '#fef3c7' : '#fee2e2');
+                  const rateColor = rateNum >= 70 ? '#15803d' : (rateNum >= 40 ? '#b45309' : '#b91c1c');
                   const maxVal = visitas > 0 ? visitas : 1;
                   const fillPct = Math.min(100, Math.max(5, (step.val / maxVal) * 100));
                   const stDisc = stageDiscarded(step.discKey);
@@ -939,8 +992,8 @@ export default function AdminAnalyticsFunilScreen() {
                             {renderTrendBadge(step.val, step.prevVal, false)}
                           </View>
                           {idx > 0 && (
-                            <View style={{ backgroundColor: Number(rate) >= 50 ? '#dcfce7' : '#fee2e2', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 999, marginTop: 2 }}>
-                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: Number(rate) >= 50 ? '#15803d' : '#b91c1c' }}>
+                            <View style={{ backgroundColor: rateBg, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 999, marginTop: 2 }}>
+                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: rateColor }}>
                                 {rate}% da etapa anterior
                               </Text>
                             </View>
@@ -1024,12 +1077,16 @@ export default function AdminAnalyticsFunilScreen() {
                 marginBottom: 16,
               }}
             >
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 16, color: '#1e293b' }}>
                   Onde eles desistem? 🚪
                 </Text>
-                <View style={{ backgroundColor: '#fee2e2', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
-                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#dc2626' }}>Atenção</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 }}>
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#64748b' }}>Taxa de Desistência:</Text>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: Number(taxaDesistencia) <= 30 ? '#10b981' : '#dc2626' }}>
+                    {iniciaram > 0 ? `${taxaDesistencia}%` : '--%'}
+                  </Text>
+                  {iniciaram > 0 && renderTrendBadge(Number(taxaDesistencia), prevTaxaDesistencia !== null ? Number(prevTaxaDesistencia) : null, true, true)}
                 </View>
               </View>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11.5, color: '#64748b', marginBottom: 12 }}>
@@ -1038,62 +1095,87 @@ export default function AdminAnalyticsFunilScreen() {
 
               {funnelData?.abandonos && funnelData.abandonos.length > 0 ? (
                 <View style={{ gap: 10 }}>
-                  {funnelData.abandonos.map((item: any) => {
-                    const count = Number(item.count || 0);
+                  {(() => {
                     const totalPerdas = funnelData.abandonos.reduce((acc: number, a: any) => acc + Number(a.count || 0), 0);
-                    const pct = totalPerdas > 0 ? ((count / totalPerdas) * 100).toFixed(1) : '0';
-                    const s = getStepInfo(item.step);
-
-                    let barColor = '#10b981';
-                    let badgeBg = '#dcfce7';
-                    let badgeText = '#15803d';
-                    let badgeLabel = '🟢 Normal';
-
-                    if (Number(pct) >= 20) {
-                      barColor = '#ef4444';
-                      badgeBg = '#fee2e2';
-                      badgeText = '#b91c1c';
-                      badgeLabel = '🔴 Gargalo Alto';
-                    } else if (Number(pct) >= 12) {
-                      barColor = '#f59e0b';
-                      badgeBg = '#fef3c7';
-                      badgeText = '#b45309';
-                      badgeLabel = '🟡 Atenção';
+                    const maxAbandono = Math.max(1, ...funnelData.abandonos.map((a: any) => Number(a.count || 0)));
+                    const prevAbandonosMap: Record<string, number> = {};
+                    if (Array.isArray(funnelData?.prevAbandonos)) {
+                      funnelData.prevAbandonos.forEach((p: any) => {
+                        prevAbandonosMap[p.step] = Number(p.count || 0);
+                      });
                     }
+                    const hasPrevAbandonos = Array.isArray(funnelData?.prevAbandonos);
 
-                    return (
-                      <View
-                        key={item.step}
-                        style={{
-                          backgroundColor: '#f8fafc',
-                          borderRadius: 12,
-                          borderWidth: 1,
-                          borderColor: '#e2e8f0',
-                          padding: 10,
-                        }}
-                      >
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                          <View style={{ flex: 1, paddingRight: 6 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#1e293b' }}>{s.label}</Text>
-                              <View style={{ backgroundColor: badgeBg, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 999 }}>
-                                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9, color: badgeText }}>{badgeLabel}</Text>
+                    return funnelData.abandonos.map((item: any) => {
+                      const count = Number(item.count || 0);
+                      const pct = totalPerdas > 0 ? ((count / totalPerdas) * 100).toFixed(1) : '0';
+                      const barWidthPct = Math.min(100, (count / maxAbandono) * 100);
+                      const s = getStepInfo(item.step);
+                      const prevCount = hasPrevAbandonos
+                        ? (prevAbandonosMap[item.step] !== undefined ? prevAbandonosMap[item.step] : null)
+                        : null;
+
+                      let barColor = '#10b981';
+                      let badgeBg = '#dcfce7';
+                      let badgeText = '#15803d';
+                      let badgeLabel = '🟢 Normal';
+
+                      if (s.isLegacy) {
+                        barColor = '#94a3b8';
+                        badgeBg = '#f1f5f9';
+                        badgeText = '#64748b';
+                        badgeLabel = '⚪ Etapa Antiga (Resolvido)';
+                      } else if (Number(pct) >= 20) {
+                        barColor = '#ef4444';
+                        badgeBg = '#fee2e2';
+                        badgeText = '#b91c1c';
+                        badgeLabel = '🔴 Gargalo Alto';
+                      } else if (Number(pct) >= 12) {
+                        barColor = '#f59e0b';
+                        badgeBg = '#fef3c7';
+                        badgeText = '#b45309';
+                        badgeLabel = '🟡 Atenção';
+                      }
+
+                      return (
+                        <View
+                          key={item.step}
+                          style={{
+                            backgroundColor: '#f8fafc',
+                            borderRadius: 12,
+                            borderWidth: 1,
+                            borderColor: '#e2e8f0',
+                            padding: 10,
+                          }}
+                        >
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4, gap: 8 }}>
+                            <View style={{ flex: 1, paddingRight: 6 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#1e293b' }}>{s.label}</Text>
+                                <View style={{ backgroundColor: badgeBg, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 999 }}>
+                                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9, color: badgeText }}>{badgeLabel}</Text>
+                                </View>
+                              </View>
+                              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10.5, color: '#64748b', fontStyle: 'italic', marginTop: 2 }}>
+                                "{s.question}"
+                              </Text>
+                            </View>
+                            <View style={{ alignItems: 'flex-end' }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#1e293b' }}>
+                                  {count} perdas ({pct}%)
+                                </Text>
+                                {prevCount !== null && renderTrendBadge(count, prevCount, true)}
                               </View>
                             </View>
-                            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10.5, color: '#64748b', fontStyle: 'italic', marginTop: 2 }}>
-                              "{s.question}"
-                            </Text>
                           </View>
-                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#1e293b' }}>
-                            {count} perdas ({pct}%)
-                          </Text>
+                          <View style={{ height: 6, backgroundColor: '#e2e8f0', borderRadius: 999, overflow: 'hidden', marginTop: 4 }}>
+                            <View style={{ width: `${barWidthPct}%`, height: '100%', backgroundColor: barColor, borderRadius: 999 }} />
+                          </View>
                         </View>
-                        <View style={{ height: 6, backgroundColor: '#e2e8f0', borderRadius: 999, overflow: 'hidden', marginTop: 4 }}>
-                          <View style={{ width: `${Math.min(100, Number(pct) * 2.5)}%`, height: '100%', backgroundColor: barColor, borderRadius: 999 }} />
-                        </View>
-                      </View>
-                    );
-                  })}
+                      );
+                    });
+                  })()}
                 </View>
               ) : (
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#94a3b8', textAlign: 'center', paddingVertical: 10 }}>
@@ -1120,32 +1202,43 @@ export default function AdminAnalyticsFunilScreen() {
                 Distribuição de visitantes por fonte de tráfego.
               </Text>
 
-              <View style={{ gap: 8 }}>
-                {Object.entries(canaisOrigem.counts).map(([nome, count]) => {
-                  const pct = canaisOrigem.total > 0 ? ((count / canaisOrigem.total) * 100).toFixed(1) : '0';
-                  return (
-                    <View
-                      key={nome}
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        backgroundColor: '#f8fafc',
-                        padding: 10,
-                        borderRadius: 12,
-                        borderWidth: 1,
-                        borderColor: '#e2e8f0',
-                      }}
-                    >
-                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#334155' }}>{nome}</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                        <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 14, color: '#1B4332' }}>{count}</Text>
-                        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#64748b' }}>({pct}%)</Text>
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
+              {canaisOrigem.total > 0 || (funnelData?.prevOrigens && funnelData.prevOrigens.length > 0) ? (
+                <View style={{ gap: 8 }}>
+                  {Object.entries(canaisOrigem.counts)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([nome, count]) => {
+                      const prevCount = canaisOrigem.hasPrevOrigens ? (canaisOrigem.prevCounts[nome] ?? 0) : null;
+                      if (count === 0 && (!prevCount || prevCount === 0)) return null;
+                      const pct = canaisOrigem.total > 0 ? ((count / canaisOrigem.total) * 100).toFixed(1) : '0';
+                      return (
+                        <View
+                          key={nome}
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            backgroundColor: '#f8fafc',
+                            padding: 10,
+                            borderRadius: 12,
+                            borderWidth: 1,
+                            borderColor: '#e2e8f0',
+                          }}
+                        >
+                          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 12, color: '#334155' }}>{nome}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 14, color: '#1B4332' }}>{count}</Text>
+                            {prevCount !== null && renderTrendBadge(count, prevCount, false)}
+                            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#64748b' }}>({pct}%)</Text>
+                          </View>
+                        </View>
+                      );
+                    })}
+                </View>
+              ) : (
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#94a3b8', textAlign: 'center', paddingVertical: 10 }}>
+                  Sem rastreamento UTM mapeado.
+                </Text>
+              )}
             </View>
           </View>
         )}

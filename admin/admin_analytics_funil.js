@@ -8,47 +8,50 @@ window.initializePage = function() {
     let currentRankingSort = { column: 'posicao', direction: 'asc' }; // Estado da ordenação
 
     // Renderiza a setinha e porcentagem de tendência em relação à janela anterior equivalente
+    let comparisonPeriodHint = '';
     const renderTrend = (current, previous, inverted = false, opts = {}) => {
         const cur = parseFloat(current) || 0;
         const prev = parseFloat(previous);
         if (isNaN(prev)) return '';
 
         const isRate = !!opts.isRate;
+        const isNeutral = !!opts.neutral;
+        const prevPrefix = comparisonPeriodHint ? `Anterior (${comparisonPeriodHint}):` : 'Anterior:';
         const formatPrevVal = isRate ? `${prev.toFixed(1)}%` : prev.toLocaleString('pt-BR');
 
         if (isRate) {
             const diffPp = cur - prev;
             if (Math.abs(diffPp) < 0.05) {
-                return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="Anterior: ${formatPrevVal} (estável em pontos percentuais)">▬ 0.0 p.p.</span>`;
+                return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="${prevPrefix} ${formatPrevVal} (estável em pontos percentuais)">▬ 0.0 p.p.</span>`;
             }
             let isGood = diffPp > 0;
             if (inverted) isGood = !isGood;
-            const color = isGood ? '#10b981' : '#ef4444';
+            const color = isNeutral ? (diffPp > 0 ? '#2563eb' : '#64748b') : (isGood ? '#10b981' : '#ef4444');
             const icon = diffPp > 0 ? '▲' : '▼';
             const sign = diffPp > 0 ? '+' : '';
-            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="Anterior: ${formatPrevVal} (${diffPp > 0 ? '+' : ''}${diffPp.toFixed(1)} p.p.)">${icon} ${sign}${diffPp.toFixed(1)} p.p.</span>`;
+            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="${prevPrefix} ${formatPrevVal} (${diffPp > 0 ? '+' : ''}${diffPp.toFixed(1)} p.p.)">${icon} ${sign}${diffPp.toFixed(1)} p.p.</span>`;
         }
 
         if (prev === 0 && cur === 0) {
-            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="Anterior: 0 (sem alteração)">▬ 0.0%</span>`;
+            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="${prevPrefix} 0 (sem alteração)">▬ 0.0%</span>`;
         }
         if (prev === 0 && cur > 0) {
-            const color = inverted ? '#ef4444' : '#10b981';
-            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="Anterior: 0 (novo no período)">▲ Novo</span>`;
+            const color = isNeutral ? '#2563eb' : (inverted ? '#ef4444' : '#10b981');
+            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="${prevPrefix} 0 (novo no período)">▲ Novo</span>`;
         }
 
         const delta = ((cur - prev) / prev) * 100;
         if (Math.abs(delta) < 0.05) {
-            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="Anterior: ${formatPrevVal} (estável)">▬ 0.0%</span>`;
+            return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: #94a3b8; vertical-align: middle; white-space: nowrap;" title="${prevPrefix} ${formatPrevVal} (estável)">▬ 0.0%</span>`;
         }
 
         let isGood = delta > 0;
         if (inverted) isGood = !isGood;
-        const color = isGood ? '#10b981' : '#ef4444';
+        const color = isNeutral ? (delta > 0 ? '#2563eb' : '#64748b') : (isGood ? '#10b981' : '#ef4444');
         const icon = delta > 0 ? '▲' : '▼';
         const sign = delta > 0 ? '+' : '';
         const lowSampleNote = prev > 0 && prev < 5 ? ' · base anterior pequena' : '';
-        return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="Anterior: ${formatPrevVal} (${delta > 0 ? '+' : ''}${delta.toFixed(1)}%${lowSampleNote})">${icon} ${sign}${delta.toFixed(1)}%</span>`;
+        return `<span style="font-size: 0.78rem; font-weight: 700; margin-left: 6px; color: ${color}; vertical-align: middle; white-space: nowrap;" title="${prevPrefix} ${formatPrevVal} (${delta > 0 ? '+' : ''}${delta.toFixed(1)}%${lowSampleNote})">${icon} ${sign}${delta.toFixed(1)}%</span>`;
     };
 
     const formatDateLocal = (date) => {
@@ -242,13 +245,17 @@ window.initializePage = function() {
             const data = await res.json();
 
             const compLabelEl = document.getElementById('funil-comparison-label');
-            if (compLabelEl && data.comparisonPeriod) {
+            comparisonPeriodHint = '';
+            if (data.comparisonPeriod) {
                 const fmtBr = (iso) => {
                     const dt = new Date(iso);
                     return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' });
                 };
                 const dCount = data.comparisonPeriod.days || '';
-                compLabelEl.textContent = `Comparando ${fmtBr(data.comparisonPeriod.start)}–${fmtBr(data.comparisonPeriod.end)} (${dCount}d) vs ${fmtBr(data.comparisonPeriod.prevStart)}–${fmtBr(data.comparisonPeriod.prevEnd)} (${dCount}d)`;
+                comparisonPeriodHint = `${fmtBr(data.comparisonPeriod.prevStart)}–${fmtBr(data.comparisonPeriod.prevEnd)}${dCount ? ` · ${dCount}d` : ''}`;
+                if (compLabelEl) {
+                    compLabelEl.textContent = `Comparando ${fmtBr(data.comparisonPeriod.start)}–${fmtBr(data.comparisonPeriod.end)} (${dCount}d) vs ${fmtBr(data.comparisonPeriod.prevStart)}–${fmtBr(data.comparisonPeriod.prevEnd)} (${dCount}d)`;
+                }
             }
             
             let dataWpp = [];
@@ -365,7 +372,7 @@ window.initializePage = function() {
 
             const totalDesc = stageDiscarded('totalEventos');
             const kpiPsiQ = document.getElementById('kpi-psicologos-questionarios');
-            if (kpiPsiQ) kpiPsiQ.innerHTML = `${totalDesc.total.toLocaleString()}${renderTrend(totalDesc.total, totalDesc.prevTotal, false)}`;
+            if (kpiPsiQ) kpiPsiQ.innerHTML = `${totalDesc.total.toLocaleString()}${renderTrend(totalDesc.total, totalDesc.prevTotal, false, { neutral: true })}`;
             const kpiPsiDetalhe = document.getElementById('kpi-psicologos-detalhe');
             if (kpiPsiDetalhe) {
                 kpiPsiDetalhe.textContent = `${totalDesc.logados.toLocaleString()} logados | ${totalDesc.naoLogados.toLocaleString()} não logados`;
@@ -676,9 +683,9 @@ window.initializePage = function() {
                 // Bottom Funnel Insight (Fim Questionário -> Clique WhatsApp)
                 const tWhats = data.completaram > 0 ? (data.whatsappUnique / data.completaram) : 0;
                 if (tWhats < 0.35) {
-                    insightsHtml += `<div class="insight-item"><div class="insight-icon">👀</div><div class="insight-text"><h5>Falta de Conexão Final (${(tWhats * 100).toFixed(1)}%)</h5><p>Sua meta é 35% a 40%. Os pacientes vêm os matches, mas não clicam. Soluções possíveis: forçar os psicólogos a melhorarem fotos/bios, ou refinar a IA para explicar melhor o porquê daquele match.</p></div></div>`;
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">👀</div><div class="insight-text"><h5>Falta de Conexão Final (${(tWhats * 100).toFixed(1)}% dos resultados)</h5><p>Sua meta é 35% a 40%. Os pacientes vêm os matches, mas não clicam. Soluções possíveis: forçar os psicólogos a melhorarem fotos/bios, ou refinar a IA para explicar melhor o porquê daquele match.</p></div></div>`;
                 } else if (tWhats >= 0.35) {
-                    insightsHtml += `<div class="insight-item"><div class="insight-icon">💸</div><div class="insight-text"><h5>Excelente Conversão Final! (${(tWhats * 100).toFixed(1)}%)</h5><p>Você atingiu a meta de conversão final! O algoritmo de recomendação está fazendo um match perfeito com o público.</p></div></div>`;
+                    insightsHtml += `<div class="insight-item"><div class="insight-icon">💸</div><div class="insight-text"><h5>Excelente Conversão Final! (${(tWhats * 100).toFixed(1)}% dos resultados)</h5><p>Você atingiu a meta de conversão final! O algoritmo de recomendação está fazendo um match perfeito com o público.</p></div></div>`;
                 }
 
                 insightsList.innerHTML = insightsHtml || '<p>Sem insights críticos no momento. Tudo operando dentro do esperado.</p>';
