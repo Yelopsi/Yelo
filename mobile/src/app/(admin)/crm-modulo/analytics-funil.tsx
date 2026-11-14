@@ -41,6 +41,7 @@ export default function AdminAnalyticsFunilScreen() {
   const [wppData, setWppData] = useState<any[]>([]);
   const [prevWppData, setPrevWppData] = useState<any[]>([]);
   const [wppDays, setWppDays] = useState<number>(30);
+  const [wppDaysExact, setWppDaysExact] = useState<number | null>(null);
   const [rankingData, setRankingData] = useState<any[]>([]);
   const [auditoriaData, setAuditoriaData] = useState<any[]>([]);
   const [isAuditoriaLoading, setIsAuditoriaLoading] = useState(false);
@@ -119,6 +120,7 @@ export default function AdminAnalyticsFunilScreen() {
           setWppData(raw.feedbacks || []);
           setPrevWppData(raw.prevFeedbacks || []);
           setWppDays(raw.days || periodDays);
+          setWppDaysExact(raw.daysExact ? Number(raw.daysExact) : null);
         } else if (Array.isArray(raw)) {
           setWppData(raw);
         }
@@ -426,12 +428,18 @@ export default function AdminAnalyticsFunilScreen() {
 
   // --- DADOS ATUAIS (CONVERSÕES PLG) ---
   const totalWppClicks = wppData.length;
-  const wppMediaDia = wppDays > 0 ? (totalWppClicks / wppDays).toFixed(1) : '0.0';
+  const effectiveWppDays = wppDaysExact && wppDaysExact > 0 ? wppDaysExact : wppDays;
+  const wppMediaDia = effectiveWppDays > 0 ? (totalWppClicks / effectiveWppDays).toFixed(1) : '0.0';
 
   const feedbacksRespondidos = wppData.filter((f) => f.feedbackGiven);
   const totalRespondidos = feedbacksRespondidos.length;
   const taxaRespostaPsi = totalWppClicks > 0 ? ((totalRespondidos / totalWppClicks) * 100).toFixed(1) : '0.0';
   const taxaNaoResposta = totalWppClicks > 0 ? (100 - parseFloat(taxaRespostaPsi)).toFixed(1) : '0.0';
+
+  const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
+  const matureWpp = wppData.filter((f) => f.createdAt && new Date(f.createdAt).getTime() <= cutoff48h);
+  const pendingRecent48h = wppData.filter((f) => !f.feedbackGiven && f.createdAt && new Date(f.createdAt).getTime() > cutoff48h).length;
+  const matureRespPct = matureWpp.length > 0 ? ((matureWpp.filter((f) => f.feedbackGiven).length / matureWpp.length) * 100).toFixed(1) : null;
 
   const contatosRealizados = feedbacksRespondidos.filter((f) => f.contactReceived === true).length;
   const fantasmas = feedbacksRespondidos.filter((f) => f.contactReceived === false).length;
@@ -461,7 +469,7 @@ export default function AdminAnalyticsFunilScreen() {
   // --- DADOS ANTERIORES (COMPARAÇÃO PLG) ---
   const hasPrevWpp = Array.isArray(prevWppData);
   const prevTotalWppClicks = hasPrevWpp ? prevWppData.length : null;
-  const prevWppMediaDia = (hasPrevWpp && wppDays > 0) ? (prevWppData.length / wppDays).toFixed(1) : null;
+  const prevWppMediaDia = (hasPrevWpp && effectiveWppDays > 0) ? (prevWppData.length / effectiveWppDays).toFixed(1) : null;
 
   const prevFeedbacksRespondidos = hasPrevWpp ? prevWppData.filter((f) => f.feedbackGiven) : [];
   const prevTotalRespondidos = prevFeedbacksRespondidos.length;
@@ -480,15 +488,15 @@ export default function AdminAnalyticsFunilScreen() {
     : null;
   const prevPerdidos = hasPrevWpp
     ? prevFeedbacksRespondidos.filter(
-        (f) =>
-          f.contactReceived &&
-          (f.dealClosed === 'ghosted' ||
-            f.dealClosed === 'not_started' ||
-            f.dealClosed === 'not_started_price' ||
-            f.dealClosed === 'not_started_schedule' ||
-            f.dealClosed === 'not_started_other' ||
-            f.dealClosed === 'no')
-      ).length
+      (f) =>
+        f.contactReceived &&
+        (f.dealClosed === 'ghosted' ||
+          f.dealClosed === 'not_started' ||
+          f.dealClosed === 'not_started_price' ||
+          f.dealClosed === 'not_started_schedule' ||
+          f.dealClosed === 'not_started_other' ||
+          f.dealClosed === 'no')
+    ).length
     : null;
 
   const prevTaxaTrocaMensagens = (hasPrevWpp && prevTotalValidados > 0) ? ((prevContatosRealizados! / prevTotalValidados) * 100).toFixed(1) : null;
@@ -800,12 +808,12 @@ export default function AdminAnalyticsFunilScreen() {
                   {activeTab === 'funil'
                     ? '🎯 Funil End-to-End'
                     : activeTab === 'conversoes'
-                    ? '🤝 Conversões (PLG)'
-                    : activeTab === 'ranking'
-                    ? '🏆 Ranking de Psis'
-                    : activeTab === 'auditoria'
-                    ? '🔎 Auditoria (Período)'
-                    : '⚖️ Monitor de Justiça V6'}
+                      ? '🤝 Conversões (PLG)'
+                      : activeTab === 'ranking'
+                        ? '🏆 Ranking de Psis'
+                        : activeTab === 'auditoria'
+                          ? '🔎 Auditoria (Período)'
+                          : '⚖️ Monitor de Justiça V6'}
                 </Text>
               </View>
               <Feather name="chevron-down" size={16} color="#1B4332" />
@@ -1319,7 +1327,7 @@ export default function AdminAnalyticsFunilScreen() {
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Média Cliques / Dia
                   </Text>
-                  {renderTrendBadge(Number(wppMediaDia), Number(prevWppMediaDia), false)}
+                  {renderTrendBadge(Number(wppMediaDia), prevWppMediaDia !== null ? Number(prevWppMediaDia) : null, false)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#0284c7', marginTop: 2 }}>{wppMediaDia}</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Em {wppDays} dias analisados</Text>
@@ -1358,7 +1366,10 @@ export default function AdminAnalyticsFunilScreen() {
                   {renderTrendBadge(Number(taxaRespostaPsi), prevTaxaRespostaPsi !== null ? Number(prevTaxaRespostaPsi) : null, false, true)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#f59e0b', marginTop: 2 }}>{taxaRespostaPsi}%</Text>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>{totalRespondidos} de {totalWppClicks} feedbacks</Text>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
+                  {totalRespondidos} de {totalWppClicks} feedbacks
+                  {pendingRecent48h > 0 && matureRespPct !== null ? ` · >48h: ${matureRespPct}%` : ''}
+                </Text>
               </View>
 
               {/* 6. Taxa de Não Resposta */}
@@ -1370,7 +1381,9 @@ export default function AdminAnalyticsFunilScreen() {
                   {renderTrendBadge(Number(taxaNaoResposta), prevTaxaNaoResposta !== null ? Number(prevTaxaNaoResposta) : null, true, true)}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#64748b', marginTop: 2 }}>{taxaNaoResposta}%</Text>
-                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Ignoraram ou fecharam</Text>
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>
+                  {pendingRecent48h > 0 ? `${pendingRecent48h} ainda <48h em aberto` : 'Ignoraram ou fecharam'}
+                </Text>
               </View>
             </View>
 
@@ -1391,7 +1404,7 @@ export default function AdminAnalyticsFunilScreen() {
                   <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
                     Em Negociação
                   </Text>
-                  {renderTrendBadge(emNegociacao, prevEmNegociacao, false)}
+                  {renderTrendBadge(emNegociacao, prevEmNegociacao, 'neutral')}
                 </View>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#f59e0b', marginTop: 2 }}>{formatNumber(emNegociacao)}</Text>
                 <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 9.5, color: '#64748b', marginTop: 2 }}>Em conversa ativa</Text>
@@ -1548,14 +1561,14 @@ export default function AdminAnalyticsFunilScreen() {
                         {wppStatusFilter === 'todos'
                           ? 'Todos'
                           : wppStatusFilter === 'cobrar_agora'
-                          ? 'Cobrar Agora'
-                          : wppStatusFilter === 'pendente'
-                          ? 'Pendente'
-                          : wppStatusFilter === 'respondido'
-                          ? 'Respondido'
-                          : wppStatusFilter === 'fechou'
-                          ? 'Fechou'
-                          : 'Não Recebeu'}
+                            ? 'Cobrar Agora'
+                            : wppStatusFilter === 'pendente'
+                              ? 'Pendente'
+                              : wppStatusFilter === 'respondido'
+                                ? 'Respondido'
+                                : wppStatusFilter === 'fechou'
+                                  ? 'Fechou'
+                                  : 'Não Recebeu'}
                       </Text>
                     </View>
                     <Feather name="chevron-down" size={14} color="#1B4332" />
