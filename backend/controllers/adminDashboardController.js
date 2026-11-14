@@ -95,9 +95,14 @@ exports.getDashboardStats = async (req, res) => {
             'Sol': 0
         };
         
-        const planPrices = { 
-            'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
-            'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
+        let sysSettings = {};
+        try { sysSettings = await db.SystemSetting.findOne() || {}; } catch (e) {}
+        const pEss = sysSettings.price_Essencial > 0 ? Number(sysSettings.price_Essencial) : 99.00;
+        const pCli = sysSettings.price_Clínico > 0 ? Number(sysSettings.price_Clínico) : 159.00;
+        const pRef = sysSettings.price_sol > 0 ? Number(sysSettings.price_sol) : 259.00;
+        const planPrices = {
+            'essential': pEss, 'clinical': pCli, 'reference': pRef,
+            'essencial': pEss, 'clínico': pCli, 'sol': pRef
         };
         let mrr = 0;
         let payingCount = 0;
@@ -279,9 +284,13 @@ exports.getDetailedReports = async (req, res) => {
 
         const demandQuery = `
             SELECT TO_CHAR("createdAt" AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') as data,
-            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as concluidos,
+            SUM(CASE WHEN status IN ('completed', 'matched') THEN 1 ELSE 0 END) as concluidos,
             SUM(CASE WHEN status = 'started' AND ("is_disqualified" IS NULL OR "is_disqualified" = false) THEN 1 ELSE 0 END) as desistencias
-            FROM "DemandSearches" WHERE "createdAt" BETWEEN :start AND :end GROUP BY data ORDER BY data ASC;
+            FROM "DemandSearches"
+            WHERE "deletedAt" IS NULL
+            AND COALESCE("searchParams"->>'respondent_type', 'patient') NOT IN ('psychologist', 'psychologist_logged', 'psychologist_unlogged', 'internal', 'admin', 'team')
+            AND "createdAt" BETWEEN :start AND :end
+            GROUP BY data ORDER BY data ASC;
         `;
 
         const plansQuery = `SELECT UPPER(plano) as plano, COUNT(*) as total FROM "Psychologists" WHERE status = 'active' AND plano IS NOT NULL AND "deletedAt" IS NULL GROUP BY UPPER(plano);`;
@@ -333,7 +342,7 @@ exports.getDetailedReports = async (req, res) => {
                 attributes: ['plano', 'is_exempt', 'subscriptionId', 'subscription_payments_count'] 
             }),
             db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } }, paranoid: false }),
-            db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
+            db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, NULLIF(NULLIF(TRIM("guestName"), ''), 'Visitante'), "id"::varchar)) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
             db.sequelize.query(`SELECT COUNT(*) as count FROM "SiteVisits" WHERE "createdAt" >= NOW() - INTERVAL '24 hours'`, { type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
             db.sequelize.query(`SELECT feature, COUNT(*) as count FROM "FeatureTrackingLogs" GROUP BY feature ORDER BY count DESC`).catch(() => [[
                 { feature: 'audio_reply', count: 88 }, { feature: 'auto_whatsapp', count: 82 }, { feature: 'calculator', count: 65 }, { feature: 'analytics', count: 45 }, { feature: 'external_links', count: 25 }
@@ -640,9 +649,14 @@ exports.getFinancials = async (req, res) => {
     try {
         const { Op } = require('sequelize'); // Ensure Op is available if not globally scoped
         const { startDate, endDate } = req.query; // capture query params
-        const planPrices = { 
-            'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
-            'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
+        let sysSettings = {};
+        try { sysSettings = await db.SystemSetting.findOne() || {}; } catch (e) {}
+        const pEss = sysSettings.price_Essencial > 0 ? Number(sysSettings.price_Essencial) : 99.00;
+        const pCli = sysSettings.price_Clínico > 0 ? Number(sysSettings.price_Clínico) : 159.00;
+        const pRef = sysSettings.price_sol > 0 ? Number(sysSettings.price_sol) : 259.00;
+        const planPrices = {
+            'essential': pEss, 'clinical': pCli, 'reference': pRef,
+            'essencial': pEss, 'clínico': pCli, 'sol': pRef
         };
 
         const allPaidCandidates = await db.Psychologist.findAll({
@@ -689,39 +703,61 @@ exports.getFinancials = async (req, res) => {
         };
 
         let mrr = 0;
+        let currentTotalActive = 0;
         let prevMrr = 0;
         let prevTotalActive = 0;
+        let currentInadimplentesCalc = 0;
+        let prevInadimplentesCalc = 0;
+
+        const wasDeactivatedBy = (p, targetDate, isActiveNow) => {
+            if (isActiveNow) return false;
+            const expObj = p.planExpiresAt ? new Date(p.planExpiresAt) : null;
+            const validExp = expObj && !isNaN(expObj.getTime()) && expObj.getFullYear() >= 2000 && expObj <= now ? expObj : null;
+            const deactDate = p.canceledAt ? new Date(p.canceledAt) : (validExp || (p.updatedAt ? new Date(p.updatedAt) : null));
+            if (!deactDate || deactDate > targetDate) return false;
+            if (p.reactivatedAt && new Date(p.reactivatedAt) <= targetDate && new Date(p.reactivatedAt) > deactDate) {
+                return false;
+            }
+            return true;
+        };
+
         allPaidCandidates.forEach(p => {
             const isExempt = !!p.is_exempt;
             const hasSubscription = !!p.subscriptionId || (p.subscription_payments_count && p.subscription_payments_count > 0);
+            const hasPaidHistory = hasSubscription || !!p.firstPaidAt;
             const planKey = resolvePlanKey(p.plano);
-            if (isExempt || !hasSubscription || !planKey || !planPrices[planKey]) return;
+            if (isExempt || !hasPaidHistory) return;
 
             const isActiveNow = p.deletedAt === null && p.status === 'active' && (!p.planExpiresAt || new Date(p.planExpiresAt) > now);
-            if (isActiveNow) {
-                mrr += planPrices[planKey];
+            const startedAt = p.firstPaidAt || p.subscribedAt || p.createdAt;
+
+            // Snapshots no fechamento do período atual (end)
+            if (p.deletedAt === null || new Date(p.deletedAt) > end) {
+                if (startedAt && new Date(startedAt) <= end) {
+                    const deactEnd = wasDeactivatedBy(p, end, isActiveNow);
+                    if (isActiveNow || !deactEnd) {
+                        if (hasSubscription && planKey && planPrices[planKey]) {
+                            mrr += planPrices[planKey];
+                            currentTotalActive++;
+                        }
+                    } else if (p.deletedAt === null) {
+                        currentInadimplentesCalc++;
+                    }
+                }
             }
 
-            // Base e MRR históricos no fechamento do período anterior (prevEnd)
-            const startedAt = p.firstPaidAt || p.subscribedAt || p.createdAt;
+            // Snapshots históricos no fechamento do período anterior (prevEnd)
             if (!startedAt || new Date(startedAt) > prevEnd) return;
             if (p.deletedAt && new Date(p.deletedAt) <= prevEnd) return;
 
-            const isDeactivatedByPrevEnd = (() => {
-                if (isActiveNow) return false;
-                const expObj = p.planExpiresAt ? new Date(p.planExpiresAt) : null;
-                const validExp = expObj && !isNaN(expObj.getTime()) && expObj.getFullYear() >= 2000 && expObj <= now ? expObj : null;
-                const deactDate = p.canceledAt ? new Date(p.canceledAt) : (validExp || (p.updatedAt ? new Date(p.updatedAt) : null));
-                if (!deactDate || deactDate > prevEnd) return false;
-                if (p.reactivatedAt && new Date(p.reactivatedAt) <= prevEnd && new Date(p.reactivatedAt) > deactDate) {
-                    return false;
-                }
-                return true;
-            })();
-
+            const isDeactivatedByPrevEnd = wasDeactivatedBy(p, prevEnd, isActiveNow);
             if (!isDeactivatedByPrevEnd) {
-                prevMrr += planPrices[planKey];
-                prevTotalActive++;
+                if (hasSubscription && planKey && planPrices[planKey]) {
+                    prevMrr += planPrices[planKey];
+                    prevTotalActive++;
+                }
+            } else {
+                prevInadimplentesCalc++;
             }
         });
         const activePsychologists = allPaidCandidates.filter(p => p.status === 'active' && !p.deletedAt);
@@ -792,11 +828,11 @@ exports.getFinancials = async (req, res) => {
         const prevTrialChurnCount = parseInt(cmoPrevTrialChurnRes.churned || 0);
 
         const paidChurnCount = cmoPaidChurnCount;
-        const inadimplentesCount = metrics.inadimplentesCount;
+        const inadimplentesCount = currentInadimplentesCalc;
         const ltv = metrics.ltvObservado;
         const ltvNet = metrics.ltvObservadoLiquido;
         const prevLtv = prevMetrics.ltvObservado;
-        const arpu = metrics.arpu;
+        const arpu = currentTotalActive > 0 ? (mrr / currentTotalActive) : metrics.arpu;
 
         const cmoNovosQuery = `
             SELECT COUNT(*) as novos
@@ -838,12 +874,18 @@ exports.getFinancials = async (req, res) => {
             paidChurnRate: { current: paidChurnRate, previous: prevPaidChurnRate },
             trialChurnCount: { current: trialChurnCount, previous: prevTrialChurnCount },
             paidChurnCount: { current: paidChurnCount, previous: cmoPrevPaidChurnCount },
-            inadimplentesCount: { current: inadimplentesCount, previous: prevMetrics.inadimplentesCount },
+            inadimplentesCount: { current: inadimplentesCount, previous: prevInadimplentesCalc },
             ltv: { current: ltv, net: ltvNet, previous: prevLtv, projected: currentLtvProjetado, projectedPrevious: prevLtvProjetado },
             arpu: { current: arpu, previous: prevArpu },
             proj30, proj60, proj90,
             cacPayback: { current: metrics.cacPaybackMonths },
-            periodDays: Math.max(1, Math.round(periodDays))
+            periodDays: Math.max(1, Math.round(periodDays)),
+            comparisonPeriod: {
+                start: start.toISOString(),
+                end: end.toISOString(),
+                prevStart: prevStart.toISOString(),
+                prevEnd: prevEnd.toISOString()
+            }
         };
 
         // Insights Generator
@@ -1493,9 +1535,14 @@ exports.getFounderMetrics = async (req, res) => {
             } catch(e){}
         }
 
-        const planPrices = { 
-            'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
-            'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
+        let sysSettings = {};
+        try { sysSettings = await db.SystemSetting.findOne() || {}; } catch (e) {}
+        const pEss = sysSettings.price_Essencial > 0 ? Number(sysSettings.price_Essencial) : 99.00;
+        const pCli = sysSettings.price_Clínico > 0 ? Number(sysSettings.price_Clínico) : 159.00;
+        const pRef = sysSettings.price_sol > 0 ? Number(sysSettings.price_sol) : 259.00;
+        const planPrices = {
+            'essential': pEss, 'clinical': pCli, 'reference': pRef,
+            'essencial': pEss, 'clínico': pCli, 'sol': pRef
         };
 
         const yesterdayStart = new Date();

@@ -43,9 +43,10 @@ export default function ReceitaScreen() {
 
   const getDateRange = (days: number) => {
     const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - days);
-    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+    const offset = days > 0 ? days - 1 : 0;
+    const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - offset);
+    const formatDate = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     return { startDate: formatDate(start), endDate: formatDate(end) };
   };
 
@@ -113,8 +114,8 @@ export default function ReceitaScreen() {
     return `${Number(val).toFixed(1).replace('.', ',')}%`;
   };
 
-  // Trend Badge Helper
-  const renderTrendBadge = (curr: number, prev: number, inverseGood: boolean = false) => {
+  // Trend Badge Helper (suporta modo percentual e pontos percentuais p.p.)
+  const renderTrendBadge = (curr: number, prev: number, inverseGood: boolean = false, isRate: boolean = false) => {
     if (prev === null || prev === undefined || isNaN(prev) || isNaN(curr)) {
       return (
         <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
@@ -122,6 +123,29 @@ export default function ReceitaScreen() {
         </View>
       );
     }
+
+    if (isRate) {
+      const diffPP = curr - prev;
+      if (Math.abs(diffPP) < 0.05) {
+        return (
+          <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
+            <Text style={{ color: '#64748b', fontSize: 10, fontWeight: '700' }}>0,0 p.p.</Text>
+          </View>
+        );
+      }
+      const isUp = diffPP > 0;
+      const isGood = inverseGood ? !isUp : isUp;
+      const color = isGood ? '#10b981' : '#ef4444';
+      const arrow = isUp ? '↑' : '↓';
+      return (
+        <View style={{ backgroundColor: color + '1a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
+          <Text style={{ color, fontSize: 10, fontWeight: '700' }}>
+            {arrow} {isUp ? '+' : '-'}{Math.abs(diffPP).toFixed(1)} p.p.
+          </Text>
+        </View>
+      );
+    }
+
     if (prev === 0 && curr > 0) {
       const color = inverseGood ? '#ef4444' : '#10b981';
       return (
@@ -430,13 +454,13 @@ export default function ReceitaScreen() {
                   <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                       <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Churn Pagantes</Text>
-                      {renderTrendBadge(kpis.paidChurnRate?.current ?? 0, kpis.paidChurnRate?.previous ?? 0, true)}
+                      {renderTrendBadge(kpis.paidChurnRate?.current ?? 0, kpis.paidChurnRate?.previous ?? 0, true, true)}
                     </View>
                     <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: (kpis.paidChurnRate?.current || 0) > 10 ? '#ef4444' : '#1e293b' }}>
                       {formatPercent(kpis.paidChurnRate?.current || 0)}
                     </Text>
                     <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
-                      Saídas: {kpis.paidChurnCount?.current || 0} psis
+                      Saídas: {kpis.paidChurnCount?.current || 0} psis (Ant: {formatPercent(kpis.paidChurnRate?.previous || 0)})
                     </Text>
                   </View>
 
@@ -464,7 +488,7 @@ export default function ReceitaScreen() {
                       {kpis.inadimplentesCount?.current || 0} psis
                     </Text>
                     <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
-                      Cartão/Pix expirado
+                      Ant: {kpis.inadimplentesCount?.previous || 0} psis · Expirado/inativo
                     </Text>
                   </View>
 
@@ -472,7 +496,7 @@ export default function ReceitaScreen() {
                   <View style={{ width: '48.5%', backgroundColor: '#ffffff', borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0', padding: 12 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                       <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>LTV Projetado</Text>
-                      {renderTrendBadge(kpis.ltv?.projected || 0, kpis.ltv?.previous || 0, false)}
+                      {renderTrendBadge(kpis.ltv?.projected || 0, kpis.ltv?.projectedPrevious ?? kpis.ltv?.previous ?? 0, false)}
                     </View>
                     <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 18, color: '#7c3aed' }}>
                       {formatBRL(kpis.ltv?.projected || 0)}
@@ -818,54 +842,64 @@ export default function ReceitaScreen() {
                     Vencimentos previstos de assinaturas ativas.
                   </Text>
 
-                  {financials.activePlans && financials.activePlans.length > 0 ? (
-                    <View style={{ gap: 8 }}>
-                      {financials.activePlans.slice(0, 5).map((plan: any, idx: number) => (
-                        <TouchableOpacity
-                          key={idx}
-                          disabled={!plan.psychologistId}
-                          activeOpacity={0.7}
-                          onPress={() =>
-                            plan.psychologistId &&
-                            router.navigate({
-                              pathname: '/(admin)/crm-modulo/psicologos',
-                              params: { openId: String(plan.psychologistId) },
-                            })
-                          }
-                          style={{
-                            padding: 12,
-                            borderRadius: 14,
-                            borderWidth: 1,
-                            borderColor: '#e2e8f0',
-                            backgroundColor: '#ffffff',
-                          }}
-                        >
-                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: plan.psychologistId ? '#1B4332' : '#1e293b', flex: 1, paddingRight: 8 }} numberOfLines={1}>
-                              {plan.psychologistName || 'Psicólogo'}
-                            </Text>
-                            <View style={{ backgroundColor: '#e0f2fe', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
-                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: '#0369a1', textTransform: 'uppercase' }}>
-                                {plan.planName || 'N/D'}
+                  {(() => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const upcomingPlans = (financials.activePlans || []).filter((plan: any) => {
+                      if (!plan.nextBilling) return true;
+                      const d = new Date(plan.nextBilling);
+                      d.setHours(0, 0, 0, 0);
+                      return Math.round((d.getTime() - today.getTime()) / 86400000) >= -2;
+                    });
+                    return upcomingPlans.length > 0 ? (
+                      <View style={{ gap: 8 }}>
+                        {upcomingPlans.slice(0, 5).map((plan: any, idx: number) => (
+                          <TouchableOpacity
+                            key={idx}
+                            disabled={!plan.psychologistId}
+                            activeOpacity={0.7}
+                            onPress={() =>
+                              plan.psychologistId &&
+                              router.navigate({
+                                pathname: '/(admin)/crm-modulo/psicologos',
+                                params: { openId: String(plan.psychologistId) },
+                              })
+                            }
+                            style={{
+                              padding: 12,
+                              borderRadius: 14,
+                              borderWidth: 1,
+                              borderColor: '#e2e8f0',
+                              backgroundColor: '#ffffff',
+                            }}
+                          >
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: plan.psychologistId ? '#1B4332' : '#1e293b', flex: 1, paddingRight: 8 }} numberOfLines={1}>
+                                {plan.psychologistName || 'Psicólogo'}
+                              </Text>
+                              <View style={{ backgroundColor: '#e0f2fe', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: '#0369a1', textTransform: 'uppercase' }}>
+                                  {plan.planName || 'N/D'}
+                                </Text>
+                              </View>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 6, borderTopWidth: 1, borderTopColor: '#f1f5f9' }}>
+                              <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11.5, color: '#1B4332' }}>
+                                MRR: {formatBRL(plan.mrr)}
+                              </Text>
+                              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b' }}>
+                                Vence: {plan.nextBilling ? new Date(plan.nextBilling).toLocaleDateString('pt-BR') : 'N/D'}
                               </Text>
                             </View>
-                          </View>
-                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 6, borderTopWidth: 1, borderTopColor: '#f1f5f9' }}>
-                            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11.5, color: '#1B4332' }}>
-                              MRR: {formatBRL(plan.mrr)}
-                            </Text>
-                            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b' }}>
-                              Vence: {plan.nextBilling ? new Date(plan.nextBilling).toLocaleDateString('pt-BR') : 'N/D'}
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  ) : (
-                    <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#94a3b8' }}>
-                      Nenhum plano com vencimento futuro.
-                    </Text>
-                  )}
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    ) : (
+                      <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#94a3b8' }}>
+                        Nenhum plano com vencimento futuro.
+                      </Text>
+                    );
+                  })()}
                 </View>
               </View>
             )}

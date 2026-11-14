@@ -7,12 +7,20 @@ window.initializePage = function() {
     const endInput = document.getElementById('crm-analytics-end');
     const customWrap = document.getElementById('custom-date-wrap');
 
+    let comparisonPeriodHint = '';
+    const formatDateLocal = (d) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+
     function setDateRange(days) {
         const end = new Date();
-        const start = new Date();
-        start.setDate(end.getDate() - days);
-        startInput.value = start.toISOString().split('T')[0];
-        endInput.value = end.toISOString().split('T')[0];
+        const offset = days > 0 ? days - 1 : 0;
+        const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - offset);
+        startInput.value = formatDateLocal(start);
+        endInput.value = formatDateLocal(end);
     }
 
     // Initialize with 30 days
@@ -142,6 +150,14 @@ window.initializePage = function() {
                         updateKpiCard('arpu', dataFin.kpis.arpu.current, dataFin.kpis.arpu.previous, formatBRL);
 
                         const pDays = dataFin.kpis.periodDays;
+                        comparisonPeriodHint = '';
+                        if (dataFin.kpis.comparisonPeriod) {
+                            const fmtBr = (iso) => {
+                                const dt = new Date(iso);
+                                return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' });
+                            };
+                            comparisonPeriodHint = `${fmtBr(dataFin.kpis.comparisonPeriod.prevStart)}–${fmtBr(dataFin.kpis.comparisonPeriod.prevEnd)}${pDays ? ` · ${pDays}d` : ''}`;
+                        }
                         if (pDays) {
                             document.querySelectorAll('.kpi-compare').forEach(el => {
                                 el.textContent = `vs ${pDays}d anteriores`;
@@ -189,7 +205,8 @@ window.initializePage = function() {
             return;
         }
         const diff = current - previous;
-        trendEl.title = `Período anterior: ${formatter(previous)}`;
+        const prevPrefix = comparisonPeriodHint ? `Período anterior (${comparisonPeriodHint}):` : 'Período anterior:';
+        trendEl.title = `${prevPrefix} ${formatter(previous)}`;
 
         if (opts.isRate) {
             if (Math.abs(diff) < 0.05) {
@@ -209,6 +226,11 @@ window.initializePage = function() {
         }
 
         let percent = previous > 0 ? (diff / previous) * 100 : (current > 0 ? 100 : 0);
+        if (Math.abs(percent) < 0.05) {
+            trendEl.innerText = '▬ 0.0%';
+            trendEl.className = 'kpi-trend trend-neutral';
+            return;
+        }
         
         let arrow = percent > 0 ? '↑' : (percent < 0 ? '↓' : '');
         trendEl.innerText = `${arrow} ${Math.abs(percent).toFixed(1)}%`;
