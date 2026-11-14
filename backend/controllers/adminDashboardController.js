@@ -1376,7 +1376,8 @@ exports.getWhatsappFeedbacks = async (req, res) => {
             const msDiff = end.getTime() - start.getTime();
             const prevStart = new Date(start.getTime() - msDiff);
             const prevEnd = new Date(start.getTime() - 1);
-            const days = Math.max(1, Math.round(msDiff / (1000 * 60 * 60 * 24)));
+            const exactDays = Math.max(1 / 24, msDiff / (1000 * 60 * 60 * 24));
+            const days = Math.max(1, Math.round(exactDays));
 
             const prevFeedbacks = await db.WhatsAppClickLog.findAll({
                 where: {
@@ -1391,7 +1392,15 @@ exports.getWhatsappFeedbacks = async (req, res) => {
             return res.status(200).json({
                 feedbacks,
                 prevFeedbacks,
-                days
+                days,
+                daysExact: Number(exactDays.toFixed(4)),
+                comparisonPeriod: {
+                    start: start.toISOString(),
+                    end: end.toISOString(),
+                    prevStart: prevStart.toISOString(),
+                    prevEnd: prevEnd.toISOString(),
+                    days
+                }
             });
         }
 

@@ -1,6 +1,6 @@
 // c:\Users\Anderson\Desktop\Yelo\admin\admin_analytics_funil.js
 
-window.initializePage = function() {
+window.initializePage = function () {
     const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : '';
     let exportData = null; // Guarda os dados do funil
     let globalRankingData = []; // Armazena o ranking para ordenação no front
@@ -182,9 +182,9 @@ window.initializePage = function() {
     // --- CORREÇÃO: TOOLTIPS NO MOBILE ---
     // Dispositivos touch não lidam bem com o pseudo-elemento :hover.
     // Isso garante que ao tocar no ícone "i", o tooltip abra e feche corretamente.
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         const isTooltip = e.target.closest('.info-tooltip');
-        
+
         // Fecha todos os tooltips ativos quando o usuário clicar fora
         document.querySelectorAll('.info-tooltip.active').forEach(tt => {
             if (tt !== isTooltip) tt.classList.remove('active');
@@ -197,18 +197,18 @@ window.initializePage = function() {
     });
 
     // --- TAB SWITCHING ---
-    window.switchFunilTab = function(btn) {
+    window.switchFunilTab = function (btn) {
         document.querySelectorAll('.content-tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
+
         document.querySelectorAll('.analytics-tab-content').forEach(tab => tab.style.display = 'none');
-        
+
         const targetId = btn.getAttribute('data-target');
         const targetTab = document.getElementById(targetId);
         if (targetTab) {
             targetTab.style.display = 'block';
         }
-        
+
         if (targetId === 'tab-v6-impact') {
             const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
             loadV6Impact(token);
@@ -220,17 +220,17 @@ window.initializePage = function() {
         const contentEl = document.getElementById('content-funil');
         const btnAtualizar = document.getElementById('btn-atualizar-funil');
 
-        if(loadingEl) loadingEl.style.display = 'block';
-        if(contentEl) contentEl.style.display = 'none';
-        
-        if(btnAtualizar) {
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (contentEl) contentEl.style.display = 'none';
+
+        if (btnAtualizar) {
             btnAtualizar.disabled = true;
             btnAtualizar.innerHTML = '<span class="loading-spinner-sm"></span> Atualizando...';
         }
 
         try {
             const token = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? 'cookie_auth_active' : localStorage.getItem('Yelo_token');
-            
+
             const queryParams = new URLSearchParams();
             if (startInput && startInput.value) queryParams.append('startDate', startInput.value);
             if (endInput && endInput.value) queryParams.append('endDate', endInput.value);
@@ -257,10 +257,11 @@ window.initializePage = function() {
                     compLabelEl.textContent = `Comparando ${fmtBr(data.comparisonPeriod.start)}–${fmtBr(data.comparisonPeriod.end)} (${dCount}d) vs ${fmtBr(data.comparisonPeriod.prevStart)}–${fmtBr(data.comparisonPeriod.prevEnd)} (${dCount}d)`;
                 }
             }
-            
+
             let dataWpp = [];
             let prevWpp = [];
             let daysCount = 30;
+            let daysExact = null;
 
             if (resWpp.ok) {
                 const rawWpp = await resWpp.json();
@@ -268,6 +269,7 @@ window.initializePage = function() {
                     dataWpp = rawWpp.feedbacks || [];
                     prevWpp = rawWpp.prevFeedbacks || [];
                     daysCount = rawWpp.days || 30;
+                    daysExact = rawWpp.daysExact || null;
                 } else if (Array.isArray(rawWpp)) {
                     dataWpp = rawWpp;
                 }
@@ -275,10 +277,10 @@ window.initializePage = function() {
             const dataRanking = (resRanking && resRanking.ok) ? await resRanking.json() : null;
 
             exportData = data; // Salva os dados globais para permitir a exportação no CSV
-            
-            renderWppFeedbacks(dataWpp, prevWpp, daysCount);
+
+            renderWppFeedbacks(dataWpp, prevWpp, daysCount, daysExact);
             globalRankingData = dataRanking ? (Array.isArray(dataRanking) ? dataRanking : dataRanking.ranking) : null;
-            
+
             if (globalRankingData) {
                 globalRankingData.forEach((item, idx) => {
                     item.originalPos = idx + 1; // Salva a posição oficial do backend
@@ -287,12 +289,12 @@ window.initializePage = function() {
                     item.conversaoFechamentoVal = (item.cliquesWpp || 0) > 0 ? ((item.fechamentos || 0) / item.cliquesWpp) * 100 : 0;
                 });
             }
-            
+
             // Reseta a ordenação e renderiza
             currentRankingSort = { column: 'posicao', direction: 'asc' };
             updateSortIndicators('posicao');
             renderRankingPsi(globalRankingData);
-            
+
             // --- POPULA KPIs DO RANKING ---
             if (globalRankingData) {
                 const totalPsis = globalRankingData.length;
@@ -344,75 +346,21 @@ window.initializePage = function() {
             // --- 1. POPULA KPIs SUPERIORES ---
             const kpiVisitas = document.getElementById('kpi-visitas');
             if (kpiVisitas) kpiVisitas.innerHTML = `${data.visitas.toLocaleString()}${renderTrend(data.visitas, data.prevVisitas)}`;
-            
+
             const kpiIniciaram = document.getElementById('kpi-iniciaram');
-            if(kpiIniciaram) kpiIniciaram.innerHTML = `${data.iniciaram.toLocaleString()}${renderTrend(data.iniciaram, data.prevIniciaram)}`;
-            
+            if (kpiIniciaram) kpiIniciaram.innerHTML = `${data.iniciaram.toLocaleString()}${renderTrend(data.iniciaram, data.prevIniciaram)}`;
+
             const kpiCompletaram = document.getElementById('kpi-completaram');
-            if(kpiCompletaram) kpiCompletaram.innerHTML = `${data.completaram.toLocaleString()}${renderTrend(data.completaram, data.prevCompletaram)}`;
+            if (kpiCompletaram) kpiCompletaram.innerHTML = `${data.completaram.toLocaleString()}${renderTrend(data.completaram, data.prevCompletaram)}`;
 
             const kpiWhatsapp = document.getElementById('kpi-whatsapp');
             if (kpiWhatsapp) kpiWhatsapp.innerHTML = `${data.whatsappUnique.toLocaleString()}${renderTrend(data.whatsappUnique, data.prevWhatsappUnique)}`;
-            
+
             const kpiWhatsappDistribuidos = document.getElementById('kpi-whatsapp-distribuidos');
             if (kpiWhatsappDistribuidos) kpiWhatsappDistribuidos.textContent = `${data.whatsappClicks.toLocaleString()} leads distribuídos`;
-            
+
             const kpiDesqualificados = document.getElementById('kpi-desqualificados');
-            if(kpiDesqualificados) kpiDesqualificados.innerHTML = `${(data.desqualificados || 0).toLocaleString()}${renderTrend(data.desqualificados, data.prevDesqualificados, true)}`;
-
-            const desc = data.descartadosProfissionais || {};
-            const stageDiscarded = (key) => {
-                const raw = desc[key] || {};
-                const logados = parseInt(raw.logados || 0, 10);
-                const naoLogados = parseInt(raw.naoLogados || 0, 10);
-                const total = parseInt(raw.total ?? (logados + naoLogados), 10);
-                const prevTotal = parseInt(raw.prevTotal || 0, 10);
-                return { total, logados, naoLogados, prevTotal };
-            };
-
-            const totalDesc = stageDiscarded('totalEventos');
-            const kpiPsiQ = document.getElementById('kpi-psicologos-questionarios');
-            if (kpiPsiQ) kpiPsiQ.innerHTML = `${totalDesc.total.toLocaleString()}${renderTrend(totalDesc.total, totalDesc.prevTotal, false, { neutral: true })}`;
-            const kpiPsiDetalhe = document.getElementById('kpi-psicologos-detalhe');
-            if (kpiPsiDetalhe) {
-                kpiPsiDetalhe.textContent = `${totalDesc.logados.toLocaleString()} logados | ${totalDesc.naoLogados.toLocaleString()} não logados`;
-            }
-
-            const discardedRows = [
-                { key: 'visitas', label: '1. Acessaram o Site (Visitas)', valid: parseInt(data.visitas || 0, 10) },
-                { key: 'iniciaram', label: '2. Iniciaram Questionário', valid: parseInt(data.iniciaram || 0, 10) },
-                { key: 'completaram', label: '3. Chegaram aos Resultados', valid: parseInt(data.completaram || 0, 10) },
-                { key: 'profileViews', label: '4. Visualizações de Perfis', valid: parseInt(data.profileViews || 0, 10) },
-                { key: 'whatsapp', label: '5. Cliques no WhatsApp', valid: parseInt(data.whatsappClicks || 0, 10) }
-            ];
-
-            const badgesEl = document.getElementById('discarded-summary-badges');
-            if (badgesEl) {
-                badgesEl.innerHTML = `
-                    <span style="background: #eef2ff; color: #4338ca; padding: 5px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;">Total: ${totalDesc.total.toLocaleString()}</span>
-                    <span style="background: #f0fdf4; color: #166534; padding: 5px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;">Logados: ${totalDesc.logados.toLocaleString()}</span>
-                    <span style="background: #fff7ed; color: #c2410c; padding: 5px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;">Não logados: ${totalDesc.naoLogados.toLocaleString()}</span>
-                `;
-            }
-
-            const breakdownBody = document.getElementById('discarded-breakdown-body');
-            if (breakdownBody) {
-                breakdownBody.innerHTML = discardedRows.map((row) => {
-                    const st = stageDiscarded(row.key);
-                    const gross = row.valid + st.total;
-                    const pctGross = gross > 0 ? ((st.total / gross) * 100).toFixed(1) : '0.0';
-                    return `
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 10px 8px; font-weight: 600; color: #1e293b;">${row.label}</td>
-                            <td style="padding: 10px 8px; text-align: right; color: #0f172a;">${row.valid.toLocaleString()}</td>
-                            <td style="padding: 10px 8px; text-align: right; font-weight: 700; color: #4338ca;">${st.total.toLocaleString()}</td>
-                            <td style="padding: 10px 8px; text-align: right; color: #15803d;">${st.logados.toLocaleString()}</td>
-                            <td style="padding: 10px 8px; text-align: right; color: #c2410c;">${st.naoLogados.toLocaleString()}</td>
-                            <td style="padding: 10px 8px; text-align: right; font-weight: 600; color: #64748b;">${pctGross}%</td>
-                        </tr>
-                    `;
-                }).join('');
-            }
+            if (kpiDesqualificados) kpiDesqualificados.innerHTML = `${(data.desqualificados || 0).toLocaleString()}${renderTrend(data.desqualificados, data.prevDesqualificados, true)}`;
 
             const taxaInicio = data.visitas > 0 ? ((data.iniciaram / data.visitas) * 100).toFixed(1) : 0;
             const corTaxaInicio = getColorForGoal(taxaInicio, 15);
@@ -437,19 +385,15 @@ window.initializePage = function() {
             // --- 2. RENDERIZA FUNIL VISUAL END-TO-END ---
             const maxFunnel = data.visitas > 0 ? data.visitas : 1; // Previne divisão por zero
             const funilHtml = [
-                { id: 'step-1', discKey: 'visitas', icon: '👁️', bg: '#e0f2fe', color: '#0284c7', label: '1. Acessaram o Site', value: data.visitas, prevValue: data.prevVisitas, parent: data.visitas, desc: 'Visualizações no Período' },
-                { id: 'step-2', discKey: 'iniciaram', icon: '🚀', bg: '#f3e8ff', color: '#7e22ce', label: '2. Iniciaram o Questionário', value: data.iniciaram, prevValue: data.prevIniciaram, parent: data.visitas, desc: 'Clicaram em Começar' },
-                { id: 'step-3', discKey: 'completaram', icon: '📋', bg: '#fef3c7', color: '#d97706', label: '3. Finalizaram Questionário (Leads)', value: data.completaram, prevValue: data.prevCompletaram, parent: data.iniciaram, desc: 'Chegaram aos Resultados' },
-                { id: 'step-4', discKey: 'profileViews', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Visualizações de Perfis', value: data.profileViews, prevValue: data.prevProfileViews, parent: data.completaram, desc: 'Acessos detalhados aos resultados' },
-                { id: 'step-5', discKey: 'whatsapp', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp (Pacientes)', value: data.whatsappUnique, prevValue: data.prevWhatsappUnique, parent: data.profileViews, desc: `Gerou ${data.whatsappClicks} clicks totais` }
+                { id: 'step-1', icon: '👁️', bg: '#e0f2fe', color: '#0284c7', label: '1. Acessaram o Site', value: data.visitas, prevValue: data.prevVisitas, parent: data.visitas, desc: 'Visualizações no Período' },
+                { id: 'step-2', icon: '🚀', bg: '#f3e8ff', color: '#7e22ce', label: '2. Iniciaram o Questionário', value: data.iniciaram, prevValue: data.prevIniciaram, parent: data.visitas, desc: 'Clicaram em Começar' },
+                { id: 'step-3', icon: '📋', bg: '#fef3c7', color: '#d97706', label: '3. Finalizaram Questionário (Leads)', value: data.completaram, prevValue: data.prevCompletaram, parent: data.iniciaram, desc: 'Chegaram aos Resultados' },
+                { id: 'step-4', icon: '👤', bg: '#e8f5e9', color: '#166534', label: '4. Visualizações de Perfis', value: data.profileViews, prevValue: data.prevProfileViews, parent: data.completaram, desc: 'Acessos detalhados aos resultados' },
+                { id: 'step-5', icon: '💬', bg: '#dcfce7', color: '#15803d', label: '5. Clicaram no WhatsApp (Pacientes)', value: data.whatsappUnique, prevValue: data.prevWhatsappUnique, parent: data.profileViews, desc: `Gerou ${data.whatsappClicks} clicks totais` }
             ].map((step, i, arr) => {
-                const stDisc = stageDiscarded(step.discKey);
-                const discardedNote = stDisc.total > 0
-                    ? ` · <span style="color:#4338ca; font-weight:600;">🛡️ ${stDisc.total.toLocaleString()} descartado(s) (${stDisc.logados.toLocaleString()} log., ${stDisc.naoLogados.toLocaleString()} não log.)</span>`
-                    : '';
                 const rateToParentRaw = step.parent > 0 ? (step.value / step.parent) : 0;
                 const rateToParentPct = (rateToParentRaw * 100).toFixed(1);
-                
+
                 // Limita a largura do background a 100% para evitar quebra de layout quando há mais visualizações do que visitas
                 const absoluteFill = Math.min(100, ((step.value / maxFunnel) * 100)).toFixed(1);
 
@@ -470,7 +414,7 @@ window.initializePage = function() {
                             <div class="funnel-icon" style="background: ${step.bg}; color: ${step.color};">${step.icon}</div>
                             <div>
                                 <h4>${step.label}</h4>
-                                <p>${step.desc}${discardedNote}</p>
+                                <p>${step.desc}</p>
                             </div>
                         </div>
                         <div class="funnel-metrics">
@@ -483,30 +427,30 @@ window.initializePage = function() {
                     </div>
                 `;
             }).join('');
-            
+
             document.getElementById('funnel-visual-container').innerHTML = funilHtml;
 
             // --- 3. RANKING DE ABANDONO (DROP-OFFS) ---
             const kpiTxDesistencia = document.getElementById('kpi-tx-desistencia');
             const kpiTxDesistenciaGlobal = document.getElementById('kpi-tx-desistencia-global');
-            
+
             if (data.iniciaram > 0) {
                 const desqualificadosCount = parseInt(data.desqualificados || 0, 10);
                 const abandonosCount = Math.max(0, data.iniciaram - data.completaram - desqualificadosCount);
                 const taxaDesistenciaPct = ((abandonosCount / data.iniciaram) * 100).toFixed(1);
                 const desistenciaColor = taxaDesistenciaPct <= 30 ? '#10b981' : '#dc2626';
-                
+
                 let prevTaxaDesistenciaPct = null;
                 if (data.prevIniciaram > 0) {
                     const prevDesqCount = parseInt(data.prevDesqualificados || 0, 10);
                     const prevAbandonosCount = Math.max(0, data.prevIniciaram - data.prevCompletaram - prevDesqCount);
                     prevTaxaDesistenciaPct = ((prevAbandonosCount / data.prevIniciaram) * 100).toFixed(1);
                 }
-                
+
                 if (kpiTxDesistencia) {
                     const trendTxDesistencia = prevTaxaDesistenciaPct !== null ? renderTrend(taxaDesistenciaPct, prevTaxaDesistenciaPct, true, { isRate: true }) : '';
                     kpiTxDesistencia.innerHTML = `${taxaDesistenciaPct}%${trendTxDesistencia}`;
-                    kpiTxDesistencia.style.color = desistenciaColor; 
+                    kpiTxDesistencia.style.color = desistenciaColor;
                 }
                 if (kpiTxDesistenciaGlobal) {
                     kpiTxDesistenciaGlobal.innerHTML = `${taxaDesistenciaPct}%${prevTaxaDesistenciaPct !== null ? renderTrend(taxaDesistenciaPct, prevTaxaDesistenciaPct, true, { isRate: true }) : ''}`;
@@ -524,12 +468,12 @@ window.initializePage = function() {
             }
 
             const containerAbandonos = document.getElementById('lista-abandonos');
-            if(containerAbandonos) {
+            if (containerAbandonos) {
                 containerAbandonos.innerHTML = '';
                 if (data.abandonos && data.abandonos.length > 0) {
                     const totalPerdasMapeadas = data.abandonos.reduce((acc, a) => acc + parseInt(a.count, 10), 0);
                     const maxAbandono = Math.max(...data.abandonos.map(a => parseInt(a.count, 10)));
-                    
+
                     const prevAbandonosMap = {};
                     if (data.prevAbandonos && Array.isArray(data.prevAbandonos)) {
                         data.prevAbandonos.forEach(p => {
@@ -544,11 +488,11 @@ window.initializePage = function() {
                         const stepInfo = getStepInfo(item.step);
                         const prevCount = prevAbandonosMap[item.step] !== undefined ? prevAbandonosMap[item.step] : null;
                         const trendLosses = prevCount !== null ? renderTrend(count, prevCount, true) : '';
-                        
+
                         // Classificação de Benchmark e Severidade
                         let statusBadge = '';
                         let barColor = '#10b981'; // Verde padrão (saudável)
-                        
+
                         if (stepInfo.isLegacy) {
                             statusBadge = `<span style="font-size: 0.72rem; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 20px; font-weight: 600;">⚪ Etapa Antiga (Resolvido)</span>`;
                             barColor = '#94a3b8';
@@ -562,7 +506,7 @@ window.initializePage = function() {
                             statusBadge = `<span style="font-size: 0.72rem; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 20px; font-weight: 600;">🟢 Normal / Esperado</span>`;
                             barColor = '#10b981';
                         }
-                        
+
                         containerAbandonos.innerHTML += `
                             <div style="background: #ffffff; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 12px;">
@@ -596,18 +540,18 @@ window.initializePage = function() {
 
             // --- 4. ORIGENS DE TRÁFEGO (CANAIS) ---
             const containerOrigens = document.getElementById('traffic-channels');
-            if(containerOrigens) {
+            if (containerOrigens) {
                 // Agrupa as origens inteligentemente
                 let canais = { 'Google Ads': 0, 'Meta/Insta Ads': 0, 'Orgânico/Direto': 0, 'Outros': 0 };
                 let prevCanais = { 'Google Ads': 0, 'Meta/Insta Ads': 0, 'Orgânico/Direto': 0, 'Outros': 0 };
                 let totalOrigens = 0;
-                
+
                 if (data.origens && data.origens.length > 0) {
                     data.origens.forEach(o => {
                         const src = (o.source || '').toLowerCase();
                         const count = parseInt(o.count, 10);
                         totalOrigens += count;
-                        
+
                         // Mapeamento Estrito para evitar falsos positivos de palavras nas UTMs
                         if (src === 'google' || src === 'google_ads' || src === 'gads' || src === 'google ads') {
                             canais['Google Ads'] += count;
@@ -638,7 +582,7 @@ window.initializePage = function() {
                 }
 
                 if (totalOrigens > 0 || (data.prevOrigens && data.prevOrigens.length > 0)) {
-                    containerOrigens.innerHTML = Object.entries(canais).sort((a,b) => b[1] - a[1]).map(([nome, count]) => {
+                    containerOrigens.innerHTML = Object.entries(canais).sort((a, b) => b[1] - a[1]).map(([nome, count]) => {
                         if (count === 0 && (!prevCanais[nome] || prevCanais[nome] === 0)) return '';
                         const pct = totalOrigens > 0 ? ((count / totalOrigens) * 100).toFixed(1) : 0;
                         const prevCount = prevCanais[nome] !== undefined ? prevCanais[nome] : null;
@@ -663,7 +607,7 @@ window.initializePage = function() {
             const insightsList = document.getElementById('ai-insights-list');
             if (insightsList) {
                 let insightsHtml = '';
-                
+
                 // Top Funnel Insight (Tráfego -> Início)
                 const tInicio = data.visitas > 0 ? (data.iniciaram / data.visitas) : 0;
                 if (tInicio < 0.15) {
@@ -691,14 +635,14 @@ window.initializePage = function() {
                 insightsList.innerHTML = insightsHtml || '<p>Sem insights críticos no momento. Tudo operando dentro do esperado.</p>';
             }
 
-            if(loadingEl) loadingEl.style.display = 'none';
-            if(contentEl) contentEl.style.display = 'block';
-            
-        } catch(e) { 
-            console.error(e); 
-            if(loadingEl) loadingEl.innerHTML = `<p style="color: #E63946;">Falha ao carregar os dados. Tente novamente.</p>`;
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (contentEl) contentEl.style.display = 'block';
+
+        } catch (e) {
+            console.error(e);
+            if (loadingEl) loadingEl.innerHTML = `<p style="color: #E63946;">Falha ao carregar os dados. Tente novamente.</p>`;
         } finally {
-            if(btnAtualizar) {
+            if (btnAtualizar) {
                 btnAtualizar.disabled = false;
                 btnAtualizar.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-10.09l5.67-5.67"/></svg> Atualizar`;
             }
@@ -706,7 +650,7 @@ window.initializePage = function() {
     }
 
     function downloadCSV(filename, content) {
-        const blob = new Blob(["\uFEFF"+content], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob(["\uFEFF" + content], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
@@ -720,7 +664,7 @@ window.initializePage = function() {
     function exportarCSV() {
         const activeTabBtn = document.querySelector('.content-tab-btn.active');
         const tabTarget = activeTabBtn ? activeTabBtn.getAttribute('data-target') : 'tab-funil';
-        
+
         const formatToBR = (dateStr) => {
             if (!dateStr) return 'N/A';
             const [y, m, d] = dateStr.split('-');
@@ -734,7 +678,7 @@ window.initializePage = function() {
 
         if (tabTarget === 'tab-funil') {
             if (!exportData) return alert("Nenhum dado para exportar. Atualize a página.");
-            
+
             const taxaConversao = exportData.visitas > 0 ? ((exportData.whatsappUnique / exportData.visitas) * 100).toFixed(2) : 0;
 
             let csvContent = `RELATÓRIO DE BUSINESS INTELLIGENCE E FUNIL DE PACIENTES\n`;
@@ -752,9 +696,7 @@ window.initializePage = function() {
             csvContent += `--- RETENÇÃO E PERDAS ---\n`;
             csvContent += `Categoria;Quantidade\n`;
             csvContent += `Desqualificados (Menor de Idade / Regras de Negócio);${exportData.desqualificados || 0}\n`;
-            csvContent += `Questionários Concluídos por Psicólogos (Excluídos do Funil de Pacientes);${exportData.psicologosCompletaram || 0}\n`;
-            csvContent += `Questionários Iniciados por Psicólogos (Excluídos do Funil de Pacientes);${exportData.psicologosIniciaram || 0}\n`;
-            
+
             if (exportData.abandonos && exportData.abandonos.length > 0) {
                 exportData.abandonos.forEach(a => {
                     const stepName = getStepInfo(a.step).label;
@@ -785,21 +727,21 @@ window.initializePage = function() {
             }
 
             downloadCSV(`yelo_funil_export_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
-            
+
         } else if (tabTarget === 'tab-conversoes') {
             const wppData = window.wppDataState ? window.wppDataState.allFeedbacks : [];
             if (!wppData || wppData.length === 0) return alert("Nenhum dado de conversão para exportar.");
-            
+
             let csvContent = `RELATÓRIO DE CONVERSÕES (PLG)\nPeríodo: ${periodStr}\n\n`;
             csvContent += `Data;Psicólogo;Paciente (Visitante);Origem (UTM);Recebeu Contato?;Fechou Negócio?;Status\n`;
-            
+
             wppData.forEach(l => {
                 const dataFormatada = new Date(l.createdAt).toLocaleDateString('pt-BR');
                 const pName = safeStr(l.guestName);
                 const psiName = l.psychologist ? safeStr(l.psychologist.nome) : 'N/A';
                 const recContato = l.contactReceived === true ? 'Sim' : (l.contactReceived === false ? 'Não' : 'Pendente');
                 const status = l.feedbackGiven ? 'Respondido' : (l.adminWppReminderSentAt ? 'Cobrado' : 'Pendente');
-                
+
                 // Mapeia fechou granularmente
                 let fechou = 'Pendente';
                 if (l.dealClosed === 'yes' || l.dealClosed === 'started') fechou = 'Sim';
@@ -820,10 +762,10 @@ window.initializePage = function() {
 
         } else if (tabTarget === 'tab-ranking') {
             if (!globalRankingData || globalRankingData.length === 0) return alert("Nenhum dado de ranking para exportar.");
-            
+
             let csvContent = `RANKING DE PSICÓLOGOS\nPeríodo: ${periodStr}\n\n`;
             csvContent += `Posição;Nome;Acesso Direto;Busca (Filtros);Visitantes Totais;Cliques no WhatsApp;Taxa de Conversão\n`;
-            
+
             globalRankingData.forEach((item, idx) => {
                 const pos = idx + 1;
                 const visitasTotais = (item.aparicoesBusca || 0) + (item.visitasDiretas || 0);
@@ -831,7 +773,7 @@ window.initializePage = function() {
                 csvContent += `${pos};${safeStr(item.nome)};${item.visitasDiretas || 0};${item.aparicoesBusca || 0};${visitasTotais};${item.cliquesWpp || 0};${conver}%\n`;
             });
             downloadCSV(`yelo_ranking_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
-            
+
 
         } else if (tabTarget === 'tab-auditoria') {
             if (!window.auditoriaData || window.auditoriaData.length === 0) return alert("Nenhum dado de auditoria. Faça a busca primeiro.");
@@ -846,7 +788,7 @@ window.initializePage = function() {
     }
 
     // --- FUNÇÕES DE RENDERIZAÇÃO SECUNDÁRIAS ---
-    
+
     // Estado Global de Paginação WPP
     window.wppDataState = {
         allFeedbacks: [],
@@ -858,14 +800,14 @@ window.initializePage = function() {
         sortDirection: 'desc'
     };
 
-    window.applyWppFilter = function() {
+    window.applyWppFilter = function () {
         const select = document.getElementById('filter-wpp-status');
         const searchInput = document.getElementById('search-wpp-name');
         if (!select) return;
         window.wppDataState.currentFilter = select.value;
         const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
         window.wppDataState.currentPage = 1;
-        
+
         const filterVal = window.wppDataState.currentFilter;
         window.wppDataState.filteredFeedbacks = window.wppDataState.allFeedbacks.filter(f => {
             if (searchTerm) {
@@ -892,14 +834,14 @@ window.initializePage = function() {
         applyWppSort();
     };
 
-    window.sortWppData = function(column) {
+    window.sortWppData = function (column) {
         if (window.wppDataState.sortColumn === column) {
             window.wppDataState.sortDirection = window.wppDataState.sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
             window.wppDataState.sortColumn = column;
             window.wppDataState.sortDirection = 'asc';
         }
-        
+
         ['data', 'origem', 'psi', 'paciente', 'recebeu', 'fechou', 'status'].forEach(col => {
             const icon = document.getElementById(`sort-wpp-${col}`);
             if (icon) {
@@ -912,7 +854,7 @@ window.initializePage = function() {
                 }
             }
         });
-        
+
         applyWppSort();
     };
 
@@ -920,10 +862,10 @@ window.initializePage = function() {
         if (!window.wppDataState.filteredFeedbacks) return;
         const col = window.wppDataState.sortColumn;
         const dir = window.wppDataState.sortDirection === 'asc' ? 1 : -1;
-        
+
         window.wppDataState.filteredFeedbacks.sort((a, b) => {
             let valA, valB;
-            
+
             if (col === 'data') {
                 valA = new Date(a.createdAt).getTime();
                 valB = new Date(b.createdAt).getTime();
@@ -946,23 +888,23 @@ window.initializePage = function() {
                 valA = a.feedbackGiven ? 1 : -1;
                 valB = b.feedbackGiven ? 1 : -1;
             }
-            
+
             if (valA < valB) return -1 * dir;
             if (valA > valB) return 1 * dir;
             return 0;
         });
-        
+
         renderWppTableOnly();
     }
 
-    window.prevWppPage = function() {
+    window.prevWppPage = function () {
         if (window.wppDataState.currentPage > 1) {
             window.wppDataState.currentPage--;
             renderWppTableOnly();
         }
     };
 
-    window.nextWppPage = function() {
+    window.nextWppPage = function () {
         const totalPages = Math.ceil(window.wppDataState.filteredFeedbacks.length / window.wppDataState.itemsPerPage);
         if (window.wppDataState.currentPage < totalPages) {
             window.wppDataState.currentPage++;
@@ -970,10 +912,10 @@ window.initializePage = function() {
         }
     };
 
-    window.markWppAsSent = async function(psiId, wppLink) {
+    window.markWppAsSent = async function (psiId, wppLink) {
         // Abre o wpp imediatamente para não ser bloqueado pelo popup blocker
         window.open(wppLink, '_blank');
-        
+
         try {
             const token = localStorage.getItem('Yelo_admin_token') || localStorage.getItem('Yelo_token');
             const response = await fetch(`/api/admin/whatsapp-feedbacks/remind/${psiId}`, {
@@ -1005,11 +947,11 @@ window.initializePage = function() {
         const paginationInfo = document.getElementById('wpp-pagination-info');
         const btnPrev = document.getElementById('btn-wpp-prev');
         const btnNext = document.getElementById('btn-wpp-next');
-        
+
         if (!tbody) return;
 
         const filtered = window.wppDataState.filteredFeedbacks;
-        
+
         if (filtered.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #666;">Nenhum contato encontrado para este filtro.</td></tr>';
             if (paginationControls) paginationControls.style.display = 'none';
@@ -1018,7 +960,7 @@ window.initializePage = function() {
 
         const totalPages = Math.ceil(filtered.length / window.wppDataState.itemsPerPage);
         if (window.wppDataState.currentPage > totalPages) window.wppDataState.currentPage = totalPages;
-        
+
         const startIdx = (window.wppDataState.currentPage - 1) * window.wppDataState.itemsPerPage;
         const endIdx = startIdx + window.wppDataState.itemsPerPage;
         const pageItems = filtered.slice(startIdx, endIdx);
@@ -1035,12 +977,12 @@ window.initializePage = function() {
             let contato = '<span class="status status-pendente" style="background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; font-size: 0.75rem;">⏳ Aguardando psi</span>';
             let fechou = '<span style="color: #94a3b8; font-weight: 500;">-</span>';
             let status = '<span class="status status-pendente" style="background: #f8fafc; color: #64748b; border: 1px solid #dee2e6; font-size: 0.75rem;">Pendente</span>';
-            
+
             if (!f.feedbackGiven && f.adminWppReminderSentAt) {
                 const sentDate = new Date(f.adminWppReminderSentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
                 status = `<span class="status status-pendente" title="Follow-up enviado pelo CRM" style="background: #fef08a; color: #854d0e; border: 1px solid #fde047; font-size: 0.75rem;">Cobrado (${sentDate})</span>`;
             }
-            
+
             const safePsiId = f.psychologistId || (f.psychologist ? f.psychologist.id : '');
             const psiNome = f.psychologist ? f.psychologist.nome : 'Psi Removido';
             const psiInitial = psiNome.charAt(0).toUpperCase();
@@ -1073,20 +1015,20 @@ window.initializePage = function() {
                 // Lógica dos botões: Responder Manualmente e Cobrança via WhatsApp
                 const baseUrl = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
                 const linkFeedback = f.feedbackToken ? `${baseUrl}/magic-feedback?token=${f.feedbackToken}` : `${baseUrl}/psi/dashboard`;
-                
+
                 const btnManual = `<a href="${linkFeedback}" target="_blank" class="btn-icon-action btn-icon-blue" title="Responder Manualmente pelo Profissional">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 </a>`;
-                
+
                 // 1. Não mostrar Wpp se tiver menos de 48h
                 const createdAtMs = new Date(f.createdAt).getTime();
                 const nowMs = Date.now();
                 const ageHours = (nowMs - createdAtMs) / (1000 * 60 * 60);
-                
+
                 if (ageHours > 48 && f.psychologist && f.psychologist.telefone) {
                     const sentAtMs = f.adminWppReminderSentAt ? new Date(f.adminWppReminderSentAt).getTime() : 0;
                     const count = f.adminWppReminderCount || 0;
-                    
+
                     if (count >= 2) {
                         // BLOQUEADO - Já foram enviados os 2 lembretes máximos
                         const btnWpp = `<span class="btn-icon-action btn-icon-disabled" title="Lembretes esgotados (máximo de 2)">
@@ -1095,7 +1037,7 @@ window.initializePage = function() {
                         status = `<div class="wpp-status-actions-cell">${status}${btnManual}${btnWpp}</div>`;
                     } else {
                         const hoursSinceLastReminder = sentAtMs ? (nowMs - sentAtMs) / (1000 * 60 * 60) : 9999;
-                        
+
                         if (hoursSinceLastReminder < 48) {
                             // BLOQUEADO - Já cobrado recentemente (menos de 48h)
                             const btnWpp = `<span class="btn-icon-action btn-icon-disabled" title="Cobrança já enviada nas últimas 48h">
@@ -1108,16 +1050,16 @@ window.initializePage = function() {
                             const phone = phoneRaw.startsWith('55') ? phoneRaw : (phoneRaw.length >= 10 ? `55${phoneRaw}` : phoneRaw);
                             const psiNameFirst = (f.psychologist.nome || 'Psi').split(' ')[0];
                             const patientText = f.guestName ? `o(a) paciente ${f.guestName}` : 'um paciente';
-                            
+
                             let msgWpp = '';
                             if (count === 0) {
                                 msgWpp = `Olá, ${psiNameFirst}! Tudo bem?\n\n${patientText} entrou em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
                             } else {
                                 msgWpp = `Olá, ${psiNameFirst}! Tudo bem? 😊\n\nPassando para lembrar sobre ${patientText}.\n\nAinda estamos aguardando seu retorno para saber o que aconteceu com esse encaminhamento. Basta informar se a mensagem chegou e se o atendimento foi iniciado.\n\nEsse retorno leva menos de 1 minuto e nos ajuda a melhorar os próximos encaminhamentos para você e para toda a comunidade da Yelo.\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
                             }
-                            
+
                             const wppLink = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msgWpp)}`;
-                            
+
                             const btnWpp = `<a href="javascript:void(0)" onclick="window.markWppAsSent('${safePsiId}', '${wppLink}')" class="btn-icon-action btn-icon-green" title="Cobrar resposta via WhatsApp">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                             </a>`;
@@ -1140,12 +1082,12 @@ window.initializePage = function() {
                 else if (src.includes('instagram')) { badgeColor = '#db2777'; bgBadge = '#fce7f3'; }
                 else if (src.includes('google')) { badgeColor = '#d97706'; bgBadge = '#fef3c7'; }
                 else if (src.includes('organico') || src.includes('organic')) { badgeColor = '#059669'; bgBadge = '#d1fae5'; }
-                
+
                 utmBadge = `<span class="utm-pill-tag" style="background: ${bgBadge}; color: ${badgeColor};">${f.utmSource}</span>`;
                 if (f.utmMedium) utmBadge += `<br><span style="font-size: 0.72rem; color: #64748b; margin-top: 2px; display: inline-block;">${f.utmMedium}</span>`;
                 if (f.utmCampaign) utmBadge += `<br><span style="font-size: 0.72rem; color: #94a3b8; font-style: italic; display: inline-block;">${f.utmCampaign}</span>`;
             }
-            
+
             return `<tr>
                 <td data-label="Data do Clique"><span style="color: #64748b; font-size: 0.88rem; font-weight: 500;">${dataClique}</span></td>
                 <td data-label="Psicólogo">
@@ -1166,24 +1108,41 @@ window.initializePage = function() {
         }).join('');
     }
 
-    function renderWppFeedbacks(feedbacks, prevFeedbacks = [], daysCount = 30) {
+    function renderWppFeedbacks(feedbacks, prevFeedbacks = [], daysCount = 30, daysExact = null) {
         window.wppDataState.allFeedbacks = feedbacks;
-        
+
         const days = Math.max(1, parseInt(daysCount) || 30);
+        const effectiveDays = Math.max(1 / 24, parseFloat(daysExact) || days);
 
         // --- DADOS ATUAIS ---
         const total = feedbacks.length;
-        const mediaDia = (total / days).toFixed(1);
+        const mediaDia = (total / effectiveDays).toFixed(1);
 
         const respondidos = feedbacks.filter(f => f.feedbackGiven).length;
         const taxaResposta = total > 0 ? ((respondidos / total) * 100).toFixed(1) : 0;
         const taxaNaoResposta = total > 0 ? (100 - parseFloat(taxaResposta)).toFixed(1) : 0;
 
+        // Janela madura (>= 48h): evita atribuir ao atendimento cliques recentes que ainda nem venceram o prazo de cobrança
+        const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
+        const matureFeedbacks = feedbacks.filter(f => f.createdAt && new Date(f.createdAt).getTime() <= cutoff48h);
+        const pendingRecent48h = feedbacks.filter(f => !f.feedbackGiven && f.createdAt && new Date(f.createdAt).getTime() > cutoff48h).length;
+        const matureRespondidos = matureFeedbacks.filter(f => f.feedbackGiven).length;
+        const matureRespPct = matureFeedbacks.length > 0 ? ((matureRespondidos / matureFeedbacks.length) * 100).toFixed(1) : null;
+
+        const isLostDeal = (f) => f.feedbackGiven && f.contactReceived && (
+            f.dealClosed === 'no' ||
+            f.dealClosed === 'ghosted' ||
+            f.dealClosed === 'not_started' ||
+            f.dealClosed === 'not_started_price' ||
+            f.dealClosed === 'not_started_schedule' ||
+            f.dealClosed === 'not_started_other'
+        );
+
         const recebidas = feedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
         const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'yes' || f.dealClosed === 'started')).length;
         const negociacao = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'talking').length;
-        const perdidos = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'ghosted' || f.dealClosed === 'not_started' || f.dealClosed === 'not_started_price' || f.dealClosed === 'not_started_schedule' || f.dealClosed === 'not_started_other')).length;
-        
+        const perdidos = feedbacks.filter(isLostDeal).length;
+
         const fantasmas = feedbacks.filter(f => f.feedbackGiven && !f.contactReceived).length;
         const totalValidados = recebidas + fantasmas;
         const taxaContato = totalValidados > 0 ? ((recebidas / totalValidados) * 100).toFixed(1) : 0;
@@ -1193,22 +1152,22 @@ window.initializePage = function() {
         // --- DADOS ANTERIORES (COMPARAÇÃO) ---
         const hasPrev = Array.isArray(prevFeedbacks);
         const prevTotal = hasPrev ? prevFeedbacks.length : null;
-        const prevMediaDia = hasPrev ? (prevTotal / days).toFixed(1) : null;
+        const prevMediaDia = hasPrev ? (prevTotal / effectiveDays).toFixed(1) : null;
 
         const prevRespondidos = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven).length : 0;
-        const prevTaxaResposta = (hasPrev && prevTotal > 0) ? ((prevRespondidos / prevTotal) * 100).toFixed(1) : (hasPrev ? 0 : null);
-        const prevTaxaNaoResposta = (hasPrev && prevTotal > 0) ? (100 - parseFloat(prevTaxaResposta)).toFixed(1) : (hasPrev ? 0 : null);
+        const prevTaxaResposta = (hasPrev && prevTotal > 0) ? ((prevRespondidos / prevTotal) * 100).toFixed(1) : null;
+        const prevTaxaNaoResposta = prevTaxaResposta !== null ? (100 - parseFloat(prevTaxaResposta)).toFixed(1) : null;
 
         const prevRecebidas = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven && f.contactReceived).length : null;
         const prevFechados = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'yes' || f.dealClosed === 'started')).length : null;
         const prevNegociacao = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'talking').length : null;
-        const prevPerdidos = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'ghosted' || f.dealClosed === 'not_started' || f.dealClosed === 'not_started_price' || f.dealClosed === 'not_started_schedule' || f.dealClosed === 'not_started_other')).length : null;
+        const prevPerdidos = hasPrev ? prevFeedbacks.filter(isLostDeal).length : null;
 
         const prevFantasmas = hasPrev ? prevFeedbacks.filter(f => f.feedbackGiven && !f.contactReceived).length : null;
         const prevTotalValidados = (prevRecebidas || 0) + (prevFantasmas || 0);
-        const prevTaxaContato = (hasPrev && prevTotalValidados > 0) ? ((prevRecebidas / prevTotalValidados) * 100).toFixed(1) : (hasPrev ? 0 : null);
-        const prevTaxaFechamento = (hasPrev && prevRecebidas > 0) ? ((prevFechados / prevRecebidas) * 100).toFixed(1) : (hasPrev ? 0 : null);
-        const prevTaxaNaoFechamento = (hasPrev && prevRecebidas > 0) ? ((prevPerdidos / prevRecebidas) * 100).toFixed(1) : (hasPrev ? 0 : null);
+        const prevTaxaContato = (hasPrev && prevTotalValidados > 0) ? ((prevRecebidas / prevTotalValidados) * 100).toFixed(1) : null;
+        const prevTaxaFechamento = (hasPrev && prevRecebidas > 0) ? ((prevFechados / prevRecebidas) * 100).toFixed(1) : null;
+        const prevTaxaNaoFechamento = (hasPrev && prevRecebidas > 0) ? ((prevPerdidos / prevRecebidas) * 100).toFixed(1) : null;
 
         // --- ELEMENTOS DOM ---
         const elWppTotal = document.getElementById('kpi-wpp-total-feedbacks');
@@ -1230,16 +1189,29 @@ window.initializePage = function() {
         if (elWppMediaDia) elWppMediaDia.innerHTML = `${mediaDia}${renderTrend(mediaDia, prevMediaDia)}`;
         if (elWppFant) elWppFant.innerHTML = `${fantasmas.toLocaleString()}${renderTrend(fantasmas, prevFantasmas, true)}`;
         if (elWppRec) elWppRec.innerHTML = `${recebidas.toLocaleString()}${renderTrend(recebidas, prevRecebidas)}`;
-        if (elWppTx) elWppTx.innerHTML = `${taxaResposta}%${renderTrend(taxaResposta, prevTaxaResposta, false, { isRate: true })}`;
-        if (elWppTxNaoResp) elWppTxNaoResp.innerHTML = `${taxaNaoResposta}%${renderTrend(taxaNaoResposta, prevTaxaNaoResposta, true, { isRate: true })}`;
+
+        const appendMaturityTitle = (html, isNonResp = false) => {
+            if (!pendingRecent48h || matureRespPct === null) return html;
+            const matureVal = isNonResp ? (100 - parseFloat(matureRespPct)).toFixed(1) : matureRespPct;
+            const suffix = ` · Maduros (>48h): ${matureVal}% (${pendingRecent48h} cliques <48h em aberto)`;
+            return html.replace(/title="([^"]*)"/, `title="$1${suffix}"`);
+        };
+        if (elWppTx) {
+            const trendTx = prevTaxaResposta !== null ? appendMaturityTitle(renderTrend(taxaResposta, prevTaxaResposta, false, { isRate: true }), false) : '';
+            elWppTx.innerHTML = `${taxaResposta}%${trendTx}`;
+        }
+        if (elWppTxNaoResp) {
+            const trendNaoResp = prevTaxaNaoResposta !== null ? appendMaturityTitle(renderTrend(taxaNaoResposta, prevTaxaNaoResposta, true, { isRate: true }), true) : '';
+            elWppTxNaoResp.innerHTML = `${taxaNaoResposta}%${trendNaoResp}`;
+        }
 
         // Linha 2: Fundo de Funil & Performance de Vendas
-        if (elWppNeg) elWppNeg.innerHTML = `${negociacao.toLocaleString()}${renderTrend(negociacao, prevNegociacao)}`;
+        if (elWppNeg) elWppNeg.innerHTML = `${negociacao.toLocaleString()}${renderTrend(negociacao, prevNegociacao, false, { neutral: true })}`;
         if (elWppFec) elWppFec.innerHTML = `${fechados.toLocaleString()}${renderTrend(fechados, prevFechados)}`;
         if (elWppPerd) elWppPerd.innerHTML = `${perdidos.toLocaleString()}${renderTrend(perdidos, prevPerdidos, true)}`;
-        if (elWppTxContato) elWppTxContato.innerHTML = `${taxaContato}%${renderTrend(taxaContato, prevTaxaContato, false, { isRate: true })}`;
-        if (elWppTxFec) elWppTxFec.innerHTML = `${taxaFechamento}%${renderTrend(taxaFechamento, prevTaxaFechamento, false, { isRate: true })}`;
-        if (elWppTxNaoFec) elWppTxNaoFec.innerHTML = `${taxaNaoFechamento}%${renderTrend(taxaNaoFechamento, prevTaxaNaoFechamento, true, { isRate: true })}`;
+        if (elWppTxContato) elWppTxContato.innerHTML = `${taxaContato}%${prevTaxaContato !== null ? renderTrend(taxaContato, prevTaxaContato, false, { isRate: true }) : ''}`;
+        if (elWppTxFec) elWppTxFec.innerHTML = `${taxaFechamento}%${prevTaxaFechamento !== null ? renderTrend(taxaFechamento, prevTaxaFechamento, false, { isRate: true }) : ''}`;
+        if (elWppTxNaoFec) elWppTxNaoFec.innerHTML = `${taxaNaoFechamento}%${prevTaxaNaoFechamento !== null ? renderTrend(taxaNaoFechamento, prevTaxaNaoFechamento, true, { isRate: true }) : ''}`;
 
         window.applyWppFilter(); // Já faz o filtro, paginação e renderização da tabela
     }
@@ -1255,7 +1227,7 @@ window.initializePage = function() {
         if (!tbody) return;
 
         const reviews = dataUx.reviews || [];
-        
+
         if (reviews.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px; color: #666;">Nenhuma avaliação UX registrada até o momento.</td></tr>';
             return;
@@ -1265,7 +1237,7 @@ window.initializePage = function() {
             const dataRow = r.createdAt ? new Date(r.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
             const starsHtml = '⭐'.repeat(r.rating || 0) + '<span style="color:#e2e8f0;">' + '⭐'.repeat(5 - (r.rating || 0)) + '</span>';
             const feedbackText = r.feedback ? `"${r.feedback}"` : '<em style="color:#aaa;">Sem comentário</em>';
-            
+
             return `<tr>
                 <td data-label="Data" style="color: #666; font-size: 0.9rem; white-space: nowrap;">${dataRow}</td>
                 <td data-label="Nota" style="text-align: center; font-size: 1.1rem;" title="Nota ${r.rating}">${starsHtml}</td>
@@ -1275,27 +1247,27 @@ window.initializePage = function() {
     }
 
     // --- ORDENAÇÃO DO RANKING (FRONTEND) ---
-    window.sortRanking = function(column) {
+    window.sortRanking = function (column) {
         if (!globalRankingData) return;
-        
+
         if (currentRankingSort.column === column) {
             currentRankingSort.direction = currentRankingSort.direction === 'asc' ? 'desc' : 'asc';
         } else {
             currentRankingSort.column = column;
             currentRankingSort.direction = column === 'nome' || column === 'posicao' ? 'asc' : 'desc';
         }
-        
+
         const sortedData = [...globalRankingData].sort((a, b) => {
             let valA = column === 'conversao' ? a.conversaoVal : (column === 'conversaoFechamento' ? a.conversaoFechamentoVal : (column === 'posicao' ? a.originalPos : a[column]));
             let valB = column === 'conversao' ? b.conversaoVal : (column === 'conversaoFechamento' ? b.conversaoFechamentoVal : (column === 'posicao' ? b.originalPos : b[column]));
-            
+
             if (typeof valA === 'string') { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
-            
+
             if (valA < valB) return currentRankingSort.direction === 'asc' ? -1 : 1;
             if (valA > valB) return currentRankingSort.direction === 'asc' ? 1 : -1;
             return 0;
         });
-        
+
         updateSortIndicators(column);
         renderRankingPsi(sortedData);
     };
@@ -1378,12 +1350,12 @@ window.initializePage = function() {
     if (btnBuscarLeads) {
         btnBuscarLeads.addEventListener('click', async () => {
             const tbody = document.getElementById('auditoria-leads-tbody');
-            
+
             // UI de carregamento
             const originalText = btnBuscarLeads.innerHTML;
             btnBuscarLeads.innerHTML = '<span class="loading-spinner-sm" style="width:14px; height:14px; margin-right:5px; border-width:2px; display:inline-block;"></span> Buscando...';
             btnBuscarLeads.disabled = true;
-            
+
             tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px;"><span class="loading-spinner-sm" style="border-width: 3px; border-top-color: #1B4332;"></span></td></tr>';
 
             try {
@@ -1397,17 +1369,17 @@ window.initializePage = function() {
                 const res = await fetch(`${API_BASE_URL}/api/admin/leads-recentes?${queryParams.toString()}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                
+
                 if (!res.ok) throw new Error("Falha ao buscar dados de auditoria.");
-                
+
                 const leads = await res.json();
                 window.auditoriaData = leads;
-                
+
                 if (!leads || leads.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px; color: #64748b;">Nenhum lead recebido no período selecionado.</td></tr>';
                     return;
                 }
-                
+
                 tbody.innerHTML = leads.map(l => {
                     let statusBadge = '<span style="background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">Desconhecido</span>';
                     if (l.status === 'active') {
@@ -1426,8 +1398,8 @@ window.initializePage = function() {
                         </tr>
                     `;
                 }).join('');
-                
-            } catch(e) {
+
+            } catch (e) {
                 console.error(e);
                 tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 40px; color: #ef4444;">Erro ao buscar dados. Tente novamente.</td></tr>';
             } finally {
@@ -1440,7 +1412,7 @@ window.initializePage = function() {
     // Executa assim que a view injetada carregar
     carregarDadosFunil();
 
-    window.loadV6Impact = async function(token) {
+    window.loadV6Impact = async function (token) {
         try {
             const response = await fetch('/api/cmo/v6-impact', {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -1454,7 +1426,7 @@ window.initializePage = function() {
             // KPIs
             document.getElementById('v6-total-leads').innerHTML = `${data.stats.totalLeadsAfter} <span style="font-size: 0.85rem; color: #64748b; font-weight: normal; margin-left: 8px;">(Antes: ${data.stats.totalLeadsBefore})</span>`;
             document.getElementById('v6-starving').innerHTML = `${data.stats.starvingAfter} <span style="font-size: 0.85rem; color: #64748b; font-weight: normal; margin-left: 8px;">(Antes: ${data.stats.starvingBefore})</span>`;
-            
+
             let concDiff = data.stats.concentrationAfter - data.stats.concentrationBefore;
             let concColor = concDiff > 0 ? '#ef4444' : (concDiff < 0 ? '#10b981' : '#64748b');
             let concArrow = concDiff > 0 ? '↑' : (concDiff < 0 ? '↓' : '−');
@@ -1464,12 +1436,12 @@ window.initializePage = function() {
             // Tabela
             const tbody = document.getElementById('v6-impact-table-body');
             tbody.innerHTML = '';
-            
+
             if (data.tableData && data.tableData.length > 0) {
                 data.tableData.forEach(row => {
                     let varColor = row.variation > 0 ? '#10b981' : (row.variation < 0 ? '#ef4444' : '#64748b');
                     let varText = row.variation > 0 ? `+${row.variation}` : row.variation;
-                    
+
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid #f1f5f9';
                     tr.innerHTML = `
