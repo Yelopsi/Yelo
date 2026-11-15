@@ -1,4 +1,6 @@
 const db = require('../models');
+const metaAdsService = require('./metaAdsService');
+const googleAdsService = require('./googleAdsService');
 
 const VALID_DRE_GROUPS = [
     'DEDUCTION_TAX',
@@ -88,7 +90,8 @@ async function ensureDreSchema() {
         `ALTER TABLE "YeloMonthlyFinances" ADD COLUMN IF NOT EXISTS "notes" TEXT;`,
         `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "company_legal_name" VARCHAR(255);`,
         `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "company_cnpj" VARCHAR(32);`,
-        `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "tax_regime" VARCHAR(40) DEFAULT 'SIMPLES_NACIONAL';`
+        `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "tax_regime" VARCHAR(40) DEFAULT 'SIMPLES_NACIONAL';`,
+        `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "auto_recurring_expenses" TEXT;`
     ];
     for (const sql of queries) {
         try {
@@ -98,6 +101,297 @@ async function ensureDreSchema() {
         }
     }
     schemaChecked = true;
+}
+
+const adSyncCooldown = new Map();
+const adSyncWarnings = new Map();
+const providerAuthErrors = new Map();
+const CURRENT_MONTH_SYNC_TTL_MS = 15 * 60 * 1000;
+const PAST_MONTH_SYNC_TTL_MS = 12 * 60 * 60 * 1000;
+const AUTH_ERROR_TTL_MS = 10 * 60 * 1000;
+
+function isAuthErrorMsg(msg) {
+    return /token|session|expired|oauth|unauthorized|auth_failed/i.test(String(msg || ''));
+}
+
+function parseRecurringRules(raw) {
+    if (!raw) return [];
+    try {
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (!Array.isArray(parsed)) return [];
+        return parsed
+            .filter(r => r && typeof r === 'object' && r.name && Number(r.amount) > 0)
+            .map(r => ({
+                id: String(r.id || `rule-${String(r.name).toLowerCase().replace(/[^a-z0-9]/g, '')}`),
+                name: String(r.name).trim().slice(0, 120),
+                amount: round2(r.amount),
+                dreGroup: VALID_DRE_GROUPS.includes(r.dreGroup) ? r.dreGroup : 'OPEX_ADMIN',
+                category: String(r.category || 'Infra / Fixo').trim().slice(0, 80),
+                provider: ['GOOGLE', 'META', 'ASAAS', 'RENDER', 'OPENAI', 'WHATSAPP', 'ACCOUNTING', 'OTHER'].includes(r.provider) ? r.provider : 'OTHER',
+                startMonth: /^\d{4}-(0[1-9]|1[0-2])$/.test(r.startMonth || '') ? r.startMonth : '2026-01',
+                active: r.active !== false
+            }));
+    } catch (_) {
+        return [];
+    }
+}
+
+function monthRangeDates(monthYear) {
+    const [y, m] = monthYear.split('-').map(Number);
+    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    return {
+        dateStart: `${monthYear}-01`,
+        dateEnd: `${monthYear}-${String(lastDay).padStart(2, '0')}`
+    };
+}
+
+async function syncSingleMonth({ monthYear, settings = null, isClosed = false, force = false }) {
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(monthYear) || isClosed) {
+        return { monthYear, synced: [], skipped: [], warnings: [] };
+    }
+
+    const todayIso = toIsoDateBRT(new Date());
+    const nowMonthKey = todayIso.slice(0, 7);
+    if (monthYear > nowMonthKey) {
+        return { monthYear, synced: [], skipped: [], warnings: [] };
+    }
+
+    const sys = settings || (await db.SystemSetting.findOne({ raw: true })) || {};
+    const rules = parseRecurringRules(sys.auto_recurring_expenses);
+    const monthExpenses = await db.YeloExpense.findAll({ where: { monthYear } });
+
+    const synced = [];
+    const skipped = [];
+    const warnings = [];
+
+    // 1. Aplica despesas fixas recorrentes automáticas (ex: Render R$ 81,98)
+    for (const rule of rules) {
+        if (!rule.active || monthYear < rule.startMonth) continue;
+
+        const normRuleName = rule.name.toLowerCase();
+        const manualOverride = monthExpenses.find(e =>
+            e.entryMethod !== 'SYSTEM' && (
+                (rule.provider !== 'OTHER' && e.provider === rule.provider) ||
+                String(e.name || '').toLowerCase() === normRuleName
+            )
+        );
+        if (manualOverride) continue;
+
+        const existingSys = monthExpenses.find(e =>
+            e.entryMethod === 'SYSTEM' && (
+                (rule.provider !== 'OTHER' && e.provider === rule.provider) ||
+                String(e.name || '').toLowerCase() === normRuleName
+            )
+        );
+        const groupMeta = DRE_GROUP_META[rule.dreGroup] || DRE_GROUP_META.OPEX_ADMIN;
+        if (existingSys) {
+            if (Math.abs(Number(existingSys.amount) - rule.amount) > 0.009 || existingSys.dreGroup !== rule.dreGroup) {
+                await existingSys.update({
+                    name: rule.name,
+                    amount: rule.amount,
+                    category: rule.category,
+                    dreGroup: rule.dreGroup,
+                    nature: groupMeta.nature,
+                    purpose: groupMeta.purpose,
+                    provider: rule.provider
+                });
+                synced.push({ provider: rule.provider, label: rule.name, amount: rule.amount, kind: 'RECURRING' });
+            }
+        } else {
+            const createdRow = await db.YeloExpense.create({
+                name: rule.name,
+                amount: rule.amount,
+                monthYear,
+                category: rule.category,
+                nature: groupMeta.nature,
+                purpose: groupMeta.purpose,
+                provider: rule.provider,
+                entryMethod: 'SYSTEM',
+                dreGroup: rule.dreGroup,
+                expenseDate: `${monthYear}-01`,
+                notes: 'Recorrência fixa mensal automática'
+            });
+            monthExpenses.push(createdRow);
+            synced.push({ provider: rule.provider, label: rule.name, amount: rule.amount, kind: 'RECURRING' });
+        }
+    }
+
+    // 2. Sincroniza Google Ads e Meta Ads sem sobrescrever lançamentos manuais
+    const { dateStart, dateEnd } = monthRangeDates(monthYear);
+    const effectiveEnd = monthYear === nowMonthKey ? todayIso : dateEnd;
+    const isPastMonth = monthYear < nowMonthKey;
+    const ttlMs = isPastMonth ? PAST_MONTH_SYNC_TTL_MS : CURRENT_MONTH_SYNC_TTL_MS;
+
+    const syncAdProvider = async (providerKey, label, isReadyFn, fetchFn) => {
+        const hasManual = monthExpenses.some(e => {
+            if (e.entryMethod === 'API') return false;
+            const prov = String(e.provider || '').toUpperCase();
+            const cat = String(e.category || '').toLowerCase();
+            if (providerKey === 'GOOGLE') return prov === 'GOOGLE' || cat.includes('google');
+            return prov === 'META' || cat.includes('meta') || cat.includes('facebook');
+        });
+        if (hasManual) {
+            skipped.push(`${label} (preservado lançamento manual)`);
+            return;
+        }
+
+        const existingApi = monthExpenses.find(e => e.entryMethod === 'API' && e.provider === providerKey);
+        const cacheKey = `${monthYear}::${providerKey}`;
+        const lastAttemptAt = adSyncCooldown.get(cacheKey) || 0;
+        const alreadyFinalizedPast = isPastMonth && existingApi && new Date(existingApi.updatedAt) > new Date(`${dateEnd}T23:59:59Z`);
+
+        if (!force && (alreadyFinalizedPast || (Date.now() - lastAttemptAt < ttlMs))) {
+            return;
+        }
+
+        const authErrState = providerAuthErrors.get(providerKey);
+        if (!force && authErrState && (Date.now() - authErrState.at < AUTH_ERROR_TTL_MS)) {
+            warnings.push({ provider: providerKey, label, message: authErrState.message });
+            return;
+        }
+        if (force) {
+            providerAuthErrors.delete(providerKey);
+        }
+
+        if (!isReadyFn()) {
+            adSyncCooldown.set(cacheKey, Date.now());
+            skipped.push(`${label} (credenciais não configuradas)`);
+            return;
+        }
+
+        try {
+            if (force && typeof metaAdsService.cache?.clear === 'function' && providerKey === 'META') {
+                metaAdsService.cache.clear();
+            }
+            if (force && typeof googleAdsService.cache?.clear === 'function' && providerKey === 'GOOGLE') {
+                googleAdsService.cache.clear();
+            }
+            const res = await fetchFn(dateStart, effectiveEnd);
+            adSyncCooldown.set(cacheKey, Date.now());
+
+            if (res && res.error) {
+                if (isAuthErrorMsg(res.error)) {
+                    providerAuthErrors.set(providerKey, { at: Date.now(), message: res.error });
+                }
+                warnings.push({ provider: providerKey, label, message: res.error });
+                skipped.push(`${label} (${res.error})`);
+                return;
+            }
+            providerAuthErrors.delete(providerKey);
+
+            const amt = round2(res?.spend || 0);
+            if (amt <= 0) {
+                skipped.push(`${label} (R$ 0,00)`);
+                return;
+            }
+
+            if (existingApi) {
+                await existingApi.update({
+                    amount: amt,
+                    dreGroup: 'OPEX_MARKETING',
+                    nature: 'VARIABLE',
+                    purpose: 'GROWTH',
+                    expenseDate: effectiveEnd,
+                    notes: `Sincronizado automaticamente (${dateStart} a ${effectiveEnd})`
+                });
+            } else {
+                await db.YeloExpense.create({
+                    name: `${label} (Automático API)`,
+                    amount: amt,
+                    monthYear,
+                    category: label,
+                    nature: 'VARIABLE',
+                    purpose: 'GROWTH',
+                    provider: providerKey,
+                    entryMethod: 'API',
+                    dreGroup: 'OPEX_MARKETING',
+                    expenseDate: effectiveEnd,
+                    notes: `Sincronizado automaticamente (${dateStart} a ${effectiveEnd})`
+                });
+            }
+            synced.push({ provider: providerKey, label, amount: amt, kind: 'ADS_API' });
+        } catch (err) {
+            adSyncCooldown.set(cacheKey, Date.now());
+            const msg = err?.response?.data?.error?.message || err.message;
+            if (isAuthErrorMsg(msg)) {
+                providerAuthErrors.set(providerKey, { at: Date.now(), message: msg });
+            }
+            warnings.push({ provider: providerKey, label, message: msg });
+            skipped.push(`${label} (${msg})`);
+        }
+    };
+
+    await Promise.all([
+        syncAdProvider(
+            'META',
+            'Meta Ads',
+            () => Boolean(metaAdsService.accessToken && metaAdsService.accessToken !== 'MOCK_META_TOKEN' && metaAdsService.adAccountId && metaAdsService.adAccountId !== 'MOCK_ACCOUNT_ID'),
+            (s, e) => metaAdsService.getAccountSpend(s, e)
+        ),
+        syncAdProvider(
+            'GOOGLE',
+            'Google Ads',
+            () => Boolean(googleAdsService.isConfigured && googleAdsService.isConfigured()),
+            (s, e) => googleAdsService.getAccountSpend(s, e)
+        )
+    ]);
+
+    if (warnings.length > 0) {
+        adSyncWarnings.set(monthYear, warnings);
+    } else {
+        adSyncWarnings.delete(monthYear);
+    }
+
+    return { monthYear, synced, skipped, warnings };
+}
+
+async function autoSyncForYear({ year, selectedMonth, force = false }) {
+    await ensureDreSchema();
+    const targetYear = Math.min(Math.max(parseInt(year, 10) || new Date().getFullYear(), 2020), 2100);
+    const todayIso = toIsoDateBRT(new Date());
+    const nowMonthKey = todayIso.slice(0, 7);
+    const settings = (await db.SystemSetting.findOne({ raw: true })) || {};
+
+    const yearMonthKeys = Array.from({ length: 12 }, (_, i) => `${targetYear}-${String(i + 1).padStart(2, '0')}`)
+        .filter(mk => mk <= nowMonthKey);
+
+    if (yearMonthKeys.length === 0) return { synced: [], warnings: [] };
+
+    const mfRows = await db.YeloMonthlyFinance.findAll({
+        where: { monthYear: yearMonthKeys },
+        raw: true
+    });
+    const closedSet = new Set(mfRows.filter(m => m.isClosed).map(m => m.monthYear));
+
+    // Garante que o mês selecionado e os meses abertos do exercício sejam sincronizados
+    const selMk = `${targetYear}-${String(Math.min(Math.max(parseInt(selectedMonth, 10) || 1, 1), 12)).padStart(2, '0')}`;
+    const monthsToSync = yearMonthKeys.filter(mk => !closedSet.has(mk));
+
+    const results = [];
+    if (monthsToSync.includes(selMk)) {
+        results.push(await syncSingleMonth({
+            monthYear: selMk,
+            settings,
+            isClosed: false,
+            force: Boolean(force)
+        }));
+    }
+    const restMonths = monthsToSync.filter(mk => mk !== selMk);
+    if (restMonths.length > 0) {
+        const restResults = await Promise.all(
+            restMonths.map(mk => syncSingleMonth({
+                monthYear: mk,
+                settings,
+                isClosed: false,
+                force: false
+            }))
+        );
+        results.push(...restResults);
+    }
+
+    const allSynced = results.flatMap(r => r.synced.map(s => ({ monthYear: r.monthYear, ...s })));
+    const allWarnings = results.flatMap(r => r.warnings.map(w => ({ monthYear: r.monthYear, ...w })));
+    return { synced: allSynced, warnings: allWarnings };
 }
 
 function round2(n) {
@@ -397,6 +691,33 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
         buckets[mk] = createEmptyMonthBucket(mk);
     });
 
+    const parseEventMeta = (ev) => {
+        if (!ev || ev.sourceMetadata == null) return null;
+        if (typeof ev.sourceMetadata === 'string') {
+            try { return JSON.parse(ev.sourceMetadata); } catch (_) { return null; }
+        }
+        return typeof ev.sourceMetadata === 'object' ? ev.sourceMetadata : null;
+    };
+
+    const extractObservedFeeFromEvents = ({ credEvent, primaryRevEvent, confEvent }, gross) => {
+        for (const ev of [credEvent, primaryRevEvent, confEvent]) {
+            if (ev && ev.feeAmount !== null && ev.feeAmount !== undefined && ev.feeAmount !== '') {
+                const parsed = Number(ev.feeAmount);
+                if (Number.isFinite(parsed) && parsed >= 0) return round2(parsed);
+            }
+        }
+        for (const ev of [credEvent, primaryRevEvent, confEvent]) {
+            const meta = parseEventMeta(ev);
+            if (!meta || meta.netValue === undefined || meta.netValue === null || meta.netValue === '') continue;
+            const netVal = Number(meta.netValue);
+            const baseVal = Number(meta.value !== undefined && meta.value !== null && meta.value !== '' ? meta.value : gross);
+            if (Number.isFinite(netVal) && Number.isFinite(baseVal) && baseVal >= netVal && (baseVal - netVal) >= 0) {
+                return round2(baseVal - netVal);
+            }
+        }
+        return null;
+    };
+
     const revenueLedger = [];
 
     // 3A. Processa pagamentos cobertos por PaymentFinancialEvents
@@ -419,9 +740,7 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
                 buckets[mk].revenue.grossTotal = round2(buckets[mk].revenue.grossTotal + gross);
                 buckets[mk].revenue.paidCount += 1;
 
-                const feeObs = credEvent && credEvent.feeAmount !== null
-                    ? round2(credEvent.feeAmount)
-                    : (primaryRevEvent.feeAmount !== null ? round2(primaryRevEvent.feeAmount) : null);
+                const feeObs = extractObservedFeeFromEvents({ credEvent, primaryRevEvent, confEvent }, gross);
 
                 let feeUsed = 0;
                 let feeIsEstimated = false;
@@ -927,6 +1246,24 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
         });
     }
 
+    const monthSyncWarnings = new Map();
+    for (const w of (adSyncWarnings.get(selectedMk) || [])) {
+        monthSyncWarnings.set(w.provider, `${w.label}: ${w.message}`);
+    }
+    for (const [provKey, errObj] of providerAuthErrors.entries()) {
+        if (Date.now() - errObj.at < AUTH_ERROR_TTL_MS && !monthSyncWarnings.has(provKey)) {
+            monthSyncWarnings.set(provKey, `${provKey}: ${errObj.message}`);
+        }
+    }
+    if (monthSyncWarnings.size > 0) {
+        alerts.push({
+            type: 'warning',
+            code: 'SYNC_WARNING',
+            title: 'Aviso na sincronização automática de Ads',
+            message: Array.from(monthSyncWarnings.values()).join(' | ')
+        });
+    }
+
     const availableYears = await getAvailableYears();
     const yearRevenueLedger = revenueLedger
         .filter(r => r.monthKey.startsWith(`${targetYear}-`))
@@ -1002,7 +1339,8 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
             shortLabel: val.shortLabel,
             nature: val.nature,
             purpose: val.purpose
-        }))
+        })),
+        autoRecurringExpenses: parseRecurringRules(settings.auto_recurring_expenses)
     };
 }
 
@@ -1233,5 +1571,8 @@ module.exports = {
     buildDreReport,
     buildCsvExport,
     buildExcelWorkbookXml,
-    ensureDreSchema
+    ensureDreSchema,
+    autoSyncForYear,
+    syncSingleMonth,
+    parseRecurringRules
 };

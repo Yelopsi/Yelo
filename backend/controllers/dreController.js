@@ -1,7 +1,5 @@
 const db = require('../models');
 const dreService = require('../services/dreService');
-const metaAdsService = require('../services/metaAdsService');
-const googleAdsService = require('../services/googleAdsService');
 
 const MONTH_KEY_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -11,20 +9,16 @@ function addMonthsToKey(monthYear, offset) {
     return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
-function monthRangeDates(monthYear) {
-    const [y, m] = monthYear.split('-').map(Number);
-    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
-    return {
-        dateStart: `${monthYear}-01`,
-        dateEnd: `${monthYear}-${String(lastDay).padStart(2, '0')}`
-    };
-}
-
 exports.getDre = async (req, res) => {
     try {
-        const { year, month, regime } = req.query;
+        const { year, month, regime, refresh } = req.query;
+        const autoSync = await dreService.autoSyncForYear({
+            year,
+            selectedMonth: month,
+            force: refresh === '1'
+        });
         const report = await dreService.buildDreReport({ year, month, regime });
-        res.json({ success: true, ...report });
+        res.json({ success: true, ...report, autoSync });
     } catch (error) {
         console.error('[DRE] Erro ao gerar DRE:', error);
         res.status(500).json({ error: 'Erro ao calcular DRE contábil.' });
@@ -163,6 +157,9 @@ exports.updateExpense = async (req, res) => {
         if (expenseDate !== undefined) updates.expenseDate = expenseDate || null;
         if (documentNumber !== undefined) updates.documentNumber = documentNumber ? String(documentNumber).trim().slice(0, 100) : null;
         if (notes !== undefined) updates.notes = notes ? String(notes).trim().slice(0, 1000) : null;
+        if (expense.entryMethod === 'SYSTEM' || expense.entryMethod === 'API') {
+            updates.entryMethod = 'MANUAL';
+        }
 
         await expense.update(updates);
         res.json({ success: true, expense });
@@ -263,81 +260,58 @@ exports.copyPreviousFixedExpenses = async (req, res) => {
 exports.syncAdsSpend = async (req, res) => {
     try {
         await dreService.ensureDreSchema();
-        const { monthYear } = req.body;
-        if (!monthYear || !MONTH_KEY_RE.test(monthYear)) {
+        const { monthYear, year } = req.body;
+        if (monthYear && !MONTH_KEY_RE.test(monthYear)) {
             return res.status(400).json({ error: 'monthYear inválido (YYYY-MM).' });
         }
 
-        const mf = await db.YeloMonthlyFinance.findOne({ where: { monthYear }, raw: true });
-        if (mf && mf.isClosed) {
-            return res.status(403).json({ error: `O mês ${monthYear} está fechado.` });
+        if (monthYear) {
+            const mf = await db.YeloMonthlyFinance.findOne({ where: { monthYear }, raw: true });
+            if (mf && mf.isClosed) {
+                return res.status(403).json({ error: `O mês ${monthYear} está fechado.` });
+            }
+            const result = await dreService.syncSingleMonth({ monthYear, isClosed: false, force: true });
+            return res.json({ success: true, ...result });
         }
 
-        const { dateStart, dateEnd } = monthRangeDates(monthYear);
-        const synced = [];
-        const skipped = [];
-
-        const upsertApiExpense = async (providerKey, label, spend) => {
-            const amt = Math.round((Number(spend || 0) + Number.EPSILON) * 100) / 100;
-            if (amt <= 0) {
-                skipped.push(`${label} (R$ 0,00)`);
-                return;
-            }
-            const existing = await db.YeloExpense.findOne({
-                where: { monthYear, provider: providerKey, entryMethod: 'API' }
-            });
-            if (existing) {
-                await existing.update({
-                    amount: amt,
-                    dreGroup: 'OPEX_MARKETING',
-                    nature: 'VARIABLE',
-                    purpose: 'GROWTH',
-                    expenseDate: dateEnd
-                });
-            } else {
-                await db.YeloExpense.create({
-                    name: `${label} (Sincronizado via API)`,
-                    amount: amt,
-                    monthYear,
-                    category: label,
-                    nature: 'VARIABLE',
-                    purpose: 'GROWTH',
-                    provider: providerKey,
-                    entryMethod: 'API',
-                    dreGroup: 'OPEX_MARKETING',
-                    expenseDate: dateEnd,
-                    notes: `Período ${dateStart} a ${dateEnd}`
-                });
-            }
-            synced.push({ provider: providerKey, label, amount: amt });
-        };
-
-        if (metaAdsService.accessToken && metaAdsService.accessToken !== 'MOCK_META_TOKEN') {
-            try {
-                const metaRes = await metaAdsService.getAccountSpend(dateStart, dateEnd);
-                await upsertApiExpense('META', 'Meta Ads', metaRes?.spend || 0);
-            } catch (err) {
-                skipped.push(`Meta Ads (${err.message})`);
-            }
-        } else {
-            skipped.push('Meta Ads (credenciais não configuradas)');
-        }
-
-        if (googleAdsService.isConfigured && googleAdsService.isConfigured()) {
-            try {
-                const googleRes = await googleAdsService.getAccountSpend(dateStart, dateEnd);
-                await upsertApiExpense('GOOGLE', 'Google Ads', googleRes?.spend || 0);
-            } catch (err) {
-                skipped.push(`Google Ads (${err.message})`);
-            }
-        } else {
-            skipped.push('Google Ads (credenciais não configuradas)');
-        }
-
-        res.json({ success: true, monthYear, synced, skipped });
+        const targetYear = parseInt(year, 10) || new Date().getFullYear();
+        const result = await dreService.autoSyncForYear({ year: targetYear, selectedMonth: new Date().getMonth() + 1, force: true });
+        res.json({ success: true, year: targetYear, ...result });
     } catch (error) {
         console.error('[DRE] Erro ao sincronizar Ads:', error);
-        res.status(500).json({ error: 'Erro ao sincronizar gastos de Ads.' });
+        res.status(500).json({ error: 'Erro ao sincronizar gastos de Ads e recorrências.' });
+    }
+};
+
+exports.saveRecurringRules = async (req, res) => {
+    try {
+        await dreService.ensureDreSchema();
+        const { rules, targetYear } = req.body;
+        if (!Array.isArray(rules)) {
+            return res.status(400).json({ error: 'Formato inválido para regras recorrentes.' });
+        }
+
+        const sanitizedRules = dreService.parseRecurringRules(rules);
+        let settings = await db.SystemSetting.findOne();
+        if (!settings) settings = await db.SystemSetting.create({});
+
+        await settings.update({ auto_recurring_expenses: JSON.stringify(sanitizedRules) });
+
+        const yr = parseInt(targetYear, 10) || new Date().getFullYear();
+        const syncRes = await dreService.autoSyncForYear({
+            year: yr,
+            selectedMonth: new Date().getMonth() + 1,
+            force: false
+        });
+
+        res.json({
+            success: true,
+            rules: sanitizedRules,
+            appliedCount: (syncRes.synced || []).filter(s => s.kind === 'RECURRING').length
+        });
+    } catch (error) {
+        console.error('[DRE] Erro ao salvar despesas recorrentes:', error);
+        res.status(500).json({ error: 'Erro ao salvar regras recorrentes.' });
     }
 };
 

@@ -119,6 +119,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: 'SIMPLES_NACIONAL'
     },
+    auto_recurring_expenses: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null
+    },
     system_changelog_data: {
       type: DataTypes.TEXT,
       allowNull: true,

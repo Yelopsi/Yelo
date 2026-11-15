@@ -256,64 +256,129 @@
         color: #1e40af;
     }
 
-    /* KPI Grid */
+    /* KPI Grid — Padrão visual dos painéis executivos (CMO / Analytics) */
     .dre-kpi-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
-        gap: 14px;
-        margin-bottom: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+        gap: 18px;
+        margin-bottom: 24px;
     }
 
     .dre-kpi-card {
-        background: var(--dre-card);
-        border: 1px solid var(--dre-border);
-        border-radius: 14px;
-        padding: 16px 18px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+        background: #ffffff;
+        border: 1px solid #f1f5f9;
+        border-top: 4px solid #64748b;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.06);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .dre-kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     }
 
     .dre-kpi-card.highlight {
-        border-color: #bbf7d0;
+        border-top-color: #10b981;
         background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
     }
 
     .dre-kpi-card.highlight-negative {
-        border-color: #fecaca;
-        background: linear-gradient(180deg, #ffffff 0%, #fef2f2 100%);
+        border-top-color: #ef4444;
+        background: linear-gradient(180deg, #ffffff 0%, #fff1f2 100%);
     }
 
     .dre-kpi-label {
-        font-size: 0.76rem;
+        font-size: 0.74rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.04em;
-        color: var(--dre-muted);
-        margin-bottom: 8px;
+        color: #64748b;
+        margin-bottom: 10px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 6px;
+    }
+
+    .dre-kpi-tag {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: none;
+        letter-spacing: normal;
+        color: #475569;
+        background: #f1f5f9;
+        padding: 2px 8px;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+
+    .dre-kpi-value-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
     }
 
     .dre-kpi-value {
-        font-size: 1.48rem;
+        font-size: 1.55rem;
         font-weight: 800;
-        color: var(--dre-text);
+        color: #1e293b;
         letter-spacing: -0.02em;
         font-variant-numeric: tabular-nums;
-        margin-bottom: 6px;
+        line-height: 1.15;
     }
 
     .dre-kpi-sub {
         font-size: 0.78rem;
-        color: var(--dre-muted);
+        color: #64748b;
         display: flex;
         justify-content: space-between;
-        gap: 6px;
+        gap: 8px;
         flex-wrap: wrap;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
     }
 
-    .dre-delta-pos { color: var(--dre-green); font-weight: 700; }
-    .dre-delta-neg { color: var(--dre-red); font-weight: 700; }
+    .dre-trend-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+        cursor: help;
+    }
+
+    .dre-trend-badge.pos {
+        color: #047857;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+    }
+
+    .dre-trend-badge.neg {
+        color: #b91c1c;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+    }
+
+    .dre-trend-badge.neutral {
+        color: #475569;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+    }
+
+    .dre-delta-pos { color: #10b981; font-weight: 700; }
+    .dre-delta-neg { color: #ef4444; font-weight: 700; }
 
     /* Sub-tabs */
     .dre-tabs {
@@ -476,6 +541,141 @@
     .dre-table tr.row-grand_total .dre-val-neg { color: #fecaca; }
     .dre-table tr.row-grand_total .dre-val-pos { color: #a7f3d0; }
 
+    /* Colapso de Grupos na DRE */
+    .dre-table tr.dre-group-row {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .dre-table tr.dre-group-row:hover td {
+        background: #eef2f6;
+    }
+
+    .dre-collapse-chevron {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        margin-right: 6px;
+        border-radius: 6px;
+        background: #e2e8f0;
+        color: #1e293b;
+        font-size: 0.72rem;
+        line-height: 1;
+        transition: transform 0.15s ease, background 0.15s ease;
+        vertical-align: middle;
+    }
+
+    .dre-group-row.is-collapsed .dre-collapse-chevron {
+        transform: rotate(-90deg);
+        background: #cbd5e1;
+    }
+
+    .dre-collapsed-badge {
+        display: none;
+        margin-left: 8px;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        color: #475569;
+        font-size: 0.7rem;
+        font-weight: 600;
+        vertical-align: middle;
+    }
+
+    .dre-group-row.is-collapsed .dre-collapsed-badge {
+        display: inline-block;
+    }
+
+    .dre-table tr.dre-row-hidden {
+        display: none;
+    }
+
+    /* Tooltips de Coluna */
+    .dre-th-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .dre-th-tip {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        color: #475569;
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: none;
+        letter-spacing: 0;
+        cursor: help;
+        flex-shrink: 0;
+        outline: none;
+    }
+
+    .dre-th-tip:hover,
+    .dre-th-tip:focus {
+        background: #1B4332;
+        color: #ffffff;
+    }
+
+    .dre-th-tip::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        width: 235px;
+        padding: 9px 11px;
+        border-radius: 9px;
+        background: #0f172a;
+        color: #f8fafc;
+        font-size: 0.74rem;
+        font-weight: 500;
+        line-height: 1.4;
+        text-align: left;
+        text-transform: none;
+        letter-spacing: 0;
+        white-space: normal;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.14s ease;
+        z-index: 40;
+    }
+
+    .dre-th-tip.tip-left::after {
+        left: 0;
+        transform: none;
+    }
+
+    .dre-th-tip.tip-right::after {
+        left: auto;
+        right: 0;
+        transform: none;
+    }
+
+    .dre-th-tip:hover::after,
+    .dre-th-tip:focus::after,
+    .dre-th-tip.tip-open::after {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    @media print {
+        .dre-collapse-chevron,
+        .dre-collapsed-badge,
+        .dre-th-tip {
+            display: none !important;
+        }
+    }
+
     .dre-chart-box {
         position: relative;
         height: 290px;
@@ -629,6 +829,13 @@
         }
         .dre-kpi-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .dre-kpi-card {
+            padding: 14px;
+        }
+        .dre-kpi-value {
+            font-size: 1.28rem;
         }
     }
 
@@ -702,6 +909,7 @@
                 <span id="dre-company-cnpj">CNPJ não configurado</span>
                 <span>•</span>
                 <span class="dre-badge" id="dre-tax-regime-badge">Simples Nacional</span>
+                <span class="dre-badge" style="background:rgba(16,185,129,0.22); border-color:rgba(52,211,153,0.45); color:#d1fae5;" title="Receitas Asaas, Google/Meta Ads e Custos Fixos Automáticos atualizam sozinhos ao abrir cada mês.">⚡ Sync Automático</span>
             </div>
         </div>
 
@@ -727,7 +935,7 @@
             </select>
 
             <button type="button" class="dre-btn dre-btn-light" id="dre-btn-fiscal">⚙️ Config. Fiscal & CNPJ</button>
-            <button type="button" class="dre-btn dre-btn-light" id="dre-btn-sync-ads">🔄 Sincronizar Ads</button>
+            <button type="button" class="dre-btn dre-btn-light" id="dre-btn-sync-ads" title="Forçar nova consulta agora às APIs de Google Ads, Meta Ads e recorrências">🔄 Atualizar Agora</button>
 
             <div class="dre-export-wrap">
                 <button type="button" class="dre-btn dre-btn-white" id="dre-btn-export-toggle">📥 Exportar Contábil ▾</button>
@@ -766,35 +974,53 @@
 
     <!-- KPI Grid Executivo -->
     <div class="dre-kpi-grid dre-no-print" id="dre-kpi-grid">
-        <div class="dre-kpi-card">
-            <div class="dre-kpi-label"><span>Receita Bruta</span><span id="kpi-paid-count">—</span></div>
-            <div class="dre-kpi-value" id="kpi-gross-rev">—</div>
-            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-gross-rev-year">—</strong></span><span id="kpi-gross-delta">—</span></div>
+        <div class="dre-kpi-card" style="border-top-color: #10b981;">
+            <div class="dre-kpi-label"><span>Receita Bruta</span><span class="dre-kpi-tag" id="kpi-paid-count">—</span></div>
+            <div class="dre-kpi-value-row">
+                <div class="dre-kpi-value" id="kpi-gross-rev">—</div>
+                <span id="kpi-gross-delta"></span>
+            </div>
+            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-gross-rev-year">—</strong></span><span>Faturamento</span></div>
         </div>
-        <div class="dre-kpi-card">
-            <div class="dre-kpi-label"><span>Deduções & Impostos</span><span id="kpi-tax-rate">—</span></div>
-            <div class="dre-kpi-value" id="kpi-deductions">—</div>
+        <div class="dre-kpi-card" style="border-top-color: #f59e0b;">
+            <div class="dre-kpi-label"><span>Deduções &amp; Impostos</span><span class="dre-kpi-tag" id="kpi-tax-rate">—</span></div>
+            <div class="dre-kpi-value-row">
+                <div class="dre-kpi-value" id="kpi-deductions">—</div>
+                <span id="kpi-deductions-delta"></span>
+            </div>
             <div class="dre-kpi-sub"><span>Estornos: <strong id="kpi-refunds">—</strong></span><span>Impostos: <strong id="kpi-taxes">—</strong></span></div>
         </div>
-        <div class="dre-kpi-card">
-            <div class="dre-kpi-label"><span>Receita Líquida</span><span>Base DRE</span></div>
-            <div class="dre-kpi-value" id="kpi-net-rev">—</div>
-            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-net-rev-year">—</strong></span><span id="kpi-net-delta">—</span></div>
+        <div class="dre-kpi-card" style="border-top-color: #3b82f6;">
+            <div class="dre-kpi-label"><span>Receita Líquida</span><span class="dre-kpi-tag">Base DRE</span></div>
+            <div class="dre-kpi-value-row">
+                <div class="dre-kpi-value" id="kpi-net-rev">—</div>
+                <span id="kpi-net-delta"></span>
+            </div>
+            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-net-rev-year">—</strong></span><span>Pós-deduções</span></div>
         </div>
-        <div class="dre-kpi-card">
-            <div class="dre-kpi-label"><span>Custos + Despesas (OPEX)</span><span>Saídas</span></div>
-            <div class="dre-kpi-value" id="kpi-costs-opex">—</div>
+        <div class="dre-kpi-card" style="border-top-color: #ef4444;">
+            <div class="dre-kpi-label"><span>Custos + OPEX</span><span class="dre-kpi-tag">Saídas</span></div>
+            <div class="dre-kpi-value-row">
+                <div class="dre-kpi-value" id="kpi-costs-opex">—</div>
+                <span id="kpi-costs-delta"></span>
+            </div>
             <div class="dre-kpi-sub"><span>CSP: <strong id="kpi-cogs">—</strong></span><span>OPEX: <strong id="kpi-opex">—</strong></span></div>
         </div>
-        <div class="dre-kpi-card">
-            <div class="dre-kpi-label"><span>EBITDA Operacional</span><span id="kpi-ebitda-margin">—</span></div>
-            <div class="dre-kpi-value" id="kpi-ebitda">—</div>
-            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-ebitda-year">—</strong></span></div>
+        <div class="dre-kpi-card" style="border-top-color: #8b5cf6;">
+            <div class="dre-kpi-label"><span>EBITDA Operacional</span><span class="dre-kpi-tag" id="kpi-ebitda-margin">—</span></div>
+            <div class="dre-kpi-value-row">
+                <div class="dre-kpi-value" id="kpi-ebitda">—</div>
+                <span id="kpi-ebitda-delta"></span>
+            </div>
+            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-ebitda-year">—</strong></span><span>Geração operacional</span></div>
         </div>
         <div class="dre-kpi-card highlight" id="kpi-net-income-card">
-            <div class="dre-kpi-label"><span>Lucro / Prejuízo Líquido</span><span id="kpi-net-margin">—</span></div>
-            <div class="dre-kpi-value" id="kpi-net-income">—</div>
-            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-net-income-year">—</strong></span><span id="kpi-net-income-delta">—</span></div>
+            <div class="dre-kpi-label"><span>Lucro / Prejuízo Líquido</span><span class="dre-kpi-tag" id="kpi-net-margin">—</span></div>
+            <div class="dre-kpi-value-row">
+                <div class="dre-kpi-value" id="kpi-net-income">—</div>
+                <span id="kpi-net-income-delta"></span>
+            </div>
+            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-net-income-year">—</strong></span><span>Resultado final</span></div>
         </div>
     </div>
 
@@ -814,8 +1040,9 @@
                     <h2 class="dre-card-title" id="dre-mensal-title">Demonstração do Resultado — Mês de Referência</h2>
                     <p class="dre-card-sub" id="dre-mensal-sub">Análise Vertical (AV% sobre Receita Líquida) e Análise Horizontal (AH% vs. mês anterior)</p>
                 </div>
-                <div class="dre-no-print" style="display:flex; gap:8px; align-items:center;">
+                <div class="dre-no-print" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                     <span class="dre-pill pill-gray" id="dre-tax-source-pill">Regra Fiscal: Padrão</span>
+                    <button type="button" class="dre-btn dre-btn-outline" id="dre-btn-toggle-collapse-all" title="Recolher ou expandir todos os grupos">↕️ Recolher Grupos</button>
                     <button type="button" class="dre-btn dre-btn-outline" id="dre-btn-toggle-close-inline">🔒 Fechar Mês</button>
                 </div>
             </div>
@@ -823,14 +1050,54 @@
                 <table class="dre-table" id="dre-monthly-table">
                     <thead>
                         <tr>
-                            <th>Cód.</th>
-                            <th>Estrutura Contábil (DRE)</th>
-                            <th class="num" id="th-sel-month">Mês Atual</th>
-                            <th class="num">AV %</th>
-                            <th class="num" id="th-prev-month">Mês Anterior</th>
-                            <th class="num">AH %</th>
-                            <th class="num" id="th-year-total">Acum. Ano</th>
-                            <th class="num">AV Ano %</th>
+                            <th>
+                                <span class="dre-th-wrap">
+                                    <span>Cód.</span>
+                                    <span class="dre-th-tip tip-left" tabindex="0" data-tooltip="Código hierárquico da conta contábil (ex.: 1 = grupo principal, 1.1 = subconta).">i</span>
+                                </span>
+                            </th>
+                            <th>
+                                <span class="dre-th-wrap">
+                                    <span>Estrutura Contábil (DRE)</span>
+                                    <span class="dre-th-tip tip-left" tabindex="0" data-tooltip="Grupos e subcontas da DRE. Clique em qualquer título (1, 2, 4, 6 ou 8) para recolher ou expandir suas subcontas.">i</span>
+                                </span>
+                            </th>
+                            <th class="num">
+                                <span class="dre-th-wrap">
+                                    <span id="th-sel-month">Mês Atual</span>
+                                    <span class="dre-th-tip" tabindex="0" data-tooltip="Valor apurado no mês selecionado segundo o regime (Competência ou Caixa). Parênteses indicam deduções, custos ou despesas.">i</span>
+                                </span>
+                            </th>
+                            <th class="num">
+                                <span class="dre-th-wrap">
+                                    <span>AV %</span>
+                                    <span class="dre-th-tip" tabindex="0" data-tooltip="Análise Vertical: participação percentual de cada linha sobre a Receita Operacional Líquida (linha 3 = 100%) no mês selecionado.">i</span>
+                                </span>
+                            </th>
+                            <th class="num">
+                                <span class="dre-th-wrap">
+                                    <span id="th-prev-month">Mês Anterior</span>
+                                    <span class="dre-th-tip tip-right" tabindex="0" data-tooltip="Valor da mesma conta no mês imediatamente anterior, usado como referência comparativa.">i</span>
+                                </span>
+                            </th>
+                            <th class="num">
+                                <span class="dre-th-wrap">
+                                    <span>AH %</span>
+                                    <span class="dre-th-tip tip-right" tabindex="0" data-tooltip="Análise Horizontal: variação percentual em relação ao mês anterior ((Mês Atual − Mês Anterior) ÷ |Mês Anterior|).">i</span>
+                                </span>
+                            </th>
+                            <th class="num">
+                                <span class="dre-th-wrap">
+                                    <span id="th-year-total">Acum. Ano</span>
+                                    <span class="dre-th-tip tip-right" tabindex="0" data-tooltip="Soma acumulada de janeiro a dezembro dentro do ano-calendário selecionado.">i</span>
+                                </span>
+                            </th>
+                            <th class="num">
+                                <span class="dre-th-wrap">
+                                    <span>AV Ano %</span>
+                                    <span class="dre-th-tip tip-right" tabindex="0" data-tooltip="Análise Vertical Anual: peso percentual de cada linha sobre a Receita Operacional Líquida acumulada no ano (linha 3 = 100%).">i</span>
+                                </span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="dre-monthly-tbody"></tbody>
@@ -889,6 +1156,55 @@
 
     <!-- ABA 3: DESPESAS & LANÇAMENTOS -->
     <div class="dre-tab-pane dre-no-print" id="tab-dre-despesas">
+        <div class="dre-card" style="border-left: 4px solid #1B4332;">
+            <div class="dre-card-header">
+                <div>
+                    <h2 class="dre-card-title">🔄 Custos Fixos Automáticos Mensais (Render, SaaS, Contabilidade...)</h2>
+                    <p class="dre-card-sub">
+                        Google Ads e Meta Ads são sincronizados automaticamente via API ao abrir a DRE. Serviços sem API de faturas (como o <strong>Render</strong>) cadastrados aqui são lançados sozinhos todo mês aberto — sem sobrescrever meses editados manualmente.
+                    </p>
+                </div>
+                <button type="button" class="dre-btn dre-btn-outline" id="dre-btn-quick-render">⚡ Preencher Render (R$ 81,98)</button>
+            </div>
+
+            <form id="dre-recurring-form" style="margin-bottom: 14px;">
+                <div class="dre-form-grid">
+                    <div class="dre-field">
+                        <label for="rec-name">Nome do Custo Fixo *</label>
+                        <input type="text" id="rec-name" class="dre-input" placeholder="Ex: Render Cloud" required>
+                    </div>
+                    <div class="dre-field">
+                        <label for="rec-amount">Valor Mensal (R$) *</label>
+                        <input type="number" id="rec-amount" class="dre-input" step="0.01" min="0.01" placeholder="81,98" required>
+                    </div>
+                    <div class="dre-field">
+                        <label for="rec-group">Conta DRE *</label>
+                        <select id="rec-group" required></select>
+                    </div>
+                    <div class="dre-field">
+                        <label for="rec-provider">Provedor</label>
+                        <select id="rec-provider">
+                            <option value="RENDER">Render / Infra Cloud</option>
+                            <option value="ACCOUNTING">Contabilidade / Jurídico</option>
+                            <option value="OPENAI">OpenAI / IA APIs</option>
+                            <option value="WHATSAPP">WhatsApp / Mensageria</option>
+                            <option value="ASAAS">Asaas</option>
+                            <option value="OTHER">Outro Fixo</option>
+                        </select>
+                    </div>
+                    <div class="dre-field">
+                        <label for="rec-start-month">Cobrar desde (Mês/Ano) *</label>
+                        <input type="month" id="rec-start-month" class="dre-input" value="2026-04" required>
+                    </div>
+                    <div>
+                        <button type="submit" class="dre-btn dre-btn-primary" style="width:100%; justify-content:center;">➕ Ativar Automação</button>
+                    </div>
+                </div>
+            </form>
+
+            <div id="dre-recurring-list" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+        </div>
+
         <div class="dre-card">
             <div class="dre-card-header">
                 <div>
