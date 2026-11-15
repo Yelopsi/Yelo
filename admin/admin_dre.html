@@ -265,6 +265,8 @@
     }
 
     .dre-kpi-card {
+        position: relative;
+        overflow: visible;
         background: #ffffff;
         border: 1px solid #f1f5f9;
         border-top: 4px solid #64748b;
@@ -277,9 +279,18 @@
         justify-content: space-between;
     }
 
-    .dre-kpi-card:hover {
+    .dre-kpi-card:hover,
+    .dre-kpi-card:focus-within {
         transform: translateY(-4px);
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        z-index: 25;
+    }
+
+    .dre-kpi-label-left {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
     }
 
     .dre-kpi-card.highlight {
@@ -975,7 +986,13 @@
     <!-- KPI Grid Executivo -->
     <div class="dre-kpi-grid dre-no-print" id="dre-kpi-grid">
         <div class="dre-kpi-card" style="border-top-color: #10b981;">
-            <div class="dre-kpi-label"><span>Receita Bruta</span><span class="dre-kpi-tag" id="kpi-paid-count">—</span></div>
+            <div class="dre-kpi-label">
+                <span class="dre-kpi-label-left">
+                    Receita Bruta
+                    <span class="dre-th-tip tip-left" tabindex="0" data-tooltip="Total que entrou das assinaturas pagas no mês, antes de descontar impostos, estornos e taxas. A tag 'pgtos' mostra quantas cobranças foram pagas.">i</span>
+                </span>
+                <span class="dre-kpi-tag" id="kpi-paid-count">—</span>
+            </div>
             <div class="dre-kpi-value-row">
                 <div class="dre-kpi-value" id="kpi-gross-rev">—</div>
                 <span id="kpi-gross-delta"></span>
@@ -983,7 +1000,13 @@
             <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-gross-rev-year">—</strong></span><span>Faturamento</span></div>
         </div>
         <div class="dre-kpi-card" style="border-top-color: #f59e0b;">
-            <div class="dre-kpi-label"><span>Deduções &amp; Impostos</span><span class="dre-kpi-tag" id="kpi-tax-rate">—</span></div>
+            <div class="dre-kpi-label">
+                <span class="dre-kpi-label-left">
+                    Deduções &amp; Impostos
+                    <span class="dre-th-tip" tabindex="0" data-tooltip="Valores abatidos direto do faturamento: estornos/reembolsos devolvidos aos psicólogos e impostos sobre a receita (no MEI, é o DAS fixo mensal). Queda (▼) é positiva.">i</span>
+                </span>
+                <span class="dre-kpi-tag" id="kpi-tax-rate">—</span>
+            </div>
             <div class="dre-kpi-value-row">
                 <div class="dre-kpi-value" id="kpi-deductions">—</div>
                 <span id="kpi-deductions-delta"></span>
@@ -991,7 +1014,13 @@
             <div class="dre-kpi-sub"><span>Estornos: <strong id="kpi-refunds">—</strong></span><span>Impostos: <strong id="kpi-taxes">—</strong></span></div>
         </div>
         <div class="dre-kpi-card" style="border-top-color: #3b82f6;">
-            <div class="dre-kpi-label"><span>Receita Líquida</span><span class="dre-kpi-tag">Base DRE</span></div>
+            <div class="dre-kpi-label">
+                <span class="dre-kpi-label-left">
+                    Receita Líquida
+                    <span class="dre-th-tip" tabindex="0" data-tooltip="Quanto realmente sobrou do faturamento depois de tirar estornos e impostos (Receita Bruta − Deduções). É a base para pagar os custos e calcular margens.">i</span>
+                </span>
+                <span class="dre-kpi-tag">Base DRE</span>
+            </div>
             <div class="dre-kpi-value-row">
                 <div class="dre-kpi-value" id="kpi-net-rev">—</div>
                 <span id="kpi-net-delta"></span>
@@ -999,7 +1028,13 @@
             <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-net-rev-year">—</strong></span><span>Pós-deduções</span></div>
         </div>
         <div class="dre-kpi-card" style="border-top-color: #ef4444;">
-            <div class="dre-kpi-label"><span>Custos + OPEX</span><span class="dre-kpi-tag">Saídas</span></div>
+            <div class="dre-kpi-label">
+                <span class="dre-kpi-label-left">
+                    Custos + OPEX
+                    <span class="dre-th-tip tip-right" tabindex="0" data-tooltip="Soma de tudo que custa manter a Yelo rodando: CSP (taxas do Asaas e APIs do serviço) + OPEX (Google/Meta Ads, servidor Render, contador e despesas operacionais). Queda (▼) é positiva.">i</span>
+                </span>
+                <span class="dre-kpi-tag">Saídas</span>
+            </div>
             <div class="dre-kpi-value-row">
                 <div class="dre-kpi-value" id="kpi-costs-opex">—</div>
                 <span id="kpi-costs-delta"></span>
@@ -1007,7 +1042,13 @@
             <div class="dre-kpi-sub"><span>CSP: <strong id="kpi-cogs">—</strong></span><span>OPEX: <strong id="kpi-opex">—</strong></span></div>
         </div>
         <div class="dre-kpi-card" style="border-top-color: #8b5cf6;">
-            <div class="dre-kpi-label"><span>EBITDA Operacional</span><span class="dre-kpi-tag" id="kpi-ebitda-margin">—</span></div>
+            <div class="dre-kpi-label">
+                <span class="dre-kpi-label-left">
+                    EBITDA Operacional
+                    <span class="dre-th-tip tip-right" tabindex="0" data-tooltip="Resultado gerado pela operação pura no mês (Receita Líquida − Custos − OPEX), antes de juros bancários ou impostos sobre lucro. A 'Mg' mostra quantos % da Receita Líquida sobraram.">i</span>
+                </span>
+                <span class="dre-kpi-tag" id="kpi-ebitda-margin">—</span>
+            </div>
             <div class="dre-kpi-value-row">
                 <div class="dre-kpi-value" id="kpi-ebitda">—</div>
                 <span id="kpi-ebitda-delta"></span>
@@ -1015,7 +1056,13 @@
             <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-ebitda-year">—</strong></span><span>Geração operacional</span></div>
         </div>
         <div class="dre-kpi-card highlight" id="kpi-net-income-card">
-            <div class="dre-kpi-label"><span>Lucro / Prejuízo Líquido</span><span class="dre-kpi-tag" id="kpi-net-margin">—</span></div>
+            <div class="dre-kpi-label">
+                <span class="dre-kpi-label-left">
+                    Lucro / Prejuízo Líquido
+                    <span class="dre-th-tip tip-right" tabindex="0" data-tooltip="Resultado final do mês: quanto sobrou (lucro) ou faltou (prejuízo) após pagar todas as deduções, taxas, anúncios e despesas fixas da Yelo. 'Mg' é a margem líquida final.">i</span>
+                </span>
+                <span class="dre-kpi-tag" id="kpi-net-margin">—</span>
+            </div>
             <div class="dre-kpi-value-row">
                 <div class="dre-kpi-value" id="kpi-net-income">—</div>
                 <span id="kpi-net-income-delta"></span>

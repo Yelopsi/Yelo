@@ -194,14 +194,24 @@
         }
 
         const prevLabel = meta.prevMonthKey || 'mês ant.';
-        const formatKpiTrend = (curr, previous, isReversed = false) => {
-            const curNum = Number(curr || 0);
-            const prevNum = Number(previous || 0);
-            const titleAttr = `title="Mês anterior (${escapeHtml(prevLabel)}): ${fmtCurrency(prevNum)}"`;
+        const cmp = report.kpiComparison || null;
+        const isPaceMode = cmp && cmp.mode === 'PACE_PROJECTION';
+        const cmpSuffix = isPaceMode ? 'ritmo' : 'm/m';
+        const cmpProj = cmp && cmp.projected ? cmp.projected : {};
+        const cmpPrev = cmp && cmp.previous ? cmp.previous : {};
+
+        const formatKpiTrend = (metricKey, currFallback, previousFallback, isReversed = false) => {
+            const curNum = Number(isPaceMode && cmpProj[metricKey] !== undefined ? cmpProj[metricKey] : currFallback || 0);
+            const prevNum = Number(cmpPrev[metricKey] !== undefined ? cmpPrev[metricKey] : previousFallback || 0);
+
+            const tooltipText = isPaceMode
+                ? `Comparação justa (mês parcial: ${cmp.daysElapsed} de ${cmp.daysInMonth} dias). Projeção no ritmo atual: ${fmtCurrency(curNum)}/mês (variáveis proporcionais + fixos 1x) vs ${escapeHtml(prevLabel)} completo (${fmtCurrency(prevNum)}).`
+                : `Mês anterior (${escapeHtml(prevLabel)}): ${fmtCurrency(prevNum)}`;
+            const titleAttr = `title="${tooltipText}"`;
 
             if (Math.abs(prevNum) < 0.01) {
                 if (Math.abs(curNum) < 0.01) {
-                    return `<span class="dre-trend-badge neutral" ${titleAttr}>▬ 0,0% m/m</span>`;
+                    return `<span class="dre-trend-badge neutral" ${titleAttr}>▬ 0,0% ${cmpSuffix}</span>`;
                 }
                 const isUp = curNum > 0;
                 const icon = isUp ? '▲' : '▼';
@@ -212,45 +222,45 @@
 
             const pct = ((curNum - prevNum) / Math.abs(prevNum)) * 100;
             if (Math.abs(pct) < 0.05) {
-                return `<span class="dre-trend-badge neutral" ${titleAttr}>▬ 0,0% m/m</span>`;
+                return `<span class="dre-trend-badge neutral" ${titleAttr}>▬ 0,0% ${cmpSuffix}</span>`;
             }
 
             const isUp = pct > 0;
             const icon = isUp ? '▲' : '▼';
             const isGood = isReversed ? !isUp : isUp;
             const tone = isGood ? 'pos' : 'neg';
-            return `<span class="dre-trend-badge ${tone}" ${titleAttr}>${icon} ${fmtPct(pct, true)} m/m</span>`;
+            return `<span class="dre-trend-badge ${tone}" ${titleAttr}>${icon} ${fmtPct(pct, true)} ${cmpSuffix}</span>`;
         };
 
         document.getElementById('kpi-paid-count').textContent = `${sel.paidCount || 0} pgtos`;
         document.getElementById('kpi-gross-rev').textContent = fmtCurrency(sel.grossRevenue);
         document.getElementById('kpi-gross-rev-year').textContent = fmtCurrency(ann.grossRevenue);
-        document.getElementById('kpi-gross-delta').innerHTML = formatKpiTrend(sel.grossRevenue, prev.grossRevenue, false);
+        document.getElementById('kpi-gross-delta').innerHTML = formatKpiTrend('grossRevenue', sel.grossRevenue, prev.grossRevenue, false);
 
         const rateTxt = sel.taxConfig && sel.taxConfig.variableRate !== null
             ? `${(sel.taxConfig.variableRate * 100).toFixed(1).replace('.', ',')}%`
             : '0%';
         document.getElementById('kpi-tax-rate').textContent = `Alíq. ${rateTxt}`;
         document.getElementById('kpi-deductions').textContent = fmtCurrency(sel.totalDeductions);
-        document.getElementById('kpi-deductions-delta').innerHTML = formatKpiTrend(sel.totalDeductions, prev.totalDeductions, true);
+        document.getElementById('kpi-deductions-delta').innerHTML = formatKpiTrend('totalDeductions', sel.totalDeductions, prev.totalDeductions, true);
         document.getElementById('kpi-refunds').textContent = fmtCurrency(sel.refunds);
         document.getElementById('kpi-taxes').textContent = fmtCurrency(sel.taxesOnRevenue);
 
         document.getElementById('kpi-net-rev').textContent = fmtCurrency(sel.netRevenue);
         document.getElementById('kpi-net-rev-year').textContent = fmtCurrency(ann.netRevenue);
-        document.getElementById('kpi-net-delta').innerHTML = formatKpiTrend(sel.netRevenue, prev.netRevenue, false);
+        document.getElementById('kpi-net-delta').innerHTML = formatKpiTrend('netRevenue', sel.netRevenue, prev.netRevenue, false);
 
         const selCostsOpex = (sel.totalCogs || 0) + (sel.totalOpex || 0);
         const prevCostsOpex = (prev.totalCogs || 0) + (prev.totalOpex || 0);
         document.getElementById('kpi-costs-opex').textContent = fmtCurrency(selCostsOpex);
-        document.getElementById('kpi-costs-delta').innerHTML = formatKpiTrend(selCostsOpex, prevCostsOpex, true);
+        document.getElementById('kpi-costs-delta').innerHTML = formatKpiTrend('costsPlusOpex', selCostsOpex, prevCostsOpex, true);
         document.getElementById('kpi-cogs').textContent = fmtCurrency(sel.totalCogs);
         document.getElementById('kpi-opex').textContent = fmtCurrency(sel.totalOpex);
 
         document.getElementById('kpi-ebitda').textContent = fmtCurrency(sel.ebitda);
         document.getElementById('kpi-ebitda-margin').textContent = `Mg ${fmtPct(sel.ebitdaMarginPct)}`;
         document.getElementById('kpi-ebitda-year').textContent = fmtCurrency(ann.ebitda);
-        document.getElementById('kpi-ebitda-delta').innerHTML = formatKpiTrend(sel.ebitda, prev.ebitda, false);
+        document.getElementById('kpi-ebitda-delta').innerHTML = formatKpiTrend('ebitda', sel.ebitda, prev.ebitda, false);
 
         const netIncomeCard = document.getElementById('kpi-net-income-card');
         if (netIncomeCard) {
@@ -260,7 +270,7 @@
         document.getElementById('kpi-net-income').textContent = fmtCurrency(sel.netIncome);
         document.getElementById('kpi-net-margin').textContent = `Mg ${fmtPct(sel.netMarginPct)}`;
         document.getElementById('kpi-net-income-year').textContent = fmtCurrency(ann.netIncome);
-        document.getElementById('kpi-net-income-delta').innerHTML = formatKpiTrend(sel.netIncome, prev.netIncome, false);
+        document.getElementById('kpi-net-income-delta').innerHTML = formatKpiTrend('netIncome', sel.netIncome, prev.netIncome, false);
     }
 
     function getDreChildCountMap(dreRows) {
@@ -421,8 +431,28 @@
         const totalOutData = series.map(m => Number(((m.totalCogs || 0) + (m.totalOpex || 0)).toFixed(2)));
         const netIncomeData = series.map(m => Number(m.netIncome || 0));
 
+        // Compensa CSS `zoom: 0.88` do body administrativo para que o hover X/Y bata exatamente com cada coluna
+        const zoomCoordFixPlugin = {
+            id: 'zoomCoordFix',
+            beforeEvent(chart, args) {
+                const e = args && args.event;
+                const native = e && e.native;
+                if (!native || !chart || !chart.canvas || !chart.width || !chart.height) return;
+                const src = (native.touches && native.touches[0])
+                    || (native.changedTouches && native.changedTouches[0])
+                    || native;
+                if (!Number.isFinite(src.clientX) || !Number.isFinite(src.clientY)) return;
+                const rect = chart.canvas.getBoundingClientRect();
+                if (rect.width <= 0 || rect.height <= 0) return;
+                e.x = Math.round(((src.clientX - rect.left) / rect.width) * chart.width);
+                e.y = Math.round(((src.clientY - rect.top) / rect.height) * chart.height);
+                args.inChartArea = chart.isPointInArea(e);
+            }
+        };
+
         state.chart = new window.Chart(canvas.getContext('2d'), {
             type: 'bar',
+            plugins: [zoomCoordFixPlugin],
             data: {
                 labels: series.map(m => m.monthLabel),
                 datasets: [
@@ -466,6 +496,7 @@
                 events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
                 interaction: {
                     mode: 'index',
+                    axis: 'x',
                     intersect: false
                 },
                 layout: {
@@ -476,6 +507,7 @@
                     tooltip: {
                         enabled: true,
                         mode: 'index',
+                        axis: 'x',
                         intersect: false,
                         backgroundColor: 'rgba(15, 23, 42, 0.94)',
                         titleColor: '#ffffff',

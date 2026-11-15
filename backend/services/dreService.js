@@ -544,9 +544,12 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
     const currentYear = Number(nowBRT.slice(0, 4));
     const currentMonth = Number(nowBRT.slice(5, 7));
 
+    const currentDay = Number(nowBRT.slice(8, 10));
+
     const targetYear = Math.min(Math.max(2020, parseInt(year, 10) || currentYear), currentYear + 1);
     const selectedMonth = month ? Math.min(Math.max(1, parseInt(month, 10) || 1), 12) : (targetYear === currentYear ? currentMonth : 12);
     const cleanRegime = regime === 'cash' ? 'cash' : 'accrual';
+    const selectedMkTarget = `${targetYear}-${String(selectedMonth).padStart(2, '0')}`;
 
     const prevDecMonthKey = `${targetYear - 1}-12`;
     const rangeStartDate = `${targetYear - 1}-12-01`;
@@ -896,6 +899,13 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
 
     const coveredAdProvidersByMonth = {}; // { '2026-10': Set(['GOOGLE', 'META']) }
     const expenseLedger = [];
+    const selExpSplit = { fixed: {}, variable: {} };
+    const trackSelectedSplit = (mk, group, nature, amt) => {
+        if (mk !== selectedMkTarget) return;
+        const isFixed = String(nature || '').toUpperCase() === 'FIXED';
+        const bucket = isFixed ? selExpSplit.fixed : selExpSplit.variable;
+        bucket[group] = round2((bucket[group] || 0) + amt);
+    };
 
     for (const exp of yeloExpenses) {
         const mk = exp.monthYear;
@@ -905,6 +915,7 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
         const amt = round2(exp.amount);
         buckets[mk].expensesByGroup[group] = round2((buckets[mk].expensesByGroup[group] || 0) + amt);
         buckets[mk].expensesCount += 1;
+        trackSelectedSplit(mk, group, exp.nature, amt);
 
         if (!exp.dreGroup && (exp.nature === 'UNCLASSIFIED' || exp.purpose === 'UNCLASSIFIED')) {
             buckets[mk].unclassifiedExpensesCount += 1;
@@ -951,6 +962,7 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
 
             buckets[mk].expensesByGroup.OPEX_MARKETING = round2(buckets[mk].expensesByGroup.OPEX_MARKETING + amt);
             buckets[mk].expensesCount += 1;
+            trackSelectedSplit(mk, 'OPEX_MARKETING', 'VARIABLE', amt);
 
             expenseLedger.push({
                 id: `admetric-${ad.id}`,
@@ -1288,6 +1300,92 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
         closedAt: m.taxConfig.closedAt
     }));
 
+    const daysInSelectedMonth = new Date(targetYear, selectedMonth, 0).getDate();
+    const isCurrentPartialMonth = (targetYear === currentYear && selectedMonth === currentMonth && currentDay < daysInSelectedMonth);
+    const prevParts = String(prevMk).split('-').map(Number);
+    const prevDaysInMonth = (prevParts.length === 2 && prevParts[0] && prevParts[1]) ? new Date(prevParts[0], prevParts[1], 0).getDate() : 30;
+
+    const buildKpiSnapshot = (s) => ({
+        grossRevenue: round2(s.grossRevenue),
+        totalDeductions: round2(s.totalDeductions),
+        netRevenue: round2(s.netRevenue),
+        totalCogs: round2(s.totalCogs),
+        totalOpex: round2(s.totalOpex),
+        costsPlusOpex: round2((s.totalCogs || 0) + (s.totalOpex || 0)),
+        ebitda: round2(s.ebitda),
+        netIncome: round2(s.netIncome)
+    });
+
+    let kpiComparison = {
+        mode: 'FULL_MONTH',
+        daysElapsed: daysInSelectedMonth,
+        daysInMonth: daysInSelectedMonth,
+        prevDaysInMonth,
+        projected: buildKpiSnapshot(selData.summary),
+        previous: buildKpiSnapshot(prevData.summary)
+    };
+
+    if (isCurrentPartialMonth) {
+        const paceFactor = daysInSelectedMonth / Math.max(1, currentDay);
+        const selSum = selData.summary;
+        const grossPace = round2(selSum.grossRevenue * paceFactor);
+        const refundsPace = round2(selSum.refunds * paceFactor);
+        const taxableBasePace = Math.max(0, round2(grossPace - refundsPace));
+        const varTaxRate = selData.taxConfig.variableRate !== null ? selData.taxConfig.variableRate : 0;
+        const fixTaxOnce = round2(selSum.calculatedTaxes > 0 || selData.taxConfig.fixedMonthly > 0 ? (selData.taxConfig.fixedMonthly || 0) : 0);
+        const extraDedPace = round2((selExpSplit.fixed.DEDUCTION_TAX || 0) + (selExpSplit.variable.DEDUCTION_TAX || 0) * paceFactor);
+        const totalDeductionsPace = round2(refundsPace + round2(taxableBasePace * varTaxRate) + fixTaxOnce + extraDedPace);
+        const netRevPace = round2(grossPace - totalDeductionsPace);
+
+        const gatewayPace = round2(selSum.gatewayFees * paceFactor);
+        const directCogsPace = round2((selExpSplit.fixed.COGS || 0) + (selExpSplit.variable.COGS || 0) * paceFactor);
+        const totalCogsPace = round2(gatewayPace + directCogsPace);
+
+        const opexFixedTotal = round2(
+            (selExpSplit.fixed.OPEX_MARKETING || 0) +
+            (selExpSplit.fixed.OPEX_PERSONNEL || 0) +
+            (selExpSplit.fixed.OPEX_ADMIN || 0)
+        );
+        const opexVarTotal = round2(
+            (selExpSplit.variable.OPEX_MARKETING || 0) +
+            (selExpSplit.variable.OPEX_PERSONNEL || 0) +
+            (selExpSplit.variable.OPEX_ADMIN || 0)
+        );
+        const totalOpexPace = round2(opexFixedTotal + opexVarTotal * paceFactor);
+        const ebitdaPace = round2((netRevPace - totalCogsPace) - totalOpexPace);
+
+        const finIncomePace = round2((selExpSplit.fixed.FINANCIAL_INCOME || 0) + (selExpSplit.variable.FINANCIAL_INCOME || 0) * paceFactor);
+        const finExpensePace = round2((selExpSplit.fixed.FINANCIAL_EXPENSE || 0) + (selExpSplit.variable.FINANCIAL_EXPENSE || 0) * paceFactor);
+        const adjPace = round2((selData.gateway.cashAdjustments || 0) * paceFactor);
+        const lairPace = round2(ebitdaPace + finIncomePace - finExpensePace + adjPace);
+
+        const profitTaxRate = selData.taxConfig.profitTaxRate || 0;
+        const profitTaxPace = round2(
+            (lairPace > 0 && profitTaxRate > 0 ? lairPace * profitTaxRate : 0) +
+            (selExpSplit.fixed.PROFIT_TAX || 0) +
+            (selExpSplit.variable.PROFIT_TAX || 0) * paceFactor
+        );
+        const netIncomePace = round2(lairPace - profitTaxPace);
+
+        kpiComparison = {
+            mode: 'PACE_PROJECTION',
+            daysElapsed: currentDay,
+            daysInMonth: daysInSelectedMonth,
+            prevDaysInMonth,
+            projected: {
+                grossRevenue: grossPace,
+                totalDeductions: totalDeductionsPace,
+                netRevenue: netRevPace,
+                totalCogs: totalCogsPace,
+                totalOpex: totalOpexPace,
+                costsPlusOpex: round2(totalCogsPace + totalOpexPace),
+                ebitda: ebitdaPace,
+                netIncome: netIncomePace
+            },
+            previous: buildKpiSnapshot(prevData.summary)
+        };
+    }
+
     return {
         meta: {
             year: targetYear,
@@ -1317,6 +1415,7 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
         },
         prevMonthSummary: prevData.summary,
         annualSummary,
+        kpiComparison,
         monthlySeries: monthlySeries.map(m => ({
             monthIndex: m.monthIndex,
             monthKey: m.monthKey,
