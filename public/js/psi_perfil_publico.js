@@ -373,6 +373,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         const abQuery = abParams.toString() ? `?${abParams.toString()}` : '';
                         const waHeaders = {};
+                        const authToken = localStorage.getItem('Yelo_token');
+                        if (authToken && authToken !== 'cookie_auth_active') waHeaders['Authorization'] = `Bearer ${authToken}`;
                         const userType = localStorage.getItem('Yelo_user_type') || '';
                         const knownPro = localStorage.getItem('yelo_known_pro') || '';
                         if (userType) waHeaders['X-Yelo-User-Type'] = userType;

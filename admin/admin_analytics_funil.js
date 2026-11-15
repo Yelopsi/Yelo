@@ -260,6 +260,9 @@ window.initializePage = function () {
 
             let dataWpp = [];
             let prevWpp = [];
+            let discardedProClicks = [];
+            let discardedProSummary = null;
+            let prevDiscardedProCount = null;
             let daysCount = 30;
             let daysExact = null;
 
@@ -268,6 +271,9 @@ window.initializePage = function () {
                 if (rawWpp && typeof rawWpp === 'object' && !Array.isArray(rawWpp)) {
                     dataWpp = rawWpp.feedbacks || [];
                     prevWpp = rawWpp.prevFeedbacks || [];
+                    discardedProClicks = Array.isArray(rawWpp.discardedProClicks) ? rawWpp.discardedProClicks : [];
+                    discardedProSummary = rawWpp.discardedProSummary || null;
+                    prevDiscardedProCount = typeof rawWpp.prevDiscardedProCount === 'number' ? rawWpp.prevDiscardedProCount : null;
                     daysCount = rawWpp.days || 30;
                     daysExact = rawWpp.daysExact || null;
                 } else if (Array.isArray(rawWpp)) {
@@ -278,7 +284,11 @@ window.initializePage = function () {
 
             exportData = data; // Salva os dados globais para permitir a exportação no CSV
 
-            renderWppFeedbacks(dataWpp, prevWpp, daysCount, daysExact);
+            renderWppFeedbacks(dataWpp, prevWpp, daysCount, daysExact, {
+                discardedProClicks,
+                discardedProSummary,
+                prevDiscardedProCount
+            });
             globalRankingData = dataRanking ? (Array.isArray(dataRanking) ? dataRanking : dataRanking.ranking) : null;
 
             if (globalRankingData) {
@@ -797,12 +807,20 @@ window.initializePage = function () {
             if (!wppData || wppData.length === 0) return alert("Nenhum dado de conversão para exportar.");
 
             let csvContent = `RELATÓRIO DE CONVERSÕES (PLG)\nPeríodo: ${periodStr}\n\n`;
-            csvContent += `Data;Psicólogo;Paciente (Visitante);Origem (UTM);Recebeu Contato?;Fechou Negócio?;Status\n`;
+            csvContent += `Data;Tipo;Psicólogo;Paciente (Visitante / Autor);Origem (UTM);Recebeu Contato?;Fechou Negócio?;Status\n`;
 
             wppData.forEach(l => {
                 const dataFormatada = new Date(l.createdAt).toLocaleDateString('pt-BR');
                 const pName = safeStr(l.guestName);
                 const psiName = l.psychologist ? safeStr(l.psychologist.nome) : 'N/A';
+                const origemUTM = safeStr(l.utmSource) || 'N/A';
+
+                if (l.isDiscardedProClick) {
+                    const tipoActor = String(l.actorType || '').startsWith('admin') ? 'Admin (Teste Descartado)' : 'Psicólogo (Teste Descartado)';
+                    csvContent += `${dataFormatada};${tipoActor};${psiName};${pName};${origemUTM};Descartado;-;Descartado (Sem feedback)\n`;
+                    return;
+                }
+
                 const recContato = l.contactReceived === true ? 'Sim' : (l.contactReceived === false ? 'Não' : 'Pendente');
                 const status = l.feedbackGiven ? 'Respondido' : (l.adminWppReminderSentAt ? 'Cobrado' : 'Pendente');
 
@@ -819,8 +837,7 @@ window.initializePage = function () {
                 else if (l.dealClosed === 'talking') fechou = 'Em Negociação';
                 else if (l.dealClosed) fechou = 'Sem Contato';
 
-                const origemUTM = safeStr(l.utmSource) || 'N/A';
-                csvContent += `${dataFormatada};${psiName};${pName};${origemUTM};${recContato};${fechou};${status}\n`;
+                csvContent += `${dataFormatada};Paciente;${psiName};${pName};${origemUTM};${recContato};${fechou};${status}\n`;
             });
             downloadCSV(`yelo_conversoes_${new Date().toISOString().split('T')[0]}.csv`, csvContent);
 
@@ -877,11 +894,18 @@ window.initializePage = function () {
             if (searchTerm) {
                 const psiName = f.psychologist && f.psychologist.nome ? f.psychologist.nome.toLowerCase() : '';
                 const patientName = f.guestName ? f.guestName.toLowerCase() : '';
-                if (!psiName.includes(searchTerm) && !patientName.includes(searchTerm)) {
+                const actorPsi = f.actorPsiNome ? f.actorPsiNome.toLowerCase() : '';
+                if (!psiName.includes(searchTerm) && !patientName.includes(searchTerm) && !actorPsi.includes(searchTerm)) {
                     return false;
                 }
             }
             if (filterVal === 'todos') return true;
+            if (filterVal === 'somente_pacientes') return !f.isDiscardedProClick;
+            if (filterVal === 'cliques_psis') return Boolean(f.isDiscardedProClick);
+
+            // Cliques de teste de psicólogos nunca entram em filtros de feedback/cobrança
+            if (f.isDiscardedProClick) return false;
+
             if (filterVal === 'cobrar_agora') {
                 if (f.feedbackGiven) return false;
                 const ageHours = (Date.now() - new Date(f.createdAt).getTime()) / (1000 * 60 * 60);
@@ -1042,11 +1066,6 @@ window.initializePage = function () {
             let fechou = '<span style="color: #94a3b8; font-weight: 500;">-</span>';
             let status = '<span class="status status-pendente" style="background: #f8fafc; color: #64748b; border: 1px solid #dee2e6; font-size: 0.75rem;">Pendente</span>';
 
-            if (!f.feedbackGiven && f.adminWppReminderSentAt) {
-                const sentDate = new Date(f.adminWppReminderSentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-                status = `<span class="status status-pendente" title="Follow-up enviado pelo CRM" style="background: #fef08a; color: #854d0e; border: 1px solid #fde047; font-size: 0.75rem;">Cobrado (${sentDate})</span>`;
-            }
-
             const safePsiId = f.psychologistId || (f.psychologist ? f.psychologist.id : '');
             const psiNome = f.psychologist ? f.psychologist.nome : 'Psi Removido';
             const psiInitial = psiNome.charAt(0).toUpperCase();
@@ -1054,85 +1073,96 @@ window.initializePage = function () {
             const psiFoto = f.psychologist ? f.psychologist.fotoUrl : null;
             const safePsiTitle = psiNome.replace(/"/g, '&quot;');
 
-            if (f.feedbackGiven) {
-                status = '<span class="status status-ativo" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.75rem;">Respondido</span>';
-                if (f.contactReceived) {
-                    contato = '<span class="status status-ativo" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 0.75rem;">✅ Sim</span>';
-                    if (f.dealClosed === 'yes' || f.dealClosed === 'started') fechou = '<span class="status status-ativo" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 0.75rem;">✅ Iniciou</span>';
-                    else if (f.dealClosed === 'talking') fechou = '<span class="status status-pendente" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.75rem;">🤝 Em negociação</span>';
-                    else if (f.dealClosed === 'ghosted') fechou = '<span class="status status-neutro" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-size: 0.75rem;">👻 Parou de responder</span>';
-                    else if (f.dealClosed === 'no' || f.dealClosed === 'not_started' || (f.dealClosed && f.dealClosed.startsWith('not_started_'))) {
-                        let subTitle = '';
-                        if (f.dealClosed === 'not_started_price') subTitle = '<div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Motivo: Valor / Preço</div>';
-                        else if (f.dealClosed === 'not_started_schedule') subTitle = '<div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Motivo: Horário / Agenda</div>';
-                        else if (f.dealClosed === 'not_started_other') subTitle = '<div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Motivo: Outro</div>';
-                        fechou = `<span class="status status-inativo" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; font-size: 0.75rem;">❌ Não iniciou</span>${subTitle}`;
-                    }
-                    else if (f.dealClosed === 'no_contact' || f.dealClosed === 'wpp_issue' || f.dealClosed === 'unknown') fechou = '<span class="status status-neutro" style="background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 0.75rem;">🤷‍♂️ Desconhecido</span>';
-                    else fechou = '<span class="status status-inativo" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; font-size: 0.75rem;">❌ Não</span>';
-                } else {
-                    contato = '<span class="status status-inativo" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; font-size: 0.75rem;">❌ Não chegou</span>';
-                    fechou = '<span style="color: #94a3b8;">-</span>';
-                }
-                status = `<div class="wpp-status-actions-cell">${status}</div>`;
+            if (f.isDiscardedProClick) {
+                contato = '<span class="status" style="background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; font-size: 0.75rem;">🧪 Teste (Descartado)</span>';
+                fechou = '<span style="color: #6366f1; font-size: 0.78rem; font-weight: 500;">Não contabilizado</span>';
+                status = '<span class="status" title="Clique de psicólogo/equipe descartado: não gera feedback pendente e não conta no total de cliques do psicólogo." style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; font-size: 0.75rem;">🛡️ Descartado (Sem feedback)</span>';
             } else {
-                // Lógica dos botões: Responder Manualmente e Cobrança via WhatsApp
-                const baseUrl = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
-                const linkFeedback = f.feedbackToken ? `${baseUrl}/magic-feedback?token=${f.feedbackToken}` : `${baseUrl}/psi/dashboard`;
+                if (!f.feedbackGiven && f.adminWppReminderSentAt) {
+                    const sentDate = new Date(f.adminWppReminderSentAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                    status = `<span class="status status-pendente" title="Follow-up enviado pelo CRM" style="background: #fef08a; color: #854d0e; border: 1px solid #fde047; font-size: 0.75rem;">Cobrado (${sentDate})</span>`;
+                }
 
-                const btnManual = `<a href="${linkFeedback}" target="_blank" class="btn-icon-action btn-icon-blue" title="Responder Manualmente pelo Profissional">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                </a>`;
-
-                // 1. Não mostrar Wpp se tiver menos de 48h
-                const createdAtMs = new Date(f.createdAt).getTime();
-                const nowMs = Date.now();
-                const ageHours = (nowMs - createdAtMs) / (1000 * 60 * 60);
-
-                if (ageHours > 48 && f.psychologist && f.psychologist.telefone) {
-                    const sentAtMs = f.adminWppReminderSentAt ? new Date(f.adminWppReminderSentAt).getTime() : 0;
-                    const count = f.adminWppReminderCount || 0;
-
-                    if (count >= 2) {
-                        // BLOQUEADO - Já foram enviados os 2 lembretes máximos
-                        const btnWpp = `<span class="btn-icon-action btn-icon-disabled" title="Lembretes esgotados (máximo de 2)">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
-                        </span>`;
-                        status = `<div class="wpp-status-actions-cell">${status}${btnManual}${btnWpp}</div>`;
+                if (f.feedbackGiven) {
+                    status = '<span class="status status-ativo" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.75rem;">Respondido</span>';
+                    if (f.contactReceived) {
+                        contato = '<span class="status status-ativo" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 0.75rem;">✅ Sim</span>';
+                        if (f.dealClosed === 'yes' || f.dealClosed === 'started') fechou = '<span class="status status-ativo" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 0.75rem;">✅ Iniciou</span>';
+                        else if (f.dealClosed === 'talking') fechou = '<span class="status status-pendente" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 0.75rem;">🤝 Em negociação</span>';
+                        else if (f.dealClosed === 'ghosted') fechou = '<span class="status status-neutro" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-size: 0.75rem;">👻 Parou de responder</span>';
+                        else if (f.dealClosed === 'no' || f.dealClosed === 'not_started' || (f.dealClosed && f.dealClosed.startsWith('not_started_'))) {
+                            let subTitle = '';
+                            if (f.dealClosed === 'not_started_price') subTitle = '<div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Motivo: Valor / Preço</div>';
+                            else if (f.dealClosed === 'not_started_schedule') subTitle = '<div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Motivo: Horário / Agenda</div>';
+                            else if (f.dealClosed === 'not_started_other') subTitle = '<div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Motivo: Outro</div>';
+                            fechou = `<span class="status status-inativo" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; font-size: 0.75rem;">❌ Não iniciou</span>${subTitle}`;
+                        }
+                        else if (f.dealClosed === 'no_contact' || f.dealClosed === 'wpp_issue' || f.dealClosed === 'unknown') fechou = '<span class="status status-neutro" style="background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 0.75rem;">🤷‍♂️ Desconhecido</span>';
+                        else fechou = '<span class="status status-inativo" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; font-size: 0.75rem;">❌ Não</span>';
                     } else {
-                        const hoursSinceLastReminder = sentAtMs ? (nowMs - sentAtMs) / (1000 * 60 * 60) : 9999;
+                        contato = '<span class="status status-inativo" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; font-size: 0.75rem;">❌ Não chegou</span>';
+                        fechou = '<span style="color: #94a3b8;">-</span>';
+                    }
+                    status = `<div class="wpp-status-actions-cell">${status}</div>`;
+                } else {
+                    // Lógica dos botões: Responder Manualmente e Cobrança via WhatsApp
+                    const baseUrl = window.location.origin.includes('localhost') ? 'http://localhost:3000' : 'https://www.yelopsi.com.br';
+                    const linkFeedback = f.feedbackToken ? `${baseUrl}/magic-feedback?token=${f.feedbackToken}` : `${baseUrl}/psi/dashboard`;
 
-                        if (hoursSinceLastReminder < 48) {
-                            // BLOQUEADO - Já cobrado recentemente (menos de 48h)
-                            const btnWpp = `<span class="btn-icon-action btn-icon-disabled" title="Cobrança já enviada nas últimas 48h">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    const btnManual = `<a href="${linkFeedback}" target="_blank" class="btn-icon-action btn-icon-blue" title="Responder Manualmente pelo Profissional">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </a>`;
+
+                    // 1. Não mostrar Wpp se tiver menos de 48h
+                    const createdAtMs = new Date(f.createdAt).getTime();
+                    const nowMs = Date.now();
+                    const ageHours = (nowMs - createdAtMs) / (1000 * 60 * 60);
+
+                    if (ageHours > 48 && f.psychologist && f.psychologist.telefone) {
+                        const sentAtMs = f.adminWppReminderSentAt ? new Date(f.adminWppReminderSentAt).getTime() : 0;
+                        const count = f.adminWppReminderCount || 0;
+
+                        if (count >= 2) {
+                            // BLOQUEADO - Já foram enviados os 2 lembretes máximos
+                            const btnWpp = `<span class="btn-icon-action btn-icon-disabled" title="Lembretes esgotados (máximo de 2)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
                             </span>`;
                             status = `<div class="wpp-status-actions-cell">${status}${btnManual}${btnWpp}</div>`;
                         } else {
-                            // LIBERADO - Pode cobrar
-                            const phoneRaw = f.psychologist.telefone.replace(/\D/g, '');
-                            const phone = phoneRaw.startsWith('55') ? phoneRaw : (phoneRaw.length >= 10 ? `55${phoneRaw}` : phoneRaw);
-                            const psiNameFirst = (f.psychologist.nome || 'Psi').split(' ')[0];
-                            const patientText = f.guestName ? `o(a) paciente ${f.guestName}` : 'um paciente';
+                            const hoursSinceLastReminder = sentAtMs ? (nowMs - sentAtMs) / (1000 * 60 * 60) : 9999;
 
-                            let msgWpp = '';
-                            if (count === 0) {
-                                msgWpp = `Olá, ${psiNameFirst}! Tudo bem?\n\n${patientText} entrou em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
+                            if (hoursSinceLastReminder < 48) {
+                                // BLOQUEADO - Já cobrado recentemente (menos de 48h)
+                                const btnWpp = `<span class="btn-icon-action btn-icon-disabled" title="Cobrança já enviada nas últimas 48h">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </span>`;
+                                status = `<div class="wpp-status-actions-cell">${status}${btnManual}${btnWpp}</div>`;
                             } else {
-                                msgWpp = `Olá, ${psiNameFirst}! Tudo bem? 😊\n\nPassando para lembrar sobre ${patientText}.\n\nAinda estamos aguardando seu retorno para saber o que aconteceu com esse encaminhamento. Basta informar se a mensagem chegou e se o atendimento foi iniciado.\n\nEsse retorno leva menos de 1 minuto e nos ajuda a melhorar os próximos encaminhamentos para você e para toda a comunidade da Yelo.\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
+                                // LIBERADO - Pode cobrar
+                                const phoneRaw = f.psychologist.telefone.replace(/\D/g, '');
+                                const phone = phoneRaw.startsWith('55') ? phoneRaw : (phoneRaw.length >= 10 ? `55${phoneRaw}` : phoneRaw);
+                                const psiNameFirst = (f.psychologist.nome || 'Psi').split(' ')[0];
+                                const patientText = f.guestName ? `o(a) paciente ${f.guestName}` : 'um paciente';
+
+                                let msgWpp = '';
+                                if (count === 0) {
+                                    msgWpp = `Olá, ${psiNameFirst}! Tudo bem?\n\n${patientText} entrou em contato com você pela Yelo. Você pode acessar o link abaixo e informar:\n\n• A mensagem chegou?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
+                                } else {
+                                    msgWpp = `Olá, ${psiNameFirst}! Tudo bem? 😊\n\nPassando para lembrar sobre ${patientText}.\n\nAinda estamos aguardando seu retorno para saber o que aconteceu com esse encaminhamento. Basta informar se a mensagem chegou e se o atendimento foi iniciado.\n\nEsse retorno leva menos de 1 minuto e nos ajuda a melhorar os próximos encaminhamentos para você e para toda a comunidade da Yelo.\n\n*Responder agora:*\n👉 ${linkFeedback}\n\nObrigado! 🌿`;
+                                }
+
+                                const wppLink = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msgWpp)}`;
+
+                                const btnWpp = `<a href="javascript:void(0)" onclick="window.markWppAsSent('${safePsiId}', '${wppLink}')" class="btn-icon-action btn-icon-green" title="Cobrar resposta via WhatsApp">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                                </a>`;
+                                status = `<div class="wpp-status-actions-cell">${status}${btnManual}${btnWpp}</div>`;
                             }
-
-                            const wppLink = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msgWpp)}`;
-
-                            const btnWpp = `<a href="javascript:void(0)" onclick="window.markWppAsSent('${safePsiId}', '${wppLink}')" class="btn-icon-action btn-icon-green" title="Cobrar resposta via WhatsApp">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                            </a>`;
-                            status = `<div class="wpp-status-actions-cell">${status}${btnManual}${btnWpp}</div>`;
                         }
+                    } else {
+                        // Se não tiver 48h ainda ou não tiver whatsapp, apenas exibe o btnManual
+                        status = `<div class="wpp-status-actions-cell">${status}${btnManual}</div>`;
                     }
-                } else {
-                    // Se não tiver 48h ainda ou não tiver whatsapp, apenas exibe o btnManual
-                    status = `<div class="wpp-status-actions-cell">${status}${btnManual}</div>`;
                 }
             }
 
@@ -1152,7 +1182,17 @@ window.initializePage = function () {
                 if (f.utmCampaign) utmBadge += `<br><span style="font-size: 0.72rem; color: #94a3b8; font-style: italic; display: inline-block;">${f.utmCampaign}</span>`;
             }
 
-            return `<tr>
+            let leadDisplay = `<span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">${f.guestName || 'Visitante'}</span>`;
+            if (f.isDiscardedProClick) {
+                const actorTag = f.actorType === 'psychologist_logged' ? '🧪 Psicólogo (Logado)'
+                    : f.actorType === 'psychologist_unlogged' ? '🧪 Psicólogo (Não logado)'
+                    : f.actorType === 'admin_logged' ? '🛡️ Admin (Logado)'
+                    : '🛡️ Admin (Não logado)';
+                const actorDetail = f.actorPsiNome ? `<div style="font-size: 0.74rem; color: #4338ca; font-weight: 600; margin-top: 3px;">${f.actorPsiNome}</div>` : '';
+                leadDisplay = `<span class="badge-psi-test">${actorTag}</span>${actorDetail}`;
+            }
+
+            return `<tr class="${f.isDiscardedProClick ? 'wpp-row-psi-test' : ''}">
                 <td data-label="Data do Clique"><span style="color: #64748b; font-size: 0.88rem; font-weight: 500;">${dataClique}</span></td>
                 <td data-label="Psicólogo">
                     <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
@@ -1163,7 +1203,7 @@ window.initializePage = function () {
                         </div>
                     </div>
                 </td>
-                <td data-label="Paciente / Lead"><span style="font-weight: 600; color: #1e293b; font-size: 0.9rem;">${f.guestName || 'Visitante'}</span></td>
+                <td data-label="Paciente / Lead">${leadDisplay}</td>
                 <td data-label="Origem (UTM)">${utmBadge}</td>
                 <td data-label="Recebeu Mensagem?" style="text-align: center;">${contato}</td>
                 <td data-label="Fechou Negócio?" style="text-align: center;">${fechou}</td>
@@ -1172,24 +1212,34 @@ window.initializePage = function () {
         }).join('');
     }
 
-    function renderWppFeedbacks(feedbacks, prevFeedbacks = [], daysCount = 30, daysExact = null) {
-        window.wppDataState.allFeedbacks = feedbacks;
+    function renderWppFeedbacks(feedbacks, prevFeedbacks = [], daysCount = 30, daysExact = null, proMeta = {}) {
+        const patientFeedbacks = Array.isArray(feedbacks) ? feedbacks.filter(f => !f.isDiscardedProClick) : [];
+        const discardedProClicks = Array.isArray(proMeta.discardedProClicks) ? proMeta.discardedProClicks : [];
+        const discardedProSummary = proMeta.discardedProSummary || {
+            total: discardedProClicks.length,
+            logados: discardedProClicks.filter(c => String(c.actorType || '').endsWith('_logged')).length,
+            naoLogados: discardedProClicks.filter(c => !String(c.actorType || '').endsWith('_logged')).length
+        };
+        const prevDiscardedProCount = typeof proMeta.prevDiscardedProCount === 'number' ? proMeta.prevDiscardedProCount : null;
+
+        // Tabela exibe pacientes + cliques de psicólogos (destacados), mas todos os KPIs gerais usam APENAS patientFeedbacks
+        window.wppDataState.allFeedbacks = [...patientFeedbacks, ...discardedProClicks];
 
         const days = Math.max(1, parseInt(daysCount) || 30);
         const effectiveDays = Math.max(1 / 24, parseFloat(daysExact) || days);
 
-        // --- DADOS ATUAIS ---
-        const total = feedbacks.length;
+        // --- DADOS ATUAIS (APENAS PACIENTES) ---
+        const total = patientFeedbacks.length;
         const mediaDia = (total / effectiveDays).toFixed(1);
 
-        const respondidos = feedbacks.filter(f => f.feedbackGiven).length;
+        const respondidos = patientFeedbacks.filter(f => f.feedbackGiven).length;
         const taxaResposta = total > 0 ? ((respondidos / total) * 100).toFixed(1) : 0;
         const taxaNaoResposta = total > 0 ? (100 - parseFloat(taxaResposta)).toFixed(1) : 0;
 
         // Janela madura (>= 48h): evita atribuir ao atendimento cliques recentes que ainda nem venceram o prazo de cobrança
         const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
-        const matureFeedbacks = feedbacks.filter(f => f.createdAt && new Date(f.createdAt).getTime() <= cutoff48h);
-        const pendingRecent48h = feedbacks.filter(f => !f.feedbackGiven && f.createdAt && new Date(f.createdAt).getTime() > cutoff48h).length;
+        const matureFeedbacks = patientFeedbacks.filter(f => f.createdAt && new Date(f.createdAt).getTime() <= cutoff48h);
+        const pendingRecent48h = patientFeedbacks.filter(f => !f.feedbackGiven && f.createdAt && new Date(f.createdAt).getTime() > cutoff48h).length;
         const matureRespondidos = matureFeedbacks.filter(f => f.feedbackGiven).length;
         const matureRespPct = matureFeedbacks.length > 0 ? ((matureRespondidos / matureFeedbacks.length) * 100).toFixed(1) : null;
 
@@ -1202,12 +1252,12 @@ window.initializePage = function () {
             f.dealClosed === 'not_started_other'
         );
 
-        const recebidas = feedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
-        const fechados = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'yes' || f.dealClosed === 'started')).length;
-        const negociacao = feedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'talking').length;
-        const perdidos = feedbacks.filter(isLostDeal).length;
+        const recebidas = patientFeedbacks.filter(f => f.feedbackGiven && f.contactReceived).length;
+        const fechados = patientFeedbacks.filter(f => f.feedbackGiven && f.contactReceived && (f.dealClosed === 'yes' || f.dealClosed === 'started')).length;
+        const negociacao = patientFeedbacks.filter(f => f.feedbackGiven && f.contactReceived && f.dealClosed === 'talking').length;
+        const perdidos = patientFeedbacks.filter(isLostDeal).length;
 
-        const fantasmas = feedbacks.filter(f => f.feedbackGiven && !f.contactReceived).length;
+        const fantasmas = patientFeedbacks.filter(f => f.feedbackGiven && !f.contactReceived).length;
         const totalValidados = recebidas + fantasmas;
         const taxaContato = totalValidados > 0 ? ((recebidas / totalValidados) * 100).toFixed(1) : 0;
         const taxaFechamento = recebidas > 0 ? ((fechados / recebidas) * 100).toFixed(1) : 0;
@@ -1267,6 +1317,16 @@ window.initializePage = function () {
         if (elWppTxNaoResp) {
             const trendNaoResp = prevTaxaNaoResposta !== null ? appendMaturityTitle(renderTrend(taxaNaoResposta, prevTaxaNaoResposta, true, { isRate: true }), true) : '';
             elWppTxNaoResp.innerHTML = `${taxaNaoResposta}%${trendNaoResp}`;
+        }
+
+        const elWppCliquesPsis = document.getElementById('kpi-wpp-cliques-psis');
+        const elWppCliquesPsisSub = document.getElementById('kpi-wpp-cliques-psis-sub');
+        const discardedTotal = discardedProSummary.total || 0;
+        if (elWppCliquesPsis) {
+            elWppCliquesPsis.innerHTML = `${discardedTotal.toLocaleString()}${renderTrend(discardedTotal, prevDiscardedProCount, false, { neutral: true })}`;
+        }
+        if (elWppCliquesPsisSub) {
+            elWppCliquesPsisSub.textContent = `${discardedProSummary.logados || 0} logado · ${discardedProSummary.naoLogados || 0} não logado — descartados`;
         }
 
         // Linha 2: Fundo de Funil & Performance de Vendas

@@ -453,6 +453,28 @@
         box-shadow: none;
     }
 
+    /* Destaque visual para cliques de teste feitos por psicólogos/admins */
+    #tab-conversoes .tabela-gerenciamento tbody tr.wpp-row-psi-test {
+        background: linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, rgba(238, 242, 255, 0.55) 100%) !important;
+        box-shadow: inset 4px 0 0 #6366f1;
+    }
+    #tab-conversoes .tabela-gerenciamento tbody tr.wpp-row-psi-test:hover {
+        background: linear-gradient(90deg, rgba(99, 102, 241, 0.13) 0%, rgba(238, 242, 255, 0.8) 100%) !important;
+    }
+    .badge-psi-test {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        background: #e0e7ff;
+        color: #4338ca;
+        border: 1px solid #c7d2fe;
+        letter-spacing: 0.01em;
+    }
+
     /* Paginação Moderna */
     #wpp-pagination-controls {
         display: flex;
@@ -554,6 +576,12 @@
         #tab-conversoes .tabela-gerenciamento tbody tr:hover {
             border-color: #cbd5e1 !important;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
+        }
+        #tab-conversoes .tabela-gerenciamento tbody tr.wpp-row-psi-test {
+            background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%) !important;
+            border: 1.5px solid #a5b4fc !important;
+            border-left: 5px solid #6366f1 !important;
+            box-shadow: 0 3px 12px rgba(99, 102, 241, 0.12) !important;
         }
 
         /* Topo do Card: Informações do Psicólogo */
@@ -864,6 +892,11 @@
                 <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Taxa de Não Resposta <span class="info-tooltip" data-tooltip="Porcentagem de interações onde os psicólogos ignoraram/fecharam o popup sem nos dar o feedback.">i</span></h4>
                 <p class="kpi-numero" id="kpi-wpp-tx-nao-resposta" style="color: #64748b;">0%</p>
             </div>
+            <div class="kpi-card" style="border-top-color: #6366f1; background: linear-gradient(180deg, #ffffff 0%, #f5f7ff 100%);">
+                <h4 style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Cliques de Psicólogos <span class="info-tooltip" data-tooltip="Cliques de teste feitos por psicólogos ou equipe logados/identificados. Descartados das contagens gerais, sem gerar feedback pendente e sem contar para o psicólogo.">i</span></h4>
+                <p class="kpi-numero" id="kpi-wpp-cliques-psis" style="color: #4f46e5;">0</p>
+                <span id="kpi-wpp-cliques-psis-sub" style="display: block; font-size: 0.72rem; color: #6366f1; margin-top: 2px; font-weight: 500;">0 logado · 0 não logado — descartados</span>
+            </div>
         </div>
 
         <!-- LINHA 2: FUNDO DE FUNIL & PERFORMANCE DE VENDAS -->
@@ -913,6 +946,8 @@
                     <div class="wpp-select-wrapper">
                         <select id="filter-wpp-status" onchange="applyWppFilter()">
                             <option value="todos">Todos os Contatos</option>
+                            <option value="somente_pacientes">Somente Pacientes</option>
+                            <option value="cliques_psis">🧪 Cliques de Psicólogos (Testes)</option>
                             <option value="cobrar_agora">Cobrar Agora</option>
                             <option value="pendente">Pendente (Sem Resposta)</option>
                             <option value="respondido">Respondido (Todos)</option>

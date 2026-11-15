@@ -1364,6 +1364,121 @@ exports.getFunnelAnalytics = async (req, res) => {
     }
 };
 
+/**
+ * Busca cliques no WhatsApp descartados no funil por serem de psicólogos ou admins.
+ */
+async function fetchDiscardedWhatsappClicks(db, start, end) {
+    const replacements = { start: start.toISOString(), end: end.toISOString() };
+    let rows = [];
+
+    try {
+        rows = await db.sequelize.query(
+            `SELECT f."id", f."actor_type", f."target_id", f."source", f."actor_id", f."utm_source", f."createdAt",
+                    t."nome" AS "target_nome", t."email" AS "target_email", t."slug" AS "target_slug",
+                    t."telefone" AS "target_telefone", t."fotoUrl" AS "target_foto",
+                    a."nome" AS "actor_psi_nome"
+             FROM "FunnelDiscardedEvents" f
+             LEFT JOIN "Psychologists" t ON t."id" = f."target_id"
+             LEFT JOIN "Psychologists" a ON a."id" = f."actor_id" AND COALESCE(f."actor_type", '') LIKE 'psychologist%'
+             WHERE f."stage" = 'whatsapp' AND f."createdAt" >= :start AND f."createdAt" <= :end
+             ORDER BY f."createdAt" DESC`,
+            { replacements, type: db.sequelize.QueryTypes.SELECT }
+        );
+    } catch (_) {
+        try {
+            rows = await db.sequelize.query(
+                `SELECT f."id", f."actor_type", f."target_id", f."source", f."createdAt",
+                        t."nome" AS "target_nome", t."email" AS "target_email", t."slug" AS "target_slug",
+                        t."telefone" AS "target_telefone", t."fotoUrl" AS "target_foto"
+                 FROM "FunnelDiscardedEvents" f
+                 LEFT JOIN "Psychologists" t ON t."id" = f."target_id"
+                 WHERE f."stage" = 'whatsapp' AND f."createdAt" >= :start AND f."createdAt" <= :end
+                 ORDER BY f."createdAt" DESC`,
+                { replacements, type: db.sequelize.QueryTypes.SELECT }
+            );
+        } catch (__) {
+            return {
+                clicks: [],
+                summary: { total: 0, logados: 0, naoLogados: 0, psis: 0, admins: 0 }
+            };
+        }
+    }
+
+    const summary = { total: rows.length, logados: 0, naoLogados: 0, psis: 0, admins: 0 };
+    const actorLabels = {
+        psychologist_logged: 'Psicólogo (Logado)',
+        psychologist_unlogged: 'Psicólogo (Não logado)',
+        admin_logged: 'Admin (Logado)',
+        admin_unlogged: 'Admin (Não logado)'
+    };
+
+    const clicks = rows.map(r => {
+        const type = String(r.actor_type || '');
+        if (type.endsWith('_logged')) summary.logados += 1;
+        else summary.naoLogados += 1;
+        if (type.startsWith('psychologist')) summary.psis += 1;
+        else if (type.startsWith('admin')) summary.admins += 1;
+
+        return {
+            id: `disc-${r.id}`,
+            discardedEventId: r.id,
+            isDiscardedProClick: true,
+            psychologistId: r.target_id,
+            psychologist: r.target_id ? {
+                id: r.target_id,
+                nome: r.target_nome || 'Psi Removido',
+                email: r.target_email || null,
+                slug: r.target_slug || null,
+                telefone: r.target_telefone || null,
+                fotoUrl: r.target_foto || null
+            } : null,
+            actorType: type,
+            actorId: r.actor_id || null,
+            actorPsiNome: r.actor_psi_nome || null,
+            guestName: r.actor_psi_nome ? `Psi: ${r.actor_psi_nome}` : (actorLabels[type] || 'Profissional (Teste)'),
+            utmSource: r.utm_source || null,
+            utmMedium: null,
+            utmCampaign: null,
+            source: r.source || null,
+            feedbackGiven: false,
+            contactReceived: null,
+            dealClosed: null,
+            adminWppReminderSentAt: null,
+            adminWppReminderCount: 0,
+            createdAt: r.createdAt
+        };
+    });
+
+    return { clicks, summary };
+}
+
+async function countDiscardedWhatsappSummary(db, start, end) {
+    try {
+        const [row] = await db.sequelize.query(
+            `SELECT COUNT(*)::int AS total,
+                    COUNT(*) FILTER (WHERE "actor_type" LIKE '%\\_logged' ESCAPE '\\')::int AS logados,
+                    COUNT(*) FILTER (WHERE "actor_type" LIKE '%\\_unlogged' ESCAPE '\\')::int AS nao_logados,
+                    COUNT(*) FILTER (WHERE "actor_type" LIKE 'psychologist%')::int AS psis,
+                    COUNT(*) FILTER (WHERE "actor_type" LIKE 'admin%')::int AS admins
+             FROM "FunnelDiscardedEvents"
+             WHERE "stage" = 'whatsapp' AND "createdAt" >= :start AND "createdAt" <= :end`,
+            {
+                replacements: { start: start.toISOString(), end: end.toISOString() },
+                type: db.sequelize.QueryTypes.SELECT
+            }
+        );
+        return {
+            total: row?.total || 0,
+            logados: row?.logados || 0,
+            naoLogados: row?.nao_logados || 0,
+            psis: row?.psis || 0,
+            admins: row?.admins || 0
+        };
+    } catch (_) {
+        return { total: 0, logados: 0, naoLogados: 0, psis: 0, admins: 0 };
+    }
+}
+
 exports.getWhatsappFeedbacks = async (req, res) => {
     try {
         const db = require('../models');
@@ -1421,19 +1536,27 @@ exports.getWhatsappFeedbacks = async (req, res) => {
             const exactDays = Math.max(1 / 24, msDiff / (1000 * 60 * 60 * 24));
             const days = Math.max(1, Math.round(exactDays));
 
-            const prevFeedbacks = await db.WhatsAppClickLog.findAll({
-                where: {
-                    createdAt: {
-                        [Op.gte]: prevStart.toISOString(),
-                        [Op.lte]: prevEnd.toISOString()
-                    }
-                },
-                attributes: ['id', 'feedbackGiven', 'contactReceived', 'dealClosed', 'createdAt']
-            });
+            const [prevFeedbacks, discardedCurrent, prevDiscardedSummary] = await Promise.all([
+                db.WhatsAppClickLog.findAll({
+                    where: {
+                        createdAt: {
+                            [Op.gte]: prevStart.toISOString(),
+                            [Op.lte]: prevEnd.toISOString()
+                        }
+                    },
+                    attributes: ['id', 'feedbackGiven', 'contactReceived', 'dealClosed', 'createdAt']
+                }),
+                fetchDiscardedWhatsappClicks(db, start, end),
+                countDiscardedWhatsappSummary(db, prevStart, prevEnd)
+            ]);
 
             return res.status(200).json({
                 feedbacks,
                 prevFeedbacks,
+                discardedProClicks: discardedCurrent.clicks,
+                discardedProSummary: discardedCurrent.summary,
+                prevDiscardedProCount: prevDiscardedSummary.total,
+                prevDiscardedSummary,
                 days,
                 daysExact: Number(exactDays.toFixed(4)),
                 comparisonPeriod: {

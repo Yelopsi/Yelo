@@ -203,26 +203,35 @@ function resolveActor(req, fallback = {}) {
 /**
  * Registra evento descartado do funil (ex.: clique no WhatsApp por profissional logado ou não).
  */
-async function recordDiscardedEvent(db, { stage, actorType, targetId = null, searchId = null, source = null, page = null }) {
+async function recordDiscardedEvent(db, { stage, actorType, targetId = null, searchId = null, source = null, page = null, actorId = null, utmSource = null }) {
     if (!db?.sequelize || !stage || !actorType || actorType === 'patient') return;
+    const replacements = {
+        stage: String(stage).slice(0, 50),
+        actorType: String(actorType).slice(0, 50),
+        targetId: targetId ? parseInt(targetId, 10) || null : null,
+        searchId: searchId ? String(searchId).slice(0, 255) : null,
+        source: source ? String(source).slice(0, 100) : null,
+        page: page ? String(page).slice(0, 255) : null,
+        actorId: actorId ? parseInt(actorId, 10) || null : null,
+        utmSource: utmSource ? String(utmSource).slice(0, 100) : null
+    };
     try {
         await db.sequelize.query(
-            `INSERT INTO "FunnelDiscardedEvents" ("stage", "actor_type", "target_id", "search_id", "source", "page", "createdAt")
-             VALUES (:stage, :actorType, :targetId, :searchId, :source, :page, NOW())`,
-            {
-                replacements: {
-                    stage: String(stage).slice(0, 50),
-                    actorType: String(actorType).slice(0, 50),
-                    targetId: targetId ? parseInt(targetId, 10) || null : null,
-                    searchId: searchId ? String(searchId).slice(0, 255) : null,
-                    source: source ? String(source).slice(0, 100) : null,
-                    page: page ? String(page).slice(0, 255) : null
-                },
-                type: db.sequelize.QueryTypes.INSERT
-            }
+            `INSERT INTO "FunnelDiscardedEvents" ("stage", "actor_type", "target_id", "search_id", "source", "page", "actor_id", "utm_source", "createdAt")
+             VALUES (:stage, :actorType, :targetId, :searchId, :source, :page, :actorId, :utmSource, NOW())`,
+            { replacements, type: db.sequelize.QueryTypes.INSERT }
         );
     } catch (_) {
-        // Nunca interrompe fluxo principal caso tabela ainda não exista em ambiente antigo
+        // Fallback caso colunas novas (actor_id/utm_source) ainda não tenham sido migradas
+        try {
+            await db.sequelize.query(
+                `INSERT INTO "FunnelDiscardedEvents" ("stage", "actor_type", "target_id", "search_id", "source", "page", "createdAt")
+                 VALUES (:stage, :actorType, :targetId, :searchId, :source, :page, NOW())`,
+                { replacements, type: db.sequelize.QueryTypes.INSERT }
+            );
+        } catch (__) {
+            // Nunca interrompe fluxo principal caso tabela ainda não exista em ambiente antigo
+        }
     }
 }
 

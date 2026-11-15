@@ -61,6 +61,8 @@ const initProfilePage = async () => {
                                 const userType = localStorage.getItem('Yelo_user_type') || '';
                                 const knownPro = localStorage.getItem('yelo_known_pro') || '';
                                 const trackHeaders = { 'Content-Type': 'application/json' };
+                                const authToken = localStorage.getItem('Yelo_token');
+                                if (authToken && authToken !== 'cookie_auth_active') trackHeaders['Authorization'] = `Bearer ${authToken}`;
                                 if (userType) trackHeaders['X-Yelo-User-Type'] = userType;
                                 if (knownPro) trackHeaders['X-Yelo-Known-Pro'] = knownPro;
 

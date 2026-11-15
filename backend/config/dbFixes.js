@@ -225,7 +225,9 @@ const applyDatabaseFixes = async (db, sequelize) => {
             `ALTER TABLE "AdminAdjustments" ADD COLUMN IF NOT EXISTS "image_url" TEXT;`,
             `ALTER TABLE "SiteVisits" ADD COLUMN IF NOT EXISTS "actor_type" VARCHAR(50) DEFAULT 'patient';`,
             `ALTER TABLE "ProfileAppearanceLogs" ADD COLUMN IF NOT EXISTS "actor_type" VARCHAR(50) DEFAULT 'patient';`,
-            `CREATE TABLE IF NOT EXISTS "FunnelDiscardedEvents" ( "id" SERIAL PRIMARY KEY, "stage" VARCHAR(50) NOT NULL, "actor_type" VARCHAR(50) NOT NULL, "target_id" INTEGER, "search_id" VARCHAR(255), "source" VARCHAR(100), "page" VARCHAR(255), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `CREATE TABLE IF NOT EXISTS "FunnelDiscardedEvents" ( "id" SERIAL PRIMARY KEY, "stage" VARCHAR(50) NOT NULL, "actor_type" VARCHAR(50) NOT NULL, "target_id" INTEGER, "search_id" VARCHAR(255), "source" VARCHAR(100), "page" VARCHAR(255), "actor_id" INTEGER, "utm_source" VARCHAR(100), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
+            `ALTER TABLE "FunnelDiscardedEvents" ADD COLUMN IF NOT EXISTS "actor_id" INTEGER;`,
+            `ALTER TABLE "FunnelDiscardedEvents" ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(100);`,
             `CREATE INDEX IF NOT EXISTS "idx_funnel_discarded_created_stage" ON "FunnelDiscardedEvents" ("createdAt", "stage");`
         ];
 

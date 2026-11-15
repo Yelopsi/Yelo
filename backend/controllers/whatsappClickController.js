@@ -35,7 +35,9 @@ exports.registerClick = async (req, res) => {
                 actorType: actor.actorType,
                 targetId: psychologistId,
                 searchId: searchId || null,
-                source: 'profile_direct'
+                source: 'profile_direct',
+                actorId: actor.userId || null,
+                utmSource: utmSource || null
             });
             return res.status(200).json({ skipped: true, message: 'Clique de profissional/admin descartado.' });
         }

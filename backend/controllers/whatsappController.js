@@ -32,7 +32,9 @@ exports.getWhatsAppLink = async (req, res) => {
                 actorType: actor.actorType,
                 targetId: psi.id,
                 searchId: req.query.searchId || null,
-                source: 'ab_link'
+                source: 'ab_link',
+                actorId: actor.userId || null,
+                utmSource: req.query.utm_source || req.query.utmSource || null
             });
             const numLimpo = psi.telefone.replace(/\D/g, '');
             return res.json({ success: true, url: `https://wa.me/55${numLimpo}`, variant: null, skipped: true });
