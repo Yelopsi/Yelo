@@ -214,90 +214,200 @@ window.initializePage = function() {
              updateSafe('kpi-waiting-list', stats.waitingListCount || 0);
 
 
-             // --- 5. MARCOS DE CRESCIMENTO E BREAKEVEN ---
+             // --- 5. MARCOS DE CRESCIMENTO E BREAKEVEN (ALINHADO COM A DRE CONTÁBIL) ---
              const currentPaying = parseInt(stats.psychologists.paying) || 0;
              try {
                  updateSafe('milestone-current-val', currentPaying);
-                 
-                 // Fetch CMO data for Ads expenses
-                 const cmoRes = await fetch(BASE_URL + '/api/cmo/dashboard', { headers: { 'Authorization': 'Bearer ' + token } });
-                 if (cmoRes.ok) {
-                     const cmoData = await cmoRes.json();
-                     
-                     // Proteção contra retornos vazios ou nulos (NaN)
-                     let metaSpend = parseFloat(cmoData?.ads?.meta?.spend) || 0;
-                     let googleSpend = parseFloat(cmoData?.ads?.google?.spend) || 0;
-                     let totalAds = metaSpend + googleSpend;
-                     
-                     // Alvo Breakeven = (Custo Ads / 99) + 5
-                     let breakevenTarget = Math.ceil((totalAds / 99) + 5);
-                     if (isNaN(breakevenTarget) || breakevenTarget < 10) breakevenTarget = 10; // Fallback seguro
+
+                 const brtDateStr = new Intl.DateTimeFormat('en-CA', {
+                     timeZone: 'America/Sao_Paulo',
+                     year: 'numeric',
+                     month: '2-digit',
+                     day: '2-digit'
+                 }).format(new Date());
+                 const [brtY, brtM, brtD] = brtDateStr.split('-').map(Number);
+                 const daysInMonth = new Date(brtY, brtM, 0).getDate();
+
+                 const dreRes = await fetch(
+                     `${BASE_URL}/api/admin/dre?year=${brtY}&month=${brtM}&regime=accrual`,
+                     { headers: { 'Authorization': 'Bearer ' + token } }
+                 );
+
+                 if (dreRes.ok) {
+                     const dreData = await dreRes.json();
+                     const sel = dreData.selectedMonthSummary || {};
+                     const prev = dreData.prevMonthSummary || {};
+                     const company = dreData.company || {};
+                     const ann = dreData.annualSummary || {};
+                     const meta = dreData.meta || {};
+                     const alerts = dreData.alerts || [];
+
+                     // ARPU real da base pagante (MRR / pagantes) com fallback no ticket médio da DRE
+                     const arpu = (currentPaying > 0 && Number(stats.mrr || 0) > 0)
+                         ? (Number(stats.mrr) / currentPaying)
+                         : (sel.paidCount > 0 && sel.grossRevenue > 0
+                             ? (sel.grossRevenue / sel.paidCount)
+                             : (prev.paidCount > 0 && prev.grossRevenue > 0 ? prev.grossRevenue / prev.paidCount : 99));
+
+                     // Taxas variáveis unitárias (impostos % + gateway Asaas observado na DRE)
+                     const varTaxRate = Number(sel.taxConfig?.variableRate ?? prev.taxConfig?.variableRate ?? 0);
+                     const gatewayRate = Number(sel.grossRevenue || 0) > 0
+                         ? (Number(sel.gatewayFees || 0) / Number(sel.grossRevenue))
+                         : (Number(prev.grossRevenue || 0) > 0 ? Number(prev.gatewayFees || 0) / Number(prev.grossRevenue) : 0.0265);
+                     const unitContribution = arpu * Math.max(0.1, 1 - varTaxRate - gatewayRate);
+
+                     // Custos fixos mensais reais da DRE (DAS/imposto fixo + CSP direto + Pessoal/Admin/Infra + Desp. Financeiras)
+                     const selFixedTax = Number(sel.taxConfig?.fixedMonthly ?? 0) + Number(sel.extraDeductionTaxes || 0);
+                     const prevFixedTax = Number(prev.taxConfig?.fixedMonthly ?? 0) + Number(prev.extraDeductionTaxes || 0);
+                     const fixedTaxMonthly = selFixedTax > 0 ? selFixedTax : prevFixedTax;
+
+                     const directCogsMonthly = Number(sel.directCogs || 0) > 0 ? Number(sel.directCogs) : Number(prev.directCogs || 0);
+
+                     const selFixedOpex = Number(sel.opexPersonnel || 0) + Number(sel.opexAdmin || 0);
+                     const prevFixedOpex = Number(prev.opexPersonnel || 0) + Number(prev.opexAdmin || 0);
+                     const fixedOpexMonthly = selFixedOpex > 0 ? selFixedOpex : prevFixedOpex;
+
+                     const selNetFin = Math.max(0, Number(sel.financialExpense || 0) - Number(sel.financialIncome || 0));
+                     const prevNetFin = Math.max(0, Number(prev.financialExpense || 0) - Number(prev.financialIncome || 0));
+                     const netFinMonthly = selNetFin > 0 ? selNetFin : prevNetFin;
+
+                     // OPEX Marketing (Ads): se mês em andamento (> dia 3), projeta o ritmo mensal; nos 3 primeiros dias ou em falha de sync, usa mês anterior completo
+                     const selMkt = Number(sel.opexMarketing || 0);
+                     const prevMkt = Number(prev.opexMarketing || 0);
+                     const hasSyncWarn = alerts.some(a => a.code === 'SYNC_WARNING');
+                     let marketingMonthly = selMkt;
+                     let usedPaceProjection = false;
+                     if (selMkt > 0 && brtD < daysInMonth) {
+                         if (brtD <= 3 && prevMkt > 0) {
+                             marketingMonthly = prevMkt;
+                         } else {
+                             marketingMonthly = (selMkt / Math.max(1, brtD)) * daysInMonth;
+                             usedPaceProjection = true;
+                         }
+                     } else if (selMkt === 0 && prevMkt > 0 && (brtD <= 3 || hasSyncWarn)) {
+                         marketingMonthly = prevMkt;
+                     }
+
+                     const monthlyCommitments = fixedTaxMonthly + directCogsMonthly + fixedOpexMonthly + marketingMonthly + netFinMonthly;
+                     const breakevenTarget = Math.max(1, Math.ceil(monthlyCommitments / unitContribution));
                      updateSafe('milestone-breakeven-target', breakevenTarget);
 
-                     // Calcular média de crescimento móvel (Baseado no netGrowth90d calculado pelo backend)
-                     // A divisão por 3 nos dá a média mensal de crescimento líquido dos últimos 3 meses
+                     // Saída MEI: limite legal de R$ 81.000/ano (R$ 6.750/mês brutos) ÷ ARPU real
+                     const meiTarget = Math.max(1, Math.floor(6750 / arpu) + 1);
+                     updateSafe('milestone-mei-target', meiTarget);
+
+                     const proLaboreTarget = Math.max(120, breakevenTarget + 20);
+                     updateSafe('milestone-prolabore-target', proLaboreTarget);
+
+                     // Ritmo médio mensal de crescimento líquido (90d)
                      let netGrowthPerMonth = 0;
                      if (stats.netGrowth90d !== undefined && stats.netGrowth90d !== null) {
                          netGrowthPerMonth = stats.netGrowth90d / 3;
                      } else {
-                         // Fallback APENAS se a API falhar em trazer o dado
                          const rawNew30d = parseInt(stats.newPsis30d) || 0;
-                         // Pega os novos de 30d, e tira uma estimativa conservadora de 50% de churn se não houver dados reais
-                         netGrowthPerMonth = rawNew30d > 0 ? (rawNew30d / 2) : 0; 
+                         netGrowthPerMonth = rawNew30d > 0 ? (rawNew30d / 2) : 0;
                      }
 
                      function formatProjection(target) {
-                        const pct = (currentPaying / target) * 100;
-                        const pctSpan = pct >= 100 
-                            ? `<span style="font-size: 0.75rem; font-weight: bold; color: #10b981; margin-left: 6px;">✓ 100%</span>`
-                            : `<span style="font-size: 0.75rem; font-weight: 600; color: #059669; margin-left: 6px;">${pct.toFixed(1).replace('.', ',')}% da meta</span>`;
+                         const pct = (currentPaying / target) * 100;
+                         const pctSpan = pct >= 100
+                             ? `<span style="font-size: 0.75rem; font-weight: bold; color: #10b981; margin-left: 6px;">✓ 100%</span>`
+                             : `<span style="font-size: 0.75rem; font-weight: 600; color: #059669; margin-left: 6px;">${pct.toFixed(1).replace('.', ',')}% da meta</span>`;
 
-                        if (currentPaying >= target) return `Atingido ${pctSpan}`;
-                        
-                        // Se o crescimento líquido (novos - churn) for menor ou igual a 0, não vai atingir
-                        if (netGrowthPerMonth <= 0) return `Estagnado ${pctSpan}`;
-                        
-                        const monthsNeeded = (target - currentPaying) / netGrowthPerMonth;
-                        // Limitar a projeção máxima a 5 anos (60 meses) para não gerar datas absurdas
-                        if (monthsNeeded > 60 || !isFinite(monthsNeeded)) return `Longo Prazo ${pctSpan}`;
+                         if (currentPaying >= target) return `Atingido ${pctSpan}`;
+                         if (netGrowthPerMonth <= 0) return `Estagnado ${pctSpan}`;
 
-                        const projDate = new Date();
-                        projDate.setMonth(projDate.getMonth() + Math.ceil(monthsNeeded));
-                        
-                        let fMonth = projDate.toLocaleString('pt-BR', { month: 'short' });
-                        let fYear = projDate.getFullYear();
-                        let dateStr = (fMonth + '/' + fYear).replace('.', '');
+                         const monthsNeeded = (target - currentPaying) / netGrowthPerMonth;
+                         if (monthsNeeded > 60 || !isFinite(monthsNeeded)) return `Longo Prazo ${pctSpan}`;
 
-                        return `${dateStr} ${pctSpan}`;
-                    }
+                         const projDate = new Date();
+                         projDate.setMonth(projDate.getMonth() + Math.ceil(monthsNeeded));
+
+                         const fMonth = projDate.toLocaleString('pt-BR', { month: 'short' });
+                         const fYear = projDate.getFullYear();
+                         const dateStr = (fMonth + '/' + fYear).replace('.', '');
+                         return `${dateStr} ${pctSpan}`;
+                     }
 
                      const projBreakeven = document.getElementById('milestone-breakeven-proj');
                      if (projBreakeven) projBreakeven.innerHTML = formatProjection(breakevenTarget);
 
                      const proj70 = document.getElementById('milestone-70-proj');
-                     if (proj70) proj70.innerHTML = formatProjection(70);
+                     if (proj70) {
+                         if (company.taxRegime && company.taxRegime !== 'MEI') {
+                             proj70.innerHTML = `Migrado <span style="font-size: 0.75rem; font-weight: bold; color: #10b981; margin-left: 6px;">✓ ${company.taxRegime}</span>`;
+                         } else {
+                             proj70.innerHTML = formatProjection(meiTarget);
+                         }
+                     }
 
                      const proj120 = document.getElementById('milestone-120-proj');
-                     if (proj120) proj120.innerHTML = formatProjection(120);
+                     if (proj120) proj120.innerHTML = formatProjection(proLaboreTarget);
 
-                     // MAX_SCALE
-                     const MAX_SCALE = Math.max(120, currentPaying, breakevenTarget);
+                     // Posicionamento na régua + proteção contra sobreposição visual de etiquetas
+                     const MAX_SCALE = Math.max(proLaboreTarget, currentPaying, breakevenTarget, meiTarget);
                      const percentCurrent = Math.min(100, (currentPaying / MAX_SCALE) * 100);
-                     
+                     const breakLeftPct = Math.min(100, (breakevenTarget / MAX_SCALE) * 100);
+                     const meiLeftPct = Math.min(100, (meiTarget / MAX_SCALE) * 100);
+                     const proLeftPct = Math.min(100, (proLaboreTarget / MAX_SCALE) * 100);
+
                      const fill = document.getElementById('milestone-progress-fill');
                      if (fill) fill.style.width = percentCurrent + '%';
 
                      const markerBreak = document.getElementById('marker-breakeven');
-                     if (markerBreak) markerBreak.style.left = Math.min(100, (breakevenTarget / MAX_SCALE) * 100) + '%';
-                     
+                     const markerBreakLabel = document.getElementById('marker-breakeven-label');
+                     if (markerBreak) {
+                         markerBreak.style.left = breakLeftPct + '%';
+                         markerBreak.title = `Breakeven DRE (${meta.selectedMonthLabel || 'Mês'}/${meta.year || brtY}): Compromissos ~${formatCurrency(monthlyCommitments)}/mês ÷ Margem contrib. ~${formatCurrency(unitContribution)}/pagante (ARPU ${formatCurrency(arpu)}).`;
+                     }
+
                      const marker70 = document.getElementById('marker-70');
-                     if (marker70) marker70.style.left = Math.min(100, (70 / MAX_SCALE) * 100) + '%';
-                     
+                     const marker70Label = document.getElementById('marker-70-label');
+                     if (marker70) {
+                         marker70.style.left = meiLeftPct + '%';
+                         marker70.title = `Teto MEI: R$ 81.000/ano (R$ 6.750/mês) com ARPU de ${formatCurrency(arpu)}. Acumulado DRE ${meta.year || brtY}: ${formatCurrency(ann.grossRevenue || 0)}.`;
+                     }
+
                      const marker120 = document.getElementById('marker-120');
-                     if (marker120) marker120.style.left = Math.min(100, (120 / MAX_SCALE) * 100) + '%';
+                     const marker120Label = document.getElementById('marker-120-label');
+                     if (marker120) {
+                         marker120.style.left = proLeftPct + '%';
+                         const projectedGross120 = proLaboreTarget * arpu;
+                         const projectedNet120 = (proLaboreTarget * unitContribution) - monthlyCommitments;
+                         marker120.title = `Meta ${proLaboreTarget} pagantes (~${formatCurrency(projectedGross120)}/mês brutos) → Resultado líquido est. DRE: ${formatCurrency(projectedNet120)}/mês.`;
+                     }
+
+                     // Evita colisão entre caixas superiores quando marcos ficam muito próximos
+                     const trackEl = document.getElementById('milestone-track');
+                     let hasStagger = false;
+                     if (markerBreakLabel && (Math.abs(breakLeftPct - meiLeftPct) < 12 || Math.abs(breakLeftPct - proLeftPct) < 12)) {
+                         markerBreakLabel.style.bottom = '86px';
+                         hasStagger = true;
+                     } else if (markerBreakLabel) {
+                         markerBreakLabel.style.bottom = '42px';
+                     }
+                     if (marker70Label && Math.abs(meiLeftPct - proLeftPct) < 12) {
+                         marker70Label.style.bottom = '86px';
+                         hasStagger = true;
+                     } else if (marker70Label) {
+                         marker70Label.style.bottom = '42px';
+                     }
+                     if (marker120Label) marker120Label.style.bottom = '42px';
+                     if (trackEl) trackEl.style.marginTop = hasStagger ? '104px' : '64px';
+
+                     const badgeEl = document.getElementById('milestone-dre-badge');
+                     if (badgeEl) {
+                         badgeEl.textContent = `DRE ${meta.selectedMonthLabel || ''}/${meta.year || brtY}${usedPaceProjection ? ' · Ritmo Ads' : ''}`;
+                     }
+
+                     const ctxEl = document.getElementById('milestone-dre-context');
+                     if (ctxEl) {
+                         const netTxt = formatCurrency(sel.netIncome || 0);
+                         ctxEl.innerHTML = `Base DRE: <strong>${formatCurrency(monthlyCommitments)}</strong>/mês em custos &amp; OPEX · Margem/pagante: <strong>${formatCurrency(unitContribution)}</strong> · Resultado DRE do mês: <strong style="color:${(sel.netIncome || 0) >= 0 ? '#059669' : '#dc2626'};">${netTxt}</strong>`;
+                     }
                  }
              } catch(e) {
-                 console.error('Erro ao atualizar marcos:', e);
+                 console.error('Erro ao atualizar marcos com base na DRE:', e);
              }
 
 

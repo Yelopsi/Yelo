@@ -103,20 +103,23 @@
                 </div>
 
                 
-                <!-- MARCOS DE CRESCIMENTO (SINGLE BAR) -->
+                <!-- MARCOS DE CRESCIMENTO (SINGLE BAR — ALINHADO COM A DRE) -->
                 <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-                    <h3 style="font-size: 0.95rem; color: #1e293b; margin: 0 0 25px 0; font-family: var(--font-titulos); text-align: center;">
-                        Marcos Estratégicos (Pagantes)
-                    </h3>
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 22px 0;">
+                        <h3 style="font-size: 0.95rem; color: #1e293b; margin: 0; font-family: var(--font-titulos); text-align: center;">
+                            Marcos Estratégicos (Pagantes)
+                        </h3>
+                        <span id="milestone-dre-badge" style="font-size: 0.7rem; font-weight: 700; color: #1b4332; background: #ecfdf5; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 999px;">Base DRE</span>
+                    </div>
                     
-                    <div style="position: relative; height: 18px; background: #e2e8f0; border-radius: 20px; overflow: visible; margin-bottom: 50px; margin-top: 60px; margin-left: 40px; margin-right: 40px;">
+                    <div id="milestone-track" style="position: relative; height: 18px; background: #e2e8f0; border-radius: 20px; overflow: visible; margin-bottom: 52px; margin-top: 64px; margin-left: 40px; margin-right: 40px;">
                         <!-- Barra de preenchimento real -->
                         <div id="milestone-progress-fill" style="position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); border-radius: 20px; transition: width 1s ease-in-out; box-shadow: 0 0 10px rgba(99,102,241,0.4);"></div>
                         
                         <!-- Marcadores -->
                         <!-- Breakeven -->
-                        <div id="marker-breakeven" style="position: absolute; top: -10px; height: 38px; width: 4px; background: #3b82f6; border-radius: 4px; left: 0%; transform: translateX(-50%); z-index: 10; transition: left 1s ease-in-out;">
-                            <div style="position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center; background: white; padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;">
+                        <div id="marker-breakeven" style="position: absolute; top: -10px; height: 38px; width: 4px; background: #3b82f6; border-radius: 4px; left: 0%; transform: translateX(-50%); z-index: 12; transition: left 1s ease-in-out; cursor: help;">
+                            <div id="marker-breakeven-label" style="position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center; background: white; padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;">
                                 <div style="font-size: 0.75rem; font-weight: bold; color: #1d4ed8;">Breakeven</div>
                                 <div style="font-size: 0.85rem; font-weight: 900; color: #1e293b;"><span id="milestone-breakeven-target">...</span></div>
                             </div>
@@ -125,27 +128,32 @@
                             </div>
                         </div>
 
-                        <!-- Saída do MEI (70) -->
-                        <div id="marker-70" style="position: absolute; top: -10px; height: 38px; width: 4px; background: #8b5cf6; border-radius: 4px; left: 58.3%; transform: translateX(-50%); z-index: 10;">
-                            <div style="position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center; background: white; padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;">
+                        <!-- Saída do MEI -->
+                        <div id="marker-70" style="position: absolute; top: -10px; height: 38px; width: 4px; background: #8b5cf6; border-radius: 4px; left: 57.5%; transform: translateX(-50%); z-index: 11; transition: left 1s ease-in-out; cursor: help;">
+                            <div id="marker-70-label" style="position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center; background: white; padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;">
                                 <div style="font-size: 0.75rem; font-weight: bold; color: #6d28d9;">Saída MEI</div>
-                                <div style="font-size: 0.85rem; font-weight: 900; color: #1e293b;">70</div>
+                                <div style="font-size: 0.85rem; font-weight: 900; color: #1e293b;"><span id="milestone-mei-target">69</span></div>
                             </div>
                             <div style="position: absolute; top: 42px; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center;">
                                 <div id="milestone-70-proj" style="font-size: 0.7rem; font-weight: 600; color: #64748b; background: #f8fafc; padding: 2px 6px; border-radius: 4px;">--</div>
                             </div>
                         </div>
 
-                        <!-- Pró-labore (120) -->
-                        <div id="marker-120" style="position: absolute; top: -10px; height: 38px; width: 4px; background: #ec4899; border-radius: 4px; left: 100%; transform: translateX(-50%); z-index: 10;">
-                            <div style="position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center; background: white; padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;">
+                        <!-- Pró-labore -->
+                        <div id="marker-120" style="position: absolute; top: -10px; height: 38px; width: 4px; background: #ec4899; border-radius: 4px; left: 100%; transform: translateX(-50%); z-index: 10; transition: left 1s ease-in-out; cursor: help;">
+                            <div id="marker-120-label" style="position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center; background: white; padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;">
                                 <div style="font-size: 0.75rem; font-weight: bold; color: #be185d;">Pró-labore</div>
-                                <div style="font-size: 0.85rem; font-weight: 900; color: #1e293b;">120</div>
+                                <div style="font-size: 0.85rem; font-weight: 900; color: #1e293b;"><span id="milestone-prolabore-target">120</span></div>
                             </div>
                             <div style="position: absolute; top: 42px; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center;">
                                 <div id="milestone-120-proj" style="font-size: 0.7rem; font-weight: 600; color: #64748b; background: #f8fafc; padding: 2px 6px; border-radius: 4px;">--</div>
                             </div>
                         </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.76rem; color: #64748b; text-align: center;">
+                        <span id="milestone-dre-context">Sincronizando estrutura de custos da DRE...</span>
+                        <a href="#" data-page-link="admin_dre.html" style="color: #1b4332; font-weight: 700; text-decoration: none;">Abrir DRE Contábil →</a>
                     </div>
                 </div>
 
