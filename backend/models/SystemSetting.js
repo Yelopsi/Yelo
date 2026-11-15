@@ -104,6 +104,21 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: null
     },
+    company_legal_name: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null
+    },
+    company_cnpj: {
+      type: DataTypes.STRING(32),
+      allowNull: true,
+      defaultValue: null
+    },
+    tax_regime: {
+      type: DataTypes.STRING(40),
+      allowNull: true,
+      defaultValue: 'SIMPLES_NACIONAL'
+    },
     system_changelog_data: {
       type: DataTypes.TEXT,
       allowNull: true,

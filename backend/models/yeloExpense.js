@@ -44,6 +44,22 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.ENUM('MANUAL', 'API', 'IMPORT', 'SYSTEM'),
             allowNull: false,
             defaultValue: 'MANUAL'
+        },
+        dreGroup: {
+            type: DataTypes.STRING(40),
+            allowNull: true
+        },
+        expenseDate: {
+            type: DataTypes.DATEONLY,
+            allowNull: true
+        },
+        documentNumber: {
+            type: DataTypes.STRING(100),
+            allowNull: true
+        },
+        notes: {
+            type: DataTypes.TEXT,
+            allowNull: true
         }
     }, {
         sequelize,

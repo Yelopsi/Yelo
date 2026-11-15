@@ -228,7 +228,16 @@ const applyDatabaseFixes = async (db, sequelize) => {
             `CREATE TABLE IF NOT EXISTS "FunnelDiscardedEvents" ( "id" SERIAL PRIMARY KEY, "stage" VARCHAR(50) NOT NULL, "actor_type" VARCHAR(50) NOT NULL, "target_id" INTEGER, "search_id" VARCHAR(255), "source" VARCHAR(100), "page" VARCHAR(255), "actor_id" INTEGER, "utm_source" VARCHAR(100), "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP );`,
             `ALTER TABLE "FunnelDiscardedEvents" ADD COLUMN IF NOT EXISTS "actor_id" INTEGER;`,
             `ALTER TABLE "FunnelDiscardedEvents" ADD COLUMN IF NOT EXISTS "utm_source" VARCHAR(100);`,
-            `CREATE INDEX IF NOT EXISTS "idx_funnel_discarded_created_stage" ON "FunnelDiscardedEvents" ("createdAt", "stage");`
+            `CREATE INDEX IF NOT EXISTS "idx_funnel_discarded_created_stage" ON "FunnelDiscardedEvents" ("createdAt", "stage");`,
+            `ALTER TABLE "YeloExpenses" ADD COLUMN IF NOT EXISTS "dreGroup" VARCHAR(40);`,
+            `ALTER TABLE "YeloExpenses" ADD COLUMN IF NOT EXISTS "expenseDate" DATE;`,
+            `ALTER TABLE "YeloExpenses" ADD COLUMN IF NOT EXISTS "documentNumber" VARCHAR(100);`,
+            `ALTER TABLE "YeloExpenses" ADD COLUMN IF NOT EXISTS "notes" TEXT;`,
+            `ALTER TABLE "YeloMonthlyFinances" ADD COLUMN IF NOT EXISTS "appliedProfitTaxRate" DECIMAL(5,4);`,
+            `ALTER TABLE "YeloMonthlyFinances" ADD COLUMN IF NOT EXISTS "notes" TEXT;`,
+            `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "company_legal_name" VARCHAR(255);`,
+            `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "company_cnpj" VARCHAR(32);`,
+            `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "tax_regime" VARCHAR(40) DEFAULT 'SIMPLES_NACIONAL';`
         ];
 
         for (const sql of schemaQueries) {

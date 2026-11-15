@@ -33,6 +33,14 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DECIMAL(12, 2),
             allowNull: true
         },
+        appliedProfitTaxRate: {
+            type: DataTypes.DECIMAL(5, 4),
+            allowNull: true
+        },
+        notes: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
         isClosed: {
             type: DataTypes.BOOLEAN,
             defaultValue: false

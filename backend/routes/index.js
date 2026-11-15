@@ -24,6 +24,7 @@ const fixRoutes = require('./fixRoutes');
 const extraRoutes = require('./extraRoutes');
 const viewRoutes = require('./viewRoutes');
 const cmoRoutes = require('./cmoRoutes');
+const dreRoutes = require('./dreRoutes');
 
 const { authLimiter, expensiveLimiter, webhookLimiter } = require('../middlewares/rateLimiter');
 
@@ -46,6 +47,7 @@ module.exports = (app) => {
     app.use('/api/demand', demandRoutes);
     app.use('/api/usuarios', usuarioRoutes);
     app.use('/api/admin/messages', adminMessageRoutes);
+    app.use('/api/admin/dre', dreRoutes);
     app.use('/api/admin', adminRoutes);
     app.use('/api/reviews', reviewRoutes);
     app.use('/api/qna', qnaRoutes);

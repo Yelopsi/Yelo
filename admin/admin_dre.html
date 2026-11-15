@@ -1,0 +1,1157 @@
+<style>
+    .dre-page {
+        --dre-primary: #1B4332;
+        --dre-primary-dark: #0f2b20;
+        --dre-bg: #f8fafc;
+        --dre-card: #ffffff;
+        --dre-border: #e2e8f0;
+        --dre-text: #0f172a;
+        --dre-muted: #64748b;
+        --dre-green: #059669;
+        --dre-green-soft: #ecfdf5;
+        --dre-red: #dc2626;
+        --dre-red-soft: #fef2f2;
+        --dre-amber: #d97706;
+        --dre-amber-soft: #fffbeb;
+        --dre-blue: #2563eb;
+        --dre-blue-soft: #eff6ff;
+        background: var(--dre-bg);
+        min-height: 100%;
+        padding: 20px 32px 110px;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        color: var(--dre-text);
+    }
+
+    /* Header Executivo */
+    .dre-hero {
+        background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%);
+        color: #ffffff;
+        border-radius: 16px;
+        padding: 24px 28px;
+        margin-bottom: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        box-shadow: 0 8px 24px rgba(27, 67, 50, 0.14);
+    }
+
+    .dre-hero-left h1 {
+        margin: 0 0 6px;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: -0.02em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .dre-hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.86);
+    }
+
+    .dre-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .dre-badge.status-closed {
+        background: #065f46;
+        border-color: #34d399;
+        color: #d1fae5;
+    }
+
+    .dre-badge.status-open {
+        background: rgba(245, 158, 11, 0.22);
+        border-color: rgba(251, 191, 36, 0.55);
+        color: #fef3c7;
+    }
+
+    .dre-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .dre-select {
+        background: rgba(255, 255, 255, 0.96);
+        color: #0f172a;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        outline: none;
+    }
+
+    .dre-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+    }
+
+    .dre-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+    .dre-btn-light {
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .dre-btn-light:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.24);
+    }
+
+    .dre-btn-white {
+        background: #ffffff;
+        color: #1B4332;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .dre-btn-white:hover:not(:disabled) {
+        background: #f1f5f9;
+    }
+
+    .dre-btn-primary {
+        background: #1B4332;
+        color: #ffffff;
+    }
+
+    .dre-btn-primary:hover:not(:disabled) {
+        background: #143326;
+    }
+
+    .dre-btn-outline {
+        background: #ffffff;
+        color: #334155;
+        border-color: #cbd5e1;
+    }
+
+    .dre-btn-outline:hover:not(:disabled) {
+        background: #f8fafc;
+        border-color: #94a3b8;
+    }
+
+    .dre-btn-danger {
+        background: #fef2f2;
+        color: #b91c1c;
+        border-color: #fecaca;
+    }
+
+    .dre-btn-danger:hover:not(:disabled) {
+        background: #fee2e2;
+    }
+
+    /* Export Dropdown */
+    .dre-export-wrap {
+        position: relative;
+    }
+
+    .dre-export-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 6px);
+        min-width: 255px;
+        background: #ffffff;
+        border: 1px solid var(--dre-border);
+        border-radius: 12px;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
+        z-index: 60;
+        padding: 6px;
+    }
+
+    .dre-export-menu.open {
+        display: block;
+    }
+
+    .dre-export-item {
+        width: 100%;
+        text-align: left;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-size: 0.84rem;
+        color: #1e293b;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-weight: 500;
+    }
+
+    .dre-export-item:hover {
+        background: #f1f5f9;
+    }
+
+    .dre-export-tag {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    /* Alertas */
+    .dre-alerts {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    .dre-alert {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: 1px solid;
+        font-size: 0.86rem;
+        line-height: 1.4;
+    }
+
+    .dre-alert.warning {
+        background: var(--dre-amber-soft);
+        border-color: #fcd34d;
+        color: #92400e;
+    }
+
+    .dre-alert.info {
+        background: var(--dre-blue-soft);
+        border-color: #bfdbfe;
+        color: #1e40af;
+    }
+
+    /* KPI Grid */
+    .dre-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .dre-kpi-card {
+        background: var(--dre-card);
+        border: 1px solid var(--dre-border);
+        border-radius: 14px;
+        padding: 16px 18px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+
+    .dre-kpi-card.highlight {
+        border-color: #bbf7d0;
+        background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+    }
+
+    .dre-kpi-card.highlight-negative {
+        border-color: #fecaca;
+        background: linear-gradient(180deg, #ffffff 0%, #fef2f2 100%);
+    }
+
+    .dre-kpi-label {
+        font-size: 0.76rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--dre-muted);
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .dre-kpi-value {
+        font-size: 1.48rem;
+        font-weight: 800;
+        color: var(--dre-text);
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+        margin-bottom: 6px;
+    }
+
+    .dre-kpi-sub {
+        font-size: 0.78rem;
+        color: var(--dre-muted);
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .dre-delta-pos { color: var(--dre-green); font-weight: 700; }
+    .dre-delta-neg { color: var(--dre-red); font-weight: 700; }
+
+    /* Sub-tabs */
+    .dre-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--dre-border);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+    }
+
+    .dre-tab-btn {
+        background: #ffffff;
+        color: #475569;
+        border: 1px solid var(--dre-border);
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .dre-tab-btn:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .dre-tab-btn.active {
+        background: #1B4332;
+        color: #ffffff;
+        border-color: #1B4332;
+    }
+
+    .dre-tab-pane {
+        display: none;
+    }
+
+    .dre-tab-pane.active {
+        display: block;
+    }
+
+    /* Cards & Tables */
+    .dre-card {
+        background: var(--dre-card);
+        border: 1px solid var(--dre-border);
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+    }
+
+    .dre-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .dre-card-title {
+        font-size: 1.02rem;
+        font-weight: 700;
+        color: var(--dre-text);
+        margin: 0;
+    }
+
+    .dre-card-sub {
+        font-size: 0.82rem;
+        color: var(--dre-muted);
+        margin: 2px 0 0;
+    }
+
+    .dre-table-scroll {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .dre-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .dre-table th {
+        text-align: left;
+        padding: 10px 12px;
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        border-bottom: 2px solid var(--dre-border);
+        white-space: nowrap;
+    }
+
+    .dre-table th.num,
+    .dre-table td.num {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .dre-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+    .dre-table tr.row-subtotal td {
+        background: #f8fafc;
+        font-weight: 700;
+        color: #0f172a;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .dre-table tr.row-total td {
+        background: #eef6f1;
+        font-weight: 700;
+        color: #14532d;
+        border-top: 1px solid #bbf7d0;
+        border-bottom: 1px solid #bbf7d0;
+    }
+
+    .dre-table tr.row-grand_total td {
+        background: #1B4332;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 0.92rem;
+        border-top: 2px solid #0f2b20;
+    }
+
+    .dre-table tr.row-item td:nth-child(2) {
+        padding-left: 24px;
+        color: #334155;
+    }
+
+    .dre-table.matrix th.sticky-col,
+    .dre-table.matrix td.sticky-col {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background: inherit;
+    }
+
+    .dre-table.matrix thead th.sticky-col {
+        background: #f8fafc;
+        z-index: 3;
+    }
+
+    .dre-table.matrix tr.row-item td.sticky-col {
+        background: #ffffff;
+    }
+
+    .dre-val-neg { color: #b91c1c; }
+    .dre-val-pos { color: #047857; }
+    .dre-table tr.row-grand_total .dre-val-neg { color: #fecaca; }
+    .dre-table tr.row-grand_total .dre-val-pos { color: #a7f3d0; }
+
+    .dre-chart-box {
+        position: relative;
+        height: 290px;
+        width: 100%;
+    }
+
+    /* Forms Despesas & Filtros */
+    .dre-form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+        gap: 12px;
+        align-items: end;
+    }
+
+    .dre-field label {
+        display: block;
+        font-size: 0.76rem;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 5px;
+    }
+
+    .dre-input,
+    .dre-field select,
+    .dre-field textarea {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 9px 11px;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        font-size: 0.86rem;
+        font-family: inherit;
+        background: #ffffff;
+        color: #0f172a;
+        outline: none;
+    }
+
+    .dre-input:focus,
+    .dre-field select:focus,
+    .dre-field textarea:focus {
+        border-color: #1B4332;
+        box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+    }
+
+    .dre-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 0.73rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .pill-green { background: #dcfce7; color: #166534; }
+    .pill-amber { background: #fef3c7; color: #92400e; }
+    .pill-blue { background: #dbeafe; color: #1e40af; }
+    .pill-red { background: #fee2e2; color: #991b1b; }
+    .pill-gray { background: #f1f5f9; color: #475569; }
+
+    .dre-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+        font-size: 0.83rem;
+        color: var(--dre-muted);
+    }
+
+    /* Modal */
+    .dre-modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        z-index: 999;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+    }
+
+    .dre-modal-backdrop.open {
+        display: flex;
+    }
+
+    .dre-modal {
+        background: #ffffff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 660px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 24px;
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.25);
+    }
+
+    .dre-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--dre-border);
+    }
+
+    .dre-modal-header h3 {
+        margin: 0;
+        font-size: 1.12rem;
+        font-weight: 700;
+    }
+
+    .dre-modal-close {
+        background: #f1f5f9;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        color: #475569;
+    }
+
+    .dre-toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: #0f172a;
+        color: #ffffff;
+        padding: 12px 18px;
+        border-radius: 10px;
+        font-size: 0.86rem;
+        font-weight: 600;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+        z-index: 1200;
+        display: none;
+    }
+
+    /* Formal Accounting Print Header (only on print) */
+    .dre-print-only {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .dre-page {
+            padding: 14px 14px 100px;
+        }
+        .dre-hero {
+            padding: 18px;
+        }
+        .dre-kpi-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media print {
+        @page {
+            size: A4 landscape;
+            margin: 12mm;
+        }
+        body {
+            background: #ffffff !important;
+        }
+        .dashboard-sidebar,
+        .modern-sidebar-container,
+        .mobile-header,
+        .mobile-bottom-nav,
+        .dre-no-print,
+        .dre-tabs,
+        .dre-alerts {
+            display: none !important;
+        }
+        .dre-page {
+            background: #ffffff !important;
+            padding: 0 !important;
+        }
+        .dre-print-only {
+            display: block !important;
+        }
+        .dre-card {
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: none !important;
+            break-inside: avoid;
+        }
+        .dre-table th,
+        .dre-table td {
+            padding: 5px 7px !important;
+            font-size: 9pt !important;
+        }
+        .dre-table tr.row-grand_total td {
+            background: #e2e8f0 !important;
+            color: #000000 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+</style>
+
+<div class="dre-page" id="dre-root">
+    <!-- Cabeçalho Formal para Impressão / PDF Contábil -->
+    <div class="dre-print-only" id="dre-print-header" style="border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 14px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+            <div>
+                <h2 style="margin:0; font-size:15pt; color:#0f172a;">DEMONSTRAÇÃO DO RESULTADO DO EXERCÍCIO (DRE)</h2>
+                <div id="dre-print-company" style="font-size:10pt; margin-top:4px; color:#334155;">Yelo Saúde Mental Ltda</div>
+            </div>
+            <div style="text-align:right; font-size:9pt; color:#334155;" id="dre-print-meta">
+                Exercício: — | Regime: Competência
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Header Executivo -->
+    <div class="dre-hero dre-no-print">
+        <div class="dre-hero-left">
+            <h1>
+                📊 DRE Contábil & Fiscal
+                <span class="dre-badge status-open" id="dre-month-status-badge">Mês Aberto</span>
+            </h1>
+            <div class="dre-hero-meta">
+                <span id="dre-company-name">Yelo Saúde Mental Ltda</span>
+                <span>•</span>
+                <span id="dre-company-cnpj">CNPJ não configurado</span>
+                <span>•</span>
+                <span class="dre-badge" id="dre-tax-regime-badge">Simples Nacional</span>
+            </div>
+        </div>
+
+        <div class="dre-controls">
+            <select id="dre-year-select" class="dre-select" title="Ano-Calendário"></select>
+            <select id="dre-month-select" class="dre-select" title="Mês de Referência">
+                <option value="1">Janeiro</option>
+                <option value="2">Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+            </select>
+            <select id="dre-regime-select" class="dre-select" title="Regime Contábil">
+                <option value="accrual">Competência (Contábil)</option>
+                <option value="cash">Caixa (Financeiro)</option>
+            </select>
+
+            <button type="button" class="dre-btn dre-btn-light" id="dre-btn-fiscal">⚙️ Config. Fiscal & CNPJ</button>
+            <button type="button" class="dre-btn dre-btn-light" id="dre-btn-sync-ads">🔄 Sincronizar Ads</button>
+
+            <div class="dre-export-wrap">
+                <button type="button" class="dre-btn dre-btn-white" id="dre-btn-export-toggle">📥 Exportar Contábil ▾</button>
+                <div class="dre-export-menu" id="dre-export-menu">
+                    <button type="button" class="dre-export-item" data-export="excel">
+                        <span>📗 Pacote Contador (5 Abas)</span>
+                        <span class="dre-export-tag">.XLS</span>
+                    </button>
+                    <button type="button" class="dre-export-item" data-export="csv-annual">
+                        <span>📄 DRE Anual (Jan–Dez)</span>
+                        <span class="dre-export-tag">.CSV</span>
+                    </button>
+                    <button type="button" class="dre-export-item" data-export="csv-monthly">
+                        <span>📄 DRE Mês + AV / AH</span>
+                        <span class="dre-export-tag">.CSV</span>
+                    </button>
+                    <button type="button" class="dre-export-item" data-export="csv-revenues">
+                        <span>📒 Livro Razão Receitas</span>
+                        <span class="dre-export-tag">.CSV</span>
+                    </button>
+                    <button type="button" class="dre-export-item" data-export="csv-expenses">
+                        <span>📕 Livro Razão Despesas</span>
+                        <span class="dre-export-tag">.CSV</span>
+                    </button>
+                    <button type="button" class="dre-export-item" data-export="print">
+                        <span>🖨️ Imprimir / Salvar PDF A4</span>
+                        <span class="dre-export-tag">PDF</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas Contábeis / Fiscais -->
+    <div class="dre-alerts" id="dre-alerts"></div>
+
+    <!-- KPI Grid Executivo -->
+    <div class="dre-kpi-grid dre-no-print" id="dre-kpi-grid">
+        <div class="dre-kpi-card">
+            <div class="dre-kpi-label"><span>Receita Bruta</span><span id="kpi-paid-count">—</span></div>
+            <div class="dre-kpi-value" id="kpi-gross-rev">—</div>
+            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-gross-rev-year">—</strong></span><span id="kpi-gross-delta">—</span></div>
+        </div>
+        <div class="dre-kpi-card">
+            <div class="dre-kpi-label"><span>Deduções & Impostos</span><span id="kpi-tax-rate">—</span></div>
+            <div class="dre-kpi-value" id="kpi-deductions">—</div>
+            <div class="dre-kpi-sub"><span>Estornos: <strong id="kpi-refunds">—</strong></span><span>Impostos: <strong id="kpi-taxes">—</strong></span></div>
+        </div>
+        <div class="dre-kpi-card">
+            <div class="dre-kpi-label"><span>Receita Líquida</span><span>Base DRE</span></div>
+            <div class="dre-kpi-value" id="kpi-net-rev">—</div>
+            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-net-rev-year">—</strong></span><span id="kpi-net-delta">—</span></div>
+        </div>
+        <div class="dre-kpi-card">
+            <div class="dre-kpi-label"><span>Custos + Despesas (OPEX)</span><span>Saídas</span></div>
+            <div class="dre-kpi-value" id="kpi-costs-opex">—</div>
+            <div class="dre-kpi-sub"><span>CSP: <strong id="kpi-cogs">—</strong></span><span>OPEX: <strong id="kpi-opex">—</strong></span></div>
+        </div>
+        <div class="dre-kpi-card">
+            <div class="dre-kpi-label"><span>EBITDA Operacional</span><span id="kpi-ebitda-margin">—</span></div>
+            <div class="dre-kpi-value" id="kpi-ebitda">—</div>
+            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-ebitda-year">—</strong></span></div>
+        </div>
+        <div class="dre-kpi-card highlight" id="kpi-net-income-card">
+            <div class="dre-kpi-label"><span>Lucro / Prejuízo Líquido</span><span id="kpi-net-margin">—</span></div>
+            <div class="dre-kpi-value" id="kpi-net-income">—</div>
+            <div class="dre-kpi-sub"><span>Anual: <strong id="kpi-net-income-year">—</strong></span><span id="kpi-net-income-delta">—</span></div>
+        </div>
+    </div>
+
+    <!-- Navegação por Abas -->
+    <div class="dre-tabs dre-no-print">
+        <button type="button" class="dre-tab-btn active" data-tab="tab-dre-mensal">📋 DRE Mensal & Evolução</button>
+        <button type="button" class="dre-tab-btn" data-tab="tab-dre-anual">📆 DRE Anual (Jan–Dez)</button>
+        <button type="button" class="dre-tab-btn" data-tab="tab-dre-despesas">🧾 Despesas & Lançamentos</button>
+        <button type="button" class="dre-tab-btn" data-tab="tab-dre-razao">⚖️ Fiscal, Fechamento & Livro Razão</button>
+    </div>
+
+    <!-- ABA 1: DRE MENSAL -->
+    <div class="dre-tab-pane active" id="tab-dre-mensal">
+        <div class="dre-card">
+            <div class="dre-card-header">
+                <div>
+                    <h2 class="dre-card-title" id="dre-mensal-title">Demonstração do Resultado — Mês de Referência</h2>
+                    <p class="dre-card-sub" id="dre-mensal-sub">Análise Vertical (AV% sobre Receita Líquida) e Análise Horizontal (AH% vs. mês anterior)</p>
+                </div>
+                <div class="dre-no-print" style="display:flex; gap:8px; align-items:center;">
+                    <span class="dre-pill pill-gray" id="dre-tax-source-pill">Regra Fiscal: Padrão</span>
+                    <button type="button" class="dre-btn dre-btn-outline" id="dre-btn-toggle-close-inline">🔒 Fechar Mês</button>
+                </div>
+            </div>
+            <div class="dre-table-scroll">
+                <table class="dre-table" id="dre-monthly-table">
+                    <thead>
+                        <tr>
+                            <th>Cód.</th>
+                            <th>Estrutura Contábil (DRE)</th>
+                            <th class="num" id="th-sel-month">Mês Atual</th>
+                            <th class="num">AV %</th>
+                            <th class="num" id="th-prev-month">Mês Anterior</th>
+                            <th class="num">AH %</th>
+                            <th class="num" id="th-year-total">Acum. Ano</th>
+                            <th class="num">AV Ano %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dre-monthly-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="dre-card dre-no-print">
+            <div class="dre-card-header">
+                <div>
+                    <h2 class="dre-card-title">Evolução Mensal do Resultado (Jan–Dez)</h2>
+                    <p class="dre-card-sub">Comparativo automático entre Receita Líquida, Custos + OPEX e Lucro Líquido ao longo do exercício</p>
+                </div>
+            </div>
+            <div class="dre-chart-box">
+                <canvas id="dre-evolution-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABA 2: DRE ANUAL (12 MESES) -->
+    <div class="dre-tab-pane" id="tab-dre-anual">
+        <div class="dre-card">
+            <div class="dre-card-header">
+                <div>
+                    <h2 class="dre-card-title" id="dre-annual-title">Matriz Contábil Anual (Jan–Dez)</h2>
+                    <p class="dre-card-sub">Visão consolidada mês a mês para envio à contabilidade ou auditoria fiscal</p>
+                </div>
+            </div>
+            <div class="dre-table-scroll">
+                <table class="dre-table matrix" id="dre-annual-table">
+                    <thead>
+                        <tr>
+                            <th class="sticky-col">Conta Contábil</th>
+                            <th class="num">Jan</th>
+                            <th class="num">Fev</th>
+                            <th class="num">Mar</th>
+                            <th class="num">Abr</th>
+                            <th class="num">Mai</th>
+                            <th class="num">Jun</th>
+                            <th class="num">Jul</th>
+                            <th class="num">Ago</th>
+                            <th class="num">Set</th>
+                            <th class="num">Out</th>
+                            <th class="num">Nov</th>
+                            <th class="num">Dez</th>
+                            <th class="num">Total Ano</th>
+                            <th class="num">AV %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dre-annual-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABA 3: DESPESAS & LANÇAMENTOS -->
+    <div class="dre-tab-pane dre-no-print" id="tab-dre-despesas">
+        <div class="dre-card">
+            <div class="dre-card-header">
+                <div>
+                    <h2 class="dre-card-title" id="dre-expense-form-title">Novo Lançamento Contábil / Despesa</h2>
+                    <p class="dre-card-sub">Lançamentos ficam vinculados diretamente à conta contábil da DRE e ao Livro Razão de Despesas</p>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" class="dre-btn dre-btn-outline" id="dre-btn-copy-prev">📋 Copiar Despesas Fixas do Mês Anterior</button>
+                    <button type="button" class="dre-btn dre-btn-outline" id="dre-btn-cancel-edit" style="display:none;">Cancelar Edição</button>
+                </div>
+            </div>
+
+            <form id="dre-expense-form">
+                <input type="hidden" id="exp-edit-id" value="">
+                <div class="dre-form-grid">
+                    <div class="dre-field" style="grid-column: span 2;">
+                        <label for="exp-name">Descrição / Fornecedor *</label>
+                        <input type="text" id="exp-name" class="dre-input" placeholder="Ex: AWS Cloud, Contador, Pró-labore, Meta Ads..." required>
+                    </div>
+                    <div class="dre-field">
+                        <label for="exp-amount">Valor (R$) *</label>
+                        <input type="number" id="exp-amount" class="dre-input" step="0.01" min="0.01" placeholder="0,00" required>
+                    </div>
+                    <div class="dre-field">
+                        <label for="exp-group">Conta DRE *</label>
+                        <select id="exp-group" required></select>
+                    </div>
+                    <div class="dre-field">
+                        <label for="exp-date">Data Competência</label>
+                        <input type="date" id="exp-date" class="dre-input">
+                    </div>
+                    <div class="dre-field">
+                        <label for="exp-category">Categoria</label>
+                        <input type="text" id="exp-category" class="dre-input" placeholder="Ex: Cloud, Contabilidade, Tráfego">
+                    </div>
+                    <div class="dre-field">
+                        <label for="exp-provider">Provedor / Canal</label>
+                        <select id="exp-provider">
+                            <option value="OTHER">Geral / Outro</option>
+                            <option value="META">Meta Ads</option>
+                            <option value="GOOGLE">Google Ads</option>
+                            <option value="ASAAS">Asaas</option>
+                            <option value="RENDER">Render / Infra Cloud</option>
+                            <option value="OPENAI">OpenAI / IA APIs</option>
+                            <option value="WHATSAPP">WhatsApp / Mensageria</option>
+                            <option value="ACCOUNTING">Contabilidade / Jurídico</option>
+                        </select>
+                    </div>
+                    <div class="dre-field">
+                        <label for="exp-doc">Nº Nota Fiscal / Recibo</label>
+                        <input type="text" id="exp-doc" class="dre-input" placeholder="Opcional (ex: NF-1042)">
+                    </div>
+                    <div class="dre-field" id="exp-repeat-wrap">
+                        <label for="exp-repeat">Repetir nos próximos meses</label>
+                        <select id="exp-repeat">
+                            <option value="1">Apenas este mês</option>
+                            <option value="3">Por 3 meses</option>
+                            <option value="6">Por 6 meses</option>
+                            <option value="12">Por 12 meses</option>
+                        </select>
+                    </div>
+                    <div class="dre-field" style="grid-column: span 2;">
+                        <label for="exp-notes">Observações Contábeis</label>
+                        <input type="text" id="exp-notes" class="dre-input" placeholder="Centro de custo, observação para contador...">
+                    </div>
+                    <div>
+                        <button type="submit" class="dre-btn dre-btn-primary" id="dre-btn-save-expense" style="width:100%; justify-content:center;">💾 Salvar Lançamento</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="dre-card">
+            <div class="dre-card-header">
+                <div>
+                    <h2 class="dre-card-title">Despesas & Custos Lançados</h2>
+                    <p class="dre-card-sub" id="dre-expenses-count-sub">Filtre por mês ou conta DRE</p>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <select id="exp-filter-scope" class="dre-input" style="width:auto;">
+                        <option value="month">Apenas Mês Selecionado</option>
+                        <option value="year">Todo o Ano</option>
+                    </select>
+                    <select id="exp-filter-group" class="dre-input" style="width:auto;">
+                        <option value="ALL">Todas as Contas DRE</option>
+                    </select>
+                    <input type="text" id="exp-filter-search" class="dre-input" style="width:200px;" placeholder="Buscar descrição ou NF...">
+                </div>
+            </div>
+            <div class="dre-table-scroll">
+                <table class="dre-table">
+                    <thead>
+                        <tr>
+                            <th>Mês</th>
+                            <th>Data</th>
+                            <th>Descrição / Fornecedor</th>
+                            <th>Conta DRE</th>
+                            <th>Origem</th>
+                            <th>NF / Doc</th>
+                            <th class="num">Valor</th>
+                            <th class="num">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dre-expenses-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABA 4: FISCAL, FECHAMENTO & RAZÃO -->
+    <div class="dre-tab-pane dre-no-print" id="tab-dre-razao">
+        <div class="dre-card">
+            <div class="dre-card-header">
+                <div>
+                    <h2 class="dre-card-title">Apuração Fiscal Mensal & Fechamento Contábil</h2>
+                    <p class="dre-card-sub">Histórico anual da base tributável (Bruto - Estornos), alíquotas aplicadas, impostos apurados e trava de fechamento mensal</p>
+                </div>
+            </div>
+            <div class="dre-table-scroll">
+                <table class="dre-table">
+                    <thead>
+                        <tr>
+                            <th>Mês</th>
+                            <th class="num">Receita Bruta</th>
+                            <th class="num">Estornos</th>
+                            <th class="num">Base Tributável</th>
+                            <th class="num">Alíquota %</th>
+                            <th class="num">Imposto Fixo</th>
+                            <th class="num">Total Tributos</th>
+                            <th class="num">Lucro Líquido</th>
+                            <th>Status</th>
+                            <th class="num">Fechamento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dre-tax-audit-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="dre-card">
+            <div class="dre-card-header">
+                <div>
+                    <h2 class="dre-card-title">Livro Razão de Receitas & Estornos (Asaas / Payments)</h2>
+                    <p class="dre-card-sub" id="dre-open-receivables-note">Carregando recebíveis em aberto...</p>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <select id="rev-filter-scope" class="dre-input" style="width:auto;">
+                        <option value="month">Apenas Mês Selecionado</option>
+                        <option value="year">Todo o Ano</option>
+                    </select>
+                    <input type="text" id="rev-filter-search" class="dre-input" style="width:230px;" placeholder="Buscar psicólogo, ID Asaas ou plano...">
+                </div>
+            </div>
+            <div class="dre-table-scroll">
+                <table class="dre-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>ID Pagamento</th>
+                            <th>Psicólogo</th>
+                            <th>Plano</th>
+                            <th>Meio</th>
+                            <th class="num">Bruto</th>
+                            <th class="num">Taxa Gateway</th>
+                            <th class="num">Líquido</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dre-revenues-tbody"></tbody>
+                </table>
+            </div>
+            <div class="dre-pagination">
+                <span id="dre-rev-page-info">—</span>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="dre-btn dre-btn-outline" id="dre-rev-prev">◀ Anterior</button>
+                    <button type="button" class="dre-btn dre-btn-outline" id="dre-rev-next">Próxima ▶</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rodapé Formal para Impressão / PDF Contábil -->
+    <div class="dre-print-only" style="margin-top: 28px; padding-top: 14px; border-top: 1px solid #94a3b8; display:flex; justify-content:space-between; font-size:9pt; color:#334155;">
+        <div>
+            <div>______________________________________________</div>
+            <div style="margin-top:4px; font-weight:600;" id="dre-print-sign-company">Representante Legal</div>
+        </div>
+        <div style="text-align:right;">
+            <div>______________________________________________</div>
+            <div style="margin-top:4px; font-weight:600;">Responsável Técnico / Contador (CRC)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Configuração Fiscal, CNPJ & Fechamento Mensal -->
+<div class="dre-modal-backdrop dre-no-print" id="dre-fiscal-modal">
+    <div class="dre-modal">
+        <div class="dre-modal-header">
+            <h3>⚙️ Configuração Fiscal, CNPJ & Fechamento Contábil</h3>
+            <button type="button" class="dre-modal-close" id="dre-modal-close">✕</button>
+        </div>
+
+        <form id="dre-fiscal-form">
+            <h4 style="margin:0 0 10px; font-size:0.88rem; color:#1B4332;">1. Dados Empresariais & Padrão Tributário</h4>
+            <div class="dre-form-grid" style="margin-bottom:18px;">
+                <div class="dre-field" style="grid-column: span 2;">
+                    <label for="cfg-legal-name">Razão Social</label>
+                    <input type="text" id="cfg-legal-name" class="dre-input" placeholder="Ex: Yelo Saúde Mental Ltda">
+                </div>
+                <div class="dre-field">
+                    <label for="cfg-cnpj">CNPJ</label>
+                    <input type="text" id="cfg-cnpj" class="dre-input" placeholder="00.000.000/0001-00">
+                </div>
+                <div class="dre-field">
+                    <label for="cfg-tax-regime">Regime Tributário</label>
+                    <select id="cfg-tax-regime">
+                        <option value="SIMPLES_NACIONAL">Simples Nacional</option>
+                        <option value="MEI">MEI (DAS Fixo Mensal)</option>
+                        <option value="LUCRO_PRESUMIDO">Lucro Presumido</option>
+                        <option value="LUCRO_REAL">Lucro Real</option>
+                    </select>
+                </div>
+                <div class="dre-field">
+                    <label for="cfg-default-var-tax">Alíquota Padrão sobre Receita (%)</label>
+                    <input type="number" id="cfg-default-var-tax" class="dre-input" step="0.01" min="0" max="100" placeholder="Ex: 6.00">
+                </div>
+                <div class="dre-field">
+                    <label for="cfg-default-fixed-tax">Imposto Fixo Mensal Padrão / DAS (R$)</label>
+                    <input type="number" id="cfg-default-fixed-tax" class="dre-input" step="0.01" min="0" placeholder="Ex: 75.90">
+                </div>
+            </div>
+
+            <h4 style="margin:0 0 10px; font-size:0.88rem; color:#1B4332;">
+                2. Parâmetros Específicos do Mês (<span id="cfg-month-label">—</span>)
+            </h4>
+            <div class="dre-form-grid" style="margin-bottom:18px;">
+                <div class="dre-field">
+                    <label for="cfg-month-var-tax">Alíquota Efetiva no Mês (%)</label>
+                    <input type="number" id="cfg-month-var-tax" class="dre-input" step="0.01" min="0" max="100" placeholder="Usa padrão se vazio">
+                </div>
+                <div class="dre-field">
+                    <label for="cfg-month-fixed-tax">Imposto Fixo no Mês (R$)</label>
+                    <input type="number" id="cfg-month-fixed-tax" class="dre-input" step="0.01" min="0" placeholder="Usa padrão se vazio">
+                </div>
+                <div class="dre-field">
+                    <label for="cfg-month-profit-tax">IRPJ / CSLL sobre Lucro (%)</label>
+                    <input type="number" id="cfg-month-profit-tax" class="dre-input" step="0.01" min="0" max="100" placeholder="0.00 (Simples = 0)">
+                </div>
+                <div class="dre-field" style="grid-column: span 3;">
+                    <label for="cfg-month-notes">Notas Contábeis / Observação de Fechamento</label>
+                    <textarea id="cfg-month-notes" rows="2" placeholder="Ex: DAS pago no dia 20; conciliação Asaas conferida."></textarea>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; padding-top:12px; border-top:1px solid #e2e8f0;">
+                <button type="button" class="dre-btn dre-btn-outline" id="dre-btn-save-and-close-month">🔒 Salvar e Fechar Mês Contábil</button>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="dre-btn dre-btn-outline" id="dre-modal-cancel">Cancelar</button>
+                    <button type="submit" class="dre-btn dre-btn-primary">💾 Salvar Configurações</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="dre-toast dre-no-print" id="dre-toast"></div>
