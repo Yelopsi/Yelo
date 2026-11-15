@@ -22,29 +22,29 @@ const DRE_GROUP_META = {
         sign: -1
     },
     COGS: {
-        label: 'Custos Diretos dos Serviços (CSP / Infra Variável / APIs)',
+        label: '4.2 Custos Diretos dos Serviços (CSP / APIs / IA)',
         shortLabel: 'Custos Diretos (CSP)',
         nature: 'VARIABLE',
         purpose: 'OPERATION',
         sign: -1
     },
     OPEX_MARKETING: {
-        label: 'Despesas Comerciais & Marketing (Ads)',
+        label: '6.1 Despesas Comerciais & Marketing (Ads)',
         shortLabel: 'Comercial & Marketing',
         nature: 'VARIABLE',
         purpose: 'GROWTH',
         sign: -1
     },
     OPEX_PERSONNEL: {
-        label: 'Despesas com Pessoal / Pró-Labore / Terceiros',
+        label: '6.2 Despesas com Pessoal / Pró-Labore / Terceiros',
         shortLabel: 'Pessoal & Pró-Labore',
         nature: 'FIXED',
         purpose: 'OPERATION',
         sign: -1
     },
     OPEX_ADMIN: {
-        label: 'Despesas Administrativas & Gerais',
-        shortLabel: 'Administrativas & Gerais',
+        label: '6.3 Despesas Administrativas, Cloud & Contabilidade (OPEX Fixo)',
+        shortLabel: 'Admin, Cloud & Contab.',
         nature: 'FIXED',
         purpose: 'OPERATION',
         sign: -1
@@ -185,7 +185,7 @@ async function syncSingleMonth({ monthYear, settings = null, isClosed = false, f
         );
         const groupMeta = DRE_GROUP_META[rule.dreGroup] || DRE_GROUP_META.OPEX_ADMIN;
         if (existingSys) {
-            if (Math.abs(Number(existingSys.amount) - rule.amount) > 0.009 || existingSys.dreGroup !== rule.dreGroup) {
+            if (Math.abs(Number(existingSys.amount) - rule.amount) > 0.009 || existingSys.dreGroup !== rule.dreGroup || existingSys.nature !== groupMeta.nature) {
                 await existingSys.update({
                     name: rule.name,
                     amount: rule.amount,

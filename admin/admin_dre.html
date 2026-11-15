@@ -833,20 +833,165 @@
 
     @media (max-width: 768px) {
         .dre-page {
-            padding: 14px 14px 100px;
+            padding: 12px 12px 96px;
         }
         .dre-hero {
-            padding: 18px;
+            padding: 16px;
+            border-radius: 14px;
+            gap: 14px;
+        }
+        .dre-hero-left {
+            width: 100%;
+        }
+        .dre-hero-left h1 {
+            font-size: 1.22rem;
+            line-height: 1.25;
+        }
+        .dre-hero-meta {
+            font-size: 0.78rem;
+            gap: 6px;
+        }
+        .dre-controls {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .dre-select,
+        .dre-controls .dre-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 8px 10px;
+            font-size: 0.8rem;
+        }
+        .dre-export-wrap {
+            width: 100%;
+        }
+        .dre-export-menu {
+            left: 0;
+            right: 0;
+            min-width: 0;
+            width: 100%;
+        }
+        .dre-tabs {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            gap: 6px;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+        }
+        .dre-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        .dre-tab-btn {
+            white-space: nowrap;
+            flex-shrink: 0;
+            padding: 7px 13px;
+            font-size: 0.8rem;
         }
         .dre-kpi-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
+            gap: 10px;
         }
         .dre-kpi-card {
-            padding: 14px;
+            padding: 12px;
+            min-width: 0;
+        }
+        .dre-kpi-label {
+            font-size: 0.68rem;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+        .dre-kpi-tag {
+            font-size: 0.62rem;
+            padding: 2px 6px;
+        }
+        .dre-kpi-value-row {
+            gap: 6px;
+            margin-bottom: 6px;
         }
         .dre-kpi-value {
-            font-size: 1.28rem;
+            font-size: 1.08rem;
+        }
+        .dre-trend-badge {
+            font-size: 0.66rem;
+            padding: 2px 6px;
+        }
+        .dre-kpi-sub {
+            font-size: 0.72rem;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .dre-th-tip::after {
+            width: min(220px, 68vw);
+            font-size: 0.72rem;
+            z-index: 60;
+        }
+        .dre-kpi-card:nth-child(odd) .dre-th-tip::after {
+            left: 0;
+            right: auto;
+            transform: none;
+        }
+        .dre-kpi-card:nth-child(even) .dre-th-tip::after {
+            left: auto;
+            right: 0;
+            transform: none;
+        }
+        .dre-card {
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+        }
+        .dre-card-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .dre-card-title {
+            font-size: 0.96rem;
+        }
+        .dre-card-sub {
+            font-size: 0.78rem;
+        }
+        .dre-card-header > .dre-no-print {
+            width: 100%;
+            justify-content: flex-start;
+        }
+        .dre-table th,
+        .dre-table td {
+            padding: 8px 8px;
+            font-size: 0.78rem;
+        }
+        .dre-table tr.row-item td:nth-child(2) {
+            padding-left: 14px;
+        }
+        .dre-chart-box {
+            height: 230px;
+        }
+        .dre-form-grid {
+            grid-template-columns: 1fr;
+        }
+        .dre-modal {
+            padding: 16px;
+            border-radius: 14px;
+        }
+        .dre-toast {
+            left: 14px;
+            right: 14px;
+            bottom: 82px;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .dre-controls {
+            grid-template-columns: 1fr;
+        }
+        .dre-kpi-value {
+            font-size: 1rem;
         }
     }
 

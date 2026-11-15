@@ -33,6 +33,14 @@
             .replace(/'/g, '&#39;');
     }
 
+    const SHORT_MONTHS_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    function fmtMonthKeyShort(mk) {
+        const parts = String(mk || '').split('-');
+        if (parts.length !== 2) return mk || '—';
+        const idx = Number(parts[1]) - 1;
+        return SHORT_MONTHS_PT[idx] ? `${SHORT_MONTHS_PT[idx]}/${parts[0]}` : mk;
+    }
+
     function fmtCurrency(val) {
         const num = Number(val || 0);
         return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -166,7 +174,9 @@
                 ? `${(sel.taxConfig.variableRate * 100).toFixed(2).replace('.', ',')}%`
                 : '0%';
             const fixedTax = sel.taxConfig && sel.taxConfig.fixedMonthly ? fmtCurrency(sel.taxConfig.fixedMonthly) : 'R$ 0,00';
-            const srcLabel = sel.taxConfig?.taxSource === 'MONTH_SNAPSHOT' ? 'Mês' : (sel.taxConfig?.taxSource === 'SYSTEM_DEFAULT' ? 'Padrão' : 'Não config.');
+            const srcLabel = (sel.taxConfig?.taxSource === 'MONTHLY_SNAPSHOT' || sel.taxConfig?.taxSource === 'MONTH_SNAPSHOT')
+                ? 'Mês'
+                : ((sel.taxConfig?.taxSource === 'GLOBAL_SETTING' || sel.taxConfig?.taxSource === 'SYSTEM_DEFAULT') ? 'Padrão' : 'Não config.');
             taxPill.textContent = `Regra Fiscal (${srcLabel}): ${varRate} + ${fixedTax}`;
         }
 
@@ -327,7 +337,7 @@
         const { meta, dreRows } = report;
         document.getElementById('dre-mensal-title').textContent = `Demonstração do Resultado — ${meta.selectedMonthLabel} / ${meta.year} (${meta.regimeLabel})`;
         document.getElementById('th-sel-month').textContent = `${meta.selectedMonthLabel.slice(0, 3)}/${meta.year}`;
-        document.getElementById('th-prev-month').textContent = meta.prevMonthKey;
+        document.getElementById('th-prev-month').textContent = fmtMonthKeyShort(meta.prevMonthKey);
         document.getElementById('th-year-total').textContent = `Total ${meta.year}`;
 
         const childCounts = getDreChildCountMap(dreRows);
@@ -339,7 +349,12 @@
             const childCount = !isChild ? (childCounts.get(codeStr) || 0) : 0;
             const isGroupHeader = childCount > 0;
 
-            const ahClass = row.ahPct === null ? '' : (row.ahPct >= 0 ? 'dre-val-pos' : 'dre-val-neg');
+            let ahClass = '';
+            if (row.ahPct !== null && Math.abs(row.ahPct) > 0.05) {
+                const isUp = row.ahPct > 0;
+                const isGood = row.sign === '-' ? !isUp : isUp;
+                ahClass = isGood ? 'dre-val-pos' : 'dre-val-neg';
+            }
             const valClass = row.sign === '-' && row.selectedValue > 0 ? 'dre-val-neg' : (row.rowType === 'grand_total' ? (row.selectedValue >= 0 ? 'dre-val-pos' : 'dre-val-neg') : '');
 
             const rowClasses = [`row-${escapeHtml(row.rowType)}`];

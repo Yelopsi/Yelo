@@ -51,6 +51,38 @@
                     .grid-2x2 .p-metric::after { display: none !important; }
                     @media (max-width: 600px) {
                         .grid-2x2 { grid-template-columns: 1fr !important; gap: 25px !important; }
+                        #milestone-track {
+                            margin-left: 22px !important;
+                            margin-right: 30px !important;
+                            margin-top: 58px !important;
+                            margin-bottom: 46px !important;
+                        }
+                        #marker-breakeven-label,
+                        #marker-70-label,
+                        #marker-120-label {
+                            padding: 3px 6px !important;
+                        }
+                        #marker-120-label {
+                            left: auto !important;
+                            right: -6px !important;
+                            transform: none !important;
+                        }
+                        #marker-breakeven-label > div:first-child,
+                        #marker-70-label > div:first-child,
+                        #marker-120-label > div:first-child {
+                            font-size: 0.66rem !important;
+                        }
+                        #marker-breakeven-label > div:last-child,
+                        #marker-70-label > div:last-child,
+                        #marker-120-label > div:last-child {
+                            font-size: 0.76rem !important;
+                        }
+                        #milestone-breakeven-proj,
+                        #milestone-70-proj,
+                        #milestone-120-proj {
+                            font-size: 0.64rem !important;
+                            padding: 2px 5px !important;
+                        }
                     }
                 </style>
                 <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 20px;">

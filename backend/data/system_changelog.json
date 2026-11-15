@@ -1,5 +1,749 @@
 [
   {
+    "id": "change-git-25d53771",
+    "date": "2026-11-15T23:45:35.000Z",
+    "commit": "25d53771",
+    "author": "Anderson",
+    "title": "Correção: Compensate admin body zoom in chart hover, add plain KPI tooltips and fair partial-month pace comparison (dre)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "compensate admin body zoom in chart hover, add plain KPI tooltips and fair partial-month pace comparison",
+    "description": "Commit registrado no repositório: \"fix(dre): compensate admin body zoom in chart hover, add plain KPI tooltips and fair partial-month pace comparison\". Arquivos modificados: admin/admin_dre.html, admin/admin_dre.js, backend/services/dreService.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #25d53771"
+    },
+    "after": {
+      "nova_versao": "compensate admin body zoom in chart hover, add plain KPI tooltips and fair partial-month pace comparison"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_dre.html",
+      "admin/admin_dre.js",
+      "backend/services/dreService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-58bf1c47",
+    "date": "2026-11-15T23:35:31.000Z",
+    "commit": "58bf1c47",
+    "author": "Anderson",
+    "title": "Novo: Align strategic paying milestones with real DRE costs, contribution margin and MEI cap (overview)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "align strategic paying milestones with real DRE costs, contribution margin and MEI cap",
+    "description": "Commit registrado no repositório: \"feat(overview): align strategic paying milestones with real DRE costs, contribution margin and MEI cap\". Arquivos modificados: admin/admin_visao_geral.html, admin/admin_visao_geral.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #58bf1c47"
+    },
+    "after": {
+      "nova_versao": "align strategic paying milestones with real DRE costs, contribution margin and MEI cap"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_visao_geral.html",
+      "admin/admin_visao_geral.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-5331f852",
+    "date": "2026-11-15T23:30:52.000Z",
+    "commit": "5331f852",
+    "author": "Anderson",
+    "title": "Novo: Auto-sync ads & recurring costs, exact Asaas fees, collapsible groups, chart tooltips and CMO-style KPIs (dre)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "auto-sync ads & recurring costs, exact Asaas fees, collapsible groups, chart tooltips and CMO-style KPIs",
+    "description": "Commit registrado no repositório: \"feat(dre): auto-sync ads & recurring costs, exact Asaas fees, collapsible groups, chart tooltips and CMO-style KPIs\". Arquivos modificados: admin/admin_dre.html, admin/admin_dre.js, backend/config/dbFixes.js, backend/controllers/dreController.js, backend/models/SystemSetting.js (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5331f852"
+    },
+    "after": {
+      "nova_versao": "auto-sync ads & recurring costs, exact Asaas fees, collapsible groups, chart tooltips and CMO-style KPIs"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_dre.html",
+      "admin/admin_dre.js",
+      "backend/config/dbFixes.js",
+      "backend/controllers/dreController.js",
+      "backend/models/SystemSetting.js",
+      "backend/routes/dreRoutes.js",
+      "backend/services/dreService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-207af381",
+    "date": "2026-11-15T22:56:39.000Z",
+    "commit": "207af381",
+    "author": "Anderson",
+    "title": "Novo: Implement automated monthly and annual accounting DRE with XLS/CSV/PDF exports",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "implement automated monthly and annual accounting DRE with XLS/CSV/PDF exports",
+    "description": "Commit registrado no repositório: \"feat(dre): implement automated monthly and annual accounting DRE with XLS/CSV/PDF exports\". Arquivos modificados: admin/admin.js, admin/admin_crm_hub.html, admin/admin_dados_hub.html, admin/admin_dre.html, admin/admin_dre.js (+9 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #207af381"
+    },
+    "after": {
+      "nova_versao": "implement automated monthly and annual accounting DRE with XLS/CSV/PDF exports"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin.js",
+      "admin/admin_crm_hub.html",
+      "admin/admin_dados_hub.html",
+      "admin/admin_dre.html",
+      "admin/admin_dre.js",
+      "backend/config/dbFixes.js",
+      "backend/controllers/dreController.js",
+      "backend/models/SystemSetting.js",
+      "backend/models/yeloExpense.js",
+      "backend/models/yeloMonthlyFinance.js",
+      "backend/routes/dreRoutes.js",
+      "backend/routes/index.js",
+      "backend/services/dreService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-dc1c391b",
+    "date": "2026-11-15T14:54:43.000Z",
+    "commit": "dc1c391b",
+    "author": "Anderson",
+    "title": "Novo: Highlight and separate psychologist clicks in PLG conversions (analytics)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "highlight and separate psychologist clicks in PLG conversions",
+    "description": "Commit registrado no repositório: \"feat(analytics): highlight and separate psychologist clicks in PLG conversions\". Arquivos modificados: admin/admin_analytics_funil.html, admin/admin_analytics_funil.js, backend/config/dbFixes.js, backend/controllers/adminDashboardController.js, backend/controllers/whatsappClickController.js (+5 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #dc1c391b"
+    },
+    "after": {
+      "nova_versao": "highlight and separate psychologist clicks in PLG conversions"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.html",
+      "admin/admin_analytics_funil.js",
+      "backend/config/dbFixes.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/controllers/whatsappClickController.js",
+      "backend/controllers/whatsappController.js",
+      "backend/utils/actorClassifier.js",
+      "public/js/perfil_psicologo.js",
+      "public/js/psi_perfil_publico.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-cdcad6cb",
+    "date": "2026-11-14T15:50:25.000Z",
+    "commit": "cdcad6cb",
+    "author": "Anderson",
+    "title": "Correção: Use observed 90d data and sync Meta hold decision across web/mobile (cmo)",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "use observed 90d data and sync Meta hold decision across web/mobile",
+    "description": "Commit registrado no repositório: \"fix(cmo): use observed 90d data and sync Meta hold decision across web/mobile\". Arquivos modificados: admin/admin_cmo_metrics.js, backend/jobs/scheduler.js, backend/routes/cmoRoutes.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #cdcad6cb"
+    },
+    "after": {
+      "nova_versao": "use observed 90d data and sync Meta hold decision across web/mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "backend/jobs/scheduler.js",
+      "backend/routes/cmoRoutes.js"
+    ]
+  },
+  {
+    "id": "change-git-f22e8bb2",
+    "date": "2026-11-14T01:12:50.000Z",
+    "commit": "f22e8bb2",
+    "author": "Anderson",
+    "title": "Correção: Restore discarded pro indicators rendering in web funnel (analytics-funil)",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "restore discarded pro indicators rendering in web funnel",
+    "description": "Commit registrado no repositório: \"fix(analytics-funil): restore discarded pro indicators rendering in web funnel\". Arquivos modificados: admin/admin_analytics_funil.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #f22e8bb2"
+    },
+    "after": {
+      "nova_versao": "restore discarded pro indicators rendering in web funnel"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.js"
+    ]
+  },
+  {
+    "id": "change-git-25db0519",
+    "date": "2026-11-14T00:15:29.000Z",
+    "commit": "25db0519",
+    "author": "Anderson",
+    "title": "Correção: Historical delinquency trend, symmetric ARPU, mobile p.p./LTV parity and local dates (crm-analytics)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "historical delinquency trend, symmetric ARPU, mobile p.p./LTV parity and local dates",
+    "description": "Commit registrado no repositório: \"fix(crm-analytics): historical delinquency trend, symmetric ARPU, mobile p.p./LTV parity and local dates\". Arquivos modificados: admin/admin_crm_analytics.html, admin/admin_crm_analytics.js, backend/controllers/adminDashboardController.js, mobile/src/app/(admin)/crm-modulo/receita.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #25db0519"
+    },
+    "after": {
+      "nova_versao": "historical delinquency trend, symmetric ARPU, mobile p.p./LTV parity and local dates"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_analytics.html",
+      "admin/admin_crm_analytics.js",
+      "backend/controllers/adminDashboardController.js",
+      "mobile/src/app/(admin)/crm-modulo/receita.tsx"
+    ]
+  },
+  {
+    "id": "change-git-46b383eb",
+    "date": "2026-11-14T00:11:06.000Z",
+    "commit": "46b383eb",
+    "author": "Anderson",
+    "title": "Correção: Neutral negotiating trend, no-status parity, exact days and 48h maturity context (conversoes-plg)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "neutral negotiating trend, no-status parity, exact days and 48h maturity context",
+    "description": "Commit registrado no repositório: \"fix(conversoes-plg): neutral negotiating trend, no-status parity, exact days and 48h maturity context\". Arquivos modificados: admin/admin_analytics_funil.js, backend/controllers/adminDashboardController.js, mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #46b383eb"
+    },
+    "after": {
+      "nova_versao": "neutral negotiating trend, no-status parity, exact days and 48h maturity context"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.js",
+      "backend/controllers/adminDashboardController.js",
+      "mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx"
+    ]
+  },
+  {
+    "id": "change-git-8ff50a6e",
+    "date": "2026-11-14T00:05:53.000Z",
+    "commit": "8ff50a6e",
+    "author": "Anderson",
+    "title": "Correção: Refine trends, funnel parity and mobile dropoffs/channels (analytics-funil)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "refine trends, funnel parity and mobile dropoffs/channels",
+    "description": "Commit registrado no repositório: \"fix(analytics-funil): refine trends, funnel parity and mobile dropoffs/channels\". Arquivos modificados: admin/admin_analytics_funil.js, mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8ff50a6e"
+    },
+    "after": {
+      "nova_versao": "refine trends, funnel parity and mobile dropoffs/channels"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.js",
+      "mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx"
+    ]
+  },
+  {
+    "id": "change-git-22ae7c7c",
+    "date": "2026-11-14T00:00:14.000Z",
+    "commit": "22ae7c7c",
+    "author": "Anderson",
+    "title": "Correção: Corrige denominador de churn Meta Ads, formatacao 2 casas em R$ e consistencia dos cards de transparencia (cmo)",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "corrige denominador de churn Meta Ads, formatacao 2 casas em R$ e consistencia dos cards de transparencia",
+    "description": "Commit registrado no repositório: \"fix(cmo): corrige denominador de churn Meta Ads, formatacao 2 casas em R$ e consistencia dos cards de transparencia\". Arquivos modificados: admin/admin_cmo_metrics.js, backend/routes/cmoRoutes.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #22ae7c7c"
+    },
+    "after": {
+      "nova_versao": "corrige denominador de churn Meta Ads, formatacao 2 casas em R$ e consistencia dos cards de transparencia"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "backend/routes/cmoRoutes.js"
+    ]
+  },
+  {
+    "id": "change-git-26da9c1c",
+    "date": "2026-11-13T23:56:54.000Z",
+    "commit": "26da9c1c",
+    "author": "Anderson",
+    "title": "Correção: Unifica janela 90d semi-aberta, protege periodo /traffic e alinha setas/tooltips B2C Eficiencia e SEO (cmo)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "unifica janela 90d semi-aberta, protege periodo /traffic e alinha setas/tooltips B2C Eficiencia e SEO",
+    "description": "Commit registrado no repositório: \"fix(cmo): unifica janela 90d semi-aberta, protege periodo /traffic e alinha setas/tooltips B2C Eficiencia e SEO\". Arquivos modificados: admin/admin_cmo_metrics.js, backend/routes/cmoRoutes.js, mobile/src/app/(admin)/crm-modulo/cmo-metrics.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #26da9c1c"
+    },
+    "after": {
+      "nova_versao": "unifica janela 90d semi-aberta, protege periodo /traffic e alinha setas/tooltips B2C Eficiencia e SEO"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "backend/routes/cmoRoutes.js",
+      "mobile/src/app/(admin)/crm-modulo/cmo-metrics.tsx"
+    ]
+  },
+  {
+    "id": "change-git-4e22ee55",
+    "date": "2026-11-13T23:53:38.000Z",
+    "commit": "4e22ee55",
+    "author": "Anderson",
+    "title": "Correção: Corrige simetria de cliques WPP Google Ads, parsing numerico e CPL consistente (cmo)",
+    "category": "Analytics & Métricas",
+    "badgeColor": "#6366f1",
+    "status": "Em Produção",
+    "summary": "corrige simetria de cliques WPP Google Ads, parsing numerico e CPL consistente",
+    "description": "Commit registrado no repositório: \"fix(cmo): corrige simetria de cliques WPP Google Ads, parsing numerico e CPL consistente\". Arquivos modificados: backend/routes/cmoRoutes.js, backend/services/googleAdsService.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4e22ee55"
+    },
+    "after": {
+      "nova_versao": "corrige simetria de cliques WPP Google Ads, parsing numerico e CPL consistente"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/routes/cmoRoutes.js",
+      "backend/services/googleAdsService.js"
+    ]
+  },
+  {
+    "id": "change-git-0fa0565d",
+    "date": "2026-11-13T23:49:23.000Z",
+    "commit": "0fa0565d",
+    "author": "Anderson",
+    "title": "Correção: Corrige formatacao numerica Meta Ads, timezone BRT nas queries B2B/B2C, data real de churn e cor neutra de verba (cmo)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "corrige formatacao numerica Meta Ads, timezone BRT nas queries B2B/B2C, data real de churn e cor neutra de verba",
+    "description": "Commit registrado no repositório: \"fix(cmo): corrige formatacao numerica Meta Ads, timezone BRT nas queries B2B/B2C, data real de churn e cor neutra de verba\". Arquivos modificados: admin/admin_cmo_metrics.js, backend/routes/cmoRoutes.js, backend/services/metaAdsService.js, mobile/src/app/(admin)/crm-modulo/cmo-metrics.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #0fa0565d"
+    },
+    "after": {
+      "nova_versao": "corrige formatacao numerica Meta Ads, timezone BRT nas queries B2B/B2C, data real de churn e cor neutra de verba"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.js",
+      "backend/routes/cmoRoutes.js",
+      "backend/services/metaAdsService.js",
+      "mobile/src/app/(admin)/crm-modulo/cmo-metrics.tsx"
+    ]
+  },
+  {
+    "id": "change-git-734fcd11",
+    "date": "2026-11-13T23:42:43.000Z",
+    "commit": "734fcd11",
+    "author": "Anderson",
+    "title": "Novo: Adiciona setas e comparativos nos 7 cards do simulador (web e mobile) e exibe janela de comparacao no app (cmo)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "adiciona setas e comparativos nos 7 cards do simulador (web e mobile) e exibe janela de comparacao no app",
+    "description": "Commit registrado no repositório: \"feat(cmo): adiciona setas e comparativos nos 7 cards do simulador (web e mobile) e exibe janela de comparacao no app\". Arquivos modificados: admin/admin_cmo_metrics.html, admin/admin_cmo_metrics.js, mobile/src/app/(admin)/crm-modulo/cmo-metrics.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #734fcd11"
+    },
+    "after": {
+      "nova_versao": "adiciona setas e comparativos nos 7 cards do simulador (web e mobile) e exibe janela de comparacao no app"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_cmo_metrics.html",
+      "admin/admin_cmo_metrics.js",
+      "mobile/src/app/(admin)/crm-modulo/cmo-metrics.tsx"
+    ]
+  },
+  {
+    "id": "change-git-abe7daab",
+    "date": "2026-11-13T23:33:38.000Z",
+    "commit": "abe7daab",
+    "author": "Anderson",
+    "title": "Correção: Remove seta enganosa de percentual de meta em marcos de crescimento (mobile)",
+    "category": "Admin & Plataforma",
+    "badgeColor": "#0284c7",
+    "status": "Em Produção",
+    "summary": "remove seta enganosa de percentual de meta em marcos de crescimento",
+    "description": "Commit registrado no repositório: \"fix(mobile): remove seta enganosa de percentual de meta em marcos de crescimento\". Arquivos modificados: mobile/src/app/(admin)/index.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #abe7daab"
+    },
+    "after": {
+      "nova_versao": "remove seta enganosa de percentual de meta em marcos de crescimento"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/index.tsx"
+    ]
+  },
+  {
+    "id": "change-git-14d30445",
+    "date": "2026-11-13T23:21:15.000Z",
+    "commit": "14d30445",
+    "author": "Anderson",
+    "title": "Correção: Corrige calculos e setas comparativas de MRR, Ativacao, Pos-Trial, Renovacao e Churn (kpi)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "corrige calculos e setas comparativas de MRR, Ativacao, Pos-Trial, Renovacao e Churn",
+    "description": "Commit registrado no repositório: \"fix(kpi): corrige calculos e setas comparativas de MRR, Ativacao, Pos-Trial, Renovacao e Churn\". Arquivos modificados: admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, admin/admin_visao_geral.js, backend/controllers/adminDashboardController.js, backend/controllers/adminUsersController.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #14d30445"
+    },
+    "after": {
+      "nova_versao": "corrige calculos e setas comparativas de MRR, Ativacao, Pos-Trial, Renovacao e Churn"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "admin/admin_visao_geral.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/controllers/adminUsersController.js",
+      "backend/services/metricsService.js",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx"
+    ]
+  },
+  {
+    "id": "change-git-ad2d9213",
+    "date": "2026-11-13T23:03:42.000Z",
+    "commit": "ad2d9213",
+    "author": "Anderson",
+    "title": "Correção: Padronizar Visao 360 CS, colapsar Saude do Perfil e detalhar Assinatura (mobile/admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "padronizar Visao 360 CS, colapsar Saude do Perfil e detalhar Assinatura",
+    "description": "Commit registrado no repositório: \"fix(mobile/admin): padronizar Visao 360 CS, colapsar Saude do Perfil e detalhar Assinatura\". Arquivos modificados: mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx, mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx, mobile/src/app/(admin)/crm-modulo/psicologos.tsx, mobile/src/app/(admin)/crm-modulo/receita.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ad2d9213"
+    },
+    "after": {
+      "nova_versao": "padronizar Visao 360 CS, colapsar Saude do Perfil e detalhar Assinatura"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(admin)/crm-modulo/analytics-crescimento.tsx",
+      "mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "mobile/src/app/(admin)/crm-modulo/receita.tsx"
+    ]
+  },
+  {
+    "id": "change-git-83019655",
+    "date": "2026-11-13T23:03:32.000Z",
+    "commit": "83019655",
+    "author": "Anderson",
+    "title": "Correção: Padronizar drawer Visao 360, colapsar Saude do Perfil e detalhar Assinatura (admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "padronizar drawer Visao 360, colapsar Saude do Perfil e detalhar Assinatura",
+    "description": "Commit registrado no repositório: \"fix(admin): padronizar drawer Visao 360, colapsar Saude do Perfil e detalhar Assinatura\". Arquivos modificados: admin/admin.css, admin/admin.html, admin/admin_analytics_funil.html, admin/admin_analytics_funil.js, admin/admin_crm_psicologos.html (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #83019655"
+    },
+    "after": {
+      "nova_versao": "padronizar drawer Visao 360, colapsar Saude do Perfil e detalhar Assinatura"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin.css",
+      "admin/admin.html",
+      "admin/admin_analytics_funil.html",
+      "admin/admin_analytics_funil.js",
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "admin/admin_cs_drawer.html",
+      "admin/admin_cs_drawer.js"
+    ]
+  },
+  {
+    "id": "change-git-3a36ca18",
+    "date": "2026-11-13T00:59:22.000Z",
+    "commit": "3a36ca18",
+    "author": "Anderson",
+    "title": "Correção: Alinhar janelas de comparacao parciais e exibicao de tendencias (p.p.) (admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "alinhar janelas de comparacao parciais e exibicao de tendencias (p.p.)",
+    "description": "Commit registrado no repositório: \"fix(admin): alinhar janelas de comparacao parciais e exibicao de tendencias (p.p.)\". Arquivos modificados: admin/admin_analytics_funil.html, admin/admin_analytics_funil.js, admin/admin_cmo_metrics.html, admin/admin_cmo_metrics.js, admin/admin_crm_analytics.js (+5 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #3a36ca18"
+    },
+    "after": {
+      "nova_versao": "alinhar janelas de comparacao parciais e exibicao de tendencias (p.p.)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.html",
+      "admin/admin_analytics_funil.js",
+      "admin/admin_cmo_metrics.html",
+      "admin/admin_cmo_metrics.js",
+      "admin/admin_crm_analytics.js",
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/controllers/adminUsersController.js",
+      "backend/routes/cmoRoutes.js"
+    ]
+  },
+  {
+    "id": "change-git-c06bb5e6",
+    "date": "2026-11-13T00:05:18.000Z",
+    "commit": "c06bb5e6",
+    "author": "Anderson",
+    "title": "Correção: Exibir total real de pagantes e janela de trial expirando 1 dia antes no horario de SP (crm)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "exibir total real de pagantes e janela de trial expirando 1 dia antes no horario de SP",
+    "description": "Commit registrado no repositório: \"fix(crm): exibir total real de pagantes e janela de trial expirando 1 dia antes no horario de SP\". Arquivos modificados: admin/admin_crm_psicologos.js, backend/controllers/adminPerformanceController.js, backend/controllers/adminUsersController.js, backend/utils/trialTiming.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #c06bb5e6"
+    },
+    "after": {
+      "nova_versao": "exibir total real de pagantes e janela de trial expirando 1 dia antes no horario de SP"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.js",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/controllers/adminUsersController.js",
+      "backend/utils/trialTiming.js"
+    ]
+  },
+  {
+    "id": "change-git-cf35508f",
+    "date": "2026-11-12T23:42:41.000Z",
+    "commit": "cf35508f",
+    "author": "Anderson",
+    "title": "Correção: Ignore pro/admin dropoff steps in registerQuestionnaireStep (tracking)",
+    "category": "Admin & Plataforma",
+    "badgeColor": "#0284c7",
+    "status": "Em Produção",
+    "summary": "ignore pro/admin dropoff steps in registerQuestionnaireStep",
+    "description": "Commit registrado no repositório: \"fix(tracking): ignore pro/admin dropoff steps in registerQuestionnaireStep\". Arquivos modificados: backend/controllers/trackingController.js, public/js/questionario_services.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #cf35508f"
+    },
+    "after": {
+      "nova_versao": "ignore pro/admin dropoff steps in registerQuestionnaireStep"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/trackingController.js",
+      "public/js/questionario_services.js"
+    ]
+  },
+  {
+    "id": "change-git-cd78fc56",
+    "date": "2026-11-12T23:29:22.000Z",
+    "commit": "cd78fc56",
+    "author": "Anderson",
+    "title": "Novo: Track/display discarded pro funnel events and refine Black Friday entry, schedule, and queue (analytics,bf)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "track/display discarded pro funnel events and refine Black Friday entry, schedule, and queue",
+    "description": "Commit registrado no repositório: \"feat(analytics,bf): track/display discarded pro funnel events and refine Black Friday entry, schedule, and queue\". Arquivos modificados: admin/admin_analytics_funil.html, admin/admin_analytics_funil.js, backend/config/dbFixes.js, backend/controllers/adminController.js, backend/controllers/adminDashboardController.js (+30 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #cd78fc56"
+    },
+    "after": {
+      "nova_versao": "track/display discarded pro funnel events and refine Black Friday entry, schedule, and queue"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_analytics_funil.html",
+      "admin/admin_analytics_funil.js",
+      "backend/config/dbFixes.js",
+      "backend/controllers/adminController.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/controllers/authController.js",
+      "backend/controllers/demandController.js",
+      "backend/controllers/psiAuthController.js",
+      "backend/controllers/psiDashboardController.js",
+      "backend/controllers/whatsappClickController.js",
+      "backend/controllers/whatsappController.js",
+      "backend/jobs/scheduler.js",
+      "backend/middlewares/trackingMiddleware.js",
+      "backend/models/siteVisit.js",
+      "backend/routes/adminAuthRoutes.js",
+      "backend/routes/publicRoutes.js",
+      "backend/services/blackFridayGrowthService.js",
+      "backend/utils/actorClassifier.js",
+      "mobile/src/app/(admin)/crm-modulo/analytics-funil.tsx",
+      "mobile/src/app/(tabs)/index.tsx",
+      "mobile/src/app/questionario.tsx",
+      "public/js/login.js",
+      "public/js/perfil_psicologo.js",
+      "public/js/psi_perfil_publico.js",
+      "public/js/psi_registro.js",
+      "public/js/questionario.js",
+      "public/js/questionario_services.js",
+      "public/js/resultados.js",
+      "public/js/script.js",
+      "public/psi/psi_visao_geral.html",
+      "public/psi/psi_visao_geral.js",
+      "views/auth_callback.ejs",
+      "views/login.ejs",
+      "views/partials/footer.ejs",
+      "views/sobre_psis.ejs"
+    ]
+  },
+  {
+    "id": "change-git-ea71ceae",
+    "date": "2026-11-12T21:50:12.000Z",
+    "commit": "ea71ceae",
+    "author": "Anderson",
+    "title": "Novo: Paginate weekly editions keeping latest visible and use native device dropdown filter (novidades)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "paginate weekly editions keeping latest visible and use native device dropdown filter",
+    "description": "Commit registrado no repositório: \"feat(novidades): paginate weekly editions keeping latest visible and use native device dropdown filter\". Arquivos modificados: mobile/src/app/(tabs)/novidades.tsx, public/psi/psi_novidades.html.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ea71ceae"
+    },
+    "after": {
+      "nova_versao": "paginate weekly editions keeping latest visible and use native device dropdown filter"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/novidades.tsx",
+      "public/psi/psi_novidades.html"
+    ]
+  },
+  {
+    "id": "change-git-35216d62",
+    "date": "2026-11-12T21:45:31.000Z",
+    "commit": "35216d62",
+    "author": "Anderson",
+    "title": "Correção: Hide and clear post view when returning to feed so mobile leaves no ghost space (forum)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "hide and clear post view when returning to feed so mobile leaves no ghost space",
+    "description": "Commit registrado no repositório: \"fix(forum): hide and clear post view when returning to feed so mobile leaves no ghost space\". Arquivos modificados: public/css/forum-community.css, public/css/psi_dashboard.css, public/psi/psi_dashboard.html, public/psi/psi_forum.html, public/psi/psi_forum.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #35216d62"
+    },
+    "after": {
+      "nova_versao": "hide and clear post view when returning to feed so mobile leaves no ghost space"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "public/css/forum-community.css",
+      "public/css/psi_dashboard.css",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_forum.html",
+      "public/psi/psi_forum.js"
+    ]
+  },
+  {
+    "id": "change-git-03c0c751",
+    "date": "2026-11-12T21:41:36.000Z",
+    "commit": "03c0c751",
+    "author": "Anderson",
+    "title": "Correção: Move pinned and closed pills to right side of card header so avatar stays aligned (forum)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "move pinned and closed pills to right side of card header so avatar stays aligned",
+    "description": "Commit registrado no repositório: \"fix(forum): move pinned and closed pills to right side of card header so avatar stays aligned\". Arquivos modificados: public/css/forum-community.css, public/css/psi_dashboard.css, public/psi/psi_dashboard.html, public/psi/psi_forum.html, public/psi/psi_forum.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #03c0c751"
+    },
+    "after": {
+      "nova_versao": "move pinned and closed pills to right side of card header so avatar stays aligned"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "public/css/forum-community.css",
+      "public/css/psi_dashboard.css",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_forum.html",
+      "public/psi/psi_forum.js"
+    ]
+  },
+  {
+    "id": "change-git-d499faa2",
+    "date": "2026-11-12T21:38:15.000Z",
+    "commit": "d499faa2",
+    "author": "Anderson",
+    "title": "Correção: Remove em-dashes, enforce concise mediator replies, and reference button above (forum)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "remove em-dashes, enforce concise mediator replies, and reference button above",
+    "description": "Commit registrado no repositório: \"fix(forum): remove em-dashes, enforce concise mediator replies, and reference button above\". Arquivos modificados: backend/services/forumMediatorService.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #d499faa2"
+    },
+    "after": {
+      "nova_versao": "remove em-dashes, enforce concise mediator replies, and reference button above"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/services/forumMediatorService.js"
+    ]
+  },
+  {
     "id": "change-git-7b727297",
     "date": "2026-11-12T02:35:56.000Z",
     "commit": "7b727297",
