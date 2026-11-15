@@ -39,6 +39,13 @@ export default function AdminAnalyticsFunilScreen() {
   // Dados das APIs
   const [funnelData, setFunnelData] = useState<any>(null);
   const [wppData, setWppData] = useState<any[]>([]);
+  const [discardedWppClicks, setDiscardedWppClicks] = useState<any[]>([]);
+  const [discardedWppSummary, setDiscardedWppSummary] = useState<{ total: number; logados: number; naoLogados: number }>({
+    total: 0,
+    logados: 0,
+    naoLogados: 0,
+  });
+  const [prevDiscardedWppCount, setPrevDiscardedWppCount] = useState<number | null>(null);
   const [prevWppData, setPrevWppData] = useState<any[]>([]);
   const [wppDays, setWppDays] = useState<number>(30);
   const [wppDaysExact, setWppDaysExact] = useState<number | null>(null);
@@ -119,10 +126,23 @@ export default function AdminAnalyticsFunilScreen() {
         if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
           setWppData(raw.feedbacks || []);
           setPrevWppData(raw.prevFeedbacks || []);
+          const discList = Array.isArray(raw.discardedProClicks) ? raw.discardedProClicks : [];
+          setDiscardedWppClicks(discList);
+          setDiscardedWppSummary(
+            raw.discardedProSummary || {
+              total: discList.length,
+              logados: discList.filter((c: any) => String(c.actorType || '').endsWith('_logged')).length,
+              naoLogados: discList.filter((c: any) => !String(c.actorType || '').endsWith('_logged')).length,
+            }
+          );
+          setPrevDiscardedWppCount(typeof raw.prevDiscardedProCount === 'number' ? raw.prevDiscardedProCount : null);
           setWppDays(raw.days || periodDays);
           setWppDaysExact(raw.daysExact ? Number(raw.daysExact) : null);
         } else if (Array.isArray(raw)) {
           setWppData(raw);
+          setDiscardedWppClicks([]);
+          setDiscardedWppSummary({ total: 0, logados: 0, naoLogados: 0 });
+          setPrevDiscardedWppCount(null);
         }
       }
 
@@ -345,16 +365,27 @@ export default function AdminAnalyticsFunilScreen() {
     }
   };
 
+  const combinedWppRows = useMemo(() => {
+    const patients = (wppData || []).filter((f: any) => !f.isDiscardedProClick);
+    const merged = [...patients, ...(discardedWppClicks || [])];
+    merged.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return merged;
+  }, [wppData, discardedWppClicks]);
+
   // Filtragem dos feedbacks de WhatsApp
   const filteredWpp = useMemo(() => {
-    return wppData.filter((f: any) => {
+    return combinedWppRows.filter((f: any) => {
       if (wppSearch.trim()) {
         const term = wppSearch.toLowerCase();
         const psiName = f.psychologist?.nome?.toLowerCase() || '';
         const guestName = f.guestName?.toLowerCase() || '';
-        if (!psiName.includes(term) && !guestName.includes(term)) return false;
+        const actorPsi = f.actorPsiNome?.toLowerCase() || '';
+        if (!psiName.includes(term) && !guestName.includes(term) && !actorPsi.includes(term)) return false;
       }
       if (wppStatusFilter === 'todos') return true;
+      if (wppStatusFilter === 'somente_pacientes') return !f.isDiscardedProClick;
+      if (wppStatusFilter === 'cliques_psis') return Boolean(f.isDiscardedProClick);
+      if (f.isDiscardedProClick) return false;
       if (wppStatusFilter === 'cobrar_agora') {
         if (f.feedbackGiven) return false;
         const ageHours = (Date.now() - new Date(f.createdAt).getTime()) / (1000 * 60 * 60);
@@ -366,7 +397,7 @@ export default function AdminAnalyticsFunilScreen() {
       if (wppStatusFilter === 'nao_recebeu') return f.feedbackGiven && f.contactReceived === false;
       return true;
     });
-  }, [wppData, wppSearch, wppStatusFilter]);
+  }, [combinedWppRows, wppSearch, wppStatusFilter]);
 
   const totalWppPages = Math.max(1, Math.ceil(filteredWpp.length / itemsPerPage));
   const paginatedWpp = filteredWpp.slice((wppPage - 1) * itemsPerPage, wppPage * itemsPerPage);
@@ -440,19 +471,20 @@ export default function AdminAnalyticsFunilScreen() {
   const corTaxaGlobal = visitas > 0 ? getColorForGoal(taxaGlobal, 3) : '#64748b';
   const corTaxaDesistencia = iniciaram > 0 ? (Number(taxaDesistencia) <= 30 ? '#10b981' : '#dc2626') : '#64748b';
 
-  // --- DADOS ATUAIS (CONVERSÕES PLG) ---
-  const totalWppClicks = wppData.length;
+  // --- DADOS ATUAIS (CONVERSÕES PLG — APENAS PACIENTES) ---
+  const patientWppData = wppData.filter((f) => !f.isDiscardedProClick);
+  const totalWppClicks = patientWppData.length;
   const effectiveWppDays = wppDaysExact && wppDaysExact > 0 ? wppDaysExact : wppDays;
   const wppMediaDia = effectiveWppDays > 0 ? (totalWppClicks / effectiveWppDays).toFixed(1) : '0.0';
 
-  const feedbacksRespondidos = wppData.filter((f) => f.feedbackGiven);
+  const feedbacksRespondidos = patientWppData.filter((f) => f.feedbackGiven);
   const totalRespondidos = feedbacksRespondidos.length;
   const taxaRespostaPsi = totalWppClicks > 0 ? ((totalRespondidos / totalWppClicks) * 100).toFixed(1) : '0.0';
   const taxaNaoResposta = totalWppClicks > 0 ? (100 - parseFloat(taxaRespostaPsi)).toFixed(1) : '0.0';
 
   const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
-  const matureWpp = wppData.filter((f) => f.createdAt && new Date(f.createdAt).getTime() <= cutoff48h);
-  const pendingRecent48h = wppData.filter((f) => !f.feedbackGiven && f.createdAt && new Date(f.createdAt).getTime() > cutoff48h).length;
+  const matureWpp = patientWppData.filter((f) => f.createdAt && new Date(f.createdAt).getTime() <= cutoff48h);
+  const pendingRecent48h = patientWppData.filter((f) => !f.feedbackGiven && f.createdAt && new Date(f.createdAt).getTime() > cutoff48h).length;
   const matureRespPct = matureWpp.length > 0 ? ((matureWpp.filter((f) => f.feedbackGiven).length / matureWpp.length) * 100).toFixed(1) : null;
 
   const contatosRealizados = feedbacksRespondidos.filter((f) => f.contactReceived === true).length;
@@ -1399,6 +1431,22 @@ export default function AdminAnalyticsFunilScreen() {
                   {pendingRecent48h > 0 ? `${pendingRecent48h} ainda <48h em aberto` : 'Ignoraram ou fecharam'}
                 </Text>
               </View>
+
+              {/* 7. Cliques de Psicólogos (Descartados) */}
+              <View style={{ width: '100%', backgroundColor: '#f5f7ff', borderRadius: 16, borderWidth: 1, borderColor: '#c7d2fe', borderTopWidth: 3, borderTopColor: '#6366f1', padding: 12 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#4338ca', textTransform: 'uppercase', flex: 1, paddingRight: 4 }} numberOfLines={1}>
+                    Cliques de Psicólogos (Testes)
+                  </Text>
+                  {renderTrendBadge(discardedWppSummary.total, prevDiscardedWppCount, 'neutral')}
+                </View>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#4f46e5', marginTop: 2 }}>
+                  {formatNumber(discardedWppSummary.total)}
+                </Text>
+                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#6366f1', marginTop: 2 }}>
+                  {formatNumber(discardedWppSummary.logados)} logado · {formatNumber(discardedWppSummary.naoLogados)} não logado — descartados (sem feedback / sem clique)
+                </Text>
+              </View>
             </View>
 
             {/* LINHA 2: PERFORMANCE DE VENDAS */}
@@ -1532,6 +1580,8 @@ export default function AdminAnalyticsFunilScreen() {
                   title="Filtrar por Status de Cobrança"
                   options={[
                     { label: 'Todos os Feedbacks', value: 'todos' },
+                    { label: 'Somente Pacientes', value: 'somente_pacientes' },
+                    { label: '🧪 Cliques de Psicólogos (Testes)', value: 'cliques_psis' },
                     { label: 'Cobrar Agora (Atrasados)', value: 'cobrar_agora' },
                     { label: 'Pendente', value: 'pendente' },
                     { label: 'Respondido', value: 'respondido' },
@@ -1574,15 +1624,19 @@ export default function AdminAnalyticsFunilScreen() {
                       >
                         {wppStatusFilter === 'todos'
                           ? 'Todos'
-                          : wppStatusFilter === 'cobrar_agora'
-                            ? 'Cobrar Agora'
-                            : wppStatusFilter === 'pendente'
-                              ? 'Pendente'
-                              : wppStatusFilter === 'respondido'
-                                ? 'Respondido'
-                                : wppStatusFilter === 'fechou'
-                                  ? 'Fechou'
-                                  : 'Não Recebeu'}
+                          : wppStatusFilter === 'somente_pacientes'
+                            ? 'Somente Pacientes'
+                            : wppStatusFilter === 'cliques_psis'
+                              ? 'Cliques de Psis'
+                              : wppStatusFilter === 'cobrar_agora'
+                                ? 'Cobrar Agora'
+                                : wppStatusFilter === 'pendente'
+                                  ? 'Pendente'
+                                  : wppStatusFilter === 'respondido'
+                                    ? 'Respondido'
+                                    : wppStatusFilter === 'fechou'
+                                      ? 'Fechou'
+                                      : 'Não Recebeu'}
                       </Text>
                     </View>
                     <Feather name="chevron-down" size={14} color="#1B4332" />
@@ -1594,21 +1648,31 @@ export default function AdminAnalyticsFunilScreen() {
               {paginatedWpp.length > 0 ? (
                 <View style={{ gap: 10 }}>
                   {paginatedWpp.map((item: any) => {
+                    const isPsiTest = Boolean(item.isDiscardedProClick);
                     const psiName = item.psychologist?.nome || 'Psicólogo';
                     const leadName = item.guestName || 'Paciente Anônimo';
                     const dataStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
                     const fechou = item.dealClosed === 'yes' || item.dealClosed === 'started';
                     const negociando = item.dealClosed === 'talking';
                     const naoFechou = item.dealClosed && item.dealClosed !== 'pending' && !fechou && !negociando;
+                    const actorTag = item.actorType === 'psychologist_logged'
+                      ? '🧪 Psicólogo (Logado)'
+                      : item.actorType === 'psychologist_unlogged'
+                        ? '🧪 Psicólogo (Não logado)'
+                        : item.actorType === 'admin_logged'
+                          ? '🛡️ Admin (Logado)'
+                          : '🛡️ Admin (Não logado)';
 
                     return (
                       <View
                         key={item.id}
                         style={{
-                          backgroundColor: '#f8fafc',
+                          backgroundColor: isPsiTest ? '#eef2ff' : '#f8fafc',
                           borderRadius: 14,
-                          borderWidth: 1,
-                          borderColor: '#e2e8f0',
+                          borderWidth: isPsiTest ? 1.5 : 1,
+                          borderColor: isPsiTest ? '#a5b4fc' : '#e2e8f0',
+                          borderLeftWidth: isPsiTest ? 4 : 1,
+                          borderLeftColor: isPsiTest ? '#6366f1' : '#e2e8f0',
                           padding: 12,
                         }}
                       >
@@ -1651,12 +1715,27 @@ export default function AdminAnalyticsFunilScreen() {
                               ) : null}
                             </TouchableOpacity>
                           </View>
-                          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: '#94a3b8' }}>{dataStr}</Text>
+                          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10, color: isPsiTest ? '#4338ca' : '#94a3b8' }}>{dataStr}</Text>
                         </View>
 
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}>
-                          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#64748b' }}>Paciente:</Text>
-                          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#1e293b' }}>{leadName}</Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 3 }}>
+                          <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#64748b' }}>
+                            {isPsiTest ? 'Autor do Clique:' : 'Paciente:'}
+                          </Text>
+                          {isPsiTest ? (
+                            <View style={{ alignItems: 'flex-end' }}>
+                              <View style={{ backgroundColor: '#e0e7ff', borderWidth: 1, borderColor: '#c7d2fe', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#4338ca' }}>{actorTag}</Text>
+                              </View>
+                              {item.actorPsiNome ? (
+                                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#4338ca', marginTop: 2 }}>
+                                  {item.actorPsiNome}
+                                </Text>
+                              ) : null}
+                            </View>
+                          ) : (
+                            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#1e293b' }}>{leadName}</Text>
+                          )}
                         </View>
 
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}>
@@ -1670,15 +1749,15 @@ export default function AdminAnalyticsFunilScreen() {
 
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}>
                           <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#64748b' }}>Recebeu Mensagem?</Text>
-                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: item.contactReceived === true ? '#16a34a' : (item.contactReceived === false ? '#ef4444' : '#64748b') }}>
-                            {item.contactReceived === true ? 'Sim' : (item.contactReceived === false ? 'Não' : 'Pendente')}
+                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: isPsiTest ? '#4338ca' : (item.contactReceived === true ? '#16a34a' : (item.contactReceived === false ? '#ef4444' : '#64748b')) }}>
+                            {isPsiTest ? '🧪 Teste (Descartado)' : (item.contactReceived === true ? 'Sim' : (item.contactReceived === false ? 'Não' : 'Pendente'))}
                           </Text>
                         </View>
 
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}>
                           <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#64748b' }}>Fechou Negócio?</Text>
                           <View style={{
-                            backgroundColor: fechou ? '#dcfce7' : (negociando ? '#fef3c7' : (naoFechou ? '#fee2e2' : '#f1f5f9')),
+                            backgroundColor: isPsiTest ? '#e0e7ff' : (fechou ? '#dcfce7' : (negociando ? '#fef3c7' : (naoFechou ? '#fee2e2' : '#f1f5f9'))),
                             paddingHorizontal: 8,
                             paddingVertical: 2,
                             borderRadius: 999,
@@ -1686,17 +1765,17 @@ export default function AdminAnalyticsFunilScreen() {
                             <Text style={{
                               fontFamily: 'Inter_700Bold',
                               fontSize: 10,
-                              color: fechou ? '#15803d' : (negociando ? '#b45309' : (naoFechou ? '#b91c1c' : '#475569')),
+                              color: isPsiTest ? '#4338ca' : (fechou ? '#15803d' : (negociando ? '#b45309' : (naoFechou ? '#b91c1c' : '#475569'))),
                             }}>
-                              {fechou ? 'Fechado' : (negociando ? 'Negociando' : (naoFechou ? 'Não Fechou' : 'Pendente'))}
+                              {isPsiTest ? 'Não contabilizado' : (fechou ? 'Fechado' : (negociando ? 'Negociando' : (naoFechou ? 'Não Fechou' : 'Pendente')))}
                             </Text>
                           </View>
                         </View>
 
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', paddingBottom: 6 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: isPsiTest ? 0 : 1, borderBottomColor: '#f1f5f9', paddingBottom: isPsiTest ? 2 : 6 }}>
                           <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#64748b' }}>Status da Resposta:</Text>
                           <View style={{
-                            backgroundColor: item.feedbackGiven ? '#e0f2fe' : (item.adminWppReminderSentAt ? '#fef9c3' : '#f1f5f9'),
+                            backgroundColor: isPsiTest ? '#e0e7ff' : (item.feedbackGiven ? '#e0f2fe' : (item.adminWppReminderSentAt ? '#fef9c3' : '#f1f5f9')),
                             paddingHorizontal: 8,
                             paddingVertical: 2,
                             borderRadius: 999,
@@ -1704,15 +1783,15 @@ export default function AdminAnalyticsFunilScreen() {
                             <Text style={{
                               fontFamily: 'Inter_700Bold',
                               fontSize: 10,
-                              color: item.feedbackGiven ? '#0369a1' : (item.adminWppReminderSentAt ? '#854d0e' : '#64748b'),
+                              color: isPsiTest ? '#4338ca' : (item.feedbackGiven ? '#0369a1' : (item.adminWppReminderSentAt ? '#854d0e' : '#64748b')),
                             }}>
-                              {item.feedbackGiven ? 'Respondido' : (item.adminWppReminderSentAt ? 'Cobrado' : 'Pendente')}
+                              {isPsiTest ? '🛡️ Descartado (Sem feedback)' : (item.feedbackGiven ? 'Respondido' : (item.adminWppReminderSentAt ? 'Cobrado' : 'Pendente'))}
                             </Text>
                           </View>
                         </View>
 
-                        {/* Ação de Cobrança se Pendente */}
-                        {!item.feedbackGiven && item.psychologist?.telefone && (
+                        {/* Ação de Cobrança apenas para cliques válidos de pacientes */}
+                        {!isPsiTest && !item.feedbackGiven && item.psychologist?.telefone && (
                           <TouchableOpacity
                             onPress={() => handleRemindPsi(item.psychologistId, psiName)}
                             style={{
