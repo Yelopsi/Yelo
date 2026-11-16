@@ -96,6 +96,53 @@ export default function AdminDadosHubScreen() {
           <Feather name="chevron-right" size={18} color="#94a3b8" />
         </TouchableOpacity>
 
+        {/* 1b. DRE Mensal & Anual (Contábil & Fiscal) */}
+        <TouchableOpacity
+          onPress={() => router.push('/(admin)/crm-modulo/dre')}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 20,
+            padding: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 4,
+            elevation: 1,
+          }}
+          activeOpacity={0.8}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              backgroundColor: '#dcfce7',
+              borderRadius: 999,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 14,
+            }}
+          >
+            <Feather name="file-text" size={20} color="#1B4332" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1e293b', fontSize: 15 }}>
+                DRE Mensal & Anual
+              </Text>
+              <View style={{ backgroundColor: '#dcfce7', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 9 }}>CONTÁBIL</Text>
+              </View>
+            </View>
+            <Text style={{ fontFamily: 'Inter_400Regular', color: '#64748b', fontSize: 12, lineHeight: 16 }}>
+              Demonstração contábil, impostos, OPEX e pacote fiscal (.XLS / .CSV).
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="#94a3b8" />
+        </TouchableOpacity>
+
         {/* 2. Macro Negócio: Relatórios e Crescimento */}
         <TouchableOpacity
           onPress={() => router.push('/(admin)/crm-modulo/analytics-crescimento')}

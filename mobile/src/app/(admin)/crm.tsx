@@ -230,6 +230,20 @@ export default function AdminCRMHubScreen() {
           onPress={() => handleNavigate('/(admin)/crm-modulo/receita')}
         />
 
+        {/* 3b. DRE Contábil & Fiscal */}
+        <CrmCard
+          title="DRE Contábil & Fiscal"
+          description="DRE mensal/anual automatizada, impostos, despesas e exportação XLS/CSV."
+          badge="Contábil"
+          badgeBg="#dcfce7"
+          badgeColor="#1B4332"
+          icon="file-text"
+          iconColor="#1B4332"
+          iconBg="#dcfce7"
+          borderColor="#1B4332"
+          onPress={() => handleNavigate('/(admin)/crm-modulo/dre')}
+        />
+
         {/* 4. Growth (Crescimento Executivo e Metas) */}
         <CrmCard
           title="Growth 📈"

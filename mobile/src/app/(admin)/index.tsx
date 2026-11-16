@@ -46,6 +46,7 @@ export default function AdminVisaoGeralScreen() {
   const { token, user } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [cmoData, setCmoData] = useState<any>(null);
+  const [dreData, setDreData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [offlineMode, setOfflineMode] = useState(false);
@@ -75,14 +76,26 @@ export default function AdminVisaoGeralScreen() {
     }
     try {
       setOfflineMode(false);
-      // Busca estatísticas gerais e dados de CMO simultaneamente
-      const [statsRes, cmoRes] = await Promise.all([
+      const brtDateStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date());
+      const [brtY, brtM] = brtDateStr.split('-').map(Number);
+
+      // Busca estatísticas gerais, CMO e DRE simultaneamente
+      const [statsRes, cmoRes, dreRes] = await Promise.all([
         api.get('/api/admin/stats').catch(err => {
           console.warn('[Admin] Erro ao buscar /api/admin/stats:', err.message);
           return null;
         }),
         api.get('/api/cmo/dashboard').catch(err => {
           console.warn('[Admin] Erro ao buscar /api/cmo/dashboard:', err.message);
+          return null;
+        }),
+        api.get(`/api/admin/dre?year=${brtY}&month=${brtM}&regime=accrual`).catch(err => {
+          console.warn('[Admin] Erro ao buscar /api/admin/dre:', err.message);
           return null;
         })
       ]);
@@ -97,6 +110,9 @@ export default function AdminVisaoGeralScreen() {
 
       if (cmoRes?.data) {
         setCmoData(cmoRes.data);
+      }
+      if (dreRes?.data) {
+        setDreData(dreRes.data);
       }
     } catch (error) {
       console.error('[Admin] Erro geral ao atualizar dados:', error);
@@ -144,14 +160,95 @@ export default function AdminVisaoGeralScreen() {
     return (value || 0).toLocaleString('pt-BR');
   };
 
-  // Cálculo de Marcos Estratégicos (Breakeven, Saída MEI 70, Pró-labore 120)
+  // Cálculo de Marcos Estratégicos alinhado à DRE (Breakeven, Saída MEI, Pró-labore)
   const currentPaying = parseInt(stats?.psychologists?.paying) || 0;
+  const brtNowStr = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+  const [brtYearNow, brtMonthNow, brtDayNow] = brtNowStr.split('-').map(Number);
+  const daysInBrtMonth = new Date(brtYearNow, brtMonthNow, 0).getDate();
+
+  const dreSel = dreData?.selectedMonthSummary || {};
+  const drePrev = dreData?.prevMonthSummary || {};
+  const dreCompany = dreData?.company || {};
+  const dreAnn = dreData?.annualSummary || {};
+  const dreMeta = dreData?.meta || {};
+  const dreAlerts = Array.isArray(dreData?.alerts) ? dreData.alerts : [];
+
   const metaSpend = parseFloat(cmoData?.ads?.meta?.spend) || 0;
   const googleSpend = parseFloat(cmoData?.ads?.google?.spend) || 0;
-  const totalAds = metaSpend + googleSpend;
-  
-  let breakevenTarget = Math.ceil((totalAds / 99) + 5);
+  const totalAdsFallback = metaSpend + googleSpend;
+
+  let breakevenTarget = Math.ceil((totalAdsFallback / 99) + 5);
   if (isNaN(breakevenTarget) || breakevenTarget < 10) breakevenTarget = 10;
+  let meiTarget = 70;
+  let proLaboreTarget = 120;
+  let dreContextLine = 'Estimativa automática de base.';
+  let breakevenTip = 'Estimativa baseada em investimento de Ads e ticket médio de R$ 99.';
+  let meiTip = 'Meta de faturamento MEI (R$ 81.000/ano).';
+  let proLaboreTip = 'Meta estratégica para retirada recorrente de pró-labore.';
+  let isMeiMigrated = false;
+
+  if (dreData) {
+    const arpu = (currentPaying > 0 && Number(stats?.mrr || 0) > 0)
+      ? (Number(stats.mrr) / currentPaying)
+      : (dreSel.paidCount > 0 && dreSel.grossRevenue > 0
+          ? (dreSel.grossRevenue / dreSel.paidCount)
+          : (drePrev.paidCount > 0 && drePrev.grossRevenue > 0 ? drePrev.grossRevenue / drePrev.paidCount : 99));
+
+    const varTaxRate = Number(dreSel.taxConfig?.variableRate ?? drePrev.taxConfig?.variableRate ?? 0);
+    const gatewayRate = Number(dreSel.grossRevenue || 0) > 0
+      ? (Number(dreSel.gatewayFees || 0) / Number(dreSel.grossRevenue))
+      : (Number(drePrev.grossRevenue || 0) > 0 ? Number(drePrev.gatewayFees || 0) / Number(drePrev.grossRevenue) : 0.0265);
+    const unitContribution = arpu * Math.max(0.1, 1 - varTaxRate - gatewayRate);
+
+    const selFixedTax = Number(dreSel.taxConfig?.fixedMonthly ?? 0) + Number(dreSel.extraDeductionTaxes || 0);
+    const prevFixedTax = Number(drePrev.taxConfig?.fixedMonthly ?? 0) + Number(drePrev.extraDeductionTaxes || 0);
+    const fixedTaxMonthly = selFixedTax > 0 ? selFixedTax : prevFixedTax;
+
+    const directCogsMonthly = Number(dreSel.directCogs || 0) > 0 ? Number(dreSel.directCogs) : Number(drePrev.directCogs || 0);
+
+    const selFixedOpex = Number(dreSel.opexPersonnel || 0) + Number(dreSel.opexAdmin || 0);
+    const prevFixedOpex = Number(drePrev.opexPersonnel || 0) + Number(drePrev.opexAdmin || 0);
+    const fixedOpexMonthly = selFixedOpex > 0 ? selFixedOpex : prevFixedOpex;
+
+    const selNetFin = Math.max(0, Number(dreSel.financialExpense || 0) - Number(dreSel.financialIncome || 0));
+    const prevNetFin = Math.max(0, Number(drePrev.financialExpense || 0) - Number(drePrev.financialIncome || 0));
+    const netFinMonthly = selNetFin > 0 ? selNetFin : prevNetFin;
+
+    const selMkt = Number(dreSel.opexMarketing || 0);
+    const prevMkt = Number(drePrev.opexMarketing || 0);
+    const hasSyncWarn = dreAlerts.some((a: any) => a?.code === 'SYNC_WARNING');
+    let marketingMonthly = selMkt;
+    let usedPaceProjection = false;
+    if (selMkt > 0 && brtDayNow < daysInBrtMonth) {
+      if (brtDayNow <= 3 && prevMkt > 0) {
+        marketingMonthly = prevMkt;
+      } else {
+        marketingMonthly = (selMkt / Math.max(1, brtDayNow)) * daysInBrtMonth;
+        usedPaceProjection = true;
+      }
+    } else if (selMkt === 0 && prevMkt > 0 && (brtDayNow <= 3 || hasSyncWarn)) {
+      marketingMonthly = prevMkt;
+    }
+
+    const monthlyCommitments = fixedTaxMonthly + directCogsMonthly + fixedOpexMonthly + marketingMonthly + netFinMonthly;
+    breakevenTarget = Math.max(1, Math.ceil(monthlyCommitments / unitContribution));
+    meiTarget = Math.max(1, Math.floor(6750 / arpu) + 1);
+    proLaboreTarget = Math.max(120, breakevenTarget + 20);
+    isMeiMigrated = !!(dreCompany.taxRegime && dreCompany.taxRegime !== 'MEI');
+
+    const mktNote = usedPaceProjection ? ' (Ads em ritmo mensal)' : '';
+    dreContextLine = `Compromissos DRE: ${formatCurrency(monthlyCommitments)}/mês${mktNote} • Contrib. líquida: ${formatCurrency(unitContribution)}/pagante • ARPU: ${formatCurrency(arpu)}`;
+    breakevenTip = `Breakeven DRE (${dreMeta.selectedMonthLabel || 'Mês'}/${dreMeta.year || brtYearNow}): Compromissos ~${formatCurrency(monthlyCommitments)}/mês ÷ Margem contrib. ~${formatCurrency(unitContribution)}/pagante (ARPU ${formatCurrency(arpu)}).`;
+    meiTip = `Teto MEI: R$ 81.000/ano (R$ 6.750/mês) com ARPU de ${formatCurrency(arpu)}. Acumulado DRE ${dreMeta.year || brtYearNow}: ${formatCurrency(dreAnn.grossRevenue || 0)}.`;
+    const projectedGrossPro = proLaboreTarget * arpu;
+    const projectedNetPro = (proLaboreTarget * unitContribution) - monthlyCommitments;
+    proLaboreTip = `Meta ${proLaboreTarget} pagantes (~${formatCurrency(projectedGrossPro)}/mês brutos) → Resultado líquido est. DRE: ${formatCurrency(projectedNetPro)}/mês.`;
+  }
 
   let netGrowthPerMonth = 0;
   if (stats?.netGrowth90d !== undefined && stats?.netGrowth90d !== null) {
@@ -163,7 +260,7 @@ export default function AdminVisaoGeralScreen() {
 
   const formatProjection = (target: number) => {
     const pct = target > 0 ? (currentPaying / target) * 100 : 0;
-    const pctBadge = pct >= 100 ? '✓ 100%' : `${pct.toFixed(1).replace('.', ',')}% da meta`;
+    const pctBadge = pct >= 100 ? '✓ 100%' : `${pct.toFixed(1).replace('.', ',')}%`;
 
     if (currentPaying >= target) return { text: 'Atingido', badge: pctBadge, achieved: true };
     if (netGrowthPerMonth <= 0) return { text: 'Estagnado', badge: pctBadge, achieved: false };
@@ -181,10 +278,12 @@ export default function AdminVisaoGeralScreen() {
   };
 
   const projBreakeven = formatProjection(breakevenTarget);
-  const proj70 = formatProjection(70);
-  const proj120 = formatProjection(120);
+  const proj70 = isMeiMigrated
+    ? { text: 'Migrado', badge: `✓ ${dreCompany.taxRegime}`, achieved: true }
+    : formatProjection(meiTarget);
+  const proj120 = formatProjection(proLaboreTarget);
 
-  const MAX_SCALE = Math.max(120, currentPaying, breakevenTarget);
+  const MAX_SCALE = Math.max(proLaboreTarget, currentPaying, breakevenTarget, meiTarget);
   const progressPercent = Math.min(100, Math.max(0, (currentPaying / MAX_SCALE) * 100));
 
   if (loading && !stats) {
@@ -542,12 +641,19 @@ export default function AdminVisaoGeralScreen() {
             </View>
           </View>
 
-          {/* MARCOS ESTRATÉGICOS (PAGANTES) — Single Bar com Marcos */}
+          {/* MARCOS ESTRATÉGICOS (PAGANTES) — Alinhado com a DRE */}
           <View style={{ borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 16 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text className="font-title text-[#1e293b] text-[15px] font-bold">
-                Marcos Estratégicos (Pagantes)
-              </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
+                <Text className="font-title text-[#1e293b] text-[15px] font-bold">
+                  Marcos Estratégicos (Pagantes)
+                </Text>
+                <View style={{ backgroundColor: '#ecfdf5', borderWidth: 1, borderColor: '#bbf7d0', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
+                  <Text className="font-sans font-bold text-[#1B4332] text-[9px]">
+                    {dreData ? 'Base DRE' : 'Estimado'}
+                  </Text>
+                </View>
+              </View>
               <View className="bg-[#e8f5e9] px-2.5 py-0.5 rounded-full">
                 <Text className="font-sans text-[11px] font-bold text-[#1B4332]">
                   Atual: <Text className="text-[#1B4332] font-extrabold">{currentPaying}</Text>
@@ -558,44 +664,71 @@ export default function AdminVisaoGeralScreen() {
             {/* Single Progress Bar com altura fixa em pixels */}
             <View style={{ height: 16, backgroundColor: '#e2e8f0', borderRadius: 999, overflow: 'hidden', marginBottom: 14, width: '100%' }}>
               <LinearGradient
-                colors={['#1B4332', '#10b981']}
+                colors={['#6366f1', '#8b5cf6']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={{ width: `${Math.max(2, Math.min(100, progressPercent))}%`, height: 16, borderRadius: 999 }}
               />
             </View>
 
-            {/* Marcadores Estratégicos */}
+            {/* Marcadores Estratégicos (toque para detalhes da DRE) */}
             <View style={{ flexDirection: 'row', gap: 8, width: '100%' }}>
               {/* Breakeven */}
-              <View style={{ flex: 1, backgroundColor: '#eff6ff', borderWidth: 1, borderColor: '#bfdbfe', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setActiveTooltip({ title: 'Breakeven (DRE)', text: breakevenTip })}
+                style={{ flex: 1, backgroundColor: '#eff6ff', borderWidth: 1, borderColor: '#bfdbfe', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' }}
+              >
                 <Text className="font-sans font-bold text-[#1d4ed8] text-[11px]">Breakeven</Text>
                 <Text className="font-title font-bold text-[#1e293b] text-[17px] my-0.5">{breakevenTarget}</Text>
-                <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, borderWidth: 1, borderColor: '#e2e8f0', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <Text className="font-sans font-semibold text-[#64748b] text-[9px]">{projBreakeven.text}</Text>
                   <Text className="font-sans font-bold text-[#10b981] text-[9px]">{projBreakeven.badge}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
 
               {/* Saída MEI */}
-              <View style={{ flex: 1, backgroundColor: '#ecfdf5', borderWidth: 1, borderColor: '#a7f3d0', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' }}>
-                <Text className="font-sans font-bold text-[#047857] text-[11px]">Saída MEI</Text>
-                <Text className="font-title font-bold text-[#1e293b] text-[17px] my-0.5">70</Text>
-                <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, borderWidth: 1, borderColor: '#e2e8f0' }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setActiveTooltip({ title: 'Saída MEI (Teto Fiscal)', text: meiTip })}
+                style={{ flex: 1, backgroundColor: '#f5f3ff', borderWidth: 1, borderColor: '#ddd6fe', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' }}
+              >
+                <Text className="font-sans font-bold text-[#6d28d9] text-[11px]">Saída MEI</Text>
+                <Text className="font-title font-bold text-[#1e293b] text-[17px] my-0.5">{meiTarget}</Text>
+                <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, borderWidth: 1, borderColor: '#e2e8f0', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <Text className="font-sans font-semibold text-[#64748b] text-[9px]">{proj70.text}</Text>
                   <Text className="font-sans font-bold text-[#10b981] text-[9px]">{proj70.badge}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
 
               {/* Pró-labore */}
-              <View style={{ flex: 1, backgroundColor: '#fdf2f8', borderWidth: 1, borderColor: '#fbcfe8', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setActiveTooltip({ title: 'Meta Pró-labore', text: proLaboreTip })}
+                style={{ flex: 1, backgroundColor: '#fdf2f8', borderWidth: 1, borderColor: '#fbcfe8', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: 'center' }}
+              >
                 <Text className="font-sans font-bold text-[#be185d] text-[11px]">Pró-labore</Text>
-                <Text className="font-title font-bold text-[#1e293b] text-[17px] my-0.5">120</Text>
-                <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                <Text className="font-title font-bold text-[#1e293b] text-[17px] my-0.5">{proLaboreTarget}</Text>
+                <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, borderWidth: 1, borderColor: '#e2e8f0', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <Text className="font-sans font-semibold text-[#64748b] text-[9px]">{proj120.text}</Text>
                   <Text className="font-sans font-bold text-[#10b981] text-[9px]">{proj120.badge}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ marginTop: 12, alignItems: 'center', gap: 4 }}>
+              <Text className="font-sans text-[#64748b] text-[11px] text-center leading-4">
+                {dreContextLine}
+              </Text>
+              <TouchableOpacity
+                activeOpacity={0.75}
+                onPress={() => router.push('/(admin)/crm-modulo/dre')}
+                style={{ paddingVertical: 4, paddingHorizontal: 8 }}
+              >
+                <Text className="font-sans font-bold text-[#1B4332] text-[12px]">
+                  Abrir DRE Contábil →
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
