@@ -67,14 +67,16 @@
 
     function updateModalPromoAutoBanner(planType) {
         const promoBanner = document.getElementById('modal-promo-auto-banner');
-        const promoEmailEl = document.getElementById('modal-promo-email');
         if (!promoBanner) return;
 
         const offer = window.yeloActiveEmailOffer;
         const normalizedPlan = String(planType || 'ESSENTIAL').toUpperCase();
         const isEssential = normalizedPlan === 'ESSENTIAL' || normalizedPlan === 'ESSENCIAL';
         if (!window.isUpdatePaymentMethodMode && offer && offer.eligible && isEssential) {
-            if (promoEmailEl) promoEmailEl.textContent = offer.email || '';
+            const titleTxt = offer.title || '2 meses por R$ 99,00';
+            const subTxt = offer.subtitle ? ` <span style="display:block; margin-top:3px;">${offer.subtitle}</span>` : '';
+            const safeEmail = String(offer.email || '').replace(/[<>&"]/g, '');
+            promoBanner.innerHTML = `✅ <strong>Condição Exclusiva Ativa:</strong> ${titleTxt} liberado automaticamente para <strong>${safeEmail}</strong>.${subTxt}`;
             promoBanner.style.display = 'block';
         } else {
             promoBanner.style.display = 'none';
@@ -116,8 +118,9 @@
         const hasSubscription = psychologistData && (psychologistData.stripeSubscriptionId || psychologistData.subscriptionId);
         const planExpiresAt = psychologistData && psychologistData.planExpiresAt ? new Date(psychologistData.planExpiresAt) : null;
         const isInTrial = !hasSubscription && planExpiresAt && planExpiresAt > hoje;
+        const skipsTrialPopup = Boolean(window.yeloActiveEmailOffer?.eligible && Number(window.yeloActiveEmailOffer.chargeToday) > 99);
 
-        if (isInTrial) {
+        if (isInTrial && !skipsTrialPopup) {
             if (typeof window.abrirModalConfirmacaoPersonalizado === 'function') {
                 window.abrirModalConfirmacaoPersonalizado(
                     'Você está no período de teste! 🎁',
@@ -422,10 +425,17 @@
             if (data && data.eligible) {
                 bfBanner.style.display = 'flex';
                 const titleEl = document.getElementById('bf-banner-title');
+                const descEl = document.getElementById('bf-banner-desc');
                 const emailEl = document.getElementById('bf-banner-email');
                 if (titleEl && data.title) titleEl.textContent = data.title;
-                if (emailEl && data.email) emailEl.textContent = data.email;
+                if (descEl && data.subtitle) {
+                    const safeEmail = String(data.email || '').replace(/[<>&"]/g, '');
+                    descEl.innerHTML = `${data.subtitle} Condição exclusiva liberada automaticamente para o e-mail <strong>${safeEmail}</strong> — sem precisar de cupom.`;
+                } else if (emailEl && data.email) {
+                    emailEl.textContent = data.email;
+                }
                 if (btnBf) {
+                    if (data.ctaLabel) btnBf.textContent = data.ctaLabel;
                     btnBf.onclick = (e) => {
                         e.preventDefault();
                         if (window.iniciarPagamento) {

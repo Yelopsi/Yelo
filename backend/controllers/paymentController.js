@@ -198,7 +198,11 @@ exports.createPreference = async (req, res) => {
 
         let value;
         switch (normalizedPlan) {
-            case 'ESSENTIAL': value = isIosFee ? 129.90 : 99.00; break;
+            case 'ESSENTIAL':
+                value = (!isIosFee && activePromoCoupon && Number(activePromoCoupon.chargeToday) > 0)
+                    ? Number(activePromoCoupon.chargeToday)
+                    : (isIosFee ? 129.90 : 99.00);
+                break;
             case 'CLINICAL': value = 159.00; break;
             case 'REFERENCE': value = 259.00; break;
             default: 
@@ -322,15 +326,16 @@ exports.createPreference = async (req, res) => {
 
         // --- PREPARAÇÃO DO PAYLOAD DA ASSINATURA ---
         let nextDueDate = new Date(Date.now() - 10800000).toISOString().split('T')[0];
+        const skipTrialWait = Boolean(activePromoCoupon && Number(activePromoCoupon.chargeToday) > 99);
         
         const accountCreatedAt = new Date(localPsychologist.createdAt);
         const trialEndDate = new Date(accountCreatedAt);
         trialEndDate.setDate(trialEndDate.getDate() + 7);
 
-        if (localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > new Date()) {
+        if (!skipTrialWait && localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > new Date()) {
             // Se já tem uma data futura (ex: trial ativo), cobra só no fim dela
             nextDueDate = new Date(localPsychologist.planExpiresAt).toISOString().split('T')[0];
-        } else if (trialEndDate > new Date()) {
+        } else if (!skipTrialWait && trialEndDate > new Date()) {
             // Se pulou etapas e planExpiresAt está nulo, mas a conta é nova, garante o trial
             nextDueDate = trialEndDate.toISOString().split('T')[0];
             const payload = { planExpiresAt: trialEndDate, status: 'active' };
@@ -528,7 +533,9 @@ exports.createPreference = async (req, res) => {
                         subscriptionId: subscriptionData.id,
                         psychologistId,
                         totalMonths: activePromoCoupon.totalMonths,
-                        minDays: activePromoCoupon.minDays
+                        minDays: activePromoCoupon.minDays,
+                        chargeToday: activePromoCoupon.chargeToday,
+                        renewalValue: activePromoCoupon.renewalValue
                     }
                 }).catch(() => {});
             }

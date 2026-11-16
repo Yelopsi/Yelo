@@ -3,12 +3,14 @@ const defaultDb = require('../models');
 const { Op } = require('sequelize');
 
 const BF_OFFER_CODE = 'BF2026_EMAIL';
+const BF_3X2_OFFER_CODE = 'BF2026_3X2_198';
 
 const EMAIL_OFFERS = {
     [BF_OFFER_CODE]: {
         code: BF_OFFER_CODE,
         title: 'Condição Exclusiva: 2 meses por R$ 99,00',
         subtitle: 'Pague apenas 1 mês (R$ 99,00) hoje e ganhe +1 mês bônus (60 dias no total). Benefício automático vinculado ao seu e-mail.',
+        ctaLabel: 'Garantir 2 meses por R$ 99 →',
         type: 'EXTRA_MONTHS',
         totalMonths: 2,
         minDays: 60,
@@ -19,6 +21,29 @@ const EMAIL_OFFERS = {
         renewalValue: 99.00
     }
 };
+
+// Ofertas Black Friday customizadas e vinculadas diretamente a e-mails específicos
+const CUSTOM_EMAIL_OFFERS = {
+    'psic.larissals@gmail.com': {
+        code: BF_3X2_OFFER_CODE,
+        title: '3 meses de consultório ativo por R$ 198,00',
+        subtitle: 'Pague 2 mensalidades (R$ 198,00) hoje e tenha 3 meses (90 dias) de assinatura ativa. Após os 3 meses, retoma ao valor normal de R$ 99,00/mês.',
+        ctaLabel: 'Garantir 3 meses por R$ 198 →',
+        type: 'EXTRA_MONTHS',
+        totalMonths: 3,
+        minDays: 90,
+        allowedPlans: ['ESSENTIAL'],
+        expiresAt: process.env.BLACK_FRIDAY_EXPIRES_AT || '2026-12-01T02:59:59.000Z',
+        onlyExpired: false,
+        chargeToday: 198.00,
+        renewalValue: 99.00
+    }
+};
+
+function getCustomEmailOffer(email) {
+    const emailLower = normalizeEmail(email);
+    return emailLower && CUSTOM_EMAIL_OFFERS[emailLower] ? CUSTOM_EMAIL_OFFERS[emailLower] : null;
+}
 
 // Mantido vazio para campanhas: Black Friday nao utiliza mais codigo de cupom digitavel.
 const PROMO_COUPONS = {};
@@ -141,7 +166,6 @@ async function grantBlackFridayOffer(psychologist, options = {}) {
 
 async function getActiveOfferForPsychologist(psychologist, normalizedPlan = 'ESSENTIAL', options = {}) {
     const now = options.now ? new Date(options.now) : new Date();
-    const config = EMAIL_OFFERS[BF_OFFER_CODE];
 
     if (!psychologist || !psychologist.id || !psychologist.email) {
         return { eligible: false, valid: false, reason: 'Profissional não identificado.' };
@@ -150,6 +174,9 @@ async function getActiveOfferForPsychologist(psychologist, normalizedPlan = 'ESS
     if (psychologist.is_exempt) {
         return { eligible: false, valid: false, reason: 'Perfis VIP isentos não necessitam desta condição.' };
     }
+
+    const customOffer = getCustomEmailOffer(psychologist.email);
+    const config = customOffer || EMAIL_OFFERS[BF_OFFER_CODE];
 
     if (config.expiresAt && new Date(config.expiresAt) < now) {
         return { eligible: false, valid: false, reason: 'Esta campanha promocional foi encerrada.' };
@@ -163,25 +190,27 @@ async function getActiveOfferForPsychologist(psychologist, normalizedPlan = 'ESS
         };
     }
 
-    const grant = await findGrantForPsychologist(psychologist, options);
-    if (!grant) {
-        return {
-            eligible: false,
-            valid: false,
-            reason: 'Nenhuma condição promocional ativa para o e-mail cadastrado nesta conta.'
-        };
+    let grantExpiresAt = config.expiresAt;
+    if (!customOffer) {
+        const grant = await findGrantForPsychologist(psychologist, options);
+        if (!grant) {
+            return {
+                eligible: false,
+                valid: false,
+                reason: 'Nenhuma condição promocional ativa para o e-mail cadastrado nesta conta.'
+            };
+        }
+        grantExpiresAt = grant.meta?.expiresAt || config.expiresAt;
+        if (grantExpiresAt && new Date(grantExpiresAt) < now) {
+            return {
+                eligible: false,
+                valid: false,
+                reason: 'O prazo da condição especial liberada para este e-mail expirou.'
+            };
+        }
     }
 
-    const grantExpiresAt = grant.meta?.expiresAt || config.expiresAt;
-    if (grantExpiresAt && new Date(grantExpiresAt) < now) {
-        return {
-            eligible: false,
-            valid: false,
-            reason: 'O prazo da condição especial liberada para este e-mail expirou.'
-        };
-    }
-
-    const alreadyUsed = await hasConsumedPromo(psychologist.id, BF_OFFER_CODE, options);
+    const alreadyUsed = await hasConsumedPromo(psychologist.id, config.code, options);
     if (alreadyUsed) {
         return {
             eligible: false,
@@ -193,13 +222,16 @@ async function getActiveOfferForPsychologist(psychologist, normalizedPlan = 'ESS
     const emailLower = normalizeEmail(psychologist.email);
 
     if (options.isIosFee) {
+        const iosReason = customOffer
+            ? `Seu e-mail possui ${config.totalMonths} meses por R$ ${Number(config.chargeToday).toFixed(2).replace('.', ',')} liberados ao concluir a assinatura pelo site ou Android.`
+            : 'Seu e-mail possui 2 meses por R$ 99,00 liberados ao concluir a assinatura pelo site ou Android.';
         return {
             eligible: false,
             valid: false,
             eligibleOtherPlatform: true,
             code: config.code,
             email: emailLower,
-            reason: 'Seu e-mail possui 2 meses por R$ 99,00 liberados ao concluir a assinatura pelo site ou Android.'
+            reason: iosReason
         };
     }
 
@@ -224,9 +256,61 @@ async function getActiveOfferForPsychologist(psychologist, normalizedPlan = 'ESS
         psychologistId: Number(psychologist.id),
         title: config.title,
         subtitle: config.subtitle,
+        ctaLabel: config.ctaLabel,
         expiresAt: grantExpiresAt,
         chargeToday: config.chargeToday,
         renewalValue: config.renewalValue
+    };
+}
+
+/**
+ * Resolve e valida uma oferta Black Friday no momento da confirmação do pagamento (webhook),
+ * cobrindo tanto BF2026_EMAIL/BLACK2X1 quanto ofertas customizadas por e-mail (ex: BF2026_3X2_198).
+ */
+async function resolveOfferForPayment(psychologist, description = '', pendingPromoLog = null, options = {}) {
+    if (!psychologist || !psychologist.id) return null;
+
+    const descStr = String(description || '');
+    const logOfferCode = pendingPromoLog?.meta?.offerCode || null;
+
+    const customOffer = getCustomEmailOffer(psychologist.email);
+    const isCustomTagged =
+        customOffer &&
+        (descStr.includes(`[${customOffer.code}]`) || logOfferCode === customOffer.code);
+
+    if (isCustomTagged) {
+        const alreadyConsumed = await hasConsumedPromo(psychologist.id, customOffer.code, options);
+        if (alreadyConsumed) return null;
+        return {
+            offerCode: customOffer.code,
+            totalMonths: customOffer.totalMonths,
+            minDays: customOffer.minDays,
+            chargeToday: customOffer.chargeToday,
+            renewalValue: customOffer.renewalValue
+        };
+    }
+
+    const isStandardPromo =
+        descStr.includes('[BF2026_EMAIL]') ||
+        descStr.includes('[BLACK2X1]') ||
+        Boolean(pendingPromoLog);
+    if (!isStandardPromo) return null;
+
+    const alreadyConsumed = await hasConsumedPromo(psychologist.id, BF_OFFER_CODE, options);
+    if (alreadyConsumed) return null;
+
+    const hasEmailGrant = descStr.includes('[BLACK2X1]')
+        ? true
+        : Boolean(await findGrantForPsychologist(psychologist, options));
+    if (!hasEmailGrant) return null;
+
+    const cfg = EMAIL_OFFERS[BF_OFFER_CODE];
+    return {
+        offerCode: BF_OFFER_CODE,
+        totalMonths: cfg.totalMonths,
+        minDays: cfg.minDays,
+        chargeToday: cfg.chargeToday,
+        renewalValue: cfg.renewalValue
     };
 }
 
@@ -256,15 +340,19 @@ async function validateCouponForPsychologist(rawCode, _psychologist, _normalized
 
 module.exports = {
     BF_OFFER_CODE,
+    BF_3X2_OFFER_CODE,
     EMAIL_OFFERS,
+    CUSTOM_EMAIL_OFFERS,
     PROMO_COUPONS,
     normalizeEmail,
     normalizeCouponCode,
+    getCustomEmailOffer,
     addMonthsWithMinDays,
     isPsychologistExpiredOrInactive,
     hasConsumedPromo,
     findGrantForPsychologist,
     grantBlackFridayOffer,
     getActiveOfferForPsychologist,
+    resolveOfferForPayment,
     validateCouponForPsychologist
 };

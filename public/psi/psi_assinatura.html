@@ -614,7 +614,9 @@
                                                     btnEssencial.disabled = false;
                                                     btnEssencial.onclick = (evt) => {
                                                         evt.preventDefault();
-                                                        abrirModalPagamento('ESSENTIAL');
+                                                        if (window.iniciarPagamento) {
+                                                            window.iniciarPagamento('ESSENTIAL', btnEssencial);
+                                                        }
                                                     };
                                                 } else {
                                                     showToast(d.error || 'Não foi possível reativar. Tente novamente.', 'error');
@@ -628,12 +630,18 @@
                                     };
                                 }
                             };
-                        } else if (user.status === 'inactive') {
-                            // Inativo (pagamento falhou)
-                            btnEssencial.textContent = 'Reativar Assinatura';
+                        } else if (!hasSubscription || ['inactive', 'vencido', 'canceled'].includes(String(user.status || '').toLowerCase())) {
+                            // Inativo / vencido / trial sem assinatura ativa no gateway: mantém botão clicável para assinar/reativar
+                            btnEssencial.textContent = hasSubscription ? 'Reativar Assinatura' : 'Assinar';
                             btnEssencial.disabled = false;
+                            btnEssencial.onclick = (evt) => {
+                                evt.preventDefault();
+                                if (window.iniciarPagamento) {
+                                    window.iniciarPagamento('ESSENTIAL', btnEssencial);
+                                }
+                            };
                         } else {
-                            // Ativo e não cancelado
+                            // Ativo com assinatura recorrente e não cancelado
                             btnEssencial.textContent = 'Seu Plano Atual';
                             btnEssencial.disabled = true;
                             btnEssencial.style.backgroundColor = '#e0e0e0';

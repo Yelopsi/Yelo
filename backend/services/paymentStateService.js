@@ -683,13 +683,14 @@ class PaymentStateService {
                 return;
             }
 
-            // Detecta se esta fatura pertence a uma assinatura criada com oferta de reativação vinculada ao e-mail (BF2026_EMAIL)
-            let isPromo2x1 = description.includes('[BF2026_EMAIL]') || description.includes('[BLACK2X1]');
-            if (!isPromo2x1 && payment.subscription && db.SystemLog) {
-                const pendingPromoLog = await db.SystemLog.findOne({
+            // Detecta se esta fatura pertence a uma assinatura criada com oferta promocional vinculada ao e-mail
+            let pendingPromoLog = null;
+            if (payment.subscription && db.SystemLog) {
+                pendingPromoLog = await db.SystemLog.findOne({
                     where: {
                         message: {
                             [db.Sequelize.Op.or]: [
+                                { [db.Sequelize.Op.like]: `[PROMO_SUB_PENDING] BF2026_3X2_198 | sub:${payment.subscription}%` },
                                 { [db.Sequelize.Op.like]: `[PROMO_SUB_PENDING] BF2026_EMAIL | sub:${payment.subscription}%` },
                                 { [db.Sequelize.Op.like]: `[PROMO_SUB_PENDING] BLACK2X1 | sub:${payment.subscription}%` }
                             ]
@@ -697,24 +698,15 @@ class PaymentStateService {
                     },
                     transaction: t
                 }).catch(() => null);
-                if (pendingPromoLog) isPromo2x1 = true;
             }
 
-            let shouldGrantPromoBonus = false;
-            if (isPromo2x1) {
-                const alreadyConsumed = await promoCouponService.hasConsumedPromo(
-                    lockedPsi.id,
-                    promoCouponService.BF_OFFER_CODE,
-                    { db, transaction: t }
-                );
-                // Garante defesa em profundidade: o benefício BF2026_EMAIL só é efetivado se existir convite para (psi.id, email)
-                const hasEmailGrant = description.includes('[BLACK2X1]')
-                    ? true
-                    : Boolean(await promoCouponService.findGrantForPsychologist(lockedPsi, { db, transaction: t }));
-                if (!alreadyConsumed && hasEmailGrant) {
-                    shouldGrantPromoBonus = true;
-                }
-            }
+            const resolvedOffer = await promoCouponService.resolveOfferForPayment(
+                lockedPsi,
+                description,
+                pendingPromoLog,
+                { db, transaction: t }
+            );
+            const shouldGrantPromoBonus = Boolean(resolvedOffer);
 
             // Contagem idempotente e exata de pagamentos confirmados
             const confirmedPaymentsCount = await db.Payment.count({
@@ -727,12 +719,12 @@ class PaymentStateService {
             const currentPayments = Math.max(confirmedPaymentsCount, 1);
             
             // Cada fatura do Asaas corresponde a um ciclo de cobrança.
-            // O pagamento padrão cobre 1 mês; com cupom BLACK2X1, cobre 2 meses (mínimo 60 dias).
+            // O pagamento padrão cobre 1 mês; ofertas promocionais concedem N meses (ex: 2 ou 3 meses) antes da retomada regular.
             const payDueDateStr = payment.dueDate || payment.paymentDate || payment.clientPaymentDate;
             const payDueDate = payDueDateStr ? new Date(payDueDateStr + (String(payDueDateStr).includes('T') ? '' : 'T12:00:00Z')) : new Date();
             
-            const monthsToGrant = shouldGrantPromoBonus ? 2 : 1;
-            const minDaysToGrant = shouldGrantPromoBonus ? 60 : 30;
+            const monthsToGrant = resolvedOffer ? resolvedOffer.totalMonths : 1;
+            const minDaysToGrant = resolvedOffer ? resolvedOffer.minDays : 30;
             const payEffectiveDateStr = payment.clientPaymentDate || payment.confirmedDate || payment.paymentDate || payDueDateStr;
             const payEffectiveDate = payEffectiveDateStr ? new Date(payEffectiveDateStr + (String(payEffectiveDateStr).includes('T') ? '' : 'T12:00:00Z')) : new Date();
 
@@ -870,13 +862,15 @@ class PaymentStateService {
                 const emailLower = promoCouponService.normalizeEmail(lockedPsi.email);
                 await db.SystemLog.create({
                     level: 'info',
-                    message: `[PROMO_CONSUMED] BF2026_EMAIL | psi:${lockedPsi.id} | email:${emailLower} | sub:${payment.subscription || 'none'}`,
+                    message: `[PROMO_CONSUMED] ${resolvedOffer.offerCode} | psi:${lockedPsi.id} | email:${emailLower} | sub:${payment.subscription || 'none'}`,
                     meta: {
-                        offerCode: promoCouponService.BF_OFFER_CODE,
+                        offerCode: resolvedOffer.offerCode,
                         email: emailLower,
                         psychologistId: lockedPsi.id,
                         subscriptionId: payment.subscription || null,
                         paymentId: payment.id,
+                        totalMonths: resolvedOffer.totalMonths,
+                        renewalValue: resolvedOffer.renewalValue,
                         grantedUntil: novaValidade.toISOString()
                     }
                 }, { transaction: t });
@@ -885,7 +879,9 @@ class PaymentStateService {
                     promoSyncPending = {
                         subscriptionId: payment.subscription,
                         nextDueDateStr: novaValidade.toISOString().split('T')[0],
-                        planType
+                        planType,
+                        renewalValue: resolvedOffer.renewalValue || 99.00,
+                        offerCode: resolvedOffer.offerCode
                     };
                 }
             }
@@ -899,20 +895,24 @@ class PaymentStateService {
             }
         });
 
-        // Sincroniza próxima cobrança no Asaas para 60 dias (pula 1 ciclo mantendo renovação regular de R$ 99/mês)
+        // Sincroniza próxima cobrança no Asaas para o fim do período promocional, retomando o valor regular (ex: R$ 99/mês)
         if (promoSyncPending && promoSyncPending.subscriptionId) {
             try {
                 const ASAAS_API_URL = PaymentStateService.getAsaasApiUrl();
                 const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
                 if (ASAAS_API_KEY) {
+                    const updateBody = {
+                        nextDueDate: promoSyncPending.nextDueDateStr,
+                        description: `Assinatura Yelo - Plano ${promoSyncPending.planType}`,
+                        updatePendingPayments: false
+                    };
+                    if (Number(promoSyncPending.renewalValue) > 0) {
+                        updateBody.value = Number(promoSyncPending.renewalValue);
+                    }
                     await fetch(`${ASAAS_API_URL}/subscriptions/${promoSyncPending.subscriptionId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                        body: JSON.stringify({
-                            nextDueDate: promoSyncPending.nextDueDateStr,
-                            description: `Assinatura Yelo - Plano ${promoSyncPending.planType}`,
-                            updatePendingPayments: false
-                        })
+                        body: JSON.stringify(updateBody)
                     });
 
                     // Remove qualquer fatura PENDING intermediária gerada antes da data bônus de 2 meses

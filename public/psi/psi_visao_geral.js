@@ -36,7 +36,9 @@
                     const promo = resPromo.ok ? await resPromo.json() : null;
                     if (promo && promo.eligible) {
                         const titleEl = document.getElementById('bf-visao-geral-title');
+                        const descEl = document.getElementById('bf-visao-geral-desc');
                         if (titleEl && promo.title) titleEl.textContent = promo.title;
+                        if (descEl && promo.subtitle) descEl.textContent = promo.subtitle;
                         bfBanner.style.display = 'flex';
                         const cta = document.getElementById('btn-bf-visao-geral-cta');
                         if (cta) cta.onclick = () => window.loadPage('psi_assinatura.html');
