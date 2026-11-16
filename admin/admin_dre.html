@@ -397,37 +397,121 @@
     .dre-delta-pos { color: #10b981; font-weight: 700; }
     .dre-delta-neg { color: #ef4444; font-weight: 700; }
 
-    /* Sub-tabs */
+    /* Sub-tabs Dropdown */
     .dre-tabs {
         display: flex;
-        gap: 8px;
+        align-items: center;
+        gap: 10px;
         flex-wrap: wrap;
         border-bottom: 1px solid var(--dre-border);
         margin-bottom: 20px;
-        padding-bottom: 10px;
+        padding-bottom: 14px;
     }
 
-    .dre-tab-btn {
-        background: #ffffff;
-        color: #475569;
-        border: 1px solid var(--dre-border);
+    .dre-view-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+    }
+
+    .dre-view-dropdown {
+        position: relative;
+        display: inline-block;
+        min-width: 290px;
+    }
+
+    .dre-view-trigger {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        background: #1B4332;
+        color: #ffffff;
+        border: 1px solid #1B4332;
         border-radius: 999px;
-        padding: 8px 16px;
-        font-size: 0.85rem;
+        padding: 9px 18px;
+        font-size: 0.86rem;
         font-weight: 600;
         cursor: pointer;
+        box-shadow: 0 2px 8px rgba(27, 67, 50, 0.16);
         transition: all 0.15s ease;
     }
 
-    .dre-tab-btn:hover {
+    .dre-view-trigger:hover {
+        background: #143326;
+        border-color: #143326;
+    }
+
+    .dre-view-chevron {
+        font-size: 0.8rem;
+        opacity: 0.9;
+        transition: transform 0.15s ease;
+    }
+
+    .dre-view-dropdown.open .dre-view-chevron {
+        transform: rotate(180deg);
+    }
+
+    .dre-view-menu {
+        display: none;
+        position: absolute;
+        left: 0;
+        top: calc(100% + 6px);
+        min-width: 100%;
+        width: max-content;
+        max-width: min(360px, 92vw);
+        background: #ffffff;
+        border: 1px solid var(--dre-border);
+        border-radius: 14px;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.15);
+        z-index: 65;
+        padding: 6px;
+    }
+
+    .dre-view-dropdown.open .dre-view-menu {
+        display: block;
+    }
+
+    .dre-tab-btn.dre-view-option {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        text-align: left;
+        background: transparent;
+        color: #334155;
+        border: none;
+        border-radius: 10px;
+        padding: 9px 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.12s ease, color 0.12s ease;
+    }
+
+    .dre-tab-btn.dre-view-option:hover {
         background: #f1f5f9;
         color: #0f172a;
     }
 
-    .dre-tab-btn.active {
-        background: #1B4332;
-        color: #ffffff;
-        border-color: #1B4332;
+    .dre-tab-btn.dre-view-option .dre-view-check {
+        font-size: 0.82rem;
+        color: #1B4332;
+        opacity: 0;
+        font-weight: 800;
+    }
+
+    .dre-tab-btn.dre-view-option.active {
+        background: #ecfdf5;
+        color: #1B4332;
+    }
+
+    .dre-tab-btn.dre-view-option.active .dre-view-check {
+        opacity: 1;
     }
 
     .dre-tab-pane {
@@ -880,22 +964,19 @@
             width: 100%;
         }
         .dre-tabs {
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
+            flex-direction: column;
+            align-items: stretch;
             gap: 6px;
             margin-bottom: 14px;
-            padding-bottom: 8px;
+            padding-bottom: 10px;
         }
-        .dre-tabs::-webkit-scrollbar {
-            display: none;
+        .dre-view-dropdown {
+            width: 100%;
+            min-width: 0;
         }
-        .dre-tab-btn {
-            white-space: nowrap;
-            flex-shrink: 0;
-            padding: 7px 13px;
-            font-size: 0.8rem;
+        .dre-view-menu {
+            width: 100%;
+            max-width: none;
         }
         .dre-kpi-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1222,12 +1303,33 @@
         </div>
     </div>
 
-    <!-- Navegação por Abas -->
+    <!-- Navegação por Visões (Dropdown) -->
     <div class="dre-tabs dre-no-print">
-        <button type="button" class="dre-tab-btn active" data-tab="tab-dre-mensal">📋 DRE Mensal & Evolução</button>
-        <button type="button" class="dre-tab-btn" data-tab="tab-dre-anual">📆 DRE Anual (Jan–Dez)</button>
-        <button type="button" class="dre-tab-btn" data-tab="tab-dre-despesas">🧾 Despesas & Lançamentos</button>
-        <button type="button" class="dre-tab-btn" data-tab="tab-dre-razao">⚖️ Fiscal, Fechamento & Livro Razão</button>
+        <span class="dre-view-label">Visão:</span>
+        <div class="dre-view-dropdown" id="dre-view-dropdown">
+            <button type="button" class="dre-view-trigger" id="dre-view-trigger" aria-haspopup="listbox" aria-expanded="false">
+                <span id="dre-view-trigger-label">📋 DRE Mensal & Evolução</span>
+                <span class="dre-view-chevron">▾</span>
+            </button>
+            <div class="dre-view-menu" id="dre-view-menu" role="listbox">
+                <button type="button" class="dre-tab-btn dre-view-option active" data-tab="tab-dre-mensal" role="option" aria-selected="true">
+                    <span>📋 DRE Mensal & Evolução</span>
+                    <span class="dre-view-check">✓</span>
+                </button>
+                <button type="button" class="dre-tab-btn dre-view-option" data-tab="tab-dre-anual" role="option" aria-selected="false">
+                    <span>📆 DRE Anual (Jan–Dez)</span>
+                    <span class="dre-view-check">✓</span>
+                </button>
+                <button type="button" class="dre-tab-btn dre-view-option" data-tab="tab-dre-despesas" role="option" aria-selected="false">
+                    <span>🧾 Despesas & Lançamentos</span>
+                    <span class="dre-view-check">✓</span>
+                </button>
+                <button type="button" class="dre-tab-btn dre-view-option" data-tab="tab-dre-razao" role="option" aria-selected="false">
+                    <span>⚖️ Fiscal, Fechamento & Livro Razão</span>
+                    <span class="dre-view-check">✓</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- ABA 1: DRE MENSAL -->

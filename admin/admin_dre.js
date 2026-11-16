@@ -1119,24 +1119,58 @@
             loadDreData();
         });
 
+        const viewDropdown = document.getElementById('dre-view-dropdown');
+        const viewTrigger = document.getElementById('dre-view-trigger');
+        const viewLabel = document.getElementById('dre-view-trigger-label');
+        const closeViewDropdown = () => {
+            if (!viewDropdown) return;
+            viewDropdown.classList.remove('open');
+            if (viewTrigger) viewTrigger.setAttribute('aria-expanded', 'false');
+        };
+
         on(exportToggle, 'click', (e) => {
             e.stopPropagation();
+            closeViewDropdown();
             if (exportMenu) exportMenu.classList.toggle('open');
         });
         on(document, 'click', (e) => {
             if (exportMenu && !exportMenu.contains(e.target) && e.target !== exportToggle) {
                 exportMenu.classList.remove('open');
             }
+            if (viewDropdown && !viewDropdown.contains(e.target)) {
+                closeViewDropdown();
+            }
         });
         document.querySelectorAll('.dre-export-item').forEach(btn => {
             on(btn, 'click', () => handleExportAction(btn.getAttribute('data-export')));
         });
 
+        if (viewTrigger && viewDropdown) {
+            on(viewTrigger, 'click', (e) => {
+                e.stopPropagation();
+                if (exportMenu) exportMenu.classList.remove('open');
+                const isOpen = viewDropdown.classList.toggle('open');
+                viewTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            });
+        }
+        on(document, 'keydown', (e) => {
+            if (e.key === 'Escape') closeViewDropdown();
+        });
+
         document.querySelectorAll('.dre-tab-btn').forEach(btn => {
             on(btn, 'click', () => {
                 const target = btn.getAttribute('data-tab');
-                document.querySelectorAll('.dre-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+                document.querySelectorAll('.dre-tab-btn').forEach(b => {
+                    const isActive = b === btn;
+                    b.classList.toggle('active', isActive);
+                    b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                });
                 document.querySelectorAll('.dre-tab-pane').forEach(p => p.classList.toggle('active', p.id === target));
+                if (viewLabel) {
+                    const labelSpan = btn.querySelector('span:first-child');
+                    viewLabel.textContent = (labelSpan ? labelSpan.textContent : btn.textContent).trim();
+                }
+                closeViewDropdown();
             });
         });
 
