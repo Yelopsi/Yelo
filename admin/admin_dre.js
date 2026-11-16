@@ -708,7 +708,9 @@
             tbody.innerHTML = pageItems.map(r => {
                 const typeBadge = r.type === 'ESTORNO'
                     ? `<span class="dre-pill pill-red">ESTORNO</span>`
-                    : `<span class="dre-pill pill-green">RECEITA</span>`;
+                    : (r.type === 'TAXA_MENSAGERIA'
+                        ? `<span class="dre-pill pill-amber">MENSAGERIA</span>`
+                        : `<span class="dre-pill pill-green">RECEITA</span>`);
                 const feeNote = r.feeEstimated ? ' <span title="Taxa estimada" style="color:#d97706;">(est.)</span>' : '';
                 return `
                     <tr>

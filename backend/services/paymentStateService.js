@@ -450,6 +450,11 @@ class PaymentStateService {
                 }
             }
         });
+
+        // Dispara checagem assíncrona de taxas acessórias (ex: PAYMENT_MESSAGING_NOTIFICATION_FEE no Asaas)
+        if (process.env.ASAAS_API_KEY && process.env.NODE_ENV !== 'test' && ['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED'].includes(eventType)) {
+            this.investigateCashImpact(payment.id).catch(e => console.error(e));
+        }
     }
 
     static async syncNegativePaymentToLedger(eventType, payment) {
@@ -565,21 +570,29 @@ class PaymentStateService {
             const data = await res.json();
             
             if (data && data.data && data.data.length > 0) {
-                const INCLUDED_AS_ADJUSTMENT = ['PAYMENT_REFUND', 'CHARGEBACK', 'PAYMENT_FEE_REFUND', 'PAYMENT_REVERSAL', 'PAYMENT_REFUND_CANCELLED'];
-                const EXCLUDED_ALREADY_REPRESENTED = ['PAYMENT_RECEIVED', 'PAYMENT_FEE', 'PAYMENT_MESSAGING_NOTIFICATION_FEE'];
+                const INCLUDED_AS_ADJUSTMENT = [
+                    'PAYMENT_REFUND',
+                    'CHARGEBACK',
+                    'PAYMENT_FEE_REFUND',
+                    'PAYMENT_REVERSAL',
+                    'PAYMENT_REFUND_CANCELLED',
+                    'PAYMENT_MESSAGING_NOTIFICATION_FEE'
+                ];
+                const EXCLUDED_ALREADY_REPRESENTED = ['PAYMENT_RECEIVED', 'PAYMENT_FEE'];
                 
                 await db.sequelize.transaction(async (t) => {
                     for (const tx of data.data) {
                         if (tx.paymentId !== paymentId) continue;
                         
                         if (INCLUDED_AS_ADJUSTMENT.includes(tx.type)) {
+                            const isNotifFee = tx.type === 'PAYMENT_MESSAGING_NOTIFICATION_FEE';
                             try {
                                 await db.PaymentFinancialEvent.create({
                                     paymentId: paymentId,
                                     externalEventId: tx.id,
                                     eventType: 'GATEWAY_CASH_MOVEMENT',
-                                    grossAmount: Math.abs(tx.value), // Magnificude
-                                    feeAmount: null,
+                                    grossAmount: Math.abs(tx.value), // Magnitude
+                                    feeAmount: isNotifFee ? Math.abs(tx.value) : null,
                                     netCashAmount: null,
                                     cashDeltaAmount: tx.value, // Signed value
                                     eventDate: tx.date,
@@ -589,7 +602,8 @@ class PaymentStateService {
                                         transactionId: tx.id,
                                         transactionType: tx.type,
                                         value: tx.value,
-                                        balance: tx.balance
+                                        balance: tx.balance,
+                                        description: tx.description ? String(tx.description).slice(0, 120) : null
                                     }
                                 }, { transaction: t });
                                 console.log(`[LEDGER] GATEWAY_CASH_MOVEMENT gerado para transação ${tx.id} do tipo ${tx.type}.`);
@@ -1000,6 +1014,11 @@ class PaymentStateService {
                 }, { transaction: t });
             }
         });
+
+        // Dispara checagem assíncrona de taxas acessórias (ex: PAYMENT_MESSAGING_NOTIFICATION_FEE no Asaas)
+        if (process.env.ASAAS_API_KEY && process.env.NODE_ENV !== 'test' && ['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED'].includes(eventType)) {
+            this.investigateCashImpact(payment.id).catch(e => console.error(e));
+        }
     }
 }
 

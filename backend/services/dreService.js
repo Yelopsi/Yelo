@@ -1,6 +1,8 @@
+const fetch = require('node-fetch');
 const db = require('../models');
 const metaAdsService = require('./metaAdsService');
 const googleAdsService = require('./googleAdsService');
+const reconciliationService = require('./reconciliationService');
 
 const VALID_DRE_GROUPS = [
     'DEDUCTION_TAX',
@@ -403,6 +405,345 @@ async function syncSingleMonth({ monthYear, settings = null, isClosed = false, f
     return { monthYear, synced, skipped, warnings };
 }
 
+async function fetchAsaasPaginated(endpoint, apiKey, maxPages = 40) {
+    const baseUrl = reconciliationService.getAsaasApiUrl();
+    const out = [];
+    let offset = 0;
+
+    for (let page = 0; page < maxPages; page++) {
+        const sep = endpoint.includes('?') ? '&' : '?';
+        const url = `${baseUrl}${endpoint}${sep}limit=100&offset=${offset}`;
+        const res = await fetch(url, {
+            headers: {
+                access_token: apiKey,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!res.ok) {
+            throw new Error(`Asaas API ${res.status} em ${endpoint}`);
+        }
+        const data = await res.json();
+        const items = Array.isArray(data?.data) ? data.data : [];
+        if (items.length === 0) break;
+        out.push(...items);
+        if (!data.hasMore) break;
+        offset += 100;
+    }
+
+    return out;
+}
+
+/**
+ * Sincroniza pagamentos pagos/estornados e taxas de mensageria (PAYMENT_MESSAGING_NOTIFICATION_FEE)
+ * da API do Asaas para Payments + PaymentFinancialEvents no exercício alvo.
+ */
+async function syncAsaasLedgerForYear({ year, force = false }) {
+    const apiKey = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+    if (!apiKey || apiKey.startsWith('MOCK') || process.env.NODE_ENV === 'test') {
+        return { synced: [], warnings: [] };
+    }
+
+    const targetYear = Math.min(Math.max(parseInt(year, 10) || new Date().getFullYear(), 2020), 2100);
+    const cacheKey = `ASAAS::${targetYear}`;
+    const lastAttemptAt = adSyncCooldown.get(cacheKey) || 0;
+    if (!force && (Date.now() - lastAttemptAt < CURRENT_MONTH_SYNC_TTL_MS)) {
+        return { synced: [], warnings: [] };
+    }
+
+    const todayIso = toIsoDateBRT(new Date());
+    const yearStart = `${targetYear}-01-01`;
+    const yearEnd = todayIso < `${targetYear}-12-31` ? todayIso : `${targetYear}-12-31`;
+    if (yearEnd < yearStart) {
+        return { synced: [], warnings: [] };
+    }
+
+    try {
+        const [asaasPayments, finTxs] = await Promise.all([
+            fetchAsaasPaginated('/payments', apiKey),
+            fetchAsaasPaginated(`/financialTransactions?startDate=${yearStart}&finishDate=${yearEnd}`, apiKey)
+        ]);
+        adSyncCooldown.set(cacheKey, Date.now());
+        providerAuthErrors.delete('ASAAS');
+
+        const notifTxs = finTxs.filter(t => t && t.type === 'PAYMENT_MESSAGING_NOTIFICATION_FEE' && t.paymentId);
+        const notifPaymentIds = new Set(notifTxs.map(t => t.paymentId));
+
+        const PAID_OR_NEG_STATUSES = new Set([
+            'RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH',
+            'REFUNDED', 'REFUND_IN_PROGRESS',
+            'CHARGEBACK_REQUESTED', 'CHARGEBACK_DISPUTE', 'AWAITING_CHARGEBACK_REVERSAL'
+        ]);
+        const dateInTargetScope = (raw) => {
+            const s = String(raw || '').slice(0, 7);
+            return s.startsWith(`${targetYear}-`) || s === `${targetYear - 1}-12`;
+        };
+
+        const relevantPayments = asaasPayments.filter(p => {
+            if (!p || !p.id) return false;
+            if (notifPaymentIds.has(p.id)) return true;
+            if (!PAID_OR_NEG_STATUSES.has(p.status)) return false;
+            const hasRefundInYear = Array.isArray(p.refunds) && p.refunds.some(r => dateInTargetScope(r?.dateCreated));
+            return (
+                hasRefundInYear ||
+                dateInTargetScope(p.confirmedDate) ||
+                dateInTargetScope(p.clientPaymentDate) ||
+                dateInTargetScope(p.paymentDate) ||
+                dateInTargetScope(p.creditDate) ||
+                dateInTargetScope(p.dueDate)
+            );
+        });
+
+        const [psychRows, subRows, existingPayRows, existingEventRows] = await Promise.all([
+            db.Psychologist.findAll({ attributes: ['id', 'subscriptionId'], raw: true }),
+            db.Subscription.findAll({ attributes: ['id'], raw: true }),
+            db.Payment.findAll({ attributes: ['id', 'status', 'paymentDate', 'dueDate'], raw: true }),
+            db.PaymentFinancialEvent.findAll({
+                attributes: ['id', 'paymentId', 'eventType', 'externalEventId', 'feeAmount', 'sourceMetadata'],
+                raw: true
+            })
+        ]);
+
+        const validPsychIds = new Set(psychRows.map(r => Number(r.id)));
+        const subToPsych = new Map();
+        for (const r of psychRows) {
+            if (r.subscriptionId) subToPsych.set(r.subscriptionId, Number(r.id));
+        }
+        const validSubIds = new Set(subRows.map(s => s.id));
+
+        const existingPayMap = new Map(existingPayRows.map(p => [p.id, p]));
+        const eventCompositeKeys = new Set();
+        const eventPaymentTypeKeys = new Set();
+        const refundCountByPayment = new Map();
+        const confRowsNeedingFee = new Map();
+
+        for (const ev of existingEventRows) {
+            eventCompositeKeys.add(`${ev.paymentId}::${ev.eventType}::${ev.externalEventId}`);
+            eventPaymentTypeKeys.add(`${ev.paymentId}::${ev.eventType}`);
+            if (ev.eventType === 'REFUND') {
+                refundCountByPayment.set(ev.paymentId, (refundCountByPayment.get(ev.paymentId) || 0) + 1);
+            }
+            if (ev.eventType === 'PAYMENT_CONFIRMED' && ev.feeAmount === null) {
+                const meta = typeof ev.sourceMetadata === 'string'
+                    ? (() => { try { return JSON.parse(ev.sourceMetadata); } catch (_) { return null; } })()
+                    : ev.sourceMetadata;
+                if (!meta || meta.netValue === undefined || meta.netValue === null) {
+                    confRowsNeedingFee.set(ev.paymentId, { id: ev.id, meta });
+                }
+            }
+        }
+
+        let createdPayments = 0;
+        let updatedPayments = 0;
+        let createdEvents = 0;
+
+        for (const p of relevantPayments) {
+            const rawPayDate = p.confirmedDate || p.clientPaymentDate || p.paymentDate || null;
+            const parsedExtId = p.externalReference ? Number(p.externalReference) : NaN;
+            const psiId = Number.isInteger(parsedExtId) && validPsychIds.has(parsedExtId)
+                ? parsedExtId
+                : (p.subscription ? (subToPsych.get(p.subscription) || null) : null);
+            const subId = p.subscription && validSubIds.has(p.subscription) ? p.subscription : null;
+
+            const existingPay = existingPayMap.get(p.id);
+            if (!existingPay) {
+                try {
+                    await db.Payment.create({
+                        id: p.id,
+                        subscriptionId: subId,
+                        psychologistId: psiId,
+                        status: p.status,
+                        value: round2(p.value),
+                        billingType: p.billingType || 'UNDEFINED',
+                        dueDate: (p.dueDate || rawPayDate || `${targetYear}-01-01`).slice(0, 10),
+                        paymentDate: rawPayDate ? new Date(rawPayDate) : null
+                    });
+                    existingPayMap.set(p.id, { id: p.id, status: p.status, paymentDate: rawPayDate });
+                    createdPayments++;
+                } catch (err) {
+                    if (err.name !== 'SequelizeUniqueConstraintError') throw err;
+                }
+            } else if (existingPay.status !== p.status || (!existingPay.paymentDate && rawPayDate)) {
+                await db.Payment.update(
+                    {
+                        status: p.status,
+                        paymentDate: existingPay.paymentDate || (rawPayDate ? new Date(rawPayDate) : null)
+                    },
+                    { where: { id: p.id } }
+                );
+                updatedPayments++;
+            }
+
+            if (!PAID_OR_NEG_STATUSES.has(p.status)) continue;
+
+            const confDateStr = p.confirmedDate || p.clientPaymentDate || p.paymentDate;
+            const feeObs = (p.netValue !== undefined && p.netValue !== null)
+                ? round2(Math.max(0, Number(p.value) - Number(p.netValue)))
+                : null;
+
+            if (confDateStr && !eventPaymentTypeKeys.has(`${p.id}::PAYMENT_CONFIRMED`)) {
+                try {
+                    await db.PaymentFinancialEvent.create({
+                        paymentId: p.id,
+                        externalEventId: p.id,
+                        eventType: 'PAYMENT_CONFIRMED',
+                        grossAmount: round2(p.value),
+                        feeAmount: feeObs,
+                        netCashAmount: null,
+                        cashDeltaAmount: null,
+                        eventDate: String(confDateStr).slice(0, 10),
+                        sourceMetadata: {
+                            id: p.id,
+                            status: p.status,
+                            billingType: p.billingType,
+                            confirmedDate: p.confirmedDate || null,
+                            clientPaymentDate: p.clientPaymentDate || null,
+                            expectedCreditDate: p.creditDate || p.estimatedCreditDate || null,
+                            value: p.value,
+                            netValue: p.netValue,
+                            source: 'asaas_dre_sync'
+                        }
+                    });
+                    eventPaymentTypeKeys.add(`${p.id}::PAYMENT_CONFIRMED`);
+                    createdEvents++;
+                } catch (err) {
+                    if (err.name !== 'SequelizeUniqueConstraintError') throw err;
+                }
+            } else if (feeObs !== null && confRowsNeedingFee.has(p.id)) {
+                const entry = confRowsNeedingFee.get(p.id);
+                await db.PaymentFinancialEvent.update(
+                    {
+                        feeAmount: feeObs,
+                        sourceMetadata: { ...(entry.meta || {}), value: p.value, netValue: p.netValue }
+                    },
+                    { where: { id: entry.id } }
+                );
+            }
+
+            if (['RECEIVED', 'RECEIVED_IN_CASH'].includes(p.status) && p.creditDate && !eventPaymentTypeKeys.has(`${p.id}::PAYMENT_CREDITED`)) {
+                const netVal = p.netValue !== undefined && p.netValue !== null ? round2(p.netValue) : round2(p.value);
+                const credFee = round2(Math.max(0, Number(p.value) - netVal));
+                try {
+                    await db.PaymentFinancialEvent.create({
+                        paymentId: p.id,
+                        externalEventId: p.id,
+                        eventType: 'PAYMENT_CREDITED',
+                        grossAmount: round2(p.value),
+                        feeAmount: credFee,
+                        netCashAmount: netVal,
+                        cashDeltaAmount: netVal,
+                        eventDate: String(p.creditDate).slice(0, 10),
+                        sourceMetadata: {
+                            id: p.id,
+                            status: p.status,
+                            billingType: p.billingType,
+                            creditDate: p.creditDate,
+                            value: p.value,
+                            netValue: p.netValue,
+                            source: 'asaas_dre_sync'
+                        }
+                    });
+                    eventPaymentTypeKeys.add(`${p.id}::PAYMENT_CREDITED`);
+                    createdEvents++;
+                } catch (err) {
+                    if (err.name !== 'SequelizeUniqueConstraintError') throw err;
+                }
+            }
+
+            if (['REFUNDED', 'REFUND_IN_PROGRESS'].includes(p.status) && Array.isArray(p.refunds) && p.refunds.length > 0) {
+                const existingRefCount = refundCountByPayment.get(p.id) || 0;
+                if (existingRefCount < p.refunds.length) {
+                    for (const ref of p.refunds) {
+                        const extId = ref.id || `ref_${p.id}_${ref.dateCreated}_${ref.value}`;
+                        const compKey = `${p.id}::REFUND::${extId}`;
+                        if (eventCompositeKeys.has(compKey)) continue;
+                        try {
+                            await db.PaymentFinancialEvent.create({
+                                paymentId: p.id,
+                                externalEventId: extId,
+                                eventType: 'REFUND',
+                                grossAmount: round2(ref.value || p.value),
+                                feeAmount: null,
+                                netCashAmount: null,
+                                cashDeltaAmount: null,
+                                eventDate: String(ref.dateCreated || confDateStr || todayIso).slice(0, 10),
+                                eventOccurredAt: ref.dateCreated ? new Date(ref.dateCreated) : null,
+                                sourceMetadata: {
+                                    id: p.id,
+                                    status: p.status,
+                                    billingType: p.billingType,
+                                    refundId: ref.id || null,
+                                    reason: ref.reason || null,
+                                    value: ref.value || p.value,
+                                    originalPaymentId: p.id,
+                                    source: 'asaas_dre_sync'
+                                }
+                            });
+                            eventCompositeKeys.add(compKey);
+                            createdEvents++;
+                        } catch (err) {
+                            if (err.name !== 'SequelizeUniqueConstraintError') throw err;
+                        }
+                    }
+                }
+            }
+        }
+
+        let createdNotifFees = 0;
+        for (const tx of notifTxs) {
+            if (!existingPayMap.has(tx.paymentId)) continue;
+            const compKey = `${tx.paymentId}::GATEWAY_CASH_MOVEMENT::${tx.id}`;
+            if (eventCompositeKeys.has(compKey)) continue;
+            const absFee = round2(Math.abs(Number(tx.value || 0)));
+            if (absFee <= 0 || !tx.date) continue;
+
+            try {
+                await db.PaymentFinancialEvent.create({
+                    paymentId: tx.paymentId,
+                    externalEventId: tx.id,
+                    eventType: 'GATEWAY_CASH_MOVEMENT',
+                    grossAmount: absFee,
+                    feeAmount: absFee,
+                    netCashAmount: null,
+                    cashDeltaAmount: round2(Number(tx.value || 0)),
+                    eventDate: String(tx.date).slice(0, 10),
+                    eventOccurredAt: null,
+                    sourceMetadata: {
+                        id: tx.paymentId,
+                        transactionId: tx.id,
+                        transactionType: 'PAYMENT_MESSAGING_NOTIFICATION_FEE',
+                        value: tx.value,
+                        balance: tx.balance,
+                        description: tx.description ? String(tx.description).slice(0, 120) : null,
+                        source: 'asaas_dre_sync'
+                    }
+                });
+                eventCompositeKeys.add(compKey);
+                createdNotifFees++;
+            } catch (err) {
+                if (err.name !== 'SequelizeUniqueConstraintError') throw err;
+            }
+        }
+
+        const synced = [];
+        if (createdPayments || updatedPayments || createdEvents || createdNotifFees) {
+            synced.push({
+                provider: 'ASAAS',
+                label: 'Asaas Ledger & Mensageria',
+                kind: 'ASAAS_SYNC',
+                createdPayments,
+                updatedPayments,
+                createdEvents,
+                createdNotifFees
+            });
+        }
+        return { synced, warnings: [] };
+    } catch (err) {
+        adSyncCooldown.set(cacheKey, Date.now());
+        const msg = err?.message || 'Falha ao consultar Asaas';
+        return { synced: [], warnings: [{ provider: 'ASAAS', label: 'Asaas API', message: msg }] };
+    }
+}
+
 async function autoSyncForYear({ year, selectedMonth, force = false }) {
     await ensureDreSchema();
     const targetYear = Math.min(Math.max(parseInt(year, 10) || new Date().getFullYear(), 2020), 2100);
@@ -414,6 +755,8 @@ async function autoSyncForYear({ year, selectedMonth, force = false }) {
         .filter(mk => mk <= nowMonthKey);
 
     if (yearMonthKeys.length === 0) return { synced: [], warnings: [] };
+
+    const asaasSyncPromise = syncAsaasLedgerForYear({ year: targetYear, force });
 
     const mfRows = await db.YeloMonthlyFinance.findAll({
         where: { monthYear: yearMonthKeys },
@@ -447,8 +790,15 @@ async function autoSyncForYear({ year, selectedMonth, force = false }) {
         results.push(...restResults);
     }
 
-    const allSynced = results.flatMap(r => r.synced.map(s => ({ monthYear: r.monthYear, ...s })));
-    const allWarnings = results.flatMap(r => r.warnings.map(w => ({ monthYear: r.monthYear, ...w })));
+    const asaasRes = await asaasSyncPromise;
+    const allSynced = [
+        ...(asaasRes.synced || []).map(s => ({ monthYear: `${targetYear}`, ...s })),
+        ...results.flatMap(r => r.synced.map(s => ({ monthYear: r.monthYear, ...s })))
+    ];
+    const allWarnings = [
+        ...(asaasRes.warnings || []).map(w => ({ monthYear: `${targetYear}`, ...w })),
+        ...results.flatMap(r => r.warnings.map(w => ({ monthYear: r.monthYear, ...w })))
+    ];
     return { synced: allSynced, warnings: allWarnings };
 }
 
@@ -652,7 +1002,7 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
     let observedCardRate = null;
     try {
         const [rateRow] = await db.sequelize.query(
-            `SELECT SUM(e."grossAmount") AS gross, SUM(e."feeAmount") AS fees
+            `SELECT COUNT(*) AS cnt, SUM(e."grossAmount") AS gross, SUM(e."feeAmount") AS fees
              FROM "PaymentFinancialEvents" e
              JOIN "Payments" p ON p."id" = e."paymentId"
              WHERE e."eventType" = 'PAYMENT_CREDITED'
@@ -661,7 +1011,9 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
             { type: db.sequelize.QueryTypes.SELECT }
         );
         if (rateRow && Number(rateRow.gross) > 0 && Number(rateRow.fees) >= 0) {
-            observedCardRate = Number(rateRow.fees) / Number(rateRow.gross);
+            const cnt = Number(rateRow.cnt || 0);
+            const variableFees = Math.max(0, Number(rateRow.fees) - cnt * 0.49);
+            observedCardRate = variableFees / Number(rateRow.gross);
         }
     } catch (_) {}
 
@@ -716,6 +1068,7 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
         gateway: {
             observedFees: 0,
             estimatedFees: 0,
+            notificationFees: 0,
             cashAdjustments: 0,
             totalFees: 0
         },
@@ -868,7 +1221,34 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
 
         for (const adj of adjEvents) {
             const mk = toMonthKeyBRT(adj.eventDate);
-            if (mk && buckets[mk]) {
+            if (!mk || !buckets[mk]) continue;
+            const meta = parseEventMeta(adj);
+            if (meta?.transactionType === 'PAYMENT_MESSAGING_NOTIFICATION_FEE') {
+                const notifFee = round2(Math.abs(Number(adj.feeAmount ?? adj.cashDeltaAmount ?? adj.grossAmount ?? 0)));
+                if (notifFee > 0) {
+                    buckets[mk].gateway.observedFees = round2(buckets[mk].gateway.observedFees + notifFee);
+                    buckets[mk].gateway.notificationFees = round2(buckets[mk].gateway.notificationFees + notifFee);
+                    revenueLedger.push({
+                        id: `${paymentId}-${adj.externalEventId || adj.id}`,
+                        monthKey: mk,
+                        type: 'TAXA_MENSAGERIA',
+                        sourceType: 'LEDGER_REAL',
+                        eventDate: adj.eventDate,
+                        dueDate: adj.dueDate || null,
+                        paymentDate: adj.eventDate,
+                        psiId: adj.psychologistId || null,
+                        psiNome: adj.psiNome || 'Asaas Mensageria',
+                        psiEmail: adj.psiEmail || null,
+                        plano: adj.psiPlano || 'Taxa Asaas',
+                        billingType: 'NOTIFICATION_FEE',
+                        status: 'FEE',
+                        grossAmount: 0,
+                        feeAmount: notifFee,
+                        feeEstimated: false,
+                        netAmount: -notifFee
+                    });
+                }
+            } else {
                 const delta = round2(adj.cashDeltaAmount || 0);
                 buckets[mk].gateway.cashAdjustments = round2(buckets[mk].gateway.cashAdjustments + delta);
             }
@@ -880,9 +1260,7 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
         if (handledPaymentIds.has(p.id)) continue;
 
         const status = String(p.status || '').toUpperCase();
-        const refDateRaw = cleanRegime === 'cash'
-            ? (p.paymentDate || p.dueDate || p.createdAt)
-            : (p.dueDate || p.paymentDate || p.createdAt);
+        const refDateRaw = p.paymentDate || p.dueDate || p.createdAt;
         const mk = toMonthKeyBRT(refDateRaw);
         if (!mk || !buckets[mk]) continue;
 
@@ -917,11 +1295,41 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
                 netAmount: round2(gross - estFee)
             });
         } else if (['REFUNDED', 'REFUND_REQUESTED', 'CHARGEBACK_REQUESTED', 'CHARGEBACK_DISPUTE'].includes(status)) {
+            // Reconhece o bruto original em 1.1 para manter simetria com Deduções 2.1 (evita desconto duplo)
+            const planBucket = classifyPlanBucket(p.psiPlano);
+            buckets[mk].revenue[planBucket] = round2(buckets[mk].revenue[planBucket] + gross);
+            buckets[mk].revenue.grossTotal = round2(buckets[mk].revenue.grossTotal + gross);
+            buckets[mk].revenue.paidCount += 1;
+
+            const estFee = estimateGatewayFee(gross, p.billingType, observedCardRate);
+            buckets[mk].gateway.estimatedFees = round2(buckets[mk].gateway.estimatedFees + estFee);
+            buckets[mk].flags.hasEstimatedFees = true;
+
+            revenueLedger.push({
+                id: p.id,
+                monthKey: mk,
+                type: 'RECEITA',
+                sourceType: 'PAYMENT_FALLBACK',
+                eventDate: toIsoDateBRT(refDateRaw),
+                dueDate: p.dueDate || null,
+                paymentDate: toIsoDateBRT(p.paymentDate || p.dueDate || p.createdAt),
+                psiId: p.psychologistId || null,
+                psiNome: p.psiNome || 'Psicólogo',
+                psiEmail: p.psiEmail || null,
+                plano: p.psiPlano || 'Outro',
+                billingType: p.billingType || 'N/A',
+                status,
+                grossAmount: gross,
+                feeAmount: estFee,
+                feeEstimated: true,
+                netAmount: round2(gross - estFee)
+            });
+
             buckets[mk].deductions.refunds = round2(buckets[mk].deductions.refunds + gross);
             buckets[mk].deductions.refundCount += 1;
 
             revenueLedger.push({
-                id: p.id,
+                id: `${p.id}-estorno`,
                 monthKey: mk,
                 type: 'ESTORNO',
                 sourceType: 'PAYMENT_FALLBACK',
@@ -1143,6 +1551,7 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
                 gatewayFees,
                 gatewayFeesObserved: round2(b.gateway.observedFees),
                 gatewayFeesEstimated: round2(b.gateway.estimatedFees),
+                gatewayNotificationFees: round2(b.gateway.notificationFees),
                 directCogs,
                 totalCogs,
                 grossProfit,
@@ -1193,6 +1602,7 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
         gatewayFees: sumField(m => m.summary.gatewayFees),
         gatewayFeesObserved: sumField(m => m.summary.gatewayFeesObserved),
         gatewayFeesEstimated: sumField(m => m.summary.gatewayFeesEstimated),
+        gatewayNotificationFees: sumField(m => m.summary.gatewayNotificationFees),
         directCogs: sumField(m => m.summary.directCogs),
         totalCogs: sumField(m => m.summary.totalCogs),
         grossProfit: annualGrossProfit,
