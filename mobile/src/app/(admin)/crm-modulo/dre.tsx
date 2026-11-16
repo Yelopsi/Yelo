@@ -26,6 +26,13 @@ import NativeSelectMenu from '../../../components/NativeSelectMenu';
 
 type TabKey = 'mensal' | 'anual' | 'despesas' | 'fiscal';
 
+const DRE_TAB_OPTIONS: { key: TabKey; label: string; icon: keyof typeof Feather.glyphMap }[] = [
+  { key: 'mensal', label: 'DRE Mensal & Evolução', icon: 'bar-chart-2' },
+  { key: 'anual', label: 'DRE Anual (Jan–Dez)', icon: 'calendar' },
+  { key: 'despesas', label: 'Despesas & Lançamentos', icon: 'file-text' },
+  { key: 'fiscal', label: 'Fiscal, Fechamento & Razão', icon: 'shield' },
+];
+
 const MONTH_OPTIONS = [
   { label: 'Janeiro', short: 'Jan', value: '1' },
   { label: 'Fevereiro', short: 'Fev', value: '2' },
@@ -943,33 +950,38 @@ export default function AdminDreScreen() {
             {company.cnpj ? ` • CNPJ ${company.cnpj}` : ''}
           </Text>
 
-          {/* Selectors Row: Year, Month, Regime */}
+          {/* Selectors Row: Year, Month, Regime (Pills) */}
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 0.9 }}>
               <NativeSelectMenu
                 title="Exercício"
                 options={yearOptions}
                 selectedValue={String(year)}
                 onSelect={(val) => setYear(Number(val))}
+                style={{ width: '100%' }}
               >
                 <View
                   style={{
-                    backgroundColor: 'rgba(255,255,255,0.95)',
-                    borderRadius: 10,
-                    paddingVertical: 8,
-                    paddingHorizontal: 10,
+                    width: '100%',
+                    backgroundColor: 'rgba(255,255,255,0.96)',
+                    borderRadius: 999,
+                    paddingVertical: 9,
+                    paddingHorizontal: 13,
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    gap: 4,
                   }}
                 >
-                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#0f172a', fontSize: 12 }}>{year}</Text>
+                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#0f172a', fontSize: 12 }} numberOfLines={1}>
+                    {year}
+                  </Text>
                   <Feather name="chevron-down" size={14} color="#475569" />
                 </View>
               </NativeSelectMenu>
             </View>
 
-            <View style={{ flex: 1.4 }}>
+            <View style={{ flex: 1.2 }}>
               <NativeSelectMenu
                 title="Mês"
                 options={MONTH_OPTIONS.map((m) => ({ label: m.label, value: m.value }))}
@@ -979,19 +991,22 @@ export default function AdminDreScreen() {
                   setMonth(num);
                   setSelectedChartIdx(num - 1);
                 }}
+                style={{ width: '100%' }}
               >
                 <View
                   style={{
-                    backgroundColor: 'rgba(255,255,255,0.95)',
-                    borderRadius: 10,
-                    paddingVertical: 8,
-                    paddingHorizontal: 10,
+                    width: '100%',
+                    backgroundColor: 'rgba(255,255,255,0.96)',
+                    borderRadius: 999,
+                    paddingVertical: 9,
+                    paddingHorizontal: 13,
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    gap: 4,
                   }}
                 >
-                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#0f172a', fontSize: 12 }} numberOfLines={1}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#0f172a', fontSize: 12, flex: 1 }} numberOfLines={1}>
                     {MONTH_OPTIONS[month - 1]?.label || month}
                   </Text>
                   <Feather name="chevron-down" size={14} color="#475569" />
@@ -999,7 +1014,7 @@ export default function AdminDreScreen() {
               </NativeSelectMenu>
             </View>
 
-            <View style={{ flex: 1.5 }}>
+            <View style={{ flex: 1.35 }}>
               <NativeSelectMenu
                 title="Regime"
                 options={[
@@ -1008,19 +1023,22 @@ export default function AdminDreScreen() {
                 ]}
                 selectedValue={regime}
                 onSelect={(val) => setRegime(val === 'cash' ? 'cash' : 'accrual')}
+                style={{ width: '100%' }}
               >
                 <View
                   style={{
-                    backgroundColor: 'rgba(255,255,255,0.95)',
-                    borderRadius: 10,
-                    paddingVertical: 8,
-                    paddingHorizontal: 10,
+                    width: '100%',
+                    backgroundColor: 'rgba(255,255,255,0.96)',
+                    borderRadius: 999,
+                    paddingVertical: 9,
+                    paddingHorizontal: 13,
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    gap: 4,
                   }}
                 >
-                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#0f172a', fontSize: 12 }} numberOfLines={1}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#0f172a', fontSize: 12, flex: 1 }} numberOfLines={1}>
                     {regime === 'cash' ? 'Caixa' : 'Competência'}
                   </Text>
                   <Feather name="chevron-down" size={14} color="#475569" />
@@ -1029,23 +1047,29 @@ export default function AdminDreScreen() {
             </View>
           </View>
 
-          {/* Hero Action Buttons */}
+          {/* Hero Action Buttons (Pills) */}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={openFiscalModal}
               style={{
-                flex: 1,
+                flex: 0.95,
+                flexDirection: 'row',
+                gap: 5,
                 backgroundColor: 'rgba(255,255,255,0.14)',
                 borderColor: 'rgba(255,255,255,0.28)',
                 borderWidth: 1,
-                borderRadius: 10,
-                paddingVertical: 8,
+                borderRadius: 999,
+                paddingVertical: 9,
+                paddingHorizontal: 10,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 12 }}>⚙️ Fiscal</Text>
+              <Feather name="sliders" size={13} color="#ffffff" />
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 12 }} numberOfLines={1}>
+                Fiscal
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -1053,19 +1077,23 @@ export default function AdminDreScreen() {
               disabled={syncingAds}
               onPress={handleSyncAds}
               style={{
-                flex: 1.3,
+                flex: 1.25,
+                flexDirection: 'row',
+                gap: 5,
                 backgroundColor: 'rgba(255,255,255,0.14)',
                 borderColor: 'rgba(255,255,255,0.28)',
                 borderWidth: 1,
-                borderRadius: 10,
-                paddingVertical: 8,
+                borderRadius: 999,
+                paddingVertical: 9,
+                paddingHorizontal: 10,
                 alignItems: 'center',
                 justifyContent: 'center',
                 opacity: syncingAds ? 0.6 : 1,
               }}
             >
-              <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 12 }}>
-                {syncingAds ? '⏳ Sincronizando...' : '🔄 Sincronizar Ads'}
+              <Feather name="refresh-cw" size={13} color="#ffffff" />
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 12 }} numberOfLines={1}>
+                {syncingAds ? 'Atualizando...' : 'Atualizar'}
               </Text>
             </TouchableOpacity>
 
@@ -1074,14 +1102,20 @@ export default function AdminDreScreen() {
               onPress={() => setExportModalVisible(true)}
               style={{
                 flex: 1.1,
+                flexDirection: 'row',
+                gap: 5,
                 backgroundColor: '#ffffff',
-                borderRadius: 10,
-                paddingVertical: 8,
+                borderRadius: 999,
+                paddingVertical: 9,
+                paddingHorizontal: 10,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 12 }}>📥 Exportar</Text>
+              <Feather name="download" size={13} color="#1B4332" />
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 12 }} numberOfLines={1}>
+                Exportar
+              </Text>
             </TouchableOpacity>
           </View>
         </LinearGradient>
@@ -1375,46 +1409,62 @@ export default function AdminDreScreen() {
             })()}
           </View>
 
-          {/* SUB-TABS PILL BAR */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8, paddingBottom: 12 }}
-          >
-            {[
-              { key: 'mensal' as TabKey, label: '📊 DRE Mensal & Gráfico' },
-              { key: 'anual' as TabKey, label: '📅 DRE Anual (12M)' },
-              { key: 'despesas' as TabKey, label: '🧾 Despesas & Recorrentes' },
-              { key: 'fiscal' as TabKey, label: '🏛️ Impostos & Razão' },
-            ].map((t) => {
-              const active = activeTab === t.key;
-              return (
-                <TouchableOpacity
-                  key={t.key}
-                  activeOpacity={0.8}
-                  onPress={() => setActiveTab(t.key)}
-                  style={{
-                    backgroundColor: active ? '#1B4332' : '#ffffff',
-                    borderColor: active ? '#1B4332' : '#e2e8f0',
-                    borderWidth: 1,
-                    borderRadius: 999,
-                    paddingHorizontal: 14,
-                    paddingVertical: 8,
-                  }}
-                >
+          {/* SUB-TABS DROPDOWN */}
+          <View style={{ marginBottom: 14 }}>
+            <Text
+              style={{
+                fontFamily: 'Inter_700Bold',
+                fontSize: 11,
+                color: '#64748b',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+                marginBottom: 6,
+              }}
+            >
+              Visão Contábil
+            </Text>
+            <NativeSelectMenu
+              title="Selecionar Visão da DRE"
+              options={DRE_TAB_OPTIONS.map((t) => ({ label: t.label, value: t.key }))}
+              selectedValue={activeTab}
+              onSelect={(val) => setActiveTab(val as TabKey)}
+              style={{ width: '100%' }}
+            >
+              <View
+                style={{
+                  backgroundColor: '#1B4332',
+                  borderRadius: 999,
+                  paddingHorizontal: 16,
+                  paddingVertical: 11,
+                  width: '100%',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, flex: 1 }}>
+                  <Feather
+                    name={DRE_TAB_OPTIONS.find((t) => t.key === activeTab)?.icon || 'bar-chart-2'}
+                    size={15}
+                    color="#ffffff"
+                  />
                   <Text
                     style={{
                       fontFamily: 'Inter_700Bold',
-                      fontSize: 12,
-                      color: active ? '#ffffff' : '#475569',
+                      fontSize: 13,
+                      color: '#ffffff',
+                      flex: 1,
                     }}
+                    numberOfLines={1}
                   >
-                    {t.label}
+                    {DRE_TAB_OPTIONS.find((t) => t.key === activeTab)?.label || 'DRE Mensal & Evolução'}
                   </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                </View>
+                <Feather name="chevron-down" size={16} color="#ffffff" />
+              </View>
+            </NativeSelectMenu>
+          </View>
 
           {/* ==================== ABA 1: DRE MENSAL & GRÁFICO ==================== */}
           {activeTab === 'mensal' && (
