@@ -79,6 +79,63 @@ const MONTH_FULL_LABELS = [
 ];
 
 let schemaChecked = false;
+async function ensureRenderMovedToOpexAdmin() {
+    try {
+        const settingsRow = await db.SystemSetting.findOne();
+        if (settingsRow && settingsRow.auto_recurring_expenses) {
+            const parsed = parseRecurringRules(settingsRow.auto_recurring_expenses);
+            let changed = false;
+            const migrated = parsed.map(rule => {
+                const isRender = rule.provider === 'RENDER' || /\brender\b/i.test(rule.name || '');
+                if (isRender && rule.dreGroup === 'COGS') {
+                    changed = true;
+                    return {
+                        ...rule,
+                        provider: 'RENDER',
+                        dreGroup: 'OPEX_ADMIN',
+                        category: (!rule.category || rule.category === 'Infra / Fixo') ? 'Cloud / Infraestrutura' : rule.category
+                    };
+                }
+                return rule;
+            });
+            if (changed) {
+                await settingsRow.update({ auto_recurring_expenses: JSON.stringify(migrated) });
+            }
+        }
+
+        const { Op } = db.Sequelize;
+        const cogsRenderRows = await db.YeloExpense.findAll({
+            where: {
+                dreGroup: 'COGS',
+                [Op.or]: [
+                    { provider: 'RENDER' },
+                    { name: { [Op.iLike]: '%render%' } }
+                ]
+            }
+        });
+        if (cogsRenderRows.length > 0) {
+            const closedRows = await db.YeloMonthlyFinance.findAll({
+                where: { isClosed: true },
+                attributes: ['monthYear'],
+                raw: true
+            });
+            const closedSet = new Set(closedRows.map(r => r.monthYear));
+            const opexMeta = DRE_GROUP_META.OPEX_ADMIN;
+            for (const row of cogsRenderRows) {
+                if (closedSet.has(row.monthYear)) continue;
+                await row.update({
+                    dreGroup: 'OPEX_ADMIN',
+                    nature: opexMeta.nature,
+                    purpose: opexMeta.purpose,
+                    provider: 'RENDER'
+                });
+            }
+        }
+    } catch (err) {
+        console.warn('[DRE] Aviso ao migrar Render COGS -> OPEX_ADMIN:', err.message);
+    }
+}
+
 async function ensureDreSchema() {
     if (schemaChecked) return;
     const queries = [
@@ -100,6 +157,7 @@ async function ensureDreSchema() {
             // Não interrompe caso ambiente utilize permissões restritas (migração já está em dbFixes.js)
         }
     }
+    await ensureRenderMovedToOpexAdmin();
     schemaChecked = true;
 }
 

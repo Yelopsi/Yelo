@@ -256,12 +256,18 @@
         color: #1e40af;
     }
 
-    /* KPI Grid — Padrão visual dos painéis executivos (CMO / Analytics) */
+    /* KPI Grid — Padrão visual dos painéis executivos (3x2 simétrico no desktop) */
     .dre-kpi-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 18px;
         margin-bottom: 24px;
+    }
+
+    @media (max-width: 1024px) {
+        .dre-kpi-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
 
     .dre-kpi-card {
@@ -1162,7 +1168,7 @@
             <div class="dre-kpi-label">
                 <span class="dre-kpi-label-left">
                     Receita Líquida
-                    <span class="dre-th-tip" tabindex="0" data-tooltip="Quanto realmente sobrou do faturamento depois de tirar estornos e impostos (Receita Bruta − Deduções). É a base para pagar os custos e calcular margens.">i</span>
+                    <span class="dre-th-tip tip-right" tabindex="0" data-tooltip="Quanto realmente sobrou do faturamento depois de tirar estornos e impostos (Receita Bruta − Deduções). É a base para pagar os custos e calcular margens.">i</span>
                 </span>
                 <span class="dre-kpi-tag">Base DRE</span>
             </div>
@@ -1176,7 +1182,7 @@
             <div class="dre-kpi-label">
                 <span class="dre-kpi-label-left">
                     Custos + OPEX
-                    <span class="dre-th-tip tip-right" tabindex="0" data-tooltip="Soma de tudo que custa manter a Yelo rodando: CSP (taxas do Asaas e APIs do serviço) + OPEX (Google/Meta Ads, servidor Render, contador e despesas operacionais). Queda (▼) é positiva.">i</span>
+                    <span class="dre-th-tip tip-left" tabindex="0" data-tooltip="Soma de tudo que custa manter a Yelo rodando: CSP (taxas do Asaas e APIs do serviço) + OPEX (Google/Meta Ads, servidor Render, contador e despesas operacionais). Queda (▼) é positiva.">i</span>
                 </span>
                 <span class="dre-kpi-tag">Saídas</span>
             </div>
@@ -1190,7 +1196,7 @@
             <div class="dre-kpi-label">
                 <span class="dre-kpi-label-left">
                     EBITDA Operacional
-                    <span class="dre-th-tip tip-right" tabindex="0" data-tooltip="Resultado gerado pela operação pura no mês (Receita Líquida − Custos − OPEX), antes de juros bancários ou impostos sobre lucro. A 'Mg' mostra quantos % da Receita Líquida sobraram.">i</span>
+                    <span class="dre-th-tip" tabindex="0" data-tooltip="Resultado gerado pela operação pura no mês (Receita Líquida − Custos − OPEX), antes de juros bancários ou impostos sobre lucro. A 'Mg' mostra quantos % da Receita Líquida sobraram.">i</span>
                 </span>
                 <span class="dre-kpi-tag" id="kpi-ebitda-margin">—</span>
             </div>
