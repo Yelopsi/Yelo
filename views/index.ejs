@@ -12,6 +12,7 @@
     <meta property="og:title" content="Yelo | Encontre seu Psicólogo Ideal">
     <meta property="og:description" content="Terapia acessível e de qualidade. Conecte-se com profissionais verificados agora mesmo.">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.yelopsi.com.br/">
     <meta property="og:image" content="https://www.yelopsi.com.br/assets/images/apple-touch-icon.png">
     <!-- Força formato pequeno e arredondado no WhatsApp -->
     <meta property="og:image:width" content="256">
@@ -26,33 +27,54 @@
 
     <%- include('partials/head') %>
 
-    <!-- SEO: Dados Estruturados (JSON-LD) para FAQ -->
+    <!-- SEO: Dados Estruturados (JSON-LD) para Organização e FAQ -->
     <script nonce="<%= nonce %>" type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [{
-        "@type": "Question",
-        "name": "Quem são os terapeutas da Yelo?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Apenas aceitamos Psicólogos com registro ativo no CRP (Conselho Regional de Psicologia). Todos passam por um processo de verificação de credenciais."
+      "@graph": [
+        {
+          "@type": "MedicalBusiness",
+          "name": "Yelo",
+          "url": "https://www.yelopsi.com.br/",
+          "description": "Plataforma de terapia online e presencial que conecta pacientes a psicólogos verificados pelo CRP.",
+          "areaServed": {
+            "@type": "Country",
+            "name": "Brasil"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [{
+            "@type": "Question",
+            "name": "Quem são os terapeutas da Yelo?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Apenas aceitamos Psicólogos com registro ativo no CRP (Conselho Regional de Psicologia). Todos passam por um processo de verificação de credenciais."
+            }
+          }, {
+            "@type": "Question",
+            "name": "A Yelo oferece terapia online?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sim. Na Yelo você pode escolher entre atendimento psicológico online por videoconferência ou presencial, conforme a sua preferência no questionário."
+            }
+          }, {
+            "@type": "Question",
+            "name": "Como o match encontra o ideal para mim?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nosso algoritmo analisa suas respostas sobre o que você está sentindo e suas preferências para conectar você aos 3 profissionais mais compatíveis."
+            }
+          }, {
+            "@type": "Question",
+            "name": "Qual o valor das sessões?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nossos profissionais definem seus próprios honorários, criando uma variedade de faixas de preço para que você encontre alguém que caiba no seu orçamento."
+            }
+          }]
         }
-      }, {
-        "@type": "Question",
-        "name": "Como o match encontra o ideal para mim?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Nosso algoritmo analisa suas respostas sobre o que você está sentindo e suas preferências para conectar você aos 3 profissionais mais compatíveis."
-        }
-      }, {
-        "@type": "Question",
-        "name": "Qual o valor das sessões?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Nossos profissionais definem seus próprios honorários, criando uma variedade de faixas de preço para que você encontre alguém que caiba no seu orçamento."
-        }
-      }]
+      ]
     }
     </script>
 
@@ -667,7 +689,7 @@
                     const fraseAleatoria = frases[Math.floor(Math.random() * frases.length)];
                 %>
                 <h1 style="font-weight: 800;">Você merece <%= fraseAleatoria %></h1>
-                <p>Encontrar a pessoa certa para te acompanhar nessa jornada é o primeiro passo.</p>
+                <p>Terapia online ou presencial com psicólogos verificados. Encontrar a pessoa certa para te acompanhar é o primeiro passo.</p>
                 
                 <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; position: relative; z-index: 2;">
                     <div style="display: flex; margin-right: -5px;">
@@ -752,7 +774,7 @@
                 <!-- Coluna Esquerda: Texto -->
                 <div class="coluna-texto">
                     <span class="tag-destaque-organica">Segurança e Qualidade</span>
-                    <h2 class="titulo-organico">Profissionais verificados em quem você pode confiar.</h2>
+                    <h2 class="titulo-organico">Psicólogos online e presenciais verificados pelo CRP.</h2>
                     <p class="texto-organico">
                         Garantimos a sua segurança através de um processo de verificação rigoroso. Todos os profissionais da plataforma possuem registro ativo no Conselho Regional de Psicologia (CRP). 
                         Aqui, você encontra especialistas prontos para te ajudar com ansiedade, depressão, carreira, relacionamentos e muito mais.

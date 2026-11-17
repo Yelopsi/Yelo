@@ -336,10 +336,9 @@ router.get('/mapa-do-site', async (req, res) => {
     }
 });
 
-// --- LANDING PAGE SEO: TERAPIA ONLINE ---
+// --- LANDING PAGE GOOGLE ADS ---
 router.get('/terapia-online', async (req, res) => {
-    const data = await loadLandingHighlights();
-    res.render('terapia_online', data);
+    res.redirect(301, '/');
 });
 
 // --- LOGOUT ---
