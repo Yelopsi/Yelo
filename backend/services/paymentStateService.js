@@ -633,16 +633,19 @@ class PaymentStateService {
 
     static async syncPaymentToDatabase(psi, payment) {
         try {
-            const dueDate = payment.dueDate ? new Date(payment.dueDate) : new Date();
-            let paymentDate = null;
-            
-            if (payment.clientPaymentDate) {
-                paymentDate = new Date(payment.clientPaymentDate);
-            } else if (payment.confirmedDate) {
-                paymentDate = new Date(payment.confirmedDate);
-            } else if (payment.paymentDate) {
-                paymentDate = new Date(payment.paymentDate);
-            }
+            // Preserva YYYY-MM-DD puro em DATEONLY para evitar recuo de -1 dia no fuso America/Sao_Paulo
+            const rawDueDate = payment.dueDate ? String(payment.dueDate).trim() : null;
+            const dueDate = rawDueDate && /^\d{4}-\d{2}-\d{2}/.test(rawDueDate)
+                ? rawDueDate.slice(0, 10)
+                : new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
+            const normalizeDateMidday = (val) => {
+                if (!val) return null;
+                const s = String(val).trim();
+                return /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(`${s}T12:00:00Z`) : new Date(s);
+            };
+
+            const paymentDate = normalizeDateMidday(payment.clientPaymentDate || payment.confirmedDate || payment.paymentDate);
 
             // Garante que o status salvo reflita a realidade
             await db.Payment.upsert({
@@ -654,7 +657,7 @@ class PaymentStateService {
                 billingType: payment.billingType,
                 dueDate: dueDate,
                 paymentDate: paymentDate,
-                createdAt: payment.dateCreated ? new Date(payment.dateCreated) : new Date()
+                createdAt: normalizeDateMidday(payment.dateCreated) || new Date()
             });
             console.log(`[ASAAS] Pagamento ${payment.id} sincronizado no banco local com sucesso.`);
         } catch (err) {
