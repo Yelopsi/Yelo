@@ -3,8 +3,12 @@
 <head>
     <!-- VARIÁVEIS DE SEO -->
     <% 
-      const rawFallback = (post.conteudo || '').replace(/<[^>]*>?/g, ' ').replace(/\s+/g, ' ').trim();
-      const descSnippet = (post.meta_description ? post.meta_description : (rawFallback.substring(0, 155) + '...')).replace(/[\r\n]+/g, ' '); 
+      const rawFallback = (post.conteudo || '').replace(/<[^>]*>?/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
+      let cleanFallbackDesc = rawFallback;
+      if (cleanFallbackDesc.length > 152) {
+          cleanFallbackDesc = cleanFallbackDesc.substring(0, 152).replace(/\s+\S*$/, '') + '...';
+      }
+      const descSnippet = (post.meta_description && post.meta_description.trim() ? post.meta_description.trim() : cleanFallbackDesc).replace(/[\r\n]+/g, ' '); 
       const currentUrl = `https://www.yelopsi.com.br/blog/post/${post.slug || post.id}`;
       const autorNome = post.autor ? post.autor.nome : 'Equipe Yelo';
       const seoTitle = (post.seo_title && post.seo_title.trim()) ? post.seo_title.trim() : post.titulo;
@@ -42,7 +46,7 @@
         "dateModified": new Date(post.updatedAt || post.updated_at || post.createdAt || post.created_at).toISOString()
       };
     %>
-    <title><%= seoTitle %> | Blog Yelo</title>
+    <title><%= seoTitle.length > 52 ? seoTitle : seoTitle + ' | Blog Yelo' %></title>
     
     <!-- PROTEÇÃO CONTRA CONTEÚDO DUPLICADO -->
     <link rel="canonical" href="<%= currentUrl %>">
@@ -430,6 +434,9 @@
                         </a>
                         <% } %>
                     </div>
+                    <p style="margin: 14px 0 0 0; font-size: 0.85rem; color: #15803d;">
+                        Quer saber mais antes de começar? <a href="/terapia-online" style="color: #1B4332; font-weight: 700; text-decoration: underline;">Veja como funciona a terapia online na Yelo</a>.
+                    </p>
                 </div>
             </div>
 

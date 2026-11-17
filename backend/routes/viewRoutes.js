@@ -62,8 +62,12 @@ router.get(['/unsubscribe', '/subscribe', '/preferencias-email'], (req, res) => 
     res.sendFile(path.join(__dirname, '../../public/unsubscribe.html'));
 });
 
-// --- HOME ---
-router.get('/', async (req, res) => {
+async function loadLandingHighlights() {
+    let profissionais = [];
+    let mediaAvaliacao = '4.9';
+    let totalAvaliacoes = '150+';
+    let depoimentos = [];
+
     try {
         const psicologos = await db.Psychologist.findAll({
             where: { status: 'active', fotoUrl: { [Op.ne]: null } },
@@ -73,63 +77,61 @@ router.get('/', async (req, res) => {
         });
 
         const agora = new Date();
-        const psicologosFiltrados = psicologos.filter(psy => {
+        profissionais = psicologos.filter(psy => {
             const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true' || psy.is_exempt === 1;
             if (isVip) return true;
             return psy.planExpiresAt && new Date(psy.planExpiresAt) > agora;
         }).slice(0, 10);
 
-        let mediaAvaliacao = '4.9';
-        let totalAvaliacoes = '150+';
-        let depoimentos = [];
-
-        try {
-            const [result] = await db.sequelize.query(`
-                SELECT AVG(CAST("searchParams"->'avaliacao_ux'->>'rating' AS NUMERIC)) as media, COUNT(*) as total 
-                FROM "DemandSearches" WHERE "searchParams"->'avaliacao_ux'->>'rating' IS NOT NULL
-            `, { type: db.sequelize.QueryTypes.SELECT });
-            
-            if (result && result.media) mediaAvaliacao = parseFloat(result.media).toFixed(1);
-            if (result && result.total > 0) {
-                // Cálculo de Crescimento Orgânico (Simulação)
-                const dataLancamento = new Date('2026-01-01');
-                const diasDeVida = Math.max(0, Math.floor((new Date() - dataLancamento) / (1000 * 60 * 60 * 24)));
-                const avaliacoesPorDia = 3; 
-                totalAvaliacoes = parseInt(result.total) + 1200 + (diasDeVida * avaliacoesPorDia);
-            }
-
-            const rows = await db.sequelize.query(`
-                SELECT "searchParams" FROM "DemandSearches"
-                WHERE "searchParams"->'avaliacao_ux'->>'feedback' IS NOT NULL
-                AND length("searchParams"->'avaliacao_ux'->>'feedback') > 10
-                AND CAST("searchParams"->'avaliacao_ux'->>'rating' AS NUMERIC) >= 4
-                ORDER BY "createdAt" DESC LIMIT 4
-            `, { type: db.sequelize.QueryTypes.SELECT });
-
-            if (rows && rows.length > 0) {
-                depoimentos = rows.map(r => {
-                    const p = r.searchParams || {};
-                    const av = p.avaliacao_ux || {};
-                    const nome = p.nome || 'Anônimo';
-                    const iniciais = nome.trim().split(/\s+/).map(n => n[0].toUpperCase() + '.').join(' ');
-                    return { nome: iniciais, texto: (av.feedback || "").replace("amei a plataforma (teste)", "amei a plataforma"), nota: parseInt(av.rating || 5), inicial: nome[0].toUpperCase() };
-                });
-            }
-        } catch (e) { }
-
-        if (depoimentos.length < 4) {
-            const mocks = [
-                { nome: "M. S.", texto: "Eu adiava a terapia por achar difícil encontrar alguém. O questionário da Yelo foi certeiro.", nota: 5, inicial: "M" },
-                { nome: "C. E.", texto: "A facilidade de fazer online mudou tudo pra mim. Plataforma estável e segura.", nota: 5, inicial: "C" },
-                { nome: "F. L.", texto: "O acolhimento que recebi foi fundamental. Recomendo a Yelo para todos.", nota: 5, inicial: "F" },
-                { nome: "J. P.", texto: "Encontrei um espaço seguro para falar sobre minhas angústias.", nota: 5, inicial: "J" }
-            ];
-            depoimentos = [...depoimentos, ...mocks.slice(0, 4 - depoimentos.length)];
+        const [result] = await db.sequelize.query(`
+            SELECT AVG(CAST("searchParams"->'avaliacao_ux'->>'rating' AS NUMERIC)) as media, COUNT(*) as total 
+            FROM "DemandSearches" WHERE "searchParams"->'avaliacao_ux'->>'rating' IS NOT NULL
+        `, { type: db.sequelize.QueryTypes.SELECT });
+        
+        if (result && result.media) mediaAvaliacao = parseFloat(result.media).toFixed(1);
+        if (result && result.total > 0) {
+            const dataLancamento = new Date('2026-01-01');
+            const diasDeVida = Math.max(0, Math.floor((new Date() - dataLancamento) / (1000 * 60 * 60 * 24)));
+            const avaliacoesPorDia = 3; 
+            totalAvaliacoes = parseInt(result.total) + 1200 + (diasDeVida * avaliacoesPorDia);
         }
-        res.render('index', { profissionais: psicologosFiltrados, mediaAvaliacao, totalAvaliacoes, depoimentos });
-    } catch (error) {
-        res.render('index', { profissionais: [], mediaAvaliacao: '4.9', totalAvaliacoes: '100+', depoimentos: [] });
+
+        const rows = await db.sequelize.query(`
+            SELECT "searchParams" FROM "DemandSearches"
+            WHERE "searchParams"->'avaliacao_ux'->>'feedback' IS NOT NULL
+            AND length("searchParams"->'avaliacao_ux'->>'feedback') > 10
+            AND CAST("searchParams"->'avaliacao_ux'->>'rating' AS NUMERIC) >= 4
+            ORDER BY "createdAt" DESC LIMIT 4
+        `, { type: db.sequelize.QueryTypes.SELECT });
+
+        if (rows && rows.length > 0) {
+            depoimentos = rows.map(r => {
+                const p = r.searchParams || {};
+                const av = p.avaliacao_ux || {};
+                const nome = p.nome || 'Anônimo';
+                const iniciais = nome.trim().split(/\s+/).map(n => n[0].toUpperCase() + '.').join(' ');
+                return { nome: iniciais, texto: (av.feedback || "").replace("amei a plataforma (teste)", "amei a plataforma"), nota: parseInt(av.rating || 5), inicial: nome[0].toUpperCase() };
+            });
+        }
+    } catch (e) { }
+
+    if (depoimentos.length < 4) {
+        const mocks = [
+            { nome: "M. S.", texto: "Eu adiava a terapia por achar difícil encontrar alguém. O questionário da Yelo foi certeiro.", nota: 5, inicial: "M" },
+            { nome: "C. E.", texto: "A facilidade de fazer online mudou tudo pra mim. Plataforma estável e segura.", nota: 5, inicial: "C" },
+            { nome: "F. L.", texto: "O acolhimento que recebi foi fundamental. Recomendo a Yelo para todos.", nota: 5, inicial: "F" },
+            { nome: "J. P.", texto: "Encontrei um espaço seguro para falar sobre minhas angústias.", nota: 5, inicial: "J" }
+        ];
+        depoimentos = [...depoimentos, ...mocks.slice(0, 4 - depoimentos.length)];
     }
+
+    return { profissionais, mediaAvaliacao, totalAvaliacoes, depoimentos };
+}
+
+// --- HOME ---
+router.get('/', async (req, res) => {
+    const data = await loadLandingHighlights();
+    res.render('index', data);
 });
 
 // --- BLOG ---
@@ -298,6 +300,7 @@ router.get('/gerador-bio', (req, res) => res.sendFile(path.join(__dirname, '../.
 router.get('/teste-terapia', (req, res) => res.sendFile(path.join(__dirname, '../../public/teste-terapia.html')));
 router.get('/roda-da-vida', (req, res) => res.sendFile(path.join(__dirname, '../../public/roda-da-vida.html')));
 router.get('/calculadora-psi', (req, res) => res.sendFile(path.join(__dirname, '../../public/calculadora-psi.html')));
+router.get('/ferramentas', (req, res) => res.sendFile(path.join(__dirname, '../../public/ferramentas.html')));
 router.get('/feedback', (req, res) => res.sendFile(path.join(__dirname, '../../public/feedback.html')));
 
 // --- API PÚBLICA PARA FEEDBACK (SEM LOGIN) ---
@@ -333,9 +336,10 @@ router.get('/mapa-do-site', async (req, res) => {
     }
 });
 
-// --- LANDING PAGE GOOGLE ADS ---
+// --- LANDING PAGE SEO: TERAPIA ONLINE ---
 router.get('/terapia-online', async (req, res) => {
-    res.redirect(301, '/');
+    const data = await loadLandingHighlights();
+    res.render('terapia_online', data);
 });
 
 // --- LOGOUT ---

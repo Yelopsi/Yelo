@@ -290,7 +290,7 @@ exports.generateSitemap = async (req, res) => {
 
         // Páginas estáticas principais e ferramentas gratuitas
         const staticPages = [
-            '', '/comunidade', '/ajuda', '/ajuda-mulher', '/contato', '/questionario',
+            '', '/terapia-online', '/comunidade', '/ajuda', '/ajuda-mulher', '/contato', '/questionario',
             '/blog', '/sobre', '/sobre_psis', '/faq', '/profissionais',
             '/ferramentas', '/gerador-bio', '/calculadora-psi', '/sos-ansiedade',
             '/teste-terapia', '/roda-da-vida', '/mapa-do-site', '/termos', '/privacidade'
