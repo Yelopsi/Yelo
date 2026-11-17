@@ -2744,14 +2744,14 @@ export default function AdminDreScreen() {
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                         <View
                           style={{
-                            backgroundColor: r.type === 'ESTORNO' ? '#fee2e2' : '#dcfce7',
+                            backgroundColor: r.type === 'ESTORNO' ? '#fee2e2' : (r.type === 'TAXA_MENSAGERIA' ? '#fef3c7' : '#dcfce7'),
                             paddingHorizontal: 8,
                             paddingVertical: 2,
                             borderRadius: 999,
                           }}
                         >
-                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: r.type === 'ESTORNO' ? '#991b1b' : '#166534' }}>
-                            {r.type}
+                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: r.type === 'ESTORNO' ? '#991b1b' : (r.type === 'TAXA_MENSAGERIA' ? '#92400e' : '#166534') }}>
+                            {r.type === 'TAXA_MENSAGERIA' ? 'MENSAGERIA' : r.type}
                           </Text>
                         </View>
                         <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#64748b' }}>

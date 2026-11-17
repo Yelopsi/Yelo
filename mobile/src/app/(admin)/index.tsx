@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -191,6 +191,97 @@ export default function AdminVisaoGeralScreen() {
   let meiTip = 'Meta de faturamento MEI (R$ 81.000/ano).';
   let proLaboreTip = 'Meta estratégica para retirada recorrente de pró-labore.';
   let isMeiMigrated = false;
+
+  const scheduledAlerts = useMemo(() => {
+    const now = new Date();
+    const configs = [
+      {
+        key: 'traffic-review',
+        emoji: '🎯',
+        targetIso: '2026-11-24T00:00:00-03:00',
+        shortDate: '24/11',
+        titlePrefix: 'Reavaliação Estratégica:',
+        topic: 'Tráfego & Motor V6.1',
+        defaultAction: 'Ver métricas do CMO →',
+        defaultBg: '#eff6ff',
+        defaultBorder: '#bfdbfe',
+        defaultAccent: '#2563eb',
+        tomorrowAction: 'Preparar análise no CMO →',
+        dueAction: 'Reavaliar agora no CMO →',
+        todayPrefix: '🚨 Hoje é a Reavaliação Estratégica!',
+        todayDetail: 'Janela de 14 dias concluída. Reavalie Ads e Motor V6.1.',
+        overduePrefix: '⚠️ Reavaliação Estratégica Pendente:',
+      },
+      {
+        key: 'seo-review',
+        emoji: '🔎',
+        targetIso: '2026-11-30T00:00:00-03:00',
+        shortDate: '30/11',
+        titlePrefix: 'Revisão SEO & GSC:',
+        topic: 'Avaliar indexação e títulos do Blog/Perguntas',
+        defaultAction: 'Acompanhar SEO no CMO →',
+        defaultBg: '#f0fdf4',
+        defaultBorder: '#bbf7d0',
+        defaultAccent: '#15803d',
+        tomorrowAction: 'Preparar revisão no GSC →',
+        dueAction: 'Revisar GSC & Blog agora →',
+        todayPrefix: '🚨 Hoje completa 14 dias dos ajustes de SEO!',
+        todayDetail: 'Puxe o Search Console e otimize títulos de menor CTR.',
+        overduePrefix: '⚠️ Revisão de SEO Pendente:',
+      },
+    ];
+
+    return configs.map((cfg) => {
+      const diffDays = Math.ceil((new Date(cfg.targetIso).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays > 1) {
+        return {
+          key: cfg.key,
+          emoji: cfg.emoji,
+          bg: cfg.defaultBg,
+          border: cfg.defaultBorder,
+          accent: cfg.defaultAccent,
+          boldText: cfg.titlePrefix,
+          bodyText: ` ${cfg.topic} — Faltam ${diffDays} dias (${cfg.shortDate}).`,
+          actionText: cfg.defaultAction,
+        };
+      }
+      if (diffDays === 1) {
+        return {
+          key: cfg.key,
+          emoji: cfg.emoji,
+          bg: '#fffbeb',
+          border: '#fde68a',
+          accent: '#d97706',
+          boldText: cfg.titlePrefix,
+          bodyText: ` ${cfg.topic} Amanhã (${cfg.shortDate})!`,
+          actionText: cfg.tomorrowAction,
+        };
+      }
+      if (diffDays === 0) {
+        return {
+          key: cfg.key,
+          emoji: cfg.emoji,
+          bg: '#fef2f2',
+          border: '#fecaca',
+          accent: '#dc2626',
+          boldText: cfg.todayPrefix,
+          bodyText: ` ${cfg.todayDetail}`,
+          actionText: cfg.dueAction,
+        };
+      }
+      const daysAgo = Math.abs(diffDays);
+      return {
+        key: cfg.key,
+        emoji: cfg.emoji,
+        bg: '#fef2f2',
+        border: '#fecaca',
+        accent: '#dc2626',
+        boldText: `${cfg.overduePrefix} (${daysAgo} dia${daysAgo > 1 ? 's' : ''} atrás)`,
+        bodyText: ` Prazo encerrou em ${cfg.shortDate}.`,
+        actionText: cfg.dueAction,
+      };
+    });
+  }, []);
 
   if (dreData) {
     const arpu = (currentPaying > 0 && Number(stats?.mrr || 0) > 0)
@@ -738,6 +829,36 @@ export default function AdminVisaoGeralScreen() {
           <Text className="font-title text-[#1B4332] text-[18px] font-bold mb-3.5">
             Alertas e Ações Rápidas
           </Text>
+
+          {scheduledAlerts.map((item) => (
+            <TouchableOpacity
+              key={item.key}
+              activeOpacity={0.8}
+              onPress={() => router.push('/(admin)/crm-modulo/cmo-metrics')}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: item.bg,
+                borderWidth: 1,
+                borderColor: item.border,
+                borderRadius: 16,
+                padding: 14,
+                marginBottom: 12,
+              }}
+            >
+              <Text style={{ fontSize: 22, marginRight: 12 }}>{item.emoji}</Text>
+              <View style={{ flex: 1 }}>
+                <Text className="font-sans text-[#333] text-[13px]">
+                  <Text style={{ fontWeight: '700', color: item.accent }}>{item.boldText}</Text>
+                  {item.bodyText}
+                </Text>
+                <Text style={{ fontFamily: 'Inter_700Bold', color: item.accent, fontSize: 11, marginTop: 2 }}>
+                  {item.actionText}
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={16} color={item.accent} />
+            </TouchableOpacity>
+          ))}
 
           {/* Candidatos na Lista de Espera */}
           <TouchableOpacity 

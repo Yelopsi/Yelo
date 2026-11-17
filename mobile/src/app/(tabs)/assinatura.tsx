@@ -133,8 +133,20 @@ export default function AssinaturaScreen() {
     email?: string;
     title?: string;
     subtitle?: string;
+    summary?: string;
     reason?: string;
+    chargeToday?: number;
+    regularPrice?: number;
+    durationMonths?: number;
+    recurringAfterMonths?: number;
   } | null>(null);
+
+  const hasPromoPricing = !!(promoOffer?.eligible && Number(promoOffer?.chargeToday) > 0);
+  const activePromoCharge = hasPromoPricing ? Number(promoOffer!.chargeToday) : 99;
+  const activePromoDuration = hasPromoPricing ? Number(promoOffer?.durationMonths || 1) : 1;
+  const activePromoPriceLabel = activePromoCharge.toFixed(2).replace('.', ',');
+  const activePromoShortPrice = Number.isInteger(activePromoCharge) ? String(activePromoCharge) : activePromoPriceLabel;
+  const activePromoPeriodLabel = activePromoDuration > 1 ? `${activePromoDuration} meses` : 'mês';
 
   const renderAutoPromoBanner = (marginBottom = 16) => {
     if (!promoOffer) return null;
@@ -154,7 +166,7 @@ export default function AssinaturaScreen() {
             🎉 {promoOffer.title || 'Condição Exclusiva: 2 meses por R$ 99,00'}
           </Text>
           <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: '#15803d', lineHeight: 17 }}>
-            Benefício automático e intransferível liberado para {promoOffer.email || psiData?.email}. Sem precisar de cupom.
+            {promoOffer.summary || promoOffer.subtitle || `Benefício automático e intransferível liberado para ${promoOffer.email || psiData?.email}. Sem precisar de cupom.`}
           </Text>
         </View>
       );
@@ -441,9 +453,9 @@ export default function AssinaturaScreen() {
       addDebugLog('Plataforma iOS detectada: Abrindo escolha de taxa');
       setActiveModal('IOS_FEE_CHOICE');
     } else {
-      addDebugLog('Plataforma Android: Indo direto para checkout R$99');
+      addDebugLog(`Plataforma Android: Indo direto para checkout R$${activePromoPriceLabel}`);
       setIsIosCheckout(false);
-      setCheckoutPrice('99,00');
+      setCheckoutPrice(activePromoPriceLabel);
       setPixData(null);
       setPaymentMethod('PIX');
       setActiveModal('CHECKOUT');
@@ -1228,8 +1240,14 @@ export default function AssinaturaScreen() {
               </Text>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 25 }}>
-                  R$ 99<Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 13.5 }}>/mês</Text>
+                  R$ {activePromoShortPrice}
+                  <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 13.5 }}>/{activePromoPeriodLabel}</Text>
                 </Text>
+                {hasPromoPricing && activePromoDuration > 1 && (
+                  <Text style={{ fontFamily: 'Inter_500Medium', color: '#15803d', fontSize: 11, marginTop: 2 }}>
+                    Depois R$ {Number(promoOffer?.regularPrice || 99)}/mês
+                  </Text>
+                )}
               </View>
             </View>
 
@@ -1317,9 +1335,11 @@ export default function AssinaturaScreen() {
                   <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 15.5 }}>
                     {isCancelAtPeriodEnd
                       ? "Reativar Assinatura ↺"
-                      : !isExpired && daysRemaining > 0
-                        ? "Assinar Plano Essencial"
-                        : "Reativar Plano Essencial"}
+                      : hasPromoPricing && activePromoDuration > 1
+                        ? `Aproveitar ${activePromoDuration} meses por R$ ${activePromoShortPrice}`
+                        : !isExpired && daysRemaining > 0
+                          ? "Assinar Plano Essencial"
+                          : "Reativar Plano Essencial"}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -1622,7 +1642,7 @@ export default function AssinaturaScreen() {
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
                       <Text style={{ fontFamily: 'NewKansas-Bold', color: '#1B4332', fontSize: 20 }}>
-                        R$ 99<Text style={{ fontSize: 12, fontFamily: 'Inter_400Regular', color: '#475569' }}>/mês</Text>
+                        R$ {activePromoShortPrice}<Text style={{ fontSize: 12, fontFamily: 'Inter_400Regular', color: '#475569' }}>/{activePromoPeriodLabel}</Text>
                       </Text>
                     </View>
                   </View>
@@ -1637,7 +1657,7 @@ export default function AssinaturaScreen() {
                     ) : (
                       <>
                         <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 13.5 }}>
-                          Pagar no Navegador (R$ 99/mês)
+                          Pagar no Navegador (R$ {activePromoShortPrice}/{activePromoPeriodLabel})
                         </Text>
                         <Feather name="arrow-up-right" size={15} color="white" />
                       </>
@@ -1731,7 +1751,7 @@ export default function AssinaturaScreen() {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                       <View style={{ backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', paddingHorizontal: 10, paddingVertical: 2, borderRadius: 999 }}>
                         <Text style={{ fontFamily: 'Inter_700Bold', color: '#166534', fontSize: 11 }}>
-                          Plano Essencial • R$ {checkoutPrice}/mês
+                          Plano Essencial • R$ {checkoutPrice}/{!isIosCheckout && hasPromoPricing && activePromoDuration > 1 ? activePromoPeriodLabel : 'mês'}
                         </Text>
                       </View>
                       {isIosCheckout && (
