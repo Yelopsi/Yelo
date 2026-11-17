@@ -251,9 +251,9 @@ exports.generateSitemap = async (req, res) => {
             await db.sequelize.query(`ALTER TABLE "${qTable}" ADD COLUMN IF NOT EXISTS "slug" VARCHAR(255);`);
         } catch(e) {}
 
-        // Usa SQL puro para buscar os slugs e evitar falhas de cache do modelo
+        // Usa SQL puro para buscar os slugs e evitar falhas de cache do modelo (inclui perguntas aprovadas e já respondidas)
         const questions = await db.sequelize.query(
-            `SELECT slug, "updatedAt" FROM "${qTable}" WHERE slug IS NOT NULL AND status = 'approved' ORDER BY "updatedAt" DESC`,
+            `SELECT slug, "updatedAt" FROM "${qTable}" WHERE slug IS NOT NULL AND status IN ('approved', 'answered') ORDER BY "updatedAt" DESC`,
             { type: db.sequelize.QueryTypes.SELECT }
         );
 
@@ -288,8 +288,13 @@ exports.generateSitemap = async (req, res) => {
         let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
         xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
-        // Páginas estáticas principais
-        const staticPages = ['', '/comunidade', '/ajuda', '/contato', '/questionario', '/blog', '/sobre', '/sobre_psis', '/faq', '/profissionais', '/termos', '/privacidade'];
+        // Páginas estáticas principais e ferramentas gratuitas
+        const staticPages = [
+            '', '/comunidade', '/ajuda', '/ajuda-mulher', '/contato', '/questionario',
+            '/blog', '/sobre', '/sobre_psis', '/faq', '/profissionais',
+            '/ferramentas', '/gerador-bio', '/calculadora-psi', '/sos-ansiedade',
+            '/teste-terapia', '/roda-da-vida', '/mapa-do-site', '/termos', '/privacidade'
+        ];
         staticPages.forEach(page => {
             xml += `  <url>\n    <loc>${frontendUrl}${page}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
         });

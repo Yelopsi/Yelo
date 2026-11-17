@@ -8,9 +8,12 @@
       const currentUrl = `https://www.yelopsi.com.br/blog/post/${post.slug || post.id}`;
       const autorNome = post.autor ? post.autor.nome : 'Equipe Yelo';
       const seoTitle = (post.seo_title && post.seo_title.trim()) ? post.seo_title.trim() : post.titulo;
-      let imageUrl = post.imagem_url || 'https://www.yelopsi.com.br/assets/images/apple-touch-icon.png';
-      if (imageUrl.includes('cloudinary.com') && imageUrl.includes('/upload/')) {
-          imageUrl = imageUrl.replace('/upload/', '/upload/w_256,h_256,c_fill,q_auto/');
+      const rawImageUrl = post.imagem_url || 'https://www.yelopsi.com.br/assets/images/icon-512x512.png';
+      let imageUrl = rawImageUrl;
+      let schemaImageUrl = rawImageUrl;
+      if (rawImageUrl.includes('cloudinary.com') && rawImageUrl.includes('/upload/')) {
+          imageUrl = rawImageUrl.replace('/upload/', '/upload/w_256,h_256,c_fill,q_auto/');
+          schemaImageUrl = rawImageUrl.replace('/upload/', '/upload/w_1200,q_auto/');
       }
       
       const schemaMarkup = {
@@ -22,7 +25,7 @@
         },
         "headline": seoTitle,
         "description": descSnippet,
-        "image": imageUrl,
+        "image": schemaImageUrl,
         "author": {
           "@type": "Person",
           "name": autorNome
@@ -32,7 +35,7 @@
           "name": "Yelo",
           "logo": {
             "@type": "ImageObject",
-            "url": "https://www.yelopsi.com.br/img/logo.png" 
+            "url": "https://www.yelopsi.com.br/assets/images/icon-512x512.png"
           }
         },
         "datePublished": new Date(post.createdAt || post.created_at).toISOString(),
