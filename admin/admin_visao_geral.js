@@ -42,53 +42,88 @@ window.initializePage = function() {
         }
     }
 
-    function updateTrafficReviewAlert() {
-        const targetDate = new Date('2026-11-24T00:00:00-03:00');
+    function updateScheduledAlert(cfg) {
+        const targetDate = new Date(cfg.targetIso);
         const now = new Date();
-        const diffMs = targetDate.getTime() - now.getTime();
-        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        const diffDays = Math.ceil((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-        const card = document.getElementById('card-alert-traffic-review');
-        const daysEl = document.getElementById('traffic-review-days');
-        const titleEl = document.getElementById('traffic-review-title');
-        const actionEl = document.getElementById('traffic-review-action');
+        const card = document.getElementById(cfg.cardId);
+        const daysEl = document.getElementById(cfg.daysId);
+        const titleEl = document.getElementById(cfg.titleId);
+        const actionEl = document.getElementById(cfg.actionId);
 
         if (!card || !daysEl || !titleEl) return;
 
         if (diffDays > 1) {
-            daysEl.textContent = `Faltam ${diffDays} dias (24/11)`;
+            daysEl.textContent = `Faltam ${diffDays} dias (${cfg.shortDate})`;
             if (actionEl) {
-                actionEl.textContent = 'Ver métricas do CMO';
-                actionEl.style.color = '#2563eb';
+                actionEl.textContent = cfg.defaultAction;
+                actionEl.style.color = cfg.defaultAccent;
             }
-            card.style.borderLeftColor = '#3b82f6';
-            card.style.background = '#eff6ff';
+            card.style.borderLeftColor = cfg.defaultBorder;
+            card.style.background = cfg.defaultBg;
         } else if (diffDays === 1) {
-            daysEl.textContent = 'Amanhã (24/11)!';
+            daysEl.textContent = `Amanhã (${cfg.shortDate})!`;
             card.style.borderLeftColor = '#f59e0b';
             card.style.background = '#fffbeb';
             if (actionEl) {
-                actionEl.textContent = 'Preparar análise no CMO';
+                actionEl.textContent = cfg.tomorrowAction;
                 actionEl.style.color = '#d97706';
             }
         } else if (diffDays === 0) {
-            titleEl.innerHTML = '<strong>🚨 Hoje é o dia da Reavaliação Estratégica!</strong> Janela de 14 dias concluída. Reavalie Google Ads, Meta Ads e Motor V6.1.';
+            titleEl.innerHTML = cfg.todayHtml;
             card.style.borderLeftColor = '#ef4444';
             card.style.background = '#fef2f2';
             if (actionEl) {
-                actionEl.textContent = 'Reavaliar agora no CMO';
+                actionEl.textContent = cfg.dueAction;
                 actionEl.style.color = '#dc2626';
             }
         } else {
             const daysAgo = Math.abs(diffDays);
-            titleEl.innerHTML = `<strong>⚠️ Reavaliação Estratégica Pendente (${daysAgo} dia${daysAgo > 1 ? 's' : ''} atrás):</strong> A janela encerrou em 24/11.`;
+            titleEl.innerHTML = cfg.overdueHtml(daysAgo);
             card.style.borderLeftColor = '#ef4444';
             card.style.background = '#fef2f2';
             if (actionEl) {
-                actionEl.textContent = 'Reavaliar agora no CMO';
+                actionEl.textContent = cfg.dueAction;
                 actionEl.style.color = '#dc2626';
             }
         }
+    }
+
+    function updateScheduledAlerts() {
+        updateScheduledAlert({
+            targetIso: '2026-11-24T00:00:00-03:00',
+            shortDate: '24/11',
+            cardId: 'card-alert-traffic-review',
+            daysId: 'traffic-review-days',
+            titleId: 'traffic-review-title',
+            actionId: 'traffic-review-action',
+            defaultAction: 'Ver métricas do CMO',
+            defaultAccent: '#2563eb',
+            defaultBorder: '#3b82f6',
+            defaultBg: '#eff6ff',
+            tomorrowAction: 'Preparar análise no CMO',
+            dueAction: 'Reavaliar agora no CMO',
+            todayHtml: '<strong>🚨 Hoje é o dia da Reavaliação Estratégica!</strong> Janela de 14 dias concluída. Reavalie Google Ads, Meta Ads e Motor V6.1.',
+            overdueHtml: (daysAgo) => `<strong>⚠️ Reavaliação Estratégica Pendente (${daysAgo} dia${daysAgo > 1 ? 's' : ''} atrás):</strong> A janela encerrou em 24/11.`
+        });
+
+        updateScheduledAlert({
+            targetIso: '2026-11-30T00:00:00-03:00',
+            shortDate: '30/11',
+            cardId: 'card-alert-seo-review',
+            daysId: 'seo-review-days',
+            titleId: 'seo-review-title',
+            actionId: 'seo-review-action',
+            defaultAction: 'Acompanhar SEO no CMO',
+            defaultAccent: '#15803d',
+            defaultBorder: '#16a34a',
+            defaultBg: '#f0fdf4',
+            tomorrowAction: 'Preparar revisão no GSC',
+            dueAction: 'Revisar GSC & Blog agora',
+            todayHtml: '<strong>🚨 Hoje completa 14 dias dos ajustes de SEO!</strong> Puxe o Search Console, cheque indexação das perguntas e otimize títulos de menor CTR.',
+            overdueHtml: (daysAgo) => `<strong>⚠️ Revisão de SEO Pendente (${daysAgo} dia${daysAgo > 1 ? 's' : ''} atrás):</strong> Prazo de 14 dias pós-sitemap encerrou em 30/11.`
+        });
     }
 
     // Listas de IDs para animação de carregamento
@@ -658,7 +693,7 @@ window.initializePage = function() {
         }
 
         // Busca os dados imediatamente na primeira vez (com animação)
-        updateTrafficReviewAlert();
+        updateScheduledAlerts();
         fetchAndRenderStats(true);
         renderNewUsersChart();
         if(window.loadClicksChartData) window.loadClicksChartData();
