@@ -482,108 +482,184 @@ window.initializePage = function() {
                 tbody.appendChild(tr);
             });
             
-            // Plotar Gráfico Semanal (Mês atual vs Mês anterior)
+            // Plotar Gráfico Semanal (Últimos 6 meses comparativos com toggle de mostrar/ocultar)
             const weeklyCtx = document.getElementById('weeklyPaymentsChart');
             if (weeklyCtx && data.weeklyCashFlow) {
-                // Obter os 2 meses mais recentes (lembrando que cashFlow está ordenado do mais recente pro mais antigo)
-                if (cashFlow.length >= 2) {
-                    const currentMonthStr = cashFlow[0].monthYear; // ex: "2026-11"
-                    const previousMonthStr = cashFlow[1].monthYear; // ex: "2026-10"
-                    
-                    const currentData = data.weeklyCashFlow[currentMonthStr] || { 1:0, 2:0, 3:0, 4:0, 5:0 };
-                    const previousData = data.weeklyCashFlow[previousMonthStr] || { 1:0, 2:0, 3:0, 4:0, 5:0 };
-                    
-                    const [cYear, cMonth] = currentMonthStr.split('-');
-                    const [pYear, pMonth] = previousMonthStr.split('-');
+                const cashFlowMap = new Map();
+                cashFlow.forEach(item => {
+                    if (item && item.monthYear) cashFlowMap.set(item.monthYear, item);
+                });
 
-                    const currentTotal = cashFlow[0].count;
-                    const previousTotal = cashFlow[1].count;
+                // Gera os últimos 6 meses sequenciais em horário de Brasília (ou a partir do mês mais recente retornado)
+                const nowParts = new Intl.DateTimeFormat('en-CA', {
+                    timeZone: 'America/Sao_Paulo',
+                    year: 'numeric',
+                    month: '2-digit'
+                }).format(new Date()).split('-').map(Number);
+                let anchorYear = nowParts[0];
+                let anchorMonth = nowParts[1];
+                if (cashFlow[0]?.monthYear) {
+                    const [topY, topM] = cashFlow[0].monthYear.split('-').map(Number);
+                    if (topY > anchorYear || (topY === anchorYear && topM > anchorMonth)) {
+                        anchorYear = topY;
+                        anchorMonth = topM;
+                    }
+                }
 
-                    // Badges com totais consolidados no cabeçalho
-                    const badgesContainer = document.getElementById('weekly-chart-summary-badges');
-                    if (badgesContainer) {
-                        badgesContainer.innerHTML = `
-                            <span style="background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
-                                <span style="width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6;"></span>
-                                ${cMonth}/${cYear}: ${currentTotal} pagamentos total
-                            </span>
-                            <span style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-                                <span style="width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span>
-                                ${pMonth}/${pYear}: ${previousTotal} pagamentos total
-                            </span>
-                        `;
-                    }
-                    
-                    if (window.weeklyPaymentsChartInstance) {
-                        window.weeklyPaymentsChartInstance.destroy();
-                    }
-                    
-                    const gradient = weeklyCtx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-                    gradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)');
-                    gradient.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
-                    
-                    window.weeklyPaymentsChartInstance = new Chart(weeklyCtx, {
-                        type: 'line',
-                        data: {
-                            labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4', 'Semana 5'],
-                            datasets: [
-                                {
-                                    label: `Mês Atual (${cMonth}/${cYear}) — ${currentTotal} total`,
-                                    data: [currentData[1], currentData[2], currentData[3], currentData[4], currentData[5]],
-                                    borderColor: '#8b5cf6',
-                                    backgroundColor: gradient,
-                                    borderWidth: 3,
-                                    pointBackgroundColor: '#ffffff',
-                                    pointBorderColor: '#8b5cf6',
-                                    pointBorderWidth: 2,
-                                    pointRadius: 4,
-                                    pointHoverRadius: 6,
-                                    fill: true,
-                                    tension: 0.4
+                const lastSixMonths = [];
+                for (let offset = 0; offset < 6; offset++) {
+                    const d = new Date(anchorYear, (anchorMonth - 1) - offset, 1);
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const monthKey = `${y}-${m}`;
+                    const weeklyObj = data.weeklyCashFlow[monthKey] || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+                    const summaryObj = cashFlowMap.get(monthKey);
+                    const total = summaryObj
+                        ? Number(summaryObj.count || 0)
+                        : [1, 2, 3, 4, 5].reduce((acc, w) => acc + Number(weeklyObj[w] || 0), 0);
+                    lastSixMonths.push({
+                        monthKey,
+                        labelShort: `${m}/${y}`,
+                        total,
+                        weekly: [
+                            Number(weeklyObj[1] || 0),
+                            Number(weeklyObj[2] || 0),
+                            Number(weeklyObj[3] || 0),
+                            Number(weeklyObj[4] || 0),
+                            Number(weeklyObj[5] || 0)
+                        ]
+                    });
+                }
+
+                if (window.weeklyPaymentsChartInstance) {
+                    window.weeklyPaymentsChartInstance.destroy();
+                }
+
+                const gradient = weeklyCtx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(139, 92, 246, 0.35)');
+                gradient.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
+
+                const MONTH_PALETTE = [
+                    { border: '#8b5cf6', bg: '#f5f3ff', text: '#6d28d9', borderPill: '#ddd6fe', dash: [], width: 3, fill: true },
+                    { border: '#2563eb', bg: '#eff6ff', text: '#1d4ed8', borderPill: '#bfdbfe', dash: [6, 4], width: 2.2, fill: false },
+                    { border: '#10b981', bg: '#ecfdf5', text: '#047857', borderPill: '#a7f3d0', dash: [], width: 2.2, fill: false },
+                    { border: '#f59e0b', bg: '#fffbeb', text: '#b45309', borderPill: '#fde68a', dash: [4, 4], width: 2, fill: false },
+                    { border: '#ec4899', bg: '#fdf2f8', text: '#be185d', borderPill: '#fbcfe8', dash: [], width: 2, fill: false },
+                    { border: '#64748b', bg: '#f8fafc', text: '#475569', borderPill: '#cbd5e1', dash: [3, 3], width: 2, fill: false }
+                ];
+
+                const datasets = lastSixMonths.map((item, idx) => {
+                    const style = MONTH_PALETTE[idx % MONTH_PALETTE.length];
+                    const prefix = idx === 0 ? 'Mês Atual' : (idx === 1 ? 'Mês Anterior' : item.labelShort);
+                    const datasetLabel = idx <= 1
+                        ? `${prefix} (${item.labelShort}) — ${item.total} total`
+                        : `${item.labelShort} — ${item.total} total`;
+                    return {
+                        label: datasetLabel,
+                        data: item.weekly,
+                        borderColor: style.border,
+                        backgroundColor: style.fill ? gradient : 'transparent',
+                        borderWidth: style.width,
+                        borderDash: style.dash,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: style.border,
+                        pointBorderWidth: 2,
+                        pointRadius: idx === 0 ? 4.5 : 3.5,
+                        pointHoverRadius: 6,
+                        fill: style.fill,
+                        tension: 0.38
+                    };
+                });
+
+                const badgesContainer = document.getElementById('weekly-chart-summary-badges');
+                const syncBadgeButtonsState = () => {
+                    const chart = window.weeklyPaymentsChartInstance;
+                    if (!badgesContainer || !chart) return;
+                    badgesContainer.querySelectorAll('button[data-dataset-index]').forEach((btn) => {
+                        const idx = parseInt(btn.getAttribute('data-dataset-index'), 10);
+                        const style = MONTH_PALETTE[idx % MONTH_PALETTE.length];
+                        const isVisible = chart.isDatasetVisible(idx);
+                        btn.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
+                        btn.style.opacity = isVisible ? '1' : '0.45';
+                        btn.style.background = isVisible ? style.bg : '#f1f5f9';
+                        btn.style.color = isVisible ? style.text : '#64748b';
+                        btn.style.borderColor = isVisible ? style.borderPill : '#cbd5e1';
+                        btn.style.textDecoration = isVisible ? 'none' : 'line-through';
+                    });
+                };
+
+                window.weeklyPaymentsChartInstance = new Chart(weeklyCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4', 'Semana 5'],
+                        datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        layout: { padding: { left: 12, right: 12 } },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                onClick: function(e, legendItem, legend) {
+                                    const index = legendItem.datasetIndex;
+                                    const ci = legend.chart;
+                                    ci.setDatasetVisibility(index, !ci.isDatasetVisible(index));
+                                    ci.update();
+                                    syncBadgeButtonsState();
                                 },
-                                {
-                                    label: `Mês Anterior (${pMonth}/${pYear}) — ${previousTotal} total`,
-                                    data: [previousData[1], previousData[2], previousData[3], previousData[4], previousData[5]],
-                                    borderColor: '#94a3b8',
-                                    backgroundColor: 'transparent',
-                                    borderWidth: 2,
-                                    borderDash: [5, 5],
-                                    pointBackgroundColor: '#ffffff',
-                                    pointBorderColor: '#94a3b8',
-                                    pointBorderWidth: 2,
-                                    pointRadius: 4,
-                                    pointHoverRadius: 6,
-                                    fill: false,
-                                    tension: 0.4
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            interaction: { mode: 'index', intersect: false },
-                            layout: { padding: { left: 12, right: 12 } },
-                            plugins: {
-                                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter', size: 12 } } },
-                                tooltip: { 
-                                    backgroundColor: '#1f2937',
-                                    padding: 12,
-                                    titleFont: { size: 13, family: 'Inter' },
-                                    bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
-                                    callbacks: {
-                                        label: function(context) {
-                                            const label = context.dataset.label ? context.dataset.label.split(' — ')[0] : '';
-                                            return ` ${label}: ${context.parsed.y} pagamentos nesta semana`;
-                                        }
+                                labels: { usePointStyle: true, boxWidth: 8, padding: 14, font: { family: 'Inter', size: 12 } }
+                            },
+                            tooltip: {
+                                backgroundColor: '#1f2937',
+                                padding: 12,
+                                titleFont: { size: 13, family: 'Inter' },
+                                bodyFont: { size: 13, family: 'Inter', weight: 'bold' },
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.dataset.label ? context.dataset.label.split(' — ')[0] : '';
+                                        return ` ${label}: ${context.parsed.y} pagamentos nesta semana`;
                                     }
                                 }
-                            },
-                            scales: {
-                                x: { grid: { display: false } },
-                                y: { grid: { color: '#f1f5f9' }, border: { display: false }, beginAtZero: true, ticks: { stepSize: 1 } }
                             }
+                        },
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { grid: { color: '#f1f5f9' }, border: { display: false }, beginAtZero: true, ticks: { stepSize: 1 } }
                         }
+                    }
+                });
+
+                if (badgesContainer) {
+                    while (badgesContainer.firstChild) badgesContainer.removeChild(badgesContainer.firstChild);
+                    lastSixMonths.forEach((item, idx) => {
+                        const style = MONTH_PALETTE[idx % MONTH_PALETTE.length];
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.setAttribute('data-dataset-index', String(idx));
+                        btn.setAttribute('aria-pressed', 'true');
+                        btn.title = `Clique para ocultar ou mostrar ${item.labelShort}`;
+                        btn.style.cssText = `background: ${style.bg}; color: ${style.text}; border: 1px solid ${style.borderPill}; padding: 5px 11px; border-radius: 999px; font-size: 0.78rem; font-weight: ${idx === 0 ? '700' : '600'}; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.15s ease;`;
+
+                        const dot = document.createElement('span');
+                        dot.style.cssText = `width: 8px; height: 8px; border-radius: 50%; background: ${style.border}; flex-shrink: 0;`;
+
+                        const txt = document.createElement('span');
+                        txt.textContent = `${item.labelShort}: ${item.total} pag.`;
+
+                        btn.appendChild(dot);
+                        btn.appendChild(txt);
+                        btn.addEventListener('click', () => {
+                            const chart = window.weeklyPaymentsChartInstance;
+                            if (!chart) return;
+                            chart.setDatasetVisibility(idx, !chart.isDatasetVisible(idx));
+                            chart.update();
+                            syncBadgeButtonsState();
+                        });
+                        badgesContainer.appendChild(btn);
                     });
+                    syncBadgeButtonsState();
                 }
             }
             
