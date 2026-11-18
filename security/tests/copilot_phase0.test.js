@@ -2,9 +2,18 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const Module = require('module');
-const express = require('../../backend/node_modules/express');
-const request = require('../../backend/node_modules/supertest');
-const { JSDOM } = require('../../backend/node_modules/jsdom');
+
+function reqDep(name) {
+    try {
+        return require(name);
+    } catch (_) {
+        return require(path.resolve(__dirname, '../../backend/node_modules', name));
+    }
+}
+
+const express = reqDep('express');
+const request = reqDep('supertest');
+const { JSDOM } = reqDep('jsdom');
 
 console.log('🧪 INICIANDO SUÍTE DE REGRESSÃO YELO COPILOT — FASE 0.1 HARDENING');
 console.log('==================================================================');
