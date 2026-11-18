@@ -253,6 +253,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const adminNameEl = document.querySelector('.nome-admin');
             if (adminNameEl) adminNameEl.textContent = admin.nome;
 
+            if (window.YeloDevRoleSwitcher && typeof window.YeloDevRoleSwitcher.initAdminUI === 'function') {
+                window.YeloDevRoleSwitcher.initAdminUI(admin);
+            }
+
             // Atualiza as fotos de avatar se o admin tiver uma foto salva
             if (admin.fotoUrl) {
                 const sidebarPhoto = document.getElementById('admin-sidebar-photo');

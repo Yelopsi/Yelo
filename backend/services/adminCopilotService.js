@@ -1,408 +1,805 @@
 // backend/services/adminCopilotService.js
+const crypto = require('crypto');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../models');
 const { formatForWhatsApp } = require('../utils/whatsappFormatter');
+const { sanitizeObject } = require('../utils/logger');
+const promoCouponService = require('./promoCouponService');
+const PsychologistContextService = require('./psychologistContextService');
+const { PROMPT_VERSION, getResponseSchema, CopilotPromptBuilder } = require('./copilotPromptBuilder');
+const CopilotOutputGuard = require('./copilotOutputGuard');
+const CopilotMemoryService = require('./copilotMemoryService');
 
-const NICKNAMES = {
-    'fred': 'frederico',
-    'leo': 'leonardo',
-    'ze': 'jose',
-    'bia': 'beatriz',
-    'dani': 'daniela',
-    'lu': 'luciana',
-    'beto': 'roberto',
-    'chico': 'francisco',
-    'manu': 'manuela',
-    'gabi': 'gabriela',
-    'theo': 'teodoro',
-    'cadu': 'carlos',
-    'gui': 'guilherme',
-    'rafa': 'rafael'
-};
+const SYSTEM_NOTICE_PATTERNS = [
+    /^mensagens e chamadas são protegidas pela criptografia/i,
+    /^messages and calls are end-to-end encrypted/i,
+    /^hoje$/i,
+    /^ontem$/i,
+    /^você criou (o|este) grupo/i,
+    /^encaminhada(?:\s+com\s+frequência)?$/i,
+    /^forwarded(?:\s+many\s+times)?$/i,
+    /^ligação de (voz|vídeo)/i
+];
+
+const DELETED_MSG_REGEX = /^(?:esta mensagem foi apagada|mensagem apagada|você apagou esta mensagem|this message was deleted)$/i;
+const EDITED_SUFFIX_REGEX = /\s*(?:<mensagem editada>|\(mensagem editada\)|<edited>|esta mensagem foi editada\.?)\s*$/i;
+const OMITTED_MEDIA_REGEX = /^<?\s*(?:m[ií]dia|imagem|foto|[áa]udio|v[ií]deo|figurinha|sticker|documento|gif|contato)\s+(?:oculta|ocultado|ocultada|omitido|omitida)\s*>?$/i;
+
+const NON_SENDER_LABELS = new Set([
+    'pix', 'crp', 'cpf', 'cnpj', 'cep', 'rg', 'email', 'e-mail', 'tel', 'telefone', 'celular',
+    'whatsapp', 'wpp', 'valor', 'sessao', 'sessão', 'horario', 'horário', 'data', 'obs',
+    'observacao', 'observação', 'link', 'link do perfil', 'perfil', 'chave', 'agencia',
+    'agência', 'conta', 'banco', 'plano', 'status', 'resumo', 'assunto', 'paciente',
+    'protocolo', 'atendimento', 'vencimento', 'fatura', 'endereco', 'endereço', 'http', 'https'
+]);
+
+const ADMIN_KEYWORDS = ['anderson', 'anderson costa', 'você', 'voce', 'eu', 'suporte', 'yelo', 'atendimento', 'desconhecido'];
+
+// Cache em memória limitado (não persiste entre restarts/instâncias)
+const failedModelsCache = new Map();
+let settingsCache = { data: null, expiresAt: 0 };
 
 class AdminCopilotService {
+    static formatDateBRT(dateInput) {
+        return PsychologistContextService.formatDateBRT(dateInput);
+    }
+
+    static formatPlanDisplayName(rawPlano) {
+        return PsychologistContextService.formatPlanDisplayName(rawPlano);
+    }
+
+    static computeSubscriptionSummary(psy, extras = {}) {
+        return PsychologistContextService.computeSubscriptionSummary(psy, extras);
+    }
+
+    static computeMessageHashes(parsedMessages = []) {
+        return PsychologistContextService.computeMessageHashes(parsedMessages);
+    }
+
+    static async logTelemetry(level, message, meta = {}) {
+        try {
+            if (db.SystemLog && typeof db.SystemLog.create === 'function') {
+                await db.SystemLog.create({
+                    level: level || 'info',
+                    message: String(message || '').slice(0, 500),
+                    meta: sanitizeObject(meta)
+                });
+            }
+        } catch (logErr) {
+            console.warn('[AdminCopilotService] Falha ao gravar SystemLog:', logErr.message);
+        }
+    }
+
     /**
-     * Extrai o interlocutor que NÃO seja o Anderson do chat colado do WhatsApp
+     * Consulta preços vigentes sem usar valores históricos hardcoded como fallback silencioso.
+     * Se SystemSettings estiver indisponível ou zerado (0.00), sinaliza explicitamente indisponibilidade.
+     */
+    static async getCommercialPricing(psi = null) {
+        const now = Date.now();
+        let settingsResult = null;
+        let readFailed = false;
+
+        if (settingsCache.data && settingsCache.expiresAt > now) {
+            settingsResult = settingsCache.data;
+        } else {
+            try {
+                if (db.SystemSetting && typeof db.SystemSetting.findOne === 'function') {
+                    const s = await db.SystemSetting.findOne();
+                    if (s) {
+                        const ess = Number(s.price_Essencial || 0);
+                        const cli = Number(s['price_Clínico'] || s.price_Clinico || 0);
+                        const ref = Number(s.price_sol || 0);
+                        settingsResult = {
+                            priceEssencial: ess > 0 ? ess : null,
+                            priceClinico: cli > 0 ? cli : null,
+                            priceReferencia: ref > 0 ? ref : null
+                        };
+                        settingsCache = { data: settingsResult, expiresAt: now + 15 * 60 * 1000 };
+                    }
+                }
+            } catch (err) {
+                readFailed = true;
+                console.warn('[AdminCopilotService] Falha ao ler SystemSettings:', err.message);
+            }
+        }
+
+        let activeOffer = null;
+        if (psi && psi.id && psi.email) {
+            try {
+                const offer = await promoCouponService.getActiveOfferForPsychologist(psi, psi.plano || 'ESSENTIAL');
+                if (offer && offer.eligible) {
+                    activeOffer = {
+                        code: offer.code,
+                        title: offer.title,
+                        chargeToday: offer.chargeToday,
+                        renewalValue: offer.renewalValue
+                    };
+                }
+            } catch (_) {
+                // Silencioso caso modelo de Payment/SystemLog não esteja disponível em teste unitário isolado
+            }
+        }
+
+        const hasPositiveSettings = Boolean(settingsResult && settingsResult.priceEssencial);
+        return {
+            available: hasPositiveSettings,
+            readFailed,
+            source: hasPositiveSettings ? 'SystemSettings' : 'unavailable',
+            priceEssencial: settingsResult?.priceEssencial || null,
+            priceClinico: settingsResult?.priceClinico || null,
+            priceReferencia: settingsResult?.priceReferencia || null,
+            activeOffer,
+            unavailableNote: hasPositiveSettings
+                ? null
+                : (readFailed
+                    ? 'Tabela de preços (SystemSettings) indisponível por falha de leitura no banco; NÃO invente nem cite valor fixo de plano.'
+                    : 'Preços padrão não configurados em SystemSettings (0,00); caso não conste valor na assinatura do profissional, não afirme preço fixo sem confirmação de Anderson.')
+        };
+    }
+
+    /**
+     * Parser resiliente aos formatos reais do WhatsApp Brasil (iPhone, Android, WPP Web),
+     * espaços não separáveis, marcas Unicode invisíveis, emojis em nomes, multilinha, editadas,
+     * apagadas, encaminhadas e mídias omitidas.
      */
     static parsePastedChat(rawChat) {
-        if (!rawChat || typeof rawChat !== 'string') return { detectedSender: null, messages: [] };
+        if (!rawChat || typeof rawChat !== 'string') {
+            return {
+                detectedSender: null,
+                cleanName: null,
+                detectedPhone: null,
+                candidateSenders: [],
+                hasForwardedContent: false,
+                parsedMessages: []
+            };
+        }
 
-        // Sanitiza caracteres invisíveis LTR/RTL e BOM do WhatsApp (muito comuns no mobile iOS/Android)
-        const cleanRaw = rawChat.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '');
+        // Remove marcas bidirecionais/invisíveis e converte NBSP / narrow NBSP em espaço normal
+        const cleanRaw = rawChat
+            .replace(/[\u200e\u200f\u202a-\u202e\ufeff\u200b-\u200d]/g, '')
+            .replace(/[\u00a0\u202f]/g, ' ');
 
-        const lines = cleanRaw.split('\n');
-        const senders = new Set();
+        const lines = cleanRaw.split(/\r?\n/);
+        const senders = [];
+        const senderSet = new Set();
         const parsedMessages = [];
+        let hasForwardedContent = false;
 
-        // Padrões de export/cópia do WhatsApp no Brasil e internacional:
-        // [16/09/26, 09:56:49] ~Psicóloga Thamiris Borges: ...
-        // [16/09/2026 09:56:49] Anderson Costa: ...
-        // [16/09/2026, 9:56:49 AM] Psicóloga Thamiris: ...
-        // 16/09/2026, 09:56 - ~Psicóloga Thamiris Borges: ...
-        // 16/09/2026 09:56 - Psicóloga Thamiris: ...
-        // 16/09/2026 09:56:49: Psicóloga Thamiris: ...
-        const headerRegex = /^(?:\[(?:\d{1,4}[\/\.-]\d{1,2}[\/\.-]\d{2,4}),?\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?\]|(?:\d{1,4}[\/\.-]\d{1,2}[\/\.-]\d{2,4}),?\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?\s*(?:[-–—]|:))\s*(?:~|~\s*)?([^:]+):\s*(.*)$/i;
+        const dateFirstBracket = /^\[(\d{1,4}[\/\.-]\d{1,2}(?:[\/\.-]\d{2,4})?,?\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?)\]\s*(?:~|~\s*)?([^:\n]+):\s*(.*)$/;
+        const timeFirstBracket = /^\[(\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?,?\s+\d{1,2}[\/\.-]\d{1,2}(?:[\/\.-]\d{2,4})?)\]\s*(?:~|~\s*)?([^:\n]+):\s*(.*)$/;
+        const dateFirstDash = /^(\d{1,4}[\/\.-]\d{1,2}(?:[\/\.-]\d{2,4})?,?\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?)\s*(?:[-–—]|:)\s*(?:~|~\s*)?([^:\n]+):\s*(.*)$/;
+        const timeFirstDash = /^(\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?,?\s+\d{1,2}[\/\.-]\d{1,2}(?:[\/\.-]\d{2,4})?)\s*(?:[-–—]|:)\s*(?:~|~\s*)?([^:\n]+):\s*(.*)$/;
+
+        const headerPatterns = [dateFirstBracket, timeFirstBracket, dateFirstDash, timeFirstDash];
+
+        const addSender = (s) => {
+            if (!senderSet.has(s)) {
+                senderSet.add(s);
+                senders.push(s);
+            }
+        };
+
+        const normalizeMessageContent = (txt) => {
+            let cleaned = String(txt || '').replace(EDITED_SUFFIX_REGEX, '').trim();
+            const wasEdited = cleaned !== String(txt || '').trim();
+
+            if (DELETED_MSG_REGEX.test(cleaned)) {
+                return { content: '[mensagem apagada no WhatsApp]', omittedMedia: false, deletedMessage: true, wasEdited };
+            }
+            if (OMITTED_MEDIA_REGEX.test(cleaned)) {
+                return { content: '[mídia omitida no WhatsApp]', omittedMedia: true, deletedMessage: false, wasEdited };
+            }
+            return { content: cleaned, omittedMedia: false, deletedMessage: false, wasEdited };
+        };
 
         for (const rawLine of lines) {
             const line = rawLine.trim();
             if (!line) continue;
 
-            const match = line.match(headerRegex);
-            if (match) {
-                const sender = match[1].trim();
-                const content = match[2].trim();
-                senders.add(sender);
-                parsedMessages.push({ sender, content });
+            if (/^(?:encaminhada(?:\s+com\s+frequência)?|forwarded(?:\s+many\s+times)?)$/i.test(line)) {
+                hasForwardedContent = true;
+                continue;
+            }
+            if (SYSTEM_NOTICE_PATTERNS.some(re => re.test(line))) continue;
+
+            // Citação com '>' nunca inicia cabeçalho de remetente real
+            if (line.startsWith('>')) {
+                hasForwardedContent = true;
+                if (parsedMessages.length > 0) {
+                    parsedMessages[parsedMessages.length - 1].content += '\n' + line;
+                }
+                continue;
+            }
+
+            let matched = null;
+            for (const re of headerPatterns) {
+                const m = line.match(re);
+                if (m) {
+                    matched = m;
+                    break;
+                }
+            }
+
+            if (matched) {
+                const timestamp = matched[1].trim();
+                const sender = matched[2].trim();
+                const info = normalizeMessageContent(matched[3]);
+                addSender(sender);
+                parsedMessages.push({
+                    timestamp,
+                    sender,
+                    content: info.content,
+                    omittedMedia: info.omittedMedia,
+                    deletedMessage: info.deletedMessage,
+                    wasEdited: info.wasEdited
+                });
             } else if (parsedMessages.length > 0) {
-                // Continuação de mensagem anterior de múltiplas linhas
-                parsedMessages[parsedMessages.length - 1].content += '\n' + line;
+                const last = parsedMessages[parsedMessages.length - 1];
+                const info = normalizeMessageContent(line);
+                last.content = last.content ? `${last.content}\n${info.content}` : info.content;
+                if (info.omittedMedia) last.omittedMedia = true;
             }
         }
 
-        // Se nenhum padrão de data/hora deu match, tenta formato simples "Nome: Mensagem"
+        // Fallback para formato simples "Nome: Mensagem", sem capturar URLs, rótulos ou headers citados
         if (parsedMessages.length === 0 && lines.length > 0) {
             const simpleRegex = /^([^:\n]{2,40}):\s*(.+)$/;
             for (const rawLine of lines) {
                 const line = rawLine.trim();
                 if (!line) continue;
+                if (SYSTEM_NOTICE_PATTERNS.some(re => re.test(line))) continue;
+                if (line.startsWith('>') || /https?:\/\/|www\./i.test(line)) {
+                    if (parsedMessages.length > 0) {
+                        parsedMessages[parsedMessages.length - 1].content += '\n' + line;
+                    }
+                    continue;
+                }
+
                 const m = line.match(simpleRegex);
                 if (m) {
-                    const sender = m[1].trim();
-                    const content = m[2].trim();
-                    senders.add(sender);
-                    parsedMessages.push({ sender, content });
-                } else if (parsedMessages.length > 0) {
+                    const candidateLabel = m[1].trim();
+                    const normalizedLabel = candidateLabel.toLowerCase().replace(/^~+/, '').trim();
+                    const startsLikeBracketOrNumber = /^[\[\d\-\+\(\*]/.test(candidateLabel);
+                    const isKnownLabel = NON_SENDER_LABELS.has(normalizedLabel) || normalizedLabel.includes('link ');
+
+                    if (!startsLikeBracketOrNumber && !isKnownLabel) {
+                        const info = normalizeMessageContent(m[2]);
+                        addSender(candidateLabel);
+                        parsedMessages.push({
+                            timestamp: null,
+                            sender: candidateLabel,
+                            content: info.content,
+                            omittedMedia: info.omittedMedia,
+                            deletedMessage: info.deletedMessage,
+                            wasEdited: info.wasEdited
+                        });
+                        continue;
+                    }
+                }
+                if (parsedMessages.length > 0) {
                     parsedMessages[parsedMessages.length - 1].content += '\n' + line;
                 }
             }
         }
 
-        // Se ainda não tiver mensagens identificadas, considera todo o texto como uma mensagem
         if (parsedMessages.length === 0 && cleanRaw.trim()) {
-            parsedMessages.push({ sender: 'Desconhecido', content: cleanRaw.trim() });
+            parsedMessages.push({
+                timestamp: null,
+                sender: 'Desconhecido',
+                content: cleanRaw.trim(),
+                omittedMedia: false,
+                deletedMessage: false,
+                wasEdited: false
+            });
         }
 
-        // Filtra para achar o contato que NÃO é o Anderson
-        const adminKeywords = ['anderson', 'anderson costa', 'você', 'voce', 'eu', 'suporte', 'yelo', 'atendimento'];
-        let candidate = null;
-
-        for (const s of senders) {
-            const lower = s.toLowerCase();
-            const isAdmin = adminKeywords.some(kw => lower === kw || lower.startsWith('anderson'));
-            if (!isAdmin) {
-                candidate = s;
-                break;
+        const extractSenderInfo = (rawSender) => {
+            const stripped = rawSender.replace(/^~+/, '').trim();
+            const digitsOnly = stripped.replace(/\D/g, '');
+            const nonPhoneText = stripped.replace(/[\d\s\+\-\(\)\.]/g, '');
+            if (digitsOnly.length >= 8 && nonPhoneText.length === 0) {
+                return { rawSender, cleanName: null, phone: digitsOnly };
             }
-        }
-
-        // Limpeza do nome do candidato
-        let cleanName = null;
-        if (candidate) {
-            cleanName = candidate
-                .replace(/^~+/, '')
+            const nameCleaned = stripped
                 .replace(/^(Psic[oó]log[ao]|Psi|Dr|Dra|Prof)\.?\s+/i, '')
-                .replace(/[^\w\sÀ-ÿ]/gi, '')
+                .replace(/[^\w\sÀ-ÿ]/gi, ' ')
+                .replace(/\s+/g, ' ')
                 .trim();
-        }
+            return {
+                rawSender,
+                cleanName: (nameCleaned && /[a-zA-ZÀ-ÿ]/.test(nameCleaned)) ? nameCleaned : null,
+                phone: null
+            };
+        };
+
+        const nonAdminSenders = senders.filter((s) => {
+            const lower = s.replace(/^~+/, '').trim().toLowerCase();
+            return !ADMIN_KEYWORDS.some(kw => lower === kw || lower.startsWith('anderson'));
+        });
+
+        const candidateSenders = nonAdminSenders.map(extractSenderInfo);
+        const primary = candidateSenders[0] || null;
 
         return {
-            detectedSender: candidate,
-            cleanName,
+            detectedSender: primary ? primary.rawSender : null,
+            cleanName: primary ? primary.cleanName : null,
+            detectedPhone: primary ? primary.phone : null,
+            candidateSenders,
+            hasForwardedContent,
             parsedMessages
         };
     }
 
-    /**
-     * Localiza o psicólogo no banco de dados com tolerância a apelidos, buscas parciais,
-     * suporte a tokens do WhatsAppClickLogs (magic-feedback) e insensibilidade a acentos.
-     */
-    static async findPsychologist(cleanName, rawChat) {
-        if (!cleanName && !rawChat) return null;
-        const cleanRaw = rawChat ? rawChat.replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '') : '';
+    static async _queryPsychologistsByName(nameStr) {
+        return PsychologistContextService._queryPsychologistsByName(nameStr);
+    }
 
-        // 1. Extração por token de feedback no chat (ex: magic-feedback?token=uuid) - 100% determinístico
-        if (rawChat) {
-            const tokenMatch = rawChat.match(/(?:token=|\/magic-feedback\?token=)([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
-            if (tokenMatch) {
-                const token = tokenMatch[1];
-                try {
-                    const [clickRows] = await db.sequelize.query(`
-                        SELECT p.id, p.nome, p.email, p.telefone, p.status, p.plano, p."planExpiresAt", p."whatsapp_clicks", p."profile_appearances", p."slug", p."fotoUrl", p."crp"
-                        FROM "WhatsAppClickLogs" w
-                        JOIN "Psychologists" p ON p.id = w."psychologistId"
-                        WHERE w."feedbackToken" = :token
-                        LIMIT 1;
-                    `, { replacements: { token } });
+    static async _queryPsychologistsByPhone(digits) {
+        return PsychologistContextService._queryPsychologistsByPhone(digits);
+    }
 
-                    if (clickRows && clickRows.length > 0) return clickRows[0];
-                } catch (tokErr) {
-                    console.warn("[AdminCopilotService] Erro ao buscar por token:", tokErr.message);
-                }
-            }
-        }
+    static async findPsychologist(cleanName, rawChat, parsedMeta = {}) {
+        return PsychologistContextService.resolveIdentity(cleanName, rawChat, parsedMeta);
+    }
 
-        // 2. Extração por telefone detectado no chat
-        if (rawChat) {
-            const phoneMatch = rawChat.match(/(?:\+?55\s?)?(?:\(?\d{2}\)?\s?)?(?:9\d{4}[-\s]?\d{4}|\d{4}[-\s]?\d{4})/);
-            if (phoneMatch) {
-                const digits = phoneMatch[0].replace(/\D/g, '');
-                if (digits.length >= 8) {
-                    try {
-                        const [phoneMatches] = await db.sequelize.query(`
-                            SELECT id, nome, email, telefone, status, plano, "planExpiresAt", "whatsapp_clicks", "profile_appearances", "slug", "fotoUrl", "crp"
-                            FROM "Psychologists"
-                            WHERE telefone LIKE :query
-                            ORDER BY (CASE WHEN status = 'active' THEN 1 ELSE 0 END) DESC, id DESC
-                            LIMIT 1;
-                        `, { replacements: { query: `%${digits.slice(-8)}%` } });
-
-                        if (phoneMatches && phoneMatches.length > 0) return phoneMatches[0];
-                    } catch (phoneErr) {
-                        console.warn("[AdminCopilotService] Erro ao buscar por telefone:", phoneErr.message);
-                    }
-                }
-            }
-        }
-
-        // 3. Busca por nome com desacentuação nativa e tolerância a apelidos
-        if (cleanName) {
-            const norm = cleanName
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
-                .replace(/[^a-z0-9\s]/g, ' ')
-                .trim();
-
-            const stopWords = new Set(['de', 'da', 'do', 'dos', 'das', 'e', 'psi', 'dr', 'dra']);
-            const rawWords = norm.split(/\s+/).filter(w => w.length >= 2 && !stopWords.has(w));
-            const words = rawWords.map(w => NICKNAMES[w] || w);
-
-            // Função translate no PostgreSQL para desacentuar a coluna nome sem requerer extensões
-            const normCol = "translate(lower(nome), 'áàâãäéèêëíìîïóòôõöúùûüçñ', 'aaaaaeeeeiiiiooooouuuucn')";
-
-            try {
-                if (words.length >= 2) {
-                    // Todos os termos principais devem existir no nome do profissional
-                    const whereClauses = words.map((_, i) => `${normCol} LIKE :w${i}`).join(' AND ');
-                    const replacements = {};
-                    words.forEach((w, i) => { replacements[`w${i}`] = `%${w}%`; });
-
-                    const [rows] = await db.sequelize.query(`
-                        SELECT id, nome, email, telefone, status, plano, "planExpiresAt", "whatsapp_clicks", "profile_appearances", "slug", "fotoUrl", "crp"
-                        FROM "Psychologists"
-                        WHERE ${whereClauses}
-                        ORDER BY (CASE WHEN status = 'active' THEN 1 ELSE 0 END) DESC, id DESC
-                        LIMIT 1;
-                    `, { replacements });
-
-                    if (rows && rows.length > 0) return rows[0];
-                } else if (words.length === 1) {
-                    // Termo único (ex: 'Thamiris' ou 'Frederico')
-                    const [rows] = await db.sequelize.query(`
-                        SELECT id, nome, email, telefone, status, plano, "planExpiresAt", "whatsapp_clicks", "profile_appearances", "slug", "fotoUrl", "crp"
-                        FROM "Psychologists"
-                        WHERE ${normCol} LIKE :w
-                        ORDER BY (CASE WHEN status = 'active' THEN 1 ELSE 0 END) DESC, id DESC
-                        LIMIT 1;
-                    `, { replacements: { w: `%${words[0]}%` } });
-
-                    if (rows && rows.length > 0) return rows[0];
-                }
-            } catch (nameErr) {
-                console.warn("[AdminCopilotService] Erro ao buscar por nome desacentuado:", nameErr.message);
-            }
-        }
-
-        return null;
+    static async buildDossier(targetInput, options = {}) {
+        return PsychologistContextService.buildDossier(targetInput, options);
     }
 
     /**
-     * Constrói o dossiê 360º de inteligência do psicólogo
+     * Limita transcrições extensas (ex.: exportação .txt do WhatsApp) mantendo os turnos mais recentes
+     * para reduzir custo de tokens sem perder o contexto imediato do atendimento.
      */
-    static async buildDossier(psychologistId) {
-        if (!psychologistId) return null;
-
-        const [psis] = await db.sequelize.query(`
-            SELECT 
-                id, nome, crp, email, telefone, slug, "fotoUrl", plano, status,
-                "planExpiresAt", "subscriptionId", "subscription_payments_count", "is_exempt",
-                "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "modalidade",
-                cidade, estado, bio, temas_atuacao, abordagens_tecnicas, free_session_active,
-                "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "createdAt"
-            FROM "Psychologists"
-            WHERE id = :id;
-        `, { replacements: { id: psychologistId } });
-
-        if (!psis || psis.length === 0) return null;
-        const psi = psis[0];
-
-        // 1. Leads e Fechamentos do WhatsApp (dealClosed é varchar no Postgres)
-        const [wppStats] = await db.sequelize.query(`
-            SELECT 
-                COUNT(*) as total_clicks,
-                COUNT(*) FILTER (WHERE "dealClosed" IN ('yes', 'started', 'true')) as deals_closed,
-                COUNT(*) FILTER (WHERE status = 'negotiating') as in_negotiation,
-                COUNT(*) FILTER (WHERE "contactReceived" = true) as contacts_received
-            FROM "WhatsAppClickLogs"
-            WHERE "psychologistId" = :id;
-        `, { replacements: { id: psychologistId } }).catch(err => {
-            console.warn("[AdminCopilotService] Erro wppStats:", err.message);
-            return [[{ total_clicks: 0, deals_closed: 0, in_negotiation: 0, contacts_received: 0 }]];
-        });
-
-        // 2. Artigos / Posts publicados no blog
-        const [topPosts] = await db.sequelize.query(`
-            SELECT id, titulo, curtidas, created_at
-            FROM "posts"
-            WHERE "psychologist_id" = :id
-            ORDER BY curtidas DESC
-            LIMIT 3;
-        `, { replacements: { id: psychologistId } }).catch(() => [[]]);
-
-        const [postCount] = await db.sequelize.query(`
-            SELECT COUNT(*) as total FROM "posts" WHERE "psychologist_id" = :id;
-        `, { replacements: { id: psychologistId } }).catch(() => [[{ total: 0 }]]);
-
-        // 3. Conversas anteriores no Copilot
-        let pastConversations = [];
-        try {
-            const [past] = await db.sequelize.query(`
-                SELECT "detectedName", "aiResponse", "createdAt"
-                FROM "AdminCopilotConversations"
-                WHERE "psychologistId" = :id
-                ORDER BY "createdAt" DESC
-                LIMIT 2;
-            `, { replacements: { id: psychologistId } });
-            pastConversations = past || [];
-        } catch (e) {}
-
+    static windowTranscriptForLLM(sanitizedText, maxChars = 6000) {
+        if (!sanitizedText || typeof sanitizedText !== 'string') {
+            return { text: '', wasTruncated: false, omittedChars: 0 };
+        }
+        if (sanitizedText.length <= maxChars) {
+            return { text: sanitizedText, wasTruncated: false, omittedChars: 0 };
+        }
+        const tail = sanitizedText.slice(-maxChars);
+        const firstNewline = tail.indexOf('\n');
+        const cleanTail = firstNewline > 0 && firstNewline < 240 ? tail.slice(firstNewline + 1) : tail;
+        const omittedChars = sanitizedText.length - cleanTail.length;
         return {
-            profile: psi,
-            stats: wppStats[0] || {},
-            posts: {
-                total: parseInt(postCount[0]?.total || 0, 10),
-                top: topPosts || []
-            },
-            pastConversations
+            text: `[${omittedChars} caracteres anteriores omitidos para economia de tokens]\n${cleanTail}`,
+            wasTruncated: true,
+            omittedChars
         };
     }
 
     /**
-     * Gera a resposta com Gemini seguindo rigorosamente a persona do Anderson Costa
+     * Abordagem conservadora de privacidade pré-LLM (Fase 0.1):
+     * - Redige identificadores detectáveis (CPF, CNPJ, RG, e-mail, tokens, chaves PIX, endereços, telefones terceiros e nomes explícitos de pacientes).
+     * - BLOQUEIA (HTTP 422) conteúdo com credenciais/segredos ou informação clínica sensível associada a identificadores que não podem ser garantidamente anonimizados por regex.
+     * Limitação explícita: expressões regulares não garantem anonimização completa de texto livre; bloqueios exigem revisão e limpeza manual pelo administrador antes do reenvio.
      */
-    static async generateResponse({ pastedChat, dossier, tone = 'natural' }) {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) throw new Error("GEMINI_API_KEY não configurada no servidor.");
+    static sanitizeChatForLLM(rawChat, options = {}) {
+        if (!rawChat || typeof rawChat !== 'string') {
+            return { sanitizedText: '', blocked: false, hadRedactions: false };
+        }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const CANDIDATE_MODELS = [
-            "gemini-3.5-flash-lite",
-            "gemini-3.1-flash-lite"
+        // 1. Bloqueio estrito para credenciais / chaves / connection strings / JWT
+        const secretPatterns = [
+            /-----BEGIN [A-Z ]*PRIVATE KEY-----/i,
+            /postgres(?:ql)?:\/\/[^\s'"]+/i,
+            /\b(?:sk_live|sk_test|rk_live|AIza)[A-Za-z0-9_-]{16,}\b/,
+            /\bBearer\s+[A-Za-z0-9\-._~+\/]+=*/i,
+            /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/
         ];
 
-        let contextBlock = "Nenhum psicólogo específico identificado automaticamente no banco de dados.";
-        let pastContext = "";
+        for (const pat of secretPatterns) {
+            if (pat.test(rawChat)) {
+                const err = new Error('Conteúdo bloqueado antes do envio à IA externa: credenciais, tokens ou chaves privadas detectadas. Remova essas informações e tente novamente.');
+                err.statusCode = 422;
+                err.isPrivacyBlock = true;
+                throw err;
+            }
+        }
+
+        // 2. Bloqueio conservador para conteúdo clínico sensível associado a identificador / contexto de paciente
+        const clinicalDocHeader = /(?:prontu[aá]rio|anamnese|laudo psicol[oó]gico|cid[-\s]*10|ficha cl[ií]nica|evolu[cç][aã]o cl[ií]nica)\s*:/i.test(rawChat);
+        const severeClinicalTerms = /(?:idea[cç][aã]o suicida|suic[ií]dio|tentativa de suic[ií]dio|automutila[cç][aã]o|abuso sexual|viol[eê]ncia dom[eé]stica|esquizofrenia|transtorno bipolar|borderline|psicose|depress[aã]o grave|surto psic[oó]tico)/i.test(rawChat);
+        const medicationTerms = /\b(?:fluoxetina|sertralina|escitalopram|citalopram|venlafaxina|desvenlafaxina|rivotril|clonazepam|alprazolam|diazepam|lorazepam|zolpidem|quetiapina|risperidona|olanzapina|haloperidol|l[ií]tio|carbonato de l[ií]tio|bupropiona|amitriptilina|duloxetina)\b/i.test(rawChat);
+        const clinicalWordWithPerson = /(?:paciente|atendendo um|atendendo uma|caso d[eao]|diagn[oó]stico d[eao]|laudo d[eao]|medica[cç][aã]o d[eao]|toma(?:ndo)?\s+(?:fluoxetina|sertralina|rivotril|clonazepam|l[ií]tio|quetiapina|escitalopram|zolpidem|alprazolam))\b/i.test(rawChat);
+
+        // Nome próprio composto (ex.: "Maria Clara Oliveira") fora dos prefixos de cabeçalho [data] Nome:
+        const bodyWithoutHeaders = rawChat
+            .split(/\r?\n/)
+            .map(l => l.replace(/^(?:\[[^\]]+\]\s*|[\d\/,\s:-]+[-–—]\s*)?(?:~|~\s*)?[^:\n]{2,45}:\s*/, ''))
+            .join('\n');
+        const hasPersonFullNameInBody = /\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-zà-ú]{2,}\s+(?:(?:da|de|do|dos|das)\s+)?[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-zà-ú]{2,}\b/.test(bodyWithoutHeaders);
+        const hasSensitiveId = /\b\d{3}\.\d{3}\.\d{3}-\d{2}\b|\bRG\s*:?\s*[\d.\-X]{5,}/i.test(rawChat);
+
+        if (clinicalDocHeader || ((severeClinicalTerms || medicationTerms) && (hasPersonFullNameInBody || hasSensitiveId || clinicalWordWithPerson))) {
+            const err = new Error('Conteúdo bloqueado antes do envio à IA externa por conter relatos clínicos sensíveis (diagnóstico, medicação, violência/risco) associados a paciente identificável. Resuma ou anonimize manualmente os dados do paciente antes de gerar.');
+            err.statusCode = 422;
+            err.isPrivacyBlock = true;
+            throw err;
+        }
+
+        // Bloqueio de dados bancários explícitos com titular/CPF
+        const hasBankAccountBlock = /\b(?:ag[eê]ncia|conta\s*(?:corrente|poupan[cç]a))\s*:?\s*\d{3,}/i.test(rawChat) && hasSensitiveId;
+        if (hasBankAccountBlock) {
+            const err = new Error('Conteúdo bloqueado por conter dados bancários privados associados a documento. Remova agência/conta/CPF antes de enviar à IA.');
+            err.statusCode = 422;
+            err.isPrivacyBlock = true;
+            throw err;
+        }
+
+        let sanitized = rawChat;
+        let hadRedactions = false;
+        const allowedDigits = new Set(
+            (options.allowedPhones || [])
+                .map(p => String(p || '').replace(/\D/g, '').slice(-8))
+                .filter(d => d.length === 8)
+        );
+
+        const replaceTrack = (regex, replacement) => {
+            sanitized = sanitized.replace(regex, (...args) => {
+                hadRedactions = true;
+                return typeof replacement === 'function' ? replacement(...args) : replacement;
+            });
+        };
+
+        // Links privados e tokens na URL
+        replaceTrack(/(https?:\/\/[^\s]+?(?:token|auth|session|key|secret|reset|convite)=[^\s]+)/gi, '[LINK_PRIVADO_OMITIDO]');
+        replaceTrack(/(token=|reset-password\/|magic-feedback\?token=)([a-zA-Z0-9._-]{8,})/gi, '$1[TOKEN_OMITIDO]');
+        // CPF, CNPJ e RG
+        replaceTrack(/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g, '[CPF_OMITIDO]');
+        replaceTrack(/\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g, '[CNPJ_OMITIDO]');
+        replaceTrack(/\bRG\s*:?\s*[\d.\-X]{5,14}\b/gi, '[RG_OMITIDO]');
+        // E-mails
+        replaceTrack(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[EMAIL_OMITIDO]');
+        // Chaves PIX explícitas ou EVP UUIDs isolados
+        replaceTrack(/(chave\s+pix\s*:?\s*)([^\s,;]+)/gi, '$1[CHAVE_PIX_OMITIDA]');
+        // Endereços físicos
+        replaceTrack(/\b(?:Rua|Avenida|Av\.?|Travessa|Alameda|Rodovia|Estrada|Praça)\s+[A-Za-zÀ-ÿ0-9\s.'-]{4,60}(?:,\s*(?:n[º°]?\.?\s*)?\d{1,5})?(?:\s*[-–]\s*[A-Za-zÀ-ÿ\s]{2,30})?/gi, '[ENDERECO_OMITIDO]');
+        replaceTrack(/\b\d{5}-\d{3}\b/g, '[CEP_OMITIDO]');
+        // Nomes explícitos de pacientes em narrativa
+        replaceTrack(/((?:meu\s+|minha\s+)?(?:paciente|consulente|atendido|atendida|menor|filho|filha|cliente)\s*(?::\s*|\s+(?:se chama|é|chamado|chamada)\s+|\s+))([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-zà-ú]{2,}(?:\s+(?:da|de|do|dos|das|[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-zà-ú]{2,}))*)/g, '$1[PACIENTE_OMITIDO]');
+        // Sequências financeiras longas (cartões, boletos, PIX numérico longo)
+        replaceTrack(/\b\d{13,48}\b/g, '[DADO_FINANCEIRO_OMITIDO]');
+
+        // Telefones que não pertençam ao psicólogo do dossiê
+        sanitized = sanitized.replace(/(?:\+?55\s?)?(?:\(?\d{2}\)?\s?)?(?:9\d{4}[-\s]\d{4}|\d{4}[-\s]\d{4}|\(?[1-9]\d\)?\s?9?\d{8})/g, (match) => {
+            const digits = match.replace(/\D/g, '');
+            const suffix = digits.slice(-8);
+            if (suffix.length === 8 && allowedDigits.has(suffix)) {
+                return match;
+            }
+            hadRedactions = true;
+            return '[TELEFONE_TERCEIRO]';
+        });
+
+        // Neutraliza qualquer tentativa de fechar delimitadores XML no texto importado
+        sanitized = sanitized.replace(/<\/?\s*untrusted_whatsapp_transcript[^>]*>/gi, '[TAG_REMOVIDA]');
+
+        return { sanitizedText: sanitized, blocked: false, hadRedactions };
+    }
+
+    /**
+     * Validação determinística de saída (delega para CopilotOutputGuard)
+     */
+    static validateGeneratedOutput(rawText) {
+        return CopilotOutputGuard.validatePlainReplyText(rawText);
+    }
+
+    /**
+     * Gera resposta com Gemini separando systemInstruction modular de contents delimitados por nonce,
+     * utilizando schema JSON estruturado (Fase 2) com rollback via COPILOT_V2_STRUCTURED=false,
+     * sanitização pré-LLM, CopilotOutputGuard, timeout e telemetria sem PII.
+     */
+    static async generateResponse({
+        pastedChat,
+        dossier,
+        tone = 'natural',
+        mode = null,
+        extension = 'padrao',
+        adminInstruction = '',
+        interactionCategoryHint = null
+    }) {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error('GEMINI_API_KEY não configurada no servidor.');
+
+        const structuredEnabled = process.env.COPILOT_V2_STRUCTURED !== 'false';
+        const effectiveMode = CopilotPromptBuilder.normalizeMode(mode, tone);
+        const effectiveExtension = CopilotPromptBuilder.normalizeExtension(extension);
+
+        const { sanitizedText, hadRedactions } = this.sanitizeChatForLLM(pastedChat, {
+            allowedPhones: dossier?.profile?.telefone ? [dossier.profile.telefone] : []
+        });
+        const windowedChat = this.windowTranscriptForLLM(sanitizedText, 6000);
+
+        const [pricing, fewShotBlock] = await Promise.all([
+            this.getCommercialPricing(dossier?.profile || null),
+            CopilotMemoryService.getApprovedExamplesBlock({
+                interactionCategory: interactionCategoryHint,
+                pastedChat: windowedChat.text
+            })
+        ]);
+
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const CANDIDATE_MODELS = CopilotPromptBuilder.selectCandidateModels({
+            mode: effectiveMode,
+            chatLength: windowedChat.text.length
+        });
+
+        let contextBlock = 'Nenhum profissional específico confirmado no banco de dados. Responda apenas de forma genérica e transparente, sem citar métricas, planos individuais ou assumir histórico prévio de conta.';
+        let pastContext = '';
 
         if (dossier && dossier.profile) {
+            const entityType = dossier.entityType || 'psychologist';
             const p = dossier.profile;
-            const s = dossier.stats || {};
-            const posts = dossier.posts || { total: 0, top: [] };
 
-            const valorFormatado = (p.valor_sessao_numero && Number(p.valor_sessao_numero) > 0)
-                ? `R$ ${p.valor_sessao_numero}`
-                : (p.tipo_cobranca === 'mensal' && p.valor_mensal_numero ? `R$ ${p.valor_mensal_numero}/mês` : 'A combinar (sem valor fixo cadastrado)');
+            if (entityType === 'lead' || entityType === 'waiting_list' || entityType === 'unregistered') {
+                const lines = [
+                    `VERIFIED_SYSTEM_DATA (${entityType}):`,
+                    `- Interessado: ${p.nome || 'Não informado'}${p.crp ? ` (CRP: ${p.crp})` : ''}`,
+                    `- Tipo/Status: ${dossier.subscriptionSummary?.badgeLabel || entityType} (ainda não é assinante ativo na vitrine)`,
+                    p.origem_url ? `- Origem: ${p.origem_url}` : null,
+                    p.valor_sessao_faixa ? `- Faixa informada: ${p.valor_sessao_faixa}` : null
+                ].filter(Boolean);
+                contextBlock = lines.join('\n');
+            } else {
+                const s = dossier.stats || {};
+                const funnel = dossier.funnel || null;
+                const usage = dossier.usage || null;
+                const posts = dossier.posts || { total: 0, top: [] };
+                const sub = dossier.subscriptionSummary || this.computeSubscriptionSummary(p, {
+                    latestPayment: dossier.latestPayment,
+                    subscription: dossier.subscription
+                });
 
-            contextBlock = `
-DOSSIÊ REAL DO PSICÓLOGO NO BANCO DE DADOS DA YELO:
-- Nome Completo: ${p.nome} (CRP: ${p.crp || 'Não informado'})
-- Situação do Plano: ${p.plano || 'Essencial'} (${p.status})
-- Data de Validade/Renovação: ${p.planExpiresAt ? new Date(p.planExpiresAt).toLocaleDateString('pt-BR') : 'Sem data'}
-- Mensalidades já pagas: ${p.subscription_payments_count || 0}
-- Valor Cobrado: ${valorFormatado}
-- Modalidade: ${Array.isArray(p.modalidade) ? p.modalidade.join(', ') : (p.modalidade || 'Online')} | Cidade: ${p.cidade || ''} - ${p.estado || ''}
-- Abordagens/Especialidades: ${Array.isArray(p.abordagens_tecnicas) ? p.abordagens_tecnicas.join(', ') : (p.abordagens_tecnicas || 'Geral')}
-- Métricas na Plataforma:
-  * Aparições nas buscas (Match): ${p.profile_appearances || 0}
-  * Cliques no WhatsApp: ${p.whatsapp_clicks || s.total_clicks || 0}
-  * Pacientes Fechados confirmados: ${s.deals_closed || 0}
-  * Pacientes em Negociação: ${s.in_negotiation || 0}
-- Produção de Conteúdo no Blog da Yelo:
-  * Total de artigos publicados: ${posts.total}
-  ${posts.top.length > 0 ? `* Artigos com mais curtidas: ${posts.top.map(t => `"${t.titulo}" (${t.curtidas} curtidas)`).join(', ')}` : ''}
-`;
-            if (dossier.pastConversations && dossier.pastConversations.length > 0) {
-                pastContext = `
-HISTÓRICO DE RESPOSTAS ANTERIORES GERADAS PELO COPILOT PARA ESTE PSICÓLOGO:
-${dossier.pastConversations.map(c => `- Resposta enviada em ${new Date(c.createdAt).toLocaleDateString('pt-BR')}: "${c.aiResponse.substring(0, 150)}..."`).join('\n')}
-`;
+                const valorFormatado = (p.valor_sessao_numero && Number(p.valor_sessao_numero) > 0)
+                    ? `R$ ${p.valor_sessao_numero}`
+                    : (p.tipo_cobranca === 'mensal' && p.valor_mensal_numero ? `R$ ${p.valor_mensal_numero}/mês` : 'A combinar');
+
+                const matchesTotal = funnel?.total?.matches ?? (p.profile_appearances || 0);
+                const clicksTotal = funnel?.total?.whatsappClicks ?? (p.whatsapp_clicks || s.total_clicks || 0);
+                const clicks30d = funnel?.d30?.whatsappClicks ?? s.clicks_30d ?? 0;
+                const clicks7d = funnel?.d7?.whatsappClicks ?? s.clicks_7d ?? 0;
+
+                const dataLines = [
+                    'VERIFIED_SYSTEM_DATA:',
+                    `- Profissional: ${p.nome} (CRP: ${p.crp || 'N/I'}) | ${p.cidade || 'Online'}${p.estado ? '/' + p.estado : ''}`,
+                    `- Cadastro: ${sub?.cadastreStatus || p.status} | Financeiro: ${sub?.financialStatus || p.status} | Visibilidade: ${sub?.visibilityStatus || 'N/I'}`,
+                    `- Plano: ${sub?.planText || p.plano || 'N/D'} | Validade(BRT): ${sub?.expireText || this.formatDateBRT(p.planExpiresAt) || '-'} | Pagamentos: ${p.subscription_payments_count || 0}`,
+                    dossier.latestPayment ? `- Última fatura: ${dossier.latestPayment.status} (${dossier.latestPayment.billingType || '-'} Venc:${dossier.latestPayment.dueDate || '-'})` : null,
+                    `- Sessão: ${valorFormatado} | Modalidade: ${Array.isArray(p.modalidade) ? p.modalidade.join(', ') : (p.modalidade || 'Online')} | Abordagens: ${Array.isArray(p.abordagens_tecnicas) ? p.abordagens_tecnicas.slice(0, 4).join(', ') : (p.abordagens_tecnicas || 'Geral')}`,
+                    `- Funil: Match=${matchesTotal} (30d:${funnel?.d30?.matches ?? 0}) | Cliques WPP Total=${clicksTotal} (7d:${clicks7d}, 30d:${clicks30d}) | Contatos=${s.contacts_received || 0} | SemContato=${s.no_contact || 0} | EmNeg=${s.in_negotiation || 0} | Fechamentos=${s.deals_closed || 0}`,
+                    posts.total > 0 ? `- Blog: ${posts.total} artigo(s)${posts.top.length > 0 ? ` (Top: "${posts.top[0].titulo}" [${posts.top[0].curtidas}❤])` : ''}` : null,
+                    (usage && (usage.activePatients > 0 || usage.appointments30d > 0)) ? `- Uso Clínica: ${usage.activePatients} pac. ativos, ${usage.appointments30d} sessões/30d` : null,
+                    dossier.exitSurvey ? `- ExitSurvey: "${dossier.exitSurvey.motivo}"${dossier.exitSurvey.sugestao ? ` ("${dossier.exitSurvey.sugestao}")` : ''}` : null,
+                    pricing.activeOffer ? `- Oferta elegível (requer aprovação): ${pricing.activeOffer.title}` : null
+                ].filter(Boolean);
+                contextBlock = dataLines.join('\n');
+            }
+
+            if (dossier.memory?.rollingSummary) {
+                const memParts = [String(dossier.memory.rollingSummary).slice(0, 420)];
+                if (Array.isArray(dossier.memory.pendingItems) && dossier.memory.pendingItems.length > 0) {
+                    memParts.push(`Pendências: ${dossier.memory.pendingItems.slice(0, 3).join('; ')}`);
+                }
+                pastContext = `\nRELATIONSHIP_MEMORY:\n${memParts.join('\n')}`;
+            } else if (dossier.pastConversations && dossier.pastConversations.length > 0) {
+                pastContext = `\nHISTÓRICO RECENTE DO COPILOT:\n${dossier.pastConversations
+                    .slice(0, 2)
+                    .map(c => `- (${this.formatDateBRT(c.createdAt) || ''}): "${String(c.aiResponse || '').substring(0, 120)}..."`)
+                    .join('\n')}`;
             }
         }
 
-        let toneInstruction = "Tom natural, parceiro e maduro (padrão de conversa entre psicólogos colegas).";
+        const commercialBlock = pricing.available
+            ? `CONDIÇÃO COMERCIAL VIGENTE (SystemSettings): Plano Essencial R$ ${Number(pricing.priceEssencial).toFixed(2).replace('.', ',')}/mês${pricing.priceClinico ? ` | Plano Clínico R$ ${Number(pricing.priceClinico).toFixed(2).replace('.', ',')}/mês` : ''}. Sem fidelidade e 0% de comissão sobre sessões.`
+            : `CONDIÇÃO COMERCIAL VIGENTE: ${pricing.unavailableNote} (A Yelo não cobra comissão sobre sessões; nunca invente preços não presentes no contexto).`;
+
+        let toneInstruction = 'Tom natural, parceiro e maduro (entre colegas psicólogos).';
         if (tone === 'comercial') {
-            toneInstruction = "Tom focado em quebra de objeção, clareza do modelo de ROI da Yelo (sem comissão, R$ 99 fixo que se paga com 2 sessões) e encorajamento prático para assinatura/continuidade.";
+            toneInstruction = pricing.available
+                ? `Tom consultivo focado em clareza comercial (0% de comissão; Plano Essencial vigente R$ ${Number(pricing.priceEssencial).toFixed(2).replace('.', ',')}/mês). Nunca prometa retorno garantido ou isenções sem autorização.`
+                : 'Tom consultivo transparente (0% de comissão sobre sessões); como os valores padrão não foram carregados do banco neste momento, não afirme valores numéricos fixos de plano.';
         } else if (tone === 'tecnico') {
-            toneInstruction = "Tom focado em explicação técnica e prática de como a plataforma distribui pacientes (algoritmo V6) ou ajustes no perfil.";
+            toneInstruction = 'Tom prático explicando ajustes de perfil ou funcionamento oficial do Match da Yelo (critérios clínicos 65% + operacionais 35% + cotas dinâmicas, sem inventar pesos ou regras).';
         }
 
-        const prompt = `Você é o Anderson Costa.
-SOBRE VOCÊ:
-- Você é homem, psicólogo clínico e o fundador da Yelo (plataforma de saúde mental).
-- Você está respondendo uma mensagem real que um psicólogo parceiro te enviou no WhatsApp.
-- Fale de psicólogo para psicólogo, como colega de profissão e parceiro que acompanha a clínica dele, e NUNCA como um atendente corporativo de suporte, telemarketing ou robô.
+        const nonce = crypto.randomBytes(4).toString('hex');
+        const transcriptTag = `untrusted_whatsapp_transcript_${nonce}`;
 
-DIRETRIZ DE TOM (${toneInstruction}):
-1. SUCINTO, DIRETO e NATURAL. Parágrafos curtos, escaneáveis e sem enrolação.
-2. ZERO HIPÉRBOLES ou exageros artificiais de IA:
-   - NÃO use "Que notícia maravilhosa!", "Isso é incrível!", "Compreendo perfeitamente sua dor", "Estou à sua inteira disposição".
-   - Use linguagem humana e sóbria: "Que bacana", "Muito bom", "Eu entendo", "Faz todo sentido", "Tranquilo".
-3. NÃO CHOVA NO MOLHADO:
-   - Não fique repetindo para o psicólogo os títulos dos posts que ele mesmo escreveu ou listando métricas óbvias como se apresentasse um slide. Ele já sabe o que fez. Apenas valide e comente como colega.
-4. NUNCA se apresente no início:
-   - Não diga "Olá, aqui é o Anderson", "Sou o Anderson da Yelo" ou "Como fundador da Yelo". Ele já conversa com você no WhatsApp.
-5. CONHECIMENTO ESSENCIAL DA YELO:
-   - A Yelo NÃO cobra comissão sobre sessões (100% do valor da consulta vai para o psicólogo).
-   - Plano Essencial é R$ 99,00 fixo por mês. Sem fidelidade (cancela quando quiser).
-   - A matemática do consultório: com 2 sessões o custo do mês está pago. O paciente semanal gera retorno recorrente e o restante é lucro líquido do profissional.
-   - O algoritmo V6 entrega pacientes qualificados respeitando tetos para que todos os pagantes recebam fluxo.
-6. FORMATAÇÃO RÍGIDA DE WHATSAPP:
-   - Use APENAS negrito nativo com um asterisco *assim* e itálico nativo _assim_.
-   - NUNCA use duplo asterisco (**assim**).
-   - NUNCA use títulos com hashtags (# Título).
-   - NUNCA use marcadores com asterisco (* item) que quebram a leitura no WhatsApp.
-   - Emojis com parcimônia (no máximo 1 como 🌿 se couber).
+        const systemInstruction = CopilotPromptBuilder.buildSystemInstruction({
+            transcriptTag,
+            mode: effectiveMode,
+            extension: effectiveExtension,
+            toneInstruction,
+            structured: structuredEnabled
+        });
 
-${contextBlock}
-${pastContext}
+        const userContents = CopilotPromptBuilder.buildUserContents({
+            contextBlock,
+            pastContext,
+            commercialBlock,
+            adminInstruction,
+            fewShotBlock,
+            transcriptTag,
+            sanitizedTranscript: windowedChat.text,
+            structured: structuredEnabled
+        });
 
-CONVERSA COPIADA DO WHATSAPP:
-"""
-${pastedChat}
-"""
+        const timeoutMs = Number(process.env.COPILOT_AI_TIMEOUT_MS) || 20000;
+        const now = Date.now();
+        const availableModels = CANDIDATE_MODELS.filter((m) => {
+            const failUntil = failedModelsCache.get(m);
+            return !failUntil || failUntil < now;
+        });
+        const modelsToTry = availableModels.length > 0 ? availableModels : CANDIDATE_MODELS;
 
-Gere a resposta exata e pronta para o Anderson copiar e enviar no WhatsApp:`;
-
-        let text = null;
+        let rawText = null;
         let lastErr = null;
+        let usedModel = null;
+        let usageMetadata = null;
+        const startMs = Date.now();
+        let retries = 0;
 
-        for (const modelName of CANDIDATE_MODELS) {
+        for (const modelName of modelsToTry) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(new Error('Timeout na chamada ao provedor de IA.')), timeoutMs);
             try {
-                const model = genAI.getGenerativeModel({ model: modelName });
-                const result = await model.generateContent(prompt);
-                text = result.response.text();
-                if (text) break;
+                const generationConfig = structuredEnabled
+                    ? { maxOutputTokens: 1100, responseMimeType: 'application/json', responseSchema: getResponseSchema() }
+                    : { maxOutputTokens: 900 };
+
+                const model = genAI.getGenerativeModel({
+                    model: modelName,
+                    systemInstruction,
+                    generationConfig
+                });
+
+                const result = await model.generateContent(userContents, {
+                    timeout: timeoutMs,
+                    signal: controller.signal
+                });
+
+                const candidateText = result?.response?.text?.();
+                if (candidateText) {
+                    rawText = candidateText;
+                    usedModel = modelName;
+                    usageMetadata = result?.response?.usageMetadata || null;
+                    break;
+                }
             } catch (err) {
+                retries++;
+                const isAbort = err?.name === 'AbortError' || /abort|timeout/i.test(err?.message || '');
+                const isNotFound = /404|not found/i.test(err?.message || '');
+                if (isNotFound) {
+                    failedModelsCache.set(modelName, Date.now() + 5 * 60 * 1000);
+                }
                 console.warn(`[AdminCopilotService] Falha no modelo ${modelName}:`, err.message);
-                lastErr = err;
+                lastErr = isAbort ? new Error(`Tempo limite (${timeoutMs}ms) excedido na geração via IA.`) : err;
+                if (isAbort) break;
+            } finally {
+                clearTimeout(timer);
             }
         }
 
-        if (!text) {
-            throw new Error(`Falha ao gerar resposta via IA: ${lastErr?.message || 'Serviço de IA temporariamente indisponível'}`);
+        const latencyMs = Date.now() - startMs;
+
+        if (!rawText) {
+            await this.logTelemetry('error', `[Copilot] Falha ao gerar resposta IA: ${lastErr?.message || 'erro desconhecido'}`, {
+                module: 'copilot',
+                latencyMs,
+                retries,
+                hadRedactions,
+                psychologistId: dossier?.profile?.id || null
+            });
+            const outErr = new Error(`Falha ao gerar resposta via IA: ${lastErr?.message || 'Serviço de IA temporariamente indisponível'}`);
+            if (lastErr && /tempo limite|timeout/i.test(lastErr.message)) {
+                outErr.statusCode = 504;
+            }
+            throw outErr;
         }
 
-        text = formatForWhatsApp(text);
-        return text;
+        let formatted = null;
+        let structuredOutput = null;
+
+        if (structuredEnabled) {
+            const { structured, parseRecovered } = CopilotOutputGuard.normalizeStructuredOutput(rawText, {
+                dossier,
+                adminInstruction
+            });
+            structuredOutput = structured;
+
+            if (!parseRecovered && structured.whatsappReply) {
+                const plainCheck = CopilotOutputGuard.validatePlainReplyText(structured.whatsappReply);
+                if (!plainCheck.ok) {
+                    await this.logTelemetry('warn', `[Copilot] Saída bloqueada pelo filtro pós-geração: ${plainCheck.reason}`, {
+                        module: 'copilot',
+                        model: usedModel,
+                        latencyMs,
+                        psychologistId: dossier?.profile?.id || null
+                    });
+                    const err = new Error(plainCheck.reason);
+                    err.statusCode = 422;
+                    err.isOutputGuardBlock = true;
+                    throw err;
+                }
+            }
+
+            if (parseRecovered && structured.whatsappReply === null && structured.status === 'requires_review' && structured.strategicAlerts?.[0]?.includes('bloqueada pelo filtro')) {
+                const err = new Error(structured.strategicAlerts[0]);
+                err.statusCode = 422;
+                err.isOutputGuardBlock = true;
+                throw err;
+            }
+
+            formatted = structured.whatsappReply || '';
+        } else {
+            formatted = formatForWhatsApp(rawText, { preserveDashBullets: true });
+            const outputCheck = this.validateGeneratedOutput(formatted);
+            if (!outputCheck.ok) {
+                await this.logTelemetry('warn', `[Copilot] Saída bloqueada pelo filtro pós-geração: ${outputCheck.reason}`, {
+                    module: 'copilot',
+                    model: usedModel,
+                    latencyMs,
+                    psychologistId: dossier?.profile?.id || null
+                });
+                const err = new Error(outputCheck.reason);
+                err.statusCode = 422;
+                err.isOutputGuardBlock = true;
+                throw err;
+            }
+            structuredOutput = {
+                status: 'ready',
+                whatsappReply: formatted,
+                alternativeReply: null,
+                interactionCategory: 'outros',
+                evidences: [],
+                investigativeHypotheses: [],
+                churnRisk: { level: 'low', reason: 'Modo legado.' },
+                strategicAlerts: [],
+                nextBestAction: '',
+                missingInformation: [],
+                suggestedPendingItems: [],
+                memoryUpdates: { newFacts: [], newRecommendations: [], commitments: [] }
+            };
+        }
+
+        await this.logTelemetry('info', '[Copilot] Resposta gerada', {
+            module: 'copilot',
+            model: usedModel,
+            promptVersion: PROMPT_VERSION,
+            operationMode: effectiveMode,
+            interactionCategory: structuredOutput?.interactionCategory || 'outros',
+            latencyMs,
+            retries,
+            hadRedactions,
+            pricingSource: pricing.source,
+            promptTokens: usageMetadata?.promptTokenCount || null,
+            outputTokens: usageMetadata?.candidatesTokenCount || null,
+            psychologistId: dossier?.profile?.id || null
+        });
+
+        return {
+            text: formatted,
+            structuredOutput,
+            promptVersion: PROMPT_VERSION,
+            operationMode: effectiveMode,
+            extension: effectiveExtension,
+            sanitizedChat: sanitizedText,
+            meta: {
+                modelUsed: usedModel,
+                promptVersion: PROMPT_VERSION,
+                operationMode: effectiveMode,
+                extension: effectiveExtension,
+                latencyMs,
+                retries,
+                hadRedactions,
+                transcriptTruncated: windowedChat.wasTruncated,
+                omittedChars: windowedChat.omittedChars,
+                pricingSource: pricing.source,
+                promptTokens: usageMetadata?.promptTokenCount || null,
+                outputTokens: usageMetadata?.candidatesTokenCount || null
+            }
+        };
     }
 }
 

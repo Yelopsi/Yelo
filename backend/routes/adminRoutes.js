@@ -16,6 +16,7 @@ const adminAdjustmentController = require('../controllers/adminAdjustmentControl
 const { protect, admin } = require('../middlewares/authMiddleware'); // Corrigido para importar ambos
 const { uploadProfilePhoto, magicBytesValidator } = require('../middlewares/upload'); // Importa o Multer unificado
 const { adminLimiter } = require('../middlewares/rateLimiters');
+const { copilotIdentifyLimiter, copilotRespondLimiter } = require('../middlewares/rateLimiter');
 
 // Rota pública para login do admin
 router.post('/login', adminLimiter, adminController.loginAdmin);
@@ -131,10 +132,15 @@ router.post('/system-changelog/:id/ai-suggest', adminController.generateAiChange
 router.post('/system-changelog/sync', adminController.syncSystemChangelogWithGit);
 
 // Rotas do Copilot de Atendimento WhatsApp AI
-router.post('/copilot/identify', adminCopilotController.identifyFromChat);
-router.post('/copilot/respond', adminCopilotController.generateResponse);
+router.post('/copilot/identify', copilotIdentifyLimiter, adminCopilotController.identifyFromChat);
+router.post('/copilot/respond', copilotRespondLimiter, adminCopilotController.generateResponse);
 router.get('/copilot/history', adminCopilotController.getHistory);
-router.get('/copilot/search-psychologists', adminCopilotController.searchPsychologists);
+router.get('/copilot/conversations/:id', adminCopilotController.getConversationById);
+router.post('/copilot/feedback', adminCopilotController.submitFeedback);
+router.post('/copilot/diagnose', copilotIdentifyLimiter, adminCopilotController.runDiagnosis);
+router.post('/copilot/backlog-draft', adminCopilotController.createBacklogDraft);
+router.get('/copilot/collective-insights', adminCopilotController.getCollectiveInsights);
+router.get('/copilot/search-psychologists', copilotIdentifyLimiter, adminCopilotController.searchPsychologists);
 
 // Rotas da Central de Ajustes & Backlog Inteligente (Notion Flow)
 router.get('/adjustments', adminAdjustmentController.getAdjustments);

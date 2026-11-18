@@ -33,6 +33,70 @@ module.exports = (sequelize, DataTypes) => {
     contextSnapshot: {
       type: DataTypes.JSONB,
       allowNull: true
+    },
+    threadId: {
+      type: DataTypes.UUID,
+      allowNull: true
+    },
+    entityType: {
+      type: DataTypes.STRING(32),
+      allowNull: false,
+      defaultValue: 'psychologist'
+    },
+    entityId: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    entityKey: {
+      type: DataTypes.STRING(120),
+      allowNull: true
+    },
+    operationMode: {
+      type: DataTypes.STRING(32),
+      allowNull: false,
+      defaultValue: 'resposta'
+    },
+    interactionCategory: {
+      type: DataTypes.STRING(64),
+      allowNull: true
+    },
+    structuredOutput: {
+      type: DataTypes.JSONB,
+      allowNull: true
+    },
+    feedbackStatus: {
+      type: DataTypes.STRING(24),
+      allowNull: false,
+      defaultValue: 'draft'
+    },
+    rejectionReason: {
+      type: DataTypes.STRING(120),
+      allowNull: true
+    },
+    finalReply: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    promptVersion: {
+      type: DataTypes.STRING(24),
+      allowNull: true
+    },
+    inputHash: {
+      type: DataTypes.STRING(64),
+      allowNull: true
+    },
+    messageHashes: {
+      type: DataTypes.JSONB,
+      allowNull: true
+    },
+    isLibraryExample: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    adminId: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     }
   }, {
     sequelize,

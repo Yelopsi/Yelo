@@ -18,8 +18,10 @@
  * 10. Normaliza quebras de linha Windows/Mac (\r\n -> \n) e remove excesso de quebras em branco.
  */
 
-function formatForWhatsApp(text) {
+function formatForWhatsApp(text, options = {}) {
     if (!text || typeof text !== 'string') return '';
+
+    const preserveDashBullets = options && options.preserveDashBullets === true;
 
     let cleaned = text
         // Normaliza quebras de linha para \n
@@ -39,10 +41,19 @@ function formatForWhatsApp(text) {
         // Converte negrito duplo markdown **texto** em negrito WhatsApp *texto*
         .replace(/\*\*([^*\n]+?)\*\*/g, '*$1*')
         // Converte itálico duplo __texto__ em itálico WhatsApp _texto_
-        .replace(/__([^_\n]+?)__/g, '_$1_')
-        // Normaliza marcadores de lista com hífen (- item) para asterisco (* item)
-        // preservando a sintaxe nativa de tópicos do WhatsApp (* item e * *negrito*)
-        .replace(/^[-]\s+/gm, '* ')
+        .replace(/__([^_\n]+?)__/g, '_$1_');
+
+    if (preserveDashBullets) {
+        // Na Copilot, preserva "- item" e converte marcadores soltos "* item" (sem fechar negrito) em "- item"
+        cleaned = cleaned.replace(/^\*\s+(?!\*)(.+)$/gm, (full, itemText) => {
+            return itemText.includes('*') ? full : `- ${itemText}`;
+        });
+    } else {
+        // Mantém comportamento legado para demais callers
+        cleaned = cleaned.replace(/^[-]\s+/gm, '* ');
+    }
+
+    cleaned = cleaned
         // Corrige espaços inválidos dentro de asteriscos do WhatsApp (* texto * -> *texto*)
         // Usa apenas espaços horizontais [ \t] para jamais colapsar quebras de linha
         .replace(/\*[ \t]+([^*\n]+?)[ \t]+\*/g, '*$1*')

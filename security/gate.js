@@ -102,6 +102,7 @@ runScanner('Socket.IO Auth & Room Escape', 'node security/tests/redteam/socket_a
 runScanner('Socket.IO Data Minimization', 'node security/tests/redteam/socket_data_minimization.test.js', 'test_socket_data_min');
 runScanner('Socket.IO Rate Limiting & Flood Protection', 'node security/tests/redteam/socket_rate_limit.test.js', 'test_socket_rate_limit');
 runScanner('API Response Regression (Data Minimization)', 'node security/tests/redteam/api_response_regression.test.js', 'test_api_regression');
+runScanner('Yelo Copilot Phase 0 Regression Suite', 'node security/tests/copilot_phase0.test.js', 'test_copilot_phase0');
 
 console.log('\n============================================');
 console.log('🔒 FASE 5: APPLICATION HARDENING');

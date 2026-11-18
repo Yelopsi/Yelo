@@ -504,6 +504,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // --- NOVO: Renderiza as badges ---
         if (psychologistData) {
             if (window.renderSidebarBadges) window.renderSidebarBadges(psychologistData);
+            if (window.YeloDevRoleSwitcher && typeof window.YeloDevRoleSwitcher.initPsiUI === 'function') {
+                window.YeloDevRoleSwitcher.initPsiUI(psychologistData);
+            }
         }
     }
 

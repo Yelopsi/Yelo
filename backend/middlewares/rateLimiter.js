@@ -33,7 +33,26 @@ const expensiveLimiter = rateLimit({
     message: { error: 'Limite de processamento atingido. Aguarde alguns minutos.' }
 });
 
-// 4. FINANCIAL (Webhooks Asaas): Isentos do limitador por IP rigoroso para não barrar retries
+// 4. COPILOT ADMIN: Proteção para chamadas de identificação e IA do Copilot (por admin autenticado)
+const copilotIdentifyLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutos
+    max: 60,
+    keyGenerator: (req) => req.user?.id ? `copilot_id_${req.user.id}` : req.ip,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Muitas consultas de identificação em sequência. Aguarde instantes.' }
+});
+
+const copilotRespondLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutos
+    max: 30,
+    keyGenerator: (req) => req.user?.id ? `copilot_ai_${req.user.id}` : req.ip,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Limite de gerações do Copilot atingido. Aguarde alguns minutos.' }
+});
+
+// 5. FINANCIAL (Webhooks Asaas): Isentos do limitador por IP rigoroso para não barrar retries
 // Mas impomos um teto para evitar flood puro. A idempotência resolve duplicações lógicas.
 const webhookLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minuto
@@ -47,5 +66,7 @@ module.exports = {
     publicLimiter,
     authLimiter,
     expensiveLimiter,
+    copilotIdentifyLimiter,
+    copilotRespondLimiter,
     webhookLimiter
 };
