@@ -250,7 +250,7 @@ export default function AdminVisaoGeralScreen() {
           {/* Efeito decorativo de fundo (radial subtle) */}
           <View className="absolute -top-[50px] -right-[50px] w-[200px] h-[200px] bg-white/5 rounded-full pointer-events-none" />
 
-          {/* Header: Título + Botão Atualizar */}
+          {/* Header: Título + Atalho Copilot + Botão Atualizar */}
           <View className="flex-row justify-between items-start mb-6">
             <View className="flex-1 pr-3">
               <Text className="font-title text-white text-[24px] font-bold leading-tight mb-1">
@@ -260,18 +260,30 @@ export default function AdminVisaoGeralScreen() {
                 Acompanhe as métricas e o crescimento da Yelo.
               </Text>
             </View>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => fetchStats(true)}
-              className="bg-[#FFEE8C] px-3.5 py-2 rounded-full flex-row items-center gap-1.5 shadow-sm"
-            >
-              <Animated.View style={{ transform: [{ rotate: spinInterpolation }] }}>
-                <Feather name="refresh-cw" size={13} color="#1B4332" />
-              </Animated.View>
-              <Text className="font-sans font-bold text-[#1B4332] text-[12px]">
-                Atualizar
-              </Text>
-            </TouchableOpacity>
+            <View className="items-end gap-2">
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => fetchStats(true)}
+                className="bg-[#FFEE8C] px-3.5 py-2 rounded-full flex-row items-center gap-1.5 shadow-sm"
+              >
+                <Animated.View style={{ transform: [{ rotate: spinInterpolation }] }}>
+                  <Feather name="refresh-cw" size={13} color="#1B4332" />
+                </Animated.View>
+                <Text className="font-sans font-bold text-[#1B4332] text-[12px]">
+                  Atualizar
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push('/(admin)/crm-modulo/copilot-wpp')}
+                className="bg-white/15 border border-white/30 px-3 py-1.5 rounded-full flex-row items-center gap-1.5"
+              >
+                <Feather name="message-circle" size={12} color="#FFEE8C" />
+                <Text className="font-sans font-bold text-[#FFEE8C] text-[11.5px]">
+                  Copilot
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Grid dos 4 KPIs Principais Centralizados */}
@@ -527,7 +539,7 @@ export default function AdminVisaoGeralScreen() {
                 <TouchableOpacity 
                   onPress={() => setActiveTooltip({
                     title: 'Fila de Espera',
-                    text: 'Pacientes que estão aguardando contato na lista de espera.'
+                    text: 'Psicólogos aguardando convite ou conclusão de cadastro na lista de espera.'
                   })}
                   className="flex-row items-center justify-center gap-1"
                 >
@@ -605,6 +617,24 @@ export default function AdminVisaoGeralScreen() {
           <Text className="font-title text-[#1B4332] text-[18px] font-bold mb-3.5">
             Alertas e Ações Rápidas
           </Text>
+
+          {/* Atalho Rápido: Copilot WhatsApp AI */}
+          <TouchableOpacity 
+            activeOpacity={0.8}
+            onPress={() => router.push('/(admin)/crm-modulo/copilot-wpp')}
+            className="flex-row items-center bg-[#f0fdf4] border border-[#bbf7d0] rounded-[16px] p-3.5 mb-3"
+          >
+            <Text className="text-[22px] mr-3">💬</Text>
+            <View className="flex-1">
+              <Text className="font-sans text-[#1e293b] text-[13px]">
+                <Text className="font-bold text-[#1B4332]">Copilot WhatsApp AI</Text> com dossiê 360º e banco em tempo real.
+              </Text>
+              <Text className="font-sans font-bold text-[#166534] text-[11px] mt-0.5">
+                Abrir Copilot agora →
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={16} color="#166534" />
+          </TouchableOpacity>
 
           {/* Candidatos na Lista de Espera */}
           <TouchableOpacity 

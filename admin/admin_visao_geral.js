@@ -129,7 +129,7 @@ window.initializePage = function() {
     // Listas de IDs para animação de carregamento
     const bigKpis = [
         'kpi-mrr', 'kpi-new-patients', 'kpi-new-psychologists', 'kpi-questionnaires-today',
-        'kpi-geral-conversao', 'kpi-total-matches', 'kpi-total-cliques'
+        'kpi-geral-conversao', 'kpi-total-matches', 'kpi-total-cliques', 'kpi-waiting-list'
     ];
     const smallKpis = [
         'kpi-psi-total', 'kpi-psi-active', 'kpi-psi-deleted',
@@ -724,8 +724,11 @@ window.initializePage = function() {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const targetPage = link.getAttribute('data-page-link');
-                if (targetPage && typeof window.loadPage === 'function') {
+                if (!targetPage) return;
+                if (typeof window.loadPage === 'function') {
                     window.loadPage(targetPage);
+                } else if (typeof window.navigateToPage === 'function') {
+                    window.navigateToPage(targetPage);
                 }
             });
         });

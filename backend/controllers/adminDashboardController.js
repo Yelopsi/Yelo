@@ -52,9 +52,20 @@ exports.getDashboardStats = async (req, res) => {
 
         const demandStatsQuery = `
             SELECT
-                COUNT(*) FILTER (WHERE status = 'completed') as total,
-                COUNT(*) FILTER (WHERE "createdAt" >= :startOfToday AND status = 'completed') as today,
-                COUNT(*) FILTER (WHERE status = 'started' AND "updatedAt" < :tenMinutesAgo AND ("is_disqualified" IS NULL OR "is_disqualified" = false)) as abandoned
+                COUNT(*) FILTER (
+                    WHERE status IN ('completed', 'matched')
+                      AND "deletedAt" IS NULL
+                      AND COALESCE("is_disqualified", false) = false
+                      AND COALESCE("searchParams"->>'respondent_type', 'patient') NOT IN ('psychologist', 'psychologist_logged', 'psychologist_unlogged', 'internal', 'admin', 'admin_logged', 'admin_unlogged', 'team')
+                ) as total,
+                COUNT(*) FILTER (
+                    WHERE "createdAt" >= :startOfToday
+                      AND status IN ('completed', 'matched')
+                      AND "deletedAt" IS NULL
+                      AND COALESCE("is_disqualified", false) = false
+                      AND COALESCE("searchParams"->>'respondent_type', 'patient') NOT IN ('psychologist', 'psychologist_logged', 'psychologist_unlogged', 'internal', 'admin', 'admin_logged', 'admin_unlogged', 'team')
+                ) as today,
+                COUNT(*) FILTER (WHERE status = 'started' AND "updatedAt" < :tenMinutesAgo AND ("is_disqualified" IS NULL OR "is_disqualified" = false) AND "deletedAt" IS NULL) as abandoned
             FROM "DemandSearches"
         `;
 
@@ -71,7 +82,7 @@ exports.getDashboardStats = async (req, res) => {
             db.sequelize.query(patientStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{total:0, active:0, deleted:0, new30d:0}]; }),
             db.sequelize.query(psychologistStatsQuery, { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{total:0, active:0, deleted:0, new30d:0}]; }),
             db.sequelize.query(demandStatsQuery, { replacements: { startOfToday, tenMinutesAgo }, type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{total:0, today:0, abandoned:0}]; }),
-            db.WaitingList.findAll({ where: { status: 'pending' }, raw: true }).catch(() => []),
+            db.WaitingList.findAll({ where: { status: { [Op.in]: ['pending', 'invited'] } }, raw: true }).catch(() => []),
             db.Review.count({ where: { status: 'pending' } }).catch(() => 0),
             db.Psychologist.findAll({
                 attributes: ['plano', 'is_exempt', 'subscriptionId', 'subscription_payments_count'],
@@ -82,7 +93,7 @@ exports.getDashboardStats = async (req, res) => {
                 }
             }).catch(() => []),
             db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } }).catch(() => 0),
-            db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count FROM "WhatsAppClickLogs"`, { type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{ count: 0 }]; })
+            db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE COALESCE(status, 'pending') <> 'deleted'`, { type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{ count: 0 }]; })
         ]);
 
         const patientStats = patientStatsResult[0] || {};

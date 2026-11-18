@@ -11,6 +11,8 @@
     let currentDossierPhone = null;
     let currentSelectionSource = 'auto'; // 'auto' | 'manual'
     let currentTone = 'natural';
+    let currentMode = 'resposta';
+    let isWppPreviewVisible = true;
     let identifyTimeout = null;
     let identifyController = null;
     let identifyRequestSeq = 0;
@@ -46,12 +48,83 @@
         while (el.firstChild) el.removeChild(el.firstChild);
     }
 
+    function normalizeWhatsAppCopyText(raw) {
+        if (!raw || typeof raw !== 'string') return '';
+        return raw
+            .replace(/\r\n/g, '\n')
+            .replace(/\r/g, '\n')
+            .replace(/[ \t]+$/gm, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    }
+
+    function appendFormattedInlineSegment(parent, line) {
+        // Renderiza *negrito*, _itálico_ e ~tachado~ com nós DOM puros (zero innerHTML)
+        const tokenRe = /(\*[^*\n]+\*|_[^_\n]+_|~[^~\n]+~)/g;
+        let lastIdx = 0;
+        let match;
+        while ((match = tokenRe.exec(line)) !== null) {
+            if (match.index > lastIdx) {
+                parent.appendChild(document.createTextNode(line.slice(lastIdx, match.index)));
+            }
+            const tok = match[0];
+            const inner = tok.slice(1, -1);
+            let el;
+            if (tok.startsWith('*')) {
+                el = document.createElement('strong');
+            } else if (tok.startsWith('_')) {
+                el = document.createElement('em');
+            } else {
+                el = document.createElement('s');
+            }
+            el.textContent = inner;
+            parent.appendChild(el);
+            lastIdx = tokenRe.lastIndex;
+        }
+        if (lastIdx < line.length) {
+            parent.appendChild(document.createTextNode(line.slice(lastIdx)));
+        }
+    }
+
+    function renderWhatsAppPreview(rawText) {
+        const previewBox = document.getElementById('whatsapp-preview-box');
+        const previewWrap = document.getElementById('whatsapp-preview-wrapper');
+        if (!previewBox) return;
+
+        const safe = normalizeWhatsAppCopyText(String(rawText || ''));
+        if (previewWrap) {
+            previewWrap.style.display = safe ? 'block' : 'none';
+        }
+        previewBox.style.display = (safe && isWppPreviewVisible) ? 'block' : 'none';
+        clearEl(previewBox);
+        if (!safe) return;
+
+        const lines = safe.split('\n');
+        lines.forEach((line, idx) => {
+            if (idx > 0) previewBox.appendChild(document.createElement('br'));
+            if (/^-\s+/.test(line)) {
+                const bulletSpan = document.createElement('span');
+                bulletSpan.textContent = '• ';
+                bulletSpan.style.fontWeight = '700';
+                previewBox.appendChild(bulletSpan);
+                appendFormattedInlineSegment(previewBox, line.replace(/^-\s+/, ''));
+            } else {
+                appendFormattedInlineSegment(previewBox, line);
+            }
+        });
+    }
+
     function setReplyText(val) {
         const boxTexto = document.getElementById('box-resposta-texto');
         if (!boxTexto) return;
         const safe = String(val || '');
         if ('value' in boxTexto) boxTexto.value = safe;
         boxTexto.textContent = safe;
+        if (boxTexto.style && boxTexto.scrollHeight) {
+            boxTexto.style.height = 'auto';
+            boxTexto.style.height = Math.min(Math.max(boxTexto.scrollHeight || 160, 160), 420) + 'px';
+        }
+        renderWhatsAppPreview(safe);
         const countEl = document.getElementById('reply-char-count');
         if (countEl) {
             countEl.textContent = safe ? `${safe.length} caracteres • Formatação WhatsApp preservada` : 'Formatação WhatsApp preservada.';
@@ -311,6 +384,11 @@
         loadHistory();
         if (window.YeloDevRoleSwitcher && typeof window.YeloDevRoleSwitcher.initCopilotButton === 'function') {
             window.YeloDevRoleSwitcher.initCopilotButton();
+        }
+        const devBtn = document.getElementById('btn-dev-switch-psi');
+        const actionsWrap = devBtn?.parentElement;
+        if (devBtn && actionsWrap && actionsWrap.classList.contains('copilot-header-actions')) {
+            actionsWrap.style.display = devBtn.style.display === 'none' ? 'none' : 'flex';
         }
     };
 
@@ -628,8 +706,53 @@
                 document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentTone = this.getAttribute('data-tone') || 'natural';
+                currentMode = this.getAttribute('data-mode') || 'resposta';
             });
         });
+
+        const quickSelect = document.getElementById('copilot-quick-question-select');
+        if (quickSelect) {
+            const QUICK_PROMPTS = {
+                'db:pacientes_mes': 'Quantos pacientes em média cada profissional recebe por mês na Yelo? Traga os números reais do banco (buscas, cliques no WhatsApp, contatos, fechamentos e diferenças por faixa de valor).',
+                'db:demanda_plataforma': 'Como está a demanda de buscas de pacientes neste mês e nos últimos 30 dias no banco? Quais temas, abordagens e faixas de preço têm mais procura?',
+                'hint:diagnostico_funil': 'Analise o funil completo deste profissional no banco (Match, visitas no perfil, cliques e fechamentos) e destaque os pontos fortes e gargalos.',
+                'hint:roi_sessao': 'Apresente o cálculo transparente de ROI comparando a assinatura com o valor real da sessão deste profissional e os números médios do banco.',
+                'hint:otimizar_perfil': 'Indique os ajustes mais práticos no perfil (bio, avaliações, Google Meu Negócio, artigos e Q&A) com base no que está faltando no cadastro dele.',
+                'hint:retencao_dados': 'Responda com empatia genuína, usando os números reais de demanda e fluxo do banco, e finalize com uma pergunta estratégica.'
+            };
+            quickSelect.addEventListener('change', function () {
+                const key = this.value;
+                const promptText = QUICK_PROMPTS[key];
+                this.value = '';
+                if (!promptText) return;
+
+                const instrInput = document.getElementById('copilot-admin-instruction');
+                const hasExistingChat = Boolean(chatInput && chatInput.value && chatInput.value.trim().length > 0);
+                if (key.startsWith('db:') || !hasExistingChat) {
+                    if (chatInput) {
+                        resetIdentityState();
+                        chatInput.value = promptText;
+                        updateInputView();
+                        chatInput.focus();
+                    }
+                } else if (instrInput) {
+                    instrInput.value = promptText;
+                    instrInput.focus();
+                }
+                notify('Pergunta preenchida! Clique em "Gerar Resposta" para consultar o banco.', 'info');
+            });
+        }
+
+        const btnTogglePreview = document.getElementById('btn-toggle-wpp-preview');
+        if (btnTogglePreview) {
+            btnTogglePreview.addEventListener('click', () => {
+                isWppPreviewVisible = !isWppPreviewVisible;
+                btnTogglePreview.textContent = isWppPreviewVisible
+                    ? '👁️ Ocultar pré-visualização WhatsApp'
+                    : '👁️ Ver como fica no WhatsApp';
+                renderWhatsAppPreview(getReplyText());
+            });
+        }
 
         if (btnGerar) {
             btnGerar.addEventListener('click', () => handleGenerateResponse(false));
@@ -647,6 +770,7 @@
             boxTexto.addEventListener('input', () => {
                 const val = getReplyText();
                 boxTexto.textContent = val;
+                renderWhatsAppPreview(val);
                 const countEl = document.getElementById('reply-char-count');
                 if (countEl) {
                     countEl.textContent = val ? `${val.length} caracteres • Editado manualmente` : 'Formatação WhatsApp preservada.';
@@ -903,7 +1027,7 @@
         if (btnRegenerar) btnRegenerar.disabled = true;
 
         try {
-            const modeVal = document.getElementById('copilot-mode-select')?.value || 'resposta';
+            const modeVal = document.getElementById('copilot-mode-select')?.value || currentMode || 'resposta';
             const extVal = document.getElementById('copilot-extension-select')?.value || 'padrao';
             const instrVal = document.getElementById('copilot-admin-instruction')?.value?.trim() || '';
 
@@ -1405,16 +1529,44 @@
             notify('Confirme o destinatário correto antes de copiar a resposta.', 'error');
             return;
         }
-        const text = getReplyText();
+        const rawText = getReplyText();
+        const text = normalizeWhatsAppCopyText(rawText);
         if (!text) return;
 
-        try {
-            await navigator.clipboard.writeText(text);
+        let copiedOk = false;
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            try {
+                await navigator.clipboard.writeText(text);
+                copiedOk = true;
+            } catch (_) {
+                copiedOk = false;
+            }
+        }
+
+        if (!copiedOk && typeof document !== 'undefined') {
+            try {
+                const tmp = document.createElement('textarea');
+                tmp.value = text;
+                tmp.setAttribute('readonly', '');
+                tmp.style.position = 'fixed';
+                tmp.style.top = '-9999px';
+                tmp.style.left = '-9999px';
+                document.body.appendChild(tmp);
+                tmp.select();
+                tmp.setSelectionRange(0, text.length);
+                copiedOk = Boolean(document.execCommand && document.execCommand('copy'));
+                document.body.removeChild(tmp);
+            } catch (_) {
+                copiedOk = false;
+            }
+        }
+
+        if (copiedOk) {
             const btnCopiar = document.getElementById('btn-copiar-resposta');
             const textCopiar = document.getElementById('text-copiar-btn');
 
             if (btnCopiar) btnCopiar.style.background = '#15803d';
-            if (textCopiar) textCopiar.textContent = '✅ Copiado e Aprovado!';
+            if (textCopiar) textCopiar.textContent = '✅ Copiado com Formatação WPP!';
 
             const wasEdited = Boolean(currentOriginalAiReply && text.trim() !== currentOriginalAiReply.trim());
             sendFeedbackStatus(wasEdited ? 'edited' : 'approved', {
@@ -1422,12 +1574,14 @@
                 isLibraryExample: true
             });
 
+            notify('Mensagem copiada mantendo quebras de linha, negrito e listas do WhatsApp!', 'success');
+
             setTimeout(() => {
                 if (btnCopiar) btnCopiar.style.background = '#25d366';
                 if (textCopiar) textCopiar.textContent = 'Copiar e Aprovar (⌘⇧C)';
             }, 2500);
-        } catch (e) {
-            notify('Não foi possível copiar automaticamente. Selecione e copie manualmente.', 'error');
+        } else {
+            notify('Não foi possível copiar automaticamente. Selecione o texto e copie manualmente.', 'error');
         }
     }
 

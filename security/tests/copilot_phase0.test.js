@@ -538,11 +538,18 @@ function makeRes() {
         );
         assert.ok(overdue.financialStatus.includes('OVERDUE'));
 
-        // Cancelamento efetivado vs agendado
+        // Cancelamento efetivado vs trial expirado com cancelAtPeriodEnd/canceledAt automático
         const canceledEff = AdminCopilotService.computeSubscriptionSummary({
             status: 'inactive', cancelAtPeriodEnd: true, canceledAt: '2026-10-01T00:00:00Z', subscriptionId: 'sub_1', planExpiresAt: '2026-10-01T00:00:00Z'
         });
         assert.strictEqual(canceledEff.financialStatus, 'Cancelamento Efetivado');
+        assert.strictEqual(canceledEff.badgeLabel, 'Expirado');
+
+        const trialExpCanceledFlag = AdminCopilotService.computeSubscriptionSummary({
+            status: 'inactive', cancelAtPeriodEnd: true, canceledAt: '2026-11-18T06:00:34.470Z', subscriptionId: null, subscription_payments_count: 0, planExpiresAt: '2026-11-18T03:29:52.357Z'
+        });
+        assert.strictEqual(trialExpCanceledFlag.badgeLabel, 'Expirado');
+        assert.strictEqual(trialExpCanceledFlag.financialStatus, 'Trial Expirado');
 
         // Meia-noite BRT: 02:59:59Z ainda é dia 30/11 em SP; 03:00:01Z já é dia 01/12 em SP!
         assert.strictEqual(AdminCopilotService.formatDateBRT('2026-12-01T02:59:59.000Z'), '30/11/2026');
@@ -950,6 +957,101 @@ function makeRes() {
         assert.strictEqual(resInsights.statusCode, 200);
         assert.strictEqual(resInsights.body.insights.approvalRate, 90);
         assert.strictEqual(resInsights.body.insights.sampleSize, 10);
+    });
+
+    // 16. Integração completa no banco, formatação WhatsApp avançada, cópia preservada e pílulas simplificadas
+    await test('16. Banco Render 360º, formatação WPP multi-linha, cópia preservada e UI com 3 pílulas de fala', async () => {
+        const { AdminCopilotService, whatsappFormatter, captured } = loadWithMocks({
+            queryHandler: async (sql) => {
+                if (sql.includes('AS active_visible')) {
+                    return [[{ active_visible: 66, active_paused: 1, active_paying: 35, total_registered: 673, waiting_list: 6, leads_total: 829 }]];
+                }
+                if (sql.includes('avg_clicks_all')) {
+                    return [[{ total_active_visible: 66, with_clicks_30d: 40, avg_clicks_all: '1.45', avg_clicks_receiving: '2.40', median_clicks_30d: '1.0', p75_clicks_30d: '2.0', max_clicks_30d: 12, with_deals_30d: 13, avg_deals_all: '0.20', avg_deals_among_closing: '1.00', max_deals_30d: 4 }]];
+                }
+                if (sql.includes('FROM "WhatsAppClickLogs"') && sql.includes('GROUP BY 1')) {
+                    return [[{ month: '2026-10', clicks: 201, feedbacks: 180, contacts: 87, deals: 26, talking: 12, psis_with_clicks: 98 }]];
+                }
+                if (sql.includes('FROM "Payments"') && sql.includes('GROUP BY 1, 2')) {
+                    return [[{ plano: 'ESSENTIAL', value: '99.00', count: 118 }]];
+                }
+                if (sql.includes('AS active_psis') && sql.includes('AS searches_30d')) {
+                    return [[{ searches_30d: 284, active_psis: 42 }]];
+                }
+                return [[]];
+            }
+        });
+
+        // 16.1 Formatação WhatsApp corrige bullets inline e sublinhados quebrados sem quebrar faixas "R$ 51 - R$ 90"
+        const uglyWpp = 'O modelo é transparente:_- Trabalhamos com 0% de comissão._ - Faixas como R$ 51 - R$ 90 têm mais buscas._- O valor é seu._';
+        const prettyWpp = whatsappFormatter.formatForWhatsApp(uglyWpp, { preserveDashBullets: true });
+        assert.ok(prettyWpp.includes('transparente:\n- Trabalhamos com 0% de comissão.\n- Faixas como R$ 51 - R$ 90 têm mais buscas.\n- O valor é seu.'), `Formatação incorreta: ${prettyWpp}`);
+
+        // 16.2 Auto-detecção de pergunta direta e injeção de PLATFORM_DB_METRICS + DYNAMIC_DB_QUERY_RESULTS no prompt
+        await AdminCopilotService.generateResponse({
+            pastedChat: 'Quantos pacientes cada profissional recebe por mês em ansiedade?'
+        });
+        const promptInjected = captured.geminiPrompts[0];
+        assert.ok(promptInjected.includes('PLATFORM_DB_METRICS'), 'PLATFORM_DB_METRICS não injetado');
+        assert.ok(promptInjected.includes('avg_clicks') || promptInjected.includes('2.4 cliques/mês') || promptInjected.includes('2.40 cliques/mês'), 'Média do banco ausente');
+        assert.ok(promptInjected.includes('DYNAMIC_DB_QUERY_RESULTS') && promptInjected.includes('284 buscas'), 'Consulta dinâmica por tema ausente');
+        assert.ok(captured.geminiConfigs[0].systemInstruction.includes('CONSULTA INTERNA DO ADMIN'), 'Modo consulta direta não ativado');
+
+        // 16.3 UI Web tem 3 pílulas simples de tipo de fala, 2 extensões e cópia preserva formatação WhatsApp
+        const dom = new JSDOM(`<!DOCTYPE html><body>${htmlCode}</body>`, { url: 'http://localhost:3001/admin/' });
+        global.window = dom.window;
+        global.document = dom.window.document;
+        global.localStorage = { getItem: () => 'fake-jwt' };
+        let copiedClipboard = '';
+        Object.defineProperty(dom.window.navigator, 'clipboard', {
+            value: { writeText: async (txt) => { copiedClipboard = txt; } },
+            configurable: true
+        });
+        Object.defineProperty(global.navigator, 'clipboard', {
+            value: { writeText: async (txt) => { copiedClipboard = txt; } },
+            configurable: true
+        });
+        dom.window.showToast = () => {};
+        dom.window.scrollTo = () => {};
+        dom.window.HTMLElement.prototype.scrollIntoView = () => {};
+        dom.window.fetch = async () => ({
+            ok: true,
+            json: async () => ({
+                aiResponse: '*Fluxo mensal*\n\n- 201 cliques em outubro\n- _Média de 2,4 cliques/mês_',
+                structuredOutput: {
+                    status: 'ready',
+                    whatsappReply: '*Fluxo mensal*\n\n- 201 cliques em outubro\n- _Média de 2,4 cliques/mês_',
+                    interactionCategory: 'desempenho_match',
+                    evidences: [],
+                    churnRisk: { level: 'low', reason: '' },
+                    strategicAlerts: [],
+                    nextBestAction: ''
+                }
+            })
+        });
+        global.fetch = dom.window.fetch;
+        dom.window.eval(jsCode);
+        dom.window.initializePage();
+
+        const tonePills = dom.window.document.querySelectorAll('.tone-btn');
+        const extOptions = dom.window.document.querySelectorAll('#copilot-extension-select option');
+        assert.strictEqual(tonePills.length, 3, 'Devem existir apenas 3 pílulas simples para tipo de fala');
+        assert.strictEqual(dom.window.document.getElementById('copilot-mode-select'), null, 'Dropdown duplicado de Modo deve ter sido removido');
+        assert.strictEqual(extOptions.length, 2, 'Extensão simplificada deve ter apenas 2 opções');
+
+        // Selecionar pergunta rápida preenche o campo automaticamente
+        const qSelect = dom.window.document.getElementById('copilot-quick-question-select');
+        qSelect.value = 'db:pacientes_mes';
+        qSelect.dispatchEvent(new dom.window.Event('change'));
+        assert.ok(dom.window.document.getElementById('copilot-input-chat').value.includes('por mês'));
+
+        // Gerar resposta e copiar preservando formatação exata
+        dom.window.document.getElementById('btn-gerar-resposta').click();
+        await new Promise(r => setTimeout(r, 30));
+        assert.ok(dom.window.document.getElementById('whatsapp-preview-box').querySelector('strong')?.textContent === 'Fluxo mensal');
+        dom.window.document.getElementById('btn-copiar-resposta').click();
+        await new Promise(r => setTimeout(r, 20));
+        assert.strictEqual(copiedClipboard, '*Fluxo mensal*\n\n- 201 cliques em outubro\n- _Média de 2,4 cliques/mês_');
     });
 
     console.log('\n==================================================================');

@@ -9,6 +9,7 @@ const PsychologistContextService = require('./psychologistContextService');
 const { PROMPT_VERSION, getResponseSchema, CopilotPromptBuilder } = require('./copilotPromptBuilder');
 const CopilotOutputGuard = require('./copilotOutputGuard');
 const CopilotMemoryService = require('./copilotMemoryService');
+const CopilotInsightsService = require('./copilotInsightsService');
 
 const SYSTEM_NOTICE_PATTERNS = [
     /^mensagens e chamadas são protegidas pela criptografia/i,
@@ -490,6 +491,61 @@ class AdminCopilotService {
      * utilizando schema JSON estruturado (Fase 2) com rollback via COPILOT_V2_STRUCTURED=false,
      * sanitização pré-LLM, CopilotOutputGuard, timeout e telemetria sem PII.
      */
+    static resolveSmartMode({ mode, tone, pastedChat = '', adminInstruction = '' }) {
+        const normalizedExplicit = CopilotPromptBuilder.normalizeMode(mode, tone);
+        // Se um modo específico (diferente do genérico "resposta") foi escolhido explicitamente, respeita
+        if (mode && mode !== 'resposta' && mode !== 'auto') {
+            return normalizedExplicit;
+        }
+        if (tone === 'comercial' || tone === 'tecnico') {
+            return normalizedExplicit;
+        }
+
+        const combined = `${pastedChat}\n${adminInstruction}`
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+
+        if (/\b(?:revise|revisar|rascunho|melhore esse texto|corrija esse texto)\b/.test(combined)) {
+            return 'revisao';
+        }
+        if (/\b(?:cancelar|cancelamento|nao vou assinar|parar de pagar|pausar perfil|estorno|reembolso|desistir|outra plataforma)\b/.test(combined)) {
+            return 'retencao';
+        }
+        if (/\b(?:quantos pacientes|media de|fluxo de pacientes|fechar mensalmente|retorno financeiro|converte pacientes|qual valor|quanto custa|mensalidade|plano essencial|plano clinico|compensa)\b/.test(combined)) {
+            return 'comercial';
+        }
+        if (/\b(?:match|algoritmo|prontuario|notificar|bug|erro|perfil|avaliacoes|google meu negocio|agenda|como funciona)\b/.test(combined)) {
+            return 'suporte';
+        }
+        return 'resposta';
+    }
+
+    static detectInputKind({ pastedChat = '', parsedMeta = {}, dossier = null }) {
+        if (dossier?.profile || parsedMeta?.detectedSender || parsedMeta?.hasForwardedContent) {
+            return 'whatsapp_chat';
+        }
+        const trimmed = String(pastedChat || '').trim();
+        const norm = trimmed.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        // Saudações diretas ao Anderson ainda simulam chat do WhatsApp
+        if (/\b(?:oi|ola|bom dia|boa tarde|boa noite)\s*,?\s*anderson\b/.test(norm) || /^oi\s+anderson\b/.test(norm)) {
+            return 'whatsapp_chat';
+        }
+        const hasExternalGreeting = /\b(?:boa tarde|boa noite|bom dia|ola|oi)\b/.test(norm) && norm.length > 25;
+        const looksLikeDataQuestion = /\b(?:quantos|quantas|qual a media|quais sao|como esta a demanda|demanda para|por mes|mensalmente|taxa de conversao|estatistica|ranking|dados do banco)\b/.test(norm)
+            || (norm.includes('?') && /\b(?:profissional|profissionais|psicologo|psicologos|plataforma|yelo|paciente|pacientes)\b/.test(norm));
+
+        if (looksLikeDataQuestion && !hasExternalGreeting) {
+            return 'direct_query';
+        }
+        return 'whatsapp_chat';
+    }
+
+    /**
+     * Gera resposta com Gemini separando systemInstruction modular de contents delimitados por nonce,
+     * utilizando schema JSON estruturado (Fase 2) com rollback via COPILOT_V2_STRUCTURED=false,
+     * sanitização pré-LLM, CopilotOutputGuard, timeout e telemetria sem PII.
+     */
     static async generateResponse({
         pastedChat,
         dossier,
@@ -503,20 +559,27 @@ class AdminCopilotService {
         if (!apiKey) throw new Error('GEMINI_API_KEY não configurada no servidor.');
 
         const structuredEnabled = process.env.COPILOT_V2_STRUCTURED !== 'false';
-        const effectiveMode = CopilotPromptBuilder.normalizeMode(mode, tone);
+        const effectiveMode = this.resolveSmartMode({ mode, tone, pastedChat, adminInstruction });
         const effectiveExtension = CopilotPromptBuilder.normalizeExtension(extension);
+        const parsedMeta = this.parsePastedChat(pastedChat);
+        const inputKind = this.detectInputKind({ pastedChat, parsedMeta, dossier });
 
         const { sanitizedText, hadRedactions } = this.sanitizeChatForLLM(pastedChat, {
             allowedPhones: dossier?.profile?.telefone ? [dossier.profile.telefone] : []
         });
         const windowedChat = this.windowTranscriptForLLM(sanitizedText, 6000);
 
-        const [pricing, fewShotBlock] = await Promise.all([
+        const [pricing, fewShotBlock, dbContext] = await Promise.all([
             this.getCommercialPricing(dossier?.profile || null),
             CopilotMemoryService.getApprovedExamplesBlock({
                 interactionCategory: interactionCategoryHint,
                 pastedChat: windowedChat.text
-            })
+            }),
+            CopilotInsightsService.getPlatformDatabaseContext({
+                pastedChat: windowedChat.text,
+                adminInstruction,
+                dossier
+            }).catch(() => ({ platformMetricsBlock: '', dynamicDbBlock: '' }))
         ]);
 
         const genAI = new GoogleGenerativeAI(apiKey);
@@ -525,7 +588,7 @@ class AdminCopilotService {
             chatLength: windowedChat.text.length
         });
 
-        let contextBlock = 'Nenhum profissional específico confirmado no banco de dados. Responda apenas de forma genérica e transparente, sem citar métricas, planos individuais ou assumir histórico prévio de conta.';
+        let contextBlock = 'Nenhum profissional específico confirmado no banco de dados. NÃO invente métricas privadas individuais, mas utilize livremente PLATFORM_DB_METRICS e DYNAMIC_DB_QUERY_RESULTS com transparência.';
         let pastContext = '';
 
         if (dossier && dossier.profile) {
@@ -546,6 +609,8 @@ class AdminCopilotService {
                 const funnel = dossier.funnel || null;
                 const usage = dossier.usage || null;
                 const posts = dossier.posts || { total: 0, top: [] };
+                const reviews = dossier.reviews || { total: 0, avgRating: null, gmbCount: 0, platformReview: null };
+                const community = dossier.community || { qnaAnswers: 0, forumPosts: 0, forumComments: 0 };
                 const sub = dossier.subscriptionSummary || this.computeSubscriptionSummary(p, {
                     latestPayment: dossier.latestPayment,
                     subscription: dossier.subscription
@@ -556,20 +621,28 @@ class AdminCopilotService {
                     : (p.tipo_cobranca === 'mensal' && p.valor_mensal_numero ? `R$ ${p.valor_mensal_numero}/mês` : 'A combinar');
 
                 const matchesTotal = funnel?.total?.matches ?? (p.profile_appearances || 0);
+                const viewsTotal = funnel?.total?.profileViews ?? 0;
                 const clicksTotal = funnel?.total?.whatsappClicks ?? (p.whatsapp_clicks || s.total_clicks || 0);
                 const clicks30d = funnel?.d30?.whatsappClicks ?? s.clicks_30d ?? 0;
                 const clicks7d = funnel?.d7?.whatsappClicks ?? s.clicks_7d ?? 0;
 
+                const monthlyStr = Array.isArray(dossier.monthlyHistory) && dossier.monthlyHistory.length > 0
+                    ? dossier.monthlyHistory.map(m => `${m.month}: ${m.matches} match/${m.clicks} cliques/${m.contacts} contatos/${m.deals} fechados`).join(' ; ')
+                    : null;
+
                 const dataLines = [
                     'VERIFIED_SYSTEM_DATA:',
-                    `- Profissional: ${p.nome} (CRP: ${p.crp || 'N/I'}) | ${p.cidade || 'Online'}${p.estado ? '/' + p.estado : ''}`,
+                    `- Profissional: ${p.nome} (CRP: ${p.crp || 'N/I'}) | ${p.cidade || 'Online'}${p.estado ? '/' + p.estado : ''} | Bio: ${p.bio_length || 0} chars | XP: ${p.xp || 0} (${p.authority_level || 'padrao'})`,
                     `- Cadastro: ${sub?.cadastreStatus || p.status} | Financeiro: ${sub?.financialStatus || p.status} | Visibilidade: ${sub?.visibilityStatus || 'N/I'}`,
-                    `- Plano: ${sub?.planText || p.plano || 'N/D'} | Validade(BRT): ${sub?.expireText || this.formatDateBRT(p.planExpiresAt) || '-'} | Pagamentos: ${p.subscription_payments_count || 0}`,
-                    dossier.latestPayment ? `- Última fatura: ${dossier.latestPayment.status} (${dossier.latestPayment.billingType || '-'} Venc:${dossier.latestPayment.dueDate || '-'})` : null,
-                    `- Sessão: ${valorFormatado} | Modalidade: ${Array.isArray(p.modalidade) ? p.modalidade.join(', ') : (p.modalidade || 'Online')} | Abordagens: ${Array.isArray(p.abordagens_tecnicas) ? p.abordagens_tecnicas.slice(0, 4).join(', ') : (p.abordagens_tecnicas || 'Geral')}`,
-                    `- Funil: Match=${matchesTotal} (30d:${funnel?.d30?.matches ?? 0}) | Cliques WPP Total=${clicksTotal} (7d:${clicks7d}, 30d:${clicks30d}) | Contatos=${s.contacts_received || 0} | SemContato=${s.no_contact || 0} | EmNeg=${s.in_negotiation || 0} | Fechamentos=${s.deals_closed || 0}`,
-                    posts.total > 0 ? `- Blog: ${posts.total} artigo(s)${posts.top.length > 0 ? ` (Top: "${posts.top[0].titulo}" [${posts.top[0].curtidas}❤])` : ''}` : null,
-                    (usage && (usage.activePatients > 0 || usage.appointments30d > 0)) ? `- Uso Clínica: ${usage.activePatients} pac. ativos, ${usage.appointments30d} sessões/30d` : null,
+                    `- Plano: ${sub?.planText || p.plano || 'N/D'} | Validade(BRT): ${sub?.expireText || this.formatDateBRT(p.planExpiresAt) || '-'} | Pagamentos: ${p.subscription_payments_count || 0}${p.lifetimeRevenue ? ` | LTV pago: R$ ${Number(p.lifetimeRevenue).toFixed(2)}` : ''}`,
+                    dossier.latestPayment ? `- Última fatura: ${dossier.latestPayment.status} (R$ ${dossier.latestPayment.value || '-'}, ${dossier.latestPayment.billingType || '-'}, Venc:${dossier.latestPayment.dueDate || '-'})` : null,
+                    `- Sessão: ${valorFormatado} | Modalidade: ${Array.isArray(p.modalidade) ? p.modalidade.join(', ') : (p.modalidade || 'Online')} | Abordagens: ${Array.isArray(p.abordagens_tecnicas) ? p.abordagens_tecnicas.slice(0, 4).join(', ') : (p.abordagens_tecnicas || 'Geral')} | Temas: ${Array.isArray(p.temas_atuacao) ? p.temas_atuacao.slice(0, 5).join(', ') : (p.temas_atuacao || '-')}`,
+                    `- Funil Geral: Match=${matchesTotal} (30d:${funnel?.d30?.matches ?? 0}, 7d:${funnel?.d7?.matches ?? 0}) | Visitas Perfil=${viewsTotal} (30d:${funnel?.d30?.profileViews ?? 0}) | Cliques WPP=${clicksTotal} (30d:${clicks30d}, 7d:${clicks7d}) | Contatos=${s.contacts_received || 0} | SemContato=${s.no_contact || 0} | EmNeg=${s.in_negotiation || 0} | Fechamentos=${s.deals_closed || 0}`,
+                    monthlyStr ? `- Evolução mensal deste profissional: ${monthlyStr}` : null,
+                    `- Provas sociais & Autoridade: ${reviews.total || 0} avaliações Yelo${reviews.avgRating ? ` (nota ${reviews.avgRating})` : ''}, ${reviews.gmbCount || 0} reviews Google Meu Negócio, ${posts.total || 0} artigo(s) Blog${posts.top.length > 0 ? ` (Top: "${posts.top[0].titulo}" [${posts.top[0].curtidas}❤])` : ''}, ${community.qnaAnswers || 0} respostas Q&A, ${community.forumPosts || 0} posts Fórum`,
+                    (usage && (usage.activePatients > 0 || usage.appointments30d > 0 || usage.appointmentsTotal > 0)) ? `- Uso Clínica: ${usage.activePatients} pac. ativos, ${usage.appointments30d} sessões/30d (${usage.appointmentsTotal || 0} total)` : null,
+                    Array.isArray(dossier.optimizationChecklist) && dossier.optimizationChecklist.length > 0 ? `- Oportunidades de otimização detectadas no perfil: ${dossier.optimizationChecklist.join('; ')}` : null,
+                    reviews.platformReview ? `- Avaliação que o psi deu à Yelo: nota ${reviews.platformReview.rating}/5${reviews.platformReview.comment ? ` ("${reviews.platformReview.comment}")` : ''}` : null,
                     dossier.exitSurvey ? `- ExitSurvey: "${dossier.exitSurvey.motivo}"${dossier.exitSurvey.sugestao ? ` ("${dossier.exitSurvey.sugestao}")` : ''}` : null,
                     pricing.activeOffer ? `- Oferta elegível (requer aprovação): ${pricing.activeOffer.title}` : null
                 ].filter(Boolean);
@@ -597,10 +670,10 @@ class AdminCopilotService {
         let toneInstruction = 'Tom natural, parceiro e maduro (entre colegas psicólogos).';
         if (tone === 'comercial') {
             toneInstruction = pricing.available
-                ? `Tom consultivo focado em clareza comercial (0% de comissão; Plano Essencial vigente R$ ${Number(pricing.priceEssencial).toFixed(2).replace('.', ',')}/mês). Nunca prometa retorno garantido ou isenções sem autorização.`
-                : 'Tom consultivo transparente (0% de comissão sobre sessões); como os valores padrão não foram carregados do banco neste momento, não afirme valores numéricos fixos de plano.';
+                ? `Tom consultivo focado em clareza comercial e ROI (0% de comissão; Plano Essencial vigente R$ ${Number(pricing.priceEssencial).toFixed(2).replace('.', ',')}/mês). Nunca prometa retorno garantido ou isenções sem autorização.`
+                : 'Tom consultivo transparente focado em ROI e dados reais do banco (0% de comissão sobre sessões); não afirme valores numéricos fixos que não constem nos blocos de dados.';
         } else if (tone === 'tecnico') {
-            toneInstruction = 'Tom prático explicando ajustes de perfil ou funcionamento oficial do Match da Yelo (critérios clínicos 65% + operacionais 35% + cotas dinâmicas, sem inventar pesos ou regras).';
+            toneInstruction = 'Tom prático explicando ajustes de perfil, funcionalidades reais da plataforma ou funcionamento oficial do Match da Yelo (critérios clínicos 65% + operacionais 35% + cotas dinâmicas, sem inventar pesos ou regras).';
         }
 
         const nonce = crypto.randomBytes(4).toString('hex');
@@ -611,11 +684,14 @@ class AdminCopilotService {
             mode: effectiveMode,
             extension: effectiveExtension,
             toneInstruction,
-            structured: structuredEnabled
+            structured: structuredEnabled,
+            inputKind
         });
 
         const userContents = CopilotPromptBuilder.buildUserContents({
             contextBlock,
+            platformMetricsBlock: dbContext.platformMetricsBlock,
+            dynamicDbBlock: dbContext.dynamicDbBlock,
             pastContext,
             commercialBlock,
             adminInstruction,
@@ -645,8 +721,8 @@ class AdminCopilotService {
             const timer = setTimeout(() => controller.abort(new Error('Timeout na chamada ao provedor de IA.')), timeoutMs);
             try {
                 const generationConfig = structuredEnabled
-                    ? { maxOutputTokens: 1100, responseMimeType: 'application/json', responseSchema: getResponseSchema() }
-                    : { maxOutputTokens: 900 };
+                    ? { maxOutputTokens: 1600, responseMimeType: 'application/json', responseSchema: getResponseSchema() }
+                    : { maxOutputTokens: 1100 };
 
                 const model = genAI.getGenerativeModel({
                     model: modelName,

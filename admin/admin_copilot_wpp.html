@@ -18,18 +18,77 @@
         overflow-x: hidden;
     }
 
+    /* Top Action Bar Mobile-first (Alinhada com a versão App) */
+    .copilot-top-nav {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 12px;
+        width: 100%;
+    }
+
+    .copilot-back-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #ffffff;
+        color: #1B4332;
+        border: 1px solid #e2e8f0;
+        padding: 7px 14px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .copilot-detector-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #ecfdf5;
+        color: #166534;
+        border: 1px solid #a7f3d0;
+        padding: 5px 11px;
+        border-radius: 999px;
+        font-size: 0.74rem;
+        font-weight: 700;
+    }
+
     /* Header (Padrão Card Hero Admin Yelo) */
     .copilot-header {
         background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%);
-        padding: 25px 30px;
-        border-radius: 16px;
+        padding: 22px 26px;
+        border-radius: 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: 16px;
-        margin-bottom: 25px;
+        gap: 14px;
+        margin-bottom: 20px;
         box-shadow: 0 8px 24px rgba(27, 67, 50, 0.16);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .copilot-header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .copilot-header-deco {
+        position: absolute;
+        top: -42px;
+        right: -42px;
+        width: 170px;
+        height: 170px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+        pointer-events: none;
     }
 
     .copilot-back-btn {
@@ -53,7 +112,7 @@
 
     .copilot-title {
         font-family: var(--font-titulos, 'Fraunces', serif);
-        font-size: 1.8rem;
+        font-size: 1.7rem;
         font-weight: 700;
         color: #ffffff;
         margin: 0 0 4px 0;
@@ -62,19 +121,19 @@
     }
 
     .copilot-subtitle {
-        color: rgba(255, 255, 255, 0.82);
+        color: rgba(255, 255, 255, 0.85);
         margin: 0;
-        font-size: 0.96rem;
-        line-height: 1.4;
+        font-size: 0.92rem;
+        line-height: 1.38;
     }
 
     .copilot-clear-btn {
         background: rgba(255, 255, 255, 0.12);
         color: #ffffff;
         border: 1px solid rgba(255, 255, 255, 0.24);
-        padding: 9px 15px;
+        padding: 8px 14px;
         border-radius: 50px;
-        font-size: 0.84rem;
+        font-size: 0.82rem;
         font-weight: 600;
         cursor: pointer;
         display: flex;
@@ -86,16 +145,12 @@
         background: rgba(255, 255, 255, 0.22);
     }
 
-    /* Mobile Segmented Navigation Tabs */
+    /* Mobile Segmented Navigation Tabs (Estilo pílulas do App) */
     .copilot-mobile-tabs {
         display: none;
         width: 100%;
-        background: #f1f5f9;
-        padding: 5px;
-        border-radius: 999px;
-        gap: 6px;
-        margin-bottom: 18px;
-        border: 1px solid #e2e8f0;
+        gap: 8px;
+        margin-bottom: 16px;
     }
 
     .copilot-tab-btn {
@@ -105,25 +160,27 @@
         align-items: center;
         justify-content: center;
         gap: 5px;
-        padding: 9px 6px;
+        padding: 9px 8px;
         border-radius: 999px;
-        border: none;
-        background: transparent;
-        color: #64748b;
-        font-size: 0.8rem;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #475569;
+        font-size: 0.78rem;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.2s ease;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         -webkit-tap-highlight-color: transparent;
     }
 
     .copilot-tab-btn.active {
-        background: #ffffff;
-        color: #1B4332;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        background: #1B4332;
+        color: #ffffff;
+        border-color: #1B4332;
+        box-shadow: 0 3px 10px rgba(27,67,50,0.18);
     }
 
     /* Main Layout Grid */
@@ -278,19 +335,39 @@
             max-width: 100% !important;
         }
 
+        .copilot-top-nav {
+            display: flex;
+        }
+
         .copilot-header {
-            padding: 16px;
-            margin-bottom: 14px;
-            border-radius: 14px;
-            width: 100%;
+            padding: 18px 20px !important;
+            margin-bottom: 14px !important;
+            border-radius: 22px !important;
+            width: 100% !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 6px !important;
+        }
+
+        .copilot-header-left {
+            flex: 0 0 auto !important;
+            width: 100% !important;
+            gap: 0 !important;
+        }
+
+        .copilot-back-btn,
+        .copilot-desktop-status {
+            display: none !important;
         }
 
         .copilot-title {
-            font-size: 1.32rem;
+            font-size: 1.42rem !important;
+            margin-bottom: 4px !important;
         }
 
         .copilot-subtitle {
-            font-size: 0.82rem;
+            font-size: 0.82rem !important;
+            line-height: 1.38 !important;
         }
 
         .copilot-mobile-tabs {
@@ -298,10 +375,10 @@
             position: sticky;
             top: 8px;
             z-index: 25;
-            background: rgba(248, 250, 252, 0.96);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            padding: 4px 0;
+            background: rgba(248, 250, 252, 0.92);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .copilot-grid {
@@ -381,16 +458,29 @@
 
 <div class="copilot-container">
     
-    <!-- CABEÇALHO DA PÁGINA (PADRÃO MAIN-HEADER YELO) -->
+    <!-- BARRA SUPERIOR MOBILE (ESPELHADA NA VERSÃO APP) -->
+    <div class="copilot-top-nav">
+        <button type="button" class="copilot-back-pill" onclick="window.navigateToPage('admin_crm_hub.html')" title="Voltar ao CRM Hub">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span>CRM Hub</span>
+        </button>
+        <div class="copilot-detector-pill">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+            <span>Detector Ativo</span>
+        </div>
+    </div>
+
+    <!-- CABEÇALHO DA PÁGINA (PADRÃO CARD HERO VERDE YELO) -->
     <div class="main-header copilot-header">
-        <div style="display: flex; align-items: center; gap: 14px; flex: 1 1 200px; min-width: 0;">
+        <div class="copilot-header-deco"></div>
+        <div class="copilot-header-left">
             <button class="copilot-back-btn" onclick="window.navigateToPage('admin_crm_hub.html')" title="Voltar ao CRM Hub">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </button>
-            <div>
+            <div style="min-width: 0; flex: 1;">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                    <span style="background: rgba(255, 255, 255, 0.15); color: #FFEE8C; font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.5px;">Inteligência AI</span>
-                    <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.72rem; color: #a7f3d0; font-weight: 600;">
+                    <span style="background: rgba(255, 255, 255, 0.16); color: #FFEE8C; font-size: 0.68rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px;">Inteligência AI</span>
+                    <span class="copilot-desktop-status" style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.72rem; color: #a7f3d0; font-weight: 600;">
                         <span style="width: 7px; height: 7px; border-radius: 50%; background: #34d399; display: inline-block;"></span>
                         Detector Ativo
                     </span>
@@ -400,14 +490,10 @@
             </div>
         </div>
 
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; max-width: 100%;">
+        <div class="copilot-header-actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; max-width: 100%; position: relative; z-index: 2;">
             <button id="btn-dev-switch-psi" type="button" class="copilot-clear-btn" style="display: none; border-style: dashed;" title="Troca rápida local para conta de Psicólogo">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
                 <span class="dev-switch-label">Conta Psi</span>
-            </button>
-            <button id="btn-limpar-tudo" class="copilot-clear-btn">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                <span>Limpar</span>
             </button>
         </div>
     </div>
@@ -423,7 +509,7 @@
         </button>
         <button type="button" class="copilot-tab-btn" data-tab-target="tab-historico">
             <span>🕒 Histórico</span>
-            <span id="mobile-history-badge" style="font-size: 0.7rem; background: #e2e8f0; color: #475569; padding: 1px 6px; border-radius: 10px; font-weight: 700;">0</span>
+            <span id="mobile-history-badge" style="font-size: 0.7rem; background: #e2e8f0; color: #1B4332; padding: 1px 6px; border-radius: 10px; font-weight: 700;">0</span>
         </button>
     </div>
 
@@ -437,9 +523,9 @@
             
             <!-- CARD DE ENTRADA DO CHAT -->
             <div class="copilot-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                     <label for="copilot-input-chat" style="font-size: 0.92rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
-                        <span>📋 Conversa do WhatsApp</span>
+                        <span>📋 Conversa do WhatsApp ou Pergunta ao Banco</span>
                     </label>
                     <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; max-width: 100%;">
                         <button type="button" id="btn-colar-clipboard" style="background: #10b981; color: #ffffff; border: 1.5px solid #059669; padding: 7px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(16,185,129,0.25);" title="Colar todo o conteúdo da área de transferência (suporte a múltiplas mensagens no iPhone)">
@@ -450,10 +536,6 @@
                             <span style="font-size: 1rem; line-height: 1; font-weight: 800;">+</span>
                             <span>Colar Mais</span>
                         </button>
-                        <button type="button" id="btn-limpar-input" disabled style="display: inline-flex; background: #fef2f2; color: #b91c1c; border: 1.5px solid #fecaca; padding: 7px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 700; cursor: not-allowed; opacity: 0.5; align-items: center; gap: 5px; transition: all 0.2s;" title="Limpar apenas o campo de texto da conversa">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            <span>Limpar</span>
-                        </button>
                         <label for="file-chat-import" style="background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1; padding: 7px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; margin: 0; transition: all 0.2s;" title="Importar arquivo .txt exportado do WhatsApp">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
                             <span>Arquivo .txt</span>
@@ -461,21 +543,27 @@
                         <input type="file" id="file-chat-import" accept=".txt,text/plain" style="display: none;">
                     </div>
                 </div>
-                <div style="display: flex; justify-content: flex-end; margin-bottom: 6px;">
-                    <span id="chat-input-stats" style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Cole o texto do chat</span>
-                </div>
 
                 <div style="position: relative;">
-                    <textarea id="copilot-input-chat" rows="6" placeholder="Cole aqui a conversa copiada diretamente do WhatsApp (ou use o botão Colar Tudo acima)...
+                    <textarea id="copilot-input-chat" rows="6" placeholder="Cole a conversa do WhatsApp OU pergunte direto sobre os dados do banco no Render...
 
-Exemplo:
-[08/10/26, 12:31:42] ~Psicólogo Fred Monte: Boa tarde, estou tendo curtidas em alguns artigos meus
-[08/10/26, 12:31:50] ~Psicólogo Fred Monte: uns mais, outros menos"></textarea>
+Exemplos:
+• Quantos pacientes cada profissional recebe por mês?
+• [08/10/26, 12:31] ~Psicólogo Fred Monte: Boa tarde, como está meu desempenho?"></textarea>
                     
                     <!-- BOTÃO FLUTUANTE DE COLAR NO MOBILE (QUANDO VAZIO) -->
                     <button type="button" id="btn-colar-floating" style="position: absolute; right: 14px; bottom: 14px; background: #1B4332; color: #FFEE8C; border: none; padding: 9px 16px; border-radius: 50px; font-size: 0.84rem; font-weight: 800; cursor: pointer; display: none; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(27,67,50,0.3); z-index: 5;">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
                         <span>Colar Conversa</span>
+                    </button>
+                </div>
+
+                <!-- BARRA DE STATUS + BOTÃO LIMPAR LOGO ABAIXO DO CAMPO (ACESSO FÁCIL) -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 8px; flex-wrap: wrap;">
+                    <span id="chat-input-stats" style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Cole o texto do chat</span>
+                    <button type="button" id="btn-limpar-input" disabled style="display: inline-flex; background: #fef2f2; color: #b91c1c; border: 1.5px solid #fecaca; padding: 6px 14px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; cursor: not-allowed; opacity: 0.5; align-items: center; gap: 5px; transition: all 0.2s;" title="Limpar conversa e iniciar novo atendimento">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        <span>Limpar</span>
                     </button>
                 </div>
 
@@ -521,43 +609,43 @@ Exemplo:
                     <div id="manual-search-results" style="margin-top: 8px; max-height: 180px; overflow-y: auto;"></div>
                 </div>
 
-                <!-- SELETOR DE TOM E BOTÃO DE GERAÇÃO -->
-                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 14px;">
+                <!-- SELETOR SIMPLIFICADO DE TIPO DE FALA, PERGUNTAS E BOTÃO DE GERAÇÃO -->
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 12px;">
                     <div class="tone-selector-wrap">
-                        <span style="font-size: 0.84rem; font-weight: 700; color: #475569;">Tom de Voz:</span>
+                        <span style="font-size: 0.84rem; font-weight: 700; color: #475569;">Tipo de fala:</span>
                         <div class="tone-buttons">
-                            <button type="button" class="tone-btn active" data-tone="natural">
-                                <span>🌿 Natural<span class="tone-label-full"> / Colega</span></span>
+                            <button type="button" class="tone-btn active" data-tone="natural" data-mode="resposta">
+                                <span>🌿 Natural</span>
                             </button>
-                            <button type="button" class="tone-btn" data-tone="comercial">
-                                <span>💼 Comercial<span class="tone-label-full"> / ROI</span></span>
+                            <button type="button" class="tone-btn" data-tone="comercial" data-mode="comercial">
+                                <span>💼 Comercial</span>
                             </button>
-                            <button type="button" class="tone-btn" data-tone="tecnico">
-                                <span>⚙️ Técnico<span class="tone-label-full"> / Suporte</span></span>
+                            <button type="button" class="tone-btn" data-tone="tecnico" data-mode="suporte">
+                                <span>⚙️ Suporte</span>
                             </button>
                         </div>
                     </div>
 
                     <div class="copilot-mode-grid">
-                        <select id="copilot-mode-select" style="padding: 9px 14px; border-radius: 999px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 600; color: #334155;">
-                            <option value="resposta">💬 Modo: Resposta</option>
-                            <option value="revisao">📝 Modo: Revisão Rascunho</option>
-                            <option value="comercial">💼 Modo: Comercial</option>
-                            <option value="suporte">🛠️ Modo: Suporte</option>
-                            <option value="retencao">🛡️ Modo: Retenção</option>
-                            <option value="estrategico">🧠 Modo: Estratégico</option>
-                        </select>
                         <select id="copilot-extension-select" style="padding: 9px 14px; border-radius: 999px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 600; color: #334155;">
-                            <option value="padrao" selected>📏 Extensão: Padrão</option>
-                            <option value="curta">⚡ Extensão: Curta</option>
-                            <option value="detalhada">📄 Extensão: Detalhada</option>
+                            <option value="padrao" selected>📝 Resposta: Completa</option>
+                            <option value="curta">⚡ Resposta: Curta</option>
+                        </select>
+                        <select id="copilot-quick-question-select" style="padding: 9px 14px; border-radius: 999px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 600; color: #334155;">
+                            <option value="">💡 Perguntas sugeridas (Banco)...</option>
+                            <option value="db:pacientes_mes">📊 Quantos pacientes cada psi recebe por mês?</option>
+                            <option value="db:demanda_plataforma">📈 Como está a demanda de buscas este mês?</option>
+                            <option value="hint:diagnostico_funil">🎯 Diagnóstico do funil e cliques deste psi</option>
+                            <option value="hint:roi_sessao">💰 Argumento de ROI usando valor real da sessão</option>
+                            <option value="hint:otimizar_perfil">🛠️ O que ajustar no perfil para converter mais</option>
+                            <option value="hint:retencao_dados">🛡️ Retenção empática com dados reais da plataforma</option>
                         </select>
                     </div>
 
-                    <input type="text" id="copilot-admin-instruction" placeholder="Orientação opcional (ex: revisar rascunho ou propor pausa)..." style="width: 100%; min-width: 0; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 999px; font-size: 14px; color: #1e293b; background: #ffffff; outline: none;">
+                    <input type="text" id="copilot-admin-instruction" placeholder="Orientação ou pergunta extra para a IA (opcional)..." style="width: 100%; min-width: 0; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 999px; font-size: 14px; color: #1e293b; background: #ffffff; outline: none;">
 
                     <button id="btn-gerar-resposta" class="btn-generate">
-                        <span>⚡ Gerar Resposta com IA</span>
+                        <span>⚡ Gerar Resposta com Banco + IA</span>
                     </button>
                 </div>
             </div>
@@ -580,7 +668,13 @@ Exemplo:
                     </div>
                 </div>
 
-                <textarea id="box-resposta-texto" rows="6" style="width: 100%; min-width: 0; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 14px; font-size: 16px; line-height: 1.55; color: #0f172a; resize: vertical; outline: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;"></textarea>
+                <textarea id="box-resposta-texto" rows="7" style="width: 100%; min-width: 0; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 14px; font-size: 16px; line-height: 1.55; color: #0f172a; resize: vertical; outline: none; white-space: pre-wrap; word-wrap: break-word; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;"></textarea>
+
+                <!-- PREVIEW VISUAL DE COMO FICA NO WHATSAPP -->
+                <div id="whatsapp-preview-wrapper" style="margin-top: 10px;">
+                    <button id="btn-toggle-wpp-preview" type="button" style="background: transparent; border: none; color: #166534; font-size: 0.74rem; font-weight: 700; cursor: pointer; padding: 2px 0; text-decoration: underline;">👁️ Ocultar pré-visualização WhatsApp</button>
+                    <div id="whatsapp-preview-box" style="margin-top: 6px; background: #e7ffdb; border: 1px solid #bbf7d0; border-radius: 12px 12px 2px 12px; padding: 12px 14px; font-size: 0.88rem; line-height: 1.5; color: #111b21; white-space: pre-wrap; word-break: break-word; box-shadow: 0 1px 3px rgba(0,0,0,0.06); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;"></div>
+                </div>
                 
                 <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; color: #64748b; flex-wrap: wrap; gap: 8px;">
                     <span id="reply-char-count">Formatação WhatsApp preservada.</span>
@@ -588,6 +682,7 @@ Exemplo:
                         <button id="btn-usar-alternativa" type="button" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; font-weight: 700; cursor: pointer; padding: 5px 12px; border-radius: 999px; font-size: 0.74rem;">Ver alternativa</button>
                         <button id="btn-rejeitar-resposta" type="button" style="display: none; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-weight: 700; cursor: pointer; padding: 5px 12px; border-radius: 999px; font-size: 0.74rem;">Rejeitar</button>
                         <button id="btn-regenerar-variacao" style="background: none; border: none; color: #166534; font-weight: 700; cursor: pointer; text-decoration: underline; padding: 4px 0;">Gerar outra opção</button>
+                        <button id="btn-limpar-tudo" type="button" style="background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-weight: 700; cursor: pointer; padding: 5px 12px; border-radius: 999px; font-size: 0.74rem;">🗑️ Nova conversa</button>
                     </div>
                 </div>
 

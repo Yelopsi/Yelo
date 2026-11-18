@@ -147,7 +147,7 @@ class PsychologistContextService {
         const isExpiredByDate = hasValidExp && expDate <= now;
         const isExpired = psy.status === 'inactive' || psy.status === 'vencido' || isExpiredByDate || isEpochExpired;
         const isCanceledEffective = Boolean(
-            (psy.canceledAt || (psy.cancelAtPeriodEnd && isExpired)) && psy.status !== 'active'
+            hasPaidHistory && (psy.canceledAt || (psy.cancelAtPeriodEnd && isExpired)) && psy.status !== 'active'
         );
 
         let visibilityStatus = 'Oculto nas buscas';
@@ -194,21 +194,21 @@ class PsychologistContextService {
         }
 
         if (isExpired) {
-            let badge = hasPaidHistory ? 'Expirado' : 'Trial Expirado';
+            let badge = 'Expirado';
             let finStatus = hasPaidHistory ? 'Assinatura Vencida' : 'Trial Expirado';
             if (latestPayStatus === 'REFUNDED') {
                 badge = 'Estornado / Inativo';
                 finStatus = 'Estornado / Chargeback';
             } else if (isCanceledEffective) {
-                badge = 'Cancelamento Efetivado';
+                badge = 'Expirado';
                 finStatus = 'Cancelamento Efetivado';
             } else if (latestPayStatus === 'OVERDUE') {
-                badge = 'Assinatura Vencida (OVERDUE)';
+                badge = 'Expirado (OVERDUE)';
                 finStatus = 'Pagamento Atrasado (OVERDUE)';
             }
 
             return {
-                planText: planLabel ? `${badge} (${planLabel})` : badge,
+                planText: planLabel ? `${hasPaidHistory ? 'Expirado' : 'Trial Expirado'} (${planLabel})` : (hasPaidHistory ? 'Expirado' : 'Trial Expirado'),
                 badgeLabel: badge,
                 cadastreStatus: psy.status || 'inactive',
                 financialStatus: finStatus,
@@ -770,16 +770,26 @@ class PsychologistContextService {
                     "planExpiresAt", "subscriptionId", "subscription_payments_count", "is_exempt",
                     "cancelAtPeriodEnd", "canceledAt", "firstPaidAt", "profile_paused",
                     "valor_sessao_numero", "tipo_cobranca", "valor_mensal_numero", "modalidade",
-                    cidade, estado, LEFT(COALESCE(bio, ''), 220) AS bio,
+                    cidade, estado, LEFT(COALESCE(bio, ''), 300) AS bio,
                     LENGTH(COALESCE(bio, '')) AS bio_length,
-                    temas_atuacao, abordagens_tecnicas, free_session_active,
-                    "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "createdAt", "updatedAt"
+                    temas_atuacao, abordagens_tecnicas, free_session_active, free_session_time,
+                    "whatsapp_clicks", "profile_appearances", "last_shown_match_at", "createdAt", "updatedAt",
+                    pronomes, ano_inicio_experiencia, formacao_nivel, publico_alvo, estilo_terapia,
+                    praticas_inclusivas, praticas_vivencias, disponibilidade_periodo,
+                    google_business_url, google_reviews_data, "profileActivatedAt", "subscribedAt",
+                    "reactivatedAt", "lifetimeRevenue", xp, authority_level, badges
                 FROM "Psychologists"
                 WHERE id = :id AND "deletedAt" IS NULL;
             `, { replacements: { id: entityId } });
 
             if (!psis || psis.length === 0) return null;
             const psi = psis[0];
+
+            const sessionVal = Number(psi.valor_sessao_numero || 0);
+            const priceBucket = sessionVal <= 0 ? null
+                : (sessionVal <= 50 ? 'Até R$ 50'
+                    : (sessionVal <= 90 ? 'R$ 51 - R$ 90'
+                        : (sessionVal <= 150 ? 'R$ 91 - R$ 150' : 'Acima de R$ 150')));
 
             const [
                 latestPayRows,
@@ -792,6 +802,12 @@ class PsychologistContextService {
                 exitSurveyRows,
                 practiceStatsRows,
                 featureRows,
+                reviewsRows,
+                platformRevRows,
+                communityRows,
+                monthlyWppRows,
+                monthlyMatchRows,
+                nicheDemandRows,
                 memAndPast
             ] = await Promise.all([
                 db.sequelize.query(`
@@ -821,7 +837,7 @@ class PsychologistContextService {
                         COUNT(*) FILTER (WHERE COALESCE("feedbackGiven", false) = false) as pending_feedback,
                         COUNT(*) FILTER (WHERE "dealClosed" IN ('yes', 'started', 'true')) as deals_closed,
                         COUNT(*) FILTER (WHERE "dealClosed" IN ('yes', 'started', 'true') AND "createdAt" >= NOW() - INTERVAL '30 days') as deals_closed_30d,
-                        COUNT(*) FILTER (WHERE status = 'negotiating') as in_negotiation
+                        COUNT(*) FILTER (WHERE status = 'negotiating' OR "dealClosed" = 'talking') as in_negotiation
                     FROM "WhatsAppClickLogs"
                     WHERE "psychologistId" = :id;
                 `, { replacements: { id: entityId } }).catch(() => [[{}]]),
@@ -866,7 +882,8 @@ class PsychologistContextService {
                 db.sequelize.query(`
                     SELECT
                         (SELECT COUNT(*) FROM "Patients" WHERE "psychologistId" = :id AND "deletedAt" IS NULL) as active_patients,
-                        (SELECT COUNT(*) FROM "Appointments" WHERE "psychologistId" = :id AND "start" >= NOW() - INTERVAL '30 days') as appointments_30d;
+                        (SELECT COUNT(*) FROM "Appointments" WHERE "psychologistId" = :id AND "start" >= NOW() - INTERVAL '30 days') as appointments_30d,
+                        (SELECT COUNT(*) FROM "Appointments" WHERE "psychologistId" = :id) as appointments_total;
                 `, { replacements: { id: entityId } }).catch(() => [[{}]]),
 
                 db.sequelize.query(`
@@ -879,6 +896,67 @@ class PsychologistContextService {
                     LIMIT 5;
                 `, { replacements: { id: entityId } }).catch(() => [[]]),
 
+                db.sequelize.query(`
+                    SELECT COUNT(*) as total_reviews, ROUND(AVG(rating)::numeric, 2) as avg_rating
+                    FROM "Reviews"
+                    WHERE "psychologistId" = :id;
+                `, { replacements: { id: entityId } }).catch(() => [[{ total_reviews: 0, avg_rating: null }]]),
+
+                db.sequelize.query(`
+                    SELECT rating, LEFT(COALESCE(comment, ''), 160) as comment, "createdAt"
+                    FROM "PlatformReviews"
+                    WHERE "psychologistId" = :id
+                    ORDER BY id DESC
+                    LIMIT 1;
+                `, { replacements: { id: entityId } }).catch(() => [[]]),
+
+                db.sequelize.query(`
+                    SELECT
+                        (SELECT COUNT(*) FROM answers WHERE "psychologistId" = :id) as qna_answers,
+                        (SELECT COUNT(*) FROM "ForumPosts" WHERE "PsychologistId" = :id) as forum_posts,
+                        (SELECT COUNT(*) FROM "ForumComments" WHERE "PsychologistId" = :id) as forum_comments;
+                `, { replacements: { id: entityId } }).catch(() => [[{ qna_answers: 0, forum_posts: 0, forum_comments: 0 }]]),
+
+                db.sequelize.query(`
+                    SELECT
+                        to_char(date_trunc('month', "createdAt"), 'YYYY-MM') as month,
+                        COUNT(*)::int as clicks,
+                        COUNT(*) FILTER (WHERE "contactReceived" = true)::int as contacts,
+                        COUNT(*) FILTER (WHERE "dealClosed" IN ('yes', 'started', 'true'))::int as deals,
+                        COUNT(*) FILTER (WHERE "dealClosed" = 'talking' OR status = 'negotiating')::int as talking
+                    FROM "WhatsAppClickLogs"
+                    WHERE "psychologistId" = :id
+                      AND "createdAt" >= NOW() - INTERVAL '4 months'
+                    GROUP BY 1
+                    ORDER BY 1 DESC
+                    LIMIT 4;
+                `, { replacements: { id: entityId } }).catch(() => [[]]),
+
+                db.sequelize.query(`
+                    SELECT
+                        to_char(date_trunc('month', "createdAt"), 'YYYY-MM') as month,
+                        COUNT(*)::int as matches
+                    FROM "MatchEvents"
+                    WHERE "psychologistId" = :id
+                      AND "createdAt" >= NOW() - INTERVAL '4 months'
+                    GROUP BY 1
+                    ORDER BY 1 DESC
+                    LIMIT 4;
+                `, { replacements: { id: entityId } }).catch(() => [[]]),
+
+                priceBucket
+                    ? db.sequelize.query(`
+                        SELECT
+                            COUNT(*) FILTER (WHERE "searchParams"->>'faixa_valor' = :bucket)::int as bucket_searches_30d,
+                            COUNT(*)::int as total_patient_searches_30d
+                        FROM "DemandSearches"
+                        WHERE status = 'completed'
+                          AND COALESCE(is_disqualified, false) = false
+                          AND COALESCE("searchParams"->>'respondent_type', 'patient') = 'patient'
+                          AND "createdAt" >= NOW() - INTERVAL '30 days';
+                    `, { replacements: { bucket: priceBucket } }).catch(() => [[{}]])
+                    : Promise.resolve([[{}]]),
+
                 this._fetchMemoryAndPastTurns('psychologist', entityKey, entityId)
             ]);
 
@@ -889,10 +967,54 @@ class PsychologistContextService {
             const matchStats = matchStatsRows?.[0]?.[0] || {};
             const viewStats = viewsStatsRows?.[0]?.[0] || {};
             const practice = practiceStatsRows?.[0]?.[0] || {};
+            const reviewsRow = reviewsRows?.[0]?.[0] || {};
+            const platformReview = platformRevRows?.[0]?.[0] || null;
+            const communityRow = communityRows?.[0]?.[0] || {};
+            const nicheRow = nicheDemandRows?.[0]?.[0] || {};
             const features = (featureRows?.[0] || []).map(f => `${f.feature}(${Number(f.uses || 0)})`);
 
             const toInt = (v) => parseInt(v || 0, 10) || 0;
             const totalAppearances = Math.max(toInt(psi.profile_appearances), toInt(matchStats.total_matches));
+
+            // Mescla histórico mensal de Match e WhatsApp
+            const matchByMonth = new Map((monthlyMatchRows?.[0] || []).map(r => [r.month, toInt(r.matches)]));
+            const wppByMonth = new Map((monthlyWppRows?.[0] || []).map(r => [r.month, r]));
+            const monthsSet = Array.from(new Set([...matchByMonth.keys(), ...wppByMonth.keys()])).sort().reverse().slice(0, 4);
+            const monthlyHistory = monthsSet.map(m => {
+                const wr = wppByMonth.get(m) || {};
+                return {
+                    month: m,
+                    matches: matchByMonth.get(m) || 0,
+                    clicks: toInt(wr.clicks),
+                    contacts: toInt(wr.contacts),
+                    deals: toInt(wr.deals),
+                    talking: toInt(wr.talking)
+                };
+            });
+
+            const totalReviews = toInt(reviewsRow.total_reviews);
+            const gmbCount = Array.isArray(psi.google_reviews_data?.reviews)
+                ? psi.google_reviews_data.reviews.length
+                : toInt(psi.google_reviews_data?.user_ratings_total || psi.google_reviews_data?.total || 0);
+            const totalPosts = toInt(postCountRows?.[0]?.[0]?.total);
+            const qnaAnswers = toInt(communityRow.qna_answers);
+
+            const optimizationChecklist = [];
+            if (toInt(psi.bio_length) < 120) optimizationChecklist.push('Bio curta (< 120 chars)');
+            if (totalReviews === 0 && gmbCount === 0) optimizationChecklist.push('Sem avaliações de pacientes ou Google Meu Negócio sincronizado');
+            if (totalPosts === 0) optimizationChecklist.push('Sem artigos publicados no Blog');
+            if (qnaAnswers === 0) optimizationChecklist.push('Ainda sem respostas no Q&A público de pacientes');
+            if (sessionVal > 120 && totalReviews === 0) optimizationChecklist.push('Ticket > R$ 120 sem prova social (avaliações pesam mais nessa faixa)');
+            if (psi.profile_paused) optimizationChecklist.push('Perfil pausado (oculto no Match)');
+
+            const bucketSearches = toInt(nicheRow.bucket_searches_30d);
+            const totalPatSearches = toInt(nicheRow.total_patient_searches_30d);
+            const nicheDemand = priceBucket ? {
+                priceBucket,
+                bucketSearches30d: bucketSearches,
+                totalPatientSearches30d: totalPatSearches,
+                sharePct: totalPatSearches > 0 ? Math.round((bucketSearches / totalPatSearches) * 100) : null
+            } : null;
 
             dossier = {
                 entityType: 'psychologist',
@@ -940,11 +1062,26 @@ class PsychologistContextService {
                 usage: {
                     activePatients: toInt(practice.active_patients),
                     appointments30d: toInt(practice.appointments_30d),
+                    appointmentsTotal: toInt(practice.appointments_total),
                     recentFeatures: features
                 },
+                reviews: {
+                    total: totalReviews,
+                    avgRating: reviewsRow.avg_rating ? Number(reviewsRow.avg_rating) : null,
+                    gmbCount,
+                    platformReview
+                },
+                community: {
+                    qnaAnswers,
+                    forumPosts: toInt(communityRow.forum_posts),
+                    forumComments: toInt(communityRow.forum_comments)
+                },
+                monthlyHistory,
+                nicheDemand,
+                optimizationChecklist,
                 exitSurvey: exitSurveyRows?.[0]?.[0] || null,
                 posts: {
-                    total: toInt(postCountRows?.[0]?.[0]?.total),
+                    total: totalPosts,
                     top: topPostsRows?.[0] || []
                 },
                 memory: memAndPast.memory,

@@ -63,6 +63,7 @@ export default function AdminCopilotWppScreen() {
   const [adminInstruction, setAdminInstruction] = useState('');
   const [selectedMode, setSelectedMode] = useState<'resposta' | 'revisao' | 'comercial' | 'suporte' | 'retencao' | 'estrategico'>('resposta');
   const [selectedExtension, setSelectedExtension] = useState<'curta' | 'padrao' | 'detalhada'>('padrao');
+  const [showingAlternative, setShowingAlternative] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Histórico
@@ -194,10 +195,36 @@ export default function AdminCopilotWppScreen() {
     }
   };
 
+  const stripHtmlTags = (html: string) => {
+    if (!html) return '';
+    return html
+      .replace(/<br\s*[\/]?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<\/div>/gi, '\n')
+      .replace(/<\/li>/gi, '\n')
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .trim();
+  };
+
+  const readBestClipboardText = async () => {
+    const plainRaw = await Clipboard.getStringAsync().catch(() => '');
+    const htmlRaw = await Clipboard.getStringAsync({
+      preferredFormat: Clipboard.StringFormat.HTML,
+    }).catch(() => '');
+    const fromHtml = htmlRaw ? stripHtmlTags(htmlRaw) : '';
+    const best = fromHtml && fromHtml.length > plainRaw.length + 5 ? fromHtml : plainRaw;
+    return (best || '').replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '').trim();
+  };
+
   // Botão Colar Tudo da Área de Transferência
   const handlePasteAll = async () => {
     try {
-      const text = await Clipboard.getStringAsync();
+      const text = await readBestClipboardText();
       if (!text || !text.trim()) {
         Alert.alert('Área de Transferência Vazia', 'Copie a conversa no WhatsApp antes de colar.');
         return;
@@ -215,7 +242,7 @@ export default function AdminCopilotWppScreen() {
   // Botão Colar Mais (Append)
   const handlePasteMore = async () => {
     try {
-      const text = await Clipboard.getStringAsync();
+      const text = await readBestClipboardText();
       if (!text || !text.trim()) {
         Alert.alert('Aviso', 'Não há texto novo na área de transferência.');
         return;
@@ -326,8 +353,8 @@ export default function AdminCopilotWppScreen() {
         setStructuredOutput(sOut);
         setConversationId(res.data?.conversationId || null);
         setOriginalGeneratedReply(replyText || '');
+        setShowingAlternative(false);
         setGeneratedReply(replyText || '');
-        setGeneratedReply(replyText);
         if (res.data?.persistenceWarning) {
           setToastMessage('Resposta gerada, mas falhou ao gravar no histórico.');
           setToastType('info');
@@ -373,23 +400,29 @@ export default function AdminCopilotWppScreen() {
     }
   };
 
-  // Copiar Resposta
+  // Copiar Resposta mantendo formatação WhatsApp (*negrito*, _itálico_, listas e quebras de linha)
   const handleCopyReply = async () => {
     if (structuredOutput?.status === 'identity_review') {
       Alert.alert('Confirme o Destinatário', 'Selecione o perfil correto antes de copiar.');
       return;
     }
     if (!generatedReply) return;
-    await Clipboard.setStringAsync(generatedReply);
+    const normalizedReply = generatedReply
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/[ \t]+$/gm, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    await Clipboard.setStringAsync(normalizedReply);
     setCopied(true);
-    setToastMessage('Resposta copiada e aprovada!');
+    setToastMessage('Resposta copiada com formatação WhatsApp!');
     setToastType('success');
     if (conversationId) {
-      const wasEdited = Boolean(originalGeneratedReply && generatedReply.trim() !== originalGeneratedReply.trim());
+      const wasEdited = Boolean(originalGeneratedReply && normalizedReply !== originalGeneratedReply.trim());
       api.post('/api/admin/copilot/feedback', {
         conversationId,
         feedbackStatus: wasEdited ? 'edited' : 'approved',
-        finalReply: generatedReply,
+        finalReply: normalizedReply,
         isLibraryExample: true,
       }).catch(() => {});
     }
@@ -517,27 +550,6 @@ export default function AdminCopilotWppScreen() {
               <Text style={{ fontSize: 10 }}>🟢</Text>
               <Text style={{ fontFamily: 'Inter_700Bold', color: '#166534', fontSize: 11 }}>Detector Ativo</Text>
             </View>
-
-            {pastedChat || generatedReply ? (
-              <TouchableOpacity
-                onPress={handleClearAll}
-                style={{
-                  backgroundColor: '#ffffff',
-                  paddingHorizontal: 10,
-                  paddingVertical: 5,
-                  borderRadius: 999,
-                  borderWidth: 1,
-                  borderColor: '#cbd5e1',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-                activeOpacity={0.7}
-              >
-                <Feather name="trash-2" size={12} color="#64748b" />
-                <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#64748b', fontSize: 11 }}>Limpar</Text>
-              </TouchableOpacity>
-            ) : null}
           </View>
         </View>
 
@@ -694,23 +706,23 @@ export default function AdminCopilotWppScreen() {
                 elevation: 1,
               }}
             >
-              {/* Toolbar superior com Colar Tudo e Colar Mais */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 14.5, color: '#1e293b' }}>
+              {/* Toolbar superior com Colar Tudo e Colar Mais (wrap garante visibilidade em telas estreitas) */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 14, color: '#1e293b', flexShrink: 1 }}>
                   📋 Conversa do WhatsApp
                 </Text>
 
-                <View style={{ flexDirection: 'row', gap: 6 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <TouchableOpacity
                     onPress={handlePasteAll}
                     style={{
                       backgroundColor: '#10b981',
                       paddingHorizontal: 12,
-                      paddingVertical: 6,
+                      paddingVertical: 7,
                       borderRadius: 999,
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 4,
+                      gap: 5,
                       shadowColor: '#10b981',
                       shadowOpacity: 0.25,
                       shadowRadius: 4,
@@ -720,7 +732,7 @@ export default function AdminCopilotWppScreen() {
                     activeOpacity={0.8}
                   >
                     <Feather name="clipboard" size={12} color="#ffffff" />
-                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#ffffff' }}>Colar Tudo</Text>
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11.5, color: '#ffffff' }}>Colar Tudo</Text>
                   </TouchableOpacity>
 
                   {pastedChat ? (
@@ -729,28 +741,21 @@ export default function AdminCopilotWppScreen() {
                       style={{
                         backgroundColor: '#eff6ff',
                         paddingHorizontal: 10,
-                        paddingVertical: 6,
+                        paddingVertical: 7,
                         borderRadius: 999,
                         borderWidth: 1,
                         borderColor: '#bfdbfe',
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 2,
+                        gap: 3,
                       }}
                       activeOpacity={0.8}
                     >
                       <Feather name="plus" size={12} color="#1d4ed8" />
-                      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#1d4ed8' }}>Mais</Text>
+                      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11.5, color: '#1d4ed8' }}>Mais</Text>
                     </TouchableOpacity>
                   ) : null}
                 </View>
-              </View>
-
-              {/* Text Stats */}
-              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 6 }}>
-                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10.5, color: '#94a3b8' }}>
-                  {chatChars > 0 ? `${chatChars} caracteres • ${chatLines} linhas` : 'Cole o texto do chat'}
-                </Text>
               </View>
 
               {/* Textarea */}
@@ -768,7 +773,7 @@ export default function AdminCopilotWppScreen() {
                   }
                   scheduleAutoIdentify(text, 350);
                 }}
-                placeholder={`Cole aqui a conversa copiada do WhatsApp...\n\nExemplo:\n[08/10, 12:31] ~Psicólogo Fred Monte: Boa tarde, estou tendo curtidas em alguns artigos meus\n[08/10, 12:31] ~Psicólogo Fred Monte: uns mais, outros menos`}
+                placeholder={`Cole a conversa do WhatsApp OU pergunte direto sobre o banco...\n\nExemplos:\n• Quantos pacientes cada profissional recebe por mês?\n• [08/10, 12:31] ~Psicólogo Fred Monte: Boa tarde`}
                 placeholderTextColor="#94a3b8"
                 multiline
                 numberOfLines={6}
@@ -787,6 +792,34 @@ export default function AdminCopilotWppScreen() {
                   lineHeight: 19,
                 }}
               />
+
+              {/* Stats + Botão Limpar logo abaixo do campo (acesso rápido com o polegar) */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 10.5, color: '#64748b' }}>
+                  {chatChars > 0 ? `${chatChars} caracteres • ${chatLines} linhas` : 'Cole o texto ou toque no campo para colar várias msgs'}
+                </Text>
+
+                {pastedChat || generatedReply ? (
+                  <TouchableOpacity
+                    onPress={handleClearAll}
+                    style={{
+                      backgroundColor: '#fef2f2',
+                      paddingHorizontal: 11,
+                      paddingVertical: 5,
+                      borderRadius: 999,
+                      borderWidth: 1,
+                      borderColor: '#fecaca',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                    activeOpacity={0.75}
+                  >
+                    <Feather name="trash-2" size={11} color="#b91c1c" />
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#b91c1c' }}>Limpar</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
 
               {/* Banner de Identificação em Tempo Real */}
               <View
@@ -1023,22 +1056,25 @@ export default function AdminCopilotWppScreen() {
                 </View>
               )}
 
-              {/* Seletor de Tom */}
+              {/* Seletor simplificado de Tipo de fala */}
               <View style={{ marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#f1f5f9' }}>
                 <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#475569', textTransform: 'uppercase', marginBottom: 6 }}>
-                  Tom de Voz:
+                  Tipo de fala:
                 </Text>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                   {[
-                    { id: 'natural', label: '🌿 Natural' },
-                    { id: 'comercial', label: '💼 Comercial' },
-                    { id: 'tecnico', label: '⚙️ Técnico' },
+                    { id: 'natural', mode: 'resposta' as const, label: '🌿 Natural' },
+                    { id: 'comercial', mode: 'comercial' as const, label: '💼 Comercial' },
+                    { id: 'tecnico', mode: 'suporte' as const, label: '⚙️ Suporte' },
                   ].map((t) => {
                     const isSelected = selectedTone === t.id;
                     return (
                       <TouchableOpacity
                         key={t.id}
-                        onPress={() => setSelectedTone(t.id as VoiceTone)}
+                        onPress={() => {
+                          setSelectedTone(t.id as VoiceTone);
+                          setSelectedMode(t.mode);
+                        }}
                         style={{
                           flex: 1,
                           paddingVertical: 7,
@@ -1065,12 +1101,12 @@ export default function AdminCopilotWppScreen() {
                 </View>
               </View>
 
-              {/* Orientação opcional + Modo / Extensão */}
+              {/* Orientação opcional + Tamanho */}
               <View style={{ marginTop: 10 }}>
                 <TextInput
                   value={adminInstruction}
                   onChangeText={setAdminInstruction}
-                  placeholder="Orientação opcional (ex: revisar rascunho ou propor pausa)..."
+                  placeholder="Orientação ou pergunta extra para a IA..."
                   placeholderTextColor="#94a3b8"
                   style={{
                     backgroundColor: '#f8fafc',
@@ -1085,15 +1121,18 @@ export default function AdminCopilotWppScreen() {
                   }}
                 />
                 <View style={{ flexDirection: 'row', gap: 6 }}>
-                  {(['curta', 'padrao', 'detalhada'] as const).map((ext) => {
-                    const active = selectedExtension === ext;
+                  {([
+                    { id: 'padrao' as const, label: '📝 Completa' },
+                    { id: 'curta' as const, label: '⚡ Curta' },
+                  ]).map((ext) => {
+                    const active = selectedExtension === ext.id;
                     return (
                       <TouchableOpacity
-                        key={ext}
-                        onPress={() => setSelectedExtension(ext)}
+                        key={ext.id}
+                        onPress={() => setSelectedExtension(ext.id)}
                         style={{
                           flex: 1,
-                          paddingVertical: 5,
+                          paddingVertical: 6,
                           borderRadius: 999,
                           backgroundColor: active ? '#e2e8f0' : '#f8fafc',
                           borderWidth: 1,
@@ -1101,8 +1140,8 @@ export default function AdminCopilotWppScreen() {
                           alignItems: 'center',
                         }}
                       >
-                        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10.5, color: '#334155', textTransform: 'capitalize' }}>
-                          {ext}
+                        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#334155' }}>
+                          {ext.label}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -1166,17 +1205,38 @@ export default function AdminCopilotWppScreen() {
                   elevation: 3,
                 }}
               >
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <View style={{ backgroundColor: '#25d366', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <View
+                      style={{
+                        backgroundColor: structuredOutput?.status === 'requires_review' ? '#f59e0b' : '#25d366',
+                        paddingHorizontal: 8,
+                        paddingVertical: 2,
+                        borderRadius: 999,
+                      }}
+                    >
                       <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 9.5, color: '#ffffff', textTransform: 'uppercase' }}>
-                        Pronta para Envio
+                        {structuredOutput?.status === 'requires_review' ? '⚠️ Requer Revisão' : 'Pronta para Envio'}
                       </Text>
                     </View>
                     <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: '#1e293b' }}>
                       Sugestão Personalizada:
                     </Text>
                   </View>
+                  {structuredOutput?.alternativeReply ? (
+                    <TouchableOpacity
+                      onPress={() => {
+                        const next = !showingAlternative;
+                        setShowingAlternative(next);
+                        setGeneratedReply(next ? structuredOutput.alternativeReply : originalGeneratedReply);
+                      }}
+                      style={{ backgroundColor: '#eff6ff', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, borderWidth: 1, borderColor: '#bfdbfe' }}
+                    >
+                      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: '#1d4ed8' }}>
+                        {showingAlternative ? 'Principal' : 'Alternativa'}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
 
                 {/* Balão WhatsApp Editável */}
@@ -1247,16 +1307,37 @@ export default function AdminCopilotWppScreen() {
                     </TouchableOpacity>
                   ) : null}
 
-                  <TouchableOpacity
-                    onPress={() => handleGenerateResponse(true)}
-                    disabled={isLoading}
-                    style={{ alignItems: 'center', paddingVertical: 4 }}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11.5, color: '#166534', textDecorationLine: 'underline' }}>
-                      Gerar outra opção
-                    </Text>
-                  </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
+                    <TouchableOpacity
+                      onPress={() => handleGenerateResponse(true)}
+                      disabled={isLoading}
+                      style={{ paddingVertical: 4 }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11.5, color: '#166534', textDecorationLine: 'underline' }}>
+                        Gerar outra opção
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={handleClearAll}
+                      style={{
+                        backgroundColor: '#fef2f2',
+                        paddingHorizontal: 11,
+                        paddingVertical: 5,
+                        borderRadius: 999,
+                        borderWidth: 1,
+                        borderColor: '#fecaca',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}
+                      activeOpacity={0.75}
+                    >
+                      <Feather name="trash-2" size={11} color="#b91c1c" />
+                      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#b91c1c' }}>Nova conversa</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             )}
@@ -1489,8 +1570,37 @@ export default function AdminCopilotWppScreen() {
                     return (
                       <TouchableOpacity
                         key={c.id || idx}
-                        onPress={() => {
+                        onPress={async () => {
+                          try {
+                            if (c.id) {
+                              const detRes = await api.get(`/api/admin/copilot/conversations/${c.id}`);
+                              const conv = detRes.data?.conversation;
+                              if (conv) {
+                                if (conv.rawPastedChat) setPastedChat(conv.rawPastedChat);
+                                if (conv.threadId) setThreadId(conv.threadId);
+                                setConversationId(conv.id || null);
+                                setStructuredOutput(conv.structuredOutput || null);
+                                if (detRes.data?.dossier?.profile) {
+                                  const eType = detRes.data.dossier.entityType || 'psychologist';
+                                  setDossier(detRes.data.dossier);
+                                  setDetectedEntityType(eType);
+                                  setDetectedEntityId(detRes.data.dossier.profile.id || null);
+                                  if (eType === 'psychologist') setDetectedPsiId(detRes.data.dossier.profile.id);
+                                }
+                                const txt = conv.finalReply || conv.aiResponse || c.aiResponse || '';
+                                setOriginalGeneratedReply(txt);
+                                setShowingAlternative(false);
+                                setGeneratedReply(txt);
+                                setActiveTab('chat');
+                                setToastMessage('Atendimento restaurado no chat!');
+                                setToastType('info');
+                                return;
+                              }
+                            }
+                          } catch (_) {}
                           if (c.aiResponse) {
+                            setOriginalGeneratedReply(c.aiResponse);
+                            setShowingAlternative(false);
                             setGeneratedReply(c.aiResponse);
                             setActiveTab('chat');
                             setToastMessage('Resposta carregada no chat!');

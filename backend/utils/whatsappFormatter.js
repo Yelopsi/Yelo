@@ -24,6 +24,9 @@ function formatForWhatsApp(text, options = {}) {
     const preserveDashBullets = options && options.preserveDashBullets === true;
 
     let cleaned = text
+        // Converte sequências literais "\n" se presentes sem quebras reais ou misturadas no JSON
+        .replace(/\\r\\n/g, '\n')
+        .replace(/\\n/g, '\n')
         // Normaliza quebras de linha para \n
         .replace(/\r\n/g, '\n')
         .replace(/\r/g, '\n')
@@ -44,10 +47,26 @@ function formatForWhatsApp(text, options = {}) {
         .replace(/__([^_\n]+?)__/g, '_$1_');
 
     if (preserveDashBullets) {
-        // Na Copilot, preserva "- item" e converte marcadores soltos "* item" (sem fechar negrito) em "- item"
-        cleaned = cleaned.replace(/^\*\s+(?!\*)(.+)$/gm, (full, itemText) => {
-            return itemText.includes('*') ? full : `- ${itemText}`;
-        });
+        // Remove sublinhados malformados envolvendo marcadores de lista (ex.: "_- Item_" ou ":_- Item")
+        cleaned = cleaned
+            .replace(/([:.;!?])_+[ \t]*-[ \t]+/g, '$1\n- ')
+            .replace(/^[ \t]*_+[ \t]*(-[ \t]+.+?)_+$/gm, '$1')
+            .replace(/^[ \t]*_+[ \t]*(-[ \t]+)/gm, '$1')
+            // Separa bullets colados na mesma linha após pontuação (sem quebrar faixas "R$ 51 - R$ 90")
+            .replace(/([:.;!?])_*[ \t]+-[ \t]+(?=[A-Za-zÀ-ÿ0-9*])/g, '$1\n- ')
+            // Converte bullets unicode (•, ▪) em "- " padrão WhatsApp
+            .replace(/^[ \t]*[•▪][ \t]+/gm, '- ')
+            // Na Copilot, preserva "- item" e converte marcadores soltos "* item" (sem fechar negrito) em "- item"
+            .replace(/^\*\s+(?!\*)(.+)$/gm, (full, itemText) => {
+                return itemText.includes('*') ? full : `- ${itemText}`;
+            });
+
+        // Separa eventuais múltiplos "- Item" remanescentes na mesma linha após ponto/itálico
+        cleaned = cleaned.replace(/([.!?])(?:_+)?[ \t]+-[ \t]+(?=[A-Za-zÀ-ÿ0-9*])/g, '$1\n- ');
+
+        // Remove itálico acidental envolvendo parágrafos longos inteiros (>= 140 chars ou múltiplos bullets)
+        cleaned = cleaned.replace(/(^|\n)_([^_\n]{140,})_([ \t]*(?=\n|$))/g, '$1$2$3');
+        cleaned = cleaned.replace(/(-[ \t]+[^\n]+?)_+(?=\n|$)/g, '$1');
     } else {
         // Mantém comportamento legado para demais callers
         cleaned = cleaned.replace(/^[-]\s+/gm, '* ');
@@ -59,10 +78,14 @@ function formatForWhatsApp(text, options = {}) {
         .replace(/\*[ \t]+([^*\n]+?)[ \t]+\*/g, '*$1*')
         .replace(/\*[ \t]+([^*\n]+?)\*/g, '*$1*')
         .replace(/\*([^*\n]+?)[ \t]+\*/g, '*$1*')
+        // Garante espaço após *negrito* quando colado a próxima palavra (preserva pontuação como , . :)
+        .replace(/\*([^*\n]+?)\*(?=[A-Za-zÀ-ÿ0-9])/g, '*$1* ')
         // Corrige espaços inválidos dentro de itálicos do WhatsApp (_ texto _ -> _texto_)
         .replace(/_[ \t]+([^_\n]+?)[ \t]+_/g, '_$1_')
         .replace(/_[ \t]+([^_\n]+?)_/g, '_$1_')
         .replace(/_([^_\n]+?)[ \t]+_/g, '_$1_')
+        // Remove espaços sobrando ao final de cada linha mantendo as quebras intactas
+        .replace(/[ \t]+$/gm, '')
         // Limpa quebras de linha triplas ou maiores
         .replace(/\n{3,}/g, '\n\n')
         .trim();
