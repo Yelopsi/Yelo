@@ -241,6 +241,7 @@
             if (cardResposta) cardResposta.style.display = 'none';
             const briefingCard = document.getElementById('card-briefing-estrategico');
             if (briefingCard) briefingCard.style.display = 'none';
+            resetFollowUpUI();
         }
         const diagBox = document.getElementById('dossie-diagnostico-box');
         if (diagBox) diagBox.style.display = 'none';
@@ -832,6 +833,43 @@
             btnInsights.addEventListener('click', handleToggleCollectiveInsights);
         }
 
+        const btnAbrirFollowUp = document.getElementById('btn-abrir-agendar-followup');
+        const btnFecharFollowUp = document.getElementById('btn-fechar-followup-card');
+        const btnDispensarFollowUp = document.getElementById('btn-dispensar-followup');
+        const btnAgendarFollowUp = document.getElementById('btn-agendar-followup');
+        const subTypeSelect = document.getElementById('followup-subtype-select');
+
+        if (btnAbrirFollowUp) {
+            btnAbrirFollowUp.addEventListener('click', () => {
+                openFollowUpCard({
+                    subType: currentStructuredOutput?.suggestedFollowUp?.subType || 'negociacao_copilot',
+                    dueDateIso: currentStructuredOutput?.suggestedFollowUp?.dueDateIso || getDefaultDateOffsetYmd(5),
+                    reason: currentStructuredOutput?.suggestedFollowUp?.reason || currentStructuredOutput?.nextBestAction || '',
+                    autoSchedulePerformanceEval: currentStructuredOutput?.suggestedFollowUp?.autoSchedulePerformanceEval,
+                    evaluationDelayDays: currentStructuredOutput?.suggestedFollowUp?.evaluationDelayDays || 14,
+                    isSuggested: false
+                });
+            });
+        }
+        if (btnFecharFollowUp) {
+            btnFecharFollowUp.addEventListener('click', () => {
+                const card = document.getElementById('card-copilot-followup');
+                if (card) card.style.display = 'none';
+            });
+        }
+        if (btnDispensarFollowUp) {
+            btnDispensarFollowUp.addEventListener('click', () => {
+                const card = document.getElementById('card-copilot-followup');
+                if (card) card.style.display = 'none';
+            });
+        }
+        if (subTypeSelect) {
+            subTypeSelect.addEventListener('change', syncFollowUpEvalVisibility);
+        }
+        if (btnAgendarFollowUp) {
+            btnAgendarFollowUp.addEventListener('click', handleScheduleFollowUp);
+        }
+
         if (!window.__copilotKeyShortcutBound) {
             window.__copilotKeyShortcutBound = true;
             document.addEventListener('keydown', (e) => {
@@ -1082,12 +1120,6 @@
                 currentConversationId = data.conversationId;
             }
 
-            renderGeneratedPayload({
-                aiResponse: data.aiResponse,
-                structuredOutput: data.structuredOutput,
-                conversationId: data.conversationId
-            });
-
             if (data.detectedPsychologist && data.detectedPsychologist.profile) {
                 const retType = data.detectedPsychologist.entityType || data.entityType || 'psychologist';
                 currentEntityType = retType;
@@ -1097,6 +1129,12 @@
                 }
                 renderDossier(data.detectedPsychologist);
             }
+
+            renderGeneratedPayload({
+                aiResponse: data.aiResponse,
+                structuredOutput: data.structuredOutput,
+                conversationId: data.conversationId
+            });
 
             if (data.persistenceWarning) {
                 notify('Resposta gerada, mas não foi possível gravar no histórico agora.', 'info');
@@ -1296,6 +1334,137 @@
         }
     }
 
+    function getDefaultDateOffsetYmd(days = 5) {
+        const dt = new Date(Date.now() + (days * 24 * 60 * 60 * 1000));
+        try {
+            return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(dt);
+        } catch (_) {
+            return dt.toISOString().slice(0, 10);
+        }
+    }
+
+    function syncFollowUpEvalVisibility() {
+        const subSel = document.getElementById('followup-subtype-select');
+        const evalRow = document.getElementById('followup-eval-row');
+        if (!subSel || !evalRow) return;
+        evalRow.style.display = subSel.value === 'ajuste_perfil' ? 'block' : 'none';
+    }
+
+    function resetFollowUpUI() {
+        const fuCard = document.getElementById('card-copilot-followup');
+        const fuBanner = document.getElementById('followup-scheduled-banner');
+        const btnAbrirFu = document.getElementById('btn-abrir-agendar-followup');
+        if (fuCard) fuCard.style.display = 'none';
+        if (fuBanner) {
+            fuBanner.style.display = 'none';
+            fuBanner.textContent = '';
+        }
+        if (btnAbrirFu) btnAbrirFu.style.display = 'none';
+    }
+
+    function openFollowUpCard({ subType = 'negociacao_copilot', dueDateIso = null, reason = '', autoSchedulePerformanceEval = true, evaluationDelayDays = 14, isSuggested = false } = {}) {
+        const fuCard = document.getElementById('card-copilot-followup');
+        const fuBanner = document.getElementById('followup-scheduled-banner');
+        const titleEl = document.getElementById('followup-card-title');
+        const subSel = document.getElementById('followup-subtype-select');
+        const dateIn = document.getElementById('followup-due-date');
+        const reasonIn = document.getElementById('followup-reason-input');
+        const evalChk = document.getElementById('followup-auto-eval');
+        const evalDelaySel = document.getElementById('followup-eval-delay');
+        if (!fuCard) return;
+
+        if (fuBanner) fuBanner.style.display = 'none';
+        if (titleEl) {
+            titleEl.textContent = isSuggested
+                ? '📅 Follow-up Detectado para o CRM'
+                : '📅 Agendar Follow-up no CRM';
+        }
+        if (subSel) subSel.value = subType || 'negociacao_copilot';
+        if (dateIn) dateIn.value = dueDateIso || getDefaultDateOffsetYmd(subType === 'ajuste_perfil' ? 5 : 15);
+        if (reasonIn) reasonIn.value = String(reason || '').slice(0, 240);
+        if (evalChk) evalChk.checked = autoSchedulePerformanceEval !== false;
+        if (evalDelaySel) {
+            const validDelays = ['7', '14', '21', '30'];
+            const dStr = String(evaluationDelayDays || 14);
+            evalDelaySel.value = validDelays.includes(dStr) ? dStr : '14';
+        }
+        syncFollowUpEvalVisibility();
+        fuCard.style.display = 'block';
+    }
+
+    async function handleScheduleFollowUp() {
+        if (!currentPsychologistId) {
+            notify('Identifique um psicólogo cadastrado antes de agendar follow-up.', 'error');
+            return;
+        }
+        const subSel = document.getElementById('followup-subtype-select');
+        const dateIn = document.getElementById('followup-due-date');
+        const reasonIn = document.getElementById('followup-reason-input');
+        const evalChk = document.getElementById('followup-auto-eval');
+        const evalDelaySel = document.getElementById('followup-eval-delay');
+        const btn = document.getElementById('btn-agendar-followup');
+        const fuCard = document.getElementById('card-copilot-followup');
+        const fuBanner = document.getElementById('followup-scheduled-banner');
+
+        const subType = subSel?.value || 'negociacao_copilot';
+        const dueAt = dateIn?.value || getDefaultDateOffsetYmd(5);
+        const reason = reasonIn?.value?.trim() || '';
+        if (!reason) {
+            notify('Descreva rapidamente o motivo do follow-up antes de agendar.', 'error');
+            reasonIn?.focus();
+            return;
+        }
+
+        const autoSchedulePerformanceEval = subType === 'ajuste_perfil' ? Boolean(evalChk?.checked) : false;
+        const evaluationDelayDays = parseInt(evalDelaySel?.value || '14', 10) || 14;
+        const contextSummary = currentStructuredOutput?.suggestedFollowUp?.contextSummary
+            || currentStructuredOutput?.nextBestAction
+            || (document.getElementById('copilot-input-chat')?.value || '').slice(0, 400);
+
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Agendando...';
+        }
+        try {
+            const res = await fetch('/api/admin/copilot/followups', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    psychologistId: currentPsychologistId,
+                    conversationId: currentConversationId || null,
+                    subType,
+                    reason,
+                    contextSummary,
+                    dueAt,
+                    autoSchedulePerformanceEval,
+                    evaluationDelayDays
+                })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.followUp) {
+                throw new Error(data.error || 'Falha ao agendar follow-up');
+            }
+            const dateBr = data.followUp.dueAt
+                ? new Date(data.followUp.dueAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+                : dueAt;
+            if (fuCard) fuCard.style.display = 'none';
+            if (fuBanner) {
+                fuBanner.textContent = subType === 'ajuste_perfil' && autoSchedulePerformanceEval
+                    ? `✅ Follow-up agendado para ${dateBr} em Follow-ups 📞 (com avaliação pós-ajuste automática em +${evaluationDelayDays}d após envio).`
+                    : `✅ Follow-up agendado para ${dateBr} na fila Follow-ups 📞 do CRM.`;
+                fuBanner.style.display = 'block';
+            }
+            notify(`Follow-up agendado para ${dateBr}!`, 'success');
+        } catch (err) {
+            notify(err.message || 'Erro ao agendar follow-up no CRM.', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '✓ Agendar em Follow-ups 📞';
+            }
+        }
+    }
+
     function renderGeneratedPayload({ aiResponse, structuredOutput, conversationId }) {
         const s = structuredOutput || null;
         currentStructuredOutput = s;
@@ -1383,6 +1552,28 @@
             } else {
                 briefingCard.style.display = 'none';
             }
+        }
+
+        const btnAbrirFu = document.getElementById('btn-abrir-agendar-followup');
+        const fuBanner = document.getElementById('followup-scheduled-banner');
+        const fuCard = document.getElementById('card-copilot-followup');
+        if (fuBanner) fuBanner.style.display = 'none';
+        if (btnAbrirFu) {
+            btnAbrirFu.style.display = (currentPsychologistId && currentEntityType === 'psychologist' && s?.status !== 'identity_review')
+                ? 'inline-block'
+                : 'none';
+        }
+        if (currentPsychologistId && currentEntityType === 'psychologist' && s?.suggestedFollowUp?.shouldCreate && s?.status !== 'identity_review') {
+            openFollowUpCard({
+                subType: s.suggestedFollowUp.subType,
+                dueDateIso: s.suggestedFollowUp.dueDateIso,
+                reason: s.suggestedFollowUp.reason,
+                autoSchedulePerformanceEval: s.suggestedFollowUp.autoSchedulePerformanceEval,
+                evaluationDelayDays: s.suggestedFollowUp.evaluationDelayDays || 14,
+                isSuggested: true
+            });
+        } else if (fuCard) {
+            fuCard.style.display = 'none';
         }
     }
 
@@ -1627,6 +1818,7 @@
     function handleClearAll() {
         abortOngoingGeneration();
         clearInputAndIdentity(true);
+        resetFollowUpUI();
 
         const cardResposta = document.getElementById('card-resposta-gerada');
         if (cardResposta) cardResposta.style.display = 'none';

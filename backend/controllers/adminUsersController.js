@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const gamificationService = require('../services/gamificationService');
 const PaymentStateService = require('../services/paymentStateService');
 const { getEndOfTomorrowSaoPaulo, getTrialExpiryTiming } = require('../utils/trialTiming');
+const CopilotFollowUpService = require('../services/copilotFollowUpService');
 
 /**
  * Rota: GET /api/admin/verifications (NOVA)
@@ -1606,6 +1607,16 @@ exports.getPendingActions = async (req, res) => {
                 ctr: 0
             });
         }
+        // 8. Follow-ups agendados via Yelo Copilot (vencidos ate o momento, sem interferir nos legados)
+        try {
+            const copilotFollowUps = await CopilotFollowUpService.getDuePendingActions(now);
+            if (Array.isArray(copilotFollowUps) && copilotFollowUps.length > 0) {
+                pendingList.push(...copilotFollowUps);
+            }
+        } catch (copilotFuErr) {
+            console.error('Erro ao buscar follow-ups do Copilot em getPendingActions:', copilotFuErr.message);
+        }
+
         // Ordena da mais antiga para a mais recente (Data de Inscrição / createdAt)
         pendingList.sort((a, b) => {
             const dateA = new Date(a.createdAt || 0).getTime();
@@ -1627,7 +1638,7 @@ exports.getPendingActions = async (req, res) => {
 exports.markActionSent = async (req, res) => {
     try {
         const { id } = req.params;
-        const { actionType } = req.body;
+        const { actionType, followUpId, dismissed } = req.body;
 
         const psychologist = await db.Psychologist.findByPk(id);
         if (!psychologist) {
@@ -1636,6 +1647,7 @@ exports.markActionSent = async (req, res) => {
 
         const now = new Date();
         const updateData = {};
+        let copilotFollowUpResult = null;
         
         if (actionType === 'analysis') {
             updateData.msg_analysis_sent_at = now;
@@ -1663,11 +1675,19 @@ exports.markActionSent = async (req, res) => {
                     { where: { psychologistId: id, dealClosed: 'talking' } }
                 );
             }
+        } else if (actionType === 'copilot_followup') {
+            copilotFollowUpResult = await CopilotFollowUpService.completeOrDismissFollowUp({
+                psychologistId: parseInt(id, 10),
+                followUpId,
+                dismissed: Boolean(dismissed),
+                messageContent: req.body.messageContent || null
+            });
         } else {
             return res.status(400).json({ error: 'Tipo de ação inválido.' });
         }
 
-        if (req.body.messageContent) {
+        const isDismissedAction = Boolean(dismissed) || /ação ignorada\/descartada/i.test(String(req.body.messageContent || ''));
+        if (req.body.messageContent && !(actionType === 'copilot_followup' && isDismissedAction)) {
             let history = psychologist.aiOptimizationHistory ? [...psychologist.aiOptimizationHistory] : [];
             history.push({ 
                 sentAt: now, 
@@ -1682,7 +1702,10 @@ exports.markActionSent = async (req, res) => {
             await psychologist.update(updateData);
         }
 
-        res.status(200).json({ message: 'Ação registrada com sucesso!' });
+        res.status(200).json({
+            message: 'Ação registrada com sucesso!',
+            scheduledNextEvaluation: copilotFollowUpResult?.scheduledNextEvaluation || null
+        });
     } catch (error) {
         console.error('Erro em markActionSent:', error);
         res.status(500).json({ error: 'Erro no servidor' });

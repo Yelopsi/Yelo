@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Switch,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -23,6 +24,53 @@ import YeloToast from '../../../components/YeloToast';
 
 type CopilotTab = 'chat' | 'dossie' | 'historico';
 type VoiceTone = 'natural' | 'comercial' | 'tecnico';
+type FollowUpSubType = 'promessa_retorno' | 'ajuste_perfil' | 'negociacao_copilot' | 'aviso_novidade';
+
+function getTodayBrtYmd(date = new Date()): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(date);
+  } catch (_) {
+    return date.toISOString().slice(0, 10);
+  }
+}
+
+function addDaysBrtYmd(days = 5): string {
+  const safeDays = Math.min(365, Math.max(0, Math.round(days)));
+  const ymd = getTodayBrtYmd(new Date());
+  const [y, m, d] = ymd.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + safeDays, 12, 0, 0));
+  return getTodayBrtYmd(dt);
+}
+
+function firstDayNextMonthYmd(): string {
+  const ymd = getTodayBrtYmd(new Date());
+  const [y, m] = ymd.split('-').map(Number);
+  const nextMonth = m === 12 ? 1 : m + 1;
+  const nextYear = m === 12 ? y + 1 : y;
+  return `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+}
+
+function ymdToBr(ymd?: string | null): string {
+  if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(String(ymd).trim())) {
+    const def = addDaysBrtYmd(5);
+    const [y, m, d] = def.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  const [y, m, d] = String(ymd).trim().split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function brToYmd(br?: string | null): string | null {
+  const clean = String(br || '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+  const m = clean.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const [, dd, mm, yyyy] = m;
+  const dNum = parseInt(dd, 10);
+  const mNum = parseInt(mm, 10);
+  if (mNum < 1 || mNum > 12 || dNum < 1 || dNum > 31) return null;
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 export default function AdminCopilotWppScreen() {
   const insets = useSafeAreaInsets();
@@ -70,6 +118,17 @@ export default function AdminCopilotWppScreen() {
   const [historyItems, setHistoryItems] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
+  // Follow-up Copilot -> CRM
+  const [showFollowUpCard, setShowFollowUpCard] = useState(false);
+  const [fuIsSuggested, setFuIsSuggested] = useState(false);
+  const [fuSubType, setFuSubType] = useState<FollowUpSubType>('negociacao_copilot');
+  const [fuReason, setFuReason] = useState('');
+  const [fuDueDateBr, setFuDueDateBr] = useState(() => ymdToBr(addDaysBrtYmd(5)));
+  const [fuAutoEval, setFuAutoEval] = useState(true);
+  const [fuEvalDelayDays, setFuEvalDelayDays] = useState(14);
+  const [fuSubmitting, setFuSubmitting] = useState(false);
+  const [fuScheduledMessage, setFuScheduledMessage] = useState<string | null>(null);
+
   // Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
@@ -102,6 +161,41 @@ export default function AdminCopilotWppScreen() {
     setIsLoading(false);
   }, []);
 
+  const resetFollowUpState = useCallback(() => {
+    setShowFollowUpCard(false);
+    setFuIsSuggested(false);
+    setFuSubType('negociacao_copilot');
+    setFuReason('');
+    setFuDueDateBr(ymdToBr(addDaysBrtYmd(5)));
+    setFuAutoEval(true);
+    setFuEvalDelayDays(14);
+    setFuSubmitting(false);
+    setFuScheduledMessage(null);
+  }, []);
+
+  const openFollowUpCard = useCallback((opts?: {
+    subType?: FollowUpSubType;
+    dueDateIso?: string | null;
+    reason?: string;
+    autoSchedulePerformanceEval?: boolean;
+    evaluationDelayDays?: number;
+    isSuggested?: boolean;
+  }) => {
+    const sub: FollowUpSubType = opts?.subType && ['promessa_retorno', 'ajuste_perfil', 'negociacao_copilot', 'aviso_novidade'].includes(opts.subType)
+      ? opts.subType
+      : 'negociacao_copilot';
+    const defaultDays = sub === 'ajuste_perfil' ? 5 : (sub === 'promessa_retorno' ? 15 : 5);
+    setFuScheduledMessage(null);
+    setFuIsSuggested(Boolean(opts?.isSuggested));
+    setFuSubType(sub);
+    setFuDueDateBr(ymdToBr(opts?.dueDateIso || addDaysBrtYmd(defaultDays)));
+    setFuReason(String(opts?.reason || '').slice(0, 240));
+    setFuAutoEval(opts?.autoSchedulePerformanceEval !== false);
+    const delay = Number(opts?.evaluationDelayDays || 14);
+    setFuEvalDelayDays([7, 14, 21, 30].includes(delay) ? delay : 14);
+    setShowFollowUpCard(true);
+  }, []);
+
   const resetIdentityState = useCallback(() => {
     const hadPrevPsi = detectedPsiId !== null || detectedEntityType !== null;
     setDetectedPsiId(null);
@@ -117,8 +211,9 @@ export default function AdminCopilotWppScreen() {
       setStructuredOutput(null);
       setConversationId(null);
       setOriginalGeneratedReply('');
+      resetFollowUpState();
     }
-  }, [detectedPsiId, detectedEntityType, abortOngoingGeneration]);
+  }, [detectedPsiId, detectedEntityType, abortOngoingGeneration, resetFollowUpState]);
 
   // Identificação automática quando o texto é colado ou editado
   const handleAutoIdentify = async (text: string, options: { preserveManualLock?: boolean } = {}) => {
@@ -366,14 +461,37 @@ export default function AdminCopilotWppScreen() {
         if (res.data?.threadId) {
           setThreadId(res.data.threadId);
         }
+        let resolvedEntityType = detectedEntityType;
+        let resolvedPsiId = detectedPsiId;
         if (res.data?.detectedPsychologist?.profile) {
           const retType = res.data.detectedPsychologist.entityType || res.data.entityType || 'psychologist';
+          resolvedEntityType = retType;
           setDossier(res.data.detectedPsychologist);
           setDetectedEntityType(retType);
           setDetectedEntityId(res.data.detectedPsychologist.profile.id || res.data.entityId || null);
           if (retType === 'psychologist') {
+            resolvedPsiId = res.data.detectedPsychologist.profile.id;
             setDetectedPsiId(res.data.detectedPsychologist.profile.id);
           }
+        }
+
+        if (
+          resolvedEntityType === 'psychologist' &&
+          resolvedPsiId &&
+          sOut?.suggestedFollowUp?.shouldCreate &&
+          sOut?.status !== 'identity_review'
+        ) {
+          openFollowUpCard({
+            subType: sOut.suggestedFollowUp.subType,
+            dueDateIso: sOut.suggestedFollowUp.dueDateIso,
+            reason: sOut.suggestedFollowUp.reason,
+            autoSchedulePerformanceEval: sOut.suggestedFollowUp.autoSchedulePerformanceEval,
+            evaluationDelayDays: sOut.suggestedFollowUp.evaluationDelayDays || 14,
+            isSuggested: true,
+          });
+        } else {
+          setShowFollowUpCard(false);
+          setFuScheduledMessage(null);
         }
 
         loadHistory();
@@ -444,6 +562,61 @@ export default function AdminCopilotWppScreen() {
     });
   };
 
+  // Agendar Follow-up no CRM
+  const handleScheduleFollowUp = async () => {
+    if (!detectedPsiId) {
+      Alert.alert('Profissional não identificado', 'Identifique um psicólogo cadastrado antes de agendar follow-up.');
+      return;
+    }
+    const cleanReason = fuReason.trim();
+    if (!cleanReason) {
+      Alert.alert('Motivo obrigatório', 'Descreva rapidamente o motivo do follow-up.');
+      return;
+    }
+    const dueAtIso = brToYmd(fuDueDateBr);
+    if (!dueAtIso) {
+      Alert.alert('Data inválida', 'Informe a data no formato DD/MM/AAAA ou use um dos atalhos rápidos.');
+      return;
+    }
+
+    setFuSubmitting(true);
+    try {
+      const autoEval = fuSubType === 'ajuste_perfil' ? Boolean(fuAutoEval) : false;
+      const contextSummary =
+        structuredOutput?.suggestedFollowUp?.contextSummary ||
+        structuredOutput?.nextBestAction ||
+        pastedChat.slice(0, 400);
+
+      const res = await api.post('/api/admin/copilot/followups', {
+        psychologistId: detectedPsiId,
+        conversationId: conversationId || null,
+        subType: fuSubType,
+        reason: cleanReason,
+        contextSummary,
+        dueAt: dueAtIso,
+        autoSchedulePerformanceEval: autoEval,
+        evaluationDelayDays: fuEvalDelayDays,
+      });
+
+      const returnedDue = res.data?.followUp?.dueAt
+        ? new Date(res.data.followUp.dueAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+        : fuDueDateBr;
+
+      setShowFollowUpCard(false);
+      setFuScheduledMessage(
+        fuSubType === 'ajuste_perfil' && autoEval
+          ? `✅ Follow-up agendado para ${returnedDue} em Follow-ups 📞 (com avaliação pós-ajuste automática em +${fuEvalDelayDays}d após envio).`
+          : `✅ Follow-up agendado para ${returnedDue} na fila Follow-ups 📞 do CRM.`
+      );
+      setToastMessage(`Follow-up agendado para ${returnedDue}!`);
+      setToastType('success');
+    } catch (err: any) {
+      Alert.alert('Erro', err?.response?.data?.error || 'Não foi possível agendar o follow-up.');
+    } finally {
+      setFuSubmitting(false);
+    }
+  };
+
   // Limpar tudo
   const handleClearAll = () => {
     if (identifyTimerRef.current) clearTimeout(identifyTimerRef.current);
@@ -451,6 +624,7 @@ export default function AdminCopilotWppScreen() {
     identifySeqRef.current++;
     setPastedChat('');
     resetIdentityState();
+    resetFollowUpState();
     setGeneratedReply(null);
     setDetectionMessage('Cole a conversa para identificar o psicólogo');
     setToastMessage('Campos limpos.');
@@ -1307,17 +1481,47 @@ export default function AdminCopilotWppScreen() {
                     </TouchableOpacity>
                   ) : null}
 
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
-                    <TouchableOpacity
-                      onPress={() => handleGenerateResponse(true)}
-                      disabled={isLoading}
-                      style={{ paddingVertical: 4 }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11.5, color: '#166534', textDecorationLine: 'underline' }}>
-                        Gerar outra opção
-                      </Text>
-                    </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4, flexWrap: 'wrap', gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <TouchableOpacity
+                        onPress={() => handleGenerateResponse(true)}
+                        disabled={isLoading}
+                        style={{ paddingVertical: 4 }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11.5, color: '#166534', textDecorationLine: 'underline' }}>
+                          Gerar outra opção
+                        </Text>
+                      </TouchableOpacity>
+
+                      {detectedPsiId && detectedEntityType === 'psychologist' && structuredOutput?.status !== 'identity_review' ? (
+                        <TouchableOpacity
+                          onPress={() =>
+                            openFollowUpCard({
+                              subType: structuredOutput?.suggestedFollowUp?.subType || 'negociacao_copilot',
+                              dueDateIso: structuredOutput?.suggestedFollowUp?.dueDateIso || addDaysBrtYmd(5),
+                              reason: structuredOutput?.suggestedFollowUp?.reason || structuredOutput?.nextBestAction || '',
+                              autoSchedulePerformanceEval: structuredOutput?.suggestedFollowUp?.autoSchedulePerformanceEval,
+                              evaluationDelayDays: structuredOutput?.suggestedFollowUp?.evaluationDelayDays || 14,
+                              isSuggested: false,
+                            })
+                          }
+                          style={{
+                            backgroundColor: '#f0f9ff',
+                            paddingHorizontal: 10,
+                            paddingVertical: 5,
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: '#bae6fd',
+                          }}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#0369a1' }}>
+                            📅 + Follow-up CRM
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
 
                     <TouchableOpacity
                       onPress={handleClearAll}
@@ -1339,6 +1543,237 @@ export default function AdminCopilotWppScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
+
+                {/* CARD DE FOLLOW-UP PARA FOLLOW-UPS 📞 NO CRM */}
+                {showFollowUpCard && (
+                  <View
+                    style={{
+                      marginTop: 12,
+                      backgroundColor: '#f0f9ff',
+                      borderWidth: 1.5,
+                      borderColor: '#0ea5e9',
+                      borderRadius: 14,
+                      padding: 12,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: '#0369a1' }}>
+                        {fuIsSuggested ? '📅 Follow-up Detectado para o CRM' : '📅 Agendar Follow-up no CRM'}
+                      </Text>
+                      <TouchableOpacity onPress={() => setShowFollowUpCard(false)} style={{ paddingHorizontal: 6, paddingVertical: 2 }}>
+                        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#64748b' }}>✕ Fechar</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10.5, color: '#334155', marginBottom: 4 }}>
+                      Tipo do follow-up
+                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                      {([
+                        { id: 'promessa_retorno', label: 'Retorno' },
+                        { id: 'ajuste_perfil', label: 'Ajuste Perfil' },
+                        { id: 'negociacao_copilot', label: 'Combinado' },
+                        { id: 'aviso_novidade', label: 'Novidade' },
+                      ] as const).map((opt) => {
+                        const active = fuSubType === opt.id;
+                        return (
+                          <TouchableOpacity
+                            key={opt.id}
+                            onPress={() => setFuSubType(opt.id)}
+                            style={{
+                              paddingHorizontal: 10,
+                              paddingVertical: 5,
+                              borderRadius: 999,
+                              backgroundColor: active ? '#0284c7' : '#ffffff',
+                              borderWidth: 1,
+                              borderColor: active ? '#0284c7' : '#bae6fd',
+                            }}
+                          >
+                            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: active ? '#ffffff' : '#0369a1' }}>
+                              {opt.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10.5, color: '#334155', marginBottom: 4 }}>
+                      Data prevista (Follow-ups 📞)
+                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+                      {[
+                        { label: '+5d', ymd: addDaysBrtYmd(5) },
+                        { label: '+7d', ymd: addDaysBrtYmd(7) },
+                        { label: '+15d', ymd: addDaysBrtYmd(15) },
+                        { label: '+30d', ymd: addDaysBrtYmd(30) },
+                        { label: '01/Próx.Mês', ymd: firstDayNextMonthYmd() },
+                      ].map((chip) => {
+                        const chipBr = ymdToBr(chip.ymd);
+                        const active = fuDueDateBr === chipBr;
+                        return (
+                          <TouchableOpacity
+                            key={chip.label}
+                            onPress={() => setFuDueDateBr(chipBr)}
+                            style={{
+                              paddingHorizontal: 9,
+                              paddingVertical: 4,
+                              borderRadius: 999,
+                              backgroundColor: active ? '#0369a1' : '#ffffff',
+                              borderWidth: 1,
+                              borderColor: active ? '#0369a1' : '#bae6fd',
+                            }}
+                          >
+                            <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10.5, color: active ? '#ffffff' : '#0369a1' }}>
+                              {chip.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                    <TextInput
+                      value={fuDueDateBr}
+                      onChangeText={setFuDueDateBr}
+                      placeholder="DD/MM/AAAA"
+                      keyboardType="numbers-and-punctuation"
+                      style={{
+                        backgroundColor: '#ffffff',
+                        borderWidth: 1,
+                        borderColor: '#bae6fd',
+                        borderRadius: 10,
+                        paddingHorizontal: 10,
+                        paddingVertical: 7,
+                        fontFamily: 'Inter_600SemiBold',
+                        fontSize: 12.5,
+                        color: '#0f172a',
+                        marginBottom: 10,
+                      }}
+                    />
+
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10.5, color: '#334155', marginBottom: 4 }}>
+                      Motivo exibido em Follow-ups 📞
+                    </Text>
+                    <TextInput
+                      value={fuReason}
+                      onChangeText={setFuReason}
+                      placeholder="Ex.: Prometeu avaliar retorno em dezembro..."
+                      maxLength={240}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        borderWidth: 1,
+                        borderColor: '#bae6fd',
+                        borderRadius: 10,
+                        paddingHorizontal: 10,
+                        paddingVertical: 8,
+                        fontFamily: 'Inter_400Regular',
+                        fontSize: 12.5,
+                        color: '#0f172a',
+                        marginBottom: 10,
+                      }}
+                    />
+
+                    {fuSubType === 'ajuste_perfil' && (
+                      <View
+                        style={{
+                          backgroundColor: '#ecfeff',
+                          borderWidth: 1,
+                          borderColor: '#a5f3fc',
+                          borderRadius: 10,
+                          padding: 10,
+                          marginBottom: 10,
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                          <Text style={{ flex: 1, fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#155e75' }}>
+                            📈 Avaliar frutos pós-ajuste automaticamente (+{fuEvalDelayDays}d após envio)
+                          </Text>
+                          <Switch
+                            value={fuAutoEval}
+                            onValueChange={setFuAutoEval}
+                            trackColor={{ false: '#cbd5e1', true: '#14b8a6' }}
+                            thumbColor="#ffffff"
+                          />
+                        </View>
+                        {fuAutoEval && (
+                          <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
+                            {[7, 14, 21, 30].map((d) => {
+                              const active = fuEvalDelayDays === d;
+                              return (
+                                <TouchableOpacity
+                                  key={d}
+                                  onPress={() => setFuEvalDelayDays(d)}
+                                  style={{
+                                    paddingHorizontal: 10,
+                                    paddingVertical: 4,
+                                    borderRadius: 999,
+                                    backgroundColor: active ? '#0d9488' : '#ffffff',
+                                    borderWidth: 1,
+                                    borderColor: active ? '#0d9488' : '#67e8f9',
+                                  }}
+                                >
+                                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10.5, color: active ? '#ffffff' : '#155e75' }}>
+                                    {d}d
+                                  </Text>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+                        )}
+                      </View>
+                    )}
+
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <TouchableOpacity
+                        onPress={handleScheduleFollowUp}
+                        disabled={fuSubmitting}
+                        style={{
+                          flex: 1,
+                          backgroundColor: '#0284c7',
+                          paddingVertical: 9,
+                          borderRadius: 999,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                        activeOpacity={0.85}
+                      >
+                        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#ffffff' }}>
+                          {fuSubmitting ? 'Agendando...' : '✓ Agendar em Follow-ups 📞'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => setShowFollowUpCard(false)}
+                        style={{
+                          backgroundColor: '#ffffff',
+                          borderWidth: 1,
+                          borderColor: '#cbd5e1',
+                          paddingHorizontal: 14,
+                          paddingVertical: 9,
+                          borderRadius: 999,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11.5, color: '#475569' }}>Dispensar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+
+                {fuScheduledMessage ? (
+                  <View
+                    style={{
+                      marginTop: 10,
+                      backgroundColor: '#ecfdf5',
+                      borderWidth: 1,
+                      borderColor: '#86efac',
+                      borderRadius: 12,
+                      padding: 10,
+                    }}
+                  >
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11.5, color: '#166534' }}>
+                      {fuScheduledMessage}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             )}
           </View>
@@ -1586,6 +2021,23 @@ export default function AdminCopilotWppScreen() {
                                   setDetectedEntityType(eType);
                                   setDetectedEntityId(detRes.data.dossier.profile.id || null);
                                   if (eType === 'psychologist') setDetectedPsiId(detRes.data.dossier.profile.id);
+                                  if (
+                                    eType === 'psychologist' &&
+                                    detRes.data.dossier.profile.id &&
+                                    conv.structuredOutput?.suggestedFollowUp?.shouldCreate
+                                  ) {
+                                    openFollowUpCard({
+                                      subType: conv.structuredOutput.suggestedFollowUp.subType,
+                                      dueDateIso: conv.structuredOutput.suggestedFollowUp.dueDateIso,
+                                      reason: conv.structuredOutput.suggestedFollowUp.reason,
+                                      autoSchedulePerformanceEval: conv.structuredOutput.suggestedFollowUp.autoSchedulePerformanceEval,
+                                      evaluationDelayDays: conv.structuredOutput.suggestedFollowUp.evaluationDelayDays || 14,
+                                      isSuggested: true,
+                                    });
+                                  } else {
+                                    setShowFollowUpCard(false);
+                                    setFuScheduledMessage(null);
+                                  }
                                 }
                                 const txt = conv.finalReply || conv.aiResponse || c.aiResponse || '';
                                 setOriginalGeneratedReply(txt);

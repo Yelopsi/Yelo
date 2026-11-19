@@ -88,6 +88,25 @@ function getResponseSchema() {
                     newRecommendations: { type: 'array', items: { type: 'string' } },
                     commitments: { type: 'array', items: { type: 'string' } }
                 }
+            },
+            suggestedFollowUp: {
+                type: 'object',
+                nullable: true,
+                properties: {
+                    shouldCreate: { type: 'boolean' },
+                    subType: {
+                        type: 'string',
+                        format: 'enum',
+                        enum: ['promessa_retorno', 'ajuste_perfil', 'negociacao_copilot', 'aviso_novidade']
+                    },
+                    reason: { type: 'string' },
+                    contextSummary: { type: 'string' },
+                    dueDateIso: { type: 'string', nullable: true },
+                    dueInDays: { type: 'integer', nullable: true },
+                    autoSchedulePerformanceEval: { type: 'boolean' },
+                    evaluationDelayDays: { type: 'integer', nullable: true }
+                },
+                required: ['shouldCreate']
             }
         },
         required: [
@@ -160,7 +179,13 @@ FORMATAÇÃO ESTRITA DE WHATSAPP (OBRIGATÓRIA EM whatsappReply e alternativeRep
         return `${core}
 
 SAÍDA JSON ESTRITA:
-Retorne apenas JSON válido no schema definido. Seja objetivo nos campos analíticos (máx. 3 evidências, 2 hipóteses com possíveis perguntas investigativas para Anderson, 2 alertas) e completo e bem formatado em whatsappReply. Em alternativeReply forneça 1 variação útil com ângulo diferente ou versão mais curta (ou null).`;
+Retorne apenas JSON válido no schema definido. Seja objetivo nos campos analíticos (máx. 3 evidências, 2 hipóteses com possíveis perguntas investigativas para Anderson, 2 alertas) e completo e bem formatado em whatsappReply. Em alternativeReply forneça 1 variação útil com ângulo diferente ou versão mais curta (ou null).
+
+SUGESTÃO DE FOLLOW-UP NO CRM (suggestedFollowUp):
+- Defina shouldCreate=true SOMENTE quando na conversa houver combinado concreto com psicólogo: promessa de voltar/assinar em data futura (promessa_retorno), aceite ou combinação de aplicar ajustes no perfil (ajuste_perfil), pendência comercial com prazo (negociacao_copilot) ou pedido explícito de aviso sobre novidade/recurso (aviso_novidade).
+- Caso seja uma dúvida pontual já resolvida sem combinado futuro, defina shouldCreate=false.
+- Use DATA_ATUAL_REFERENCIA para calcular dueDateIso (formato YYYY-MM-DD) ou dueInDays.
+- Quando subType='ajuste_perfil', defina autoSchedulePerformanceEval=true e evaluationDelayDays=14 (para medir frutos após os ajustes).`;
     }
 
     static buildUserContents({
@@ -175,7 +200,14 @@ Retorne apenas JSON válido no schema definido. Seja objetivo nos campos analít
         sanitizedTranscript,
         structured = true
     }) {
-        const blocks = [contextBlock];
+        let todayBrt = '';
+        try {
+            todayBrt = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+        } catch (_) {
+            todayBrt = new Date().toISOString().slice(0, 10);
+        }
+        const blocks = [`DATA_ATUAL_REFERENCIA: ${todayBrt} (America/Sao_Paulo)`];
+        if (contextBlock) blocks.push(contextBlock);
         if (platformMetricsBlock) blocks.push(platformMetricsBlock.trim());
         if (dynamicDbBlock) blocks.push(dynamicDbBlock.trim());
         if (pastContext) blocks.push(pastContext.trim());

@@ -26,7 +26,85 @@ const FORBIDDEN_PROMISES = [
     /\bvou\s+liberar\s+(?:um\s+)?desconto\s+de\s+\d+%/i
 ];
 
+const FOLLOWUP_SUBTYPES = ['promessa_retorno', 'ajuste_perfil', 'negociacao_copilot', 'aviso_novidade'];
+
+const FOLLOWUP_FALLBACK_DAYS = {
+    ajuste_perfil: 5,
+    negociacao_copilot: 4,
+    promessa_retorno: 15,
+    aviso_novidade: 30
+};
+
+function getTodayBrtYmd(date = new Date()) {
+    try {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(date);
+    } catch (_) {
+        return date.toISOString().slice(0, 10);
+    }
+}
+
+function addDaysBrtYmd(days = 5) {
+    const num = Math.min(365, Math.max(1, parseInt(days, 10) || 5));
+    const todayYmd = getTodayBrtYmd(new Date());
+    const [y, m, d] = todayYmd.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d + num, 12, 0, 0));
+    return getTodayBrtYmd(dt);
+}
+
 class CopilotOutputGuard {
+    static normalizeSuggestedFollowUp(rawFollowUp, context = {}) {
+        if (!rawFollowUp || typeof rawFollowUp !== 'object' || !rawFollowUp.shouldCreate) {
+            return null;
+        }
+        const dossier = context.dossier;
+        if (!dossier || dossier.entityType !== 'psychologist' || !dossier.profile?.id) {
+            return null;
+        }
+
+        const subType = FOLLOWUP_SUBTYPES.includes(rawFollowUp.subType)
+            ? rawFollowUp.subType
+            : 'negociacao_copilot';
+        const reason = String(rawFollowUp.reason || '').replace(/\s+/g, ' ').trim().slice(0, 240);
+        if (!reason) {
+            return null;
+        }
+        const contextSummary = String(rawFollowUp.contextSummary || '').trim().slice(0, 800);
+
+        const todayYmd = getTodayBrtYmd(new Date());
+        let dueDateIso = null;
+        if (typeof rawFollowUp.dueDateIso === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rawFollowUp.dueDateIso.trim())) {
+            const candidate = rawFollowUp.dueDateIso.trim();
+            if (candidate >= todayYmd) {
+                dueDateIso = candidate;
+            }
+        }
+        if (!dueDateIso) {
+            const parsedDays = parseInt(rawFollowUp.dueInDays, 10);
+            const fallbackDays = !Number.isNaN(parsedDays) && parsedDays >= 1
+                ? Math.min(365, parsedDays)
+                : (FOLLOWUP_FALLBACK_DAYS[subType] || 5);
+            dueDateIso = addDaysBrtYmd(fallbackDays);
+        }
+
+        const parsedDelay = parseInt(rawFollowUp.evaluationDelayDays, 10);
+        const evaluationDelayDays = subType === 'ajuste_perfil'
+            ? (!Number.isNaN(parsedDelay) ? Math.min(45, Math.max(7, parsedDelay)) : 14)
+            : 14;
+        const autoSchedulePerformanceEval = subType === 'ajuste_perfil'
+            ? (rawFollowUp.autoSchedulePerformanceEval !== false)
+            : false;
+
+        return {
+            shouldCreate: true,
+            subType,
+            reason,
+            contextSummary,
+            dueDateIso,
+            autoSchedulePerformanceEval,
+            evaluationDelayDays
+        };
+    }
+
     static parseAndRepairJson(rawText) {
         if (!rawText || typeof rawText !== 'string') return null;
         let cleaned = rawText.trim();
@@ -119,7 +197,8 @@ class CopilotOutputGuard {
                     nextBestAction: 'Revisar o texto antes de copiar e enviar.',
                     missingInformation: [],
                     suggestedPendingItems: [],
-                    memoryUpdates: { newFacts: [], newRecommendations: [], commitments: [] }
+                    memoryUpdates: { newFacts: [], newRecommendations: [], commitments: [] },
+                    suggestedFollowUp: null
                 },
                 parseRecovered: false
             };
@@ -201,7 +280,8 @@ class CopilotOutputGuard {
                     newFacts: this.sanitizeReplyList(parsed.memoryUpdates?.newFacts, 4),
                     newRecommendations: this.sanitizeReplyList(parsed.memoryUpdates?.newRecommendations, 4),
                     commitments: this.sanitizeReplyList(parsed.memoryUpdates?.commitments, 4)
-                }
+                },
+                suggestedFollowUp: this.normalizeSuggestedFollowUp(parsed.suggestedFollowUp, context)
             },
             parseRecovered: true
         };

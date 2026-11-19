@@ -141,6 +141,10 @@ router.post('/copilot/diagnose', copilotIdentifyLimiter, adminCopilotController.
 router.post('/copilot/backlog-draft', adminCopilotController.createBacklogDraft);
 router.get('/copilot/collective-insights', adminCopilotController.getCollectiveInsights);
 router.get('/copilot/search-psychologists', copilotIdentifyLimiter, adminCopilotController.searchPsychologists);
+router.get('/copilot/followups', adminCopilotController.listFollowUps);
+router.post('/copilot/followups', adminCopilotController.createFollowUp);
+router.patch('/copilot/followups/:id', adminCopilotController.updateFollowUp);
+router.post('/copilot/followups/:id/ai-message', copilotRespondLimiter, adminCopilotController.generateFollowUpMessage);
 
 // Rotas da Central de Ajustes & Backlog Inteligente (Notion Flow)
 router.get('/adjustments', adminAdjustmentController.getAdjustments);

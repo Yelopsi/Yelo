@@ -835,7 +835,8 @@ class AdminCopilotService {
                 nextBestAction: '',
                 missingInformation: [],
                 suggestedPendingItems: [],
-                memoryUpdates: { newFacts: [], newRecommendations: [], commitments: [] }
+                memoryUpdates: { newFacts: [], newRecommendations: [], commitments: [] },
+                suggestedFollowUp: null
             };
         }
 

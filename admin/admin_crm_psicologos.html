@@ -222,12 +222,12 @@
         color: #0f172a !important;
         transform: translateY(-1px) !important;
     }
-    #main-content .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar):not(.btn-tabela-conversion):not(.btn-tabela-analysis):not(.btn-tabela-lowperf):not(.btn-tabela-trial):not(.btn-tabela-churn):not(.btn-tabela-paidchurn):not(.btn-tabela-feedback):not(.btn-tabela-incomplete):not(.btn-tabela-negotiation) {
+    #main-content .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar):not(.btn-tabela-conversion):not(.btn-tabela-analysis):not(.btn-tabela-lowperf):not(.btn-tabela-trial):not(.btn-tabela-churn):not(.btn-tabela-paidchurn):not(.btn-tabela-feedback):not(.btn-tabela-incomplete):not(.btn-tabela-negotiation):not(.btn-tabela-copilot):not(.btn-tabela-copilot-adjust):not(.btn-tabela-copilot-eval) {
         background: #f0fdf4 !important;
         border-color: #bbf7d0 !important;
         color: #166534 !important;
     }
-    #main-content .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar):not(.btn-tabela-conversion):not(.btn-tabela-analysis):not(.btn-tabela-lowperf):not(.btn-tabela-trial):not(.btn-tabela-churn):not(.btn-tabela-paidchurn):not(.btn-tabela-feedback):not(.btn-tabela-incomplete):not(.btn-tabela-negotiation):hover {
+    #main-content .btn-tabela:not(.btn-tabela-perigo):not(.btn-tabela-ia):not(.btn-tabela-wpp):not(.btn-tabela-dispensar):not(.btn-tabela-conversion):not(.btn-tabela-analysis):not(.btn-tabela-lowperf):not(.btn-tabela-trial):not(.btn-tabela-churn):not(.btn-tabela-paidchurn):not(.btn-tabela-feedback):not(.btn-tabela-incomplete):not(.btn-tabela-negotiation):not(.btn-tabela-copilot):not(.btn-tabela-copilot-adjust):not(.btn-tabela-copilot-eval):hover {
         background: #dcfce7 !important;
         border-color: #86efac !important;
         color: #14532d !important;
@@ -356,6 +356,46 @@
         border-color: #3730a3 !important;
         color: #ffffff !important;
         box-shadow: 0 4px 12px rgba(79, 70, 229, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    /* 10. Copilot Follow-ups */
+    .btn-tabela.btn-tabela-copilot {
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+        border: 1px solid #0369a1 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-copilot:hover {
+        background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
+        border-color: #075985 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    .btn-tabela.btn-tabela-copilot-adjust {
+        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
+        border: 1px solid #0f766e !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(13, 148, 136, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-copilot-adjust:hover {
+        background: linear-gradient(135deg, #0f766e 0%, #115e59 100%) !important;
+        border-color: #115e59 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.38) !important;
+        transform: translateY(-1px) !important;
+    }
+    .btn-tabela.btn-tabela-copilot-eval {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+        border: 1px solid #047857 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.28) !important;
+    }
+    .btn-tabela.btn-tabela-copilot-eval:hover {
+        background: linear-gradient(135deg, #047857 0%, #065f46 100%) !important;
+        border-color: #065f46 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.38) !important;
         transform: translateY(-1px) !important;
     }
     /* Botão IA Legado / Fallback */
@@ -968,6 +1008,7 @@
     </div>
 
     <div class="tabela-container">
+        <div id="crm-future-followups-bar" style="display: none; margin-bottom: 12px;"></div>
         <div class="tabela-wrapper">
             <table class="tabela-gerenciamento">
                 <thead id="crm-table-head">

@@ -109,7 +109,9 @@ function loadWithMocks({ queryHandler, geminiImpl, systemSettingsData, throwSett
     const outputGuardPath = path.resolve(__dirname, '../../backend/services/copilotOutputGuard.js');
     const memoryServicePath = path.resolve(__dirname, '../../backend/services/copilotMemoryService.js');
     const insightsServicePath = path.resolve(__dirname, '../../backend/services/copilotInsightsService.js');
+    const followUpServicePath = path.resolve(__dirname, '../../backend/services/copilotFollowUpService.js');
     const controllerPath = path.resolve(__dirname, '../../backend/controllers/adminCopilotController.js');
+    const usersControllerPath = path.resolve(__dirname, '../../backend/controllers/adminUsersController.js');
     const formatterPath = path.resolve(__dirname, '../../backend/utils/whatsappFormatter.js');
 
     delete require.cache[contextServicePath];
@@ -117,8 +119,10 @@ function loadWithMocks({ queryHandler, geminiImpl, systemSettingsData, throwSett
     delete require.cache[outputGuardPath];
     delete require.cache[memoryServicePath];
     delete require.cache[insightsServicePath];
+    delete require.cache[followUpServicePath];
     delete require.cache[servicePath];
     delete require.cache[controllerPath];
+    delete require.cache[usersControllerPath];
     delete require.cache[formatterPath];
 
     Module._load = function (requestPath, parent, isMain) {
@@ -131,9 +135,11 @@ function loadWithMocks({ queryHandler, geminiImpl, systemSettingsData, throwSett
     let PsychologistContextService;
     let CopilotMemoryService;
     let CopilotInsightsService;
+    let CopilotFollowUpService;
     let CopilotOutputGuard;
     let CopilotPromptBuilder;
     let AdminCopilotController;
+    let AdminUsersController;
     let whatsappFormatter;
     try {
         process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'test-fake-gemini-key';
@@ -143,8 +149,10 @@ function loadWithMocks({ queryHandler, geminiImpl, systemSettingsData, throwSett
         CopilotOutputGuard = require(outputGuardPath);
         CopilotMemoryService = require(memoryServicePath);
         CopilotInsightsService = require(insightsServicePath);
+        CopilotFollowUpService = require(followUpServicePath);
         AdminCopilotService = require(servicePath);
         AdminCopilotController = require(controllerPath);
+        AdminUsersController = require(usersControllerPath);
     } finally {
         Module._load = originalLoad;
     }
@@ -154,9 +162,11 @@ function loadWithMocks({ queryHandler, geminiImpl, systemSettingsData, throwSett
         PsychologistContextService,
         CopilotMemoryService,
         CopilotInsightsService,
+        CopilotFollowUpService,
         CopilotOutputGuard,
         CopilotPromptBuilder,
         AdminCopilotController,
+        AdminUsersController,
         whatsappFormatter,
         captured,
         mockDb
@@ -1052,6 +1062,426 @@ function makeRes() {
         dom.window.document.getElementById('btn-copiar-resposta').click();
         await new Promise(r => setTimeout(r, 20));
         assert.strictEqual(copiedClipboard, '*Fluxo mensal*\n\n- 201 cliques em outubro\n- _Média de 2,4 cliques/mês_');
+    });
+
+    await test('17. Follow-ups do Copilot: schema, OutputGuard, captura de baseline e deduplicação', async () => {
+        const schema = require('../../backend/services/copilotPromptBuilder').getResponseSchema();
+        assert.ok(schema.properties.suggestedFollowUp, 'Schema deve expor suggestedFollowUp');
+        assert.deepStrictEqual(
+            schema.properties.suggestedFollowUp.properties.subType.enum,
+            ['promessa_retorno', 'ajuste_perfil', 'negociacao_copilot', 'aviso_novidade']
+        );
+
+        let insertedCount = 0;
+        let updatedCount = 0;
+        let openFollowUpId = null;
+
+        const { CopilotOutputGuard, CopilotFollowUpService } = loadWithMocks({
+            queryHandler: async (sql, rep) => {
+                if (sql.includes('SELECT id, nome') && sql.includes('FROM "Psychologists"')) {
+                    return [[{ id: 42, nome: 'Dra. Victória' }]];
+                }
+                if (sql.includes('FROM "AdminCopilotFollowUps"') && sql.includes('AND "conversationId" = :convId')) {
+                    return [openFollowUpId ? [{ id: openFollowUpId }] : []];
+                }
+                if (sql.includes('UPDATE "AdminCopilotFollowUps"')) {
+                    updatedCount++;
+                    return [[{
+                        id: openFollowUpId,
+                        psychologistId: 42,
+                        subType: 'ajuste_perfil',
+                        reason: rep.reason,
+                        dueAt: rep.dueAt,
+                        autoSchedulePerformanceEval: rep.autoEval,
+                        evaluationDelayDays: rep.evalDelay
+                    }]];
+                }
+                if (sql.includes('FROM "Psychologists"') && sql.includes('bio_length')) {
+                    return [[{
+                        id: 42,
+                        nome: 'Dra. Victória',
+                        status: 'active',
+                        plano: 'essencial',
+                        updatedAt: '2026-11-18T12:00:00.000Z',
+                        bio_length: 210,
+                        has_photo: true,
+                        valor_sessao_numero: 150,
+                        profile_appearances: 30,
+                        whatsapp_clicks: 2
+                    }]];
+                }
+                if (sql.includes('FROM "MatchEvents"')) return [[{ total_matches: 30, matches_14d: 12 }]];
+                if (sql.includes('FROM "ProfileAppearanceLogs"')) return [[{ total_views: 18, views_14d: 8 }]];
+                if (sql.includes('FROM "WhatsAppClickLogs"')) return [[{ total_clicks: 2, clicks_14d: 1, closed_total: 0, closed_14d: 0, talking_count: 1 }]];
+                if (sql.includes('FROM "Reviews"')) return [[{ approved_reviews: 1 }]];
+                if (sql.includes('INSERT INTO "AdminCopilotFollowUps"')) {
+                    insertedCount++;
+                    openFollowUpId = 501;
+                    return [[{
+                        id: 501,
+                        psychologistId: rep.psiId,
+                        subType: rep.subType,
+                        reason: rep.reason,
+                        dueAt: rep.dueAt,
+                        status: 'scheduled',
+                        autoSchedulePerformanceEval: rep.autoEval,
+                        evaluationDelayDays: rep.evalDelay,
+                        baselineMetrics: JSON.parse(rep.baseline)
+                    }]];
+                }
+                return [[]];
+            }
+        });
+
+        // Bloqueia quando não é psychologist cadastrado
+        const blockedLead = CopilotOutputGuard.normalizeSuggestedFollowUp(
+            { shouldCreate: true, subType: 'promessa_retorno', reason: 'Volta depois', dueInDays: 15 },
+            { dossier: { entityType: 'lead', profile: { id: 9 } } }
+        );
+        assert.strictEqual(blockedLead, null, 'Não deve sugerir follow-up para lead sem ID de psicólogo');
+
+        // Normaliza ajuste_perfil com avaliação automática padrão +14d
+        const normAdj = CopilotOutputGuard.normalizeSuggestedFollowUp(
+            { shouldCreate: true, subType: 'ajuste_perfil', reason: 'Revisar bio e avaliações', dueInDays: 5 },
+            { dossier: { entityType: 'psychologist', profile: { id: 42 } } }
+        );
+        assert.strictEqual(normAdj.shouldCreate, true);
+        assert.strictEqual(normAdj.subType, 'ajuste_perfil');
+        assert.strictEqual(normAdj.autoSchedulePerformanceEval, true);
+        assert.strictEqual(normAdj.evaluationDelayDays, 14);
+
+        const created = await CopilotFollowUpService.createFollowUp({
+            psychologistId: 42,
+            conversationId: 88,
+            subType: 'ajuste_perfil',
+            reason: 'Aceitou ajustar bio e pedir 2 avaliações',
+            dueAt: '2026-11-23'
+        });
+        assert.strictEqual(insertedCount, 1);
+        assert.strictEqual(created.deduped, false);
+        assert.strictEqual(created.followUp.baselineMetrics.matchesTotal, 30);
+        assert.strictEqual(created.followUp.baselineMetrics.clicksTotal, 2);
+
+        const deduped = await CopilotFollowUpService.createFollowUp({
+            psychologistId: 42,
+            conversationId: 88,
+            subType: 'ajuste_perfil',
+            reason: 'Aceitou ajustar bio até segunda',
+            dueAt: '2026-11-24'
+        });
+        assert.strictEqual(insertedCount, 1, 'Não deveria duplicar follow-up aberto na mesma conversa');
+        assert.strictEqual(updatedCount, 1);
+        assert.strictEqual(deduped.deduped, true);
+    });
+
+    await test('18. Follow-ups do Copilot: auto-resolução de pagante + ciclo 2 etapas de ajuste_perfil (completed vs dismissed)', async () => {
+        const autoResolvedIds = [];
+        const insertedEvaluations = [];
+        const statusUpdates = [];
+        let childExists = false;
+
+        const { CopilotFollowUpService } = loadWithMocks({
+            queryHandler: async (sql, rep) => {
+                if (sql.includes('FROM "AdminCopilotFollowUps" f') && sql.includes('LEFT JOIN "Psychologists" p')) {
+                    return [[
+                        {
+                            followUpId: 101,
+                            psychologistId: 7,
+                            conversationId: 10,
+                            parentFollowUpId: null,
+                            followUpSubType: 'promessa_retorno',
+                            followUpReason: 'Prometeu assinar em dezembro',
+                            dueAt: '2026-11-18T03:00:00.000Z',
+                            autoSchedulePerformanceEval: false,
+                            evaluationDelayDays: 14,
+                            baselineMetrics: {},
+                            followUpCreatedAt: '2026-11-01T12:00:00.000Z',
+                            id: 7,
+                            nome: 'Dra. Pagante Antes da Hora',
+                            telefone: '5511999990007',
+                            status: 'active',
+                            plano: 'essencial',
+                            subscriptionId: 'sub_123',
+                            subscription_payments_count: 1,
+                            cancelAtPeriodEnd: false,
+                            is_exempt: false,
+                            planExpiresAt: '2027-01-01T00:00:00.000Z',
+                            deletedAt: null
+                        },
+                        {
+                            followUpId: 102,
+                            psychologistId: 8,
+                            conversationId: 11,
+                            parentFollowUpId: null,
+                            followUpSubType: 'ajuste_perfil',
+                            followUpReason: 'Combinou melhorar a bio',
+                            dueAt: '2026-11-18T03:00:00.000Z',
+                            autoSchedulePerformanceEval: true,
+                            evaluationDelayDays: 14,
+                            baselineMetrics: {
+                                bioLength: 80,
+                                hasPhoto: true,
+                                matchesTotal: 40,
+                                viewsTotal: 10,
+                                clicksTotal: 1,
+                                reviewsCount: 0,
+                                profileUpdatedAt: '2026-11-10T10:00:00.000Z'
+                            },
+                            followUpCreatedAt: '2026-11-12T10:00:00.000Z',
+                            id: 8,
+                            nome: 'Dr. Ajustou Perfil',
+                            telefone: '5511999990008',
+                            status: 'active',
+                            plano: 'essencial',
+                            subscriptionId: null,
+                            subscription_payments_count: 0,
+                            deletedAt: null
+                        }
+                    ]];
+                }
+                if (sql.includes('UPDATE "AdminCopilotFollowUps"') && sql.includes('auto_resolved')) {
+                    autoResolvedIds.push(rep.followUpId);
+                    return [[]];
+                }
+                if (sql.includes('SELECT * FROM "AdminCopilotFollowUps"') || (sql.includes('SELECT *') && sql.includes('FROM "AdminCopilotFollowUps"'))) {
+                    if (rep.followUpId === 102) {
+                        return [[{
+                            id: 102,
+                            psychologistId: 8,
+                            conversationId: 11,
+                            subType: 'ajuste_perfil',
+                            reason: 'Combinou melhorar a bio',
+                            contextSummary: 'Focar dor de ansiedade',
+                            status: 'scheduled',
+                            autoSchedulePerformanceEval: true,
+                            evaluationDelayDays: 14,
+                            baselineMetrics: { matchesTotal: 40, viewsTotal: 10, clicksTotal: 1, bioLength: 80 },
+                            createdAt: '2026-11-12T10:00:00.000Z'
+                        }]];
+                    }
+                    if (rep.followUpId === 103) {
+                        return [[{
+                            id: 103,
+                            psychologistId: 9,
+                            conversationId: 12,
+                            subType: 'ajuste_perfil',
+                            reason: 'Ignorado pelo Admin',
+                            status: 'scheduled',
+                            autoSchedulePerformanceEval: true,
+                            evaluationDelayDays: 14,
+                            baselineMetrics: { matchesTotal: 20, viewsTotal: 5, clicksTotal: 0 }
+                        }]];
+                    }
+                    return [[]];
+                }
+                if (sql.includes('UPDATE "AdminCopilotFollowUps"') && sql.includes('SET status = :newStatus')) {
+                    statusUpdates.push({ id: rep.id, status: rep.newStatus });
+                    return [[{ id: rep.id, status: rep.newStatus, psychologistId: 8 }]];
+                }
+                if (sql.includes('WHERE "parentFollowUpId" = :parentId')) {
+                    return [childExists ? [{ id: 901 }] : []];
+                }
+                if (sql.includes('INSERT INTO "AdminCopilotFollowUps"') && sql.includes('avaliacao_pos_ajuste')) {
+                    childExists = true;
+                    insertedEvaluations.push(rep);
+                    return [[{ id: 901, psychologistId: rep.psiId, parentFollowUpId: rep.parentId, subType: 'avaliacao_pos_ajuste', dueAt: rep.dueAt }]];
+                }
+                if (sql.includes('FROM "Psychologists"') && sql.includes('bio_length')) {
+                    return [[{
+                        id: 8,
+                        nome: 'Dr. Ajustou Perfil',
+                        status: 'active',
+                        plano: 'essencial',
+                        updatedAt: '2026-11-16T15:00:00.000Z',
+                        bio_length: 340,
+                        has_photo: true,
+                        valor_sessao_numero: 140,
+                        profile_appearances: 62,
+                        whatsapp_clicks: 4
+                    }]];
+                }
+                if (sql.includes('FROM "MatchEvents"')) return [[{ total_matches: 62, matches_14d: 30 }]];
+                if (sql.includes('FROM "ProfileAppearanceLogs"')) return [[{ total_views: 25, views_14d: 15 }]];
+                if (sql.includes('FROM "WhatsAppClickLogs"')) return [[{ total_clicks: 4, clicks_14d: 3, closed_total: 1, closed_14d: 1, talking_count: 1 }]];
+                if (sql.includes('FROM "Reviews"')) return [[{ approved_reviews: 2 }]];
+                return [[]];
+            }
+        });
+
+        const dueItems = await CopilotFollowUpService.getDuePendingActions(new Date('2026-11-19T12:00:00.000Z'));
+        assert.deepStrictEqual(autoResolvedIds, [101], 'Promessa de retorno já pagante deve ser auto-resolvida');
+        assert.strictEqual(dueItems.length, 1);
+        assert.strictEqual(dueItems[0].actionType, 'copilot_followup');
+        assert.strictEqual(dueItems[0].followUpId, 102);
+        assert.ok(dueItems[0].reason.includes('bio ampliada'), 'Deve detectar alteração real da bio no banco');
+
+        // Completed agenda Etapa 2 (avaliacao_pos_ajuste)
+        const completedRes = await CopilotFollowUpService.completeOrDismissFollowUp({
+            psychologistId: 8,
+            followUpId: 102,
+            dismissed: false,
+            messageContent: 'Oi! Vi que você ajustou sua bio!'
+        });
+        assert.strictEqual(completedRes.updated, true);
+        assert.strictEqual(statusUpdates[0].status, 'completed');
+        assert.strictEqual(insertedEvaluations.length, 1, 'Etapa 2 deve ser agendada automaticamente após ajuste_perfil concluído');
+        assert.strictEqual(insertedEvaluations[0].parentId, 102);
+
+        // Dismissed NÃO agenda Etapa 2
+        const dismissedRes = await CopilotFollowUpService.completeOrDismissFollowUp({
+            psychologistId: 9,
+            followUpId: 103,
+            dismissed: true,
+            messageContent: 'Ação ignorada/descartada pelo Admin.'
+        });
+        assert.strictEqual(dismissedRes.updated, true);
+        assert.strictEqual(statusUpdates[1].status, 'dismissed');
+        assert.strictEqual(dismissedRes.scheduledNextEvaluation, null);
+        assert.strictEqual(insertedEvaluations.length, 1, 'Follow-up ignorado NUNCA deve gerar Etapa 2');
+    });
+
+    await test('19. Avaliação pós-ajuste (cálculo de frutos + mensagem WhatsApp) e regressão em markActionSent', async () => {
+        const prevEnv = process.env.NODE_ENV;
+        process.env.NODE_ENV = 'test';
+        try {
+            const psyUpdates = [];
+            const { CopilotFollowUpService, AdminUsersController } = loadWithMocks({
+                queryHandler: async (sql, rep) => {
+                    if (sql.includes('SELECT * FROM "AdminCopilotFollowUps"') && rep.id === 901) {
+                        return [[{
+                            id: 901,
+                            psychologistId: 8,
+                            conversationId: 11,
+                            parentFollowUpId: 102,
+                            subType: 'avaliacao_pos_ajuste',
+                            reason: 'Avaliação de desempenho pós-ajuste: Combinou melhorar a bio',
+                            dueAt: '2026-12-03T03:00:00.000Z',
+                            createdAt: '2026-11-19T12:00:00.000Z',
+                            baselineMetrics: {
+                                capturedAt: '2026-11-19T12:00:00.000Z',
+                                matchesTotal: 40,
+                                matches14d: 15,
+                                viewsTotal: 10,
+                                views14d: 5,
+                                clicksTotal: 1,
+                                clicks14d: 0,
+                                closedDealsTotal: 0,
+                                reviewsCount: 0
+                            }
+                        }]];
+                    }
+                    if (sql.includes('SELECT *') && sql.includes('FROM "AdminCopilotFollowUps"') && rep.followUpId === 901) {
+                        return [[{
+                            id: 901,
+                            psychologistId: 8,
+                            subType: 'avaliacao_pos_ajuste',
+                            reason: 'Avaliação de desempenho pós-ajuste: Combinou melhorar a bio',
+                            status: 'scheduled',
+                            autoSchedulePerformanceEval: false,
+                            baselineMetrics: { matchesTotal: 40, viewsTotal: 10, clicksTotal: 1 }
+                        }]];
+                    }
+                    if (sql.includes('UPDATE "AdminCopilotFollowUps"') && sql.includes('SET status = :newStatus')) {
+                        return [[{ id: rep.id, status: rep.newStatus }]];
+                    }
+                    if (sql.includes('FROM "Psychologists"') && sql.includes('bio_length')) {
+                        return [[{
+                            id: 8,
+                            nome: 'Dr. Ajustou Perfil',
+                            status: 'active',
+                            plano: 'essencial',
+                            updatedAt: '2026-12-01T12:00:00.000Z',
+                            bio_length: 340,
+                            has_photo: true,
+                            valor_sessao_numero: 140,
+                            profile_appearances: 75,
+                            whatsapp_clicks: 5
+                        }]];
+                    }
+                    if (sql.includes('FROM "MatchEvents"')) return [[{ total_matches: 75, matches_14d: 35 }]];
+                    if (sql.includes('FROM "ProfileAppearanceLogs"')) return [[{ total_views: 28, views_14d: 18 }]];
+                    if (sql.includes('FROM "WhatsAppClickLogs"')) return [[{ total_clicks: 5, clicks_14d: 4, closed_total: 2, closed_14d: 2, talking_count: 1 }]];
+                    if (sql.includes('FROM "Reviews"')) return [[{ approved_reviews: 2 }]];
+                    return [[]];
+                }
+            });
+
+            const deltaMelhorou = CopilotFollowUpService.computePerformanceDelta(
+                { capturedAt: '2026-11-19T12:00:00.000Z', matchesTotal: 40, viewsTotal: 10, clicksTotal: 1, closedDealsTotal: 0, matches14d: 10, views14d: 4, clicks14d: 0 },
+                { matchesTotal: 75, viewsTotal: 28, clicksTotal: 5, closedDealsTotal: 2, matches14d: 35, views14d: 18, clicks14d: 4 }
+            );
+            assert.strictEqual(deltaMelhorou.verdict, 'melhorou');
+            assert.strictEqual(deltaMelhorou.clicksDelta, 4);
+
+            const deltaVis = CopilotFollowUpService.computePerformanceDelta(
+                { capturedAt: '2026-11-19T12:00:00.000Z', matchesTotal: 40, viewsTotal: 10, clicksTotal: 1, closedDealsTotal: 0, matches14d: 10, views14d: 4, clicks14d: 1 },
+                { matchesTotal: 60, viewsTotal: 22, clicksTotal: 1, closedDealsTotal: 0, matches14d: 25, views14d: 12, clicks14d: 1 }
+            );
+            assert.strictEqual(deltaVis.verdict, 'visibilidade_subiu');
+
+            const deltaEstag = CopilotFollowUpService.computePerformanceDelta(
+                { capturedAt: '2026-11-19T12:00:00.000Z', matchesTotal: 40, viewsTotal: 10, clicksTotal: 1, closedDealsTotal: 0, matches14d: 20, views14d: 8, clicks14d: 1 },
+                { matchesTotal: 40, viewsTotal: 10, clicksTotal: 1, closedDealsTotal: 0, matches14d: 20, views14d: 8, clicks14d: 1 }
+            );
+            assert.strictEqual(deltaEstag.verdict, 'estagnado');
+
+            const msgRes = await CopilotFollowUpService.generateFollowUpWhatsAppMessage({ followUpId: 901, psychologistId: 8 });
+            assert.strictEqual(msgRes.usedFallback, true);
+            assert.ok(msgRes.whatsappCopy.includes('*Cliques no WhatsApp:* +4'), 'Copy pós-ajuste deve mostrar ganho real de cliques');
+            assert.ok(!msgRes.whatsappCopy.includes('**'), 'Copy deve usar *negrito* simples do WhatsApp');
+
+            // Testa regressão em AdminUsersController.markActionSent (copilot_followup + legado analysis + erro 400)
+            const ctxWithPsi = loadWithMocks({
+                queryHandler: async (sql, rep) => {
+                    if (sql.includes('SELECT *') && sql.includes('FROM "AdminCopilotFollowUps"') && rep.followUpId === 901) {
+                        return [[{
+                            id: 901,
+                            psychologistId: 8,
+                            subType: 'avaliacao_pos_ajuste',
+                            reason: 'Avaliação pós-ajuste',
+                            status: 'scheduled',
+                            autoSchedulePerformanceEval: false,
+                            baselineMetrics: {}
+                        }]];
+                    }
+                    if (sql.includes('UPDATE "AdminCopilotFollowUps"') && sql.includes('SET status = :newStatus')) {
+                        return [[{ id: 901, status: rep.newStatus }]];
+                    }
+                    return [[]];
+                }
+            });
+            ctxWithPsi.mockDb.Psychologist = {
+                findByPk: async (id) => ({
+                    id: Number(id),
+                    aiOptimizationHistory: [],
+                    update: async (u) => { psyUpdates.push({ id: Number(id), ...u }); }
+                })
+            };
+
+            const resCopilot = makeRes();
+            await ctxWithPsi.AdminUsersController.markActionSent(
+                { params: { id: '8' }, body: { actionType: 'copilot_followup', followUpId: 901, messageContent: msgRes.whatsappCopy } },
+                resCopilot
+            );
+            assert.strictEqual(resCopilot.statusCode, 200);
+
+            const resLegacy = makeRes();
+            await ctxWithPsi.AdminUsersController.markActionSent(
+                { params: { id: '8' }, body: { actionType: 'analysis', messageContent: 'Análise enviada' } },
+                resLegacy
+            );
+            assert.strictEqual(resLegacy.statusCode, 200);
+            assert.ok(psyUpdates.some(u => u.msg_analysis_sent_at), 'Fluxo legado analysis deve continuar intacto');
+
+            const resInvalid = makeRes();
+            await ctxWithPsi.AdminUsersController.markActionSent(
+                { params: { id: '8' }, body: { actionType: 'tipo_desconhecido' } },
+                resInvalid
+            );
+            assert.strictEqual(resInvalid.statusCode, 400);
+        } finally {
+            process.env.NODE_ENV = prevEnv;
+        }
     });
 
     console.log('\n==================================================================');

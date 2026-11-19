@@ -358,6 +358,13 @@ window.initializePage = function () {
 
         const searchTerm = searchInput.value;
         const status = statusInput.value;
+        const futureBar = document.getElementById('crm-future-followups-bar');
+
+        if (status === 'pending_actions') {
+            loadFutureCopilotFollowUps();
+        } else if (futureBar) {
+            futureBar.style.display = 'none';
+        }
 
         // NOVO LÓGICA PARA FOLLOW-UPS
         if (status === 'pending_actions' || status === 'pending_paid_churn' || status === 'pending_expiring_trial' || status === 'pending_incomplete') {
@@ -488,6 +495,109 @@ window.initializePage = function () {
         }
     }
 
+    function escapeHtml(str) {
+        return String(str == null ? '' : str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    async function loadFutureCopilotFollowUps() {
+        const bar = document.getElementById('crm-future-followups-bar');
+        if (!bar) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/admin/copilot/followups?status=scheduled&futureOnly=true&limit=20`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) {
+                bar.style.display = 'none';
+                return;
+            }
+            const data = await res.json().catch(() => ({}));
+            const list = Array.isArray(data.followUps) ? data.followUps : [];
+            if (list.length === 0) {
+                bar.style.display = 'none';
+                bar.innerHTML = '';
+                return;
+            }
+
+            const isExpanded = bar.dataset.expanded === 'true';
+            bar.style.display = 'block';
+            bar.innerHTML = `
+                <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 11px 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <div style="font-size: 0.84rem; font-weight: 700; color: #0369a1;">
+                            📅 ${list.length} follow-up${list.length > 1 ? 's' : ''} do Copilot agendado${list.length > 1 ? 's' : ''} para datas futuras (entram na fila automaticamente no dia)
+                        </div>
+                        <button type="button" id="btn-toggle-future-followups" style="background: #ffffff; border: 1px solid #bae6fd; color: #0369a1; padding: 5px 12px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
+                            ${isExpanded ? 'Ocultar lista ▲' : 'Ver agendamentos ▼'}
+                        </button>
+                    </div>
+                    <div id="future-followups-list" style="display: ${isExpanded ? 'flex' : 'none'}; flex-direction: column; gap: 8px; margin-top: 10px;">
+                        ${list.map(f => {
+                            const dueStr = f.dueAt ? new Date(f.dueAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '-';
+                            const label = escapeHtml(f.subTypeLabel || f.subType || 'Combinado');
+                            const psiName = escapeHtml(f.psychologistName || `Psicólogo #${f.psychologistId}`);
+                            const reasonSafe = escapeHtml(f.reason || '');
+                            return `
+                                <div style="background: #ffffff; border: 1px solid #e0f2fe; border-radius: 10px; padding: 9px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <div style="min-width: 0; flex: 1;">
+                                        <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a;">
+                                            ${psiName} <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; margin-left: 4px;">${label}</span>
+                                        </div>
+                                        <div style="font-size: 0.78rem; color: #475569; margin-top: 2px;">${reasonSafe}</div>
+                                        <div style="font-size: 0.72rem; color: #0284c7; font-weight: 600; margin-top: 2px;">Previsto para: ${dueStr}</div>
+                                    </div>
+                                    <button type="button" class="btn-cancel-future-fu" data-fu-id="${Number(f.id)}" style="background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 5px 11px; border-radius: 999px; font-size: 0.74rem; font-weight: 700; cursor: pointer;">Cancelar</button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            const toggleBtn = document.getElementById('btn-toggle-future-followups');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const next = bar.dataset.expanded !== 'true';
+                    bar.dataset.expanded = next ? 'true' : 'false';
+                    const listEl = document.getElementById('future-followups-list');
+                    if (listEl) listEl.style.display = next ? 'flex' : 'none';
+                    toggleBtn.textContent = next ? 'Ocultar lista ▲' : 'Ver agendamentos ▼';
+                });
+            }
+
+            bar.querySelectorAll('.btn-cancel-future-fu').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const fuId = btn.getAttribute('data-fu-id');
+                    if (!fuId) return;
+                    const execCancel = async () => {
+                        try {
+                            const r = await fetch(`${API_BASE_URL}/api/admin/copilot/followups/${fuId}`, {
+                                method: 'PATCH',
+                                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status: 'dismissed' })
+                            });
+                            if (r.ok) {
+                                if (window.showToast) window.showToast('Agendamento futuro cancelado.', 'success');
+                                loadFutureCopilotFollowUps();
+                            }
+                        } catch (_) {}
+                    };
+                    if (window.openConfirmationModal) {
+                        window.openConfirmationModal('Cancelar Agendamento', 'Deseja cancelar este follow-up agendado no Copilot?', execCancel);
+                    } else if (confirm('Deseja cancelar este follow-up agendado no Copilot?')) {
+                        execCancel();
+                    }
+                });
+            });
+        } catch (_) {
+            bar.style.display = 'none';
+        }
+    }
+
     function renderPendingActionsTable(data) {
         updateTableHeaders('pending_actions');
         tableBody.innerHTML = '';
@@ -500,11 +610,15 @@ window.initializePage = function () {
         window.__pendingActionsList = Array.isArray(data) ? data : [];
 
         data.forEach(item => {
-            const actionKey = `${item.id}_${item.actionType}`;
+            const actionKey = item.followUpId
+                ? `${item.id}_${item.actionType}_${item.followUpId}`
+                : `${item.id}_${item.actionType}`;
             window.__pendingActionsMap.set(actionKey, item);
 
             let dateStr = '-';
-            if (item.actionType === 'expiring_trial' && item.planExpiresAt) {
+            if (item.actionType === 'copilot_followup' && item.dueAt) {
+                dateStr = new Date(item.dueAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+            } else if (item.actionType === 'expiring_trial' && item.planExpiresAt) {
                 dateStr = new Date(item.planExpiresAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
             } else if (item.createdAt) {
                 dateStr = new Date(item.createdAt).toLocaleDateString('pt-BR');
@@ -520,13 +634,21 @@ window.initializePage = function () {
             else if (item.actionType === 'low_performance') actionBadge = '<span class="status" style="background:#f3e8ff; color:#7c3aed;">Análise (IA)</span>';
             else if (item.actionType === 'conversion_failure') actionBadge = '<span class="status" style="background:#fee2e2; color:#b91c1c;">Falha Conversão</span>';
             else if (item.actionType === 'negotiation') actionBadge = '<span class="status" style="background:#ffedd5; color:#c2410c;">Em Negociação</span>';
+            else if (item.actionType === 'copilot_followup') {
+                const sub = item.followUpSubType;
+                if (sub === 'promessa_retorno') actionBadge = '<span class="status" style="background:#e0f2fe; color:#0369a1;">Retorno Combinado</span>';
+                else if (sub === 'ajuste_perfil') actionBadge = '<span class="status" style="background:#ccfbf1; color:#0f766e;">Check-in Ajustes</span>';
+                else if (sub === 'avaliacao_pos_ajuste') actionBadge = '<span class="status" style="background:#dcfce7; color:#047857;">Resultado Pós-Ajuste 📈</span>';
+                else if (sub === 'aviso_novidade') actionBadge = '<span class="status" style="background:#ede9fe; color:#6d28d9;">Aviso Novidade</span>';
+                else actionBadge = '<span class="status" style="background:#e0f2fe; color:#0369a1;">Combinado (Copilot)</span>';
+            }
 
-            let nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; overflow-wrap: break-word; line-height: 1.35;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${item.nome}</strong>`;
+            let nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; overflow-wrap: break-word; line-height: 1.35;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${escapeHtml(item.nome)}</strong>`;
 
             if (item.actionType === 'low_performance' && item.aiOptimizationHistory) {
                 const history = Array.isArray(item.aiOptimizationHistory) ? item.aiOptimizationHistory : [];
                 if (history.some(h => h.action === 'whatsapp_ai_diagnosis')) {
-                    nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; overflow-wrap: break-word; line-height: 1.35;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${item.nome} <span class="badge-pending" title="Contato IA Realizado" style="margin-left: 5px; font-size: 0.8rem;">🤖📱</span></strong>`;
+                    nameHtml = `<strong style="color: var(--verde-escuro); cursor: pointer; white-space: normal; word-break: break-word; overflow-wrap: break-word; line-height: 1.35;" onclick="window.openCSDrawer('${item.id}')" id="name-psy-${item.id}">${escapeHtml(item.nome)} <span class="badge-pending" title="Contato IA Realizado" style="margin-left: 5px; font-size: 0.8rem;">🤖📱</span></strong>`;
                 }
             }
 
@@ -571,15 +693,35 @@ window.initializePage = function () {
                 btnPrimaryLabel = 'Acompanhar Negociação';
                 btnPrimaryClass = 'btn-tabela btn-tabela-negotiation';
                 btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>';
+            } else if (item.actionType === 'copilot_followup') {
+                const sub = item.followUpSubType;
+                if (sub === 'ajuste_perfil') {
+                    btnPrimaryLabel = 'Checar Ajustes (IA)';
+                    btnPrimaryClass = 'btn-tabela btn-tabela-copilot-adjust';
+                    btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>';
+                } else if (sub === 'avaliacao_pos_ajuste') {
+                    btnPrimaryLabel = 'Avaliar Frutos (IA)';
+                    btnPrimaryClass = 'btn-tabela btn-tabela-copilot-eval';
+                    btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>';
+                } else if (sub === 'aviso_novidade') {
+                    btnPrimaryLabel = 'Avisar Novidade (IA)';
+                    btnPrimaryClass = 'btn-tabela btn-tabela-copilot';
+                    btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>';
+                } else {
+                    btnPrimaryLabel = 'Retomar (IA)';
+                    btnPrimaryClass = 'btn-tabela btn-tabela-copilot';
+                    btnPrimaryIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>';
+                }
             }
 
+            const fuIdArg = item.followUpId ? String(item.followUpId) : '';
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td data-label="Profissional">
                     <div style="display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0;">
                         <div style="display: flex; flex-direction: column; min-width: 0; flex: 1;">
                             ${nameHtml}
-                            <span style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">${item.telefone || 'Sem telefone'}</span>
+                            <span style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">${escapeHtml(item.telefone || 'Sem telefone')}</span>
                         </div>
                     </div>
                 </td>
@@ -587,19 +729,19 @@ window.initializePage = function () {
                     ${actionBadge}
                 </td>
                 <td data-label="Motivo do Contato">
-                    <span class="motivo-contato-texto">${item.reason}</span>
+                    <span class="motivo-contato-texto">${escapeHtml(item.reason)}</span>
                 </td>
                 <td data-label="Data / Previsão">
-                    <span style="color: #64748b; font-size: 0.88rem; font-weight: 500;">${dateStr}</span>
+                    <span style="color: #64748b; font-size: 0.88rem; font-weight: 500;">${escapeHtml(dateStr)}</span>
                 </td>
                 <td data-label="Plano">
-                    <span style="font-size: 0.82rem; color: #64748b; font-weight: 500;">${planoLabel}</span>
+                    <span style="font-size: 0.82rem; color: #64748b; font-weight: 500;">${escapeHtml(planoLabel)}</span>
                 </td>
                 <td data-label="Ações CS" style="white-space: nowrap; text-align: right;">
-                    <button class="${btnPrimaryClass}" onclick="window.sendPendingAction('${item.id}', '${item.actionType}', this)" title="${btnPrimaryLabel}">
+                    <button class="${btnPrimaryClass}" onclick="window.sendPendingAction('${item.id}', '${item.actionType}', this, '${fuIdArg}')" title="${btnPrimaryLabel}">
                         ${btnPrimaryIcon} <span>${btnPrimaryLabel}</span>
                     </button>
-                    <button class="btn-tabela btn-tabela-dispensar" onclick="window.dismissAction('${item.id}', '${item.actionType}')" style="margin-left: 6px;" title="Ignorar esta ação">
+                    <button class="btn-tabela btn-tabela-dispensar" onclick="window.dismissAction('${item.id}', '${item.actionType}', '${fuIdArg}')" style="margin-left: 6px;" title="Ignorar esta ação">
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> <span>Ignorar</span>
                     </button>
                 </td>
@@ -608,17 +750,27 @@ window.initializePage = function () {
         });
     }
 
-    window.sendPendingAction = function (id, actionType, btnElement) {
-        const actionKey = `${id}_${actionType}`;
+    window.sendPendingAction = function (id, actionType, btnElement, followUpId = '') {
+        const actionKey = followUpId
+            ? `${id}_${actionType}_${followUpId}`
+            : `${id}_${actionType}`;
         let item = window.__pendingActionsMap?.get(actionKey);
         if (!item) {
             const list = window.__pendingActionsList || [];
-            item = list.find(a => String(a.id) === String(id) && a.actionType === actionType) || list.find(a => String(a.id) === String(id));
+            item = (followUpId
+                ? list.find(a => String(a.id) === String(id) && a.actionType === actionType && String(a.followUpId || '') === String(followUpId))
+                : null)
+                || list.find(a => String(a.id) === String(id) && a.actionType === actionType)
+                || list.find(a => String(a.id) === String(id));
         }
         if (!item) {
             const nameEl = document.getElementById(`name-psy-${id}`);
             const name = nameEl ? nameEl.innerText.trim() : 'Colega';
-            item = { id, nome: name, telefone: null, actionType };
+            item = { id, nome: name, telefone: null, actionType, followUpId: followUpId || undefined };
+        }
+        const itemMetrics = { ...(item.metrics || {}) };
+        if (item.followUpId || followUpId) {
+            itemMetrics.followUpId = item.followUpId || followUpId;
         }
         window.sendWhatsAppAction(
             item.id,
@@ -627,31 +779,39 @@ window.initializePage = function () {
             item.actionType,
             item.patientName || '',
             item.feedbackToken || '',
-            encodeURIComponent(JSON.stringify(item.metrics || {})),
+            encodeURIComponent(JSON.stringify(itemMetrics)),
             btnElement
         );
     };
 
-    window.dismissAction = function (id, actionType) {
+    window.dismissAction = function (id, actionType, followUpId = '') {
         if (window.openConfirmationModal) {
             window.openConfirmationModal('Descartar Ação', 'Deseja ignorar esta ação e removê-la da lista (nenhuma mensagem será enviada)?', async () => {
-                await performDismiss(id, actionType);
+                await performDismiss(id, actionType, followUpId);
             });
         } else {
             if (!confirm('Deseja ignorar esta ação e removê-la da lista (nenhuma mensagem será enviada)?')) return;
-            performDismiss(id, actionType);
+            performDismiss(id, actionType, followUpId);
         }
     };
 
-    async function performDismiss(id, actionType) {
+    async function performDismiss(id, actionType, followUpId = '') {
         try {
+            const payload = {
+                actionType,
+                messageContent: 'Ação ignorada/descartada pelo Admin.'
+            };
+            if (followUpId) {
+                payload.followUpId = followUpId;
+                payload.dismissed = true;
+            }
             const res = await fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/action-sent`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ actionType, messageContent: 'Ação ignorada/descartada pelo Admin.' })
+                body: JSON.stringify(payload)
             });
             if (res.ok) {
                 if (window.showToast) window.showToast('Ação descartada com sucesso!', 'success');
@@ -977,6 +1137,32 @@ window.initializePage = function () {
                 const metrics = metricsStr && metricsStr !== '{}' ? JSON.parse(decodeURIComponent(metricsStr)) : {};
                 const dataNeg = metrics.dataNeg || 'alguns dias';
                 msg = `Olá, ${firstName}. Como vai?\n\nPreciso da sua ajuda com um retorno rápido.\n\nVocê estava em negociação com ${patientName} desde ${dataNeg}:\n\n• Conseguiram conversar novamente?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nPara responder, acesse sua conta na Yelo e vá até a opção *Evolução > Histórico de Contatos* e mude o status "⏳ Em negociação".\n\nObrigado! 🌿`;
+            } else if (actionType === 'copilot_followup') {
+                try {
+                    if (window.showToast) window.showToast('Gerando mensagem personalizada com Copilot + Banco... Aguarde.', 'info');
+                    if (!metrics.followUpId) {
+                        throw new Error('Identificador do follow-up ausente.');
+                    }
+                    const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
+                    const resAi = await fetch(`${API_BASE_URL}/api/admin/copilot/followups/${metrics.followUpId}/ai-message`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${tokenAdmin}`, 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ psychologistId: id })
+                    });
+                    const data = await resAi.json().catch(() => ({}));
+                    if (resAi.ok && data.whatsappCopy) {
+                        msg = data.whatsappCopy;
+                    } else {
+                        if (popupWindow) popupWindow.close();
+                        if (window.showToast) window.showToast(data.error || 'Erro ao gerar mensagem do follow-up.', 'error');
+                        return;
+                    }
+                } catch (e) {
+                    if (popupWindow) popupWindow.close();
+                    if (window.showToast) window.showToast('Erro ao gerar mensagem: ' + e.message, 'error');
+                    return;
+                }
             }
 
             // Formata e sanitiza para o parser nativo do WhatsApp não perder a formatação
@@ -1028,6 +1214,13 @@ window.initializePage = function () {
             // 2. Registra o envio no banco em segundo plano via keepalive (não bloqueia nem atrasa a abertura)
             try {
                 const tokenAdmin = localStorage.getItem('Yelo_token_admin') === 'cookie_auth_active' ? (localStorage.getItem('Yelo_token') || 'cookie_auth_active') : (localStorage.getItem('Yelo_token') || localStorage.getItem('Yelo_token_admin') || '');
+                const actionPayload = {
+                    actionType,
+                    messageContent: msg
+                };
+                if (metrics.followUpId) {
+                    actionPayload.followUpId = metrics.followUpId;
+                }
                 fetch(`${API_BASE_URL}/api/admin/psychologists/${id}/action-sent`, {
                     method: 'PATCH',
                     headers: {
@@ -1036,10 +1229,16 @@ window.initializePage = function () {
                     },
                     credentials: 'include',
                     keepalive: true,
-                    body: JSON.stringify({ actionType, messageContent: msg })
+                    body: JSON.stringify(actionPayload)
                 }).then(async (res) => {
                     if (res.ok) {
-                        if (window.showToast) window.showToast('Ação registrada com sucesso!', 'success');
+                        const respData = await res.json().catch(() => ({}));
+                        if (respData?.scheduledNextEvaluation?.dueAt) {
+                            const nextDateBr = new Date(respData.scheduledNextEvaluation.dueAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+                            if (window.showToast) window.showToast(`Ação registrada! Nova avaliação pós-ajuste agendada para ${nextDateBr}.`, 'success');
+                        } else if (window.showToast) {
+                            window.showToast('Ação registrada com sucesso!', 'success');
+                        }
                         const statusInput = document.getElementById('crm-status-psi');
                         if (statusInput && statusInput.value === 'pending_actions') {
                             setTimeout(() => fetchAndRenderPsis(window.currentCrmPage || 1), 300);

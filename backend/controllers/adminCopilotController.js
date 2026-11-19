@@ -5,6 +5,7 @@ const AdminCopilotService = require('../services/adminCopilotService');
 const PsychologistContextService = require('../services/psychologistContextService');
 const CopilotMemoryService = require('../services/copilotMemoryService');
 const CopilotInsightsService = require('../services/copilotInsightsService');
+const CopilotFollowUpService = require('../services/copilotFollowUpService');
 
 /**
  * Cache em memória para rajadas simultâneas (concorrência), complementado na Fase 1
@@ -683,5 +684,93 @@ exports.getCollectiveInsights = async (req, res) => {
     } catch (err) {
         console.error('Erro em getCollectiveInsights:', err.message);
         return res.status(500).json({ error: 'Erro ao carregar insights coletivos.' });
+    }
+};
+
+exports.listFollowUps = async (req, res) => {
+    try {
+        const { psychologistId, status, futureOnly, limit } = req.query || {};
+        const followUps = await CopilotFollowUpService.listFollowUps({
+            psychologistId: psychologistId || null,
+            status: status || 'scheduled',
+            futureOnly: String(futureOnly) === 'true',
+            limit: limit || 30
+        });
+        return res.json({ success: true, followUps });
+    } catch (err) {
+        console.error('Erro em listFollowUps:', err.message);
+        return res.status(err.statusCode || 500).json({ error: err.message || 'Erro ao listar follow-ups.' });
+    }
+};
+
+exports.createFollowUp = async (req, res) => {
+    try {
+        const {
+            psychologistId,
+            conversationId,
+            parentFollowUpId,
+            subType,
+            reason,
+            contextSummary,
+            dueAt,
+            dueInDays,
+            autoSchedulePerformanceEval,
+            evaluationDelayDays
+        } = req.body || {};
+
+        const result = await CopilotFollowUpService.createFollowUp({
+            psychologistId,
+            conversationId,
+            parentFollowUpId,
+            subType,
+            reason,
+            contextSummary,
+            dueAt,
+            dueInDays,
+            autoSchedulePerformanceEval,
+            evaluationDelayDays,
+            adminId: req.user?.id || null
+        });
+
+        return res.status(result.deduped ? 200 : 201).json({
+            success: true,
+            followUp: result.followUp,
+            deduped: Boolean(result.deduped)
+        });
+    } catch (err) {
+        console.error('Erro em createFollowUp:', err.message);
+        return res.status(err.statusCode || 500).json({ error: err.message || 'Erro ao agendar follow-up.' });
+    }
+};
+
+exports.updateFollowUp = async (req, res) => {
+    try {
+        const { dueAt, reason, status, evaluationDelayDays, autoSchedulePerformanceEval } = req.body || {};
+        const followUp = await CopilotFollowUpService.updateFollowUp({
+            id: req.params.id,
+            dueAt,
+            reason,
+            status,
+            evaluationDelayDays,
+            autoSchedulePerformanceEval
+        });
+        return res.json({ success: true, followUp });
+    } catch (err) {
+        console.error('Erro em updateFollowUp:', err.message);
+        return res.status(err.statusCode || 500).json({ error: err.message || 'Erro ao atualizar follow-up.' });
+    }
+};
+
+exports.generateFollowUpMessage = async (req, res) => {
+    try {
+        const { psychologistId } = req.body || {};
+        const result = await CopilotFollowUpService.generateFollowUpWhatsAppMessage({
+            followUpId: req.params.id,
+            psychologistId: psychologistId || null
+        });
+        return res.json({ success: true, ...result });
+    } catch (err) {
+        console.error('Erro em generateFollowUpMessage:', err.message);
+        return res.status(err.statusCode || 500).json({ error: err.message || 'Erro ao gerar mensagem de follow-up.' });
     }
 };

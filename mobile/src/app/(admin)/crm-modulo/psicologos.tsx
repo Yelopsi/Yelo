@@ -252,6 +252,8 @@ export default function AdminCRMPsicologosScreen() {
   // Dados principais
   const [psychologists, setPsychologists] = useState<any[]>([]);
   const [pendingActions, setPendingActions] = useState<any[]>([]);
+  const [futureFollowUps, setFutureFollowUps] = useState<any[]>([]);
+  const [futureFollowUpsExpanded, setFutureFollowUpsExpanded] = useState(false);
   const [kpis, setKpis] = useState<any>({});
   const [founderMetrics, setFounderMetrics] = useState<any>({});
   const [stats, setStats] = useState<any>({});
@@ -349,6 +351,16 @@ export default function AdminCRMPsicologosScreen() {
       ].includes(activeFilter);
 
       if (isPendingFilter) {
+        if (activeFilter === 'pending_actions') {
+          api
+            .get('/api/admin/copilot/followups', { params: { status: 'scheduled', futureOnly: 'true', limit: 20 } })
+            .then((fuRes) => {
+              setFutureFollowUps(Array.isArray(fuRes.data?.followUps) ? fuRes.data.followUps : []);
+            })
+            .catch(() => setFutureFollowUps([]));
+        } else {
+          setFutureFollowUps([]);
+        }
         const res = await api.get('/api/admin/pending-actions');
         const allActions: any[] = res.data?.pendingActions || (Array.isArray(res.data) ? res.data : []);
 
@@ -405,6 +417,7 @@ export default function AdminCRMPsicologosScreen() {
         setCurrentPage(1);
         setTotalItems(data.length);
       } else {
+        setFutureFollowUps([]);
         const params: any = {
           page,
           limit,
@@ -504,7 +517,8 @@ export default function AdminCRMPsicologosScreen() {
     const patientName = item.patientName || '';
     const feedbackToken = item.feedbackToken || '';
 
-    setActionLoadingId(`${id}_${actionType}`);
+    const actionKey = item.followUpId ? `${id}_${actionType}_${item.followUpId}` : `${id}_${actionType}`;
+    setActionLoadingId(actionKey);
 
     try {
       let msg = '';
@@ -796,6 +810,22 @@ export default function AdminCRMPsicologosScreen() {
         const dataNeg = metrics.dataNeg || 'alguns dias';
         const pName = patientName || 'um paciente';
         msg = `Olá, ${firstName}. Como vai?\n\nPreciso da sua ajuda com um retorno rápido.\n\nVocê estava em negociação com ${pName} desde ${dataNeg}:\n\n• Conseguiram conversar novamente?\n• O paciente iniciou a terapia?\n\nLeva menos de 1 minuto e essa informação é essencial para avaliarmos a qualidade dos encaminhamentos.\n\nPara responder, acesse sua conta na Yelo e vá até a opção *Evolução > Histórico de Contatos* e mude o status "⏳ Em negociação".\n\nObrigado! 🌿`;
+      } else if (actionType === 'copilot_followup') {
+        const fuId = item.followUpId || metrics.followUpId;
+        if (!fuId) {
+          Alert.alert('Erro', 'Identificador do follow-up ausente.');
+          return;
+        }
+        try {
+          const resAi = await api.post(`/api/admin/copilot/followups/${fuId}/ai-message`, { psychologistId: id });
+          if (resAi.data?.whatsappCopy) {
+            msg = resAi.data.whatsappCopy;
+          }
+        } catch (_) {}
+        if (!msg) {
+          Alert.alert('Erro', 'Não foi possível gerar a mensagem personalizada do follow-up agora.');
+          return;
+        }
       } else {
         msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson da Yelo. 🌿\n\nPassando para acompanhar sua experiência na plataforma e saber se precisa de algum suporte no seu perfil.\n\nSigo à disposição!`;
       }
@@ -829,12 +859,25 @@ export default function AdminCRMPsicologosScreen() {
       }
 
       // Registra no banco via action-sent
+      const actionPayload: any = {
+        actionType,
+        messageContent: formattedMsg,
+      };
+      if (item.followUpId || metrics.followUpId) {
+        actionPayload.followUpId = item.followUpId || metrics.followUpId;
+      }
       api
-        .patch(`/api/admin/psychologists/${id}/action-sent`, {
-          actionType,
-          messageContent: formattedMsg,
-        })
-        .then(() => {
+        .patch(`/api/admin/psychologists/${id}/action-sent`, actionPayload)
+        .then((patchRes) => {
+          if (patchRes?.data?.scheduledNextEvaluation?.dueAt) {
+            const nextDateBr = new Date(patchRes.data.scheduledNextEvaluation.dueAt).toLocaleDateString('pt-BR', {
+              timeZone: 'America/Sao_Paulo',
+            });
+            Alert.alert(
+              'Avaliação Pós-Ajuste Agendada',
+              `Check-in registrado! Uma nova avaliação de desempenho foi agendada automaticamente para ${nextDateBr}.`
+            );
+          }
           if (activeFilter.includes('pending')) {
             fetchData(currentPage);
           }
@@ -850,7 +893,7 @@ export default function AdminCRMPsicologosScreen() {
   // -------------------------------------------------------------
   // Descartar Ação Pendente (espelha dismissAction)
   // -------------------------------------------------------------
-  const handleDismissAction = (id: string, actionType: string) => {
+  const handleDismissAction = (id: string, actionType: string, followUpId?: number | string) => {
     setConfirmModal({
       visible: true,
       title: 'Descartar Ação',
@@ -858,10 +901,15 @@ export default function AdminCRMPsicologosScreen() {
         'Deseja ignorar esta ação e removê-la da lista (nenhuma mensagem será enviada)?',
       onConfirm: async () => {
         try {
-          await api.patch(`/api/admin/psychologists/${id}/action-sent`, {
+          const payload: any = {
             actionType,
             messageContent: 'Ação ignorada/descartada pelo Admin.',
-          });
+          };
+          if (followUpId) {
+            payload.followUpId = followUpId;
+            payload.dismissed = true;
+          }
+          await api.patch(`/api/admin/psychologists/${id}/action-sent`, payload);
           setConfirmModal((prev) => ({ ...prev, visible: false }));
           fetchData(currentPage);
         } catch (e: any) {
@@ -1795,6 +1843,104 @@ export default function AdminCRMPsicologosScreen() {
         {/* 7. LISTA DE CARDS (MODO FOLLOW-UP OU MODO PADRÃO)          */}
         {/* ========================================================= */}
         <View className="mb-2">
+          {activeFilter === 'pending_actions' && futureFollowUps.length > 0 && (
+            <View
+              style={{
+                backgroundColor: '#f0f9ff',
+                borderWidth: 1,
+                borderColor: '#bae6fd',
+                borderRadius: 14,
+                padding: 12,
+                marginBottom: 12,
+              }}
+            >
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                <Text style={{ flex: 1, fontFamily: 'Inter_700Bold', fontSize: 12, color: '#0369a1' }}>
+                  📅 {futureFollowUps.length} follow-up{futureFollowUps.length > 1 ? 's' : ''} do Copilot agendado{futureFollowUps.length > 1 ? 's' : ''} para datas futuras
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setFutureFollowUpsExpanded((prev) => !prev)}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    borderWidth: 1,
+                    borderColor: '#bae6fd',
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 999,
+                  }}
+                >
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#0369a1' }}>
+                    {futureFollowUpsExpanded ? 'Ocultar ▲' : 'Ver ▼'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {futureFollowUpsExpanded && (
+                <View style={{ marginTop: 10, gap: 8 }}>
+                  {futureFollowUps.map((fu) => {
+                    const dueBr = fu.dueAt
+                      ? new Date(fu.dueAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+                      : '-';
+                    return (
+                      <View
+                        key={fu.id}
+                        style={{
+                          backgroundColor: '#ffffff',
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: '#e0f2fe',
+                          padding: 10,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 8,
+                        }}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12.5, color: '#0f172a' }}>
+                            {fu.psychologistName || `Psicólogo #${fu.psychologistId}`} • {fu.subTypeLabel || fu.subType}
+                          </Text>
+                          <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11.5, color: '#475569', marginTop: 2 }}>
+                            {fu.reason}
+                          </Text>
+                          <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11, color: '#0284c7', marginTop: 2 }}>
+                            Previsto para: {dueBr}
+                          </Text>
+                        </View>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setConfirmModal({
+                              visible: true,
+                              title: 'Cancelar Agendamento',
+                              message: 'Deseja cancelar este follow-up agendado no Copilot?',
+                              onConfirm: async () => {
+                                try {
+                                  await api.patch(`/api/admin/copilot/followups/${fu.id}`, { status: 'dismissed' });
+                                  setFutureFollowUps((prev) => prev.filter((item) => item.id !== fu.id));
+                                  setConfirmModal((prev) => ({ ...prev, visible: false }));
+                                } catch (err: any) {
+                                  Alert.alert('Erro', err?.message || 'Erro ao cancelar agendamento.');
+                                }
+                              },
+                            });
+                          }}
+                          style={{
+                            backgroundColor: '#fef2f2',
+                            borderWidth: 1,
+                            borderColor: '#fecaca',
+                            paddingHorizontal: 10,
+                            paddingVertical: 5,
+                            borderRadius: 999,
+                          }}
+                        >
+                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#b91c1c' }}>Cancelar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
           {loading ? (
             <View className="py-[40px] items-center justify-center">
               <ActivityIndicator size="large" color="#1B4332" />
@@ -1821,7 +1967,8 @@ export default function AdminCRMPsicologosScreen() {
               </View>
             ) : (
               pendingActions.map((item, idx) => {
-                const actionLoading = actionLoadingId === `${item.id}_${item.actionType}`;
+                const currentKey = item.followUpId ? `${item.id}_${item.actionType}_${item.followUpId}` : `${item.id}_${item.actionType}`;
+                const actionLoading = actionLoadingId === currentKey;
 
                 // Cores e labels contextuais do botão de ação primária
                 let btnLabel = 'Contatar (WhatsApp)';
@@ -1901,16 +2048,56 @@ export default function AdminCRMPsicologosScreen() {
                   badgeBg = '#fef3c7';
                   badgeColor = '#b45309';
                   badgeText = 'FOMO Assinatura';
+                } else if (item.actionType === 'copilot_followup') {
+                  const sub = item.followUpSubType;
+                  if (sub === 'promessa_retorno') {
+                    btnLabel = 'Retomar (IA)';
+                    btnGradient = ['#0284c7', '#0369a1'];
+                    btnIcon = 'calendar';
+                    badgeBg = '#e0f2fe';
+                    badgeColor = '#0369a1';
+                    badgeText = 'Retorno Combinado';
+                  } else if (sub === 'ajuste_perfil') {
+                    btnLabel = 'Checar Ajustes (IA)';
+                    btnGradient = ['#0d9488', '#0f766e'];
+                    btnIcon = 'check-square';
+                    badgeBg = '#ccfbf1';
+                    badgeColor = '#0f766e';
+                    badgeText = 'Check-in Ajustes';
+                  } else if (sub === 'avaliacao_pos_ajuste') {
+                    btnLabel = 'Avaliar Frutos (IA)';
+                    btnGradient = ['#059669', '#047857'];
+                    btnIcon = 'trending-up';
+                    badgeBg = '#dcfce7';
+                    badgeColor = '#047857';
+                    badgeText = 'Resultado Pós-Ajuste 📈';
+                  } else if (sub === 'aviso_novidade') {
+                    btnLabel = 'Avisar Novidade (IA)';
+                    btnGradient = ['#0284c7', '#0369a1'];
+                    btnIcon = 'bell';
+                    badgeBg = '#ede9fe';
+                    badgeColor = '#6d28d9';
+                    badgeText = 'Aviso Novidade';
+                  } else {
+                    btnLabel = 'Retomar (IA)';
+                    btnGradient = ['#0284c7', '#0369a1'];
+                    btnIcon = 'calendar';
+                    badgeBg = '#e0f2fe';
+                    badgeColor = '#0369a1';
+                    badgeText = 'Combinado (Copilot)';
+                  }
                 }
 
                 const dateStr =
-                  item.actionType === 'expiring_trial' && item.planExpiresAt
-                    ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR')
-                    : item.createdAt
-                      ? new Date(item.createdAt).toLocaleDateString('pt-BR')
-                      : item.planExpiresAt
-                        ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR')
-                        : '-';
+                  item.actionType === 'copilot_followup' && item.dueAt
+                    ? new Date(item.dueAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+                    : item.actionType === 'expiring_trial' && item.planExpiresAt
+                      ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR')
+                      : item.createdAt
+                        ? new Date(item.createdAt).toLocaleDateString('pt-BR')
+                        : item.planExpiresAt
+                          ? new Date(item.planExpiresAt).toLocaleDateString('pt-BR')
+                          : '-';
 
                 const planoLabel = item.plano
                   ? item.plano.charAt(0).toUpperCase() + item.plano.slice(1).toLowerCase()
@@ -1925,7 +2112,7 @@ export default function AdminCRMPsicologosScreen() {
 
                 return (
                   <View
-                    key={`${item.id}_${item.actionType}_${idx}`}
+                    key={`${item.id}_${item.actionType}_${item.followUpId || idx}`}
                     style={{
                       backgroundColor: '#ffffff',
                       borderRadius: 16,
@@ -2090,7 +2277,7 @@ export default function AdminCRMPsicologosScreen() {
                       </TouchableOpacity>
 
                       <TouchableOpacity
-                        onPress={() => handleDismissAction(item.id, item.actionType)}
+                        onPress={() => handleDismissAction(item.id, item.actionType, item.followUpId)}
                         activeOpacity={0.7}
                         style={{
                           height: 40,

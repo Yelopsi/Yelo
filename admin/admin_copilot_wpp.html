@@ -679,12 +679,57 @@ Exemplos:
                 <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; color: #64748b; flex-wrap: wrap; gap: 8px;">
                     <span id="reply-char-count">Formatação WhatsApp preservada.</span>
                     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <button id="btn-abrir-agendar-followup" type="button" style="display: none; background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; font-weight: 700; cursor: pointer; padding: 5px 12px; border-radius: 999px; font-size: 0.74rem;">📅 + Follow-up CRM</button>
                         <button id="btn-usar-alternativa" type="button" style="display: none; background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; font-weight: 700; cursor: pointer; padding: 5px 12px; border-radius: 999px; font-size: 0.74rem;">Ver alternativa</button>
                         <button id="btn-rejeitar-resposta" type="button" style="display: none; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-weight: 700; cursor: pointer; padding: 5px 12px; border-radius: 999px; font-size: 0.74rem;">Rejeitar</button>
                         <button id="btn-regenerar-variacao" style="background: none; border: none; color: #166534; font-weight: 700; cursor: pointer; text-decoration: underline; padding: 4px 0;">Gerar outra opção</button>
                         <button id="btn-limpar-tudo" type="button" style="background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-weight: 700; cursor: pointer; padding: 5px 12px; border-radius: 999px; font-size: 0.74rem;">🗑️ Nova conversa</button>
                     </div>
                 </div>
+
+                <!-- CARD DE FOLLOW-UP PARA FOLLOW-UPS 📞 NO CRM -->
+                <div id="card-copilot-followup" style="display: none; margin-top: 12px; padding: 14px; border-radius: 12px; background: #f0f9ff; border: 1.5px solid #0ea5e9; font-size: 0.8rem; color: #0f172a;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <strong id="followup-card-title" style="color: #0369a1; font-size: 0.86rem;">📅 Follow-up Detectado para o CRM</strong>
+                        <button id="btn-fechar-followup-card" type="button" style="background: transparent; border: none; color: #64748b; font-weight: 700; cursor: pointer; font-size: 0.78rem; padding: 2px 6px;">✕ Fechar</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <label for="followup-subtype-select" style="display: block; font-size: 0.72rem; font-weight: 700; color: #334155; margin-bottom: 4px;">Tipo do follow-up</label>
+                            <select id="followup-subtype-select" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #bae6fd; background: #ffffff; font-size: 0.8rem; font-weight: 600; color: #0f172a;">
+                                <option value="promessa_retorno">Promessa de retorno</option>
+                                <option value="ajuste_perfil">Ajuste de perfil (com check-in)</option>
+                                <option value="negociacao_copilot">Negociação / Combinado</option>
+                                <option value="aviso_novidade">Aviso de novidade</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="followup-due-date" style="display: block; font-size: 0.72rem; font-weight: 700; color: #334155; margin-bottom: 4px;">Data prevista (Follow-ups 📞)</label>
+                            <input id="followup-due-date" type="date" style="width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #bae6fd; background: #ffffff; font-size: 0.8rem; font-weight: 600; color: #0f172a;">
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label for="followup-reason-input" style="display: block; font-size: 0.72rem; font-weight: 700; color: #334155; margin-bottom: 4px;">Motivo exibido em Follow-ups 📞</label>
+                        <input id="followup-reason-input" type="text" maxlength="260" placeholder="Ex.: Prometeu avaliar retorno em dezembro após outro contrato..." style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #bae6fd; background: #ffffff; font-size: 0.8rem; color: #0f172a;">
+                    </div>
+                    <div id="followup-eval-row" style="display: none; background: #ecfeff; border: 1px solid #a5f3fc; border-radius: 8px; padding: 9px 10px; margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.76rem; color: #155e75; font-weight: 600; cursor: pointer;">
+                            <input id="followup-auto-eval" type="checkbox" checked style="width: 15px; height: 15px; accent-color: #0d9488;">
+                            <span>📈 Agendar nova avaliação de desempenho automaticamente após o check-in para verificar frutos em</span>
+                            <select id="followup-eval-delay" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #67e8f9; background: #ffffff; font-size: 0.76rem; font-weight: 700; color: #0f172a;">
+                                <option value="7">7 dias</option>
+                                <option value="14" selected>14 dias</option>
+                                <option value="21">21 dias</option>
+                                <option value="30">30 dias</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <button id="btn-agendar-followup" type="button" style="background: #0284c7; color: #ffffff; border: none; padding: 8px 14px; border-radius: 999px; font-size: 0.78rem; font-weight: 800; cursor: pointer;">✓ Agendar em Follow-ups 📞</button>
+                        <button id="btn-dispensar-followup" type="button" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">Dispensar</button>
+                    </div>
+                </div>
+                <div id="followup-scheduled-banner" style="display: none; margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: #ecfdf5; border: 1px solid #86efac; color: #166534; font-size: 0.78rem; font-weight: 700;"></div>
 
                 <!-- BRIEFING ESTRATÉGICO CONDICIONAL (FASE 2/3) -->
                 <div id="card-briefing-estrategico" style="display: none; margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.78rem; color: #334155;">
