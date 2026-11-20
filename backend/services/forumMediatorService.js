@@ -444,14 +444,14 @@ async function ensureMediatorAccount(db = defaultDb, dryRun = true) {
     if (existing) return existing;
 
     if (dryRun) {
-        return { id: null, nome: 'Moderação Yelo', email: mediatorEmail, status: 'content_creator', fotoUrl: DEFAULT_MEDIATOR_AVATAR_URL };
+        return { id: null, nome: 'Yara - Moderadora Yelo', email: mediatorEmail, status: 'content_creator', fotoUrl: DEFAULT_MEDIATOR_AVATAR_URL };
     }
 
     const bcrypt = require('bcryptjs');
     const randomPassword = await bcrypt.hash(crypto.randomBytes(24).toString('hex'), 10);
 
     return db.Psychologist.create({
-        nome: 'Moderação Yelo',
+        nome: 'Yara - Moderadora Yelo',
         email: mediatorEmail,
         senha: randomPassword,
         status: 'content_creator',
@@ -476,12 +476,12 @@ async function notifyAuthorQuietly(db, post, mediatorCommentText, mediatorAction
     }
 
     const preview = stripHtmlAndCompact(mediatorCommentText, 180);
-    const content = `A Moderação da Yelo deixou uma orientação no seu tópico "<strong>${post.title}</strong>":<br><br><em>"${preview}"</em><br><br><a href="#" class="aviso-link-direto" data-post-id="${post.id}" onclick="window.loadPage('psi_forum.html?postId=${post.id}'); return false;" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Ver orientação completa no Fórum</a>.`;
+    const content = `A Yara (Moderadora Yelo) deixou uma orientação no seu tópico "<strong>${post.title}</strong>":<br><br><em>"${preview}"</em><br><br><a href="#" class="aviso-link-direto" data-post-id="${post.id}" onclick="window.loadPage('psi_forum.html?postId=${post.id}'); return false;" style="color: #1B4332; font-weight: bold; text-decoration: underline;">Ver orientação completa no Fórum</a>.`;
 
     await db.Aviso.create({
         title,
         content,
-        author: 'Moderação Yelo',
+        author: 'Yara - Moderadora Yelo',
         status: 'published',
         psychologistId: post.PsychologistId
     }).catch(() => {});
