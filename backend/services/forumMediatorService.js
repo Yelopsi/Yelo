@@ -22,6 +22,7 @@ const VALID_ACTIONS = new Set([
 
 const DEFAULT_MIN_CONFIDENCE = 0.82;
 const CANDIDATE_MODELS = ['gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'];
+const DEFAULT_MEDIATOR_AVATAR_URL = 'https://res.cloudinary.com/dzqmypviz/image/upload/v1795206380/yelo/profiles/profile-3398-moderacao-yelo.png';
 
 function stripHtmlAndCompact(text, maxLen = 600) {
     const clean = String(text || '')
@@ -438,12 +439,12 @@ async function ensureMediatorAccount(db = defaultDb, dryRun = true) {
     const mediatorEmail = (process.env.FORUM_MEDIATOR_EMAIL || 'mediador@yelopsi.com.br').trim().toLowerCase();
     const existing = await db.Psychologist.findOne({
         where: { email: mediatorEmail },
-        attributes: ['id', 'nome', 'email', 'status', 'isAdmin']
+        attributes: ['id', 'nome', 'email', 'status', 'isAdmin', 'fotoUrl']
     });
     if (existing) return existing;
 
     if (dryRun) {
-        return { id: null, nome: 'Moderação Yelo', email: mediatorEmail, status: 'content_creator' };
+        return { id: null, nome: 'Moderação Yelo', email: mediatorEmail, status: 'content_creator', fotoUrl: DEFAULT_MEDIATOR_AVATAR_URL };
     }
 
     const bcrypt = require('bcryptjs');
@@ -456,6 +457,7 @@ async function ensureMediatorAccount(db = defaultDb, dryRun = true) {
         status: 'content_creator',
         is_exempt: true,
         isAdmin: false,
+        fotoUrl: DEFAULT_MEDIATOR_AVATAR_URL,
         bio: 'Canal automático de organização e curadoria da Comunidade Clínica Yelo.'
     });
 }

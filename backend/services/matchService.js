@@ -10,6 +10,10 @@ const WEIGHTS = {
     OPERATIONAL: 0.35
 };
 
+const DEFAULT_NEGOTIABLE_REFERENCE_PRICE = 80;
+const REFERENCE_PRICE_CACHE_TTL_MS = 60 * 60 * 1000;
+let cachedReferencePrice = { value: null, source: null, updatedAt: 0 };
+
 const MAPA_CARACTERISTICAS = {
     "LGBTQIAPN+ Friendly 🏳️‍🌈": ["LGBTQIAPN+ Friendly 🏳️‍🌈", "LGBTQIAPN+ friendly", "Afirmativa"],
     "Que faça parte da comunidade LGBTQIAPN+": ["Faz parte da comunidade LGBTQIAPN+ / Afirmativa", "Comunidade LGBTQIAPN+", "Que faça parte da comunidade LGBTQIAPN+"],
@@ -20,12 +24,79 @@ const MAPA_CARACTERISTICAS = {
 
 const parsePriceRange = (rangeString) => {
     if (!rangeString || typeof rangeString !== 'string') return { min: 0, max: 99999 };
-    if (rangeString.toLowerCase().includes('acima')) return { min: 150, max: 9999 }; // Corrige o teto ilimitado para pacientes premium
+    const lower = rangeString.toLowerCase();
     const numbers = rangeString.match(/\d+/g);
-    if (!numbers || numbers.length === 0) return { min: 0, max: 9999 };
+    if (lower.includes('acima')) {
+        const min = numbers && numbers[0] ? parseInt(numbers[0], 10) : 150;
+        return { min, max: 99999 };
+    }
+    if (!numbers || numbers.length === 0) return { min: 0, max: 99999 };
+    if (numbers.length === 1 && (lower.includes('até') || lower.includes('ate'))) {
+        return { min: 0, max: parseInt(numbers[0], 10) };
+    }
     const min = parseInt(numbers[0], 10);
     const max = numbers.length > 1 ? parseInt(numbers[1], 10) : (min === 0 ? 99999 : min);
     return { min, max };
+};
+
+const getPlatformReferencePrice = async (forceRefresh = false) => {
+    const now = Date.now();
+    if (!forceRefresh && cachedReferencePrice.value !== null && (now - cachedReferencePrice.updatedAt) < REFERENCE_PRICE_CACHE_TTL_MS) {
+        return cachedReferencePrice;
+    }
+
+    try {
+        const rows = await db.sequelize.query(`
+            WITH click_prices AS (
+                SELECT
+                    w."dealClosed",
+                    w."createdAt",
+                    CASE
+                        WHEN COALESCE(p.valor_sessao_numero, 0) > 0 THEN p.valor_sessao_numero
+                        WHEN p.tipo_cobranca = 'mensal' AND COALESCE(p.valor_mensal_numero, 0) > 0 THEN p.valor_mensal_numero / 4.0
+                        ELSE NULL
+                    END AS effective_price
+                FROM "WhatsAppClickLogs" w
+                JOIN "Psychologists" p ON p.id = w."psychologistId"
+            )
+            SELECT
+                COUNT(*) FILTER (WHERE effective_price IS NOT NULL AND "dealClosed" IN ('yes', 'started') AND "createdAt" >= NOW() - INTERVAL '90 days')::int AS closed_90d_cnt,
+                AVG(effective_price) FILTER (WHERE effective_price IS NOT NULL AND "dealClosed" IN ('yes', 'started') AND "createdAt" >= NOW() - INTERVAL '90 days') AS closed_90d_avg,
+                COUNT(*) FILTER (WHERE effective_price IS NOT NULL AND "dealClosed" IN ('yes', 'started'))::int AS closed_all_cnt,
+                AVG(effective_price) FILTER (WHERE effective_price IS NOT NULL AND "dealClosed" IN ('yes', 'started')) AS closed_all_avg,
+                COUNT(*) FILTER (WHERE effective_price IS NOT NULL AND "createdAt" >= NOW() - INTERVAL '90 days')::int AS clicked_90d_cnt,
+                AVG(effective_price) FILTER (WHERE effective_price IS NOT NULL AND "createdAt" >= NOW() - INTERVAL '90 days') AS clicked_90d_avg,
+                COUNT(*) FILTER (WHERE effective_price IS NOT NULL)::int AS clicked_all_cnt,
+                AVG(effective_price) FILTER (WHERE effective_price IS NOT NULL) AS clicked_all_avg
+            FROM click_prices
+        `, { type: db.sequelize.QueryTypes.SELECT });
+
+        const row = Array.isArray(rows) ? rows[0] : rows;
+        let resolvedValue = DEFAULT_NEGOTIABLE_REFERENCE_PRICE;
+        let source = 'fallback';
+
+        if (row) {
+            const candidates = [
+                { source: 'closed_90d', cnt: Number(row.closed_90d_cnt || 0), avg: Number(row.closed_90d_avg) },
+                { source: 'closed_all', cnt: Number(row.closed_all_cnt || 0), avg: Number(row.closed_all_avg) },
+                { source: 'clicked_90d', cnt: Number(row.clicked_90d_cnt || 0), avg: Number(row.clicked_90d_avg) },
+                { source: 'clicked_all', cnt: Number(row.clicked_all_cnt || 0), avg: Number(row.clicked_all_avg) }
+            ];
+            const chosen = candidates.find(c => c.cnt >= 5 && Number.isFinite(c.avg) && c.avg > 0);
+            if (chosen) {
+                resolvedValue = Math.max(40, Math.min(300, Number(chosen.avg.toFixed(2))));
+                source = chosen.source;
+            }
+        }
+
+        cachedReferencePrice = { value: resolvedValue, source, updatedAt: now };
+        return cachedReferencePrice;
+    } catch (err) {
+        console.warn('⚠️ [MATCH ENGINE] Falha ao calcular valor de referência da plataforma, usando fallback:', err.message);
+        const fallback = { value: DEFAULT_NEGOTIABLE_REFERENCE_PRICE, source: 'fallback', updatedAt: now };
+        cachedReferencePrice = fallback;
+        return fallback;
+    }
 };
 
 const getArrayField = (field) => {
@@ -45,7 +116,7 @@ const mapAgeToTarget = (idadeStr) => {
 };
 
 // --- L2: SCORING CLINICO & OPERACIONAL ---
-const calculateSimilarity = (psy, preferences = {}, priceRange) => {
+const calculateSimilarity = (psy, preferences = {}, priceRange, referencePrice = DEFAULT_NEGOTIABLE_REFERENCE_PRICE) => {
     try {
     let sClinical = 0;
     let sOp = 50;
@@ -123,20 +194,33 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
     }
 
     let valorPsi = parseFloat(psy.valor_sessao_numero || 0);
-    if (valorPsi === 0 && psy.tipo_cobranca === 'mensal' && parseFloat(psy.valor_mensal_numero || 0) > 0) {
-        valorPsi = parseFloat(psy.valor_mensal_numero) / 4;
+    if (!Number.isFinite(valorPsi) || valorPsi <= 0) valorPsi = 0;
+    if (valorPsi === 0 && psy.tipo_cobranca === 'mensal') {
+        const mensal = parseFloat(psy.valor_mensal_numero || 0);
+        if (Number.isFinite(mensal) && mensal > 0) {
+            valorPsi = mensal / 4;
+        }
     }
-    if (valorPsi === 0) {
-        valorPsi = 100; // Assumir valor médio da plataforma para burlar o filtro de preço
-    }
-    
-    if (valorPsi > 0) {
-        if (valorPsi >= priceRange.min && valorPsi <= priceRange.max) {
-            sOp += 30; 
+
+    const isNegotiablePrice = valorPsi === 0;
+    const effectivePrice = isNegotiablePrice
+        ? (Number(referencePrice) || DEFAULT_NEGOTIABLE_REFERENCE_PRICE)
+        : valorPsi;
+
+    if (effectivePrice > 0) {
+        if (isNegotiablePrice) {
+            if (effectivePrice <= priceRange.max) {
+                sOp += 15;
+                explainability.neutral.push('Valor a combinar');
+            } else {
+                sOp -= 20;
+            }
+        } else if (effectivePrice >= priceRange.min && effectivePrice <= priceRange.max) {
+            sOp += 30;
             explainability.positives.push("Dentro do orçamento ideal");
-        } else if (valorPsi < priceRange.min) {
-            sOp += 20; 
-        } else if (valorPsi > priceRange.max) {
+        } else if (effectivePrice < priceRange.min) {
+            sOp += 20;
+        } else if (effectivePrice > priceRange.max) {
             sOp -= 20; // Penalidade suave. Ocorre apenas se o filtro rigoroso falhar (relaxFilters ativado na L3).
         }
     }
@@ -324,10 +408,12 @@ exports.calculateMatches = async (preferences = {}) => {
         debugLog.push(`[${Date.now() - startTime}ms] 🎯 Cota Justa (Fair Share) de Conversões / mês: ${fairShare}`);
 
         const priceRange = parsePriceRange(preferences.faixa_valor);
+        const refPriceInfo = await getPlatformReferencePrice();
+        debugLog.push(`[${Date.now() - startTime}ms] 💲 Valor de referência "A combinar": R$ ${refPriceInfo.value} (origem: ${refPriceInfo.source})`);
         debugLog.push(`[${Date.now() - startTime}ms] 💯 Calculando pontuação de similaridade para ${allEligiblePsychologists.length} candidatos...`);
         
         let scored = allEligiblePsychologists.map(psy => {
-            const { rawMatchScore, explainability } = calculateSimilarity(psy, preferences, priceRange);
+            const { rawMatchScore, explainability } = calculateSimilarity(psy, preferences, priceRange, refPriceInfo.value);
             const psyJSON = psy.toJSON ? psy.toJSON() : psy;
             
             const stats = psyStats[psyJSON.id] || { clicks: 0, leads: 0, conversoes: 0 };
@@ -533,4 +619,11 @@ exports.isEligibleForMatch = (psy) => {
     const isNotPaused = psy.profile_paused !== true && String(psy.profile_paused).toLowerCase() !== 'true';
 
     return validStatus && hasActivePlan && hasMinBio && hasPhoto && hasCpf && isNotPaused;
+};
+
+exports.parsePriceRange = parsePriceRange;
+exports.calculateSimilarity = calculateSimilarity;
+exports.getPlatformReferencePrice = getPlatformReferencePrice;
+exports._resetReferencePriceCache = () => {
+    cachedReferencePrice = { value: null, source: null, updatedAt: 0 };
 };
