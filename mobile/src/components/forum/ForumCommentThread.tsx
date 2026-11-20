@@ -339,7 +339,7 @@ export const CommentNode = React.memo(function CommentNode({ comment, depth }: {
       {comment.isPinned && (
         <View style={styles.pinnedChip}>
           <PinIcon size={9} color="#92400E" />
-          <Text style={styles.pinnedChipText}>Fixado pelo Administrador</Text>
+          <Text style={styles.pinnedChipText}>Fixado pela admin</Text>
         </View>
       )}
 

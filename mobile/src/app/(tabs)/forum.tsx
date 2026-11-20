@@ -840,7 +840,7 @@ export default function ForumScreen() {
       await reloadComments();
       showToast(res.data?.message || (comment.isPinned ? 'Comentário desafixado.' : 'Comentário fixado no topo! 📌'));
     } catch (err: any) {
-      Alert.alert('Aviso', err.response?.data?.error || 'Apenas moderadores podem fixar comentários.');
+      Alert.alert('Aviso', err.response?.data?.error || 'Apenas a moderação pode fixar comentários.');
     }
   };
 

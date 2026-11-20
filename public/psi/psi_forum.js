@@ -1704,7 +1704,7 @@
             commentEl.querySelector('.comment-body').innerHTML = window.formatTextContent(comment.content);
             hydrateForumMentions(commentEl);
             
-            // Destaque visual de comentário fixado pelo Administrador
+            // Destaque visual de comentário fixado pela admin
             const pinnedBadge = commentEl.querySelector('.comment-pinned-badge');
             if (comment.isPinned) {
                 commentEl.classList.add('pinned-comment');

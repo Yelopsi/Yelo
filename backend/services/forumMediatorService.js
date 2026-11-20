@@ -279,7 +279,7 @@ function normalizeAiDecision(rawJsonText, post, candidateMap) {
             confidence,
             targetPostId,
             targetCategory,
-            reasonSummary: 'Comentário do mediador veio vazio.',
+            reasonSummary: 'Comentário da mediadora veio vazio.',
             commentMessage: ''
         };
     }
@@ -331,7 +331,7 @@ async function analyzePostWithAI(post, contextPosts = [], options = {}) {
     const virtualIntroHubNote = '';
     const authorProfile = resolveAuthorGenderProfile(post);
 
-    const prompt = `Você é o Mediador Oficial da Comunidade Yelo Psi (fórum exclusivo de psicólogos clínicos no Brasil).
+    const prompt = `Você é a Yara, Mediadora Oficial da Comunidade Yelo Psi (fórum exclusivo de psicólogos clínicos no Brasil).
 Analise a publicação abaixo e decida com bom senso clínico, ética e acolhimento se ela deve permanecer como está ou se precisa de organização.
 
 POST EM ANÁLISE:
@@ -759,7 +759,7 @@ async function runMediatorBatch(options = {}) {
                     entry.applied = true;
                 } else if (action === 'DEFER_LOW_CONFIDENCE' && db.AdminAdjustment) {
                     await db.AdminAdjustment.create({
-                        title: `[Mediador Fórum] Revisar tópico #${post.id}: "${post.title.slice(0, 45)}"`,
+                        title: `[Moderação Fórum] Revisar tópico #${post.id}: "${post.title.slice(0, 45)}"`,
                         target_page: 'psi_forum.html',
                         file_path: 'backend/services/forumMediatorService.js',
                         category: 'Comunidade & Fórum',

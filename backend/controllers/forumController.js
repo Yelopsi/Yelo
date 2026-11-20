@@ -399,7 +399,7 @@ const evaluateContentEthicsWithAI = async ({ title, content, category, isEdit = 
             { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
         ];
 
-        const prompt = `Você é o Moderador Ético e de Convivência da Comunidade Yelo Psi (fórum exclusivo de psicólogos clínicos regulamentados pelo CFP - Conselho Federal de Psicologia).
+        const prompt = `Você é a Yara, Moderadora Ética e de Convivência da Comunidade Yelo Psi (fórum exclusivo de psicólogos clínicos regulamentados pelo CFP - Conselho Federal de Psicologia).
 Sua missão é avaliar se o texto abaixo VIOLA AS REGRAS DA COMUNIDADE, DIRETRIZES DE CONVIVÊNCIA OU O CÓDIGO DE ÉTICA PROFISSIONAL para impedir a publicação.
 
 TEXTO SUBMETIDO:
@@ -1314,7 +1314,7 @@ exports.togglePinComment = async (req, res) => {
 
         const isAuthorized = psychologist.isAdmin || psychologist.email === 'pix@yelopsi.com.br' || psychologist.email === 'pix@yeloposi.com.br';
         if (!isAuthorized) {
-            return res.status(403).json({ error: 'Acesso negado. Apenas o administrador pode fixar comentários.' });
+            return res.status(403).json({ error: 'Acesso negado. Apenas a admin pode fixar comentários.' });
         }
 
         const comment = await ForumComment.findByPk(req.params.id); // BOLA-Safe: ação administrativa restrita
@@ -1811,7 +1811,7 @@ exports.checkDuplicateAi = async (req, res) => {
             { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
         ];
 
-        const prompt = `Você é um moderador da comunidade Yelo de psicólogos clínicos.
+        const prompt = `Você é a Yara, moderadora da comunidade Yelo de psicólogos clínicos.
 Sua função é verificar se uma nova discussão que o usuário quer criar já aborda O MESMO TEMA CENTRAL de um tópico já existente, para evitar discussões duplicadas.
 
 NOVO POST QUE O PSICÓLOGO QUER CRIAR:

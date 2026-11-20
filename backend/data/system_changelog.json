@@ -1,5 +1,578 @@
 [
   {
+    "id": "change-git-531d40ca",
+    "date": "2026-11-20T20:35:22.000Z",
+    "commit": "531d40ca",
+    "author": "Anderson",
+    "title": "Manutenção: Renomear perfil da moderadora para Yara - Moderadora Yelo (forum)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "renomear perfil da moderadora para Yara - Moderadora Yelo",
+    "description": "Commit registrado no repositório: \"chore(forum): renomear perfil da moderadora para Yara - Moderadora Yelo\". Arquivos modificados: backend/services/forumMediatorService.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #531d40ca"
+    },
+    "after": {
+      "nova_versao": "renomear perfil da moderadora para Yara - Moderadora Yelo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/services/forumMediatorService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-be922072",
+    "date": "2026-11-20T20:27:55.000Z",
+    "commit": "be922072",
+    "author": "Anderson",
+    "title": "Novo: Media dinamica para preco a combinar no match e avatar oficial da Moderacao Yelo (match,forum)",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "media dinamica para preco a combinar no match e avatar oficial da Moderacao Yelo",
+    "description": "Commit registrado no repositório: \"feat(match,forum): media dinamica para preco a combinar no match e avatar oficial da Moderacao Yelo\". Arquivos modificados: backend/services/forumMediatorService.js, backend/services/matchService.js, security/reports/gate_report.json, security/tests/match_price_negotiable.test.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #be922072"
+    },
+    "after": {
+      "nova_versao": "media dinamica para preco a combinar no match e avatar oficial da Moderacao Yelo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/services/forumMediatorService.js",
+      "backend/services/matchService.js",
+      "security/reports/gate_report.json",
+      "security/tests/match_price_negotiable.test.js"
+    ]
+  },
+  {
+    "id": "change-git-23e4e49e",
+    "date": "2026-11-20T17:19:55.000Z",
+    "commit": "23e4e49e",
+    "author": "Anderson",
+    "title": "Novo: Rascunho manual no limite diario do blog, blindagem upload/CORS e logs amigaveis do sistema (blog,admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "rascunho manual no limite diario do blog, blindagem upload/CORS e logs amigaveis do sistema",
+    "description": "Commit registrado no repositório: \"feat(blog,admin): rascunho manual no limite diario do blog, blindagem upload/CORS e logs amigaveis do sistema\". Arquivos modificados: admin/admin_logs_sistema.html, admin/admin_logs_sistema.js, backend/config/dbFixes.js, backend/controllers/adminDashboardController.js, backend/controllers/blogController.js (+17 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #23e4e49e"
+    },
+    "after": {
+      "nova_versao": "rascunho manual no limite diario do blog, blindagem upload/CORS e logs amigaveis do sistema"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_logs_sistema.html",
+      "admin/admin_logs_sistema.js",
+      "backend/config/dbFixes.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/controllers/blogController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/controllers/qnaController.js",
+      "backend/middlewares/securityMiddleware.js",
+      "backend/migrations/20261120140000-add-blog-post-scheduling.js",
+      "backend/models/Post.js",
+      "backend/routes/blogRoutes.js",
+      "backend/routes/publicRoutes.js",
+      "backend/routes/viewRoutes.js",
+      "backend/services/gamificationService.js",
+      "backend/utils/systemLogFormatter.js",
+      "mobile/src/app/(admin)/logs-sistema.tsx",
+      "mobile/src/app/(tabs)/blog.tsx",
+      "public/psi/psi_blog.html",
+      "public/psi/psi_blog.js",
+      "security/reports/gate_report.json",
+      "security/tests/blog_scheduling.test.js",
+      "security/tests/system_log_formatter.test.js"
+    ]
+  },
+  {
+    "id": "change-git-81b2bbc0",
+    "date": "2026-11-19T04:07:39.000Z",
+    "commit": "81b2bbc0",
+    "author": "Anderson",
+    "title": "Novo: Agendamentos de follow-up no CRM e avaliacao automatica pos-ajuste (copilot)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "agendamentos de follow-up no CRM e avaliacao automatica pos-ajuste",
+    "description": "Commit registrado no repositório: \"feat(copilot): agendamentos de follow-up no CRM e avaliacao automatica pos-ajuste\". Arquivos modificados: admin/admin_copilot_wpp.html, admin/admin_copilot_wpp.js, admin/admin_crm_psicologos.html, admin/admin_crm_psicologos.js, backend/controllers/adminCopilotController.js (+12 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #81b2bbc0"
+    },
+    "after": {
+      "nova_versao": "agendamentos de follow-up no CRM e avaliacao automatica pos-ajuste"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_copilot_wpp.html",
+      "admin/admin_copilot_wpp.js",
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "backend/controllers/adminCopilotController.js",
+      "backend/controllers/adminUsersController.js",
+      "backend/migrations/20261118200000-create-admin-copilot-followups.js",
+      "backend/models/AdminCopilotFollowUp.js",
+      "backend/routes/adminRoutes.js",
+      "backend/services/adminCopilotService.js",
+      "backend/services/copilotFollowUpService.js",
+      "backend/services/copilotOutputGuard.js",
+      "backend/services/copilotPromptBuilder.js",
+      "mobile/src/app/(admin)/crm-modulo/copilot-wpp.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json",
+      "security/tests/copilot_phase0.test.js"
+    ]
+  },
+  {
+    "id": "change-git-2f5dd420",
+    "date": "2026-11-18T22:00:39.000Z",
+    "commit": "2f5dd420",
+    "author": "Anderson",
+    "title": "Novo: Expand weekly transactions comparison chart to last 6 months with toggleable pills (analytics)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "expand weekly transactions comparison chart to last 6 months with toggleable pills",
+    "description": "Commit registrado no repositório: \"feat(analytics): expand weekly transactions comparison chart to last 6 months with toggleable pills\". Arquivos modificados: admin/admin_crm_analytics.html, admin/admin_crm_analytics.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2f5dd420"
+    },
+    "after": {
+      "nova_versao": "expand weekly transactions comparison chart to last 6 months with toggleable pills"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_analytics.html",
+      "admin/admin_crm_analytics.js"
+    ]
+  },
+  {
+    "id": "change-git-d791264a",
+    "date": "2026-11-18T21:54:03.000Z",
+    "commit": "d791264a",
+    "author": "Anderson",
+    "title": "Novo: Integrate full Render DB context, fix Visao Geral KPIs, align web/app UI and status badges (copilot,overview)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "integrate full Render DB context, fix Visao Geral KPIs, align web/app UI and status badges",
+    "description": "Commit registrado no repositório: \"feat(copilot,overview): integrate full Render DB context, fix Visao Geral KPIs, align web/app UI and status badges\". Arquivos modificados: admin/admin_copilot_wpp.html, admin/admin_copilot_wpp.js, admin/admin_visao_geral.html, admin/admin_visao_geral.js, backend/controllers/adminDashboardController.js (+9 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #d791264a"
+    },
+    "after": {
+      "nova_versao": "integrate full Render DB context, fix Visao Geral KPIs, align web/app UI and status badges"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_copilot_wpp.html",
+      "admin/admin_copilot_wpp.js",
+      "admin/admin_visao_geral.html",
+      "admin/admin_visao_geral.js",
+      "backend/controllers/adminDashboardController.js",
+      "backend/services/adminCopilotService.js",
+      "backend/services/copilotInsightsService.js",
+      "backend/services/copilotPromptBuilder.js",
+      "backend/services/psychologistContextService.js",
+      "backend/utils/whatsappFormatter.js",
+      "mobile/src/app/(admin)/crm-modulo/copilot-wpp.tsx",
+      "mobile/src/app/(admin)/index.tsx",
+      "security/reports/gate_report.json",
+      "security/tests/copilot_phase0.test.js"
+    ]
+  },
+  {
+    "id": "change-git-ca6e5b0f",
+    "date": "2026-11-18T00:17:39.000Z",
+    "commit": "ca6e5b0f",
+    "author": "Anderson",
+    "title": "Correção: Resolve supertest, express and jsdom from root or backend node_modules on Render",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "resolve supertest, express and jsdom from root or backend node_modules on Render",
+    "description": "Commit registrado no repositório: \"fix(test): resolve supertest, express and jsdom from root or backend node_modules on Render\". Arquivos modificados: security/tests/copilot_phase0.test.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ca6e5b0f"
+    },
+    "after": {
+      "nova_versao": "resolve supertest, express and jsdom from root or backend node_modules on Render"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "security/tests/copilot_phase0.test.js"
+    ]
+  },
+  {
+    "id": "change-git-056ef463",
+    "date": "2026-11-18T00:12:40.000Z",
+    "commit": "056ef463",
+    "author": "Anderson",
+    "title": "Novo: Implement full Fases 0-6 evolution, local switcher, pill UI and mobile fixes (copilot)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "implement full Fases 0-6 evolution, local switcher, pill UI and mobile fixes",
+    "description": "Commit registrado no repositório: \"feat(copilot): implement full Fases 0-6 evolution, local switcher, pill UI and mobile fixes\". Arquivos modificados: admin/admin.css, admin/admin.html, admin/admin.js, admin/admin_copilot_wpp.html, admin/admin_copilot_wpp.js (+21 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #056ef463"
+    },
+    "after": {
+      "nova_versao": "implement full Fases 0-6 evolution, local switcher, pill UI and mobile fixes"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin.css",
+      "admin/admin.html",
+      "admin/admin.js",
+      "admin/admin_copilot_wpp.html",
+      "admin/admin_copilot_wpp.js",
+      "backend/controllers/adminCopilotController.js",
+      "backend/middlewares/rateLimiter.js",
+      "backend/migrations/20261117210000-evolve-copilot-memory.js",
+      "backend/migrations/20261117213000-add-copilot-fts-index.js",
+      "backend/models/AdminCopilotConversation.js",
+      "backend/models/AdminCopilotMemory.js",
+      "backend/routes/adminRoutes.js",
+      "backend/services/adminCopilotService.js",
+      "backend/services/copilotInsightsService.js",
+      "backend/services/copilotMemoryService.js",
+      "backend/services/copilotOutputGuard.js",
+      "backend/services/copilotPromptBuilder.js",
+      "backend/services/psychologistContextService.js",
+      "backend/utils/whatsappFormatter.js",
+      "mobile/src/app/(admin)/crm-modulo/copilot-wpp.tsx",
+      "public/js/dev_role_switcher.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "security/gate.js",
+      "security/reports/gate_report.json",
+      "security/tests/copilot_phase0.test.js"
+    ]
+  },
+  {
+    "id": "change-git-966b1616",
+    "date": "2026-11-17T22:23:34.000Z",
+    "commit": "966b1616",
+    "author": "Anderson",
+    "title": "Correção: Preserve YYYY-MM-DD dueDate string in syncPaymentToDatabase to prevent -1 day timezone shift (payments)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "preserve YYYY-MM-DD dueDate string in syncPaymentToDatabase to prevent -1 day timezone shift",
+    "description": "Commit registrado no repositório: \"fix(payments): preserve YYYY-MM-DD dueDate string in syncPaymentToDatabase to prevent -1 day timezone shift\". Arquivos modificados: backend/services/paymentStateService.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #966b1616"
+    },
+    "after": {
+      "nova_versao": "preserve YYYY-MM-DD dueDate string in syncPaymentToDatabase to prevent -1 day timezone shift"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/services/paymentStateService.js"
+    ]
+  },
+  {
+    "id": "change-git-eef526b6",
+    "date": "2026-11-17T01:18:29.000Z",
+    "commit": "eef526b6",
+    "author": "Anderson",
+    "title": "Novo: Add 14-day SEO & GSC review reminder card to overview (admin)",
+    "category": "Admin & Plataforma",
+    "badgeColor": "#0284c7",
+    "status": "Em Produção",
+    "summary": "add 14-day SEO & GSC review reminder card to overview",
+    "description": "Commit registrado no repositório: \"feat(admin): add 14-day SEO & GSC review reminder card to overview\". Arquivos modificados: admin/admin_visao_geral.html, admin/admin_visao_geral.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #eef526b6"
+    },
+    "after": {
+      "nova_versao": "add 14-day SEO & GSC review reminder card to overview"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_visao_geral.html",
+      "admin/admin_visao_geral.js"
+    ]
+  },
+  {
+    "id": "change-git-ec783372",
+    "date": "2026-11-17T01:06:08.000Z",
+    "commit": "ec783372",
+    "author": "Anderson",
+    "title": "Interface: Add line break in hero subtitle (home)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "add line break in hero subtitle",
+    "description": "Commit registrado no repositório: \"style(home): add line break in hero subtitle\". Arquivos modificados: views/index.ejs.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ec783372"
+    },
+    "after": {
+      "nova_versao": "add line break in hero subtitle"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "views/index.ejs"
+    ]
+  },
+  {
+    "id": "change-git-1bd1a15f",
+    "date": "2026-11-17T01:01:14.000Z",
+    "commit": "1bd1a15f",
+    "author": "Anderson",
+    "title": "Refatoração: Revert /terapia-online to 301 redirect and strengthen Home SEO copy/schema",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "revert /terapia-online to 301 redirect and strengthen Home SEO copy/schema",
+    "description": "Commit registrado no repositório: \"refactor(seo): revert /terapia-online to 301 redirect and strengthen Home SEO copy/schema\". Arquivos modificados: backend/controllers/qnaController.js, backend/routes/viewRoutes.js, views/index.ejs, views/mapa_site.ejs, views/partials/footer.ejs (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #1bd1a15f"
+    },
+    "after": {
+      "nova_versao": "revert /terapia-online to 301 redirect and strengthen Home SEO copy/schema"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/qnaController.js",
+      "backend/routes/viewRoutes.js",
+      "views/index.ejs",
+      "views/mapa_site.ejs",
+      "views/partials/footer.ejs",
+      "views/pergunta_unica.ejs",
+      "views/post_completo.ejs",
+      "views/terapia_online.ejs"
+    ]
+  },
+  {
+    "id": "change-git-42812d19",
+    "date": "2026-11-17T00:40:22.000Z",
+    "commit": "42812d19",
+    "author": "Anderson",
+    "title": "Novo: Add /terapia-online landing page, improve blog/qna CTR metadata and clean .html internal links (seo)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "add /terapia-online landing page, improve blog/qna CTR metadata and clean .html internal links",
+    "description": "Commit registrado no repositório: \"feat(seo): add /terapia-online landing page, improve blog/qna CTR metadata and clean .html internal links\". Arquivos modificados: backend/controllers/qnaController.js, backend/routes/viewRoutes.js, views/ajuda.ejs, views/cadastro.ejs, views/convite.ejs (+8 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #42812d19"
+    },
+    "after": {
+      "nova_versao": "add /terapia-online landing page, improve blog/qna CTR metadata and clean .html internal links"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/qnaController.js",
+      "backend/routes/viewRoutes.js",
+      "views/ajuda.ejs",
+      "views/cadastro.ejs",
+      "views/convite.ejs",
+      "views/mapa_site.ejs",
+      "views/partials/footer.ejs",
+      "views/pergunta_unica.ejs",
+      "views/post_completo.ejs",
+      "views/psi_registro.ejs",
+      "views/resultados.ejs",
+      "views/sobre_psis.ejs",
+      "views/terapia_online.ejs"
+    ]
+  },
+  {
+    "id": "change-git-31bfc5c7",
+    "date": "2026-11-17T00:32:37.000Z",
+    "commit": "31bfc5c7",
+    "author": "Anderson",
+    "title": "Correção: Restore answered questions to sitemap, add missing canonicals and fix broken tool/schema URLs (seo)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "restore answered questions to sitemap, add missing canonicals and fix broken tool/schema URLs",
+    "description": "Commit registrado no repositório: \"fix(seo): restore answered questions to sitemap, add missing canonicals and fix broken tool/schema URLs\". Arquivos modificados: backend/controllers/qnaController.js, public/calculadora-psi.html, public/ferramentas.html, public/gerador-bio.html, public/roda-da-vida.html (+15 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #31bfc5c7"
+    },
+    "after": {
+      "nova_versao": "restore answered questions to sitemap, add missing canonicals and fix broken tool/schema URLs"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/qnaController.js",
+      "public/calculadora-psi.html",
+      "public/ferramentas.html",
+      "public/gerador-bio.html",
+      "public/roda-da-vida.html",
+      "public/sos-ansiedade.html",
+      "public/teste-terapia.html",
+      "views/ajuda.ejs",
+      "views/ajuda_mulher.ejs",
+      "views/cadastro.ejs",
+      "views/contato.ejs",
+      "views/index.ejs",
+      "views/mapa_site.ejs",
+      "views/post_completo.ejs",
+      "views/privacidade.ejs",
+      "views/psi_questionario.ejs",
+      "views/psi_registro.ejs",
+      "views/questionario.ejs",
+      "views/sobre_psis.ejs",
+      "views/termos.ejs"
+    ]
+  },
+  {
+    "id": "change-git-b120f84e",
+    "date": "2026-11-16T22:31:32.000Z",
+    "commit": "b120f84e",
+    "author": "Anderson",
+    "title": "Novo: Grant custom 3-for-2 Black Friday offer (R / 3 months -> R) to psic.larissals@gmail.com (promo)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "grant custom 3-for-2 Black Friday offer (R / 3 months -> R) to psic.larissals@gmail.com",
+    "description": "Commit registrado no repositório: \"feat(promo): grant custom 3-for-2 Black Friday offer (R / 3 months -> R) to psic.larissals@gmail.com\". Arquivos modificados: backend/controllers/paymentController.js, backend/services/paymentStateService.js, backend/services/promoCouponService.js, public/psi/psi_assinatura.html, public/psi/psi_assinatura.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #b120f84e"
+    },
+    "after": {
+      "nova_versao": "grant custom 3-for-2 Black Friday offer (R / 3 months -> R) to psic.larissals@gmail.com"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/paymentController.js",
+      "backend/services/paymentStateService.js",
+      "backend/services/promoCouponService.js",
+      "public/psi/psi_assinatura.html",
+      "public/psi/psi_assinatura.js",
+      "public/psi/psi_visao_geral.html",
+      "public/psi/psi_visao_geral.js"
+    ]
+  },
+  {
+    "id": "change-git-8266300e",
+    "date": "2026-11-16T00:29:17.000Z",
+    "commit": "8266300e",
+    "author": "Anderson",
+    "title": "Correção: Sync Asaas notification fees, backfill confirmed/refund events, and align legacy payment dates (dre)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "sync Asaas notification fees, backfill confirmed/refund events, and align legacy payment dates",
+    "description": "Commit registrado no repositório: \"fix(dre): sync Asaas notification fees, backfill confirmed/refund events, and align legacy payment dates\". Arquivos modificados: admin/admin_dre.js, backend/services/dreService.js, backend/services/paymentStateService.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8266300e"
+    },
+    "after": {
+      "nova_versao": "sync Asaas notification fees, backfill confirmed/refund events, and align legacy payment dates"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_dre.js",
+      "backend/services/dreService.js",
+      "backend/services/paymentStateService.js"
+    ]
+  },
+  {
+    "id": "change-git-4c4843fc",
+    "date": "2026-11-16T00:16:07.000Z",
+    "commit": "4c4843fc",
+    "author": "Anderson",
+    "title": "Novo: Convert navigation tabs into pill dropdown on web (dre)",
+    "category": "Admin & Plataforma",
+    "badgeColor": "#0284c7",
+    "status": "Em Produção",
+    "summary": "convert navigation tabs into pill dropdown on web",
+    "description": "Commit registrado no repositório: \"feat(dre): convert navigation tabs into pill dropdown on web\". Arquivos modificados: admin/admin_dre.html, admin/admin_dre.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4c4843fc"
+    },
+    "after": {
+      "nova_versao": "convert navigation tabs into pill dropdown on web"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_dre.html",
+      "admin/admin_dre.js"
+    ]
+  },
+  {
+    "id": "change-git-24da8937",
+    "date": "2026-11-16T00:05:43.000Z",
+    "commit": "24da8937",
+    "author": "Anderson",
+    "title": "Correção: Balance desktop KPI grid 3x2 and migrate Render rule to 6.3 OPEX_ADMIN (dre)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "balance desktop KPI grid 3x2 and migrate Render rule to 6.3 OPEX_ADMIN",
+    "description": "Commit registrado no repositório: \"fix(dre): balance desktop KPI grid 3x2 and migrate Render rule to 6.3 OPEX_ADMIN\". Arquivos modificados: admin/admin_dre.html, backend/services/dreService.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #24da8937"
+    },
+    "after": {
+      "nova_versao": "balance desktop KPI grid 3x2 and migrate Render rule to 6.3 OPEX_ADMIN"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_dre.html",
+      "backend/services/dreService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-a46bfc51",
+    "date": "2026-11-15T23:52:52.000Z",
+    "commit": "a46bfc51",
+    "author": "Anderson",
+    "title": "Correção: Refine DRE accounting labels, AH polarity and mobile web layout (admin)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "refine DRE accounting labels, AH polarity and mobile web layout",
+    "description": "Commit registrado no repositório: \"fix(admin): refine DRE accounting labels, AH polarity and mobile web layout\". Arquivos modificados: admin/admin_dre.html, admin/admin_dre.js, admin/admin_visao_geral.html, backend/.data/system_changelog.json, backend/data/system_changelog.json (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a46bfc51"
+    },
+    "after": {
+      "nova_versao": "refine DRE accounting labels, AH polarity and mobile web layout"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_dre.html",
+      "admin/admin_dre.js",
+      "admin/admin_visao_geral.html",
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "backend/services/dreService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-25d53771",
     "date": "2026-11-15T23:45:35.000Z",
     "commit": "25d53771",
