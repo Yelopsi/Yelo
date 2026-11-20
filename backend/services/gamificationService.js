@@ -116,7 +116,8 @@ async function calculateBadges(psychologistId) {
         let badges = psi.badges ? JSON.parse(JSON.stringify(psi.badges)) : {};
         badges.progress = badges.progress || {};
 
-        const postCount = await db.Post.count({ where: { psychologist_id: psychologistId } });
+        const postCount = await db.Post.count({ where: { psychologist_id: psychologistId, status: 'published' } })
+            .catch(async () => await db.Post.count({ where: { psychologist_id: psychologistId } }).catch(() => 0));
         if (postCount >= BADGE_THRESHOLDS.SEMEADOR.OURO) badges.semeador = 'ouro';
         else if (postCount >= BADGE_THRESHOLDS.SEMEADOR.PRATA) badges.semeador = 'prata';
         else if (postCount >= BADGE_THRESHOLDS.SEMEADOR.BRONZE) badges.semeador = 'bronze';

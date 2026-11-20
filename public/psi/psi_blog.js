@@ -13,6 +13,108 @@
         let currentPage = 1;
         const ARTICLES_LIMIT = 3; // Limite de artigos por página
         const loadMoreBtn = document.getElementById('btn-load-more-articles');
+        let blogQuota = { canPublishToday: true, nextPublishDateBr: null, draftCount: 0 };
+        let lastRenderedPosts = [];
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function atualizarAvisosCota() {
+            const bannerEl = document.getElementById('blog-daily-limit-banner');
+            if (!bannerEl) return;
+            if (!blogQuota.canPublishToday) {
+                const nextBr = blogQuota.nextPublishDateBr || 'o próximo dia disponível';
+                bannerEl.style.background = '#fffbeb';
+                bannerEl.style.borderColor = '#fde68a';
+                bannerEl.style.borderLeftColor = '#d97706';
+                bannerEl.style.color = '#92400e';
+                bannerEl.textContent = `📝 Você já publicou seu artigo de hoje! O limite é de 1 publicação por dia. Se quiser escrever agora, seu novo post ficará salvo aqui como rascunho para você acessar e publicar a partir de ${nextBr}.`;
+                bannerEl.style.display = 'block';
+            } else if (blogQuota.draftCount > 0) {
+                bannerEl.style.background = '#f0fdf4';
+                bannerEl.style.borderColor = '#bbf7d0';
+                bannerEl.style.borderLeftColor = '#16a34a';
+                bannerEl.style.color = '#166534';
+                bannerEl.textContent = `🚀 Você tem ${blogQuota.draftCount} ${blogQuota.draftCount === 1 ? 'post salvo aguardando publicação' : 'posts salvos aguardando publicação'}! Clique em "Publicar agora" no artigo desejado para colocá-lo no ar hoje.`;
+                bannerEl.style.display = 'block';
+            } else {
+                bannerEl.style.display = 'none';
+                bannerEl.textContent = '';
+            }
+        }
+
+        function atualizarAvisoModal({ isEditing = false, isDraftPost = false } = {}) {
+            const noticeEl = document.getElementById('blog-modal-schedule-notice');
+            const submitBtn = document.getElementById('btn-salvar-artigo');
+            const nextBr = blogQuota.nextPublishDateBr || 'o próximo dia disponível';
+
+            if (isEditing) {
+                if (submitBtn) submitBtn.textContent = 'Salvar Alterações';
+                if (noticeEl) {
+                    if (isDraftPost) {
+                        if (blogQuota.canPublishToday) {
+                            noticeEl.style.background = '#f0fdf4';
+                            noticeEl.style.borderColor = '#bbf7d0';
+                            noticeEl.style.borderLeftColor = '#16a34a';
+                            noticeEl.style.color = '#166534';
+                            noticeEl.textContent = '📝 Este artigo está salvo como rascunho. Após salvar suas alterações, clique em "Publicar agora" na lista para colocá-lo no Blog.';
+                        } else {
+                            noticeEl.style.background = '#fffbeb';
+                            noticeEl.style.borderColor = '#fde68a';
+                            noticeEl.style.borderLeftColor = '#d97706';
+                            noticeEl.style.color = '#92400e';
+                            noticeEl.textContent = `📝 Este artigo está salvo como rascunho. Acesse novamente a partir de ${nextBr} e clique em "Publicar agora" para colocá-lo no Blog.`;
+                        }
+                        noticeEl.style.display = 'block';
+                    } else {
+                        noticeEl.style.display = 'none';
+                        noticeEl.textContent = '';
+                    }
+                }
+                return;
+            }
+
+            if (!blogQuota.canPublishToday) {
+                if (noticeEl) {
+                    noticeEl.style.background = '#fffbeb';
+                    noticeEl.style.borderColor = '#fde68a';
+                    noticeEl.style.borderLeftColor = '#d97706';
+                    noticeEl.style.color = '#92400e';
+                    noticeEl.textContent = `📝 Você já publicou seu artigo de hoje e não poderá publicar outro hoje. Se escrever agora, ele ficará salvo como rascunho para você acessar e publicar a partir de ${nextBr}.`;
+                    noticeEl.style.display = 'block';
+                }
+                if (submitBtn) submitBtn.textContent = '💾 Salvar Rascunho';
+            } else {
+                if (noticeEl) {
+                    noticeEl.style.display = 'none';
+                    noticeEl.textContent = '';
+                }
+                if (submitBtn) submitBtn.textContent = 'Publicar Post';
+            }
+        }
+
+        async function carregarCotaPublicacao() {
+            try {
+                const res = await window.apiFetch(`${API_BASE_URL}/api/psychologists/me/posts/quota`);
+                if (!res.ok) return;
+                const data = await res.json();
+                blogQuota = {
+                    canPublishToday: data.canPublishToday !== false,
+                    nextPublishDateBr: data.nextPublishDateBr || null,
+                    draftCount: Number(data.draftCount || 0)
+                };
+                atualizarAvisosCota();
+                if (lastRenderedPosts.some(p => p.status === 'draft' || p.status === 'scheduled')) {
+                    renderizarLista(lastRenderedPosts, false);
+                }
+            } catch (_) {}
+        }
 
         // Tenta achar os elementos cruciais
         const viewLista = document.getElementById('view-lista-artigos');
@@ -57,16 +159,35 @@
             inputImagemUpload.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    if (file.size > 5 * 1024 * 1024) {
-                        window.showToast('A imagem deve ter no máximo 5MB.', 'error');
+                    const mime = String(file.type || '').toLowerCase();
+                    const ext = (file.name.split('.').pop() || '').toLowerCase();
+                    const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                    const allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+                    const isValidType = mime ? allowedMimes.includes(mime) : allowedExts.includes(ext);
+
+                    if (!isValidType) {
+                        window.showToast('Formato não suportado. Envie uma imagem JPG, PNG ou WebP.', 'error');
                         this.value = '';
+                        if (imgText) imgText.textContent = '📎 Nenhuma imagem selecionada...';
                         if (btnRemoveImagem) btnRemoveImagem.style.display = 'none';
                         return;
                     }
-                    if (imgText) imgText.innerHTML = `📎 <strong>${file.name}</strong>`;
+                    if (file.size > 8 * 1024 * 1024) {
+                        window.showToast('A imagem deve ter no máximo 8MB.', 'error');
+                        this.value = '';
+                        if (imgText) imgText.textContent = '📎 Nenhuma imagem selecionada...';
+                        if (btnRemoveImagem) btnRemoveImagem.style.display = 'none';
+                        return;
+                    }
+                    if (imgText) {
+                        imgText.textContent = '📎 ';
+                        const strong = document.createElement('strong');
+                        strong.textContent = file.name;
+                        imgText.appendChild(strong);
+                    }
                     if (btnRemoveImagem) btnRemoveImagem.style.display = 'block';
                 } else {
-                    if (imgText) imgText.innerHTML = '📎 Nenhuma imagem selecionada...';
+                    if (imgText) imgText.textContent = '📎 Nenhuma imagem selecionada...';
                     if (btnRemoveImagem) btnRemoveImagem.style.display = 'none';
                 }
             });
@@ -117,6 +238,7 @@
                     }
                     const formTituloAcao = document.getElementById('form-titulo-acao');
                     if (formTituloAcao) formTituloAcao.textContent = "Novo Post";
+                    atualizarAvisoModal({ isEditing: false });
                     toggleView(true);
                 };
                 container.appendChild(div);
@@ -163,6 +285,7 @@
             if (blogId) limparFormulario();
             const formTitle = document.getElementById('form-titulo-acao');
             if (formTitle) formTitle.textContent = "Novo Post";
+            atualizarAvisoModal({ isEditing: false });
             toggleView(true);
         });
 
@@ -203,6 +326,7 @@
                 }
 
                 if (!Array.isArray(posts)) posts = [];
+                lastRenderedPosts = append ? lastRenderedPosts.concat(posts) : [...posts];
                 let hasMore = posts.length === ARTICLES_LIMIT;
                 renderizarLista(posts, append);
 
@@ -241,23 +365,51 @@
             posts.forEach(post => {
                 const div = document.createElement('div');
                 div.className = 'artigo-item';
-                div.title = "Clique para ver o post público";
+                const isDraft = post.status === 'draft' || post.status === 'scheduled';
+                const nextBr = blogQuota.nextPublishDateBr || 'amanhã';
+                div.title = isDraft ? 'Clique para editar seu rascunho' : 'Clique para ver o post público';
                 
                 const dataStr = post.created_at || post.createdAt || new Date();
                 const dataF = new Date(dataStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+                const safeTitulo = escapeHtml(post.titulo);
+                const safeNextBr = escapeHtml(nextBr);
+
+                const draftBadgeHtml = isDraft
+                    ? (blogQuota.canPublishToday
+                        ? `<span style="display: inline-block; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px;">📝 Rascunho salvo • Pronto para publicar</span>`
+                        : `<span style="display: inline-block; background: #fffbeb; border: 1px solid #fde68a; color: #b45309; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px;">📝 Salvo para publicar depois • Libera em ${safeNextBr}</span>`)
+                    : '';
+
+                const metaDateText = isDraft
+                    ? (blogQuota.canPublishToday
+                        ? '✨ Disponível para publicação hoje'
+                        : `⏳ Aguardando sua publicação a partir de ${safeNextBr}`)
+                    : `📅 ${dataF}`;
+
+                const likesHtml = isDraft
+                    ? ''
+                    : `<span style="display: flex; align-items: center; gap: 5px; color: #e63946; font-weight: bold;" title="Total de leitores que curtiram">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/></svg>
+                                ${post.curtidas || 0}
+                            </span>`;
+
+                const publishBtnHtml = isDraft
+                    ? (blogQuota.canPublishToday
+                        ? `<button class="btn-acao btn-publicar" title="Publicar no Blog agora">🚀 <span>Publicar agora</span></button>`
+                        : `<button class="btn-acao btn-publicar-locked" title="Disponível a partir de ${safeNextBr}">⏳ <span>Publicar em ${safeNextBr}</span></button>`)
+                    : '';
 
                 div.innerHTML = `
                     <div style="flex: 1;">
-                        <strong style="font-size:1.2rem; color:#1B4332; display:block; margin-bottom:8px;">${post.titulo}</strong>
+                        ${draftBadgeHtml}
+                        <strong style="font-size:1.2rem; color:#1B4332; display:block; margin-bottom:8px;">${safeTitulo}</strong>
                         <div style="display: flex; align-items: center; gap: 20px; font-size:0.85rem; color:#666;">
-                            <span style="display: flex; align-items: center; gap: 5px;">📅 ${dataF}</span>
-                            <span style="display: flex; align-items: center; gap: 5px; color: #e63946; font-weight: bold;" title="Total de leitores que curtiram">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/></svg>
-                                ${post.curtidas || 0}
-                            </span>
+                            <span style="display: flex; align-items: center; gap: 5px;">${metaDateText}</span>
+                            ${likesHtml}
                         </div>
                     </div>
                     <div class="btn-acoes-grupo">
+                        ${publishBtnHtml}
                         <button class="btn-acao btn-editar" title="Editar Post">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path><path d="M15 5l4 4"></path><path d="M5 15l4 4"></path><path d="M3.5 16.5l4 4"></path></svg>
                             <span>Editar</span>
@@ -269,21 +421,69 @@
                     </div>
                 `;
 
+                const btnPublicar = div.querySelector('.btn-publicar');
+                if (btnPublicar) {
+                    btnPublicar.onclick = () => {
+                        if (typeof window.abrirModalConfirmacaoPersonalizado === 'function') {
+                            window.abrirModalConfirmacaoPersonalizado(
+                                'Publicar Post Agora',
+                                `Deseja publicar o artigo "<strong>${safeTitulo}</strong>" no Blog Yelo agora?`,
+                                () => publicarArtigoSalvo(post.id)
+                            );
+                        } else {
+                            publicarArtigoSalvo(post.id);
+                        }
+                    };
+                }
+
+                const btnPublicarLocked = div.querySelector('.btn-publicar-locked');
+                if (btnPublicarLocked) {
+                    btnPublicarLocked.onclick = () => {
+                        window.showToast(`Você já publicou seu artigo de hoje. Acesse novamente a partir de ${nextBr} para publicar este post.`, 'info');
+                    };
+                }
+
                 div.querySelector('.btn-editar').onclick = () => carregarParaEdicao(post);
                 div.querySelector('.btn-excluir').onclick = () => {
                     window.abrirModalConfirmacaoPersonalizado(
                         'Excluir Post',
-                        `Tem certeza que deseja apagar o post "<strong>${post.titulo}</strong>"?<br>Essa ação não pode ser desfeita.`,
+                        `Tem certeza que deseja apagar o post "<strong>${safeTitulo}</strong>"?<br>Essa ação não pode ser desfeita.`,
                         () => deletarArtigo(post.id)
                     );
                 };
                 div.style.cursor = 'pointer';
                 div.addEventListener('click', (e) => {
                     if (e.target.closest('.btn-acao')) return;
+                    if (isDraft) {
+                        carregarParaEdicao(post);
+                        return;
+                    }
                     window.open(`/blog/post/${post.id}`, '_blank');
                 });
                 containerLista.appendChild(div);
             });
+        }
+
+        async function publicarArtigoSalvo(id) {
+            try {
+                const res = await window.apiFetch(`${API_BASE_URL}/api/psychologists/me/posts/${id}/publish`, {
+                    method: 'POST'
+                });
+                const rawText = await res.text();
+                let payload = {};
+                try { payload = JSON.parse(rawText); } catch (_) {}
+
+                if (res.ok) {
+                    window.showToast('🚀 Post publicado com sucesso no Blog!', 'success');
+                    await carregarArtigos(1, false);
+                    await carregarCotaPublicacao();
+                } else {
+                    window.showToast((payload && payload.error) || 'Não foi possível publicar o post.', 'error');
+                    carregarCotaPublicacao();
+                }
+            } catch (e) {
+                window.showToast('Erro ao conectar com o servidor para publicar.', 'error');
+            }
         }
 
         async function deletarArtigo(id) {
@@ -294,6 +494,7 @@
                     if (data.pointsDeducted) window.showToast(`Post excluído. Você perdeu ${data.pointsDeducted} XP.`, 'info');
                     else window.showToast('Post excluído com sucesso.', 'success');
                     carregarArtigos();
+                    carregarCotaPublicacao();
                 } else throw new Error("Falha ao excluir");
             } catch (e) { window.showToast('Erro ao excluir post.', 'error'); }
         }
@@ -315,6 +516,10 @@
                     if (btnRemoveImagemLocal2) btnRemoveImagemLocal2.style.display = 'none';
                 }
             }
+            atualizarAvisoModal({
+                isEditing: true,
+                isDraftPost: post.status === 'draft' || post.status === 'scheduled'
+            });
             toggleView(true);
         }
 
@@ -382,9 +587,31 @@
                 }
                 
                 const res = await window.apiFetch(url, { method: method, body: formData });
-                if(res.ok) { window.showToast(id ? 'Post atualizado!' : 'Post publicado!', 'success'); limparFormulario(); toggleView(false); carregarArtigos(); }
-                else throw new Error((await res.json()).error || "Erro ao salvar.");
-            } catch (error) { window.showToast('Não foi possível salvar: ' + error.message, 'error'); } 
+                const rawText = await res.text();
+                let payload = {};
+                try { payload = JSON.parse(rawText); } catch (_) {}
+
+                if (res.ok) {
+                    if (payload && (payload.savedAsDraft || payload.status === 'draft')) {
+                        window.showToast(`📝 Post salvo como rascunho! Acesse a partir de ${payload.availableFromBr || 'amanhã'} para publicá-lo.`, 'success');
+                    } else {
+                        window.showToast(id ? 'Post atualizado!' : 'Post publicado!', 'success');
+                    }
+                    limparFormulario();
+                    toggleView(false);
+                    carregarArtigos();
+                    carregarCotaPublicacao();
+                } else {
+                    throw new Error((payload && payload.error) || `Erro ao salvar (HTTP ${res.status}).`);
+                }
+            } catch (error) {
+                const msg = String(error?.message || '');
+                if (/failed to fetch|load failed|networkerror|network request failed/i.test(msg)) {
+                    window.showToast('Falha de conexão ao enviar o post. Verifique sua internet ou tente uma imagem JPG/PNG menor e clique em salvar novamente — seu texto foi mantido!', 'error');
+                } else {
+                    window.showToast('Não foi possível salvar: ' + msg, 'error');
+                }
+            }
             finally { btn.innerHTML = originalText; btn.disabled = false; }
         };
         form.addEventListener('submit', blogSubmitHandler);
@@ -397,6 +624,7 @@
         };
 
         carregarArtigos(1, false);
+        carregarCotaPublicacao();
         carregarSugestoes();
         if (loadMoreBtn) loadMoreBtn.onclick = () => carregarArtigos(++currentPage, true);
     };

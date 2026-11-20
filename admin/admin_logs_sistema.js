@@ -17,6 +17,19 @@ window.initializePage = async function () {
     let allLogs = [];
     let processedLogs = [];
 
+    const VALID_LOG_CATEGORIES = new Set([
+        'campaign', 'payment', 'finance', 'email', 'auth', 'security', 'forum', 'copilot', 'admin', 'system'
+    ]);
+
+    function escapeHtml(str) {
+        return String(str == null ? '' : str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // --- LÓGICA DE CARREGAMENTO ---
     async function fetchSystemData() {
         if (!logsList) return; // Segurança caso a página não tenha carregado
@@ -191,11 +204,16 @@ window.initializePage = async function () {
 
         logsToRender.forEach(log => {
             const li = document.createElement('li');
-            li.classList.add('log-item', `log-level-${log.level}`);
+            li.classList.add('log-item', `log-level-${log.level || 'info'}`);
 
-            const icon = log.level === 'error' ? '❌' : (log.level === 'info' ? '✅' : 'ℹ️');
-            const userIdentifier = log.meta?.userEmail || 'Sistema';
-            const message = log.message;
+            const icon = log.level === 'error' ? '❌' : (log.level === 'warning' ? '⚠️' : (log.level === 'info' ? '✅' : 'ℹ️'));
+            const safeCat = VALID_LOG_CATEGORIES.has(log.category) ? log.category : 'system';
+            const categoryLabel = log.categoryLabel || '⚙️ Sistema';
+            const actorLabel = log.actorLabel || log.meta?.userEmail || 'Sistema';
+            const actorEmail = (log.actorEmail && log.actorEmail.toLowerCase() !== actorLabel.toLowerCase()) ? log.actorEmail : '';
+            const message = log.message || '';
+            const rawMessage = log.rawMessage || '';
+            const details = log.details || '';
 
             let attemptStatusHTML = '';
             if (log.subsequentAttempt) {
@@ -217,14 +235,32 @@ window.initializePage = async function () {
                 attemptStatusHTML = `<div class="subsequent-attempt ${statusClass}">${statusText}</div>`;
             }
 
+            const emailSubHtml = actorEmail
+                ? `<span class="log-actor-email">(${escapeHtml(actorEmail)})</span>`
+                : '';
+
+            const detailsHtml = details
+                ? `<div class="log-friendly-details">${escapeHtml(details)}</div>`
+                : '';
+
+            const rawDetailsHtml = (rawMessage && rawMessage !== message)
+                ? `<details class="log-raw-details"><summary>Ver detalhe técnico</summary><code>${escapeHtml(rawMessage)}</code></details>`
+                : '';
+
             li.innerHTML = `
-                <div class="log-header">
+                <div class="log-top-row">
                     <span class="log-icon">${icon}</span>
-                    <strong class="log-user">${userIdentifier}</strong>
-                    <span class="log-message">${message}</span>
-                    <span class="log-timestamp">${new Date(log.createdAt).toLocaleString('pt-BR')}</span>
+                    <span class="log-category-badge log-cat-${safeCat}">${escapeHtml(categoryLabel)}</span>
+                    <span class="log-actor-wrap">
+                        <strong class="log-actor-name">${escapeHtml(actorLabel)}</strong>
+                        ${emailSubHtml}
+                    </span>
+                    <span class="log-timestamp">${escapeHtml(new Date(log.createdAt).toLocaleString('pt-BR'))}</span>
                 </div>
+                <div class="log-friendly-message">${escapeHtml(message)}</div>
+                ${detailsHtml}
                 ${attemptStatusHTML}
+                ${rawDetailsHtml}
             `;
             logsList.appendChild(li);
         });
@@ -234,8 +270,10 @@ window.initializePage = async function () {
      * Processa os logs brutos para correlacionar erros e tentativas subsequentes.
      */
     const processAndCorrelateLogs = (logs) => {
+        const getUserKey = (item) => item?.actorEmail || item?.meta?.userEmail || null;
+
         const logsByUser = logs.reduce((acc, log) => {
-            const userId = log.meta?.userEmail;
+            const userId = getUserKey(log);
             if (userId) {
                 if (!acc[userId]) acc[userId] = [];
                 acc[userId].push(log);
@@ -251,7 +289,7 @@ window.initializePage = async function () {
             const newLog = { ...log };
             if (newLog.level !== 'error') return newLog;
 
-            const userId = newLog.meta?.userEmail;
+            const userId = getUserKey(newLog);
             if (!userId || !logsByUser[userId]) return newLog;
 
             const userActions = logsByUser[userId];
@@ -263,9 +301,13 @@ window.initializePage = async function () {
                 const minutesDiff = timeDiff / (1000 * 60);
 
                 if (minutesDiff < 30) { // Janela de 30 minutos
-                    const msgA = (newLog.message || '').toLowerCase();
-                    const msgB = (nextAction.message || '').toLowerCase();
-                    const isSameAction = (msgA.includes('login') && msgB.includes('login')) || (msgA.includes('pagamento') && msgB.includes('pagamento'));
+                    const msgA = ((newLog.message || '') + ' ' + (newLog.rawMessage || '')).toLowerCase();
+                    const msgB = ((nextAction.message || '') + ' ' + (nextAction.rawMessage || '')).toLowerCase();
+                    const isSameAction =
+                        ((msgA.includes('login') || msgA.includes('acess') || msgA.includes('entrou')) &&
+                         (msgB.includes('login') || msgB.includes('acess') || msgB.includes('entrou'))) ||
+                        ((msgA.includes('pagamento') || msgA.includes('asaas') || msgA.includes('cobrança')) &&
+                         (msgB.includes('pagamento') || msgB.includes('asaas') || msgB.includes('cobrança')));
 
                     newLog.subsequentAttempt = isSameAction ? { type: nextAction.level === 'error' ? 'failure' : 'success' } : { type: 'gave_up' };
                 } else { newLog.subsequentAttempt = { type: 'gave_up' }; }
@@ -301,17 +343,36 @@ window.initializePage = async function () {
 
         let filteredByLevelAndType = processedLogs.filter(log => {
             if (filterType === 'all') return true; // Mostra todos
-            if (filterType === 'payment') return (log.message || '').toLowerCase().includes('pagamento') || (log.message || '').toLowerCase().includes('asaas');
+            if (filterType === 'payment') {
+                const msg = (log.message || '').toLowerCase();
+                const rawMsg = (log.rawMessage || '').toLowerCase();
+                return (
+                    log.category === 'payment' ||
+                    log.category === 'finance' ||
+                    msg.includes('pagamento') ||
+                    msg.includes('asaas') ||
+                    msg.includes('cobrança') ||
+                    msg.includes('faturamento') ||
+                    rawMsg.includes('asaas') ||
+                    rawMsg.includes('pagamento')
+                );
+            }
             // Garante que log.level exista antes de comparar
             return (log.level && log.level === filterType);
         });
 
         const finalFilteredList = filteredByLevelAndType.filter(log => {
             if (searchTerm === '') return true; // Se não há termo de busca, não filtra por ele
-            const logMessage = (log.message || '').toLowerCase();
-            const userEmail = (log.meta?.userEmail || '').toLowerCase();
-            // Verifica se o termo de busca está na mensagem ou no e-mail do usuário
-            return logMessage.includes(searchTerm) || userEmail.includes(searchTerm);
+            const fields = [
+                log.message,
+                log.rawMessage,
+                log.actorLabel,
+                log.actorEmail,
+                log.categoryLabel,
+                log.details,
+                log.meta?.userEmail
+            ];
+            return fields.some(f => String(f || '').toLowerCase().includes(searchTerm));
         });
 
         renderLogsList(finalFilteredList);

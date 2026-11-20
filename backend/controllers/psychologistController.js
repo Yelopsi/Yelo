@@ -44,7 +44,10 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         // --- CORREÇÃO V2: Busca contagens com Fallback Duplo do ORM ---
         let blogPostCount = 0, forumPostCount = 0, forumCommentCount = 0, answerCount = 0, reviewCount = 0;
         
-        if (db.Post) blogPostCount = await db.Post.count({ where: { psychologistId } }).catch(async () => await db.Post.count({ where: { psychologist_id: psychologistId } }).catch(() => 0));
+        if (db.Post) {
+            blogPostCount = await db.Post.count({ where: { psychologistId, status: 'published' } })
+                .catch(async () => await db.Post.count({ where: { psychologist_id: psychologistId } }).catch(() => 0));
+        }
         
         if (db.ForumPost) forumPostCount = await db.ForumPost.count({ where: { PsychologistId: psychologistId } }).catch(async () => await db.ForumPost.count({ where: { psychologistId } }).catch(() => 0));
         

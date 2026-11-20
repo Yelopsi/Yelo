@@ -44,6 +44,9 @@ interface Post {
   conteudo: string;
   imagem_url?: string | null;
   curtidas?: number;
+  status?: 'published' | 'draft' | 'scheduled';
+  scheduledFor?: string | null;
+  scheduled_for?: string | null;
   createdAt?: string;
   created_at?: string;
   slug?: string;
@@ -68,6 +71,13 @@ export default function BlogScreen() {
   // Estados do Modal de Criação / Edição
   const [modalVisible, setModalVisible] = useState(false);
   const [editingPostId, setEditingPostId] = useState<number | null>(null);
+  const [editingPostIsDraft, setEditingPostIsDraft] = useState(false);
+  const [publishingPostId, setPublishingPostId] = useState<number | null>(null);
+  const [quota, setQuota] = useState<{ canPublishToday: boolean; nextPublishDateBr: string | null; draftCount: number }>({
+    canPublishToday: true,
+    nextPublishDateBr: null,
+    draftCount: 0,
+  });
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -179,6 +189,20 @@ export default function BlogScreen() {
     setSugestoes(FALLBACK_SUGESTOES.slice(0, 3));
   };
 
+  // Carregar cota diária editorial (1 post por dia + rascunhos salvos)
+  const fetchQuota = async () => {
+    try {
+      const res = await api.get('/api/psychologists/me/posts/quota');
+      if (res.data) {
+        setQuota({
+          canPublishToday: res.data.canPublishToday !== false,
+          nextPublishDateBr: res.data.nextPublishDateBr || null,
+          draftCount: Number(res.data.draftCount || 0),
+        });
+      }
+    } catch (_) {}
+  };
+
   // Carregar posts paginados
   const fetchPosts = async (page = 1, append = false) => {
     try {
@@ -210,12 +234,14 @@ export default function BlogScreen() {
 
   useEffect(() => {
     fetchPosts(1, false);
+    fetchQuota();
     fetchSugestoes();
   }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchPosts(1, false);
+    fetchQuota();
     fetchSugestoes();
   }, []);
 
@@ -228,6 +254,7 @@ export default function BlogScreen() {
   // Abrir Modal para Novo Post
   const handleOpenNewPost = (suggestedTitle?: string) => {
     setEditingPostId(null);
+    setEditingPostIsDraft(false);
     setTitle(suggestedTitle || '');
     setContent('');
     setImageUri(null);
@@ -245,6 +272,7 @@ export default function BlogScreen() {
   // Abrir Modal para Edição
   const handleOpenEditPost = (post: Post) => {
     setEditingPostId(post.id);
+    setEditingPostIsDraft(post.status === 'draft' || post.status === 'scheduled');
     setTitle(post.titulo || '');
     setContent(post.conteudo || '');
     setImageUri(null);
@@ -367,19 +395,68 @@ export default function BlogScreen() {
         });
         showToast('Seu post foi atualizado com sucesso! 🎉');
       } else {
-        await api.post('/api/psychologists/me/posts', formData, {
+        const postRes = await api.post('/api/psychologists/me/posts', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        showToast('Post publicado com sucesso no Blog Yelo! 🚀');
+        if (postRes.data?.savedAsDraft || postRes.data?.status === 'draft') {
+          showToast(`Post salvo como rascunho! Volte em ${postRes.data.availableFromBr || 'amanhã'} para publicar. 📝`);
+        } else {
+          showToast('Post publicado com sucesso no Blog Yelo! 🚀');
+        }
       }
 
       setModalVisible(false);
       fetchPosts(1, false);
+      fetchQuota();
     } catch (e: any) {
-      Alert.alert('Erro', e.response?.data?.error || 'Não foi possível salvar o post.');
+      if (!e?.response) {
+        Alert.alert(
+          'Falha de conexão',
+          'Não foi possível enviar seu post agora. Verifique sua internet ou tente uma imagem menor (JPG/PNG) e toque em salvar novamente — seu texto foi mantido.'
+        );
+      } else {
+        Alert.alert('Erro', e.response?.data?.error || 'Não foi possível salvar o post.');
+      }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Publicar manualmente um Rascunho Salvo
+  const handlePublishDraft = (post: Post) => {
+    if (!quota.canPublishToday) {
+      Alert.alert(
+        'Limite diário atingido',
+        `Você já publicou seu artigo de hoje. Acesse novamente a partir de ${quota.nextPublishDateBr || 'amanhã'} para publicar este post.`
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Publicar Post Agora',
+      `Deseja publicar o artigo "${post.titulo}" no Blog Yelo agora?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Publicar agora',
+          onPress: async () => {
+            try {
+              setPublishingPostId(post.id);
+              await api.post(`/api/psychologists/me/posts/${post.id}/publish`);
+              showToast('Post publicado com sucesso no Blog Yelo! 🚀');
+              setPreviewPost(null);
+              fetchPosts(1, false);
+              fetchQuota();
+            } catch (e: any) {
+              Alert.alert('Erro', e.response?.data?.error || 'Não foi possível publicar o post.');
+              fetchQuota();
+            } finally {
+              setPublishingPostId(null);
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Excluir Post com Confirmação
@@ -401,6 +478,7 @@ export default function BlogScreen() {
                 showToast('Post excluído com sucesso.');
               }
               fetchPosts(1, false);
+              fetchQuota();
             } catch (e: any) {
               Alert.alert('Erro', e.response?.data?.error || 'Erro ao excluir post.');
             }
@@ -490,6 +568,21 @@ export default function BlogScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* AVISO PRÉVIO DE COTA DIÁRIA / RASCUNHOS PRONTOS */}
+          {!quota.canPublishToday ? (
+            <View style={styles.dailyLimitBanner}>
+              <Text style={styles.dailyLimitBannerText}>
+                📝 Você já publicou seu artigo de hoje! O limite é de 1 publicação por dia. Se quiser escrever agora, seu novo post ficará salvo aqui como rascunho para você acessar e publicar a partir de {quota.nextPublishDateBr || 'amanhã'}.
+              </Text>
+            </View>
+          ) : quota.draftCount > 0 ? (
+            <View style={styles.draftReadyBanner}>
+              <Text style={styles.draftReadyBannerText}>
+                🚀 Você tem {quota.draftCount} {quota.draftCount === 1 ? 'post salvo aguardando publicação' : 'posts salvos aguardando publicação'}! Toque em "Publicar agora" no artigo desejado para colocá-lo no ar hoje.
+              </Text>
+            </View>
+          ) : null}
+
           {/* LISTA DE POSTS */}
           {isLoading && !refreshing ? (
             <View style={styles.loaderBox}>
@@ -514,6 +607,8 @@ export default function BlogScreen() {
           ) : (
             posts.map(post => {
               const fullImageUrl = resolveImageUrl(post.imagem_url);
+              const isDraft = post.status === 'draft' || post.status === 'scheduled';
+              const nextBr = quota.nextPublishDateBr || 'amanhã';
               const dataFormatada = formatDate(post.createdAt || post.created_at);
               const excerpt = stripHtml(post.conteudo);
 
@@ -524,6 +619,16 @@ export default function BlogScreen() {
                   activeOpacity={0.92}
                   style={styles.postCard}
                 >
+                  {isDraft && (
+                    <View style={quota.canPublishToday ? styles.draftReadyPill : styles.scheduledPill}>
+                      <Text style={quota.canPublishToday ? styles.draftReadyPillText : styles.scheduledPillText}>
+                        {quota.canPublishToday
+                          ? '📝 Rascunho salvo • Pronto para publicar'
+                          : `📝 Salvo para publicar depois • Libera em ${nextBr}`}
+                      </Text>
+                    </View>
+                  )}
+
                   {/* Capa do Post (se houver) */}
                   {fullImageUrl ? (
                     <View style={styles.postImageWrapper}>
@@ -548,16 +653,41 @@ export default function BlogScreen() {
                   {/* Metadados: Data e Curtidas */}
                   <View style={styles.postMetaRow}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={styles.postDate}>📅 {dataFormatada}</Text>
+                      <Text style={styles.postDate}>
+                        {isDraft
+                          ? (quota.canPublishToday
+                              ? '✨ Disponível para publicação hoje'
+                              : `⏳ Aguardando sua publicação a partir de ${nextBr}`)
+                          : `📅 ${dataFormatada}`}
+                      </Text>
                     </View>
-                    <View style={styles.postLikes}>
-                      <Feather name="heart" size={14} color="#e63946" />
-                      <Text style={styles.postLikesText}>{post.curtidas || 0}</Text>
-                    </View>
+                    {!isDraft && (
+                      <View style={styles.postLikes}>
+                        <Feather name="heart" size={14} color="#e63946" />
+                        <Text style={styles.postLikesText}>{post.curtidas || 0}</Text>
+                      </View>
+                    )}
                   </View>
 
-                  {/* Grupo de Ações: Editar e Excluir */}
+                  {/* Grupo de Ações: Publicar (se rascunho), Editar e Excluir */}
                   <View style={styles.postActionsGroup}>
+                    {isDraft && (
+                      <TouchableOpacity
+                        onPress={() => handlePublishDraft(post)}
+                        disabled={publishingPostId === post.id}
+                        style={quota.canPublishToday ? styles.btnAcaoPublicar : styles.btnAcaoPublicarLocked}
+                        activeOpacity={0.85}
+                      >
+                        {publishingPostId === post.id ? (
+                          <ActivityIndicator size="small" color="#ffffff" />
+                        ) : (
+                          <Text style={quota.canPublishToday ? styles.btnAcaoPublicarText : styles.btnAcaoPublicarLockedText}>
+                            {quota.canPublishToday ? '🚀 Publicar agora' : `⏳ Em ${nextBr}`}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    )}
+
                     <TouchableOpacity
                       onPress={() => handleOpenEditPost(post)}
                       style={styles.btnAcaoEditar}
@@ -665,6 +795,22 @@ export default function BlogScreen() {
               style={{ flexGrow: 0, flexShrink: 1 }}
               contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 12 }}
             >
+              {(!editingPostId && !quota.canPublishToday) ? (
+                <View style={styles.modalScheduleBanner}>
+                  <Text style={styles.modalScheduleBannerText}>
+                    📝 Você já publicou seu artigo de hoje e não poderá publicar outro hoje. Se escrever agora, ele ficará salvo como rascunho para você acessar e publicar a partir de {quota.nextPublishDateBr || 'amanhã'}.
+                  </Text>
+                </View>
+              ) : (editingPostId && editingPostIsDraft) ? (
+                <View style={quota.canPublishToday ? styles.draftReadyBanner : styles.modalScheduleBanner}>
+                  <Text style={quota.canPublishToday ? styles.draftReadyBannerText : styles.modalScheduleBannerText}>
+                    {quota.canPublishToday
+                      ? '📝 Este artigo está salvo como rascunho. Após salvar suas alterações, toque em "Publicar agora" na lista para colocá-lo no Blog.'
+                      : `📝 Este artigo está salvo como rascunho. Acesse novamente a partir de ${quota.nextPublishDateBr || 'amanhã'} e toque em "Publicar agora" para colocá-lo no Blog.`}
+                  </Text>
+                </View>
+              ) : null}
+
               {/* Campo: Título do Post */}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>TÍTULO DO POST *</Text>
@@ -933,7 +1079,11 @@ export default function BlogScreen() {
                     <ActivityIndicator size="small" color="#ffffff" />
                   ) : (
                     <Text style={styles.btnSaveModalText}>
-                      {editingPostId ? 'Salvar' : 'Publicar Post'}
+                      {editingPostId
+                        ? 'Salvar'
+                        : !quota.canPublishToday
+                          ? 'Salvar Rascunho'
+                          : 'Publicar Post'}
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -989,12 +1139,18 @@ export default function BlogScreen() {
               {/* Data & Curtidas */}
               <View style={styles.previewMetaRow}>
                 <Text style={styles.previewDate}>
-                  📅 {formatDate(previewPost.createdAt || previewPost.created_at)}
+                  {(previewPost.status === 'draft' || previewPost.status === 'scheduled')
+                    ? (quota.canPublishToday
+                        ? '📝 Rascunho salvo • Pronto para publicar hoje'
+                        : `📝 Rascunho salvo • Libera em ${quota.nextPublishDateBr || 'amanhã'}`)
+                    : `📅 ${formatDate(previewPost.createdAt || previewPost.created_at)}`}
                 </Text>
-                <View style={styles.postLikes}>
-                  <Feather name="heart" size={14} color="#e63946" />
-                  <Text style={styles.postLikesText}>{previewPost.curtidas || 0} curtidas</Text>
-                </View>
+                {!(previewPost.status === 'draft' || previewPost.status === 'scheduled') && (
+                  <View style={styles.postLikes}>
+                    <Feather name="heart" size={14} color="#e63946" />
+                    <Text style={styles.postLikesText}>{previewPost.curtidas || 0} curtidas</Text>
+                  </View>
+                )}
               </View>
 
               {/* Conteúdo Completo Formatado (Sem tags visíveis) */}
@@ -1046,7 +1202,28 @@ export default function BlogScreen() {
               </View>
 
               {/* Ações Rápidas */}
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 30, borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 20 }}>
+              {(previewPost.status === 'draft' || previewPost.status === 'scheduled') && (
+                <View style={{ marginTop: 24 }}>
+                  <TouchableOpacity
+                    onPress={() => handlePublishDraft(previewPost)}
+                    disabled={publishingPostId === previewPost.id}
+                    style={quota.canPublishToday ? styles.btnPreviewPublicar : styles.btnPreviewPublicarLocked}
+                    activeOpacity={0.85}
+                  >
+                    {publishingPostId === previewPost.id ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <Text style={quota.canPublishToday ? styles.btnPreviewPublicarText : styles.btnPreviewPublicarLockedText}>
+                        {quota.canPublishToday
+                          ? '🚀 Publicar Post Agora no Blog'
+                          : `⏳ Disponível para publicar em ${quota.nextPublishDateBr || 'amanhã'}`}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: (previewPost.status === 'draft' || previewPost.status === 'scheduled') ? 12 : 30, borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 20 }}>
                 <TouchableOpacity
                   onPress={() => {
                     const postToEdit = previewPost;
@@ -1236,6 +1413,84 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: 'bold',
   },
+  dailyLimitBanner: {
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    borderLeftWidth: 4,
+    borderLeftColor: '#d97706',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  dailyLimitBannerText: {
+    color: '#92400e',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '500',
+  },
+  draftReadyBanner: {
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+    borderLeftWidth: 4,
+    borderLeftColor: '#16a34a',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  draftReadyBannerText: {
+    color: '#166534',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '500',
+  },
+  scheduledPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginBottom: 10,
+  },
+  scheduledPillText: {
+    color: '#b45309',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  draftReadyPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginBottom: 10,
+  },
+  draftReadyPillText: {
+    color: '#166534',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  modalScheduleBanner: {
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    borderLeftWidth: 4,
+    borderLeftColor: '#d97706',
+    borderRadius: 10,
+    padding: 11,
+    marginBottom: 14,
+  },
+  modalScheduleBannerText: {
+    color: '#92400e',
+    fontSize: 12.5,
+    lineHeight: 18,
+    fontWeight: '500',
+  },
 
   // LOADER E EMPTY STATE
   loaderBox: {
@@ -1348,12 +1603,45 @@ const styles = StyleSheet.create({
   },
   postActionsGroup: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: 10,
+    gap: 8,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
     paddingTop: 12,
+  },
+  btnAcaoPublicar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1B4332',
+    borderWidth: 1,
+    borderColor: '#1B4332',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 50,
+  },
+  btnAcaoPublicarText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  btnAcaoPublicarLocked: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 50,
+  },
+  btnAcaoPublicarLockedText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#92400e',
   },
   btnAcaoEditar: {
     flexDirection: 'row',
@@ -1768,5 +2056,33 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     fontWeight: '600',
     color: '#4b5563',
+  },
+  btnPreviewPublicar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1B4332',
+    paddingVertical: 13,
+    paddingHorizontal: 18,
+    borderRadius: 50,
+  },
+  btnPreviewPublicarText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  btnPreviewPublicarLocked: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 50,
+  },
+  btnPreviewPublicarLockedText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#92400e',
   },
 });

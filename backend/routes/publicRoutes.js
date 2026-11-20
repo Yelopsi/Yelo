@@ -102,6 +102,7 @@ router.get('/psychologists/list', async (req, res) => {
 router.get('/posts', async (req, res) => {
     try {
         const posts = await db.Post.scope(null).findAll({
+            where: { status: 'published' },
             order: [['createdAt', 'DESC']],
             limit: 30,
             include: [{

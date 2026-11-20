@@ -5,6 +5,7 @@ const {
     UNLOGGED_NON_PATIENT_TYPES,
     B2B_OR_PRO_PAGE_SQL
 } = require('../utils/actorClassifier');
+const { extractLogReferences, formatSystemLog } = require('../utils/systemLogFormatter');
 
 // Configurações do Asaas (Extraídas de adminController)
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
@@ -493,7 +494,10 @@ exports.getSystemLogs = async (req, res) => {
         } catch(e) {} // Fallback se tabela não existir
 
         const formattedWebhooks = webhooks.map(wh => {
-            const payloadObj = typeof wh.payload === 'string' ? JSON.parse(wh.payload) : (wh.payload || {});
+            let payloadObj = {};
+            try {
+                payloadObj = typeof wh.payload === 'string' ? JSON.parse(wh.payload) : (wh.payload || {});
+            } catch (_) {}
             const customerStr = payloadObj.payment?.customer || payloadObj.customer || 'Sistema Asaas';
             return {
                 id: 'wh_' + wh.id,
@@ -502,7 +506,10 @@ exports.getSystemLogs = async (req, res) => {
                 createdAt: wh.receivedAt || wh.createdAt,
                 meta: {
                     userEmail: customerStr,
-                    error: wh.lastError
+                    error: wh.lastError,
+                    event: payloadObj.event || null,
+                    webhookStatus: wh.status || null,
+                    value: payloadObj.payment?.value ?? null
                 }
             };
         });
@@ -517,6 +524,67 @@ exports.getSystemLogs = async (req, res) => {
         
         // Garante que o frontend receba os logs recentes E os de pagamento
         logs = logs.slice(0, 150);
+
+        // Enriquece e traduz mensagens técnicas para exibição amigável sem alterar os registros brutos no banco
+        const refs = extractLogReferences(logs);
+        const lookup = { byId: {}, byEmail: {} };
+        try {
+            const lookupQueries = [];
+            if (refs.psychologistIds.length > 0 || refs.emails.length > 0) {
+                const psiConditions = [];
+                if (refs.psychologistIds.length > 0) {
+                    psiConditions.push({ id: { [Op.in]: refs.psychologistIds } });
+                }
+                if (refs.emails.length > 0) {
+                    psiConditions.push(
+                        db.sequelize.where(
+                            db.sequelize.fn('LOWER', db.sequelize.col('email')),
+                            { [Op.in]: refs.emails }
+                        )
+                    );
+                }
+                lookupQueries.push(
+                    db.Psychologist.findAll({
+                        where: { [Op.or]: psiConditions },
+                        attributes: ['id', 'nome', 'email'],
+                        raw: true
+                    })
+                );
+            } else {
+                lookupQueries.push(Promise.resolve([]));
+            }
+
+            if (refs.emails.length > 0) {
+                lookupQueries.push(
+                    db.Patient.findAll({
+                        where: db.sequelize.where(
+                            db.sequelize.fn('LOWER', db.sequelize.col('email')),
+                            { [Op.in]: refs.emails }
+                        ),
+                        attributes: ['id', 'nome', 'email'],
+                        raw: true
+                    })
+                );
+            } else {
+                lookupQueries.push(Promise.resolve([]));
+            }
+
+            const [matchedPsis, matchedPatients] = await Promise.all(lookupQueries);
+            for (const p of (matchedPsis || [])) {
+                if (p.id) lookup.byId[p.id] = p;
+                if (p.email) lookup.byEmail[String(p.email).trim().toLowerCase()] = p;
+            }
+            for (const pt of (matchedPatients || [])) {
+                if (pt.email) {
+                    const key = String(pt.email).trim().toLowerCase();
+                    if (!lookup.byEmail[key]) lookup.byEmail[key] = pt;
+                }
+            }
+        } catch (lookupErr) {
+            console.warn('[ADMIN LOGS] Lookup auxiliar ignorado:', lookupErr.message);
+        }
+
+        logs = logs.map((l) => formatSystemLog(l, lookup));
 
         const oneDayAgo = new Date(new Date() - 24 * 60 * 60 * 1000);
         let metrics = {

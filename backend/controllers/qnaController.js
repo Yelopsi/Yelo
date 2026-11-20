@@ -269,12 +269,11 @@ exports.generateSitemap = async (req, res) => {
             );
         } catch(e) { console.error("Erro ao buscar psicólogos para o sitemap:", e.message); }
 
-        // Busca os posts do blog
-        const postTable = db.Post ? db.Post.tableName : 'Posts';
+        // Busca os posts do blog (somente publicados)
         let posts = [];
         try {
             posts = await db.sequelize.query(
-                `SELECT id, slug, "updated_at" as "updatedAt" FROM "${postTable}" WHERE "slug" IS NOT NULL`,
+                `SELECT id, slug, "updated_at" as "updatedAt" FROM "posts" WHERE "slug" IS NOT NULL AND ("status" IS NULL OR "status" = 'published')`,
                 { type: db.sequelize.QueryTypes.SELECT }
             );
         } catch(e) {

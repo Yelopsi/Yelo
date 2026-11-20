@@ -30,7 +30,12 @@ interface LogItem {
   id?: string | number;
   level: string;
   message: string;
+  rawMessage?: string;
   details?: string;
+  category?: string;
+  categoryLabel?: string;
+  actorLabel?: string;
+  actorEmail?: string | null;
   createdAt: string;
   meta?: {
     userEmail?: string;
@@ -47,6 +52,11 @@ export default function LogsSistemaScreen() {
   const [search, setSearch] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [latency, setLatency] = useState<number | null>(null);
+  const [expandedLogIds, setExpandedLogIds] = useState<Record<string, boolean>>({});
+
+  const toggleRawLog = (key: string) => {
+    setExpandedLogIds((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const [rawLogs, setRawLogs] = useState<LogItem[]>([]);
   const [health, setHealth] = useState<HealthData | null>(null);
@@ -60,10 +70,11 @@ export default function LogsSistemaScreen() {
 
   // Processa e correlaciona logs para detectar o status da tentativa subsequente (igual à versão web)
   const processAndCorrelateLogs = useCallback((logsList: LogItem[]): LogItem[] => {
+    const getUserKey = (item: LogItem) => item.actorEmail || item.meta?.userEmail || null;
     const logsByUser: Record<string, LogItem[]> = {};
 
     logsList.forEach((log) => {
-      const userId = log.meta?.userEmail;
+      const userId = getUserKey(log);
       if (userId) {
         if (!logsByUser[userId]) logsByUser[userId] = [];
         logsByUser[userId].push(log);
@@ -80,7 +91,7 @@ export default function LogsSistemaScreen() {
       const newLog = { ...log };
       if (newLog.level !== 'error' && newLog.level !== 'fatal') return newLog;
 
-      const userId = newLog.meta?.userEmail;
+      const userId = getUserKey(newLog);
       if (!userId || !logsByUser[userId]) return newLog;
 
       const userActions = logsByUser[userId];
@@ -93,12 +104,13 @@ export default function LogsSistemaScreen() {
         const minutesDiff = timeDiff / (1000 * 60);
 
         if (minutesDiff < 30) {
-          const msgA = (newLog.message || '').toLowerCase();
-          const msgB = (nextAction.message || '').toLowerCase();
+          const msgA = ((newLog.message || '') + ' ' + (newLog.rawMessage || '')).toLowerCase();
+          const msgB = ((nextAction.message || '') + ' ' + (nextAction.rawMessage || '')).toLowerCase();
           const isSameAction =
-            (msgA.includes('login') && msgB.includes('login')) ||
-            (msgA.includes('pagamento') && msgB.includes('pagamento')) ||
-            (msgA.includes('asaas') && msgB.includes('asaas'));
+            ((msgA.includes('login') || msgA.includes('acess') || msgA.includes('entrou')) &&
+              (msgB.includes('login') || msgB.includes('acess') || msgB.includes('entrou'))) ||
+            ((msgA.includes('pagamento') || msgA.includes('asaas') || msgA.includes('cobrança')) &&
+              (msgB.includes('pagamento') || msgB.includes('asaas') || msgB.includes('cobrança')));
 
           newLog.subsequentAttempt = isSameAction
             ? { type: nextAction.level === 'error' ? 'failure' : 'success' }
@@ -175,17 +187,32 @@ export default function LogsSistemaScreen() {
         matchesTab = l.level === 'info';
       } else if (activeTab === 'payment') {
         const msg = (l.message || '').toLowerCase();
-        matchesTab = l.level === 'payment' || msg.includes('pagamento') || msg.includes('asaas');
+        const rawMsg = (l.rawMessage || '').toLowerCase();
+        matchesTab =
+          l.level === 'payment' ||
+          l.category === 'payment' ||
+          l.category === 'finance' ||
+          msg.includes('pagamento') ||
+          msg.includes('asaas') ||
+          msg.includes('cobrança') ||
+          msg.includes('faturamento') ||
+          rawMsg.includes('asaas') ||
+          rawMsg.includes('pagamento');
       }
 
       // Filtro de Busca
       let matchesSearch = true;
       if (searchTerm) {
-        const msg = (l.message || '').toLowerCase();
-        const userEmail = (l.meta?.userEmail || '').toLowerCase();
-        const details = (l.details || '').toLowerCase();
-        matchesSearch =
-          msg.includes(searchTerm) || userEmail.includes(searchTerm) || details.includes(searchTerm);
+        const fields = [
+          l.message,
+          l.rawMessage,
+          l.actorLabel,
+          l.actorEmail,
+          l.categoryLabel,
+          l.details,
+          l.meta?.userEmail,
+        ];
+        matchesSearch = fields.some((f) => String(f || '').toLowerCase().includes(searchTerm));
       }
 
       return matchesTab && matchesSearch;
@@ -474,7 +501,7 @@ export default function LogsSistemaScreen() {
             <TextInput
               value={search}
               onChangeText={setSearch}
-              placeholder="Buscar por e-mail, mensagem ou erro..."
+              placeholder="Buscar por nome, e-mail, campanha, pagamento ou erro..."
               placeholderTextColor="#94a3b8"
               style={{
                 flex: 1,
@@ -743,6 +770,8 @@ export default function LogsSistemaScreen() {
               const isWarning = log.level === 'warning';
               const isPayment =
                 log.level === 'payment' ||
+                log.category === 'payment' ||
+                log.category === 'finance' ||
                 (log.message || '').toLowerCase().includes('pagamento') ||
                 (log.message || '').toLowerCase().includes('asaas');
 
@@ -754,21 +783,37 @@ export default function LogsSistemaScreen() {
                 color = '#ef4444';
                 badgeBg = '#fee2e2';
                 title = 'ERROR';
+              } else if (log.category === 'campaign') {
+                color = '#6b21a8';
+                badgeBg = '#f3e8ff';
+                title = 'CAMPANHA';
               } else if (isPayment) {
                 color = '#10b981';
                 badgeBg = '#ecfdf5';
                 title = 'PAGAMENTO';
+              } else if (log.category === 'forum' || log.category === 'copilot') {
+                color = '#0f766e';
+                badgeBg = '#f0fdfa';
+                title = 'IA';
               } else if (isWarning) {
                 color = '#f59e0b';
                 badgeBg = '#fffbeb';
                 title = 'WARNING';
               }
 
-              const userIdentifier = log.meta?.userEmail || 'Sistema';
+              const badgeText = log.categoryLabel || title;
+              const actorLabel = log.actorLabel || log.meta?.userEmail || 'Sistema';
+              const actorEmailSub =
+                log.actorEmail && log.actorEmail.toLowerCase() !== actorLabel.toLowerCase()
+                  ? log.actorEmail
+                  : null;
+              const rowKey = String(log.id || idx);
+              const hasRawDiff = Boolean(log.rawMessage && log.rawMessage !== log.message);
+              const isExpanded = Boolean(expandedLogIds[rowKey]);
 
               return (
                 <View
-                  key={log.id || idx}
+                  key={rowKey}
                   style={{
                     backgroundColor: '#ffffff',
                     borderRadius: 18,
@@ -787,11 +832,12 @@ export default function LogsSistemaScreen() {
                     style={{
                       flexDirection: 'row',
                       justifyContent: 'space-between',
-                      alignItems: 'center',
+                      alignItems: 'flex-start',
                       marginBottom: 8,
+                      gap: 8,
                     }}
                   >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, flex: 1 }}>
                       <View
                         style={{
                           backgroundColor: badgeBg,
@@ -801,18 +847,33 @@ export default function LogsSistemaScreen() {
                         }}
                       >
                         <Text style={{ fontFamily: 'Inter_700Bold', color, fontSize: 10 }}>
-                          {title}
+                          {badgeText}
                         </Text>
                       </View>
-                      <Text
-                        style={{
-                          fontFamily: 'Inter_600SemiBold',
-                          color: '#475569',
-                          fontSize: 11,
-                        }}
-                      >
-                        {userIdentifier}
-                      </Text>
+                      <View style={{ flexShrink: 1 }}>
+                        <Text
+                          style={{
+                            fontFamily: 'Inter_700Bold',
+                            color: '#1e293b',
+                            fontSize: 12,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {actorLabel}
+                        </Text>
+                        {actorEmailSub ? (
+                          <Text
+                            style={{
+                              fontFamily: 'Inter_400Regular',
+                              color: '#64748b',
+                              fontSize: 10.5,
+                            }}
+                            numberOfLines={1}
+                          >
+                            {actorEmailSub}
+                          </Text>
+                        ) : null}
+                      </View>
                     </View>
 
                     <Text
@@ -838,7 +899,7 @@ export default function LogsSistemaScreen() {
                       fontFamily: 'Inter_500Medium',
                       color: '#1e293b',
                       fontSize: 13,
-                      lineHeight: 18,
+                      lineHeight: 19,
                     }}
                   >
                     {log.message}
@@ -911,16 +972,48 @@ export default function LogsSistemaScreen() {
                     <Text
                       style={{
                         fontFamily: 'Inter_400Regular',
-                        color: '#64748b',
-                        fontSize: 11,
+                        color: '#475569',
+                        fontSize: 11.5,
+                        lineHeight: 16,
                         marginTop: 8,
                         backgroundColor: '#f8fafc',
-                        padding: 8,
+                        padding: 9,
                         borderRadius: 8,
                       }}
                     >
                       {log.details}
                     </Text>
+                  ) : null}
+
+                  {hasRawDiff ? (
+                    <View style={{ marginTop: 8 }}>
+                      <TouchableOpacity onPress={() => toggleRawLog(rowKey)} activeOpacity={0.7}>
+                        <Text
+                          style={{
+                            fontFamily: 'Inter_600SemiBold',
+                            color: '#64748b',
+                            fontSize: 11,
+                          }}
+                        >
+                          {isExpanded ? '▾ Ocultar detalhe técnico' : '▸ Ver detalhe técnico'}
+                        </Text>
+                      </TouchableOpacity>
+                      {isExpanded ? (
+                        <Text
+                          style={{
+                            fontFamily: 'Inter_400Regular',
+                            color: '#475569',
+                            fontSize: 10.5,
+                            marginTop: 6,
+                            backgroundColor: '#f8fafc',
+                            padding: 8,
+                            borderRadius: 6,
+                          }}
+                        >
+                          {log.rawMessage}
+                        </Text>
+                      ) : null}
+                    </View>
                   ) : null}
                 </View>
               );

@@ -1,9 +1,26 @@
 const cors = require('cors');
 
+function buildAllowedOrigins() {
+    const origins = new Set();
+    const rawFrontend = (process.env.FRONTEND_URL || '').trim().replace(/\/+$/, '');
+    if (rawFrontend) {
+        origins.add(rawFrontend);
+        try {
+            const parsed = new URL(rawFrontend);
+            if (parsed.hostname.startsWith('www.')) {
+                origins.add(`${parsed.protocol}//${parsed.hostname.slice(4)}${parsed.port ? ':' + parsed.port : ''}`);
+            } else {
+                origins.add(`${parsed.protocol}//www.${parsed.hostname}${parsed.port ? ':' + parsed.port : ''}`);
+            }
+        } catch (_) {}
+    }
+    return origins;
+}
+
 const corsConfig = cors({
     origin: (origin, callback) => {
-        const allowedOrigins = [process.env.FRONTEND_URL];
-        if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+        const allowedOrigins = buildAllowedOrigins();
+        if (!origin || allowedOrigins.has(origin) || process.env.NODE_ENV !== 'production') {
             callback(null, true);
         } else {
             callback(new Error('Origem não permitida pelo CORS'));

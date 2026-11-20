@@ -435,6 +435,7 @@ router.get('/:slug', async (req, res, next) => {
             const postsAutor = await db.Post.findAll({
                 where: { 
                     psychologistId: psychologist.id,
+                    status: 'published',
                     slug: { [db.Sequelize.Op.not]: null } 
                 },
                 limit: 3,

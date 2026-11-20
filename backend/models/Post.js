@@ -38,6 +38,16 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             defaultValue: 0
         },
+        status: {
+            type: DataTypes.STRING(24),
+            allowNull: false,
+            defaultValue: 'published'
+        },
+        scheduledFor: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            field: 'scheduled_for'
+        },
         createdAt: {
             type: DataTypes.DATE,
             field: 'created_at'
