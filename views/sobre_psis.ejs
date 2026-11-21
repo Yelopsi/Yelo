@@ -212,6 +212,18 @@
             .collage-wrapper { height: auto; margin-top: 40px; }
             .hero-psis h1 { font-size: 2.5rem; }
 
+            /* Grid 3 horizontal x 4 vertical (12 fotos) no Mobile */
+            .therapist-collage {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 8px !important;
+            }
+            .therapist-collage .collage-item {
+                border-radius: 8px !important;
+            }
+            .therapist-collage .collage-item:nth-child(n+13) {
+                display: none !important;
+            }
+
             /* Scroll Snap Horizontal para Cards no Mobile */
             .quality-grid {
                 display: flex;
@@ -381,7 +393,7 @@
         <section class="cta-final-psi">
             <div style="max-width: 600px; margin: 0 auto;">
                 <h2>Encontre o acolhimento que você merece</h2>
-                <p>Nossa inteligência artificial conectará você aos profissionais mais compatíveis com o seu momento.</p>
+                <p>Nosso algoritmo conectará você aos profissionais mais compatíveis com o seu momento.</p>
                 <a href="/questionario" class="btn-cta-principal" style="border-radius: 50px; padding: 15px 40px; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(27,67,50,0.2);">Começar meu Match</a>
                 
                 <div style="margin-top: 60px; padding: 35px 30px; border-radius: 16px; background: #E6F4F1; display: inline-block;">
@@ -405,21 +417,32 @@
                 let psis = await res.json();
                 
                 if (psis && psis.length > 0) {
-                    // Filtra os psicólogos reais com foto válida
+                    // Filtra exclusivamente psicólogos reais que fizeram upload da foto (armazenada no Cloudinary)
                     let reais = psis.filter(p => 
                         p.id !== 0 && 
                         p.fotoUrl && 
                         p.fotoUrl !== 'null' &&
                         p.fotoUrl.trim() !== '' &&
-                        !p.fotoUrl.includes('placehold.co')
+                        !p.fotoUrl.includes('googleusercontent') &&
+                        !p.fotoUrl.includes('placehold') &&
+                        !p.fotoUrl.includes('placeholder') &&
+                        !p.fotoUrl.includes('default-avatar') &&
+                        (p.fotoUrl.includes('cloudinary') || window.location.hostname === 'localhost')
                     );
                     
-                    if (reais.length === 0) reais = psis; // Fallback
+                    if (reais.length === 0) {
+                        reais = psis.filter(p => p.fotoUrl && !p.fotoUrl.includes('googleusercontent') && !p.fotoUrl.includes('placehold') && !p.fotoUrl.includes('placeholder'));
+                    }
+
+                    if (reais.length === 0) {
+                        grid.innerHTML = '<p style="text-align: center; color: #888; grid-column: 1 / -1;">Nenhum profissional com foto cadastrada no momento.</p>';
+                        return;
+                    }
                     
                     // Embaralha todos para ter variação inicial
                     reais = reais.sort(() => 0.5 - Math.random());
                     
-                    // Preenche os 16 slots distribuindo os profissionais de forma igualitária
+                    // Preenche os 16 slots distribuindo os profissionais de forma igualitária (no mobile o CSS exibe 3x4 = 12)
                     let displayPsis = [];
                     let pIndex = 0;
                     while (displayPsis.length < 16) { 
@@ -434,7 +457,7 @@
                     displayPsis.forEach(psi => {
                         grid.innerHTML += `
                             <div class="collage-item" title="${psi.nome}">
-                                <img src="${psi.fotoUrl}" alt="${psi.nome}" onerror="this.src='https://placehold.co/400x400/1B4332/FFFFFF?text=Psi'">
+                                <img src="${psi.fotoUrl}" alt="${psi.nome}" loading="lazy" onerror="this.onerror=null; const repl = reais[Math.floor(Math.random() * reais.length)]; if(repl) { this.src = repl.fotoUrl; this.alt = repl.nome; }">
                             </div>
                         `;
                     });
@@ -444,6 +467,14 @@
                     
                     shuffledItems.forEach((img, index) => {
                         const runCycle = () => {
+                            // Não processa animação para itens ocultos (ex: slots 13 a 16 no mobile)
+                            const parentCard = img.closest('.collage-item');
+                            if (parentCard && (window.getComputedStyle(parentCard).display === 'none' || parentCard.offsetParent === null)) {
+                                const nextWait = Math.random() * 15000 + 15000;
+                                setTimeout(runCycle, nextWait);
+                                return;
+                            }
+
                             // 1. Desaparece (Fade out)
                             img.style.opacity = '0';
                             

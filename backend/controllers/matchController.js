@@ -288,14 +288,42 @@ exports.getShowcasePsychologists = async (req, res) => {
         const limit = parseInt(req.query.limit, 10) || 4;
         const dbLimit = limit > 4 ? limit * 2 : 20; // Busca um pouco mais no DB para compensar possíveis inativos
 
-        const psychologists = await db.Psychologist.findAll({
+        const baseWhere = {
+            fotoUrl: {
+                [Op.and]: [
+                    { [Op.ne]: null },
+                    { [Op.ne]: '' },
+                    { [Op.notILike]: '%googleusercontent%' },
+                    { [Op.notILike]: '%placehold%' },
+                    { [Op.notILike]: '%default-avatar%' }
+                ]
+            }
+        };
+
+        // Filtra estritamente psicólogos que fizeram upload real de foto (armazenada no Cloudinary)
+        let psychologists = await db.Psychologist.findAll({
             where: {
-                fotoUrl: { [Op.ne]: null }
+                fotoUrl: {
+                    [Op.and]: [
+                        baseWhere.fotoUrl,
+                        { [Op.iLike]: '%cloudinary%' }
+                    ]
+                }
             },
             order: db.sequelize.random(), 
             limit: dbLimit, 
             attributes: ['id', 'nome', 'slug', 'fotoUrl', 'status', 'createdAt', 'planExpiresAt', 'is_exempt'] 
         });
+
+        // Fallback seguro em desenvolvimento local caso a base não possua registros Cloudinary
+        if (psychologists.length === 0 && process.env.NODE_ENV !== 'production') {
+            psychologists = await db.Psychologist.findAll({
+                where: baseWhere,
+                order: db.sequelize.random(), 
+                limit: dbLimit, 
+                attributes: ['id', 'nome', 'slug', 'fotoUrl', 'status', 'createdAt', 'planExpiresAt', 'is_exempt'] 
+            });
+        }
 
         const agora = new Date();
         const validPsychologists = psychologists.map(psy => {
@@ -313,16 +341,9 @@ exports.getShowcasePsychologists = async (req, res) => {
             return psyData;
         }).slice(0, limit);
 
-        while (validPsychologists.length < 4) {
-            validPsychologists.push({
-                id: 0,
-                nome: "Em breve",
-                fotoUrl: "https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-            });
-        }
-
         res.status(200).json(validPsychologists);
     } catch (error) {
+        console.error('[Showcase] Erro ao buscar vitrine de psicólogos:', error);
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 };

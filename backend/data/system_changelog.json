@@ -1,5 +1,36 @@
 [
   {
+    "id": "change-git-a09d1c07",
+    "date": "2026-11-20T20:47:04.000Z",
+    "commit": "a09d1c07",
+    "author": "Anderson",
+    "title": "Novo: Adequar linguagem da moderacao ao genero feminino (Yara) e fixado pela admin (forum)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "adequar linguagem da moderacao ao genero feminino (Yara) e fixado pela admin",
+    "description": "Commit registrado no repositório: \"feat(forum): adequar linguagem da moderacao ao genero feminino (Yara) e fixado pela admin\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/forumController.js, backend/data/system_changelog.json, backend/services/forumMediatorService.js, mobile/src/app/(tabs)/forum.tsx (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a09d1c07"
+    },
+    "after": {
+      "nova_versao": "adequar linguagem da moderacao ao genero feminino (Yara) e fixado pela admin"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/forumController.js",
+      "backend/data/system_changelog.json",
+      "backend/services/forumMediatorService.js",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "mobile/src/components/forum/ForumCommentThread.tsx",
+      "public/psi/psi_forum.html",
+      "public/psi/psi_forum.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-531d40ca",
     "date": "2026-11-20T20:35:22.000Z",
     "commit": "531d40ca",

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -7,6 +7,7 @@ import YeloScrollView from '../components/YeloScrollView';
 import Footer from '../components/Footer';
 import PublicBottomNav from '../components/PublicBottomNav';
 import PublicHeader from '../components/PublicHeader';
+import api from '../services/api';
 
 const { width } = Dimensions.get('window');
 const gap = 8;
@@ -14,6 +15,28 @@ const itemWidth = (width - 40 - (gap * 2)) / 3; // 40 is horizontal padding (20 
 
 export default function SobrePsisScreen() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    api.get('/api/psychologists/showcase?limit=50')
+      .then(res => {
+        if (!isMounted || !Array.isArray(res.data)) return;
+        const validPhotos = res.data
+          .filter((p: any) => p && p.fotoUrl && !p.fotoUrl.includes('googleusercontent') && !p.fotoUrl.includes('placehold') && !p.fotoUrl.includes('default-avatar'))
+          .map((p: any) => p.fotoUrl);
+        if (validPhotos.length > 0) {
+          const shuffled = [...validPhotos].sort(() => 0.5 - Math.random());
+          const display: string[] = [];
+          for (let i = 0; i < 12; i++) {
+            display.push(shuffled[i % shuffled.length]);
+          }
+          setPhotos(display);
+        }
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
   return (
     <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
@@ -122,21 +145,24 @@ export default function SobrePsisScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Grid 3x5 de Fotos (15 items) para mobile */}
+            {/* Grid 3x4 de Fotos (12 items) para mobile */}
             <View className="w-full mt-[40px] flex-row flex-wrap justify-between" style={{ gap: gap }}>
-              {Array.from({ length: 15 }).map((_, index) => (
-                <View 
-                  key={index} 
-                  className="rounded-[8px] overflow-hidden bg-[#e0e0e0] shadow-[0_4px_10px_rgba(0,0,0,0.05)]"
-                  style={{ width: itemWidth, height: itemWidth }}
-                >
-                  <Image 
-                    source={{uri: `https://images.pexels.com/photos/${3184291 + index}/pexels-photo-${3184291 + index}.jpeg?auto=compress&cs=tinysrgb&w=200`}} 
-                    className="w-full h-full" 
-                    resizeMode="cover" 
-                  />
-                </View>
-              ))}
+              {Array.from({ length: 12 }).map((_, index) => {
+                const photoUri = photos[index] || `https://images.pexels.com/photos/${3184291 + index}/pexels-photo-${3184291 + index}.jpeg?auto=compress&cs=tinysrgb&w=200`;
+                return (
+                  <View 
+                    key={index} 
+                    className="rounded-[8px] overflow-hidden bg-[#e0e0e0] shadow-[0_4px_10px_rgba(0,0,0,0.05)]"
+                    style={{ width: itemWidth, height: itemWidth }}
+                  >
+                    <Image 
+                      source={{ uri: photoUri }} 
+                      className="w-full h-full" 
+                      resizeMode="cover" 
+                    />
+                  </View>
+                );
+              })}
             </View>
 
           </View>
@@ -156,7 +182,7 @@ export default function SobrePsisScreen() {
               Encontre o acolhimento que você merece
             </Text>
             <Text className="font-sans text-[#666] text-[18px] text-center mb-[30px] leading-[28px]">
-              Nossa inteligência artificial conectará você aos profissionais mais compatíveis com o seu momento.
+              Nosso algoritmo conectará você aos profissionais mais compatíveis com o seu momento.
             </Text>
             
             <TouchableOpacity 

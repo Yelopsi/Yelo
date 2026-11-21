@@ -44,7 +44,7 @@
         gap: 8px; /* Espaço menor no celular */
     }
     .therapist-collage .collage-item { border-radius: 8px; }
-    .therapist-collage .collage-item:nth-child(16) { display: none; } /* Mantém 15 fotos (3x5) para fechar o grid perfeitamente */
+    .therapist-collage .collage-item:nth-child(n+13) { display: none !important; } /* 3 horizontal x 4 vertical = 12 fotos no mobile */
 }
 
 /* --- PÁGINA PROFISSIONAIS --- */
