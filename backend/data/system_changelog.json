@@ -1,5 +1,33 @@
 [
   {
+    "id": "change-git-34dcec59",
+    "date": "2026-11-23T00:05:27.000Z",
+    "commit": "34dcec59",
+    "author": "Anderson",
+    "title": "Novo: Adicionar botoes faltantes no CS drawer e tela de Dossie Completo do psicologo (crm-app)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "adicionar botoes faltantes no CS drawer e tela de Dossie Completo do psicologo",
+    "description": "Commit registrado no repositório: \"feat(crm-app): adicionar botoes faltantes no CS drawer e tela de Dossie Completo do psicologo\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/_layout.tsx, mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx, mobile/src/app/(admin)/crm-modulo/psicologos.tsx (+1 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #34dcec59"
+    },
+    "after": {
+      "nova_versao": "adicionar botoes faltantes no CS drawer e tela de Dossie Completo do psicologo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-b728b0cf",
     "date": "2026-11-21T01:49:37.000Z",
     "commit": "b728b0cf",
