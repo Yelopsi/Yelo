@@ -982,6 +982,28 @@ export default function AdminCRMPsicologosScreen() {
   };
 
   // -------------------------------------------------------------
+  // Estender Período Grátis (Trial) no Drawer
+  // -------------------------------------------------------------
+  const handleExtendTrial = async (psy: any) => {
+    setConfirmModal({
+      visible: true,
+      title: 'Estender Período Grátis',
+      message: `Deseja adicionar 7 dias extras de período grátis para "${psy.nome}"?`,
+      onConfirm: async () => {
+        try {
+          await api.post(`/api/admin/psychologists/${psy.id}/extend-trial`, { days: 7 });
+          setConfirmModal((prev) => ({ ...prev, visible: false }));
+          Alert.alert('Sucesso', 'Período grátis estendido em 7 dias com sucesso!');
+          setDrawerData((prev: any) => ({ ...prev, status: 'active' }));
+          fetchData(currentPage);
+        } catch (e: any) {
+          Alert.alert('Erro', e.message || 'Erro ao estender período.');
+        }
+      },
+    });
+  };
+
+  // -------------------------------------------------------------
   // Gerar Diagnóstico com IA no Drawer
   // -------------------------------------------------------------
   const handleGenerateAiDiagnosis = async (psy: any) => {
@@ -3040,29 +3062,33 @@ export default function AdminCRMPsicologosScreen() {
                           Ações de CS
                         </Text>
 
-                        {/* WhatsApp */}
+                        {/* 1. Conceder Isenção VIP */}
                         <TouchableOpacity
-                          onPress={() => handleSendAction(psy, 'standard_contact')}
-                          className="bg-[#10b981] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
+                          onPress={() => handleToggleVip(psy)}
+                          className="bg-[#f0fdf4] border border-[#bbf7d0] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
                         >
-                          <Feather name="message-circle" size={16} color="#fff" />
-                          <Text className="font-sans font-bold text-white text-[14px]">
-                            Chamar no WhatsApp 📱
+                          <Text className="font-sans font-bold text-[#166534] text-[14px]">
+                            {isVip ? 'Remover Isenção VIP' : 'Conceder Isenção VIP'}
                           </Text>
                         </TouchableOpacity>
 
-                        {/* Análise de Perfil (IA) */}
+                        {/* 2. Ver Dossiê Completo 📦 */}
                         <TouchableOpacity
-                          onPress={() => handleSendAction(psy, 'analysis')}
-                          className="bg-[#fef08a] border border-[#fde047] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
+                          onPress={() => {
+                            setDrawerVisible(false);
+                            router.push({
+                              pathname: '/(admin)/crm-modulo/detalhes-psicologo' as any,
+                              params: { id: String(psy.id) },
+                            });
+                          }}
+                          className="bg-[#f8fafc] border border-[#cbd5e1] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
                         >
-                          <Feather name="award" size={16} color="#b45309" />
-                          <Text className="font-sans font-bold text-[#b45309] text-[14px]">
-                            ✨ Análise de Perfil (IA)
+                          <Text className="font-sans font-bold text-[#334155] text-[14px]">
+                            Ver Dossiê Completo 📦
                           </Text>
                         </TouchableOpacity>
 
-                        {/* Ver Perfil Público */}
+                        {/* 3. Ver Perfil Público 🔗 */}
                         <TouchableOpacity
                           onPress={() => {
                             const slug = psy.slug || psy.id;
@@ -3070,31 +3096,48 @@ export default function AdminCRMPsicologosScreen() {
                           }}
                           className="bg-[#f0fdf4] border border-[#bbf7d0] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
                         >
-                          <Feather name="external-link" size={16} color="#166534" />
                           <Text className="font-sans font-bold text-[#166534] text-[14px]">
                             Ver Perfil Público 🔗
                           </Text>
                         </TouchableOpacity>
 
-                        {/* Gerenciar VIP */}
+                        {/* 4. Chamar no WhatsApp 📱 */}
                         <TouchableOpacity
-                          onPress={() => handleToggleVip(psy)}
-                          className="bg-[#1B4332] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
+                          onPress={() => handleSendAction(psy, 'standard_contact')}
+                          className="bg-[#e0f2fe] border border-[#bae6fd] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
                         >
-                          <Feather name="star" size={16} color="#fff" />
-                          <Text className="font-sans font-bold text-white text-[14px]">
-                            {isVip ? 'Remover Isenção VIP' : 'Conceder Isenção VIP ⭐'}
+                          <Text className="font-sans font-bold text-[#0369a1] text-[14px]">
+                            Chamar no WhatsApp 📱
                           </Text>
                         </TouchableOpacity>
 
-                        {/* Expirar Perfil */}
+                        {/* 5. ✨ Análise de Perfil (IA) */}
+                        <TouchableOpacity
+                          onPress={() => handleSendAction(psy, 'analysis')}
+                          className="bg-[#fef08a] border border-[#fde047] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
+                        >
+                          <Text className="font-sans font-bold text-[#b45309] text-[14px]">
+                            ✨ Análise de Perfil (IA)
+                          </Text>
+                        </TouchableOpacity>
+
+                        {/* 6. Expirar Perfil (Inativo) ⚠️ */}
                         <TouchableOpacity
                           onPress={() => handleExpireProfile(psy)}
-                          className="bg-[#fef2f2] border border-[#fecaca] py-[12px] rounded-full items-center flex-row justify-center gap-[6px] mt-2"
+                          className="bg-[#fef2f2] border border-[#fecaca] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
                         >
-                          <Feather name="alert-circle" size={16} color="#991b1b" />
                           <Text className="font-sans font-bold text-[#991b1b] text-[14px]">
                             Expirar Perfil (Inativo) ⚠️
+                          </Text>
+                        </TouchableOpacity>
+
+                        {/* 7. Estender Período Grátis 🎁 */}
+                        <TouchableOpacity
+                          onPress={() => handleExtendTrial(psy)}
+                          className="bg-[#f0fdf4] border border-[#bbf7d0] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"
+                        >
+                          <Text className="font-sans font-bold text-[#166534] text-[14px]">
+                            Estender Período Grátis 🎁
                           </Text>
                         </TouchableOpacity>
                       </View>

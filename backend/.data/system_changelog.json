@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-b728b0cf",
+    "date": "2026-11-21T01:49:37.000Z",
+    "commit": "b728b0cf",
+    "author": "Anderson",
+    "title": "Novo: Vitrine com fotos reais de upload, grid mobile 3x4 e texto alinhado ao algoritmo (sobre_psis)",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "vitrine com fotos reais de upload, grid mobile 3x4 e texto alinhado ao algoritmo",
+    "description": "Commit registrado no repositório: \"feat(sobre_psis): vitrine com fotos reais de upload, grid mobile 3x4 e texto alinhado ao algoritmo\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/matchController.js, backend/data/system_changelog.json, mobile/src/app/sobre_psis.tsx, public/css/components/public_profissionais.css (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #b728b0cf"
+    },
+    "after": {
+      "nova_versao": "vitrine com fotos reais de upload, grid mobile 3x4 e texto alinhado ao algoritmo"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/matchController.js",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/sobre_psis.tsx",
+      "public/css/components/public_profissionais.css",
+      "security/reports/gate_report.json",
+      "views/sobre_psis.ejs"
+    ]
+  },
+  {
     "id": "change-git-a09d1c07",
     "date": "2026-11-20T20:47:04.000Z",
     "commit": "a09d1c07",
