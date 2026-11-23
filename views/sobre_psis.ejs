@@ -420,6 +420,7 @@
                     // Filtra exclusivamente psicólogos reais que fizeram upload da foto (armazenada no Cloudinary)
                     let reais = psis.filter(p => 
                         p.id !== 0 && 
+                        p.id !== 232 &&
                         p.fotoUrl && 
                         p.fotoUrl !== 'null' &&
                         p.fotoUrl.trim() !== '' &&
@@ -427,11 +428,12 @@
                         !p.fotoUrl.includes('placehold') &&
                         !p.fotoUrl.includes('placeholder') &&
                         !p.fotoUrl.includes('default-avatar') &&
+                        !p.fotoUrl.includes('profile-232') &&
                         (p.fotoUrl.includes('cloudinary') || window.location.hostname === 'localhost')
                     );
                     
                     if (reais.length === 0) {
-                        reais = psis.filter(p => p.fotoUrl && !p.fotoUrl.includes('googleusercontent') && !p.fotoUrl.includes('placehold') && !p.fotoUrl.includes('placeholder'));
+                        reais = psis.filter(p => p.fotoUrl && p.id !== 232 && !p.fotoUrl.includes('profile-232') && !p.fotoUrl.includes('googleusercontent') && !p.fotoUrl.includes('placehold') && !p.fotoUrl.includes('placeholder'));
                     }
 
                     if (reais.length === 0) {

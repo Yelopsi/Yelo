@@ -289,13 +289,18 @@ exports.getShowcasePsychologists = async (req, res) => {
         const dbLimit = limit > 4 ? limit * 2 : 20; // Busca um pouco mais no DB para compensar possíveis inativos
 
         const baseWhere = {
+            id: {
+                [Op.notIn]: [232] // Exclui avatares gráficos/letras que não sejam fotos reais de psicólogos
+            },
             fotoUrl: {
                 [Op.and]: [
                     { [Op.ne]: null },
                     { [Op.ne]: '' },
                     { [Op.notILike]: '%googleusercontent%' },
                     { [Op.notILike]: '%placehold%' },
-                    { [Op.notILike]: '%default-avatar%' }
+                    { [Op.notILike]: '%placeholder%' },
+                    { [Op.notILike]: '%default-avatar%' },
+                    { [Op.notILike]: '%profile-232.%' }
                 ]
             }
         };

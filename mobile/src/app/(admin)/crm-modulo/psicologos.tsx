@@ -3078,7 +3078,7 @@ export default function AdminCRMPsicologosScreen() {
                             setDrawerVisible(false);
                             router.push({
                               pathname: '/(admin)/crm-modulo/detalhes-psicologo' as any,
-                              params: { id: String(psy.id) },
+                              params: { id: String(psy.id), name: psy.nome || '' },
                             });
                           }}
                           className="bg-[#f8fafc] border border-[#cbd5e1] py-[12px] rounded-full items-center flex-row justify-center gap-[6px]"

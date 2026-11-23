@@ -5,64 +5,115 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
+  RefreshControl,
   Image,
   Linking,
-  RefreshControl,
-  Share,
+  Alert,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import api from '../../../services/api';
+import NativeSelectMenu, { type NativeSelectOption } from '../../../components/NativeSelectMenu';
 
-type TabKey = 'timeline' | 'payments' | 'whatsapp' | 'reviews' | 'blog' | 'forum';
-
-interface FullDetailsResponse {
-  psychologist: any;
-  subscription?: any;
-  stats?: {
-    profileViews?: number;
-    matches?: number;
-    whatsappClicks?: number;
-    forumActivities?: number;
-  };
-  blogPosts?: any[];
-  forumPosts?: any[];
-  forumComments?: any[];
-  reviews?: any[];
-  matches?: any[];
-  whatsappLogs?: any[];
-  payments?: any[];
-  asaasSubscription?: any;
-  asaasFailedReason?: string;
-  asaasFailedBillingType?: string;
+// -------------------------------------------------------------
+// Formatadores e Utilitários
+// -------------------------------------------------------------
+function formatDateBR(dateString?: string | null): string {
+  if (!dateString) return '-';
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('pt-BR');
+  } catch {
+    return '-';
+  }
 }
 
-export default function AdminCRMPsicologoDetalhesScreen() {
+function formatDateTimeBR(dateString?: string | null): string {
+  if (!dateString) return '-';
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '-';
+    return `${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+  } catch {
+    return '-';
+  }
+}
+
+function formatCurrency(val?: number | string | null): string {
+  if (val === undefined || val === null || val === '') return 'R$ 0,00';
+  const num = typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val;
+  if (isNaN(num)) return 'R$ 0,00';
+  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function mascaraTelefone(tel?: string | null): string {
+  if (!tel) return '';
+  const r = tel.replace(/\D/g, '');
+  if (r.length === 11) return r.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+  if (r.length === 10) return r.replace(/^(\d{2})(\d{4})(\d{4}).*/, '($1) $2-$3');
+  return tel;
+}
+
+function getExpiryCountdown(dateStr?: string | null) {
+  if (!dateStr) return null;
+  const target = new Date(dateStr);
+  if (isNaN(target.getTime())) return null;
+
+  const now = new Date();
+  target.setHours(23, 59, 59, 999);
+  const diffMs = target.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    const past = Math.abs(diffDays);
+    return {
+      isExpired: true,
+      days: past,
+      text: past === 0 ? 'Expirou hoje' : `Expirado há ${past} dia${past > 1 ? 's' : ''}`,
+    };
+  }
+  if (diffDays === 0) return { isExpired: false, days: 0, text: 'Vence hoje' };
+  if (diffDays === 1) return { isExpired: false, days: 1, text: 'Vence amanhã' };
+  return { isExpired: false, days: diffDays, text: `Restam ${diffDays} dias` };
+}
+
+type TabType = 'timeline' | 'payments' | 'blog' | 'forum' | 'reviews' | 'whatsapp';
+
+export default function AdminDetalhesPsicologoScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id: string; name?: string }>();
+  const psyId = params.id;
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [data, setData] = useState<FullDetailsResponse | null>(null);
-  const [activeTab, setActiveTab] = useState<TabKey>('timeline');
-  const [actionLoading, setActionLoading] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('timeline');
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const fetchDetails = useCallback(async () => {
-    if (!id) return;
+    if (!psyId) {
+      Alert.alert('Erro', 'ID do psicólogo não fornecido.');
+      router.back();
+      return;
+    }
+
     try {
-      const response = await api.get<FullDetailsResponse>(
-        `/api/admin/psychologists/${id}/full-details`
-      );
-      setData(response.data);
-    } catch (error: any) {
-      console.error('Erro ao carregar dossiê completo:', error);
-      Alert.alert('Erro', error?.message || 'Não foi possível carregar os detalhes do psicólogo.');
+      const res = await api.get(`/api/admin/psychologists/${psyId}/full-details`);
+      setData(res.data);
+    } catch (err: any) {
+      console.error('[AdminDetalhesPsicologo] Erro ao carregar detalhes:', err);
+      Alert.alert('Erro', 'Não foi possível carregar o dossiê do psicólogo.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [id]);
+  }, [psyId, router]);
 
   useEffect(() => {
     fetchDetails();
@@ -73,428 +124,443 @@ export default function AdminCRMPsicologoDetalhesScreen() {
     fetchDetails();
   }, [fetchDetails]);
 
-  // Helpers de formatação
-  const formatDateBR = (dateInput?: string | Date | null) => {
-    if (!dateInput) return '-';
+  const copyToClipboard = async (text: string, key: string) => {
     try {
-      const d = new Date(dateInput);
-      if (isNaN(d.getTime())) return '-';
-      return d.toLocaleDateString('pt-BR');
-    } catch {
-      return '-';
+      await Clipboard.setStringAsync(text);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+    } catch (e) {
+      console.warn('Falha ao copiar:', e);
     }
   };
 
-  const formatDateTimeBR = (dateInput?: string | Date | null) => {
-    if (!dateInput) return '-';
-    try {
-      const d = new Date(dateInput);
-      if (isNaN(d.getTime())) return '-';
-      return `${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })}`;
-    } catch {
-      return '-';
+  const openWhatsApp = (phone?: string | null, customMsg?: string) => {
+    if (!phone) {
+      Alert.alert('Aviso', 'Telefone não disponível.');
+      return;
     }
+    const cleanNumber = phone.replace(/\D/g, '');
+    const formatted = cleanNumber.startsWith('55') ? cleanNumber : `55${cleanNumber}`;
+    const textParam = customMsg ? `?text=${encodeURIComponent(customMsg)}` : '';
+    const url = `https://wa.me/${formatted}${textParam}`;
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Erro', 'Não foi possível abrir o WhatsApp.');
+    });
   };
 
-  const formatCurrency = (val: number | string | null | undefined) => {
-    const num = typeof val === 'number' ? val : parseFloat(val || '0');
-    if (isNaN(num)) return 'R$ 0,00';
-    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const openExternalUrl = (url?: string | null) => {
+    if (!url) return;
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Erro', 'Não foi possível abrir o link externo.');
+    });
   };
 
-  const psy = data?.psychologist;
+  // -------------------------------------------------------------
+  // Processamento e Normalização de Dados
+  // -------------------------------------------------------------
+  const p = data?.psychologist || {};
   const stats = data?.stats || {};
-  const payments = data?.payments || [];
-  const whatsappLogs = data?.whatsappLogs || [];
-  const reviews = data?.reviews || [];
-  const blogPosts = data?.blogPosts || [];
-  const forumPosts = data?.forumPosts || [];
-  const forumComments = data?.forumComments || [];
-  const asaasSub = data?.asaasSubscription;
-  const sub = data?.subscription;
+  const sub = data?.subscription || {};
+  const asaasSub = data?.asaasSubscription || {};
+  const payments = (data?.payments as any[]) || [];
+  const blogPosts = (data?.blogPosts as any[]) || [];
+  const forumPosts = (data?.forumPosts as any[]) || [];
+  const forumComments = (data?.forumComments as any[]) || [];
+  const reviews = (data?.reviews as any[]) || [];
+  const matches = (data?.matches as any[]) || [];
+  const whatsappLogs = (data?.whatsappLogs as any[]) || [];
 
-  // Calculo de expiração do plano
-  const expiryInfo = useMemo(() => {
-    const dateInput = psy?.planExpiresAt || asaasSub?.nextDueDate;
-    if (!dateInput) return null;
-    const d = new Date(dateInput);
-    if (isNaN(d.getTime())) return null;
-    if (d.getUTCFullYear() >= 2090) {
-      return { isPerpetual: true, isExpired: false, days: 9999, text: 'Vitalício' };
-    }
-    const now = new Date();
-    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-    const expDate = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-    const diffMs = expDate.getTime() - today.getTime();
-    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+  // Status Badge Logic
+  const statusInfo = useMemo(() => {
+    const isExempt = !!p.is_exempt;
+    const st = p.status || 'inactive';
 
-    if (diffDays < 0) {
-      const absDays = Math.abs(diffDays);
-      return {
-        isPerpetual: false,
-        isExpired: true,
-        days: absDays,
-        text: absDays === 1 ? 'Expirou ontem' : `Expirou há ${absDays} dias`,
-      };
-    } else if (diffDays === 0) {
-      return { isPerpetual: false, isExpired: false, days: 0, text: 'Vence hoje' };
-    } else if (diffDays === 1) {
-      return { isPerpetual: false, isExpired: false, days: 1, text: 'Vence amanhã' };
+    if (st === 'active') {
+      if (isExempt) {
+        return { label: 'VIP', bg: '#fef9c3', text: '#854d0e', border: '#fde047' };
+      }
+      if (!p.subscriptionId && p.planExpiresAt && new Date(p.planExpiresAt) > new Date()) {
+        return { label: 'TRIAL', bg: '#dbeafe', text: '#1e40af', border: '#93c5fd' };
+      }
+      return { label: 'ATIVO', bg: '#dcfce7', text: '#166534', border: '#86efac' };
     }
-    return { isPerpetual: false, isExpired: false, days: diffDays, text: `Vence em ${diffDays} dias` };
-  }, [psy?.planExpiresAt, asaasSub?.nextDueDate]);
+    if (st === 'pending') {
+      return { label: 'INCOMPLETO', bg: '#fef3c7', text: '#92400e', border: '#fcd34d' };
+    }
+    return { label: 'EXPIRADO', bg: '#fee2e2', text: '#991b1b', border: '#fca5a5' };
+  }, [p.status, p.is_exempt, p.subscriptionId, p.planExpiresAt]);
 
   // Conversões PLG
-  const plgAgendados = useMemo(() => {
+  const conversoesPlg = useMemo(() => {
     return whatsappLogs.filter(
       (l: any) => l.dealClosed === 'yes' || l.dealClosed === 'started'
     ).length;
   }, [whatsappLogs]);
 
-  // Eventos da Linha do Tempo
+  // Expiry Countdown Info
+  const expiryInfo = useMemo(() => {
+    return getExpiryCountdown(p.planExpiresAt || asaasSub.nextDueDate);
+  }, [p.planExpiresAt, asaasSub.nextDueDate]);
+
+  // Normalização da Linha do Tempo (Timeline)
   const timelineEvents = useMemo(() => {
-    const evts: any[] = [];
-    blogPosts.forEach((x: any) =>
-      evts.push({ type: 'blog', date: x.createdAt || x.created_at, data: x })
-    );
-    forumPosts.forEach((x: any) =>
-      evts.push({ type: 'forum_post', date: x.createdAt, data: x })
-    );
-    forumComments.forEach((x: any) =>
-      evts.push({ type: 'forum_comment', date: x.createdAt, data: x })
-    );
-    reviews.forEach((x: any) =>
-      evts.push({ type: 'review', date: x.createdAt, data: x })
-    );
-    (data?.matches || []).forEach((x: any) =>
-      evts.push({ type: 'match', date: x.createdAt, data: x })
-    );
+    const list: Array<{ type: string; date: string; title: string; desc: string; icon: any; color: string; bg: string }> = [];
 
-    evts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return evts;
-  }, [blogPosts, forumPosts, forumComments, reviews, data?.matches]);
+    blogPosts.forEach((b: any) => {
+      list.push({
+        type: 'blog',
+        date: b.createdAt || b.created_at,
+        title: 'Publicou um Artigo',
+        desc: b.titulo || 'Sem título',
+        icon: 'book-open',
+        color: '#2563eb',
+        bg: '#eff6ff',
+      });
+    });
 
-  // Status badge config
-  const statusBadge = useMemo(() => {
-    if (!psy) return { label: 'INATIVO', bg: '#f1f5f9', text: '#475569' };
-    if (psy.status === 'active') {
-      if (psy.is_exempt) return { label: 'VIP ⭐', bg: '#fef3c7', text: '#92400e' };
-      if (!psy.subscriptionId && psy.planExpiresAt && new Date(psy.planExpiresAt) > new Date()) {
-        return { label: 'TRIAL ⏳', bg: '#e0f2fe', text: '#0369a1' };
+    forumPosts.forEach((fp: any) => {
+      list.push({
+        type: 'forum_post',
+        date: fp.createdAt,
+        title: 'Criou Tópico no Fórum',
+        desc: fp.title || 'Sem título',
+        icon: 'message-circle',
+        color: '#7c3aed',
+        bg: '#f5f3ff',
+      });
+    });
+
+    forumComments.forEach((fc: any) => {
+      list.push({
+        type: 'forum_comment',
+        date: fc.createdAt,
+        title: 'Respondeu no Fórum',
+        desc: `Em: ${fc.postTitle || 'Tópico da comunidade'}`,
+        icon: 'corner-down-right',
+        color: '#9333ea',
+        bg: '#faf5ff',
+      });
+    });
+
+    reviews.forEach((r: any) => {
+      const nota = r.rating || r.nota || 5;
+      list.push({
+        type: 'review',
+        date: r.createdAt,
+        title: 'Recebeu Avaliação',
+        desc: `Nota: ${nota}★ - ${r.comment ? `"${r.comment.slice(0, 70)}..."` : 'Sem comentário'}`,
+        icon: 'star',
+        color: '#d97706',
+        bg: '#fffbeb',
+      });
+    });
+
+    matches.slice(0, 15).forEach((m: any) => {
+      let tags = 'Geral';
+      if (m.matchTags) {
+        tags = Array.isArray(m.matchTags) ? m.matchTags.join(', ') : String(m.matchTags);
       }
-      return { label: 'ATIVO ✅', bg: '#dcfce7', text: '#166534' };
-    }
-    if (psy.status === 'pending') {
-      return { label: 'INCOMPLETO 📝', bg: '#fef9c3', text: '#854d0e' };
-    }
-    return { label: 'EXPIRADO ⚠️', bg: '#fee2e2', text: '#991b1b' };
-  }, [psy]);
+      list.push({
+        type: 'match',
+        date: m.createdAt || m.created_at,
+        title: 'Apareceu em Busca (Match)',
+        desc: `Tags: ${tags}`,
+        icon: 'target',
+        color: '#16a34a',
+        bg: '#f0fdf4',
+      });
+    });
 
-  // Ações de CS
-  const handleToggleVip = async () => {
-    if (!psy) return;
-    const isCurrentlyVip = psy.is_exempt;
-    Alert.alert(
-      isCurrentlyVip ? 'Remover Isenção VIP' : 'Conceder Isenção VIP',
-      isCurrentlyVip
-        ? `Deseja revogar a isenção VIP de ${psy.nome}?`
-        : `Deseja conceder isenção VIP vitalícia para ${psy.nome}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Confirmar',
-          onPress: async () => {
-            try {
-              setActionLoading(true);
-              await api.patch(`/api/admin/psychologists/${psy.id}/vip`, {
-                plan: isCurrentlyVip ? null : 'CLINICAL',
-              });
-              Alert.alert(
-                'Sucesso',
-                isCurrentlyVip ? 'Isenção VIP removida.' : 'Isenção VIP concedida com sucesso!'
-              );
-              fetchDetails();
-            } catch (e: any) {
-              Alert.alert('Erro', e.message || 'Erro ao alterar status VIP.');
-            } finally {
-              setActionLoading(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleExtendTrial = async () => {
-    if (!psy) return;
-    Alert.alert(
-      'Estender Período Grátis',
-      `Deseja adicionar 7 dias extras de período grátis para "${psy.nome}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Adicionar 7 dias',
-          onPress: async () => {
-            try {
-              setActionLoading(true);
-              await api.post(`/api/admin/psychologists/${psy.id}/extend-trial`, { days: 7 });
-              Alert.alert('Sucesso', 'Período grátis estendido em 7 dias com sucesso!');
-              fetchDetails();
-            } catch (e: any) {
-              Alert.alert('Erro', e.message || 'Erro ao estender período.');
-            } finally {
-              setActionLoading(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleExpireProfile = async () => {
-    if (!psy) return;
-    Alert.alert(
-      'Expirar Perfil',
-      `Tem certeza que deseja marcar o perfil de "${psy.nome}" como INATIVO (Expirado)?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Expirar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setActionLoading(true);
-              await api.put(`/api/admin/psychologists/${psy.id}/status`, { status: 'inactive' });
-              Alert.alert('Sucesso', 'Perfil marcado como inativo.');
-              fetchDetails();
-            } catch (e: any) {
-              Alert.alert('Erro', e.message || 'Erro ao expirar perfil.');
-            } finally {
-              setActionLoading(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleCallWhatsapp = () => {
-    if (!psy?.telefone) {
-      Alert.alert('Aviso', 'Este psicólogo não possui telefone cadastrado.');
-      return;
-    }
-    const tel = String(psy.telefone).replace(/\D/g, '');
-    const firstName = psy.nome ? psy.nome.split(' ')[0] : 'Psicólogo(a)';
-    const msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da equipe Yelo. 🌿 Vi seu perfil aqui na plataforma e gostaria de conversar com você.`;
-    Linking.openURL(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`);
-  };
+    list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return list;
+  }, [blogPosts, forumPosts, forumComments, reviews, matches]);
 
   if (loading) {
     return (
-      <View className="flex-1 bg-[#f8fafc] justify-center items-center p-6">
+      <View style={{ flex: 1, backgroundColor: '#f8fafc', justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#1B4332" />
-        <Text className="font-sans text-[#64748b] text-[15px] mt-4">
+        <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', color: '#64748b', marginTop: 12, fontSize: 14 }}>
           Carregando dossiê completo...
         </Text>
       </View>
     );
   }
 
-  if (!psy) {
-    return (
-      <View className="flex-1 bg-[#f8fafc] justify-center items-center p-6">
-        <Feather name="alert-circle" size={44} color="#94a3b8" />
-        <Text className="font-title text-[#1e293b] text-[18px] font-bold mt-3">
-          Psicólogo não encontrado
-        </Text>
+  return (
+    <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      {/* ------------------------------------------------------------- */}
+      {/* TOP BAR / HEADER NATIVO                                        */}
+      {/* ------------------------------------------------------------- */}
+      <View
+        style={{
+          backgroundColor: '#1B4332',
+          paddingTop: insets.top + 8,
+          paddingBottom: 14,
+          paddingHorizontal: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottomWidth: 1,
+          borderBottomColor: 'rgba(255,255,255,0.1)',
+        }}
+      >
         <TouchableOpacity
           onPress={() => router.back()}
-          className="mt-5 bg-[#1B4332] px-6 py-2.5 rounded-full"
+          activeOpacity={0.7}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            paddingHorizontal: 12,
+            paddingVertical: 7,
+            borderRadius: 999,
+            gap: 6,
+          }}
         >
-          <Text className="text-white font-sans font-bold text-[14px]">Voltar para Lista</Text>
+          <Feather name="arrow-left" size={17} color="#fff" />
+          <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#fff', fontSize: 13 }}>
+            Voltar
+          </Text>
         </TouchableOpacity>
-      </View>
-    );
-  }
 
-  return (
-    <View className="flex-1 bg-[#f8fafc]">
+        <Text
+          numberOfLines={1}
+          style={{
+            fontFamily: 'PlusJakartaSans_700Bold',
+            color: '#fff',
+            fontSize: 16,
+            flex: 1,
+            textAlign: 'center',
+            marginHorizontal: 10,
+          }}
+        >
+          Dossiê do Profissional
+        </Text>
+
+        {p.slug ? (
+          <TouchableOpacity
+            onPress={() => openExternalUrl(`https://www.yelopsi.com.br/${p.slug}`)}
+            activeOpacity={0.7}
+            style={{
+              backgroundColor: '#f0fdf4',
+              paddingHorizontal: 10,
+              paddingVertical: 7,
+              borderRadius: 999,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <Feather name="external-link" size={13} color="#166534" />
+            <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#166534', fontSize: 11 }}>
+              Ver Perfil
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 70 }} />
+        )}
+      </View>
+
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1B4332']} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1B4332']} tintColor="#1B4332" />
         }
       >
-        {/* ========================================================= */}
-        {/* 1. CABEÇALHO DO PERFIL                                   */}
-        {/* ========================================================= */}
-        <View className="bg-white border-b border-slate-200">
-          {/* Top Banner Cover */}
-          <View className="h-[90px] bg-[#1B4332] justify-between p-4 flex-row items-start">
-            <View className="flex-row items-center gap-2">
-              <View className="bg-white/20 px-2.5 py-1 rounded-full">
-                <Text className="text-white text-[11px] font-bold uppercase tracking-wider">
-                  Dossiê 360º
-                </Text>
-              </View>
-            </View>
+        {/* ------------------------------------------------------------- */}
+        {/* CARD PRINCIPAL DO PERFIL (Header Info)                       */}
+        {/* ------------------------------------------------------------- */}
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            marginHorizontal: 16,
+            marginTop: 16,
+            borderRadius: 20,
+            overflow: 'hidden',
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 8,
+            elevation: 2,
+          }}
+        >
+          {/* Cover gradient */}
+          <LinearGradient
+            colors={['#1B4332', '#2D6A4F']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ height: 80, width: '100%' }}
+          />
 
-            {psy.slug ? (
-              <TouchableOpacity
-                onPress={() =>
-                  Linking.openURL(`https://www.yelopsi.com.br/psicologo/${psy.slug}`)
-                }
-                className="bg-white/20 px-3 py-1.5 rounded-full flex-row items-center gap-1.5"
-              >
-                <Feather name="external-link" size={13} color="#fff" />
-                <Text className="text-white font-sans text-[12px] font-bold">Ver Perfil</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
+          {/* Main Info */}
+          <View style={{ paddingHorizontal: 16, marginTop: -40 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+              <Image
+                source={{
+                  uri: p.fotoUrl || 'https://www.yelopsi.com.br/assets/images/icon-192x192.png',
+                }}
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 40,
+                  borderWidth: 4,
+                  borderColor: '#ffffff',
+                  backgroundColor: '#e2e8f0',
+                }}
+              />
 
-          {/* Main info card */}
-          <View className="px-4 pb-4">
-            <View className="flex-row items-end -mt-[38px] mb-3 gap-3">
-              {psy.fotoUrl ? (
-                <Image
-                  source={{ uri: psy.fotoUrl }}
-                  className="w-[74px] h-[74px] rounded-full border-4 border-white bg-slate-100"
-                  resizeMode="cover"
-                />
-              ) : (
-                <View className="w-[74px] h-[74px] rounded-full border-4 border-white bg-[#ecfdf5] items-center justify-center">
-                  <Text className="font-title text-[#166534] text-[28px] font-bold">
-                    {(psy.nome || '?').charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              )}
-
-              <View className="flex-1 pb-1">
-                <Text className="font-title text-[#1e293b] text-[20px] font-bold leading-tight">
-                  {psy.nome || 'Sem Nome'}
-                </Text>
-                <Text className="font-sans text-[#64748b] text-[13px] mt-0.5">
-                  CRP: {psy.crp || 'Não informado'}
-                </Text>
-              </View>
-            </View>
-
-            {/* Badges de Status e Plano */}
-            <View className="flex-row flex-wrap gap-2 mb-3">
-              <View
-                style={{ backgroundColor: statusBadge.bg }}
-                className="px-3 py-1 rounded-full border border-black/5"
-              >
-                <Text
-                  style={{ color: statusBadge.text }}
-                  className="font-sans font-bold text-[12px]"
+              <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
+                <View
+                  style={{
+                    backgroundColor: statusInfo.bg,
+                    borderColor: statusInfo.border,
+                    borderWidth: 1,
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 999,
+                  }}
                 >
-                  {statusBadge.label}
-                </Text>
-              </View>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: statusInfo.text, fontSize: 11 }}>
+                    {statusInfo.label}
+                  </Text>
+                </View>
 
-              <View className="bg-[#f1f5f9] px-3 py-1 rounded-full border border-slate-200">
-                <Text className="font-sans text-[#334155] font-semibold text-[12px]">
-                  Plano: {psy.plano || 'Nenhum'} {psy.is_exempt ? '(VIP)' : ''}
-                </Text>
+                <View
+                  style={{
+                    backgroundColor: '#fef3c7',
+                    borderColor: '#fde68a',
+                    borderWidth: 1,
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 999,
+                  }}
+                >
+                  <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#92400e', fontSize: 11 }}>
+                    {p.plano || 'Sem Plano'}{p.is_exempt ? ' (VIP)' : ''}
+                  </Text>
+                </View>
               </View>
             </View>
 
-            {/* Informações de contato */}
-            <View className="bg-[#f8fafc] rounded-xl p-3 border border-slate-200 gap-2">
-              <View className="flex-row items-center justify-between">
-                <Text className="font-sans text-[#64748b] text-[12px]">Email</Text>
-                <Text className="font-sans text-[#1e293b] font-medium text-[13px]">
-                  {psy.email || '-'}
-                </Text>
-              </View>
+            <View style={{ marginTop: 10 }}>
+              <Text
+                style={{
+                  fontFamily: 'PlusJakartaSans_700Bold',
+                  fontSize: 20,
+                  color: '#0f172a',
+                  lineHeight: 26,
+                }}
+              >
+                {p.nome || 'Sem Nome'}
+              </Text>
+              <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13, color: '#64748b', marginTop: 2 }}>
+                CRP: {p.crp || 'Não informado'}
+              </Text>
+            </View>
 
-              <View className="flex-row items-center justify-between">
-                <Text className="font-sans text-[#64748b] text-[12px]">Telefone</Text>
-                {psy.telefone ? (
-                  <TouchableOpacity
-                    onPress={handleCallWhatsapp}
-                    className="flex-row items-center gap-1"
-                  >
-                    <Text className="font-sans text-[#0369a1] font-bold text-[13px]">
-                      {psy.telefone}
+            {/* Contatos Grid */}
+            <View
+              style={{
+                marginTop: 16,
+                paddingTop: 14,
+                borderTopWidth: 1,
+                borderTopColor: '#f1f5f9',
+                gap: 12,
+                paddingBottom: 16,
+              }}
+            >
+              {/* Email */}
+              <TouchableOpacity
+                onPress={() => copyToClipboard(p.email || '', 'email')}
+                activeOpacity={0.7}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="mail" size={15} color="#475569" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Email</Text>
+                    <Text numberOfLines={1} style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13, color: '#1e293b' }}>
+                      {p.email || '-'}
                     </Text>
-                    <Feather name="message-circle" size={13} color="#0369a1" />
-                  </TouchableOpacity>
-                ) : (
-                  <Text className="font-sans text-[#94a3b8] text-[13px]">-</Text>
-                )}
-              </View>
-
-              <View className="flex-row items-center justify-between">
-                <Text className="font-sans text-[#64748b] text-[12px]">Cidade/UF</Text>
-                <Text className="font-sans text-[#1e293b] font-medium text-[13px]">
-                  {psy.cidade ? `${psy.cidade} - ${psy.estado || ''}` : 'Não informado'}
+                  </View>
+                </View>
+                <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11, color: copiedKey === 'email' ? '#16a34a' : '#64748b' }}>
+                  {copiedKey === 'email' ? 'Copiado! ✓' : 'Copiar'}
                 </Text>
-              </View>
+              </TouchableOpacity>
 
-              <View className="flex-row items-center justify-between">
-                <Text className="font-sans text-[#64748b] text-[12px]">Cadastro</Text>
-                <Text className="font-sans text-[#1e293b] font-medium text-[13px]">
-                  {formatDateBR(psy.createdAt)}
-                </Text>
-              </View>
-
-              <View className="flex-row items-center justify-between">
-                <Text className="font-sans text-[#64748b] text-[12px]">Vencimento</Text>
-                {psy.is_exempt ? (
-                  <Text className="font-sans text-[#ca8a04] font-bold text-[13px]">
-                    Isento (VIP)
-                  </Text>
-                ) : psy.planExpiresAt ? (
-                  <Text
-                    className={`font-sans font-bold text-[13px] ${
-                      expiryInfo?.isExpired ? 'text-[#dc2626]' : 'text-[#166534]'
-                    }`}
+              {/* Telefone & WhatsApp */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#f0fdf4', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="phone" size={15} color="#166534" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Telefone</Text>
+                    <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13, color: '#1e293b' }}>
+                      {mascaraTelefone(p.telefone) || 'Não informado'}
+                    </Text>
+                  </View>
+                </View>
+                {p.telefone ? (
+                  <TouchableOpacity
+                    onPress={() => openWhatsApp(p.telefone, `Olá, ${p.nome?.split(' ')[0]}! Tudo bem? Aqui é o suporte da Yelo.`)}
+                    style={{
+                      backgroundColor: '#25D366',
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
+                      borderRadius: 999,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
                   >
-                    {formatDateBR(psy.planExpiresAt)}{' '}
-                    {expiryInfo ? `(${expiryInfo.text})` : ''}
-                  </Text>
-                ) : (
-                  <Text className="font-sans text-[#94a3b8] text-[13px]">Sem assinatura</Text>
-                )}
+                    <Feather name="message-circle" size={13} color="#fff" />
+                    <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11, color: '#fff' }}>
+                      WhatsApp
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
-            </View>
 
-            {/* Aquisição / UTMs */}
-            <View className="mt-3 bg-white border border-slate-200 rounded-xl p-3">
-              <View className="flex-row items-center gap-1.5 mb-2">
-                <Feather name="target" size={13} color="#64748b" />
-                <Text className="font-sans font-bold text-[#475569] text-[11px] uppercase tracking-wider">
-                  Aquisição (UTMs)
-                </Text>
+              {/* Localização */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="map-pin" size={15} color="#475569" />
+                </View>
+                <View>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#94a3b8', textTransform: 'uppercase' }}>Cidade / Estado</Text>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 13, color: '#1e293b' }}>
+                    {p.cidade || 'Não informada'}{p.estado ? ` - ${p.estado}` : ''}
+                  </Text>
+                </View>
               </View>
-              <View className="flex-row flex-wrap gap-1.5">
-                <View className="bg-[#f8fafc] border border-slate-200 rounded-full px-2.5 py-1 flex-row items-center gap-1">
-                  <Text className="text-[11px] text-[#94a3b8] uppercase font-bold">Src:</Text>
-                  <Text className="text-[11px] text-[#0f172a] font-semibold">
-                    {psy.utm_source || 'Orgânico'}
+
+              {/* Datas de Cadastro & Vencimento */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginTop: 4 }}>
+                <View style={{ flex: 1, backgroundColor: '#f8fafc', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: '#f1f5f9' }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Cadastro</Text>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13, color: '#1e293b', marginTop: 2 }}>
+                    {formatDateBR(p.createdAt)}
                   </Text>
                 </View>
-                <View className="bg-[#f8fafc] border border-slate-200 rounded-full px-2.5 py-1 flex-row items-center gap-1">
-                  <Text className="text-[11px] text-[#94a3b8] uppercase font-bold">Med:</Text>
-                  <Text className="text-[11px] text-[#0f172a] font-semibold">
-                    {psy.utm_medium || '-'}
-                  </Text>
-                </View>
-                <View className="bg-[#f8fafc] border border-slate-200 rounded-full px-2.5 py-1 flex-row items-center gap-1">
-                  <Text className="text-[11px] text-[#94a3b8] uppercase font-bold">Camp:</Text>
-                  <Text className="text-[11px] text-[#0f172a] font-semibold">
-                    {psy.utm_campaign || '-'}
-                  </Text>
-                </View>
-                <View className="bg-[#f8fafc] border border-slate-200 rounded-full px-2.5 py-1 flex-row items-center gap-1">
-                  <Text className="text-[11px] text-[#94a3b8] uppercase font-bold">Cont:</Text>
-                  <Text className="text-[11px] text-[#0f172a] font-semibold">
-                    {psy.utm_content || '-'}
+
+                <View style={{ flex: 1, backgroundColor: '#f8fafc', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: '#f1f5f9' }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Vencimento</Text>
+                  <Text
+                    style={{
+                      fontFamily: 'PlusJakartaSans_700Bold',
+                      fontSize: 13,
+                      color: p.is_exempt ? '#854d0e' : (expiryInfo?.isExpired ? '#dc2626' : '#166534'),
+                      marginTop: 2,
+                    }}
+                  >
+                    {p.is_exempt ? 'Isento (VIP)' : (p.planExpiresAt ? formatDateBR(p.planExpiresAt) : 'Sem data')}
                   </Text>
                 </View>
               </View>
@@ -502,429 +568,493 @@ export default function AdminCRMPsicologoDetalhesScreen() {
           </View>
         </View>
 
-        {/* ========================================================= */}
-        {/* 2. STATS GRID (6 INDICADORES)                            */}
-        {/* ========================================================= */}
-        <View className="p-4">
-          <Text className="font-title text-[#1e293b] text-[15px] font-bold mb-2.5">
-            Métricas de Desempenho
-          </Text>
-          <View className="flex-row flex-wrap gap-2.5">
-            <View className="flex-1 min-w-[100px] bg-white p-3 rounded-xl border border-slate-200">
-              <Text className="font-sans text-[#64748b] text-[11px] uppercase font-semibold">
-                Visualizações
-              </Text>
-              <Text className="font-title text-[#0f172a] text-[20px] font-bold mt-1">
+        {/* ------------------------------------------------------------- */}
+        {/* DADOS DE AQUISIÇÃO (UTMs)                                      */}
+        {/* ------------------------------------------------------------- */}
+        <View
+          style={{
+            backgroundColor: '#ffffff',
+            marginHorizontal: 16,
+            marginTop: 12,
+            padding: 14,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <Feather name="trending-up" size={15} color="#475569" />
+            <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12, color: '#475569', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Aquisição (UTMs)
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, flexDirection: 'row', gap: 5 }}>
+              <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', color: '#94a3b8', fontSize: 11 }}>Source:</Text>
+              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#0f172a', fontSize: 11 }}>{p.utm_source || 'Orgânico'}</Text>
+            </View>
+            <View style={{ backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, flexDirection: 'row', gap: 5 }}>
+              <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', color: '#94a3b8', fontSize: 11 }}>Medium:</Text>
+              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#0f172a', fontSize: 11 }}>{p.utm_medium || '-'}</Text>
+            </View>
+            <View style={{ backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, flexDirection: 'row', gap: 5 }}>
+              <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', color: '#94a3b8', fontSize: 11 }}>Campaign:</Text>
+              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#0f172a', fontSize: 11 }}>{p.utm_campaign || '-'}</Text>
+            </View>
+            <View style={{ backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, flexDirection: 'row', gap: 5 }}>
+              <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', color: '#94a3b8', fontSize: 11 }}>Content:</Text>
+              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#0f172a', fontSize: 11 }}>{p.utm_content || '-'}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ------------------------------------------------------------- */}
+        {/* GRID DE ESTATÍSTICAS RÁPIDAS (6 KPIs)                         */}
+        {/* ------------------------------------------------------------- */}
+        <View style={{ paddingHorizontal: 16, marginTop: 14 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            {/* Visualizações */}
+            <View style={{ width: '48%', backgroundColor: '#ffffff', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+              <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11, color: '#64748b' }}>👁️ Visualizações</Text>
+              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 22, color: '#1B4332', marginTop: 4 }}>
                 {stats.profileViews || 0}
               </Text>
             </View>
 
-            <View className="flex-1 min-w-[100px] bg-white p-3 rounded-xl border border-slate-200">
-              <Text className="font-sans text-[#64748b] text-[11px] uppercase font-semibold">
-                Matches
-              </Text>
-              <Text className="font-title text-[#0f172a] text-[20px] font-bold mt-1">
+            {/* Matches */}
+            <View style={{ width: '48%', backgroundColor: '#ffffff', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+              <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11, color: '#64748b' }}>🎯 Matches</Text>
+              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 22, color: '#1B4332', marginTop: 4 }}>
                 {stats.matches || 0}
               </Text>
             </View>
 
-            <View className="flex-1 min-w-[100px] bg-white p-3 rounded-xl border border-slate-200">
-              <Text className="font-sans text-[#64748b] text-[11px] uppercase font-semibold">
-                Cliques WPP
-              </Text>
-              <Text className="font-title text-[#0f172a] text-[20px] font-bold mt-1">
+            {/* Cliques WhatsApp */}
+            <View style={{ width: '48%', backgroundColor: '#ffffff', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+              <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11, color: '#64748b' }}>💬 Cliques WhatsApp</Text>
+              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 22, color: '#1B4332', marginTop: 4 }}>
                 {stats.whatsappClicks || 0}
               </Text>
             </View>
-          </View>
 
-          <View className="flex-row flex-wrap gap-2.5 mt-2.5">
-            <View className="flex-1 min-w-[100px] bg-white p-3 rounded-xl border border-slate-200">
-              <Text className="font-sans text-[#64748b] text-[11px] uppercase font-semibold">
-                Conversão PLG
-              </Text>
-              <Text className="font-title text-[#166534] text-[20px] font-bold mt-1">
-                {plgAgendados}
+            {/* Conversões PLG */}
+            <View style={{ width: '48%', backgroundColor: '#ffffff', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+              <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11, color: '#64748b' }}>🚀 Conversões (PLG)</Text>
+              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 22, color: '#16a34a', marginTop: 4 }}>
+                {conversoesPlg}
               </Text>
             </View>
 
-            <View className="flex-1 min-w-[100px] bg-white p-3 rounded-xl border border-slate-200">
-              <Text className="font-sans text-[#64748b] text-[11px] uppercase font-semibold">
-                Blog
-              </Text>
-              <Text className="font-title text-[#0f172a] text-[20px] font-bold mt-1">
+            {/* Posts Blog */}
+            <View style={{ width: '48%', backgroundColor: '#ffffff', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+              <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11, color: '#64748b' }}>📝 Posts Blog</Text>
+              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 22, color: '#1B4332', marginTop: 4 }}>
                 {blogPosts.length}
               </Text>
             </View>
 
-            <View className="flex-1 min-w-[100px] bg-white p-3 rounded-xl border border-slate-200">
-              <Text className="font-sans text-[#64748b] text-[11px] uppercase font-semibold">
-                Fórum
-              </Text>
-              <Text className="font-title text-[#0f172a] text-[20px] font-bold mt-1">
-                {stats.forumActivities || forumPosts.length + forumComments.length}
+            {/* Fórum */}
+            <View style={{ width: '48%', backgroundColor: '#ffffff', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+              <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 11, color: '#64748b' }}>🗣️ Interações Fórum</Text>
+              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 22, color: '#1B4332', marginTop: 4 }}>
+                {stats.forumActivities || (forumPosts.length + forumComments.length)}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* ========================================================= */}
-        {/* 3. NAVEGAÇÃO DE ABAS                                      */}
-        {/* ========================================================= */}
-        <View className="px-4 mb-3">
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-            {[
-              { key: 'timeline', label: 'Linha do Tempo', icon: 'clock', count: timelineEvents.length },
-              { key: 'payments', label: 'Pagamentos', icon: 'credit-card', count: payments.length },
-              { key: 'whatsapp', label: 'WhatsApp', icon: 'message-circle', count: whatsappLogs.length },
-              { key: 'reviews', label: 'Avaliações', icon: 'star', count: reviews.length },
-              { key: 'blog', label: 'Artigos', icon: 'file-text', count: blogPosts.length },
-              { key: 'forum', label: 'Fórum', icon: 'message-square', count: forumPosts.length + forumComments.length },
-            ].map((tab) => {
-              const isActive = activeTab === tab.key;
-              return (
-                <TouchableOpacity
-                  key={tab.key}
-                  onPress={() => setActiveTab(tab.key as TabKey)}
-                  className={`flex-row items-center px-4 py-2.5 rounded-full border ${
-                    isActive
-                      ? 'bg-[#1B4332] border-[#1B4332]'
-                      : 'bg-white border-slate-200'
-                  }`}
+        {/* ------------------------------------------------------------- */}
+        {/* MENU DROPDOWN NATIVO NO ESTILO DO DISPOSITIVO                 */}
+        {/* ------------------------------------------------------------- */}
+        <View style={{ marginHorizontal: 16, marginTop: 18, marginBottom: 2 }}>
+          <Text
+            style={{
+              fontFamily: 'PlusJakartaSans_700Bold',
+              fontSize: 12,
+              color: '#64748b',
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
+              marginBottom: 8,
+            }}
+          >
+            Seção do Dossiê
+          </Text>
+
+          <NativeSelectMenu
+            title="Selecione a Seção do Dossiê"
+            options={[
+              { label: `Linha do Tempo (${timelineEvents.length})`, value: 'timeline' },
+              { label: `Pagamentos & Assinatura (${payments.length})`, value: 'payments' },
+              { label: `Blog & Artigos (${blogPosts.length})`, value: 'blog' },
+              { label: `Atividade no Fórum (${forumPosts.length + forumComments.length})`, value: 'forum' },
+              { label: `Avaliações & Feedback (${reviews.length})`, value: 'reviews' },
+              { label: `Leads WhatsApp (${whatsappLogs.length})`, value: 'whatsapp' },
+            ]}
+            selectedValue={activeTab}
+            onSelect={(val) => setActiveTab(val as TabType)}
+            style={{ width: '100%' }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#cbd5e1',
+                borderRadius: 16,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.04,
+                shadowRadius: 4,
+                elevation: 2,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 }}>
+                <View
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 10,
+                    backgroundColor: '#1B4332',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 >
                   <Feather
-                    name={tab.icon as any}
-                    size={14}
-                    color={isActive ? '#fff' : '#64748b'}
+                    name={
+                      activeTab === 'timeline'
+                        ? 'clock'
+                        : activeTab === 'payments'
+                        ? 'credit-card'
+                        : activeTab === 'blog'
+                        ? 'book-open'
+                        : activeTab === 'forum'
+                        ? 'message-circle'
+                        : activeTab === 'reviews'
+                        ? 'star'
+                        : 'phone-call'
+                    }
+                    size={16}
+                    color="#ffffff"
                   />
+                </View>
+                <View style={{ flex: 1 }}>
                   <Text
-                    className={`font-sans font-bold text-[13px] ml-1.5 ${
-                      isActive ? 'text-white' : 'text-[#64748b]'
-                    }`}
+                    numberOfLines={1}
+                    style={{
+                      fontFamily: 'PlusJakartaSans_700Bold',
+                      fontSize: 15,
+                      color: '#0f172a',
+                    }}
                   >
-                    {tab.label}
+                    {activeTab === 'timeline'
+                      ? 'Linha do Tempo'
+                      : activeTab === 'payments'
+                      ? 'Pagamentos & Assinatura'
+                      : activeTab === 'blog'
+                      ? 'Blog & Artigos'
+                      : activeTab === 'forum'
+                      ? 'Atividade no Fórum'
+                      : activeTab === 'reviews'
+                      ? 'Avaliações & Feedback'
+                      : 'Leads WhatsApp'}
                   </Text>
-                  {tab.count > 0 && (
-                    <View
-                      className={`ml-1.5 px-1.5 py-0.5 rounded-full ${
-                        isActive ? 'bg-white/20' : 'bg-slate-100'
-                      }`}
-                    >
-                      <Text
-                        className={`font-sans text-[11px] font-bold ${
-                          isActive ? 'text-white' : 'text-[#64748b]'
-                        }`}
-                      >
-                        {tab.count}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                </View>
+                <View
+                  style={{
+                    backgroundColor: '#f1f5f9',
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: '#e2e8f0',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: 'PlusJakartaSans_700Bold',
+                      color: '#475569',
+                      fontSize: 11,
+                    }}
+                  >
+                    {activeTab === 'timeline'
+                      ? timelineEvents.length
+                      : activeTab === 'payments'
+                      ? payments.length
+                      : activeTab === 'blog'
+                      ? blogPosts.length
+                      : activeTab === 'forum'
+                      ? forumPosts.length + forumComments.length
+                      : activeTab === 'reviews'
+                      ? reviews.length
+                      : whatsappLogs.length}
+                  </Text>
+                </View>
+              </View>
+              <Feather name="chevron-down" size={18} color="#1B4332" />
+            </View>
+          </NativeSelectMenu>
         </View>
 
-        {/* ========================================================= */}
-        {/* 4. CONTEÚDO DAS ABAS                                      */}
-        {/* ========================================================= */}
-        <View className="px-4">
-          {/* TAB 1: LINHA DO TEMPO */}
+        {/* ------------------------------------------------------------- */}
+        {/* CONTEÚDO DAS ABAS                                             */}
+        {/* ------------------------------------------------------------- */}
+        <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
+          {/* ========================================================= */}
+          {/* ABA 1: LINHA DO TEMPO (TIMELINE)                          */}
+          {/* ========================================================= */}
           {activeTab === 'timeline' && (
-            <View className="bg-white rounded-2xl p-4 border border-slate-200">
-              <Text className="font-title text-[#1e293b] text-[16px] font-bold mb-3">
-                Histórico Recente de Atividades
-              </Text>
-
+            <View>
               {timelineEvents.length === 0 ? (
-                <Text className="font-sans text-[#94a3b8] text-[13px] text-center py-6">
-                  Nenhuma atividade recente registrada.
-                </Text>
+                <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 16, alignItems: 'center' }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', color: '#94a3b8', fontSize: 14 }}>
+                    Nenhuma atividade recente registrada.
+                  </Text>
+                </View>
               ) : (
-                <View className="gap-3">
-                  {timelineEvents.slice(0, 20).map((evt, idx) => {
-                    let icon = 'activity';
-                    let iconColor = '#0284c7';
-                    let iconBg = '#e0f2fe';
-                    let title = 'Atividade';
-                    let desc = '';
-
-                    switch (evt.type) {
-                      case 'blog':
-                        icon = 'file-text';
-                        iconColor = '#166534';
-                        iconBg = '#dcfce7';
-                        title = 'Publicou Artigo no Blog';
-                        desc = evt.data.titulo || evt.data.title || 'Artigo sem título';
-                        break;
-                      case 'forum_post':
-                        icon = 'message-circle';
-                        iconColor = '#7c3aed';
-                        iconBg = '#f3e8ff';
-                        title = 'Criou Tópico no Fórum';
-                        desc = evt.data.title || 'Sem título';
-                        break;
-                      case 'forum_comment':
-                        icon = 'corner-down-right';
-                        iconColor = '#9333ea';
-                        iconBg = '#faf5ff';
-                        title = 'Respondeu no Fórum';
-                        desc = evt.data.postTitle ? `Em: ${evt.data.postTitle}` : 'Comentário';
-                        break;
-                      case 'review':
-                        icon = 'star';
-                        iconColor = '#ca8a04';
-                        iconBg = '#fef3c7';
-                        title = 'Recebeu Avaliação';
-                        desc = `Nota: ${evt.data.rating || evt.data.nota || 5} estrelas`;
-                        break;
-                      case 'match':
-                        icon = 'target';
-                        iconColor = '#059669';
-                        iconBg = '#ecfdf5';
-                        title = 'Apareceu em Busca (Match)';
-                        desc = evt.data.matchTags
-                          ? `Tags: ${
-                              Array.isArray(evt.data.matchTags)
-                                ? evt.data.matchTags.join(', ')
-                                : evt.data.matchTags
-                            }`
-                          : 'Match realizado';
-                        break;
-                    }
-
-                    return (
+                <View style={{ gap: 10 }}>
+                  {timelineEvents.map((ev, idx) => (
+                    <View
+                      key={idx}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        padding: 14,
+                        borderRadius: 16,
+                        borderLeftWidth: 4,
+                        borderLeftColor: ev.color,
+                        borderWidth: 1,
+                        borderColor: '#e2e8f0',
+                        flexDirection: 'row',
+                        alignItems: 'flex-start',
+                        gap: 12,
+                      }}
+                    >
                       <View
-                        key={idx}
-                        className="flex-row items-start gap-3 pb-3 border-b border-slate-100 last:border-b-0"
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 10,
+                          backgroundColor: ev.bg,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
                       >
-                        <View
-                          style={{ backgroundColor: iconBg }}
-                          className="w-8 h-8 rounded-full items-center justify-center mt-0.5"
-                        >
-                          <Feather name={icon as any} size={15} color={iconColor} />
-                        </View>
-                        <View className="flex-1">
-                          <View className="flex-row items-center justify-between">
-                            <Text className="font-sans font-bold text-[#1e293b] text-[13px]">
-                              {title}
-                            </Text>
-                            <Text className="font-sans text-[#94a3b8] text-[11px]">
-                              {formatDateTimeBR(evt.date)}
-                            </Text>
-                          </View>
-                          <Text
-                            className="font-sans text-[#64748b] text-[12px] mt-0.5"
-                            numberOfLines={2}
-                          >
-                            {desc}
-                          </Text>
-                        </View>
+                        <Feather name={ev.icon} size={17} color={ev.color} />
                       </View>
-                    );
-                  })}
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', color: '#94a3b8', fontSize: 11 }}>
+                          {formatDateTimeBR(ev.date)}
+                        </Text>
+                        <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#0f172a', fontSize: 14, marginTop: 2 }}>
+                          {ev.title}
+                        </Text>
+                        <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', color: '#475569', fontSize: 13, marginTop: 2 }}>
+                          {ev.desc}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
                 </View>
               )}
             </View>
           )}
 
-          {/* TAB 2: PAGAMENTOS */}
+          {/* ========================================================= */}
+          {/* ABA 2: PAGAMENTOS & ASSINATURA                            */}
+          {/* ========================================================= */}
           {activeTab === 'payments' && (
-            <View className="gap-3">
-              {/* Banner de status da assinatura */}
-              {psy.is_exempt ? (
-                <View className="bg-[#fefce8] border border-[#fde047] p-4 rounded-2xl">
-                  <View className="flex-row items-center gap-2 mb-1">
-                    <Feather name="star" size={16} color="#854d0e" />
-                    <Text className="font-title text-[#854d0e] text-[15px] font-bold">
-                      Conta Isenta (VIP)
-                    </Text>
-                  </View>
-                  <Text className="font-sans text-[#854d0e] text-[13px] leading-5">
-                    Este profissional possui isenção permanente de mensalidade autorizada pela
-                    administração da Yelo. Não são emitidas faturas recorrentes no gateway.
-                  </Text>
-                </View>
-              ) : psy.cancelAtPeriodEnd || psy.canceledAt ? (
-                <View className="bg-[#fef2f2] border border-[#fca5a5] p-4 rounded-2xl">
-                  <View className="flex-row items-center gap-2 mb-1">
-                    <Feather name="slash" size={16} color="#991b1b" />
-                    <Text className="font-title text-[#991b1b] text-[15px] font-bold">
+            <View style={{ gap: 14 }}>
+              {/* Status Banner */}
+              {p.cancelAtPeriodEnd || p.canceledAt ? (
+                <View style={{ backgroundColor: '#fef2f2', borderWidth: 1, borderColor: '#fca5a5', padding: 14, borderRadius: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ fontSize: 18 }}>🛑</Text>
+                    <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14, color: '#991b1b' }}>
                       Renovação Automática Cancelada
                     </Text>
                   </View>
-                  <Text className="font-sans text-[#991b1b] text-[13px] leading-5">
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, color: '#7f1d1d', marginTop: 6, lineHeight: 18 }}>
                     {expiryInfo?.isExpired
-                      ? `O psicólogo solicitou o cancelamento e o período de acesso pago foi encerrado em ${formatDateBR(
-                          psy.planExpiresAt
-                        )}.`
-                      : `O psicólogo cancelou a renovação. Seu plano permanecerá ativo até ${formatDateBR(
-                          psy.planExpiresAt
-                        )} (${expiryInfo?.text}).`}
+                      ? `O psicólogo solicitou cancelamento e o acesso encerrou em ${formatDateBR(p.planExpiresAt)}.`
+                      : `Acesso permanece ativo até ${formatDateBR(p.planExpiresAt)}. Nenhuma nova cobrança será realizada.`}
                   </Text>
                 </View>
-              ) : (psy.subscriptionId || asaasSub?.id) && psy.status === 'active' ? (
-                <View className="bg-[#f0fdf4] border border-[#86efac] p-4 rounded-2xl">
-                  <View className="flex-row items-center gap-2 mb-1">
-                    <Feather name="repeat" size={16} color="#166534" />
-                    <Text className="font-title text-[#166534] text-[15px] font-bold">
+              ) : p.is_exempt ? (
+                <View style={{ backgroundColor: '#fefce8', borderWidth: 1, borderColor: '#fde047', padding: 14, borderRadius: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ fontSize: 18 }}>⭐</Text>
+                    <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14, color: '#854d0e' }}>
+                      Conta Isenta (VIP) - Acesso Vitalício
+                    </Text>
+                  </View>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, color: '#713f12', marginTop: 6 }}>
+                    Este profissional possui isenção permanente de mensalidade autorizada pela administração da Yelo.
+                  </Text>
+                </View>
+              ) : (p.subscriptionId || asaasSub.id) && p.status === 'active' ? (
+                <View style={{ backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#86efac', padding: 14, borderRadius: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ fontSize: 18 }}>🔄</Text>
+                    <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14, color: '#166534' }}>
                       Assinatura Recorrente Ativa
                     </Text>
                   </View>
-                  <Text className="font-sans text-[#166534] text-[13px] leading-5">
-                    Próxima renovação automática programada para {formatDateBR(psy.planExpiresAt || asaasSub?.nextDueDate)}{' '}
-                    {expiryInfo ? `(${expiryInfo.text})` : ''}.
-                  </Text>
-                </View>
-              ) : !psy.subscriptionId && psy.planExpiresAt && (!expiryInfo || !expiryInfo.isExpired) ? (
-                <View className="bg-[#f0f9ff] border border-[#7dd3fc] p-4 rounded-2xl">
-                  <View className="flex-row items-center gap-2 mb-1">
-                    <Feather name="clock" size={16} color="#0369a1" />
-                    <Text className="font-title text-[#0369a1] text-[15px] font-bold">
-                      Período de Degustação Gratuita (Trial)
-                    </Text>
-                  </View>
-                  <Text className="font-sans text-[#0369a1] text-[13px] leading-5">
-                    O psicólogo está testando a plataforma gratuitamente até {formatDateBR(psy.planExpiresAt)}{' '}
-                    {expiryInfo ? `(${expiryInfo.text})` : ''}.
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, color: '#14532d', marginTop: 6, lineHeight: 18 }}>
+                    Próxima renovação automática programada para {formatDateBR(p.planExpiresAt || asaasSub.nextDueDate)} {expiryInfo ? `(${expiryInfo.text})` : ''}.
                   </Text>
                 </View>
               ) : (
-                <View className="bg-[#fffbeb] border border-[#fde68a] p-4 rounded-2xl">
-                  <View className="flex-row items-center gap-2 mb-1">
-                    <Feather name="alert-triangle" size={16} color="#92400e" />
-                    <Text className="font-title text-[#92400e] text-[15px] font-bold">
-                      Sem Assinatura Ativa
+                <View style={{ backgroundColor: '#eff6ff', borderWidth: 1, borderColor: '#bfdbfe', padding: 14, borderRadius: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ fontSize: 18 }}>⏳</Text>
+                    <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14, color: '#1e40af' }}>
+                      Período de Testes (Trial)
                     </Text>
                   </View>
-                  <Text className="font-sans text-[#92400e] text-[13px] leading-5">
-                    O perfil não possui assinatura corrente ativa.
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, color: '#1e3a8a', marginTop: 6 }}>
+                    Vencimento do teste: {formatDateBR(p.planExpiresAt)} {expiryInfo ? `(${expiryInfo.text})` : ''}.
                   </Text>
                 </View>
               )}
 
-              {/* Alerta de Falha no Gateway (se houver) */}
-              {data?.asaasFailedReason ? (
-                <View className="bg-[#fef2f2] border border-[#fca5a5] p-4 rounded-2xl">
-                  <View className="flex-row items-center gap-2 mb-1">
-                    <Feather name="alert-octagon" size={16} color="#b91c1c" />
-                    <Text className="font-title text-[#b91c1c] text-[14px] font-bold">
-                      Alerta Gateway: Última Cobrança Falhou
+              {/* Banner de Falha de Pagamento no Gateway (se houver) */}
+              {data.asaasFailedReason ? (
+                <View style={{ backgroundColor: '#fef2f2', borderWidth: 1.5, borderColor: '#ef4444', padding: 14, borderRadius: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ fontSize: 18 }}>⚠️</Text>
+                    <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14, color: '#991b1b' }}>
+                      Falha na Cobrança do Gateway
                     </Text>
                   </View>
-                  <Text className="font-sans text-[#991b1b] font-medium text-[12px]">
+                  <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12, color: '#b91c1c', marginTop: 4 }}>
                     Motivo: {data.asaasFailedReason}
                   </Text>
                 </View>
               ) : null}
 
-              {/* KPI Cards de Pagamento */}
-              <View className="bg-white rounded-2xl p-4 border border-slate-200 gap-3">
-                <Text className="font-title text-[#1e293b] text-[15px] font-bold mb-1">
-                  Resumo Financeiro
-                </Text>
-
-                <View className="flex-row justify-between py-2 border-b border-slate-100">
-                  <Text className="font-sans text-[#64748b] text-[13px]">Plano Contratado</Text>
-                  <Text className="font-sans font-bold text-[#1e293b] text-[13px]">
-                    {psy.plano || 'Sem Plano'}
+              {/* Grid de 4 Cards de KPI Financeiro */}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                {/* Plano e Valor */}
+                <View style={{ width: '48%', backgroundColor: '#ffffff', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#64748b' }}>📦 PLANO</Text>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16, color: '#0f172a', marginTop: 4 }}>
+                    {p.plano || sub.plan || 'Sem Plano'}
+                  </Text>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12, color: '#16a34a', marginTop: 2 }}>
+                    {p.is_exempt ? 'Isento (VIP)' : (asaasSub.value ? formatCurrency(asaasSub.value) : (p.valor_mensal_numero ? `R$ ${p.valor_mensal_numero},00` : '-'))}
                   </Text>
                 </View>
 
-                <View className="flex-row justify-between py-2 border-b border-slate-100">
-                  <Text className="font-sans text-[#64748b] text-[13px]">Vencimento do Acesso</Text>
-                  <Text className="font-sans font-bold text-[#1e293b] text-[13px]">
-                    {formatDateBR(psy.planExpiresAt || asaasSub?.nextDueDate)}
+                {/* Vencimento */}
+                <View style={{ width: '48%', backgroundColor: '#ffffff', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#64748b' }}>📅 VENCIMENTO</Text>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16, color: '#0f172a', marginTop: 4 }}>
+                    {formatDateBR(p.planExpiresAt || asaasSub.nextDueDate)}
+                  </Text>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', fontSize: 12, color: expiryInfo?.isExpired ? '#dc2626' : '#166534', marginTop: 2 }}>
+                    {expiryInfo ? expiryInfo.text : '-'}
                   </Text>
                 </View>
 
-                <View className="flex-row justify-between py-2 border-b border-slate-100">
-                  <Text className="font-sans text-[#64748b] text-[13px]">ID Asaas (Assinatura)</Text>
-                  <Text className="font-sans text-[#1e293b] text-[12px] font-mono">
-                    {psy.subscriptionId || asaasSub?.id || '-'}
+                {/* Mensalidades Pagas */}
+                <View style={{ width: '48%', backgroundColor: '#ffffff', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#64748b' }}>📈 MENSALIDADES</Text>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16, color: '#0f172a', marginTop: 4 }}>
+                    {p.subscription_payments_count || payments.filter((x: any) => ['RECEIVED', 'CONFIRMED', 'paid'].includes(x.status)).length} meses
+                  </Text>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                    Total: {payments.length} faturas
                   </Text>
                 </View>
 
-                <View className="flex-row justify-between py-2 border-b border-slate-100">
-                  <Text className="font-sans text-[#64748b] text-[13px]">Mensalidades Pagas</Text>
-                  <Text className="font-sans font-bold text-[#1e293b] text-[13px]">
-                    {psy.subscription_payments_count || payments.filter((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED').length} meses
+                {/* LTV */}
+                <View style={{ width: '48%', backgroundColor: '#ffffff', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#64748b' }}>💰 RECEITA TOTAL (LTV)</Text>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16, color: '#166534', marginTop: 4 }}>
+                    {formatCurrency(p.lifetimeRevenue || payments.filter((x: any) => ['RECEIVED', 'CONFIRMED', 'paid'].includes(x.status)).reduce((s: number, c: any) => s + parseFloat(c.value || 0), 0))}
                   </Text>
-                </View>
-
-                <View className="flex-row justify-between py-2">
-                  <Text className="font-sans text-[#64748b] text-[13px]">Receita Total (LTV)</Text>
-                  <Text className="font-title text-[#166534] font-bold text-[15px]">
-                    {formatCurrency(psy.lifetimeRevenue || 0)}
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                    1º pgto: {formatDateBR(p.firstPaidAt || p.subscribedAt)}
                   </Text>
                 </View>
               </View>
 
-              {/* Lista de Faturas */}
-              <View className="bg-white rounded-2xl p-4 border border-slate-200">
-                <View className="flex-row items-center justify-between mb-3">
-                  <Text className="font-title text-[#1e293b] text-[15px] font-bold">
-                    Histórico de Faturas
+              {/* Histórico de Faturas */}
+              <View style={{ marginTop: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 15, color: '#1e293b' }}>
+                    🧾 Histórico de Faturas
                   </Text>
-                  <View className="bg-slate-100 px-2.5 py-0.5 rounded-full">
-                    <Text className="font-sans text-[#475569] text-[11px] font-bold">
+                  <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }}>
+                    <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#475569', fontSize: 11 }}>
                       {payments.length} {payments.length === 1 ? 'fatura' : 'faturas'}
                     </Text>
                   </View>
                 </View>
 
                 {payments.length === 0 ? (
-                  <Text className="font-sans text-[#94a3b8] text-[13px] text-center py-6">
-                    Nenhuma fatura registrada no gateway.
-                  </Text>
+                  <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 16, alignItems: 'center' }}>
+                    <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', color: '#94a3b8', fontSize: 13 }}>
+                      Nenhum pagamento registrado no sistema.
+                    </Text>
+                  </View>
                 ) : (
-                  <View className="gap-3">
+                  <View style={{ gap: 10 }}>
                     {payments.map((pm: any, i: number) => {
-                      const isPaid = ['RECEIVED', 'CONFIRMED', 'PAID'].includes(
-                        String(pm.status || '').toUpperCase()
-                      );
-                      const isOverdue = ['OVERDUE', 'FAILED'].includes(
-                        String(pm.status || '').toUpperCase()
-                      );
+                      const isPaid = ['RECEIVED', 'CONFIRMED', 'paid', 'PAID'].includes(pm.status);
+                      const isOverdue = ['OVERDUE', 'FAILED'].includes(pm.status);
+                      const bType = String(pm.billingType || '').toUpperCase();
+                      const icon = bType === 'PIX' ? '💠' : (bType === 'BOLETO' ? '📄' : '💳');
 
                       return (
                         <View
-                          key={i}
-                          className="p-3 bg-[#f8fafc] rounded-xl border border-slate-200"
+                          key={pm.id || i}
+                          style={{
+                            backgroundColor: '#ffffff',
+                            padding: 14,
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            borderColor: '#e2e8f0',
+                            gap: 10,
+                          }}
                         >
-                          <View className="flex-row justify-between items-start">
-                            <View className="flex-1 mr-2">
-                              <Text className="font-sans font-bold text-[#1e293b] text-[13px]">
-                                {pm.description || 'Fatura Yelo'}
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <View style={{ flex: 1, marginRight: 10 }}>
+                              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14, color: '#0f172a' }}>
+                                {icon} {pm.description || (bType === 'PIX' ? 'Fatura PIX' : 'Mensalidade Yelo')}
                               </Text>
-                              <Text className="font-sans text-[#64748b] text-[11px] mt-0.5">
-                                Venc: {formatDateBR(pm.dueDate)} | Pag: {formatDateBR(pm.paymentDate)}
+                              <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, color: '#64748b', marginTop: 4 }}>
+                                Vencimento: {formatDateBR(pm.dueDate)}
+                              </Text>
+                              <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#94a3b8' }}>
+                                Pago em: {pm.paymentDate ? formatDateBR(pm.paymentDate) : 'Pendente'}
                               </Text>
                             </View>
 
-                            <View className="items-end">
-                              <Text className="font-title font-bold text-[#0f172a] text-[14px]">
+                            <View style={{ alignItems: 'flex-end' }}>
+                              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 16, color: '#0f172a' }}>
                                 {formatCurrency(pm.value)}
                               </Text>
                               <View
-                                className={`px-2 py-0.5 rounded-full mt-1 ${
-                                  isPaid
-                                    ? 'bg-[#dcfce7]'
-                                    : isOverdue
-                                    ? 'bg-[#fee2e2]'
-                                    : 'bg-[#fef9c3]'
-                                }`}
+                                style={{
+                                  backgroundColor: isPaid ? '#dcfce7' : (isOverdue ? '#fee2e2' : '#fef3c7'),
+                                  paddingHorizontal: 8,
+                                  paddingVertical: 3,
+                                  borderRadius: 999,
+                                  marginTop: 4,
+                                }}
                               >
                                 <Text
-                                  className={`font-sans text-[10px] font-bold ${
-                                    isPaid
-                                      ? 'text-[#166534]'
-                                      : isOverdue
-                                      ? 'text-[#991b1b]'
-                                      : 'text-[#854d0e]'
-                                  }`}
+                                  style={{
+                                    fontFamily: 'PlusJakartaSans_700Bold',
+                                    fontSize: 10,
+                                    color: isPaid ? '#166534' : (isOverdue ? '#991b1b' : '#92400e'),
+                                  }}
                                 >
-                                  {isPaid ? 'PAGO' : isOverdue ? 'ATRASADO' : 'PENDENTE'}
+                                  {isPaid ? 'Pago' : (isOverdue ? 'Atrasado' : 'Pendente')}
                                 </Text>
                               </View>
                             </View>
@@ -932,12 +1062,23 @@ export default function AdminCRMPsicologoDetalhesScreen() {
 
                           {(pm.invoiceUrl || pm.bankSlipUrl) && (
                             <TouchableOpacity
-                              onPress={() => Linking.openURL(pm.invoiceUrl || pm.bankSlipUrl)}
-                              className="mt-2 pt-2 border-t border-slate-200 flex-row items-center gap-1"
+                              onPress={() => openExternalUrl(pm.invoiceUrl || pm.bankSlipUrl)}
+                              style={{
+                                backgroundColor: '#eff6ff',
+                                borderWidth: 1,
+                                borderColor: '#bfdbfe',
+                                paddingVertical: 7,
+                                paddingHorizontal: 12,
+                                borderRadius: 10,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 6,
+                              }}
                             >
-                              <Feather name="external-link" size={12} color="#0369a1" />
-                              <Text className="font-sans font-bold text-[#0369a1] text-[11px]">
-                                Ver no Gateway Asaas
+                              <Feather name="external-link" size={13} color="#2563eb" />
+                              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 12, color: '#2563eb' }}>
+                                Ver Fatura / Comprovante
                               </Text>
                             </TouchableOpacity>
                           )}
@@ -950,74 +1091,305 @@ export default function AdminCRMPsicologoDetalhesScreen() {
             </View>
           )}
 
-          {/* TAB 3: LEADS WHATSAPP */}
-          {activeTab === 'whatsapp' && (
-            <View className="bg-white rounded-2xl p-4 border border-slate-200">
-              <Text className="font-title text-[#1e293b] text-[15px] font-bold mb-3">
-                Cliques e Contatos de Pacientes
-              </Text>
-
-              {whatsappLogs.length === 0 ? (
-                <Text className="font-sans text-[#94a3b8] text-[13px] text-center py-6">
-                  Nenhum clique de WhatsApp registrado ainda.
-                </Text>
+          {/* ========================================================= */}
+          {/* ABA 3: BLOG & ARTIGOS                                     */}
+          {/* ========================================================= */}
+          {activeTab === 'blog' && (
+            <View>
+              {blogPosts.length === 0 ? (
+                <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 16, alignItems: 'center' }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', color: '#94a3b8', fontSize: 14 }}>
+                    Nenhum artigo publicado pelo psicólogo.
+                  </Text>
+                </View>
               ) : (
-                <View className="gap-2.5">
-                  {whatsappLogs.map((log: any, i: number) => {
-                    let dealBadge = { label: 'Sem feedback', bg: '#f1f5f9', text: '#475569' };
-                    if (log.feedbackGiven) {
-                      if (['yes', 'started'].includes(log.dealClosed)) {
-                        dealBadge = { label: '✅ Agendou', bg: '#dcfce7', text: '#166534' };
-                      } else if (log.dealClosed === 'talking') {
-                        dealBadge = { label: '⏳ Em negociação', bg: '#ffedd5', text: '#c2410c' };
-                      } else if (['no', 'not_started', 'ghosted'].includes(log.dealClosed)) {
-                        dealBadge = { label: '💬 Não Agendou', bg: '#fef9c3', text: '#854d0e' };
+                <View style={{ gap: 10 }}>
+                  {blogPosts.map((post: any) => (
+                    <View
+                      key={post.id}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        padding: 14,
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        borderColor: '#e2e8f0',
+                      }}
+                    >
+                      <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14, color: '#1B4332' }}>
+                        {post.titulo || post.title || 'Sem título'}
+                      </Text>
+                      <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, color: '#64748b', marginTop: 4 }}>
+                        Publicado em: {formatDateBR(post.createdAt || post.created_at)}
+                      </Text>
+                      {post.resumo ? (
+                        <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, color: '#475569', marginTop: 6 }}>
+                          {post.resumo}
+                        </Text>
+                      ) : null}
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* ========================================================= */}
+          {/* ABA 4: FÓRUM                                              */}
+          {/* ========================================================= */}
+          {activeTab === 'forum' && (
+            <View>
+              {forumPosts.length === 0 && forumComments.length === 0 ? (
+                <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 16, alignItems: 'center' }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', color: '#94a3b8', fontSize: 14 }}>
+                    Nenhuma interação registrada no fórum.
+                  </Text>
+                </View>
+              ) : (
+                <View style={{ gap: 10 }}>
+                  {forumPosts.map((fp: any) => (
+                    <View
+                      key={`fp-${fp.id}`}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        padding: 14,
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        borderColor: '#e2e8f0',
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <View style={{ backgroundColor: '#f5f3ff', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                          <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#7c3aed', fontSize: 10 }}>TÓPICO</Text>
+                        </View>
+                        <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#94a3b8' }}>
+                          {formatDateBR(fp.createdAt)}
+                        </Text>
+                      </View>
+                      <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14, color: '#1e293b', marginTop: 6 }}>
+                        {fp.title || 'Sem título'}
+                      </Text>
+                      {fp.content ? (
+                        <Text numberOfLines={2} style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, color: '#475569', marginTop: 4 }}>
+                          {fp.content}
+                        </Text>
+                      ) : null}
+                    </View>
+                  ))}
+
+                  {forumComments.map((fc: any) => (
+                    <View
+                      key={`fc-${fc.id}`}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        padding: 14,
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        borderColor: '#e2e8f0',
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <View style={{ backgroundColor: '#faf5ff', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                          <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#9333ea', fontSize: 10 }}>RESPOSTA</Text>
+                        </View>
+                        <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#94a3b8' }}>
+                          {formatDateBR(fc.createdAt)}
+                        </Text>
+                      </View>
+                      <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13, color: '#334155', marginTop: 6 }}>
+                        Em: {fc.postTitle || 'Tópico do fórum'}
+                      </Text>
+                      <Text numberOfLines={2} style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, color: '#475569', marginTop: 4 }}>
+                        {fc.content || fc.texto || '-'}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* ========================================================= */}
+          {/* ABA 5: AVALIAÇÕES & FEEDBACK                              */}
+          {/* ========================================================= */}
+          {activeTab === 'reviews' && (
+            <View>
+              {reviews.length === 0 ? (
+                <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 16, alignItems: 'center' }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', color: '#94a3b8', fontSize: 14 }}>
+                    Nenhuma avaliação registrada para este profissional.
+                  </Text>
+                </View>
+              ) : (
+                <View style={{ gap: 10 }}>
+                  {reviews.map((rev: any) => {
+                    const stars = rev.rating || rev.nota || 5;
+                    return (
+                      <View
+                        key={rev.id}
+                        style={{
+                          backgroundColor: '#ffffff',
+                          padding: 14,
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          borderColor: '#e2e8f0',
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ color: '#d97706', fontSize: 15, letterSpacing: 2 }}>
+                            {'★'.repeat(stars)}{'☆'.repeat(Math.max(0, 5 - stars))}
+                          </Text>
+                          <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', color: '#94a3b8', fontSize: 11 }}>
+                            {formatDateBR(rev.createdAt)}
+                          </Text>
+                        </View>
+                        <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', color: '#1e293b', fontSize: 13, marginTop: 8, fontStyle: 'italic' }}>
+                          "{rev.comment || rev.comentario || 'Sem comentário por escrito.'}"
+                        </Text>
+                        <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', color: '#64748b', fontSize: 11, marginTop: 8 }}>
+                          Por: {rev.patient?.nome || rev.autor || 'Paciente Anônimo'}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* ========================================================= */}
+          {/* ABA 6: LEADS WHATSAPP                                     */}
+          {/* ========================================================= */}
+          {activeTab === 'whatsapp' && (
+            <View>
+              {whatsappLogs.length === 0 ? (
+                <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 16, alignItems: 'center' }}>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_600SemiBold', color: '#94a3b8', fontSize: 14 }}>
+                    Nenhum clique ou lead registrado no WhatsApp.
+                  </Text>
+                </View>
+              ) : (
+                <View style={{ gap: 10 }}>
+                  {whatsappLogs.map((log: any, idx: number) => {
+                    const hasFeedback = Boolean(log.feedbackGiven);
+                    const isClosed = hasFeedback && (log.dealClosed === 'yes' || log.dealClosed === 'started');
+                    const isTalking = hasFeedback && log.dealClosed === 'talking';
+                    const isNoContact = hasFeedback && (
+                      log.contactReceived === false ||
+                      log.dealClosed === 'no_contact' ||
+                      log.dealClosed === 'wpp_issue' ||
+                      log.dealClosed === 'unknown'
+                    );
+                    const isNotClosed = hasFeedback && (
+                      ['no', 'not_started', 'ghosted'].includes(log.dealClosed) ||
+                      (typeof log.dealClosed === 'string' && log.dealClosed.startsWith('not_started_')) ||
+                      (Boolean(log.dealClosed) && Boolean(log.contactReceived))
+                    );
+
+                    let badgeColor = '#64748b';
+                    let badgeBg = '#f1f5f9';
+                    let badgeLabel = '⏳ Sem feedback';
+
+                    if (hasFeedback) {
+                      if (isClosed) {
+                        badgeColor = '#166534';
+                        badgeBg = '#dcfce7';
+                        badgeLabel = '✅ Agendou';
+                      } else if (isTalking) {
+                        badgeColor = '#c2410c';
+                        badgeBg = '#ffedd5';
+                        badgeLabel = '⏳ Em negociação';
+                      } else if (isNoContact) {
+                        badgeColor = '#991b1b';
+                        badgeBg = '#fee2e2';
+                        badgeLabel = '❌ Não contatou';
+                      } else if (isNotClosed) {
+                        badgeColor = '#854d0e';
+                        badgeBg = '#fef9c3';
+                        if (log.dealClosed === 'not_started_price') {
+                          badgeLabel = '💬 Não agendou (Preço)';
+                        } else if (log.dealClosed === 'not_started_schedule') {
+                          badgeLabel = '💬 Não agendou (Horário)';
+                        } else if (log.dealClosed === 'ghosted') {
+                          badgeLabel = '💬 Não agendou (Sumiu)';
+                        } else {
+                          badgeLabel = '💬 Não agendou';
+                        }
                       } else {
-                        dealBadge = { label: '❌ Não Contatou', bg: '#fee2e2', text: '#991b1b' };
+                        badgeColor = '#0369a1';
+                        badgeBg = '#e0f2fe';
+                        badgeLabel = '✅ Respondido';
                       }
+                    } else if (log.adminWppReminderSentAt) {
+                      badgeColor = '#854d0e';
+                      badgeBg = '#fef9c3';
+                      badgeLabel = '⚠️ Cobrado';
+                    } else {
+                      badgeColor = '#64748b';
+                      badgeBg = '#f1f5f9';
+                      badgeLabel = '⏳ Sem feedback';
                     }
 
                     return (
                       <View
-                        key={i}
-                        className="p-3 bg-[#f8fafc] rounded-xl border border-slate-200 flex-row items-center justify-between"
+                        key={log.id || idx}
+                        style={{
+                          backgroundColor: '#ffffff',
+                          padding: 14,
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          borderColor: '#e2e8f0',
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
                       >
-                        <View className="flex-1 mr-2">
-                          <View className="flex-row items-center gap-1.5 flex-wrap">
-                            <Text className="font-sans font-bold text-[#1e293b] text-[13px]">
-                              {log.guestName || 'Anônimo / Não informado'}
+                        <View style={{ flex: 1, marginRight: 10 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14, color: '#0f172a' }}>
+                              {log.guestName || 'Paciente Anônimo'}
                             </Text>
-                            <View
-                              style={{ backgroundColor: dealBadge.bg }}
-                              className="px-2 py-0.5 rounded-full"
-                            >
-                              <Text
-                                style={{ color: dealBadge.text }}
-                                className="font-sans font-bold text-[10px]"
-                              >
-                                {dealBadge.label}
+                            <View style={{ backgroundColor: badgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                              <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: badgeColor, fontSize: 10 }}>
+                                {badgeLabel}
                               </Text>
                             </View>
                           </View>
-                          <Text className="font-sans text-[#94a3b8] text-[11px] mt-1">
-                            {formatDateTimeBR(log.createdAt)}
-                          </Text>
+
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+                            <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 11, color: '#94a3b8' }}>
+                              {formatDateTimeBR(log.createdAt)}
+                            </Text>
+                            {log.utmSource && (
+                              <View style={{ backgroundColor: '#f1f5f9', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                                <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 9.5, color: '#475569' }}>
+                                  {String(log.utmSource).toUpperCase()}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+
+                          {log.dealClosedNotes && (
+                            <Text style={{ fontFamily: 'PlusJakartaSans_400Regular', fontSize: 11, color: '#64748b', fontStyle: 'italic', marginTop: 3 }}>
+                              "{log.dealClosedNotes}"
+                            </Text>
+                          )}
                         </View>
 
-                        {log.guestPhone ? (
+                        {log.guestPhone && (
                           <TouchableOpacity
-                            onPress={() => {
-                              const p = String(log.guestPhone).replace(/\D/g, '');
-                              Linking.openURL(`https://wa.me/55${p}`);
+                            onPress={() => openWhatsApp(log.guestPhone)}
+                            style={{
+                              backgroundColor: '#25D366',
+                              paddingHorizontal: 10,
+                              paddingVertical: 6,
+                              borderRadius: 999,
                             }}
-                            className="bg-[#10b981] px-3 py-1.5 rounded-full flex-row items-center gap-1"
                           >
-                            <Feather name="message-circle" size={12} color="#fff" />
-                            <Text className="font-sans font-bold text-white text-[11px]">
+                            <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', color: '#fff', fontSize: 11 }}>
                               WhatsApp
                             </Text>
                           </TouchableOpacity>
-                        ) : null}
+                        )}
                       </View>
                     );
                   })}
@@ -1025,220 +1397,9 @@ export default function AdminCRMPsicologoDetalhesScreen() {
               )}
             </View>
           )}
-
-          {/* TAB 4: AVALIAÇÕES */}
-          {activeTab === 'reviews' && (
-            <View className="bg-white rounded-2xl p-4 border border-slate-200">
-              <Text className="font-title text-[#1e293b] text-[15px] font-bold mb-3">
-                Avaliações de Pacientes
-              </Text>
-
-              {reviews.length === 0 ? (
-                <Text className="font-sans text-[#94a3b8] text-[13px] text-center py-6">
-                  Nenhuma avaliação registrada ainda.
-                </Text>
-              ) : (
-                <View className="gap-3">
-                  {reviews.map((rev: any, i: number) => {
-                    const stars = Math.min(5, Math.max(1, rev.rating || rev.nota || 5));
-                    return (
-                      <View
-                        key={i}
-                        className="p-3 bg-[#f8fafc] rounded-xl border border-slate-200"
-                      >
-                        <View className="flex-row items-center gap-1 mb-1.5">
-                          {Array.from({ length: 5 }).map((_, s) => (
-                            <Feather
-                              key={s}
-                              name="star"
-                              size={13}
-                              color={s < stars ? '#eab308' : '#cbd5e1'}
-                            />
-                          ))}
-                        </View>
-                        <Text className="font-sans text-[#334155] text-[13px] italic">
-                          "{rev.comment || rev.comentario || 'Sem comentário'}"
-                        </Text>
-                        <Text className="font-sans text-[#94a3b8] text-[11px] mt-2">
-                          Por: {rev.patient?.nome || rev.autor || 'Paciente Anônimo'} em{' '}
-                          {formatDateBR(rev.createdAt)}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* TAB 5: BLOG */}
-          {activeTab === 'blog' && (
-            <View className="bg-white rounded-2xl p-4 border border-slate-200">
-              <Text className="font-title text-[#1e293b] text-[15px] font-bold mb-3">
-                Artigos Publicados no Blog
-              </Text>
-
-              {blogPosts.length === 0 ? (
-                <Text className="font-sans text-[#94a3b8] text-[13px] text-center py-6">
-                  Nenhum artigo publicado pelo psicólogo.
-                </Text>
-              ) : (
-                <View className="gap-3">
-                  {blogPosts.map((post: any, i: number) => (
-                    <View
-                      key={i}
-                      className="p-3 bg-[#f8fafc] rounded-xl border border-slate-200"
-                    >
-                      <Text className="font-title font-bold text-[#1e293b] text-[14px]">
-                        {post.titulo || post.title || 'Artigo'}
-                      </Text>
-                      <Text className="font-sans text-[#64748b] text-[11px] mt-1">
-                        Publicado em {formatDateBR(post.createdAt || post.created_at)}
-                      </Text>
-                      {(post.slug || post.id) && (
-                        <TouchableOpacity
-                          onPress={() =>
-                            Linking.openURL(
-                              `https://www.yelopsi.com.br/blog/post/${post.slug || post.id}`
-                            )
-                          }
-                          className="mt-2 pt-2 border-t border-slate-200 flex-row items-center gap-1"
-                        >
-                          <Feather name="external-link" size={12} color="#166534" />
-                          <Text className="font-sans font-bold text-[#166534] text-[11px]">
-                            Ver Post no Portal
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* TAB 6: FÓRUM */}
-          {activeTab === 'forum' && (
-            <View className="bg-white rounded-2xl p-4 border border-slate-200">
-              <Text className="font-title text-[#1e293b] text-[15px] font-bold mb-3">
-                Interações no Fórum da Comunidade
-              </Text>
-
-              {forumPosts.length === 0 && forumComments.length === 0 ? (
-                <Text className="font-sans text-[#94a3b8] text-[13px] text-center py-6">
-                  Nenhuma postagem ou resposta no fórum.
-                </Text>
-              ) : (
-                <View className="gap-3">
-                  {forumPosts.map((post: any, i: number) => (
-                    <View
-                      key={`post-${i}`}
-                      className="p-3 bg-[#f8fafc] rounded-xl border border-slate-200"
-                    >
-                      <View className="flex-row items-center gap-1.5 mb-1">
-                        <Feather name="message-circle" size={13} color="#7c3aed" />
-                        <Text className="font-sans text-[11px] font-bold text-[#7c3aed] uppercase">
-                          Tópico Criado
-                        </Text>
-                      </View>
-                      <Text className="font-title font-bold text-[#1e293b] text-[14px]">
-                        {post.title}
-                      </Text>
-                      <Text
-                        className="font-sans text-[#64748b] text-[12px] mt-1"
-                        numberOfLines={2}
-                      >
-                        {post.content || ''}
-                      </Text>
-                      <Text className="font-sans text-[#94a3b8] text-[11px] mt-2">
-                        {formatDateBR(post.createdAt)}
-                      </Text>
-                    </View>
-                  ))}
-
-                  {forumComments.map((comment: any, i: number) => (
-                    <View
-                      key={`comm-${i}`}
-                      className="p-3 bg-[#f8fafc] rounded-xl border border-slate-200"
-                    >
-                      <View className="flex-row items-center gap-1.5 mb-1">
-                        <Feather name="corner-down-right" size={13} color="#9333ea" />
-                        <Text className="font-sans text-[11px] font-bold text-[#9333ea] uppercase">
-                          Resposta em: {comment.postTitle || 'Tópico'}
-                        </Text>
-                      </View>
-                      <Text
-                        className="font-sans text-[#475569] text-[12px] mt-0.5"
-                        numberOfLines={2}
-                      >
-                        {comment.content || ''}
-                      </Text>
-                      <Text className="font-sans text-[#94a3b8] text-[11px] mt-2">
-                        {formatDateBR(comment.createdAt)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          )}
-        </View>
-
-        {/* ========================================================= */}
-        {/* 5. AÇÕES RÁPIDAS DE CS NO RODAPÉ DO DOSSIÊ                */}
-        {/* ========================================================= */}
-        <View className="px-4 mt-6">
-          <View className="bg-white p-4 rounded-2xl border border-slate-200 gap-2.5">
-            <Text className="font-title text-[#1e293b] text-[15px] font-bold mb-1">
-              Ações Rápidas de CS
-            </Text>
-
-            {/* Chamar no WhatsApp */}
-            <TouchableOpacity
-              onPress={handleCallWhatsapp}
-              className="bg-[#e0f2fe] border border-[#bae6fd] py-3 rounded-full flex-row items-center justify-center gap-2"
-            >
-              <Feather name="message-circle" size={16} color="#0369a1" />
-              <Text className="font-sans font-bold text-[#0369a1] text-[14px]">
-                Chamar no WhatsApp 📱
-              </Text>
-            </TouchableOpacity>
-
-            {/* Estender Período Grátis */}
-            <TouchableOpacity
-              onPress={handleExtendTrial}
-              className="bg-[#f0fdf4] border border-[#bbf7d0] py-3 rounded-full flex-row items-center justify-center gap-2"
-            >
-              <Feather name="gift" size={16} color="#166534" />
-              <Text className="font-sans font-bold text-[#166534] text-[14px]">
-                Estender Período Grátis 🎁
-              </Text>
-            </TouchableOpacity>
-
-            {/* Conceder / Remover Isenção VIP */}
-            <TouchableOpacity
-              onPress={handleToggleVip}
-              className="bg-[#f0fdf4] border border-[#bbf7d0] py-3 rounded-full flex-row items-center justify-center gap-2"
-            >
-              <Feather name="star" size={16} color="#166534" />
-              <Text className="font-sans font-bold text-[#166534] text-[14px]">
-                {psy.is_exempt ? 'Remover Isenção VIP' : 'Conceder Isenção VIP ⭐'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Expirar Perfil */}
-            <TouchableOpacity
-              onPress={handleExpireProfile}
-              className="bg-[#fef2f2] border border-[#fecaca] py-3 rounded-full flex-row items-center justify-center gap-2"
-            >
-              <Feather name="alert-circle" size={16} color="#991b1b" />
-              <Text className="font-sans font-bold text-[#991b1b] text-[14px]">
-                Expirar Perfil (Inativo) ⚠️
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
     </View>
   );
 }
+
