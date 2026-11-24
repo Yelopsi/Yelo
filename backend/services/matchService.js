@@ -440,12 +440,39 @@ exports.calculateMatches = async (preferences = {}) => {
         debugLog.push(`[${Date.now() - startTime}ms] ⚖️ Aplicando algoritmos de fairness V5 (Bônus Fome, Penalidade Desperdício)...`);
         scored = applyFairness(scored, fairShare);
 
+        // --- MATCH V6.1: BLINDAGEM ESTRITA DE TRÁFEGO PAGO (GOOGLE ADS / B2C) ---
+        // Se a busca vem de tráfego pago (Google Ads / CPC), o pool base deve ser restrito aos psicólogos
+        // pagantes ativos ANTES do corte de nota >= 50 e do filtro de não-cappados. Assim, se menos de 3
+        // pagantes tiverem rawMatchScore >= 50, os demais slots são preenchidos pelos melhores pagantes
+        // (e nunca por trials gratuitos).
+        const utmSource = String(preferences.utm_source || preferences.utmSource || '').toLowerCase().trim();
+        const isPaidTraffic = utmSource.includes('google') || utmSource.includes('adwords') || utmSource.includes('cpc') || utmSource === 'gads';
+
+        let candidatePool = [...scored];
+        if (isPaidTraffic) {
+            debugLog.push(`[${Date.now() - startTime}ms] 💰 Tráfego Pago Google Ads detectado (UTM: "${utmSource}").`);
+            const allPaidCandidates = scored.filter(c => c.isPaid);
+            if (allPaidCandidates.length >= 3) {
+                debugLog.push(`   💎 ${allPaidCandidates.length} assinantes pagantes ativos na base. Blindando pool 100% para pagantes antes do corte.`);
+                candidatePool = allPaidCandidates;
+            } else if (allPaidCandidates.length > 0) {
+                debugLog.push(`   ⚠️ Apenas ${allPaidCandidates.length} pagantes ativos na base. Pagantes terão prioridade absoluta nas primeiras vagas.`);
+            }
+        }
+
         debugLog.push(`[${Date.now() - startTime}ms] 📊 Candidatos elegíveis (Nota de Corte >= 50)...`);
         
-        let eligibleForSlots = [...scored].filter(c => c.rawMatchScore >= 50);
+        let eligibleForSlots = candidatePool.filter(c => c.rawMatchScore >= 50);
         if (eligibleForSlots.length === 0) {
-            debugLog.push(`   ⚠️ Ninguém passou no corte (>=50). Flexibilizando para os melhores disponíveis.`);
-            eligibleForSlots = [...scored];
+            debugLog.push(`   ⚠️ Ninguém passou no corte (>=50). Flexibilizando para os melhores disponíveis do pool.`);
+            eligibleForSlots = [...candidatePool];
+        } else if (isPaidTraffic && eligibleForSlots.length < 3 && candidatePool.length >= 3) {
+            const alreadyIds = new Set(eligibleForSlots.map(c => c.id));
+            const fallbackPaid = candidatePool
+                .filter(c => !alreadyIds.has(c.id))
+                .sort((a, b) => (b.rawMatchScore - a.rawMatchScore) || (b.finalScore - a.finalScore));
+            debugLog.push(`   🛡️ Apenas ${eligibleForSlots.length} pagante(s) com score >= 50. Complementando pool com os demais pagantes elegíveis para evitar vazamento para trials.`);
+            eligibleForSlots = [...eligibleForSlots, ...fallbackPaid];
         }
 
         // --- PROTEÇÃO DE VAGAS: OCULTA OS CAPPADOS SE HOUVER OPÇÕES SUFICIENTES ---
@@ -457,20 +484,11 @@ exports.calculateMatches = async (preferences = {}) => {
             debugLog.push(`   ⚠️ Apenas ${nonCappedEligible.length} não-cappados. Mantendo a base inteira para garantir preenchimento das 3 vagas.`);
         }
 
-        // --- MATCH V6.1: PRIORIZAÇÃO DE TRÁFEGO PAGO (GOOGLE ADS / B2C) ---
-        // Se a busca vem de tráfego pago (Google Ads / CPC), o lead deve ser alocado prioritariamente para psicólogos
-        // pagantes ativos, garantindo o retorno da assinatura e blindando a retenção da base.
-        const utmSource = String(preferences.utm_source || preferences.utmSource || '').toLowerCase().trim();
-        const isPaidTraffic = utmSource.includes('google') || utmSource.includes('adwords') || utmSource.includes('cpc') || utmSource === 'gads';
-
         if (isPaidTraffic) {
-            debugLog.push(`[${Date.now() - startTime}ms] 💰 Tráfego Pago Google Ads detectado (UTM: "${utmSource}").`);
             const paidEligible = eligibleForSlots.filter(c => c.isPaid);
             if (paidEligible.length >= 3) {
-                debugLog.push(`   💎 ${paidEligible.length} assinantes pagantes ativos encontrados. Slots 100% restritos a assinantes pagantes.`);
                 eligibleForSlots = paidEligible;
             } else if (paidEligible.length > 0) {
-                debugLog.push(`   ⚠️ Apenas ${paidEligible.length} pagantes ativos disponíveis. Pagantes ocuparão as primeiras vagas; trials preencherão o restante.`);
                 const remainingTrials = eligibleForSlots.filter(c => !c.isPaid);
                 eligibleForSlots = [...paidEligible, ...remainingTrials];
             }

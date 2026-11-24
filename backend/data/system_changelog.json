@@ -1,5 +1,40 @@
 [
   {
+    "id": "change-git-c9e7ac29",
+    "date": "2026-11-24T02:02:19.000Z",
+    "commit": "c9e7ac29",
+    "author": "Anderson",
+    "title": "Correção: Elevar resolucao de avatares do google de 96px para 800px no web e mobile (profiles)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "elevar resolucao de avatares do google de 96px para 800px no web e mobile",
+    "description": "Commit registrado no repositório: \"fix(profiles): elevar resolucao de avatares do google de 96px para 800px no web e mobile\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/authController.js, backend/data/system_changelog.json, backend/migrations/20261123230000-upgrade-google-avatar-resolution.js, backend/routes/viewRoutes.js (+8 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #c9e7ac29"
+    },
+    "after": {
+      "nova_versao": "elevar resolucao de avatares do google de 96px para 800px no web e mobile"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/authController.js",
+      "backend/data/system_changelog.json",
+      "backend/migrations/20261123230000-upgrade-google-avatar-resolution.js",
+      "backend/routes/viewRoutes.js",
+      "mobile/src/app/(tabs)/meu_perfil.tsx",
+      "mobile/src/app/[slug].tsx",
+      "mobile/src/utils/imageUrl.ts",
+      "public/jobs/ui-helpers.js",
+      "public/js/psi_perfil_publico.js",
+      "public/psi/psi_meu_perfil.js",
+      "security/reports/gate_report.json",
+      "views/psi_perfil_publico.ejs"
+    ]
+  },
+  {
     "id": "change-git-c3af8be1",
     "date": "2026-11-24T01:11:31.000Z",
     "commit": "c3af8be1",

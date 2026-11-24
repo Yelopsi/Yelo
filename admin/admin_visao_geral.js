@@ -92,8 +92,8 @@ window.initializePage = function() {
 
     function updateScheduledAlerts() {
         updateScheduledAlert({
-            targetIso: '2026-11-24T00:00:00-03:00',
-            shortDate: '24/11',
+            targetIso: '2026-12-08T00:00:00-03:00',
+            shortDate: '08/12',
             cardId: 'card-alert-traffic-review',
             daysId: 'traffic-review-days',
             titleId: 'traffic-review-title',
@@ -104,8 +104,8 @@ window.initializePage = function() {
             defaultBg: '#eff6ff',
             tomorrowAction: 'Preparar análise no CMO',
             dueAction: 'Reavaliar agora no CMO',
-            todayHtml: '<strong>🚨 Hoje é o dia da Reavaliação Estratégica!</strong> Janela de 14 dias concluída. Reavalie Google Ads, Meta Ads e Motor V6.1.',
-            overdueHtml: (daysAgo) => `<strong>⚠️ Reavaliação Estratégica Pendente (${daysAgo} dia${daysAgo > 1 ? 's' : ''} atrás):</strong> A janela encerrou em 24/11.`
+            todayHtml: '<strong>🚨 Hoje é o dia da Reavaliação Estratégica!</strong> Janela de 14 dias concluída. Reavalie Google Ads (R$ 90/dia), Meta Ads e Motor V6.1.',
+            overdueHtml: (daysAgo) => `<strong>⚠️ Reavaliação Estratégica Pendente (${daysAgo} dia${daysAgo > 1 ? 's' : ''} atrás):</strong> A janela encerrou em 08/12.`
         });
 
         updateScheduledAlert({

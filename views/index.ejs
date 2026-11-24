@@ -996,19 +996,30 @@
                 const campaign = urlParams.get('utm_campaign');
                 const content = urlParams.get('utm_content');
                 
-                let utms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{"source":"direto"}');
+                let utms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
                 
-                // Só atualiza o localStorage se houver dados novos na URL
+                // Só atualiza o localStorage se houver dados novos na URL (mantendo padrão utm_source compatível com script.js e questionario.js)
                 if (source || medium) {
-                    utms = { source: source || '', medium: medium || '', campaign: campaign || '', content: content || '' };
+                    utms = {
+                        ...utms,
+                        utm_source: source || utms.utm_source || '',
+                        utm_medium: medium || utms.utm_medium || '',
+                        utm_campaign: campaign || utms.utm_campaign || '',
+                        utm_content: content || utms.utm_content || '',
+                        source: source || utms.source || ''
+                    };
                     localStorage.setItem('yelo_global_utms', JSON.stringify(utms));
                 }
+
+                const resolvedSource = utms.utm_source || utms.source || localStorage.getItem('yelo_utm_source') || 'direto';
+                const resolvedMedium = utms.utm_medium || utms.medium || '';
+                const resolvedCampaign = utms.utm_campaign || utms.campaign || '';
 
                 fetch('/api/tracking/visit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        page: window.location.pathname, utm_source: utms.source, utm_medium: utms.medium, utm_campaign: utms.campaign
+                        page: window.location.pathname, utm_source: resolvedSource, utm_medium: resolvedMedium, utm_campaign: resolvedCampaign
                     })
                 }).catch(() => {});
             } catch(e) {}

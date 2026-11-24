@@ -114,28 +114,28 @@ cron.schedule('0 4 * * *', () => {
 });
 
 /**
- * Tarefa 8: Gestão Inteligente de Tráfego Pago & Campanha Black Friday
- * - Pausa a escala automática antiga do Meta Ads B2B (substituída por recuperação orgânica + Google Ads proporcional)
- * - Executa o balanceador adaptativo (Google Ads até R$ 200/dia se justificável + micro-lotes de e-mails por adesão/capacidade)
- *   quando ENABLE_BLACK_FRIDAY_AUTO=true.
- * - Mantém alerta de Reavaliação Estratégica em 24/11/2026.
+ * Tarefa 8: Gestão Inteligente de Tráfego Pago & Reavaliação Estratégica (Ciclos de 14 dias)
+ * - Revisão de 24/11/2026 concluída: Google Ads fixado no teto disciplinado de R$ 90,00/dia e Motor V6.1 100% blindado para pagantes.
+ * - Balanceador da Black Friday desativado por padrão pós-24/11 (só roda se ENABLE_BLACK_FRIDAY_AUTO='true' explícito).
+ * - Próxima Reavaliação Estratégica agendada para 08/12/2026 (nova janela de 14 dias).
  */
 async function checkAndExecuteTrafficScalingJobs() {
     try {
         const db = require('../models');
         const metaAdsService = require('../services/metaAdsService');
+        const googleAdsService = require('../services/googleAdsService');
         const blackFridayGrowthService = require('../services/blackFridayGrowthService');
         const now = new Date();
         const brtDateStr = now.toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" }); // YYYY-MM-DD
 
         console.log(`[CRON TRAFFIC] Verificando rotinas de tráfego pago para data: ${brtDateStr}...`);
 
-        const isProdRuntime = process.env.NODE_ENV === 'production';
-        // Meta Ads B2B mantido ativo por decisão estratégica em 14/11/2026 (só pausa se AUTO_PAUSE_META_ADS='true' explícito)
+        // Meta Ads B2B mantido ativo em R$ 24/dia por decisão estratégica (só pausa se AUTO_PAUSE_META_ADS='true' explícito)
         const isMetaPauseEnabled = process.env.AUTO_PAUSE_META_ADS === 'true';
-        const isBlackFridayAutoEnabled = process.env.ENABLE_BLACK_FRIDAY_AUTO === 'true' || (isProdRuntime && process.env.ENABLE_BLACK_FRIDAY_AUTO !== 'false');
+        // Ciclo automático de Black Friday encerrado na revisão de 24/11; só executa se explicitamente forçado via ENABLE_BLACK_FRIDAY_AUTO='true'
+        const isBlackFridayAutoEnabled = process.env.ENABLE_BLACK_FRIDAY_AUTO === 'true';
 
-        // 1. Pausa da campanha Meta Ads B2B (Degraus 2 e 3 desativados permanentemente)
+        // 1. Pausa da campanha Meta Ads B2B (somente se flag explícita)
         const existingMetaPause = await db.AdminAdjustment.findOne({
             where: { title: { [db.Sequelize.Op.like]: '%[Meta Ads] Campanha B2B Pausada%' } }
         }).catch(() => null);
@@ -172,7 +172,33 @@ async function checkAndExecuteTrafficScalingJobs() {
             }
         }
 
-        // 2. Balanceamento Adaptativo Black Friday + Google Ads (em produção fica ativo por padrão; use ENABLE_BLACK_FRIDAY_AUTO=false para desligar)
+        // 2. Trava Pós-Revisão 24/11: Retorno do Google Ads ao teto disciplinado de R$ 90,00/dia
+        if (brtDateStr >= '2026-11-24' && !isBlackFridayAutoEnabled) {
+            const existingGoogleReset = await db.AdminAdjustment.findOne({
+                where: { title: { [db.Sequelize.Op.like]: '%[Google Ads] Teto Reajustado Pós-Revisão 24/11%' } }
+            }).catch(() => null);
+
+            if (!existingGoogleReset) {
+                const resetRes = await googleAdsService.updateCampaignDailyBudget(90, { minBudgetReais: 90, maxBudgetReais: 200 });
+                if (resetRes.success) {
+                    await db.AdminAdjustment.create({
+                        title: '[Google Ads] Teto Reajustado Pós-Revisão 24/11: R$ 90,00/dia',
+                        target_page: 'admin_cmo_metrics.html',
+                        file_path: 'backend/services/googleAdsService.js',
+                        category: 'Marketing & Growth',
+                        environment: 'admin',
+                        device: 'todos',
+                        priority: 'media',
+                        status: 'concluído',
+                        completedAt: new Date(),
+                        notes: `Orçamento diário do Google Ads retornado de R$ ${resetRes.previousBudgetReais || 115.73}/dia para R$ 90,00/dia em ${brtDateStr} após conclusão da janela de 14 dias e blindagem 100% do Motor V6.1.`
+                    }).catch(() => {});
+                    console.log('✅ [CRON TRAFFIC] Orçamento Google Ads ajustado para R$ 90,00/dia.');
+                }
+            }
+        }
+
+        // 3. Balanceamento Adaptativo Black Friday + Google Ads (apenas se ENABLE_BLACK_FRIDAY_AUTO=true)
         if (isBlackFridayAutoEnabled) {
             const bfRunTag = `[BF2026_AUTO_RUN] ${brtDateStr}`;
             const alreadyRanToday = db.SystemLog
@@ -206,15 +232,15 @@ async function checkAndExecuteTrafficScalingJobs() {
             }
         }
 
-        // 3. Reavaliação Estratégica: 24/11/2026 (Janela de 14 dias)
-        if (brtDateStr >= '2026-11-24') {
-            const existingReview = await db.AdminAdjustment.findOne({
-                where: { title: { [db.Sequelize.Op.like]: '%Reavaliação Estratégica: Tráfego Pago & Motor V6.1%' } }
+        // 4. Próxima Reavaliação Estratégica: 08/12/2026 (Janela de 14 dias pós-24/11)
+        if (brtDateStr >= '2026-12-08') {
+            const existingReviewDec = await db.AdminAdjustment.findOne({
+                where: { title: { [db.Sequelize.Op.like]: '%Reavaliação Estratégica: Tráfego Pago & Motor V6.1 (Ciclo 08/12)%' } }
             });
 
-            if (!existingReview) {
+            if (!existingReviewDec) {
                 await db.AdminAdjustment.create({
-                    title: '🎯 Reavaliação Estratégica: Tráfego Pago & Motor V6.1 (14 dias)',
+                    title: '🎯 Reavaliação Estratégica: Tráfego Pago & Motor V6.1 (Ciclo 08/12)',
                     target_page: 'admin_cmo_metrics.html',
                     file_path: 'admin/admin_cmo_metrics.html',
                     category: 'Marketing & Growth',
@@ -222,9 +248,9 @@ async function checkAndExecuteTrafficScalingJobs() {
                     device: 'todos',
                     priority: 'alta',
                     status: 'pendente',
-                    notes: `Janela de 14 dias concluída em ${brtDateStr}. Realizar reavaliação completa no Painel do CMO: 1) Adesão da Black Friday; 2) CPL e eficiência da escala Google Ads (teto R$ 200/dia); 3) Retenção dos assinantes ativos no Motor V6.1 e decisão sobre reativação do Meta Ads.`
+                    notes: `Janela de 14 dias (24/11 a 08/12) concluída em ${brtDateStr}. Realizar reavaliação completa no Painel do CMO: 1) Confirmar 0% de vazamento de cliques pagos do Google Ads para trials após blindagem pre-cutoff do Motor V6.1; 2) CPL e volume de cliques com teto Google Ads em R$ 90/dia; 3) Retenção da base pagante e eficiência do Meta Ads (R$ 24/dia).`
                 });
-                console.log('🎯 [CRON TRAFFIC] Alerta de Reavaliação Estratégica criado no painel admin.');
+                console.log('🎯 [CRON TRAFFIC] Alerta de Reavaliação Estratégica (08/12) criado no painel admin.');
             }
         }
     } catch (err) {

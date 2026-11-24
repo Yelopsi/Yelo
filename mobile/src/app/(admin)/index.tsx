@@ -636,6 +636,86 @@ export default function AdminVisaoGeralScreen() {
             <Feather name="chevron-right" size={16} color="#166534" />
           </TouchableOpacity>
 
+          {/* Alerta Programado: Reavaliação Estratégica (08/12) */}
+          {(() => {
+            const target = new Date('2026-12-08T00:00:00-03:00');
+            const diffDays = Math.ceil((target.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            const isDue = diffDays <= 0;
+            const isTomorrow = diffDays === 1;
+            const bgClass = isDue ? 'bg-[#fef2f2] border-[#fecaca]' : isTomorrow ? 'bg-[#fffbeb] border-[#fde68a]' : 'bg-[#eff6ff] border-[#bfdbfe]';
+            const accentColor = isDue ? '#dc2626' : isTomorrow ? '#d97706' : '#2563eb';
+            return (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push('/(admin)/crm-modulo/cmo-metrics')}
+                className={`flex-row items-center border rounded-[16px] p-3.5 mb-3 ${bgClass}`}
+              >
+                <Text className="text-[22px] mr-3">🎯</Text>
+                <View className="flex-1">
+                  {isDue ? (
+                    <Text className="font-sans text-[#1e293b] text-[13px]">
+                      <Text className="font-bold text-[#dc2626]">
+                        {diffDays === 0 ? '🚨 Hoje é o dia da Reavaliação Estratégica!' : `⚠️ Reavaliação Estratégica Pendente (${Math.abs(diffDays)}d atrás):`}
+                      </Text>{' '}
+                      Janela de 14 dias concluída. Reavalie Google Ads (R$ 90/dia), Meta Ads e Motor V6.1.
+                    </Text>
+                  ) : (
+                    <Text className="font-sans text-[#1e293b] text-[13px]">
+                      <Text className="font-bold text-[#1e3a8a]">Reavaliação Estratégica:</Text> Tráfego & Motor V6.1 em{' '}
+                      <Text className="font-bold" style={{ color: accentColor }}>
+                        {isTomorrow ? 'Amanhã (08/12)!' : `Faltam ${diffDays} dias (08/12)`}
+                      </Text>.
+                    </Text>
+                  )}
+                  <Text className="font-sans font-bold text-[11px] mt-0.5" style={{ color: accentColor }}>
+                    {isDue ? 'Reavaliar agora no CMO →' : isTomorrow ? 'Preparar análise no CMO →' : 'Ver métricas do CMO →'}
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={16} color={accentColor} />
+              </TouchableOpacity>
+            );
+          })()}
+
+          {/* Alerta Programado: Revisão SEO & GSC (30/11) */}
+          {(() => {
+            const target = new Date('2026-11-30T00:00:00-03:00');
+            const diffDays = Math.ceil((target.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            const isDue = diffDays <= 0;
+            const isTomorrow = diffDays === 1;
+            const bgClass = isDue ? 'bg-[#fef2f2] border-[#fecaca]' : isTomorrow ? 'bg-[#fffbeb] border-[#fde68a]' : 'bg-[#f0fdf4] border-[#bbf7d0]';
+            const accentColor = isDue ? '#dc2626' : isTomorrow ? '#d97706' : '#15803d';
+            return (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push('/(admin)/crm-modulo/cmo-metrics')}
+                className={`flex-row items-center border rounded-[16px] p-3.5 mb-3 ${bgClass}`}
+              >
+                <Text className="text-[22px] mr-3">🔎</Text>
+                <View className="flex-1">
+                  {isDue ? (
+                    <Text className="font-sans text-[#1e293b] text-[13px]">
+                      <Text className="font-bold text-[#dc2626]">
+                        {diffDays === 0 ? '🚨 Hoje completa 14 dias dos ajustes de SEO!' : `⚠️ Revisão de SEO Pendente (${Math.abs(diffDays)}d atrás):`}
+                      </Text>{' '}
+                      Puxe o Search Console, cheque indexação das perguntas e otimize títulos de menor CTR.
+                    </Text>
+                  ) : (
+                    <Text className="font-sans text-[#1e293b] text-[13px]">
+                      <Text className="font-bold text-[#14532d]">Revisão SEO & GSC:</Text> Avaliar indexação e otimizar títulos em{' '}
+                      <Text className="font-bold" style={{ color: accentColor }}>
+                        {isTomorrow ? 'Amanhã (30/11)!' : `Faltam ${diffDays} dias (30/11)`}
+                      </Text>.
+                    </Text>
+                  )}
+                  <Text className="font-sans font-bold text-[11px] mt-0.5" style={{ color: accentColor }}>
+                    {isDue ? 'Revisar GSC & Blog agora →' : isTomorrow ? 'Preparar revisão no GSC →' : 'Acompanhar SEO no CMO →'}
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={16} color={accentColor} />
+              </TouchableOpacity>
+            );
+          })()}
+
           {/* Candidatos na Lista de Espera */}
           <TouchableOpacity 
             activeOpacity={0.8}
