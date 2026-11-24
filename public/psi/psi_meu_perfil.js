@@ -40,6 +40,7 @@
 
     function formatImageUrl(path) {
         if (!path) return 'https://placehold.co/70x70/1B4332/FFFFFF?text=Psi';
+        if (path.includes('googleusercontent.com')) return path.replace(/=s\d+(-c)?$/, '=s800-c');
         if (path.startsWith('http')) return path;
         let cleanPath = path.replace(/\\/g, '/');
         if (cleanPath.includes('uploads/')) cleanPath = cleanPath.substring(cleanPath.lastIndexOf('uploads/'));

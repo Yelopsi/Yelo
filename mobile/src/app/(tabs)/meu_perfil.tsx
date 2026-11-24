@@ -1032,7 +1032,7 @@ export default function MeuPerfilScreen() {
               >
                 <Image
                   key={fotoUrl || 'empty'}
-                  source={{ uri: resolvePhotoUrl(fotoUrl) }}
+                  source={{ uri: resolvePhotoUrl(fotoUrl) /* resolvePhotoUrl eleva avatares do Google para 800x800 */ }}
                   style={styles.avatarImage}
                 />
                 <View style={styles.avatarCameraBadge}>

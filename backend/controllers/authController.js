@@ -65,7 +65,10 @@ exports.unifiedGoogleLogin = async (req, res) => {
         if (!token) return res.status(400).json({ error: 'Token do Google obrigatório.' });
 
         const googleUser = await exports.verifyGoogleToken(token);
-        const { email, name, sub: googleId, picture } = googleUser;
+        let { email, name, sub: googleId, picture } = googleUser;
+        if (picture && picture.includes('googleusercontent.com')) {
+            picture = picture.replace(/=s\d+(-c)?$/, '=s800-c');
+        }
         const userEmailForLog = email;
 
         console.log(`[AUTH] Tentativa de login Google: ${email}`);
@@ -81,7 +84,8 @@ exports.unifiedGoogleLogin = async (req, res) => {
         if (psychologist) {
             // FIX: Permite login de TODOS (ativos, inativos, pendentes) pelo Google.
             // O frontend (Dashboard) cuidará de bloquear as abas e exigir o pagamento se necessário.
-            if (!psychologist.fotoUrl && picture) {
+            // Atualiza caso não tenha foto ou se a foto atual for um thumbnail de baixa resolução do Google
+            if ((!psychologist.fotoUrl || (psychologist.fotoUrl.includes('googleusercontent.com') && /=s\d+(-c)?$/.test(psychologist.fotoUrl))) && picture) {
                 await psychologist.update({ fotoUrl: picture });
             }
 

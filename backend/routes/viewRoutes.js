@@ -443,6 +443,11 @@ router.get('/:slug', async (req, res, next) => {
                 attributes: ['id', 'titulo', 'slug', 'imagem_url', 'curtidas', 'createdAt'] // Apenas campos essenciais para a lista
             });
 
+            // Garante alta resolução para fotos do Google no SSR
+            if (psychologist.fotoUrl && psychologist.fotoUrl.includes('googleusercontent.com')) {
+                psychologist.fotoUrl = psychologist.fotoUrl.replace(/=s\d+(-c)?$/, '=s800-c');
+            }
+
             return res.render('psi_perfil_publico', { 
                 psicologo: psychologist, 
                 pacientesAtendidosCount,

@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import * as SecureStore from 'expo-secure-store';
 import api from '../services/api';
+import { resolvePhotoUrl } from '../utils/imageUrl';
 
 const VerifiedBadge = () => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -226,7 +227,7 @@ export default function PerfilPublicoScreen() {
           <View className="items-center mb-6">
             <View className="w-[130px] h-[130px] rounded-full border-2 border-dashed border-[#1B4332] p-1 mb-4 shadow-sm">
               <Image 
-                source={{ uri: psicologo.fotoUrl || 'https://placehold.co/400x500/1B4332/FFF?text=Foto' }} 
+                source={{ uri: resolvePhotoUrl(psicologo.fotoUrl) }} 
                 className="w-full h-full rounded-full" 
                 resizeMode="cover"
               />

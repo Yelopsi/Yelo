@@ -79,7 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bloco Principal
         const photoEl = document.getElementById('psi-photo');
         if (photoEl) {
-            photoEl.src = psi.fotoUrl || 'https://placehold.co/180x180/e8f5e9/1B4332?text=Psi';
+            let finalPhoto = psi.fotoUrl || 'https://placehold.co/180x180/e8f5e9/1B4332?text=Psi';
+            if (finalPhoto.includes('googleusercontent.com')) {
+                finalPhoto = finalPhoto.replace(/=s\d+(-c)?$/, '=s800-c');
+            }
+            photoEl.src = finalPhoto;
             photoEl.alt = `Foto de ${psi.nome}`;
         }
 

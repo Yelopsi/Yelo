@@ -8,6 +8,9 @@ export const resolvePhotoUrl = (path?: string | null): string => {
     return 'https://placehold.co/150x150/1B4332/FFF.png?text=Psi';
   }
   if (path.startsWith('http://') || path.startsWith('https://')) {
+    if (path.includes('googleusercontent.com')) {
+      return path.replace(/=s\d+(-c)?$/, '=s800-c');
+    }
     return path;
   }
   let clean = path.replace(/\\/g, '/');

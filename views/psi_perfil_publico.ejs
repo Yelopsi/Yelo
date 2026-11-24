@@ -34,7 +34,11 @@
         : `Encontre acolhimento e suporte com ${psicologo.nome}. ${profTitleBase} especialista em saúde mental.`);
       const currentUrl = `https://www.yelopsi.com.br/${psicologo.slug || ''}`;
       
-      let imageUrl = psicologo.fotoUrl || 'https://www.yelopsi.com.br/assets/images/apple-touch-icon.png';
+      let rawFoto = psicologo.fotoUrl;
+      if (rawFoto && rawFoto.includes('googleusercontent.com')) {
+          rawFoto = rawFoto.replace(/=s\d+(-c)?$/, '=s800-c');
+      }
+      let imageUrl = rawFoto || 'https://www.yelopsi.com.br/assets/images/apple-touch-icon.png';
       if (imageUrl.includes('cloudinary.com') && imageUrl.includes('/upload/')) {
           imageUrl = imageUrl.replace('/upload/', '/upload/w_256,h_256,c_fill,q_auto/');
       }
@@ -524,7 +528,7 @@
                         <!-- Cabeçalho (Foto, Nome, CRP, Avaliações) -->
                         <div class="hero-card-modern">
                             <div class="hero-photo-container">
-                                <img id="psi-photo" src="<%= psicologo.fotoUrl || 'https://placehold.co/240x240/e8f5e9/1B4332?text=Psi' %>" alt="Foto de <%= psicologo.nome %>">
+                                <img id="psi-photo" src="<%= (psicologo.fotoUrl ? (psicologo.fotoUrl.includes('googleusercontent.com') ? psicologo.fotoUrl.replace(/=s\d+(-c)?$/, '=s800-c') : psicologo.fotoUrl) : 'https://placehold.co/240x240/e8f5e9/1B4332?text=Psi') %>" alt="Foto de <%= psicologo.nome %>">
                             </div>
                             <div class="hero-details-container">
                                 <h1 id="psi-name" class="hero-name-title">
