@@ -1,5 +1,35 @@
 [
   {
+    "id": "change-git-19cffb53",
+    "date": "2026-11-23T00:34:40.000Z",
+    "commit": "19cffb53",
+    "author": "Anderson",
+    "title": "Correção: Restaurar dossie oficial do psicologo no app e filtrar avatares sem foto real na vitrine",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "restaurar dossie oficial do psicologo no app e filtrar avatares sem foto real na vitrine",
+    "description": "Commit registrado no repositório: \"fix: restaurar dossie oficial do psicologo no app e filtrar avatares sem foto real na vitrine\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/matchController.js, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/_layout.tsx, mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx (+3 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #19cffb53"
+    },
+    "after": {
+      "nova_versao": "restaurar dossie oficial do psicologo no app e filtrar avatares sem foto real na vitrine"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/matchController.js",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "security/reports/gate_report.json",
+      "views/sobre_psis.ejs"
+    ]
+  },
+  {
     "id": "change-git-560beb32",
     "date": "2026-11-23T00:17:29.000Z",
     "commit": "560beb32",
