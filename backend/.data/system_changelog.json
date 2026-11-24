@@ -1,5 +1,36 @@
 [
   {
+    "id": "change-git-055a439a",
+    "date": "2026-11-24T20:26:46.000Z",
+    "commit": "055a439a",
+    "author": "Anderson",
+    "title": "Novo: Blindar 100% trafego pago no Motor V6.1, fixar Google Ads em R$ 90/dia e agendar revisao 08/12 (match & cmo)",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "blindar 100% trafego pago no Motor V6.1, fixar Google Ads em R$ 90/dia e agendar revisao 08/12",
+    "description": "Commit registrado no repositório: \"feat(match & cmo): blindar 100% trafego pago no Motor V6.1, fixar Google Ads em R$ 90/dia e agendar revisao 08/12\". Arquivos modificados: admin/admin_visao_geral.html, admin/admin_visao_geral.js, backend/.data/system_changelog.json, backend/data/system_changelog.json, backend/jobs/scheduler.js (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #055a439a"
+    },
+    "after": {
+      "nova_versao": "blindar 100% trafego pago no Motor V6.1, fixar Google Ads em R$ 90/dia e agendar revisao 08/12"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_visao_geral.html",
+      "admin/admin_visao_geral.js",
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "backend/jobs/scheduler.js",
+      "backend/services/matchService.js",
+      "mobile/src/app/(admin)/index.tsx",
+      "security/reports/gate_report.json",
+      "views/index.ejs"
+    ]
+  },
+  {
     "id": "change-git-c9e7ac29",
     "date": "2026-11-24T02:02:19.000Z",
     "commit": "c9e7ac29",

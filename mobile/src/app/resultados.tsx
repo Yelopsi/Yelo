@@ -5,11 +5,12 @@ import {
   TouchableOpacity, 
   Image, 
   ActivityIndicator, 
-  Alert 
+  Alert,
+  Linking
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
+import { Feather, FontAwesome } from '@expo/vector-icons';
 import YeloScrollView from '../components/YeloScrollView';
 import Footer from '../components/Footer';
 import PublicBottomNav from '../components/PublicBottomNav';
@@ -27,6 +28,42 @@ export default function ResultadosScreen() {
   const [results, setResults] = useState<any[]>([]);
   const [parsedAnswers, setParsedAnswers] = useState<any>({});
   const [hasLoadedMore, setHasLoadedMore] = useState(false);
+  const [openingWhatsAppId, setOpeningWhatsAppId] = useState<number | null>(null);
+
+  const handleWhatsAppClick = async (profile: any) => {
+    if (!profile || openingWhatsAppId === profile.id) return;
+    setOpeningWhatsAppId(profile.id);
+    try {
+      const params = new URLSearchParams();
+      params.append('utm_source', parsedAnswers?.utm_source || 'mobile_app');
+      params.append('source', 'match_card');
+      if (parsedAnswers?.searchId) {
+        params.append('searchId', String(parsedAnswers.searchId));
+      }
+      if (user?.nome) {
+        params.append('guest_name', user.nome);
+      }
+
+      const res = await api.get(`/api/public/whatsapp/link/${profile.id}?${params.toString()}`);
+      const data = res.data;
+      if (data && data.url) {
+        await Linking.openURL(data.url);
+      } else {
+        throw new Error('URL não retornada');
+      }
+    } catch (e) {
+      const cleanPhone = String(profile.telefone || '').replace(/\D/g, '');
+      if (cleanPhone) {
+        const firstName = String(profile.nome || 'Profissional').split(' ')[0];
+        const fallbackMsg = `Olá, ${firstName}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas.`;
+        await Linking.openURL(`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(fallbackMsg)}`);
+      } else if (profile.slug) {
+        router.push(`/${profile.slug}` as any);
+      }
+    } finally {
+      setOpeningWhatsAppId(null);
+    }
+  };
 
   useEffect(() => {
     let currentAnswers: any = {};
@@ -264,24 +301,42 @@ export default function ResultadosScreen() {
                         </Text>
                       ) : null}
 
-                      {/* Footer: Preço & Ação */}
-                      <View className="flex-row justify-between items-center pt-[16px] border-t border-[#f0f0f0]">
-                        <View>
-                          <Text className="font-sans font-bold text-[#888] text-[11px] uppercase tracking-wide mb-0.5">
-                            Por {isMensal ? 'mês' : 'sessão'}
-                          </Text>
-                          <Text className="font-title text-[#1B4332] text-[22px]">
-                            {priceFormatted}
-                          </Text>
+                      {/* Footer: Preço & Ações (Ver Perfil + Chamar no WhatsApp) */}
+                      <View className="pt-[16px] border-t border-[#f0f0f0]">
+                        <View className="flex-row justify-between items-center mb-3.5">
+                          <View>
+                            <Text className="font-sans font-bold text-[#888] text-[11px] uppercase tracking-wide mb-0.5">
+                              Por {isMensal ? 'mês' : 'sessão'}
+                            </Text>
+                            <Text className="font-title text-[#1B4332] text-[22px]">
+                              {priceFormatted}
+                            </Text>
+                          </View>
+
+                          <TouchableOpacity 
+                            onPress={() => router.push(`/${profile.slug}` as any)}
+                            className="bg-[#f0fdf4] border border-[#bbf7d0] px-[18px] py-[9px] rounded-[50px]"
+                          >
+                            <Text className="font-sans font-extrabold text-[#1B4332] text-[13px] uppercase tracking-wide">
+                              Ver Perfil
+                            </Text>
+                          </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity 
-                          onPress={() => router.push(`/${profile.slug}` as any)}
-                          className="bg-[#FFEE8C] px-[24px] py-[11px] rounded-[50px]"
-                          style={{ shadowColor: '#FFEE8C', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.35, shadowRadius: 10 }}
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          disabled={openingWhatsAppId === profile.id}
+                          onPress={() => handleWhatsAppClick(profile)}
+                          className="w-full bg-[#1B4332] py-[13px] px-[20px] rounded-[50px] flex-row items-center justify-center gap-2"
+                          style={{ shadowColor: '#1B4332', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 10 }}
                         >
-                          <Text className="font-sans font-extrabold text-[#1B4332] text-[14px] uppercase tracking-wide">
-                            Ver Perfil
+                          {openingWhatsAppId === profile.id ? (
+                            <ActivityIndicator size="small" color="#ffffff" />
+                          ) : (
+                            <FontAwesome name="whatsapp" size={18} color="#ffffff" />
+                          )}
+                          <Text className="font-sans font-extrabold text-white text-[15px] tracking-wide">
+                            {openingWhatsAppId === profile.id ? 'Abrindo WhatsApp...' : 'Chamar no WhatsApp'}
                           </Text>
                         </TouchableOpacity>
                       </View>

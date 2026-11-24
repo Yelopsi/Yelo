@@ -128,12 +128,15 @@ exports.getRatings = async (req, res) => {
         // SQL Otimizado para ler campos dentro do JSONB (searchParams ->> 'rating')
         /// a sintaxe (searchParams->>'rating') extrai o valor como texto
         
+        const nonPatientFilter = `COALESCE("searchParams"->>'respondent_type', 'patient') NOT IN ('psychologist', 'psychologist_logged', 'psychologist_unlogged', 'psi', 'internal', 'admin', 'admin_logged', 'admin_unlogged', 'team')`;
+
         const [stats] = await db.sequelize.query(`
             SELECT 
                 AVG(CAST("searchParams"->>'rating' AS FLOAT))::numeric(10,1) as media, 
                 COUNT(*) as total 
             FROM "DemandSearches" 
             WHERE "searchParams"->>'rating' IS NOT NULL
+              AND ${nonPatientFilter}
         `);
 
         const [reviews] = await db.sequelize.query(`
@@ -143,6 +146,7 @@ exports.getRatings = async (req, res) => {
                 "createdAt"
             FROM "DemandSearches"
             WHERE "searchParams"->>'rating' IS NOT NULL
+              AND ${nonPatientFilter}
             ORDER BY "createdAt" DESC
             LIMIT 50
         `);

@@ -247,7 +247,7 @@ export default function QuestionarioScreen() {
     setTimeout(() => {
       router.replace({
         pathname: '/resultados',
-        params: { answers: JSON.stringify(finalAnswers) }
+        params: { answers: JSON.stringify({ ...finalAnswers, searchId: searchIdRef.current || undefined }) }
       });
     }, 1200);
   };

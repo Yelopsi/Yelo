@@ -138,8 +138,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div id="bio-text-${profile.id}" class="match-bio"></div>
                     
                     <div class="match-footer">
-                        <div class="match-price">${precoHtml}</div>
-                        <a id="link-${profile.id}" class="btn-profile" target="_blank">Ver Perfil</a>
+                        <div class="match-footer-top">
+                            <div class="match-price">${precoHtml}</div>
+                            <a id="link-${profile.id}" class="btn-profile" target="_blank">Ver Perfil</a>
+                        </div>
+                        <button type="button" id="zap-${profile.id}" class="btn-whatsapp-match" data-id="${profile.id}">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            <span>Chamar no WhatsApp</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -193,6 +199,109 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function buildActorHeaders(includeJson = true) {
+        const headers = includeJson ? { 'Content-Type': 'application/json' } : {};
+        const authToken = localStorage.getItem('Yelo_token');
+        if (authToken && authToken !== 'cookie_auth_active' && authToken !== 'null' && authToken !== 'undefined') {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        const userType = localStorage.getItem('Yelo_user_type') || '';
+        const knownPro = localStorage.getItem('yelo_known_pro') || '';
+        if (userType) headers['X-Yelo-User-Type'] = userType;
+        if (knownPro) headers['X-Yelo-Known-Pro'] = knownPro;
+        return headers;
+    }
+
+    function setupWhatsAppButtons(profiles) {
+        const profileMap = new Map((profiles || []).map(p => [String(p.id), p]));
+        document.querySelectorAll('.btn-whatsapp-match').forEach(btn => {
+            if (btn.dataset.bound === 'true') return;
+            btn.dataset.bound = 'true';
+
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (btn.disabled) return;
+
+                const psiId = btn.dataset.id;
+                const profile = profileMap.get(String(psiId)) || { id: psiId, nome: 'Profissional' };
+                const originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span>Abrindo WhatsApp...</span>';
+
+                try {
+                    if (typeof gtag === 'function') {
+                        gtag('event', 'whatsapp_click', {
+                            'id_psi': profile.id,
+                            'nome_psi': profile.nome,
+                            'btn_id': 'match_card_whatsapp'
+                        });
+                    }
+                } catch (err) {}
+
+                try {
+                    let utmSource = 'organico';
+                    try {
+                        const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
+                        utmSource = globalUtms.utm_source || globalUtms.source || localStorage.getItem('yelo_utm_source') || 'organico';
+                    } catch (err) {}
+
+                    const guestName = localStorage.getItem('yelo_guest_name') || '';
+                    const searchId = sessionStorage.getItem('currentSearchId') || localStorage.getItem('yelo_current_search_id') || '';
+                    const abParams = new URLSearchParams();
+                    if (utmSource) abParams.append('utm_source', utmSource);
+                    if (guestName) abParams.append('guest_name', guestName);
+                    if (searchId) abParams.append('searchId', searchId);
+                    abParams.append('source', 'match_card');
+
+                    const res = await fetch(`${BASE_URL}/api/public/whatsapp/link/${psiId}?${abParams.toString()}`, {
+                        credentials: 'include',
+                        headers: buildActorHeaders(false)
+                    });
+                    const data = await res.json();
+                    if (data && data.success && data.url) {
+                        const goToWhatsApp = () => {
+                            window.location.href = data.url;
+                            setTimeout(() => {
+                                btn.disabled = false;
+                                btn.innerHTML = originalHtml;
+                            }, 1500);
+                        };
+
+                        let redirectDone = false;
+                        if (!data.skipped && typeof gtag === 'function') {
+                            gtag('event', 'conversion', {
+                                'send_to': 'AW-11236864912/Y_n_COzEiaUcEJDnk-4p',
+                                'event_callback': function() {
+                                    if (!redirectDone) {
+                                        redirectDone = true;
+                                        setTimeout(goToWhatsApp, 300);
+                                    }
+                                }
+                            });
+                            setTimeout(() => {
+                                if (!redirectDone) {
+                                    redirectDone = true;
+                                    goToWhatsApp();
+                                }
+                            }, 600);
+                        } else {
+                            setTimeout(goToWhatsApp, 200);
+                        }
+                        return;
+                    }
+                    throw new Error('Link não retornado');
+                } catch (err) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    if (profile.slug) {
+                        window.location.href = `/${profile.slug}?ref=match`;
+                    }
+                }
+            });
+        });
+    }
+
     function init() {
         // BLOQUEIO: Verifica se há resultados para mostrar
         const storedResults = sessionStorage.getItem('matchResults');
@@ -223,6 +332,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (pendingAnswers) {
             const userAnswers = JSON.parse(pendingAnswers);
+            if (userAnswers.searchId) {
+                try {
+                    sessionStorage.setItem('currentSearchId', String(userAnswers.searchId));
+                    localStorage.setItem('yelo_current_search_id', String(userAnswers.searchId));
+                } catch (e) {}
+            }
             if (!userAnswers.utm_source) {
                 try {
                     const globalUtms = JSON.parse(localStorage.getItem('yelo_global_utms') || '{}');
@@ -233,7 +348,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             fetch(`${BASE_URL}/api/psychologists/match`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                headers: buildActorHeaders(true),
                 body: JSON.stringify(userAnswers),
             })
             .then(res => res.ok ? res.json() : { matchTier: 'none', results: [] })
@@ -353,6 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         setupFavoriteButtons();
+        setupWhatsAppButtons(dataToRender);
 
         loadingScreen.style.transition = 'opacity 0.3s ease';
         loadingScreen.style.opacity = '0';
@@ -366,15 +483,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }, 150);
         
-        grid.addEventListener('click', (e) => {
-            const card = e.target.closest('.match-card');
-            if (card && !e.target.closest('.heart-icon')) {
-                const slug = card.dataset.slug;
-                if (!e.target.closest('.btn-profile') && slug) {
-                    window.open(`/${slug}?ref=match`, '_blank');
+        if (!grid.dataset.cardClickBound) {
+            grid.dataset.cardClickBound = 'true';
+            grid.addEventListener('click', (e) => {
+                const card = e.target.closest('.match-card');
+                if (card && !e.target.closest('.heart-icon') && !e.target.closest('.btn-whatsapp-match')) {
+                    const slug = card.dataset.slug;
+                    if (!e.target.closest('.btn-profile') && slug) {
+                        window.open(`/${slug}?ref=match`, '_blank');
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     // --- LÓGICA DO BOTÃO CARREGAR MAIS ---
@@ -398,7 +518,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             fetch(`${BASE_URL}/api/psychologists/match`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                headers: buildActorHeaders(true),
                 body: JSON.stringify(userAnswers),
             })
             .then(res => res.ok ? res.json() : { matchTier: 'none', results: [], hasMore: false })
@@ -547,9 +668,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     await fetch(`${BASE_URL}/api/demand/searches`, {
                         method: 'POST',
                         credentials: 'include',
-                        headers,
+                        headers: buildActorHeaders(true),
                         body: JSON.stringify({
-                            searchId: sessionStorage.getItem('currentSearchId') || null,
+                            searchId: sessionStorage.getItem('currentSearchId') || localStorage.getItem('yelo_current_search_id') || null,
                             user_type: userType || undefined,
                             known_pro: knownPro || undefined,
                             avaliacao_ux: { rating: ratingValue, feedback: feedbackText }

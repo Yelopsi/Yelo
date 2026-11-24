@@ -104,7 +104,7 @@ window.initializePage = function() {
             defaultBg: '#eff6ff',
             tomorrowAction: 'Preparar análise no CMO',
             dueAction: 'Reavaliar agora no CMO',
-            todayHtml: '<strong>🚨 Hoje é o dia da Reavaliação Estratégica!</strong> Janela de 14 dias concluída. Reavalie Google Ads (R$ 90/dia), Meta Ads e Motor V6.1.',
+            todayHtml: '<strong>🚨 Hoje é o dia da Reavaliação Estratégica (08/12)!</strong> Avalie Teto CPC R$ 5,00 (Google Ads R$ 90/dia), Botão WhatsApp em /resultados, Meta Ads e Motor V6.1.',
             overdueHtml: (daysAgo) => `<strong>⚠️ Reavaliação Estratégica Pendente (${daysAgo} dia${daysAgo > 1 ? 's' : ''} atrás):</strong> A janela encerrou em 08/12.`
         });
 

@@ -57,16 +57,24 @@ exports.getDashboardStats = async (req, res) => {
                     WHERE status IN ('completed', 'matched')
                       AND "deletedAt" IS NULL
                       AND COALESCE("is_disqualified", false) = false
-                      AND COALESCE("searchParams"->>'respondent_type', 'patient') NOT IN ('psychologist', 'psychologist_logged', 'psychologist_unlogged', 'internal', 'admin', 'admin_logged', 'admin_unlogged', 'team')
+                      AND COALESCE("searchParams"->>'respondent_type', 'patient') NOT IN ('psychologist', 'psychologist_logged', 'psychologist_unlogged', 'psi', 'internal', 'admin', 'admin_logged', 'admin_unlogged', 'team')
+                      AND NOT (("searchParams"->>'avaliacao_ux') IS NOT NULL AND ("searchParams"->>'temas') IS NULL AND ("searchParams"->>'idade') IS NULL)
                 ) as total,
                 COUNT(*) FILTER (
                     WHERE "createdAt" >= :startOfToday
                       AND status IN ('completed', 'matched')
                       AND "deletedAt" IS NULL
                       AND COALESCE("is_disqualified", false) = false
-                      AND COALESCE("searchParams"->>'respondent_type', 'patient') NOT IN ('psychologist', 'psychologist_logged', 'psychologist_unlogged', 'internal', 'admin', 'admin_logged', 'admin_unlogged', 'team')
+                      AND COALESCE("searchParams"->>'respondent_type', 'patient') NOT IN ('psychologist', 'psychologist_logged', 'psychologist_unlogged', 'psi', 'internal', 'admin', 'admin_logged', 'admin_unlogged', 'team')
+                      AND NOT (("searchParams"->>'avaliacao_ux') IS NOT NULL AND ("searchParams"->>'temas') IS NULL AND ("searchParams"->>'idade') IS NULL)
                 ) as today,
-                COUNT(*) FILTER (WHERE status = 'started' AND "updatedAt" < :tenMinutesAgo AND ("is_disqualified" IS NULL OR "is_disqualified" = false) AND "deletedAt" IS NULL) as abandoned
+                COUNT(*) FILTER (
+                    WHERE status = 'started'
+                      AND "updatedAt" < :tenMinutesAgo
+                      AND ("is_disqualified" IS NULL OR "is_disqualified" = false)
+                      AND "deletedAt" IS NULL
+                      AND COALESCE("searchParams"->>'respondent_type', 'patient') NOT IN ('psychologist', 'psychologist_logged', 'psychologist_unlogged', 'psi', 'internal', 'admin', 'admin_logged', 'admin_unlogged', 'team')
+                ) as abandoned
             FROM "DemandSearches"
         `;
 
@@ -1075,17 +1083,25 @@ exports.getFinancials = async (req, res) => {
  */
 exports.getQuestionnaireAnalytics = async (req, res) => {
     try {
+        const patientFilterSql = `
+            status = 'completed'
+            AND "deletedAt" IS NULL
+            AND COALESCE("is_disqualified", false) = false
+            AND COALESCE(CAST("searchParams" AS JSONB)->>'respondent_type', 'patient') NOT IN ('psychologist', 'psychologist_logged', 'psychologist_unlogged', 'psi', 'internal', 'admin', 'admin_logged', 'admin_unlogged', 'team')
+            AND (CAST("searchParams" AS JSONB)->>'avaliacao_ux') IS NULL
+        `;
+
         const countJsonField = async (field, isArray = false) => {
             const jsonCol = 'CAST("searchParams" AS JSONB)';
             let query = isArray ? `
                 SELECT value, COUNT(*) as count
                 FROM "DemandSearches", jsonb_array_elements_text(${jsonCol}->'${field}') as value
-                WHERE status = 'completed' AND ${jsonCol}->'${field}' IS NOT NULL AND jsonb_typeof(${jsonCol}->'${field}') = 'array'
+                WHERE ${patientFilterSql} AND ${jsonCol}->'${field}' IS NOT NULL AND jsonb_typeof(${jsonCol}->'${field}') = 'array'
                 GROUP BY value
             ` : `
                 SELECT ${jsonCol}->>'${field}' as value, COUNT(*) as count
                 FROM "DemandSearches"
-                WHERE status = 'completed' AND ${jsonCol}->>'${field}' IS NOT NULL
+                WHERE ${patientFilterSql} AND ${jsonCol}->>'${field}' IS NOT NULL
                 GROUP BY value
             `;
             const [results] = await db.sequelize.query(query);
@@ -1094,7 +1110,8 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
             return counts;
         };
 
-        const totalPatients = await db.DemandSearch.count({ where: { status: 'completed' } });
+        const [totalPatientsRows] = await db.sequelize.query(`SELECT COUNT(*) as count FROM "DemandSearches" WHERE ${patientFilterSql}`);
+        const totalPatients = parseInt(totalPatientsRows?.[0]?.count || 0, 10);
 
         const [ idade, identidade_genero, pref_genero_prof, motivacao, temas, terapia_anterior, experiencia_desejada, caracteristicas_prof, faixa_valor, modalidade_atendimento ] = await Promise.all([
             countJsonField('idade'), countJsonField('identidade_genero'), countJsonField('pref_genero_prof'),
@@ -1155,7 +1172,11 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const total30d = await db.DemandSearch.count({ where: { status: 'completed', createdAt: { [Op.gte]: thirtyDaysAgo } } });
+        const [total30dRows] = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "DemandSearches" WHERE ${patientFilterSql} AND "createdAt" >= :date`,
+            { replacements: { date: thirtyDaysAgo } }
+        );
+        const total30d = parseInt(total30dRows?.[0]?.count || 0, 10);
         const summary30d = { total: total30d, stats: {} };
 
         if (total30d > 0) {
@@ -1164,12 +1185,12 @@ exports.getQuestionnaireAnalytics = async (req, res) => {
                 let query = isArray ? `
                     SELECT value, COUNT(*) as count
                     FROM "DemandSearches", jsonb_array_elements_text(${jsonCol}->'${field}') as value
-                    WHERE status = 'completed' AND "createdAt" >= :date AND ${jsonCol}->'${field}' IS NOT NULL AND jsonb_typeof(${jsonCol}->'${field}') = 'array'
+                    WHERE ${patientFilterSql} AND "createdAt" >= :date AND ${jsonCol}->'${field}' IS NOT NULL AND jsonb_typeof(${jsonCol}->'${field}') = 'array'
                     GROUP BY value ORDER BY count DESC LIMIT 1
                 ` : `
                     SELECT ${jsonCol}->>'${field}' as value, COUNT(*) as count
                     FROM "DemandSearches"
-                    WHERE status = 'completed' AND "createdAt" >= :date AND ${jsonCol}->>'${field}' IS NOT NULL
+                    WHERE ${patientFilterSql} AND "createdAt" >= :date AND ${jsonCol}->>'${field}' IS NOT NULL
                     GROUP BY value ORDER BY count DESC LIMIT 1
                 `;
                 const [results] = await db.sequelize.query(query, { replacements: { date: thirtyDaysAgo } });
@@ -1204,7 +1225,8 @@ const UNLOGGED_ACTOR_LIST_SQL = toSqlInList(UNLOGGED_NON_PATIENT_TYPES);
 const ALL_NON_PATIENT_LIST_SQL = `${LOGGED_ACTOR_LIST_SQL}, ${UNLOGGED_ACTOR_LIST_SQL}`;
 
 const SEARCH_RESPONDENT_EXPR = `COALESCE("searchParams"->>'respondent_type', 'patient')`;
-const PATIENT_SEARCH_SQL = `${SEARCH_RESPONDENT_EXPR} NOT IN (${ALL_NON_PATIENT_LIST_SQL})`;
+const NOT_UX_RATING_ONLY_SQL = `NOT ((CAST("searchParams" AS JSONB)->>'avaliacao_ux') IS NOT NULL AND (CAST("searchParams" AS JSONB)->>'temas') IS NULL AND (CAST("searchParams" AS JSONB)->>'idade') IS NULL)`;
+const PATIENT_SEARCH_SQL = `${SEARCH_RESPONDENT_EXPR} NOT IN (${ALL_NON_PATIENT_LIST_SQL}) AND ${NOT_UX_RATING_ONLY_SQL}`;
 
 const fetchFunnelPeriodMetrics = async (rangeStart, rangeEnd) => {
     const queryOne = (sql) => db.sequelize.query(sql, {
@@ -1234,10 +1256,10 @@ const fetchFunnelPeriodMetrics = async (rangeStart, rangeEnd) => {
             SELECT
                 COUNT(*) FILTER (WHERE ${PATIENT_SEARCH_SQL}) AS iniciaram,
                 COUNT(*) FILTER (WHERE ${PATIENT_SEARCH_SQL} AND status IN ('completed', 'matched')) AS completaram,
-                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${LOGGED_ACTOR_LIST_SQL})) AS init_logged,
-                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${UNLOGGED_ACTOR_LIST_SQL})) AS init_unlogged,
-                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${LOGGED_ACTOR_LIST_SQL}) AND status IN ('completed', 'matched')) AS comp_logged,
-                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${UNLOGGED_ACTOR_LIST_SQL}) AND status IN ('completed', 'matched')) AS comp_unlogged
+                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${LOGGED_ACTOR_LIST_SQL}) AND ${NOT_UX_RATING_ONLY_SQL}) AS init_logged,
+                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${UNLOGGED_ACTOR_LIST_SQL}) AND ${NOT_UX_RATING_ONLY_SQL}) AS init_unlogged,
+                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${LOGGED_ACTOR_LIST_SQL}) AND ${NOT_UX_RATING_ONLY_SQL} AND status IN ('completed', 'matched')) AS comp_logged,
+                COUNT(*) FILTER (WHERE ${SEARCH_RESPONDENT_EXPR} IN (${UNLOGGED_ACTOR_LIST_SQL}) AND ${NOT_UX_RATING_ONLY_SQL} AND status IN ('completed', 'matched')) AS comp_unlogged
             FROM "DemandSearches"
             WHERE "deletedAt" IS NULL AND "createdAt" BETWEEN :start AND :end
         `).catch(() => ({})),
@@ -1367,6 +1389,7 @@ exports.getFunnelAnalytics = async (req, res) => {
             FROM "TrackingLogs" t
             LEFT JOIN "DemandSearches" d ON t."searchId" = CAST(d.id AS VARCHAR)
             WHERE t."type" = 'questionario_dropoff'
+              AND t.step != 'final'
               AND t."createdAt" BETWEEN :start AND :end
               AND (
                 d.id IS NULL

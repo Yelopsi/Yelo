@@ -3,6 +3,7 @@ const db = require('../models');
 const { Op } = require('sequelize');
 const crypto = require('crypto');
 const matchService = require('../services/matchService'); // Algoritmo unificado de Match
+const { resolveActor } = require('../utils/actorClassifier');
 
 // --- CACHE LRU (Evitar Denial of Wallet e DB Exhaustion) ---
 class MatchLRUCache {
@@ -75,7 +76,7 @@ let matchSchemaChecked = false;
 // --- SINGLE FLIGHT (Deduplicação de Promises em Voo) ---
 const inFlightMatches = new Map();
 
-async function executeMatchSingleFlight(safePreferences, matchHash, patient) {
+async function executeMatchSingleFlight(safePreferences, matchHash, patient, isPatientActor = true) {
     if (inFlightMatches.has(matchHash)) {
         return await inFlightMatches.get(matchHash);
     }
@@ -97,8 +98,9 @@ async function executeMatchSingleFlight(safePreferences, matchHash, patient) {
             }
         }
 
-        // --- LOG DE EVENTO DE MATCH E UPDATE DE FAIRNESS ---
-        if (matchResult && matchResult.results && matchResult.results.length > 0) {
+        // --- LOG DE EVENTO DE MATCH E UPDATE DE FAIRNESS (APENAS PARA PACIENTES REAIS) ---
+        // Testes de psicólogos ou admins não devem colocar profissionais reais em cooldown (last_shown_match_at) nem inflar profile_appearances/MatchEvents.
+        if (isPatientActor && matchResult && matchResult.results && matchResult.results.length > 0) {
             const matchEvents = matchResult.results.map(psi => ({
                 psychologistId: psi.id,
                 patientId: patient ? patient.id : null,
@@ -261,9 +263,11 @@ exports.getAnonymousMatches = async (req, res) => {
             return res.status(400).json({ error: err.message });
         }
 
-        // Gera Hash Único da Busca usando o IP para anônimos
+        const actor = resolveActor(req, req.body || {});
+
+        // Gera Hash Único da Busca usando o IP + tipo de ator para não misturar cache de teste de psicólogo com paciente real
         const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'anon';
-        const matchHash = crypto.createHash('md5').update(JSON.stringify(safePreferences) + userIp).digest('hex');
+        const matchHash = crypto.createHash('md5').update(JSON.stringify(safePreferences) + userIp + (actor.isPatient ? ':p' : ':pro')).digest('hex');
         
         // --- EARLY RETURN (CACHE HIT) ---
         const cachedResult = recentMatchesCache.get(matchHash);
@@ -271,7 +275,7 @@ exports.getAnonymousMatches = async (req, res) => {
             return res.status(200).json(cachedResult);
         }
 
-        const finalPayload = await executeMatchSingleFlight(safePreferences, matchHash, null);
+        const finalPayload = await executeMatchSingleFlight(safePreferences, matchHash, null, actor.isPatient);
         res.status(200).json(finalPayload);
 
     } catch (error) {

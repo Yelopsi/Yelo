@@ -248,7 +248,7 @@ async function checkAndExecuteTrafficScalingJobs() {
                     device: 'todos',
                     priority: 'alta',
                     status: 'pendente',
-                    notes: `Janela de 14 dias (24/11 a 08/12) concluída em ${brtDateStr}. Realizar reavaliação completa no Painel do CMO: 1) Confirmar 0% de vazamento de cliques pagos do Google Ads para trials após blindagem pre-cutoff do Motor V6.1; 2) CPL e volume de cliques com teto Google Ads em R$ 90/dia; 3) Retenção da base pagante e eficiência do Meta Ads (R$ 24/dia).`
+                    notes: `Janela de 14 dias (24/11 a 08/12) concluída em ${brtDateStr}. Realizar reavaliação completa no Painel do CMO e no Funil B2C: 1) Impacto do Teto de CPC R$ 5,00 e CPA R$ 22,00 no Google Ads (meta: cair CPC de R$ 7,76 para <= R$ 5,00 e subir volume de cliques/dia com R$ 90/dia); 2) Impacto do botão direto "Chamar no WhatsApp" em /resultados na taxa de Conexão Final (meta: subir de 30,8% para 35-40%); 3) Confirmar 0% de vazamento de cliques pagos para trials no Motor V6.1; 4) Retenção da base pagante e eficiência do Meta Ads (R$ 24/dia).`
                 });
                 console.log('🎯 [CRON TRAFFIC] Alerta de Reavaliação Estratégica (08/12) criado no painel admin.');
             }

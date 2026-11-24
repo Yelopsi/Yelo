@@ -657,7 +657,7 @@ export default function AdminVisaoGeralScreen() {
                       <Text className="font-bold text-[#dc2626]">
                         {diffDays === 0 ? '🚨 Hoje é o dia da Reavaliação Estratégica!' : `⚠️ Reavaliação Estratégica Pendente (${Math.abs(diffDays)}d atrás):`}
                       </Text>{' '}
-                      Janela de 14 dias concluída. Reavalie Google Ads (R$ 90/dia), Meta Ads e Motor V6.1.
+                      Avalie Teto CPC R$ 5,00 (Google Ads R$ 90/dia), Botão WhatsApp em /resultados, Meta Ads e Motor V6.1.
                     </Text>
                   ) : (
                     <Text className="font-sans text-[#1e293b] text-[13px]">

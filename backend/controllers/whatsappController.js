@@ -26,13 +26,38 @@ exports.getWhatsAppLink = async (req, res) => {
 
         // 2. Descarta cliques de profissionais ou admins (logados ou não logados no mesmo navegador)
         const actor = resolveActor(req, req.query || {});
+        const clickSource = req.query.source || null;
+
+        // Se o clique partiu direto do card em /resultados (match_card), garante o registro na Etapa 4 (profile_click_funnel)
+        // para manter a consistência da Jornada do Paciente (Etapa 4 -> Etapa 5) e do Ranking em admin_analytics_funil.html
+        if (clickSource === 'match_card' && db.ProfileAppearanceLog) {
+            try {
+                const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000);
+                const existingView = await db.ProfileAppearanceLog.findOne({
+                    where: {
+                        psychologistId: psi.id,
+                        source: 'profile_click_funnel',
+                        actor_type: actor.actorType,
+                        createdAt: { [db.Sequelize.Op.gte]: tenMinsAgo }
+                    }
+                });
+                if (!existingView) {
+                    await db.ProfileAppearanceLog.create({
+                        psychologistId: psi.id,
+                        source: 'profile_click_funnel',
+                        actor_type: actor.actorType
+                    });
+                }
+            } catch (_) {}
+        }
+
         if (!actor.isPatient) {
             await recordDiscardedEvent(db, {
                 stage: 'whatsapp',
                 actorType: actor.actorType,
                 targetId: psi.id,
                 searchId: req.query.searchId || null,
-                source: 'ab_link',
+                source: clickSource || 'ab_link',
                 actorId: actor.userId || null,
                 utmSource: req.query.utm_source || req.query.utmSource || null
             });
@@ -49,7 +74,7 @@ exports.getWhatsAppLink = async (req, res) => {
         }
         res.cookie(cookieName, 'true', { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'Lax' });
 
-        // 4. Captura UTM e nome do visitante (enviados pelo frontend via querystring)
+        // 4. Captura UTM, origem e nome do visitante (enviados pelo frontend via querystring)
         const utmSource = req.query.utm_source || 'organico';
         const guestName = req.query.guest_name || 'um paciente';
         const searchId = req.query.searchId || null;
@@ -67,7 +92,8 @@ exports.getWhatsAppLink = async (req, res) => {
             guestName,
             utmSource,
             feedbackGiven: false,
-            searchId
+            searchId,
+            source: clickSource
         });
 
         // 7. Incrementa o contador agregado no perfil do psicólogo (usado p/ trial limit e gamificação)

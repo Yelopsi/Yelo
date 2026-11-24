@@ -103,6 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Adiciona o ID do rascunho para o backend saber qual atualizar
             if (currentSearchId) {
                 demandAnswers.searchId = currentSearchId;
+                userAnswers.searchId = currentSearchId;
+                try {
+                    sessionStorage.setItem('currentSearchId', String(currentSearchId));
+                    localStorage.setItem('yelo_current_search_id', String(currentSearchId));
+                } catch (e) {}
             }
 
             if (window.QuestionarioService) {
@@ -456,7 +461,15 @@ document.addEventListener('DOMContentLoaded', () => {
             goToSlide(0);
             // Dispara a criação do rascunho de busca imediatamente (identifica paciente vs psicólogo/admin)
             if (window.QuestionarioService) {
-                window.QuestionarioService.startSearch().then(id => { if (id) currentSearchId = id; });
+                window.QuestionarioService.startSearch().then(id => {
+                    if (id) {
+                        currentSearchId = id;
+                        try {
+                            sessionStorage.setItem('currentSearchId', String(id));
+                            localStorage.setItem('yelo_current_search_id', String(id));
+                        } catch (e) {}
+                    }
+                });
             }
         } else {
         }

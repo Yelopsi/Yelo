@@ -348,6 +348,130 @@ class GoogleAdsService {
         }
     }
 
+    /**
+     * Configura Estratégia de Lances de Portfólio (TARGET_CPA) com Teto de CPC Máximo (cpc_bid_ceiling_micros)
+     * e vincula à campanha ativa para impedir cliques inflacionados mantendo Smart Bidding de Conversões.
+     * @param {Object} options { maxCpcReais = 5.00, targetCpaReais = 22.00, campaignId = '23782636012', validateOnly = false }
+     */
+    async applyCpcCeilingPortfolioStrategy(options = {}) {
+        const maxCpcReais = Number.isFinite(Number(options.maxCpcReais)) ? Number(options.maxCpcReais) : 5.00;
+        const targetCpaReais = Number.isFinite(Number(options.targetCpaReais)) ? Number(options.targetCpaReais) : 22.00;
+        const campaignId = String(options.campaignId || '23782636012');
+        const validateOnly = Boolean(options.validateOnly);
+
+        const cpcBidCeilingMicros = String(Math.round(maxCpcReais * 1000000));
+        const targetCpaMicros = String(Math.round(targetCpaReais * 1000000));
+
+        if (!this.isConfigured()) {
+            return { success: false, reason: 'GOOGLE_ADS_CONFIGURATION_MISSING' };
+        }
+
+        try {
+            const accessToken = await this.getAccessToken();
+            if (!accessToken) {
+                return { success: false, reason: 'GOOGLE_ADS_AUTH_FAILED' };
+            }
+
+            const customerIdRaw = this.customerId.replace(/-/g, '');
+            const headers = this._buildHeaders(accessToken);
+            const strategyName = `Yelo Max Conversoes - Teto CPC R$ ${maxCpcReais.toFixed(2).replace('.', ',')}`;
+
+            // 1. Verifica se já existe estratégia de portfólio com esse nome ou tipo TARGET_CPA
+            const existingQuery = `
+                SELECT bidding_strategy.id, bidding_strategy.name, bidding_strategy.resource_name, bidding_strategy.type
+                FROM bidding_strategy
+                WHERE bidding_strategy.type = 'TARGET_CPA'
+            `;
+            const existingRes = await this.queryGoogleAds(existingQuery, accessToken).catch(() => ({ results: [] }));
+            let strategyResourceName = existingRes.results?.[0]?.biddingStrategy?.resourceName || null;
+
+            if (strategyResourceName) {
+                await axios.post(
+                    `https://googleads.googleapis.com/v25/customers/${customerIdRaw}/biddingStrategies:mutate`,
+                    {
+                        operations: [{
+                            updateMask: 'targetCpa.targetCpaMicros,targetCpa.cpcBidCeilingMicros',
+                            update: {
+                                resourceName: strategyResourceName,
+                                targetCpa: {
+                                    targetCpaMicros,
+                                    cpcBidCeilingMicros
+                                }
+                            }
+                        }],
+                        validateOnly
+                    },
+                    { headers }
+                );
+            } else {
+                const createRes = await axios.post(
+                    `https://googleads.googleapis.com/v25/customers/${customerIdRaw}/biddingStrategies:mutate`,
+                    {
+                        operations: [{
+                            create: {
+                                name: strategyName,
+                                targetCpa: {
+                                    targetCpaMicros,
+                                    cpcBidCeilingMicros
+                                }
+                            }
+                        }],
+                        validateOnly
+                    },
+                    { headers }
+                );
+                strategyResourceName = createRes.data?.results?.[0]?.resourceName || null;
+            }
+
+            if (!strategyResourceName && !validateOnly) {
+                return { success: false, reason: 'STRATEGY_RESOURCE_MISSING' };
+            }
+
+            // 2. Vincula a estratégia de portfólio à campanha
+            const campaignResourceName = `customers/${customerIdRaw}/campaigns/${campaignId}`;
+            if (strategyResourceName) {
+                await axios.post(
+                    `https://googleads.googleapis.com/v25/customers/${customerIdRaw}/campaigns:mutate`,
+                    {
+                        operations: [{
+                            updateMask: 'biddingStrategy',
+                            update: {
+                                resourceName: campaignResourceName,
+                                biddingStrategy: strategyResourceName
+                            }
+                        }],
+                        validateOnly
+                    },
+                    { headers }
+                );
+            }
+
+            if (!validateOnly) {
+                this.cache.clear();
+            }
+
+            return {
+                success: true,
+                validateOnly,
+                campaignResourceName,
+                strategyResourceName,
+                appliedMaxCpcReais: maxCpcReais,
+                appliedTargetCpaReais: targetCpaReais,
+                cpcBidCeilingMicros,
+                targetCpaMicros
+            };
+        } catch (error) {
+            const detail = error.response?.data?.error?.message || error.response?.data?.[0]?.error?.message || error.message;
+            console.error('[GoogleAdsService] Falha em applyCpcCeilingPortfolioStrategy:', detail);
+            return {
+                success: false,
+                validateOnly,
+                reason: 'GOOGLE_ADS_BIDDING_MUTATE_FAILED',
+                error: detail
+            };
+        }
+    }
+
     mockAccountSpend() {
         return { spend: 850.20, impressions: 110000, clicks: 3200, cpc: 0.26 };
     }

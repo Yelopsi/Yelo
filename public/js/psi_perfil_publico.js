@@ -350,6 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // 1. O tracking detalhado e o incremento são feitos exclusivamente pela nova API A/B
                     let whatsappLink = '';
+                    let isSkippedProClick = false;
                     
                     try {
                         // Faz a requisição pro backend pra pegar a URL com a Variante A/B já montada
@@ -369,11 +370,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (utmSource) abParams.append('utm_source', utmSource);
                         if (guestName) abParams.append('guest_name', guestName);
                         
-                        // Busca o searchId (sessão do paciente) no sessionStorage
-                        const searchId = sessionStorage.getItem('currentSearchId') || '';
+                        // Busca o searchId (sessão do paciente) no sessionStorage ou localStorage
+                        const searchId = sessionStorage.getItem('currentSearchId') || localStorage.getItem('yelo_current_search_id') || '';
                         if (searchId) {
                             abParams.append('searchId', searchId);
                         }
+                        const clickSource = (new URLSearchParams(window.location.search).get('ref') === 'match') ? 'profile_click_funnel' : 'direct_view';
+                        abParams.append('source', clickSource);
 
                         const abQuery = abParams.toString() ? `?${abParams.toString()}` : '';
                         const waHeaders = {};
@@ -391,6 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (data.success && data.url) {
                             whatsappLink = data.url;
+                            isSkippedProClick = Boolean(data.skipped);
                         } else {
                             throw new Error('Falha ao gerar link do WhatsApp');
                         }
@@ -409,9 +413,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         }, 1500); // Restaura o botão após redirecionar
                     };
                     
-                    // 2. Dispara a Conversão do Google Ads com delay de 300ms para carregar
+                    // 2. Dispara a Conversão do Google Ads com delay de 300ms para carregar (apenas para pacientes reais)
                     let redirectDone = false;
-                    if (typeof gtag === 'function') {
+                    if (!isSkippedProClick && typeof gtag === 'function') {
                         gtag('event', 'conversion', {
                             'send_to': 'AW-11236864912/Y_n_COzEiaUcEJDnk-4p',
                             'event_callback': function() {
