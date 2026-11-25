@@ -899,8 +899,8 @@ export default function SegurancaClinicaScreen() {
           }}
         >
           <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 18, marginBottom: 12 }}>
-            <Text style={{ fontWeight: '700', color: '#0f172a' }}>Agradecimento & Fontes: </Text>
-            Espaço gentilmente sugerido pela psicóloga Suzana Terumi. Diretrizes baseadas nas normativas do CFP (Código de Ética e Res. 08/2020), CRP-PR, CRP-RS, Código Penal e na cartilha educativa "PSIS (+) SEGURAS", elaborada pelo projeto PSI (+) REAL (@psimaisreal) das psicólogas Amanda Cei (CRP 16/3526) e Nicolly Amorim (CRP 15/6193).
+            <Text style={{ fontWeight: '700', color: '#0f172a' }}>Fontes: </Text>
+            Diretrizes baseadas nas normativas do CFP (Código de Ética e Res. 08/2020), CRP-PR, CRP-RS, Código Penal e na cartilha educativa "PSIS (+) SEGURAS", elaborada pelo projeto PSI (+) REAL (@psimaisreal) das psicólogas Amanda Cei (CRP 16/3526) e Nicolly Amorim (CRP 15/6193).
           </Text>
           <TouchableOpacity
             activeOpacity={0.8}
