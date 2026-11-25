@@ -452,14 +452,14 @@ export default function SegurancaClinicaScreen() {
                 O que fazer se acontecer com você
               </Text>
               <Text style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
-                Siga esta ordem para preservar provas válidas e interromper o contato.
+                Não é culpa sua. Interrompa o atendimento na hora, busque pessoas de confiança e siga esta ordem.
               </Text>
 
               {[
                 {
                   num: '1',
                   title: 'Não apague a conversa e tire prints com o número visível',
-                  desc: 'Capture prints mostrando o número com DDD no topo (sem nome salvo na agenda), data e horário. Se puder, use "Exportar conversa" no WhatsApp.',
+                  desc: 'Capture prints mostrando o número com DDD no topo (sem nome salvo na agenda), data e horário. Use "Exportar conversa" e guarde áudios e imagens — o CRP SP orienta montar um dossiê.',
                 },
                 {
                   num: '2',
@@ -468,13 +468,18 @@ export default function SegurancaClinicaScreen() {
                 },
                 {
                   num: '3',
-                  title: 'Registre um Boletim de Ocorrência online',
-                  desc: 'Importunação sexual e perseguição por mensagem ou vídeo são crimes. O B.O. pode ser feito pela internet na Delegacia Virtual (gov.br) com respaldo do CFP.',
+                  title: 'Registre um Boletim de Ocorrência',
+                  desc: 'Importunação sexual e perseguição por mensagem ou vídeo são crimes. Faça o B.O. online na Delegacia Virtual (gov.br) ou na Delegacia da Mulher, com respaldo do CFP.',
                 },
                 {
                   num: '4',
                   title: 'Acione canais de proteção digital e apoio à mulher',
                   desc: 'Reforce a denúncia na SaferNet (denuncie.org.br), consulte o Canal de Ajuda (canaldeajuda.org.br) ou ligue 180 (gratuito 24h).',
+                },
+                {
+                  num: '5',
+                  title: 'Comunique ao seu Conselho Regional',
+                  desc: 'CRP SP e SinPsi-SP mantêm um comitê de enfrentamento da violência sexual na prática profissional: comiteenfrentamento@crpsp.org.br. Dúvidas: orientacao@crpsp.org.br. Em outros estados, procure seu CRP.',
                 },
               ].map((step, idx, arr) => (
                 <View
@@ -520,6 +525,33 @@ export default function SegurancaClinicaScreen() {
                   </View>
                 </View>
               ))}
+
+              {/* Atalhos CRP SP (passo 5) */}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginLeft: 40, marginTop: -4 }}>
+                {[
+                  { label: 'Comitê CRP SP', url: 'mailto:comiteenfrentamento@crpsp.org.br' },
+                  { label: 'Orientação CRP SP', url: 'mailto:orientacao@crpsp.org.br' },
+                ].map((link) => (
+                  <TouchableOpacity
+                    key={link.label}
+                    activeOpacity={0.85}
+                    onPress={() => openExternalUrl(link.url)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: '#f0fdf4',
+                      borderRadius: 999,
+                      paddingVertical: 7,
+                      paddingHorizontal: 12,
+                    }}
+                  >
+                    <Feather name="mail" size={13} color="#1B4332" />
+                    <Text style={{ color: '#1B4332', fontWeight: '600', fontSize: 12, marginLeft: 6 }}>
+                      {link.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
               {/* Box discreto para avisar a Yelo */}
               <View
@@ -619,6 +651,8 @@ export default function SegurancaClinicaScreen() {
                     'Recusa em informar CPF ou nome completo: Evasivas ou irritação quando você solicita dados básicos para prontuário e recibo.',
                     'Perguntas invasivas ou elogios físicos: Comentários sobre sua foto, estado civil, se mora sozinha ou endereço.',
                     'Linguagem sexual gráfica no texto inicial: Descrições explícitas já no WhatsApp sob pretexto de adiantar a demanda.',
+                    '"Sessão de urgência" com demanda sexual: Padrão relatado ao CRP SP — o autor marca às pressas, traz queixa ligada à sexualidade e usa o sigilo como coação para se expor. Sigilo não protege crime.',
+                    '"Envolvimento afetivo" sem consentimento: Em atendimentos contínuos, o assédio pode vir disfarçado de declaração de afeto, às vezes seguido de ameaças, perseguição ou ataques nas redes.',
                   ],
                 },
                 {
@@ -756,6 +790,13 @@ export default function SegurancaClinicaScreen() {
                   badgeBg: '#f0fdf4',
                   badgeColor: '#1B4332',
                   desc: 'Autoriza a quebra de sigilo em situações de menor prejuízo e legítima defesa de direitos fundamentais, informando à polícia os dados estritamente necessários (número, data, hora e prints).',
+                },
+                {
+                  title: 'Resolução CFP nº 08/2020 e orientações dos CRPs',
+                  badge: 'CRP-SP · PR · RS',
+                  badgeBg: '#f0fdf4',
+                  badgeColor: '#1B4332',
+                  desc: 'Asseguram o direito de interromper imediatamente a sessão e acionar a segurança pública. A nota conjunta CRP SP e SinPsi-SP (2022) orienta interromper o serviço, registrar B.O. e comunicar o comitê de enfrentamento (comiteenfrentamento@crpsp.org.br). Em outros estados, procure o seu CRP.',
                 },
                 {
                   title: 'Art. 215-A do Código Penal • Importunação Sexual',
@@ -900,7 +941,7 @@ export default function SegurancaClinicaScreen() {
         >
           <Text style={{ fontSize: 12, color: '#64748b', lineHeight: 18, marginBottom: 12 }}>
             <Text style={{ fontWeight: '700', color: '#0f172a' }}>Fontes: </Text>
-            Diretrizes baseadas nas normativas do CFP (Código de Ética e Res. 08/2020), CRP-PR, CRP-RS, Código Penal e na cartilha educativa "PSIS (+) SEGURAS", elaborada pelo projeto PSI (+) REAL (@psimaisreal) das psicólogas Amanda Cei (CRP 16/3526) e Nicolly Amorim (CRP 15/6193).
+            Diretrizes baseadas nas normativas do CFP (Código de Ética e Res. 08/2020), CRP-SP (nota conjunta com o SinPsi-SP, 2022), CRP-PR, CRP-RS, Código Penal e na cartilha educativa "PSIS (+) SEGURAS", elaborada pelo projeto PSI (+) REAL (@psimaisreal) das psicólogas Amanda Cei (CRP 16/3526) e Nicolly Amorim (CRP 15/6193).
           </Text>
           <TouchableOpacity
             activeOpacity={0.8}
