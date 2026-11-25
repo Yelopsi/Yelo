@@ -572,6 +572,9 @@
             gap: 8px !important;
             width: 100% !important;
         }
+        .ecosystem-tools-group > :nth-child(3) {
+            grid-column: 1 / -1 !important;
+        }
         .ecosystem-btn.tool-btn {
             width: 100% !important;
             justify-content: center !important;
@@ -729,6 +732,11 @@
                 <span class="eco-icon">📊</span>
                 <span class="btn-text-desktop">Ver Meus Leads Recebidos</span>
                 <span class="btn-text-mobile">Meus Leads</span>
+            </a>
+            <a onclick="window.loadPage('psi_seguranca_clinica.html')" class="ecosystem-btn tool-btn" role="button" style="border-color: #fecaca; background: #fff5f5; color: #991b1b;">
+                <span class="eco-icon">🛡️</span>
+                <span class="btn-text-desktop">Segurança &amp; Anti-Assédio</span>
+                <span class="btn-text-mobile">Segurança</span>
             </a>
             <a onclick="window.loadPage('psi_calculadora_honorarios.html')" class="ecosystem-btn tool-btn" role="button">
                 <span class="eco-icon">🧮</span>
@@ -1014,6 +1022,26 @@
                     tone: 'objetiva',
                     label: 'Objetiva',
                     text: 'Oi, [Nome]! Tudo bem? Estou organizando minha agenda da semana e lembrei do nosso contato. Você conseguiu pensar sobre o início das sessões ou optou por deixar para um outro momento? Qualquer coisa, estou por aqui.'
+                }
+            ]
+        },
+        {
+            id: 'seguranca-triagem',
+            icon: '🛡️',
+            title: '🛡️ Filtro de Segurança & Contato Inadequado',
+            shortLabel: 'Segurança & Limites',
+            shortDesc: 'Triagem por CPF (Receita Saúde) ou encerramento de assédio',
+            advice: 'Pedir CPF (para recibo no Receita Saúde) e pagamento prévio da 1ª sessão afasta 95% dos contatos mal-intencionados. Em caso de mensagem invasiva ou assédio, não argumente: registre a mensagem de encerramento formal, tire print com o número visível e bloqueie.',
+            copies: [
+                {
+                    tone: 'objetiva',
+                    label: 'Triagem Segura (CPF + Reserva)',
+                    text: 'Perfeito! Para deixarmos o seu horário da primeira sessão reservado na agenda e preenchermos o seu cadastro clínico obrigatório (incluindo a emissão do recibo oficial pelo Receita Saúde), preciso apenas que você me envie por aqui:\n\n1. Seu nome completo e data de nascimento;\n2. Seu CPF;\n3. O comprovante do PIX referente à primeira sessão (Chave PIX: [SUA CHAVE] — Valor: R$ [VALOR]).\n\nAssim que confirmado, já te envio o link da nossa sala virtual!'
+                },
+                {
+                    tone: 'informal',
+                    label: 'Encerramento Formal (Assédio / Conduta Inadequada)',
+                    text: 'Este número é um canal estritamente profissional de Psicologia. Diante da conduta inadequada e sem consentimento, encerro imediatamente este contato. Informo que os dados deste número, data, horário e histórico de mensagens foram integralmente registrados para formalização de Boletim de Ocorrência policial, nos termos do Código Penal e com respaldo do Art. 10º do Código de Ética do CFP.'
                 }
             ]
         }

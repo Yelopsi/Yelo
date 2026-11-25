@@ -141,6 +141,27 @@ const SCENARIOS_DATA: Scenario[] = [
       },
     ],
   },
+  {
+    id: 'seguranca-triagem',
+    icon: '🛡️',
+    title: '🛡️ Filtro de Segurança & Contato Inadequado',
+    shortLabel: 'Segurança & Limites',
+    shortDesc: 'Triagem por CPF (Receita Saúde) ou encerramento de assédio',
+    advice:
+      'Pedir CPF (para recibo no Receita Saúde) e pagamento prévio da 1ª sessão afasta 95% dos contatos mal-intencionados. Em caso de mensagem invasiva ou assédio, não argumente: registre a mensagem de encerramento formal, tire print com o número visível e bloqueie.',
+    copies: [
+      {
+        tone: 'objetiva',
+        label: 'Triagem Segura (CPF + Reserva)',
+        text: 'Perfeito! Para deixarmos o seu horário da primeira sessão reservado na agenda e preenchermos o seu cadastro clínico obrigatório (incluindo a emissão do recibo oficial pelo Receita Saúde), preciso apenas que você me envie por aqui:\n\n1. Seu nome completo e data de nascimento;\n2. Seu CPF;\n3. O comprovante do PIX referente à primeira sessão (Chave PIX: [SUA CHAVE] — Valor: R$ [VALOR]).\n\nAssim que confirmado, já te envio o link da nossa sala virtual!',
+      },
+      {
+        tone: 'informal',
+        label: 'Encerramento Formal (Assédio / Conduta Inadequada)',
+        text: 'Este número é um canal estritamente profissional de Psicologia. Diante da conduta inadequada e sem consentimento, encerro imediatamente este contato. Informo que os dados deste número, data, horário e histórico de mensagens foram integralmente registrados para formalização de Boletim de Ocorrência policial, nos termos do Código Penal e com respaldo do Art. 10º do Código de Ética do CFP.',
+      },
+    ],
+  },
 ];
 
 // Helper: Botão de Copiar Texto Estilizado
@@ -282,8 +303,8 @@ export default function ManualConversaoScreen() {
           paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : 140,
         }}
       >
-        {/* TOP NAVIGATION: BOTÃO VOLTAR */}
-        <View className="mx-5 mt-5 mb-3 flex-row items-center">
+        {/* TOP NAVIGATION: BOTÃO VOLTAR + ATALHO SEGURANÇA */}
+        <View className="mx-5 mt-5 mb-3 flex-row items-center justify-between">
           <TouchableOpacity
             onPress={handleBackPress}
             activeOpacity={0.7}
@@ -293,6 +314,17 @@ export default function ManualConversaoScreen() {
             <Feather name="arrow-left" size={20} color="#1B4332" />
             <Text className="font-sans font-bold text-[#1B4332] text-[15px] ml-1.5">
               Voltar
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.navigate('/(tabs)/seguranca-clinica')}
+            activeOpacity={0.75}
+            className="bg-[#fff5f5] border border-[#fecaca] rounded-full px-3.5 py-1.5 flex-row items-center"
+          >
+            <Text className="text-[13px] mr-1.5">🛡️</Text>
+            <Text className="font-sans font-bold text-[#991b1b] text-[12.5px]">
+              Segurança na Clínica
             </Text>
           </TouchableOpacity>
         </View>

@@ -266,6 +266,13 @@ export default function TabLayout() {
             tabBarItemStyle: { display: 'none' },
           }}
         />
+        <Tabs.Screen
+          name="seguranca-clinica"
+          options={{
+            tabBarButton: () => null,
+            tabBarItemStyle: { display: 'none' },
+          }}
+        />
         <Tabs.Screen name="jornada" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
         <Tabs.Screen name="blog" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />
         <Tabs.Screen name="forum" options={{ tabBarButton: () => null, tabBarItemStyle: { display: 'none' } }} />

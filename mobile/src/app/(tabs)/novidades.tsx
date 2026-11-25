@@ -250,7 +250,11 @@ export default function NovidadesScreen() {
   const handleNavigateCta = (ctaLink?: string | null) => {
     if (!ctaLink) return;
     const link = ctaLink.toLowerCase();
-    if (link.includes('forum')) {
+    if (link.includes('seguranca')) {
+      router.navigate('/(tabs)/seguranca-clinica');
+    } else if (link.includes('manual')) {
+      router.navigate('/(tabs)/manual-conversao');
+    } else if (link.includes('forum')) {
       router.navigate('/(tabs)/forum');
     } else if (link.includes('perfil') || link.includes('ajustes_hub')) {
       router.navigate('/(tabs)/meu_perfil');

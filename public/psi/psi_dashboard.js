@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!activeLink || !activeBottomLink) {
             let hubPage = '';
-            if (['psi_pacientes.html', 'psi_financeiro.html', 'psi_analytics.html', 'psi_favoritos_analytics.html', 'psi_calculadora_honorarios.html', 'psi_manual_conversao.html'].includes(url)) {
+            if (['psi_pacientes.html', 'psi_financeiro.html', 'psi_analytics.html', 'psi_favoritos_analytics.html', 'psi_calculadora_honorarios.html', 'psi_manual_conversao.html', 'psi_seguranca_clinica.html'].includes(url)) {
                 hubPage = 'psi_clinica_hub.html';
             } else if (['psi_jornada.html', 'psi_blog.html', 'psi_forum.html', 'psi_comunidade.html', 'psi_hub.html', 'psi_lista_espera.html'].includes(url)) {
                 hubPage = 'psi_evolucao_hub.html';
@@ -731,6 +731,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 else if (url.includes('psi_novidades')) { if (window.inicializarNovidades) window.inicializarNovidades(); }
                 else if (url.includes('psi_manual_conversao')) { if (window.inicializarManualConversao) window.inicializarManualConversao(); }
+                else if (url.includes('psi_seguranca_clinica')) { if (window.inicializarSegurancaClinica) window.inicializarSegurancaClinica(); }
                 // Adicione outras inicializações de página aqui
 
                 // SEMPRE atualiza a bolinha do sino ao navegar entre as páginas do painel

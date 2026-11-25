@@ -1,5 +1,82 @@
 [
   {
+    "id": "change-psi-seguranca-clinica",
+    "date": "2026-11-24T22:00:00.000Z",
+    "commit": "manual",
+    "author": "Anderson",
+    "title": "Novo: Central de Segurança na Clínica e protocolo de proteção contra assédio",
+    "category": "Consultório & Gestão",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "Central dedicada com protocolo de ação imediata contra assédio, respaldo ético do CFP (Art. 10º), filtros de triagem por CPF no Receita Saúde e modelos de cláusula contratual.",
+    "description": "Criação da página Segurança na Clínica no painel web e aplicativo mobile, gentilmente sugerida pela psicóloga Suzana Terumi.",
+    "rationale": "Apoiar e respaldar as psicólogas com orientações práticas, jurídicas e éticas contra o assédio sexual na clínica.",
+    "before": {
+      "estado_anterior": "Sem central dedicada de segurança clínica no painel"
+    },
+    "after": {
+      "nova_versao": "Central Segurança na Clínica com atalhos de denúncia, respaldo do CFP e scripts prontos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "public/psi/psi_seguranca_clinica.html",
+      "public/psi/psi_clinica_hub.html",
+      "public/psi/psi_manual_conversao.html",
+      "public/psi/psi_historico_contatos.html",
+      "mobile/src/app/(tabs)/seguranca-clinica.tsx"
+    ],
+    "publishedToPsi": true,
+    "psiCurated": true,
+    "psiTitle": "Nova Central de Segurança na Clínica 🛡️",
+    "psiSummary": "Criamos uma página dedicada com orientações práticas de prevenção e reação ao assédio na clínica (online e presencial), explicando o respaldo do CFP para quebra legítima de sigilo (Art. 10º), o enquadramento no Código Penal, a triagem preventiva de CPF via Receita Saúde e modelos prontos de cláusula contratual e scripts para copiar em 1 clique. Uma melhoria construída com muito cuidado e gentilmente sugerida pela psicóloga Suzana Terumi!",
+    "psiCategory": "Consultório & Gestão",
+    "impactBadge": "Novo Recurso ✨",
+    "ctaLink": "psi_seguranca_clinica.html",
+    "ctaText": "Acessar Segurança na Clínica →",
+    "scheduledMonday": "2026-11-23T15:00:00.000Z",
+    "scheduledFriday": "2026-11-23T15:00:00.000Z",
+    "updatedAt": "2026-11-24T23:10:50.476Z"
+  },
+  {
+    "id": "change-git-7f782a7d",
+    "date": "2026-11-24T21:04:12.000Z",
+    "commit": "7f782a7d",
+    "author": "Anderson",
+    "title": "Novo: Incluir CTA WhatsApp direto em /resultados, filtrar testes/ratings no funil e aplicar teto CPC R$ 5,00 no Google Ads (funnel & ads)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "incluir CTA WhatsApp direto em /resultados, filtrar testes/ratings no funil e aplicar teto CPC R$ 5,00 no Google Ads",
+    "description": "Commit registrado no repositório: \"feat(funnel & ads): incluir CTA WhatsApp direto em /resultados, filtrar testes/ratings no funil e aplicar teto CPC R$ 5,00 no Google Ads\". Arquivos modificados: admin/admin_visao_geral.js, backend/.data/system_changelog.json, backend/controllers/adminDashboardController.js, backend/controllers/demandController.js, backend/controllers/matchController.js (+12 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #7f782a7d"
+    },
+    "after": {
+      "nova_versao": "incluir CTA WhatsApp direto em /resultados, filtrar testes/ratings no funil e aplicar teto CPC R$ 5,00 no Google Ads"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_visao_geral.js",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/adminDashboardController.js",
+      "backend/controllers/demandController.js",
+      "backend/controllers/matchController.js",
+      "backend/controllers/whatsappController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/scheduler.js",
+      "backend/services/googleAdsService.js",
+      "mobile/src/app/(admin)/index.tsx",
+      "mobile/src/app/questionario.tsx",
+      "mobile/src/app/resultados.tsx",
+      "public/css/components/public_match_results.css",
+      "public/js/psi_perfil_publico.js",
+      "public/js/questionario.js",
+      "public/js/resultados.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-055a439a",
     "date": "2026-11-24T20:26:46.000Z",
     "commit": "055a439a",

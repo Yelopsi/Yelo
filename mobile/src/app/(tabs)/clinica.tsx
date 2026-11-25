@@ -86,6 +86,21 @@ export default function ClinicaScreen() {
               </View>
             </TouchableOpacity>
 
+            {/* 3.5. PROTEÇÃO & ÉTICA: Segurança na Clínica */}
+            <TouchableOpacity 
+              onPress={() => handleNavigate('Segurança na Clínica', 'seguranca-clinica')}
+              className="bg-white border border-[#e5e7eb] rounded-[16px] p-[25px] flex-row items-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-5"
+              activeOpacity={0.8}
+            >
+              <View className="w-[55px] h-[55px] rounded-[16px] bg-[#fef2f2] items-center justify-center mr-5">
+                <Text className="text-[24px]">🛡️</Text>
+              </View>
+              <View className="flex-1">
+                <Text className="font-title text-[#1B4332] text-[19px] mb-1">Segurança na Clínica</Text>
+                <Text className="font-sans text-[14px] text-[#888] leading-snug">Prevenção, respaldo ético (CFP) e como agir em casos de assédio.</Text>
+              </View>
+            </TouchableOpacity>
+
             {/* 4. CAPTAÇÃO & DEMANDA: Análise de Favoritos */}
             <TouchableOpacity 
               onPress={() => handleNavigate('Análise de Favoritos', 'favoritos-analytics')}

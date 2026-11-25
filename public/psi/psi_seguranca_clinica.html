@@ -1,0 +1,1237 @@
+<style>
+    /* ==========================================================================
+       CENTRAL DE SEGURANÇA YELO — DESIGN SYSTEM AIRBNB / NUBANK
+       Mobile-First (Acordeões e Coluna Única) + Desktop Wide Bento Grid
+       ========================================================================== */
+    .yelo-safety-shell {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 4px 0 80px 0;
+        box-sizing: border-box;
+        font-family: var(--font-principal, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif);
+        color: #0f172a;
+    }
+
+    /* 1. HERO MINIMALISTA (ESTILO NUBANK CENTRAL DE PROTEÇÃO) */
+    .ns-hero {
+        background: linear-gradient(135deg, #1B4332 0%, #153527 100%);
+        border-radius: 24px;
+        padding: 32px 36px;
+        color: #ffffff;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 22px;
+        box-shadow: 0 12px 32px -8px rgba(27, 67, 50, 0.22);
+    }
+    .ns-hero::before {
+        content: '';
+        position: absolute;
+        top: -90px;
+        right: -60px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 238, 140, 0.14) 0%, rgba(255, 238, 140, 0) 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .ns-hero-grid {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 32px;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+    }
+    .ns-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: #FFEE8C;
+        margin-bottom: 14px;
+    }
+    .ns-hero h1 {
+        margin: 0 0 10px 0;
+        font-family: var(--font-titulos, 'Fraunces', serif);
+        font-size: clamp(1.75rem, 3vw, 2.25rem);
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: -0.02em;
+        line-height: 1.18;
+    }
+    .ns-hero p {
+        margin: 0;
+        font-size: 0.98rem;
+        color: rgba(255, 255, 255, 0.86);
+        line-height: 1.55;
+        text-align: left;
+    }
+
+    /* Card/Drawer de Transparência no Hero */
+    .ns-hero-transp-box {
+        background: rgba(255, 255, 255, 0.09);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 20px;
+        padding: 18px 20px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    .ns-transparency-trigger {
+        background: transparent;
+        border: none;
+        padding: 0;
+        width: 100%;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        cursor: pointer;
+        text-align: left;
+        font-family: inherit;
+    }
+    .ns-transparency-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #FFEE8C;
+    }
+    .ns-transparency-chevron {
+        transition: transform 0.25s ease;
+        flex-shrink: 0;
+        opacity: 0.85;
+        display: none; /* No desktop já fica aberto; no mobile aparece o chevron */
+    }
+    .ns-transparency-trigger.is-open .ns-transparency-chevron {
+        transform: rotate(180deg);
+    }
+    .ns-transparency-body {
+        margin-top: 10px;
+        font-size: 0.86rem;
+        line-height: 1.58;
+        color: rgba(255, 255, 255, 0.88);
+    }
+
+    /* 2. DOCK DE ATALHOS RÁPIDOS (HORIZONTAL NO DESKTOP, 2x2 NO MOBILE) */
+    .ns-quick-section-label {
+        font-size: 0.76rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #64748b;
+        margin: 0 0 10px 4px;
+    }
+    .ns-quick-dock {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+    .ns-quick-tile {
+        background: #ffffff;
+        border: 1px solid rgba(15, 23, 42, 0.07);
+        border-radius: 20px;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        text-decoration: none;
+        color: #0f172a;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02);
+        text-align: left;
+        font-family: inherit;
+    }
+    .ns-quick-tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+        border-color: rgba(27, 67, 50, 0.22);
+    }
+    .ns-icon-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 13px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1f5f9;
+        color: #0f172a;
+        flex-shrink: 0;
+    }
+    .ns-icon-circle.red {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+    .ns-icon-circle.green {
+        background: #f0fdf4;
+        color: #1B4332;
+    }
+    .ns-quick-tile-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .ns-quick-tile-title {
+        font-size: 0.94rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.25;
+        display: block;
+    }
+    .ns-quick-tile-sub {
+        font-size: 0.79rem;
+        color: #64748b;
+        margin-top: 2px;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .ns-quick-tile-arrow {
+        color: #94a3b8;
+        flex-shrink: 0;
+        transition: transform 0.2s ease, color 0.2s ease;
+    }
+    .ns-quick-tile:hover .ns-quick-tile-arrow {
+        color: #0f172a;
+        transform: translate(2px, -2px);
+    }
+
+    /* 3. BARRA TOPO DE CONTEÚDO: SEGMENTED CONTROL (AIRBNB / iOS STYLE) */
+    .ns-toolbar-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 22px;
+        flex-wrap: wrap;
+    }
+    .ns-segmented-wrap {
+        background: #eef2f6;
+        padding: 5px;
+        border-radius: 999px;
+        display: inline-grid;
+        grid-template-columns: repeat(4, minmax(145px, 1fr));
+        gap: 4px;
+        width: 100%;
+        max-width: 680px;
+    }
+    .ns-seg-btn {
+        border: none;
+        background: transparent;
+        padding: 11px 16px;
+        border-radius: 999px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        font-family: inherit;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .ns-seg-btn:hover:not(.active) {
+        color: #0f172a;
+    }
+    .ns-seg-btn.active {
+        background: #ffffff;
+        color: #0f172a;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .ns-panel {
+        display: none;
+        animation: nsFade 0.24s ease;
+    }
+    .ns-panel.active {
+        display: block;
+    }
+    @keyframes nsFade {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 4. SUPERFÍCIES E BENTO GRIDS (DESKTOP WIDE vs MOBILE STACK) */
+    .ns-surface-card {
+        background: #ffffff;
+        border: 1px solid rgba(15, 23, 42, 0.07);
+        border-radius: 24px;
+        padding: 28px 30px;
+        margin-bottom: 18px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.025);
+        box-sizing: border-box;
+    }
+    .ns-surface-header {
+        margin-bottom: 22px;
+    }
+    .ns-surface-eyebrow {
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #1B4332;
+        margin-bottom: 4px;
+        display: block;
+    }
+    .ns-surface-title {
+        margin: 0;
+        font-family: var(--font-titulos, 'Fraunces', serif);
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.01em;
+    }
+    .ns-surface-subtitle {
+        margin: 4px 0 0 0;
+        font-size: 0.9rem;
+        color: #64748b;
+        line-height: 1.5;
+    }
+
+    /* ABA 1: Grid 2x2 no Desktop para os 4 passos + barra lateral/inferior de suporte */
+    .ns-agir-desktop-layout {
+        display: grid;
+        grid-template-columns: 2.1fr 1fr;
+        gap: 20px;
+        align-items: stretch;
+    }
+    .ns-step-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+    }
+    .ns-step-row {
+        background: #f8fafc;
+        border: 1px solid #eef2f6;
+        border-radius: 18px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 12px;
+        transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .ns-step-row:hover {
+        background: #ffffff;
+        border-color: #cbd5e1;
+    }
+    .ns-step-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+    .ns-step-num {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #1B4332;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 0.82rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .ns-step-title {
+        margin: 0;
+        font-size: 0.98rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.3;
+    }
+    .ns-step-desc {
+        margin: 0;
+        font-size: 0.88rem;
+        color: #475569;
+        line-height: 1.58;
+    }
+    .ns-step-pill-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #0f172a;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.18s ease;
+        width: fit-content;
+    }
+    .ns-step-pill-link:hover {
+        background: #0f172a;
+        border-color: #0f172a;
+        color: #ffffff;
+    }
+
+    /* Card Lateral de Suporte Yelo (Aba 1) */
+    .ns-yelo-side-card {
+        background: linear-gradient(160deg, #f0fdf4 0%, #ffffff 100%);
+        border: 1px solid #bbf7d0;
+        border-radius: 24px;
+        padding: 28px 26px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 20px;
+        box-shadow: 0 4px 20px rgba(22, 101, 52, 0.04);
+    }
+    .ns-yelo-side-card h4 {
+        margin: 14px 0 8px 0;
+        font-family: var(--font-titulos, 'Fraunces', serif);
+        font-size: 1.22rem;
+        color: #0f172a;
+        line-height: 1.3;
+    }
+    .ns-yelo-side-card p {
+        margin: 0 0 12px 0;
+        font-size: 0.88rem;
+        color: #475569;
+        line-height: 1.6;
+    }
+    .ns-btn-primary {
+        background: #1B4332;
+        color: #ffffff;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 999px;
+        font-size: 0.86rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        font-family: inherit;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .ns-btn-primary:hover {
+        background: #143527;
+        transform: translateY(-1px);
+    }
+    .ns-btn-secondary {
+        background: #ffffff;
+        color: #1B4332;
+        border: 1px solid #bbf7d0;
+        padding: 11px 20px;
+        border-radius: 999px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        font-family: inherit;
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 8px;
+    }
+    .ns-btn-secondary:hover {
+        background: #dcfce7;
+    }
+
+    /* ABA 2 & ABA 3: No Desktop, os Accordions viram um Grid Bento de 3 ou 2 colunas sempre abertos! */
+    .ns-bento-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+    }
+    .ns-bento-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    .ns-accordion-item {
+        background: #ffffff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 22px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.02);
+        display: flex;
+        flex-direction: column;
+    }
+    .ns-accordion-btn {
+        width: 100%;
+        background: transparent;
+        border: none;
+        padding: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        cursor: default;
+        text-align: left;
+        font-family: inherit;
+        margin-bottom: 16px;
+    }
+    .ns-accordion-left {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        min-width: 0;
+        flex: 1;
+    }
+    .ns-accordion-title {
+        font-size: 1.02rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: block;
+        line-height: 1.3;
+    }
+    .ns-accordion-tag {
+        font-size: 0.78rem;
+        color: #64748b;
+        font-weight: 500;
+        display: block;
+        margin-top: 3px;
+        line-height: 1.35;
+    }
+    .ns-accordion-arrow {
+        display: none; /* Oculto no Desktop pois os cards já ficam abertos lado a lado */
+    }
+    .ns-accordion-content {
+        display: block;
+        padding-top: 14px;
+        border-top: 1px solid #f1f5f9;
+        font-size: 0.89rem;
+        color: #475569;
+        line-height: 1.6;
+    }
+
+    /* Lista limpa de Bullets */
+    .ns-clean-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .ns-clean-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 0.88rem;
+        color: #475569;
+        line-height: 1.55;
+    }
+    .ns-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #1B4332;
+        margin-top: 8px;
+        flex-shrink: 0;
+    }
+    .ns-dot.red { background: #dc2626; }
+
+    /* ABA 4: Grid 2x2 de Scripts Copiáveis no Desktop */
+    .ns-templates-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+    }
+    .ns-template-card {
+        background: #ffffff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 22px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(15, 23, 42, 0.02);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .ns-template-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .ns-template-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.3;
+    }
+    .ns-template-sub {
+        margin: 4px 0 0 0;
+        font-size: 0.82rem;
+        color: #64748b;
+        line-height: 1.4;
+    }
+    .ns-copy-pill {
+        background: #0f172a;
+        color: #ffffff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+        font-family: inherit;
+    }
+    .ns-copy-pill:hover {
+        background: #1B4332;
+        transform: scale(1.02);
+    }
+    .ns-template-box {
+        background: #f8fafc;
+        border: 1px solid #eef2f6;
+        border-radius: 16px;
+        padding: 16px 18px;
+        font-size: 0.87rem;
+        color: #334155;
+        line-height: 1.6;
+        white-space: pre-line;
+        flex: 1;
+    }
+
+    /* Rodapé Editorial de Créditos */
+    .ns-credits-footer {
+        margin-top: 24px;
+        padding: 20px 26px;
+        border-radius: 20px;
+        background: #ffffff;
+        border: 1px solid rgba(15, 23, 42, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .ns-credits-text {
+        flex: 1;
+        min-width: 240px;
+        font-size: 0.82rem;
+        color: #64748b;
+        line-height: 1.55;
+    }
+    .ns-credits-text strong {
+        color: #0f172a;
+    }
+    .ns-credits-link {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #1B4332;
+        text-decoration: none;
+        padding: 9px 16px;
+        border-radius: 999px;
+        background: #f0fdf4;
+        transition: background 0.2s ease;
+        white-space: nowrap;
+    }
+    .ns-credits-link:hover {
+        background: #dcfce7;
+    }
+
+    /* ==========================================================================
+       RESPONSIVIDADE MOBILE (MANTÉM O LAYOUT MOBILE-FIRST INTACTO <= 992px)
+       ========================================================================== */
+    @media (max-width: 1150px) {
+        .ns-bento-grid-3 {
+            grid-template-columns: 1fr;
+        }
+        .ns-agir-desktop-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .yelo-safety-shell {
+            padding: 10px 14px 95px 14px;
+        }
+        .ns-hero {
+            padding: 24px 20px 20px 20px;
+            border-radius: 22px;
+        }
+        .ns-hero-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        .ns-hero-transp-box {
+            padding: 13px 16px;
+            border-radius: 16px;
+        }
+        .ns-transparency-chevron {
+            display: block;
+        }
+        .ns-transparency-body {
+            display: none;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.12);
+        }
+        .ns-transparency-body.is-open {
+            display: block;
+        }
+
+        .ns-quick-dock {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .ns-quick-tile {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 15px;
+            gap: 10px;
+        }
+        .ns-quick-tile-arrow {
+            display: none;
+        }
+
+        .ns-segmented-wrap {
+            display: flex;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            border-radius: 16px;
+            padding: 4px;
+        }
+        .ns-segmented-wrap::-webkit-scrollbar { display: none; }
+        .ns-seg-btn {
+            flex: 1 0 auto;
+            padding: 9px 14px;
+            font-size: 0.82rem;
+            border-radius: 12px;
+        }
+
+        .ns-surface-card {
+            padding: 20px 16px;
+            border-radius: 20px;
+        }
+        .ns-step-list {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .ns-bento-grid-3,
+        .ns-bento-grid-2,
+        .ns-templates-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        /* No mobile, reativa o comportamento de Accordion retrátil */
+        .ns-accordion-item {
+            padding: 18px 16px;
+            border-radius: 18px;
+        }
+        .ns-accordion-btn {
+            cursor: pointer;
+            margin-bottom: 0;
+            align-items: center;
+        }
+        .ns-accordion-arrow {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #f8fafc;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            transition: all 0.22s ease;
+            flex-shrink: 0;
+        }
+        .ns-accordion-item.is-open .ns-accordion-arrow {
+            transform: rotate(180deg);
+            background: #1B4332;
+            color: #ffffff;
+        }
+        .ns-accordion-content {
+            display: none;
+            margin-top: 14px;
+        }
+        .ns-accordion-item.is-open .ns-accordion-content {
+            display: block;
+        }
+
+        .ns-template-top {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .ns-copy-pill {
+            justify-content: center;
+            padding: 10px 16px;
+        }
+    }
+</style>
+
+<div class="yelo-safety-shell fade-in-up">
+
+    <!-- 1. HERO WIDE (2 COLUNAS NO DESKTOP, EXPANSÍVEL NO MOBILE) -->
+    <div class="ns-hero">
+        <div class="ns-hero-grid">
+            <div>
+                <span class="ns-hero-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    Central de Proteção à Psicóloga
+                </span>
+                <h1>Segurança na Clínica</h1>
+                <p>Protocolo prático de prevenção, respaldo ético do CFP e canais imediatos de denúncia contra assédio no atendimento online e presencial.</p>
+            </div>
+
+            <div class="ns-hero-transp-box">
+                <button type="button" class="ns-transparency-trigger" onclick="this.classList.toggle('is-open'); document.getElementById('ns-transp-drawer').classList.toggle('is-open');">
+                    <span class="ns-transparency-left">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFEE8C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <span>Como funciona a privacidade do clique no WhatsApp?</span>
+                    </span>
+                    <svg class="ns-transparency-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div id="ns-transp-drawer" class="ns-transparency-body">
+                    Quando alguém clica no botão do seu perfil, a conversa acontece diretamente entre os dois celulares (criptografia ponta a ponta). A Yelo não recebe o número da pessoa nem vê as mensagens, por isso não conseguimos bloquear o contato no seu aparelho. Estamos evoluindo nossas camadas de proteção continuamente para apoiar você.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. DOCK DE AÇÃO IMEDIATA (FULL-WIDTH 4 COLUNAS NO DESKTOP, 2x2 NO MOBILE) -->
+    <div class="ns-quick-section-label">Canais de Ação Rápida</div>
+    <div class="ns-quick-dock">
+        <a href="https://www.gov.br/pt-br/servicos/registrar-ocorrencia-policial-online" target="_blank" rel="noopener noreferrer" class="ns-quick-tile">
+            <span class="ns-icon-circle red">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+            </span>
+            <div class="ns-quick-tile-info">
+                <span class="ns-quick-tile-title">Fazer B.O. Online</span>
+                <span class="ns-quick-tile-sub">Delegacia Virtual gov.br</span>
+            </div>
+            <svg class="ns-quick-tile-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+        </a>
+
+        <a href="tel:180" class="ns-quick-tile">
+            <span class="ns-icon-circle red">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            </span>
+            <div class="ns-quick-tile-info">
+                <span class="ns-quick-tile-title">Ligue 180</span>
+                <span class="ns-quick-tile-sub">Central da Mulher 24h</span>
+            </div>
+            <svg class="ns-quick-tile-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+        </a>
+
+        <a href="https://denuncie.org.br" target="_blank" rel="noopener noreferrer" class="ns-quick-tile">
+            <span class="ns-icon-circle">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            </span>
+            <div class="ns-quick-tile-info">
+                <span class="ns-quick-tile-title">SaferNet Brasil</span>
+                <span class="ns-quick-tile-sub">Denúncia anônima web</span>
+            </div>
+            <svg class="ns-quick-tile-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+        </a>
+
+        <button type="button" onclick="window.loadPage('psi_caixa_de_entrada.html')" class="ns-quick-tile">
+            <span class="ns-icon-circle green">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </span>
+            <div class="ns-quick-tile-info">
+                <span class="ns-quick-tile-title">Avisar a Yelo</span>
+                <span class="ns-quick-tile-sub">Reportar horário/padrão</span>
+            </div>
+            <svg class="ns-quick-tile-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+    </div>
+
+    <!-- 3. SEGMENTED CONTROL (AIRBNB / iOS STYLE) -->
+    <div class="ns-toolbar-row">
+        <div class="ns-segmented-wrap" role="tablist">
+            <button type="button" class="ns-seg-btn active" onclick="window.switchSafetyTab('agir-agora', this)">Como agir</button>
+            <button type="button" class="ns-seg-btn" onclick="window.switchSafetyTab('prevencao', this)">Prevenção</button>
+            <button type="button" class="ns-seg-btn" onclick="window.switchSafetyTab('sigilo-lei', this)">Sigilo e Lei</button>
+            <button type="button" class="ns-seg-btn" onclick="window.switchSafetyTab('clausulas', this)">Scripts prontos</button>
+        </div>
+    </div>
+
+    <!-- ======================================================================
+         PAINEL 1: COMO AGIR AGORA (SPLIT 2x2 + CARD LATERAL NO DESKTOP)
+         ====================================================================== -->
+    <div id="safety-tab-agir-agora" class="ns-panel active">
+        <div class="ns-agir-desktop-layout">
+            <!-- Coluna Principal: 4 Passos em Grid 2x2 -->
+            <div class="ns-surface-card" style="margin-bottom: 0;">
+                <div class="ns-surface-header">
+                    <span class="ns-surface-eyebrow">Protocolo imediato</span>
+                    <h2 class="ns-surface-title">O que fazer se acontecer com você</h2>
+                    <p class="ns-surface-subtitle">Siga esta ordem para preservar provas válidas e interromper o contato com segurança.</p>
+                </div>
+
+                <div class="ns-step-list">
+                    <div class="ns-step-row">
+                        <div>
+                            <div class="ns-step-top">
+                                <span class="ns-step-num">1</span>
+                                <h3 class="ns-step-title">Preserve provas com o número visível</h3>
+                            </div>
+                            <p class="ns-step-desc">Não apague a conversa. Tire prints mostrando o <strong>número com DDD no topo</strong> (sem nome salvo na agenda), data e horário. Se puder, use <em>Mais opções &gt; Exportar conversa</em>.</p>
+                        </div>
+                    </div>
+
+                    <div class="ns-step-row">
+                        <div>
+                            <div class="ns-step-top">
+                                <span class="ns-step-num">2</span>
+                                <h3 class="ns-step-title">Denuncie e bloqueie no WhatsApp</h3>
+                            </div>
+                            <p class="ns-step-desc">Não tente argumentar nem fazer manejo clínico de uma agressão. Toque em <strong>Denunciar e Bloquear</strong> nos dados do contato — o WhatsApp analisa as últimas 5 mensagens para banir o número.</p>
+                        </div>
+                    </div>
+
+                    <div class="ns-step-row">
+                        <div>
+                            <div class="ns-step-top">
+                                <span class="ns-step-num">3</span>
+                                <h3 class="ns-step-title">Registre um Boletim de Ocorrência</h3>
+                            </div>
+                            <p class="ns-step-desc">Importunação sexual e perseguição por mensagem ou vídeo são crimes. O B.O. pode ser feito 100% online na Delegacia Virtual do seu Estado com respaldo do CFP.</p>
+                        </div>
+                        <a href="https://www.gov.br/pt-br/servicos/registrar-ocorrencia-policial-online" target="_blank" rel="noopener noreferrer" class="ns-step-pill-link">
+                            <span>Delegacia Virtual (gov.br)</span>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+                        </a>
+                    </div>
+
+                    <div class="ns-step-row">
+                        <div>
+                            <div class="ns-step-top">
+                                <span class="ns-step-num">4</span>
+                                <h3 class="ns-step-title">Acione redes de proteção à mulher</h3>
+                            </div>
+                            <p class="ns-step-desc">Reforce a denúncia de forma anônima na <strong>SaferNet</strong>, consulte o <strong>Canal de Ajuda</strong> para segurança digital ou ligue <strong>180</strong> (atendimento gratuito 24h).</p>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <a href="https://denuncie.org.br" target="_blank" rel="noopener noreferrer" class="ns-step-pill-link">SaferNet ↗</a>
+                            <a href="https://canaldeajuda.org.br" target="_blank" rel="noopener noreferrer" class="ns-step-pill-link">Canal de Ajuda ↗</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna Lateral: Aviso à Equipe Yelo -->
+            <div class="ns-yelo-side-card">
+                <div>
+                    <span class="ns-icon-circle green" style="width: 48px; height: 48px; border-radius: 14px;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </span>
+                    <h4>Conte para a equipe Yelo o que aconteceu</h4>
+                    <p>Por favor, nos avise sempre que passar por qualquer situação suspeita ou desconfortável.</p>
+                    <p><strong>Você não precisa enviar a conversa inteira:</strong> basta nos contar o que houve e informar a data, o horário aproximado do clique ou o nome preenchido pelo contato. Com esses relatos conseguimos cruzar os logs de acesso, identificar padrões e criar travas melhores na plataforma.</p>
+                </div>
+
+                <div>
+                    <button type="button" class="ns-btn-primary" onclick="window.loadPage('psi_caixa_de_entrada.html')">
+                        <span>Avisar no Fale com a Yelo</span>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                    <a href="mailto:contato@yelopsi.com.br?subject=Relato%20de%20Seguran%C3%A7a%20na%20Cl%C3%ADnica%20-%20Yelo" class="ns-btn-secondary">
+                        <span>contato@yelopsi.com.br</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================
+         PAINEL 2: PREVENÇÃO & RED FLAGS (3 COLUNAS NO DESKTOP / ACCORDION NO MOBILE)
+         ====================================================================== -->
+    <div id="safety-tab-prevencao" class="ns-panel">
+        <div class="ns-bento-grid-3">
+            <!-- Card 1 -->
+            <div class="ns-accordion-item is-open">
+                <button type="button" class="ns-accordion-btn" onclick="this.parentElement.classList.toggle('is-open')">
+                    <div class="ns-accordion-left">
+                        <span class="ns-icon-circle green">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                        </span>
+                        <div>
+                            <span class="ns-accordion-title">A Regra de Ouro da Triagem</span>
+                            <span class="ns-accordion-tag">CPF no Receita Saúde + PIX prévio</span>
+                        </div>
+                    </div>
+                    <span class="ns-accordion-arrow">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                </button>
+                <div class="ns-accordion-content">
+                    <ul class="ns-clean-list">
+                        <li>
+                            <span class="ns-dot"></span>
+                            <div><strong>Validação prévia do CPF no Receita Saúde:</strong> Peça Nome Completo, Data de Nascimento e CPF no agendamento para emissão obrigatória do recibo no Receita Saúde. Ao digitar o CPF no sistema da Receita antes da sessão, ele mostra na hora se o documento existe e se o nome e a idade conferem.</div>
+                        </li>
+                        <li>
+                            <span class="ns-dot"></span>
+                            <div><strong>Pagamento antecipado da 1ª sessão:</strong> Condicione a reserva do horário ao comprovante do PIX. O comprovante bancário revela nome real, banco e dígitos do CPF do titular, eliminando o anonimato de chips pré-pagos.</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="ns-accordion-item">
+                <button type="button" class="ns-accordion-btn" onclick="this.parentElement.classList.toggle('is-open')">
+                    <div class="ns-accordion-left">
+                        <span class="ns-icon-circle red">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        </span>
+                        <div>
+                            <span class="ns-accordion-title">Alertas no 1º Contato</span>
+                            <span class="ns-accordion-tag">Sinais típicos no WhatsApp</span>
+                        </div>
+                    </div>
+                    <span class="ns-accordion-arrow">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                </button>
+                <div class="ns-accordion-content">
+                    <ul class="ns-clean-list">
+                        <li><span class="ns-dot red"></span><div><strong>Urgência para vídeo imediato:</strong> Insistência para fazer chamada de vídeo "agora mesmo" sem agendar ou fornecer dados.</div></li>
+                        <li><span class="ns-dot red"></span><div><strong>Recusa em informar CPF ou nome completo:</strong> Evasivas ou irritação quando você solicita dados básicos para prontuário e recibo.</div></li>
+                        <li><span class="ns-dot red"></span><div><strong>Perguntas invasivas ou elogios físicos:</strong> Comentários sobre sua foto, estado civil, se mora sozinha ou endereço.</div></li>
+                        <li><span class="ns-dot red"></span><div><strong>Descrições sexuais gráficas no WhatsApp:</strong> Uso de linguagem explícita antes mesmo da sessão sob pretexto de adiantar a queixa.</div></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="ns-accordion-item">
+                <button type="button" class="ns-accordion-btn" onclick="this.parentElement.classList.toggle('is-open')">
+                    <div class="ns-accordion-left">
+                        <span class="ns-icon-circle">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                        </span>
+                        <div>
+                            <span class="ns-accordion-title">Cuidados na 1ª Sessão</span>
+                            <span class="ns-accordion-tag">Regras de vídeo e consultório</span>
+                        </div>
+                    </div>
+                    <span class="ns-accordion-arrow">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                </button>
+                <div class="ns-accordion-content">
+                    <ul class="ns-clean-list">
+                        <li><span class="ns-dot"></span><div><strong>Câmera fechada ou apontada para o teto:</strong> Na 1ª sessão online, exija que o paciente abra a câmera e mostre o rosto em local iluminado antes de prosseguir.</div></li>
+                        <li><span class="ns-dot"></span><div><strong>Postura ou vestimenta inadequadas:</strong> Paciente deitado na cama no escuro ou sem camisa. Ao menor sinal de ato obsceno, feche a chamada em 1 segundo.</div></li>
+                        <li><span class="ns-dot"></span><div><strong>No consultório presencial:</strong> Evite agendar o 1º atendimento de desconhecidos quando o prédio estiver vazio e posicione sua poltrona mais próxima da porta de saída.</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================
+         PAINEL 3: SIGILO (CFP) & LEI (2 COLUNAS LADO A LADO NO DESKTOP)
+         ====================================================================== -->
+    <div id="safety-tab-sigilo-lei" class="ns-panel">
+        <div class="ns-bento-grid-2">
+            <div class="ns-accordion-item is-open">
+                <button type="button" class="ns-accordion-btn" onclick="this.parentElement.classList.toggle('is-open')">
+                    <div class="ns-accordion-left">
+                        <span class="ns-icon-circle green">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        </span>
+                        <div>
+                            <span class="ns-accordion-title">Posso denunciar sem violar o sigilo do CFP?</span>
+                            <span class="ns-accordion-tag">Arts. 9º e 10º do Código de Ética e Resolução CFP 08/2020</span>
+                        </div>
+                    </div>
+                    <span class="ns-accordion-arrow">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                </button>
+                <div class="ns-accordion-content">
+                    <ul class="ns-clean-list">
+                        <li><span class="ns-dot"></span><div><strong>Inexistência de vínculo terapêutico:</strong> O sigilo protege pacientes em tratamento legítimo. Quem aborda a profissional para praticar importunação sexual não está buscando serviço psicológico, mas praticando ato ilícito.</div></li>
+                        <li><span class="ns-dot"></span><div><strong>Art. 10º do Código de Ética (Res. CFP 010/2005):</strong> Autoriza a quebra de sigilo em situações de menor prejuízo e legítima defesa de direitos fundamentais, fornecendo à autoridade policial os dados estritamente necessários (número, data, hora e prints do crime).</div></li>
+                        <li><span class="ns-dot"></span><div><strong>Resolução CFP nº 08/2020 e Cartilhas CRP-PR / CRP-RS:</strong> Asseguram o direito da psicóloga de interromper imediatamente a sessão e acionar os órgãos de segurança pública.</div></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="ns-accordion-item is-open">
+                <button type="button" class="ns-accordion-btn" onclick="this.parentElement.classList.toggle('is-open')">
+                    <div class="ns-accordion-left">
+                        <span class="ns-icon-circle red">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        </span>
+                        <div>
+                            <span class="ns-accordion-title">Quais crimes citar no Boletim de Ocorrência</span>
+                            <span class="ns-accordion-tag">Enquadramento no Código Penal Brasileiro</span>
+                        </div>
+                    </div>
+                    <span class="ns-accordion-arrow">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </span>
+                </button>
+                <div class="ns-accordion-content">
+                    <ul class="ns-clean-list">
+                        <li><span class="ns-dot red"></span><div><strong>Art. 215-A • Importunação Sexual (Lei 13.718/2018):</strong> Praticar sem anuência ato libidinoso para satisfazer a própria lascívia (exibição íntima/masturbação em videochamada ou envio de mídia sexual não solicitada). <em>Pena: reclusão de 1 a 5 anos.</em></div></li>
+                        <li><span class="ns-dot red"></span><div><strong>Art. 147-A • Perseguição / Stalking (Lei 14.132/2021):</strong> Perseguir reiteradamente por qualquer meio (WhatsApp ou redes sociais), invadindo ou perturbando a liberdade e privacidade. <em>Pena: reclusão de 6 meses a 2 anos e multa.</em></div></li>
+                        <li><span class="ns-dot red"></span><div><strong>Art. 216-A (Assédio Sexual), Art. 140 (Injúria) e Art. 147 (Ameaça):</strong> Aplicáveis conforme o teor das mensagens ou intimidações recebidas.</div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================
+         PAINEL 4: CLÁUSULAS & SCRIPTS PRONTOS (GRID 2x2 NO DESKTOP)
+         ====================================================================== -->
+    <div id="safety-tab-clausulas" class="ns-panel">
+        <div class="ns-templates-grid">
+            <div class="ns-template-card">
+                <div class="ns-template-top">
+                    <div>
+                        <h3 class="ns-template-title">1. Cláusula de Segurança para Contrato Terapêutico</h3>
+                        <p class="ns-template-sub">Respalda o encerramento imediato da sessão sem reembolso em caso de assédio.</p>
+                    </div>
+                    <button type="button" class="ns-copy-pill" onclick="window.copySafetyText('safety-copy-clausula', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copiar</span>
+                    </button>
+                </div>
+                <div class="ns-template-box" id="safety-copy-clausula">CLÁUSULA DE POSTURA, SEGURANÇA E RESPEITO MÚTUO: Para a realização das sessões (presenciais ou online), o(a) paciente compromete-se a comparecer em ambiente adequado, com privacidade, iluminação suficiente, vestimenta compatível e câmera de vídeo aberta (na modalidade online). Qualquer conduta desrespeitosa, invasiva, exposição corporal indevida ou manifestação de cunho sexual direcionada à profissional acarretará a interrupção imediata da sessão e a rescisão unilateral do contrato, sem direito a reembolso dos valores pagos, ficando a profissional autorizada (Arts. 9º e 10º do Código de Ética do CFP) a utilizar os dados cadastrais para comunicação às autoridades policiais.</div>
+            </div>
+
+            <div class="ns-template-card">
+                <div class="ns-template-top">
+                    <div>
+                        <h3 class="ns-template-title">2. Script de Triagem no WhatsApp (CPF + Reserva)</h3>
+                        <p class="ns-template-sub">Solicita CPF para o Receita Saúde e PIX antecipado antes de enviar o link da sala.</p>
+                    </div>
+                    <button type="button" class="ns-copy-pill" onclick="window.copySafetyText('safety-copy-triagem', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copiar</span>
+                    </button>
+                </div>
+                <div class="ns-template-box" id="safety-copy-triagem">Perfeito! Para deixarmos o seu horário da primeira sessão reservado na agenda e preenchermos o seu cadastro clínico obrigatório (incluindo a emissão do recibo oficial pelo Receita Saúde), preciso apenas que você me envie por aqui:
+
+1. Seu nome completo e data de nascimento;
+2. Seu CPF;
+3. O comprovante do PIX referente à primeira sessão (Chave PIX: [SUA CHAVE] — Valor: R$ [VALOR]).
+
+Assim que confirmado, já te envio o link da nossa sala virtual!</div>
+            </div>
+
+            <div class="ns-template-card">
+                <div class="ns-template-top">
+                    <div>
+                        <h3 class="ns-template-title">3. Enquadramento de Câmera Fechada na 1ª Sessão</h3>
+                        <p class="ns-template-sub">Para exigir câmera aberta e ambiente iluminado no início da chamada.</p>
+                    </div>
+                    <button type="button" class="ns-copy-pill" onclick="window.copySafetyText('safety-copy-camera', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copiar</span>
+                    </button>
+                </div>
+                <div class="ns-template-box" id="safety-copy-camera">Olá, [Nome]. Para realizarmos a nossa primeira sessão online com ética e segurança técnica, é indispensável que a sua câmera permaneça aberta mostrando o seu rosto em ambiente iluminado, sentado(a) e com vestimenta adequada. Caso não seja possível ajustar neste momento, precisaremos encerrar a chamada de hoje.</div>
+            </div>
+
+            <div class="ns-template-card">
+                <div class="ns-template-top">
+                    <div>
+                        <h3 class="ns-template-title">4. Encerramento Formal (Antes do Print e Bloqueio)</h3>
+                        <p class="ns-template-sub">Demarca a falta de consentimento para fortalecer a prova do Boletim de Ocorrência.</p>
+                    </div>
+                    <button type="button" class="ns-copy-pill" onclick="window.copySafetyText('safety-copy-encerramento', this)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copiar</span>
+                    </button>
+                </div>
+                <div class="ns-template-box" id="safety-copy-encerramento">Este número é um canal estritamente profissional de Psicologia. Diante da conduta inadequada e sem consentimento, encerro imediatamente este contato. Informo que o número, data, horário e mensagens foram salvos para registro de Boletim de Ocorrência policial, nos termos do Código Penal e do Art. 10º do Código de Ética do CFP.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RODAPÉ EDITORIAL DE CRÉDITOS -->
+    <div class="ns-credits-footer">
+        <div class="ns-credits-text">
+            <strong>Agradecimento &amp; Fontes:</strong> Espaço gentilmente sugerido pela psicóloga <strong>Suzana Terumi</strong>. Diretrizes baseadas nas normativas do <strong>CFP (Código de Ética e Res. 08/2020)</strong>, <strong>CRP-PR</strong>, <strong>CRP-RS</strong>, <strong>Código Penal</strong> e na cartilha educativa <em>"PSIS (+) SEGURAS"</em>, elaborada pelo projeto <strong>PSI (+) REAL (@psimaisreal)</strong> das psicólogas <strong>Amanda Cei (CRP 16/3526)</strong> e <strong>Nicolly Amorim (CRP 15/6193)</strong>.
+        </div>
+        <a href="https://www.instagram.com/psimaisreal/" target="_blank" rel="noopener noreferrer" class="ns-credits-link">
+            Conhecer @psimaisreal ↗
+        </a>
+    </div>
+
+</div>
+
+<script>
+    window.switchSafetyTab = function(tabId, btnEl) {
+        document.querySelectorAll('.ns-seg-btn').forEach(function(t) {
+            t.classList.remove('active');
+        });
+        document.querySelectorAll('.ns-panel').forEach(function(c) {
+            c.classList.remove('active');
+        });
+
+        if (btnEl) {
+            btnEl.classList.add('active');
+        }
+        var target = document.getElementById('safety-tab-' + tabId);
+        if (target) {
+            target.classList.add('active');
+        }
+    };
+
+    window.copySafetyText = function(elementId, btnEl) {
+        var el = document.getElementById(elementId);
+        if (!el) return;
+        var text = el.innerText;
+
+        navigator.clipboard.writeText(text).then(function() {
+            var originalHtml = btnEl.innerHTML;
+            btnEl.innerHTML = '<span>✓ Copiado</span>';
+            btnEl.style.backgroundColor = '#16a34a';
+
+            if (typeof window.showToast === 'function') {
+                window.showToast('Texto copiado para a área de transferência', 'success');
+            }
+
+            setTimeout(function() {
+                btnEl.innerHTML = originalHtml;
+                btnEl.style.backgroundColor = '#0f172a';
+            }, 2000);
+        });
+    };
+
+    window.inicializarSegurancaClinica = function() {
+        var targetTab = sessionStorage.getItem('yelo_safety_initial_tab');
+        if (targetTab) {
+            sessionStorage.removeItem('yelo_safety_initial_tab');
+            var btn = document.querySelector('.ns-seg-btn[onclick*="' + targetTab + '"]');
+            if (btn) {
+                window.switchSafetyTab(targetTab, btn);
+            }
+        }
+    };
+
+    window.inicializarSegurancaClinica();
+</script>

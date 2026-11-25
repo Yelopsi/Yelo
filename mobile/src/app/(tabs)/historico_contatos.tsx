@@ -244,6 +244,47 @@ export default function HistoricoContatosScreen() {
           </Text>
         </View>
 
+        {/* ATALHO CONTEXTUAL: SEGURANÇA NA CLÍNICA */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.navigate('/(tabs)/seguranca-clinica')}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 16,
+            padding: 14,
+            marginBottom: 18,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            borderLeftWidth: 4,
+            borderLeftColor: '#1B4332',
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+        >
+          <View
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              backgroundColor: '#f0fdf4',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 12,
+            }}
+          >
+            <Text style={{ fontSize: 18 }}>🛡️</Text>
+          </View>
+          <View style={{ flex: 1, marginRight: 8 }}>
+            <Text style={{ fontWeight: '700', color: '#0f172a', fontSize: 13.5, marginBottom: 2 }}>
+              Segurança na Clínica & Proteção
+            </Text>
+            <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 16 }}>
+              Recebeu contato suspeito? Veja como filtrar por CPF e agir com respaldo do CFP.
+            </Text>
+          </View>
+          <Text style={{ color: '#166534', fontWeight: '700', fontSize: 13 }}>Ver →</Text>
+        </TouchableOpacity>
+
         {/* GRID DE KPIS (kpi-grid) */}
         <View style={styles.kpiGrid}>
           {/* Card 1: Cliques Totais */}
