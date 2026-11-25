@@ -265,6 +265,20 @@ export default function AdminCRMHubScreen() {
           borderColor="#d93025"
           onPress={() => handleNavigate('/(admin)/crm-modulo/distribuicao')}
         />
+
+        {/* 7. Implementações Futuras & Reavaliações */}
+        <CrmCard
+          title="Implementações & Reavaliações"
+          description="Avaliações agendadas, virada de janeiro e roadmap estratégico."
+          badge="Estratégia"
+          badgeBg="#fef3c7"
+          badgeColor="#92400e"
+          icon="check-square"
+          iconColor="#1B4332"
+          iconBg="#dcfce7"
+          borderColor="#1B4332"
+          onPress={() => handleNavigate('/(admin)/roadmap-reavaliacoes')}
+        />
       </View>
 
       {/* 4. SEÇÃO: QUALIDADE E EXPERIÊNCIA DO CLIENTE */}

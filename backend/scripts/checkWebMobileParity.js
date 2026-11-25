@@ -46,6 +46,11 @@ const PARITY_PAIRS = [
         name: 'Dossiê Psicólogo (Admin)',
         web: ['admin/admin_detalhes_psicologo.html', 'admin/admin_detalhes_psicologo.js'],
         mobile: ['mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx']
+    },
+    {
+        name: 'Implementações & Reavaliações (Admin)',
+        web: ['admin/admin_roadmap_reavaliacoes.html', 'admin/admin_roadmap_reavaliacoes.js'],
+        mobile: ['mobile/src/app/(admin)/roadmap-reavaliacoes.tsx']
     }
 ];
 

@@ -1,56 +1,75 @@
 <style>
     .rm-simple-shell {
-        max-width: 980px;
-        margin: 0 auto;
-        padding-bottom: 90px;
+        width: 100%;
+        max-width: 100%;
+        padding-bottom: 48px;
         font-family: var(--font-principal, 'Inter', sans-serif);
+        box-sizing: border-box;
     }
     .rm-header {
-        margin-bottom: 22px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
     }
     .rm-header h1 {
-        margin: 0 0 6px 0;
+        margin: 0 0 4px 0;
         color: #1B4332;
         font-family: var(--font-titulos, 'Fraunces', serif);
         font-size: 1.75rem;
+        line-height: 1.15;
     }
     .rm-header p {
         margin: 0;
         color: #64748b;
-        font-size: 0.94rem;
+        font-size: 0.92rem;
+    }
+
+    /* Desktop horizontal: 2 colunas equilibradas */
+    .rm-grid {
+        display: grid;
+        grid-template-columns: 1.35fr 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+    .rm-col-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 
     .rm-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 16px;
-        padding: 20px 24px;
-        margin-bottom: 18px;
+        padding: 20px 22px;
         box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+        box-sizing: border-box;
     }
     .rm-card-title {
-        margin: 0 0 4px 0;
-        font-size: 1.08rem;
+        margin: 0 0 3px 0;
+        font-size: 1.05rem;
         font-weight: 700;
         color: #0f172a;
     }
     .rm-card-sub {
-        margin: 0 0 16px 0;
-        font-size: 0.85rem;
+        margin: 0 0 14px 0;
+        font-size: 0.83rem;
         color: #64748b;
     }
 
     .rm-rows {
         display: flex;
         flex-direction: column;
-        divide-y: 1px solid #f1f5f9;
     }
     .rm-row {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
-        gap: 16px;
-        padding: 13px 0;
+        gap: 14px;
+        padding: 12px 0;
         border-top: 1px solid #f1f5f9;
     }
     .rm-row:first-child {
@@ -63,21 +82,22 @@
     .rm-row-main {
         display: flex;
         align-items: flex-start;
-        gap: 14px;
+        gap: 12px;
         flex: 1;
         min-width: 0;
     }
     .rm-pill {
         flex-shrink: 0;
-        min-width: 82px;
+        min-width: 78px;
         text-align: center;
-        font-size: 0.75rem;
+        font-size: 0.74rem;
         font-weight: 700;
         padding: 5px 10px;
         border-radius: 999px;
         background: #f1f5f9;
         color: #334155;
         margin-top: 1px;
+        white-space: nowrap;
     }
     .rm-pill-green { background: #dcfce7; color: #166534; }
     .rm-pill-blue { background: #dbeafe; color: #1e40af; }
@@ -85,26 +105,28 @@
 
     .rm-row-title {
         font-weight: 700;
-        font-size: 0.94rem;
+        font-size: 0.92rem;
         color: #0f172a;
-        margin-bottom: 3px;
+        margin-bottom: 2px;
+        line-height: 1.3;
     }
     .rm-row-desc {
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         color: #475569;
-        line-height: 1.45;
+        line-height: 1.42;
         margin: 0;
     }
     .rm-countdown {
         display: inline-block;
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         font-weight: 700;
         color: #1B4332;
         margin-left: 6px;
+        white-space: nowrap;
     }
     .rm-link {
         flex-shrink: 0;
-        font-size: 0.82rem;
+        font-size: 0.8rem;
         font-weight: 700;
         color: #1B4332;
         text-decoration: none;
@@ -113,7 +135,6 @@
         background: #f0fdf4;
         border: 1px solid #bbf7d0;
         white-space: nowrap;
-        align-self: center;
     }
     .rm-link:hover {
         background: #dcfce7;
@@ -125,7 +146,7 @@
         border-radius: 50%;
         background: #1B4332;
         color: #ffffff;
-        font-size: 0.76rem;
+        font-size: 0.75rem;
         font-weight: 800;
         display: flex;
         align-items: center;
@@ -134,165 +155,226 @@
         margin-top: 1px;
     }
 
-    @media (max-width: 700px) {
-        .rm-card { padding: 16px 18px; }
-        .rm-row { flex-direction: column; gap: 10px; }
-        .rm-link { align-self: flex-start; }
+    /* Tablet */
+    @media (max-width: 1120px) {
+        .rm-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+        .rm-simple-shell {
+            padding-bottom: 115px;
+        }
+        .rm-header {
+            margin-bottom: 14px;
+        }
+        .rm-header h1 {
+            font-size: 1.42rem;
+        }
+        .rm-header p {
+            font-size: 0.85rem;
+        }
+        .rm-grid,
+        .rm-col-stack {
+            gap: 14px;
+        }
+        .rm-card {
+            padding: 16px;
+            border-radius: 14px;
+        }
+        .rm-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            padding: 12px 0;
+        }
+        .rm-row-main {
+            flex-direction: column;
+            gap: 6px;
+        }
+        .rm-pill {
+            align-self: flex-start;
+            min-width: 0;
+            padding: 4px 10px;
+        }
+        .rm-row-title {
+            font-size: 0.93rem;
+        }
+        .rm-row-desc {
+            font-size: 0.83rem;
+        }
+        .rm-countdown {
+            margin-left: 0;
+            display: block;
+            margin-top: 2px;
+        }
+        .rm-link {
+            align-self: flex-start;
+            padding: 7px 14px;
+            font-size: 0.82rem;
+        }
     }
 </style>
 
 <div class="modern-dashboard-layout rm-simple-shell">
     <div class="rm-header">
-        <h1>Implementações Futuras &amp; Reavaliações</h1>
-        <p>Visão simples de consulta: avaliações já agendadas, passos do lançamento de janeiro e melhorias futuras.</p>
+        <div>
+            <h1>Implementações Futuras &amp; Reavaliações</h1>
+            <p>Visão rápida de consulta: avaliações agendadas, virada de janeiro e melhorias mapeadas.</p>
+        </div>
     </div>
 
-    <!-- 1. AVALIAÇÕES AGENDADAS & REAVALIAÇÃO -->
-    <section class="rm-card">
-        <h2 class="rm-card-title">1. Avaliações Agendadas</h2>
-        <p class="rm-card-sub">Datas previstas hoje na operação e marcos para reavaliar a estratégia pós-lançamento.</p>
+    <div class="rm-grid">
+        <!-- COLUNA ESQUERDA: AVALIAÇÕES AGENDADAS -->
+        <section class="rm-card">
+            <h2 class="rm-card-title">1. Avaliações Agendadas</h2>
+            <p class="rm-card-sub">Revisões já previstas na operação e marcos pós-lançamento.</p>
 
-        <div class="rm-rows">
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-pill rm-pill-green">30/11</span>
-                    <div>
-                        <div class="rm-row-title">
-                            Revisão SEO &amp; GSC
-                            <span class="rm-countdown" id="rm-cd-seo"></span>
+            <div class="rm-rows">
+                <div class="rm-row">
+                    <div class="rm-row-main">
+                        <span class="rm-pill rm-pill-green">30/11</span>
+                        <div>
+                            <div class="rm-row-title">
+                                Revisão SEO &amp; GSC
+                                <span class="rm-countdown" id="rm-cd-seo"></span>
+                            </div>
+                            <p class="rm-row-desc">Conferir indexação de Perguntas/Blog no Search Console e ajustar títulos de menor CTR.</p>
                         </div>
-                        <p class="rm-row-desc">Conferir indexação de Perguntas/Blog no Search Console e ajustar títulos de menor CTR.</p>
                     </div>
+                    <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_cmo_metrics.html'); return false;">Ver no CMO &rarr;</a>
                 </div>
-                <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_cmo_metrics.html'); return false;">Ver no CMO &rarr;</a>
-            </div>
 
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-pill rm-pill-blue">08/12</span>
-                    <div>
-                        <div class="rm-row-title">
-                            Tráfego Pago &amp; Motor V6.1
-                            <span class="rm-countdown" id="rm-cd-traffic"></span>
+                <div class="rm-row">
+                    <div class="rm-row-main">
+                        <span class="rm-pill rm-pill-blue">08/12</span>
+                        <div>
+                            <div class="rm-row-title">
+                                Tráfego Pago &amp; Motor V6.1
+                                <span class="rm-countdown" id="rm-cd-traffic"></span>
+                            </div>
+                            <p class="rm-row-desc">Avaliar teto CPC R$ 5,00 (Google Ads R$ 90/dia), WhatsApp em /resultados, Meta Ads e Motor V6.1.</p>
                         </div>
-                        <p class="rm-row-desc">Avaliar teto de CPC R$ 5,00 no Google Ads (R$ 90/dia), botão WhatsApp em /resultados, Meta Ads e Motor V6.1.</p>
                     </div>
+                    <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_cmo_metrics.html'); return false;">Ver no CMO &rarr;</a>
                 </div>
-                <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_cmo_metrics.html'); return false;">Ver no CMO &rarr;</a>
-            </div>
 
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-pill rm-pill-amber">Jan (D+8)</span>
-                    <div>
-                        <div class="rm-row-title">Auditoria do 1º lote de cobrança pós-trial (7 dias)</div>
-                        <p class="rm-row-desc">Conferir se os primeiros trials Trimestrais/Semestrais cobraram corretamente no 8º dia via tokenização Asaas.</p>
+                <div class="rm-row">
+                    <div class="rm-row-main">
+                        <span class="rm-pill rm-pill-amber">Jan (D+8)</span>
+                        <div>
+                            <div class="rm-row-title">Auditoria do 1º lote de cobrança pós-trial (7d)</div>
+                            <p class="rm-row-desc">Conferir cobranças automáticas dos primeiros Trimestrais/Semestrais no 8º dia via tokenização Asaas.</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-pill rm-pill-amber">Fev (D+30)</span>
-                    <div>
-                        <div class="rm-row-title">Reavaliação da Estratégia (Comunidade + 7d c/ Cartão)</div>
-                        <p class="rm-row-desc">Comparar conversão Trial &rarr; Pagante e decidir se mantém cartão nos 7 dias ou testa opt-in sem cartão por CPF.</p>
+                <div class="rm-row">
+                    <div class="rm-row-main">
+                        <span class="rm-pill rm-pill-amber">Fev (D+30)</span>
+                        <div>
+                            <div class="rm-row-title">Reavaliação da Estratégia (Comunidade + 7d c/ Cartão)</div>
+                            <p class="rm-row-desc">Comparar conversão Trial &rarr; Pagante e decidir se mantém cartão nos 7 dias ou testa opt-in sem cartão por CPF.</p>
+                        </div>
                     </div>
+                    <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_crm_health.html'); return false;">Ver Saúde &rarr;</a>
                 </div>
-                <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_crm_health.html'); return false;">Ver Saúde &rarr;</a>
-            </div>
 
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-pill">Marcos</span>
-                    <div>
-                        <div class="rm-row-title">Metas de Base Pagante (20 / 70 / 120)</div>
-                        <p class="rm-row-desc" id="rm-marcos-line">Carregando progresso atual dos marcos...</p>
+                <div class="rm-row">
+                    <div class="rm-row-main">
+                        <span class="rm-pill">Marcos</span>
+                        <div>
+                            <div class="rm-row-title">Metas de Base Pagante (20 / 70 / 120)</div>
+                            <p class="rm-row-desc" id="rm-marcos-line">Carregando progresso atual dos marcos...</p>
+                        </div>
+                    </div>
+                    <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_crm_health.html'); return false;">Ver Marcos &rarr;</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLUNA DIREITA: CHECKLIST LANÇAMENTO + FUTURO -->
+        <div class="rm-col-stack">
+            <section class="rm-card">
+                <h2 class="rm-card-title">2. Quando lançar em Janeiro</h2>
+                <p class="rm-card-sub">Virada da branch <code>feature/freemium-plan</code> &rarr; <code>main</code>.</p>
+
+                <div class="rm-rows">
+                    <div class="rm-row">
+                        <div class="rm-row-main">
+                            <span class="rm-num">1</span>
+                            <div>
+                                <div class="rm-row-title">Confirmar tokenização no Asaas Produção</div>
+                                <p class="rm-row-desc">Validar <code>/v3/creditCard/tokenizeCreditCard</code> habilitado na conta live.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rm-row">
+                        <div class="rm-row-main">
+                            <span class="rm-num">2</span>
+                            <div>
+                                <div class="rm-row-title">Definir <code>NEW_PRICING_LAUNCH_DATE</code> no Render</div>
+                                <p class="rm-row-desc">Preserva preço antigo e exibe aviso somente para assinantes anteriores à data.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rm-row">
+                        <div class="rm-row-main">
+                            <span class="rm-num">3</span>
+                            <div>
+                                <div class="rm-row-title">Subir <code>feature/freemium-plan</code> &rarr; <code>main</code></div>
+                                <p class="rm-row-desc">Testar Mensal (D+7), Trimestral (3x R$ 129), Semestral (6x R$ 99), legado e bloqueio do Comunidade no Match.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_crm_health.html'); return false;">Ver Marcos &rarr;</a>
-            </div>
+            </section>
+
+            <section class="rm-card">
+                <h2 class="rm-card-title">3. Implementações Futuras</h2>
+                <p class="rm-card-sub">Melhorias mapeadas para solicitar depois.</p>
+
+                <div class="rm-rows">
+                    <div class="rm-row">
+                        <div class="rm-row-main">
+                            <span class="rm-pill">Conversão</span>
+                            <div>
+                                <div class="rm-row-title">Reduzir <code>no_contact</code> no WhatsApp</div>
+                                <p class="rm-row-desc">Disparo síncrono de <code>wa.me</code> em <code>psi_perfil_publico.js</code> + mensagem inicial direta.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rm-row">
+                        <div class="rm-row-main">
+                            <span class="rm-pill">Google Ads</span>
+                            <div>
+                                <div class="rm-row-title">Grupos de cauda longa por abordagem</div>
+                                <p class="rm-row-desc">Desconcentrar verba das 3 head terms caras e negativar termos sem conversão.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rm-row">
+                        <div class="rm-row-main">
+                            <span class="rm-pill">Produto</span>
+                            <div>
+                                <div class="rm-row-title">Lançamento do Plano Referência</div>
+                                <p class="rm-row-desc">Supervisão/intervisão, workshops e encaminhamento após consolidar o Essencial.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rm-row">
+                        <div class="rm-row-main">
+                            <span class="rm-pill">CRM</span>
+                            <div>
+                                <div class="rm-row-title">Reativação da base histórica sem assinatura</div>
+                                <p class="rm-row-desc">Convidar cadastros antigos com CPF para o Comunidade grátis e teste 7d do Essencial.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
-    </section>
-
-    <!-- 2. O QUE FAZER AO LANÇAR EM JANEIRO -->
-    <section class="rm-card">
-        <h2 class="rm-card-title">2. Quando lançar a versão de Janeiro</h2>
-        <p class="rm-card-sub">Passos rápidos na virada da branch <code>feature/freemium-plan</code> para produção.</p>
-
-        <div class="rm-rows">
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-num">1</span>
-                    <div>
-                        <div class="rm-row-title">Confirmar tokenização no Asaas Produção</div>
-                        <p class="rm-row-desc">Validar com o Asaas que o endpoint <code>/v3/creditCard/tokenizeCreditCard</code> está liberado na conta live.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-num">2</span>
-                    <div>
-                        <div class="rm-row-title">Definir <code>NEW_PRICING_LAUNCH_DATE</code> no Render</div>
-                        <p class="rm-row-desc">Garante que apenas assinantes anteriores à data recebam o aviso e preservem o valor contratado no painel.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-num">3</span>
-                    <div>
-                        <div class="rm-row-title">Subir <code>feature/freemium-plan</code> &rarr; <code>main</code> e validar fluxos</div>
-                        <p class="rm-row-desc">Testar Mensal (D+7), Trimestral (3x R$ 129), Semestral (6x R$ 99), assinante legado e ocultação do Plano Comunidade no Match.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 3. IMPLEMENTAÇÕES FUTURAS -->
-    <section class="rm-card">
-        <h2 class="rm-card-title">3. Implementações Futuras</h2>
-        <p class="rm-card-sub">Lista de melhorias mapeadas para pedir quando for o momento.</p>
-
-        <div class="rm-rows">
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-pill">Conversão</span>
-                    <div>
-                        <div class="rm-row-title">Ajuste no clique do WhatsApp para reduzir <code>no_contact</code></div>
-                        <p class="rm-row-desc">Disparo síncrono de <code>wa.me</code> (sem <code>await fetch</code> / <code>setTimeout</code> em <code>psi_perfil_publico.js</code>) + mensagem inicial direta.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-pill">Google Ads</span>
-                    <div>
-                        <div class="rm-row-title">Grupos de cauda longa por abordagem</div>
-                        <p class="rm-row-desc">Reduzir dependência das 3 head terms caras e negativar termos sem conversão para baixar o CPL.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-pill">Produto</span>
-                    <div>
-                        <div class="rm-row-title">Lançamento do Plano Referência</div>
-                        <p class="rm-row-desc">Supervisão/intervisão, workshops e rede de encaminhamento após consolidação do Plano Essencial.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="rm-row">
-                <div class="rm-row-main">
-                    <span class="rm-pill">CRM</span>
-                    <div>
-                        <div class="rm-row-title">Reativação da base histórica sem assinatura</div>
-                        <p class="rm-row-desc">Convidar cadastros antigos completos a entrar no Plano Comunidade gratuito e experimentar o novo Essencial.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    </div>
 </div>

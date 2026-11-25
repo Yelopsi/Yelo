@@ -716,6 +716,24 @@ export default function AdminVisaoGeralScreen() {
             );
           })()}
 
+          {/* Implementações Futuras & Reavaliações */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push('/(admin)/roadmap-reavaliacoes')}
+            className="flex-row items-center bg-[#fffbeb] border border-[#fde68a] rounded-[16px] p-3.5 mb-3"
+          >
+            <Text className="text-[22px] mr-3">📋</Text>
+            <View className="flex-1">
+              <Text className="font-sans text-[#1e293b] text-[13px]">
+                <Text className="font-bold text-[#92400e]">Checklist &amp; Reavaliações:</Text> Lançamento de janeiro, avaliações agendadas e roadmap.
+              </Text>
+              <Text className="font-sans font-bold text-[#b45309] text-[11px] mt-0.5">
+                Abrir painel estratégico →
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={16} color="#b45309" />
+          </TouchableOpacity>
+
           {/* Candidatos na Lista de Espera */}
           <TouchableOpacity 
             activeOpacity={0.8}

@@ -292,6 +292,48 @@ export default function AdminAjustesHubScreen() {
           <Feather name="chevron-right" size={18} color="#94a3b8" />
         </TouchableOpacity>
 
+        {/* 4.5 Implementações Futuras & Reavaliações */}
+        <TouchableOpacity
+          onPress={() => router.push('/(admin)/roadmap-reavaliacoes')}
+          style={{
+            backgroundColor: '#f0fdf4',
+            borderRadius: 20,
+            padding: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#bbf7d0',
+            shadowColor: '#000',
+            shadowOpacity: 0.02,
+            shadowRadius: 4,
+            elevation: 1,
+          }}
+          activeOpacity={0.8}
+        >
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              backgroundColor: '#dcfce7',
+              borderRadius: 999,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 14,
+            }}
+          >
+            <Feather name="compass" size={20} color="#1B4332" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 15, marginBottom: 2 }}>
+              Implementações &amp; Reavaliações
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', color: '#475569', fontSize: 12, lineHeight: 16 }}>
+              Avaliações agendadas, virada de janeiro e roadmap estratégico.
+            </Text>
+          </View>
+          <Feather name="chevron-right" size={18} color="#94a3b8" />
+        </TouchableOpacity>
+
         {/* 5. Saúde & Infra: Monitoramento e Logs */}
         <TouchableOpacity
           onPress={() => router.push('/(admin)/logs-sistema')}
