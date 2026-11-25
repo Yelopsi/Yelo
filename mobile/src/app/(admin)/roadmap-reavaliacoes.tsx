@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import api from '../../services/api';
@@ -27,17 +28,13 @@ function formatCountdown(isoStr: string) {
 export default function AdminRoadmapReavaliacoesScreen() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
-  const [marcosText, setMarcosText] = useState('Acompanhe os marcos em Saúde & Crescimento.');
+  const [marcos, setMarcos] = useState<any>(null);
 
   const fetchMarcos = async () => {
     try {
       const res = await api.get('/api/admin/analytics/growth/health');
       const m = res?.data?.dashboard?.marcos;
-      if (m) {
-        setMarcosText(
-          `Operacional: ${m.m20.atual}/20 (${m.m20.percentual}%) · Saída MEI: ${m.m70.atual}/70 (${m.m70.percentual}%) · Pró-labore: ${m.m120.atual}/120 (${m.m120.percentual}%)`
-        );
-      }
+      if (m) setMarcos(m);
     } catch (_) {
       // Fallback silencioso
     } finally {
@@ -64,38 +61,77 @@ export default function AdminRoadmapReavaliacoesScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B4332" />}
       showsVerticalScrollIndicator={false}
     >
-      {/* Cabeçalho simples */}
-      <View className="mb-4">
-        <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 22, marginBottom: 4 }}>
+      {/* HEADER VERDE PADRÃO YELO */}
+      <LinearGradient
+        colors={['#1B4332', '#0f2b20']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          borderRadius: 22,
+          padding: 20,
+          marginBottom: 18,
+          shadowColor: '#1B4332',
+          shadowOpacity: 0.14,
+          shadowRadius: 18,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 4,
+        }}
+      >
+        <Text className="font-title text-white text-[22px] font-bold mb-1">
           Implementações &amp; Reavaliações
         </Text>
-        <Text className="font-sans text-[#64748b] text-[13px] leading-5">
-          Painel rápido de consulta: avaliações agendadas, virada de janeiro e melhorias futuras.
+        <Text className="font-sans text-white/80 text-[13px] leading-5 mb-3.5">
+          Consulta rápida: avaliações agendadas, virada de janeiro e melhorias futuras.
         </Text>
-      </View>
+
+        <View className="flex-row gap-2 flex-wrap">
+          <View className="bg-white/15 border border-white/25 rounded-xl px-3 py-1.5">
+            <Text className="font-sans text-white/70 text-[9.5px] uppercase font-bold">SEO &amp; GSC</Text>
+            <Text className="font-sans text-[#FFEE8C] text-[12px] font-bold">30/11 · {seoCountdown}</Text>
+          </View>
+          <View className="bg-white/15 border border-white/25 rounded-xl px-3 py-1.5">
+            <Text className="font-sans text-white/70 text-[9.5px] uppercase font-bold">Tráfego &amp; V6.1</Text>
+            <Text className="font-sans text-[#FFEE8C] text-[12px] font-bold">08/12 · {trafficCountdown}</Text>
+          </View>
+          <View className="bg-white/15 border border-white/25 rounded-xl px-3 py-1.5">
+            <Text className="font-sans text-white/70 text-[9.5px] uppercase font-bold">Novos Planos</Text>
+            <Text className="font-sans text-[#FFEE8C] text-[12px] font-bold">Janeiro</Text>
+          </View>
+        </View>
+      </LinearGradient>
 
       {/* 1. AVALIAÇÕES AGENDADAS */}
-      <View className="bg-white border border-[#e2e8f0] rounded-[20px] p-4 mb-4">
-        <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#0f172a', fontSize: 16, marginBottom: 2 }}>
-          1. Avaliações Agendadas
-        </Text>
-        <Text className="font-sans text-[#64748b] text-[12px] mb-3">
-          Datas previstas na operação e marcos pós-lançamento.
-        </Text>
+      <View
+        className="bg-white border border-[#e2e8f0] rounded-[20px] p-4 mb-4"
+        style={{ borderTopWidth: 4, borderTopColor: '#1B4332' }}
+      >
+        <View className="flex-row items-center gap-3 mb-3.5">
+          <View className="w-9 h-9 rounded-xl bg-[#dcfce7] items-center justify-center">
+            <Feather name="calendar" size={18} color="#1B4332" />
+          </View>
+          <View className="flex-1">
+            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#0f172a', fontSize: 16 }}>
+              1. Avaliações Agendadas
+            </Text>
+            <Text className="font-sans text-[#64748b] text-[12px]">
+              Revisões já previstas na operação e marcos pós-lançamento.
+            </Text>
+          </View>
+        </View>
 
         {/* 30/11 SEO */}
         <TouchableOpacity
-          activeOpacity={0.8}
+          activeOpacity={0.85}
           onPress={() => router.push('/(admin)/crm-modulo/cmo-metrics')}
-          className="py-3 border-t border-[#f1f5f9]"
+          className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-3.5 mb-2.5"
         >
           <View className="flex-row items-center justify-between mb-1.5">
             <View className="bg-[#dcfce7] px-2.5 py-1 rounded-full">
               <Text className="font-sans font-bold text-[#166534] text-[11px]">30/11 · {seoCountdown}</Text>
             </View>
-            <View className="flex-row items-center gap-1">
-              <Text className="font-sans font-bold text-[#1B4332] text-[11.5px]">Ver no CMO</Text>
-              <Feather name="arrow-right" size={12} color="#1B4332" />
+            <View className="flex-row items-center gap-1 bg-white border border-[#bbf7d0] px-2.5 py-1 rounded-full">
+              <Text className="font-sans font-bold text-[#1B4332] text-[11px]">Ver no CMO</Text>
+              <Feather name="arrow-right" size={11} color="#1B4332" />
             </View>
           </View>
           <Text className="font-sans font-bold text-[#0f172a] text-[14px] mb-0.5">
@@ -108,17 +144,17 @@ export default function AdminRoadmapReavaliacoesScreen() {
 
         {/* 08/12 Tráfego & Motor V6.1 */}
         <TouchableOpacity
-          activeOpacity={0.8}
+          activeOpacity={0.85}
           onPress={() => router.push('/(admin)/crm-modulo/cmo-metrics')}
-          className="py-3 border-t border-[#f1f5f9]"
+          className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-3.5 mb-2.5"
         >
           <View className="flex-row items-center justify-between mb-1.5">
             <View className="bg-[#dbeafe] px-2.5 py-1 rounded-full">
               <Text className="font-sans font-bold text-[#1e40af] text-[11px]">08/12 · {trafficCountdown}</Text>
             </View>
-            <View className="flex-row items-center gap-1">
-              <Text className="font-sans font-bold text-[#1B4332] text-[11.5px]">Ver no CMO</Text>
-              <Feather name="arrow-right" size={12} color="#1B4332" />
+            <View className="flex-row items-center gap-1 bg-white border border-[#bbf7d0] px-2.5 py-1 rounded-full">
+              <Text className="font-sans font-bold text-[#1B4332] text-[11px]">Ver no CMO</Text>
+              <Feather name="arrow-right" size={11} color="#1B4332" />
             </View>
           </View>
           <Text className="font-sans font-bold text-[#0f172a] text-[14px] mb-0.5">
@@ -130,7 +166,7 @@ export default function AdminRoadmapReavaliacoesScreen() {
         </TouchableOpacity>
 
         {/* Jan D+8 */}
-        <View className="py-3 border-t border-[#f1f5f9]">
+        <View className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-3.5 mb-2.5">
           <View className="self-start bg-[#fef3c7] px-2.5 py-1 rounded-full mb-1.5">
             <Text className="font-sans font-bold text-[#92400e] text-[11px]">Jan (D+8)</Text>
           </View>
@@ -144,17 +180,17 @@ export default function AdminRoadmapReavaliacoesScreen() {
 
         {/* Fev D+30 */}
         <TouchableOpacity
-          activeOpacity={0.8}
+          activeOpacity={0.85}
           onPress={() => router.push('/(admin)/crm-modulo/analytics-crescimento')}
-          className="py-3 border-t border-[#f1f5f9]"
+          className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-3.5 mb-2.5"
         >
           <View className="flex-row items-center justify-between mb-1.5">
             <View className="bg-[#fef3c7] px-2.5 py-1 rounded-full">
               <Text className="font-sans font-bold text-[#92400e] text-[11px]">Fev (D+30)</Text>
             </View>
-            <View className="flex-row items-center gap-1">
-              <Text className="font-sans font-bold text-[#1B4332] text-[11.5px]">Ver Saúde</Text>
-              <Feather name="arrow-right" size={12} color="#1B4332" />
+            <View className="flex-row items-center gap-1 bg-white border border-[#bbf7d0] px-2.5 py-1 rounded-full">
+              <Text className="font-sans font-bold text-[#1B4332] text-[11px]">Ver Saúde</Text>
+              <Feather name="arrow-right" size={11} color="#1B4332" />
             </View>
           </View>
           <Text className="font-sans font-bold text-[#0f172a] text-[14px] mb-0.5">
@@ -167,36 +203,62 @@ export default function AdminRoadmapReavaliacoesScreen() {
 
         {/* Marcos */}
         <TouchableOpacity
-          activeOpacity={0.8}
+          activeOpacity={0.85}
           onPress={() => router.push('/(admin)/crm-modulo/analytics-crescimento')}
-          className="pt-3 border-t border-[#f1f5f9]"
+          className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-3.5"
         >
-          <View className="flex-row items-center justify-between mb-1.5">
-            <View className="bg-[#f1f5f9] px-2.5 py-1 rounded-full">
-              <Text className="font-sans font-bold text-[#334155] text-[11px]">Marcos</Text>
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="bg-[#e2e8f0] px-2.5 py-1 rounded-full">
+              <Text className="font-sans font-bold text-[#334155] text-[11px]">Marcos 20 / 70 / 120</Text>
             </View>
-            <View className="flex-row items-center gap-1">
-              <Text className="font-sans font-bold text-[#1B4332] text-[11.5px]">Ver Marcos</Text>
-              <Feather name="arrow-right" size={12} color="#1B4332" />
+            <View className="flex-row items-center gap-1 bg-white border border-[#bbf7d0] px-2.5 py-1 rounded-full">
+              <Text className="font-sans font-bold text-[#1B4332] text-[11px]">Ver Marcos</Text>
+              <Feather name="arrow-right" size={11} color="#1B4332" />
             </View>
           </View>
-          <Text className="font-sans font-bold text-[#0f172a] text-[14px] mb-0.5">
-            Metas de Base Pagante (20 / 70 / 120)
-          </Text>
-          <Text className="font-sans text-[#475569] text-[12.5px] leading-[18px]">
-            {marcosText}
-          </Text>
+
+          {[
+            { label: 'Operacional', item: marcos?.m20, target: 20, color: '#6366f1' },
+            { label: 'Saída MEI', item: marcos?.m70, target: 70, color: '#8b5cf6' },
+            { label: 'Pró-labore', item: marcos?.m120, target: 120, color: '#ec4899' },
+          ].map((mRow, i) => {
+            const atual = mRow.item?.atual ?? '--';
+            const pct = mRow.item?.percentual ?? 0;
+            return (
+              <View key={mRow.label} className={`bg-white border border-[#e2e8f0] rounded-xl p-2.5 ${i > 0 ? 'mt-2' : ''}`}>
+                <View className="flex-row justify-between mb-1">
+                  <Text className="font-sans font-bold text-[#334155] text-[11.5px]">{mRow.label}</Text>
+                  <Text className="font-sans font-bold text-[#0f172a] text-[11.5px]">
+                    {atual}/{mRow.target} ({pct}%)
+                  </Text>
+                </View>
+                <View className="h-1.5 bg-[#e2e8f0] rounded-full overflow-hidden">
+                  <View style={{ width: `${Math.min(100, pct)}%`, height: '100%', backgroundColor: mRow.color }} />
+                </View>
+              </View>
+            );
+          })}
         </TouchableOpacity>
       </View>
 
       {/* 2. QUANDO LANÇAR EM JANEIRO */}
-      <View className="bg-white border border-[#e2e8f0] rounded-[20px] p-4 mb-4">
-        <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#0f172a', fontSize: 16, marginBottom: 2 }}>
-          2. Quando lançar em Janeiro
-        </Text>
-        <Text className="font-sans text-[#64748b] text-[12px] mb-3">
-          Virada da branch feature/freemium-plan → main.
-        </Text>
+      <View
+        className="bg-white border border-[#e2e8f0] rounded-[20px] p-4 mb-4"
+        style={{ borderTopWidth: 4, borderTopColor: '#f59e0b' }}
+      >
+        <View className="flex-row items-center gap-3 mb-3.5">
+          <View className="w-9 h-9 rounded-xl bg-[#fef3c7] items-center justify-center">
+            <Feather name="zap" size={18} color="#b45309" />
+          </View>
+          <View className="flex-1">
+            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#0f172a', fontSize: 16 }}>
+              2. Quando lançar em Janeiro
+            </Text>
+            <Text className="font-sans text-[#64748b] text-[12px]">
+              Virada da branch feature/freemium-plan → main.
+            </Text>
+          </View>
+        </View>
 
         {[
           {
@@ -217,10 +279,10 @@ export default function AdminRoadmapReavaliacoesScreen() {
         ].map((step, idx) => (
           <View
             key={step.n}
-            className={`flex-row items-start gap-3 py-2.5 ${idx > 0 ? 'border-t border-[#f1f5f9]' : ''}`}
+            className={`flex-row items-start gap-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-3.5 ${idx > 0 ? 'mt-2.5' : ''}`}
           >
             <View className="w-6 h-6 rounded-full bg-[#1B4332] items-center justify-center mt-0.5">
-              <Text className="font-sans font-bold text-white text-[11px]">{step.n}</Text>
+              <Text className="font-sans font-bold text-[#FFEE8C] text-[11px]">{step.n}</Text>
             </View>
             <View className="flex-1">
               <Text className="font-sans font-bold text-[#0f172a] text-[13.5px] mb-0.5">{step.title}</Text>
@@ -231,13 +293,23 @@ export default function AdminRoadmapReavaliacoesScreen() {
       </View>
 
       {/* 3. IMPLEMENTAÇÕES FUTURAS */}
-      <View className="bg-white border border-[#e2e8f0] rounded-[20px] p-4">
-        <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#0f172a', fontSize: 16, marginBottom: 2 }}>
-          3. Implementações Futuras
-        </Text>
-        <Text className="font-sans text-[#64748b] text-[12px] mb-3">
-          Melhorias mapeadas para solicitar depois.
-        </Text>
+      <View
+        className="bg-white border border-[#e2e8f0] rounded-[20px] p-4"
+        style={{ borderTopWidth: 4, borderTopColor: '#7c3aed' }}
+      >
+        <View className="flex-row items-center gap-3 mb-3.5">
+          <View className="w-9 h-9 rounded-xl bg-[#ede9fe] items-center justify-center">
+            <Feather name="compass" size={18} color="#6d28d9" />
+          </View>
+          <View className="flex-1">
+            <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#0f172a', fontSize: 16 }}>
+              3. Implementações Futuras
+            </Text>
+            <Text className="font-sans text-[#64748b] text-[12px]">
+              Melhorias mapeadas para solicitar depois.
+            </Text>
+          </View>
+        </View>
 
         {[
           {
@@ -263,10 +335,10 @@ export default function AdminRoadmapReavaliacoesScreen() {
         ].map((item, idx) => (
           <View
             key={item.title}
-            className={`py-2.5 ${idx > 0 ? 'border-t border-[#f1f5f9]' : ''}`}
+            className={`bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-3.5 ${idx > 0 ? 'mt-2.5' : ''}`}
           >
-            <View className="self-start bg-[#f1f5f9] px-2.5 py-0.5 rounded-full mb-1">
-              <Text className="font-sans font-bold text-[#334155] text-[10.5px]">{item.tag}</Text>
+            <View className="self-start bg-[#ede9fe] px-2.5 py-0.5 rounded-full mb-1">
+              <Text className="font-sans font-bold text-[#5b21b6] text-[10.5px]">{item.tag}</Text>
             </View>
             <Text className="font-sans font-bold text-[#0f172a] text-[13.5px] mb-0.5">{item.title}</Text>
             <Text className="font-sans text-[#475569] text-[12.5px] leading-[18px]">{item.desc}</Text>

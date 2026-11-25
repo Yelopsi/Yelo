@@ -6,31 +6,66 @@
         font-family: var(--font-principal, 'Inter', sans-serif);
         box-sizing: border-box;
     }
-    .rm-header {
+
+    /* Header Verde Floresta Padrão Yelo */
+    .rm-hero {
+        background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%);
+        border-radius: 18px;
+        padding: 24px 28px;
+        margin-bottom: 22px;
+        color: #ffffff;
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         justify-content: space-between;
-        gap: 16px;
+        gap: 20px;
         flex-wrap: wrap;
-        margin-bottom: 20px;
+        box-shadow: 0 10px 24px rgba(27, 67, 50, 0.14);
+        position: relative;
+        overflow: hidden;
     }
-    .rm-header h1 {
+    .rm-hero h1 {
         margin: 0 0 4px 0;
-        color: #1B4332;
+        color: #ffffff;
         font-family: var(--font-titulos, 'Fraunces', serif);
-        font-size: 1.75rem;
+        font-size: 1.85rem;
         line-height: 1.15;
     }
-    .rm-header p {
+    .rm-hero p {
         margin: 0;
-        color: #64748b;
+        color: rgba(255, 255, 255, 0.84);
+        font-size: 0.96rem;
+    }
+    .rm-hero-chips {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .rm-hero-chip {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 12px;
+        padding: 8px 14px;
+        min-width: 120px;
+    }
+    .rm-hero-chip span {
+        display: block;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: rgba(255, 255, 255, 0.72);
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+    .rm-hero-chip strong {
         font-size: 0.92rem;
+        color: #FFEE8C;
+        font-weight: 800;
     }
 
     /* Desktop horizontal: 2 colunas equilibradas */
     .rm-grid {
         display: grid;
-        grid-template-columns: 1.35fr 1fr;
+        grid-template-columns: 1.32fr 1fr;
         gap: 20px;
         align-items: start;
     }
@@ -43,41 +78,67 @@
     .rm-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 16px;
+        border-top: 4px solid #1B4332;
+        border-radius: 18px;
         padding: 20px 22px;
-        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
         box-sizing: border-box;
     }
+    .rm-card.is-amber { border-top-color: #f59e0b; }
+    .rm-card.is-purple { border-top-color: #7c3aed; }
+
+    .rm-card-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .rm-card-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .rm-icon-green { background: #dcfce7; color: #1B4332; }
+    .rm-icon-amber { background: #fef3c7; color: #b45309; }
+    .rm-icon-purple { background: #ede9fe; color: #6d28d9; }
+
     .rm-card-title {
-        margin: 0 0 3px 0;
-        font-size: 1.05rem;
-        font-weight: 700;
+        margin: 0 0 2px 0;
+        font-size: 1.08rem;
+        font-weight: 800;
         color: #0f172a;
+        font-family: var(--font-titulos, 'Fraunces', serif);
     }
     .rm-card-sub {
-        margin: 0 0 14px 0;
-        font-size: 0.83rem;
+        margin: 0;
+        font-size: 0.82rem;
         color: #64748b;
     }
 
     .rm-rows {
         display: flex;
         flex-direction: column;
+        gap: 10px;
     }
     .rm-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 14px;
-        padding: 12px 0;
-        border-top: 1px solid #f1f5f9;
+        padding: 13px 15px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        transition: all 0.15s ease;
     }
-    .rm-row:first-child {
-        border-top: none;
-        padding-top: 4px;
-    }
-    .rm-row:last-child {
-        padding-bottom: 2px;
+    .rm-row:hover {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
     }
     .rm-row-main {
         display: flex;
@@ -90,11 +151,11 @@
         flex-shrink: 0;
         min-width: 78px;
         text-align: center;
-        font-size: 0.74rem;
-        font-weight: 700;
+        font-size: 0.73rem;
+        font-weight: 800;
         padding: 5px 10px;
         border-radius: 999px;
-        background: #f1f5f9;
+        background: #e2e8f0;
         color: #334155;
         margin-top: 1px;
         white-space: nowrap;
@@ -102,27 +163,32 @@
     .rm-pill-green { background: #dcfce7; color: #166534; }
     .rm-pill-blue { background: #dbeafe; color: #1e40af; }
     .rm-pill-amber { background: #fef3c7; color: #92400e; }
+    .rm-pill-purple { background: #ede9fe; color: #5b21b6; }
 
     .rm-row-title {
         font-weight: 700;
-        font-size: 0.92rem;
+        font-size: 0.93rem;
         color: #0f172a;
-        margin-bottom: 2px;
+        margin-bottom: 3px;
         line-height: 1.3;
     }
     .rm-row-desc {
         font-size: 0.82rem;
         color: #475569;
-        line-height: 1.42;
+        line-height: 1.45;
         margin: 0;
     }
     .rm-countdown {
         display: inline-block;
-        font-size: 0.76rem;
-        font-weight: 700;
+        font-size: 0.74rem;
+        font-weight: 800;
         color: #1B4332;
+        background: #dcfce7;
+        padding: 2px 8px;
+        border-radius: 999px;
         margin-left: 6px;
         white-space: nowrap;
+        vertical-align: middle;
     }
     .rm-link {
         flex-shrink: 0;
@@ -130,29 +196,65 @@
         font-weight: 700;
         color: #1B4332;
         text-decoration: none;
-        padding: 6px 12px;
+        padding: 7px 13px;
         border-radius: 999px;
-        background: #f0fdf4;
+        background: #ffffff;
         border: 1px solid #bbf7d0;
         white-space: nowrap;
+        box-shadow: 0 1px 3px rgba(27, 67, 50, 0.06);
     }
     .rm-link:hover {
-        background: #dcfce7;
+        background: #1B4332;
+        color: #ffffff;
+        border-color: #1B4332;
     }
 
     .rm-num {
-        width: 24px;
-        height: 24px;
+        width: 26px;
+        height: 26px;
         border-radius: 50%;
         background: #1B4332;
-        color: #ffffff;
-        font-size: 0.75rem;
+        color: #FFEE8C;
+        font-size: 0.78rem;
         font-weight: 800;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
         margin-top: 1px;
+    }
+
+    /* Mini barras de progresso dos Marcos */
+    .rm-marcos-bars {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 8px;
+    }
+    .rm-marco-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 7px 9px;
+    }
+    .rm-marco-top {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 5px;
+    }
+    .rm-marco-track {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    .rm-marco-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.5s ease;
     }
 
     /* Tablet */
@@ -167,14 +269,24 @@
         .rm-simple-shell {
             padding-bottom: 115px;
         }
-        .rm-header {
-            margin-bottom: 14px;
+        .rm-hero {
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 16px;
         }
-        .rm-header h1 {
-            font-size: 1.42rem;
+        .rm-hero h1 {
+            font-size: 1.48rem;
         }
-        .rm-header p {
-            font-size: 0.85rem;
+        .rm-hero p {
+            font-size: 0.86rem;
+        }
+        .rm-hero-chips {
+            width: 100%;
+        }
+        .rm-hero-chip {
+            flex: 1;
+            min-width: 95px;
+            padding: 7px 10px;
         }
         .rm-grid,
         .rm-col-stack {
@@ -182,55 +294,73 @@
         }
         .rm-card {
             padding: 16px;
-            border-radius: 14px;
+            border-radius: 16px;
         }
         .rm-row {
             flex-direction: column;
             align-items: stretch;
             gap: 10px;
-            padding: 12px 0;
+            padding: 13px;
         }
         .rm-row-main {
             flex-direction: column;
-            gap: 6px;
+            gap: 7px;
         }
         .rm-pill {
             align-self: flex-start;
             min-width: 0;
-            padding: 4px 10px;
-        }
-        .rm-row-title {
-            font-size: 0.93rem;
-        }
-        .rm-row-desc {
-            font-size: 0.83rem;
         }
         .rm-countdown {
             margin-left: 0;
-            display: block;
-            margin-top: 2px;
+            margin-top: 4px;
+            display: inline-block;
         }
         .rm-link {
             align-self: flex-start;
             padding: 7px 14px;
-            font-size: 0.82rem;
+        }
+        .rm-marcos-bars {
+            grid-template-columns: 1fr;
+            gap: 7px;
         }
     }
 </style>
 
 <div class="modern-dashboard-layout rm-simple-shell">
-    <div class="rm-header">
+    <!-- HEADER VERDE PADRÃO ADMIN -->
+    <div class="rm-hero">
         <div>
             <h1>Implementações Futuras &amp; Reavaliações</h1>
-            <p>Visão rápida de consulta: avaliações agendadas, virada de janeiro e melhorias mapeadas.</p>
+            <p>Central de consulta rápida: avaliações já agendadas, virada de janeiro e melhorias mapeadas.</p>
+        </div>
+        <div class="rm-hero-chips">
+            <div class="rm-hero-chip">
+                <span>SEO &amp; GSC</span>
+                <strong id="rm-chip-seo">30/11</strong>
+            </div>
+            <div class="rm-hero-chip">
+                <span>Tráfego &amp; V6.1</span>
+                <strong id="rm-chip-traffic">08/12</strong>
+            </div>
+            <div class="rm-hero-chip">
+                <span>Novos Planos</span>
+                <strong>Janeiro</strong>
+            </div>
         </div>
     </div>
 
     <div class="rm-grid">
         <!-- COLUNA ESQUERDA: AVALIAÇÕES AGENDADAS -->
         <section class="rm-card">
-            <h2 class="rm-card-title">1. Avaliações Agendadas</h2>
-            <p class="rm-card-sub">Revisões já previstas na operação e marcos pós-lançamento.</p>
+            <div class="rm-card-head">
+                <div class="rm-card-icon rm-icon-green">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </div>
+                <div>
+                    <h2 class="rm-card-title">1. Avaliações Agendadas</h2>
+                    <p class="rm-card-sub">Revisões já previstas na operação e marcos pós-lançamento.</p>
+                </div>
+            </div>
 
             <div class="rm-rows">
                 <div class="rm-row">
@@ -253,7 +383,7 @@
                         <div>
                             <div class="rm-row-title">
                                 Tráfego Pago &amp; Motor V6.1
-                                <span class="rm-countdown" id="rm-cd-traffic"></span>
+                                <span class="rm-countdown" id="rm-cd-traffic" style="background:#dbeafe; color:#1e40af;"></span>
                             </div>
                             <p class="rm-row-desc">Avaliar teto CPC R$ 5,00 (Google Ads R$ 90/dia), WhatsApp em /resultados, Meta Ads e Motor V6.1.</p>
                         </div>
@@ -282,12 +412,26 @@
                     <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_crm_health.html'); return false;">Ver Saúde &rarr;</a>
                 </div>
 
-                <div class="rm-row">
-                    <div class="rm-row-main">
+                <div class="rm-row" style="align-items: flex-start;">
+                    <div class="rm-row-main" style="width: 100%;">
                         <span class="rm-pill">Marcos</span>
-                        <div>
+                        <div style="flex: 1; min-width: 0;">
                             <div class="rm-row-title">Metas de Base Pagante (20 / 70 / 120)</div>
-                            <p class="rm-row-desc" id="rm-marcos-line">Carregando progresso atual dos marcos...</p>
+                            <p class="rm-row-desc" id="rm-marcos-line">Carregando progresso atual...</p>
+                            <div class="rm-marcos-bars">
+                                <div class="rm-marco-box">
+                                    <div class="rm-marco-top"><span>Operacional</span><span id="rm-m20-txt">--/20</span></div>
+                                    <div class="rm-marco-track"><div class="rm-marco-fill" id="rm-m20-bar" style="width:0%; background:#6366f1;"></div></div>
+                                </div>
+                                <div class="rm-marco-box">
+                                    <div class="rm-marco-top"><span>Saída MEI</span><span id="rm-m70-txt">--/70</span></div>
+                                    <div class="rm-marco-track"><div class="rm-marco-fill" id="rm-m70-bar" style="width:0%; background:#8b5cf6;"></div></div>
+                                </div>
+                                <div class="rm-marco-box">
+                                    <div class="rm-marco-top"><span>Pró-labore</span><span id="rm-m120-txt">--/120</span></div>
+                                    <div class="rm-marco-track"><div class="rm-marco-fill" id="rm-m120-bar" style="width:0%; background:#ec4899;"></div></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_crm_health.html'); return false;">Ver Marcos &rarr;</a>
@@ -297,9 +441,16 @@
 
         <!-- COLUNA DIREITA: CHECKLIST LANÇAMENTO + FUTURO -->
         <div class="rm-col-stack">
-            <section class="rm-card">
-                <h2 class="rm-card-title">2. Quando lançar em Janeiro</h2>
-                <p class="rm-card-sub">Virada da branch <code>feature/freemium-plan</code> &rarr; <code>main</code>.</p>
+            <section class="rm-card is-amber">
+                <div class="rm-card-head">
+                    <div class="rm-card-icon rm-icon-amber">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    </div>
+                    <div>
+                        <h2 class="rm-card-title">2. Quando lançar em Janeiro</h2>
+                        <p class="rm-card-sub">Virada da branch <code>feature/freemium-plan</code> &rarr; <code>main</code>.</p>
+                    </div>
+                </div>
 
                 <div class="rm-rows">
                     <div class="rm-row">
@@ -332,14 +483,21 @@
                 </div>
             </section>
 
-            <section class="rm-card">
-                <h2 class="rm-card-title">3. Implementações Futuras</h2>
-                <p class="rm-card-sub">Melhorias mapeadas para solicitar depois.</p>
+            <section class="rm-card is-purple">
+                <div class="rm-card-head">
+                    <div class="rm-card-icon rm-icon-purple">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                    </div>
+                    <div>
+                        <h2 class="rm-card-title">3. Implementações Futuras</h2>
+                        <p class="rm-card-sub">Melhorias mapeadas para solicitar depois.</p>
+                    </div>
+                </div>
 
                 <div class="rm-rows">
                     <div class="rm-row">
                         <div class="rm-row-main">
-                            <span class="rm-pill">Conversão</span>
+                            <span class="rm-pill rm-pill-purple">Conversão</span>
                             <div>
                                 <div class="rm-row-title">Reduzir <code>no_contact</code> no WhatsApp</div>
                                 <p class="rm-row-desc">Disparo síncrono de <code>wa.me</code> em <code>psi_perfil_publico.js</code> + mensagem inicial direta.</p>
@@ -348,7 +506,7 @@
                     </div>
                     <div class="rm-row">
                         <div class="rm-row-main">
-                            <span class="rm-pill">Google Ads</span>
+                            <span class="rm-pill rm-pill-purple">Google Ads</span>
                             <div>
                                 <div class="rm-row-title">Grupos de cauda longa por abordagem</div>
                                 <p class="rm-row-desc">Desconcentrar verba das 3 head terms caras e negativar termos sem conversão.</p>
@@ -357,7 +515,7 @@
                     </div>
                     <div class="rm-row">
                         <div class="rm-row-main">
-                            <span class="rm-pill">Produto</span>
+                            <span class="rm-pill rm-pill-purple">Produto</span>
                             <div>
                                 <div class="rm-row-title">Lançamento do Plano Referência</div>
                                 <p class="rm-row-desc">Supervisão/intervisão, workshops e encaminhamento após consolidar o Essencial.</p>
@@ -366,7 +524,7 @@
                     </div>
                     <div class="rm-row">
                         <div class="rm-row-main">
-                            <span class="rm-pill">CRM</span>
+                            <span class="rm-pill rm-pill-purple">CRM</span>
                             <div>
                                 <div class="rm-row-title">Reativação da base histórica sem assinatura</div>
                                 <p class="rm-row-desc">Convidar cadastros antigos com CPF para o Comunidade grátis e teste 7d do Essencial.</p>
