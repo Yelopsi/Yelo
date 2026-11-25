@@ -35,6 +35,8 @@ router.use(admin);
 // --- Rotas de Configuração do Sistema (Yelo v2.1) ---
 router.get('/settings', settingsController.getSettings);
 router.post('/settings', settingsController.updateSettings);
+router.get('/roadmap', settingsController.getRoadmapState);
+router.put('/roadmap', settingsController.updateRoadmapState);
 
 // --- NOVAS ROTAS DE VERIFICAÇÃO ---
 // Busca psicólogos com documentos pendentes de verificação

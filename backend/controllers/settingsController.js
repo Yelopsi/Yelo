@@ -44,5 +44,46 @@ module.exports = {
       console.error('Erro ao salvar configurações:', error);
       return res.status(500).json({ error: 'Erro ao salvar alterações.' });
     }
+  },
+
+  // GET: Busca estado do checklist/roadmap de implementações e reavaliações
+  getRoadmapState: async (req, res) => {
+    try {
+      await db.sequelize.query('ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "roadmap_state" JSONB;').catch(() => {});
+      let settings = await SystemSetting.findOne();
+      if (!settings) {
+        settings = await SystemSetting.create({
+          maintenance_mode: false,
+          allow_registrations: true,
+          roadmap_state: null
+        });
+      }
+      return res.status(200).json({ roadmapState: settings.roadmap_state || null });
+    } catch (error) {
+      console.error('Erro ao buscar roadmap:', error);
+      return res.status(500).json({ error: 'Erro interno ao buscar checklist/roadmap.' });
+    }
+  },
+
+  // PUT: Salva estado do checklist/roadmap de implementações e reavaliações
+  updateRoadmapState: async (req, res) => {
+    try {
+      await db.sequelize.query('ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "roadmap_state" JSONB;').catch(() => {});
+      const { roadmapState } = req.body;
+      let settings = await SystemSetting.findOne();
+      if (settings) {
+        await settings.update({ roadmap_state: roadmapState });
+      } else {
+        settings = await SystemSetting.create({
+          maintenance_mode: false,
+          allow_registrations: true,
+          roadmap_state: roadmapState
+        });
+      }
+      return res.status(200).json({ success: true, roadmapState: settings.roadmap_state });
+    } catch (error) {
+      console.error('Erro ao salvar roadmap:', error);
+      return res.status(500).json({ error: 'Erro interno ao salvar checklist/roadmap.' });
+    }
   }
 };
