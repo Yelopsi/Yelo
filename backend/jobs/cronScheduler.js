@@ -1,10 +1,98 @@
 const db = require('../models');
 const { Op } = require('sequelize');
 // ============================================================================
+// 0. CONVERSÃO AUTOMÁTICA DE TRIALS TOKENIZADOS (Trimestral / Semestral D+7)
+// ============================================================================
+async function processTokenizedTrials() {
+    try {
+        let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
+        if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
+            ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+        }
+        const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+
+        const dueTrials = await db.Subscription.findAll({
+            where: {
+                status: 'TRIAL_CARD_TOKENIZED',
+                currentPeriodEnd: { [Op.lte]: new Date() }
+            }
+        });
+
+        for (const sub of dueTrials) {
+            const psi = await db.Psychologist.findByPk(sub.psychologistId);
+            if (!psi || psi.status !== 'active' || psi.cancelAtPeriodEnd || psi.subscriptionId !== sub.id) {
+                await sub.update({ status: 'CANCELED' });
+                if (psi && psi.subscriptionId === sub.id) {
+                    await psi.update({ plano: 'Comunidade', planExpiresAt: null, subscriptionId: null, cancelAtPeriodEnd: false });
+                }
+                continue;
+            }
+
+            let meta;
+            try { meta = JSON.parse(sub.plan); } catch (e) { continue; }
+            if (!meta || !meta.token) continue;
+
+            const todayBRT = new Date(Date.now() - 10800000).toISOString().split('T')[0];
+            try {
+                const res = await fetch(`${ASAAS_API_URL}/payments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                    body: JSON.stringify({
+                        customer: sub.asaasCustomerId,
+                        billingType: 'CREDIT_CARD',
+                        dueDate: todayBRT,
+                        installmentCount: meta.installmentCount,
+                        totalValue: meta.totalValue,
+                        creditCardToken: meta.token,
+                        description: `Assinatura Yelo - Plano ${meta.planType} - ${meta.cycle}`,
+                        externalReference: String(psi.id)
+                    })
+                });
+                const payData = await res.json();
+
+                if (res.ok && payData.id && !payData.errors) {
+                    const realRefId = payData.installment || payData.id;
+                    const monthsToAdd = meta.cycle === 'SEMIANNUAL' ? 6 : (meta.cycle === 'QUARTERLY' ? 3 : 1);
+                    const novaValidade = new Date();
+                    const targetMonth = novaValidade.getMonth() + monthsToAdd;
+                    novaValidade.setMonth(targetMonth);
+                    if (novaValidade.getMonth() !== targetMonth % 12) novaValidade.setDate(0);
+
+                    await sub.update({ status: 'CONVERTED' });
+                    await db.Subscription.upsert({
+                        id: realRefId,
+                        psychologistId: psi.id,
+                        asaasCustomerId: sub.asaasCustomerId,
+                        plan: `${meta.planType}_${meta.cycle}`,
+                        status: payData.status || 'ACTIVE'
+                    });
+                    await psi.update({
+                        subscriptionId: realRefId,
+                        plano: meta.planType,
+                        planExpiresAt: novaValidade,
+                        firstPaidAt: psi.firstPaidAt || new Date()
+                    });
+                    console.log(`✅ [CRON TRIAL] Trial tokenizado convertido (${meta.cycle}): Psi ID ${psi.id}`);
+                } else {
+                    await sub.update({ status: 'FAILED' });
+                    await psi.update({ plano: 'Comunidade', planExpiresAt: null, subscriptionId: null });
+                    console.warn(`❌ [CRON TRIAL] Falha na cobrança pós-trial do Psi ID ${psi.id}:`, payData.errors?.[0]?.description || res.status);
+                }
+            } catch (err) {
+                console.error(`⚠️ [CRON TRIAL] Erro de rede ao cobrar trial tokenizado Psi ID ${psi.id}:`, err.message);
+            }
+        }
+    } catch (e) {
+        console.error('❌ [CRON TRIAL] Erro no processTokenizedTrials:', e.message);
+    }
+}
+
+// ============================================================================
 // 1. AUDITORIA DE INTEGRIDADE DA BASE DE DADOS (Limpeza de Inadimplentes)
 // ============================================================================
 async function runIntegrityAudit() {
     console.log('🛡️ [CRON AUDIT] Executando auditoria de integridade da base de dados e Asaas...');
+    await processTokenizedTrials();
     try {
         let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
         if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
@@ -17,10 +105,11 @@ async function runIntegrityAudit() {
         // 2. Bloqueia VIPs que não tem plano setado
         await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false, plano = 'Comunidade' WHERE "is_exempt" = true AND ("plano" IS NULL OR "plano" = '');`);
 
-        // 3. Busca psicólogos com plano vencido ou sem assinatura
+        // 3. Busca psicólogos pagos/em trial com plano vencido (exclui quem já está no Plano Comunidade gratuito)
         const expiredPsis = await db.Psychologist.findAll({
             where: {
                 status: 'active',
+                plano: { [Op.notIn]: ['Comunidade'] },
                 [Op.or]: [
                     { is_exempt: null },
                     { is_exempt: false }
@@ -45,10 +134,16 @@ async function runIntegrityAudit() {
                 // Sem assinatura no banco -> bloqueia direto na virada
                 shouldBlock = true;
                 reason = 'Sem assinatura no sistema';
+            } else if (psi.subscriptionId.startsWith('trial_tok_')) {
+                // Trial tokenizado já processado acima por processTokenizedTrials
+                continue;
             } else {
-                // Tem assinatura -> Consulta Ativa no Asaas
+                // Tem assinatura ou parcelamento -> Consulta Ativa no Asaas
                 try {
-                    const pRes = await fetch(`${ASAAS_API_URL}/payments?subscription=${psi.subscriptionId}`, { 
+                    const queryParam = psi.subscriptionId.startsWith('sub_')
+                        ? `subscription=${psi.subscriptionId}`
+                        : `installment=${psi.subscriptionId}`;
+                    const pRes = await fetch(`${ASAAS_API_URL}/payments?${queryParam}`, { 
                         headers: { 'access_token': process.env.ASAAS_API_KEY } 
                     });
                     
@@ -250,9 +345,10 @@ const startCronJobs = () => {
             await runIntegrityAudit();
         }
 
-        // 3 & 4. LEMBRETES DE SESSÃO E FEEDBACK (Verifica a cada virada de hora)
+        // 3 & 4. LEMBRETES DE SESSÃO, FEEDBACK E CONVERSÃO DE TRIAL TOKENIZADO (Verifica a cada virada de hora)
         if (currentBrtHour !== lastReminderHour) {
             lastReminderHour = currentBrtHour;
+            await processTokenizedTrials();
             await checkSessionReminders(now);
             await checkFeedbackReminders(now);
         }

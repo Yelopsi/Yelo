@@ -33,6 +33,8 @@ router.use(admin);
 // --- Rotas de Configuração do Sistema (Yelo v2.1) ---
 router.get('/settings', settingsController.getSettings);
 router.post('/settings', settingsController.updateSettings);
+router.get('/roadmap', settingsController.getRoadmapState);
+router.put('/roadmap', settingsController.updateRoadmapState);
 
 // --- NOVAS ROTAS DE VERIFICAÇÃO ---
 // Busca psicólogos com documentos pendentes de verificação
@@ -43,7 +45,7 @@ router.put('/psychologists/:id/moderate', adminController.moderatePsychologist);
 // Rota para buscar as estatísticas da Visão Geral
 router.get('/stats', adminDashboardController.getDashboardStats);
 
-// Rota para liberar 14 dias de teste para todos os usuários inativos/pendentes
+// Rota para liberar 7 dias de teste para todos os usuários inativos/pendentes
 router.post('/psychologists/grant-trial-all', adminController.grantTrialToAll);
 
 // Rota para buscar e atualizar os dados do admin logado

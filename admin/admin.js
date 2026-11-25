@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (['admin_crm_leads.html', 'admin_crm_pacientes.html', 'admin_crm_psicologos.html', 'admin_crm_analytics.html', 'admin_analytics_funil.html', 'admin_lista_espera.html', 'admin_avaliacoes.html', 'admin_avaliacoes_psi.html', 'admin_caixa_entrada.html', 'admin_avisos.html', 'admin_followup.html'].includes(pageUrl)) hubPage = 'admin_crm_hub.html';
             else if (['admin_gestao_conteudo.html', 'admin_comunidade_gestao.html', 'admin_moderacao_forum.html'].includes(pageUrl)) hubPage = 'admin_conteudo_hub.html';
             else if (['admin_indicadores.html', 'admin_downloads.html'].includes(pageUrl)) hubPage = 'admin_dados_hub.html';
-            else if (['admin_minha_conta.html', 'admin_configuracoes.html', 'admin_logs_sistema.html'].includes(pageUrl)) hubPage = 'admin_configuracoes_hub.html';
+            else if (['admin_minha_conta.html', 'admin_configuracoes.html', 'admin_logs_sistema.html', 'admin_roadmap_reavaliacoes.html'].includes(pageUrl)) hubPage = 'admin_configuracoes_hub.html';
 
             if (hubPage) {
                 if (!activeLink) activeLink = document.querySelector(`.sidebar-nav a[data-page="${hubPage}"]`);

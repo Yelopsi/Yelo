@@ -42,7 +42,7 @@ exports.deletePsychologistAccount = async (req, res) => {
         }
 
         // --- PONTO CRÍTICO: CANCELAMENTO NO ASAAS ---
-        if (psychologist.subscriptionId) {
+        if (psychologist.subscriptionId && psychologist.subscriptionId.startsWith('sub_')) {
             try {
                 await fetch(`${ASAAS_API_URL}/subscriptions/${psychologist.subscriptionId}`, {
                     method: 'DELETE',
@@ -112,7 +112,70 @@ exports.cancelSubscription = async (req, res) => {
              return res.status(200).json({ message: 'Assinatura cancelada localmente (Vínculo de pagamento não encontrado).' });
         }
 
-        // 1. Busca dados da assinatura no Asaas para verificar data de criação
+        // 1. Verifica se é trial tokenizado (sem cobrança ainda), assinatura recorrente (sub_...) ou cobrança parcelada (Trimestral/Semestral)
+        if (subId.startsWith('trial_tok_')) {
+            await db.Subscription.update(
+                { status: 'CANCELED' },
+                { where: { id: subId } }
+            ).catch(() => {});
+
+            await psychologist.update({
+                plano: 'Comunidade',
+                planExpiresAt: null,
+                cancelAtPeriodEnd: false,
+                subscriptionId: null
+            });
+            return res.json({ message: 'Período de teste cancelado sem nenhuma cobrança no cartão. Você voltou para o Plano Comunidade (Grátis).' });
+        }
+
+        const isRecurringSub = subId.startsWith('sub_');
+        
+        if (!isRecurringSub) {
+            // --- PLANO PARCELADO NO CARTÃO (TRIMESTRAL OU SEMESTRAL) ---
+            let isEligibleForRefund = false;
+            let paymentToRefund = null;
+
+            try {
+                const payRes = await fetch(`${ASAAS_API_URL}/payments/${subId}`, {
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                const payData = await payRes.json();
+                if (payData.id) {
+                    paymentToRefund = payData;
+                    const dateCreated = new Date(payData.dateCreated);
+                    const now = new Date();
+                    const diffDays = Math.floor((now - dateCreated) / (1000 * 60 * 60 * 24));
+                    if (diffDays <= 7) isEligibleForRefund = true;
+                }
+            } catch (e) {}
+
+            if (isEligibleForRefund && paymentToRefund) {
+                try {
+                    await fetch(`${ASAAS_API_URL}/payments/${paymentToRefund.id}/refund`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                        body: JSON.stringify({ value: paymentToRefund.value, description: "Cancelamento no prazo de 7 dias (Arrependimento)" })
+                    });
+                } catch(e) {}
+
+                await psychologist.update({
+                    plano: 'Comunidade',
+                    planExpiresAt: null,
+                    cancelAtPeriodEnd: false,
+                    subscriptionId: null
+                });
+                return res.json({ message: 'Plano cancelado e valor estornado no cartão com sucesso.' });
+            }
+
+            // Se já passaram os 7 dias: o parcelamento é fechado no cartão e não possui renovação automática
+            const dataFim = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt).toLocaleDateString('pt-BR') : '';
+            await psychologist.update({ cancelAtPeriodEnd: false });
+            return res.json({ 
+                message: `Seu plano é parcelado no cartão com vigência garantida até ${dataFim}. Não há renovação automática pendente.` 
+            });
+        }
+
+        // --- ASSINATURA RECORRENTE MENSAL ---
         const subResponse = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
             headers: { 'access_token': ASAAS_API_KEY }
         });

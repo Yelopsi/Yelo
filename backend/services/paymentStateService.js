@@ -139,6 +139,8 @@ class PaymentStateService {
         let psi = null;
         if (externalId) psi = await db.Psychologist.findByPk(externalId);
         if (!psi && payment.subscription) psi = await db.Psychologist.findOne({ where: { subscriptionId: payment.subscription } });
+        if (!psi && payment.installment) psi = await db.Psychologist.findOne({ where: { subscriptionId: payment.installment } });
+        if (!psi && payment.id) psi = await db.Psychologist.findOne({ where: { subscriptionId: payment.id } });
 
         if (!psi) {
             console.log(`[ASAAS] Psicólogo não encontrado para o pagamento ${payment.id}. Ignorando.`);
@@ -253,6 +255,16 @@ class PaymentStateService {
         if (description.includes('CLINICAL')) planType = 'CLINICAL';
         if (description.includes('REFERENCE')) planType = 'REFERENCE';
 
+        // Determina periodicidade e meses de vigência (Semestral = 6, Trimestral = 3, Mensal = 1)
+        let monthsToAdd = 1;
+        if (description.includes('SEMIANNUAL') || description.includes('Semestral') || payment.installmentCount === 6) {
+            monthsToAdd = 6;
+        } else if (description.includes('QUARTERLY') || description.includes('Trimestral') || payment.installmentCount === 3) {
+            monthsToAdd = 3;
+        } else {
+            monthsToAdd = 1;
+        }
+
         await db.sequelize.transaction(async (t) => {
             const lockedPsi = await db.Psychologist.findOne({
                 where: { id: psi.id },
@@ -267,33 +279,35 @@ class PaymentStateService {
             }
 
             const currentPayments = (lockedPsi.subscription_payments_count || 0) + 1;
-            
-            // Calcula nova validade baseada no dueDate da fatura que acabou de ser paga
-            let novaValidade;
-            if (payment.dueDate) {
-                const parts = payment.dueDate.split('-'); 
-                novaValidade = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T23:59:59.999-03:00`);
-            } else {
-                // Fallback de segurança caso dueDate não venha no payload
-                novaValidade = (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > new Date()) 
-                    ? new Date(lockedPsi.planExpiresAt) 
-                    : new Date();
-            }
-
-            // Adiciona 1 mês de forma segura (previne bug do Javascript de pular meses curtos ex: 31 Jan -> 03 Mar)
-            const targetMonth = novaValidade.getMonth() + 1;
-            novaValidade.setMonth(targetMonth);
-            if (novaValidade.getMonth() !== targetMonth % 12) {
-                novaValidade.setDate(0); // Recua para o último dia do mês correto
-            }
+            const refId = payment.subscription || payment.installment || payment.id;
+            const isSubsequentInstallment = payment.installment && payment.installmentNumber && payment.installmentNumber > 1;
 
             const updatePayload = {
                 status: 'active',
-                planExpiresAt: novaValidade,
                 plano: planType,
-                subscriptionId: payment.subscription,
-                subscription_payments_count: currentPayments
+                subscriptionId: refId,
+                subscription_payments_count: currentPayments,
+                cancelAtPeriodEnd: false
             };
+
+            // Se for cobrança recorrente mensal ou 1ª parcela de plano contratado: estende a validade
+            if (!isSubsequentInstallment) {
+                let baseDate = new Date();
+                if (lockedPsi.planExpiresAt && new Date(lockedPsi.planExpiresAt) > baseDate) {
+                    baseDate = new Date(lockedPsi.planExpiresAt);
+                } else if (payment.dueDate) {
+                    const parts = payment.dueDate.split('-'); 
+                    baseDate = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T23:59:59.999-03:00`);
+                }
+
+                let novaValidade = new Date(baseDate.getTime());
+                const targetMonth = novaValidade.getMonth() + monthsToAdd;
+                novaValidade.setMonth(targetMonth);
+                if (novaValidade.getMonth() !== targetMonth % 12) {
+                    novaValidade.setDate(0); // Recua para o último dia do mês correto
+                }
+                updatePayload.planExpiresAt = novaValidade;
+            }
 
             if (!lockedPsi.subscribedAt) {
                 updatePayload.subscribedAt = new Date();
@@ -304,7 +318,7 @@ class PaymentStateService {
             if (db.SystemLog) {
                 await db.SystemLog.create({
                     level: 'info',
-                    message: `[ASAAS] Pagamento Confirmado: ${lockedPsi.email} (Plano ${planType})`,
+                    message: `[ASAAS] Pagamento Confirmado: ${lockedPsi.email} (Plano ${planType} +${monthsToAdd}m)`,
                     meta: { userEmail: lockedPsi.email, psychologistId: lockedPsi.id, paymentId: payment.id }
                 }, { transaction: t });
             }
@@ -324,9 +338,12 @@ class PaymentStateService {
             });
 
             // PROTEÇÃO: Verificar se este estorno/falha pertence à assinatura ATUAL.
-            // Se ele for um Refund de uma assinatura antiga, e o usuário JÁ assinou uma nova, NÃO suspendemos.
             if (lockedPsi.subscriptionId && payment.subscription && lockedPsi.subscriptionId !== payment.subscription) {
                 console.log(`[ASAAS] Ignorando falha/refund de assinatura legada ${payment.subscription} (Atual: ${lockedPsi.subscriptionId})`);
+                return;
+            }
+            if (lockedPsi.subscriptionId && payment.installment && lockedPsi.subscriptionId !== payment.installment) {
+                console.log(`[ASAAS] Ignorando falha/refund de parcelamento legado ${payment.installment}`);
                 return;
             }
 

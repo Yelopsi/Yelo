@@ -362,7 +362,7 @@ exports.generateAiChurnMessage = async (req, res) => {
 
         const prompt = `
 Atue como Anderson, gerente de Customer Success da plataforma de saúde mental Yelo. 
-Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}, cujo período de testes (Trial) de 14 dias expirou recentemente (Churn).
+Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}, cujo período de testes (Trial) de 7 dias expirou recentemente (Churn).
 O objetivo da mensagem é convencer o profissional a reativar sua assinatura (que custa R$ 99,00/mês).
 
 Aja de forma humanizada, direta, e TOTALMENTE PROFISSIONAL. NÃO use NENHUMA gíria (como "dar um tchan", "dar um grito", etc.).
@@ -386,7 +386,7 @@ Você DEVE SEMPRE citar esses três indicadores no corpo do seu texto de forma c
 [INSTRUÇÕES DA COPY (MENSAGEM)]
 1. A mensagem deve ser enviada via WhatsApp. Use formatação nativa (*negrito*, _itálico_) e quebras de linha (\n\n).
 2. Cumprimente o psicólogo pelo nome e se apresente. Comece em um tom acolhedor e agradeça por ele ter testado a plataforma.
-3. Seja SUAVE ao informar que o Trial de 14 dias expirou. Exemplo: "O seu período gratuito encerrou, mas eu estava analisando as suas métricas e os resultados foram super interessantes..."
+3. Seja SUAVE ao informar que o Trial de 7 dias expirou. Exemplo: "O seu período gratuito encerrou, mas eu estava analisando as suas métricas e os resultados foram super interessantes..."
 4. Apresente os resultados dele (os 3 indicadores numéricos são obrigatórios: Aparições, Visitas e Cliques).
 5. Analise os resultados de fechamento de forma consultiva e empática:
    - Se ele fechou pacientes, parabenize-o! É o maior argumento de que a plataforma funciona.
@@ -588,7 +588,7 @@ exports.generateAiExpiringTrialMessage = async (req, res) => {
         const prompt = `
 Atue como Anderson, gerente de Customer Success da Yelo. 
 Você vai redigir uma mensagem de WhatsApp para o psicólogo(a) ${psi.nome.split(' ')[0]}.
-Situação atual: O período de testes gratuito (Trial) de 14 dias deste profissional vai expirar em exatos ${daysLeft} dias.
+Situação atual: O período de testes gratuito (Trial) de 7 dias deste profissional vai expirar em exatos ${daysLeft} dias.
 
 Aja de forma humanizada, empática e consultiva. NÃO seja agressivamente vendedor e não use gírias.
 

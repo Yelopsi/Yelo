@@ -56,27 +56,95 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         ).catch(() => [{ count: 0 }]);
         const hasPlatformReview = parseInt(platformReviewCountResult[0]?.count || 0, 10) > 0;
 
-        // --- DADOS DE OPORTUNIDADE (INFLADOS PARA CONVERSÃO) ---
+        // --- DADOS REAIS DE DEMANDA NA PLATAFORMA (7d e 30d) ---
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        
-        const globalMatchesResult = await db.sequelize.query(
-            `SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "id"::varchar)) as count 
-             FROM "DemandSearches" WHERE "createdAt" >= :thirtyDaysAgo`,
-            { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => [{ count: 0 }]);
-        
-        const globalClicksResult = await db.sequelize.query(
-            `SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, "guestName", "id"::varchar)) as count 
-             FROM "WhatsAppClickLogs" WHERE "createdAt" >= :thirtyDaysAgo`,
-            { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
-        ).catch(() => [{ count: 0 }]);
-        const realMatches = parseInt(globalMatchesResult[0]?.count || 0, 10);
-        const realClicks = parseInt(globalClicksResult[0]?.count || 0, 10);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const [
+            globalMatches30Res,
+            globalMatches7Res,
+            globalClicks30Res,
+            globalClicks7Res
+        ] = await Promise.all([
+            db.sequelize.query(
+                `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "createdAt" >= :thirtyDaysAgo`,
+                { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
+            ).catch(() => [{ count: 0 }]),
+            db.sequelize.query(
+                `SELECT COUNT(*) as count FROM "MatchEvents" WHERE "createdAt" >= :sevenDaysAgo`,
+                { replacements: { sevenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
+            ).catch(() => [{ count: 0 }]),
+            db.sequelize.query(
+                `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "createdAt" >= :thirtyDaysAgo`,
+                { replacements: { thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
+            ).catch(() => [{ count: 0 }]),
+            db.sequelize.query(
+                `SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE "createdAt" >= :sevenDaysAgo`,
+                { replacements: { sevenDaysAgo }, type: db.sequelize.QueryTypes.SELECT }
+            ).catch(() => [{ count: 0 }])
+        ]);
+
+        const realMatches30d = parseInt(globalMatches30Res[0]?.count || 0, 10);
+        const realMatches7d = parseInt(globalMatches7Res[0]?.count || 0, 10);
+        const realClicks30d = parseInt(globalClicks30Res[0]?.count || 0, 10);
+        const realClicks7d = parseInt(globalClicks7Res[0]?.count || 0, 10);
 
         // Monta o objeto de resposta
         const responseData = psychologist.toJSON();
         responseData.hasPlatformReview = hasPlatformReview;
+
+        // --- DADOS REAIS DA ASSINATURA ATUAL (PARA PRESERVAR PREÇO LEGADO NA UI E EXIBIR AVISO) ---
+        let activeSubscriptionPrice = null;
+        let activeSubscriptionBillingType = null;
+        let isLegacySubscriber = false;
+        try {
+            const activeSub = await db.Subscription.findOne({
+                where: {
+                    psychologistId,
+                    id: { [Op.notLike]: 'trial_tok_%' },
+                    status: { [Op.in]: ['ACTIVE', 'CONFIRMED'] }
+                },
+                order: [['createdAt', 'DESC']]
+            }).catch(() => null);
+
+            const latestPayment = await db.Payment.findOne({
+                where: {
+                    psychologistId,
+                    status: { [Op.in]: ['CONFIRMED', 'RECEIVED', 'PENDING'] }
+                },
+                order: [['paymentDate', 'DESC'], ['createdAt', 'DESC']]
+            }).catch(() => null);
+
+            if (latestPayment && latestPayment.value != null) {
+                activeSubscriptionPrice = parseFloat(latestPayment.value);
+                activeSubscriptionBillingType = latestPayment.billingType || null;
+            }
+
+            const hasActivePaidSub = !psychologist.is_exempt
+                && psychologist.plano
+                && psychologist.plano !== 'Comunidade'
+                && psychologist.status === 'active'
+                && !!(psychologist.subscriptionId || psychologist.stripeSubscriptionId)
+                && !String(psychologist.subscriptionId || '').startsWith('trial_tok_')
+                && !(psychologist.planExpiresAt && !psychologist.firstPaidAt && !latestPayment);
+
+            if (hasActivePaidSub) {
+                const subRefDate = (activeSub && activeSub.createdAt)
+                    ? new Date(activeSub.createdAt)
+                    : (psychologist.subscribedAt ? new Date(psychologist.subscribedAt) : (psychologist.firstPaidAt ? new Date(psychologist.firstPaidAt) : null));
+                const pricingLaunchDate = process.env.NEW_PRICING_LAUNCH_DATE ? new Date(process.env.NEW_PRICING_LAUNCH_DATE) : null;
+                isLegacySubscriber = pricingLaunchDate && subRefDate
+                    ? subRefDate < pricingLaunchDate
+                    : true;
+            }
+        } catch (subInfoErr) {
+            console.warn('Aviso ao consultar assinatura atual:', subInfoErr.message);
+        }
+        responseData.activeSubscriptionPrice = activeSubscriptionPrice;
+        responseData.activeSubscriptionBillingType = activeSubscriptionBillingType;
+        responseData.isLegacySubscriber = isLegacySubscriber;
         
         // Verifica se vinculou google (raw query)
         const [rawRecord] = await db.sequelize.query(`SELECT "googleId" FROM "Psychologists" WHERE id = :id`, { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT });
@@ -92,16 +160,15 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             ? null 
             : "⚠️ Atenção: Seu perfil não aparecerá nos Matches para os pacientes enquanto não tiver uma Foto de Perfil e uma Biografia detalhada (mínimo 150 caracteres). Complete seus dados para receber contatos.";
 
-        // --- NOVO: LÓGICA PARA O BANNER DE TRIAL PREMIUM (CPF) ---
-        const hasValidCpf = !!(psychologist.cpf && psychologist.cpf.replace(/\D/g, '').length >= 11);
-        responseData.showTrialBanner = (psychologist.status === 'pending' && !hasValidCpf);
-        responseData.trialBannerMessage = responseData.showTrialBanner
-            ? "Complete seu CPF no perfil para liberar seus 14 dias Premium grátis."
-            : null;
+        // Trial de 7 dias do Plano Essencial exige inclusão de cartão na tela de Assinatura (não é liberado via CPF)
+        responseData.showTrialBanner = false;
+        responseData.trialBannerMessage = null;
 
         responseData.globalStats = {
-            matches30d: 150 + Math.floor(realMatches * 1.2),
-            clicks30d: 30 + Math.floor(realClicks * 1.1)
+            matches7d: realMatches7d,
+            clicks7d: realClicks7d,
+            matches30d: realMatches30d,
+            clicks30d: realClicks30d
         };
 
         responseData.gamificationProgress = {
@@ -304,18 +371,8 @@ exports.updatePsychologistProfile = async (req, res) => {
 
         await psychologist.update(updatePayload);
 
-        // --- ATIVAÇÃO DO TRIAL PÓS-CADASTRO (ANTI-ABUSO) ---
-        // Se o profissional não tinha CPF e preencheu um válido agora, ativa os 14 dias (se ele estava no Comunidade ou Pendente)
-        const isFirstCpf = !psychologist.cpf && cpf && cpf.replace(/\D/g, '').length >= 11;
-        if ((psychologist.status === 'pending' || psychologist.plano === 'Comunidade') && isFirstCpf) {
-            const trialEndDate = new Date();
-            trialEndDate.setDate(trialEndDate.getDate() + 14);
-            await psychologist.update({
-                status: 'active',
-                plano: 'Essencial',
-                planExpiresAt: trialEndDate
-            });
-        }
+        // Nota: O trial gratuito de 7 dias do Plano Essencial requer inclusão de cartão na página de Assinatura
+        // (não é mais ativado automaticamente pelo preenchimento do CPF).
 
         // --- GAMIFICATION HOOK (BADGE AUTÊNTICO) ---
         await gamificationService.checkProfileCompletion(psychologist.id);

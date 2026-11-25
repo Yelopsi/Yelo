@@ -54,7 +54,8 @@ const calculateSimilarity = (psy, preferences = {}, priceRange) => {
     // --- REQUISITOS MÍNIMOS (AGORA COMO PENALIDADES) ---
     const agora = new Date();
     const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true';
-    const hasActivePlan = isVip || (psy.planExpiresAt && new Date(psy.planExpiresAt) > agora);
+    const isComunidade = psy.plano === 'Comunidade';
+    const hasActivePlan = !isComunidade && (isVip || (psy.planExpiresAt && new Date(psy.planExpiresAt) > agora));
     const hasPhoto = psy.fotoUrl && psy.fotoUrl.trim() !== '' && !psy.fotoUrl.includes('placehold.co');
     const hasMinBio = psy.bio && psy.bio.trim().length >= 10;
 
@@ -194,6 +195,15 @@ const applyFairness = (scoredCandidates, fairShare) => {
                 }
             }
 
+            // --- WELCOME BOOST (primeiros 5 dias no Essencial/trial para evitar fila fria) ---
+            const refStartDate = c.subscribedAt || c.createdAt;
+            if (refStartDate) {
+                const daysSinceJoin = (new Date() - new Date(refStartDate)) / (1000 * 60 * 60 * 24);
+                if (daysSinceJoin >= 0 && daysSinceJoin <= 5 && leads < 2) {
+                    finalScore += 30;
+                }
+            }
+
             // Aplica o cooldown no score FINAL
             finalScore *= cooldownPenalty;
 
@@ -224,9 +234,10 @@ exports.calculateMatches = async (preferences = {}) => {
     try {
         const agora = new Date();
 
-        // --- MUDANÇA ESTRATÉGICA: BUSCA RESTRITA A ATIVOS E TRIALS COMPLETOS ---
+        // --- MUDANÇA ESTRATÉGICA: BUSCA RESTRITA A ATIVOS E TRIALS COMPLETOS (EXCLUI COMUNIDADE) ---
         const baseWhereConditions = { 
             status: { [Op.in]: ['active', 'trial'] },
+            plano: { [Op.ne]: 'Comunidade' },
             bio: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
             cpf: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
             fotoUrl: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },

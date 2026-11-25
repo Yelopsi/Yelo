@@ -502,12 +502,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 banner.style.position = 'fixed';
                 banner.style.paddingRight = '45px'; // Espaço para o X
 
-                const isEligibleForTrial = !psychologistData.cpf;
-                const textMessage = isEligibleForTrial
-                    ? `👁️ Seu perfil público está oculto. Preencha seu CPF no Perfil para ativar 14 dias de acesso Premium grátis e receber pacientes.`
-                    : `👁️ Seu perfil público está oculto (Plano Grátis). Faça o upgrade para o Plano Essencial e receba novos pacientes.`;
-                const btnAction = isEligibleForTrial ? "window.loadPage('psi_meu_perfil.html')" : "window.loadPage('psi_assinatura.html')";
-                const btnText = isEligibleForTrial ? "Ativar Trial Grátis" : "Assinar Essencial";
+                const textMessage = `👁️ Seu perfil público está oculto no Plano Comunidade (Grátis). Ative o Plano Essencial e ganhe 7 dias grátis com seu cartão para aparecer nas buscas.`;
+                const btnAction = "window.loadPage('psi_assinatura.html')";
+                const btnText = "Testar 7 dias grátis";
 
                 banner.innerHTML = `
                     <span>${textMessage}</span>
@@ -528,8 +525,21 @@ document.addEventListener('DOMContentLoaded', function () {
             trialPremiumBanner.style.display = 'flex';
             const titleEl = document.getElementById('trial-premium-title');
             const messageEl = document.getElementById('trial-premium-message');
-            if (titleEl) titleEl.textContent = psychologistData.trialBannerMessage || "Complete seu CPF para liberar o Premium!";
-            if (messageEl) messageEl.textContent = "Seu perfil está quase pronto! Adicione seu CPF para ativar seus 14 dias Premium grátis e começar a receber pacientes.";
+            if (titleEl) titleEl.textContent = psychologistData.trialBannerMessage || "Ative o Plano Essencial com 7 dias grátis!";
+            if (messageEl) messageEl.textContent = "Cadastre seu cartão na página de Assinatura para testar a vitrine completa por 7 dias grátis antes da primeira cobrança.";
+        }
+
+        // Banner informativo para quem já é assinante (preço e condições preservados)
+        const legacyNoticeBanner = document.getElementById('legacy-pricing-notice-banner');
+        if (legacyNoticeBanner && psychologistData.isLegacySubscriber && !localStorage.getItem('yelo_dismissed_legacy_notice_v1')) {
+            legacyNoticeBanner.style.display = 'flex';
+            const btnDismissLegacy = document.getElementById('btn-dismiss-legacy-notice');
+            if (btnDismissLegacy) {
+                btnDismissLegacy.onclick = () => {
+                    legacyNoticeBanner.style.display = 'none';
+                    localStorage.setItem('yelo_dismissed_legacy_notice_v1', '1');
+                };
+            }
         }
     }
 

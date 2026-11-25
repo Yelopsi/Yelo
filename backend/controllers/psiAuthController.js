@@ -120,20 +120,16 @@ exports.registerPsychologist = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(passwordInput, salt);
 
-        // --- Define o Trial Automático de 14 Dias ---
-        const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 14);
-
-        // --- 6. CRIAÇÃO NO BANCO (USANDO COLUNAS REAIS) ---
+        // --- 6. CRIAÇÃO NO BANCO (FREEMIUM COMUNIDADE — SEM CARTÃO E SEM TRIAL AUTOMÁTICO) ---
         const newPsychologist = await db.Psychologist.create({
             nome,
             email,
             senha: hashedPassword,
             crp,
             slug: generatedSlug,
-            status: 'active', // Sempre ativo (se não tiver CPF, fica no Comunidade e não aparece nas buscas)
-            plano: cleanCpf ? 'Essencial' : 'Comunidade',
-            planExpiresAt: cleanCpf ? trialEndDate : null,
+            status: 'active', // Acesso imediato às ferramentas gratuitas do Plano Comunidade (perfil oculto nas buscas)
+            plano: 'Comunidade',
+            planExpiresAt: null,
             cpf: cleanCpf, // Salva na coluna CPF
             telefone, // Salva o número de telefone no banco
             utm_source,

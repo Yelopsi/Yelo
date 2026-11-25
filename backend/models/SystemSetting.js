@@ -30,6 +30,10 @@ module.exports = (sequelize, DataTypes) => {
     email_support: {
       type: DataTypes.STRING,
       defaultValue: ''
+    },
+    roadmap_state: {
+      type: DataTypes.JSONB,
+      allowNull: true
     }
   });
 
