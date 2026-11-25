@@ -1,5 +1,54 @@
 [
   {
+    "id": "change-git-2191b643",
+    "date": "2026-11-25T00:54:58.000Z",
+    "commit": "2191b643",
+    "author": "Anderson",
+    "title": "Manutenção: Remover mencao de sugestao da pagina Seguranca na Clinica (credito mantido em Novidades) (psi)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "remover mencao de sugestao da pagina Seguranca na Clinica (credito mantido em Novidades)",
+    "description": "Commit registrado no repositório: \"chore(psi): remover mencao de sugestao da pagina Seguranca na Clinica (credito mantido em Novidades)\". Arquivos modificados: mobile/src/app/(tabs)/seguranca-clinica.tsx, public/psi/psi_seguranca_clinica.html.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2191b643"
+    },
+    "after": {
+      "nova_versao": "remover mencao de sugestao da pagina Seguranca na Clinica (credito mantido em Novidades)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/seguranca-clinica.tsx",
+      "public/psi/psi_seguranca_clinica.html"
+    ]
+  },
+  {
+    "id": "change-git-5b27ffa1",
+    "date": "2026-11-25T00:45:34.000Z",
+    "commit": "5b27ffa1",
+    "author": "Anderson",
+    "title": "Manutenção: Registrar commit c79f7585 no changelog do sistema",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "registrar commit c79f7585 no changelog do sistema",
+    "description": "Commit registrado no repositório: \"chore(changelog): registrar commit c79f7585 no changelog do sistema\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #5b27ffa1"
+    },
+    "after": {
+      "nova_versao": "registrar commit c79f7585 no changelog do sistema"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-c79f7585",
     "date": "2026-11-25T00:01:14.000Z",
     "commit": "c79f7585",
