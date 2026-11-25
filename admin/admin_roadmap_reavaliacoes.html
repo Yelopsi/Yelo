@@ -1,443 +1,298 @@
 <style>
-    .roadmap-shell {
-        padding-bottom: 120px;
+    .rm-simple-shell {
+        max-width: 980px;
+        margin: 0 auto;
+        padding-bottom: 90px;
         font-family: var(--font-principal, 'Inter', sans-serif);
     }
-    .roadmap-hero {
-        background: linear-gradient(135deg, #1B4332 0%, #0f2b20 100%);
-        color: #ffffff;
-        border-radius: 18px;
-        padding: 28px 32px;
-        margin-bottom: 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 20px;
-        flex-wrap: wrap;
-        box-shadow: 0 12px 28px rgba(27, 67, 50, 0.14);
-    }
-    .roadmap-hero h1 {
-        margin: 0 0 6px 0;
-        color: #ffffff;
-        font-family: var(--font-titulos, 'Fraunces', serif);
-        font-size: 1.85rem;
-    }
-    .roadmap-hero p {
-        margin: 0;
-        color: rgba(255, 255, 255, 0.85);
-        font-size: 0.96rem;
-        max-width: 680px;
-        line-height: 1.45;
-    }
-    .roadmap-hero-actions {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-    .roadmap-btn-primary {
-        background: #FFEE8C;
-        color: #1B4332;
-        border: none;
-        padding: 10px 18px;
-        border-radius: 999px;
-        font-weight: 800;
-        font-size: 0.88rem;
-        cursor: pointer;
-        transition: transform 0.15s ease;
-    }
-    .roadmap-btn-primary:hover { transform: translateY(-1px); }
-    .roadmap-btn-ghost {
-        background: rgba(255, 255, 255, 0.14);
-        color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        padding: 10px 16px;
-        border-radius: 999px;
-        font-weight: 600;
-        font-size: 0.86rem;
-        cursor: pointer;
-    }
-
-    .roadmap-kpi-strip {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 16px;
+    .rm-header {
         margin-bottom: 22px;
     }
-    .roadmap-kpi-card {
+    .rm-header h1 {
+        margin: 0 0 6px 0;
+        color: #1B4332;
+        font-family: var(--font-titulos, 'Fraunces', serif);
+        font-size: 1.75rem;
+    }
+    .rm-header p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.94rem;
+    }
+
+    .rm-card {
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 16px;
-        padding: 18px 20px;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+        padding: 20px 24px;
+        margin-bottom: 18px;
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
     }
-    .roadmap-kpi-label {
-        font-size: 0.78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #64748b;
-        margin-bottom: 8px;
-    }
-    .roadmap-kpi-value {
-        font-size: 1.65rem;
-        font-weight: 800;
-        color: #0f172a;
-        line-height: 1.1;
-    }
-    .roadmap-kpi-sub {
-        font-size: 0.82rem;
-        color: #475569;
-        margin-top: 6px;
-    }
-    .roadmap-progress-track {
-        height: 7px;
-        background: #e2e8f0;
-        border-radius: 999px;
-        overflow: hidden;
-        margin-top: 10px;
-    }
-    .roadmap-progress-fill {
-        height: 100%;
-        background: #1B4332;
-        border-radius: 999px;
-        transition: width 0.3s ease;
-    }
-
-    .roadmap-tabs {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-bottom: 22px;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .roadmap-tab-list {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-    .roadmap-tab-btn {
-        background: #ffffff;
-        color: #475569;
-        border: 1px solid #cbd5e1;
-        padding: 8px 16px;
-        border-radius: 999px;
-        font-size: 0.86rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.15s ease;
-    }
-    .roadmap-tab-btn.is-active {
-        background: #1B4332;
-        color: #ffffff;
-        border-color: #1B4332;
-    }
-
-    .roadmap-section {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 18px;
-        padding: 22px 24px;
-        margin-bottom: 22px;
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
-    }
-    .roadmap-section-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 14px;
-        margin-bottom: 16px;
-        flex-wrap: wrap;
-        border-bottom: 1px solid #f1f5f9;
-        padding-bottom: 14px;
-    }
-    .roadmap-section-head h2 {
+    .rm-card-title {
         margin: 0 0 4px 0;
-        font-size: 1.2rem;
+        font-size: 1.08rem;
+        font-weight: 700;
         color: #0f172a;
-        font-family: var(--font-titulos, 'Fraunces', serif);
     }
-    .roadmap-section-head p {
-        margin: 0;
-        font-size: 0.88rem;
+    .rm-card-sub {
+        margin: 0 0 16px 0;
+        font-size: 0.85rem;
         color: #64748b;
     }
 
-    .roadmap-list {
+    .rm-rows {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        divide-y: 1px solid #f1f5f9;
     }
-    .roadmap-item {
+    .rm-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 13px 0;
+        border-top: 1px solid #f1f5f9;
+    }
+    .rm-row:first-child {
+        border-top: none;
+        padding-top: 4px;
+    }
+    .rm-row:last-child {
+        padding-bottom: 2px;
+    }
+    .rm-row-main {
         display: flex;
         align-items: flex-start;
         gap: 14px;
-        padding: 15px 16px;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        background: #f8fafc;
-        transition: all 0.15s ease;
-    }
-    .roadmap-item.is-done {
-        background: #f0fdf4;
-        border-color: #bbf7d0;
-    }
-    .roadmap-item.is-done .roadmap-item-title {
-        text-decoration: line-through;
-        color: #64748b;
-    }
-    .roadmap-check {
-        width: 22px;
-        height: 22px;
-        margin-top: 2px;
-        accent-color: #1B4332;
-        cursor: pointer;
-        flex-shrink: 0;
-    }
-    .roadmap-item-body {
         flex: 1;
         min-width: 0;
     }
-    .roadmap-item-top {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-bottom: 5px;
-    }
-    .roadmap-item-title {
-        font-weight: 700;
-        font-size: 0.96rem;
-        color: #0f172a;
-    }
-    .roadmap-badge {
-        font-size: 0.72rem;
-        font-weight: 800;
-        padding: 2px 9px;
-        border-radius: 999px;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-    .badge-hoje { background: #fee2e2; color: #991b1b; }
-    .badge-lancamento { background: #fef3c7; color: #92400e; }
-    .badge-agendado { background: #dbeafe; color: #1e40af; }
-    .badge-futuro { background: #ede9fe; color: #5b21b6; }
-    .badge-critico { background: #1B4332; color: #FFEE8C; }
-
-    .roadmap-item-desc {
-        margin: 0;
-        font-size: 0.87rem;
-        color: #475569;
-        line-height: 1.5;
-    }
-    .roadmap-item-meta {
-        margin-top: 8px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        font-size: 0.78rem;
-        color: #64748b;
-        align-items: center;
-    }
-    .roadmap-trigger-box {
-        margin-top: 8px;
-        padding: 8px 11px;
-        background: #ffffff;
-        border: 1px dashed #cbd5e1;
-        border-radius: 10px;
-        font-size: 0.82rem;
-        color: #334155;
-        line-height: 1.45;
-    }
-    .roadmap-item-actions {
-        display: flex;
-        gap: 6px;
+    .rm-pill {
         flex-shrink: 0;
+        min-width: 82px;
+        text-align: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #334155;
+        margin-top: 1px;
     }
-    .roadmap-icon-btn {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        color: #64748b;
-        border-radius: 8px;
-        padding: 6px 9px;
-        font-size: 0.78rem;
-        cursor: pointer;
-    }
-    .roadmap-icon-btn:hover {
-        border-color: #1B4332;
-        color: #1B4332;
-    }
+    .rm-pill-green { background: #dcfce7; color: #166534; }
+    .rm-pill-blue { background: #dbeafe; color: #1e40af; }
+    .rm-pill-amber { background: #fef3c7; color: #92400e; }
 
-    .roadmap-marcos-mini {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        gap: 12px;
-        margin-bottom: 16px;
-    }
-    .marco-mini-card {
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 12px 14px;
-        background: #f8fafc;
-    }
-    .marco-mini-card strong {
-        display: block;
-        font-size: 0.85rem;
+    .rm-row-title {
+        font-weight: 700;
+        font-size: 0.94rem;
         color: #0f172a;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
     }
-    .marco-mini-card span {
-        font-size: 0.8rem;
-        color: #64748b;
+    .rm-row-desc {
+        font-size: 0.85rem;
+        color: #475569;
+        line-height: 1.45;
+        margin: 0;
+    }
+    .rm-countdown {
+        display: inline-block;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #1B4332;
+        margin-left: 6px;
+    }
+    .rm-link {
+        flex-shrink: 0;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #1B4332;
+        text-decoration: none;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        white-space: nowrap;
+        align-self: center;
+    }
+    .rm-link:hover {
+        background: #dcfce7;
     }
 
-    @media (max-width: 768px) {
-        .roadmap-hero { padding: 20px; }
-        .roadmap-section { padding: 16px; }
-        .roadmap-item { flex-direction: column; }
+    .rm-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #1B4332;
+        color: #ffffff;
+        font-size: 0.76rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    @media (max-width: 700px) {
+        .rm-card { padding: 16px 18px; }
+        .rm-row { flex-direction: column; gap: 10px; }
+        .rm-link { align-self: flex-start; }
     }
 </style>
 
-<div class="modern-dashboard-layout roadmap-shell">
-    <div class="roadmap-hero">
-        <div>
-            <h1>Implementações Futuras &amp; Reavaliações</h1>
-            <p>Checklist operacional do lançamento de janeiro (Comunidade + Essencial 7d c/ cartão), cronograma de reavaliação estratégica e avaliações já agendadas.</p>
-        </div>
-        <div class="roadmap-hero-actions">
-            <button type="button" class="roadmap-btn-ghost" onclick="window.navigateToPage('admin_crm_health.html')">Ver Saúde &amp; Marcos</button>
-            <button type="button" class="roadmap-btn-primary" id="btn-novo-item-roadmap">+ Adicionar item</button>
-        </div>
+<div class="modern-dashboard-layout rm-simple-shell">
+    <div class="rm-header">
+        <h1>Implementações Futuras &amp; Reavaliações</h1>
+        <p>Visão simples de consulta: avaliações já agendadas, passos do lançamento de janeiro e melhorias futuras.</p>
     </div>
 
-    <!-- KPI RESUMO -->
-    <div class="roadmap-kpi-strip">
-        <div class="roadmap-kpi-card">
-            <div class="roadmap-kpi-label">Checklist de Lançamento (Jan)</div>
-            <div class="roadmap-kpi-value" id="kpi-launch-progress">0 / 0</div>
-            <div class="roadmap-kpi-sub" id="kpi-launch-sub">Itens obrigatórios para virar a chave</div>
-            <div class="roadmap-progress-track"><div class="roadmap-progress-fill" id="kpi-launch-bar" style="width: 0%;"></div></div>
-        </div>
-        <div class="roadmap-kpi-card">
-            <div class="roadmap-kpi-label">Avaliações Agendadas</div>
-            <div class="roadmap-kpi-value" id="kpi-reviews-progress">0 pendentes</div>
-            <div class="roadmap-kpi-sub" id="kpi-reviews-next">Próxima: carregando...</div>
-        </div>
-        <div class="roadmap-kpi-card">
-            <div class="roadmap-kpi-label">Backlog Futuro</div>
-            <div class="roadmap-kpi-value" id="kpi-future-progress">0 / 0</div>
-            <div class="roadmap-kpi-sub">Otimizações de funil, Ads e Plano Referência</div>
-        </div>
-        <div class="roadmap-kpi-card">
-            <div class="roadmap-kpi-label">Status de Sincronização</div>
-            <div class="roadmap-kpi-value" id="kpi-sync-status" style="font-size: 1.15rem; color: #166534;">Sincronizado</div>
-            <div class="roadmap-kpi-sub" id="kpi-sync-time">Salvo no banco da plataforma</div>
-        </div>
-    </div>
+    <!-- 1. AVALIAÇÕES AGENDADAS & REAVALIAÇÃO -->
+    <section class="rm-card">
+        <h2 class="rm-card-title">1. Avaliações Agendadas</h2>
+        <p class="rm-card-sub">Datas previstas hoje na operação e marcos para reavaliar a estratégia pós-lançamento.</p>
 
-    <!-- FILTROS POR SEÇÃO -->
-    <div class="roadmap-tabs">
-        <div class="roadmap-tab-list">
-            <button type="button" class="roadmap-tab-btn is-active" data-filter="all">Tudo</button>
-            <button type="button" class="roadmap-tab-btn" data-filter="launch">Checklist de Lançamento</button>
-            <button type="button" class="roadmap-tab-btn" data-filter="reviews">Avaliações Agendadas &amp; Reavaliações</button>
-            <button type="button" class="roadmap-tab-btn" data-filter="future">Implementações Futuras</button>
-        </div>
-        <button type="button" id="btn-reset-roadmap" style="background: none; border: none; color: #64748b; font-size: 0.8rem; text-decoration: underline; cursor: pointer;">Restaurar checklist padrão</button>
-    </div>
-
-    <!-- SEÇÃO 1: CHECKLIST DO LANÇAMENTO DE JANEIRO -->
-    <section class="roadmap-section" data-section-group="launch">
-        <div class="roadmap-section-head">
-            <div>
-                <h2>1. Checklist do Lançamento (Branch <code>feature/freemium-plan</code> &rarr; Produção)</h2>
-                <p>Passo a passo técnico e de validação para executar no dia em que publicar a versão em janeiro.</p>
-            </div>
-        </div>
-        <div class="roadmap-list" id="list-launch"></div>
-    </section>
-
-    <!-- SEÇÃO 2: AVALIAÇÕES AGENDADAS HOJE & REAVALIAÇÃO DA ESTRATÉGIA -->
-    <section class="roadmap-section" data-section-group="reviews">
-        <div class="roadmap-section-head">
-            <div>
-                <h2>2. Avaliações Agendadas Hoje &amp; Quando Reavaliar a Nova Estratégia</h2>
-                <p>Inclui as revisões já previstas na operação (Marcos financeiros, Ads e WhatsApp) + marcos de decisão D+8, D+30 e D+60/90 pós-lançamento.</p>
-            </div>
-        </div>
-
-        <div class="roadmap-marcos-mini" id="marcos-live-strip">
-            <div class="marco-mini-card">
-                <strong>Marco 20 — Operacional</strong>
-                <span id="live-marco-20">Carregando...</span>
-            </div>
-            <div class="marco-mini-card">
-                <strong>Marco 70 — Saída do MEI</strong>
-                <span id="live-marco-70">Carregando...</span>
-            </div>
-            <div class="marco-mini-card">
-                <strong>Marco 120 — Pró-labore Sustentável</strong>
-                <span id="live-marco-120">Carregando...</span>
-            </div>
-        </div>
-
-        <div class="roadmap-list" id="list-reviews"></div>
-    </section>
-
-    <!-- SEÇÃO 3: IMPLEMENTAÇÕES FUTURAS -->
-    <section class="roadmap-section" data-section-group="future">
-        <div class="roadmap-section-head">
-            <div>
-                <h2>3. Implementações Futuras (Backlog Estratégico)</h2>
-                <p>Melhorias priorizadas de produto, tráfego pago, conversão de WhatsApp e novos planos.</p>
-            </div>
-        </div>
-        <div class="roadmap-list" id="list-future"></div>
-    </section>
-</div>
-
-<!-- MODAL ADICIONAR NOVO ITEM / REAVALIAÇÃO -->
-<div id="modal-roadmap-add" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); z-index: 12000; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
-    <div style="background: #ffffff; width: 92%; max-width: 520px; border-radius: 18px; padding: 26px; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
-        <h3 style="margin: 0 0 6px 0; color: #1B4332; font-family: var(--font-titulos, 'Fraunces', serif); font-size: 1.35rem;">Adicionar Item ou Reavaliação</h3>
-        <p style="margin: 0 0 18px 0; color: #64748b; font-size: 0.88rem;">Salvo diretamente no painel admin para acompanhamento da estratégia.</p>
-
-        <form id="form-roadmap-add" style="display: flex; flex-direction: column; gap: 12px;">
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">Categoria</label>
-                <select id="rm-input-group" style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; font-size:0.9rem;">
-                    <option value="launch">Checklist de Lançamento</option>
-                    <option value="reviews" selected>Avaliação / Reavaliação Agendada</option>
-                    <option value="future">Implementação Futura</option>
-                </select>
-            </div>
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">Título</label>
-                <input id="rm-input-title" type="text" required placeholder="Ex.: Revisar CPA após novo grupo TCC no Google Ads" style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; font-size:0.9rem; box-sizing:border-box;">
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div>
-                    <label style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">Data / Marco alvo</label>
-                    <input id="rm-input-when" type="text" placeholder="Ex.: D+15 / 15/01/2027" style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; font-size:0.9rem; box-sizing:border-box;">
+        <div class="rm-rows">
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-pill rm-pill-green">30/11</span>
+                    <div>
+                        <div class="rm-row-title">
+                            Revisão SEO &amp; GSC
+                            <span class="rm-countdown" id="rm-cd-seo"></span>
+                        </div>
+                        <p class="rm-row-desc">Conferir indexação de Perguntas/Blog no Search Console e ajustar títulos de menor CTR.</p>
+                    </div>
                 </div>
-                <div>
-                    <label style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">Prioridade / Tag</label>
-                    <input id="rm-input-tag" type="text" placeholder="Ex.: Estratégia / Alta" style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; font-size:0.9rem; box-sizing:border-box;">
+                <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_cmo_metrics.html'); return false;">Ver no CMO &rarr;</a>
+            </div>
+
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-pill rm-pill-blue">08/12</span>
+                    <div>
+                        <div class="rm-row-title">
+                            Tráfego Pago &amp; Motor V6.1
+                            <span class="rm-countdown" id="rm-cd-traffic"></span>
+                        </div>
+                        <p class="rm-row-desc">Avaliar teto de CPC R$ 5,00 no Google Ads (R$ 90/dia), botão WhatsApp em /resultados, Meta Ads e Motor V6.1.</p>
+                    </div>
+                </div>
+                <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_cmo_metrics.html'); return false;">Ver no CMO &rarr;</a>
+            </div>
+
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-pill rm-pill-amber">Jan (D+8)</span>
+                    <div>
+                        <div class="rm-row-title">Auditoria do 1º lote de cobrança pós-trial (7 dias)</div>
+                        <p class="rm-row-desc">Conferir se os primeiros trials Trimestrais/Semestrais cobraram corretamente no 8º dia via tokenização Asaas.</p>
+                    </div>
                 </div>
             </div>
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">Descrição / O que verificar</label>
-                <textarea id="rm-input-desc" rows="3" placeholder="Detalhes da tarefa ou métricas a comparar..." style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; font-size:0.9rem; box-sizing:border-box;"></textarea>
+
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-pill rm-pill-amber">Fev (D+30)</span>
+                    <div>
+                        <div class="rm-row-title">Reavaliação da Estratégia (Comunidade + 7d c/ Cartão)</div>
+                        <p class="rm-row-desc">Comparar conversão Trial &rarr; Pagante e decidir se mantém cartão nos 7 dias ou testa opt-in sem cartão por CPF.</p>
+                    </div>
+                </div>
+                <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_crm_health.html'); return false;">Ver Saúde &rarr;</a>
             </div>
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">Critério de Decisão (opcional)</label>
-                <input id="rm-input-trigger" type="text" placeholder="Ex.: Se no_contact continuar > 20%, implementar confirmação antes do wa.me" style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; font-size:0.9rem; box-sizing:border-box;">
+
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-pill">Marcos</span>
+                    <div>
+                        <div class="rm-row-title">Metas de Base Pagante (20 / 70 / 120)</div>
+                        <p class="rm-row-desc" id="rm-marcos-line">Carregando progresso atual dos marcos...</p>
+                    </div>
+                </div>
+                <a href="#" class="rm-link" onclick="if(window.navigateToPage) window.navigateToPage('admin_crm_health.html'); return false;">Ver Marcos &rarr;</a>
             </div>
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
-                <button type="button" id="btn-cancel-roadmap-add" style="padding:10px 16px; border:1px solid #cbd5e1; background:#ffffff; border-radius:10px; cursor:pointer; font-weight:600;">Cancelar</button>
-                <button type="submit" style="padding:10px 18px; border:none; background:#1B4332; color:#ffffff; border-radius:10px; cursor:pointer; font-weight:700;">Salvar item</button>
+        </div>
+    </section>
+
+    <!-- 2. O QUE FAZER AO LANÇAR EM JANEIRO -->
+    <section class="rm-card">
+        <h2 class="rm-card-title">2. Quando lançar a versão de Janeiro</h2>
+        <p class="rm-card-sub">Passos rápidos na virada da branch <code>feature/freemium-plan</code> para produção.</p>
+
+        <div class="rm-rows">
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-num">1</span>
+                    <div>
+                        <div class="rm-row-title">Confirmar tokenização no Asaas Produção</div>
+                        <p class="rm-row-desc">Validar com o Asaas que o endpoint <code>/v3/creditCard/tokenizeCreditCard</code> está liberado na conta live.</p>
+                    </div>
+                </div>
             </div>
-        </form>
-    </div>
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-num">2</span>
+                    <div>
+                        <div class="rm-row-title">Definir <code>NEW_PRICING_LAUNCH_DATE</code> no Render</div>
+                        <p class="rm-row-desc">Garante que apenas assinantes anteriores à data recebam o aviso e preservem o valor contratado no painel.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-num">3</span>
+                    <div>
+                        <div class="rm-row-title">Subir <code>feature/freemium-plan</code> &rarr; <code>main</code> e validar fluxos</div>
+                        <p class="rm-row-desc">Testar Mensal (D+7), Trimestral (3x R$ 129), Semestral (6x R$ 99), assinante legado e ocultação do Plano Comunidade no Match.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. IMPLEMENTAÇÕES FUTURAS -->
+    <section class="rm-card">
+        <h2 class="rm-card-title">3. Implementações Futuras</h2>
+        <p class="rm-card-sub">Lista de melhorias mapeadas para pedir quando for o momento.</p>
+
+        <div class="rm-rows">
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-pill">Conversão</span>
+                    <div>
+                        <div class="rm-row-title">Ajuste no clique do WhatsApp para reduzir <code>no_contact</code></div>
+                        <p class="rm-row-desc">Disparo síncrono de <code>wa.me</code> (sem <code>await fetch</code> / <code>setTimeout</code> em <code>psi_perfil_publico.js</code>) + mensagem inicial direta.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-pill">Google Ads</span>
+                    <div>
+                        <div class="rm-row-title">Grupos de cauda longa por abordagem</div>
+                        <p class="rm-row-desc">Reduzir dependência das 3 head terms caras e negativar termos sem conversão para baixar o CPL.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-pill">Produto</span>
+                    <div>
+                        <div class="rm-row-title">Lançamento do Plano Referência</div>
+                        <p class="rm-row-desc">Supervisão/intervisão, workshops e rede de encaminhamento após consolidação do Plano Essencial.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="rm-row">
+                <div class="rm-row-main">
+                    <span class="rm-pill">CRM</span>
+                    <div>
+                        <div class="rm-row-title">Reativação da base histórica sem assinatura</div>
+                        <p class="rm-row-desc">Convidar cadastros antigos completos a entrar no Plano Comunidade gratuito e experimentar o novo Essencial.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
