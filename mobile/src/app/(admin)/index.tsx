@@ -609,6 +609,16 @@ export default function AdminVisaoGeralScreen() {
                 </View>
               </View>
             </View>
+
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={() => router.push('/(admin)/crm-modulo/dre')}
+              style={{ marginTop: 12, alignItems: 'center', paddingVertical: 4 }}
+            >
+              <Text className="font-sans font-bold text-[#1B4332] text-[12px]">
+                Abrir DRE Contábil →
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 

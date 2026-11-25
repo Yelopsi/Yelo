@@ -95,6 +95,12 @@ export default function AdminCopilotWppScreen() {
   const identifyAbortRef = useRef<AbortController | null>(null);
   const generateSeqRef = useRef(0);
   const generateAbortRef = useRef<AbortController | null>(null);
+  const pasteBurstRef = useRef<{
+    lastEventAt: number;
+    baseText: string;
+    chunks: string[];
+    isAppend: boolean;
+  }>({ lastEventAt: 0, baseText: '', chunks: [], isAppend: false });
 
   // Busca manual
   const [isManualSearchOpen, setIsManualSearchOpen] = useState(false);
@@ -314,6 +320,48 @@ export default function AdminCopilotWppScreen() {
     const fromHtml = htmlRaw ? stripHtmlTags(htmlRaw) : '';
     const best = fromHtml && fromHtml.length > plainRaw.length + 5 ? fromHtml : plainRaw;
     return (best || '').replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '').trim();
+  };
+
+  // Manipula múltiplos NSItemProviders do UIPasteControl (WhatsApp iOS envia 1 item por balão)
+  const handleNativePastePayload = (data: Clipboard.PasteEventPayload, isAppend: boolean) => {
+    if (data?.type !== 'text' || !data.text) return;
+    const cleanChunk = String(data.text)
+      .replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '')
+      .trim();
+    if (!cleanChunk) return;
+
+    const now = Date.now();
+    const isSameBurst = now - pasteBurstRef.current.lastEventAt < 500 && pasteBurstRef.current.isAppend === isAppend;
+
+    if (!isSameBurst) {
+      pasteBurstRef.current = {
+        lastEventAt: now,
+        baseText: isAppend ? pastedChat.trim() : '',
+        chunks: [cleanChunk],
+        isAppend,
+      };
+      if (!isAppend) {
+        resetIdentityState();
+      }
+    } else {
+      pasteBurstRef.current.lastEventAt = now;
+      pasteBurstRef.current.chunks.push(cleanChunk);
+    }
+
+    const joinedBurst = pasteBurstRef.current.chunks.join('\n\n');
+    const finalText = pasteBurstRef.current.baseText
+      ? `${pasteBurstRef.current.baseText}\n\n${joinedBurst}`
+      : joinedBurst;
+
+    setPastedChat(finalText);
+    scheduleAutoIdentify(finalText, 250, { preserveManualLock: isAppend });
+    const count = pasteBurstRef.current.chunks.length;
+    setToastMessage(
+      isAppend
+        ? `${count > 1 ? count + ' mensagens anexadas' : 'Mensagem anexada'}!`
+        : `${count > 1 ? count + ' mensagens coladas' : 'Conversa colada'}!`
+    );
+    setToastType('success');
   };
 
   // Botão Colar Tudo da Área de Transferência
@@ -886,49 +934,79 @@ export default function AdminCopilotWppScreen() {
                   📋 Conversa do WhatsApp
                 </Text>
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <TouchableOpacity
-                    onPress={handlePasteAll}
-                    style={{
-                      backgroundColor: '#10b981',
-                      paddingHorizontal: 12,
-                      paddingVertical: 7,
-                      borderRadius: 999,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 5,
-                      shadowColor: '#10b981',
-                      shadowOpacity: 0.25,
-                      shadowRadius: 4,
-                      shadowOffset: { width: 0, height: 1 },
-                      elevation: 2,
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Feather name="clipboard" size={12} color="#ffffff" />
-                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11.5, color: '#ffffff' }}>Colar Tudo</Text>
-                  </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  {Platform.OS === 'ios' && Clipboard.isPasteButtonAvailable ? (
+                    <>
+                      <Clipboard.ClipboardPasteButton
+                        onPress={(payload) => handleNativePastePayload(payload, false)}
+                        acceptedContentTypes={['plain-text']}
+                        backgroundColor="#10b981"
+                        foregroundColor="#ffffff"
+                        cornerStyle="capsule"
+                        displayMode="iconAndLabel"
+                        style={{ height: 30, width: 92 }}
+                      />
+                      {pastedChat ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#1d4ed8' }}>+</Text>
+                          <Clipboard.ClipboardPasteButton
+                            onPress={(payload) => handleNativePastePayload(payload, true)}
+                            acceptedContentTypes={['plain-text']}
+                            backgroundColor="#eff6ff"
+                            foregroundColor="#1d4ed8"
+                            cornerStyle="capsule"
+                            displayMode="iconOnly"
+                            style={{ height: 30, width: 34 }}
+                          />
+                        </View>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      <TouchableOpacity
+                        onPress={handlePasteAll}
+                        style={{
+                          backgroundColor: '#10b981',
+                          paddingHorizontal: 12,
+                          paddingVertical: 7,
+                          borderRadius: 999,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 5,
+                          shadowColor: '#10b981',
+                          shadowOpacity: 0.25,
+                          shadowRadius: 4,
+                          shadowOffset: { width: 0, height: 1 },
+                          elevation: 2,
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Feather name="clipboard" size={12} color="#ffffff" />
+                        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11.5, color: '#ffffff' }}>Colar Tudo</Text>
+                      </TouchableOpacity>
 
-                  {pastedChat ? (
-                    <TouchableOpacity
-                      onPress={handlePasteMore}
-                      style={{
-                        backgroundColor: '#eff6ff',
-                        paddingHorizontal: 10,
-                        paddingVertical: 7,
-                        borderRadius: 999,
-                        borderWidth: 1,
-                        borderColor: '#bfdbfe',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 3,
-                      }}
-                      activeOpacity={0.8}
-                    >
-                      <Feather name="plus" size={12} color="#1d4ed8" />
-                      <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11.5, color: '#1d4ed8' }}>Mais</Text>
-                    </TouchableOpacity>
-                  ) : null}
+                      {pastedChat ? (
+                        <TouchableOpacity
+                          onPress={handlePasteMore}
+                          style={{
+                            backgroundColor: '#eff6ff',
+                            paddingHorizontal: 10,
+                            paddingVertical: 7,
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: '#bfdbfe',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 3,
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Feather name="plus" size={12} color="#1d4ed8" />
+                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11.5, color: '#1d4ed8' }}>Mais</Text>
+                        </TouchableOpacity>
+                      ) : null}
+                    </>
+                  )}
                 </View>
               </View>
 
