@@ -1,5 +1,40 @@
 [
   {
+    "id": "change-git-c79f7585",
+    "date": "2026-11-25T00:01:14.000Z",
+    "commit": "c79f7585",
+    "author": "Anderson",
+    "title": "Novo: Adicionar central Seguranca na Clinica e novidade sugerida por Suzana Terumi (psi)",
+    "category": "Melhorias do Sistema",
+    "badgeColor": "#1B4332",
+    "status": "Em Produção",
+    "summary": "adicionar central Seguranca na Clinica e novidade sugerida por Suzana Terumi",
+    "description": "Commit registrado no repositório: \"feat(psi): adicionar central Seguranca na Clinica e novidade sugerida por Suzana Terumi\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(tabs)/_layout.tsx, mobile/src/app/(tabs)/clinica.tsx, mobile/src/app/(tabs)/historico_contatos.tsx (+8 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #c79f7585"
+    },
+    "after": {
+      "nova_versao": "adicionar central Seguranca na Clinica e novidade sugerida por Suzana Terumi"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/_layout.tsx",
+      "mobile/src/app/(tabs)/clinica.tsx",
+      "mobile/src/app/(tabs)/historico_contatos.tsx",
+      "mobile/src/app/(tabs)/manual-conversao.tsx",
+      "mobile/src/app/(tabs)/novidades.tsx",
+      "mobile/src/app/(tabs)/seguranca-clinica.tsx",
+      "public/psi/psi_clinica_hub.html",
+      "public/psi/psi_dashboard.js",
+      "public/psi/psi_historico_contatos.html",
+      "public/psi/psi_manual_conversao.html",
+      "public/psi/psi_seguranca_clinica.html"
+    ]
+  },
+  {
     "id": "change-psi-seguranca-clinica",
     "date": "2026-11-24T22:00:00.000Z",
     "commit": "manual",
