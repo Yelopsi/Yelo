@@ -1,5 +1,62 @@
 [
   {
+    "id": "change-git-e26b840d",
+    "date": "2026-11-25T19:09:21.000Z",
+    "commit": "e26b840d",
+    "author": "Anderson",
+    "title": "Novo: Add roadmap, launch checklist and scheduled reviews page (admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "add roadmap, launch checklist and scheduled reviews page",
+    "description": "Commit registrado no repositório: \"feat(admin): add roadmap, launch checklist and scheduled reviews page\". Arquivos modificados: admin/admin.js, admin/admin_configuracoes_hub.html, admin/admin_crm_hub.html, admin/admin_roadmap_reavaliacoes.html, admin/admin_roadmap_reavaliacoes.js (+5 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #e26b840d"
+    },
+    "after": {
+      "nova_versao": "add roadmap, launch checklist and scheduled reviews page"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin.js",
+      "admin/admin_configuracoes_hub.html",
+      "admin/admin_crm_hub.html",
+      "admin/admin_roadmap_reavaliacoes.html",
+      "admin/admin_roadmap_reavaliacoes.js",
+      "admin/admin_visao_geral.html",
+      "backend/controllers/settingsController.js",
+      "backend/models/SystemSetting.js",
+      "backend/routes/adminRoutes.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-4d4a6eab",
+    "date": "2026-11-25T01:20:21.000Z",
+    "commit": "4d4a6eab",
+    "author": "Anderson",
+    "title": "Manutenção: Registrar commit 9180997a (changelog)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "registrar commit 9180997a",
+    "description": "Commit registrado no repositório: \"chore(changelog): registrar commit 9180997a\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #4d4a6eab"
+    },
+    "after": {
+      "nova_versao": "registrar commit 9180997a"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-9180997a",
     "date": "2026-11-25T01:13:16.000Z",
     "commit": "9180997a",
