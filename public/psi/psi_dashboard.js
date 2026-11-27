@@ -60,6 +60,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- EXPOSIÇÃO DE ESTADO PARA MÓDULOS ---
     window.getPsychologistData = () => psychologistData;
     window.setPsychologistData = (data) => { psychologistData = data; };
+    window.isYeloNewPricingActive = (data) => {
+        const ref = data || psychologistData;
+        if (ref && typeof ref.isNewPricingActive === 'boolean') return ref.isNewPricingActive;
+        return Date.now() >= Date.parse('2027-01-01T00:00:00-03:00');
+    };
     window.atualizarInterfaceLateral = atualizarInterfaceLateral;
 
     const mainContent = document.getElementById('main-content');
@@ -535,6 +540,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (trialPremiumBanner) trialPremiumBanner.style.display = 'none'; // Esconde o banner de trial por padrão
         if (bannerAnterior) bannerAnterior.remove();
 
+        const isNewPricing = window.isYeloNewPricingActive(psychologistData);
+
         // Usuários VIP/Isentos nunca são bloqueados
         if (psychologistData.is_exempt) return;
 
@@ -543,6 +550,14 @@ document.addEventListener('DOMContentLoaded', function () {
             mainEl.classList.add('blocked-view');
 
             if (paywallOverlay) {
+                const paywallTitle = paywallOverlay.querySelector('h2');
+                const paywallText = paywallOverlay.querySelector('p');
+                const paywallBtn = paywallOverlay.querySelector('button');
+                if (!isNewPricing) {
+                    if (paywallTitle) paywallTitle.textContent = 'Seu período de teste terminou!';
+                    if (paywallText) paywallText.textContent = 'Seu período de avaliação gratuita acabou! Mas seus pacientes continuam esperando por você. Assine agora para manter seu perfil visível nos resultados e desbloquear recursos exclusivos.';
+                    if (paywallBtn) paywallBtn.textContent = 'Ativar Agora';
+                }
                 paywallOverlay.style.display = 'flex';
             } else {
                 mainEl.classList.add('restricted-mode');
@@ -551,7 +566,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 banner.innerHTML = `<span>🔒 Seu período de teste expirou. Ative o Premium para continuar.</span><button onclick="window.loadPage('psi_assinatura.html')">Assinar Agora</button>`;
                 document.body.appendChild(banner);
             }
-        } else if (psychologistData.plano === 'Comunidade' && !paginasPermitidas.includes(url)) {
+        } else if (isNewPricing && psychologistData.plano === 'Comunidade' && !paginasPermitidas.includes(url)) {
             if (!sessionStorage.getItem('hideFreemiumBanner')) {
                 const banner = document.createElement('div');
                 banner.className = 'restriction-floating-banner';
@@ -583,20 +598,29 @@ document.addEventListener('DOMContentLoaded', function () {
             trialPremiumBanner.style.display = 'flex';
             const titleEl = document.getElementById('trial-premium-title');
             const messageEl = document.getElementById('trial-premium-message');
-            if (titleEl) titleEl.textContent = psychologistData.trialBannerMessage || "Ative o Plano Essencial com 7 dias grátis!";
-            if (messageEl) messageEl.textContent = "Cadastre seu cartão na página de Assinatura para testar a vitrine completa por 7 dias grátis antes da primeira cobrança.";
+            if (!isNewPricing) {
+                if (titleEl) titleEl.textContent = psychologistData.trialBannerMessage || "Complete seu CPF para liberar o Plano Essencial!";
+                if (messageEl) messageEl.textContent = "Seu perfil está quase pronto! Adicione seu CPF para ativar seus 7 dias de teste grátis do Plano Essencial e começar a receber pacientes.";
+            } else {
+                if (titleEl) titleEl.textContent = psychologistData.trialBannerMessage || "Ative o Plano Essencial com 7 dias grátis!";
+                if (messageEl) messageEl.textContent = "Cadastre seu cartão na página de Assinatura para testar a vitrine completa por 7 dias grátis antes da primeira cobrança.";
+            }
         }
 
-        // Banner informativo para quem já é assinante (preço e condições preservados)
+        // Banner informativo para quem já é assinante após a virada de preços (preço e condições preservados)
         const legacyNoticeBanner = document.getElementById('legacy-pricing-notice-banner');
-        if (legacyNoticeBanner && psychologistData.isLegacySubscriber && !localStorage.getItem('yelo_dismissed_legacy_notice_v1')) {
-            legacyNoticeBanner.style.display = 'flex';
-            const btnDismissLegacy = document.getElementById('btn-dismiss-legacy-notice');
-            if (btnDismissLegacy) {
-                btnDismissLegacy.onclick = () => {
-                    legacyNoticeBanner.style.display = 'none';
-                    localStorage.setItem('yelo_dismissed_legacy_notice_v1', '1');
-                };
+        if (legacyNoticeBanner) {
+            if (isNewPricing && psychologistData.isLegacySubscriber && !localStorage.getItem('yelo_dismissed_legacy_notice_v1')) {
+                legacyNoticeBanner.style.display = 'flex';
+                const btnDismissLegacy = document.getElementById('btn-dismiss-legacy-notice');
+                if (btnDismissLegacy) {
+                    btnDismissLegacy.onclick = () => {
+                        legacyNoticeBanner.style.display = 'none';
+                        localStorage.setItem('yelo_dismissed_legacy_notice_v1', '1');
+                    };
+                }
+            } else {
+                legacyNoticeBanner.style.display = 'none';
             }
         }
     }

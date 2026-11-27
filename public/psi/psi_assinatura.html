@@ -1,7 +1,7 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 <style>
     /* ==========================================================================
-       ASSINATURA & PLANOS YELO — ESTÉTICA AIRBNB / NUBANK
+       ASSINATURA & PLANOS YELO - ESTÉTICA AIRBNB / NUBANK
        Mobile-First + Bento Grid Desktop
        ========================================================================== */
     .yelo-sub-shell {
@@ -224,6 +224,10 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 22px;
         align-items: stretch;
+    }
+    .plans-bento-grid.is-legacy-prejan {
+        grid-template-columns: minmax(0, 460px);
+        justify-content: center;
     }
     .plan-surface {
         background: #ffffff;
@@ -547,7 +551,7 @@
         <div style="flex: 1; min-width: 240px;">
             <span style="display: inline-block; background: #FFEE8C; color: #1B4332; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;">Black Friday Yelo • 50% OFF</span>
             <h2 id="bf-banner-title" style="margin: 0 0 6px 0; color: #ffffff !important; font-family: var(--font-titulos, serif); font-size: 1.55rem;">2 meses de consultório ativo por R$ 99,00</h2>
-            <p id="bf-banner-desc" style="margin: 0; color: rgba(255,255,255,0.9); font-size: 0.96rem; line-height: 1.5;">Pague apenas 1 mês (R$ 99,00) na entrada e receba <strong>60 dias completos</strong> de assinatura. Condição exclusiva liberada automaticamente para o e-mail <strong id="bf-banner-email"></strong> — sem precisar de cupom.</p>
+            <p id="bf-banner-desc" style="margin: 0; color: rgba(255,255,255,0.9); font-size: 0.96rem; line-height: 1.5;">Pague apenas 1 mês (R$ 99,00) na entrada e receba <strong>60 dias completos</strong> de assinatura. Condição exclusiva liberada automaticamente para o e-mail <strong id="bf-banner-email"></strong>, sem precisar de cupom.</p>
         </div>
         <button type="button" id="btn-bf-assinar-agora" style="background: #FFEE8C; color: #1B4332; border: none; border-radius: 50px; padding: 14px 26px; font-weight: 800; font-size: 0.98rem; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.2); white-space: nowrap;">Garantir 2 meses por R$ 99 &rarr;</button>
     </div>
@@ -792,7 +796,7 @@
             </ul>
 
             <button class="btn-modern btn-primary-modern btn-upgrade btn-mudar-plano" id="btn-assinar-essencial" data-plano="ESSENTIAL" data-cycle="SEMIANNUAL">
-                Assinar Semestral — R$ 99/mês
+                Assinar Semestral - R$ 99/mês
             </button>
             <p class="cta-footnote">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
@@ -881,34 +885,52 @@
     const BASE_URL = (typeof window.API_BASE_URL !== 'undefined') ? window.API_BASE_URL : 'http://localhost:3001';
     const token = localStorage.getItem('Yelo_token');
 
-    // --- CONFIGURAÇÃO DAS 3 MODALIDADES DO PLANO ESSENCIAL ---
+    function resolveNewPricing(user) {
+        if (typeof window.isYeloNewPricingActive === 'function') {
+            return window.isYeloNewPricingActive(user);
+        }
+        if (user && typeof user.isNewPricingActive === 'boolean') {
+            return user.isNewPricingActive;
+        }
+        return Date.now() >= Date.parse('2027-01-01T00:00:00-03:00');
+    }
+
+    let isNewPricingMode = resolveNewPricing(window.currentUserData || (window.getPsychologistData && window.getPsychologistData()));
+
+    // --- CONFIGURAÇÃO DAS 3 MODALIDADES DO PLANO ESSENCIAL (JAN/2027+) ---
     const CYCLE_CONFIG = {
         MONTHLY: {
             label: 'Mensal',
             monthlyPrice: 159,
             oldPrice: null,
             noteHtml: 'Cobrança mensal de <strong>R$ 159</strong> · Sem fidelidade, cancele quando quiser',
-            cta: 'Assinar Mensal — R$ 159/mês'
+            cta: 'Assinar Mensal - R$ 159/mês'
         },
         QUARTERLY: {
             label: 'Trimestral',
             monthlyPrice: 129,
             oldPrice: 'R$ 159',
             noteHtml: 'Trimestral: 3x de R$ 129 no cartão (total R$ 387) · <span class="plan-savings-inline">Economia de R$ 90</span>',
-            cta: 'Assinar Trimestral — R$ 129/mês'
+            cta: 'Assinar Trimestral - R$ 129/mês'
         },
         SEMIANNUAL: {
             label: 'Semestral',
             monthlyPrice: 99,
             oldPrice: 'R$ 159',
             noteHtml: 'Semestral: 6x de R$ 99 no cartão (total R$ 594) · <span class="plan-savings-inline">Economia de R$ 360</span>',
-            cta: 'Assinar Semestral — R$ 99/mês'
+            cta: 'Assinar Semestral - R$ 99/mês'
         }
     };
 
-    let selectedCycle = 'SEMIANNUAL';
+    let selectedCycle = isNewPricingMode ? 'SEMIANNUAL' : 'MONTHLY';
 
     function updateCycleUI(cycleKey) {
+        if (!isNewPricingMode) {
+            selectedCycle = 'MONTHLY';
+            const ctaBtn = document.getElementById('btn-assinar-essencial');
+            if (ctaBtn) ctaBtn.setAttribute('data-cycle', 'MONTHLY');
+            return;
+        }
         const cfg = CYCLE_CONFIG[cycleKey] || CYCLE_CONFIG.SEMIANNUAL;
         selectedCycle = cycleKey;
 
@@ -935,11 +957,71 @@
             ctaBtn.setAttribute('data-cycle', cycleKey);
             if (!ctaBtn.disabled && (ctaBtn.textContent.trim().startsWith('Assinar') || ctaBtn.textContent.trim().startsWith('Testar'))) {
                 ctaBtn.textContent = window.isEligibleForTrial7d
-                    ? `Testar 7 dias grátis — ${cfg.label} (R$ ${cfg.monthlyPrice}/mês depois)`
+                    ? `Testar 7 dias grátis - ${cfg.label} (R$ ${cfg.monthlyPrice}/mês depois)`
                     : cfg.cta;
             }
         }
     }
+
+    function applyLaunchModeUI(active) {
+        isNewPricingMode = Boolean(active);
+        const cycleBar = document.getElementById('sub-cycle-bar');
+        const cardComunidade = document.getElementById('card-plano-comunidade');
+        const cardReferencia = document.getElementById('card-plano-referencia');
+        const gridEl = document.querySelector('.plans-bento-grid');
+        const heroTitle = document.querySelector('.sub-hero h1');
+        const heroLead = document.querySelector('.sub-hero-lead');
+        const tagEssencial = document.getElementById('tag-oferta-essencial');
+        const oldPriceEl = document.getElementById('essencial-old-price');
+        const priceEl = document.getElementById('essencial-display-price');
+        const noteEl = document.getElementById('essencial-billing-note');
+        const ctaBtn = document.getElementById('btn-assinar-essencial');
+        const footnoteEl = document.querySelector('#card-plano-essencial .cta-footnote span');
+        const firstFeatTitle = document.querySelector('#card-plano-essencial .sub-feature-item .sub-feat-title');
+        const firstFeatDesc = document.querySelector('#card-plano-essencial .sub-feature-item .sub-feat-desc');
+        const areaCancelText = document.querySelector('#area-cancelamento p');
+        const modalCancelText = document.querySelector('#modal-cancelamento p');
+
+        if (!isNewPricingMode) {
+            if (cycleBar) cycleBar.style.display = 'none';
+            if (cardComunidade) cardComunidade.style.display = 'none';
+            if (cardReferencia) cardReferencia.style.display = 'none';
+            if (gridEl) gridEl.classList.add('is-legacy-prejan');
+            if (heroTitle) heroTitle.textContent = 'Escolha o plano ideal para impulsionar seu consultório';
+            if (heroLead) heroLead.textContent = 'Ative sua vitrine na Yelo e receba pacientes particulares sem comissão por sessão.';
+            if (tagEssencial) tagEssencial.textContent = 'Licença Fundador';
+            if (oldPriceEl) { oldPriceEl.textContent = 'R$ 199'; oldPriceEl.style.display = 'inline'; }
+            if (priceEl) priceEl.textContent = 'R$ 99';
+            if (noteEl) noteEl.innerHTML = '<strong>7 dias de teste grátis</strong> sem precisar cadastrar cartão · Cancele quando quiser';
+            if (firstFeatTitle) firstFeatTitle.textContent = 'Gestão completa do consultório incluída';
+            if (firstFeatDesc) firstFeatDesc.textContent = 'Agenda, gestão de pacientes, controle financeiro, calculadora e fórum.';
+            if (footnoteEl) footnoteEl.textContent = 'Pagamento seguro via Cartão de Crédito ou PIX (Asaas)';
+            if (ctaBtn) {
+                ctaBtn.setAttribute('data-cycle', 'MONTHLY');
+                if (!ctaBtn.disabled) ctaBtn.textContent = 'Assinar Plano';
+            }
+            if (areaCancelText) areaCancelText.innerHTML = 'Se você cancelar, deixará de receber novos pacientes após o fim do período atual.';
+            if (modalCancelText) modalCancelText.innerHTML = 'Você continuará com acesso aos benefícios até o fim do período pago. Após isso, sua cobrança será interrompida e seu perfil não aparecerá mais nas buscas.';
+            selectedCycle = 'MONTHLY';
+        } else {
+            if (cycleBar) cycleBar.style.display = '';
+            if (cardComunidade) cardComunidade.style.display = '';
+            if (cardReferencia) cardReferencia.style.display = '';
+            if (gridEl) gridEl.classList.remove('is-legacy-prejan');
+            if (heroTitle) heroTitle.textContent = 'Escolha como crescer sua clínica na Yelo';
+            if (heroLead) heroLead.textContent = 'Use o consultório gratuitamente no Plano Comunidade ou abra seu perfil para receber pacientes particulares sem comissão por sessão.';
+            if (tagEssencial) tagEssencial.textContent = 'Mais escolhido';
+            if (firstFeatTitle) firstFeatTitle.textContent = 'Tudo do Plano Comunidade incluído';
+            if (firstFeatDesc) firstFeatDesc.textContent = 'Agenda, gestão de pacientes, financeiro, calculadora e fórum.';
+            if (footnoteEl) footnoteEl.textContent = 'Teste de 7 dias mediante inclusão do cartão · Pagamento seguro via Asaas';
+            if (areaCancelText) areaCancelText.innerHTML = 'Se você cancelar, seu perfil retornará ao <strong>Plano Comunidade (Grátis)</strong> e deixará de receber novos pacientes após o fim do período atual pago.';
+            if (modalCancelText) modalCancelText.innerHTML = 'Você continuará com acesso aos benefícios até o fim do período pago. Após isso, sua conta mudará para o <strong>Plano Comunidade (Grátis)</strong> e seu perfil público será ocultado.';
+            if (selectedCycle === 'MONTHLY') selectedCycle = 'SEMIANNUAL';
+            updateCycleUI(selectedCycle);
+        }
+    }
+
+    applyLaunchModeUI(isNewPricingMode);
 
     document.querySelectorAll('.sub-seg-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -951,7 +1033,9 @@
     // Permite que o modal sincronize caso o usuário troque de ciclo dentro do checkout
     window.syncAssinaturaCycleUI = updateCycleUI;
 
-    updateCycleUI(selectedCycle);
+    if (isNewPricingMode) {
+        updateCycleUI(selectedCycle);
+    }
 
     // --- BINDING IMEDIATO DO BOTÃO DE UPGRADE ---
     document.querySelectorAll('.btn-upgrade').forEach(btn => {
@@ -974,17 +1058,23 @@
         if (response.ok) {
             const user = await response.json();
             window.currentUserData = user;
+            if (window.setPsychologistData) window.setPsychologistData(user);
 
-            // --- CÁLCULO DO TRIAL (7 DIAS MEDIANTE CARTÃO DE CRÉDITO) ---
+            const activeNewPricing = resolveNewPricing(user);
+            applyLaunchModeUI(activeNewPricing);
+
+            // --- CÁLCULO DO TRIAL ---
             const hoje = new Date();
             const hasSubscription = user.stripeSubscriptionId || user.subscriptionId;
             const isTokenizedTrial = String(user.subscriptionId || '').startsWith('trial_tok_');
             const planExpiresAt = user.planExpiresAt ? new Date(user.planExpiresAt) : null;
 
-            const isEligibleForTrial = !user.is_exempt && user.plano === 'Comunidade' && !hasSubscription && !user.firstPaidAt && !user.subscribedAt;
+            const isEligibleForTrial = activeNewPricing && !user.is_exempt && user.plano === 'Comunidade' && !hasSubscription && !user.firstPaidAt && !user.subscribedAt;
             window.isEligibleForTrial7d = isEligibleForTrial;
 
-            const isInTrial = !user.is_exempt && user.plano !== 'Comunidade' && planExpiresAt && planExpiresAt > hoje && !user.firstPaidAt && (!hasSubscription || isTokenizedTrial);
+            const isInTrial = activeNewPricing
+                ? (!user.is_exempt && user.plano !== 'Comunidade' && planExpiresAt && planExpiresAt > hoje && !user.firstPaidAt && (!hasSubscription || isTokenizedTrial))
+                : (!user.is_exempt && planExpiresAt && planExpiresAt > hoje && !hasSubscription);
             const trialBannerGlobal = document.getElementById('trial-banner-global');
             const trialBannerTitle = document.getElementById('trial-banner-title');
             const trialBannerDesc = document.getElementById('trial-banner-desc');
@@ -993,9 +1083,11 @@
             if (trialDemandProof && user.globalStats) {
                 const m7 = Number(user.globalStats.matches7d || 0);
                 const c7 = Number(user.globalStats.clicks7d || 0);
-                if (m7 > 0 || c7 > 0) {
+                if (activeNewPricing && (m7 > 0 || c7 > 0)) {
                     trialDemandProof.textContent = `Demanda real na Yelo (últimos 7 dias): ${m7} ${m7 === 1 ? 'match gerado' : 'matches gerados'} e ${c7} ${c7 === 1 ? 'clique direto no WhatsApp' : 'cliques diretos no WhatsApp'}.`;
                     trialDemandProof.style.display = 'block';
+                } else {
+                    trialDemandProof.style.display = 'none';
                 }
             }
 
@@ -1006,7 +1098,9 @@
                 if (trialBannerGlobal) trialBannerGlobal.style.display = 'flex';
                 if (trialBannerTitle) trialBannerTitle.textContent = `Você está no seu teste grátis (${diffDays} ${diffDays === 1 ? 'dia restante' : 'dias restantes'})`;
                 if (trialBannerDesc) {
-                    trialBannerDesc.innerHTML = `Aproveite a vitrine completa do Plano Essencial sem custos agora. O lançamento no cartão cadastrado só acontece em <strong>${planExpiresAt.toLocaleDateString('pt-BR')}</strong>.`;
+                    trialBannerDesc.innerHTML = activeNewPricing
+                        ? `Aproveite a vitrine completa do Plano Essencial sem custos agora. O lançamento no cartão cadastrado só acontece em <strong>${planExpiresAt.toLocaleDateString('pt-BR')}</strong>.`
+                        : `Aproveite sua semana gratuita na Yelo sem precisar cadastrar cartão. Você terá até <strong>${planExpiresAt.toLocaleDateString('pt-BR')}</strong> para decidir sua assinatura.`;
                 }
             } else if (isEligibleForTrial) {
                 if (trialBannerGlobal) trialBannerGlobal.style.display = 'flex';
@@ -1017,6 +1111,8 @@
                     trialBannerDesc.innerHTML = `Cadastre seu cartão de crédito ao escolher seu plano abaixo e comece hoje sem pagar nada. Você testa a vitrine completa por <strong>7 dias</strong> antes da primeira cobrança (${dataApos7Dias.toLocaleDateString('pt-BR')}).`;
                 }
                 updateCycleUI(selectedCycle);
+            } else if (!activeNewPricing && trialBannerGlobal) {
+                trialBannerGlobal.style.display = 'none';
             }
 
             const isVip = user.is_exempt;
@@ -1028,8 +1124,12 @@
                 if (trialBannerGlobal) trialBannerGlobal.style.display = 'none';
             }
 
-            if (legacyBanner && isActivePaidSubscriber && user.isLegacySubscriber !== false) {
-                legacyBanner.style.display = 'flex';
+            if (legacyBanner) {
+                if (activeNewPricing && isActivePaidSubscriber && user.isLegacySubscriber !== false) {
+                    legacyBanner.style.display = 'flex';
+                } else {
+                    legacyBanner.style.display = 'none';
+                }
             }
 
             if (isVip) {
@@ -1103,12 +1203,12 @@
                                                 if (res.status === 400 || res.status === 404 || (d.error && (d.error.includes('encontrada') || d.error.includes('disponível')))) {
                                                     showToast('Assinatura anterior expirou. Por favor, realize uma nova assinatura.', 'info');
                                                     modalReativacao.style.display = 'none';
-                                                    btnEssencial.textContent = CYCLE_CONFIG[selectedCycle].cta;
+                                                    btnEssencial.textContent = activeNewPricing ? CYCLE_CONFIG[selectedCycle].cta : 'Assinar Agora';
                                                     btnEssencial.style.background = '#1B4332';
                                                     btnEssencial.disabled = false;
                                                     btnEssencial.onclick = (evt) => {
                                                         evt.preventDefault();
-                                                        if (window.iniciarPagamento) window.iniciarPagamento('ESSENTIAL', btnEssencial, null, selectedCycle);
+                                                        if (window.iniciarPagamento) window.iniciarPagamento('ESSENTIAL', btnEssencial, null, activeNewPricing ? selectedCycle : 'MONTHLY');
                                                     };
                                                 } else {
                                                     showToast(d.error || 'Não foi possível reativar. Tente novamente.', 'error');
@@ -1123,11 +1223,11 @@
                                 }
                             };
                         } else if (!hasSubscription || ['inactive', 'vencido', 'canceled'].includes(String(user.status || '').toLowerCase())) {
-                            btnEssencial.textContent = hasSubscription ? 'Reativar Assinatura' : CYCLE_CONFIG[selectedCycle].cta;
+                            btnEssencial.textContent = hasSubscription ? 'Reativar Assinatura' : (activeNewPricing ? CYCLE_CONFIG[selectedCycle].cta : 'Assinar');
                             btnEssencial.disabled = false;
                             btnEssencial.onclick = (evt) => {
                                 evt.preventDefault();
-                                if (window.iniciarPagamento) window.iniciarPagamento('ESSENTIAL', btnEssencial, null, selectedCycle);
+                                if (window.iniciarPagamento) window.iniciarPagamento('ESSENTIAL', btnEssencial, null, activeNewPricing ? selectedCycle : 'MONTHLY');
                             };
                         } else if (hasSubscription) {
                             btnEssencial.textContent = isInTrial ? 'Teste Grátis Ativo (7 dias)' : 'Seu Plano Atual';
@@ -1137,7 +1237,7 @@
                             btnEssencial.style.boxShadow = 'none';
                             btnEssencial.style.cursor = 'default';
                         } else {
-                            btnEssencial.textContent = CYCLE_CONFIG[selectedCycle].cta;
+                            btnEssencial.textContent = activeNewPricing ? CYCLE_CONFIG[selectedCycle].cta : 'Assinar Agora';
                         }
                     }
                 } else if (user.plano === 'ESSENTIAL' && user.status === 'inactive') {

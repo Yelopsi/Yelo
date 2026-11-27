@@ -243,7 +243,7 @@
             <div class="accordion-item">
                 <button class="accordion-header">Como funciona o teste grátis?</button>
                 <div class="accordion-content">
-                    <p>O Plano Comunidade é gratuito sem exigir cartão. Para aparecer nas buscas de pacientes, você pode testar o Plano Essencial por 7 dias grátis mediante a inclusão do cartão de crédito (a primeira cobrança só ocorre após o 7º dia).</p>
+                    <p id="faq-trial-answer">Você tem 7 dias para usar todas as funcionalidades da plataforma sem custo e sem precisar cadastrar um cartão de crédito. Após esse período, para continuar recebendo pacientes, você precisará escolher um dos nossos planos.</p>
                 </div>
             </div>
             <div class="accordion-item">
@@ -312,6 +312,11 @@
                 const mensagem = encodeURIComponent('Olá! Sou psicólogo cadastrado na Yelo e preciso de ajuda com:');
                 window.open(`https://wa.me/${numeroYelo}?text=${mensagem}`, '_blank');
             });
+        }
+
+        const faqTrialEl = document.getElementById('faq-trial-answer');
+        if (faqTrialEl && ((typeof window.isYeloNewPricingActive === 'function' && window.isYeloNewPricingActive()) || Date.now() >= Date.parse('2027-01-01T00:00:00-03:00'))) {
+            faqTrialEl.textContent = 'O Plano Comunidade é gratuito sem exigir cartão. Para aparecer nas buscas de pacientes, você pode testar o Plano Essencial por 7 dias grátis mediante a inclusão do cartão de crédito (a primeira cobrança só ocorre após o 7º dia).';
         }
 
         // Lógica do Formulário de Suporte Alternativo

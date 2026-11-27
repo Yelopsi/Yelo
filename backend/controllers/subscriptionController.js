@@ -2,6 +2,7 @@ const db = require('../models');
 const bcrypt = require('bcryptjs');
 const { sendSubscriptionCancelledEmail } = require('../services/emailService');
 const PaymentStateService = require('../services/paymentStateService');
+const pricingLaunch = require('../utils/pricingLaunch');
 
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
 if (process.env.ASAAS_API_KEY && process.env.ASAAS_API_KEY.includes('prod_')) {
@@ -113,13 +114,20 @@ exports.cancelSubscription = async (req, res) => {
                      status: ['PENDING', 'OVERDUE']
                  }
              }).catch(() => {});
-             await psychologist.update({
-                plano: 'Comunidade',
-                planExpiresAt: null,
-                cancelAtPeriodEnd: true,
-                canceledAt: new Date(),
-                subscriptionId: null
-             });
+             if (pricingLaunch.isNewPricingActive()) {
+                 await psychologist.update({
+                    plano: 'Comunidade',
+                    planExpiresAt: null,
+                    cancelAtPeriodEnd: true,
+                    canceledAt: new Date(),
+                    subscriptionId: null
+                 });
+             } else {
+                 await psychologist.update({
+                    cancelAtPeriodEnd: true,
+                    canceledAt: new Date()
+                 });
+             }
              return res.status(200).json({ message: 'Assinatura cancelada localmente (Vínculo de pagamento não encontrado).' });
         }
 
@@ -184,10 +192,45 @@ exports.cancelSubscription = async (req, res) => {
             });
         }
 
-        // 3. Assinatura recorrente mensal: purga faturas pendentes, encerra recorrência no Asaas e mantém acesso até planExpiresAt
-        await PaymentStateService.cancelAndPurgeSubscription(subId, {
-            psychologistId: psychologist.id
-        });
+        // 3. Assinatura recorrente mensal: limpa faturas em aberto, agenda fim do ciclo no Asaas (permitindo reativação até o vencimento) ou purga se já vencida
+        const now = new Date();
+        const hasRemainingPaidPeriod = Boolean(
+            psychologist.status === 'active' &&
+            psychologist.planExpiresAt &&
+            new Date(psychologist.planExpiresAt) > now
+        );
+
+        let scheduledGracefully = false;
+        if (hasRemainingPaidPeriod) {
+            await PaymentStateService.purgeOpenSubscriptionInvoices(subId, {
+                psychologistId: psychologist.id
+            });
+
+            const endLimitMs = Math.max(now.getTime(), new Date(psychologist.planExpiresAt).getTime() - 24 * 60 * 60 * 1000);
+            const endDateStr = new Date(endLimitMs - 10800000).toISOString().split('T')[0];
+
+            try {
+                const putRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                    body: JSON.stringify({ endDate: endDateStr })
+                });
+                const putText = await putRes.text();
+                const putData = putText ? JSON.parse(putText) : {};
+                if (putRes.ok && !putData.errors && !putData.deleted) {
+                    scheduledGracefully = true;
+                }
+            } catch (endErr) {
+                console.warn(`[ASAAS] Não foi possível agendar endDate em ${subId}, realizando purga imediata:`, endErr.message);
+            }
+        }
+
+        if (!scheduledGracefully) {
+            await PaymentStateService.cancelAndPurgeSubscription(subId, {
+                psychologistId: psychologist.id
+            });
+            await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: subId } }).catch(() => {});
+        }
 
         await db.Payment.update({ status: 'CANCELED' }, {
             where: {
@@ -196,8 +239,17 @@ exports.cancelSubscription = async (req, res) => {
             }
         }).catch(() => {});
 
-        await psychologist.update({ cancelAtPeriodEnd: true, canceledAt: new Date() });
-        await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: subId } }).catch(() => {});
+        if (!hasRemainingPaidPeriod && pricingLaunch.isNewPricingActive()) {
+            await psychologist.update({
+                plano: 'Comunidade',
+                planExpiresAt: null,
+                subscriptionId: null,
+                cancelAtPeriodEnd: false,
+                canceledAt: now
+            });
+        } else {
+            await psychologist.update({ cancelAtPeriodEnd: true, canceledAt: now });
+        }
 
         sendSubscriptionCancelledEmail(psychologist).catch(e => {});
 
@@ -221,11 +273,14 @@ exports.reactivateSubscription = async (req, res) => {
 
         const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
 
-        // [CORREÇÃO] Verifica ambas as colunas
         const subId = psychologist.subscriptionId;
 
-        if (!subId) {
+        if (!subId || !String(subId).startsWith('sub_')) {
              return res.status(400).json({ error: 'Nenhuma assinatura encontrada para reativar.' });
+        }
+
+        if (psychologist.status !== 'active' || !psychologist.planExpiresAt || new Date(psychologist.planExpiresAt) <= new Date()) {
+             return res.status(400).json({ error: 'Assinatura anterior expirou. Por favor, assine novamente.' });
         }
 
         // 1. Tenta remover a data de fim no Asaas (Reativar recorrência)
@@ -239,12 +294,22 @@ exports.reactivateSubscription = async (req, res) => {
         const data = responseText ? JSON.parse(responseText) : {};
 
         // Se der erro (ex: assinatura já deletada), forçamos o usuário a assinar de novo
-        if (response.status !== 200 || data.errors) {
+        if (response.status !== 200 || data.errors || data.deleted) {
             return res.status(400).json({ error: 'Não foi possível reativar automaticamente. Por favor, assine novamente.' });
         }
 
+        // Reativa notificações do cliente no Asaas caso tenham sido desativadas no cancelamento
+        if (data.customer) {
+            await fetch(`${ASAAS_API_URL}/customers/${data.customer}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                body: JSON.stringify({ notificationDisabled: false })
+            }).catch(() => {});
+        }
+
         // 2. Atualiza banco local
-        await psychologist.update({ cancelAtPeriodEnd: false, canceledAt: null });
+        await psychologist.update({ cancelAtPeriodEnd: false, canceledAt: null, reactivatedAt: new Date() });
+        await db.Subscription.update({ status: 'ACTIVE' }, { where: { id: subId } }).catch(() => {});
 
         res.json({ message: 'Assinatura reativada com sucesso! A cobrança automática voltará a ocorrer.' });
 

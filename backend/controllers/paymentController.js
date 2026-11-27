@@ -3,6 +3,7 @@ const db = require('../models');
 const emailService = require('../services/emailService');
 const gamificationService = require('../services/gamificationService');
 const promoCouponService = require('../services/promoCouponService');
+const pricingLaunch = require('../utils/pricingLaunch');
 
 // Configurações do Asaas
 // Limpeza robusta da URL (remove espaços e barras finais)
@@ -196,13 +197,27 @@ exports.createPreference = async (req, res) => {
             }
         }
 
-        // --- PREÇIFICAÇÃO E MODALIDADE (MENSAL, TRIMESTRAL, SEMESTRAL) + PROMO/iOS ---
-        const cycle = (billingCycle || 'SEMIANNUAL').toUpperCase();
-        let value = 159.00;
+        // --- PREÇIFICAÇÃO E MODALIDADE (PRE-2027 R$99 vs JAN/2027+ CICLOS) + PROMO/iOS ---
+        const newPricingActive = pricingLaunch.isNewPricingActive();
+        const cycle = newPricingActive ? (billingCycle || 'SEMIANNUAL').toUpperCase() : 'MONTHLY';
+        let value = newPricingActive ? 159.00 : 99.00;
         let installmentCount = 1;
         let isInstallment = false;
 
-        if (normalizedPlan === 'ESSENTIAL') {
+        if (!newPricingActive) {
+            switch (normalizedPlan) {
+                case 'ESSENTIAL':
+                    value = (!isIosFee && activePromoCoupon && Number(activePromoCoupon.chargeToday) > 0)
+                        ? Number(activePromoCoupon.chargeToday)
+                        : (isIosFee ? 129.90 : 99.00);
+                    break;
+                case 'CLINICAL': value = 159.00; break;
+                case 'REFERENCE': value = 259.00; break;
+                default:
+                    await intent.update({ status: 'FAILED_LOCAL' });
+                    return res.status(400).json({ error: 'Plano inválido: ' + planType });
+            }
+        } else if (normalizedPlan === 'ESSENTIAL') {
             if (!isIosFee && activePromoCoupon && Number(activePromoCoupon.chargeToday) > 0) {
                 value = Number(activePromoCoupon.chargeToday);
                 installmentCount = 1;
@@ -357,28 +372,43 @@ exports.createPreference = async (req, res) => {
         }
 
         // --- PREPARAÇÃO DO PAYLOAD DA COBRANÇA, TOKENIZAÇÃO (TRIAL 7D) OU ASSINATURA ---
-        const isEligibleForTrial = !localPsychologist.firstPaidAt
-            && !localPsychologist.subscribedAt
-            && !localPsychologist.subscriptionId
-            && (!localPsychologist.planExpiresAt || localPsychologist.plano === 'Comunidade');
-
         const skipTrialWait = Boolean(activePromoCoupon && Number(activePromoCoupon.chargeToday) > 99);
-
         let trialEndDate = null;
-        if (!skipTrialWait && isEligibleForTrial && billingType !== 'PIX') {
-            trialEndDate = new Date();
-            trialEndDate.setDate(trialEndDate.getDate() + 7);
-        }
-
         let nextDueDate = new Date(Date.now() - 10800000).toISOString().split('T')[0];
-        if (trialEndDate) {
-            nextDueDate = new Date(trialEndDate.getTime() - 10800000).toISOString().split('T')[0];
-        } else if (!skipTrialWait && localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > new Date()) {
-            nextDueDate = new Date(localPsychologist.planExpiresAt).toISOString().split('T')[0];
+
+        if (!newPricingActive) {
+            const accountCreatedAt = new Date(localPsychologist.createdAt);
+            const legacyTrialEnd = new Date(accountCreatedAt);
+            legacyTrialEnd.setDate(legacyTrialEnd.getDate() + 7);
+
+            if (!skipTrialWait && localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > new Date()) {
+                nextDueDate = new Date(localPsychologist.planExpiresAt).toISOString().split('T')[0];
+            } else if (!skipTrialWait && legacyTrialEnd > new Date()) {
+                nextDueDate = legacyTrialEnd.toISOString().split('T')[0];
+                const payload = { planExpiresAt: legacyTrialEnd, status: 'active' };
+                if (!localPsychologist.profileActivatedAt) payload.profileActivatedAt = new Date();
+                await localPsychologist.update(payload);
+            }
+        } else {
+            const isEligibleForTrial = !localPsychologist.firstPaidAt
+                && !localPsychologist.subscribedAt
+                && !localPsychologist.subscriptionId
+                && (!localPsychologist.planExpiresAt || localPsychologist.plano === 'Comunidade');
+
+            if (!skipTrialWait && isEligibleForTrial && billingType !== 'PIX') {
+                trialEndDate = new Date();
+                trialEndDate.setDate(trialEndDate.getDate() + 7);
+            }
+
+            if (trialEndDate) {
+                nextDueDate = new Date(trialEndDate.getTime() - 10800000).toISOString().split('T')[0];
+            } else if (!skipTrialWait && localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > new Date()) {
+                nextDueDate = new Date(localPsychologist.planExpiresAt).toISOString().split('T')[0];
+            }
         }
 
         const subDescriptionBase = isIosFee ? `Assinatura Yelo - Plano ${normalizedPlan} (iOS)` : `Assinatura Yelo - Plano ${normalizedPlan}`;
-        const subDescriptionCycle = (!isIosFee && !activePromoCoupon) ? `${subDescriptionBase} - ${cycle}` : subDescriptionBase;
+        const subDescriptionCycle = (newPricingActive && !isIosFee && !activePromoCoupon) ? `${subDescriptionBase} - ${cycle}` : subDescriptionBase;
         const subDescription = activePromoCoupon ? `${subDescriptionCycle} [${activePromoCoupon.code}]` : subDescriptionCycle;
 
         const remoteIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || '127.0.0.1';
@@ -389,7 +419,7 @@ exports.createPreference = async (req, res) => {
             if (expiryYear && expiryYear.length === 2) expiryYear = `20${expiryYear}`;
         }
 
-        const useTokenizedTrial = isInstallment && Boolean(trialEndDate);
+        const useTokenizedTrial = newPricingActive && isInstallment && Boolean(trialEndDate);
         let asaasPayload;
         let asaasEndpoint;
 
@@ -425,7 +455,7 @@ exports.createPreference = async (req, res) => {
                 dueDate: nextDueDate,
                 installmentCount: installmentCount,
                 totalValue: value,
-                description: `Assinatura Yelo - Plano ${planType} - ${cycle}`,
+                description: subDescription,
                 externalReference: String(psychologistId),
                 remoteIp,
                 creditCard: {
@@ -455,7 +485,7 @@ exports.createPreference = async (req, res) => {
                     value: value,
                     nextDueDate: nextDueDate,
                     cycle: 'MONTHLY',
-                    description: `Assinatura Yelo - Plano ${planType} - MONTHLY`,
+                    description: subDescription,
                     externalReference: String(psychologistId),
                     retryPolicy: 'ALLOW_THREE_IN_SEVEN_DAYS',
                 };
@@ -466,7 +496,7 @@ exports.createPreference = async (req, res) => {
                     value: value,
                     nextDueDate: nextDueDate,
                     cycle: 'MONTHLY',
-                    description: `Assinatura Yelo - Plano ${planType} - MONTHLY`,
+                    description: subDescription,
                     externalReference: String(psychologistId),
                     softDescriptor: 'Yelo Saude',
                     remoteIp,

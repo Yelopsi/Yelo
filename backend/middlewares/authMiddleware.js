@@ -2,6 +2,7 @@
 
 const jwt = require('jsonwebtoken');
 const db = require('../models');
+const pricingLaunch = require('../utils/pricingLaunch');
 
 /**
  * Middleware para proteger rotas. Verifica se o token JWT é válido.
@@ -79,15 +80,21 @@ const protect = async (req, res, next) => {
             } else if (userType === 'psychologist') {
                 user = await db.Psychologist.findByPk(decoded.id, { attributes: { exclude: ['senha'] } });
                 if (user) {
-                    // BLOQUEIO EM TEMPO REAL: Inativa acesso no exato segundo se vencido
+                    // BLOQUEIO EM TEMPO REAL: Inativa ou migra para Comunidade conforme data de lancamento
                     const isVip = user.is_exempt === true || String(user.is_exempt).toLowerCase() === 'true' || user.is_exempt === 1;
-                    if (user.status === 'active' && !isVip) {
+                    if (user.status === 'active' && !isVip && user.plano !== 'Comunidade') {
                         const validade = user.planExpiresAt ? new Date(user.planExpiresAt) : null;
                         if (!validade || validade <= new Date()) {
-                            console.log(`[AUTH] ⏰ Assinatura expirada. Migrando para o Plano Comunidade: ${user.email}`);
-                            await user.update({ plano: 'Comunidade', planExpiresAt: null });
-                            user.plano = 'Comunidade';
-                            user.planExpiresAt = null;
+                            if (pricingLaunch.isNewPricingActive()) {
+                                console.log(`[AUTH] ⏰ Assinatura expirada. Migrando para o Plano Comunidade: ${user.email}`);
+                                await user.update({ plano: 'Comunidade', planExpiresAt: null });
+                                user.plano = 'Comunidade';
+                                user.planExpiresAt = null;
+                            } else {
+                                console.log(`[AUTH] ⏰ Assinatura expirada. Inativando perfil em tempo real: ${user.email}`);
+                                await user.update({ status: 'inactive' });
+                                user.status = 'inactive';
+                            }
                         }
                     }
                 }

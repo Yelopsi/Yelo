@@ -42,6 +42,76 @@ class PaymentStateService {
     }
 
     /**
+     * Cancela faturas PENDING e OVERDUE no Asaas e localmente, e desativa notificações de cobrança do cliente.
+     */
+    static async purgeOpenSubscriptionInvoices(subscriptionId, options = {}) {
+        if (!subscriptionId) return { customerId: null };
+        const ASAAS_API_URL = this.getAsaasApiUrl();
+        const apiKey = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+        if (!apiKey) return { customerId: null };
+
+        let customerId = options.customerId || null;
+
+        try {
+            if (String(subscriptionId).startsWith('sub_')) {
+                if (!customerId) {
+                    const subRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionId}`, {
+                        headers: { 'access_token': apiKey }
+                    });
+                    if (subRes.ok) {
+                        const subData = await subRes.json();
+                        customerId = subData.customer;
+                    }
+                }
+
+                const [pendingRes, overdueRes] = await Promise.all([
+                    fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionId}/payments?status=PENDING`, {
+                        headers: { 'access_token': apiKey }
+                    }),
+                    fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionId}/payments?status=OVERDUE`, {
+                        headers: { 'access_token': apiKey }
+                    })
+                ]);
+                const pendingData = await pendingRes.json().catch(() => ({ data: [] }));
+                const overdueData = await overdueRes.json().catch(() => ({ data: [] }));
+                const openPayments = [
+                    ...(pendingData.data || []),
+                    ...(overdueData.data || [])
+                ];
+
+                for (const p of openPayments) {
+                    await fetch(`${ASAAS_API_URL}/payments/${p.id}`, {
+                        method: 'DELETE',
+                        headers: { 'access_token': apiKey }
+                    }).catch(() => {});
+                    await db.Payment.update({ status: 'CANCELED' }, { where: { id: p.id } }).catch(() => {});
+                }
+            }
+
+            if (customerId && options.disableNotifications !== false) {
+                await fetch(`${ASAAS_API_URL}/customers/${customerId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'access_token': apiKey },
+                    body: JSON.stringify({ notificationDisabled: true })
+                }).catch(() => {});
+            }
+
+            if (options.psychologistId) {
+                await db.Payment.update({ status: 'CANCELED' }, {
+                    where: {
+                        psychologistId: options.psychologistId,
+                        status: ['PENDING', 'OVERDUE']
+                    }
+                }).catch(() => {});
+            }
+        } catch (err) {
+            console.error(`[ASAAS PURGE] Erro ao limpar faturas abertas de ${subscriptionId}:`, err.message);
+        }
+
+        return { customerId };
+    }
+
+    /**
      * Cancela e purga uma assinatura no Asaas e no banco local:
      * 1. Remove faturas PENDING e OVERDUE geradas no Asaas
      * 2. Deleta a assinatura no Asaas
@@ -53,71 +123,18 @@ class PaymentStateService {
         if (!subscriptionId) return;
         const ASAAS_API_URL = this.getAsaasApiUrl();
         const apiKey = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
-        if (!apiKey) return;
-
-        let customerId = options.customerId || null;
 
         try {
-            // 1. Busca dados da assinatura no Asaas se não tivermos customerId
-            if (!customerId) {
-                const subRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionId}`, {
-                    headers: { 'access_token': apiKey }
-                });
-                if (subRes.ok) {
-                    const subData = await subRes.json();
-                    customerId = subData.customer;
-                }
-            }
+            await this.purgeOpenSubscriptionInvoices(subscriptionId, options);
 
-            // 2. Busca e deleta faturas abertas (PENDING e OVERDUE) desta assinatura no Asaas
-            const [pendingRes, overdueRes] = await Promise.all([
-                fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionId}/payments?status=PENDING`, {
-                    headers: { 'access_token': apiKey }
-                }),
-                fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionId}/payments?status=OVERDUE`, {
-                    headers: { 'access_token': apiKey }
-                })
-            ]);
-            const pendingData = await pendingRes.json().catch(() => ({ data: [] }));
-            const overdueData = await overdueRes.json().catch(() => ({ data: [] }));
-            const openPayments = [
-                ...(pendingData.data || []),
-                ...(overdueData.data || [])
-            ];
-
-            for (const p of openPayments) {
-                await fetch(`${ASAAS_API_URL}/payments/${p.id}`, {
+            if (apiKey && String(subscriptionId).startsWith('sub_')) {
+                await fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionId}`, {
                     method: 'DELETE',
                     headers: { 'access_token': apiKey }
                 }).catch(() => {});
-                await db.Payment.update({ status: 'CANCELED' }, { where: { id: p.id } }).catch(() => {});
             }
 
-            // 3. Deleta a assinatura no Asaas para cessar o ciclo
-            await fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionId}`, {
-                method: 'DELETE',
-                headers: { 'access_token': apiKey }
-            }).catch(() => {});
-
-            // 4. Desativa notificações do cliente no Asaas para nunca mais mandar SMS/Email de cobrança
-            if (customerId) {
-                await fetch(`${ASAAS_API_URL}/customers/${customerId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'access_token': apiKey },
-                    body: JSON.stringify({ notificationDisabled: true })
-                }).catch(() => {});
-            }
-
-            // 5. Atualiza modelos locais
             await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: subscriptionId } }).catch(() => {});
-            if (options.psychologistId) {
-                await db.Payment.update({ status: 'CANCELED' }, {
-                    where: {
-                        psychologistId: options.psychologistId,
-                        status: ['PENDING', 'OVERDUE']
-                    }
-                }).catch(() => {});
-            }
             console.log(`[ASAAS PURGE] Assinatura ${subscriptionId} cancelada e faturas abertas limpas com sucesso.`);
         } catch (err) {
             console.error(`[ASAAS PURGE] Erro ao purgar assinatura ${subscriptionId}:`, err.message);

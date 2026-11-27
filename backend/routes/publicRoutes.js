@@ -7,6 +7,7 @@ const whatsappClickController = require('../controllers/whatsappClickController'
 const whatsappController = require('../controllers/whatsappController');
 const { emailSpamLimiter, clickLimiter } = require('../middlewares/rateLimiters');
 const { resolveActor } = require('../utils/actorClassifier');
+const pricingLaunch = require('../utils/pricingLaunch');
 
 // Rotas de Magic Link de Feedback (PLG)
 router.get('/feedback/:token', whatsappClickController.getPublicFeedbackByToken);
@@ -198,6 +199,13 @@ router.post('/contato', emailSpamLimiter, async (req, res) => {
         res.json({ success: true, message: 'Mensagem enviada com sucesso!' });
     } catch (error) { res.status(500).json({ success: false, error: 'Erro interno ao enviar a mensagem.' }); }
 });
+router.get('/pricing-status', (req, res) => {
+    res.json({
+        isNewPricingActive: pricingLaunch.isNewPricingActive(),
+        newPricingLaunchDate: pricingLaunch.getNewPricingLaunchDate().toISOString()
+    });
+});
+
 router.post('/missed-lead', async (req, res) => {
     try {
         const { psychologistId, source } = req.body;

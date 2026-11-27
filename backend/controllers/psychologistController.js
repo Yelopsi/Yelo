@@ -9,6 +9,7 @@ const subscriptionController = require('./subscriptionController');
 const seoService = require('../services/seoService'); // Importa a Inteligência Artificial
 const GoogleBusinessService = require('../services/googleBusinessService');
 const { isValidDocument } = require('../utils/documentValidator');
+const pricingLaunch = require('../utils/pricingLaunch');
 
 // --- CONFIGURAÇÃO DO CLOUDINARY ---
 const cloudinary = require('cloudinary').v2;
@@ -121,6 +122,11 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         responseData.serverNow = new Date().toISOString();
 
         // --- DADOS REAIS DA ASSINATURA ATUAL (PARA PRESERVAR PREÇO LEGADO NA UI E EXIBIR AVISO) ---
+        const launchDate = pricingLaunch.getNewPricingLaunchDate();
+        const newPricingActive = pricingLaunch.isNewPricingActive();
+        responseData.isNewPricingActive = newPricingActive;
+        responseData.newPricingLaunchDate = launchDate.toISOString();
+
         let activeSubscriptionPrice = null;
         let activeSubscriptionBillingType = null;
         let isLegacySubscriber = false;
@@ -155,13 +161,12 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
                 && !String(psychologist.subscriptionId || '').startsWith('trial_tok_')
                 && !(psychologist.planExpiresAt && !psychologist.firstPaidAt && !latestPayment);
 
-            if (hasActivePaidSub) {
+            if (hasActivePaidSub && newPricingActive) {
                 const subRefDate = (activeSub && activeSub.createdAt)
                     ? new Date(activeSub.createdAt)
                     : (psychologist.subscribedAt ? new Date(psychologist.subscribedAt) : (psychologist.firstPaidAt ? new Date(psychologist.firstPaidAt) : null));
-                const pricingLaunchDate = process.env.NEW_PRICING_LAUNCH_DATE ? new Date(process.env.NEW_PRICING_LAUNCH_DATE) : null;
-                isLegacySubscriber = pricingLaunchDate && subRefDate
-                    ? subRefDate < pricingLaunchDate
+                isLegacySubscriber = subRefDate
+                    ? subRefDate < launchDate
                     : true;
             }
         } catch (subInfoErr) {
@@ -185,9 +190,17 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             ? null 
             : "⚠️ Atenção: Seu perfil não aparecerá nos Matches para os pacientes enquanto não tiver uma Foto de Perfil e uma Biografia detalhada (mínimo 150 caracteres). Complete seus dados para receber contatos.";
 
-        // Trial de 7 dias do Plano Essencial exige inclusão de cartão na tela de Assinatura (não é liberado via CPF)
-        responseData.showTrialBanner = false;
-        responseData.trialBannerMessage = null;
+        // Banner de Trial: pre-launch usa CPF; pos-launch (01/01/2027+) exige inclusao de cartao na Assinatura
+        if (!newPricingActive) {
+            const hasValidCpf = !!(psychologist.cpf && isValidDocument(psychologist.cpf));
+            responseData.showTrialBanner = (psychologist.status === 'pending' && !hasValidCpf);
+            responseData.trialBannerMessage = responseData.showTrialBanner
+                ? "Complete seu CPF no perfil para liberar seus 7 dias Premium grátis."
+                : null;
+        } else {
+            responseData.showTrialBanner = false;
+            responseData.trialBannerMessage = null;
+        }
 
         responseData.globalStats = {
             matches7d: realMatches7d,
@@ -446,8 +459,16 @@ exports.updatePsychologistProfile = async (req, res) => {
 
         await psychologist.update(updatePayload);
 
-        // Nota: O trial gratuito de 7 dias do Plano Essencial requer inclusão de cartão na página de Assinatura
-        // (não é mais ativado automaticamente pelo preenchimento do CPF).
+        // --- ATIVAÇÃO DO TRIAL PÓS-CADASTRO (PRE-2027) ---
+        if (!pricingLaunch.isNewPricingActive() && psychologist.status === 'pending' && cpf && cpf.replace(/\D/g, '').length >= 11) {
+            const trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + 7);
+            await psychologist.update({
+                status: 'active',
+                plano: 'Essencial',
+                planExpiresAt: trialEndDate
+            });
+        }
 
         // --- TRANSIÇÃO DE ELEGIBILIDADE (PROFILE ACTIVATED AT) ---
         const isEligible = matchService.isEligibleForMatch(psychologist);

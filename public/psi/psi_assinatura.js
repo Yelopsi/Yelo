@@ -120,10 +120,23 @@
         }
     });
 
+    function isNewPricingEnabled(psychologistData) {
+        if (typeof window.isYeloNewPricingActive === 'function') {
+            return window.isYeloNewPricingActive(psychologistData);
+        }
+        if (psychologistData && typeof psychologistData.isNewPricingActive === 'boolean') {
+            return psychologistData.isNewPricingActive;
+        }
+        return Date.now() >= Date.parse('2027-01-01T00:00:00-03:00');
+    }
+
     window.iniciarPagamento = async function(planType, btnElement, cupomForce = null, billingCycle = 'SEMIANNUAL') {
         const psychologistData = window.getPsychologistData();
+        const isNewPricing = isNewPricingEnabled(psychologistData);
         currentPlanAttempt = planType;
-        currentBillingCycle = CYCLE_META[billingCycle] ? billingCycle : 'SEMIANNUAL';
+        currentBillingCycle = isNewPricing
+            ? (CYCLE_META[billingCycle] ? billingCycle : 'SEMIANNUAL')
+            : 'MONTHLY';
         
         const btn = btnElement.tagName ? btnElement : { textContent: '', disabled: false };
         const originalText = btn.textContent;
@@ -139,14 +152,40 @@
             if(btn.tagName) { btn.textContent = originalText; btn.disabled = false; }
         };
 
+        if (!isNewPricing) {
+            const hoje = new Date();
+            const hasSubscription = psychologistData && (psychologistData.stripeSubscriptionId || psychologistData.subscriptionId);
+            const planExpiresAt = psychologistData && psychologistData.planExpiresAt ? new Date(psychologistData.planExpiresAt) : null;
+            const isInTrial = !hasSubscription && planExpiresAt && planExpiresAt > hoje;
+            const skipsTrialPopup = Boolean(window.yeloActiveEmailOffer?.eligible && Number(window.yeloActiveEmailOffer.chargeToday) > 99);
+
+            if (isInTrial && !skipsTrialPopup) {
+                if (typeof window.abrirModalConfirmacaoPersonalizado === 'function') {
+                    window.abrirModalConfirmacaoPersonalizado(
+                        'Você está no período de teste! 🎁',
+                        'Você ainda tem dias grátis para conhecer a plataforma e <strong>não precisa cadastrar um cartão de crédito agora.</strong><br><br>Mas se preferir deixar sua assinatura já configurada, <strong>você só será cobrado no 8º dia</strong>.',
+                        () => { proceedToPayment(); }
+                    );
+                    cancelPayment();
+                } else {
+                    const confirmou = confirm('Você está no período de teste grátis e não precisa cadastrar um cartão agora.\n\nSe quiser assinar mesmo assim, você só será cobrado no 8º dia. Deseja continuar?');
+                    if (confirmou) proceedToPayment(); else cancelPayment();
+                }
+                return;
+            }
+        }
+
         // Abre o modal diretamente com o resumo do plano e condições de teste
         proceedToPayment();
     };
 
     function abrirModalAsaas(planType, cupomPreenchido, billingCycle = 'SEMIANNUAL') {
-        currentBillingCycle = CYCLE_META[billingCycle] ? billingCycle : 'SEMIANNUAL';
-        const info = CYCLE_META[currentBillingCycle] || CYCLE_META.SEMIANNUAL;
         const psychologistData = window.getPsychologistData();
+        const isNewPricing = isNewPricingEnabled(psychologistData);
+        currentBillingCycle = isNewPricing
+            ? (CYCLE_META[billingCycle] ? billingCycle : 'SEMIANNUAL')
+            : 'MONTHLY';
+        const info = CYCLE_META[currentBillingCycle] || CYCLE_META.SEMIANNUAL;
         const modal = document.getElementById('payment-modal');
         const form = document.getElementById('payment-form');
         const btnSubmit = document.getElementById('btn-confirmar-stripe');
@@ -236,9 +275,9 @@
         `;
 
         const modalSub = document.getElementById('payment-modal-desc') || modal.querySelector('.custom-modal-box p');
-        const requiresCardOnly = !window.isUpdatePaymentMethodMode && ((info.installments > 1) || isInTrial);
-        if (window.isUpdatePaymentMethodMode && cycleBanner) {
-            cycleBanner.style.display = 'none';
+        const requiresCardOnly = isNewPricing && !window.isUpdatePaymentMethodMode && ((info.installments > 1) || isInTrial);
+        if (!isNewPricing || window.isUpdatePaymentMethodMode) {
+            if (cycleBanner) cycleBanner.style.display = 'none';
         } else if (cycleBanner) {
             cycleBanner.style.display = 'block';
         }
@@ -257,6 +296,8 @@
 
                 if (window.isUpdatePaymentMethodMode) {
                     btnSubmit.innerHTML = `Atualizar Cartão da Assinatura`;
+                } else if (!isNewPricing) {
+                    btnSubmit.innerHTML = `Ativar Assinatura`;
                 } else if (isInTrial && dataFimTrial) {
                     btnSubmit.innerHTML = `Cadastrar Cartão & Ativar 7 Dias Grátis <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">Primeira cobrança apenas em ${dataFimTrial}</span>`;
                 } else {
@@ -277,7 +318,7 @@
         };
 
         if (requiresCardOnly) {
-            // Trimestral, Semestral ou Período de Teste: direto para o formulário do cartão
+            // Trimestral, Semestral ou Período de Teste (2027+): direto para o formulário do cartão
             setTab('CREDIT_CARD');
             if (btnBackMethod) btnBackMethod.style.display = 'none';
             if (modalSub) {
@@ -286,7 +327,7 @@
                     : 'Informe os dados do cartão para concluir sua assinatura.';
             }
         } else {
-            // Mensal sem trial: pode optar entre Cartão e PIX
+            // Pre-2027 ou Mensal sem trial: pode optar entre Cartão e PIX
             stepMethod.style.display = 'block'; 
             form.style.display = 'none';
             if (btnBackMethod) btnBackMethod.style.display = 'flex';
@@ -538,7 +579,7 @@
                 if (titleEl && data.title) titleEl.textContent = data.title;
                 if (descEl && data.subtitle) {
                     const safeEmail = String(data.email || '').replace(/[<>&"]/g, '');
-                    descEl.innerHTML = `${data.subtitle} Condição exclusiva liberada automaticamente para o e-mail <strong>${safeEmail}</strong> — sem precisar de cupom.`;
+                    descEl.innerHTML = `${data.subtitle} Condição exclusiva liberada automaticamente para o e-mail <strong>${safeEmail}</strong>, sem precisar de cupom.`;
                 } else if (emailEl && data.email) {
                     emailEl.textContent = data.email;
                 }
@@ -568,8 +609,9 @@
         
         const temPlano = psychologistData && psychologistData.plano;
         const hasSubscription = psychologistData && (psychologistData.stripeSubscriptionId || psychologistData.subscriptionId);
-        
-        const precos = { 'essential': 'R$ 159,00', 'clinical': 'R$ 159,00', 'reference': 'R$ 259,00', 'essencial': 'R$ 159,00', 'clínico': 'R$ 149,00', 'sol': 'R$ 199,00' };
+        const isNewPricing = isNewPricingEnabled(psychologistData);
+        const essentialFallback = (isNewPricing && !(psychologistData && psychologistData.isLegacySubscriber)) ? 'R$ 159,00' : 'R$ 99,00';
+        const precos = { 'essential': essentialFallback, 'clinical': 'R$ 159,00', 'reference': 'R$ 259,00', 'essencial': essentialFallback, 'clínico': 'R$ 149,00', 'sol': 'R$ 199,00' };
 
         if (temPlano && cardResumo) {
             cardResumo.style.display = 'flex';

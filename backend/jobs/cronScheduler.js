@@ -1,6 +1,7 @@
 const db = require('../models');
 const { Op } = require('sequelize');
 const PaymentStateService = require('../services/paymentStateService');
+const pricingLaunch = require('../utils/pricingLaunch');
 // ============================================================================
 // 0. CONVERSÃO AUTOMÁTICA DE TRIALS TOKENIZADOS (Trimestral / Semestral D+7)
 // ============================================================================
@@ -107,7 +108,12 @@ async function runIntegrityAudit() {
         await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false WHERE "subscriptionId" IS NOT NULL AND "is_exempt" = true;`);
         
         // 2. Bloqueia VIPs que não tem plano setado
-        await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false, plano = 'Comunidade' WHERE "is_exempt" = true AND ("plano" IS NULL OR "plano" = '');`);
+        const newPricingActive = pricingLaunch.isNewPricingActive();
+        if (newPricingActive) {
+            await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false, plano = 'Comunidade' WHERE "is_exempt" = true AND ("plano" IS NULL OR "plano" = '');`);
+        } else {
+            await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false, status = 'inactive' WHERE "is_exempt" = true AND ("plano" IS NULL OR "plano" = '');`);
+        }
 
         // 3. Busca psicólogos pagos/em trial com plano vencido (exclui quem já está no Plano Comunidade gratuito)
         const expiredPsis = await db.Psychologist.findAll({
@@ -217,45 +223,68 @@ async function runIntegrityAudit() {
             }
 
             if (shouldBlock) {
-                console.log(`❌ [CRON AUDIT] Rebaixando psicólogo ID ${psi.id} (${psi.nome}) para Comunidade. Motivo: ${reason}`);
-                if (psi.subscriptionId) {
-                    await PaymentStateService.cancelAndPurgeSubscription(psi.subscriptionId, {
-                        psychologistId: psi.id
-                    }).catch(() => {});
+                if (newPricingActive) {
+                    console.log(`❌ [CRON AUDIT] Rebaixando psicólogo ID ${psi.id} (${psi.nome}) para Comunidade. Motivo: ${reason}`);
+                    if (psi.subscriptionId) {
+                        await PaymentStateService.cancelAndPurgeSubscription(psi.subscriptionId, {
+                            psychologistId: psi.id
+                        }).catch(() => {});
+                    }
+                    await psi.update({
+                        plano: 'Comunidade',
+                        planExpiresAt: null,
+                        subscriptionId: null,
+                        cancelAtPeriodEnd: false,
+                        canceledAt: psi.canceledAt || new Date()
+                    });
+                } else {
+                    console.log(`❌ [CRON AUDIT] Bloqueando psicólogo ID ${psi.id} (${psi.nome}). Motivo: ${reason}`);
+                    await psi.update({
+                        status: 'inactive',
+                        cancelAtPeriodEnd: true,
+                        canceledAt: psi.canceledAt || new Date()
+                    });
+                    if (psi.subscriptionId) {
+                        await PaymentStateService.cancelAndPurgeSubscription(psi.subscriptionId, {
+                            psychologistId: psi.id
+                        }).catch(() => {});
+                    }
                 }
-                await psi.update({
-                    plano: 'Comunidade',
-                    planExpiresAt: null,
-                    subscriptionId: null,
-                    cancelAtPeriodEnd: false,
-                    canceledAt: psi.canceledAt || new Date()
-                });
             }
         }
 
-        // 4. Checagem de integridade: Psicólogos inativos ou cancelados que ainda possuem subscriptionId vinculada
+        // 4. Checagem de integridade: Psicólogos inativos ou com período cancelado já vencido que ainda possuem sub_... vinculada
+        const auditNow = new Date();
         const inactiveWithSub = await db.Psychologist.findAll({
             where: {
+                subscriptionId: { [Op.like]: 'sub_%' },
                 [Op.or]: [
-                    { status: 'inactive' },
-                    { status: 'vencido' },
-                    { cancelAtPeriodEnd: true },
-                    { canceledAt: { [Op.ne]: null } }
-                ],
-                subscriptionId: { [Op.ne]: null }
+                    { status: { [Op.in]: ['inactive', 'vencido'] } },
+                    {
+                        cancelAtPeriodEnd: true,
+                        [Op.or]: [
+                            { planExpiresAt: null },
+                            { planExpiresAt: { [Op.lte]: auditNow } }
+                        ]
+                    },
+                    {
+                        canceledAt: { [Op.ne]: null },
+                        status: { [Op.ne]: 'active' }
+                    }
+                ]
             }
         });
 
         for (const psi of inactiveWithSub) {
             try {
-                // Checa no Asaas se a assinatura ainda está ativa ou tem faturas abertas
+                // Checa no Asaas se a assinatura ainda não foi deletada antes de purgar
                 const subRes = await fetch(`${ASAAS_API_URL}/subscriptions/${psi.subscriptionId}`, {
                     headers: { 'access_token': process.env.ASAAS_API_KEY }
                 });
                 if (subRes.ok) {
                     const subData = await subRes.json();
-                    if ((subData.status === 'ACTIVE' && !subData.deleted) || !subData.deleted) {
-                        console.log(`🛡️ [CRON AUDIT] Purgando assinatura órfã no Asaas para psicólogo inativo/cancelado ID ${psi.id} (${psi.nome})...`);
+                    if (subData && !subData.deleted) {
+                        console.log(`🛡️ [CRON AUDIT] Purgando assinatura órfã no Asaas para psicólogo inativo/vencido ID ${psi.id} (${psi.nome})...`);
                         await PaymentStateService.cancelAndPurgeSubscription(psi.subscriptionId, {
                             psychologistId: psi.id,
                             customerId: subData.customer

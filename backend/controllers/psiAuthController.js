@@ -9,6 +9,7 @@ const gamificationService = require('../services/gamificationService');
 const { verifyGoogleToken } = require('./authController');
 const metaService = require('../services/metaService');
 const { isValidDocument } = require('../utils/documentValidator');
+const pricingLaunch = require('../utils/pricingLaunch');
 
 // ----------------------------------------------------------------------
 // Função Auxiliar: Gera o Token JWT para Psicólogo
@@ -125,16 +126,20 @@ exports.registerPsychologist = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(passwordInput, salt);
 
-        // --- 6. CRIAÇÃO NO BANCO (FREEMIUM COMUNIDADE — SEM CARTÃO E SEM TRIAL AUTOMÁTICO) ---
+        // --- 6. CRIAÇÃO NO BANCO (LEGADO PRE-2027 vs FREEMIUM COMUNIDADE A PARTIR DE 01/01/2027) ---
+        const isNewPricing = pricingLaunch.isNewPricingActive();
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 7);
+
         const newPsychologist = await db.Psychologist.create({
             nome,
             email,
             senha: hashedPassword,
             crp,
             slug: generatedSlug,
-            status: 'active', // Acesso imediato às ferramentas gratuitas do Plano Comunidade (perfil oculto nas buscas)
-            plano: 'Comunidade',
-            planExpiresAt: null,
+            status: isNewPricing ? 'active' : (cleanCpf ? 'active' : 'pending'),
+            plano: isNewPricing ? 'Comunidade' : (cleanCpf ? 'Essencial' : null),
+            planExpiresAt: isNewPricing ? null : (cleanCpf ? trialEndDate : null),
             cpf: cleanCpf, // Salva na coluna CPF
             telefone, // Salva o número de telefone no banco
             utm_source: utm_source || 'organico',

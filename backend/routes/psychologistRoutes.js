@@ -14,6 +14,7 @@ const whatsappClickController = require('../controllers/whatsappClickController'
 const { protect, admin } = require('../middlewares/authMiddleware');
 const { uploadProfilePhoto, uploadCrpDocument, magicBytesValidator } = require('../middlewares/upload');
 const { authLimiter, emailSpamLimiter, registerLimiter, matchLimiter, clickLimiter } = require('../middlewares/rateLimiters');
+const pricingLaunch = require('../utils/pricingLaunch');
 
 // ===============================================
 // ROTAS PÚBLICAS (Não exigem login)
@@ -126,12 +127,17 @@ const safeProtect = async (req, res, next) => {
             // Verifica e atualiza expiração do plano (espelhando o protect original)
             if (user && userType === 'psychologist') {
                 const isVip = user.is_exempt === true || String(user.is_exempt).toLowerCase() === 'true' || user.is_exempt === 1;
-                if (user.status === 'active' && !isVip) {
+                if (user.status === 'active' && !isVip && user.plano !== 'Comunidade') {
                     const validade = user.planExpiresAt ? new Date(user.planExpiresAt) : null;
                     if (!validade || validade <= new Date()) {
-                        await user.update({ plano: 'Comunidade', planExpiresAt: null }).catch(() => {});
-                        user.plano = 'Comunidade';
-                        user.planExpiresAt = null;
+                        if (pricingLaunch.isNewPricingActive()) {
+                            await user.update({ plano: 'Comunidade', planExpiresAt: null }).catch(() => {});
+                            user.plano = 'Comunidade';
+                            user.planExpiresAt = null;
+                        } else {
+                            await user.update({ status: 'inactive' }).catch(() => {});
+                            user.status = 'inactive';
+                        }
                     }
                 }
             }

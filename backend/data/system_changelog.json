@@ -1,5 +1,37 @@
 [
   {
+    "id": "change-git-993af8b0",
+    "date": "2026-11-27T15:13:35.000Z",
+    "commit": "993af8b0",
+    "author": "Anderson",
+    "title": "Novo: Schedule December pricing notice modal for subscribers and non-subscribers (psi,mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "schedule December pricing notice modal for subscribers and non-subscribers",
+    "description": "Commit registrado no repositório: \"feat(psi,mobile): schedule December pricing notice modal for subscribers and non-subscribers\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/psychologistController.js, backend/data/system_changelog.json, backend/migrations/20261126213000-add-pricing-notice-jan27-to-psychologists.js, backend/models/psychologist.js (+5 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #993af8b0"
+    },
+    "after": {
+      "nova_versao": "schedule December pricing notice modal for subscribers and non-subscribers"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/psychologistController.js",
+      "backend/data/system_changelog.json",
+      "backend/migrations/20261126213000-add-pricing-notice-jan27-to-psychologists.js",
+      "backend/models/psychologist.js",
+      "backend/routes/psychologistRoutes.js",
+      "mobile/src/app/(tabs)/index.tsx",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-caf91966",
     "date": "2026-11-25T19:48:55.000Z",
     "commit": "caf91966",
@@ -161,6 +193,58 @@
       "backend/models/SystemSetting.js",
       "backend/routes/adminRoutes.js",
       "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-9b5718a1",
+    "date": "2026-11-25T19:06:38.000Z",
+    "commit": "9b5718a1",
+    "author": "Anderson",
+    "title": "Novo: Finalize 7d card trial, legacy banners, and admin roadmap (freemium)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "finalize 7d card trial, legacy banners, and admin roadmap",
+    "description": "Commit registrado no repositório: \"feat(freemium): finalize 7d card trial, legacy banners, and admin roadmap\". Arquivos modificados: admin/admin.html, admin/admin.js, admin/admin_configuracoes_hub.html, admin/admin_crm_hub.html, admin/admin_crm_leads.js (+25 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #9b5718a1"
+    },
+    "after": {
+      "nova_versao": "finalize 7d card trial, legacy banners, and admin roadmap"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin.html",
+      "admin/admin.js",
+      "admin/admin_configuracoes_hub.html",
+      "admin/admin_crm_hub.html",
+      "admin/admin_crm_leads.js",
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_crm_psicologos.js",
+      "admin/admin_cs_drawer.js",
+      "admin/admin_roadmap_reavaliacoes.html",
+      "admin/admin_roadmap_reavaliacoes.js",
+      "backend/controllers/adminPerformanceController.js",
+      "backend/controllers/adminUsersController.js",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/psiAuthController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/controllers/settingsController.js",
+      "backend/controllers/subscriptionController.js",
+      "backend/jobs/cronScheduler.js",
+      "backend/jobs/remarketing.js",
+      "backend/jobs/remarketingCron.js",
+      "backend/models/SystemSetting.js",
+      "backend/routes/adminRoutes.js",
+      "backend/routes/viewRoutes.js",
+      "backend/services/matchService.js",
+      "backend/services/paymentStateService.js",
+      "public/psi/psi_assinatura.html",
+      "public/psi/psi_assinatura.js",
+      "public/psi/psi_caixa_de_entrada.html",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js"
     ]
   },
   {
