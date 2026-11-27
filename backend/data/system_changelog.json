@@ -1,5 +1,37 @@
 [
   {
+    "id": "change-git-f1714f8d",
+    "date": "2026-11-27T16:40:30.000Z",
+    "commit": "f1714f8d",
+    "author": "Anderson",
+    "title": "Correção: Ampliar coluna plan para TEXT, proteger lookup legado e fluxo trial_tok (subscriptions,e2e)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "ampliar coluna plan para TEXT, proteger lookup legado e fluxo trial_tok",
+    "description": "Commit registrado no repositório: \"fix(subscriptions,e2e): ampliar coluna plan para TEXT, proteger lookup legado e fluxo trial_tok\". Arquivos modificados: backend/.data/system_changelog.json, backend/config/dbFixes.js, backend/controllers/paymentController.js, backend/controllers/psychologistController.js, backend/data/system_changelog.json (+5 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #f1714f8d"
+    },
+    "after": {
+      "nova_versao": "ampliar coluna plan para TEXT, proteger lookup legado e fluxo trial_tok"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/config/dbFixes.js",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/cronScheduler.js",
+      "backend/migrations/20261127140000-widen-subscriptions-plan-column.js",
+      "backend/models/Subscription.js",
+      "public/psi/psi_assinatura.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-a741d59b",
     "date": "2026-11-27T16:24:52.000Z",
     "commit": "a741d59b",

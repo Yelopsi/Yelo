@@ -7,11 +7,9 @@ const pricingLaunch = require('../utils/pricingLaunch');
 // ============================================================================
 async function processTokenizedTrials() {
     try {
-        let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
-        if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
-            ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
-        }
+        const ASAAS_API_URL = PaymentStateService.getAsaasApiUrl();
         const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+        if (!ASAAS_API_KEY) return;
 
         const dueTrials = await db.Subscription.findAll({
             where: {
@@ -68,6 +66,11 @@ async function processTokenizedTrials() {
                         plan: `${meta.planType}_${meta.cycle}`,
                         status: payData.status || 'ACTIVE'
                     });
+                    await PaymentStateService.syncPaymentToDatabase(psi, {
+                        ...payData,
+                        value: payData.value != null ? payData.value : Number(((Number(meta.totalValue) || 0) / (Number(meta.installmentCount) || 1)).toFixed(2)),
+                        billingType: payData.billingType || 'CREDIT_CARD'
+                    }).catch(() => {});
                     await psi.update({
                         subscriptionId: realRefId,
                         plano: meta.planType,
@@ -96,13 +99,7 @@ async function runIntegrityAudit() {
     console.log('🛡️ [CRON AUDIT] Executando auditoria de integridade da base de dados e Asaas...');
     await processTokenizedTrials();
     try {
-        let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
-        if (process.env.ASAAS_API_KEY && process.env.ASAAS_API_KEY.includes('prod_')) {
-            ASAAS_API_URL = 'https://api.asaas.com/v3';
-        } else if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
-            ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
-        }
-        ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
+        const ASAAS_API_URL = PaymentStateService.getAsaasApiUrl();
 
         // 1. Revoga is_exempt se a pessoa já for pagante
         await db.sequelize.query(`UPDATE "Psychologists" SET "is_exempt" = false WHERE "subscriptionId" IS NOT NULL AND "is_exempt" = true;`);
@@ -192,7 +189,7 @@ async function runIntegrityAudit() {
                                     const diffTime = now.getTime() - dueDate.getTime();
                                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                                    if (diffDays > 5) {
+                                    if (isRecurringSub && diffDays > 5) {
                                         try {
                                             await fetch(`${ASAAS_API_URL}/subscriptions/${psi.subscriptionId}`, {
                                                 method: 'DELETE',

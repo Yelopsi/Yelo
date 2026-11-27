@@ -4,18 +4,10 @@ const emailService = require('../services/emailService');
 const gamificationService = require('../services/gamificationService');
 const promoCouponService = require('../services/promoCouponService');
 const pricingLaunch = require('../utils/pricingLaunch');
+const PaymentStateService = require('../services/paymentStateService');
 
-// Configurações do Asaas
-// Limpeza robusta da URL (remove espaços e barras finais)
-let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
-if (process.env.ASAAS_API_KEY && process.env.ASAAS_API_KEY.includes('prod_')) {
-    ASAAS_API_URL = 'https://api.asaas.com/v3';
-} else if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
-    ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
-}
-ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
-
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+const getAsaasApiUrl = () => PaymentStateService.getAsaasApiUrl();
+const getAsaasApiKey = () => (process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '');
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -77,6 +69,8 @@ exports.validateCoupon = async (req, res) => {
 exports.createPreference = async (req, res) => {
     let intent = null;
     let localPsychologist = null;
+    const ASAAS_API_URL = getAsaasApiUrl();
+    const ASAAS_API_KEY = getAsaasApiKey();
     
     try {
         const { planType, cupom, creditCard, billingType, billingCycle } = req.body;
@@ -96,7 +90,7 @@ exports.createPreference = async (req, res) => {
         if (overduePayments.length > 0) {
             // Verifica se o psicólogo ainda possui uma assinatura realmente ATIVA no gateway
             let hasActiveOngoingSub = false;
-            if (localPsychologist.subscriptionId && localPsychologist.status === 'active' && !localPsychologist.cancelAtPeriodEnd) {
+            if (localPsychologist.subscriptionId && String(localPsychologist.subscriptionId).startsWith('sub_') && localPsychologist.status === 'active' && !localPsychologist.cancelAtPeriodEnd) {
                 try {
                     const subCheckRes = await fetch(`${ASAAS_API_URL}/subscriptions/${localPsychologist.subscriptionId}`, {
                         headers: { 'access_token': ASAAS_API_KEY }
@@ -803,6 +797,8 @@ exports.createPreference = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.getPendingPix = async (req, res) => {
     try {
+        const ASAAS_API_URL = getAsaasApiUrl();
+        const ASAAS_API_KEY = getAsaasApiKey();
         const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
         if (!psychologist || !psychologist.subscriptionId) {
             return res.status(404).json({ error: 'Nenhuma assinatura encontrada.' });
@@ -877,6 +873,8 @@ exports.getPendingPix = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.convertOverdueToPix = async (req, res) => {
     try {
+        const ASAAS_API_URL = getAsaasApiUrl();
+        const ASAAS_API_KEY = getAsaasApiKey();
         const psychologistId = req.psychologist.id;
         const pendingPayment = await db.Payment.findOne({
             where: {
@@ -890,7 +888,7 @@ exports.convertOverdueToPix = async (req, res) => {
             return res.status(404).json({ error: 'Nenhuma fatura pendente encontrada.' });
         }
 
-        const asaasPaymentId = pendingPayment.asaasPaymentId;
+        const asaasPaymentId = pendingPayment.asaasPaymentId || pendingPayment.id;
 
         // 1. Converte a cobrança para PIX no Asaas
         const updateRes = await fetch(`${ASAAS_API_URL}/payments/${asaasPaymentId}`, {
@@ -931,6 +929,8 @@ exports.convertOverdueToPix = async (req, res) => {
 // ----------------------------------------------------------------------
 exports.updateSubscriptionMethod = async (req, res) => {
     try {
+        const ASAAS_API_URL = getAsaasApiUrl();
+        const ASAAS_API_KEY = getAsaasApiKey();
         const { billingType, creditCard } = req.body;
         const psychologistId = req.psychologist.id;
         
@@ -940,6 +940,9 @@ exports.updateSubscriptionMethod = async (req, res) => {
         }
 
         const subId = localPsychologist.subscriptionId;
+        if (!String(subId).startsWith('sub_')) {
+            return res.status(400).json({ error: 'Alteração de método disponível apenas para assinaturas mensais recorrentes.' });
+        }
 
         // --- PREPARAÇÃO DO PAYLOAD DE ATUALIZAÇÃO ---
         let updatePayload = {

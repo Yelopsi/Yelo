@@ -35,8 +35,10 @@ class PaymentStateService {
         let url = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
         if (process.env.ASAAS_API_KEY && process.env.ASAAS_API_KEY.includes('prod_')) {
             url = 'https://api.asaas.com/v3';
-        } else if (url.includes('sandbox.asaas.com') && !url.includes('/api')) {
-            url = url.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
+        } else if (process.env.ASAAS_API_KEY && process.env.ASAAS_API_KEY.includes('hmlg_') && !process.env.ASAAS_API_URL) {
+            url = 'https://sandbox.asaas.com/api/v3';
+        } else if (url.includes('://sandbox.asaas.com') && !url.includes('/api')) {
+            url = url.replace('://sandbox.asaas.com', '://sandbox.asaas.com/api');
         }
         return url.trim().replace(/\/+$/, '');
     }
@@ -326,11 +328,7 @@ class PaymentStateService {
         try {
             console.log(`[ASAAS] Pix Automático: Agendando retentativa ${attempt + 1} para instrução ${instruction.id} na data ${dueDateStr}`);
             
-            let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
-            ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
-            if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
-                ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
-            }
+            const ASAAS_API_URL = this.getAsaasApiUrl();
             const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
 
             const fetch = require('node-fetch');
@@ -575,10 +573,7 @@ class PaymentStateService {
 
     static async investigateCashImpact(paymentId) {
         try {
-            let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
-            if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
-                ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
-            }
+            const ASAAS_API_URL = this.getAsaasApiUrl();
             
             const fetch = require('node-fetch');
             const res = await fetch(`${ASAAS_API_URL}/financialTransactions?paymentId=${paymentId}`, {

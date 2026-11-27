@@ -4,14 +4,8 @@ const { sendSubscriptionCancelledEmail } = require('../services/emailService');
 const PaymentStateService = require('../services/paymentStateService');
 const pricingLaunch = require('../utils/pricingLaunch');
 
-let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://api.asaas.com/v3';
-if (process.env.ASAAS_API_KEY && process.env.ASAAS_API_KEY.includes('prod_')) {
-    ASAAS_API_URL = 'https://api.asaas.com/v3';
-} else if (ASAAS_API_URL.includes('sandbox.asaas.com') && !ASAAS_API_URL.includes('/api')) {
-    ASAAS_API_URL = ASAAS_API_URL.replace('sandbox.asaas.com', 'sandbox.asaas.com/api');
-}
-ASAAS_API_URL = ASAAS_API_URL.trim().replace(/\/+$/, '');
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+const getAsaasApiUrl = () => PaymentStateService.getAsaasApiUrl();
+const getAsaasApiKey = () => (process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '');
 
 // ----------------------------------------------------------------------
 // Rota: DELETE /api/psychologists/me (BLINDADA CONTRA COBRANÇA INDEVIDA)
@@ -148,40 +142,93 @@ exports.cancelSubscription = async (req, res) => {
             return res.json({ message: 'Período de teste cancelado sem nenhuma cobrança no cartão. Você voltou para o Plano Comunidade (Grátis).' });
         }
 
-        // 2. Plano parcelado no cartão (Trimestral ou Semestral)
+        // 2. Plano parcelado no cartão (Trimestral ou Semestral) ou cobrança avulsa
         if (!subId.startsWith('sub_')) {
+            const asaasApiUrl = getAsaasApiUrl();
+            const asaasApiKey = getAsaasApiKey();
+            const isSinglePayment = String(subId).startsWith('pay_');
             let isEligibleForRefund = false;
             let paymentToRefund = null;
 
             try {
-                const payRes = await fetch(`${ASAAS_API_URL}/payments/${subId}`, {
-                    headers: { 'access_token': ASAAS_API_KEY }
-                });
-                const payData = await payRes.json();
-                if (payData && payData.id) {
-                    paymentToRefund = payData;
-                    const dateCreated = new Date(payData.dateCreated);
-                    const diffDays = Math.floor((Date.now() - dateCreated.getTime()) / (1000 * 60 * 60 * 24));
-                    if (diffDays <= 7) isEligibleForRefund = true;
+                if (isSinglePayment) {
+                    const payRes = await fetch(`${asaasApiUrl}/payments/${subId}`, {
+                        headers: { 'access_token': asaasApiKey }
+                    });
+                    const payData = await payRes.json().catch(() => ({}));
+                    if (payData && payData.id && payData.dateCreated) {
+                        paymentToRefund = payData;
+                        const diffDays = Math.floor((Date.now() - new Date(payData.dateCreated).getTime()) / (1000 * 60 * 60 * 24));
+                        if (diffDays <= 7) isEligibleForRefund = true;
+                    }
+                } else {
+                    const instRes = await fetch(`${asaasApiUrl}/payments?installment=${encodeURIComponent(subId)}&limit=1`, {
+                        headers: { 'access_token': asaasApiKey }
+                    });
+                    const instData = await instRes.json().catch(() => ({}));
+                    const firstPay = Array.isArray(instData.data) && instData.data.length > 0 ? instData.data[0] : null;
+                    if (firstPay && firstPay.dateCreated) {
+                        paymentToRefund = firstPay;
+                        const diffDays = Math.floor((Date.now() - new Date(firstPay.dateCreated).getTime()) / (1000 * 60 * 60 * 24));
+                        if (diffDays <= 7) isEligibleForRefund = true;
+                    }
                 }
             } catch (e) {}
 
             if (isEligibleForRefund && paymentToRefund) {
+                const refundUrl = isSinglePayment
+                    ? `${asaasApiUrl}/payments/${paymentToRefund.id}/refund`
+                    : `${asaasApiUrl}/installments/${subId}/refund`;
+                const refundBody = isSinglePayment
+                    ? JSON.stringify({ value: paymentToRefund.value, description: "Cancelamento no prazo de 7 dias (Arrependimento)" })
+                    : JSON.stringify({});
+
+                let refundSucceeded = false;
+                let refundErrMsg = 'Não foi possível concluir o estorno automático no gateway. Tente novamente em instantes.';
                 try {
-                    await fetch(`${ASAAS_API_URL}/payments/${paymentToRefund.id}/refund`, {
+                    const refundRes = await fetch(refundUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                        body: JSON.stringify({ value: paymentToRefund.value, description: "Cancelamento no prazo de 7 dias (Arrependimento)" })
+                        headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey },
+                        body: refundBody
                     });
+                    const refundText = await refundRes.text();
+                    const refundData = refundText ? JSON.parse(refundText) : {};
+                    if (refundRes.ok && !refundData.errors) {
+                        refundSucceeded = true;
+                    } else if (refundData.errors && refundData.errors[0]?.description) {
+                        refundErrMsg = refundData.errors[0].description;
+                    }
                 } catch (e) {}
 
-                await psychologist.update({
-                    plano: 'Comunidade',
-                    planExpiresAt: null,
-                    cancelAtPeriodEnd: false,
-                    canceledAt: new Date(),
-                    subscriptionId: null
-                });
+                if (!refundSucceeded) {
+                    return res.status(400).json({ error: refundErrMsg });
+                }
+
+                await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: subId } }).catch(() => {});
+                if (isSinglePayment && paymentToRefund.id) {
+                    await db.Payment.update({ status: 'REFUNDED' }, { where: { id: paymentToRefund.id } }).catch(() => {});
+                }
+                await db.Payment.update({ status: 'CANCELED' }, {
+                    where: { psychologistId: psychologist.id, status: ['PENDING', 'OVERDUE'] }
+                }).catch(() => {});
+
+                if (pricingLaunch.isNewPricingActive()) {
+                    await psychologist.update({
+                        plano: 'Comunidade',
+                        planExpiresAt: null,
+                        cancelAtPeriodEnd: false,
+                        canceledAt: new Date(),
+                        subscriptionId: null
+                    });
+                } else {
+                    await psychologist.update({
+                        status: 'inactive',
+                        planExpiresAt: new Date(),
+                        cancelAtPeriodEnd: true,
+                        canceledAt: new Date(),
+                        subscriptionId: null
+                    });
+                }
                 return res.json({ message: 'Plano cancelado e valor estornado no cartão com sucesso.' });
             }
 
@@ -210,9 +257,9 @@ exports.cancelSubscription = async (req, res) => {
             const endDateStr = new Date(endLimitMs - 10800000).toISOString().split('T')[0];
 
             try {
-                const putRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+                const putRes = await fetch(`${getAsaasApiUrl()}/subscriptions/${subId}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                    headers: { 'Content-Type': 'application/json', 'access_token': getAsaasApiKey() },
                     body: JSON.stringify({ endDate: endDateStr })
                 });
                 const putText = await putRes.text();
@@ -284,9 +331,11 @@ exports.reactivateSubscription = async (req, res) => {
         }
 
         // 1. Tenta remover a data de fim no Asaas (Reativar recorrência)
-        const response = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+        const asaasApiUrl = getAsaasApiUrl();
+        const asaasApiKey = getAsaasApiKey();
+        const response = await fetch(`${asaasApiUrl}/subscriptions/${subId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+            headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey },
             body: JSON.stringify({ endDate: null }) // null remove a data de encerramento
         });
 
@@ -300,9 +349,9 @@ exports.reactivateSubscription = async (req, res) => {
 
         // Reativa notificações do cliente no Asaas caso tenham sido desativadas no cancelamento
         if (data.customer) {
-            await fetch(`${ASAAS_API_URL}/customers/${data.customer}`, {
+            await fetch(`${asaasApiUrl}/customers/${data.customer}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey },
                 body: JSON.stringify({ notificationDisabled: false })
             }).catch(() => {});
         }
