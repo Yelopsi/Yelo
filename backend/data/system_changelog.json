@@ -1,5 +1,49 @@
 [
   {
+    "id": "change-git-91675889",
+    "date": "2026-11-27T16:13:49.000Z",
+    "commit": "91675889",
+    "author": "Anderson",
+    "title": "Novo: Corrigir cancelAtPeriodEnd e adicionar trava de lancamento para 01/01/2027 (pricing)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "corrigir cancelAtPeriodEnd e adicionar trava de lancamento para 01/01/2027",
+    "description": "Commit registrado no repositório: \"feat(pricing): corrigir cancelAtPeriodEnd e adicionar trava de lancamento para 01/01/2027\". Arquivos modificados: admin/admin.html, admin/admin_crm_leads.js, admin/admin_crm_psicologos.html, admin/admin_cs_drawer.js, backend/.data/system_changelog.json (+17 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #91675889"
+    },
+    "after": {
+      "nova_versao": "corrigir cancelAtPeriodEnd e adicionar trava de lancamento para 01/01/2027"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin.html",
+      "admin/admin_crm_leads.js",
+      "admin/admin_crm_psicologos.html",
+      "admin/admin_cs_drawer.js",
+      "backend/.data/system_changelog.json",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/psiAuthController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/controllers/subscriptionController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/cronScheduler.js",
+      "backend/middlewares/authMiddleware.js",
+      "backend/routes/psychologistRoutes.js",
+      "backend/routes/publicRoutes.js",
+      "backend/services/paymentStateService.js",
+      "backend/utils/pricingLaunch.js",
+      "public/psi/psi_assinatura.html",
+      "public/psi/psi_assinatura.js",
+      "public/psi/psi_caixa_de_entrada.html",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-993af8b0",
     "date": "2026-11-27T15:13:35.000Z",
     "commit": "993af8b0",

@@ -20,19 +20,26 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import api from '../../../services/api';
 import NativeSelectMenu from '../../../components/NativeSelectMenu';
+import { fetchPublicNewPricingStatus, isMobileNewPricingActive } from '../../../utils/pricingLaunch';
 
 // -------------------------------------------------------------
 // Dicionário de Copys Outbound (Espelho de admin_crm_leads.js)
 // -------------------------------------------------------------
-const COPYS_OUTBOUND = {
-  intro: `Olá, [PRIMEIRO NOME]! Tudo bem?\n\nSou Anderson Costa, psicólogo clínico e fundador da Yelo.\n\nEstamos construindo uma comunidade de psicólogos que conecta profissionais a novos pacientes e também promove troca de experiências entre colegas.\n\nAchei que a proposta poderia fazer sentido para você.\n\nPosso te explicar rapidamente como funciona? Prometo que são apenas duas mensagens. 😊`,
+function buildCopysOutbound(isNewPricing: boolean) {
+  return {
+    intro: `Olá, [PRIMEIRO NOME]! Tudo bem?\n\nSou Anderson Costa, psicólogo clínico e fundador da Yelo.\n\nEstamos construindo uma comunidade de psicólogos que conecta profissionais a novos pacientes e também promove troca de experiências entre colegas.\n\nAchei que a proposta poderia fazer sentido para você.\n\nPosso te explicar rapidamente como funciona? Prometo que são apenas duas mensagens. 😊`,
 
-  pitch: `Maravilha, [PRIMEIRO NOME]! Serei bem direto, porque sei que a vida é corrida.\n\nA Yelo não é uma daquelas listas genéricas de profissionais. Nós construímos um Hub completo: o paciente responde a um questionário e nosso algoritmo faz o Match Inteligente, direcionando-o para a sua especialidade.\n\nAlém disso, a plataforma oferece ferramentas de gestão e troca de saberes 🤝:\n🧠 Fórum privado para discussões\n✍️ Blog para escrever aos usuários\n📊 Gestão financeira\n🌐 Página pública com endereço personalizado\n\nNa Yelo você tem total autonomia: define seus horários, valores, edita seu perfil, etc.\n\nComo estamos selecionando profissionais referência para esta fase, liberei **7 dias de acesso Premium gratuito para você testar na prática, sem precisar cadastrar nenhum cartão**. O que acha?\n\nwww.yelopsi.com.br/profissionais?utm_source=whatsapp&utm_medium=convite_manual`,
+    pitch: isNewPricing
+      ? `Maravilha, [PRIMEIRO NOME]! Serei bem direto, porque sei que a vida é corrida.\n\nA Yelo não é uma daquelas listas genéricas de profissionais. Nós construímos um Hub completo: o paciente responde a um questionário e nosso algoritmo faz o Match Inteligente, direcionando-o para a sua especialidade.\n\nAlém disso, a plataforma oferece ferramentas de gestão e troca de saberes 🤝:\n🧠 Fórum privado para discussões\n✍️ Blog para escrever aos usuários\n📊 Gestão financeira\n🌐 Página pública com endereço personalizado\n\nNa Yelo você tem total autonomia: define seus horários, valores, edita seu perfil, etc.\n\nVocê já pode usar as ferramentas de gestão gratuitamente no Plano Comunidade e ainda testar o Plano Essencial por **7 dias grátis (mediante cadastro do cartão na assinatura)**. O que acha?\n\nwww.yelopsi.com.br/profissionais?utm_source=whatsapp&utm_medium=convite_manual`
+      : `Maravilha, [PRIMEIRO NOME]! Serei bem direto, porque sei que a vida é corrida.\n\nA Yelo não é uma daquelas listas genéricas de profissionais. Nós construímos um Hub completo: o paciente responde a um questionário e nosso algoritmo faz o Match Inteligente, direcionando-o para a sua especialidade.\n\nAlém disso, a plataforma oferece ferramentas de gestão e troca de saberes 🤝:\n🧠 Fórum privado para discussões\n✍️ Blog para escrever aos usuários\n📊 Gestão financeira\n🌐 Página pública com endereço personalizado\n\nNa Yelo você tem total autonomia: define seus horários, valores, edita seu perfil, etc.\n\nComo estamos selecionando profissionais referência para esta fase, liberei **7 dias de acesso Premium gratuito para você testar na prática, sem precisar cadastrar nenhum cartão**. O que acha?\n\nwww.yelopsi.com.br/profissionais?utm_source=whatsapp&utm_medium=convite_manual`,
 
-  followup1: `Oi, [PRIMEIRO NOME], tudo bem?\n\nConseguiu dar uma olhada no link da Yelo que te enviei?\n\nGostaria muito de ter um colega com a sua visão na nossa rede. Nossos primeiros 7 dias Premium são totalmente sem custo **(e sem pedir cartão)** para você sentir como nossa gestão e nosso algoritmo podem te ajudar na captação de pacientes de forma ética.\n\nQualquer dúvida, estou à disposição!\n\nwww.yelopsi.com.br/profissionais?utm_source=whatsapp&utm_medium=convite_manual`,
+    followup1: isNewPricing
+      ? `Oi, [PRIMEIRO NOME], tudo bem?\n\nConseguiu dar uma olhada no link da Yelo que te enviei?\n\nGostaria muito de ter um colega com a sua visão na nossa rede. O acesso de gestão no Plano Comunidade é gratuito, e no Plano Essencial você conta com **7 dias grátis para testar a captação de pacientes** antes da primeira cobrança.\n\nQualquer dúvida, estou à disposição!\n\nwww.yelopsi.com.br/profissionais?utm_source=whatsapp&utm_medium=convite_manual`
+      : `Oi, [PRIMEIRO NOME], tudo bem?\n\nConseguiu dar uma olhada no link da Yelo que te enviei?\n\nGostaria muito de ter um colega com a sua visão na nossa rede. Nossos primeiros 7 dias Premium são totalmente sem custo **(e sem pedir cartão)** para você sentir como nossa gestão e nosso algoritmo podem te ajudar na captação de pacientes de forma ética.\n\nQualquer dúvida, estou à disposição!\n\nwww.yelopsi.com.br/profissionais?utm_source=whatsapp&utm_medium=convite_manual`,
 
-  followup2: `Olá, [PRIMEIRO NOME]!\n\nSei perfeitamente como a rotina de consultório é engolida por sessões, então não quero tomar seu tempo.\n\nEstou passando rapidinho só para deixar nosso convite em aberto. Nosso objetivo com a Yelo é eliminar o ruído de marketing e burocracia para você focar no atendimento.\nSe fizer sentido conversar depois e testar a plataforma, me dá um alô por aqui ou vem nos conhecer em www.yelopsi.com.br/profissionais?utm_source=whatsapp&utm_medium=convite_manual\n\nBons atendimentos!`,
-};
+    followup2: `Olá, [PRIMEIRO NOME]!\n\nSei perfeitamente como a rotina de consultório é engolida por sessões, então não quero tomar seu tempo.\n\nEstou passando rapidinho só para deixar nosso convite em aberto. Nosso objetivo com a Yelo é eliminar o ruído de marketing e burocracia para você focar no atendimento.\nSe fizer sentido conversar depois e testar a plataforma, me dá um alô por aqui ou vem nos conhecer em www.yelopsi.com.br/profissionais?utm_source=whatsapp&utm_medium=convite_manual\n\nBons atendimentos!`,
+  };
+}
 
 // Formatação de telefone para exibição
 function mascaraTelefone(tel: string): string {
@@ -69,6 +76,12 @@ export default function AdminCRMLeadsScreen() {
 
   // Modal Bottom Sheet de Copys WhatsApp
   const [modalZapLead, setModalZapLead] = useState<any | null>(null);
+  const [isNewPricingActive, setIsNewPricingActive] = useState<boolean>(() => isMobileNewPricingActive());
+  const copysOutbound = useMemo(() => buildCopysOutbound(isNewPricingActive), [isNewPricingActive]);
+
+  useEffect(() => {
+    fetchPublicNewPricingStatus().then(setIsNewPricingActive);
+  }, []);
 
   // Paginação (20 por página)
   const [currentPage, setCurrentPage] = useState(1);
@@ -144,7 +157,7 @@ export default function AdminCRMLeadsScreen() {
   }, [filteredLeads, currentPage]);
 
   // Disparo de mensagem no WhatsApp com injeção automática de dados
-  const handleSendWhatsAppCopy = async (lead: any, tipoCopy: keyof typeof COPYS_OUTBOUND) => {
+  const handleSendWhatsAppCopy = async (lead: any, tipoCopy: keyof ReturnType<typeof buildCopysOutbound>) => {
     if (!lead || !lead.telefone) {
       Alert.alert('Atenção', 'Lead sem telefone válido cadastrado.');
       return;
@@ -163,7 +176,7 @@ export default function AdminCRMLeadsScreen() {
         primeiroNome = 'colega';
       }
 
-      const template = COPYS_OUTBOUND[tipoCopy] || COPYS_OUTBOUND.intro;
+      const template = copysOutbound[tipoCopy] || copysOutbound.intro;
       const msgFinal = template.replace(/\[PRIMEIRO NOME\]/g, primeiroNome);
 
       const urlApp = `whatsapp://send?phone=${telClean}&text=${encodeURIComponent(msgFinal)}`;
@@ -1064,7 +1077,9 @@ export default function AdminCRMLeadsScreen() {
                   <Feather name="send" size={15} color="#10b981" />
                 </View>
                 <Text className="font-sans text-[#64748b] text-[12px] leading-5">
-                  Apresenta a Yelo e oferece 7 dias de Teste Premium grátis sem pedir cartão.
+                  {isNewPricingActive
+                    ? 'Apresenta a Yelo (Comunidade grátis + 7 dias do Plano Essencial no cartão).'
+                    : 'Apresenta a Yelo e oferece 7 dias de Teste Premium grátis sem pedir cartão.'}
                 </Text>
               </TouchableOpacity>
 

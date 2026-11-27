@@ -1292,6 +1292,9 @@ window.initializePage = function () {
             } else if (psy.status === 'active') {
                 if (isVip) {
                     statusLabel = 'VIP';
+                } else if (psy.plano === 'Comunidade') {
+                    statusLabel = 'Comunidade';
+                    statusClass = 'status-pending';
                 } else if (psy.planExpiresAt && new Date(psy.planExpiresAt) <= new Date()) {
                     // Força status "Expirado" no front caso a data já tenha passado (Lazy Evaluation Fallback)
                     statusLabel = 'Expirado';

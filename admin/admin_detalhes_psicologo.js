@@ -553,6 +553,8 @@ function renderPaymentKpis(p, sub, asaasSub, payments, expiryInfo) {
     let planoValor = '';
     if (p.is_exempt) {
         planoValor = 'Isento (VIP)';
+    } else if (p.plano === 'Comunidade') {
+        planoValor = 'Grátis (Comunidade)';
     } else if (asaasSub.value) {
         planoValor = `R$ ${parseFloat(asaasSub.value).toFixed(2).replace('.', ',')} / mês`;
     } else if (p.valor_mensal_numero) {
@@ -578,6 +580,9 @@ function renderPaymentKpis(p, sub, asaasSub, payments, expiryInfo) {
     } else if (p.subscriptionId || asaasSub.id) {
         renovacaoValor = '<span style="color: #16a34a;">Ativa ✅</span>';
         renovacaoSub = `Próx. débito: ${dataVenc}`;
+    } else if (p.plano === 'Comunidade') {
+        renovacaoValor = '<span style="color: #475569;">Comunidade (Grátis)</span>';
+        renovacaoSub = 'Perfil oculto nas buscas';
     } else if (p.planExpiresAt && (!expiryInfo || !expiryInfo.isExpired)) {
         renovacaoValor = '<span style="color: #2563eb;">Trial ⏳</span>';
         renovacaoSub = 'Degustação gratuita';

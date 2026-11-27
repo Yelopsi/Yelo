@@ -22,6 +22,7 @@ import { StatusBar } from 'expo-status-bar';
 import api from '../../../services/api';
 import NativeSelectMenu from '../../../components/NativeSelectMenu';
 import { resolvePhotoUrl } from '../../../utils/imageUrl';
+import { fetchPublicNewPricingStatus } from '../../../utils/pricingLaunch';
 
 // -------------------------------------------------------------
 // Helper: Cálculo de Força do Perfil (espelha calculateProfileHealth do Admin Web)
@@ -209,6 +210,16 @@ function getSubscriptionSummary(psy: any, fullData?: any) {
       expireLabel: formattedExpDate ? 'Expirou em' : 'Expiração',
       expireText: formattedExpDate || 'Expirado',
       expireColor: '#ef4444',
+    };
+  }
+
+  if (psy?.plano === 'Comunidade') {
+    return {
+      planText: 'Comunidade (Grátis)',
+      planColor: '#475569',
+      expireLabel: 'Vigência',
+      expireText: 'Gratuito',
+      expireColor: '#475569',
     };
   }
 
@@ -550,7 +561,11 @@ export default function AdminCRMPsicologosScreen() {
           }
         }
       } else if (actionType === 'incomplete') {
-        msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\nPassei só para te lembrar que os seus 7 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas. Se precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
+        const activeNewPricing = await fetchPublicNewPricingStatus();
+        const trialBlock = activeNewPricing
+          ? `Passei só para te lembrar que você pode finalizar seu perfil gratuitamente no Plano Comunidade e ativar os *7 dias grátis do Plano Essencial* (mediante cadastro do cartão na assinatura) para começar a receber pacientes!`
+          : `Passei só para te lembrar que os seus 7 dias de teste gratuito (sem precisar cadastrar cartão de crédito) só começam a contar depois que o seu perfil estiver completo e a sua página disponível para receber pacientes!`;
+        msg = `Olá, ${firstName}! Tudo bem? Aqui é o Anderson, da Yelo. 🌿\n\nVi que você deu o primeiro passo e iniciou o seu cadastro na nossa plataforma, mas acabou não finalizando o preenchimento do seu perfil. Eu sei bem que a rotina de atendimentos acaba engolindo o nosso tempo, né? rs\n\n${trialBlock}\n\nÉ a oportunidade perfeita para você testar na prática como a plataforma te conecta com pacientes direto no seu WhatsApp, lembrando que a gente não cobra nenhuma taxa ou comissão pelas suas sessões.\n\nFalta bem pouco para o seu perfil ficar ativo nas buscas. Se precisar de uma mãozinha para preencher a sua bio ou tiver qualquer dúvida, é só me dar um toque respondendo esta mensagem. Sigo super à disposição por aqui!`;
       } else if (actionType === 'expired_pix_fomo') {
         const m = metrics || {};
         const approach = m.approach || 'Psicologia';

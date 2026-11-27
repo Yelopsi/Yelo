@@ -894,6 +894,18 @@ export default function AdminDetalhesPsicologoScreen() {
                     Este profissional possui isenção permanente de mensalidade autorizada pela administração da Yelo.
                   </Text>
                 </View>
+              ) : p.plano === 'Comunidade' ? (
+                <View style={{ backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#cbd5e1', padding: 14, borderRadius: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ fontSize: 18 }}>🌱</Text>
+                    <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontSize: 14, color: '#334155' }}>
+                      Plano Comunidade (Grátis)
+                    </Text>
+                  </View>
+                  <Text style={{ fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, color: '#475569', marginTop: 6 }}>
+                    Acesso gratuito às ferramentas internas. Perfil oculto nas buscas até ativação do Plano Essencial.
+                  </Text>
+                </View>
               ) : (p.subscriptionId || asaasSub.id) && p.status === 'active' ? (
                 <View style={{ backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#86efac', padding: 14, borderRadius: 16 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

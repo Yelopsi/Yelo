@@ -23,6 +23,11 @@ import YeloToast from '../../components/YeloToast';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import api, { getBaseUrl } from '../../services/api';
+import {
+  BillingCycleKey,
+  MOBILE_CYCLE_CONFIG,
+  isMobileNewPricingActive,
+} from '../../utils/pricingLaunch';
 
 // =========================================================================
 // MOCK DE TESTE VISUAL DE CENÁRIOS
@@ -102,6 +107,7 @@ export default function AssinaturaScreen() {
   }, []);
 
   // Native Checkout State
+  const [selectedCycle, setSelectedCycle] = useState<BillingCycleKey>('SEMIANNUAL');
   const [checkoutPrice, setCheckoutPrice] = useState('99,00');
   const [isIosCheckout, setIsIosCheckout] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'PIX' | 'CREDIT_CARD'>('PIX');
@@ -428,8 +434,8 @@ export default function AssinaturaScreen() {
     }
   };
 
-  // Se iOS: abre o modal de escolha (Web R$99 ou iOS R$129,90)
-  // Se Android ou outro: abre direto o checkout nativo no app a R$99!
+  // Se iOS: abre o modal de escolha (Web ou iOS R$129,90)
+  // Se Android ou outro: abre direto o checkout nativo no app respeitando a trava de 01/01/2027
   const handleAssinarEssencial = () => {
     addDebugLog('Abrindo fluxo de assinatura...');
     setIsUpdatePaymentMethodMode(false);
@@ -437,15 +443,39 @@ export default function AssinaturaScreen() {
     if (!pixCpfInput && (psiData?.cpf || psiData?.cnpj)) {
       setPixCpfInput(maskCpfCnpj(psiData.cpf || psiData.cnpj));
     }
+
+    const activeNewPricing = isMobileNewPricingActive(psiData);
+    const cycleMeta = MOBILE_CYCLE_CONFIG[selectedCycle];
+    const isComunidadeLocal = String(psiData?.plano || '') === 'Comunidade';
+    const isTokenTrialLocal = String(psiData?.subscriptionId || '').startsWith('trial_tok_');
+    const expLocal = psiData?.planExpiresAt ? new Date(psiData.planExpiresAt) : null;
+    const hasSubLocal = !!(psiData?.subscriptionId || psiData?.stripeSubscriptionId);
+    const eligibleTrialLocal =
+      activeNewPricing &&
+      !psiData?.is_exempt &&
+      isComunidadeLocal &&
+      !hasSubLocal &&
+      !psiData?.firstPaidAt &&
+      !psiData?.subscribedAt;
+    const inTrialLocal = activeNewPricing
+      ? !psiData?.is_exempt &&
+        !isComunidadeLocal &&
+        !!expLocal &&
+        expLocal > new Date() &&
+        !psiData?.firstPaidAt &&
+        (!hasSubLocal || isTokenTrialLocal)
+      : false;
+    const mustUseCard = activeNewPricing && (cycleMeta.installments > 1 || eligibleTrialLocal || inTrialLocal);
+
     if (Platform.OS === 'ios') {
       addDebugLog('Plataforma iOS detectada: Abrindo escolha de taxa');
       setActiveModal('IOS_FEE_CHOICE');
     } else {
-      addDebugLog('Plataforma Android: Indo direto para checkout R$99');
+      addDebugLog('Plataforma Android: Abrindo checkout nativo');
       setIsIosCheckout(false);
-      setCheckoutPrice('99,00');
+      setCheckoutPrice(activeNewPricing ? cycleMeta.priceFormatted : '99,00');
       setPixData(null);
-      setPaymentMethod('PIX');
+      setPaymentMethod(mustUseCard ? 'CREDIT_CARD' : 'PIX');
       setActiveModal('CHECKOUT');
     }
   };
@@ -457,7 +487,15 @@ export default function AssinaturaScreen() {
     setPixData(null);
     setPaymentMethod('CREDIT_CARD');
     setIsIosCheckout(false);
-    setCheckoutPrice('99,00');
+    const subPrice =
+      psiData?.activeSubscriptionPrice !== null &&
+      psiData?.activeSubscriptionPrice !== undefined &&
+      Number(psiData.activeSubscriptionPrice) > 0
+        ? Number(psiData.activeSubscriptionPrice).toFixed(2).replace('.', ',')
+        : isMobileNewPricingActive(psiData) && !psiData?.isLegacySubscriber
+          ? '159,00'
+          : '99,00';
+    setCheckoutPrice(subPrice);
     if (!pixCpfInput && (psiData?.cpf || psiData?.cnpj)) {
       setPixCpfInput(maskCpfCnpj(psiData.cpf || psiData.cnpj));
     }
@@ -618,6 +656,9 @@ export default function AssinaturaScreen() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 25000);
 
+      const activeNewPricing = isMobileNewPricingActive(psiData);
+      const effectiveCycle = (!activeNewPricing || isIosCheckout) ? 'MONTHLY' : selectedCycle;
+
       const payload = isUpdatePaymentMethodMode
         ? {
           billingType: 'PIX',
@@ -629,6 +670,7 @@ export default function AssinaturaScreen() {
         }
         : {
           planType: isIosCheckout ? 'ESSENTIAL_IOS' : 'ESSENTIAL',
+          billingCycle: effectiveCycle,
           billingType: 'PIX',
           isIos: isIosCheckout,
           creditCard: {
@@ -814,10 +856,14 @@ export default function AssinaturaScreen() {
         ccv: cardData.ccv.trim()
       };
 
+      const activeNewPricing = isMobileNewPricingActive(psiData);
+      const effectiveCycle = (!activeNewPricing || isIosCheckout) ? 'MONTHLY' : selectedCycle;
+
       const payload = isUpdatePaymentMethodMode
         ? { billingType: 'CREDIT_CARD', creditCard: creditCardObj }
         : {
           planType: isIosCheckout ? 'ESSENTIAL_IOS' : 'ESSENTIAL',
+          billingCycle: effectiveCycle,
           billingType: 'CREDIT_CARD',
           isIos: isIosCheckout,
           creditCard: creditCardObj
@@ -834,7 +880,13 @@ export default function AssinaturaScreen() {
       } else if (res.data?.success || res.data?.subscriptionId) {
         setActiveModal('NONE');
         addDebugLog('✅ Cartão aprovado pelo Asaas!');
-        setToastMessage("🎉 Assinatura ativada com sucesso!");
+        const subIdResp = String(res.data?.subscriptionId || '');
+        const activatedTrial = subIdResp.startsWith('trial_tok_') || (activeNewPricing && !psiData?.firstPaidAt && !isIosCheckout);
+        setToastMessage(
+          activatedTrial
+            ? "🎉 Teste de 7 dias grátis ativado! Nenhuma cobrança foi feita hoje."
+            : "🎉 Assinatura ativada com sucesso!"
+        );
         setToastType('success');
         await fetchStatus();
       } else if (res.data?.couponSuccess) {
@@ -869,12 +921,46 @@ export default function AssinaturaScreen() {
 
   const isExempt = psiData?.is_exempt === true || String(psiData?.is_exempt).toLowerCase() === 'true' || psiData?.is_exempt === 1;
   const now = new Date();
+  const isNewPricing = isMobileNewPricingActive(psiData);
+  const isComunidade = String(psiData?.plano || '') === 'Comunidade';
+  const isTokenizedTrial = String(psiData?.subscriptionId || '').startsWith('trial_tok_');
+  const hasRecurringSub = Boolean(psiData?.subscriptionId && String(psiData.subscriptionId).startsWith('sub_'));
   const expiresAt = psiData?.planExpiresAt ? new Date(psiData.planExpiresAt) : null;
   const isExpired = expiresAt ? expiresAt < now : true;
   const daysRemaining = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : 0;
   const isCancelAtPeriodEnd = !!(psiData?.cancel_at_period_end || psiData?.cancelAtPeriodEnd);
   const hasSubscription = !!(psiData?.subscriptionId || psiData?.stripeSubscriptionId);
+  const isEligibleForTrial =
+    isNewPricing &&
+    !isExempt &&
+    isComunidade &&
+    !hasSubscription &&
+    !psiData?.firstPaidAt &&
+    !psiData?.subscribedAt;
+  const isInTrial = isNewPricing
+    ? !isExempt && !isComunidade && !!expiresAt && expiresAt > now && !psiData?.firstPaidAt && (!hasSubscription || isTokenizedTrial)
+    : !isExempt && !hasSubscription && !isExpired && daysRemaining > 0;
+  const isActivePaidSubscriber = !isExempt && !isComunidade && psiData?.status === 'active' && hasSubscription && !isInTrial && !isExpired;
+  const showLegacyBanner = isNewPricing && isActivePaidSubscriber && psiData?.isLegacySubscriber !== false;
   const isActive = (psiData?.status === 'active' || isExempt) && (!isExpired || isExempt);
+  const activeCycleMeta = MOBILE_CYCLE_CONFIG[selectedCycle];
+  const isCardOnlyCheckout =
+    isNewPricing &&
+    !isUpdatePaymentMethodMode &&
+    !isIosCheckout &&
+    (activeCycleMeta.installments > 1 || isEligibleForTrial || isInTrial);
+  const displayResumoPrice = isExempt
+    ? 'R$ 0,00 (Isento)'
+    : isComunidade
+      ? 'Grátis'
+      : psiData?.activeSubscriptionPrice !== null &&
+          psiData?.activeSubscriptionPrice !== undefined &&
+          Number(psiData.activeSubscriptionPrice) > 0
+        ? `R$ ${Number(psiData.activeSubscriptionPrice).toFixed(2).replace('.', ',')}`
+        : isNewPricing && !psiData?.isLegacySubscriber
+          ? 'R$ 159,00'
+          : 'R$ 99,00';
+  const nextSevenDaysFormatted = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR');
 
   return (
     <View className="flex-1 bg-[#f9fafb]">
@@ -912,12 +998,58 @@ export default function AssinaturaScreen() {
           </View>
         )}
 
+        {/* BANNER PARA QUEM JÁ É ASSINANTE APÓS 01/01/2027 (PREÇO LEGADO MANTIDO) */}
+        {showLegacyBanner && (
+          <View
+            style={{
+              marginHorizontal: 16,
+              marginBottom: 16,
+              backgroundColor: '#f0fdf4',
+              borderWidth: 1,
+              borderColor: '#bbf7d0',
+              borderLeftWidth: 5,
+              borderLeftColor: '#1B4332',
+              borderRadius: 18,
+              padding: 16,
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 12,
+            }}
+          >
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                backgroundColor: '#1B4332',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Feather name="shield" size={18} color="#FFEE8C" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
+                <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 13.5 }}>
+                  Sua assinatura atual permanece igual
+                </Text>
+                <View style={{ backgroundColor: '#dcfce7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                  <Text style={{ fontFamily: 'Inter_800ExtraBold', color: '#166534', fontSize: 10 }}>CONDIÇÃO MANTIDA</Text>
+                </View>
+              </View>
+              <Text style={{ fontFamily: 'Inter_400Regular', color: '#334155', fontSize: 12.5, lineHeight: 18 }}>
+                Atualizamos os valores apenas para novas assinaturas. Como você já é assinante, seu valor e condições atuais continuam exatamente os mesmos enquanto sua assinatura permanecer ativa.
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* ========================================================================= */}
         {/* RESUMO DO PLANO ATUAL (#card-resumo-assinatura da versão Web) OU BANNER   */}
         {/* ========================================================================= */}
         <View style={{ paddingHorizontal: 16, marginBottom: 20 }}>
-          {!isActive && renderAutoPromoBanner(16)}
-          {hasSubscription || isExempt ? (
+          {!isActivePaidSubscriber && renderAutoPromoBanner(16)}
+          {hasSubscription || isExempt || (isNewPricing && isComunidade) ? (
             <View
               style={{
                 backgroundColor: '#ffffff',
@@ -935,7 +1067,7 @@ export default function AssinaturaScreen() {
               {/* Linha 1: Nome do Plano + Badge de Status (.status-badge) */}
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 8 }}>
                 <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 21 }}>
-                  Plano Essencial
+                  {isComunidade ? 'Plano Comunidade' : 'Plano Essencial'}
                 </Text>
 
                 {isExempt ? (
@@ -955,6 +1087,25 @@ export default function AssinaturaScreen() {
                     <Text style={{ fontSize: 12 }}>💎</Text>
                     <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 12 }}>
                       VIP Ativo
+                    </Text>
+                  </View>
+                ) : isComunidade ? (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      backgroundColor: '#f1f5f9',
+                      borderWidth: 1,
+                      borderColor: '#cbd5e1',
+                      paddingHorizontal: 12,
+                      paddingVertical: 5,
+                      borderRadius: 999,
+                    }}
+                  >
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#64748b' }} />
+                    <Text style={{ fontFamily: 'Inter_700Bold', color: '#475569', fontSize: 12 }}>
+                      Gratuito
                     </Text>
                   </View>
                 ) : isCancelAtPeriodEnd ? (
@@ -1011,74 +1162,86 @@ export default function AssinaturaScreen() {
                   >
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#16a34a' }} />
                     <Text style={{ fontFamily: 'Inter_700Bold', color: '#166534', fontSize: 12 }}>
-                      Ativo
+                      {isInTrial ? 'Teste Grátis (7 dias)' : 'Ativo'}
                     </Text>
                   </View>
                 )}
               </View>
 
               {/* Linha 2: Data de Renovação / Vencimento (#banner-renovacao) */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
-                <Feather name="calendar" size={14} color="#64748b" />
-                <Text style={{ fontFamily: 'Inter_500Medium', color: '#475569', fontSize: 13.5 }}>
-                  {isExempt
-                    ? 'Status: Isento (Acesso Vitalício)'
-                    : !isActive
-                      ? `Inativo desde: ${expiresAt?.toLocaleDateString('pt-BR') || '--/--/----'}`
-                      : isCancelAtPeriodEnd
-                        ? `Acesso até: ${expiresAt?.toLocaleDateString('pt-BR') || '--/--/----'} (${daysRemaining} ${daysRemaining === 1 ? 'dia restante' : 'dias restantes'})`
-                        : `Renova em: ${expiresAt?.toLocaleDateString('pt-BR') || '--/--/----'} (${daysRemaining} ${daysRemaining === 1 ? 'dia restante' : 'dias restantes'})`}
-                </Text>
-              </View>
-
-              {/* Linha 3: Preço Mensal (#banner-preco) + Botão Alterar Forma de Pagamento (#btn-alterar-pagamento) */}
-              <View
-                style={{
-                  borderTopWidth: 1,
-                  borderColor: '#f1f5f9',
-                  paddingTop: 14,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 10,
-                }}
-              >
-                <View>
-                  <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 11.5, marginBottom: 2 }}>
-                    Valor da mensalidade
-                  </Text>
-                  <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 22 }}>
-                    {isExempt ? 'R$ 0,00 (Isento)' : 'R$ 99,00'}
-                    {!isExempt && (
-                      <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 13 }}> / mês</Text>
-                    )}
+              {!isComunidade && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                  <Feather name="calendar" size={14} color="#64748b" />
+                  <Text style={{ fontFamily: 'Inter_500Medium', color: '#475569', fontSize: 13.5 }}>
+                    {isExempt
+                      ? 'Status: Isento (Acesso Vitalício)'
+                      : !isActive
+                        ? `Inativo desde: ${expiresAt?.toLocaleDateString('pt-BR') || '--/--/----'}`
+                        : isInTrial
+                          ? `Teste grátis até: ${expiresAt?.toLocaleDateString('pt-BR') || '--/--/----'} (${daysRemaining} ${daysRemaining === 1 ? 'dia restante' : 'dias restantes'})`
+                          : isCancelAtPeriodEnd
+                            ? `Acesso até: ${expiresAt?.toLocaleDateString('pt-BR') || '--/--/----'} (${daysRemaining} ${daysRemaining === 1 ? 'dia restante' : 'dias restantes'})`
+                            : `Renova em: ${expiresAt?.toLocaleDateString('pt-BR') || '--/--/----'} (${daysRemaining} ${daysRemaining === 1 ? 'dia restante' : 'dias restantes'})`}
                   </Text>
                 </View>
+              )}
 
-                {!isExempt && hasSubscription && (
-                  <TouchableOpacity
-                    onPress={handleAlterarFormaPagamento}
-                    disabled={isProcessingCheckout}
-                    activeOpacity={0.8}
-                    style={{
-                      backgroundColor: '#f8fafc',
-                      borderWidth: 1,
-                      borderColor: '#cbd5e1',
-                      paddingHorizontal: 14,
-                      paddingVertical: 9,
-                      borderRadius: 999,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
-                    <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#334155', fontSize: 12.5 }}>
-                      Alterar Forma de Pagamento ⚙️
+              {isComunidade && (
+                <Text style={{ fontFamily: 'Inter_400Regular', color: '#475569', fontSize: 13, lineHeight: 19, marginBottom: 12 }}>
+                  Ferramentas internas liberadas gratuitamente. Seu perfil público está oculto nas buscas até ativar o Plano Essencial.
+                </Text>
+              )}
+
+              {/* Linha 3: Preço Mensal (#banner-preco) + Botão Alterar Forma de Pagamento (#btn-alterar-pagamento) */}
+              {!isComunidade && (
+                <View
+                  style={{
+                    borderTopWidth: 1,
+                    borderColor: '#f1f5f9',
+                    paddingTop: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 10,
+                  }}
+                >
+                  <View>
+                    <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 11.5, marginBottom: 2 }}>
+                      {isInTrial ? 'Primeira cobrança após o teste' : 'Valor da assinatura'}
                     </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+                    <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 22 }}>
+                      {displayResumoPrice}
+                      {!isExempt && (
+                        <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 13 }}> / mês</Text>
+                      )}
+                    </Text>
+                  </View>
+
+                  {!isExempt && hasRecurringSub && (
+                    <TouchableOpacity
+                      onPress={handleAlterarFormaPagamento}
+                      disabled={isProcessingCheckout}
+                      activeOpacity={0.8}
+                      style={{
+                        backgroundColor: '#f8fafc',
+                        borderWidth: 1,
+                        borderColor: '#cbd5e1',
+                        paddingHorizontal: 14,
+                        paddingVertical: 9,
+                        borderRadius: 999,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#334155', fontSize: 12.5 }}>
+                        Alterar Forma de Pagamento ⚙️
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
 
               {/* Alerta de Fatura PIX / Cartão em Aberto (#alert-pix-pending da versão Web) */}
               {pendingInvoice?.pending && (
@@ -1159,10 +1322,135 @@ export default function AssinaturaScreen() {
               </View>
             </View>
           )}
+
+          {isEligibleForTrial && (
+            <View
+              style={{
+                marginTop: 14,
+                backgroundColor: '#1B4332',
+                borderRadius: 20,
+                padding: 16,
+              }}
+            >
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#FFEE8C', fontSize: 13.5, marginBottom: 4 }}>
+                🎁 Experimente o Essencial por 7 dias grátis
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.9)', fontSize: 12.5, lineHeight: 18 }}>
+                Cadastre seu cartão de crédito ao escolher seu plano abaixo e comece hoje sem pagar nada. A primeira cobrança ocorre só em {nextSevenDaysFormatted}.
+              </Text>
+            </View>
+          )}
         </View>
 
-        {/* CONTAINER DO PLANO ÚNICO DISPONÍVEL NO APP: PLANO ESSENCIAL */}
+        {/* SELETOR SEGMENTADO DE PERIODICIDADE (LIBERADO EM 01/01/2027) */}
+        {isNewPricing && (
+          <View style={{ paddingHorizontal: 16, marginBottom: 18 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                backgroundColor: '#ffffff',
+                padding: 5,
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                shadowColor: '#0f172a',
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 2,
+              }}
+            >
+              {(['MONTHLY', 'QUARTERLY', 'SEMIANNUAL'] as BillingCycleKey[]).map((cycleKey) => {
+                const cfg = MOBILE_CYCLE_CONFIG[cycleKey];
+                const isSel = selectedCycle === cycleKey;
+                return (
+                  <TouchableOpacity
+                    key={cycleKey}
+                    activeOpacity={0.8}
+                    onPress={() => setSelectedCycle(cycleKey)}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      paddingHorizontal: 6,
+                      borderRadius: 999,
+                      backgroundColor: isSel ? '#1B4332' : 'transparent',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: isSel ? 'Inter_700Bold' : 'Inter_600SemiBold',
+                        fontSize: 12,
+                        color: isSel ? '#ffffff' : '#334155',
+                      }}
+                    >
+                      {cfg.label}
+                    </Text>
+                    {cycleKey !== 'MONTHLY' && cfg.badgeText && (
+                      <View
+                        style={{
+                          backgroundColor: isSel ? '#FFEE8C' : '#dcfce7',
+                          paddingHorizontal: 5,
+                          paddingVertical: 1.5,
+                          borderRadius: 999,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontFamily: 'Inter_800ExtraBold',
+                            fontSize: 9.5,
+                            color: isSel ? '#1B4332' : '#166534',
+                          }}
+                        >
+                          {cfg.badgeText}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* CONTAINER DOS PLANOS DISPONÍVEIS */}
         <View style={{ paddingHorizontal: 16 }}>
+          {isNewPricing && (
+            <View
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: 22,
+                borderWidth: isComunidade ? 1.5 : 1,
+                borderColor: isComunidade ? '#1B4332' : '#e2e8f0',
+                padding: 18,
+                marginBottom: 16,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <View>
+                  <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10.5, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                    Organização interna
+                  </Text>
+                  <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#0f172a' }}>
+                    Comunidade
+                  </Text>
+                </View>
+                <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 20, color: '#1B4332' }}>
+                  Grátis
+                </Text>
+              </View>
+              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: '#475569', lineHeight: 18, marginBottom: 10 }}>
+                Agenda, financeiro, calculadora e fórum sem custo fixo. Perfil mantido oculto nas buscas de pacientes.
+              </Text>
+              {isComunidade && (
+                <View style={{ backgroundColor: '#f1f5f9', paddingVertical: 8, borderRadius: 999, alignItems: 'center' }}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#475569', fontSize: 12 }}>Seu Plano Atual</Text>
+                </View>
+              )}
+            </View>
+          )}
 
           <View
             style={{
@@ -1199,12 +1487,12 @@ export default function AssinaturaScreen() {
               }}
             >
               <Text style={{ fontFamily: 'Inter_700Bold', color: '#1B4332', fontSize: 10.5, letterSpacing: 0.6 }}>
-                ⭐ PLANO OFICIAL YELO
+                {isNewPricing ? '⭐ MAIS ESCOLHIDO' : '⭐ PLANO OFICIAL YELO'}
               </Text>
             </View>
 
             {/* SELO DO PLANO ATUAL (.selo-plano-atual da versão Web) */}
-            {hasSubscription && (
+            {hasSubscription && !isComunidade && (
               <View
                 style={{
                   alignSelf: 'flex-start',
@@ -1216,26 +1504,38 @@ export default function AssinaturaScreen() {
                 }}
               >
                 <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 11 }}>
-                  Seu Plano Atual
+                  {isInTrial ? 'Teste Grátis Ativo' : 'Seu Plano Atual'}
                 </Text>
               </View>
             )}
 
             {/* CABEÇALHO DO CARD (TÍTULO E PREÇO) */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, marginTop: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, marginTop: 4 }}>
               <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 23 }}>
                 Plano Essencial
               </Text>
               <View style={{ alignItems: 'flex-end' }}>
+                {isNewPricing && activeCycleMeta.oldPrice && (
+                  <Text style={{ fontFamily: 'Inter_500Medium', color: '#94a3b8', fontSize: 12, textDecorationLine: 'line-through' }}>
+                    {activeCycleMeta.oldPrice}
+                  </Text>
+                )}
                 <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 25 }}>
-                  R$ 99<Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 13.5 }}>/mês</Text>
+                  R$ {isNewPricing ? activeCycleMeta.monthlyPrice : 99}
+                  <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 13.5 }}>/mês</Text>
                 </Text>
               </View>
             </View>
 
+            {isNewPricing && (
+              <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#166534', fontSize: 12, marginBottom: 10 }}>
+                {activeCycleMeta.billingNote}
+              </Text>
+            )}
+
             {/* DESCRIÇÃO DO PLANO - ALTA LEGIBILIDADE MOBILE */}
             <Text style={{ fontFamily: 'Inter_400Regular', color: '#475569', fontSize: 13.5, lineHeight: 20, marginBottom: 18 }}>
-              Acesso irrestrito a todas as ferramentas clínicas e gestão inteligente de pacientes.
+              Acesso irrestrito a todas as ferramentas clínicas e gestão inteligente de pacientes, sem comissão por sessão.
             </Text>
 
             {/* LISTA DE BENEFÍCIOS REFINADA */}
@@ -1288,7 +1588,7 @@ export default function AssinaturaScreen() {
               >
                 <Feather name="check-circle" size={16} color="#64748b" />
                 <Text style={{ fontFamily: 'Inter_700Bold', color: '#64748b', fontSize: 15 }}>
-                  Seu Plano Atual
+                  {isInTrial ? 'Teste Grátis Ativo (7 dias)' : 'Seu Plano Atual'}
                 </Text>
               </View>
             ) : (
@@ -1314,12 +1614,16 @@ export default function AssinaturaScreen() {
                 {isProcessingCheckout ? (
                   <ActivityIndicator color="white" />
                 ) : (
-                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 15.5 }}>
+                  <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 15.5, textAlign: 'center', paddingHorizontal: 10 }}>
                     {isCancelAtPeriodEnd
-                      ? "Reativar Assinatura ↺"
-                      : !isExpired && daysRemaining > 0
-                        ? "Assinar Plano Essencial"
-                        : "Reativar Plano Essencial"}
+                      ? 'Reativar Assinatura ↺'
+                      : isNewPricing
+                        ? isEligibleForTrial
+                          ? `Testar 7 dias grátis - ${activeCycleMeta.label} (R$ ${activeCycleMeta.monthlyPrice}/mês depois)`
+                          : `Assinar ${activeCycleMeta.label} - R$ ${activeCycleMeta.monthlyPrice}/mês`
+                        : !isExpired && daysRemaining > 0
+                          ? 'Assinar Plano Essencial'
+                          : 'Reativar Plano Essencial'}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -1328,13 +1632,13 @@ export default function AssinaturaScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 2 }}>
               <Feather name="lock" size={13} color="#64748b" />
               <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 12 }}>
-                Pagamento seguro e criptografado
+                {isNewPricing ? 'Teste de 7 dias mediante inclusão do cartão · Asaas' : 'Pagamento seguro e criptografado'}
               </Text>
             </View>
           </View>
 
           {/* ÁREA DE CANCELAMENTO DE RENOVAÇÃO AUTOMÁTICA (#area-cancelamento da versão Web) */}
-          {hasSubscription && isActive && !isCancelAtPeriodEnd && !isExempt && (
+          {hasSubscription && isActive && !isCancelAtPeriodEnd && !isExempt && !isComunidade && (
             <View
               style={{
                 marginTop: 18,
@@ -1347,7 +1651,9 @@ export default function AssinaturaScreen() {
               }}
             >
               <Text style={{ fontFamily: 'Inter_500Medium', color: '#991b1b', fontSize: 12.5, textAlign: 'center', lineHeight: 18, marginBottom: 10 }}>
-                Se você cancelar, seu perfil deixará de aparecer nas buscas após o fim do período atual pago ({expiresAt?.toLocaleDateString('pt-BR')}).
+                {isNewPricing
+                  ? `Se você cancelar, seu perfil retornará ao Plano Comunidade (Grátis) e deixará de aparecer nas buscas após o fim do período atual (${expiresAt?.toLocaleDateString('pt-BR')}).`
+                  : `Se você cancelar, seu perfil deixará de aparecer nas buscas após o fim do período atual pago (${expiresAt?.toLocaleDateString('pt-BR')}).`}
               </Text>
               <TouchableOpacity
                 onPress={() => setActiveModal('CANCEL_CONFIRM')}
@@ -1622,13 +1928,13 @@ export default function AssinaturaScreen() {
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
                       <Text style={{ fontFamily: 'NewKansas-Bold', color: '#1B4332', fontSize: 20 }}>
-                        R$ 99<Text style={{ fontSize: 12, fontFamily: 'Inter_400Regular', color: '#475569' }}>/mês</Text>
+                        R$ {isNewPricing ? activeCycleMeta.monthlyPrice : 99}<Text style={{ fontSize: 12, fontFamily: 'Inter_400Regular', color: '#475569' }}>/mês</Text>
                       </Text>
                     </View>
                   </View>
 
                   <Text style={{ fontFamily: 'Inter_400Regular', color: '#334155', fontSize: 12.5, lineHeight: 18, marginBottom: 12 }}>
-                    Assine diretamente no portal seguro da Yelo sem nenhuma taxa da Apple. Pagamento via PIX ou Cartão de Crédito.
+                    Assine diretamente no portal seguro da Yelo sem nenhuma taxa da Apple. {isNewPricing ? activeCycleMeta.billingNote + '.' : 'Pagamento via PIX ou Cartão de Crédito.'}
                   </Text>
 
                   <View style={{ backgroundColor: '#1B4332', paddingVertical: 12, borderRadius: 50, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
@@ -1637,7 +1943,7 @@ export default function AssinaturaScreen() {
                     ) : (
                       <>
                         <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 13.5 }}>
-                          Pagar no Navegador (R$ 99/mês)
+                          Pagar no Navegador ({isNewPricing ? `${activeCycleMeta.label} R$ ${activeCycleMeta.monthlyPrice}/mês` : 'R$ 99/mês'})
                         </Text>
                         <Feather name="arrow-up-right" size={15} color="white" />
                       </>
@@ -1731,7 +2037,9 @@ export default function AssinaturaScreen() {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                       <View style={{ backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', paddingHorizontal: 10, paddingVertical: 2, borderRadius: 999 }}>
                         <Text style={{ fontFamily: 'Inter_700Bold', color: '#166534', fontSize: 11 }}>
-                          Plano Essencial • R$ {checkoutPrice}/mês
+                          {isNewPricing && !isIosCheckout && !isUpdatePaymentMethodMode
+                            ? `Plano Essencial · ${activeCycleMeta.label} (${activeCycleMeta.installments > 1 ? `${activeCycleMeta.installments}x de R$ ${activeCycleMeta.monthlyPrice}` : `R$ ${checkoutPrice}/mês`})`
+                            : `Plano Essencial • R$ ${checkoutPrice}/mês`}
                         </Text>
                       </View>
                       {isIosCheckout && (
@@ -1758,7 +2066,17 @@ export default function AssinaturaScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {/* ABAS SELETORAS FIXAS (PIX vs CARTÃO DE CRÉDITO) COM REGISTRO INSTANTÂNEO DE TOQUE */}
+                {/* ABAS SELETORAS FIXAS (PIX vs CARTÃO DE CRÉDITO) OU AVISO CARTÃO OBRIGATÓRIO */}
+                {isCardOnlyCheckout ? (
+                  <View style={{ marginHorizontal: 22, marginTop: 10, marginBottom: 8, backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                    <Text style={{ fontSize: 15 }}>🎁</Text>
+                    <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#166534', fontSize: 12, flex: 1, lineHeight: 17 }}>
+                      {isEligibleForTrial || isInTrial
+                        ? `Teste de 7 dias grátis no Cartão de Crédito: nenhuma cobrança é feita hoje (primeira cobrança apenas em ${nextSevenDaysFormatted}).`
+                        : `Modalidade ${activeCycleMeta.label} (${activeCycleMeta.installments}x de R$ ${activeCycleMeta.monthlyPrice}) exclusiva no Cartão de Crédito.`}
+                    </Text>
+                  </View>
+                ) : (
                 <View style={{ paddingHorizontal: 22, paddingTop: 10, paddingBottom: 8, backgroundColor: '#ffffff' }}>
                   <View style={{ flexDirection: 'row', backgroundColor: '#f1f5f9', padding: 4, borderRadius: 999, borderWidth: 1, borderColor: '#e2e8f0' }}>
                     <TouchableOpacity
@@ -1834,6 +2152,7 @@ export default function AssinaturaScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
+                )}
 
                 {/* BANNER DE ERRO DENTRO DO MODAL (EVITA ALERT NATIVO QUE CRASHA O IOS) */}
                 {modalError && (
@@ -2251,10 +2570,14 @@ export default function AssinaturaScreen() {
                         ) : (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                             <Feather name="lock" size={16} color="#FFEE8C" />
-                            <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 14.5 }}>
+                            <Text style={{ fontFamily: 'Inter_700Bold', color: '#ffffff', fontSize: 14.5, textAlign: 'center' }}>
                               {isUpdatePaymentMethodMode
                                 ? 'Salvar Novo Cartão'
-                                : `Ativar Assinatura (R$ ${checkoutPrice}/mês)`}
+                                : isNewPricing && !isIosCheckout && (isEligibleForTrial || isInTrial)
+                                  ? 'Cadastrar Cartão e Ativar 7 Dias Grátis'
+                                  : isNewPricing && !isIosCheckout
+                                    ? `Confirmar (${activeCycleMeta.installments > 1 ? `${activeCycleMeta.installments}x de R$ ${activeCycleMeta.monthlyPrice}` : `R$ ${activeCycleMeta.monthlyPrice}/mês`})`
+                                    : `Ativar Assinatura (R$ ${checkoutPrice}/mês)`}
                             </Text>
                           </View>
                         )}

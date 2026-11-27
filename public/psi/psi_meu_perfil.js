@@ -1140,7 +1140,9 @@
                     if (originalProfileData.status === 'pending' || !isAtivoEValido || originalProfileData.profile_paused) {
                         const msg = originalProfileData.status === 'pending' 
                             ? 'Sua URL não está ativa porque o perfil está incompleto (falta CPF).'
-                            : 'Sua URL está inativa. Reative seu perfil primeiro.';
+                            : originalProfileData.plano === 'Comunidade'
+                                ? 'Seu perfil está no Plano Comunidade (oculto nas buscas). Ative o Plano Essencial para liberar sua URL pública.'
+                                : 'Sua URL está inativa. Reative seu perfil primeiro.';
                         window.showToast ? window.showToast(msg, 'error') : alert(msg);
                         return;
                     }

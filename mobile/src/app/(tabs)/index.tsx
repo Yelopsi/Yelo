@@ -9,6 +9,7 @@ import * as Clipboard from 'expo-clipboard';
 import YeloToast from '../../components/YeloToast';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
+import { isMobileNewPricingActive } from '../../utils/pricingLaunch';
 
 export default function HomeScreen() {
   const { user, updateUser } = useAuth();
@@ -24,6 +25,7 @@ export default function HomeScreen() {
   const [promoOffer, setPromoOffer] = useState<any>(null);
   const [showPricingNotice, setShowPricingNotice] = useState(false);
   const [savingPricingNotice, setSavingPricingNotice] = useState(false);
+  const [dismissedLegacyBanner, setDismissedLegacyBanner] = useState(false);
 
   const handlePricingNoticeAction = async (action: 'acknowledged' | 'later') => {
     if (savingPricingNotice) return;
@@ -467,6 +469,72 @@ export default function HomeScreen() {
             </View>
           )}
         </LinearGradient>
+
+        {/* BANNER INFORMATIVO COMUNIDADE / LEGADO (LIBERADO EM 01/01/2027) */}
+        {isMobileNewPricingActive(psiData) && psiData.plano === 'Comunidade' && (
+          <View
+            style={{
+              backgroundColor: '#FFF4E5',
+              borderWidth: 1,
+              borderColor: '#FFB020',
+              borderRadius: 18,
+              padding: 15,
+              marginBottom: 18,
+            }}
+          >
+            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13.5, color: '#B25E02', marginBottom: 4 }}>
+              👁️ Seu perfil público está oculto no Plano Comunidade (Grátis)
+            </Text>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: '#92400e', lineHeight: 18, marginBottom: 10 }}>
+              Ative o Plano Essencial e ganhe 7 dias grátis com seu cartão para aparecer nas buscas de pacientes.
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.navigate('/assinatura')}
+              style={{ backgroundColor: '#1B4332', alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 }}
+            >
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#ffffff' }}>
+                Testar 7 dias grátis →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {isMobileNewPricingActive(psiData) && psiData.isLegacySubscriber && !dismissedLegacyBanner && (
+          <View
+            style={{
+              backgroundColor: '#f0fdf4',
+              borderWidth: 1,
+              borderColor: '#bbf7d0',
+              borderLeftWidth: 5,
+              borderLeftColor: '#1B4332',
+              borderRadius: 18,
+              padding: 15,
+              marginBottom: 18,
+            }}
+          >
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13.5, color: '#1B4332', flex: 1 }}>
+                Atualização nos planos Yelo: sua assinatura permanece igual
+              </Text>
+              <TouchableOpacity onPress={() => setDismissedLegacyBanner(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Feather name="x" size={16} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: '#334155', lineHeight: 18, marginTop: 4, marginBottom: 10 }}>
+              Lançamos novos planos apenas para novos cadastros. Seu valor e condições atuais continuam garantidos enquanto a assinatura permanecer ativa.
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.navigate('/assinatura')}
+              style={{ backgroundColor: '#1B4332', alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 }}
+            >
+              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#ffffff' }}>
+                Ver assinatura
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* BANNER DISCRETO DE CONDIÇÃO PROMOCIONAL (espelho de #bf-visao-geral-banner da web) */}
         {promoOffer?.eligible && (

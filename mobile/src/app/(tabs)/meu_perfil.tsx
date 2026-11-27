@@ -211,6 +211,7 @@ export default function MeuPerfilScreen() {
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [statusPerfil, setStatusPerfil] = useState<string>('active');
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
+  const [planoAtual, setPlanoAtual] = useState<string | null>(null);
   const [isExempt, setIsExempt] = useState<boolean>(false);
   const [googleReviewsData, setGoogleReviewsData] = useState<any>(null);
   const [isQualityCardExpanded, setIsQualityCardExpanded] = useState(false);
@@ -311,6 +312,7 @@ export default function MeuPerfilScreen() {
         });
         setFotoUrl(p.fotoUrl || null);
         setStatusPerfil(p.status || 'active');
+        setPlanoAtual(p.plano || null);
         setPlanExpiresAt(p.planExpiresAt || null);
         setIsExempt(p.is_exempt === true || String(p.is_exempt).toLowerCase() === 'true' || p.is_exempt === 1);
         setGoogleReviewsData(p.google_reviews_data || null);
@@ -487,7 +489,9 @@ export default function MeuPerfilScreen() {
       const msg =
         statusPerfil === 'pending'
           ? 'Complete seu perfil (incluindo CPF) para liberar sua URL pública.'
-          : 'Seu perfil está inativo ou pausado. Reative sua assinatura para liberar sua página pública.';
+          : planoAtual === 'Comunidade'
+            ? 'Seu perfil está no Plano Comunidade (oculto nas buscas). Ative o Plano Essencial para liberar sua página pública.'
+            : 'Seu perfil está inativo ou pausado. Reative sua assinatura para liberar sua página pública.';
       showToast(msg);
       return;
     }
@@ -503,7 +507,9 @@ export default function MeuPerfilScreen() {
       const msg =
         statusPerfil === 'pending'
           ? 'Complete seu perfil (incluindo CPF) para liberar sua URL pública.'
-          : 'Seu perfil está inativo ou pausado. Reative sua assinatura para liberar sua página pública.';
+          : planoAtual === 'Comunidade'
+            ? 'Seu perfil está no Plano Comunidade (oculto nas buscas). Ative o Plano Essencial para liberar sua página pública.'
+            : 'Seu perfil está inativo ou pausado. Reative sua assinatura para liberar sua página pública.';
       showToast(msg);
       return;
     }
