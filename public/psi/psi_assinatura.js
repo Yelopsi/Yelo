@@ -275,7 +275,24 @@
         `;
 
         const modalSub = document.getElementById('payment-modal-desc') || modal.querySelector('.custom-modal-box p');
+        const modalBox = modal.querySelector('.custom-modal-box');
+        const modalLeft = modal.querySelector('.payment-modal-left');
         const requiresCardOnly = isNewPricing && !window.isUpdatePaymentMethodMode && ((info.installments > 1) || isInTrial);
+        if (!isNewPricing) {
+            if (modalBox) modalBox.classList.add('is-prejan-modal');
+            if (securityBadges && form && btnSubmit && securityBadges.parentNode !== form) {
+                form.insertBefore(securityBadges, btnSubmit);
+                securityBadges.style.marginTop = '0';
+                securityBadges.style.marginBottom = '18px';
+            }
+        } else {
+            if (modalBox) modalBox.classList.remove('is-prejan-modal');
+            if (securityBadges && modalLeft && securityBadges.parentNode !== modalLeft) {
+                modalLeft.appendChild(securityBadges);
+                securityBadges.style.marginTop = 'auto';
+                securityBadges.style.marginBottom = '0';
+            }
+        }
         if (!isNewPricing || window.isUpdatePaymentMethodMode) {
             if (cycleBanner) cycleBanner.style.display = 'none';
         } else if (cycleBanner) {

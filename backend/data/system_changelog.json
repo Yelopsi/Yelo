@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-23430783",
+    "date": "2026-11-27T17:16:25.000Z",
+    "commit": "23430783",
+    "author": "Anderson",
+    "title": "Correção: Unificar URL Asaas e blindar estorno CDC de parcelamentos (payments,cron)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "unificar URL Asaas e blindar estorno CDC de parcelamentos",
+    "description": "Commit registrado no repositório: \"fix(payments,cron): unificar URL Asaas e blindar estorno CDC de parcelamentos\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/paymentController.js, backend/controllers/subscriptionController.js, backend/data/system_changelog.json, backend/jobs/cronScheduler.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #23430783"
+    },
+    "after": {
+      "nova_versao": "unificar URL Asaas e blindar estorno CDC de parcelamentos"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/subscriptionController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/cronScheduler.js",
+      "backend/services/paymentStateService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-f1714f8d",
     "date": "2026-11-27T16:40:30.000Z",
     "commit": "f1714f8d",

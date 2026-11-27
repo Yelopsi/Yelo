@@ -598,12 +598,21 @@ document.addEventListener('DOMContentLoaded', function () {
             trialPremiumBanner.style.display = 'flex';
             const titleEl = document.getElementById('trial-premium-title');
             const messageEl = document.getElementById('trial-premium-message');
+            const btnEl = document.getElementById('trial-premium-btn') || trialPremiumBanner.querySelector('button');
             if (!isNewPricing) {
                 if (titleEl) titleEl.textContent = psychologistData.trialBannerMessage || "Complete seu CPF para liberar o Plano Essencial!";
                 if (messageEl) messageEl.textContent = "Seu perfil está quase pronto! Adicione seu CPF para ativar seus 7 dias de teste grátis do Plano Essencial e começar a receber pacientes.";
+                if (btnEl) {
+                    btnEl.textContent = "Completar Agora";
+                    btnEl.onclick = () => window.loadPage('psi_meu_perfil.html');
+                }
             } else {
                 if (titleEl) titleEl.textContent = psychologistData.trialBannerMessage || "Ative o Plano Essencial com 7 dias grátis!";
                 if (messageEl) messageEl.textContent = "Cadastre seu cartão na página de Assinatura para testar a vitrine completa por 7 dias grátis antes da primeira cobrança.";
+                if (btnEl) {
+                    btnEl.textContent = "Ver Planos";
+                    btnEl.onclick = () => window.loadPage('psi_assinatura.html');
+                }
             }
         }
 
