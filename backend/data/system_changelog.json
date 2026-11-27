@@ -1,5 +1,32 @@
 [
   {
+    "id": "change-git-202dd934",
+    "date": "2026-11-27T23:26:54.000Z",
+    "commit": "202dd934",
+    "author": "Anderson",
+    "title": "Correção: Enviar remoteIp e mobilePhone em cobrancas tokenizadas no Asaas (billing)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "enviar remoteIp e mobilePhone em cobrancas tokenizadas no Asaas",
+    "description": "Commit registrado no repositório: \"fix(billing): enviar remoteIp e mobilePhone em cobrancas tokenizadas no Asaas\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/paymentController.js, backend/data/system_changelog.json, backend/services/paymentStateService.js, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #202dd934"
+    },
+    "after": {
+      "nova_versao": "enviar remoteIp e mobilePhone em cobrancas tokenizadas no Asaas"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/paymentController.js",
+      "backend/data/system_changelog.json",
+      "backend/services/paymentStateService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-53118225",
     "date": "2026-11-27T23:22:47.000Z",
     "commit": "53118225",

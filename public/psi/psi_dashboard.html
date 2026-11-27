@@ -571,6 +571,10 @@
                                 <input type="text" id="card-expiry" placeholder="MM/AAAA" required class="modal-input" style="flex: 1.2;" inputmode="numeric">
                                 <input type="text" id="card-ccv" placeholder="CVV" required class="modal-input" style="flex: 1;" inputmode="numeric">
                             </div>
+                            <div id="card-installments-wrap" style="display: none; flex-direction: column; gap: 4px; margin-top: 2px;">
+                                <label for="card-installments" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #1B4332;">Parcelamento no cartão</label>
+                                <select id="card-installments" class="modal-input" style="background: #ffffff; cursor: pointer;"></select>
+                            </div>
                         </div>
 
                         <div id="payment-message" class="hidden" style="margin-top: 4px; font-size: 0.82rem; text-align: center;"></div>

@@ -106,7 +106,7 @@ async function processInstallmentRenewals() {
 
         for (const sub of dueSubs) {
             const meta = PaymentStateService.parseSubscriptionPlanMeta(sub.plan);
-            if (!meta || (meta.cycle !== 'QUARTERLY' && meta.cycle !== 'SEMIANNUAL') || meta.installmentCount <= 1) {
+            if (!meta || (meta.cycle !== 'QUARTERLY' && meta.cycle !== 'SEMIANNUAL')) {
                 continue;
             }
 
@@ -149,12 +149,19 @@ async function processInstallmentRenewals() {
 
             // Verifica se houve parcela em atraso no ciclo anterior antes de renovar
             try {
-                const overdueRes = await fetch(`${ASAAS_API_URL}/payments?installment=${sub.id}&status=OVERDUE`, {
+                const isSinglePayRef = String(sub.id).startsWith('pay_');
+                const overdueUrl = isSinglePayRef
+                    ? `${ASAAS_API_URL}/payments/${sub.id}`
+                    : `${ASAAS_API_URL}/payments?installment=${sub.id}&status=OVERDUE`;
+                const overdueRes = await fetch(overdueUrl, {
                     headers: { 'access_token': ASAAS_API_KEY }
                 });
                 if (overdueRes.ok) {
                     const overdueData = await overdueRes.json();
-                    if (overdueData && Array.isArray(overdueData.data) && overdueData.data.length > 0) {
+                    const hasOverdue = isSinglePayRef
+                        ? (overdueData && overdueData.status === 'OVERDUE')
+                        : (overdueData && Array.isArray(overdueData.data) && overdueData.data.length > 0);
+                    if (hasOverdue) {
                         console.warn(`⚠️ [CRON RENEW] Parcela OVERDUE encontrada no ciclo ${sub.id} do Psi ID ${psi.id}. Renovação suspensa.`);
                         await sub.update({ status: 'INACTIVE' });
                         await downgradePsi();

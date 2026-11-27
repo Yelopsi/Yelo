@@ -108,7 +108,12 @@ export default function AssinaturaScreen() {
 
   // Native Checkout State
   const [selectedCycle, setSelectedCycle] = useState<BillingCycleKey>('SEMIANNUAL');
+  const [selectedInstallments, setSelectedInstallments] = useState<number>(6);
   const [checkoutPrice, setCheckoutPrice] = useState('99,00');
+
+  useEffect(() => {
+    setSelectedInstallments(MOBILE_CYCLE_CONFIG[selectedCycle].installments);
+  }, [selectedCycle]);
   const [isIosCheckout, setIsIosCheckout] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'PIX' | 'CREDIT_CARD'>('PIX');
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
@@ -473,6 +478,7 @@ export default function AssinaturaScreen() {
     } else {
       addDebugLog('Plataforma Android: Abrindo checkout nativo');
       setIsIosCheckout(false);
+      setSelectedInstallments(cycleMeta.installments);
       setCheckoutPrice(activeNewPricing ? cycleMeta.priceFormatted : '99,00');
       setPixData(null);
       setPaymentMethod(mustUseCard ? 'CREDIT_CARD' : 'PIX');
@@ -867,6 +873,7 @@ export default function AssinaturaScreen() {
         : {
           planType: isIosCheckout ? 'ESSENTIAL_IOS' : 'ESSENTIAL',
           billingCycle: effectiveCycle,
+          installments: activeInstallments,
           billingType: 'CREDIT_CARD',
           isIos: isIosCheckout,
           creditCard: creditCardObj
@@ -957,6 +964,13 @@ export default function AssinaturaScreen() {
   const showLegacyBanner = isNewPricing && isActivePaidSubscriber && psiData?.isLegacySubscriber !== false;
   const isActive = (psiData?.status === 'active' || isExempt) && (!isExpired || isExempt);
   const activeCycleMeta = MOBILE_CYCLE_CONFIG[selectedCycle];
+  const canChooseInstallments =
+    isNewPricing &&
+    !isIosCheckout &&
+    !isUpdatePaymentMethodMode &&
+    activeCycleMeta.installments > 1;
+  const activeInstallments =
+    canChooseInstallments && selectedInstallments === 1 ? 1 : activeCycleMeta.installments;
   const isCardOnlyCheckout =
     isNewPricing &&
     !isIosCheckout &&
@@ -2072,7 +2086,7 @@ export default function AssinaturaScreen() {
                       <View style={{ backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', paddingHorizontal: 10, paddingVertical: 2, borderRadius: 999 }}>
                         <Text style={{ fontFamily: 'Inter_700Bold', color: '#166534', fontSize: 11 }}>
                           {isNewPricing && !isIosCheckout && !isUpdatePaymentMethodMode
-                            ? `Plano Essencial · ${activeCycleMeta.label} (${activeCycleMeta.installments > 1 ? `${activeCycleMeta.installments}x de R$ ${activeCycleMeta.monthlyPrice}` : `R$ ${checkoutPrice}/mês`})`
+                            ? `Plano Essencial · ${activeCycleMeta.label} (${activeInstallments > 1 ? `${activeInstallments}x de R$ ${activeCycleMeta.monthlyPrice}` : activeCycleMeta.installments > 1 ? `1x de R$ ${activeCycleMeta.total} à vista` : `R$ ${checkoutPrice}/mês`})`
                             : `Plano Essencial • R$ ${checkoutPrice}/mês`}
                         </Text>
                       </View>
@@ -2109,7 +2123,9 @@ export default function AssinaturaScreen() {
                         ? 'Atualização de cartão de crédito para as próximas cobranças automáticas.'
                         : isEligibleForTrial || isInTrial
                           ? `Teste de 7 dias grátis no Cartão de Crédito: nenhuma cobrança é feita hoje (primeira cobrança apenas em ${nextSevenDaysFormatted}).`
-                          : `Modalidade ${activeCycleMeta.label} (${activeCycleMeta.installments}x de R$ ${activeCycleMeta.monthlyPrice}) exclusiva no Cartão de Crédito.`}
+                          : activeInstallments === 1 && activeCycleMeta.installments > 1
+                            ? `Modalidade ${activeCycleMeta.label} (1x de R$ ${activeCycleMeta.total} à vista) exclusiva no Cartão de Crédito.`
+                            : `Modalidade ${activeCycleMeta.label} (${activeCycleMeta.installments}x de R$ ${activeCycleMeta.monthlyPrice}) exclusiva no Cartão de Crédito.`}
                     </Text>
                   </View>
                 ) : (
@@ -2415,6 +2431,56 @@ export default function AssinaturaScreen() {
                   {/* ABA 2: CARTÃO DE CRÉDITO */}
                   {paymentMethod === 'CREDIT_CARD' && (
                     <View key="checkout-tab-card">
+                      {canChooseInstallments && (
+                        <View style={{ marginBottom: 14 }}>
+                          <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#475569', marginBottom: 6, marginLeft: 8 }}>
+                            Parcelamento no Cartão
+                          </Text>
+                          <View style={{ flexDirection: 'row', gap: 10 }}>
+                            <TouchableOpacity
+                              activeOpacity={0.8}
+                              onPress={() => setSelectedInstallments(activeCycleMeta.installments)}
+                              style={{
+                                flex: 1,
+                                backgroundColor: activeInstallments === activeCycleMeta.installments ? '#f0fdf4' : '#f8fafc',
+                                borderWidth: 1.5,
+                                borderColor: activeInstallments === activeCycleMeta.installments ? '#1B4332' : '#cbd5e1',
+                                borderRadius: 16,
+                                paddingVertical: 10,
+                                paddingHorizontal: 12,
+                              }}
+                            >
+                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#1B4332' }}>
+                                {activeCycleMeta.installments}x de R$ {activeCycleMeta.monthlyPrice}
+                              </Text>
+                              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#475569', marginTop: 2 }}>
+                                Sem juros (R$ {activeCycleMeta.total})
+                              </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              activeOpacity={0.8}
+                              onPress={() => setSelectedInstallments(1)}
+                              style={{
+                                flex: 1,
+                                backgroundColor: activeInstallments === 1 ? '#f0fdf4' : '#f8fafc',
+                                borderWidth: 1.5,
+                                borderColor: activeInstallments === 1 ? '#1B4332' : '#cbd5e1',
+                                borderRadius: 16,
+                                paddingVertical: 10,
+                                paddingHorizontal: 12,
+                              }}
+                            >
+                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#1B4332' }}>
+                                1x de R$ {activeCycleMeta.total}
+                              </Text>
+                              <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#475569', marginTop: 2 }}>
+                                À vista no cartão
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      )}
                       <View style={{ marginBottom: 14 }}>
                         <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#475569', marginBottom: 6, marginLeft: 8 }}>
                           Número do Cartão *
@@ -2612,7 +2678,7 @@ export default function AssinaturaScreen() {
                                 : isNewPricing && !isIosCheckout && (isEligibleForTrial || isInTrial)
                                   ? 'Cadastrar Cartão e Ativar 7 Dias Grátis'
                                   : isNewPricing && !isIosCheckout
-                                    ? `Confirmar (${activeCycleMeta.installments > 1 ? `${activeCycleMeta.installments}x de R$ ${activeCycleMeta.monthlyPrice}` : `R$ ${activeCycleMeta.monthlyPrice}/mês`})`
+                                    ? `Confirmar (${activeInstallments > 1 ? `${activeInstallments}x de R$ ${activeCycleMeta.monthlyPrice}` : activeCycleMeta.installments > 1 ? `1x de R$ ${activeCycleMeta.total} à vista` : `R$ ${activeCycleMeta.monthlyPrice}/mês`})`
                                     : `Ativar Assinatura (R$ ${checkoutPrice}/mês)`}
                             </Text>
                           </View>

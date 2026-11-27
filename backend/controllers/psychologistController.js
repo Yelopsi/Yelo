@@ -172,12 +172,14 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
                 order: [['paymentDate', 'DESC'], ['createdAt', 'DESC']]
             }).catch(() => null);
 
-            if (latestPayment && latestPayment.value != null) {
+            if (subMeta && (subMeta.cycle === 'QUARTERLY' || subMeta.cycle === 'SEMIANNUAL')) {
+                const cycleMonths = subMeta.cycle === 'SEMIANNUAL' ? 6 : 3;
+                const cycleTotal = Number(subMeta.totalValue || (cycleMonths === 6 ? 594 : 387));
+                activeSubscriptionPrice = Number((cycleTotal / cycleMonths).toFixed(2));
+                activeSubscriptionBillingType = 'CREDIT_CARD';
+            } else if (latestPayment && latestPayment.value != null) {
                 activeSubscriptionPrice = parseFloat(latestPayment.value);
                 activeSubscriptionBillingType = latestPayment.billingType || null;
-            } else if (subMeta && subMeta.totalValue && subMeta.installmentCount) {
-                activeSubscriptionPrice = Number((subMeta.totalValue / subMeta.installmentCount).toFixed(2));
-                activeSubscriptionBillingType = 'CREDIT_CARD';
             }
 
             const hasActivePaidSub = !psychologist.is_exempt

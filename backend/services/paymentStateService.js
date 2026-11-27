@@ -156,6 +156,12 @@ class PaymentStateService {
         const dueDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
         const cleanRemoteIp = meta && meta.remoteIp ? String(meta.remoteIp).replace(/^::ffff:/, '').trim() : '';
 
+        const count = Number(meta.installmentCount || 1);
+        const totalVal = Number(meta.totalValue || 0);
+        const amountFields = count > 1
+            ? { installmentCount: count, totalValue: totalVal }
+            : { value: totalVal };
+
         const res = await fetchFn(`${ASAAS_API_URL}/payments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
@@ -163,8 +169,7 @@ class PaymentStateService {
                 customer: customerId,
                 billingType: 'CREDIT_CARD',
                 dueDate: dueDateStr,
-                installmentCount: meta.installmentCount,
-                totalValue: meta.totalValue,
+                ...amountFields,
                 creditCardToken,
                 description: `Assinatura Yelo - Plano ${meta.planType} - ${meta.cycle}`,
                 externalReference: String(psychologistId),

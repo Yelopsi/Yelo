@@ -73,7 +73,7 @@ exports.createPreference = async (req, res) => {
     const ASAAS_API_KEY = getAsaasApiKey();
     
     try {
-        const { planType, cupom, creditCard, billingType, billingCycle } = req.body;
+        const { planType, cupom, creditCard, billingType, billingCycle, installments } = req.body;
         const psychologistId = req.psychologist.id;
         localPsychologist = await db.Psychologist.findByPk(psychologistId);
         if (!localPsychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
@@ -234,12 +234,12 @@ exports.createPreference = async (req, res) => {
                 installmentCount = 1;
                 isInstallment = false;
             } else if (cycle === 'SEMIANNUAL') {
-                value = 594.00; // 6x de R$ 99
-                installmentCount = 6;
+                value = 594.00; // R$ 99/mes (6x de R$ 99 ou 1x de R$ 594)
+                installmentCount = Number(installments) === 1 ? 1 : 6;
                 isInstallment = true;
             } else if (cycle === 'QUARTERLY') {
-                value = 387.00; // 3x de R$ 129
-                installmentCount = 3;
+                value = 387.00; // R$ 129/mes (3x de R$ 129 ou 1x de R$ 387)
+                installmentCount = Number(installments) === 1 ? 1 : 3;
                 isInstallment = true;
             } else {
                 value = 159.00; // Mensal recorrente
@@ -261,7 +261,7 @@ exports.createPreference = async (req, res) => {
 
         if (billingType === 'PIX' && isInstallment) {
             await intent.update({ status: 'FAILED_LOCAL' });
-            return res.status(400).json({ error: 'O parcelamento em ' + installmentCount + 'x é exclusivo para cartão de crédito.' });
+            return res.status(400).json({ error: 'O plano ' + (cycle === 'SEMIANNUAL' ? 'Semestral' : 'Trimestral') + ' é exclusivo para cartão de crédito.' });
         }
 
         // --- SANITIZAÇÃO DE DADOS DO TITULAR ---
@@ -457,14 +457,15 @@ exports.createPreference = async (req, res) => {
                 remoteIp
             };
         } else if (isInstallment) {
-            // --- PLANOS TRIMESTRAL (3x) E SEMESTRAL (6x) SEM TRIAL: COBRANÇA PARCELADA IMEDIATA ---
+            // --- PLANOS TRIMESTRAL E SEMESTRAL SEM TRIAL: COBRANÇA À VISTA (1x) OU PARCELADA (3x/6x) ---
             asaasEndpoint = `${ASAAS_API_URL}/payments`;
             asaasPayload = {
                 customer: customerIdAsaas,
                 billingType: 'CREDIT_CARD',
                 dueDate: nextDueDate,
-                installmentCount: installmentCount,
-                totalValue: value,
+                ...(installmentCount > 1
+                    ? { installmentCount: installmentCount, totalValue: value }
+                    : { value: value }),
                 description: subDescription,
                 externalReference: String(psychologistId),
                 remoteIp,
@@ -482,7 +483,8 @@ exports.createPreference = async (req, res) => {
                     postalCode: postalCode,
                     addressNumber: creditCard.addressNumber,
                     addressComplement: creditCard.addressComplement || null,
-                    phone: phone
+                    phone: phone,
+                    mobilePhone: phone
                 }
             };
         } else {

@@ -202,6 +202,7 @@
         const securityBadges = document.getElementById('security-badges');
         
         let currentMethod = 'CREDIT_CARD';
+        let currentInstallmentCount = info.installments;
         if (!modal) return;
 
         modal.style.display = 'flex'; modal.style.opacity = 1; modal.style.visibility = 'visible';
@@ -234,9 +235,16 @@
                 ? '<span style="font-size:0.72rem; font-weight:800; background:#dcfce7; color:#166534; padding:3px 9px; border-radius:999px;">Economia de 19%</span>'
                 : '<span style="font-size:0.72rem; font-weight:700; background:#f1f5f9; color:#475569; padding:3px 9px; border-radius:999px;">Sem fidelidade</span>');
 
-        const billingDetail = info.installments > 1
-            ? `Cobrança de <strong>${info.installments}x de R$ ${info.monthlyPrice}</strong> no cartão (total R$ ${info.total})`
-            : `Cobrança mensal de <strong>R$ ${info.monthlyPrice}</strong> no cartão · Sem fidelidade`;
+        const formatBillingDetail = (instCount) => {
+            if (instCount > 1) {
+                return `Cobrança de <strong>${instCount}x de R$ ${info.monthlyPrice}</strong> no cartão (total R$ ${info.total})`;
+            }
+            if (info.installments > 1) {
+                return `Cobrança à vista de <strong>1x de R$ ${info.total}</strong> no cartão (equivale a R$ ${info.monthlyPrice}/mês)`;
+            }
+            return `Cobrança mensal de <strong>R$ ${info.monthlyPrice}</strong> no cartão · Sem fidelidade`;
+        };
+        const billingDetail = formatBillingDetail(currentInstallmentCount);
 
         const demandNote = (psychologistData && psychologistData.globalStats && (psychologistData.globalStats.matches7d > 0 || psychologistData.globalStats.clicks7d > 0))
             ? `<div style="margin-top:8px; font-size:0.77rem; color:#0f172a; font-weight:600;">📊 Demanda real na Yelo (7 dias): ${Number(psychologistData.globalStats.matches7d || 0)} matches e ${Number(psychologistData.globalStats.clicks7d || 0)} cliques em WhatsApp</div>`
@@ -260,7 +268,7 @@
                         <span style="font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; background:#1B4332; color:#ffffff; padding:3px 9px; border-radius:999px;">Plano Essencial</span>
                         <span style="font-size:0.86rem; font-weight:700; color:#0f172a;">${info.label}</span>
                     </div>
-                    <div style="font-size:0.83rem; color:#475569; line-height:1.4;">
+                    <div id="modal-cycle-detail" style="font-size:0.83rem; color:#475569; line-height:1.4;">
                         ${billingDetail}
                     </div>
                 </div>
@@ -304,6 +312,39 @@
             cycleBanner.style.display = 'block';
         }
 
+        const installmentsWrap = document.getElementById('card-installments-wrap');
+        const installmentsSelect = document.getElementById('card-installments');
+        const updateInstallmentSummaryAndCta = () => {
+            const detailEl = document.getElementById('modal-cycle-detail');
+            if (detailEl) detailEl.innerHTML = formatBillingDetail(currentInstallmentCount);
+            if (!window.isUpdatePaymentMethodMode && isNewPricing && !isInTrial && currentMethod === 'CREDIT_CARD') {
+                const cobrancaTxt = currentInstallmentCount > 1
+                    ? `${currentInstallmentCount}x de R$ ${info.monthlyPrice}`
+                    : (info.installments > 1 ? `1x de R$ ${info.total} à vista` : `R$ ${info.monthlyPrice}/mês`);
+                btnSubmit.innerHTML = `Confirmar Assinatura <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">${cobrancaTxt}</span>`;
+            }
+        };
+        if (installmentsWrap && installmentsSelect) {
+            if (isNewPricing && !window.isUpdatePaymentMethodMode && info.installments > 1) {
+                installmentsSelect.innerHTML = `
+                    <option value="${info.installments}">${info.installments}x de R$ ${info.monthlyPrice},00 sem juros (R$ ${info.total} total)</option>
+                    <option value="1">À vista: 1x de R$ ${info.total},00 no cartão</option>
+                `;
+                installmentsSelect.value = String(info.installments);
+                currentInstallmentCount = info.installments;
+                installmentsSelect.onchange = () => {
+                    currentInstallmentCount = Number(installmentsSelect.value) === 1 ? 1 : info.installments;
+                    updateInstallmentSummaryAndCta();
+                };
+                installmentsWrap.style.display = 'flex';
+            } else {
+                installmentsSelect.innerHTML = '';
+                installmentsSelect.onchange = null;
+                currentInstallmentCount = info.installments;
+                installmentsWrap.style.display = 'none';
+            }
+        }
+
         const setTab = (method) => {
             currentMethod = method;
             stepMethod.style.display = 'none'; form.style.display = 'block'; customerSection.style.display = 'flex';
@@ -323,7 +364,9 @@
                 } else if (isInTrial && dataFimTrial) {
                     btnSubmit.innerHTML = `Cadastrar Cartão & Ativar 7 Dias Grátis <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">Primeira cobrança apenas em ${dataFimTrial}</span>`;
                 } else {
-                    const cobrancaTxt = info.installments > 1 ? `${info.installments}x de R$ ${info.monthlyPrice}` : `R$ ${info.monthlyPrice}/mês`;
+                    const cobrancaTxt = currentInstallmentCount > 1
+                        ? `${currentInstallmentCount}x de R$ ${info.monthlyPrice}`
+                        : (info.installments > 1 ? `1x de R$ ${info.total} à vista` : `R$ ${info.monthlyPrice}/mês`);
                     btnSubmit.innerHTML = `Confirmar Assinatura <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">${cobrancaTxt}</span>`;
                 }
                 document.getElementById('card-holder-name').placeholder = "Nome impresso no cartão";
@@ -527,7 +570,7 @@
                 const endpoint = window.isUpdatePaymentMethodMode ? '/api/payments/update-method' : '/api/payments/create-preference';
                 const payload = window.isUpdatePaymentMethodMode
                     ? { billingType: currentMethod, creditCard: cardData }
-                    : { planType, billingCycle: currentBillingCycle, cupom, billingType: currentMethod, creditCard: cardData };
+                    : { planType, billingCycle: currentBillingCycle, installments: currentInstallmentCount, cupom, billingType: currentMethod, creditCard: cardData };
 
                 const res = await window.apiFetch(`${API_BASE_URL}${endpoint}`, {
                     method: 'POST', body: JSON.stringify(payload)
