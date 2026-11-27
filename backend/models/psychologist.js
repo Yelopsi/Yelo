@@ -489,6 +489,16 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false
+    },
+    pricing_notice_jan27_status: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null // 'acknowledged' | 'later' | null
+    },
+    pricing_notice_jan27_snooze_until: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null
     }
   }, {
     sequelize,

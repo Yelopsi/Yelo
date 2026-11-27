@@ -759,7 +759,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (ok) {
             // --- NOVO: MODAL DE BOAS-VINDAS (PRIMEIRO ACESSO) ---
-            if (psychologistData.hasSeenWelcome === false) {
+            const _previewPricingParam = new URLSearchParams(window.location.search).get('previewPricingModal');
+            const _isPricingPreview = Boolean(_previewPricingParam && ['1', 'true', 'subscriber', 'non_subscriber'].includes(_previewPricingParam));
+            if (psychologistData.hasSeenWelcome === false && !_isPricingPreview) {
                 // Atualiza o estado local para não repetir na mesma sessão
                 psychologistData.hasSeenWelcome = true;
 
@@ -928,6 +930,255 @@ document.addEventListener('DOMContentLoaded', function () {
                         };
                     }
                 }
+            }
+
+            // --- MODAL AGENDADO (01 A 31/12/2026): MUDANÇA DE VALORES EM 01/01/2027 ---
+            iniciarModalAvisoValoresJan27(psychologistData);
+
+            function iniciarModalAvisoValoresJan27(psiData) {
+                const modal = document.getElementById('modal-aviso-valores-jan27');
+                if (!modal) return;
+
+                const iconEl = document.getElementById('pricing-notice-icon');
+                const eyebrowEl = document.getElementById('pricing-notice-eyebrow');
+                const titleEl = document.getElementById('pricing-notice-title');
+                const subEl = document.getElementById('pricing-notice-sub');
+                const contextEl = document.getElementById('pricing-notice-user-context');
+                const gridEl = document.getElementById('pricing-notice-grid');
+                const btnAck = document.getElementById('btn-pricing-notice-ack');
+                const btnLater = document.getElementById('btn-pricing-notice-later');
+                const btnCloseX = document.getElementById('btn-fechar-pricing-notice-x');
+
+                const WINDOW_START = new Date('2026-12-01T00:00:00-03:00').getTime();
+                const WINDOW_END = new Date('2026-12-31T23:59:59.999-03:00').getTime();
+                const ACK_STORAGE_KEY = `yelo_pricing_notice_jan27_ack_${psiData?.id || 'psi'}`;
+                const LATER_SESSION_KEY = 'yelo_pricing_notice_jan27_later_session';
+
+                const detectIsSubscriber = (data) => {
+                    if (!data) return false;
+                    const plano = String(data.plano || '').trim().toLowerCase();
+                    const hasSubId = Boolean(data.stripeSubscriptionId || data.subscriptionId);
+                    const isActivePaid = data.status === 'active' && Boolean(plano) && plano !== 'comunidade';
+                    return Boolean((hasSubId && isActivePaid) || data.is_exempt);
+                };
+
+                const renderVariant = (forcedVariant) => {
+                    const isSubscriber = forcedVariant === 'subscriber'
+                        ? true
+                        : forcedVariant === 'non_subscriber'
+                            ? false
+                            : detectIsSubscriber(psiData);
+
+                    const isExempt = Boolean(psiData?.is_exempt);
+
+                    if (isSubscriber) {
+                        if (iconEl) iconEl.textContent = '🛡️';
+                        if (eyebrowEl) {
+                            eyebrowEl.textContent = 'Comunicado importante';
+                            eyebrowEl.style.background = '#dcfce7';
+                            eyebrowEl.style.color = '#166534';
+                        }
+                        if (titleEl) titleEl.textContent = 'Comunicado importante sobre os planos da Yelo';
+                        if (subEl) {
+                            subEl.textContent = 'A Yelo está passando por algumas alterações de valores que entram em vigor a partir de 01/01/2027, acompanhando a evolução da plataforma. Mas queremos te tranquilizar logo de início: para quem já é assinante, nada muda.';
+                        }
+                        if (contextEl) {
+                            contextEl.style.display = 'inline-block';
+                            contextEl.style.background = isExempt ? '#e0e7ff' : '#dcfce7';
+                            contextEl.style.color = isExempt ? '#3730a3' : '#166534';
+                            contextEl.style.border = isExempt ? '1px solid #c7d2fe' : '1px solid #86efac';
+                            contextEl.innerHTML = isExempt
+                                ? '✨ <strong>Sua conta possui isenção ativa:</strong> nenhuma cobrança ou reajuste será aplicado em janeiro.'
+                                : '✅ <strong>Sua conta já possui assinatura ativa:</strong> você segue com exatamente o mesmo valor e os mesmos benefícios.';
+                        }
+                        if (gridEl) {
+                            gridEl.innerHTML = `
+                                <div class="pricing-notice-card is-current">
+                                    <span class="pricing-card-tag" style="background: #dcfce7; color: #166534;">Valor protegido</span>
+                                    <h4>Para você, nada muda em janeiro</h4>
+                                    <p>
+                                        Enquanto a sua assinatura atual permanecer <strong>ativa e vigente</strong>, você continua pagando exatamente o mesmo valor contratado hoje, sem nenhum reajuste.
+                                    </p>
+                                </div>
+                                <div class="pricing-notice-card is-neutral">
+                                    <span class="pricing-card-tag" style="background: #e2e8f0; color: #334155;">Regra de vigência</span>
+                                    <h4>Quando os novos valores se aplicam</h4>
+                                    <p>
+                                        As novas regras valem apenas para novas contratações a partir de <strong>01/01/2027</strong>, ou caso você cancele sua assinatura atual e decida assinar novamente após essa data.
+                                    </p>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        if (iconEl) iconEl.textContent = '📅';
+                        if (eyebrowEl) {
+                            eyebrowEl.textContent = 'Comunicado importante';
+                            eyebrowEl.style.background = '#fef3c7';
+                            eyebrowEl.style.color = '#92400e';
+                        }
+                        if (titleEl) titleEl.textContent = 'Comunicado importante sobre os planos da Yelo';
+                        if (subEl) {
+                            subEl.textContent = 'A Yelo está passando por algumas alterações de planos e valores para continuar evoluindo a plataforma e atraindo mais pacientes. As novas regras entram em vigor em 01/01/2027, e queremos te avisar com antecedência.';
+                        }
+                        if (contextEl) {
+                            contextEl.style.display = 'inline-block';
+                            contextEl.style.background = '#fef3c7';
+                            contextEl.style.color = '#92400e';
+                            contextEl.style.border = '1px solid #fcd34d';
+                            contextEl.innerHTML = '💡 <strong>Sua conta ainda não possui assinatura ativa:</strong> contratações feitas a partir de <strong>01/01/2027</strong> seguirão os novos valores.';
+                        }
+                        if (gridEl) {
+                            gridEl.innerHTML = `
+                                <div class="pricing-notice-card is-new">
+                                    <span class="pricing-card-tag" style="background: #fef3c7; color: #92400e;">A partir de 01/01/2027</span>
+                                    <h4>Como ficam os novos planos</h4>
+                                    <p>Para quem contratar a partir de janeiro de 2027:</p>
+                                    <ul class="pricing-notice-list">
+                                        <li><strong>Plano Comunidade (Grátis):</strong> ferramentas internas da plataforma, sem aparecer nas buscas de pacientes.</li>
+                                        <li><strong>Plano Essencial:</strong> Semestral em 6x de R$ 99/mês, Trimestral em 3x de R$ 129/mês ou Mensal por R$ 159/mês (com 7 dias grátis).</li>
+                                    </ul>
+                                </div>
+                                <div class="pricing-notice-card is-current">
+                                    <span class="pricing-card-tag" style="background: #dcfce7; color: #166534;">Válido até 31/12/2026</span>
+                                    <h4>Assinando ainda em dezembro</h4>
+                                    <p>Quem assinar até <strong>31/12/2026</strong> garante as condições vigentes atualmente e mantém o valor enquanto a assinatura permanecer ativa:</p>
+                                    <ul class="pricing-notice-list">
+                                        <li><strong>Plano Essencial Mensal:</strong> R$ 99/mês (sem fidelidade).</li>
+                                        <li><strong>Benefícios atuais:</strong> 7 dias grátis sem cartão, Match Inteligente com pacientes, Agenda e Financeiro.</li>
+                                    </ul>
+                                </div>
+                            `;
+                        }
+                    }
+                };
+
+                const persistStatus = async (action) => {
+                    const token = localStorage.getItem('Yelo_token');
+                    const base = (typeof window.API_BASE_URL !== 'undefined')
+                        ? window.API_BASE_URL
+                        : ((typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : 'http://localhost:3001');
+
+                    if (typeof apiFetch === 'function') {
+                        return apiFetch('/api/psychologists/me/pricing-notice-status', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action })
+                        });
+                    }
+                    return fetch(`${base}/api/psychologists/me/pricing-notice-status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                        },
+                        body: JSON.stringify({ action })
+                    });
+                };
+
+                const closeModal = () => {
+                    modal.style.display = 'none';
+                };
+
+                const openModal = (forcedVariant) => {
+                    if (modal.parentElement !== document.body) {
+                        document.body.appendChild(modal);
+                    }
+                    renderVariant(forcedVariant);
+                    modal.style.display = 'flex';
+                };
+
+                // Exposto globalmente para preview local / console:
+                // window.abrirPreviewModalMudancaValores('subscriber' | 'non_subscriber')
+                window.abrirPreviewModalMudancaValores = openModal;
+
+                const handleAction = async (action) => {
+                    const targetBtn = action === 'acknowledged' ? btnAck : btnLater;
+                    const originalText = targetBtn ? targetBtn.textContent : '';
+                    if (targetBtn) {
+                        targetBtn.disabled = true;
+                        targetBtn.textContent = 'Salvando...';
+                    }
+
+                    if (action === 'acknowledged') {
+                        localStorage.setItem(ACK_STORAGE_KEY, 'true');
+                        if (psiData) psiData.pricing_notice_jan27_status = 'acknowledged';
+                    } else {
+                        sessionStorage.setItem(LATER_SESSION_KEY, '1');
+                        if (psiData) {
+                            psiData.pricing_notice_jan27_status = 'later';
+                            psiData.pricing_notice_jan27_snooze_until = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+                        }
+                    }
+
+                    try {
+                        await persistStatus(action);
+                    } catch (err) {
+                        console.warn('Não foi possível salvar preferência do aviso de valores no banco:', err);
+                    } finally {
+                        if (targetBtn) {
+                            targetBtn.disabled = false;
+                            targetBtn.textContent = originalText;
+                        }
+                        closeModal();
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(
+                                action === 'acknowledged'
+                                    ? 'Ok! Esse comunicado não será exibido novamente.'
+                                    : 'Tudo bem! Vamos te lembrar novamente mais tarde.',
+                                'success'
+                            );
+                        }
+                    }
+                };
+
+                if (btnAck) btnAck.onclick = () => handleAction('acknowledged');
+                if (btnLater) btnLater.onclick = () => handleAction('later');
+                if (btnCloseX) btnCloseX.onclick = () => handleAction('later');
+                modal.onclick = (e) => {
+                    if (e.target === modal) handleAction('later');
+                };
+
+                const previewParam = new URLSearchParams(window.location.search).get('previewPricingModal');
+                if (previewParam === 'subscriber' || previewParam === 'non_subscriber' || previewParam === '1' || previewParam === 'true') {
+                    const variant = (previewParam === 'subscriber' || previewParam === 'non_subscriber') ? previewParam : undefined;
+                    setTimeout(() => openModal(variant), 250);
+                    return;
+                }
+
+                const nowMs = psiData?.serverNow ? new Date(psiData.serverNow).getTime() : Date.now();
+                const inScheduleWindow = nowMs >= WINDOW_START && nowMs <= WINDOW_END;
+                if (!inScheduleWindow) return;
+
+                const dbStatus = psiData?.pricing_notice_jan27_status;
+                const snoozeMs = psiData?.pricing_notice_jan27_snooze_until
+                    ? new Date(psiData.pricing_notice_jan27_snooze_until).getTime()
+                    : 0;
+
+                if (dbStatus === 'acknowledged' || localStorage.getItem(ACK_STORAGE_KEY) === 'true') {
+                    return;
+                }
+                if (sessionStorage.getItem(LATER_SESSION_KEY) === '1') {
+                    return;
+                }
+                if (dbStatus === 'later' && snoozeMs > nowMs) {
+                    return;
+                }
+
+                // Aguarda modais de boas-vindas / novidade GMB fecharem antes de exibir
+                let attempts = 0;
+                const waitForClearStage = () => {
+                    const firstWelcomeOpen = Boolean(document.getElementById('modal-boas-vindas-psi'));
+                    const welcomeOpen = document.getElementById('modal-welcome-back')?.style.display === 'flex';
+                    const gmbOpen = document.getElementById('modal-novidade-google-reviews')?.style.display === 'flex';
+                    if (!firstWelcomeOpen && !welcomeOpen && !gmbOpen) {
+                        openModal();
+                        return;
+                    }
+                    if (attempts++ < 25) {
+                        setTimeout(waitForClearStage, 1000);
+                    }
+                };
+                setTimeout(waitForClearStage, 700);
             }
 
             // --- LÓGICA DE FEEDBACK DE WHATSAPP (PLG CONVERSÃO) ---

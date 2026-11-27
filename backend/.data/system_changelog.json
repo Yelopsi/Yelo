@@ -1,5 +1,137 @@
 [
   {
+    "id": "change-git-caf91966",
+    "date": "2026-11-25T19:48:55.000Z",
+    "commit": "caf91966",
+    "author": "Anderson",
+    "title": "Novo: Add DRE Contabil, iOS ClipboardPasteButton and full parity rules (mobile,parity)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "add DRE Contabil, iOS ClipboardPasteButton and full parity rules",
+    "description": "Commit registrado no repositório: \"feat(mobile,parity): add DRE Contabil, iOS ClipboardPasteButton and full parity rules\". Arquivos modificados: backend/scripts/checkWebMobileParity.js, mobile/src/app/(admin)/crm-modulo/_layout.tsx, mobile/src/app/(admin)/crm-modulo/copilot-wpp.tsx, mobile/src/app/(admin)/crm-modulo/dre.tsx, mobile/src/app/(admin)/crm.tsx (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #caf91966"
+    },
+    "after": {
+      "nova_versao": "add DRE Contabil, iOS ClipboardPasteButton and full parity rules"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/scripts/checkWebMobileParity.js",
+      "mobile/src/app/(admin)/crm-modulo/_layout.tsx",
+      "mobile/src/app/(admin)/crm-modulo/copilot-wpp.tsx",
+      "mobile/src/app/(admin)/crm-modulo/dre.tsx",
+      "mobile/src/app/(admin)/crm.tsx",
+      "mobile/src/app/(admin)/dados.tsx",
+      "mobile/src/app/(admin)/index.tsx"
+    ]
+  },
+  {
+    "id": "change-git-63d9b3d0",
+    "date": "2026-11-25T19:32:53.000Z",
+    "commit": "63d9b3d0",
+    "author": "Anderson",
+    "title": "Interface: Add green header and refine roadmap cards aesthetic (admin,mobile)",
+    "category": "Admin & Plataforma",
+    "badgeColor": "#0284c7",
+    "status": "Em Produção",
+    "summary": "add green header and refine roadmap cards aesthetic",
+    "description": "Commit registrado no repositório: \"style(admin,mobile): add green header and refine roadmap cards aesthetic\". Arquivos modificados: admin/admin_roadmap_reavaliacoes.html, admin/admin_roadmap_reavaliacoes.js, mobile/src/app/(admin)/roadmap-reavaliacoes.tsx.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #63d9b3d0"
+    },
+    "after": {
+      "nova_versao": "add green header and refine roadmap cards aesthetic"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_roadmap_reavaliacoes.html",
+      "admin/admin_roadmap_reavaliacoes.js",
+      "mobile/src/app/(admin)/roadmap-reavaliacoes.tsx"
+    ]
+  },
+  {
+    "id": "change-git-ec87b7fd",
+    "date": "2026-11-25T19:25:07.000Z",
+    "commit": "ec87b7fd",
+    "author": "Anderson",
+    "title": "Novo: Improve horizontal desktop/mobile layout and add roadmap screen in app (admin,mobile)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "improve horizontal desktop/mobile layout and add roadmap screen in app",
+    "description": "Commit registrado no repositório: \"feat(admin,mobile): improve horizontal desktop/mobile layout and add roadmap screen in app\". Arquivos modificados: admin/admin_roadmap_reavaliacoes.html, backend/scripts/checkWebMobileParity.js, mobile/src/app/(admin)/_layout.tsx, mobile/src/app/(admin)/ajustes.tsx, mobile/src/app/(admin)/crm.tsx (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ec87b7fd"
+    },
+    "after": {
+      "nova_versao": "improve horizontal desktop/mobile layout and add roadmap screen in app"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_roadmap_reavaliacoes.html",
+      "backend/scripts/checkWebMobileParity.js",
+      "mobile/src/app/(admin)/_layout.tsx",
+      "mobile/src/app/(admin)/ajustes.tsx",
+      "mobile/src/app/(admin)/crm.tsx",
+      "mobile/src/app/(admin)/index.tsx",
+      "mobile/src/app/(admin)/roadmap-reavaliacoes.tsx"
+    ]
+  },
+  {
+    "id": "change-git-51432392",
+    "date": "2026-11-25T19:17:20.000Z",
+    "commit": "51432392",
+    "author": "Anderson",
+    "title": "Refatoração: Simplify roadmap & evaluations page to clean read-only view (admin)",
+    "category": "Admin & Plataforma",
+    "badgeColor": "#0284c7",
+    "status": "Em Produção",
+    "summary": "simplify roadmap & evaluations page to clean read-only view",
+    "description": "Commit registrado no repositório: \"refactor(admin): simplify roadmap & evaluations page to clean read-only view\". Arquivos modificados: admin/admin_roadmap_reavaliacoes.html, admin/admin_roadmap_reavaliacoes.js.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #51432392"
+    },
+    "after": {
+      "nova_versao": "simplify roadmap & evaluations page to clean read-only view"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_roadmap_reavaliacoes.html",
+      "admin/admin_roadmap_reavaliacoes.js"
+    ]
+  },
+  {
+    "id": "change-git-a97a4fd3",
+    "date": "2026-11-25T19:09:56.000Z",
+    "commit": "a97a4fd3",
+    "author": "Anderson",
+    "title": "Manutenção: Registrar commit e26b840d (changelog)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "registrar commit e26b840d",
+    "description": "Commit registrado no repositório: \"chore(changelog): registrar commit e26b840d\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a97a4fd3"
+    },
+    "after": {
+      "nova_versao": "registrar commit e26b840d"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-e26b840d",
     "date": "2026-11-25T19:09:21.000Z",
     "commit": "e26b840d",

@@ -101,6 +101,7 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         const responseData = psychologist.toJSON();
         responseData.hasPlatformReview = hasPlatformReview;
         responseData.lastPlatformReview = lastPlatformReview;
+        responseData.serverNow = new Date().toISOString();
         
         // Verifica se vinculou google (raw query)
         const [rawRecord] = await db.sequelize.query(`SELECT "googleId" FROM "Psychologists" WHERE id = :id`, { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT });
@@ -534,6 +535,48 @@ exports.markGmbModalAsSeen = async (req, res) => {
     } catch (error) {
         console.error('Erro ao marcar modal GMB como visto:', error);
         res.status(500).json({ error: 'Erro interno ao salvar status do modal.' });
+    }
+};
+
+// ----------------------------------------------------------------------
+// Rota: POST /api/psychologists/me/pricing-notice-status
+// Descrição: Registra "Ok, entendi" (não mostrar mais) ou "Ver depois" (adiar 24h)
+//            para o modal agendado de 01/12 a 31/12 sobre os valores de janeiro/2027.
+// ----------------------------------------------------------------------
+exports.savePricingNoticeStatus = async (req, res) => {
+    try {
+        const psychologistId = req.psychologist?.id || req.user?.id;
+        if (!psychologistId) {
+            return res.status(401).json({ error: 'Não autorizado.' });
+        }
+
+        const { action } = req.body || {};
+        if (!['acknowledged', 'later'].includes(action)) {
+            return res.status(400).json({ error: 'Ação inválida. Use "acknowledged" ou "later".' });
+        }
+
+        await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "pricing_notice_jan27_status" VARCHAR(32);').catch(() => {});
+        await db.sequelize.query('ALTER TABLE "Psychologists" ADD COLUMN IF NOT EXISTS "pricing_notice_jan27_snooze_until" TIMESTAMPTZ;').catch(() => {});
+
+        const snoozeUntil = action === 'later'
+            ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+            : null;
+
+        await db.Psychologist.update({
+            pricing_notice_jan27_status: action,
+            pricing_notice_jan27_snooze_until: snoozeUntil
+        }, {
+            where: { id: psychologistId }
+        });
+
+        return res.status(200).json({
+            success: true,
+            pricing_notice_jan27_status: action,
+            pricing_notice_jan27_snooze_until: snoozeUntil ? snoozeUntil.toISOString() : null
+        });
+    } catch (error) {
+        console.error('Erro ao salvar status do modal de aviso de valores:', error);
+        return res.status(500).json({ error: 'Erro interno ao salvar preferência do aviso.' });
     }
 };
 

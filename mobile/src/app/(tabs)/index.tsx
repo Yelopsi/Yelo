@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Image, Share, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Image, Share, Platform, Modal, ScrollView } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +22,38 @@ export default function HomeScreen() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [copiedReview, setCopiedReview] = useState(false);
   const [promoOffer, setPromoOffer] = useState<any>(null);
+  const [showPricingNotice, setShowPricingNotice] = useState(false);
+  const [savingPricingNotice, setSavingPricingNotice] = useState(false);
+
+  const handlePricingNoticeAction = async (action: 'acknowledged' | 'later') => {
+    if (savingPricingNotice) return;
+    setSavingPricingNotice(true);
+    try {
+      await api.post('/api/psychologists/me/pricing-notice-status', { action });
+      setPsiData((prev: any) =>
+        prev
+          ? {
+              ...prev,
+              pricing_notice_jan27_status: action,
+              pricing_notice_jan27_snooze_until:
+                action === 'later'
+                  ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+                  : null,
+            }
+          : prev
+      );
+      setShowPricingNotice(false);
+      setToastMessage(
+        action === 'acknowledged'
+          ? 'Ok! Esse comunicado não aparecerá novamente.'
+          : 'Tudo bem! Vamos te lembrar novamente mais tarde.'
+      );
+    } catch (err) {
+      setShowPricingNotice(false);
+    } finally {
+      setSavingPricingNotice(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,6 +74,21 @@ export default function HomeScreen() {
           setPsiData(meRes.data);
           if (meRes.data.fotoUrl && meRes.data.fotoUrl !== user?.fotoUrl) {
             updateUser({ fotoUrl: meRes.data.fotoUrl, nome: meRes.data.nome });
+          }
+          const windowStart = new Date('2026-12-01T00:00:00-03:00').getTime();
+          const windowEnd = new Date('2026-12-31T23:59:59.999-03:00').getTime();
+          const nowMs = meRes.data.serverNow ? new Date(meRes.data.serverNow).getTime() : Date.now();
+          const noticeStatus = meRes.data.pricing_notice_jan27_status;
+          const snoozeMs = meRes.data.pricing_notice_jan27_snooze_until
+            ? new Date(meRes.data.pricing_notice_jan27_snooze_until).getTime()
+            : 0;
+          if (
+            nowMs >= windowStart &&
+            nowMs <= windowEnd &&
+            noticeStatus !== 'acknowledged' &&
+            !(noticeStatus === 'later' && snoozeMs > nowMs)
+          ) {
+            setShowPricingNotice(true);
           }
         } else {
           setIsOffline(true);
@@ -675,6 +722,270 @@ export default function HomeScreen() {
 
         <View className="h-[20px]" />
       </YeloScrollView>
+
+      {/* Modal Agendado (01 a 31/12/2026): Mudança de Valores em 01/01/2027 */}
+      <Modal
+        visible={showPricingNotice}
+        transparent
+        animationType="slide"
+        onRequestClose={() => handlePricingNoticeAction('later')}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.55)',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingHorizontal: 20,
+              paddingTop: 12,
+              paddingBottom: 28,
+              maxHeight: '88%',
+            }}
+          >
+            <View
+              style={{
+                width: 40,
+                height: 4,
+                borderRadius: 99,
+                backgroundColor: '#D1D5DB',
+                alignSelf: 'center',
+                marginBottom: 14,
+              }}
+            />
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {(() => {
+                const planoStr = String(psiData?.plano || '').trim();
+                const hasSubId = Boolean(psiData?.stripeSubscriptionId || psiData?.subscriptionId);
+                const isActivePaid = psiData?.status === 'active' && Boolean(planoStr) && planoStr.toLowerCase() !== 'comunidade';
+                const isExempt = Boolean(psiData?.is_exempt);
+                const isSubscriberAccount = Boolean((hasSubId && isActivePaid) || isExempt);
+
+                return isSubscriberAccount ? (
+                  <>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                      <View
+                        style={{
+                          backgroundColor: '#DCFCE7',
+                          paddingHorizontal: 10,
+                          paddingVertical: 5,
+                          borderRadius: 999,
+                        }}
+                      >
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#166534', letterSpacing: 0.4 }}>
+                          COMUNICADO IMPORTANTE
+                        </Text>
+                      </View>
+
+                      <TouchableOpacity
+                        onPress={() => handlePricingNoticeAction('later')}
+                        disabled={savingPricingNotice}
+                        style={{ padding: 6 }}
+                      >
+                        <Text style={{ fontSize: 18, color: '#6B7280', fontWeight: '600' }}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <Text style={{ fontSize: 20, fontWeight: '700', color: '#1B4332', marginBottom: 6 }}>
+                      Comunicado importante sobre os planos da Yelo
+                    </Text>
+                    <Text style={{ fontSize: 13.5, color: '#4B5563', lineHeight: 20, marginBottom: 14 }}>
+                      A Yelo está passando por algumas alterações de valores que entram em vigor a partir de 01/01/2027, acompanhando a evolução da plataforma. Mas queremos te tranquilizar logo de início: para quem já é assinante, nada muda.
+                    </Text>
+
+                    <View
+                      style={{
+                        backgroundColor: isExempt ? '#E0E7FF' : '#DCFCE7',
+                        borderWidth: 1,
+                        borderColor: isExempt ? '#C7D2FE' : '#86EFAC',
+                        borderRadius: 12,
+                        padding: 12,
+                        marginBottom: 12,
+                      }}
+                    >
+                      <Text style={{ fontSize: 12.5, color: isExempt ? '#3730A3' : '#166534', lineHeight: 18 }}>
+                        {isExempt
+                          ? '✨ Sua conta possui isenção ativa: nenhuma cobrança ou reajuste será aplicado em janeiro.'
+                          : '✅ Sua conta já possui assinatura ativa: você segue com exatamente o mesmo valor e os mesmos benefícios.'}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={{
+                        backgroundColor: '#F0FDF4',
+                        borderWidth: 1,
+                        borderColor: '#BBF7D0',
+                        borderRadius: 14,
+                        padding: 14,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: '#166534', marginBottom: 4 }}>
+                        Para você, nada muda em janeiro
+                      </Text>
+                      <Text style={{ fontSize: 13, color: '#1F2937', lineHeight: 19 }}>
+                        Enquanto a sua assinatura atual permanecer <Text style={{ fontWeight: '700' }}>ativa e vigente</Text>, você continua pagando exatamente o mesmo valor contratado hoje, sem nenhum reajuste.
+                      </Text>
+                    </View>
+
+                    <View
+                      style={{
+                        backgroundColor: '#F8FAFC',
+                        borderWidth: 1,
+                        borderColor: '#CBD5E1',
+                        borderRadius: 14,
+                        padding: 14,
+                        marginBottom: 16,
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: '#334155', marginBottom: 4 }}>
+                        Quando os novos valores se aplicam
+                      </Text>
+                      <Text style={{ fontSize: 13, color: '#374151', lineHeight: 19 }}>
+                        As novas regras valem apenas para novas contratações a partir de <Text style={{ fontWeight: '700' }}>01/01/2027</Text>, ou caso você cancele sua assinatura atual e decida assinar novamente após essa data.
+                      </Text>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                      <View
+                        style={{
+                          backgroundColor: '#FEF3C7',
+                          paddingHorizontal: 10,
+                          paddingVertical: 5,
+                          borderRadius: 999,
+                        }}
+                      >
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#92400E', letterSpacing: 0.4 }}>
+                          COMUNICADO IMPORTANTE
+                        </Text>
+                      </View>
+
+                      <TouchableOpacity
+                        onPress={() => handlePricingNoticeAction('later')}
+                        disabled={savingPricingNotice}
+                        style={{ padding: 6 }}
+                      >
+                        <Text style={{ fontSize: 18, color: '#6B7280', fontWeight: '600' }}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <Text style={{ fontSize: 20, fontWeight: '700', color: '#1B4332', marginBottom: 6 }}>
+                      Comunicado importante sobre os planos da Yelo
+                    </Text>
+                    <Text style={{ fontSize: 13.5, color: '#4B5563', lineHeight: 20, marginBottom: 14 }}>
+                      A Yelo está passando por algumas alterações de planos e valores para continuar evoluindo a plataforma e atraindo mais pacientes. As novas regras entram em vigor em 01/01/2027, e queremos te avisar com antecedência.
+                    </Text>
+
+                    <View
+                      style={{
+                        backgroundColor: '#FEF3C7',
+                        borderWidth: 1,
+                        borderColor: '#FCD34D',
+                        borderRadius: 12,
+                        padding: 12,
+                        marginBottom: 12,
+                      }}
+                    >
+                      <Text style={{ fontSize: 12.5, color: '#92400E', lineHeight: 18 }}>
+                        💡 Sua conta ainda não possui assinatura ativa: contratações feitas a partir de 01/01/2027 seguirão os novos valores.
+                      </Text>
+                    </View>
+
+                    <View
+                      style={{
+                        backgroundColor: '#FFFBEB',
+                        borderWidth: 1,
+                        borderColor: '#FDE68A',
+                        borderRadius: 14,
+                        padding: 14,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: '#92400E', marginBottom: 6 }}>
+                        Como ficam os novos planos a partir de 01/01/2027
+                      </Text>
+                      <Text style={{ fontSize: 12.8, color: '#374151', lineHeight: 19, marginBottom: 4 }}>
+                        • <Text style={{ fontWeight: '700' }}>Plano Comunidade (Grátis):</Text> ferramentas internas da plataforma, sem aparecer nas buscas de pacientes.
+                      </Text>
+                      <Text style={{ fontSize: 12.8, color: '#374151', lineHeight: 19 }}>
+                        • <Text style={{ fontWeight: '700' }}>Plano Essencial:</Text> Semestral em 6x de R$ 99/mês, Trimestral em 3x de R$ 129/mês ou Mensal por R$ 159/mês (com 7 dias grátis).
+                      </Text>
+                    </View>
+
+                    <View
+                      style={{
+                        backgroundColor: '#F0FDF4',
+                        borderWidth: 1,
+                        borderColor: '#BBF7D0',
+                        borderRadius: 14,
+                        padding: 14,
+                        marginBottom: 16,
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: '#166534', marginBottom: 6 }}>
+                        Assinando ainda em dezembro (até 31/12/2026)
+                      </Text>
+                      <Text style={{ fontSize: 12.8, color: '#1F2937', lineHeight: 19, marginBottom: 4 }}>
+                        Quem assinar até <Text style={{ fontWeight: '700' }}>31/12/2026</Text> garante as condições vigentes atualmente e mantém o valor enquanto a assinatura permanecer ativa:
+                      </Text>
+                      <Text style={{ fontSize: 12.8, color: '#1F2937', lineHeight: 19, marginBottom: 3 }}>
+                        • <Text style={{ fontWeight: '700' }}>Plano Essencial Mensal:</Text> R$ 99/mês (sem fidelidade).
+                      </Text>
+                      <Text style={{ fontSize: 12.8, color: '#1F2937', lineHeight: 19 }}>
+                        • <Text style={{ fontWeight: '700' }}>Benefícios atuais:</Text> 7 dias grátis sem cartão, Match Inteligente com pacientes, Agenda e Financeiro.
+                      </Text>
+                    </View>
+                  </>
+                );
+              })()}
+            </ScrollView>
+
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+              <TouchableOpacity
+                onPress={() => handlePricingNoticeAction('later')}
+                disabled={savingPricingNotice}
+                style={{
+                  flex: 1,
+                  paddingVertical: 13,
+                  borderRadius: 999,
+                  borderWidth: 1.5,
+                  borderColor: '#D1D5DB',
+                  backgroundColor: '#FFFFFF',
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151' }}>
+                  {savingPricingNotice ? 'Salvando...' : 'Ver depois'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => handlePricingNoticeAction('acknowledged')}
+                disabled={savingPricingNotice}
+                style={{
+                  flex: 1.2,
+                  paddingVertical: 13,
+                  borderRadius: 999,
+                  backgroundColor: '#1B4332',
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#FFFFFF' }}>
+                  {savingPricingNotice ? 'Salvando...' : 'Ok, entendi'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Toast flutuante de baixo pra cima */}
       <YeloToast message={toastMessage} onDismiss={() => setToastMessage(null)} />

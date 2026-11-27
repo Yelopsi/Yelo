@@ -548,6 +548,222 @@
         </div>
     </div>
 
+    <!-- MODAL AGENDADO (01 A 31/12): MUDANÇA DE VALORES EM 01/01/2027 -->
+    <style>
+        #modal-aviso-valores-jan27 .pricing-notice-box {
+            max-width: 680px !important;
+            width: 92% !important;
+            padding: 30px 32px;
+            border-radius: 24px;
+            text-align: left;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.24);
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-header {
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e8f5e9 0%, #fef9c3 100%);
+            border: 1.5px solid #bbf7d0;
+            color: #1B4332;
+            font-size: 1.65rem;
+            margin-bottom: 12px;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-eyebrow {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #1B4332;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 4px 12px;
+            border-radius: 999px;
+            margin-bottom: 8px;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-title {
+            margin: 0 0 6px 0;
+            color: #1B4332;
+            font-family: var(--font-titulos, 'Fraunces', serif);
+            font-size: 1.55rem;
+            line-height: 1.22;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-sub {
+            margin: 0;
+            color: #475569;
+            font-size: 0.92rem;
+            line-height: 1.48;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-context {
+            margin: 14px auto 0 auto;
+            padding: 9px 14px;
+            border-radius: 12px;
+            font-size: 0.83rem;
+            font-weight: 600;
+            line-height: 1.4;
+            display: inline-block;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-card {
+            border-radius: 16px;
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-sizing: border-box;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-card.is-current {
+            background: #f0fdf4;
+            border: 1.5px solid #bbf7d0;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-card.is-new {
+            background: #fffbeb;
+            border: 1.5px solid #fde68a;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-card.is-neutral {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+        }
+        #modal-aviso-valores-jan27 .pricing-card-tag {
+            display: inline-block;
+            align-self: flex-start;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 3px 9px;
+            border-radius: 999px;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-card h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: #0f172a;
+            font-weight: 800;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-card p,
+        #modal-aviso-valores-jan27 .pricing-notice-card li {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #334155;
+            line-height: 1.48;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-list {
+            margin: 2px 0 0 0;
+            padding-left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        #modal-aviso-valores-jan27 .pricing-notice-actions {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        #modal-aviso-valores-jan27 .btn-later {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 13px 22px;
+            border-radius: 50px;
+            font-size: 0.94rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        #modal-aviso-valores-jan27 .btn-later:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        #modal-aviso-valores-jan27 .btn-ack {
+            background: #1B4332;
+            color: #ffffff;
+            border: none;
+            padding: 13px 28px;
+            border-radius: 50px;
+            font-size: 0.96rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(27, 67, 50, 0.24);
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        #modal-aviso-valores-jan27 .btn-ack:hover {
+            background: #143326;
+            transform: translateY(-1px);
+        }
+        @media (max-width: 768px) {
+            #modal-aviso-valores-jan27 .pricing-notice-box {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 20px 18px max(20px, env(safe-area-inset-bottom, 20px)) 18px !important;
+                max-height: 92dvh;
+            }
+            #modal-aviso-valores-jan27 .pricing-notice-header {
+                margin-bottom: 14px;
+            }
+            #modal-aviso-valores-jan27 .pricing-notice-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 1.4rem;
+                margin-bottom: 8px;
+            }
+            #modal-aviso-valores-jan27 .pricing-notice-title {
+                font-size: 1.28rem;
+            }
+            #modal-aviso-valores-jan27 .pricing-notice-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                margin-bottom: 14px;
+            }
+            #modal-aviso-valores-jan27 .pricing-notice-actions {
+                flex-direction: column-reverse;
+                align-items: stretch;
+                gap: 8px;
+            }
+            #modal-aviso-valores-jan27 .btn-ack,
+            #modal-aviso-valores-jan27 .btn-later {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+
+    <div id="modal-aviso-valores-jan27" class="custom-modal-overlay" style="display: none; z-index: 100040;">
+        <div class="custom-modal-box pricing-notice-box">
+            <div class="sheet-drag-handle"></div>
+            <button type="button" id="btn-fechar-pricing-notice-x" class="modal-close-btn" title="Ver depois" aria-label="Fechar aviso">✕</button>
+
+            <div class="pricing-notice-header">
+                <div id="pricing-notice-icon" class="pricing-notice-icon">📅</div>
+                <div><span id="pricing-notice-eyebrow" class="pricing-notice-eyebrow">Comunicado importante</span></div>
+                <h3 id="pricing-notice-title" class="pricing-notice-title">Atualização nos planos e valores da Yelo</h3>
+                <p id="pricing-notice-sub" class="pricing-notice-sub">
+                    A Yelo está passando por algumas alterações de valores a partir de 01/01/2027, e queremos explicar com transparência como isso funciona para você.
+                </p>
+                <div id="pricing-notice-user-context" class="pricing-notice-context" style="display: none;"></div>
+            </div>
+
+            <div id="pricing-notice-grid" class="pricing-notice-grid"></div>
+
+            <div class="pricing-notice-actions">
+                <button type="button" id="btn-pricing-notice-later" class="btn-later">Ver depois</button>
+                <button type="button" id="btn-pricing-notice-ack" class="btn-ack">Ok, entendi</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- BOTTOM NAVIGATION (MOBILE ONLY) -->
     <nav class="mobile-bottom-nav">
@@ -600,7 +816,7 @@
     <script src="/psi/psi_dashboard_notif.js?v=7.2"></script>
     <script src="/psi/psi_dashboard_feedback.js?v=7.2"></script>
     <script src="/psi/psi_sidebar.js?v=7.2"></script>
-    <script src="/psi/psi_dashboard.js?v=8.1"></script>
+    <script src="/psi/psi_dashboard.js?v=8.2"></script>
     <script src="/psi/psi_blog.js?v=8.0"></script>
     <script src="/psi/psi_forum.js?v=13.6"></script>
     <script src="/psi/psi_meu_perfil.js?v=7.3"></script>
