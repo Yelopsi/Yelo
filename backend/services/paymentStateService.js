@@ -43,6 +43,131 @@ class PaymentStateService {
         return url.trim().replace(/\/+$/, '');
     }
 
+    static addMonthsSafe(fromDate, months) {
+        const d = fromDate instanceof Date ? new Date(fromDate.getTime()) : new Date(fromDate);
+        const targetMonth = d.getMonth() + Number(months || 1);
+        d.setMonth(targetMonth);
+        if (d.getMonth() !== targetMonth % 12) d.setDate(0);
+        return d;
+    }
+
+    static parseSubscriptionPlanMeta(planValue) {
+        if (!planValue) return null;
+        const raw = String(planValue).trim();
+        if (!raw) return null;
+        if (raw.startsWith('{')) {
+            try {
+                const parsed = JSON.parse(raw);
+                const cycle = parsed.cycle || 'MONTHLY';
+                const installmentCount = Number(parsed.installmentCount || (cycle === 'SEMIANNUAL' ? 6 : cycle === 'QUARTERLY' ? 3 : 1));
+                return {
+                    planType: parsed.planType || 'ESSENTIAL',
+                    cycle,
+                    installmentCount,
+                    totalValue: Number(parsed.totalValue || (cycle === 'SEMIANNUAL' ? 594 : cycle === 'QUARTERLY' ? 387 : 0)),
+                    token: parsed.token || null,
+                    last4: parsed.last4 || null,
+                    brand: parsed.brand || null,
+                    autoRenew: parsed.autoRenew !== false
+                };
+            } catch (_e) {
+                return null;
+            }
+        }
+        const upper = raw.toUpperCase();
+        const planType = upper.split('_')[0] || 'ESSENTIAL';
+        if (upper.endsWith('_SEMIANNUAL')) {
+            return { planType, cycle: 'SEMIANNUAL', installmentCount: 6, totalValue: 594, token: null, last4: null, brand: null, autoRenew: false };
+        }
+        if (upper.endsWith('_QUARTERLY')) {
+            return { planType, cycle: 'QUARTERLY', installmentCount: 3, totalValue: 387, token: null, last4: null, brand: null, autoRenew: false };
+        }
+        return { planType, cycle: 'MONTHLY', installmentCount: 1, totalValue: null, token: null, last4: null, brand: null, autoRenew: true };
+    }
+
+    static buildInstallmentPlanMeta(opts = {}) {
+        const cycle = opts.cycle || 'MONTHLY';
+        const installmentCount = Number(opts.installmentCount || (cycle === 'SEMIANNUAL' ? 6 : cycle === 'QUARTERLY' ? 3 : 1));
+        const defaultTotal = cycle === 'SEMIANNUAL' ? 594 : cycle === 'QUARTERLY' ? 387 : 159;
+        return JSON.stringify({
+            planType: opts.planType || 'ESSENTIAL',
+            cycle,
+            installmentCount,
+            totalValue: Number(opts.totalValue || defaultTotal),
+            token: opts.token || null,
+            last4: opts.last4 || null,
+            brand: opts.brand || null,
+            autoRenew: opts.autoRenew !== false
+        });
+    }
+
+    static async tokenizeCardForCustomer({ customerId, creditCard, email, cpfCnpj, postalCode, phone, remoteIp }) {
+        const ASAAS_API_URL = this.getAsaasApiUrl();
+        const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+        const fetchFn = typeof globalThis.fetch === 'function' ? globalThis.fetch : require('node-fetch');
+
+        const tokRes = await fetchFn(`${ASAAS_API_URL}/creditCard/tokenizeCreditCard`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+            body: JSON.stringify({
+                customer: customerId,
+                creditCard: {
+                    holderName: creditCard.holderName,
+                    number: String(creditCard.number || '').replace(/\D/g, ''),
+                    expiryMonth: String(creditCard.expiryMonth || '').padStart(2, '0'),
+                    expiryYear: String(creditCard.expiryYear || ''),
+                    ccv: String(creditCard.ccv || '')
+                },
+                creditCardHolderInfo: {
+                    name: creditCard.holderName,
+                    email: email,
+                    cpfCnpj: String(cpfCnpj || '').replace(/\D/g, ''),
+                    postalCode: String(postalCode || '').replace(/\D/g, ''),
+                    addressNumber: creditCard.addressNumber || 'S/N',
+                    phone: String(phone || '').replace(/\D/g, '') || '11999999999'
+                },
+                remoteIp: remoteIp || '127.0.0.1'
+            })
+        });
+        const tokData = await tokRes.json();
+        if (!tokRes.ok || !tokData.creditCardToken) {
+            return {
+                ok: false,
+                error: (tokData && tokData.errors && tokData.errors[0] && tokData.errors[0].description) || 'Cartão não autorizado.'
+            };
+        }
+        return {
+            ok: true,
+            token: tokData.creditCardToken,
+            last4: tokData.creditCardNumber || String(creditCard.number || '').replace(/\D/g, '').slice(-4),
+            brand: tokData.creditCardBrand || null
+        };
+    }
+
+    static async createInstallmentChargeWithToken({ customerId, creditCardToken, meta, psychologistId }) {
+        const ASAAS_API_URL = this.getAsaasApiUrl();
+        const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+        const fetchFn = typeof globalThis.fetch === 'function' ? globalThis.fetch : require('node-fetch');
+        const dueDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
+        const res = await fetchFn(`${ASAAS_API_URL}/payments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+            body: JSON.stringify({
+                customer: customerId,
+                billingType: 'CREDIT_CARD',
+                dueDate: dueDateStr,
+                installmentCount: meta.installmentCount,
+                totalValue: meta.totalValue,
+                creditCardToken,
+                description: `Assinatura Yelo - Plano ${meta.planType} - ${meta.cycle}`,
+                externalReference: String(psychologistId)
+            })
+        });
+        const payData = await res.json();
+        return { res, payData };
+    }
+
     /**
      * Cancela faturas PENDING e OVERDUE no Asaas e localmente, e desativa notificações de cobrança do cliente.
      */

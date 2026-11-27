@@ -277,7 +277,12 @@
         const modalSub = document.getElementById('payment-modal-desc') || modal.querySelector('.custom-modal-box p');
         const modalBox = modal.querySelector('.custom-modal-box');
         const modalLeft = modal.querySelector('.payment-modal-left');
-        const requiresCardOnly = isNewPricing && !window.isUpdatePaymentMethodMode && ((info.installments > 1) || isInTrial);
+        const isCurrentSubCardOnly = !!(psychologistData && (psychologistData.isInstallmentPlan || isTokenizedTrial));
+        const requiresCardOnly = isNewPricing && (
+            window.isUpdatePaymentMethodMode
+                ? isCurrentSubCardOnly
+                : ((info.installments > 1) || isInTrial)
+        );
         if (!isNewPricing) {
             if (modalBox) modalBox.classList.add('is-prejan-modal');
             if (securityBadges && form && btnSubmit && securityBadges.parentNode !== form) {
@@ -335,13 +340,15 @@
         };
 
         if (requiresCardOnly) {
-            // Trimestral, Semestral ou Período de Teste (2027+): direto para o formulário do cartão
+            // Trimestral, Semestral, atualização de cartão parcelado ou Teste Grátis (2027+): direto para o cartão
             setTab('CREDIT_CARD');
             if (btnBackMethod) btnBackMethod.style.display = 'none';
             if (modalSub) {
-                modalSub.textContent = isInTrial 
-                    ? 'Cadastre seu cartão de crédito para ativar seu teste gratuito de 7 dias.' 
-                    : 'Informe os dados do cartão para concluir sua assinatura.';
+                modalSub.textContent = window.isUpdatePaymentMethodMode
+                    ? 'Informe os dados do novo cartão de crédito para as próximas cobranças automáticas.'
+                    : isInTrial
+                        ? 'Cadastre seu cartão de crédito para ativar seu teste gratuito de 7 dias.'
+                        : 'Informe os dados do cartão para concluir sua assinatura.';
             }
         } else {
             // Pre-2027 ou Mensal sem trial: pode optar entre Cartão e PIX
@@ -647,7 +654,10 @@
             const realPrice = (psychologistData.activeSubscriptionPrice !== null && psychologistData.activeSubscriptionPrice !== undefined && Number(psychologistData.activeSubscriptionPrice) > 0)
                 ? Number(psychologistData.activeSubscriptionPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
                 : null;
-            if(elPreco) elPreco.textContent = `${realPrice || precos[planoKey] || 'R$ --'} / mês`;
+            const cycleSuffix = psychologistData.subscriptionCycle === 'SEMIANNUAL'
+                ? ' (Semestral)'
+                : (psychologistData.subscriptionCycle === 'QUARTERLY' ? ' (Trimestral)' : '');
+            if(elPreco) elPreco.textContent = `${realPrice || precos[planoKey] || 'R$ --'} / mês${cycleSuffix}`;
 
             const elData = document.getElementById('banner-renovacao');
             const elPrecoBlock = elPreco ? elPreco.closest('div[style*="text-align: right"], .price-block') : null;
@@ -672,7 +682,9 @@
                     ? `<span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></span> Inativo / Pendente`
                     : `<span style="width: 8px; height: 8px; background: #FFC107; border-radius: 50%;"></span> Cancelado`;
             } else {
-                if (elData) elData.textContent = `Renova em: ${dataFormatada}`;
+                const subIdStr = psychologistData.subscriptionId ? String(psychologistData.subscriptionId) : '';
+                const hasAutoRenew = subIdStr.startsWith('sub_') || Boolean(psychologistData.isAutoRenewInstallment) || subIdStr.startsWith('trial_tok_') || !psychologistData.isInstallmentPlan;
+                if (elData) elData.textContent = `${hasAutoRenew ? 'Renova em' : 'Válido até'}: ${dataFormatada}`;
                 if (elBadge) elBadge.innerHTML = `<span style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%;"></span> Ativo`;
             }
 
@@ -755,12 +767,16 @@
     async function setupPendingPixAndMethodUpdate(psychologistData) {
         const subId = psychologistData && psychologistData.subscriptionId ? String(psychologistData.subscriptionId) : '';
         const isRecurringSub = subId.startsWith('sub_');
+        const isCardUpdatableSub = isRecurringSub || Boolean(psychologistData && psychologistData.isAutoRenewInstallment) || subId.startsWith('trial_tok_');
 
-        // 1. Configura botão de Alterar Forma de Pagamento (apenas para assinaturas recorrentes sub_)
+        // 1. Configura botão de Alterar Forma de Pagamento (recorrente mensal, parcelado auto-renovável ou trial cartão)
         const btnAlterar = document.getElementById('btn-alterar-pagamento');
         if (btnAlterar) {
-            if (isRecurringSub) {
+            if (isCardUpdatableSub) {
                 btnAlterar.style.display = '';
+                btnAlterar.textContent = (psychologistData && (psychologistData.isInstallmentPlan || subId.startsWith('trial_tok_')))
+                    ? 'Atualizar Cartão'
+                    : 'Alterar Forma de Pagamento';
                 btnAlterar.onclick = (e) => {
                     e.preventDefault();
                     window.isUpdatePaymentMethodMode = true;

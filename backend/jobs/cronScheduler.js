@@ -32,39 +32,32 @@ async function processTokenizedTrials() {
             try { meta = JSON.parse(sub.plan); } catch (e) { continue; }
             if (!meta || !meta.token) continue;
 
-            const todayBRT = new Date(Date.now() - 10800000).toISOString().split('T')[0];
             try {
-                const res = await fetch(`${ASAAS_API_URL}/payments`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                    body: JSON.stringify({
-                        customer: sub.asaasCustomerId,
-                        billingType: 'CREDIT_CARD',
-                        dueDate: todayBRT,
-                        installmentCount: meta.installmentCount,
-                        totalValue: meta.totalValue,
-                        creditCardToken: meta.token,
-                        description: `Assinatura Yelo - Plano ${meta.planType} - ${meta.cycle}`,
-                        externalReference: String(psi.id)
-                    })
+                const { res, payData } = await PaymentStateService.createInstallmentChargeWithToken({
+                    customerId: sub.asaasCustomerId,
+                    creditCardToken: meta.token,
+                    meta,
+                    psychologistId: psi.id
                 });
-                const payData = await res.json();
 
                 if (res.ok && payData.id && !payData.errors) {
                     const realRefId = payData.installment || payData.id;
                     const monthsToAdd = meta.cycle === 'SEMIANNUAL' ? 6 : (meta.cycle === 'QUARTERLY' ? 3 : 1);
-                    const novaValidade = new Date();
-                    const targetMonth = novaValidade.getMonth() + monthsToAdd;
-                    novaValidade.setMonth(targetMonth);
-                    if (novaValidade.getMonth() !== targetMonth % 12) novaValidade.setDate(0);
+                    const now = new Date();
+                    const novaValidade = PaymentStateService.addMonthsSafe(now, monthsToAdd);
 
                     await sub.update({ status: 'CONVERTED' });
                     await db.Subscription.upsert({
                         id: realRefId,
                         psychologistId: psi.id,
                         asaasCustomerId: sub.asaasCustomerId,
-                        plan: `${meta.planType}_${meta.cycle}`,
-                        status: payData.status || 'ACTIVE'
+                        plan: PaymentStateService.buildInstallmentPlanMeta({
+                            ...meta,
+                            autoRenew: meta.cycle === 'QUARTERLY' || meta.cycle === 'SEMIANNUAL'
+                        }),
+                        status: 'ACTIVE',
+                        currentPeriodStart: now,
+                        currentPeriodEnd: novaValidade
                     });
                     await PaymentStateService.syncPaymentToDatabase(psi, {
                         ...payData,
@@ -75,7 +68,9 @@ async function processTokenizedTrials() {
                         subscriptionId: realRefId,
                         plano: meta.planType,
                         planExpiresAt: novaValidade,
-                        firstPaidAt: psi.firstPaidAt || new Date()
+                        firstPaidAt: psi.firstPaidAt || now,
+                        cancelAtPeriodEnd: false,
+                        canceledAt: null
                     });
                     console.log(`✅ [CRON TRIAL] Trial tokenizado convertido (${meta.cycle}): Psi ID ${psi.id}`);
                 } else {
@@ -93,11 +88,141 @@ async function processTokenizedTrials() {
 }
 
 // ============================================================================
+// 0B. RENOVAÇÃO AUTOMÁTICA DE PLANOS PARCELADOS (Trimestral / Semestral)
+// ============================================================================
+async function processInstallmentRenewals() {
+    try {
+        const ASAAS_API_URL = PaymentStateService.getAsaasApiUrl();
+        const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
+        if (!ASAAS_API_KEY) return;
+
+        const now = new Date();
+        const dueSubs = await db.Subscription.findAll({
+            where: {
+                status: { [Op.in]: ['ACTIVE', 'CONFIRMED'] },
+                currentPeriodEnd: { [Op.lte]: now }
+            }
+        });
+
+        for (const sub of dueSubs) {
+            const meta = PaymentStateService.parseSubscriptionPlanMeta(sub.plan);
+            if (!meta || (meta.cycle !== 'QUARTERLY' && meta.cycle !== 'SEMIANNUAL') || meta.installmentCount <= 1) {
+                continue;
+            }
+
+            const psi = await db.Psychologist.findByPk(sub.psychologistId);
+            if (!psi || psi.subscriptionId !== sub.id) {
+                await sub.update({ status: 'INACTIVE' });
+                continue;
+            }
+
+            const isNewPricing = pricingLaunch.isNewPricingActive();
+            const downgradePsi = async () => {
+                if (isNewPricing) {
+                    await psi.update({
+                        plano: 'Comunidade',
+                        status: 'active',
+                        planExpiresAt: null,
+                        subscriptionId: null,
+                        cancelAtPeriodEnd: false
+                    });
+                } else {
+                    await psi.update({
+                        status: 'inactive',
+                        planExpiresAt: null,
+                        subscriptionId: null,
+                        cancelAtPeriodEnd: false
+                    });
+                }
+            };
+
+            // Respeita cancelamento agendado, ausência de cartão tokenizado ou conta inativa
+            if (psi.cancelAtPeriodEnd || !meta.autoRenew || !meta.token || psi.status !== 'active') {
+                await sub.update({
+                    status: 'INACTIVE',
+                    plan: PaymentStateService.buildInstallmentPlanMeta({ ...meta, autoRenew: false })
+                });
+                await downgradePsi();
+                console.log(`ℹ️ [CRON RENEW] Ciclo parcelado (${meta.cycle}) encerrado sem renovação para Psi ID ${psi.id}`);
+                continue;
+            }
+
+            // Verifica se houve parcela em atraso no ciclo anterior antes de renovar
+            try {
+                const overdueRes = await fetch(`${ASAAS_API_URL}/payments?installment=${sub.id}&status=OVERDUE`, {
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                if (overdueRes.ok) {
+                    const overdueData = await overdueRes.json();
+                    if (overdueData && Array.isArray(overdueData.data) && overdueData.data.length > 0) {
+                        console.warn(`⚠️ [CRON RENEW] Parcela OVERDUE encontrada no ciclo ${sub.id} do Psi ID ${psi.id}. Renovação suspensa.`);
+                        await sub.update({ status: 'INACTIVE' });
+                        await downgradePsi();
+                        continue;
+                    }
+                }
+            } catch (checkErr) {
+                console.error(`⚠️ [CRON RENEW] Erro ao verificar inadimplência do ciclo ${sub.id}:`, checkErr.message);
+                continue;
+            }
+
+            try {
+                const { res, payData } = await PaymentStateService.createInstallmentChargeWithToken({
+                    customerId: sub.asaasCustomerId,
+                    creditCardToken: meta.token,
+                    meta,
+                    psychologistId: psi.id
+                });
+
+                if (res.ok && payData.id && !payData.errors) {
+                    const newRefId = payData.installment || payData.id;
+                    const monthsToAdd = meta.cycle === 'SEMIANNUAL' ? 6 : 3;
+                    const novaValidade = PaymentStateService.addMonthsSafe(now, monthsToAdd);
+
+                    await sub.update({ status: 'RENEWED' });
+                    await db.Subscription.upsert({
+                        id: newRefId,
+                        psychologistId: psi.id,
+                        asaasCustomerId: sub.asaasCustomerId,
+                        plan: PaymentStateService.buildInstallmentPlanMeta({ ...meta, autoRenew: true }),
+                        status: 'ACTIVE',
+                        currentPeriodStart: now,
+                        currentPeriodEnd: novaValidade
+                    });
+                    await PaymentStateService.syncPaymentToDatabase(psi, {
+                        ...payData,
+                        value: payData.value != null ? payData.value : Number(((Number(meta.totalValue) || 0) / (Number(meta.installmentCount) || 1)).toFixed(2)),
+                        billingType: payData.billingType || 'CREDIT_CARD'
+                    }).catch(() => {});
+                    await psi.update({
+                        subscriptionId: newRefId,
+                        plano: meta.planType,
+                        planExpiresAt: novaValidade,
+                        cancelAtPeriodEnd: false,
+                        canceledAt: null
+                    });
+                    console.log(`✅ [CRON RENEW] Parcelamento ${meta.cycle} renovado automaticamente (${newRefId}) para Psi ID ${psi.id}`);
+                } else {
+                    await sub.update({ status: 'FAILED' });
+                    await downgradePsi();
+                    console.warn(`❌ [CRON RENEW] Recusa ao renovar parcelamento (${meta.cycle}) do Psi ID ${psi.id}:`, payData.errors?.[0]?.description || res.status);
+                }
+            } catch (err) {
+                console.error(`⚠️ [CRON RENEW] Erro de rede ao renovar parcelamento Psi ID ${psi.id}:`, err.message);
+            }
+        }
+    } catch (e) {
+        console.error('❌ [CRON RENEW] Erro no processInstallmentRenewals:', e.message);
+    }
+}
+
+// ============================================================================
 // 1. AUDITORIA DE INTEGRIDADE DA BASE DE DADOS (Limpeza de Inadimplentes)
 // ============================================================================
 async function runIntegrityAudit() {
     console.log('🛡️ [CRON AUDIT] Executando auditoria de integridade da base de dados e Asaas...');
     await processTokenizedTrials();
+    await processInstallmentRenewals();
     try {
         const ASAAS_API_URL = PaymentStateService.getAsaasApiUrl();
 
@@ -582,4 +707,4 @@ const startCronJobs = () => {
     }, 60000); 
 };
 
-module.exports = { startCronJobs, runIntegrityAudit, processTokenizedTrials };
+module.exports = { startCronJobs, runIntegrityAudit, processTokenizedTrials, processInstallmentRenewals };

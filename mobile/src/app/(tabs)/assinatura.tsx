@@ -499,6 +499,9 @@ export default function AssinaturaScreen() {
     if (!pixCpfInput && (psiData?.cpf || psiData?.cnpj)) {
       setPixCpfInput(maskCpfCnpj(psiData.cpf || psiData.cnpj));
     }
+    if (isInstallmentPlan || isTokenizedTrial) {
+      setPaymentMethod('CREDIT_CARD');
+    }
     setActiveModal('CHECKOUT');
   };
 
@@ -925,6 +928,15 @@ export default function AssinaturaScreen() {
   const isComunidade = String(psiData?.plano || '') === 'Comunidade';
   const isTokenizedTrial = String(psiData?.subscriptionId || '').startsWith('trial_tok_');
   const hasRecurringSub = Boolean(psiData?.subscriptionId && String(psiData.subscriptionId).startsWith('sub_'));
+  const isInstallmentPlan = Boolean(psiData?.isInstallmentPlan);
+  const isAutoRenewInstallment = Boolean(psiData?.isAutoRenewInstallment);
+  const canUpdatePaymentMethod = Boolean(hasRecurringSub || isAutoRenewInstallment || isTokenizedTrial);
+  const subCycleSuffix =
+    psiData?.subscriptionCycle === 'SEMIANNUAL'
+      ? ' (Semestral)'
+      : psiData?.subscriptionCycle === 'QUARTERLY'
+        ? ' (Trimestral)'
+        : '';
   const expiresAt = psiData?.planExpiresAt ? new Date(psiData.planExpiresAt) : null;
   const isExpired = expiresAt ? expiresAt < now : true;
   const daysRemaining = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : 0;
@@ -947,9 +959,10 @@ export default function AssinaturaScreen() {
   const activeCycleMeta = MOBILE_CYCLE_CONFIG[selectedCycle];
   const isCardOnlyCheckout =
     isNewPricing &&
-    !isUpdatePaymentMethodMode &&
     !isIosCheckout &&
-    (activeCycleMeta.installments > 1 || isEligibleForTrial || isInTrial);
+    (isUpdatePaymentMethodMode
+      ? (isInstallmentPlan || isTokenizedTrial)
+      : (activeCycleMeta.installments > 1 || isEligibleForTrial || isInTrial));
   const displayResumoPrice = isExempt
     ? 'R$ 0,00 (Isento)'
     : isComunidade
@@ -1214,12 +1227,12 @@ export default function AssinaturaScreen() {
                     <Text style={{ fontFamily: 'Fraunces_700Bold', color: '#1B4332', fontSize: 22 }}>
                       {displayResumoPrice}
                       {!isExempt && (
-                        <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 13 }}> / mês</Text>
+                        <Text style={{ fontFamily: 'Inter_500Medium', color: '#64748b', fontSize: 13 }}> / mês{subCycleSuffix}</Text>
                       )}
                     </Text>
                   </View>
 
-                  {!isExempt && hasRecurringSub && (
+                  {!isExempt && canUpdatePaymentMethod && (
                     <TouchableOpacity
                       onPress={handleAlterarFormaPagamento}
                       disabled={isProcessingCheckout}
@@ -1237,7 +1250,7 @@ export default function AssinaturaScreen() {
                       }}
                     >
                       <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#334155', fontSize: 12.5 }}>
-                        Alterar Forma de Pagamento ⚙️
+                        {isInstallmentPlan || isTokenizedTrial ? 'Atualizar Cartão 💳' : 'Alterar Forma de Pagamento ⚙️'}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -2092,9 +2105,11 @@ export default function AssinaturaScreen() {
                   <View style={{ marginHorizontal: 22, marginTop: 10, marginBottom: 8, backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
                     <Text style={{ fontSize: 15 }}>🎁</Text>
                     <Text style={{ fontFamily: 'Inter_600SemiBold', color: '#166534', fontSize: 12, flex: 1, lineHeight: 17 }}>
-                      {isEligibleForTrial || isInTrial
-                        ? `Teste de 7 dias grátis no Cartão de Crédito: nenhuma cobrança é feita hoje (primeira cobrança apenas em ${nextSevenDaysFormatted}).`
-                        : `Modalidade ${activeCycleMeta.label} (${activeCycleMeta.installments}x de R$ ${activeCycleMeta.monthlyPrice}) exclusiva no Cartão de Crédito.`}
+                      {isUpdatePaymentMethodMode
+                        ? 'Atualização de cartão de crédito para as próximas cobranças automáticas.'
+                        : isEligibleForTrial || isInTrial
+                          ? `Teste de 7 dias grátis no Cartão de Crédito: nenhuma cobrança é feita hoje (primeira cobrança apenas em ${nextSevenDaysFormatted}).`
+                          : `Modalidade ${activeCycleMeta.label} (${activeCycleMeta.installments}x de R$ ${activeCycleMeta.monthlyPrice}) exclusiva no Cartão de Crédito.`}
                     </Text>
                   </View>
                 ) : (

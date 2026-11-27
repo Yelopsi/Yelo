@@ -628,36 +628,7 @@ exports.createPreference = async (req, res) => {
         }
 
         try {
-            if (useTokenizedTrial) {
-                await ensureSubscriptionPlanTextColumn();
-                await db.Subscription.upsert({
-                    id: asaasRefId,
-                    psychologistId: psychologistId,
-                    asaasCustomerId: customerIdAsaas,
-                    plan: JSON.stringify({
-                        planType: normalizedPlan,
-                        cycle,
-                        installmentCount,
-                        totalValue: value,
-                        token: subscriptionData.creditCardToken,
-                        last4: subscriptionData.creditCardNumber || null,
-                        brand: subscriptionData.creditCardBrand || null
-                    }),
-                    status: 'TRIAL_CARD_TOKENIZED',
-                    currentPeriodStart: new Date(),
-                    currentPeriodEnd: trialEndDate
-                });
-            } else {
-                await db.Subscription.upsert({
-                    id: asaasRefId,
-                    psychologistId: psychologistId,
-                    asaasCustomerId: customerIdAsaas,
-                    plan: isInstallment ? `${normalizedPlan}_${cycle}` : normalizedPlan,
-                    status: subscriptionData.status || 'ACTIVE'
-                });
-            }
-
-            // Calcula a expiração baseada no nextDueDate
+            // Calcula a expiração baseada no nextDueDate antes de gravar a assinatura
             const parsedNextDueDate = new Date(nextDueDate + 'T12:00:00Z');
             const now = new Date();
             let newPlanExpiresAt = parsedNextDueDate;
@@ -674,12 +645,7 @@ exports.createPreference = async (req, res) => {
                     if (localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > now) {
                         novaValidade = new Date(localPsychologist.planExpiresAt);
                     }
-                    const targetMonth = novaValidade.getMonth() + monthsToAdd;
-                    novaValidade.setMonth(targetMonth);
-                    if (novaValidade.getMonth() !== targetMonth % 12) {
-                        novaValidade.setDate(0);
-                    }
-                    newPlanExpiresAt = novaValidade;
+                    newPlanExpiresAt = PaymentStateService.addMonthsSafe(novaValidade, monthsToAdd);
                 }
             } else {
                 if (parsedNextDueDate <= now) {
@@ -687,6 +653,85 @@ exports.createPreference = async (req, res) => {
                         ? localPsychologist.planExpiresAt
                         : now;
                 }
+            }
+
+            if (useTokenizedTrial) {
+                await ensureSubscriptionPlanTextColumn();
+                await db.Subscription.upsert({
+                    id: asaasRefId,
+                    psychologistId: psychologistId,
+                    asaasCustomerId: customerIdAsaas,
+                    plan: PaymentStateService.buildInstallmentPlanMeta({
+                        planType: normalizedPlan,
+                        cycle,
+                        installmentCount,
+                        totalValue: value,
+                        token: subscriptionData.creditCardToken,
+                        last4: subscriptionData.creditCardNumber || null,
+                        brand: subscriptionData.creditCardBrand || null,
+                        autoRenew: true
+                    }),
+                    status: 'TRIAL_CARD_TOKENIZED',
+                    currentPeriodStart: now,
+                    currentPeriodEnd: trialEndDate
+                });
+            } else if (isInstallment) {
+                await ensureSubscriptionPlanTextColumn();
+                let instToken = (subscriptionData.creditCard && subscriptionData.creditCard.creditCardToken) || null;
+                let instLast4 = (subscriptionData.creditCard && subscriptionData.creditCard.creditCardNumber)
+                    || (creditCard && creditCard.number ? String(creditCard.number).replace(/\D/g, '').slice(-4) : null);
+                let instBrand = (subscriptionData.creditCard && subscriptionData.creditCard.creditCardBrand) || null;
+
+                if (!instToken && billingType === 'CREDIT_CARD' && creditCard) {
+                    const tokRes = await PaymentStateService.tokenizeCardForCustomer({
+                        customerId: customerIdAsaas,
+                        creditCard: {
+                            holderName: creditCard.holderName,
+                            number: creditCard.number,
+                            expiryMonth,
+                            expiryYear,
+                            ccv: creditCard.ccv,
+                            addressNumber: creditCard.addressNumber
+                        },
+                        email: localPsychologist.email,
+                        cpfCnpj: creditCard.holderCpf,
+                        postalCode,
+                        phone,
+                        remoteIp
+                    }).catch(() => null);
+                    if (tokRes && tokRes.ok) {
+                        instToken = tokRes.token;
+                        instLast4 = tokRes.last4 || instLast4;
+                        instBrand = tokRes.brand || instBrand;
+                    }
+                }
+
+                await db.Subscription.upsert({
+                    id: asaasRefId,
+                    psychologistId: psychologistId,
+                    asaasCustomerId: customerIdAsaas,
+                    plan: PaymentStateService.buildInstallmentPlanMeta({
+                        planType: normalizedPlan,
+                        cycle,
+                        installmentCount,
+                        totalValue: value,
+                        token: instToken,
+                        last4: instLast4,
+                        brand: instBrand,
+                        autoRenew: Boolean(instToken)
+                    }),
+                    status: 'ACTIVE',
+                    currentPeriodStart: now,
+                    currentPeriodEnd: newPlanExpiresAt
+                });
+            } else {
+                await db.Subscription.upsert({
+                    id: asaasRefId,
+                    psychologistId: psychologistId,
+                    asaasCustomerId: customerIdAsaas,
+                    plan: normalizedPlan,
+                    status: subscriptionData.status || 'ACTIVE'
+                });
             }
 
             if (activePromoCoupon && db.SystemLog) {
@@ -942,7 +987,85 @@ exports.updateSubscriptionMethod = async (req, res) => {
 
         const subId = localPsychologist.subscriptionId;
         if (!String(subId).startsWith('sub_')) {
-            return res.status(400).json({ error: 'Alteração de método disponível apenas para assinaturas mensais recorrentes.' });
+            await ensureSubscriptionPlanTextColumn();
+            const subRow = await db.Subscription.findByPk(subId);
+            const subMeta = PaymentStateService.parseSubscriptionPlanMeta(subRow ? subRow.plan : null);
+            const isTokTrial = String(subId).startsWith('trial_tok_');
+            const isInstallmentSub = Boolean(subMeta && (subMeta.cycle === 'QUARTERLY' || subMeta.cycle === 'SEMIANNUAL'));
+
+            if (!subRow || (!isInstallmentSub && !isTokTrial)) {
+                return res.status(400).json({ error: 'Alteração de método disponível apenas para assinaturas recorrentes ou parcelamentos com renovação automática.' });
+            }
+
+            if (billingType === 'PIX') {
+                return res.status(400).json({ error: 'Planos parcelados ou em teste grátis no cartão aceitam apenas cartão de crédito.' });
+            }
+
+            if (!creditCard || !creditCard.holderName || !creditCard.holderCpf || !creditCard.holderPhone || !creditCard.number || !creditCard.expiry || !creditCard.ccv) {
+                return res.status(400).json({ error: 'Dados do cartão incompletos.' });
+            }
+
+            let expiryMonth = '', expiryYear = '';
+            [expiryMonth, expiryYear] = String(creditCard.expiry).split('/');
+            expiryYear = expiryYear && expiryYear.length === 2 ? `20${expiryYear}` : expiryYear;
+
+            const phone = String(creditCard.holderPhone || '').replace(/\D/g, '');
+            const cleanCpfCnpj = String(creditCard.holderCpf || '').replace(/\D/g, '');
+            const postalCode = creditCard.postalCode ? String(creditCard.postalCode).replace(/\D/g, '') : '';
+            const remoteIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '127.0.0.1';
+
+            let customerId = subRow.asaasCustomerId;
+            if (!customerId && cleanCpfCnpj) {
+                const searchRes = await fetch(`${ASAAS_API_URL}/customers?cpfCnpj=${cleanCpfCnpj}`, {
+                    headers: { 'access_token': ASAAS_API_KEY }
+                }).catch(() => null);
+                if (searchRes && searchRes.ok) {
+                    const searchData = await searchRes.json().catch(() => null);
+                    customerId = searchData && searchData.data && searchData.data[0] ? searchData.data[0].id : null;
+                }
+            }
+            if (!customerId) {
+                return res.status(400).json({ error: 'Cliente de pagamento não localizado no gateway.' });
+            }
+
+            const tokRes = await PaymentStateService.tokenizeCardForCustomer({
+                customerId,
+                creditCard: {
+                    holderName: creditCard.holderName,
+                    number: creditCard.number,
+                    expiryMonth,
+                    expiryYear,
+                    ccv: creditCard.ccv,
+                    addressNumber: creditCard.addressNumber
+                },
+                email: localPsychologist.email,
+                cpfCnpj: cleanCpfCnpj,
+                postalCode,
+                phone,
+                remoteIp
+            });
+
+            if (!tokRes.ok) {
+                return res.status(400).json({ error: tokRes.error || 'Cartão não autorizado.' });
+            }
+
+            await subRow.update({
+                asaasCustomerId: customerId,
+                plan: PaymentStateService.buildInstallmentPlanMeta({
+                    ...subMeta,
+                    token: tokRes.token,
+                    last4: tokRes.last4,
+                    brand: tokRes.brand,
+                    autoRenew: isTokTrial ? true : !localPsychologist.cancelAtPeriodEnd
+                })
+            });
+
+            return res.json({
+                success: true,
+                subscriptionId: subId,
+                billingType: 'CREDIT_CARD',
+                message: 'Cartão para renovação automática atualizado com sucesso!'
+            });
         }
 
         // --- PREPARAÇÃO DO PAYLOAD DE ATUALIZAÇÃO ---

@@ -10,6 +10,7 @@ const seoService = require('../services/seoService'); // Importa a Inteligência
 const GoogleBusinessService = require('../services/googleBusinessService');
 const { isValidDocument } = require('../utils/documentValidator');
 const pricingLaunch = require('../utils/pricingLaunch');
+const PaymentStateService = require('../services/paymentStateService');
 
 // --- CONFIGURAÇÃO DO CLOUDINARY ---
 const cloudinary = require('cloudinary').v2;
@@ -130,6 +131,9 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         let activeSubscriptionPrice = null;
         let activeSubscriptionBillingType = null;
         let isLegacySubscriber = false;
+        let subscriptionCycle = null;
+        let isInstallmentPlan = false;
+        let isAutoRenewInstallment = false;
         try {
             const currentSubId = psychologist.subscriptionId ? String(psychologist.subscriptionId) : null;
             const activeSub = (currentSubId && !currentSubId.startsWith('trial_tok_'))
@@ -145,6 +149,21 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
                     order: [['createdAt', 'DESC']]
                 }).catch(() => null);
 
+            const currentSubRow = currentSubId
+                ? (activeSub && activeSub.id === currentSubId
+                    ? activeSub
+                    : await db.Subscription.findOne({ where: { psychologistId, id: currentSubId } }).catch(() => null))
+                : null;
+            const subMeta = PaymentStateService.parseSubscriptionPlanMeta(currentSubRow ? currentSubRow.plan : null);
+            const isTokTrialSub = Boolean(currentSubId && currentSubId.startsWith('trial_tok_'));
+            if (subMeta) {
+                subscriptionCycle = subMeta.cycle;
+                isInstallmentPlan = subMeta.cycle === 'QUARTERLY' || subMeta.cycle === 'SEMIANNUAL';
+                isAutoRenewInstallment = Boolean(isInstallmentPlan && !isTokTrialSub && subMeta.token);
+            } else if (currentSubId && currentSubId.startsWith('sub_')) {
+                subscriptionCycle = 'MONTHLY';
+            }
+
             const latestPayment = await db.Payment.findOne({
                 where: {
                     psychologistId,
@@ -156,6 +175,9 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
             if (latestPayment && latestPayment.value != null) {
                 activeSubscriptionPrice = parseFloat(latestPayment.value);
                 activeSubscriptionBillingType = latestPayment.billingType || null;
+            } else if (subMeta && subMeta.totalValue && subMeta.installmentCount) {
+                activeSubscriptionPrice = Number((subMeta.totalValue / subMeta.installmentCount).toFixed(2));
+                activeSubscriptionBillingType = 'CREDIT_CARD';
             }
 
             const hasActivePaidSub = !psychologist.is_exempt
@@ -180,6 +202,9 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         responseData.activeSubscriptionPrice = activeSubscriptionPrice;
         responseData.activeSubscriptionBillingType = activeSubscriptionBillingType;
         responseData.isLegacySubscriber = isLegacySubscriber;
+        responseData.subscriptionCycle = subscriptionCycle;
+        responseData.isInstallmentPlan = isInstallmentPlan;
+        responseData.isAutoRenewInstallment = isAutoRenewInstallment;
         
         // Verifica se vinculou google (raw query)
         const [rawRecord] = await db.sequelize.query(`SELECT "googleId" FROM "Psychologists" WHERE id = :id`, { replacements: { id: psychologistId }, type: db.sequelize.QueryTypes.SELECT });

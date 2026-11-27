@@ -37,7 +37,7 @@ export const MOBILE_CYCLE_CONFIG: Record<BillingCycleKey, CycleMeta> = {
     installments: 3,
     badgeText: '-19%',
     priceFormatted: '129,00',
-    billingNote: '3x de R$ 129 no cartão (total R$ 387) · Economia de R$ 90',
+    billingNote: '3x de R$ 129 no cartão (total R$ 387) · Renova a cada 3 meses · Economia de R$ 90',
   },
   SEMIANNUAL: {
     key: 'SEMIANNUAL',
@@ -48,7 +48,7 @@ export const MOBILE_CYCLE_CONFIG: Record<BillingCycleKey, CycleMeta> = {
     installments: 6,
     badgeText: '-38%',
     priceFormatted: '99,00',
-    billingNote: '6x de R$ 99 no cartão (total R$ 594) · Economia de R$ 360',
+    billingNote: '6x de R$ 99 no cartão (total R$ 594) · Renova a cada 6 meses · Economia de R$ 360',
   },
 };
 

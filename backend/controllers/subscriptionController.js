@@ -233,6 +233,23 @@ exports.cancelSubscription = async (req, res) => {
             }
 
             const dataFim = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt).toLocaleDateString('pt-BR') : '';
+            const subRow = await db.Subscription.findByPk(subId);
+            const subMeta = PaymentStateService.parseSubscriptionPlanMeta(subRow ? subRow.plan : null);
+            const hasAutoRenewInstallment = Boolean(subMeta && (subMeta.cycle === 'QUARTERLY' || subMeta.cycle === 'SEMIANNUAL') && subMeta.token);
+
+            if (hasAutoRenewInstallment) {
+                await subRow.update({
+                    plan: PaymentStateService.buildInstallmentPlanMeta({ ...subMeta, autoRenew: false })
+                });
+                await psychologist.update({
+                    cancelAtPeriodEnd: true,
+                    canceledAt: new Date()
+                });
+                return res.json({
+                    message: `Renovação automática cancelada. Seu acesso permanece ativo até ${dataFim || 'o fim do ciclo contratado'}, sem nova cobrança após este ciclo.`
+                });
+            }
+
             await psychologist.update({ cancelAtPeriodEnd: false });
             return res.json({
                 message: `Seu plano é parcelado no cartão com vigência garantida até ${dataFim}. Não há renovação automática pendente.`
@@ -322,12 +339,36 @@ exports.reactivateSubscription = async (req, res) => {
 
         const subId = psychologist.subscriptionId;
 
-        if (!subId || !String(subId).startsWith('sub_')) {
+        if (!subId) {
              return res.status(400).json({ error: 'Nenhuma assinatura encontrada para reativar.' });
         }
 
         if (psychologist.status !== 'active' || !psychologist.planExpiresAt || new Date(psychologist.planExpiresAt) <= new Date()) {
              return res.status(400).json({ error: 'Assinatura anterior expirou. Por favor, assine novamente.' });
+        }
+
+        if (!String(subId).startsWith('sub_')) {
+             const subRow = await db.Subscription.findByPk(subId);
+             const subMeta = PaymentStateService.parseSubscriptionPlanMeta(subRow ? subRow.plan : null);
+             const canReactivateInstallment = Boolean(
+                 subRow && subMeta && (subMeta.cycle === 'QUARTERLY' || subMeta.cycle === 'SEMIANNUAL') && subMeta.token
+             );
+             if (!canReactivateInstallment) {
+                 return res.status(400).json({ error: 'Não há renovação automática elegível para reativação neste plano. Por favor, assine novamente.' });
+             }
+
+             await subRow.update({
+                 status: 'ACTIVE',
+                 plan: PaymentStateService.buildInstallmentPlanMeta({ ...subMeta, autoRenew: true })
+             });
+             await psychologist.update({
+                 cancelAtPeriodEnd: false,
+                 canceledAt: null,
+                 reactivatedAt: new Date()
+             });
+             return res.json({
+                 message: 'Renovação automática reativada com sucesso! Ao fim do ciclo atual seu plano será renovado automaticamente.'
+             });
         }
 
         // 1. Tenta remover a data de fim no Asaas (Reativar recorrência)
