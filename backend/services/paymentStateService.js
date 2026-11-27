@@ -237,6 +237,8 @@ class PaymentStateService {
         let psi = null;
         if (externalId) psi = await db.Psychologist.findByPk(externalId);
         if (!psi && payment.subscription) psi = await db.Psychologist.findOne({ where: { subscriptionId: payment.subscription } });
+        if (!psi && payment.installment) psi = await db.Psychologist.findOne({ where: { subscriptionId: payment.installment } });
+        if (!psi && payment.id) psi = await db.Psychologist.findOne({ where: { subscriptionId: payment.id } });
 
         if (!psi) {
             console.log(`[ASAAS] Psicólogo não encontrado para o pagamento ${payment.id}. Ignorando.`);
@@ -672,6 +674,15 @@ class PaymentStateService {
         if (description.includes('REFERENCE')) planType = 'REFERENCE';
 
         let promoSyncPending = null;
+        // Determina periodicidade e meses de vigência (Semestral = 6, Trimestral = 3, Mensal = 1)
+        let monthsToAdd = 1;
+        if (description.includes('SEMIANNUAL') || description.includes('Semestral') || payment.installmentCount === 6) {
+            monthsToAdd = 6;
+        } else if (description.includes('QUARTERLY') || description.includes('Trimestral') || payment.installmentCount === 3) {
+            monthsToAdd = 3;
+        } else {
+            monthsToAdd = 1;
+        }
 
         await db.sequelize.transaction(async (t) => {
             const lockedPsi = await db.Psychologist.findOne({
@@ -720,14 +731,15 @@ class PaymentStateService {
                 transaction: t
             });
             const currentPayments = Math.max(confirmedPaymentsCount, 1);
+            const refId = payment.subscription || payment.installment || payment.id;
+            const isSubsequentInstallment = Boolean(payment.installment && payment.installmentNumber && payment.installmentNumber > 1);
             
-            // Cada fatura do Asaas corresponde a um ciclo de cobrança.
-            // O pagamento padrão cobre 1 mês; ofertas promocionais concedem N meses (ex: 2 ou 3 meses) antes da retomada regular.
+            // Cada fatura do Asaas corresponde a um ciclo de cobrança ou 1a parcela do ciclo Trimestral/Semestral.
             const payDueDateStr = payment.dueDate || payment.paymentDate || payment.clientPaymentDate;
             const payDueDate = payDueDateStr ? new Date(payDueDateStr + (String(payDueDateStr).includes('T') ? '' : 'T12:00:00Z')) : new Date();
             
-            const monthsToGrant = resolvedOffer ? resolvedOffer.totalMonths : 1;
-            const minDaysToGrant = resolvedOffer ? resolvedOffer.minDays : 30;
+            const monthsToGrant = resolvedOffer ? resolvedOffer.totalMonths : monthsToAdd;
+            const minDaysToGrant = resolvedOffer ? resolvedOffer.minDays : (monthsToAdd * 30);
             const payEffectiveDateStr = payment.clientPaymentDate || payment.confirmedDate || payment.paymentDate || payDueDateStr;
             const payEffectiveDate = payEffectiveDateStr ? new Date(payEffectiveDateStr + (String(payEffectiveDateStr).includes('T') ? '' : 'T12:00:00Z')) : new Date();
 
@@ -802,7 +814,7 @@ class PaymentStateService {
                 novaValidade = new Date(lockedPsi.planExpiresAt);
             }
 
-            const isNewSubscription = !lockedPsi.subscriptionId || (payment.subscription && lockedPsi.subscriptionId !== payment.subscription);
+            const isNewSubscription = !lockedPsi.subscriptionId || (refId && lockedPsi.subscriptionId !== refId);
 
             const wasExpiredOrReturning =
                 shouldGrantPromoBonus ||
@@ -812,11 +824,14 @@ class PaymentStateService {
 
             const updatePayload = {
                 status: 'active',
-                planExpiresAt: novaValidade,
                 plano: planType,
-                subscriptionId: payment.subscription,
+                subscriptionId: refId,
                 subscription_payments_count: currentPayments
             };
+
+            if (!isSubsequentInstallment) {
+                updatePayload.planExpiresAt = novaValidade;
+            }
 
             if (wasExpiredOrReturning && !lockedPsi.reactivatedAt) {
                 updatePayload.reactivatedAt = new Date();
@@ -892,7 +907,7 @@ class PaymentStateService {
             if (db.SystemLog) {
                 await db.SystemLog.create({
                     level: 'info',
-                    message: `[ASAAS] Pagamento Confirmado: ${lockedPsi.email} (Plano ${planType})`,
+                    message: `[ASAAS] Pagamento Confirmado: ${lockedPsi.email} (Plano ${planType} +${monthsToAdd}m)`,
                     meta: { userEmail: lockedPsi.email, psychologistId: lockedPsi.id, paymentId: payment.id }
                 }, { transaction: t });
             }
@@ -971,9 +986,12 @@ class PaymentStateService {
             });
 
             // PROTEÇÃO: Verificar se este estorno/falha pertence à assinatura ATUAL.
-            // Se ele for um Refund de uma assinatura antiga, e o usuário JÁ assinou uma nova, NÃO suspendemos.
             if (lockedPsi.subscriptionId && payment.subscription && lockedPsi.subscriptionId !== payment.subscription) {
                 console.log(`[ASAAS] Ignorando falha/refund de assinatura legada ${payment.subscription} (Atual: ${lockedPsi.subscriptionId})`);
+                return;
+            }
+            if (lockedPsi.subscriptionId && payment.installment && lockedPsi.subscriptionId !== payment.installment) {
+                console.log(`[ASAAS] Ignorando falha/refund de parcelamento legado ${payment.installment}`);
                 return;
             }
 

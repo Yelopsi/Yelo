@@ -47,7 +47,7 @@ exports.deletePsychologistAccount = async (req, res) => {
         }
 
         // --- PONTO CRÍTICO: CANCELAMENTO NO ASAAS ---
-        if (psychologist.subscriptionId) {
+        if (psychologist.subscriptionId && psychologist.subscriptionId.startsWith('sub_')) {
             try {
                 await PaymentStateService.cancelAndPurgeSubscription(psychologist.subscriptionId, {
                     psychologistId: psychologist.id
@@ -114,18 +114,81 @@ exports.cancelSubscription = async (req, res) => {
                  }
              }).catch(() => {});
              await psychologist.update({
+                plano: 'Comunidade',
+                planExpiresAt: null,
                 cancelAtPeriodEnd: true,
-                canceledAt: new Date()
+                canceledAt: new Date(),
+                subscriptionId: null
              });
              return res.status(200).json({ message: 'Assinatura cancelada localmente (Vínculo de pagamento não encontrado).' });
         }
 
-        // Purgar faturas pendentes, deletar assinatura no Asaas e desativar notificações
+        // 1. Trial tokenizado (sem cobrança ainda)
+        if (subId.startsWith('trial_tok_')) {
+            await db.Subscription.update(
+                { status: 'CANCELED' },
+                { where: { id: subId } }
+            ).catch(() => {});
+
+            await psychologist.update({
+                plano: 'Comunidade',
+                planExpiresAt: null,
+                cancelAtPeriodEnd: false,
+                canceledAt: new Date(),
+                subscriptionId: null
+            });
+            return res.json({ message: 'Período de teste cancelado sem nenhuma cobrança no cartão. Você voltou para o Plano Comunidade (Grátis).' });
+        }
+
+        // 2. Plano parcelado no cartão (Trimestral ou Semestral)
+        if (!subId.startsWith('sub_')) {
+            let isEligibleForRefund = false;
+            let paymentToRefund = null;
+
+            try {
+                const payRes = await fetch(`${ASAAS_API_URL}/payments/${subId}`, {
+                    headers: { 'access_token': ASAAS_API_KEY }
+                });
+                const payData = await payRes.json();
+                if (payData && payData.id) {
+                    paymentToRefund = payData;
+                    const dateCreated = new Date(payData.dateCreated);
+                    const diffDays = Math.floor((Date.now() - dateCreated.getTime()) / (1000 * 60 * 60 * 24));
+                    if (diffDays <= 7) isEligibleForRefund = true;
+                }
+            } catch (e) {}
+
+            if (isEligibleForRefund && paymentToRefund) {
+                try {
+                    await fetch(`${ASAAS_API_URL}/payments/${paymentToRefund.id}/refund`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
+                        body: JSON.stringify({ value: paymentToRefund.value, description: "Cancelamento no prazo de 7 dias (Arrependimento)" })
+                    });
+                } catch (e) {}
+
+                await psychologist.update({
+                    plano: 'Comunidade',
+                    planExpiresAt: null,
+                    cancelAtPeriodEnd: false,
+                    canceledAt: new Date(),
+                    subscriptionId: null
+                });
+                return res.json({ message: 'Plano cancelado e valor estornado no cartão com sucesso.' });
+            }
+
+            const dataFim = psychologist.planExpiresAt ? new Date(psychologist.planExpiresAt).toLocaleDateString('pt-BR') : '';
+            await psychologist.update({ cancelAtPeriodEnd: false });
+            return res.json({
+                message: `Seu plano é parcelado no cartão com vigência garantida até ${dataFim}. Não há renovação automática pendente.`
+            });
+        }
+
+        // 3. Assinatura recorrente mensal: purga faturas pendentes, encerra recorrência no Asaas e mantém acesso até planExpiresAt
         await PaymentStateService.cancelAndPurgeSubscription(subId, {
             psychologistId: psychologist.id
         });
 
-        // ATUALIZA O BANCO LOCAL
         await db.Payment.update({ status: 'CANCELED' }, {
             where: {
                 psychologistId: psychologist.id,
@@ -133,12 +196,9 @@ exports.cancelSubscription = async (req, res) => {
             }
         }).catch(() => {});
 
-        // NÃO atualizamos o planExpiresAt baseado no Asaas, pois o Asaas joga a data muito pra frente
-        // O planExpiresAt local já reflete exatamente o que o psicólogo pagou.
         await psychologist.update({ cancelAtPeriodEnd: true, canceledAt: new Date() });
         await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: subId } }).catch(() => {});
 
-        // Envia E-mail de Cancelamento (opcional, já que a renovação foi cancelada)
         sendSubscriptionCancelledEmail(psychologist).catch(e => {});
 
         res.json({ message: 'Renovação automática cancelada. Seu acesso continua até o fim do período já pago.' });

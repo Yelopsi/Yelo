@@ -132,6 +132,10 @@ module.exports = (sequelize, DataTypes) => {
     roadmap_state: {
       type: DataTypes.JSONB,
       allowNull: true
+    },
+    roadmap_state: {
+      type: DataTypes.JSONB,
+      allowNull: true
     }
   });
 

@@ -35,7 +35,7 @@ async function sendPendingSubscriptionEmails() {
         },
         {
             step: 4,
-            // Registrados entre 14 e 15 dias atrás (336h - 360h) -> Fim do período Trial
+            // Registrados entre 14 e 15 dias atrás (336h - 360h) -> Lembrete de conversão pós-teste
             minHours: 336,
             maxHours: 360,
         }

@@ -65,7 +65,7 @@ exports.createPreference = async (req, res) => {
     let localPsychologist = null;
     
     try {
-        const { planType, cupom, creditCard, billingType } = req.body;
+        const { planType, cupom, creditCard, billingType, billingCycle } = req.body;
         const psychologistId = req.psychologist.id;
         localPsychologist = await db.Psychologist.findByPk(psychologistId);
         if (!localPsychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
@@ -196,18 +196,50 @@ exports.createPreference = async (req, res) => {
             }
         }
 
-        let value;
-        switch (normalizedPlan) {
-            case 'ESSENTIAL':
-                value = (!isIosFee && activePromoCoupon && Number(activePromoCoupon.chargeToday) > 0)
-                    ? Number(activePromoCoupon.chargeToday)
-                    : (isIosFee ? 129.90 : 99.00);
-                break;
-            case 'CLINICAL': value = 159.00; break;
-            case 'REFERENCE': value = 259.00; break;
-            default: 
-                await intent.update({ status: 'FAILED_LOCAL' });
-                return res.status(400).json({ error: 'Plano inválido: ' + planType });
+        // --- PREÇIFICAÇÃO E MODALIDADE (MENSAL, TRIMESTRAL, SEMESTRAL) + PROMO/iOS ---
+        const cycle = (billingCycle || 'SEMIANNUAL').toUpperCase();
+        let value = 159.00;
+        let installmentCount = 1;
+        let isInstallment = false;
+
+        if (normalizedPlan === 'ESSENTIAL') {
+            if (!isIosFee && activePromoCoupon && Number(activePromoCoupon.chargeToday) > 0) {
+                value = Number(activePromoCoupon.chargeToday);
+                installmentCount = 1;
+                isInstallment = false;
+            } else if (isIosFee) {
+                value = 129.90;
+                installmentCount = 1;
+                isInstallment = false;
+            } else if (cycle === 'SEMIANNUAL') {
+                value = 594.00; // 6x de R$ 99
+                installmentCount = 6;
+                isInstallment = true;
+            } else if (cycle === 'QUARTERLY') {
+                value = 387.00; // 3x de R$ 129
+                installmentCount = 3;
+                isInstallment = true;
+            } else {
+                value = 159.00; // Mensal recorrente
+                installmentCount = 1;
+                isInstallment = false;
+            }
+        } else if (normalizedPlan === 'CLINICAL') {
+            value = 159.00;
+            installmentCount = 1;
+            isInstallment = false;
+        } else if (normalizedPlan === 'REFERENCE') {
+            value = 259.00;
+            installmentCount = 1;
+            isInstallment = false;
+        } else {
+            await intent.update({ status: 'FAILED_LOCAL' });
+            return res.status(400).json({ error: 'Plano inválido: ' + planType });
+        }
+
+        if (billingType === 'PIX' && isInstallment) {
+            await intent.update({ status: 'FAILED_LOCAL' });
+            return res.status(400).json({ error: 'O parcelamento em ' + installmentCount + 'x é exclusivo para cartão de crédito.' });
         }
 
         // --- SANITIZAÇÃO DE DADOS DO TITULAR ---
@@ -324,57 +356,83 @@ exports.createPreference = async (req, res) => {
             return res.status(400).json({ error: `Erro no Cliente Asaas: ${custError.message}` });
         }
 
-        // --- PREPARAÇÃO DO PAYLOAD DA ASSINATURA ---
-        let nextDueDate = new Date(Date.now() - 10800000).toISOString().split('T')[0];
-        const skipTrialWait = Boolean(activePromoCoupon && Number(activePromoCoupon.chargeToday) > 99);
-        
-        const accountCreatedAt = new Date(localPsychologist.createdAt);
-        const trialEndDate = new Date(accountCreatedAt);
-        trialEndDate.setDate(trialEndDate.getDate() + 7);
+        // --- PREPARAÇÃO DO PAYLOAD DA COBRANÇA, TOKENIZAÇÃO (TRIAL 7D) OU ASSINATURA ---
+        const isEligibleForTrial = !localPsychologist.firstPaidAt
+            && !localPsychologist.subscribedAt
+            && !localPsychologist.subscriptionId
+            && (!localPsychologist.planExpiresAt || localPsychologist.plano === 'Comunidade');
 
-        if (!skipTrialWait && localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > new Date()) {
-            // Se já tem uma data futura (ex: trial ativo), cobra só no fim dela
+        const skipTrialWait = Boolean(activePromoCoupon && Number(activePromoCoupon.chargeToday) > 99);
+
+        let trialEndDate = null;
+        if (!skipTrialWait && isEligibleForTrial && billingType !== 'PIX') {
+            trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + 7);
+        }
+
+        let nextDueDate = new Date(Date.now() - 10800000).toISOString().split('T')[0];
+        if (trialEndDate) {
+            nextDueDate = new Date(trialEndDate.getTime() - 10800000).toISOString().split('T')[0];
+        } else if (!skipTrialWait && localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > new Date()) {
             nextDueDate = new Date(localPsychologist.planExpiresAt).toISOString().split('T')[0];
-        } else if (!skipTrialWait && trialEndDate > new Date()) {
-            // Se pulou etapas e planExpiresAt está nulo, mas a conta é nova, garante o trial
-            nextDueDate = trialEndDate.toISOString().split('T')[0];
-            const payload = { planExpiresAt: trialEndDate, status: 'active' };
-            if (!localPsychologist.profileActivatedAt) payload.profileActivatedAt = new Date();
-            await localPsychologist.update(payload);
         }
 
         const subDescriptionBase = isIosFee ? `Assinatura Yelo - Plano ${normalizedPlan} (iOS)` : `Assinatura Yelo - Plano ${normalizedPlan}`;
-        const subDescription = activePromoCoupon ? `${subDescriptionBase} [${activePromoCoupon.code}]` : subDescriptionBase;
+        const subDescriptionCycle = (!isIosFee && !activePromoCoupon) ? `${subDescriptionBase} - ${cycle}` : subDescriptionBase;
+        const subDescription = activePromoCoupon ? `${subDescriptionCycle} [${activePromoCoupon.code}]` : subDescriptionCycle;
 
-        let subscriptionPayload;
-        if (billingType === 'PIX') {
-            subscriptionPayload = {
-                customer: customerIdAsaas,
-                billingType: 'PIX',
-                value: value,
-                nextDueDate: nextDueDate,
-                cycle: 'MONTHLY',
-                description: subDescription,
-                externalReference: String(psychologistId),
-                retryPolicy: 'ALLOW_THREE_IN_SEVEN_DAYS',
-            };
-        } else {
-            let expiryMonth = '', expiryYear = '';
+        const remoteIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || '127.0.0.1';
+
+        let expiryMonth = '', expiryYear = '';
+        if (creditCard && creditCard.expiry) {
             [expiryMonth, expiryYear] = creditCard.expiry.split('/');
-            subscriptionPayload = {
+            if (expiryYear && expiryYear.length === 2) expiryYear = `20${expiryYear}`;
+        }
+
+        const useTokenizedTrial = isInstallment && Boolean(trialEndDate);
+        let asaasPayload;
+        let asaasEndpoint;
+
+        if (useTokenizedTrial) {
+            // --- TRIMESTRAL / SEMESTRAL COM TRIAL DE 7 DIAS: TOKENIZA CARTÃO SEM COBRAR HOJE ---
+            asaasEndpoint = `${ASAAS_API_URL}/creditCard/tokenizeCreditCard`;
+            asaasPayload = {
                 customer: customerIdAsaas,
-                billingType: 'CREDIT_CARD',
-                value: value,
-                nextDueDate: nextDueDate,
-                cycle: 'MONTHLY',
-                description: subDescription,
-                externalReference: String(psychologistId),
-                softDescriptor: 'Yelo Saude',
                 creditCard: {
                     holderName: creditCard.holderName,
                     number: creditCard.number,
                     expiryMonth: expiryMonth,
-                    expiryYear: expiryYear.length === 2 ? `20${expiryYear}` : expiryYear,
+                    expiryYear: expiryYear,
+                    ccv: creditCard.ccv
+                },
+                creditCardHolderInfo: {
+                    name: creditCard.holderName,
+                    email: localPsychologist.email,
+                    cpfCnpj: creditCard.holderCpf,
+                    postalCode: postalCode,
+                    addressNumber: creditCard.addressNumber,
+                    addressComplement: creditCard.addressComplement || null,
+                    phone: phone
+                },
+                remoteIp
+            };
+        } else if (isInstallment) {
+            // --- PLANOS TRIMESTRAL (3x) E SEMESTRAL (6x) SEM TRIAL: COBRANÇA PARCELADA IMEDIATA ---
+            asaasEndpoint = `${ASAAS_API_URL}/payments`;
+            asaasPayload = {
+                customer: customerIdAsaas,
+                billingType: 'CREDIT_CARD',
+                dueDate: nextDueDate,
+                installmentCount: installmentCount,
+                totalValue: value,
+                description: `Assinatura Yelo - Plano ${planType} - ${cycle}`,
+                externalReference: String(psychologistId),
+                remoteIp,
+                creditCard: {
+                    holderName: creditCard.holderName,
+                    number: creditCard.number,
+                    expiryMonth: expiryMonth,
+                    expiryYear: expiryYear,
                     ccv: creditCard.ccv
                 },
                 creditCardHolderInfo: {
@@ -387,6 +445,49 @@ exports.createPreference = async (req, res) => {
                     phone: phone
                 }
             };
+        } else {
+            // --- PLANO MENSAL: ASSINATURA RECORRENTE TRADICIONAL ---
+            asaasEndpoint = `${ASAAS_API_URL}/subscriptions`;
+            if (billingType === 'PIX') {
+                asaasPayload = {
+                    customer: customerIdAsaas,
+                    billingType: 'PIX',
+                    value: value,
+                    nextDueDate: nextDueDate,
+                    cycle: 'MONTHLY',
+                    description: `Assinatura Yelo - Plano ${planType} - MONTHLY`,
+                    externalReference: String(psychologistId),
+                    retryPolicy: 'ALLOW_THREE_IN_SEVEN_DAYS',
+                };
+            } else {
+                asaasPayload = {
+                    customer: customerIdAsaas,
+                    billingType: 'CREDIT_CARD',
+                    value: value,
+                    nextDueDate: nextDueDate,
+                    cycle: 'MONTHLY',
+                    description: `Assinatura Yelo - Plano ${planType} - MONTHLY`,
+                    externalReference: String(psychologistId),
+                    softDescriptor: 'Yelo Saude',
+                    remoteIp,
+                    creditCard: {
+                        holderName: creditCard.holderName,
+                        number: creditCard.number,
+                        expiryMonth: expiryMonth,
+                        expiryYear: expiryYear,
+                        ccv: creditCard.ccv
+                    },
+                    creditCardHolderInfo: {
+                        name: creditCard.holderName,
+                        email: localPsychologist.email,
+                        cpfCnpj: creditCard.holderCpf,
+                        postalCode: postalCode,
+                        addressNumber: creditCard.addressNumber,
+                        addressComplement: creditCard.addressComplement || null,
+                        phone: phone
+                    }
+                };
+            }
         }
 
         // --- ALTERA O ESTADO PARA AVISAR QUE A REQUISIÇÃO VAI SAIR (PONTO SEM VOLTA) ---
@@ -398,11 +499,8 @@ exports.createPreference = async (req, res) => {
         
         try {
             if (subId) {
-                // Se o psicólogo estava inativo, com cancelamento agendado, ou a assinatura antiga foi encerrada,
-                // devemos criar uma NOVA assinatura limpa (POST /subscriptions).
-                // Caso contrário (psicólogo ativo com assinatura ativa no Asaas migrando de plano), atualizamos a existente.
                 let canUpdateExisting = false;
-                if (localPsychologist.status === 'active' && !localPsychologist.cancelAtPeriodEnd) {
+                if (!isInstallment && !useTokenizedTrial && subId.startsWith('sub_') && localPsychologist.status === 'active' && !localPsychologist.cancelAtPeriodEnd) {
                     try {
                         const checkRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
                             headers: { 'access_token': ASAAS_API_KEY }
@@ -418,50 +516,50 @@ exports.createPreference = async (req, res) => {
                 }
 
                 if (canUpdateExisting) {
-                    subscriptionPayload.updatePendingPayments = true;
+                    asaasPayload.updatePendingPayments = true;
                     subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
-                        method: 'POST', 
+                        method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                        body: JSON.stringify(subscriptionPayload)
+                        body: JSON.stringify(asaasPayload)
                     });
                     const resText = await subscriptionRes.text();
                     subscriptionData = resText ? JSON.parse(resText) : {};
                 } else {
-                    // Reassinatura ou migração limpa: encerra resquício legado no Asaas se ainda existir e cria uma nova
-                    try {
-                        await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
-                            method: 'DELETE',
-                            headers: { 'access_token': ASAAS_API_KEY }
-                        });
-                    } catch (e) {}
+                    if (subId.startsWith('sub_')) {
+                        try {
+                            await fetch(`${ASAAS_API_URL}/subscriptions/${subId}`, {
+                                method: 'DELETE',
+                                headers: { 'access_token': ASAAS_API_KEY }
+                            });
+                        } catch (e) {}
+                    }
                     subId = null;
                 }
             }
 
             if (!subId) {
-                subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+                subscriptionRes = await fetch(asaasEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                    body: JSON.stringify(subscriptionPayload)
+                    body: JSON.stringify(asaasPayload)
                 });
                 const resText = await subscriptionRes.text();
                 subscriptionData = resText ? JSON.parse(resText) : {};
             }
 
             // Fallback para BOLETO se PIX falhar
-            if (billingType === 'PIX' && subscriptionRes.status === 400 && subscriptionData.errors && subscriptionData.errors[0]?.description?.includes('forma de pagamento')) {
-                subscriptionPayload.billingType = 'BOLETO';
-                subscriptionRes = await fetch(`${ASAAS_API_URL}/subscriptions`, {
+            if (!isInstallment && billingType === 'PIX' && subscriptionRes.status === 400 && subscriptionData.errors && subscriptionData.errors[0]?.description?.includes('forma de pagamento')) {
+                asaasPayload.billingType = 'BOLETO';
+                subscriptionRes = await fetch(asaasEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'access_token': ASAAS_API_KEY },
-                    body: JSON.stringify(subscriptionPayload)
+                    body: JSON.stringify(asaasPayload)
                 });
                 const fbText = await subscriptionRes.text();
                 subscriptionData = fbText ? JSON.parse(fbText) : {};
             }
 
         } catch (networkError) {
-            // Timeout/Erro de DNS ao chamar Asaas. A requisição pode ter chegado lá.
             await intent.update({ status: 'RECONCILIATION_REQUIRED' });
             return res.status(500).json({ error: 'Erro de comunicação com o gateway. Verificando o estado do pagamento. Aguarde e confira seu plano em instantes.' });
         }
@@ -470,51 +568,81 @@ exports.createPreference = async (req, res) => {
         if (!subscriptionRes.ok || subscriptionData.errors) {
             const errCode = subscriptionRes.status;
             if (errCode >= 500) {
-                // Erro 500 deles. A transação pode ter passado lá dentro e crachou na hora de montar a resposta.
                 await intent.update({ status: 'RECONCILIATION_REQUIRED' });
                 return res.status(500).json({ error: 'Gateway instável. Verificaremos seu pagamento em instantes.' });
             }
-            // Falha semântica explícita (Ex: Cartão Recusado). Asaas retornou HTTP 400 = 100% certeza de não ter criado.
             await intent.update({ status: 'FAILED_LOCAL' });
             const errorMsg = subscriptionData.errors ? subscriptionData.errors[0].description : 'Operação recusada pelo cartão/banco.';
             return res.status(400).json({ error: errorMsg });
         }
 
+        // Identificador de referência (Token Trial, ID da assinatura OU ID do parcelamento)
+        const asaasRefId = useTokenizedTrial
+            ? `trial_tok_${uuidv4().replace(/-/g, '').slice(0, 16)}`
+            : (subscriptionData.installment || subscriptionData.id);
+
         // --- SUCESSO NO ASAAS ---
         try {
-            await intent.update({ asaasSubscriptionId: subscriptionData.id });
+            await intent.update({ asaasSubscriptionId: asaasRefId });
         } catch (intentErr) {
-            // Se o Banco Yelo falhar, o Recovery processará o status SENT_TO_ASAAS expirado e retificará.
             console.error("Erro fatal ao dar update no Intent: ", intentErr);
             throw intentErr; 
         }
 
         try {
-            // Persistência nas tabelas financeiras
-            await db.Subscription.upsert({
-                id: subscriptionData.id,
-                psychologistId: psychologistId,
-                asaasCustomerId: customerIdAsaas,
-                plan: normalizedPlan,
-                status: subscriptionData.status || 'ACTIVE'
-            });
+            if (useTokenizedTrial) {
+                await db.Subscription.upsert({
+                    id: asaasRefId,
+                    psychologistId: psychologistId,
+                    asaasCustomerId: customerIdAsaas,
+                    plan: JSON.stringify({
+                        planType: normalizedPlan,
+                        cycle,
+                        installmentCount,
+                        totalValue: value,
+                        token: subscriptionData.creditCardToken,
+                        last4: subscriptionData.creditCardNumber || null,
+                        brand: subscriptionData.creditCardBrand || null
+                    }),
+                    status: 'TRIAL_CARD_TOKENIZED',
+                    currentPeriodStart: new Date(),
+                    currentPeriodEnd: trialEndDate
+                });
+            } else {
+                await db.Subscription.upsert({
+                    id: asaasRefId,
+                    psychologistId: psychologistId,
+                    asaasCustomerId: customerIdAsaas,
+                    plan: isInstallment ? `${normalizedPlan}_${cycle}` : normalizedPlan,
+                    status: subscriptionData.status || 'ACTIVE'
+                });
+            }
 
             // Calcula a expiração baseada no nextDueDate
-            const parsedNextDueDate = new Date(nextDueDate + 'T12:00:00Z'); // Força meio-dia para evitar fuso
+            const parsedNextDueDate = new Date(nextDueDate + 'T12:00:00Z');
             const now = new Date();
             let newPlanExpiresAt = parsedNextDueDate;
             const wasExpiredOrInactive = promoCouponService.isPsychologistExpiredOrInactive(localPsychologist, now);
-            
-            // Para Cartão de Crédito, a cobrança é imediata e síncrona
-            if (billingType === 'CREDIT_CARD') {
+
+            const monthsToAdd = cycle === 'SEMIANNUAL' ? 6 : (cycle === 'QUARTERLY' ? 3 : 1);
+            if (trialEndDate) {
+                newPlanExpiresAt = trialEndDate;
+            } else if (billingType === 'CREDIT_CARD') {
                 if (activePromoCoupon && activePromoCoupon.type === 'EXTRA_MONTHS') {
                     newPlanExpiresAt = promoCouponService.addMonthsWithMinDays(now, activePromoCoupon.totalMonths, activePromoCoupon.minDays);
-                } else if (parsedNextDueDate <= now) {
-                    newPlanExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                } else {
+                    let novaValidade = new Date(now.getTime());
+                    if (localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > now) {
+                        novaValidade = new Date(localPsychologist.planExpiresAt);
+                    }
+                    const targetMonth = novaValidade.getMonth() + monthsToAdd;
+                    novaValidade.setMonth(targetMonth);
+                    if (novaValidade.getMonth() !== targetMonth % 12) {
+                        novaValidade.setDate(0);
+                    }
+                    newPlanExpiresAt = novaValidade;
                 }
             } else {
-                // Para PIX/Boleto: se já possui validade futura (ex: trial ativo), preserva
-                // Se for vencimento imediato (sem trial), só ganha validade após pagar (via webhook/processPaymentSuccess)
                 if (parsedNextDueDate <= now) {
                     newPlanExpiresAt = (localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > now)
                         ? localPsychologist.planExpiresAt
@@ -526,11 +654,11 @@ exports.createPreference = async (req, res) => {
                 const emailLower = promoCouponService.normalizeEmail(localPsychologist.email);
                 await db.SystemLog.create({
                     level: 'info',
-                    message: `[PROMO_SUB_PENDING] ${activePromoCoupon.code} | sub:${subscriptionData.id} | psi:${psychologistId} | email:${emailLower}`,
+                    message: `[PROMO_SUB_PENDING] ${activePromoCoupon.code} | sub:${asaasRefId} | psi:${psychologistId} | email:${emailLower}`,
                     meta: {
                         offerCode: activePromoCoupon.code,
                         email: emailLower,
-                        subscriptionId: subscriptionData.id,
+                        subscriptionId: asaasRefId,
                         psychologistId,
                         totalMonths: activePromoCoupon.totalMonths,
                         minDays: activePromoCoupon.minDays,
@@ -540,19 +668,24 @@ exports.createPreference = async (req, res) => {
                 }).catch(() => {});
             }
 
-            // Atualiza o Psychologist
             const updateData = {
-                subscriptionId: subscriptionData.id,
+                subscriptionId: asaasRefId,
                 plano: normalizedPlan,
                 planExpiresAt: newPlanExpiresAt,
                 cancelAtPeriodEnd: false,
                 canceledAt: null
             };
-            
-            // Ativação Imediata para Cartão de Crédito (fluxo síncrono tem sucesso garantido aqui)
-            if (billingType === 'CREDIT_CARD') {
+
+            if (trialEndDate) {
                 updateData.status = 'active';
                 updateData.is_exempt = false;
+                if (!localPsychologist.subscribedAt) updateData.subscribedAt = now;
+                if (!localPsychologist.profileActivatedAt) updateData.profileActivatedAt = now;
+            } else if (billingType === 'CREDIT_CARD') {
+                updateData.status = 'active';
+                updateData.is_exempt = false;
+                if (!localPsychologist.subscribedAt) updateData.subscribedAt = now;
+                if (!localPsychologist.profileActivatedAt) updateData.profileActivatedAt = now;
                 if (wasExpiredOrInactive || activePromoCoupon) {
                     updateData.reactivatedAt = now;
                 }
@@ -563,7 +696,6 @@ exports.createPreference = async (req, res) => {
             // Sucesso Completo
             await intent.update({ status: 'COMPLETED' });
         } catch (dbError) {
-            // Yelo DB Error: A assinatura Asaas existe e o Intent foi marcado com o ID, mas as tabelas locais (Psychologist) falharam.
             await intent.update({ status: 'RECONCILIATION_REQUIRED' });
             throw dbError;
         }
@@ -587,7 +719,7 @@ exports.createPreference = async (req, res) => {
                     
                     return res.json({ 
                         success: true, 
-                        subscriptionId: subscriptionData.id, 
+                        subscriptionId: asaasRefId, 
                         billingType: 'PIX',
                         pix: { encodedImage: qrData.encodedImage, payload: qrData.payload }
                     });
@@ -595,10 +727,10 @@ exports.createPreference = async (req, res) => {
             } catch (pixErr) {
                 console.error("Assinatura criada mas falha ao obter QRCode PIX", pixErr);
             }
-            return res.json({ success: true, subscriptionId: subscriptionData.id, message: 'Assinatura PIX criada.' });
+            return res.json({ success: true, subscriptionId: asaasRefId, message: 'Assinatura PIX criada.' });
         }
 
-        res.json({ success: true, subscriptionId: subscriptionData.id });
+        res.json({ success: true, subscriptionId: asaasRefId });
 
     } catch (error) {
         try {
