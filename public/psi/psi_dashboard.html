@@ -115,9 +115,21 @@
             border-radius: 9px;
             font-size: 0.86rem;
             font-family: inherit;
+            font-weight: 400;
+            line-height: 1.25;
             color: #0f172a;
             background: #ffffff;
             transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        #payment-modal select.modal-input {
+            -webkit-appearance: none;
+            appearance: none;
+            padding-right: 34px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 14px 14px;
+            cursor: pointer;
         }
         #payment-modal .modal-input:focus {
             outline: none;
@@ -571,14 +583,9 @@
                                 <input type="text" id="card-expiry" placeholder="MM/AAAA" required class="modal-input" style="flex: 1.2;" inputmode="numeric">
                                 <input type="text" id="card-ccv" placeholder="CVV" required class="modal-input" style="flex: 1;" inputmode="numeric">
                             </div>
-                            <div id="card-installments-wrap" style="display: none; flex-direction: column; gap: 6px; margin-top: 2px; position: relative;">
-                                <label style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #1B4332;">Parcelamento no cartão</label>
-                                <input type="hidden" id="card-installments" value="6">
-                                <button type="button" id="card-installments-trigger" class="modal-input" aria-expanded="false" style="width: 100%; display: flex; align-items: center; justify-content: space-between; text-align: left; background: #ffffff; cursor: pointer; font-weight: 600; color: #0f172a;">
-                                    <span id="card-installments-label"></span>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0; transition: transform 0.18s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                                </button>
-                                <div id="card-installments-menu" style="display: none; flex-direction: column; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 24px rgba(15,23,42,0.08);"></div>
+                            <div id="card-installments-wrap" style="display: none; flex-direction: column; gap: 7px; margin-top: 2px;">
+                                <label for="card-installments" style="font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #1B4332;">Parcelamento no cartão</label>
+                                <select id="card-installments" class="modal-input"></select>
                             </div>
                         </div>
 

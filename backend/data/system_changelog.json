@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-d32f8a66",
+    "date": "2026-11-27T23:51:56.000Z",
+    "commit": "d32f8a66",
+    "author": "Anderson",
+    "title": "Correção: Substituir select nativo por dropdown customizado e liberar 1x a 6x/3x sem juros (ui,billing)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "substituir select nativo por dropdown customizado e liberar 1x a 6x/3x sem juros",
+    "description": "Commit registrado no repositório: \"fix(ui,billing): substituir select nativo por dropdown customizado e liberar 1x a 6x/3x sem juros\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/paymentController.js, backend/data/system_changelog.json, mobile/src/app/(tabs)/assinatura.tsx, public/psi/psi_assinatura.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #d32f8a66"
+    },
+    "after": {
+      "nova_versao": "substituir select nativo por dropdown customizado e liberar 1x a 6x/3x sem juros"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/paymentController.js",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "public/psi/psi_assinatura.js",
+      "public/psi/psi_dashboard.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-b1389ac3",
     "date": "2026-11-27T23:39:30.000Z",
     "commit": "b1389ac3",

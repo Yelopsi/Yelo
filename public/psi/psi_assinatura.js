@@ -315,10 +315,7 @@
         }
 
         const installmentsWrap = document.getElementById('card-installments-wrap');
-        const installmentsInput = document.getElementById('card-installments');
-        const installmentsTrigger = document.getElementById('card-installments-trigger');
-        const installmentsLabelEl = document.getElementById('card-installments-label');
-        const installmentsMenu = document.getElementById('card-installments-menu');
+        const installmentsSelect = document.getElementById('card-installments');
 
         const getInstallmentOptionText = (count) => {
             if (count === 1) {
@@ -338,73 +335,25 @@
             }
         };
 
-        const closeInstallmentMenu = () => {
-            if (installmentsMenu) installmentsMenu.style.display = 'none';
-            if (installmentsTrigger) {
-                installmentsTrigger.setAttribute('aria-expanded', 'false');
-                const chevron = installmentsTrigger.querySelector('svg');
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            }
-        };
-
-        const renderInstallmentOptions = () => {
-            if (!installmentsMenu) return;
-            const counts = [];
-            for (let c = info.installments; c >= 1; c--) counts.push(c);
-            installmentsMenu.innerHTML = counts.map((count, idx) => {
-                const isSelected = count === currentInstallmentCount;
-                const borderBottom = idx < counts.length - 1 ? 'border-bottom: 1px solid #f1f5f9;' : '';
-                const bg = isSelected ? '#f0fdf4' : '#ffffff';
-                const txtColor = isSelected ? '#1B4332' : '#334155';
-                const weight = isSelected ? '700' : '500';
-                const checkHtml = isSelected ? '<span style="color:#16a34a;font-weight:800;">✓</span>' : '';
-                return `<button type="button" class="card-inst-opt" data-installments="${count}" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:${bg};color:${txtColor};font-weight:${weight};font-size:0.86rem;border:none;${borderBottom}cursor:pointer;text-align:left;"><span>${getInstallmentOptionText(count)}</span>${checkHtml}</button>`;
-            }).join('');
-
-            installmentsMenu.querySelectorAll('.card-inst-opt').forEach((optBtn) => {
-                optBtn.onclick = (evt) => {
-                    evt.preventDefault();
-                    evt.stopPropagation();
-                    const chosen = parseInt(optBtn.getAttribute('data-installments'), 10);
-                    currentInstallmentCount = (Number.isInteger(chosen) && chosen >= 1 && chosen <= info.installments) ? chosen : info.installments;
-                    if (installmentsInput) installmentsInput.value = String(currentInstallmentCount);
-                    if (installmentsLabelEl) installmentsLabelEl.textContent = getInstallmentOptionText(currentInstallmentCount);
-                    renderInstallmentOptions();
-                    closeInstallmentMenu();
-                    updateInstallmentSummaryAndCta();
-                };
-            });
-        };
-
-        if (installmentsWrap && installmentsInput && installmentsTrigger && installmentsMenu) {
-            closeInstallmentMenu();
+        if (installmentsWrap && installmentsSelect) {
             if (isNewPricing && !window.isUpdatePaymentMethodMode && info.installments > 1) {
+                const counts = [];
+                for (let c = info.installments; c >= 1; c--) counts.push(c);
+                installmentsSelect.innerHTML = counts
+                    .map((count) => `<option value="${count}">${getInstallmentOptionText(count)}</option>`)
+                    .join('');
+                installmentsSelect.value = String(info.installments);
                 currentInstallmentCount = info.installments;
-                installmentsInput.value = String(info.installments);
-                if (installmentsLabelEl) installmentsLabelEl.textContent = getInstallmentOptionText(info.installments);
-                renderInstallmentOptions();
-                installmentsTrigger.onclick = (evt) => {
-                    evt.preventDefault();
-                    evt.stopPropagation();
-                    const isOpen = installmentsMenu.style.display === 'flex';
-                    if (isOpen) {
-                        closeInstallmentMenu();
-                    } else {
-                        installmentsMenu.style.display = 'flex';
-                        installmentsTrigger.setAttribute('aria-expanded', 'true');
-                        const chevron = installmentsTrigger.querySelector('svg');
-                        if (chevron) chevron.style.transform = 'rotate(180deg)';
-                        if (typeof installmentsMenu.scrollIntoView === 'function') {
-                            setTimeout(() => installmentsMenu.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 20);
-                        }
-                    }
+                installmentsSelect.onchange = () => {
+                    const chosen = parseInt(installmentsSelect.value, 10);
+                    currentInstallmentCount = (Number.isInteger(chosen) && chosen >= 1 && chosen <= info.installments) ? chosen : info.installments;
+                    updateInstallmentSummaryAndCta();
                 };
                 installmentsWrap.style.display = 'flex';
             } else {
-                installmentsMenu.innerHTML = '';
-                installmentsTrigger.onclick = null;
+                installmentsSelect.innerHTML = '';
+                installmentsSelect.onchange = null;
                 currentInstallmentCount = info.installments;
-                installmentsInput.value = String(info.installments);
                 installmentsWrap.style.display = 'none';
             }
         }
