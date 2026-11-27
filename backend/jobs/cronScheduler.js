@@ -585,4 +585,4 @@ const startCronJobs = () => {
     }, 60000); 
 };
 
-module.exports = { startCronJobs, runIntegrityAudit };
+module.exports = { startCronJobs, runIntegrityAudit, processTokenizedTrials };

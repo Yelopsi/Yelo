@@ -131,14 +131,19 @@ exports.getAuthenticatedPsychologistProfile = async (req, res) => {
         let activeSubscriptionBillingType = null;
         let isLegacySubscriber = false;
         try {
-            const activeSub = await db.Subscription.findOne({
-                where: {
-                    psychologistId,
-                    id: { [Op.notLike]: 'trial_tok_%' },
-                    status: { [Op.in]: ['ACTIVE', 'CONFIRMED'] }
-                },
-                order: [['createdAt', 'DESC']]
-            }).catch(() => null);
+            const currentSubId = psychologist.subscriptionId ? String(psychologist.subscriptionId) : null;
+            const activeSub = (currentSubId && !currentSubId.startsWith('trial_tok_'))
+                ? await db.Subscription.findOne({
+                    where: { psychologistId, id: currentSubId }
+                }).catch(() => null)
+                : await db.Subscription.findOne({
+                    where: {
+                        psychologistId,
+                        id: { [Op.notLike]: 'trial_tok_%' },
+                        status: { [Op.in]: ['ACTIVE', 'CONFIRMED'] }
+                    },
+                    order: [['createdAt', 'DESC']]
+                }).catch(() => null);
 
             const latestPayment = await db.Payment.findOne({
                 where: {

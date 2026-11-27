@@ -1,5 +1,42 @@
 [
   {
+    "id": "change-git-a741d59b",
+    "date": "2026-11-27T16:24:52.000Z",
+    "commit": "a741d59b",
+    "author": "Anderson",
+    "title": "Novo: Aplicar trava de lancamento 01/01/2027, ciclos de cobranca e paridade Comunidade/R legado (mobile,admin)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "aplicar trava de lancamento 01/01/2027, ciclos de cobranca e paridade Comunidade/R legado",
+    "description": "Commit registrado no repositório: \"feat(mobile,admin): aplicar trava de lancamento 01/01/2027, ciclos de cobranca e paridade Comunidade/R legado\". Arquivos modificados: admin/admin_crm_psicologos.js, admin/admin_detalhes_psicologo.js, backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx (+10 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #a741d59b"
+    },
+    "after": {
+      "nova_versao": "aplicar trava de lancamento 01/01/2027, ciclos de cobranca e paridade Comunidade/R legado"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_crm_psicologos.js",
+      "admin/admin_detalhes_psicologo.js",
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(admin)/crm-modulo/detalhes-psicologo.tsx",
+      "mobile/src/app/(admin)/crm-modulo/leads.tsx",
+      "mobile/src/app/(admin)/crm-modulo/psicologos.tsx",
+      "mobile/src/app/(tabs)/ajustes.tsx",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "mobile/src/app/(tabs)/fale_com_a_yelo.tsx",
+      "mobile/src/app/(tabs)/index.tsx",
+      "mobile/src/app/(tabs)/meu_perfil.tsx",
+      "mobile/src/utils/pricingLaunch.ts",
+      "public/psi/psi_meu_perfil.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-91675889",
     "date": "2026-11-27T16:13:49.000Z",
     "commit": "91675889",

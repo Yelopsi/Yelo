@@ -736,15 +736,25 @@
     }
 
     async function setupPendingPixAndMethodUpdate(psychologistData) {
-        // 1. Configura botão de Alterar Forma de Pagamento
+        const subId = psychologistData && psychologistData.subscriptionId ? String(psychologistData.subscriptionId) : '';
+        const isRecurringSub = subId.startsWith('sub_');
+
+        // 1. Configura botão de Alterar Forma de Pagamento (apenas para assinaturas recorrentes sub_)
         const btnAlterar = document.getElementById('btn-alterar-pagamento');
-        if (btnAlterar && psychologistData && psychologistData.subscriptionId) {
-            btnAlterar.onclick = (e) => {
-                e.preventDefault();
-                window.isUpdatePaymentMethodMode = true;
-                abrirModalAsaas(psychologistData.plano);
-            };
+        if (btnAlterar) {
+            if (isRecurringSub) {
+                btnAlterar.style.display = '';
+                btnAlterar.onclick = (e) => {
+                    e.preventDefault();
+                    window.isUpdatePaymentMethodMode = true;
+                    abrirModalAsaas(psychologistData.plano);
+                };
+            } else {
+                btnAlterar.style.display = 'none';
+            }
         }
+
+        if (!isRecurringSub) return;
 
         // 2. Busca Fatura PIX Aberta
         try {

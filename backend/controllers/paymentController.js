@@ -19,6 +19,19 @@ const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim
 
 const { v4: uuidv4 } = require('uuid');
 
+let subscriptionPlanColumnWidened = false;
+async function ensureSubscriptionPlanTextColumn() {
+    if (subscriptionPlanColumnWidened) return;
+    try {
+        if (db.sequelize.getDialect() === 'postgres') {
+            await db.sequelize.query('ALTER TABLE "Subscriptions" ALTER COLUMN "plan" TYPE TEXT;');
+        }
+        subscriptionPlanColumnWidened = true;
+    } catch (err) {
+        console.warn('[DB SCHEMA] Aviso ao ampliar Subscriptions.plan:', err.message);
+    }
+}
+
 // 0. VERIFICA ELEGIBILIDADE DE OFERTA PROMOCIONAL VINCULADA AO E-MAIL DO PROFISSIONAL
 exports.getPromoEligibility = async (req, res) => {
     try {
@@ -621,6 +634,7 @@ exports.createPreference = async (req, res) => {
 
         try {
             if (useTokenizedTrial) {
+                await ensureSubscriptionPlanTextColumn();
                 await db.Subscription.upsert({
                     id: asaasRefId,
                     psychologistId: psychologistId,
@@ -792,6 +806,10 @@ exports.getPendingPix = async (req, res) => {
         const psychologist = await db.Psychologist.findByPk(req.psychologist.id);
         if (!psychologist || !psychologist.subscriptionId) {
             return res.status(404).json({ error: 'Nenhuma assinatura encontrada.' });
+        }
+
+        if (!String(psychologist.subscriptionId).startsWith('sub_')) {
+            return res.json({ pending: false });
         }
 
         // Busca tanto faturas OVERDUE quanto PENDING no Asaas para priorizar a mais antiga
