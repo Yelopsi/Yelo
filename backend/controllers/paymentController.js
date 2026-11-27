@@ -419,7 +419,8 @@ exports.createPreference = async (req, res) => {
         const subDescriptionCycle = (newPricingActive && !isIosFee && !activePromoCoupon) ? `${subDescriptionBase} - ${cycle}` : subDescriptionBase;
         const subDescription = activePromoCoupon ? `${subDescriptionCycle} [${activePromoCoupon.code}]` : subDescriptionCycle;
 
-        const remoteIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || '127.0.0.1';
+        const rawRemoteIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || '127.0.0.1';
+        const remoteIp = String(rawRemoteIp).replace(/^::ffff:/, '');
 
         let expiryMonth = '', expiryYear = '';
         if (creditCard && creditCard.expiry) {
@@ -450,7 +451,8 @@ exports.createPreference = async (req, res) => {
                     postalCode: postalCode,
                     addressNumber: creditCard.addressNumber,
                     addressComplement: creditCard.addressComplement || null,
-                    phone: phone
+                    phone: phone,
+                    mobilePhone: phone
                 },
                 remoteIp
             };
@@ -669,6 +671,7 @@ exports.createPreference = async (req, res) => {
                         token: subscriptionData.creditCardToken,
                         last4: subscriptionData.creditCardNumber || null,
                         brand: subscriptionData.creditCardBrand || null,
+                        remoteIp,
                         autoRenew: true
                     }),
                     status: 'TRIAL_CARD_TOKENIZED',
@@ -718,6 +721,7 @@ exports.createPreference = async (req, res) => {
                         token: instToken,
                         last4: instLast4,
                         brand: instBrand,
+                        remoteIp,
                         autoRenew: Boolean(instToken)
                     }),
                     status: 'ACTIVE',
@@ -1012,7 +1016,8 @@ exports.updateSubscriptionMethod = async (req, res) => {
             const phone = String(creditCard.holderPhone || '').replace(/\D/g, '');
             const cleanCpfCnpj = String(creditCard.holderCpf || '').replace(/\D/g, '');
             const postalCode = creditCard.postalCode ? String(creditCard.postalCode).replace(/\D/g, '') : '';
-            const remoteIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '127.0.0.1';
+            const rawUpdIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '127.0.0.1';
+            const remoteIp = String(rawUpdIp).replace(/^::ffff:/, '');
 
             let customerId = subRow.asaasCustomerId;
             if (!customerId && cleanCpfCnpj) {
@@ -1056,6 +1061,7 @@ exports.updateSubscriptionMethod = async (req, res) => {
                     token: tokRes.token,
                     last4: tokRes.last4,
                     brand: tokRes.brand,
+                    remoteIp,
                     autoRenew: isTokTrial ? true : !localPsychologist.cancelAtPeriodEnd
                 })
             });

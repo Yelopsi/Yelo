@@ -1,5 +1,39 @@
 [
   {
+    "id": "change-git-53118225",
+    "date": "2026-11-27T23:22:47.000Z",
+    "commit": "53118225",
+    "author": "Anderson",
+    "title": "Novo: Adicionar renovacao automatica para planos Trimestral e Semestral (billing)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "adicionar renovacao automatica para planos Trimestral e Semestral",
+    "description": "Commit registrado no repositório: \"feat(billing): adicionar renovacao automatica para planos Trimestral e Semestral\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/paymentController.js, backend/controllers/psychologistController.js, backend/controllers/subscriptionController.js, backend/data/system_changelog.json (+7 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #53118225"
+    },
+    "after": {
+      "nova_versao": "adicionar renovacao automatica para planos Trimestral e Semestral"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/controllers/subscriptionController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/cronScheduler.js",
+      "backend/services/paymentStateService.js",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "mobile/src/utils/pricingLaunch.ts",
+      "public/psi/psi_assinatura.html",
+      "public/psi/psi_assinatura.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-8a40e89c",
     "date": "2026-11-27T22:49:00.000Z",
     "commit": "8a40e89c",

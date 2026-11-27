@@ -68,6 +68,7 @@ class PaymentStateService {
                     token: parsed.token || null,
                     last4: parsed.last4 || null,
                     brand: parsed.brand || null,
+                    remoteIp: parsed.remoteIp || null,
                     autoRenew: parsed.autoRenew !== false
                 };
             } catch (_e) {
@@ -77,12 +78,12 @@ class PaymentStateService {
         const upper = raw.toUpperCase();
         const planType = upper.split('_')[0] || 'ESSENTIAL';
         if (upper.endsWith('_SEMIANNUAL')) {
-            return { planType, cycle: 'SEMIANNUAL', installmentCount: 6, totalValue: 594, token: null, last4: null, brand: null, autoRenew: false };
+            return { planType, cycle: 'SEMIANNUAL', installmentCount: 6, totalValue: 594, token: null, last4: null, brand: null, remoteIp: null, autoRenew: false };
         }
         if (upper.endsWith('_QUARTERLY')) {
-            return { planType, cycle: 'QUARTERLY', installmentCount: 3, totalValue: 387, token: null, last4: null, brand: null, autoRenew: false };
+            return { planType, cycle: 'QUARTERLY', installmentCount: 3, totalValue: 387, token: null, last4: null, brand: null, remoteIp: null, autoRenew: false };
         }
-        return { planType, cycle: 'MONTHLY', installmentCount: 1, totalValue: null, token: null, last4: null, brand: null, autoRenew: true };
+        return { planType, cycle: 'MONTHLY', installmentCount: 1, totalValue: null, token: null, last4: null, brand: null, remoteIp: null, autoRenew: true };
     }
 
     static buildInstallmentPlanMeta(opts = {}) {
@@ -97,6 +98,7 @@ class PaymentStateService {
             token: opts.token || null,
             last4: opts.last4 || null,
             brand: opts.brand || null,
+            remoteIp: opts.remoteIp || null,
             autoRenew: opts.autoRenew !== false
         });
     }
@@ -105,6 +107,8 @@ class PaymentStateService {
         const ASAAS_API_URL = this.getAsaasApiUrl();
         const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
         const fetchFn = typeof globalThis.fetch === 'function' ? globalThis.fetch : require('node-fetch');
+        const cleanPhone = String(phone || '').replace(/\D/g, '') || '11999999999';
+        const cleanIp = String(remoteIp || '127.0.0.1').replace(/^::ffff:/, '');
 
         const tokRes = await fetchFn(`${ASAAS_API_URL}/creditCard/tokenizeCreditCard`, {
             method: 'POST',
@@ -124,9 +128,10 @@ class PaymentStateService {
                     cpfCnpj: String(cpfCnpj || '').replace(/\D/g, ''),
                     postalCode: String(postalCode || '').replace(/\D/g, ''),
                     addressNumber: creditCard.addressNumber || 'S/N',
-                    phone: String(phone || '').replace(/\D/g, '') || '11999999999'
+                    phone: cleanPhone,
+                    mobilePhone: cleanPhone
                 },
-                remoteIp: remoteIp || '127.0.0.1'
+                remoteIp: cleanIp
             })
         });
         const tokData = await tokRes.json();
@@ -149,6 +154,7 @@ class PaymentStateService {
         const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
         const fetchFn = typeof globalThis.fetch === 'function' ? globalThis.fetch : require('node-fetch');
         const dueDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+        const cleanRemoteIp = meta && meta.remoteIp ? String(meta.remoteIp).replace(/^::ffff:/, '').trim() : '';
 
         const res = await fetchFn(`${ASAAS_API_URL}/payments`, {
             method: 'POST',
@@ -161,7 +167,8 @@ class PaymentStateService {
                 totalValue: meta.totalValue,
                 creditCardToken,
                 description: `Assinatura Yelo - Plano ${meta.planType} - ${meta.cycle}`,
-                externalReference: String(psychologistId)
+                externalReference: String(psychologistId),
+                ...(cleanRemoteIp && cleanRemoteIp !== '::1' ? { remoteIp: cleanRemoteIp } : {})
             })
         });
         const payData = await res.json();
