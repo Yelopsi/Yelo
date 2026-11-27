@@ -235,12 +235,14 @@
                 ? '<span style="font-size:0.72rem; font-weight:800; background:#dcfce7; color:#166534; padding:3px 9px; border-radius:999px;">Economia de 19%</span>'
                 : '<span style="font-size:0.72rem; font-weight:700; background:#f1f5f9; color:#475569; padding:3px 9px; border-radius:999px;">Sem fidelidade</span>');
 
+        const formatParcelBRL = (val) => Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
         const formatBillingDetail = (instCount) => {
             if (instCount > 1) {
-                return `Cobrança de <strong>${instCount}x de R$ ${info.monthlyPrice}</strong> no cartão (total R$ ${info.total})`;
+                return `Cobrança de <strong>${instCount}x de R$ ${formatParcelBRL(info.total / instCount)}</strong> sem juros no cartão (total R$ ${info.total})`;
             }
             if (info.installments > 1) {
-                return `Cobrança à vista de <strong>1x de R$ ${info.total}</strong> no cartão (equivale a R$ ${info.monthlyPrice}/mês)`;
+                return `Cobrança à vista de <strong>1x de R$ ${formatParcelBRL(info.total)}</strong> no cartão (equivale a R$ ${info.monthlyPrice}/mês)`;
             }
             return `Cobrança mensal de <strong>R$ ${info.monthlyPrice}</strong> no cartão · Sem fidelidade`;
         };
@@ -313,34 +315,96 @@
         }
 
         const installmentsWrap = document.getElementById('card-installments-wrap');
-        const installmentsSelect = document.getElementById('card-installments');
+        const installmentsInput = document.getElementById('card-installments');
+        const installmentsTrigger = document.getElementById('card-installments-trigger');
+        const installmentsLabelEl = document.getElementById('card-installments-label');
+        const installmentsMenu = document.getElementById('card-installments-menu');
+
+        const getInstallmentOptionText = (count) => {
+            if (count === 1) {
+                return `À vista: 1x de R$ ${formatParcelBRL(info.total)} no cartão`;
+            }
+            return `${count}x de R$ ${formatParcelBRL(info.total / count)} sem juros`;
+        };
+
         const updateInstallmentSummaryAndCta = () => {
             const detailEl = document.getElementById('modal-cycle-detail');
             if (detailEl) detailEl.innerHTML = formatBillingDetail(currentInstallmentCount);
             if (!window.isUpdatePaymentMethodMode && isNewPricing && !isInTrial && currentMethod === 'CREDIT_CARD') {
                 const cobrancaTxt = currentInstallmentCount > 1
-                    ? `${currentInstallmentCount}x de R$ ${info.monthlyPrice}`
-                    : (info.installments > 1 ? `1x de R$ ${info.total} à vista` : `R$ ${info.monthlyPrice}/mês`);
+                    ? `${currentInstallmentCount}x de R$ ${formatParcelBRL(info.total / currentInstallmentCount)} sem juros`
+                    : (info.installments > 1 ? `1x de R$ ${formatParcelBRL(info.total)} à vista` : `R$ ${info.monthlyPrice}/mês`);
                 btnSubmit.innerHTML = `Confirmar Assinatura <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">${cobrancaTxt}</span>`;
             }
         };
-        if (installmentsWrap && installmentsSelect) {
-            if (isNewPricing && !window.isUpdatePaymentMethodMode && info.installments > 1) {
-                installmentsSelect.innerHTML = `
-                    <option value="${info.installments}">${info.installments}x de R$ ${info.monthlyPrice},00 sem juros (R$ ${info.total} total)</option>
-                    <option value="1">À vista: 1x de R$ ${info.total},00 no cartão</option>
-                `;
-                installmentsSelect.value = String(info.installments);
-                currentInstallmentCount = info.installments;
-                installmentsSelect.onchange = () => {
-                    currentInstallmentCount = Number(installmentsSelect.value) === 1 ? 1 : info.installments;
+
+        const closeInstallmentMenu = () => {
+            if (installmentsMenu) installmentsMenu.style.display = 'none';
+            if (installmentsTrigger) {
+                installmentsTrigger.setAttribute('aria-expanded', 'false');
+                const chevron = installmentsTrigger.querySelector('svg');
+                if (chevron) chevron.style.transform = 'rotate(0deg)';
+            }
+        };
+
+        const renderInstallmentOptions = () => {
+            if (!installmentsMenu) return;
+            const counts = [];
+            for (let c = info.installments; c >= 1; c--) counts.push(c);
+            installmentsMenu.innerHTML = counts.map((count, idx) => {
+                const isSelected = count === currentInstallmentCount;
+                const borderBottom = idx < counts.length - 1 ? 'border-bottom: 1px solid #f1f5f9;' : '';
+                const bg = isSelected ? '#f0fdf4' : '#ffffff';
+                const txtColor = isSelected ? '#1B4332' : '#334155';
+                const weight = isSelected ? '700' : '500';
+                const checkHtml = isSelected ? '<span style="color:#16a34a;font-weight:800;">✓</span>' : '';
+                return `<button type="button" class="card-inst-opt" data-installments="${count}" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:${bg};color:${txtColor};font-weight:${weight};font-size:0.86rem;border:none;${borderBottom}cursor:pointer;text-align:left;"><span>${getInstallmentOptionText(count)}</span>${checkHtml}</button>`;
+            }).join('');
+
+            installmentsMenu.querySelectorAll('.card-inst-opt').forEach((optBtn) => {
+                optBtn.onclick = (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    const chosen = parseInt(optBtn.getAttribute('data-installments'), 10);
+                    currentInstallmentCount = (Number.isInteger(chosen) && chosen >= 1 && chosen <= info.installments) ? chosen : info.installments;
+                    if (installmentsInput) installmentsInput.value = String(currentInstallmentCount);
+                    if (installmentsLabelEl) installmentsLabelEl.textContent = getInstallmentOptionText(currentInstallmentCount);
+                    renderInstallmentOptions();
+                    closeInstallmentMenu();
                     updateInstallmentSummaryAndCta();
+                };
+            });
+        };
+
+        if (installmentsWrap && installmentsInput && installmentsTrigger && installmentsMenu) {
+            closeInstallmentMenu();
+            if (isNewPricing && !window.isUpdatePaymentMethodMode && info.installments > 1) {
+                currentInstallmentCount = info.installments;
+                installmentsInput.value = String(info.installments);
+                if (installmentsLabelEl) installmentsLabelEl.textContent = getInstallmentOptionText(info.installments);
+                renderInstallmentOptions();
+                installmentsTrigger.onclick = (evt) => {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    const isOpen = installmentsMenu.style.display === 'flex';
+                    if (isOpen) {
+                        closeInstallmentMenu();
+                    } else {
+                        installmentsMenu.style.display = 'flex';
+                        installmentsTrigger.setAttribute('aria-expanded', 'true');
+                        const chevron = installmentsTrigger.querySelector('svg');
+                        if (chevron) chevron.style.transform = 'rotate(180deg)';
+                        if (typeof installmentsMenu.scrollIntoView === 'function') {
+                            setTimeout(() => installmentsMenu.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 20);
+                        }
+                    }
                 };
                 installmentsWrap.style.display = 'flex';
             } else {
-                installmentsSelect.innerHTML = '';
-                installmentsSelect.onchange = null;
+                installmentsMenu.innerHTML = '';
+                installmentsTrigger.onclick = null;
                 currentInstallmentCount = info.installments;
+                installmentsInput.value = String(info.installments);
                 installmentsWrap.style.display = 'none';
             }
         }
@@ -365,8 +429,8 @@
                     btnSubmit.innerHTML = `Cadastrar Cartão & Ativar 7 Dias Grátis <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">Primeira cobrança apenas em ${dataFimTrial}</span>`;
                 } else {
                     const cobrancaTxt = currentInstallmentCount > 1
-                        ? `${currentInstallmentCount}x de R$ ${info.monthlyPrice}`
-                        : (info.installments > 1 ? `1x de R$ ${info.total} à vista` : `R$ ${info.monthlyPrice}/mês`);
+                        ? `${currentInstallmentCount}x de R$ ${formatParcelBRL(info.total / currentInstallmentCount)} sem juros`
+                        : (info.installments > 1 ? `1x de R$ ${formatParcelBRL(info.total)} à vista` : `R$ ${info.monthlyPrice}/mês`);
                     btnSubmit.innerHTML = `Confirmar Assinatura <span style="display:block;font-size:0.75rem;font-weight:normal;opacity:0.8;margin-top:2px;">${cobrancaTxt}</span>`;
                 }
                 document.getElementById('card-holder-name').placeholder = "Nome impresso no cartão";

@@ -234,12 +234,14 @@ exports.createPreference = async (req, res) => {
                 installmentCount = 1;
                 isInstallment = false;
             } else if (cycle === 'SEMIANNUAL') {
-                value = 594.00; // R$ 99/mes (6x de R$ 99 ou 1x de R$ 594)
-                installmentCount = Number(installments) === 1 ? 1 : 6;
+                value = 594.00; // R$ 99/mes (1x a 6x sem juros)
+                const parsedInst = parseInt(installments, 10);
+                installmentCount = (Number.isInteger(parsedInst) && parsedInst >= 1 && parsedInst <= 6) ? parsedInst : 6;
                 isInstallment = true;
             } else if (cycle === 'QUARTERLY') {
-                value = 387.00; // R$ 129/mes (3x de R$ 129 ou 1x de R$ 387)
-                installmentCount = Number(installments) === 1 ? 1 : 3;
+                value = 387.00; // R$ 129/mes (1x a 3x sem juros)
+                const parsedInst = parseInt(installments, 10);
+                installmentCount = (Number.isInteger(parsedInst) && parsedInst >= 1 && parsedInst <= 3) ? parsedInst : 3;
                 isInstallment = true;
             } else {
                 value = 159.00; // Mensal recorrente

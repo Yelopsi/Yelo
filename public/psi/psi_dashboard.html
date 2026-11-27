@@ -571,9 +571,14 @@
                                 <input type="text" id="card-expiry" placeholder="MM/AAAA" required class="modal-input" style="flex: 1.2;" inputmode="numeric">
                                 <input type="text" id="card-ccv" placeholder="CVV" required class="modal-input" style="flex: 1;" inputmode="numeric">
                             </div>
-                            <div id="card-installments-wrap" style="display: none; flex-direction: column; gap: 4px; margin-top: 2px;">
-                                <label for="card-installments" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #1B4332;">Parcelamento no cartão</label>
-                                <select id="card-installments" class="modal-input" style="background: #ffffff; cursor: pointer;"></select>
+                            <div id="card-installments-wrap" style="display: none; flex-direction: column; gap: 6px; margin-top: 2px; position: relative;">
+                                <label style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #1B4332;">Parcelamento no cartão</label>
+                                <input type="hidden" id="card-installments" value="6">
+                                <button type="button" id="card-installments-trigger" class="modal-input" aria-expanded="false" style="width: 100%; display: flex; align-items: center; justify-content: space-between; text-align: left; background: #ffffff; cursor: pointer; font-weight: 600; color: #0f172a;">
+                                    <span id="card-installments-label"></span>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0; transition: transform 0.18s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </button>
+                                <div id="card-installments-menu" style="display: none; flex-direction: column; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 24px rgba(15,23,42,0.08);"></div>
                             </div>
                         </div>
 

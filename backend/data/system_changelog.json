@@ -1,5 +1,37 @@
 [
   {
+    "id": "change-git-b1389ac3",
+    "date": "2026-11-27T23:39:30.000Z",
+    "commit": "b1389ac3",
+    "author": "Anderson",
+    "title": "Novo: Permitir escolha entre 1x a vista e parcelado no cartao para Trimestral e Semestral (billing)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "permitir escolha entre 1x a vista e parcelado no cartao para Trimestral e Semestral",
+    "description": "Commit registrado no repositório: \"feat(billing): permitir escolha entre 1x a vista e parcelado no cartao para Trimestral e Semestral\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/paymentController.js, backend/controllers/psychologistController.js, backend/data/system_changelog.json, backend/jobs/cronScheduler.js (+5 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #b1389ac3"
+    },
+    "after": {
+      "nova_versao": "permitir escolha entre 1x a vista e parcelado no cartao para Trimestral e Semestral"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/psychologistController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/cronScheduler.js",
+      "backend/services/paymentStateService.js",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "public/psi/psi_assinatura.js",
+      "public/psi/psi_dashboard.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-202dd934",
     "date": "2026-11-27T23:26:54.000Z",
     "commit": "202dd934",
