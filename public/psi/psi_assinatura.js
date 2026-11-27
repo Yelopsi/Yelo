@@ -214,7 +214,7 @@
         const hasSubscription = psychologistData && (psychologistData.stripeSubscriptionId || psychologistData.subscriptionId);
         const isTokenizedTrial = !!(psychologistData && String(psychologistData.subscriptionId || '').startsWith('trial_tok_'));
         const planExpiresAt = psychologistData && psychologistData.planExpiresAt ? new Date(psychologistData.planExpiresAt) : null;
-        const isEligibleForNewTrial = !!(psychologistData && !psychologistData.is_exempt && !hasSubscription && !psychologistData.firstPaidAt && !psychologistData.subscribedAt && (!planExpiresAt || psychologistData.plano === 'Comunidade'));
+        const isEligibleForNewTrial = !!(psychologistData && !psychologistData.is_exempt && !hasSubscription && !psychologistData.firstPaidAt && !psychologistData.subscribedAt && !psychologistData.canceledAt && (!planExpiresAt || psychologistData.plano === 'Comunidade'));
         const isCurrentlyInTrial = !!(psychologistData && !psychologistData.is_exempt && psychologistData.plano !== 'Comunidade' && planExpiresAt && planExpiresAt > hoje && !psychologistData.firstPaidAt && (!hasSubscription || isTokenizedTrial));
         const isInTrial = isEligibleForNewTrial || isCurrentlyInTrial;
         const dataFimDate = isCurrentlyInTrial ? planExpiresAt : (isEligibleForNewTrial ? new Date(hoje.getTime() + 7 * 24 * 60 * 60 * 1000) : null);
