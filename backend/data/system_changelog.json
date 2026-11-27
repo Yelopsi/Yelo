@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-7fc9d4da",
+    "date": "2026-11-27T21:13:39.000Z",
+    "commit": "7fc9d4da",
+    "author": "Anderson",
+    "title": "Correção: Manter pagina Assinatura, modal e banner de CPF identicos a producao ate 31/12/2026 (psi)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "manter pagina Assinatura, modal e banner de CPF identicos a producao ate 31/12/2026",
+    "description": "Commit registrado no repositório: \"fix(psi): manter pagina Assinatura, modal e banner de CPF identicos a producao ate 31/12/2026\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, public/psi/psi_assinatura.html, public/psi/psi_assinatura.js, public/psi/psi_dashboard.html (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #7fc9d4da"
+    },
+    "after": {
+      "nova_versao": "manter pagina Assinatura, modal e banner de CPF identicos a producao ate 31/12/2026"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "public/psi/psi_assinatura.html",
+      "public/psi/psi_assinatura.js",
+      "public/psi/psi_dashboard.html",
+      "public/psi/psi_dashboard.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-23430783",
     "date": "2026-11-27T17:16:25.000Z",
     "commit": "23430783",

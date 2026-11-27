@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../services/api';
+import ComunidadeLockedCard from '../../components/ComunidadeLockedCard';
 
 interface PriceComparisonData {
   myPrice?: number;
@@ -38,6 +39,9 @@ interface ProfileStrengthData {
 }
 
 interface AnalyticsResponse {
+  restricted?: boolean;
+  isComunidadeRestricted?: boolean;
+  peerOpportunityStats?: any;
   priceComparison?: PriceComparisonData;
   topTopics?: TopicData[];
   visibility?: VisibilityData;
@@ -181,6 +185,8 @@ export default function AnalyticsScreen() {
     );
   }
 
+  const isRestrictedComunidade = Boolean(data?.restricted || data?.isComunidadeRestricted);
+
   return (
     <View className="flex-1 bg-[#f9fafb]">
       <YeloScrollView
@@ -216,6 +222,16 @@ export default function AnalyticsScreen() {
           </Text>
         </View>
 
+        {isRestrictedComunidade ? (
+          <View className="mx-6 mb-6 bg-white p-[22px] rounded-[20px] shadow-sm border border-[#e5e7eb]">
+            <ComunidadeLockedCard
+              title="Indicadores pessoais e de mercado são restritos ao Plano Essencial"
+              description="No Plano Comunidade (Grátis), seu perfil fica oculto nas buscas e não recebe cliques de pacientes. Comparativos de honorários, temas buscados pelos pacientes, visibilidade individual e força do perfil são liberados ao assinar."
+              peerStats={data?.peerOpportunityStats}
+            />
+          </View>
+        ) : (
+          <>
         {/* ============================================================ */}
         {/* CARD 1: ANÁLISE DE PREÇOS (TERMÔMETRO HORIZONTAL GRADIENTE) */}
         {/* ============================================================ */}
@@ -610,6 +626,8 @@ export default function AnalyticsScreen() {
             </Text>
           </View>
         </View>
+          </>
+        )}
 
       </YeloScrollView>
     </View>

@@ -1188,7 +1188,7 @@ export default function AssinaturaScreen() {
 
               {isComunidade && (
                 <Text style={{ fontFamily: 'Inter_400Regular', color: '#475569', fontSize: 13, lineHeight: 19, marginBottom: 12 }}>
-                  Ferramentas internas liberadas gratuitamente. Seu perfil público está oculto nas buscas até ativar o Plano Essencial.
+                  Ferramentas internas liberadas gratuitamente. Seu perfil está oculto nas buscas e não recebe cliques de pacientes até ativar o Plano Essencial.
                 </Text>
               )}
 
@@ -1442,7 +1442,7 @@ export default function AssinaturaScreen() {
                 </Text>
               </View>
               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: '#475569', lineHeight: 18, marginBottom: 10 }}>
-                Agenda, financeiro, calculadora e fórum sem custo fixo. Perfil mantido oculto nas buscas de pacientes.
+                Agenda, financeiro, calculadora e fórum sem custo fixo. Perfil oculto nas buscas e sem receber cliques de pacientes.
               </Text>
               {isComunidade && (
                 <View style={{ backgroundColor: '#f1f5f9', paddingVertical: 8, borderRadius: 999, alignItems: 'center' }}>
@@ -1652,7 +1652,7 @@ export default function AssinaturaScreen() {
             >
               <Text style={{ fontFamily: 'Inter_500Medium', color: '#991b1b', fontSize: 12.5, textAlign: 'center', lineHeight: 18, marginBottom: 10 }}>
                 {isNewPricing
-                  ? `Se você cancelar, seu perfil retornará ao Plano Comunidade (Grátis) e deixará de aparecer nas buscas após o fim do período atual (${expiresAt?.toLocaleDateString('pt-BR')}).`
+                  ? `Se você cancelar, seu perfil retornará ao Plano Comunidade (Grátis), ficará oculto das buscas e deixará de receber cliques e pacientes após o fim do período atual (${expiresAt?.toLocaleDateString('pt-BR')}).`
                   : `Se você cancelar, seu perfil deixará de aparecer nas buscas após o fim do período atual pago (${expiresAt?.toLocaleDateString('pt-BR')}).`}
               </Text>
               <TouchableOpacity

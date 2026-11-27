@@ -478,8 +478,9 @@ export default function MeuPerfilScreen() {
   const isAtivoEValido = useMemo(() => {
     const hoje = new Date();
     const validade = planExpiresAt ? new Date(planExpiresAt) : null;
-    return statusPerfil === 'active' && (isExempt || !!(validade && validade > hoje));
-  }, [statusPerfil, isExempt, planExpiresAt]);
+    const isComunidadePlan = !isExempt && String(planoAtual || '').trim() === 'Comunidade';
+    return statusPerfil === 'active' && !isComunidadePlan && (isExempt || !!(validade && validade > hoje));
+  }, [statusPerfil, isExempt, planExpiresAt, planoAtual]);
 
   const isPublicProfileBlocked = statusPerfil === 'pending' || !isAtivoEValido || form.profile_paused;
 
@@ -489,8 +490,8 @@ export default function MeuPerfilScreen() {
       const msg =
         statusPerfil === 'pending'
           ? 'Complete seu perfil (incluindo CPF) para liberar sua URL pública.'
-          : planoAtual === 'Comunidade'
-            ? 'Seu perfil está no Plano Comunidade (oculto nas buscas). Ative o Plano Essencial para liberar sua página pública.'
+          : planoAtual === 'Comunidade' && !isExempt
+            ? 'Seu perfil está no Plano Comunidade (Grátis): oculto das buscas e sem receber cliques de pacientes. Ative o Plano Essencial para liberar sua página pública.'
             : 'Seu perfil está inativo ou pausado. Reative sua assinatura para liberar sua página pública.';
       showToast(msg);
       return;
@@ -507,8 +508,8 @@ export default function MeuPerfilScreen() {
       const msg =
         statusPerfil === 'pending'
           ? 'Complete seu perfil (incluindo CPF) para liberar sua URL pública.'
-          : planoAtual === 'Comunidade'
-            ? 'Seu perfil está no Plano Comunidade (oculto nas buscas). Ative o Plano Essencial para liberar sua página pública.'
+          : planoAtual === 'Comunidade' && !isExempt
+            ? 'Seu perfil está no Plano Comunidade (Grátis): oculto das buscas e sem receber cliques de pacientes. Ative o Plano Essencial para liberar sua página pública.'
             : 'Seu perfil está inativo ou pausado. Reative sua assinatura para liberar sua página pública.';
       showToast(msg);
       return;
@@ -971,15 +972,15 @@ export default function MeuPerfilScreen() {
             <Text style={styles.backBtnText}>Voltar</Text>
           </TouchableOpacity>
 
-          {/* BANNER DE AVISO QUANDO PERFIL BLOQUEADO / ASSINATURA EXPIRADA (Paridade com #profile-warning-banner-container da Web) */}
+          {/* BANNER DE AVISO QUANDO PERFIL BLOQUEADO / COMUNIDADE / ASSINATURA EXPIRADA */}
           {!isAtivoEValido && statusPerfil !== 'pending' && (
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push('/(tabs)/assinatura' as any)}
               style={{
-                backgroundColor: '#FEF2F2',
+                backgroundColor: planoAtual === 'Comunidade' && !isExempt ? '#FFF4E5' : '#FEF2F2',
                 borderWidth: 1,
-                borderColor: '#FECACA',
+                borderColor: planoAtual === 'Comunidade' && !isExempt ? '#FFB020' : '#FECACA',
                 borderRadius: 14,
                 padding: 14,
                 marginBottom: 16,
@@ -988,13 +989,30 @@ export default function MeuPerfilScreen() {
                 gap: 10,
               }}
             >
-              <Text style={{ fontSize: 20 }}>🔴</Text>
+              <Text style={{ fontSize: 20 }}>{planoAtual === 'Comunidade' && !isExempt ? '👁️' : '🔴'}</Text>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13.5, fontWeight: '800', color: '#991B1B', marginBottom: 2 }}>
-                  Perfil Público Bloqueado (Assinatura Inativa)
+                <Text
+                  style={{
+                    fontSize: 13.5,
+                    fontWeight: '800',
+                    color: planoAtual === 'Comunidade' && !isExempt ? '#9A3412' : '#991B1B',
+                    marginBottom: 2,
+                  }}
+                >
+                  {planoAtual === 'Comunidade' && !isExempt
+                    ? 'Plano Comunidade (Grátis) - Perfil oculto nas buscas'
+                    : 'Perfil Público Bloqueado (Assinatura Inativa)'}
                 </Text>
-                <Text style={{ fontSize: 12.5, color: '#B91C1C', lineHeight: 17 }}>
-                  Seu perfil está oculto nas buscas e sua URL pública está desativada. Toque aqui para reativar sua assinatura.
+                <Text
+                  style={{
+                    fontSize: 12.5,
+                    color: planoAtual === 'Comunidade' && !isExempt ? '#78350F' : '#B91C1C',
+                    lineHeight: 17,
+                  }}
+                >
+                  {planoAtual === 'Comunidade' && !isExempt
+                    ? 'Seu perfil não aparece nas buscas e não recebe cliques de pacientes. Toque aqui para testar o Plano Essencial por 7 dias grátis.'
+                    : 'Seu perfil está oculto nas buscas e sua URL pública está desativada. Toque aqui para reativar sua assinatura.'}
                 </Text>
               </View>
             </TouchableOpacity>

@@ -5,6 +5,63 @@ const showEmptyState = (containerId, message) => {
     }
 };
 
+function renderComunidadeRestrictedAnalytics(container, peerStats, globalStats, featureTitle, featureDesc) {
+    if (!container) return;
+    const pStats = peerStats || {};
+    const gStats = globalStats || {};
+    const m30 = Number(pStats.matches30d ?? gStats.matches30d ?? 0);
+    const c30 = Number(pStats.clicks30d ?? gStats.clicks30d ?? 0);
+    const c7 = Number(pStats.clicks7d ?? gStats.clicks7d ?? 0);
+    const avgC30 = Number(pStats.avgClicksPerProfile30d ?? 0);
+    const cohortText = pStats.scope === 'similar_profiles' ? 'perfis com atuação parecida com a sua' : 'perfis ativos no Plano Essencial';
+
+    const statsGridHtml = (m30 > 0 || c30 > 0) ? `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin: 18px 0;">
+            <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: 14px; padding: 16px;">
+                <div style="font-size: 2rem; font-weight: 900; color: #1B4332; line-height: 1.1;">+${c30}</div>
+                <div style="font-size: 0.84rem; color: #166534; font-weight: 700; margin-top: 6px;">Cliques no WhatsApp (30 dias)</div>
+                <div style="font-size: 0.78rem; color: #475569; margin-top: 2px;">${c7 > 0 ? `${c7} só nos últimos 7 dias` : 'Demanda ativa por atendimento'}</div>
+            </div>
+            <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: 14px; padding: 16px;">
+                <div style="font-size: 2rem; font-weight: 900; color: #1B4332; line-height: 1.1;">+${m30}</div>
+                <div style="font-size: 0.84rem; color: #166534; font-weight: 700; margin-top: 6px;">Recomendações no Match (30 dias)</div>
+                <div style="font-size: 0.78rem; color: #475569; margin-top: 2px;">${avgC30 > 0 ? `Média de ${avgC30.toFixed(1).replace('.', ',')} cliques/perfil ativo` : 'Entre perfis visíveis nas buscas'}</div>
+            </div>
+        </div>
+        <p style="margin: 0; color: #14532d; font-size: 0.92rem; line-height: 1.5;">
+            Enquanto seu perfil permanece oculto no plano gratuito, ${cohortText} geraram <strong>${m30} matches</strong> e <strong>${c30} cliques no WhatsApp</strong> nos últimos 30 dias. Esses são contatos que você poderia estar recebendo no seu consultório.
+        </p>
+    ` : `
+        <p style="margin: 10px 0 0 0; color: #14532d; font-size: 0.92rem; line-height: 1.5;">
+            Perfis visíveis no Plano Essencial aparecem no Match Inteligente e recebem cliques diretos no WhatsApp dos pacientes interessados, além de acompanharem funil completo de demanda.
+        </p>
+    `;
+
+    container.innerHTML = `
+        <div class="widget fade-in-up" style="grid-column: 1 / -1; padding: 28px; border-radius: 22px; background: #ffffff; border: 1px solid #e2e8f0; text-align: left;">
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: #FFF4E5; border: 1px solid #FFB020; color: #9A3412; padding: 6px 14px; border-radius: 999px; font-size: 0.8rem; font-weight: 800; margin-bottom: 14px;">
+                🔒 Plano Comunidade (Grátis) - Exclusivo do Plano Essencial
+            </div>
+            <h2 style="margin: 0 0 8px 0; font-family: var(--font-titulos); color: #1B4332; font-size: 1.6rem;">${featureTitle}</h2>
+            <p style="color: #475569; font-size: 0.96rem; line-height: 1.55; margin: 0 0 22px 0; max-width: 720px;">
+                ${featureDesc}
+            </p>
+
+            <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #86efac; border-radius: 18px; padding: 22px; margin-bottom: 22px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                    <span style="font-size: 1.5rem;">🔥</span>
+                    <strong style="color: #166534; font-size: 1.05rem;">Desempenho de perfis como o seu na Yelo</strong>
+                </div>
+                ${statsGridHtml}
+            </div>
+
+            <button type="button" onclick="window.loadPage('psi_assinatura.html')" style="background: #1B4332; color: #ffffff; border: none; border-radius: 999px; padding: 13px 26px; font-weight: 700; font-size: 0.95rem; cursor: pointer; box-shadow: 0 6px 18px rgba(27, 67, 50, 0.2);">
+                Testar Plano Essencial por 7 dias grátis &rarr;
+            </button>
+        </div>
+    `;
+}
+
 async function initializeAnalyticsPage() {
     const token = localStorage.getItem('Yelo_token');
     const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
@@ -19,11 +76,22 @@ async function initializeAnalyticsPage() {
         }
 
         const data = await response.json();
+        const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+
+        if (data?.restricted || data?.isComunidadeRestricted) {
+            const analyticsGrid = document.querySelector('#analytics-container .analytics-grid');
+            renderComunidadeRestrictedAnalytics(
+                analyticsGrid,
+                data.peerOpportunityStats,
+                psiData?.globalStats,
+                'Indicadores pessoais e de mercado são restritos ao Plano Essencial',
+                'No Plano Comunidade (Grátis), seu perfil fica oculto nas buscas e não recebe cliques de pacientes. Comparativos de honorários, temas buscados pelos pacientes, visibilidade individual e força do perfil são liberados ao assinar.'
+            );
+            return;
+        }
         
         // Obtém o valor real cadastrado no perfil do psicólogo logado
-        if (typeof window.getPsychologistData === 'function') {
-            const psiData = window.getPsychologistData();
-            if (psiData && data.priceComparison) {
+        if (psiData && data.priceComparison) {
                 const isMensal = psiData.tipo_cobranca === 'mensal';
                 data.priceComparison.isMensal = isMensal;
                 
@@ -41,7 +109,6 @@ async function initializeAnalyticsPage() {
                     const realPrice = parseFloat(psiData.valor_sessao_numero);
                     if (realPrice > 0) data.priceComparison.myPrice = realPrice;
                 }
-            }
         }
 
         // Renderiza todos os gráficos com os dados reais

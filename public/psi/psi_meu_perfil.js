@@ -337,7 +337,8 @@
                 const hoje = new Date();
                 const validade = data.planExpiresAt ? new Date(data.planExpiresAt) : null;
                 const isVip = data.is_exempt === true;
-                const isAtivoEValido = data.status === 'active' && (isVip || (validade && validade > hoje));
+                const isComunidadePlan = !isVip && String(data.plano || '').trim() === 'Comunidade';
+                const isAtivoEValido = data.status === 'active' && !isComunidadePlan && (isVip || (validade && validade > hoje));
                 
                 if (data.status === 'pending' || !isAtivoEValido || data.profile_paused) {
                     btnPublic.style.opacity = 0.5;
@@ -346,7 +347,9 @@
                         e.preventDefault();
                         const msg = data.status === 'pending' 
                             ? 'Complete seu perfil (incluindo CPF) para liberar sua URL pública.'
-                            : 'Seu perfil está inativo ou pausado. Reative-o para visualizar sua página.';
+                            : isComunidadePlan
+                                ? 'Seu perfil está no Plano Comunidade (Grátis): oculto das buscas e sem receber cliques de pacientes. Ative o Plano Essencial para liberar sua página pública.'
+                                : 'Seu perfil está inativo ou pausado. Reative-o para visualizar sua página.';
                         window.showToast ? window.showToast(msg, 'error') : alert(msg);
                     };
                 } else {
@@ -1135,13 +1138,14 @@
                     const hoje = new Date();
                     const validade = originalProfileData.planExpiresAt ? new Date(originalProfileData.planExpiresAt) : null;
                     const isVip = originalProfileData.is_exempt === true;
-                    const isAtivoEValido = originalProfileData.status === 'active' && (isVip || (validade && validade > hoje));
+                    const isComunidadePlan = !isVip && String(originalProfileData.plano || '').trim() === 'Comunidade';
+                    const isAtivoEValido = originalProfileData.status === 'active' && !isComunidadePlan && (isVip || (validade && validade > hoje));
                     
                     if (originalProfileData.status === 'pending' || !isAtivoEValido || originalProfileData.profile_paused) {
                         const msg = originalProfileData.status === 'pending' 
                             ? 'Sua URL não está ativa porque o perfil está incompleto (falta CPF).'
-                            : originalProfileData.plano === 'Comunidade'
-                                ? 'Seu perfil está no Plano Comunidade (oculto nas buscas). Ative o Plano Essencial para liberar sua URL pública.'
+                            : isComunidadePlan
+                                ? 'Seu perfil está no Plano Comunidade (Grátis): oculto das buscas e sem receber cliques de pacientes. Ative o Plano Essencial para liberar sua URL pública.'
                                 : 'Sua URL está inativa. Reative seu perfil primeiro.';
                         window.showToast ? window.showToast(msg, 'error') : alert(msg);
                         return;

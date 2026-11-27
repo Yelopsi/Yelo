@@ -1133,7 +1133,7 @@
                     <span class="plan-price-value">Grátis</span>
                     <span class="plan-price-period">para sempre</span>
                 </div>
-                <p class="plan-billing-caption">Sem custo fixo. Perfil mantido oculto nas buscas de pacientes.</p>
+                <p class="plan-billing-caption">Sem custo fixo. Perfil mantido oculto nas buscas e sem receber cliques de pacientes.</p>
             </div>
 
             <ul class="sub-feature-list">
@@ -1154,8 +1154,8 @@
                 <li class="sub-feature-item">
                     <span class="sub-feat-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
                     <div>
-                        <span class="sub-feat-title">Calculadora de Honorários & Mercado</span>
-                        <span class="sub-feat-desc">Referência de valores e temas mais buscados.</span>
+                        <span class="sub-feat-title">Calculadora de Honorários</span>
+                        <span class="sub-feat-desc">Simule o valor ideal da sua sessão para seus custos e metas.</span>
                     </div>
                 </li>
                 <li class="sub-feature-item">
@@ -1168,15 +1168,15 @@
                 <li class="sub-feature-item is-locked">
                     <span class="sub-feat-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
                     <div>
-                        <span class="sub-feat-title">Perfil Público & Buscas na Yelo</span>
-                        <span class="sub-feat-desc">Oculto do diretório até ativar o Plano Essencial.</span>
+                        <span class="sub-feat-title">Perfil Público & Cliques no WhatsApp</span>
+                        <span class="sub-feat-desc">Oculto das buscas e sem receber cliques de pacientes até ativar o Essencial.</span>
                     </div>
                 </li>
                 <li class="sub-feature-item is-locked">
                     <span class="sub-feat-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
                     <div>
-                        <span class="sub-feat-title">Captação pelo Questionário de Match</span>
-                        <span class="sub-feat-desc">Exclusivo para assinantes do Plano Essencial.</span>
+                        <span class="sub-feat-title">Match Inteligente & Indicadores</span>
+                        <span class="sub-feat-desc">Captação e métricas de desempenho exclusivos do Plano Essencial.</span>
                     </div>
                 </li>
             </ul>
@@ -1303,7 +1303,7 @@
     <!-- ÁREA DE CANCELAMENTO -->
     <div id="area-cancelamento" style="display: none; margin-top: 36px; background: #fffaf5; border-radius: 20px; padding: 22px; text-align: center; border: 1px solid #fecaca;">
         <p style="color: #991b1b; font-size: 0.92rem; margin: 0 0 12px 0; font-weight: 500;">
-            Se você cancelar, seu perfil retornará ao <strong>Plano Comunidade (Grátis)</strong> e deixará de receber novos pacientes após o fim do período atual pago.
+            Se você cancelar, seu perfil retornará ao <strong>Plano Comunidade (Grátis)</strong>, ficará oculto das buscas e deixará de receber novos cliques e pacientes após o fim do período atual pago.
         </p>
         <button id="btn-cancelar-assinatura" style="background: none; border: none; color: #dc2626; font-weight: 700; text-decoration: underline; cursor: pointer; font-size: 0.92rem;">
             Cancelar renovação automática
@@ -1692,11 +1692,11 @@
             }
         } else if (isEligibleForTrial) {
             if (trialBannerGlobal) trialBannerGlobal.style.display = 'flex';
-            if (trialBannerTitle) trialBannerTitle.textContent = 'Experimente o Essencial por 7 dias grátis';
+            if (trialBannerTitle) trialBannerTitle.textContent = 'Plano Comunidade: seu perfil não recebe cliques';
             if (trialBannerDesc) {
                 const dataApos7Dias = new Date(hoje);
                 dataApos7Dias.setDate(dataApos7Dias.getDate() + 7);
-                trialBannerDesc.innerHTML = `Cadastre seu cartão de crédito ao escolher seu plano abaixo e comece hoje sem pagar nada. Você testa a vitrine completa por <strong>7 dias</strong> antes da primeira cobrança (${dataApos7Dias.toLocaleDateString('pt-BR')}).`;
+                trialBannerDesc.innerHTML = `No plano gratuito, seu perfil fica oculto nas buscas e não recebe contatos no WhatsApp. Escolha seu plano abaixo, cadastre seu cartão e teste o Plano Essencial completo por <strong>7 dias grátis</strong> antes da primeira cobrança (${dataApos7Dias.toLocaleDateString('pt-BR')}).`;
             }
             updateCycleUI(selectedCycle);
         }

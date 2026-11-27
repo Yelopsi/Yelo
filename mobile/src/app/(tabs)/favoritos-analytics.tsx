@@ -4,6 +4,7 @@ import YeloScrollView from '../../components/YeloScrollView';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import api from '../../services/api';
+import ComunidadeLockedCard from '../../components/ComunidadeLockedCard';
 
 // Paletas de cores para as barras
 const TEMA_COLORS = ['#1B4332', '#2D6A4F', '#40916C', '#52B788', '#74C69D', '#95D5B2'];
@@ -27,6 +28,9 @@ const ProgressBar = ({ label, percentage, color }: { label: string; percentage: 
 );
 
 interface FavoritesProfileData {
+  restricted?: boolean;
+  isComunidadeRestricted?: boolean;
+  peerOpportunityStats?: any;
   total: number;
   temas: Record<string, number>;
   faixaValor: Record<string, number>;
@@ -79,6 +83,7 @@ export default function FavoritosAnalyticsScreen() {
     );
   }
 
+  const isRestrictedComunidade = Boolean(data?.restricted || data?.isComunidadeRestricted);
   const total = data?.total || 0;
   const temasList = Object.entries(data?.temas || {})
     .map(([label, count]) => ({
@@ -163,8 +168,16 @@ export default function FavoritosAnalyticsScreen() {
           </View>
         )}
 
-        {/* ESTADO VAZIO (ESPELHO DA WEB) */}
-        {total === 0 ? (
+        {/* ESTADO RESTRITO COMUNIDADE (01/01/2027+) */}
+        {isRestrictedComunidade ? (
+          <View className="mx-6 mb-6 bg-white p-6 rounded-[20px] shadow-sm border border-[#e5e7eb]">
+            <ComunidadeLockedCard
+              title="Análise de favoritos disponível no Plano Essencial"
+              description="No Plano Comunidade (Grátis), seu perfil fica oculto nas buscas e não recebe cliques ou salvamentos de novos pacientes. Ative seu teste grátis para aparecer nas buscas e destravar estes indicadores."
+              peerStats={data?.peerOpportunityStats}
+            />
+          </View>
+        ) : total === 0 ? (
           <View className="mx-6 mb-6 bg-white p-8 rounded-[20px] shadow-sm border border-[#e5e7eb] items-center text-center">
             <Text className="text-[52px] mb-4">🕵️‍♀️</Text>
             <Text className="font-title text-[22px] text-[#1B4332] text-center mb-2">

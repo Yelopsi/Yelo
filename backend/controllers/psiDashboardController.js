@@ -4,6 +4,162 @@ const db = require('../models');
 const { Op } = require('sequelize');
 const gamificationService = require('../services/gamificationService');
 const { resolveActor } = require('../utils/actorClassifier');
+const pricingLaunch = require('../utils/pricingLaunch');
+
+function isRestrictedComunidadePlan(psychologist) {
+    if (!psychologist) return false;
+    if (!pricingLaunch.isNewPricingActive()) return false;
+    if (psychologist.is_exempt) return false;
+    return String(psychologist.plano || '').trim() === 'Comunidade';
+}
+
+async function queryCohortEvents(tableName, cohortFilterSql, replacements) {
+    const run = (colName) => db.sequelize.query(
+        `SELECT COUNT(t.id) as total_30d,
+                COUNT(t.id) FILTER (WHERE t."createdAt" >= NOW() - INTERVAL '7 days') as total_7d
+         FROM "${tableName}" t
+         INNER JOIN "Psychologists" p ON p.id = t."${colName}"
+         WHERE t."createdAt" >= NOW() - INTERVAL '30 days'
+           AND p.status = 'active'
+           AND (p."plano" IS NULL OR p."plano" != 'Comunidade')
+           ${cohortFilterSql}`,
+        { replacements, type: db.sequelize.QueryTypes.SELECT }
+    );
+    return run('psychologistId').catch(() => run('PsychologistId')).catch(() => [{ total_30d: 0, total_7d: 0 }]);
+}
+
+async function buildPeerOpportunityStats(psychologist) {
+    const rawTemas = Array.isArray(psychologist?.temas_atuacao) ? psychologist.temas_atuacao : [];
+    const cleanTemas = rawTemas.map(t => String(t || '').trim()).filter(Boolean);
+
+    let usingSpecialtyCohort = false;
+    let peerCount = 0;
+
+    if (cleanTemas.length > 0) {
+        const [similarRes] = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "Psychologists" p
+             WHERE p.status = 'active'
+               AND (p."plano" IS NULL OR p."plano" != 'Comunidade')
+               AND jsonb_typeof(p."temas_atuacao") = 'array'
+               AND EXISTS (
+                   SELECT 1 FROM jsonb_array_elements_text(p."temas_atuacao") tema
+                   WHERE tema IN (:temas)
+               )`,
+            { replacements: { temas: cleanTemas }, type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const similarCount = parseInt(similarRes?.count || 0, 10);
+        if (similarCount >= 3) {
+            usingSpecialtyCohort = true;
+            peerCount = similarCount;
+        }
+    }
+
+    if (!usingSpecialtyCohort) {
+        const [allActiveRes] = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "Psychologists" p
+             WHERE p.status = 'active'
+               AND (p."plano" IS NULL OR p."plano" != 'Comunidade')`,
+            { type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        peerCount = parseInt(allActiveRes?.count || 0, 10);
+    }
+
+    const cohortFilterSql = usingSpecialtyCohort
+        ? `AND jsonb_typeof(p."temas_atuacao") = 'array'
+           AND EXISTS (
+               SELECT 1 FROM jsonb_array_elements_text(p."temas_atuacao") tema
+               WHERE tema IN (:temas)
+           )`
+        : '';
+    const replacements = usingSpecialtyCohort ? { temas: cleanTemas } : {};
+
+    const [matchRows, clickRows] = await Promise.all([
+        queryCohortEvents('MatchEvents', cohortFilterSql, replacements),
+        queryCohortEvents('WhatsAppClickLogs', cohortFilterSql, replacements)
+    ]);
+
+    const matches30d = parseInt(matchRows[0]?.total_30d || 0, 10);
+    const matches7d = parseInt(matchRows[0]?.total_7d || 0, 10);
+    const clicks30d = parseInt(clickRows[0]?.total_30d || 0, 10);
+    const clicks7d = parseInt(clickRows[0]?.total_7d || 0, 10);
+
+    if (usingSpecialtyCohort && matches30d === 0 && clicks30d === 0) {
+        const [allActiveRes] = await db.sequelize.query(
+            `SELECT COUNT(*) as count FROM "Psychologists" p
+             WHERE p.status = 'active'
+               AND (p."plano" IS NULL OR p."plano" != 'Comunidade')`,
+            { type: db.sequelize.QueryTypes.SELECT }
+        ).catch(() => [{ count: 0 }]);
+        const allPeerCount = parseInt(allActiveRes?.count || 0, 10);
+        const [allMatchRows, allClickRows] = await Promise.all([
+            queryCohortEvents('MatchEvents', '', {}),
+            queryCohortEvents('WhatsAppClickLogs', '', {})
+        ]);
+        const allM30 = parseInt(allMatchRows[0]?.total_30d || 0, 10);
+        const allC30 = parseInt(allClickRows[0]?.total_30d || 0, 10);
+        if (allM30 > 0 || allC30 > 0) {
+            return {
+                scope: 'active_profiles',
+                peerCount: allPeerCount,
+                matches30d: allM30,
+                matches7d: parseInt(allMatchRows[0]?.total_7d || 0, 10),
+                clicks30d: allC30,
+                clicks7d: parseInt(allClickRows[0]?.total_7d || 0, 10),
+                avgMatchesPerProfile30d: allPeerCount > 0 ? parseFloat((allM30 / allPeerCount).toFixed(1)) : 0,
+                avgClicksPerProfile30d: allPeerCount > 0 ? parseFloat((allC30 / allPeerCount).toFixed(1)) : 0
+            };
+        }
+    }
+
+    return {
+        scope: usingSpecialtyCohort ? 'similar_profiles' : 'active_profiles',
+        peerCount,
+        matches30d,
+        matches7d,
+        clicks30d,
+        clicks7d,
+        avgMatchesPerProfile30d: peerCount > 0 ? parseFloat((matches30d / peerCount).toFixed(1)) : 0,
+        avgClicksPerProfile30d: peerCount > 0 ? parseFloat((clicks30d / peerCount).toFixed(1)) : 0
+    };
+}
+
+async function fetchCommunityActivitySummary(psychologistId) {
+    const [
+        blogPostCountResult,
+        forumPostCountResult,
+        forumCommentCountResult,
+        answerCountResult,
+        lastPostRes,
+        lastForumRes,
+        lastCommentRes
+    ] = await Promise.all([
+        db.sequelize.query(`SELECT COUNT(*) as count FROM posts WHERE psychologist_id = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM posts WHERE "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT })).catch(() => [{ count: 0 }]),
+        db.sequelize.query(`SELECT COUNT(*) as count FROM "ForumPosts" WHERE "PsychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "ForumPosts" WHERE "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT })).catch(() => [{ count: 0 }]),
+        db.sequelize.query(`SELECT COUNT(*) as count FROM "ForumComments" WHERE "PsychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "ForumComments" WHERE "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT })).catch(() => [{ count: 0 }]),
+        db.sequelize.query(`SELECT COUNT(*) as count FROM "answers" WHERE "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }).catch(() => db.sequelize.query(`SELECT COUNT(*) as count FROM "answers" WHERE "PsychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT })).catch(() => [{ count: 0 }]),
+        db.sequelize.query(`SELECT MAX(COALESCE(created_at, "createdAt")) as last_date FROM posts WHERE psychologist_id = :psiId OR "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []),
+        db.sequelize.query(`SELECT MAX("createdAt") as last_date FROM "ForumPosts" WHERE "PsychologistId" = :psiId OR "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }).catch(() => []),
+        db.sequelize.query(`SELECT MAX("createdAt") as last_date FROM "ForumComments" WHERE "PsychologistId" = :psiId OR "psychologistId" = :psiId`, { replacements: { psiId: psychologistId }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [])
+    ]);
+
+    const blogPostCount = parseInt(blogPostCountResult[0]?.count || 0, 10);
+    const forumPostCount = parseInt(forumPostCountResult[0]?.count || 0, 10);
+    const forumCommentCount = parseInt(forumCommentCountResult[0]?.count || 0, 10);
+    const answerCount = parseInt(answerCountResult[0]?.count || 0, 10);
+
+    return {
+        blogPostCount,
+        forumPostCount,
+        forumCommentCount,
+        answerCount,
+        forumActivityCount: forumPostCount + forumCommentCount,
+        lastInteractions: {
+            blog: lastPostRes?.[0]?.last_date || null,
+            forum: lastForumRes?.[0]?.last_date || null,
+            comment: lastCommentRes?.[0]?.last_date || null
+        }
+    };
+}
 
 const normalizeTheme = (name) => {
     if (!name) return null;
@@ -131,7 +287,54 @@ exports.getStats = async (req, res) => {
         const psychologistId = req.psychologist.id;
         const { period } = req.query; 
 
-        const psychologist = await db.Psychologist.findByPk(psychologistId, { attributes: ['temas_atuacao', 'xp', 'profile_appearances', 'whatsapp_clicks'] });
+        const psychologist = await db.Psychologist.findByPk(psychologistId, {
+            attributes: ['temas_atuacao', 'xp', 'profile_appearances', 'whatsapp_clicks', 'plano', 'is_exempt']
+        });
+
+        if (isRestrictedComunidadePlan(psychologist)) {
+            const [community, peerOpportunityStats] = await Promise.all([
+                fetchCommunityActivitySummary(psychologistId),
+                buildPeerOpportunityStats(psychologist)
+            ]);
+            return res.json({
+                restricted: true,
+                isComunidadeRestricted: true,
+                plan: 'Comunidade',
+                whatsappClicks: null,
+                profileViews: null,
+                matchImpressions: null,
+                favoritesCount: null,
+                funnelRates: null,
+                topDemands: [],
+                betterThanPercentage: null,
+                xpHistory: [],
+                todayStats: null,
+                last7DaysStats: null,
+                profileViewsMatch: null,
+                profileViewsDirect: null,
+                whatsappMatch: null,
+                whatsappDirect: null,
+                contatosConvertidos: null,
+                lastInteractions: community.lastInteractions,
+                gamificationProgress: {
+                    blogPostCount: community.blogPostCount,
+                    forumActivityCount: community.forumActivityCount,
+                    answerCount: community.answerCount,
+                    semeador: community.blogPostCount,
+                    vozAtiva: community.forumActivityCount,
+                    conselheiro: community.answerCount
+                },
+                blogPostCount: community.blogPostCount,
+                forumActivityCount: community.forumActivityCount,
+                answerCount: community.answerCount,
+                blogLikes: 0,
+                forumPosts: community.forumPostCount,
+                forumComments: community.forumCommentCount,
+                reviewCount: 0,
+                peerOpportunityStats
+            });
+        }
+
         const psiTemas = psychologist?.temas_atuacao || [];
 
         let dateCondition = "";
@@ -364,6 +567,21 @@ exports.getAnalyticsData = async (req, res) => {
         const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
         const psychologist = await db.Psychologist.findByPk(psychologistId);
         if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+
+        if (isRestrictedComunidadePlan(psychologist)) {
+            const peerOpportunityStats = await buildPeerOpportunityStats(psychologist);
+            return res.json({
+                restricted: true,
+                isComunidadeRestricted: true,
+                plan: 'Comunidade',
+                priceComparison: null,
+                topTopics: [],
+                visibility: null,
+                betterThanPercentage: null,
+                profileStrength: null,
+                peerOpportunityStats
+            });
+        }
 
         const myPrice = psychologist.valor_sessao_numero || 0;
         const [cityAvgResult] = await db.sequelize.query(`SELECT AVG("valor_sessao_numero") as avg FROM "Psychologists" WHERE "cidade" = :city AND status = 'active' AND "valor_sessao_numero" > 0`, { replacements: { city: psychologist.cidade || null }, type: db.sequelize.QueryTypes.SELECT });
@@ -660,6 +878,23 @@ exports.getAiInsights = async (req, res) => {
         const psychologist = await db.Psychologist.findByPk(psychologistId);
         if (!psychologist) return res.status(404).json({ error: 'Psicólogo não encontrado.' });
 
+        if (isRestrictedComunidadePlan(psychologist)) {
+            return res.status(200).json({
+                restricted: true,
+                isComunidadeRestricted: true,
+                marketingTip: {
+                    title: "Ative o Plano Essencial para aparecer nas buscas e receber cliques",
+                    impact: "7 dias grátis",
+                    url: "psi_assinatura.html"
+                },
+                contentIdea: {
+                    title: "Fortaleça sua presença no Fórum e Blog da Comunidade",
+                    impact: "Comunidade",
+                    url: "psi_comunidade.html"
+                }
+            });
+        }
+
         if (psychologist.ai_insights_cache) {
             const cacheData = psychologist.ai_insights_cache;
             const diasPassados = (Date.now() - cacheData.timestamp) / (1000 * 60 * 60 * 24);
@@ -710,6 +945,27 @@ exports.getFavoritesProfile = async (req, res) => {
         const psychologistId = req.psychologist?.id || req.userDecoded?.id || req.user?.id;
         if (!psychologistId) {
             return res.status(401).json({ error: 'Psicólogo não autenticado.' });
+        }
+
+        const psychologist = await db.Psychologist.findByPk(psychologistId, {
+            attributes: ['id', 'plano', 'is_exempt', 'temas_atuacao']
+        });
+        if (!psychologist) {
+            return res.status(404).json({ error: 'Psicólogo não encontrado.' });
+        }
+
+        if (isRestrictedComunidadePlan(psychologist)) {
+            const peerOpportunityStats = await buildPeerOpportunityStats(psychologist);
+            return res.json({
+                restricted: true,
+                isComunidadeRestricted: true,
+                plan: 'Comunidade',
+                total: 0,
+                temas: {},
+                faixaValor: {},
+                genero: {},
+                peerOpportunityStats
+            });
         }
 
         const [patients] = await db.sequelize.query(`

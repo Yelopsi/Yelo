@@ -161,8 +161,8 @@ export default function AjustesScreen() {
             'Perfil Público Bloqueado',
             p.profile_paused
               ? 'Seu perfil está pausado no momento. Reative a exibição em Meu Perfil para visualizar sua página pública.'
-              : p.plano === 'Comunidade'
-                ? 'Seu perfil está no Plano Comunidade (oculto nas buscas). Assine o Plano Essencial para liberar sua página pública.'
+              : p.plano === 'Comunidade' && !isVip
+                ? 'Seu perfil está no Plano Comunidade (Grátis): oculto das buscas e sem receber cliques de pacientes. Assine o Plano Essencial para liberar sua página pública.'
                 : 'Seu perfil está inativo porque sua assinatura expirou. Reative sua assinatura para liberar sua página pública.',
             [
               { text: 'Cancelar', style: 'cancel' },

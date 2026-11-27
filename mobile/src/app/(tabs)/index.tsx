@@ -10,6 +10,7 @@ import YeloToast from '../../components/YeloToast';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 import { isMobileNewPricingActive } from '../../utils/pricingLaunch';
+import ComunidadeLockedCard from '../../components/ComunidadeLockedCard';
 
 export default function HomeScreen() {
   const { user, updateUser } = useAuth();
@@ -153,21 +154,27 @@ export default function HomeScreen() {
   // A web só bloqueia quando status === 'inactive' E o usuário não é isento (is_exempt)
   const isExempt = psiData.is_exempt === true || String(psiData.is_exempt).toLowerCase() === 'true' || psiData.is_exempt === 1;
   const estaInativo = psiData.status === 'inactive' && !isExempt;
+  const isRestrictedComunidade = Boolean(
+    stats?.isComunidadeRestricted ||
+      (isMobileNewPricingActive(psiData) && !isExempt && String(psiData?.plano || '').trim() === 'Comunidade')
+  );
 
   // --- DADOS REAIS DA API (sem nenhum fallback inventado) ---
   const primeiroNome = psiData.nome ? psiData.nome.split(' ')[0] : '';
   const fotoUrl = psiData.fotoUrl || null;
 
   // Stats gerais (all_time) — iguais à web (psi_visao_geral.js)
-  const whatsappClicks = stats?.whatsappClicks ?? 0;
-  const profileViews = stats?.profileViews ?? 0;
-  const matchImpressions = stats?.matchImpressions ?? 0;
-  const contatosConvertidos = stats?.contatosConvertidos ?? 0;
-  const betterThan = stats?.betterThanPercentage !== undefined ? Math.min(stats.betterThanPercentage, 99) : null;
+  const whatsappClicks = isRestrictedComunidade ? 0 : (stats?.whatsappClicks ?? 0);
+  const profileViews = isRestrictedComunidade ? 0 : (stats?.profileViews ?? 0);
+  const matchImpressions = isRestrictedComunidade ? 0 : (stats?.matchImpressions ?? 0);
+  const contatosConvertidos = isRestrictedComunidade ? 0 : (stats?.contatosConvertidos ?? 0);
+  const betterThan = isRestrictedComunidade
+    ? null
+    : (stats?.betterThanPercentage !== undefined ? Math.min(stats.betterThanPercentage, 99) : null);
 
   // KPIs do card Pacientes
-  const contatosTotal = stats?.whatsappClicks ?? null;
-  const taxaClique = stats?.funnelRates?.finalConversion ?? null;
+  const contatosTotal = isRestrictedComunidade ? null : (stats?.whatsappClicks ?? null);
+  const taxaClique = isRestrictedComunidade ? null : (stats?.funnelRates?.finalConversion ?? null);
 
   // Comunidade
   const artigos = stats?.blogPostCount ?? null;
@@ -311,7 +318,7 @@ export default function HomeScreen() {
         isTip: true,
         isMarketingAI: true
       });
-    } else {
+    } else if (!isRestrictedComunidade) {
       if (impressions >= 10 && (views / impressions) < 0.15) {
         stepsToRender.push({ title: 'Ajustar o início do seu texto de bio para melhorar a taxa de clique no seu perfil', impact: 'Maior Conversão', completed: false, url: 'psi_meu_perfil.html', isTip: true });
       } else if (views >= 10 && viewToClickRate >= 0.25 && myPrice > 0 && myPrice < 130) {
@@ -364,6 +371,10 @@ export default function HomeScreen() {
       router.navigate('/meu_perfil');
     } else if (step.url === 'psi_financeiro.html') {
       router.navigate('/financeiro');
+    } else if (step.url === 'psi_assinatura.html') {
+      router.navigate('/assinatura');
+    } else if (step.url === 'psi_comunidade.html') {
+      router.navigate('/comunidade');
     }
   };
 
@@ -399,7 +410,11 @@ export default function HomeScreen() {
                 Olá, {primeiroNome || 'Psicólogo'}!
               </Text>
               <Text className="font-sans text-white/85 text-[15px]">
-                {whatsappClicks === 0 && profileViews === 0 ? 'Fase de construção 🌱' : 'Seu impacto na Yelo:'}
+                {isRestrictedComunidade
+                  ? 'Plano Comunidade (Grátis) - perfil oculto'
+                  : whatsappClicks === 0 && profileViews === 0
+                    ? 'Fase de construção 🌱'
+                    : 'Seu impacto na Yelo:'}
               </Text>
             </View>
             <TouchableOpacity
@@ -413,65 +428,99 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Grid de Métricas: 2 colunas com flex-wrap (espelho exato da web) */}
-          <View className="flex-row flex-wrap mb-2">
-            {/* Aparições no Match */}
-            {matchImpressions > 0 && (
-              <View style={{ width: '50%' }} className="pr-2 mb-4">
-                <Text className="font-title text-[#FFEE8C] text-[36px] leading-tight mb-1">
-                  +{matchImpressions}
-                </Text>
-                <Text className="font-sans text-white/90 text-[11px] uppercase tracking-wider font-medium">
-                  Aparições no Match
-                </Text>
+          {isRestrictedComunidade ? (
+            <>
+              <View className="flex-row flex-wrap mb-2">
+                <View style={{ width: '50%' }} className="pr-2 mb-3">
+                  <Text className="font-sans font-bold text-white/95 text-[16px] leading-tight mb-1">
+                    🔒 Oculto
+                  </Text>
+                  <Text className="font-sans text-white/85 text-[11px] uppercase tracking-wider font-medium">
+                    Visibilidade nas buscas
+                  </Text>
+                </View>
+                <View style={{ width: '50%' }} className="pl-2 mb-3">
+                  <Text className="font-sans font-bold text-[#FFEE8C] text-[16px] leading-tight mb-1">
+                    0 cliques
+                  </Text>
+                  <Text className="font-sans text-white/85 text-[11px] uppercase tracking-wider font-medium">
+                    Cliques no WhatsApp
+                  </Text>
+                </View>
               </View>
-            )}
-
-            {/* Visualizações de Perfil */}
-            <View style={{ width: '50%' }} className="pl-2 mb-4">
-              <Text className="font-title text-[#FFEE8C] text-[36px] leading-tight mb-1">
-                +{profileViews}
-              </Text>
-              <Text className="font-sans text-white/90 text-[11px] uppercase tracking-wider font-medium">
-                Visualizações de Perfil
-              </Text>
-            </View>
-
-            {/* Contatos Recebidos */}
-            <View style={{ width: '50%' }} className="pr-2 mb-3">
-              <Text className="font-title text-[#FFEE8C] text-[36px] leading-tight mb-1">
-                +{whatsappClicks}
-              </Text>
-              <Text className="font-sans text-white/90 text-[11px] uppercase tracking-wider font-medium">
-                Contatos Recebidos
-              </Text>
-            </View>
-
-            {/* Contatos Convertidos (se houver) */}
-            {contatosConvertidos > 0 && (
-              <View style={{ width: '50%' }} className="pl-2 mb-3">
-                <Text className="font-title text-[#FFEE8C] text-[36px] leading-tight mb-1">
-                  +{contatosConvertidos}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => router.navigate('/assinatura')}
+                className="bg-white/15 self-start px-3.5 py-1.5 rounded-full mt-1"
+              >
+                <Text className="font-sans text-[#FFEE8C] text-[12px] font-semibold">
+                  🔒 Cliques e indicadores exclusivos do Essencial - Testar 7d grátis →
                 </Text>
-                <Text className="font-sans text-white/90 text-[11px] uppercase tracking-wider font-medium">
-                  Contatos Convertidos
-                </Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {/* Grid de Métricas: 2 colunas com flex-wrap (espelho exato da web) */}
+              <View className="flex-row flex-wrap mb-2">
+                {/* Aparições no Match */}
+                {matchImpressions > 0 && (
+                  <View style={{ width: '50%' }} className="pr-2 mb-4">
+                    <Text className="font-title text-[#FFEE8C] text-[36px] leading-tight mb-1">
+                      +{matchImpressions}
+                    </Text>
+                    <Text className="font-sans text-white/90 text-[11px] uppercase tracking-wider font-medium">
+                      Aparições no Match
+                    </Text>
+                  </View>
+                )}
+
+                {/* Visualizações de Perfil */}
+                <View style={{ width: '50%' }} className="pl-2 mb-4">
+                  <Text className="font-title text-[#FFEE8C] text-[36px] leading-tight mb-1">
+                    +{profileViews}
+                  </Text>
+                  <Text className="font-sans text-white/90 text-[11px] uppercase tracking-wider font-medium">
+                    Visualizações de Perfil
+                  </Text>
+                </View>
+
+                {/* Contatos Recebidos */}
+                <View style={{ width: '50%' }} className="pr-2 mb-3">
+                  <Text className="font-title text-[#FFEE8C] text-[36px] leading-tight mb-1">
+                    +{whatsappClicks}
+                  </Text>
+                  <Text className="font-sans text-white/90 text-[11px] uppercase tracking-wider font-medium">
+                    Contatos Recebidos
+                  </Text>
+                </View>
+
+                {/* Contatos Convertidos (se houver) */}
+                {contatosConvertidos > 0 && (
+                  <View style={{ width: '50%' }} className="pl-2 mb-3">
+                    <Text className="font-title text-[#FFEE8C] text-[36px] leading-tight mb-1">
+                      +{contatosConvertidos}
+                    </Text>
+                    <Text className="font-sans text-white/90 text-[11px] uppercase tracking-wider font-medium">
+                      Contatos Convertidos
+                    </Text>
+                  </View>
+                )}
               </View>
-            )}
-          </View>
 
-          {/* Benchmark — espelho da web */}
-          {betterThan !== null && (
-            <View className="bg-white/15 self-start px-3.5 py-1.5 rounded-full mt-1">
-              <Text className="font-sans text-[#d1fae5] text-[12px] font-semibold">
-                🔥 Seu perfil tem um histórico melhor que <Text className="font-bold">{betterThan}%</Text> dos psicólogos
-              </Text>
-            </View>
+              {/* Benchmark — espelho da web */}
+              {betterThan !== null && (
+                <View className="bg-white/15 self-start px-3.5 py-1.5 rounded-full mt-1">
+                  <Text className="font-sans text-[#d1fae5] text-[12px] font-semibold">
+                    🔥 Seu perfil tem um histórico melhor que <Text className="font-bold">{betterThan}%</Text> dos psicólogos
+                  </Text>
+                </View>
+              )}
+            </>
           )}
         </LinearGradient>
 
         {/* BANNER INFORMATIVO COMUNIDADE / LEGADO (LIBERADO EM 01/01/2027) */}
-        {isMobileNewPricingActive(psiData) && psiData.plano === 'Comunidade' && (
+        {isRestrictedComunidade && (
           <View
             style={{
               backgroundColor: '#FFF4E5',
@@ -482,11 +531,11 @@ export default function HomeScreen() {
               marginBottom: 18,
             }}
           >
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13.5, color: '#B25E02', marginBottom: 4 }}>
-              👁️ Seu perfil público está oculto no Plano Comunidade (Grátis)
+            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13.5, color: '#9A3412', marginBottom: 4 }}>
+              👁️ Plano Comunidade (Grátis) - perfil oculto nas buscas
             </Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: '#92400e', lineHeight: 18, marginBottom: 10 }}>
-              Ative o Plano Essencial e ganhe 7 dias grátis com seu cartão para aparecer nas buscas de pacientes.
+            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: '#78350F', lineHeight: 18, marginBottom: 10 }}>
+              Suas ferramentas internas seguem gratuitas, mas seu perfil não aparece nas buscas e você não recebe cliques nem contatos de pacientes no WhatsApp. Ative o Plano Essencial e ganhe 7 dias grátis no cartão.
             </Text>
             <TouchableOpacity
               activeOpacity={0.85}
@@ -694,26 +743,36 @@ export default function HomeScreen() {
         {/* kpi-whatsapp-clicks = "Novos contatos", kpi-match-impressions = "Aparições no match", kpi-taxa-escolha = "Taxa de clique" */}
         <View className="bg-white rounded-[24px] p-[22px] border border-[#e5e7eb] mb-6">
           <Text className="font-title text-[#1B4332] text-[20px] mb-5">💬 Pacientes</Text>
-          <View className="flex-row flex-wrap gap-3 mb-5">
-            <View className="bg-[#f8f9fa] rounded-[14px] p-4 flex-1" style={{ minWidth: '44%' }}>
-              <Text className="font-title text-[#1B4332] text-[30px] leading-tight">
-                {contatosTotal !== null ? contatosTotal : '—'}
-              </Text>
-              <Text className="font-sans text-[#555] text-[11px] mt-1">Novos contatos</Text>
+          {isRestrictedComunidade ? (
+            <View className="mb-5">
+              <ComunidadeLockedCard
+                compact
+                peerStats={stats?.peerOpportunityStats}
+                globalStats={psiData?.globalStats}
+              />
             </View>
-            <View className="bg-[#f8f9fa] rounded-[14px] p-4 flex-1" style={{ minWidth: '44%' }}>
-              <Text className="font-title text-[#1B4332] text-[30px] leading-tight">
-                {matchImpressions !== null ? matchImpressions : '—'}
-              </Text>
-              <Text className="font-sans text-[#555] text-[11px] mt-1">Aparições no match</Text>
+          ) : (
+            <View className="flex-row flex-wrap gap-3 mb-5">
+              <View className="bg-[#f8f9fa] rounded-[14px] p-4 flex-1" style={{ minWidth: '44%' }}>
+                <Text className="font-title text-[#1B4332] text-[30px] leading-tight">
+                  {contatosTotal !== null ? contatosTotal : '-'}
+                </Text>
+                <Text className="font-sans text-[#555] text-[11px] mt-1">Novos contatos</Text>
+              </View>
+              <View className="bg-[#f8f9fa] rounded-[14px] p-4 flex-1" style={{ minWidth: '44%' }}>
+                <Text className="font-title text-[#1B4332] text-[30px] leading-tight">
+                  {matchImpressions !== null ? matchImpressions : '-'}
+                </Text>
+                <Text className="font-sans text-[#555] text-[11px] mt-1">Aparições no match</Text>
+              </View>
+              <View className="bg-[#f8f9fa] rounded-[14px] p-4 flex-1" style={{ minWidth: '44%' }}>
+                <Text className="font-title text-[#1B4332] text-[30px] leading-tight">
+                  {taxaClique !== null ? `${taxaClique}%` : '-'}
+                </Text>
+                <Text className="font-sans text-[#555] text-[11px] mt-1">Taxa de clique</Text>
+              </View>
             </View>
-            <View className="bg-[#f8f9fa] rounded-[14px] p-4 flex-1" style={{ minWidth: '44%' }}>
-              <Text className="font-title text-[#1B4332] text-[30px] leading-tight">
-                {taxaClique !== null ? `${taxaClique}%` : '—'}
-              </Text>
-              <Text className="font-sans text-[#555] text-[11px] mt-1">Taxa de clique</Text>
-            </View>
-          </View>
+          )}
           <TouchableOpacity 
             activeOpacity={0.8}
             onPress={() => router.navigate('/pacientes')}
@@ -981,7 +1040,7 @@ export default function HomeScreen() {
                         Como ficam os novos planos a partir de 01/01/2027
                       </Text>
                       <Text style={{ fontSize: 12.8, color: '#374151', lineHeight: 19, marginBottom: 4 }}>
-                        • <Text style={{ fontWeight: '700' }}>Plano Comunidade (Grátis):</Text> ferramentas internas da plataforma, sem aparecer nas buscas de pacientes.
+                        • <Text style={{ fontWeight: '700' }}>Plano Comunidade (Grátis):</Text> ferramentas internas da plataforma, sem aparecer nas buscas nem receber cliques de pacientes.
                       </Text>
                       <Text style={{ fontSize: 12.8, color: '#374151', lineHeight: 19 }}>
                         • <Text style={{ fontWeight: '700' }}>Plano Essencial:</Text> Semestral em 6x de R$ 99/mês, Trimestral em 3x de R$ 129/mês ou Mensal por R$ 159/mês (com 7 dias grátis).

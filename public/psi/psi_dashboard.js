@@ -576,7 +576,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 banner.style.position = 'fixed';
                 banner.style.paddingRight = '45px';
 
-                const textMessage = `👁️ Seu perfil público está oculto no Plano Comunidade (Grátis). Ative o Plano Essencial e ganhe 7 dias grátis com seu cartão para aparecer nas buscas.`;
+                const textMessage = `👁️ Plano Comunidade (Grátis): seu perfil está oculto das buscas e não recebe cliques de pacientes. Ative o Plano Essencial com 7 dias grátis para aparecer aos pacientes.`;
                 const btnAction = "window.loadPage('psi_assinatura.html')";
                 const btnText = "Testar 7 dias grátis";
 
@@ -1121,7 +1121,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <h4>Como ficam os novos planos</h4>
                                     <p>Para quem contratar a partir de janeiro de 2027:</p>
                                     <ul class="pricing-notice-list">
-                                        <li><strong>Plano Comunidade (Grátis):</strong> ferramentas internas da plataforma, sem aparecer nas buscas de pacientes.</li>
+                                        <li><strong>Plano Comunidade (Grátis):</strong> ferramentas internas da plataforma, sem aparecer nas buscas nem receber cliques de pacientes.</li>
                                         <li><strong>Plano Essencial:</strong> Semestral em 6x de R$ 99/mês, Trimestral em 3x de R$ 129/mês ou Mensal por R$ 159/mês (com 7 dias grátis).</li>
                                     </ul>
                                 </div>

@@ -46,8 +46,65 @@
                 } catch (e) {}
             })();
             
-            // Inicializa visualizações sem log no console
+            const isRestrictedComunidade = Boolean(
+                stats?.isComunidadeRestricted ||
+                (typeof window.isYeloNewPricingActive === 'function' &&
+                    window.isYeloNewPricingActive(psychologistData) &&
+                    !psychologistData.is_exempt &&
+                    String(psychologistData.plano || '').trim() === 'Comunidade')
+            );
 
+            const comBanner = document.getElementById('comunidade-visao-geral-banner');
+            if (comBanner) {
+                comBanner.style.display = isRestrictedComunidade ? 'flex' : 'none';
+            }
+
+            const formatPeerCardHtml = (peerStats, globalStats, compact = false) => {
+                const pStats = peerStats || {};
+                const gStats = globalStats || {};
+                const m30 = Number(pStats.matches30d ?? gStats.matches30d ?? 0);
+                const c30 = Number(pStats.clicks30d ?? gStats.clicks30d ?? 0);
+                const c7 = Number(pStats.clicks7d ?? gStats.clicks7d ?? 0);
+                const avgC30 = Number(pStats.avgClicksPerProfile30d ?? 0);
+                const cohortLabel = pStats.scope === 'similar_profiles' ? 'perfis com atuação parecida com a sua' : 'perfis ativos na Yelo';
+
+                const numbersBlock = (m30 > 0 || c30 > 0)
+                    ? `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 12px 0;">
+                            <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: 12px; padding: 12px; text-align: left;">
+                                <div style="font-size: 1.45rem; font-weight: 800; color: #1B4332; line-height: 1.1;">+${c30}</div>
+                                <div style="font-size: 0.78rem; color: #166534; font-weight: 600; margin-top: 4px;">Cliques no WhatsApp recebidos (30d)</div>
+                            </div>
+                            <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: 12px; padding: 12px; text-align: left;">
+                                <div style="font-size: 1.45rem; font-weight: 800; color: #1B4332; line-height: 1.1;">+${m30}</div>
+                                <div style="font-size: 0.78rem; color: #166534; font-weight: 600; margin-top: 4px;">Aparições no Match (30d)</div>
+                            </div>
+                        </div>
+                        <p style="margin: 0; color: #14532d; font-size: 0.85rem; line-height: 1.45;">
+                            Nos últimos 30 dias, ${cohortLabel} registraram <strong>${m30} matches</strong> e <strong>${c30} cliques no WhatsApp</strong>${avgC30 > 0 ? ` (média de <strong>${avgC30.toFixed(1).replace('.', ',')} cliques/perfil ativo</strong>)` : ''}${c7 > 0 ? `, sendo <strong>${c7}</strong> só nos últimos 7 dias` : ''}. Ative seu teste grátis de 7 dias para começar a receber esses cliques.
+                        </p>
+                    `
+                    : `
+                        <p style="margin: 8px 0 0 0; color: #14532d; font-size: 0.85rem; line-height: 1.45;">
+                            No Plano Essencial, ${cohortLabel} aparecem nas recomendações do Match Inteligente e recebem cliques diretos no WhatsApp dos pacientes interessados.
+                        </p>
+                    `;
+
+                return `
+                    <div class="global-stats-card" style="width: 100%; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: ${compact ? '16px' : '20px'}; border-radius: 14px; border: 1px solid #86efac; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                            <span style="font-size: 1.5rem;">🔥</span>
+                            <strong style="color: #166534; font-size: 0.96rem;">Desempenho de perfis como o seu na Yelo</strong>
+                        </div>
+                        ${numbersBlock}
+                        <div style="margin-top: 12px;">
+                            <button type="button" onclick="window.loadPage('psi_assinatura.html')" style="background: #1B4332; color: #ffffff; border: none; border-radius: 999px; padding: 9px 18px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">Testar 7 dias grátis e liberar cliques &rarr;</button>
+                        </div>
+                    </div>
+                `;
+            };
+
+            // Inicializa visualizações sem log no console
             const profileViews = stats.profileViews || 0;
             const matchImpressions = stats.matchImpressions || 0;
             const whatsappClicks = stats.whatsappClicks || 0;
@@ -55,45 +112,74 @@
             const last7DaysContacts = stats.last7DaysStats?.whatsappClicks || 0;
             const last7DaysViews = stats.last7DaysStats?.profileViews || 0;
 
-            if (whatsappClicks === 0 && profileViews === 0) {
+            if (isRestrictedComunidade) {
                 const subtitle = document.querySelector('.modern-hero-subtitle');
-                if (subtitle) subtitle.textContent = 'Fase de construção 🌱';
-                
-                if (document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = `<span style="font-size: 1.05rem; color: #fde047; font-weight: 600; cursor: pointer; border-bottom: 1px dashed rgba(253, 224, 71, 0.5); padding-bottom: 2px;" onclick="const card = document.querySelector('.modern-action-list')?.closest('.modern-checklist-card'); if(card) { card.scrollIntoView({behavior: 'smooth', block: 'center'}); const ogTrans = card.style.transition; card.style.transition = 'transform 0.2s, box-shadow 0.2s, background-color 0.5s ease'; card.style.backgroundColor = '#fef3c7'; setTimeout(() => { card.style.backgroundColor = ''; setTimeout(() => { card.style.transition = ogTrans; }, 500); }, 1500); }">Bora atrair pacientes? 🚀</span>`;
-                if (document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = '<span style="font-size: 1.05rem; opacity: 0.8; font-weight: 500;">Seu perfil está sendo indexado 🔍</span>';
-            } else if (profileViews > 0 && whatsappClicks === 0) {
-                if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = `+${profileViews}`;
-                if (document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = `<span style="font-size: 1.05rem; color: #fde047; font-weight: 600; cursor: pointer; border-bottom: 1px dashed rgba(253, 224, 71, 0.5); padding-bottom: 2px;" onclick="const card = document.querySelector('.modern-action-list')?.closest('.modern-checklist-card'); if(card) { card.scrollIntoView({behavior: 'smooth', block: 'center'}); const ogTrans = card.style.transition; card.style.transition = 'transform 0.2s, box-shadow 0.2s, background-color 0.5s ease'; card.style.backgroundColor = '#fef3c7'; setTimeout(() => { card.style.backgroundColor = ''; setTimeout(() => { card.style.transition = ogTrans; }, 500); }, 1500); }">Veja como converter mais 🎯</span>`;
-            } else {
-                if(document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = `+${whatsappClicks}`;
-                if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = `+${profileViews}`;
-            }
+                if (subtitle) subtitle.textContent = 'Plano Comunidade (Grátis) - perfil oculto';
 
-            if (stats.matchImpressions > 0) {
                 const elItemMatch = document.getElementById('hero-item-match-impressions');
-                const elValMatch = document.getElementById('hero-match-impressions');
-                if (elItemMatch && elValMatch) {
-                    elItemMatch.style.display = '';
-                    elValMatch.innerHTML = `+${stats.matchImpressions}`;
-                }
-            }
-            
-            const contatosConvertidos = stats.contatosConvertidos || 0;
-            if (contatosConvertidos > 0) {
                 const elItemConv = document.getElementById('hero-item-conversions');
-                const elValConv = document.getElementById('hero-conversions');
-                if (elItemConv && elValConv) {
-                    elItemConv.style.display = '';
-                    elValConv.innerHTML = `+${contatosConvertidos}`;
+                if (elItemMatch) elItemMatch.style.display = 'none';
+                if (elItemConv) elItemConv.style.display = 'none';
+
+                const viewsItem = document.getElementById('hero-item-views');
+                const viewsLabel = viewsItem ? viewsItem.querySelector('.hero-metric-label') : null;
+                if (viewsLabel) viewsLabel.textContent = 'Visibilidade nas buscas';
+                if (document.getElementById('hero-views')) {
+                    document.getElementById('hero-views').innerHTML = `<span style="font-size: 1rem; color: rgba(255,255,255,0.92); font-weight: 700;">🔒 Oculto no gratuito</span>`;
                 }
-            }
-            
-            const realScore = stats.betterThanPercentage !== undefined ? Math.min(stats.betterThanPercentage, 99) : 0;
-            if(document.getElementById('hero-benchmark-text')) {
-                if (realScore > 0) {
-                    document.getElementById('hero-benchmark-text').innerHTML = `🔥 Seu perfil tem um histórico melhor que <strong>${realScore}%</strong> dos psicólogos`;
+
+                const contactsItem = document.getElementById('hero-item-contacts');
+                const contactsLabel = contactsItem ? contactsItem.querySelector('.hero-metric-label') : null;
+                if (contactsLabel) contactsLabel.textContent = 'Cliques no WhatsApp';
+                if (document.getElementById('hero-contacts')) {
+                    document.getElementById('hero-contacts').innerHTML = `<span style="font-size: 1.05rem; color: #fde047; font-weight: 700; cursor: pointer;" onclick="window.loadPage('psi_assinatura.html')">0 cliques (Assinar) &rarr;</span>`;
+                }
+
+                const benchmarkEl = document.getElementById('hero-benchmark-text');
+                if (benchmarkEl) {
+                    benchmarkEl.innerHTML = `🔒 Indicadores e cliques exclusivos do Plano Essencial - <a href="javascript:void(0)" onclick="window.loadPage('psi_assinatura.html')" style="color: #FFEE8C; text-decoration: underline; font-weight: 700;">Testar 7 dias grátis</a>`;
+                }
+            } else {
+                if (whatsappClicks === 0 && profileViews === 0) {
+                    const subtitle = document.querySelector('.modern-hero-subtitle');
+                    if (subtitle) subtitle.textContent = 'Fase de construção 🌱';
+                    
+                    if (document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = `<span style="font-size: 1.05rem; color: #fde047; font-weight: 600; cursor: pointer; border-bottom: 1px dashed rgba(253, 224, 71, 0.5); padding-bottom: 2px;" onclick="const card = document.querySelector('.modern-action-list')?.closest('.modern-checklist-card'); if(card) { card.scrollIntoView({behavior: 'smooth', block: 'center'}); const ogTrans = card.style.transition; card.style.transition = 'transform 0.2s, box-shadow 0.2s, background-color 0.5s ease'; card.style.backgroundColor = '#fef3c7'; setTimeout(() => { card.style.backgroundColor = ''; setTimeout(() => { card.style.transition = ogTrans; }, 500); }, 1500); }">Bora atrair pacientes? 🚀</span>`;
+                    if (document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = '<span style="font-size: 1.05rem; opacity: 0.8; font-weight: 500;">Seu perfil está sendo indexado 🔍</span>';
+                } else if (profileViews > 0 && whatsappClicks === 0) {
+                    if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = `+${profileViews}`;
+                    if (document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = `<span style="font-size: 1.05rem; color: #fde047; font-weight: 600; cursor: pointer; border-bottom: 1px dashed rgba(253, 224, 71, 0.5); padding-bottom: 2px;" onclick="const card = document.querySelector('.modern-action-list')?.closest('.modern-checklist-card'); if(card) { card.scrollIntoView({behavior: 'smooth', block: 'center'}); const ogTrans = card.style.transition; card.style.transition = 'transform 0.2s, box-shadow 0.2s, background-color 0.5s ease'; card.style.backgroundColor = '#fef3c7'; setTimeout(() => { card.style.backgroundColor = ''; setTimeout(() => { card.style.transition = ogTrans; }, 500); }, 1500); }">Veja como converter mais 🎯</span>`;
                 } else {
-                    document.getElementById('hero-benchmark-text').innerHTML = `🔥 Seu perfil tem um histórico crescente na plataforma`;
+                    if(document.getElementById('hero-contacts')) document.getElementById('hero-contacts').innerHTML = `+${whatsappClicks}`;
+                    if(document.getElementById('hero-views')) document.getElementById('hero-views').innerHTML = `+${profileViews}`;
+                }
+
+                if (stats.matchImpressions > 0) {
+                    const elItemMatch = document.getElementById('hero-item-match-impressions');
+                    const elValMatch = document.getElementById('hero-match-impressions');
+                    if (elItemMatch && elValMatch) {
+                        elItemMatch.style.display = '';
+                        elValMatch.innerHTML = `+${stats.matchImpressions}`;
+                    }
+                }
+                
+                const contatosConvertidos = stats.contatosConvertidos || 0;
+                if (contatosConvertidos > 0) {
+                    const elItemConv = document.getElementById('hero-item-conversions');
+                    const elValConv = document.getElementById('hero-conversions');
+                    if (elItemConv && elValConv) {
+                        elItemConv.style.display = '';
+                        elValConv.innerHTML = `+${contatosConvertidos}`;
+                    }
+                }
+                
+                const realScore = stats.betterThanPercentage !== undefined ? Math.min(stats.betterThanPercentage, 99) : 0;
+                if(document.getElementById('hero-benchmark-text')) {
+                    if (realScore > 0) {
+                        document.getElementById('hero-benchmark-text').innerHTML = `🔥 Seu perfil tem um histórico melhor que <strong>${realScore}%</strong> dos psicólogos`;
+                    } else {
+                        document.getElementById('hero-benchmark-text').innerHTML = `🔥 Seu perfil tem um histórico crescente na plataforma`;
+                    }
                 }
             }
 
@@ -112,49 +198,63 @@
             const patientsMetricsGroup = document.querySelector('.patients-metrics-group');
             if (patientsMetricsGroup) {
                 patientsMetricsGroup.style.flexWrap = 'wrap';
-                patientsMetricsGroup.innerHTML = `
-                    <div class="p-metric" style="min-width: 45%; margin-bottom: 15px;">
-                        <div class="p-metric-val" id="kpi-whatsapp-clicks">${stats.whatsappClicks || 0}</div>
-                        <div class="p-metric-label">
-                            Cliques no WhatsApp
-                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Total de pacientes que clicaram para falar com você no WhatsApp." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                if (isRestrictedComunidade) {
+                    patientsMetricsGroup.innerHTML = `
+                        <div style="width: 100%; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 14px; padding: 16px; margin-bottom: 14px; text-align: left;">
+                            <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; margin-bottom: 4px;">
+                                🔒 Indicadores individuais e comparativos bloqueados
+                            </div>
+                            <p style="margin: 0; color: #475569; font-size: 0.85rem; line-height: 1.45;">
+                                No Plano Comunidade (Grátis), seu perfil fica oculto nas buscas e não recebe cliques de pacientes. Indicadores individuais e de mercado são exclusivos para assinantes do Plano Essencial.
+                            </p>
                         </div>
-                    </div>
-                    <div class="p-metric" style="min-width: 45%; margin-bottom: 15px;">
-                        <div class="p-metric-val" id="kpi-match-impressions">${stats.matchImpressions || 0}</div>
-                        <div class="p-metric-label">
-                            Aparições no match
-                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Vezes que seu perfil foi recomendado na tela de resultados após o questionário." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
-                        </div>
-                    </div>
-                    <div class="p-metric" style="min-width: 45%; border-top: 1px solid #e9ecef; padding-top: 15px;">
-                        <div class="p-metric-val" id="kpi-views-match">${stats.profileViewsMatch || 0}</div>
-                        <div class="p-metric-label">
-                            Visualizações pelo Match
-                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Quantas vezes abriram seu perfil clicando na lista de resultados." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
-                        </div>
-                        <div style="font-size: 0.8rem; color: #16a34a; font-weight: bold; margin-top: 4px;">Conversão: ${stats.funnelRates?.matchToProfileViewRate || 0}%</div>
-                    </div>
-                    <div class="p-metric" style="min-width: 45%; border-top: 1px solid #e9ecef; padding-top: 15px;">
-                        <div class="p-metric-val" id="kpi-views-direct">${stats.profileViewsDirect || 0}</div>
-                        <div class="p-metric-label">
-                            Visualizações Diretas
-                            <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Quantas vezes abriram seu perfil por outros meios (Busca Orgânica, Link Direto, Comunidade, Blog)." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
-                        </div>
-                        <div style="font-size: 0.8rem; color: #16a34a; font-weight: bold; margin-top: 4px;">Conversão p/ WhatsApp: ${stats.funnelRates?.directViewToWhatsappRate || 0}%</div>
-                    </div>
-
-                    <!-- NOVO CARD DE OPORTUNIDADE DE DEMANDA -->
-                    <div class="p-metric global-stats-card" style="width: 100%; margin-top: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 15px; border-radius: 12px; border: 1px solid #bbf7d0; display: flex; align-items: center; gap: 15px;">
-                        <div style="font-size: 2rem; display: flex; align-items: center; justify-content: center;">🔥</div>
-                        <div style="text-align: left;">
-                            <div style="color: #166534; font-size: 0.9rem; font-weight: 700; margin-bottom: 4px;">Oportunidades na Yelo</div>
-                            <div style="color: #14532d; font-size: 0.85rem; line-height: 1.4;">
-                                Nos últimos 30 dias, geramos <strong>${displayMatches} matches</strong> e <strong>${displayClicks} cliques</strong> no WhatsApp para perfis como o seu.
+                        ${formatPeerCardHtml(stats.peerOpportunityStats, psychologistData.globalStats, true)}
+                    `;
+                } else {
+                    patientsMetricsGroup.innerHTML = `
+                        <div class="p-metric" style="min-width: 45%; margin-bottom: 15px;">
+                            <div class="p-metric-val" id="kpi-whatsapp-clicks">${stats.whatsappClicks || 0}</div>
+                            <div class="p-metric-label">
+                                Cliques no WhatsApp
+                                <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Total de pacientes que clicaram para falar com você no WhatsApp." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
                             </div>
                         </div>
-                    </div>
-                `;
+                        <div class="p-metric" style="min-width: 45%; margin-bottom: 15px;">
+                            <div class="p-metric-val" id="kpi-match-impressions">${stats.matchImpressions || 0}</div>
+                            <div class="p-metric-label">
+                                Aparições no match
+                                <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Vezes que seu perfil foi recomendado na tela de resultados após o questionário." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                            </div>
+                        </div>
+                        <div class="p-metric" style="min-width: 45%; border-top: 1px solid #e9ecef; padding-top: 15px;">
+                            <div class="p-metric-val" id="kpi-views-match">${stats.profileViewsMatch || 0}</div>
+                            <div class="p-metric-label">
+                                Visualizações pelo Match
+                                <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Quantas vezes abriram seu perfil clicando na lista de resultados." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #16a34a; font-weight: bold; margin-top: 4px;">Conversão: ${stats.funnelRates?.matchToProfileViewRate || 0}%</div>
+                        </div>
+                        <div class="p-metric" style="min-width: 45%; border-top: 1px solid #e9ecef; padding-top: 15px;">
+                            <div class="p-metric-val" id="kpi-views-direct">${stats.profileViewsDirect || 0}</div>
+                            <div class="p-metric-label">
+                                Visualizações Diretas
+                                <span class="info-tooltip" style="margin-left: 0; width: 16px; height: 16px;" data-tooltip="Quantas vezes abriram seu perfil por outros meios (Busca Orgânica, Link Direto, Comunidade, Blog)." tabindex="0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #16a34a; font-weight: bold; margin-top: 4px;">Conversão p/ WhatsApp: ${stats.funnelRates?.directViewToWhatsappRate || 0}%</div>
+                        </div>
+
+                        <!-- NOVO CARD DE OPORTUNIDADE DE DEMANDA -->
+                        <div class="p-metric global-stats-card" style="width: 100%; margin-top: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 15px; border-radius: 12px; border: 1px solid #bbf7d0; display: flex; align-items: center; gap: 15px;">
+                            <div style="font-size: 2rem; display: flex; align-items: center; justify-content: center;">🔥</div>
+                            <div style="text-align: left;">
+                                <div style="color: #166534; font-size: 0.9rem; font-weight: 700; margin-bottom: 4px;">Oportunidades na Yelo</div>
+                                <div style="color: #14532d; font-size: 0.85rem; line-height: 1.4;">
+                                    Nos últimos 30 dias, geramos <strong>${displayMatches} matches</strong> e <strong>${displayClicks} cliques</strong> no WhatsApp para perfis como o seu.
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
                 if (!document.getElementById('patients-metrics-style')) {
                     const style = document.createElement('style');
                     style.id = 'patients-metrics-style';
@@ -169,21 +269,23 @@
             }
 
             if(document.getElementById('psi-sidebar-growth-val')) {
-                const growthRate = profileViews > 0 ? '+12%' : '+0%';
+                const growthRate = isRestrictedComunidade ? 'Grátis' : (profileViews > 0 ? '+12%' : '+0%');
                 document.getElementById('psi-sidebar-growth-val').textContent = growthRate;
             }
             
             const renderFriendlyZero = (value, fallbackText) => value > 0 ? value : `<span style="font-size: 1.2rem; color: #888;">${fallbackText}</span>`;
             
-            if(document.getElementById('kpi-whatsapp-clicks')) document.getElementById('kpi-whatsapp-clicks').innerHTML = renderFriendlyZero(whatsappClicks, 'Ainda não');
-            if(document.getElementById('kpi-profile-views')) document.getElementById('kpi-profile-views').innerHTML = renderFriendlyZero(profileViews, 'Nenhuma');
-            if(document.getElementById('kpi-match-impressions')) document.getElementById('kpi-match-impressions').innerHTML = renderFriendlyZero(matchImpressions, 'Aguardando');
-            if(document.getElementById('kpi-taxa-escolha')) {
-                const convRate = stats.funnelRates?.profileConversion;
-                if (convRate === undefined || convRate === null) {
-                    document.getElementById('kpi-taxa-escolha').innerHTML = '<span style="font-size: 1.2rem; color: #888;">Em breve</span>';
-                } else {
-                    document.getElementById('kpi-taxa-escolha').textContent = `${convRate}%`;
+            if (!isRestrictedComunidade) {
+                if(document.getElementById('kpi-whatsapp-clicks')) document.getElementById('kpi-whatsapp-clicks').innerHTML = renderFriendlyZero(whatsappClicks, 'Ainda não');
+                if(document.getElementById('kpi-profile-views')) document.getElementById('kpi-profile-views').innerHTML = renderFriendlyZero(profileViews, 'Nenhuma');
+                if(document.getElementById('kpi-match-impressions')) document.getElementById('kpi-match-impressions').innerHTML = renderFriendlyZero(matchImpressions, 'Aguardando');
+                if(document.getElementById('kpi-taxa-escolha')) {
+                    const convRate = stats.funnelRates?.profileConversion;
+                    if (convRate === undefined || convRate === null) {
+                        document.getElementById('kpi-taxa-escolha').innerHTML = '<span style="font-size: 1.2rem; color: #888;">Em breve</span>';
+                    } else {
+                        document.getElementById('kpi-taxa-escolha').textContent = `${convRate}%`;
+                    }
                 }
             }
 
@@ -412,8 +514,8 @@
                             isTip: true, // Lâmpada fixa
                             isMarketingAI: true 
                         });
-                    } else {
-                        // Fallback de Regras de Negócio
+                    } else if (!isRestrictedComunidade) {
+                        // Fallback de Regras de Negócio (exclusivo de perfis em busca)
                         if (impressions >= 10 && (views / impressions) < 0.15) {
                             stepsToRender.push({ title: 'Ajustar o início do seu texto de bio para melhorar a taxa de clique no seu perfil', impact: 'Maior Conversão', completed: false, url: 'psi_meu_perfil.html', isTip: true });
                         } else if (views >= 10 && viewToClickRate >= 0.25 && myPrice > 0 && myPrice < 130) {
