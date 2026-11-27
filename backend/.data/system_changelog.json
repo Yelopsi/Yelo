@@ -1,5 +1,45 @@
 [
   {
+    "id": "change-git-2ece84cc",
+    "date": "2026-11-27T21:35:50.000Z",
+    "commit": "2ece84cc",
+    "author": "Anderson",
+    "title": "Novo: Avisos claros de zero cliques e restricao de indicadores com benchmark no Plano Comunidade (freemium)",
+    "category": "Planos & Trial",
+    "badgeColor": "#f59e0b",
+    "status": "Em Produção",
+    "summary": "avisos claros de zero cliques e restricao de indicadores com benchmark no Plano Comunidade",
+    "description": "Commit registrado no repositório: \"feat(freemium): avisos claros de zero cliques e restricao de indicadores com benchmark no Plano Comunidade\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/psiDashboardController.js, backend/data/system_changelog.json, mobile/src/app/(tabs)/ajustes.tsx, mobile/src/app/(tabs)/analytics.tsx (+13 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #2ece84cc"
+    },
+    "after": {
+      "nova_versao": "avisos claros de zero cliques e restricao de indicadores com benchmark no Plano Comunidade"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/psiDashboardController.js",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/(tabs)/ajustes.tsx",
+      "mobile/src/app/(tabs)/analytics.tsx",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "mobile/src/app/(tabs)/favoritos-analytics.tsx",
+      "mobile/src/app/(tabs)/index.tsx",
+      "mobile/src/app/(tabs)/meu_perfil.tsx",
+      "mobile/src/components/ComunidadeLockedCard.tsx",
+      "public/psi/psi_analytics.js",
+      "public/psi/psi_assinatura.html",
+      "public/psi/psi_dashboard.js",
+      "public/psi/psi_favoritos_analytics.js",
+      "public/psi/psi_meu_perfil.js",
+      "public/psi/psi_visao_geral.html",
+      "public/psi/psi_visao_geral.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-7fc9d4da",
     "date": "2026-11-27T21:13:39.000Z",
     "commit": "7fc9d4da",

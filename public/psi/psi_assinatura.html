@@ -1662,7 +1662,7 @@
         const isTokenizedTrial = String(user.subscriptionId || '').startsWith('trial_tok_');
         const planExpiresAt = user.planExpiresAt ? new Date(user.planExpiresAt) : null;
 
-        const isEligibleForTrial = !user.is_exempt && user.plano === 'Comunidade' && !hasSubscription && !user.firstPaidAt && !user.subscribedAt;
+        const isEligibleForTrial = !user.is_exempt && user.plano === 'Comunidade' && !hasSubscription && !user.firstPaidAt && !user.subscribedAt && !user.canceledAt;
         window.isEligibleForTrial7d = isEligibleForTrial;
 
         const isInTrial = !user.is_exempt && user.plano !== 'Comunidade' && planExpiresAt && planExpiresAt > hoje && !user.firstPaidAt && (!hasSubscription || isTokenizedTrial);
@@ -1697,6 +1697,17 @@
                 const dataApos7Dias = new Date(hoje);
                 dataApos7Dias.setDate(dataApos7Dias.getDate() + 7);
                 trialBannerDesc.innerHTML = `No plano gratuito, seu perfil fica oculto nas buscas e não recebe contatos no WhatsApp. Escolha seu plano abaixo, cadastre seu cartão e teste o Plano Essencial completo por <strong>7 dias grátis</strong> antes da primeira cobrança (${dataApos7Dias.toLocaleDateString('pt-BR')}).`;
+            }
+            updateCycleUI(selectedCycle);
+        } else if (!user.is_exempt && user.plano === 'Comunidade') {
+            if (trialBannerGlobal) trialBannerGlobal.style.display = 'flex';
+            if (trialBannerTitle) {
+                trialBannerTitle.textContent = user.firstPaidAt
+                    ? 'Assinatura encerrada - Plano Comunidade (Grátis)'
+                    : 'Seu período de teste já foi utilizado';
+            }
+            if (trialBannerDesc) {
+                trialBannerDesc.innerHTML = `Sua conta retornou ao <strong>Plano Comunidade (Grátis)</strong>: seu perfil está oculto nas buscas e não recebe cliques no WhatsApp. Escolha qualquer plano abaixo para voltar às buscas e receber pacientes imediatamente.`;
             }
             updateCycleUI(selectedCycle);
         }

@@ -63,6 +63,33 @@ export function isMobileNewPricingActive(
   return refMs >= Date.parse(NEW_PRICING_DEFAULT_ISO);
 }
 
+export function isMobileTrialEligible(
+  psiData?: {
+    is_exempt?: boolean | string | number;
+    plano?: string | null;
+    subscriptionId?: string | null;
+    stripeSubscriptionId?: string | null;
+    firstPaidAt?: string | null;
+    subscribedAt?: string | null;
+    canceledAt?: string | null;
+  } | null
+): boolean {
+  if (!psiData) return false;
+  const isExempt =
+    psiData.is_exempt === true ||
+    String(psiData.is_exempt).toLowerCase() === 'true' ||
+    psiData.is_exempt === 1;
+  if (isExempt) return false;
+  const hasSub = Boolean(psiData.stripeSubscriptionId || psiData.subscriptionId);
+  return (
+    String(psiData.plano || '').trim() === 'Comunidade' &&
+    !hasSub &&
+    !psiData.firstPaidAt &&
+    !psiData.subscribedAt &&
+    !psiData.canceledAt
+  );
+}
+
 export async function fetchPublicNewPricingStatus(): Promise<boolean> {
   try {
     const res = await api.get('/api/public/pricing-status');

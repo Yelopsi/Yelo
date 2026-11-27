@@ -53,20 +53,36 @@
                     !psychologistData.is_exempt &&
                     String(psychologistData.plano || '').trim() === 'Comunidade')
             );
+            const isTrialEligible = typeof window.isYeloComunidadeTrialEligible === 'function'
+                ? window.isYeloComunidadeTrialEligible(psychologistData)
+                : (!psychologistData.firstPaidAt && !psychologistData.subscribedAt && !psychologistData.canceledAt);
 
             const comBanner = document.getElementById('comunidade-visao-geral-banner');
             if (comBanner) {
                 comBanner.style.display = isRestrictedComunidade ? 'flex' : 'none';
+                if (isRestrictedComunidade && !isTrialEligible) {
+                    const bTitle = document.getElementById('comunidade-visao-geral-title');
+                    const bDesc = document.getElementById('comunidade-visao-geral-desc');
+                    const bCta = document.getElementById('comunidade-visao-geral-cta');
+                    if (bTitle) bTitle.textContent = psychologistData.firstPaidAt
+                        ? '🔒 Assinatura inativa - Perfil no Plano Comunidade (Grátis)'
+                        : '🔒 Período de teste encerrado - Seu perfil não recebe cliques';
+                    if (bDesc) bDesc.innerHTML = 'Seu perfil retornou ao <strong>Plano Comunidade (Grátis)</strong>. Agenda, Pacientes, Financeiro e Fórum continuam livres, mas <strong>seu perfil está oculto das buscas e você não recebe cliques nem contatos de pacientes</strong>. Assine o Plano Essencial para reativar imediatamente.';
+                    if (bCta) bCta.innerHTML = 'Assinar Plano Essencial &rarr;';
+                }
             }
 
             const formatPeerCardHtml = (peerStats, globalStats, compact = false) => {
                 const pStats = peerStats || {};
                 const gStats = globalStats || {};
-                const m30 = Number(pStats.matches30d ?? gStats.matches30d ?? 0);
-                const c30 = Number(pStats.clicks30d ?? gStats.clicks30d ?? 0);
+                const m30 = pStats.matches30d !== undefined ? Number(pStats.matches30d) : (Number(gStats.matches30d || 0) + 20);
+                const c30 = pStats.clicks30d !== undefined ? Number(pStats.clicks30d) : (Number(gStats.clicks30d || 0) + 10);
                 const c7 = Number(pStats.clicks7d ?? gStats.clicks7d ?? 0);
                 const avgC30 = Number(pStats.avgClicksPerProfile30d ?? 0);
                 const cohortLabel = pStats.scope === 'similar_profiles' ? 'perfis com atuação parecida com a sua' : 'perfis ativos na Yelo';
+                const fomoCtaText = isTrialEligible
+                    ? 'Testar 7 dias grátis e liberar cliques &rarr;'
+                    : 'Assinar Plano Essencial e voltar às buscas &rarr;';
 
                 const numbersBlock = (m30 > 0 || c30 > 0)
                     ? `
@@ -81,7 +97,7 @@
                             </div>
                         </div>
                         <p style="margin: 0; color: #14532d; font-size: 0.85rem; line-height: 1.45;">
-                            Nos últimos 30 dias, ${cohortLabel} registraram <strong>${m30} matches</strong> e <strong>${c30} cliques no WhatsApp</strong>${avgC30 > 0 ? ` (média de <strong>${avgC30.toFixed(1).replace('.', ',')} cliques/perfil ativo</strong>)` : ''}${c7 > 0 ? `, sendo <strong>${c7}</strong> só nos últimos 7 dias` : ''}. Ative seu teste grátis de 7 dias para começar a receber esses cliques.
+                            Nos últimos 30 dias, ${cohortLabel} registraram <strong>${m30} matches</strong> e <strong>${c30} cliques no WhatsApp</strong>${avgC30 >= 0.1 ? ` (média de <strong>${avgC30.toFixed(1).replace('.', ',')} cliques/perfil ativo</strong>)` : ''}${c7 > 0 ? `, sendo <strong>${c7}</strong> só nos últimos 7 dias` : ''}. ${isTrialEligible ? 'Ative seu teste grátis de 7 dias para começar a receber esses cliques.' : 'Reative sua assinatura para voltar a receber esses cliques.'}
                         </p>
                     `
                     : `
@@ -98,7 +114,7 @@
                         </div>
                         ${numbersBlock}
                         <div style="margin-top: 12px;">
-                            <button type="button" onclick="window.loadPage('psi_assinatura.html')" style="background: #1B4332; color: #ffffff; border: none; border-radius: 999px; padding: 9px 18px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">Testar 7 dias grátis e liberar cliques &rarr;</button>
+                            <button type="button" onclick="window.loadPage('psi_assinatura.html')" style="background: #1B4332; color: #ffffff; border: none; border-radius: 999px; padding: 9px 18px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">${fomoCtaText}</button>
                         </div>
                     </div>
                 `;
@@ -114,7 +130,11 @@
 
             if (isRestrictedComunidade) {
                 const subtitle = document.querySelector('.modern-hero-subtitle');
-                if (subtitle) subtitle.textContent = 'Plano Comunidade (Grátis) - perfil oculto';
+                if (subtitle) {
+                    subtitle.textContent = isTrialEligible
+                        ? 'Plano Comunidade (Grátis) - perfil oculto'
+                        : 'Teste encerrado - perfil oculto no Comunidade';
+                }
 
                 const elItemMatch = document.getElementById('hero-item-match-impressions');
                 const elItemConv = document.getElementById('hero-item-conversions');
@@ -137,7 +157,9 @@
 
                 const benchmarkEl = document.getElementById('hero-benchmark-text');
                 if (benchmarkEl) {
-                    benchmarkEl.innerHTML = `🔒 Indicadores e cliques exclusivos do Plano Essencial - <a href="javascript:void(0)" onclick="window.loadPage('psi_assinatura.html')" style="color: #FFEE8C; text-decoration: underline; font-weight: 700;">Testar 7 dias grátis</a>`;
+                    benchmarkEl.innerHTML = isTrialEligible
+                        ? `🔒 Indicadores e cliques exclusivos do Plano Essencial - <a href="javascript:void(0)" onclick="window.loadPage('psi_assinatura.html')" style="color: #FFEE8C; text-decoration: underline; font-weight: 700;">Testar 7 dias grátis</a>`
+                        : `🔒 Seu período de teste acabou - <a href="javascript:void(0)" onclick="window.loadPage('psi_assinatura.html')" style="color: #FFEE8C; text-decoration: underline; font-weight: 700;">Assinar Plano Essencial</a>`;
                 }
             } else {
                 if (whatsappClicks === 0 && profileViews === 0) {

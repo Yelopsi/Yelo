@@ -9,7 +9,7 @@ import * as Clipboard from 'expo-clipboard';
 import YeloToast from '../../components/YeloToast';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
-import { isMobileNewPricingActive } from '../../utils/pricingLaunch';
+import { isMobileNewPricingActive, isMobileTrialEligible } from '../../utils/pricingLaunch';
 import ComunidadeLockedCard from '../../components/ComunidadeLockedCard';
 
 export default function HomeScreen() {
@@ -158,6 +158,8 @@ export default function HomeScreen() {
     stats?.isComunidadeRestricted ||
       (isMobileNewPricingActive(psiData) && !isExempt && String(psiData?.plano || '').trim() === 'Comunidade')
   );
+  const isTrialEligible =
+    typeof stats?.trialEligible === 'boolean' ? stats.trialEligible : isMobileTrialEligible(psiData);
 
   // --- DADOS REAIS DA API (sem nenhum fallback inventado) ---
   const primeiroNome = psiData.nome ? psiData.nome.split(' ')[0] : '';
@@ -411,7 +413,9 @@ export default function HomeScreen() {
               </Text>
               <Text className="font-sans text-white/85 text-[15px]">
                 {isRestrictedComunidade
-                  ? 'Plano Comunidade (Grátis) - perfil oculto'
+                  ? isTrialEligible
+                    ? 'Plano Comunidade (Grátis) - perfil oculto'
+                    : 'Teste encerrado - perfil oculto no Comunidade'
                   : whatsappClicks === 0 && profileViews === 0
                     ? 'Fase de construção 🌱'
                     : 'Seu impacto na Yelo:'}
@@ -454,7 +458,9 @@ export default function HomeScreen() {
                 className="bg-white/15 self-start px-3.5 py-1.5 rounded-full mt-1"
               >
                 <Text className="font-sans text-[#FFEE8C] text-[12px] font-semibold">
-                  🔒 Cliques e indicadores exclusivos do Essencial - Testar 7d grátis →
+                  {isTrialEligible
+                    ? '🔒 Cliques e indicadores exclusivos do Essencial - Testar 7d grátis →'
+                    : '🔒 Período de teste encerrado - Assinar Plano Essencial →'}
                 </Text>
               </TouchableOpacity>
             </>
@@ -532,10 +538,14 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13.5, color: '#9A3412', marginBottom: 4 }}>
-              👁️ Plano Comunidade (Grátis) - perfil oculto nas buscas
+              {isTrialEligible
+                ? '👁️ Plano Comunidade (Grátis) - perfil oculto nas buscas'
+                : '🔒 Período de teste encerrado - Seu perfil não recebe cliques'}
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: '#78350F', lineHeight: 18, marginBottom: 10 }}>
-              Suas ferramentas internas seguem gratuitas, mas seu perfil não aparece nas buscas e você não recebe cliques nem contatos de pacientes no WhatsApp. Ative o Plano Essencial e ganhe 7 dias grátis no cartão.
+              {isTrialEligible
+                ? 'Suas ferramentas internas seguem gratuitas, mas seu perfil não aparece nas buscas e você não recebe cliques nem contatos de pacientes no WhatsApp. Ative o Plano Essencial e ganhe 7 dias grátis no cartão.'
+                : 'Seu teste do Plano Essencial terminou sem assinatura ativa e sua conta retornou ao Plano Comunidade (Grátis). Suas ferramentas internas continuam livres, mas seu perfil está oculto e sem cliques. Assine para voltar às buscas.'}
             </Text>
             <TouchableOpacity
               activeOpacity={0.85}
@@ -543,7 +553,7 @@ export default function HomeScreen() {
               style={{ backgroundColor: '#1B4332', alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 }}
             >
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#ffffff' }}>
-                Testar 7 dias grátis →
+                {isTrialEligible ? 'Testar 7 dias grátis →' : 'Assinar Plano Essencial →'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -747,6 +757,7 @@ export default function HomeScreen() {
             <View className="mb-5">
               <ComunidadeLockedCard
                 compact
+                trialEligible={isTrialEligible}
                 peerStats={stats?.peerOpportunityStats}
                 globalStats={psiData?.globalStats}
               />

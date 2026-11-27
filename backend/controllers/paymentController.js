@@ -399,6 +399,7 @@ exports.createPreference = async (req, res) => {
         } else {
             const isEligibleForTrial = !localPsychologist.firstPaidAt
                 && !localPsychologist.subscribedAt
+                && !localPsychologist.canceledAt
                 && !localPsychologist.subscriptionId
                 && (!localPsychologist.planExpiresAt || localPsychologist.plano === 'Comunidade');
 

@@ -30,6 +30,7 @@ const ProgressBar = ({ label, percentage, color }: { label: string; percentage: 
 interface FavoritesProfileData {
   restricted?: boolean;
   isComunidadeRestricted?: boolean;
+  trialEligible?: boolean;
   peerOpportunityStats?: any;
   total: number;
   temas: Record<string, number>;
@@ -173,7 +174,12 @@ export default function FavoritosAnalyticsScreen() {
           <View className="mx-6 mb-6 bg-white p-6 rounded-[20px] shadow-sm border border-[#e5e7eb]">
             <ComunidadeLockedCard
               title="Análise de favoritos disponível no Plano Essencial"
-              description="No Plano Comunidade (Grátis), seu perfil fica oculto nas buscas e não recebe cliques ou salvamentos de novos pacientes. Ative seu teste grátis para aparecer nas buscas e destravar estes indicadores."
+              trialEligible={data?.trialEligible !== false}
+              description={
+                data?.trialEligible === false
+                  ? 'Seu período de teste encerrou e sua conta retornou ao Plano Comunidade (Grátis), sem aparecer nas buscas nem receber cliques. Assine o Plano Essencial para destravar estes indicadores.'
+                  : 'No Plano Comunidade (Grátis), seu perfil fica oculto nas buscas e não recebe cliques ou salvamentos de novos pacientes. Ative seu teste grátis para aparecer nas buscas e destravar estes indicadores.'
+              }
               peerStats={data?.peerOpportunityStats}
             />
           </View>

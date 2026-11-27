@@ -65,6 +65,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (ref && typeof ref.isNewPricingActive === 'boolean') return ref.isNewPricingActive;
         return Date.now() >= Date.parse('2027-01-01T00:00:00-03:00');
     };
+    window.isYeloComunidadeTrialEligible = (data) => {
+        const ref = data || psychologistData;
+        if (!ref || ref.is_exempt) return false;
+        const hasSub = Boolean(ref.stripeSubscriptionId || ref.subscriptionId);
+        return String(ref.plano || '').trim() === 'Comunidade'
+            && !hasSub
+            && !ref.firstPaidAt
+            && !ref.subscribedAt
+            && !ref.canceledAt;
+    };
     window.atualizarInterfaceLateral = atualizarInterfaceLateral;
 
     const mainContent = document.getElementById('main-content');
@@ -576,9 +586,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 banner.style.position = 'fixed';
                 banner.style.paddingRight = '45px';
 
-                const textMessage = `👁️ Plano Comunidade (Grátis): seu perfil está oculto das buscas e não recebe cliques de pacientes. Ative o Plano Essencial com 7 dias grátis para aparecer aos pacientes.`;
+                const isTrialEligible = window.isYeloComunidadeTrialEligible(psychologistData);
+                const textMessage = isTrialEligible
+                    ? `👁️ Plano Comunidade (Grátis): seu perfil está oculto das buscas e não recebe cliques de pacientes. Ative o Plano Essencial com 7 dias grátis para aparecer aos pacientes.`
+                    : `🔒 Seu período de teste encerrou: seu perfil retornou ao Plano Comunidade (Grátis), está oculto das buscas e não recebe cliques de pacientes.`;
                 const btnAction = "window.loadPage('psi_assinatura.html')";
-                const btnText = "Testar 7 dias grátis";
+                const btnText = isTrialEligible ? "Testar 7 dias grátis" : "Assinar Plano Essencial";
 
                 banner.innerHTML = `
                     <span>${textMessage}</span>

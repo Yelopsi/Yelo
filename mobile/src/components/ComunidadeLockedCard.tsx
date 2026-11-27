@@ -24,21 +24,40 @@ interface ComunidadeLockedCardProps {
     clicks7d?: number;
   } | null;
   compact?: boolean;
+  trialEligible?: boolean;
   ctaLabel?: string;
 }
 
 export default function ComunidadeLockedCard({
   title = 'Indicadores individuais e de mercado bloqueados',
-  description = 'No Plano Comunidade (Grátis), seu perfil fica oculto nas buscas e não recebe cliques de pacientes. Indicadores individuais e comparativos são exclusivos para assinantes do Plano Essencial.',
+  description,
   peerStats,
   globalStats,
   compact = false,
-  ctaLabel = 'Testar 7 dias grátis e liberar cliques →',
+  trialEligible = true,
+  ctaLabel,
 }: ComunidadeLockedCardProps) {
   const router = useRouter();
 
-  const m30 = Number(peerStats?.matches30d ?? globalStats?.matches30d ?? 0);
-  const c30 = Number(peerStats?.clicks30d ?? globalStats?.clicks30d ?? 0);
+  const resolvedDescription =
+    description ||
+    (trialEligible
+      ? 'No Plano Comunidade (Grátis), seu perfil fica oculto nas buscas e não recebe cliques de pacientes. Indicadores individuais e comparativos são exclusivos para assinantes do Plano Essencial.'
+      : 'Seu período de teste encerrou e sua conta retornou ao Plano Comunidade (Grátis), oculto nas buscas e sem cliques. Assine o Plano Essencial para reativar seu perfil e indicadores.');
+  const resolvedCta =
+    ctaLabel ||
+    (trialEligible
+      ? 'Testar 7 dias grátis e liberar cliques →'
+      : 'Assinar Plano Essencial e voltar às buscas →');
+
+  const m30 =
+    peerStats?.matches30d !== undefined
+      ? Number(peerStats.matches30d)
+      : Number(globalStats?.matches30d ?? 0) + 20;
+  const c30 =
+    peerStats?.clicks30d !== undefined
+      ? Number(peerStats.clicks30d)
+      : Number(globalStats?.clicks30d ?? 0) + 10;
   const c7 = Number(peerStats?.clicks7d ?? globalStats?.clicks7d ?? 0);
   const avgC30 = Number(peerStats?.avgClicksPerProfile30d ?? 0);
   const cohortText =
@@ -72,7 +91,7 @@ export default function ComunidadeLockedCard({
           }}
         >
           <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#9A3412' }}>
-            🔒 Plano Comunidade (Grátis)
+            {trialEligible ? '🔒 Plano Comunidade (Grátis)' : '🔒 Período de teste encerrado'}
           </Text>
         </View>
         <Text
@@ -93,7 +112,7 @@ export default function ComunidadeLockedCard({
             lineHeight: 19,
           }}
         >
-          {description}
+          {resolvedDescription}
         </Text>
       </View>
 
@@ -165,8 +184,8 @@ export default function ComunidadeLockedCard({
               }}
             >
               Nos últimos 30 dias, {cohortText} receberam <Text style={{ fontWeight: '700' }}>{m30} matches</Text> e <Text style={{ fontWeight: '700' }}>{c30} cliques no WhatsApp</Text>
-              {avgC30 > 0 ? ` (média de ${avgC30.toFixed(1).replace('.', ',')} cliques/perfil ativo)` : ''}
-              {c7 > 0 ? ` - com ${c7} só nos últimos 7 dias` : ''}. Ative seu teste grátis para receber esses contatos.
+              {avgC30 >= 0.1 ? ` (média de ${avgC30.toFixed(1).replace('.', ',')} cliques/perfil ativo)` : ''}
+              {c7 > 0 ? ` - com ${c7} só nos últimos 7 dias` : ''}. {trialEligible ? 'Ative seu teste grátis para receber esses contatos.' : 'Reative sua assinatura para voltar a receber esses contatos.'}
             </Text>
           </>
         ) : (
@@ -195,7 +214,7 @@ export default function ComunidadeLockedCard({
           }}
         >
           <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#ffffff' }}>
-            {ctaLabel}
+            {resolvedCta}
           </Text>
         </TouchableOpacity>
       </View>

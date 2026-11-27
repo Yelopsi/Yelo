@@ -41,6 +41,7 @@ interface ProfileStrengthData {
 interface AnalyticsResponse {
   restricted?: boolean;
   isComunidadeRestricted?: boolean;
+  trialEligible?: boolean;
   peerOpportunityStats?: any;
   priceComparison?: PriceComparisonData;
   topTopics?: TopicData[];
@@ -226,7 +227,7 @@ export default function AnalyticsScreen() {
           <View className="mx-6 mb-6 bg-white p-[22px] rounded-[20px] shadow-sm border border-[#e5e7eb]">
             <ComunidadeLockedCard
               title="Indicadores pessoais e de mercado são restritos ao Plano Essencial"
-              description="No Plano Comunidade (Grátis), seu perfil fica oculto nas buscas e não recebe cliques de pacientes. Comparativos de honorários, temas buscados pelos pacientes, visibilidade individual e força do perfil são liberados ao assinar."
+              trialEligible={data?.trialEligible !== false}
               peerStats={data?.peerOpportunityStats}
             />
           </View>

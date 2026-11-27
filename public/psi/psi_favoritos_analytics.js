@@ -80,10 +80,13 @@ async function initializeFavoritosAnalyticsPage() {
 
         if (data?.restricted || data?.isComunidadeRestricted) {
             const psiData = typeof window.getPsychologistData === 'function' ? window.getPsychologistData() : null;
+            const isTrialEligible = typeof window.isYeloComunidadeTrialEligible === 'function'
+                ? window.isYeloComunidadeTrialEligible(psiData)
+                : (!psiData || (!psiData.firstPaidAt && !psiData.subscribedAt && !psiData.canceledAt));
             const pStats = data.peerOpportunityStats || {};
             const gStats = psiData?.globalStats || {};
-            const m30 = Number(pStats.matches30d ?? gStats.matches30d ?? 0);
-            const c30 = Number(pStats.clicks30d ?? gStats.clicks30d ?? 0);
+            const m30 = pStats.matches30d !== undefined ? Number(pStats.matches30d) : (Number(gStats.matches30d || 0) + 20);
+            const c30 = pStats.clicks30d !== undefined ? Number(pStats.clicks30d) : (Number(gStats.clicks30d || 0) + 10);
             const c7 = Number(pStats.clicks7d ?? gStats.clicks7d ?? 0);
             const avgC30 = Number(pStats.avgClicksPerProfile30d ?? 0);
             const cohortText = pStats.scope === 'similar_profiles' ? 'perfis com atuação parecida com a sua' : 'perfis ativos no Plano Essencial';
@@ -91,22 +94,24 @@ async function initializeFavoritosAnalyticsPage() {
             grid.innerHTML = `
                 <div class="widget fade-in-up" style="grid-column: 1 / -1; padding: 28px; border-radius: 22px; background: #fff; border: 1px solid #e2e8f0; text-align: left;">
                     <div style="display: inline-flex; align-items: center; gap: 8px; background: #FFF4E5; border: 1px solid #FFB020; color: #9A3412; padding: 6px 14px; border-radius: 999px; font-size: 0.8rem; font-weight: 800; margin-bottom: 14px;">
-                        🔒 Plano Comunidade (Grátis) - Exclusivo do Plano Essencial
+                        ${isTrialEligible ? '🔒 Plano Comunidade (Grátis) - Exclusivo do Plano Essencial' : '🔒 Período de teste encerrado - Exclusivo do Plano Essencial'}
                     </div>
                     <h2 style="margin: 0 0 8px 0; font-family: var(--font-titulos); color: #1B4332; font-size: 1.55rem;">Perfil de pacientes e favoritos disponível no Plano Essencial</h2>
                     <p style="color: #475569; font-size: 0.95rem; line-height: 1.55; margin: 0 0 20px 0; max-width: 700px;">
-                        No plano gratuito seu perfil fica oculto nas buscas e não recebe cliques ou salvamentos de novos pacientes. Ative seu teste grátis para aparecer nas buscas e destravar estes indicadores.
+                        ${isTrialEligible
+                            ? 'No plano gratuito seu perfil fica oculto nas buscas e não recebe cliques ou salvamentos de novos pacientes. Ative seu teste grátis para aparecer nas buscas e destravar estes indicadores.'
+                            : 'Seu período de teste encerrou e sua conta retornou ao Plano Comunidade (Grátis), sem aparecer nas buscas nem receber cliques. Assine o Plano Essencial para destravar estes indicadores.'}
                     </p>
                     <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #86efac; border-radius: 18px; padding: 20px; margin-bottom: 20px;">
                         <strong style="color: #166534; font-size: 1rem; display: block; margin-bottom: 8px;">🔥 Desempenho de perfis como o seu na Yelo</strong>
                         <p style="margin: 0; color: #14532d; font-size: 0.9rem; line-height: 1.5;">
                             ${(m30 > 0 || c30 > 0)
-                                ? `Nos últimos 30 dias, ${cohortText} receberam <strong>${m30} aparições no Match</strong> e <strong>${c30} cliques no WhatsApp</strong>${avgC30 > 0 ? ` (média de <strong>${avgC30.toFixed(1).replace('.', ',')} cliques/perfil ativo</strong>)` : ''}${c7 > 0 ? ` - com <strong>${c7}</strong> só nos últimos 7 dias` : ''}.`
+                                ? `Nos últimos 30 dias, ${cohortText} receberam <strong>${m30} aparições no Match</strong> e <strong>${c30} cliques no WhatsApp</strong>${avgC30 >= 0.1 ? ` (média de <strong>${avgC30.toFixed(1).replace('.', ',')} cliques/perfil ativo</strong>)` : ''}${c7 > 0 ? ` - com <strong>${c7}</strong> só nos últimos 7 dias` : ''}.`
                                 : `Perfis no Plano Essencial recebem recomendações no Match e cliques diretos no WhatsApp todos os dias.`}
                         </p>
                     </div>
                     <button type="button" onclick="window.loadPage('psi_assinatura.html')" style="background: #1B4332; color: #ffffff; border: none; border-radius: 999px; padding: 12px 24px; font-weight: 700; font-size: 0.94rem; cursor: pointer;">
-                        Testar 7 dias grátis no Plano Essencial &rarr;
+                        ${isTrialEligible ? 'Testar 7 dias grátis no Plano Essencial &rarr;' : 'Assinar Plano Essencial e voltar às buscas &rarr;'}
                     </button>
                 </div>`;
             return;

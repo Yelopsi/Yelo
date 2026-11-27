@@ -936,7 +936,8 @@ export default function AssinaturaScreen() {
     isComunidade &&
     !hasSubscription &&
     !psiData?.firstPaidAt &&
-    !psiData?.subscribedAt;
+    !psiData?.subscribedAt &&
+    !psiData?.canceledAt;
   const isInTrial = isNewPricing
     ? !isExempt && !isComunidade && !!expiresAt && expiresAt > now && !psiData?.firstPaidAt && (!hasSubscription || isTokenizedTrial)
     : !isExempt && !hasSubscription && !isExpired && daysRemaining > 0;
@@ -1323,7 +1324,7 @@ export default function AssinaturaScreen() {
             </View>
           )}
 
-          {isEligibleForTrial && (
+          {isEligibleForTrial ? (
             <View
               style={{
                 marginTop: 14,
@@ -1339,7 +1340,27 @@ export default function AssinaturaScreen() {
                 Cadastre seu cartão de crédito ao escolher seu plano abaixo e comece hoje sem pagar nada. A primeira cobrança ocorre só em {nextSevenDaysFormatted}.
               </Text>
             </View>
-          )}
+          ) : isNewPricing && !isExempt && isComunidade && !isInTrial ? (
+            <View
+              style={{
+                marginTop: 14,
+                backgroundColor: '#FFF4E5',
+                borderWidth: 1,
+                borderColor: '#FFB020',
+                borderRadius: 20,
+                padding: 16,
+              }}
+            >
+              <Text style={{ fontFamily: 'Inter_700Bold', color: '#9A3412', fontSize: 13.5, marginBottom: 4 }}>
+                {psiData?.firstPaidAt
+                  ? '🔒 Assinatura encerrada - Plano Comunidade (Grátis)'
+                  : '🔒 Seu período de teste já foi utilizado'}
+              </Text>
+              <Text style={{ fontFamily: 'Inter_400Regular', color: '#78350F', fontSize: 12.5, lineHeight: 18 }}>
+                Sua conta retornou ao Plano Comunidade (Grátis): seu perfil está oculto nas buscas e não recebe cliques no WhatsApp. Escolha qualquer plano abaixo para voltar às buscas imediatamente.
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         {/* SELETOR SEGMENTADO DE PERIODICIDADE (LIBERADO EM 01/01/2027) */}

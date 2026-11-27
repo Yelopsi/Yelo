@@ -1011,7 +1011,7 @@ export default function MeuPerfilScreen() {
                   }}
                 >
                   {planoAtual === 'Comunidade' && !isExempt
-                    ? 'Seu perfil não aparece nas buscas e não recebe cliques de pacientes. Toque aqui para testar o Plano Essencial por 7 dias grátis.'
+                    ? 'Seu perfil não aparece nas buscas e não recebe cliques de pacientes. Toque aqui para ativar o Plano Essencial.'
                     : 'Seu perfil está oculto nas buscas e sua URL pública está desativada. Toque aqui para reativar sua assinatura.'}
                 </Text>
               </View>

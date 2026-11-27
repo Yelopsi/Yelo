@@ -6,11 +6,41 @@ const gamificationService = require('../services/gamificationService');
 const { resolveActor } = require('../utils/actorClassifier');
 const pricingLaunch = require('../utils/pricingLaunch');
 
+const PEER_DISPLAY_MATCHES_OFFSET = 20;
+const PEER_DISPLAY_CLICKS_OFFSET = 10;
+
+function formatPeerOpportunityResult(scope, peerCount, rawMatches30d, rawMatches7d, rawClicks30d, rawClicks7d) {
+    const matches30d = rawMatches30d + PEER_DISPLAY_MATCHES_OFFSET;
+    const clicks30d = rawClicks30d + PEER_DISPLAY_CLICKS_OFFSET;
+    return {
+        scope,
+        peerCount,
+        matches30d,
+        matches7d: rawMatches7d,
+        clicks30d,
+        clicks7d: rawClicks7d,
+        rawMatches30d,
+        rawClicks30d,
+        avgMatchesPerProfile30d: peerCount > 0 ? parseFloat((matches30d / peerCount).toFixed(1)) : 0,
+        avgClicksPerProfile30d: peerCount > 0 ? parseFloat((clicks30d / peerCount).toFixed(1)) : 0
+    };
+}
+
 function isRestrictedComunidadePlan(psychologist) {
     if (!psychologist) return false;
     if (!pricingLaunch.isNewPricingActive()) return false;
     if (psychologist.is_exempt) return false;
     return String(psychologist.plano || '').trim() === 'Comunidade';
+}
+
+function isComunidadeTrialEligible(psychologist) {
+    if (!psychologist || psychologist.is_exempt) return false;
+    const hasSub = Boolean(psychologist.stripeSubscriptionId || psychologist.subscriptionId);
+    return String(psychologist.plano || '').trim() === 'Comunidade'
+        && !hasSub
+        && !psychologist.firstPaidAt
+        && !psychologist.subscribedAt
+        && !psychologist.canceledAt;
 }
 
 async function queryCohortEvents(tableName, cohortFilterSql, replacements) {
@@ -98,29 +128,25 @@ async function buildPeerOpportunityStats(psychologist) {
         const allM30 = parseInt(allMatchRows[0]?.total_30d || 0, 10);
         const allC30 = parseInt(allClickRows[0]?.total_30d || 0, 10);
         if (allM30 > 0 || allC30 > 0) {
-            return {
-                scope: 'active_profiles',
-                peerCount: allPeerCount,
-                matches30d: allM30,
-                matches7d: parseInt(allMatchRows[0]?.total_7d || 0, 10),
-                clicks30d: allC30,
-                clicks7d: parseInt(allClickRows[0]?.total_7d || 0, 10),
-                avgMatchesPerProfile30d: allPeerCount > 0 ? parseFloat((allM30 / allPeerCount).toFixed(1)) : 0,
-                avgClicksPerProfile30d: allPeerCount > 0 ? parseFloat((allC30 / allPeerCount).toFixed(1)) : 0
-            };
+            return formatPeerOpportunityResult(
+                'active_profiles',
+                allPeerCount,
+                allM30,
+                parseInt(allMatchRows[0]?.total_7d || 0, 10),
+                allC30,
+                parseInt(allClickRows[0]?.total_7d || 0, 10)
+            );
         }
     }
 
-    return {
-        scope: usingSpecialtyCohort ? 'similar_profiles' : 'active_profiles',
+    return formatPeerOpportunityResult(
+        usingSpecialtyCohort ? 'similar_profiles' : 'active_profiles',
         peerCount,
         matches30d,
         matches7d,
         clicks30d,
-        clicks7d,
-        avgMatchesPerProfile30d: peerCount > 0 ? parseFloat((matches30d / peerCount).toFixed(1)) : 0,
-        avgClicksPerProfile30d: peerCount > 0 ? parseFloat((clicks30d / peerCount).toFixed(1)) : 0
-    };
+        clicks7d
+    );
 }
 
 async function fetchCommunityActivitySummary(psychologistId) {
@@ -288,7 +314,7 @@ exports.getStats = async (req, res) => {
         const { period } = req.query; 
 
         const psychologist = await db.Psychologist.findByPk(psychologistId, {
-            attributes: ['temas_atuacao', 'xp', 'profile_appearances', 'whatsapp_clicks', 'plano', 'is_exempt']
+            attributes: ['temas_atuacao', 'xp', 'profile_appearances', 'whatsapp_clicks', 'plano', 'is_exempt', 'subscriptionId', 'subscribedAt', 'firstPaidAt', 'canceledAt']
         });
 
         if (isRestrictedComunidadePlan(psychologist)) {
@@ -300,6 +326,7 @@ exports.getStats = async (req, res) => {
                 restricted: true,
                 isComunidadeRestricted: true,
                 plan: 'Comunidade',
+                trialEligible: isComunidadeTrialEligible(psychologist),
                 whatsappClicks: null,
                 profileViews: null,
                 matchImpressions: null,
@@ -574,6 +601,7 @@ exports.getAnalyticsData = async (req, res) => {
                 restricted: true,
                 isComunidadeRestricted: true,
                 plan: 'Comunidade',
+                trialEligible: isComunidadeTrialEligible(psychologist),
                 priceComparison: null,
                 topTopics: [],
                 visibility: null,
@@ -948,7 +976,7 @@ exports.getFavoritesProfile = async (req, res) => {
         }
 
         const psychologist = await db.Psychologist.findByPk(psychologistId, {
-            attributes: ['id', 'plano', 'is_exempt', 'temas_atuacao']
+            attributes: ['id', 'plano', 'is_exempt', 'temas_atuacao', 'subscriptionId', 'subscribedAt', 'firstPaidAt', 'canceledAt']
         });
         if (!psychologist) {
             return res.status(404).json({ error: 'Psicólogo não encontrado.' });
@@ -960,6 +988,7 @@ exports.getFavoritesProfile = async (req, res) => {
                 restricted: true,
                 isComunidadeRestricted: true,
                 plan: 'Comunidade',
+                trialEligible: isComunidadeTrialEligible(psychologist),
                 total: 0,
                 temas: {},
                 faixaValor: {},
