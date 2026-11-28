@@ -150,7 +150,9 @@ async function ensureDreSchema() {
         `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "company_legal_name" VARCHAR(255);`,
         `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "company_cnpj" VARCHAR(32);`,
         `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "tax_regime" VARCHAR(40) DEFAULT 'SIMPLES_NACIONAL';`,
-        `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "auto_recurring_expenses" TEXT;`
+        `ALTER TABLE "SystemSettings" ADD COLUMN IF NOT EXISTS "auto_recurring_expenses" TEXT;`,
+        `ALTER TABLE "Payments" ADD COLUMN IF NOT EXISTS "nfIssuedAt" TIMESTAMPTZ;`,
+        `ALTER TABLE "Payments" ADD COLUMN IF NOT EXISTS "nfNumber" VARCHAR(80);`
     ];
     for (const sql of queries) {
         try {
@@ -941,6 +943,172 @@ async function getAvailableYears() {
     return Array.from(yearsSet).sort((a, b) => b - a);
 }
 
+function formatCnpjStr(digits) {
+    const clean = String(digits || '').replace(/\D/g, '');
+    if (clean.length !== 14) return clean;
+    return clean.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+}
+
+async function getCnpjNfQueue() {
+    await ensureDreSchema();
+    const rows = await db.sequelize.query(
+        `SELECT p."id", p."subscriptionId", p."psychologistId", p."status", p."value",
+                p."billingType", p."dueDate", p."paymentDate", p."createdAt",
+                p."nfIssuedAt", p."nfNumber",
+                psi."nome" AS "psiNome", psi."email" AS "psiEmail", psi."plano" AS "psiPlano",
+                psi."razao_social" AS "razaoSocial", psi."cpf" AS "psiCpf", psi."cnpj" AS "psiCnpj",
+                psi."cep", psi."rua", psi."numero", psi."bairro", psi."complemento", psi."cidade", psi."estado"
+         FROM "Payments" p
+         JOIN "Psychologists" psi ON psi."id" = p."psychologistId"
+         WHERE p."status" IN ('RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH')
+           AND p."value" > 0
+           AND (
+               LENGTH(REGEXP_REPLACE(COALESCE(psi."cpf", ''), '[^0-9]', '', 'g')) = 14
+               OR LENGTH(REGEXP_REPLACE(COALESCE(psi."cnpj", ''), '[^0-9]', '', 'g')) = 14
+           )
+         ORDER BY COALESCE(p."paymentDate", p."dueDate"::timestamp, p."createdAt") DESC`,
+        { type: db.sequelize.QueryTypes.SELECT }
+    ).catch(() => []);
+
+    const nowMs = Date.now();
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const items = [];
+    let readyCount = 0;
+    let readyAmount = 0;
+    let waitingCount = 0;
+    let waitingAmount = 0;
+    let issuedCount = 0;
+    let nextReadyMs = null;
+
+    for (const r of rows) {
+        const docCnpj = String(r.psiCnpj || '').replace(/\D/g, '');
+        const docCpf = String(r.psiCpf || '').replace(/\D/g, '');
+        const cnpj = docCnpj.length === 14 ? docCnpj : docCpf;
+        if (cnpj.length !== 14) continue;
+
+        const paidAtRaw = r.paymentDate || r.dueDate || r.createdAt;
+        const paidAtDate = new Date(paidAtRaw);
+        const paidAtMs = Number.isFinite(paidAtDate.getTime()) ? paidAtDate.getTime() : nowMs;
+        const eligibleMs = paidAtMs + SEVEN_DAYS_MS;
+        const eligibleDateObj = new Date(eligibleMs);
+
+        const isIssued = Boolean(r.nfIssuedAt);
+        const nfStatus = isIssued ? 'ISSUED' : (nowMs >= eligibleMs ? 'READY' : 'WAITING_7D');
+        const val = round2(r.value);
+        const daysRemaining = nfStatus === 'WAITING_7D'
+            ? Math.max(1, Math.ceil((eligibleMs - nowMs) / (24 * 60 * 60 * 1000)))
+            : 0;
+
+        if (nfStatus === 'READY') {
+            readyCount += 1;
+            readyAmount = round2(readyAmount + val);
+        } else if (nfStatus === 'WAITING_7D') {
+            waitingCount += 1;
+            waitingAmount = round2(waitingAmount + val);
+            if (nextReadyMs === null || eligibleMs < nextReadyMs) {
+                nextReadyMs = eligibleMs;
+            }
+        } else {
+            issuedCount += 1;
+        }
+
+        const addrParts = [r.rua, r.numero, r.complemento, r.bairro].filter(Boolean);
+        const hasFullAddress = Boolean(
+            String(r.cep || '').trim()
+            && String(r.rua || '').trim()
+            && String(r.numero || '').trim()
+            && String(r.bairro || '').trim()
+            && String(r.cidade || '').trim()
+            && String(r.estado || '').trim()
+        );
+
+        items.push({
+            id: r.id,
+            paymentId: r.id,
+            psiId: r.psychologistId,
+            psiNome: r.psiNome || 'Psicólogo',
+            razaoSocial: r.razaoSocial || null,
+            psiEmail: r.psiEmail || null,
+            cnpj,
+            cnpjFormatted: formatCnpjStr(cnpj),
+            plano: r.psiPlano || 'Essencial',
+            billingType: r.billingType || 'CREDIT_CARD',
+            value: val,
+            paidDate: toIsoDateBRT(paidAtDate),
+            eligibleDate: toIsoDateBRT(eligibleDateObj),
+            daysRemaining,
+            nfStatus,
+            nfIssuedAt: r.nfIssuedAt ? toIsoDateBRT(r.nfIssuedAt) : null,
+            nfNumber: r.nfNumber || null,
+            cep: r.cep || null,
+            addressLine: addrParts.join(', '),
+            cityState: [r.cidade, r.estado].filter(Boolean).join('/'),
+            hasFullAddress
+        });
+    }
+
+    const orderWeight = { READY: 0, WAITING_7D: 1, ISSUED: 2 };
+    items.sort((a, b) => {
+        const wDiff = orderWeight[a.nfStatus] - orderWeight[b.nfStatus];
+        if (wDiff !== 0) return wDiff;
+        if (a.nfStatus === 'ISSUED') return String(b.paidDate).localeCompare(String(a.paidDate));
+        return String(a.eligibleDate).localeCompare(String(b.eligibleDate));
+    });
+
+    return {
+        summary: {
+            readyCount,
+            readyAmount,
+            waitingCount,
+            waitingAmount,
+            issuedCount,
+            totalCount: items.length,
+            nextReadyDate: nextReadyMs ? toIsoDateBRT(new Date(nextReadyMs)) : null
+        },
+        items
+    };
+}
+
+async function markCnpjNfStatus(paymentId, { issued = true, nfNumber = null } = {}) {
+    await ensureDreSchema();
+    const cleanId = String(paymentId || '').trim();
+    if (!cleanId) return null;
+
+    const payment = await db.Payment.findByPk(cleanId);
+    if (!payment) return null;
+
+    const cleanStatus = String(payment.status || '').toUpperCase();
+    if (!['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(cleanStatus)) {
+        return null;
+    }
+
+    const psi = payment.psychologistId
+        ? await db.Psychologist.findByPk(payment.psychologistId, { attributes: ['id', 'cpf', 'cnpj'] })
+        : null;
+    if (!psi) return null;
+
+    const hasCnpj = String(psi.cnpj || '').replace(/\D/g, '').length === 14
+        || String(psi.cpf || '').replace(/\D/g, '').length === 14;
+    if (!hasCnpj) return null;
+
+    const cleanNfNum = issued && nfNumber ? String(nfNumber).trim().slice(0, 80) : null;
+    const issuedAt = issued ? new Date() : null;
+    await db.sequelize.query(
+        `UPDATE "Payments" SET "nfIssuedAt" = :nfIssuedAt, "nfNumber" = :nfNumber WHERE id = :id`,
+        {
+            replacements: { nfIssuedAt: issuedAt, nfNumber: cleanNfNum || null, id: payment.id },
+            type: db.sequelize.QueryTypes.UPDATE
+        }
+    );
+
+    return {
+        paymentId: payment.id,
+        nfIssuedAt: issuedAt ? toIsoDateBRT(issuedAt) : null,
+        nfNumber: cleanNfNum || null,
+        nfStatus: issued ? 'ISSUED' : 'READY'
+    };
+}
+
 /**
  * Carrega e consolida todas as transações de receita, estorno, taxas, despesas e configurações
  * para o exercício solicitado (e dezembro anterior para cálculo de AH% em Janeiro).
@@ -1701,6 +1869,16 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
 
     // 8. Alertas de auditoria e integridade contábil
     const alerts = [];
+    const cnpjNf = await getCnpjNfQueue();
+    if (cnpjNf.summary.readyCount > 0) {
+        const amtFmt = cnpjNf.summary.readyAmount.toFixed(2).replace('.', ',');
+        alerts.push({
+            type: 'warning',
+            code: 'PENDING_CNPJ_NF',
+            title: `NFS-e MEI pendente: ${cnpjNf.summary.readyCount} pagamento(s) CNPJ liberado(s)`,
+            message: `Total de R$ ${amtFmt} já completou 7 dias após pagamento e aguarda emissão manual no Emissor Nacional (nfse.gov.br).`
+        });
+    }
     if (selData.flags.hasMissingTaxConfig || (annualSummary.grossRevenue > 0 && annualSummary.taxesOnRevenue === 0)) {
         alerts.push({
             type: 'warning',
@@ -1896,6 +2074,7 @@ async function buildDreReport({ year, month = null, regime = 'accrual' }) {
         dreRows,
         taxAudit,
         alerts,
+        cnpjNf,
         ledger: {
             revenues: yearRevenueLedger,
             expenses: yearExpenseLedger
@@ -2136,6 +2315,8 @@ module.exports = {
     DRE_GROUP_META,
     VALID_DRE_GROUPS,
     buildDreReport,
+    getCnpjNfQueue,
+    markCnpjNfStatus,
     buildCsvExport,
     buildExcelWorkbookXml,
     ensureDreSchema,

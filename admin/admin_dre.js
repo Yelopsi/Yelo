@@ -33,6 +33,32 @@
             .replace(/'/g, '&#39;');
     }
 
+    function activateDreTab(target, scrollTargetId = null) {
+        const targetBtn = document.querySelector(`.dre-tab-btn[data-tab="${target}"]`);
+        if (!targetBtn) return;
+        document.querySelectorAll('.dre-tab-btn').forEach(b => {
+            const isActive = b === targetBtn;
+            b.classList.toggle('active', isActive);
+            b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        document.querySelectorAll('.dre-tab-pane').forEach(p => p.classList.toggle('active', p.id === target));
+        const viewLabel = document.getElementById('dre-view-trigger-label');
+        if (viewLabel) {
+            const labelSpan = targetBtn.querySelector('span:first-child');
+            viewLabel.textContent = (labelSpan ? labelSpan.textContent : targetBtn.textContent).trim();
+        }
+        const viewDropdown = document.getElementById('dre-view-dropdown');
+        const viewTrigger = document.getElementById('dre-view-trigger');
+        if (viewDropdown) viewDropdown.classList.remove('open');
+        if (viewTrigger) viewTrigger.setAttribute('aria-expanded', 'false');
+        if (scrollTargetId) {
+            setTimeout(() => {
+                const el = document.getElementById(scrollTargetId);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 80);
+        }
+    }
+
     const SHORT_MONTHS_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     function fmtMonthKeyShort(mk) {
         const parts = String(mk || '').split('-');
@@ -196,11 +222,19 @@
                     </div>
                     ${a.code === 'MISSING_TAX_CONFIG'
                         ? '<button type="button" class="dre-btn dre-btn-outline dre-alert-cfg-btn">Configurar agora</button>'
-                        : ''}
+                        : (a.code === 'PENDING_CNPJ_NF'
+                            ? '<button type="button" class="dre-btn dre-btn-outline dre-alert-nf-btn">Ver fila NFS-e</button>'
+                            : '')}
                 </div>
             `).join('');
             const cfgBtn = alertsEl.querySelector('.dre-alert-cfg-btn');
             if (cfgBtn) cfgBtn.addEventListener('click', openFiscalModal);
+            const nfBtn = alertsEl.querySelector('.dre-alert-nf-btn');
+            if (nfBtn) {
+                nfBtn.addEventListener('click', () => {
+                    activateDreTab('tab-dre-razao', 'dre-cnpj-nf-card');
+                });
+            }
         }
 
         const prevLabel = meta.prevMonthKey || 'mês ant.';
@@ -679,7 +713,136 @@
         document.getElementById('dre-open-receivables-note').textContent =
             `Nota Extra-DRE (${meta.selectedMonthKey}): ${openRec.pendingCount} pendente(s) (${fmtCurrency(openRec.pendingTotal)}) • ${openRec.overdueCount} vencido(s) (${fmtCurrency(openRec.overdueTotal)})`;
 
+        renderCnpjNfSection(report);
         renderRevenueLedgerRows(report);
+    }
+
+    async function toggleCnpjNfMark(paymentId, issued) {
+        let nfNumber = null;
+        if (issued) {
+            const promptVal = window.prompt('Nº da NFS-e emitida no Emissor Nacional (opcional):', '');
+            if (promptVal === null) return;
+            nfNumber = promptVal.trim() || null;
+        } else if (!window.confirm('Voltar este pagamento CNPJ para a fila de NFS-e pendentes?')) {
+            return;
+        }
+
+        try {
+            await apiFetch(`/api/admin/dre/cnpj-nf/${encodeURIComponent(paymentId)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ issued, nfNumber })
+            });
+            showToast(issued ? 'NFS-e marcada como emitida.' : 'Pagamento retornado para a fila pendente.');
+            await loadDreData();
+        } catch (err) {
+            showToast(err.message || 'Erro ao atualizar status da NFS-e.', true);
+        }
+    }
+
+    function renderCnpjNfSection(report) {
+        const cnpjNf = (report && report.cnpjNf) || { summary: {}, items: [] };
+        const sum = cnpjNf.summary || {};
+        const items = Array.isArray(cnpjNf.items) ? cnpjNf.items : [];
+
+        const summaryEl = document.getElementById('dre-cnpj-nf-summary');
+        const tbody = document.getElementById('dre-cnpj-nf-tbody');
+        const card = document.getElementById('dre-cnpj-nf-card');
+        if (!summaryEl || !tbody) return;
+
+        const readyCount = sum.readyCount || 0;
+        const waitingCount = sum.waitingCount || 0;
+        const issuedCount = sum.issuedCount || 0;
+        summaryEl.textContent = `${readyCount} liberado(s) (+7d: ${fmtCurrency(sum.readyAmount || 0)}) • ${waitingCount} em garantia 7d (${fmtCurrency(sum.waitingAmount || 0)}) • ${issuedCount} já emitida(s)`;
+        if (card) {
+            card.style.borderLeftColor = readyCount > 0 ? '#d97706' : (waitingCount > 0 ? '#3b82f6' : '#10b981');
+        }
+
+        const filterSel = document.getElementById('cnpj-nf-filter-status');
+        const filterVal = filterSel ? filterSel.value : 'PENDING';
+        const filtered = items.filter(item => {
+            if (filterVal === 'READY') return item.nfStatus === 'READY';
+            if (filterVal === 'ISSUED') return item.nfStatus === 'ISSUED';
+            if (filterVal === 'PENDING') return item.nfStatus === 'READY' || item.nfStatus === 'WAITING_7D';
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            const emptyMsg = filterVal === 'PENDING'
+                ? 'Nenhum pagamento de CNPJ pendente de NFS-e no momento.'
+                : 'Nenhum pagamento de CNPJ encontrado neste filtro.';
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#64748b; padding:22px;">${emptyMsg}</td></tr>`;
+            return;
+        }
+
+        const fmtDateBr = (iso) => (iso ? String(iso).split('-').reverse().join('/') : '--');
+
+        tbody.innerHTML = filtered.map(item => {
+            let statusPill = '';
+            if (item.nfStatus === 'READY') {
+                statusPill = `<span class="dre-pill pill-amber">Liberado (+7d)</span>`;
+            } else if (item.nfStatus === 'WAITING_7D') {
+                statusPill = `<span class="dre-pill pill-gray">Aguarda ${item.daysRemaining}d</span>`;
+            } else {
+                const nfNumTag = item.nfNumber ? ` #${escapeHtml(item.nfNumber)}` : '';
+                statusPill = `<span class="dre-pill pill-green">Emitida${nfNumTag}</span><div style="font-size:0.74rem; color:#64748b; margin-top:3px;">Em ${escapeHtml(fmtDateBr(item.nfIssuedAt))}</div>`;
+            }
+
+            const titleName = escapeHtml(item.razaoSocial || item.psiNome);
+            const subName = item.razaoSocial && item.psiNome && item.razaoSocial !== item.psiNome
+                ? `<div style="font-size:0.75rem; color:#64748b;">Resp.: ${escapeHtml(item.psiNome)}</div>`
+                : '';
+            const addrTxt = item.hasFullAddress
+                ? `${escapeHtml(item.addressLine)}${item.cityState ? ` - ${escapeHtml(item.cityState)}` : ''}${item.cep ? ` (CEP ${escapeHtml(item.cep)})` : ''}`
+                : `<span style="color:#b45309; font-weight:600;">⚠️ Endereço incompleto${item.cep ? ` (CEP ${escapeHtml(item.cep)})` : ''}</span>`;
+
+            const actionBtn = item.nfStatus === 'ISSUED'
+                ? `<button type="button" class="dre-btn dre-btn-outline dre-cnpj-undo-btn" data-pid="${escapeHtml(item.paymentId)}">Desfazer</button>`
+                : `<button type="button" class="dre-btn ${item.nfStatus === 'READY' ? 'dre-btn-primary' : 'dre-btn-outline'} dre-cnpj-mark-btn" data-pid="${escapeHtml(item.paymentId)}">✓ Marcar NF emitida</button>`;
+
+            return `
+                <tr>
+                    <td>${statusPill}</td>
+                    <td>
+                        <div><strong>${escapeHtml(fmtDateBr(item.paidDate))}</strong></div>
+                        <div style="font-size:0.75rem; color:#64748b;">Libera: ${escapeHtml(fmtDateBr(item.eligibleDate))}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight:700;">${titleName}</div>
+                        ${subName}
+                        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px;">
+                            <span style="font-family:monospace; font-size:0.78rem; color:#0f172a;">${escapeHtml(item.cnpjFormatted)}</span>
+                            <button type="button" class="dre-btn dre-btn-outline dre-copy-cnpj-btn" data-cnpj="${escapeHtml(item.cnpj)}" style="padding:2px 8px; font-size:0.72rem;">Copiar</button>
+                        </div>
+                        <div style="font-size:0.74rem; color:#64748b; margin-top:3px;">${addrTxt}</div>
+                    </td>
+                    <td>
+                        <div>${escapeHtml(item.plano)}</div>
+                        <div style="font-size:0.74rem; color:#64748b;">${escapeHtml(item.billingType)}</div>
+                    </td>
+                    <td class="num"><strong>${escapeHtml(fmtCurrency(item.value))}</strong></td>
+                    <td class="num">${actionBtn}</td>
+                </tr>
+            `;
+        }).join('');
+
+        tbody.querySelectorAll('.dre-copy-cnpj-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const cnpj = btn.getAttribute('data-cnpj') || '';
+                try {
+                    await navigator.clipboard.writeText(cnpj);
+                    showToast(`CNPJ ${cnpj} copiado!`);
+                } catch (_) {
+                    showToast(`CNPJ: ${cnpj}`);
+                }
+            });
+        });
+        tbody.querySelectorAll('.dre-cnpj-mark-btn').forEach(btn => {
+            btn.addEventListener('click', () => toggleCnpjNfMark(btn.getAttribute('data-pid'), true));
+        });
+        tbody.querySelectorAll('.dre-cnpj-undo-btn').forEach(btn => {
+            btn.addEventListener('click', () => toggleCnpjNfMark(btn.getAttribute('data-pid'), false));
+        });
     }
 
     function renderRevenueLedgerRows(report) {
@@ -1160,20 +1323,7 @@
         });
 
         document.querySelectorAll('.dre-tab-btn').forEach(btn => {
-            on(btn, 'click', () => {
-                const target = btn.getAttribute('data-tab');
-                document.querySelectorAll('.dre-tab-btn').forEach(b => {
-                    const isActive = b === btn;
-                    b.classList.toggle('active', isActive);
-                    b.setAttribute('aria-selected', isActive ? 'true' : 'false');
-                });
-                document.querySelectorAll('.dre-tab-pane').forEach(p => p.classList.toggle('active', p.id === target));
-                if (viewLabel) {
-                    const labelSpan = btn.querySelector('span:first-child');
-                    viewLabel.textContent = (labelSpan ? labelSpan.textContent : btn.textContent).trim();
-                }
-                closeViewDropdown();
-            });
+            on(btn, 'click', () => activateDreTab(btn.getAttribute('data-tab')));
         });
 
         on(document.getElementById('dre-btn-fiscal'), 'click', openFiscalModal);
@@ -1226,6 +1376,10 @@
         on(document.getElementById('exp-filter-group'), 'change', () => state.report && renderExpensesSection(state.report));
         on(document.getElementById('exp-filter-search'), 'input', () => state.report && renderExpensesSection(state.report));
 
+        on(document.getElementById('cnpj-nf-filter-status'), 'change', () => {
+            if (state.report) renderCnpjNfSection(state.report);
+        });
+
         on(document.getElementById('rev-filter-scope'), 'change', () => {
             state.revPage = 1;
             if (state.report) renderRevenueLedgerRows(state.report);
@@ -1258,6 +1412,15 @@
         });
 
         await loadDreData();
+
+        if (window.pageQueryString) {
+            const params = new URLSearchParams(window.pageQueryString);
+            const targetTab = params.get('tab');
+            const focusArea = params.get('focus');
+            if (targetTab) {
+                activateDreTab(targetTab, focusArea === 'cnpj-nf' ? 'dre-cnpj-nf-card' : null);
+            }
+        }
     };
 
     window.cleanupPage = function () {

@@ -90,6 +90,54 @@ window.initializePage = function() {
         }
     }
 
+    function updateCnpjNfAlert(cnpjNf) {
+        const card = document.getElementById('card-alert-cnpj-nf');
+        const iconEl = document.getElementById('cnpj-nf-alert-icon');
+        const titleEl = document.getElementById('cnpj-nf-alert-title');
+        const actionEl = document.getElementById('cnpj-nf-alert-action');
+        if (!card || !titleEl) return;
+
+        const sum = cnpjNf && cnpjNf.summary ? cnpjNf.summary : null;
+        if (!sum || ((sum.readyCount || 0) === 0 && (sum.waitingCount || 0) === 0)) {
+            card.style.display = 'none';
+            return;
+        }
+
+        card.style.display = 'flex';
+        if ((sum.readyCount || 0) > 0) {
+            card.style.borderLeftColor = '#d97706';
+            card.style.background = '#fffbeb';
+            if (iconEl) {
+                iconEl.textContent = '🧾';
+                iconEl.style.background = 'rgba(217, 119, 6, 0.16)';
+                iconEl.style.color = '#b45309';
+            }
+            const waitingNote = (sum.waitingCount || 0) > 0
+                ? ` (${sum.waitingCount} em garantia 7d)`
+                : '';
+            titleEl.innerHTML = `<strong>⚠️ Emitir NFS-e (MEI):</strong> ${sum.readyCount} pagamento${sum.readyCount > 1 ? 's' : ''} CNPJ passou dos 7 dias (${formatCurrency(sum.readyAmount || 0)})${waitingNote}.`;
+            if (actionEl) {
+                actionEl.textContent = 'Ver CNPJs e marcar emissão na DRE →';
+                actionEl.style.color = '#b45309';
+            }
+            return;
+        }
+
+        const nextDateBr = sum.nextReadyDate ? sum.nextReadyDate.split('-').reverse().join('/') : '--';
+        card.style.borderLeftColor = '#3b82f6';
+        card.style.background = '#eff6ff';
+        if (iconEl) {
+            iconEl.textContent = '🕒';
+            iconEl.style.background = 'rgba(59, 130, 246, 0.14)';
+            iconEl.style.color = '#2563eb';
+        }
+        titleEl.innerHTML = `<strong>NFS-e CNPJ (em garantia 7d):</strong> ${sum.waitingCount} pagamento${sum.waitingCount > 1 ? 's' : ''} (${formatCurrency(sum.waitingAmount || 0)}). Próxima liberação: ${nextDateBr}.`;
+        if (actionEl) {
+            actionEl.textContent = 'Acompanhar fila na DRE →';
+            actionEl.style.color = '#2563eb';
+        }
+    }
+
     function updateScheduledAlerts() {
         updateScheduledAlert({
             targetIso: '2026-12-08T00:00:00-03:00',
@@ -276,6 +324,7 @@ window.initializePage = function() {
                      const ann = dreData.annualSummary || {};
                      const meta = dreData.meta || {};
                      const alerts = dreData.alerts || [];
+                     updateCnpjNfAlert(dreData.cnpjNf);
 
                      // ARPU real da base pagante (MRR / pagantes) com fallback no ticket médio da DRE
                      const arpu = (currentPaying > 0 && Number(stats.mrr || 0) > 0)

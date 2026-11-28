@@ -46,6 +46,7 @@ export default function AdminVisaoGeralScreen() {
   const { token, user } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [cmoData, setCmoData] = useState<any>(null);
+  const [cnpjNfSummary, setCnpjNfSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [offlineMode, setOfflineMode] = useState(false);
@@ -75,8 +76,14 @@ export default function AdminVisaoGeralScreen() {
     }
     try {
       setOfflineMode(false);
-      // Busca estatísticas gerais e dados de CMO simultaneamente
-      const [statsRes, cmoRes] = await Promise.all([
+      // Busca estatísticas gerais, CMO e resumo NFS-e CNPJ da DRE simultaneamente
+      const brtNow = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+      }).format(new Date());
+      const [dreYear, dreMonth] = brtNow.split('-');
+      const [statsRes, cmoRes, dreRes] = await Promise.all([
         api.get('/api/admin/stats').catch(err => {
           console.warn('[Admin] Erro ao buscar /api/admin/stats:', err.message);
           return null;
@@ -84,7 +91,8 @@ export default function AdminVisaoGeralScreen() {
         api.get('/api/cmo/dashboard').catch(err => {
           console.warn('[Admin] Erro ao buscar /api/cmo/dashboard:', err.message);
           return null;
-        })
+        }),
+        api.get('/api/admin/dre', { params: { year: dreYear, month: dreMonth, regime: 'accrual' } }).catch(() => null),
       ]);
 
       if (statsRes?.data) {
@@ -97,6 +105,9 @@ export default function AdminVisaoGeralScreen() {
 
       if (cmoRes?.data) {
         setCmoData(cmoRes.data);
+      }
+      if (dreRes?.data?.cnpjNf?.summary) {
+        setCnpjNfSummary(dreRes.data.cnpjNf.summary);
       }
     } catch (error) {
       console.error('[Admin] Erro geral ao atualizar dados:', error);
@@ -627,6 +638,42 @@ export default function AdminVisaoGeralScreen() {
           <Text className="font-title text-[#1B4332] text-[18px] font-bold mb-3.5">
             Alertas e Ações Rápidas
           </Text>
+
+          {/* Aviso NFS-e Manual MEI (Pagamentos CNPJ pós-7 dias) */}
+          {cnpjNfSummary && ((cnpjNfSummary.readyCount || 0) > 0 || (cnpjNfSummary.waitingCount || 0) > 0) && (() => {
+            const hasReady = (cnpjNfSummary.readyCount || 0) > 0;
+            const nextBr = cnpjNfSummary.nextReadyDate
+              ? String(cnpjNfSummary.nextReadyDate).split('-').reverse().join('/')
+              : '--';
+            return (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push({ pathname: '/(admin)/crm-modulo/dre' as any, params: { tab: 'fiscal' } })}
+                className={`flex-row items-center border rounded-[16px] p-3.5 mb-3 ${
+                  hasReady ? 'bg-[#fffbeb] border-[#fde68a]' : 'bg-[#eff6ff] border-[#bfdbfe]'
+                }`}
+              >
+                <Text className="text-[22px] mr-3">{hasReady ? '🧾' : '🕒'}</Text>
+                <View className="flex-1">
+                  {hasReady ? (
+                    <Text className="font-sans text-[#1e293b] text-[13px]">
+                      <Text className="font-bold text-[#b45309]">⚠️ Emitir NFS-e (MEI):</Text>{' '}
+                      {cnpjNfSummary.readyCount} pgto(s) CNPJ passou dos 7 dias (R$ {Number(cnpjNfSummary.readyAmount || 0).toFixed(2).replace('.', ',')}).
+                    </Text>
+                  ) : (
+                    <Text className="font-sans text-[#1e293b] text-[13px]">
+                      <Text className="font-bold text-[#1e40af]">NFS-e CNPJ (em garantia 7d):</Text>{' '}
+                      {cnpjNfSummary.waitingCount} pgto(s) • Próxima liberação: {nextBr}.
+                    </Text>
+                  )}
+                  <Text className="font-sans font-bold text-[11px] mt-0.5" style={{ color: hasReady ? '#b45309' : '#2563eb' }}>
+                    Ver CNPJs na DRE →
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={16} color={hasReady ? '#b45309' : '#2563eb'} />
+              </TouchableOpacity>
+            );
+          })()}
 
           {/* Atalho Rápido: Copilot WhatsApp AI */}
           <TouchableOpacity 

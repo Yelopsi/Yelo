@@ -14,6 +14,7 @@ router.delete('/expenses/:id', dreController.deleteExpense);
 router.post('/sync-ads', dreController.syncAdsSpend);
 router.post('/recurring-rules', dreController.saveRecurringRules);
 router.post('/fiscal-config', dreController.saveFiscalConfig);
+router.post('/cnpj-nf/:paymentId', dreController.markCnpjNfStatus);
 router.get('/export/csv', dreController.exportCsv);
 router.get('/export/excel', dreController.exportExcel);
 

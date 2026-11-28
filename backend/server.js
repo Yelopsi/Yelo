@@ -353,6 +353,8 @@ const startServer = async () => {
             await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "recurrenceUntil" TIMESTAMP WITH TIME ZONE NULL;');
             await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "recurrenceExceptions" TEXT DEFAULT \'[]\';');
             await db.sequelize.query('ALTER TABLE "Appointments" ADD COLUMN IF NOT EXISTS "seriesId" INTEGER NULL;');
+            await db.sequelize.query('ALTER TABLE "Payments" ADD COLUMN IF NOT EXISTS "nfIssuedAt" TIMESTAMP WITH TIME ZONE NULL;');
+            await db.sequelize.query('ALTER TABLE "Payments" ADD COLUMN IF NOT EXISTS "nfNumber" VARCHAR(80) NULL;');
         } catch(e) {
             console.warn('⚠️ Aviso ao tentar criar colunas manualmente (podem já existir ou banco travado):', e.message);
         }

@@ -1616,6 +1616,41 @@
 
     <!-- ABA 4: FISCAL, FECHAMENTO & RAZÃO -->
     <div class="dre-tab-pane dre-no-print" id="tab-dre-razao">
+        <div class="dre-card" id="dre-cnpj-nf-card" style="border-left: 4px solid #d97706;">
+            <div class="dre-card-header">
+                <div>
+                    <h2 class="dre-card-title">🧾 Emissão Manual de NFS-e (MEI: Obrigatório apenas para CNPJ pós-7 dias)</h2>
+                    <p class="dre-card-sub" id="dre-cnpj-nf-summary">Carregando pagamentos de CNPJ...</p>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <select id="cnpj-nf-filter-status" class="dre-input" style="width:auto;">
+                        <option value="PENDING">Pendentes (Liberados + 7d)</option>
+                        <option value="READY">Somente Liberados (+7d)</option>
+                        <option value="ISSUED">Já Emitidas</option>
+                        <option value="ALL">Todos</option>
+                    </select>
+                    <a href="https://www.nfse.gov.br/EmissorNacional" target="_blank" rel="noopener noreferrer" class="dre-btn dre-btn-primary" style="text-decoration:none;">
+                        🌐 Abrir Emissor Nacional ↗
+                    </a>
+                </div>
+            </div>
+            <div class="dre-table-scroll">
+                <table class="dre-table">
+                    <thead>
+                        <tr>
+                            <th>Status NF</th>
+                            <th>Pgto / Libera (7d)</th>
+                            <th>Tomador (CNPJ &amp; Endereço)</th>
+                            <th>Plano / Meio</th>
+                            <th class="num">Valor</th>
+                            <th class="num">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dre-cnpj-nf-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="dre-card">
             <div class="dre-card-header">
                 <div>

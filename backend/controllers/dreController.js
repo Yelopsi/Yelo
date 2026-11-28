@@ -425,6 +425,27 @@ exports.saveFiscalConfig = async (req, res) => {
     }
 };
 
+exports.markCnpjNfStatus = async (req, res) => {
+    try {
+        const paymentId = String(req.params.paymentId || '').trim();
+        if (!paymentId) {
+            return res.status(400).json({ error: 'ID do pagamento inválido.' });
+        }
+        const { issued = true, nfNumber = null } = req.body || {};
+        const result = await dreService.markCnpjNfStatus(paymentId, {
+            issued: Boolean(issued),
+            nfNumber
+        });
+        if (!result) {
+            return res.status(404).json({ error: 'Pagamento CNPJ pago não encontrado.' });
+        }
+        res.json({ success: true, item: result });
+    } catch (error) {
+        console.error('[DRE] Erro ao atualizar status da NFS-e CNPJ:', error);
+        res.status(500).json({ error: 'Erro ao atualizar marcação da NFS-e.' });
+    }
+};
+
 exports.exportCsv = async (req, res) => {
     try {
         const { year, month, regime, type = 'annual' } = req.query;

@@ -205,6 +205,15 @@
                     Alertas e Ações Rápidas
                 </div>
                 <div class="notification-list">
+                    <!-- Alerta NFS-e Manual (MEI -> Pagamentos CNPJ pós-7 dias) -->
+                    <a href="#" class="notification-item type-reminder" id="card-alert-cnpj-nf" data-page-link="admin_dre.html?tab=tab-dre-razao&focus=cnpj-nf" style="display: none; border-left: 4px solid #d97706; background: #fffbeb;">
+                        <div class="notification-icon" id="cnpj-nf-alert-icon" style="background: rgba(217, 119, 6, 0.16); color: #b45309;">🧾</div>
+                        <div class="notification-content">
+                            <p id="cnpj-nf-alert-title"><strong>NFS-e (MEI):</strong> Verificando pagamentos CNPJ...</p>
+                            <span class="notification-time" id="cnpj-nf-alert-action" style="color: #b45309; font-weight: 700;">Abrir fila na DRE →</span>
+                        </div>
+                    </a>
+
                     <!-- Atalho Direto: Copilot WhatsApp AI -->
                     <a href="#" class="notification-item type-interaction" id="card-shortcut-copilot" data-page-link="admin_copilot_wpp.html" style="border-left: 4px solid #1B4332; background: #f0fdf4;">
                         <div class="notification-icon" style="background: rgba(27, 67, 50, 0.14); color: #1B4332;">💬</div>

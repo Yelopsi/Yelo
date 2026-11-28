@@ -11,10 +11,11 @@ import {
   Alert,
   Share,
   Platform,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import Svg, { Rect, Path, Circle, Line, Text as SvgText } from 'react-native-svg';
@@ -183,7 +184,15 @@ export default function AdminDreScreen() {
   const [year, setYear] = useState<number>(nowBrt.year);
   const [month, setMonth] = useState<number>(nowBrt.month);
   const [regime, setRegime] = useState<'accrual' | 'cash'>('accrual');
-  const [activeTab, setActiveTab] = useState<TabKey>('mensal');
+  const { tab: routeTab } = useLocalSearchParams<{ tab?: string }>();
+  const [activeTab, setActiveTab] = useState<TabKey>(routeTab === 'fiscal' ? 'fiscal' : 'mensal');
+  const [cnpjNfFilter, setCnpjNfFilter] = useState<'PENDING' | 'READY' | 'ISSUED' | 'ALL'>('PENDING');
+
+  useEffect(() => {
+    if (routeTab === 'fiscal') {
+      setActiveTab('fiscal');
+    }
+  }, [routeTab]);
 
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -281,6 +290,31 @@ export default function AdminDreScreen() {
     setLoading(true);
     loadDreData(false);
   }, [loadDreData]);
+
+  const handleToggleCnpjNf = useCallback(
+    (paymentId: string, issued: boolean) => {
+      const title = issued ? 'Marcar NFS-e emitida' : 'Desfazer marcação de NFS-e';
+      const msg = issued
+        ? 'Confirma que a NFS-e manual foi emitida no Emissor Nacional para este CNPJ?'
+        : 'Voltar este pagamento CNPJ para a fila pendente?';
+      Alert.alert(title, msg, [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: issued ? 'Marcar emitida' : 'Desfazer',
+          onPress: async () => {
+            try {
+              await api.post(`/api/admin/dre/cnpj-nf/${encodeURIComponent(paymentId)}`, { issued });
+              showToast(issued ? 'NFS-e marcada como emitida!' : 'Retornado para a fila pendente.');
+              await loadDreData(false);
+            } catch (err: any) {
+              showToast(err?.response?.data?.error || 'Erro ao atualizar status da NFS-e.', 'error');
+            }
+          },
+        },
+      ]);
+    },
+    [loadDreData, showToast]
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -1145,6 +1179,26 @@ export default function AdminDreScreen() {
                   <Text style={{ fontFamily: 'Inter_700Bold' }}>{a.title}: </Text>
                   {a.message}
                 </Text>
+                {a.code === 'PENDING_CNPJ_NF' && (
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setActiveTab('fiscal')}
+                    style={{
+                      marginTop: 8,
+                      alignSelf: 'flex-start',
+                      backgroundColor: '#ffffff',
+                      borderColor: '#cbd5e1',
+                      borderWidth: 1,
+                      borderRadius: 8,
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                    }}
+                  >
+                    <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#0f172a' }}>
+                      Ver fila NFS-e
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 {a.code === 'MISSING_TAX_CONFIG' && (
                   <TouchableOpacity
                     activeOpacity={0.8}
@@ -2556,6 +2610,150 @@ export default function AdminDreScreen() {
           {/* ==================== ABA 4: APURAÇÃO FISCAL & RAZÃO ==================== */}
           {activeTab === 'fiscal' && (
             <>
+              {/* Controle Manual NFS-e MEI (CNPJ pós-7 dias) */}
+              {(() => {
+                const cnpjSum = report?.cnpjNf?.summary || {};
+                const allCnpjItems: any[] = Array.isArray(report?.cnpjNf?.items) ? report.cnpjNf.items : [];
+                const filteredCnpj = allCnpjItems.filter((item) => {
+                  if (cnpjNfFilter === 'READY') return item.nfStatus === 'READY';
+                  if (cnpjNfFilter === 'ISSUED') return item.nfStatus === 'ISSUED';
+                  if (cnpjNfFilter === 'PENDING') return item.nfStatus === 'READY' || item.nfStatus === 'WAITING_7D';
+                  return true;
+                });
+                const fmtBr = (iso?: string | null) => (iso ? String(iso).split('-').reverse().join('/') : '--');
+                return (
+                  <View
+                    style={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: '#e2e8f0',
+                      borderLeftWidth: 4,
+                      borderLeftColor: (cnpjSum.readyCount || 0) > 0 ? '#d97706' : (cnpjSum.waitingCount || 0) > 0 ? '#3b82f6' : '#10b981',
+                      padding: 14,
+                      marginBottom: 14,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 8 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: 'Fraunces_700Bold', fontSize: 15, color: '#0f172a' }}>
+                          🧾 Emissão Manual de NFS-e (CNPJ)
+                        </Text>
+                        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                          {cnpjSum.readyCount || 0} liberado(s) (+7d) • {cnpjSum.waitingCount || 0} em garantia 7d • {cnpjSum.issuedCount || 0} emitida(s)
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => Linking.openURL('https://www.nfse.gov.br/EmissorNacional').catch(() => {})}
+                        style={{
+                          backgroundColor: '#1B4332',
+                          borderRadius: 9,
+                          paddingHorizontal: 10,
+                          paddingVertical: 6,
+                        }}
+                      >
+                        <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: '#ffffff' }}>Emissor ↗</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                      {[
+                        { key: 'PENDING', label: 'Pendentes' },
+                        { key: 'READY', label: 'Liberados (+7d)' },
+                        { key: 'ISSUED', label: 'Emitidas' },
+                        { key: 'ALL', label: 'Todos' },
+                      ].map((opt) => {
+                        const isSel = cnpjNfFilter === opt.key;
+                        return (
+                          <TouchableOpacity
+                            key={opt.key}
+                            onPress={() => setCnpjNfFilter(opt.key as any)}
+                            style={{
+                              paddingHorizontal: 10,
+                              paddingVertical: 5,
+                              borderRadius: 999,
+                              backgroundColor: isSel ? '#1B4332' : '#f1f5f9',
+                            }}
+                          >
+                            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: isSel ? '#ffffff' : '#334155' }}>
+                              {opt.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    {filteredCnpj.length === 0 ? (
+                      <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12, color: '#64748b', paddingVertical: 10 }}>
+                        Nenhum pagamento de CNPJ neste filtro.
+                      </Text>
+                    ) : (
+                      filteredCnpj.map((item) => {
+                        const isReady = item.nfStatus === 'READY';
+                        const isIssued = item.nfStatus === 'ISSUED';
+                        const badgeBg = isReady ? '#fef3c7' : isIssued ? '#dcfce7' : '#e2e8f0';
+                        const badgeFg = isReady ? '#92400e' : isIssued ? '#166534' : '#334155';
+                        const badgeTxt = isReady
+                          ? 'Liberado (+7d)'
+                          : isIssued
+                          ? `Emitida${item.nfNumber ? ` #${item.nfNumber}` : ''}`
+                          : `Aguarda ${item.daysRemaining}d`;
+
+                        return (
+                          <View
+                            key={item.paymentId}
+                            style={{
+                              borderWidth: 1,
+                              borderColor: '#f1f5f9',
+                              backgroundColor: '#f8fafc',
+                              borderRadius: 12,
+                              padding: 10,
+                              marginBottom: 8,
+                            }}
+                          >
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                              <View style={{ backgroundColor: badgeBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 }}>
+                                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 10, color: badgeFg }}>{badgeTxt}</Text>
+                              </View>
+                              <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#0f172a' }}>
+                                {fmtCurrency(item.value)}
+                              </Text>
+                            </View>
+                            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#0f172a' }}>
+                              {item.razaoSocial || item.psiNome}
+                            </Text>
+                            <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 11, color: '#334155', marginTop: 1 }}>
+                              CNPJ: {item.cnpjFormatted} • {item.plano} ({item.billingType})
+                            </Text>
+                            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                              Pgto: {fmtBr(item.paidDate)} • Libera 7d: {fmtBr(item.eligibleDate)}
+                            </Text>
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 }}>
+                              <TouchableOpacity
+                                onPress={() => handleToggleCnpjNf(item.paymentId, !isIssued)}
+                                style={{
+                                  backgroundColor: isIssued ? '#ffffff' : isReady ? '#1B4332' : '#ffffff',
+                                  borderWidth: 1,
+                                  borderColor: isReady && !isIssued ? '#1B4332' : '#cbd5e1',
+                                  borderRadius: 8,
+                                  paddingHorizontal: 10,
+                                  paddingVertical: 6,
+                                }}
+                              >
+                                <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 11, color: isReady && !isIssued ? '#ffffff' : '#0f172a' }}>
+                                  {isIssued ? 'Desfazer' : '✓ Marcar NF emitida'}
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        );
+                      })
+                    )}
+                  </View>
+                );
+              })()}
+
               {/* Apuração Mensal e Fechamento */}
               <View
                 style={{
