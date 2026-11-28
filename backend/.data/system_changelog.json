@@ -1,5 +1,34 @@
 [
   {
+    "id": "change-git-8fbd3f5c",
+    "date": "2026-11-28T17:23:22.000Z",
+    "commit": "8fbd3f5c",
+    "author": "Anderson",
+    "title": "Novo: Display attendance modality badge on match cards (resultados,mobile)",
+    "category": "Motor de Match",
+    "badgeColor": "#3b82f6",
+    "status": "Em Produção",
+    "summary": "display attendance modality badge on match cards",
+    "description": "Commit registrado no repositório: \"feat(resultados,mobile): display attendance modality badge on match cards\". Arquivos modificados: backend/.data/system_changelog.json, backend/data/system_changelog.json, mobile/src/app/resultados.tsx, public/css/components/public_match_results.css, public/js/resultados.js (+2 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #8fbd3f5c"
+    },
+    "after": {
+      "nova_versao": "display attendance modality badge on match cards"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/data/system_changelog.json",
+      "mobile/src/app/resultados.tsx",
+      "public/css/components/public_match_results.css",
+      "public/js/resultados.js",
+      "security/reports/gate_report.json",
+      "views/resultados.ejs"
+    ]
+  },
+  {
     "id": "change-git-4457c0c9",
     "date": "2026-11-28T17:10:15.000Z",
     "commit": "4457c0c9",

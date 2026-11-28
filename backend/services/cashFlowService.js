@@ -1,18 +1,58 @@
 const db = require('../models');
 const { Op } = require('sequelize');
+const subscriptionRevenue = require('../utils/subscriptionRevenue');
 
 class CashFlowService {
     async buildCashFlowData() {
         try {
-            // 1. Busca todos os pagamentos confirmados ou recebidos no banco de dados local
-            const localPayments = await db.Payment.findAll({
-                where: {
-                    status: {
-                        [Op.in]: ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH']
-                    }
-                },
-                raw: true
-            });
+            // 1. Busca todos os pagamentos confirmados ou recebidos no banco local + taxas reais e assinaturas
+            const [localPayments, financialEvents, subscriptions] = await Promise.all([
+                db.Payment.findAll({
+                    where: {
+                        status: {
+                            [Op.in]: ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH']
+                        }
+                    },
+                    raw: true
+                }),
+                db.PaymentFinancialEvent
+                    ? db.PaymentFinancialEvent.findAll({
+                        where: { eventType: 'PAYMENT_CREDITED' },
+                        attributes: ['paymentId', 'grossAmount', 'feeAmount', 'netCashAmount'],
+                        raw: true
+                    }).catch(() => [])
+                    : Promise.resolve([]),
+                db.Subscription
+                    ? db.Subscription.findAll({
+                        attributes: ['id', 'psychologistId', 'plan', 'currentPeriodStart', 'currentPeriodEnd'],
+                        raw: true
+                    }).catch(() => [])
+                    : Promise.resolve([])
+            ]);
+
+            const netByPaymentId = new Map();
+            const feeByPaymentId = new Map();
+            for (const ev of (financialEvents || [])) {
+                if (!ev.paymentId) continue;
+                const netCash = Number(ev.netCashAmount);
+                const feeAmt = Number(ev.feeAmount);
+                const grossAmt = Number(ev.grossAmount);
+                if (Number.isFinite(netCash) && netCash > 0) {
+                    netByPaymentId.set(ev.paymentId, netCash);
+                } else if (Number.isFinite(grossAmt) && Number.isFinite(feeAmt) && feeAmt >= 0) {
+                    netByPaymentId.set(ev.paymentId, subscriptionRevenue.round2(grossAmt - feeAmt));
+                }
+                if (Number.isFinite(feeAmt) && feeAmt >= 0) {
+                    feeByPaymentId.set(ev.paymentId, feeAmt);
+                }
+            }
+
+            const subById = new Map();
+            const subByPsi = new Map();
+            for (const s of (subscriptions || [])) {
+                if (s.id) subById.set(s.id, s);
+                if (s.psychologistId) subByPsi.set(s.psychologistId, s);
+            }
 
             const mergedPayments = {};
             
@@ -22,7 +62,7 @@ class CashFlowService {
             });
 
             // 2. Tenta buscar o histórico diretamente do Asaas para preencher pagamentos antigos 
-            // (antes da implementação da tabela local)
+            // (antes da implementação da tabela local) e netValue real do gateway
             try {
                 const fetchAsaas = async (endpoint) => {
                     const url = `${process.env.ASAAS_API_URL || 'https://www.asaas.com/api/v3'}${endpoint}`;
@@ -49,9 +89,11 @@ class CashFlowService {
                         mergedPayments[p.id] = {
                             id: p.id,
                             value: p.value,
+                            netValue: p.netValue,
                             paymentDate: asaasDate,
                             dueDate: p.dueDate,
-                            status: p.status
+                            status: p.status,
+                            subscriptionId: p.subscription || null
                         };
                     } else {
                         if (asaasDate) {
@@ -59,6 +101,12 @@ class CashFlowService {
                         }
                         if (p.status) {
                             mergedPayments[p.id].status = p.status;
+                        }
+                        if (p.netValue !== undefined && p.netValue !== null) {
+                            mergedPayments[p.id].netValue = p.netValue;
+                        }
+                        if (!mergedPayments[p.id].subscriptionId && p.subscription) {
+                            mergedPayments[p.id].subscriptionId = p.subscription;
                         }
                     }
                 });
@@ -100,7 +148,11 @@ class CashFlowService {
                         monthYear,
                         grossValue: 0,
                         netValue: 0,
-                        count: 0
+                        count: 0,
+                        avgTicket: 0,
+                        multiMonthCount: 0,
+                        nonStandardPayments: [],
+                        distinctValues: new Set()
                     };
                 }
 
@@ -108,13 +160,36 @@ class CashFlowService {
                     weeklyData[monthYear] = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
                 }
 
-                // Converter os valores que podem vir como string do banco
                 const grossVal = parseFloat(payment.value) || 0;
-                const netVal = grossVal - 1.99; // Estimativa de taxa Asaas
+                const ledgerNet = netByPaymentId.get(payment.id);
+                const asaasNet = payment.netValue !== undefined && payment.netValue !== null ? Number(payment.netValue) : NaN;
+                const netVal = Number.isFinite(ledgerNet)
+                    ? ledgerNet
+                    : (Number.isFinite(asaasNet) && asaasNet > 0 ? asaasNet : (grossVal > 1.99 ? grossVal - 1.99 : grossVal));
 
-                cashFlowByMonth[monthYear].grossValue += grossVal;
-                cashFlowByMonth[monthYear].netValue += netVal > 0 ? netVal : grossVal;
-                cashFlowByMonth[monthYear].count += 1;
+                const sub = (payment.subscriptionId && subById.get(payment.subscriptionId)) || (payment.psychologistId && subByPsi.get(payment.psychologistId)) || null;
+                let monthsCovered = 1;
+                if (sub?.currentPeriodStart && sub?.currentPeriodEnd) {
+                    const pTime = new Date(dateObj).getTime();
+                    const sStart = new Date(sub.currentPeriodStart).getTime();
+                    const sEnd = new Date(sub.currentPeriodEnd).getTime();
+                    if (!Number.isNaN(pTime) && pTime >= (sStart - 3 * 86400000) && pTime <= sEnd) {
+                        monthsCovered = subscriptionRevenue.computeMonthsFromDates(sub.currentPeriodStart, sub.currentPeriodEnd);
+                    }
+                }
+
+                const bucket = cashFlowByMonth[monthYear];
+                bucket.grossValue += grossVal;
+                bucket.netValue += netVal > 0 ? netVal : grossVal;
+                bucket.count += 1;
+                bucket.distinctValues.add(subscriptionRevenue.round2(grossVal));
+
+                if (monthsCovered > 1 && grossVal > 100) {
+                    bucket.multiMonthCount += 1;
+                    bucket.nonStandardPayments.push({ value: subscriptionRevenue.round2(grossVal), monthsCovered });
+                } else if (Math.abs(grossVal - 99) >= 1 && grossVal > 99) {
+                    bucket.nonStandardPayments.push({ value: subscriptionRevenue.round2(grossVal), monthsCovered });
+                }
 
                 const weekNum = Math.min(Math.ceil(day / 7), 5); // 1 a 5
                 if (weekNum >= 1 && weekNum <= 5) {
@@ -122,8 +197,42 @@ class CashFlowService {
                 }
             });
 
-            // Converter para array e ordenar (mais recente primeiro)
-            const result = Object.values(cashFlowByMonth).sort((a, b) => b.monthYear.localeCompare(a.monthYear));
+            // Finaliza métricas auxiliares e resume notas de transparência para o painel
+            const result = Object.values(cashFlowByMonth)
+                .map(bucket => {
+                    const grossValue = subscriptionRevenue.round2(bucket.grossValue);
+                    const netValue = subscriptionRevenue.round2(bucket.netValue);
+                    const avgTicket = bucket.count > 0 ? subscriptionRevenue.round2(grossValue / bucket.count) : 0;
+
+                    let summaryHint = '';
+                    if (bucket.nonStandardPayments.length > 0) {
+                        const grouped = new Map();
+                        for (const item of bucket.nonStandardPayments) {
+                            const key = `${item.value}|${item.monthsCovered}`;
+                            grouped.set(key, (grouped.get(key) || 0) + 1);
+                        }
+                        const parts = Array.from(grouped.entries()).map(([key, qty]) => {
+                            const [valStr, monthsStr] = key.split('|');
+                            const valFmt = subscriptionRevenue.formatMoneyCompact(Number(valStr));
+                            const monthsNum = Number(monthsStr);
+                            return monthsNum > 1 ? `${qty}× R$ ${valFmt} (${monthsNum}m)` : `${qty}× R$ ${valFmt}`;
+                        });
+                        summaryHint = `Inclui ${parts.join(', ')} · Ticket R$ ${subscriptionRevenue.formatMoneyCompact(avgTicket)}`;
+                    } else if (bucket.distinctValues.size > 1 && bucket.count > 1) {
+                        summaryHint = `Ticket médio R$ ${subscriptionRevenue.formatMoneyCompact(avgTicket)}`;
+                    }
+
+                    return {
+                        monthYear: bucket.monthYear,
+                        grossValue,
+                        netValue,
+                        count: bucket.count,
+                        avgTicket,
+                        multiMonthCount: bucket.multiMonthCount,
+                        summaryHint
+                    };
+                })
+                .sort((a, b) => b.monthYear.localeCompare(a.monthYear));
 
             return { monthly: result, weekly: weeklyData };
         } catch (error) {

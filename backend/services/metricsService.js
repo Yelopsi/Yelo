@@ -1,5 +1,6 @@
 const { Op } = require('sequelize');
 const db = require('../models');
+const subscriptionRevenue = require('../utils/subscriptionRevenue');
 
 class MetricsService {
     static getValidStatuses() {
@@ -91,20 +92,40 @@ class MetricsService {
             paranoid: false, raw: true 
         });
         const allPayments = await db.Payment.findAll({ raw: true });
+        const allSubscriptions = db.Subscription
+            ? await db.Subscription.findAll({
+                attributes: ['id', 'psychologistId', 'plan', 'status', 'currentPeriodStart', 'currentPeriodEnd', 'updatedAt'],
+                raw: true
+            }).catch(() => [])
+            : [];
 
         const paymentsByPsy = {};
+        const paymentsByPsyMap = new Map();
         for (const p of allPayments) {
             if (!paymentsByPsy[p.psychologistId]) paymentsByPsy[p.psychologistId] = [];
             paymentsByPsy[p.psychologistId].push(p);
+            if (!paymentsByPsyMap.has(p.psychologistId)) paymentsByPsyMap.set(p.psychologistId, []);
+            paymentsByPsyMap.get(p.psychologistId).push(p);
+        }
+
+        const subscriptionsById = new Map();
+        const subscriptionsByPsi = new Map();
+        for (const s of allSubscriptions) {
+            if (s.id) subscriptionsById.set(s.id, s);
+            if (s.psychologistId) subscriptionsByPsi.set(s.psychologistId, s);
         }
 
         let settings = {};
         try { settings = await db.SystemSetting.findOne() || {}; } catch(e) { }
 
         const priceEssencial = settings.price_Essencial > 0 ? settings.price_Essencial : 99.00;
-        const priceClinico = settings.price_Clínico > 0 ? settings.price_Clínico : 159.00;
-        const priceReference = settings.price_sol > 0 ? settings.price_sol : 259.00;
-        const planPrices = { 'essencial': priceEssencial, 'essential': priceEssencial, 'clínico': priceClinico, 'clinical': priceClinico, 'sol': priceReference, 'reference': priceReference };
+        const planPrices = subscriptionRevenue.buildPlanPrices(settings);
+        const revenueContext = {
+            subscriptionsById,
+            subscriptionsByPsi,
+            paymentsByPsi: paymentsByPsyMap,
+            planPrices
+        };
 
         let mrrTotal = 0;
         let payingActiveCount = 0;
@@ -113,12 +134,12 @@ class MetricsService {
         for (const psy of allPsychologists) {
             if (this.isCurrentlyPaying(psy, paymentsByPsy)) {
                 payingActiveCount++;
-                const pName = (psy.plano || '').toLowerCase();
-                mrrTotal += planPrices[pName] || 0;
+                mrrTotal += subscriptionRevenue.computePsychologistRevenueSummary(psy, revenueContext).effectiveMonthly;
             } else if (this.hasPaidCustomer(psy, paymentsByPsy) && psy.status === 'inactive') {
                 inadimplentesCount++;
             }
         }
+        mrrTotal = subscriptionRevenue.round2(mrrTotal);
         
         const arpu = payingActiveCount > 0 ? (mrrTotal / payingActiveCount) : 0;
         const ticketMedio = arpu > 0 ? arpu : priceEssencial;

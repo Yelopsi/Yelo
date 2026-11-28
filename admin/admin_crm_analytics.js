@@ -112,12 +112,31 @@ window.initializePage = function() {
                 .then(res => res.ok ? res.json() : {})
                 .then(dataFin => {
                     if (dataFin.kpis) {
-                        const formatBRL = (v) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                        const formatBRL = (v) => {
+                            const n = Number(v || 0);
+                            const isInt = Math.abs(n - Math.round(n)) < 0.005;
+                            return `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: isInt ? 0 : 2, maximumFractionDigits: 2 })}`;
+                        };
                         const formatPerc = (v) => `${v.toFixed(1)}%`;
                         const formatNum = (v) => `${v} usuários`;
                         
                         // Update KPIs with variations
                         updateKpiCard('mrr', dataFin.kpis.mrr.current, dataFin.kpis.mrr.previous, formatBRL);
+                        const cardMrrMeta = document.querySelector('#card-mrr .kpi-meta');
+                        if (cardMrrMeta) {
+                            let promoNoteEl = document.getElementById('kpi-mrr-promo-note');
+                            if (dataFin.kpis.mrr.promoCount > 0 && dataFin.kpis.mrr.multiMonthDiscount >= 1) {
+                                if (!promoNoteEl) {
+                                    promoNoteEl = document.createElement('div');
+                                    promoNoteEl.id = 'kpi-mrr-promo-note';
+                                    promoNoteEl.style.cssText = 'font-size: 0.72rem; color: #0369a1; font-weight: 600; margin-top: 6px;';
+                                    cardMrrMeta.insertAdjacentElement('afterend', promoNoteEl);
+                                }
+                                promoNoteEl.textContent = `Pós-promo: ${formatBRL(dataFin.kpis.mrr.contracted)} (${dataFin.kpis.mrr.promoCount} em promo/multi-mês)`;
+                            } else if (promoNoteEl) {
+                                promoNoteEl.remove();
+                            }
+                        }
                         updateKpiCard('paid-churn', dataFin.kpis.paidChurnRate.current, dataFin.kpis.paidChurnRate.previous, formatPerc, true, { isRate: true }); // inverted: lower is better
                         updateKpiCard('trial-churn', dataFin.kpis.trialChurnCount.current, dataFin.kpis.trialChurnCount.previous, formatNum, true); // inverted: lower is better
                         
@@ -479,6 +498,15 @@ window.initializePage = function() {
                     <td data-label="Valor Bruto" class="cf-col-bruto">${brutoStr}</td>
                     <td data-label="Valor Líquido (Recebido)" class="cf-col-liquido">${liquidoStr}</td>
                 `;
+                if (item.summaryHint) {
+                    const transCell = tr.querySelector('.cf-col-transacoes');
+                    if (transCell) {
+                        const hintDiv = document.createElement('div');
+                        hintDiv.style.cssText = 'font-size: 0.72rem; color: #0369a1; font-weight: 600; margin-top: 4px;';
+                        hintDiv.textContent = item.summaryHint;
+                        transCell.appendChild(hintDiv);
+                    }
+                }
                 tbody.appendChild(tr);
             });
             

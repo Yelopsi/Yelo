@@ -152,23 +152,26 @@ exports.getGrowthData = async (req, res) => {
         const totalTrials = cumulativoTrials;
 
         // --- VISÃO MACRO FINANCEIRA ---
-        // 1. Calcular o MRR Atual
+        // 1. Calcular o MRR Atual Efetivo (considerando ciclos multi-mês/promocionais)
+        const subscriptionRevenue = require('../utils/subscriptionRevenue');
         const activePsychologists = await db.Psychologist.findAll({
-            where: { plano: { [Op.ne]: null }, status: 'active' },
-            attributes: ['plano', 'is_exempt', 'subscriptionId']
+            where: {
+                plano: { [Op.ne]: null },
+                status: 'active',
+                [Op.or]: [{ is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } }]
+            },
+            attributes: ['id', 'plano', 'is_exempt', 'subscriptionId', 'subscription_payments_count', 'firstPaidAt', 'subscribedAt', 'planExpiresAt'],
+            raw: true
         });
 
-        const planPrices = { 
-            'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
-            'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
-        };
+        const revenueContext = await subscriptionRevenue.loadRevenueContext(db, {
+            psychologistIds: activePsychologists.map(p => p.id)
+        });
 
-        const currentMRR = activePsychologists.reduce((acc, psy) => {
-            if (psy.is_exempt) return acc;
-            const hasSub = !!psy.subscriptionId;
-            if (!hasSub) return acc;
-            return acc + (planPrices[psy.plano ? psy.plano.toLowerCase() : ''] || 0);
-        }, 0);
+        const currentMRR = subscriptionRevenue.round2(activePsychologists.reduce((acc, psy) => {
+            if (psy.is_exempt || !psy.subscriptionId) return acc;
+            return acc + subscriptionRevenue.computePsychologistRevenueSummary(psy, revenueContext).effectiveMonthly;
+        }, 0));
 
         // 2. Calcular Custos do Mês Atual (Snapshot)
         const hoje = new Date();

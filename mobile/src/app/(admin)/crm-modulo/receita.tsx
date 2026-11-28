@@ -448,6 +448,11 @@ export default function ReceitaScreen() {
                     <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 10, color: '#94a3b8', marginTop: 2 }}>
                       Anterior: {formatBRL(kpis.mrr?.previous || 0)}
                     </Text>
+                    {(kpis.mrr?.promoCount || 0) > 0 && (kpis.mrr?.multiMonthDiscount || 0) >= 1 && (
+                      <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 9.5, color: '#0369a1', marginTop: 2 }}>
+                        Pós-promo: {formatBRL(kpis.mrr.contracted)} ({kpis.mrr.promoCount} promo)
+                      </Text>
+                    )}
                   </View>
 
                   {/* Churn Financeiro (Pagantes) */}
@@ -719,13 +724,18 @@ export default function ReceitaScreen() {
                               borderColor: '#e2e8f0',
                             }}
                           >
-                            <View>
+                            <View style={{ flex: 1, paddingRight: 8 }}>
                               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 13, color: '#1e293b' }}>
                                 {dataFormatada}
                               </Text>
                               <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 11, color: '#64748b', marginTop: 1 }}>
                                 {item.count} pagamentos
                               </Text>
+                              {item.summaryHint ? (
+                                <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 10, color: '#0369a1', marginTop: 2 }}>
+                                  {item.summaryHint}
+                                </Text>
+                              ) : null}
                             </View>
 
                             <View style={{ alignItems: 'flex-end' }}>

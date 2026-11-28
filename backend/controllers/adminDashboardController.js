@@ -6,6 +6,7 @@ const {
     B2B_OR_PRO_PAGE_SQL
 } = require('../utils/actorClassifier');
 const { extractLogReferences, formatSystemLog } = require('../utils/systemLogFormatter');
+const subscriptionRevenue = require('../utils/subscriptionRevenue');
 
 // Configurações do Asaas (Extraídas de adminController)
 let ASAAS_API_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/v3';
@@ -94,12 +95,13 @@ exports.getDashboardStats = async (req, res) => {
             db.WaitingList.findAll({ where: { status: { [Op.in]: ['pending', 'invited'] } }, raw: true }).catch(() => []),
             db.Review.count({ where: { status: 'pending' } }).catch(() => 0),
             db.Psychologist.findAll({
-                attributes: ['plano', 'is_exempt', 'subscriptionId', 'subscription_payments_count'],
+                attributes: ['id', 'plano', 'is_exempt', 'subscriptionId', 'subscription_payments_count', 'subscribedAt', 'firstPaidAt', 'planExpiresAt'],
                 where: { 
                     status: 'active', 
                     plano: { [Op.ne]: null },
                     [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
-                }
+                },
+                raw: true
             }).catch(() => []),
             db.SystemLog.count({ where: { message: { [Op.iLike]: '%[EMAIL_FAIL]%' }, createdAt: { [Op.gte]: oneDayAgo } } }).catch(() => 0),
             db.sequelize.query(`SELECT COUNT(*) as count FROM "WhatsAppClickLogs" WHERE COALESCE(status, 'pending') <> 'deleted'`, { type: db.sequelize.QueryTypes.SELECT }).catch(e => { return [{ count: 0 }]; })
@@ -117,13 +119,12 @@ exports.getDashboardStats = async (req, res) => {
         
         let sysSettings = {};
         try { sysSettings = await db.SystemSetting.findOne() || {}; } catch (e) {}
-        const pEss = sysSettings.price_Essencial > 0 ? Number(sysSettings.price_Essencial) : 99.00;
-        const pCli = sysSettings.price_Clínico > 0 ? Number(sysSettings.price_Clínico) : 159.00;
-        const pRef = sysSettings.price_sol > 0 ? Number(sysSettings.price_sol) : 259.00;
-        const planPrices = {
-            'essential': pEss, 'clinical': pCli, 'reference': pRef,
-            'essencial': pEss, 'clínico': pCli, 'sol': pRef
-        };
+        const planPrices = subscriptionRevenue.buildPlanPrices(sysSettings);
+        const revenueContext = await subscriptionRevenue.loadRevenueContext(db, {
+            psychologistIds: psisByPlan.map(p => p.id).filter(Boolean),
+            sysSettings,
+            planPrices
+        });
         let mrr = 0;
         let payingCount = 0;
         let vipCount = 0;
@@ -150,9 +151,10 @@ exports.getDashboardStats = async (req, res) => {
             if (['reference', 'sol'].includes(planKey)) plansCount['Sol'] = (plansCount['Sol'] || 0) + 1;
             
             if (!isExempt && hasSubscription && planPrices[planKey]) {
-                mrr += planPrices[planKey];
+                mrr += subscriptionRevenue.computePsychologistRevenueSummary(p, revenueContext).effectiveMonthly;
             }
         });
+        mrr = subscriptionRevenue.round2(mrr);
 
         const emailStatus = emailErrors === 0 ? 'healthy' : (emailErrors > 5 ? 'critical' : 'warning');
         const totalMatches = parseInt(demandStats.total || 0, 10);
@@ -359,7 +361,8 @@ exports.getDetailedReports = async (req, res) => {
                     status: 'active',
                     [Op.or]: [ { is_exempt: true }, { planExpiresAt: { [Op.gt]: new Date() } } ]
                 }, 
-                attributes: ['plano', 'is_exempt', 'subscriptionId', 'subscription_payments_count'] 
+                attributes: ['id', 'plano', 'is_exempt', 'subscriptionId', 'subscription_payments_count', 'subscribedAt', 'firstPaidAt', 'planExpiresAt'],
+                raw: true
             }),
             db.Psychologist.count({ where: { status: 'inactive', updatedAt: { [Op.between]: [startDate, endDate] } }, paranoid: false }),
             db.sequelize.query(`SELECT COUNT(DISTINCT COALESCE("patientId"::varchar, NULLIF(NULLIF(TRIM("guestName"), ''), 'Visitante'), "id"::varchar)) as count FROM "WhatsAppClickLogs" WHERE "createdAt" BETWEEN :start AND :end`, { replacements: { start: startDate, end: endDate }, type: db.sequelize.QueryTypes.SELECT }).catch(() => [{ count: 0 }]),
@@ -374,17 +377,16 @@ exports.getDetailedReports = async (req, res) => {
 
         let financialStats = { mrr: 0, churnRate: 0, ltv: 0 };
         try {
-            const planPrices = { 
-                'essential': 99.00, 'clinical': 159.00, 'reference': 259.00,
-                'essencial': 99.00, 'clínico': 159.00, 'sol': 259.00 
-            };
+            const execRevenueContext = await subscriptionRevenue.loadRevenueContext(db, {
+                psychologistIds: activePsychologists.map(p => p.id).filter(Boolean)
+            });
             let mrr = activePsychologists.reduce((acc, psy) => {
                 if (psy.is_exempt) return acc;
                 const hasSub = !!psy.subscriptionId || (psy.subscription_payments_count && psy.subscription_payments_count > 0);
                 if (!hasSub) return acc;
-                const planoKey = (psy.plano || '').toLowerCase();
-                return acc + (planPrices[planoKey] || 0);
+                return acc + subscriptionRevenue.computePsychologistRevenueSummary(psy, execRevenueContext).effectiveMonthly;
             }, 0);
+            mrr = subscriptionRevenue.round2(mrr);
 
             const payingCondition = {
                 [Op.or]: [{ subscriptionId: { [Op.ne]: null } }, { subscription_payments_count: { [Op.gt]: 0 } }]
@@ -789,7 +791,15 @@ exports.getFinancials = async (req, res) => {
             return null;
         };
 
+        const revenueContext = await subscriptionRevenue.loadRevenueContext(db, {
+            psychologistIds: allPaidCandidates.map(p => p.id).filter(Boolean),
+            sysSettings,
+            planPrices
+        });
+
         let mrr = 0;
+        let nominalMrr = 0;
+        let promoCount = 0;
         let currentTotalActive = 0;
         let prevMrr = 0;
         let prevTotalActive = 0;
@@ -824,7 +834,10 @@ exports.getFinancials = async (req, res) => {
                     const deactEnd = wasDeactivatedBy(p, end, isActiveNow);
                     if (isActiveNow || !deactEnd) {
                         if (hasSubscription && planKey && planPrices[planKey]) {
-                            mrr += planPrices[planKey];
+                            const revNow = subscriptionRevenue.computePsychologistRevenueSummary(p, revenueContext);
+                            mrr += revNow.effectiveMonthly;
+                            nominalMrr += revNow.nominalMonthly;
+                            if (revNow.isMultiMonthPromo) promoCount++;
                             currentTotalActive++;
                         }
                     } else if (p.deletedAt === null) {
@@ -840,13 +853,17 @@ exports.getFinancials = async (req, res) => {
             const isDeactivatedByPrevEnd = wasDeactivatedBy(p, prevEnd, isActiveNow);
             if (!isDeactivatedByPrevEnd) {
                 if (hasSubscription && planKey && planPrices[planKey]) {
-                    prevMrr += planPrices[planKey];
+                    prevMrr += subscriptionRevenue.computePsychologistRevenueSummary(p, revenueContext, { atDate: prevEnd }).effectiveMonthly;
                     prevTotalActive++;
                 }
             } else {
                 prevInadimplentesCalc++;
             }
         });
+        mrr = subscriptionRevenue.round2(mrr);
+        nominalMrr = subscriptionRevenue.round2(nominalMrr);
+        prevMrr = subscriptionRevenue.round2(prevMrr);
+        const multiMonthDiscount = subscriptionRevenue.round2(Math.max(0, nominalMrr - mrr));
         const activePsychologists = allPaidCandidates.filter(p => p.status === 'active' && !p.deletedAt);
         const dateStart = start.toISOString();
         const nextDayStr = end.toISOString();
@@ -957,7 +974,13 @@ exports.getFinancials = async (req, res) => {
         const prevLtvProjetado = prevArpu * prevProjectedLifetime;
 
         const kpis = {
-            mrr: { current: mrr, previous: prevMrr },
+            mrr: {
+                current: mrr,
+                previous: prevMrr,
+                contracted: nominalMrr,
+                promoCount,
+                multiMonthDiscount
+            },
             paidChurnRate: { current: paidChurnRate, previous: prevPaidChurnRate },
             trialChurnCount: { current: trialChurnCount, previous: prevTrialChurnCount },
             paidChurnCount: { current: paidChurnCount, previous: cmoPrevPaidChurnCount },
@@ -986,6 +1009,13 @@ exports.getFinancials = async (req, res) => {
 
         if (metrics.novosCount > paidChurnCount) insights.push({ type: 'positive', text: `Mais assinantes pagantes entraram (${metrics.novosCount}) do que saíram (${paidChurnCount}).` });
         else if (paidChurnCount > metrics.novosCount) insights.push({ type: 'warning', text: `Alerta: Base de assinantes está encolhendo devido ao churn.` });
+
+        if (promoCount > 0 && multiMonthDiscount >= 1) {
+            insights.push({
+                type: 'warning',
+                text: `${promoCount} assinante(s) em ciclo promocional/multi-mês reduzem o MRR efetivo em R$ ${subscriptionRevenue.formatMoneyCompact(multiMonthDiscount)}/mês agora (nominal pós-promo: R$ ${subscriptionRevenue.formatMoneyCompact(nominalMrr)}/mês).`
+            });
+        }
 
 
         // Invoices 
@@ -1032,12 +1062,15 @@ exports.getFinancials = async (req, res) => {
 
         let activePlans = activePsychologists.map(psy => {
             const hasSub = !!psy.subscriptionId || (psy.subscription_payments_count && psy.subscription_payments_count > 0);
-            const planKey = (psy.plano || '').toLowerCase();
+            const rev = subscriptionRevenue.computePsychologistRevenueSummary(psy, revenueContext);
             return {
                 psychologistId: psy.id,
                 psychologistName: psy.nome,
-                planName: psy.is_exempt ? `${psy.plano} (VIP)` : (!hasSub ? `${psy.plano} (Trial)` : psy.plano),
-                mrr: (psy.is_exempt || !hasSub) ? 0 : (planPrices[planKey] || 0),
+                planName: psy.is_exempt ? `${psy.plano} (VIP)` : (!hasSub ? `${psy.plano} (Trial)` : rev.planDisplayName),
+                mrr: (psy.is_exempt || !hasSub) ? 0 : rev.effectiveMonthly,
+                nominalMrr: rev.nominalMonthly,
+                monthsCovered: rev.monthsCovered,
+                paidAmount: rev.paidAmount,
                 nextBilling: psy.is_exempt ? null : (psy.planExpiresAt ? new Date(psy.planExpiresAt) : new Date(new Date(psy.updatedAt).setMonth(new Date(psy.updatedAt).getMonth() + 1))) 
             };
         });
@@ -1786,9 +1819,10 @@ exports.getFounderMetrics = async (req, res) => {
                     }
                 ]
             },
-            attributes: ['id', 'nome', 'telefone', 'plano', 'status', 'subscriptionId', 'subscription_payments_count', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances', 'admin_billing_sent_at']
+            attributes: ['id', 'nome', 'telefone', 'plano', 'status', 'subscriptionId', 'subscription_payments_count', 'subscribedAt', 'firstPaidAt', 'planExpiresAt', 'cancelAtPeriodEnd', 'createdAt', 'fotoUrl', 'bio', 'whatsapp_clicks', 'profile_appearances', 'admin_billing_sent_at']
         });
 
+        const mainRevenueContext = await subscriptionRevenue.loadRevenueContext(db, { sysSettings, planPrices });
         let currentMRR = 0;
         let payingUsers = 0;
         let activeTrialsCount = 0;
@@ -1818,10 +1852,9 @@ exports.getFounderMetrics = async (req, res) => {
             const isPayingActiveNow = hasSub && p.status === 'active' && (!p.planExpiresAt || planEndsInFuture);
 
             if (isPayingActiveNow) {
-                // Pagante ativo (alinhado com getDashboardStats)
+                // Pagante ativo (alinhado com getDashboardStats e mensalização real de ciclos/promos)
                 payingUsers++;
-                const planoKey = (p.plano || '').toLowerCase();
-                currentMRR += (planPrices[planoKey] || 0);
+                currentMRR += subscriptionRevenue.computePsychologistRevenueSummary(p, mainRevenueContext).effectiveMonthly;
             } else if (planEndsInFuture || expiredSundayKeepMonday) {
                 // Trial Ativo: Somente contabiliza como ativo se executou ação chave (preencheu perfil)
                 if (p.fotoUrl || p.bio) {
@@ -2084,8 +2117,7 @@ exports.getFounderMetrics = async (req, res) => {
 
                 if (wasActive30dAgo && (!!p.subscriptionId || realPaid)) {
                     payingPrev++;
-                    const pk = (p.plano || '').toLowerCase();
-                    prevMRR += (planPrices[pk] || 0);
+                    prevMRR += subscriptionRevenue.computePsychologistRevenueSummary(p, mainRevenueContext, { atDate: thirtyDaysAgo }).effectiveMonthly;
                 }
             }
 
@@ -2099,7 +2131,9 @@ exports.getFounderMetrics = async (req, res) => {
             }
         }
 
-        const mrrDiff = currentMRR - prevMRR;
+        currentMRR = subscriptionRevenue.round2(currentMRR);
+        prevMRR = subscriptionRevenue.round2(prevMRR);
+        const mrrDiff = subscriptionRevenue.round2(currentMRR - prevMRR);
         const mrrDiffRate = prevMRR > 0 ? (mrrDiff / prevMRR) : (currentMRR > 0 ? 1 : 0);
 
         // --- 4.2 RETENÇÃO PÓS-TRIAL (Últimos 30 dias vs 30 dias anteriores) ---
