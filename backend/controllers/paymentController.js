@@ -422,7 +422,9 @@ exports.createPreference = async (req, res) => {
         const subDescription = activePromoCoupon ? `${subDescriptionCycle} [${activePromoCoupon.code}]` : subDescriptionCycle;
 
         const rawRemoteIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || '127.0.0.1';
-        const remoteIp = String(rawRemoteIp).replace(/^::ffff:/, '');
+        const cleanCandidateIp = String(rawRemoteIp).replace(/^::ffff:/, '').trim();
+        const isValidIpv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(cleanCandidateIp);
+        const remoteIp = isValidIpv4 ? cleanCandidateIp : '127.0.0.1';
 
         let expiryMonth = '', expiryYear = '';
         if (creditCard && creditCard.expiry) {
@@ -513,7 +515,7 @@ exports.createPreference = async (req, res) => {
                     description: subDescription,
                     externalReference: String(psychologistId),
                     softDescriptor: 'Yelo Saude',
-                    remoteIp,
+                    ...(newPricingActive ? { remoteIp } : {}),
                     creditCard: {
                         holderName: creditCard.holderName,
                         number: creditCard.number,
@@ -646,7 +648,11 @@ exports.createPreference = async (req, res) => {
             } else if (billingType === 'CREDIT_CARD') {
                 if (activePromoCoupon && activePromoCoupon.type === 'EXTRA_MONTHS') {
                     newPlanExpiresAt = promoCouponService.addMonthsWithMinDays(now, activePromoCoupon.totalMonths, activePromoCoupon.minDays);
-                } else {
+                } else if (!newPricingActive) {
+                    if (parsedNextDueDate <= now) {
+                        newPlanExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                    }
+                } else if (isInstallment || parsedNextDueDate <= now) {
                     let novaValidade = new Date(now.getTime());
                     if (localPsychologist.planExpiresAt && new Date(localPsychologist.planExpiresAt) > now) {
                         novaValidade = new Date(localPsychologist.planExpiresAt);
@@ -768,10 +774,17 @@ exports.createPreference = async (req, res) => {
                 canceledAt: null
             };
 
-            if (trialEndDate) {
+            if (!newPricingActive) {
+                if (billingType === 'CREDIT_CARD') {
+                    updateData.status = 'active';
+                    updateData.is_exempt = false;
+                    if (wasExpiredOrInactive || activePromoCoupon) {
+                        updateData.reactivatedAt = now;
+                    }
+                }
+            } else if (trialEndDate) {
                 updateData.status = 'active';
                 updateData.is_exempt = false;
-                if (!localPsychologist.subscribedAt) updateData.subscribedAt = now;
                 if (!localPsychologist.profileActivatedAt) updateData.profileActivatedAt = now;
             } else if (billingType === 'CREDIT_CARD') {
                 updateData.status = 'active';
@@ -803,20 +816,24 @@ exports.createPreference = async (req, res) => {
                 
                 if (paymentsData.data && paymentsData.data.length > 0) {
                     const firstPayment = paymentsData.data[0];
-                    const qrRes = await fetch(`${ASAAS_API_URL}/payments/${firstPayment.id}/pixQrCode`, {
-                        headers: { 'access_token': ASAAS_API_KEY }
-                    });
-                    const qrText = await qrRes.text();
-                    const qrData = qrText ? JSON.parse(qrText) : {};
-
-                    if (qrRes.ok && qrData && qrData.encodedImage && qrData.payload) {
-                        return res.json({
-                            success: true,
-                            subscriptionId: asaasRefId,
-                            billingType: 'PIX',
-                            invoiceUrl: firstPayment.invoiceUrl || null,
-                            pix: { encodedImage: qrData.encodedImage, payload: qrData.payload }
+                    try {
+                        const qrRes = await fetch(`${ASAAS_API_URL}/payments/${firstPayment.id}/pixQrCode`, {
+                            headers: { 'access_token': ASAAS_API_KEY }
                         });
+                        const qrText = await qrRes.text();
+                        const qrData = qrText ? JSON.parse(qrText) : {};
+
+                        if (qrRes.ok && qrData && qrData.encodedImage && qrData.payload) {
+                            return res.json({
+                                success: true,
+                                subscriptionId: asaasRefId,
+                                billingType: 'PIX',
+                                invoiceUrl: firstPayment.invoiceUrl || null,
+                                pix: { encodedImage: qrData.encodedImage, payload: qrData.payload }
+                            });
+                        }
+                    } catch (qrErr) {
+                        console.error("Assinatura criada mas falha ao obter /pixQrCode:", qrErr?.message || qrErr);
                     }
                     return res.json({
                         success: true,
@@ -827,7 +844,7 @@ exports.createPreference = async (req, res) => {
                     });
                 }
             } catch (pixErr) {
-                console.error("Assinatura criada mas falha ao obter QRCode PIX", pixErr);
+                console.error("Assinatura criada mas falha ao obter QRCode PIX:", pixErr?.message || pixErr);
             }
             return res.json({ success: true, subscriptionId: asaasRefId, message: 'Assinatura PIX criada.' });
         }

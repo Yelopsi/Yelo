@@ -1159,8 +1159,9 @@ class PaymentStateService {
                     status: 'inactive',
                     planExpiresAt: now
                 }, { transaction: t });
-                if (payment.subscription) {
-                    await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: payment.subscription }, transaction: t }).catch(() => {});
+                const failRefId = payment.subscription || payment.installment || payment.id;
+                if (failRefId) {
+                    await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: failRefId }, transaction: t }).catch(() => {});
                 }
             } else {
                 // Para OVERDUE, DELETED, REFUSED, só inativamos se não tiver plano válido vigente

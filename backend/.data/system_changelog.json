@@ -1,5 +1,36 @@
 [
   {
+    "id": "change-git-fd0c0802",
+    "date": "2026-11-28T01:22:09.000Z",
+    "commit": "fd0c0802",
+    "author": "Anderson",
+    "title": "Correção: Corrigir fallback PIX, checagem pay_ no cron, schema NF e chave duplicada (audit)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "corrigir fallback PIX, checagem pay_ no cron, schema NF e chave duplicada",
+    "description": "Commit registrado no repositório: \"fix(audit): corrigir fallback PIX, checagem pay_ no cron, schema NF e chave duplicada\". Arquivos modificados: backend/.data/system_changelog.json, backend/config/dbFixes.js, backend/controllers/paymentController.js, backend/data/system_changelog.json, backend/jobs/cronScheduler.js (+4 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #fd0c0802"
+    },
+    "after": {
+      "nova_versao": "corrigir fallback PIX, checagem pay_ no cron, schema NF e chave duplicada"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/config/dbFixes.js",
+      "backend/controllers/paymentController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/cronScheduler.js",
+      "backend/migrations/20261128010000-add-nf-columns-to-payments.js",
+      "backend/models/SystemSetting.js",
+      "public/psi/psi_assinatura.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-e2722980",
     "date": "2026-11-28T01:06:29.000Z",
     "commit": "e2722980",

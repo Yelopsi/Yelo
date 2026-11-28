@@ -357,7 +357,7 @@ exports.calculateMatches = async (preferences = {}) => {
         // --- MUDANÇA ESTRATÉGICA: BUSCA RESTRITA A ATIVOS E TRIALS COMPLETOS (EXCLUI COMUNIDADE) ---
         const baseWhereConditions = { 
             status: { [Op.in]: ['active', 'trial'] },
-            plano: { [Op.ne]: 'Comunidade' },
+            [Op.or]: [{ plano: null }, { plano: { [Op.ne]: 'Comunidade' } }],
             bio: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
             cpf: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },
             fotoUrl: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] },

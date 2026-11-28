@@ -87,7 +87,11 @@ router.post('/psychologists/:id/appearance', async (req, res) => {
 router.get('/psychologists/list', async (req, res) => {
     try {
         const psis = await db.Psychologist.findAll({
-            where: { status: 'active', fotoUrl: { [Op.ne]: null }, plano: { [Op.ne]: 'Comunidade' } },
+            where: {
+                status: 'active',
+                fotoUrl: { [Op.ne]: null },
+                [Op.or]: [{ plano: null }, { plano: { [Op.ne]: 'Comunidade' } }]
+            },
             attributes: ['id', 'nome', 'fotoUrl', 'status', 'createdAt', 'planExpiresAt', 'is_exempt'],
             limit: 100, order: db.sequelize.random()
         });

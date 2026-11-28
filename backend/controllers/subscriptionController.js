@@ -50,6 +50,11 @@ exports.deletePsychologistAccount = async (req, res) => {
             } catch (asaasError) {
                 // Log error but continue deletion
             }
+        } else if (psychologist.subscriptionId) {
+            await db.Subscription.update(
+                { status: 'CANCELED' },
+                { where: { id: psychologist.subscriptionId } }
+            ).catch(() => {});
         }
 
         // 4. Salvar Feedback de Saída (Via Modelo Sequelize)
@@ -256,7 +261,24 @@ exports.cancelSubscription = async (req, res) => {
             });
         }
 
-        // 3. Assinatura recorrente mensal: limpa faturas em aberto, agenda fim do ciclo no Asaas (permitindo reativação até o vencimento) ou purga se já vencida
+        // 3. Assinatura recorrente mensal pré-2027: mantém 100% o fluxo atual em produção (purga faturas abertas e encerra assinatura na hora no Asaas)
+        if (!pricingLaunch.isNewPricingActive()) {
+            await PaymentStateService.cancelAndPurgeSubscription(subId, {
+                psychologistId: psychologist.id
+            });
+            await db.Payment.update({ status: 'CANCELED' }, {
+                where: {
+                    psychologistId: psychologist.id,
+                    status: ['PENDING', 'OVERDUE']
+                }
+            }).catch(() => {});
+            await psychologist.update({ cancelAtPeriodEnd: true, canceledAt: new Date() });
+            await db.Subscription.update({ status: 'INACTIVE' }, { where: { id: subId } }).catch(() => {});
+            sendSubscriptionCancelledEmail(psychologist).catch(e => {});
+            return res.json({ message: 'Renovação automática cancelada. Seu acesso continua até o fim do período já pago.' });
+        }
+
+        // 3B. Assinatura recorrente mensal pós-2027: limpa faturas em aberto, agenda fim do ciclo no Asaas (permitindo reativação até o vencimento) ou purga se já vencida
         const now = new Date();
         const hasRemainingPaidPeriod = Boolean(
             psychologist.status === 'active' &&

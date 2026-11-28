@@ -7,6 +7,7 @@ const pricingLaunch = require('../utils/pricingLaunch');
 // ============================================================================
 async function processTokenizedTrials() {
     try {
+        if (!pricingLaunch.isNewPricingActive()) return;
         const ASAAS_API_URL = PaymentStateService.getAsaasApiUrl();
         const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
         if (!ASAAS_API_KEY) return;
@@ -92,6 +93,7 @@ async function processTokenizedTrials() {
 // ============================================================================
 async function processInstallmentRenewals() {
     try {
+        if (!pricingLaunch.isNewPricingActive()) return;
         const ASAAS_API_URL = PaymentStateService.getAsaasApiUrl();
         const ASAAS_API_KEY = process.env.ASAAS_API_KEY ? process.env.ASAAS_API_KEY.trim() : '';
         if (!ASAAS_API_KEY) return;
@@ -248,14 +250,10 @@ async function runIntegrityAudit() {
         const expiredPsis = await db.Psychologist.findAll({
             where: {
                 status: 'active',
-                plano: { [Op.notIn]: ['Comunidade'] },
-                [Op.or]: [
-                    { is_exempt: null },
-                    { is_exempt: false }
-                ],
-                [Op.or]: [
-                    { planExpiresAt: { [Op.lte]: new Date() } },
-                    { planExpiresAt: null }
+                [Op.and]: [
+                    { [Op.or]: [{ plano: null }, { plano: { [Op.ne]: 'Comunidade' } }] },
+                    { [Op.or]: [{ is_exempt: null }, { is_exempt: false }] },
+                    { [Op.or]: [{ planExpiresAt: { [Op.lte]: new Date() } }, { planExpiresAt: null }] }
                 ]
             }
         });
@@ -386,26 +384,36 @@ async function runIntegrityAudit() {
             }
         }
 
-        // 4. Checagem de integridade: Psicólogos inativos ou com período cancelado já vencido que ainda possuem sub_... vinculada
+        // 4. Checagem de integridade: pré-2027 segue critério legado exato; pós-2027 preserva cancelAtPeriodEnd até vencer planExpiresAt para permitir reativação
         const auditNow = new Date();
         const inactiveWithSub = await db.Psychologist.findAll({
-            where: {
-                subscriptionId: { [Op.like]: 'sub_%' },
-                [Op.or]: [
-                    { status: { [Op.in]: ['inactive', 'vencido'] } },
-                    {
-                        cancelAtPeriodEnd: true,
-                        [Op.or]: [
-                            { planExpiresAt: null },
-                            { planExpiresAt: { [Op.lte]: auditNow } }
-                        ]
-                    },
-                    {
-                        canceledAt: { [Op.ne]: null },
-                        status: { [Op.ne]: 'active' }
-                    }
-                ]
-            }
+            where: newPricingActive
+                ? {
+                    subscriptionId: { [Op.like]: 'sub_%' },
+                    [Op.or]: [
+                        { status: { [Op.in]: ['inactive', 'vencido'] } },
+                        {
+                            cancelAtPeriodEnd: true,
+                            [Op.or]: [
+                                { planExpiresAt: null },
+                                { planExpiresAt: { [Op.lte]: auditNow } }
+                            ]
+                        },
+                        {
+                            canceledAt: { [Op.ne]: null },
+                            status: { [Op.ne]: 'active' }
+                        }
+                    ]
+                }
+                : {
+                    subscriptionId: { [Op.like]: 'sub_%' },
+                    [Op.or]: [
+                        { status: 'inactive' },
+                        { status: 'vencido' },
+                        { cancelAtPeriodEnd: true },
+                        { canceledAt: { [Op.ne]: null } }
+                    ]
+                }
         });
 
         for (const psi of inactiveWithSub) {

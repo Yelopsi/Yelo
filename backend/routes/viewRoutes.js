@@ -70,7 +70,11 @@ async function loadLandingHighlights() {
 
     try {
         const psicologos = await db.Psychologist.findAll({
-            where: { status: 'active', fotoUrl: { [Op.ne]: null }, plano: { [Op.ne]: 'Comunidade' } },
+            where: {
+                status: 'active',
+                fotoUrl: { [Op.ne]: null },
+                [Op.or]: [{ plano: null }, { plano: { [Op.ne]: 'Comunidade' } }]
+            },
             order: db.sequelize.random(),
             limit: 30,
             attributes: ['nome', 'fotoUrl', 'slug', 'status', 'createdAt', 'planExpiresAt', 'is_exempt']
@@ -319,7 +323,10 @@ router.get('/mapa-do-site', async (req, res) => {
     try {
         const agora = new Date();
         const psicologos = await db.Psychologist.findAll({
-            where: { status: 'active', plano: { [Op.ne]: 'Comunidade' } },
+            where: {
+                status: 'active',
+                [Op.or]: [{ plano: null }, { plano: { [Op.ne]: 'Comunidade' } }]
+            },
             attributes: ['nome', 'slug', 'is_exempt', 'planExpiresAt'],
             order: [['nome', 'ASC']]
         });
