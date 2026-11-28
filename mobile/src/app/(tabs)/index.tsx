@@ -23,7 +23,6 @@ export default function HomeScreen() {
   const [isOffline, setIsOffline] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [copiedReview, setCopiedReview] = useState(false);
-  const [promoOffer, setPromoOffer] = useState<any>(null);
   const [showPricingNotice, setShowPricingNotice] = useState(false);
   const [savingPricingNotice, setSavingPricingNotice] = useState(false);
   const [dismissedLegacyBanner, setDismissedLegacyBanner] = useState(false);
@@ -61,17 +60,13 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, apptsRes, finRes, meRes, aiRes, promoRes] = await Promise.all([
+        const [statsRes, apptsRes, finRes, meRes, aiRes] = await Promise.all([
           api.get('/api/psychologists/me/stats?period=all_time').catch(() => ({ data: null })),
           api.get('/api/appointments').catch(() => ({ data: [] })),
           api.get('/api/financials/dashboard?period=current').catch(() => ({ data: { appointments: [] } })),
           api.get('/api/psychologists/me').catch(() => ({ data: null })),
           api.post('/api/psychologists/me/ai-insights', {}).catch(() => ({ data: null })),
-          api.get(`/api/payments/promo-eligibility?planType=ESSENTIAL&isIos=${Platform.OS === 'ios'}&platform=${Platform.OS}`).catch(() => ({ data: null })),
         ]);
-        if (promoRes?.data?.eligible) {
-          setPromoOffer(promoRes.data);
-        }
 
         if (meRes.data) {
           setPsiData(meRes.data);
@@ -85,7 +80,18 @@ export default function HomeScreen() {
           const snoozeMs = meRes.data.pricing_notice_jan27_snooze_until
             ? new Date(meRes.data.pricing_notice_jan27_snooze_until).getTime()
             : 0;
+          const isExemptMe =
+            meRes.data.is_exempt === true ||
+            String(meRes.data.is_exempt).toLowerCase() === 'true' ||
+            meRes.data.is_exempt === 1;
+          const hasSubMe = Boolean(meRes.data.subscriptionId || meRes.data.stripeSubscriptionId);
+          const isPaidSubscriberMe =
+            isExemptMe ||
+            (meRes.data.status === 'active' &&
+              hasSubMe &&
+              String(meRes.data.plano || '').trim() !== 'Comunidade');
           if (
+            isPaidSubscriberMe &&
             nowMs >= windowStart &&
             nowMs <= windowEnd &&
             noticeStatus !== 'acknowledged' &&
@@ -459,8 +465,8 @@ export default function HomeScreen() {
               >
                 <Text className="font-sans text-[#FFEE8C] text-[12px] font-semibold">
                   {isTrialEligible
-                    ? '🔒 Cliques e indicadores exclusivos do Essencial - Testar 7d grátis →'
-                    : '🔒 Período de teste encerrado - Assinar Plano Essencial →'}
+                    ? '🔒 Plano Comunidade ativo - Ver detalhes do plano →'
+                    : '🔒 Perfil oculto nas buscas - Ver status do plano →'}
                 </Text>
               </TouchableOpacity>
             </>
@@ -544,8 +550,8 @@ export default function HomeScreen() {
             </Text>
             <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: '#78350F', lineHeight: 18, marginBottom: 10 }}>
               {isTrialEligible
-                ? 'Suas ferramentas internas seguem gratuitas, mas seu perfil não aparece nas buscas e você não recebe cliques nem contatos de pacientes no WhatsApp. Ative o Plano Essencial e ganhe 7 dias grátis no cartão.'
-                : 'Seu teste do Plano Essencial terminou sem assinatura ativa e sua conta retornou ao Plano Comunidade (Grátis). Suas ferramentas internas continuam livres, mas seu perfil está oculto e sem cliques. Assine para voltar às buscas.'}
+                ? 'Suas ferramentas internas seguem gratuitas, mas seu perfil não aparece nas buscas de pacientes. Os recursos de exibição ficam disponíveis automaticamente quando a conta está no Plano Essencial.'
+                : 'Seu acesso atual está no Plano Comunidade (Gratuito). Suas ferramentas internas continuam livres, enquanto a exibição pública nas buscas fica pausada.'}
             </Text>
             <TouchableOpacity
               activeOpacity={0.85}
@@ -553,7 +559,7 @@ export default function HomeScreen() {
               style={{ backgroundColor: '#1B4332', alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 }}
             >
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#ffffff' }}>
-                {isTrialEligible ? 'Testar 7 dias grátis →' : 'Assinar Plano Essencial →'}
+                Ver status do plano →
               </Text>
             </TouchableOpacity>
           </View>
@@ -590,41 +596,6 @@ export default function HomeScreen() {
             >
               <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 12, color: '#ffffff' }}>
                 Ver assinatura
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* BANNER DISCRETO DE CONDIÇÃO PROMOCIONAL (espelho de #bf-visao-geral-banner da web) */}
-        {promoOffer?.eligible && (
-          <View
-            style={{
-              backgroundColor: '#1B4332',
-              borderWidth: 1.5,
-              borderColor: '#F4D35E',
-              borderRadius: 18,
-              padding: 16,
-              marginBottom: 20,
-            }}
-          >
-            <View style={{ backgroundColor: '#FFEE8C', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, marginBottom: 6 }}>
-              <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 10, color: '#1B4332', textTransform: 'uppercase' }}>
-                Condição Especial Liberação Automática
-              </Text>
-            </View>
-            <Text style={{ fontFamily: 'Inter_700Bold', fontSize: 15, color: '#ffffff', marginBottom: 3 }}>
-              {promoOffer.title || '2 meses de consultório ativo por R$ 99,00'}
-            </Text>
-            <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 12.5, color: 'rgba(255,255,255,0.88)', lineHeight: 18, marginBottom: 12 }}>
-              Pague apenas 1 mês (R$ 99) e receba 60 dias completos no Plano Essencial, sem precisar de cupom.
-            </Text>
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => router.navigate('/assinatura')}
-              style={{ backgroundColor: '#FFEE8C', alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999 }}
-            >
-              <Text style={{ fontFamily: 'Inter_800ExtraBold', fontSize: 12.5, color: '#1B4332' }}>
-                Ver condição →
               </Text>
             </TouchableOpacity>
           </View>

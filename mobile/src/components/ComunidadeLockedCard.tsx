@@ -42,13 +42,10 @@ export default function ComunidadeLockedCard({
   const resolvedDescription =
     description ||
     (trialEligible
-      ? 'No Plano Comunidade (Grátis), seu perfil fica oculto nas buscas e não recebe cliques de pacientes. Indicadores individuais e comparativos são exclusivos para assinantes do Plano Essencial.'
-      : 'Seu período de teste encerrou e sua conta retornou ao Plano Comunidade (Grátis), oculto nas buscas e sem cliques. Assine o Plano Essencial para reativar seu perfil e indicadores.');
+      ? 'No Plano Comunidade (Gratuito), suas ferramentas internas seguem disponíveis, mas seu perfil fica oculto nas buscas. Indicadores individuais são exibidos quando a conta está no Plano Essencial.'
+      : 'No Plano Comunidade (Gratuito), seu perfil está oculto nas buscas e estes indicadores individuais ficam desativados até que o Plano Essencial esteja ativo em sua conta.');
   const resolvedCta =
-    ctaLabel ||
-    (trialEligible
-      ? 'Testar 7 dias grátis e liberar cliques →'
-      : 'Assinar Plano Essencial e voltar às buscas →');
+    ctaLabel || 'Ver detalhes do meu plano →';
 
   const m30 =
     peerStats?.matches30d !== undefined
@@ -185,7 +182,7 @@ export default function ComunidadeLockedCard({
             >
               Nos últimos 30 dias, {cohortText} receberam <Text style={{ fontWeight: '700' }}>{m30} matches</Text> e <Text style={{ fontWeight: '700' }}>{c30} cliques no WhatsApp</Text>
               {avgC30 >= 0.1 ? ` (média de ${avgC30.toFixed(1).replace('.', ',')} cliques/perfil ativo)` : ''}
-              {c7 > 0 ? ` - com ${c7} só nos últimos 7 dias` : ''}. {trialEligible ? 'Ative seu teste grátis para receber esses contatos.' : 'Reative sua assinatura para voltar a receber esses contatos.'}
+              {c7 > 0 ? ` - com ${c7} só nos últimos 7 dias` : ''}. Os indicadores detalhados são habilitados automaticamente com o Plano Essencial ativo.
             </Text>
           </>
         ) : (

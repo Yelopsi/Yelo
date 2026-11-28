@@ -144,7 +144,7 @@ export default function CalculadoraPsi() {
           <Text className="font-title text-[#1B4332] text-[24px] mt-[2px]">{formatCurrency(valorSessao)}</Text>
         </View>
         <TouchableOpacity 
-          onPress={() => router.push('/registro')}
+          onPress={() => router.push('/psi_questionario')}
           className="bg-[#FFEE8C] py-[12px] px-[20px] rounded-[50px] shadow-[0_4px_15px_rgba(255,238,140,0.4)]"
         >
           <Text className="font-sans font-bold text-[#1B4332] text-[14px]">Captar pacientes</Text>

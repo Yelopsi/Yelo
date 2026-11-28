@@ -12,7 +12,7 @@ export default function ConfiguracoesScreen() {
   const [priceClinico, setPriceClinico] = useState('149.90');
   const [priceReferencia, setPriceReferencia] = useState('249.90');
 
-  const [whatsapp, setWhatsapp] = useState('5511999999999');
+  const [whatsapp, setWhatsapp] = useState('5511988887723');
   const [email, setEmail] = useState('suporte@yelopsi.com.br');
 
   const toggleMaintenance = (val: boolean) => {

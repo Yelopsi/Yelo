@@ -370,32 +370,8 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
               
-              {/* DIVIDER */}
-              <View className="flex-row items-center my-6">
-                <View className="flex-1 h-[1px] bg-[#e5e7eb]" />
-                <Text className="px-4 text-[#9ca3af] text-[13px] font-semibold font-sans">OU ACESSE COM</Text>
-                <View className="flex-1 h-[1px] bg-[#e5e7eb]" />
-              </View>
-
-              {/* SOCIAL BUTTONS */}
-              <TouchableOpacity className="w-full bg-white border border-[#e5e7eb] py-3.5 rounded-full items-center justify-center flex-row mb-3">
-                <Image 
-                  source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png' }} 
-                  style={{ width: 18, height: 18, marginRight: 10 }}
-                />
-                <Text className="text-[#3c4043] font-semibold text-[15px] font-sans">Continuar com o Google</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity className="w-full bg-black border border-black py-3.5 rounded-full items-center justify-center flex-row mb-6">
-                <Image 
-                  source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/120px-Apple_logo_black.svg.png' }} 
-                  style={{ width: 16, height: 19, marginRight: 10, tintColor: 'white' }}
-                />
-                <Text className="text-white font-semibold text-[15px] font-sans">Continuar com a Apple</Text>
-              </TouchableOpacity>
-
               {/* FOOTER LINKS */}
-              <View className="items-center mt-2">
+              <View className="items-center mt-6">
                 <TouchableOpacity className="mb-4" onPress={() => router.push('/recuperar-senha')}>
                   <Text className="text-[#6b7280] font-medium text-[15px] font-sans">Esqueceu sua senha?</Text>
                 </TouchableOpacity>

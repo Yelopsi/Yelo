@@ -182,9 +182,17 @@ export default function CadastroScreen() {
                 <View className={`w-5 h-5 rounded-[6px] border ${termosAceitos ? 'bg-[#1B4332] border-[#1B4332]' : 'bg-white border-[#d1d5db]'} items-center justify-center mr-3`}>
                   {termosAceitos && <Feather name="check" size={14} color="white" />}
                 </View>
-                <Text className="text-[#666] text-[13px] font-sans flex-1">
-                  Li e aceito os <Text className="text-[#1B4332] font-bold">Termos de Uso</Text> e <Text className="text-[#1B4332] font-bold">Política de Privacidade</Text>.
-                </Text>
+                <View className="flex-1 flex-row flex-wrap items-center">
+                  <Text className="text-[#666] text-[13px] font-sans">Li e aceito os </Text>
+                  <TouchableOpacity onPress={() => router.push('/termos')}>
+                    <Text className="text-[#1B4332] font-bold text-[13px] font-sans underline">Termos de Uso</Text>
+                  </TouchableOpacity>
+                  <Text className="text-[#666] text-[13px] font-sans"> e </Text>
+                  <TouchableOpacity onPress={() => router.push('/privacidade')}>
+                    <Text className="text-[#1B4332] font-bold text-[13px] font-sans underline">Política de Privacidade</Text>
+                  </TouchableOpacity>
+                  <Text className="text-[#666] text-[13px] font-sans">.</Text>
+                </View>
               </TouchableOpacity>
 
               {errorMsg ? (
@@ -203,25 +211,9 @@ export default function CadastroScreen() {
                   <Text className="text-white font-bold text-[15px] font-sans">Criar Conta Gratuita</Text>
                 )}
               </TouchableOpacity>
-              
-              {/* DIVIDER */}
-              <View className="flex-row items-center my-4">
-                <View className="flex-1 h-[1px] bg-[#e5e7eb]" />
-                <Text className="px-4 text-[#9ca3af] text-[12px] font-semibold font-sans">OU ACESSE COM</Text>
-                <View className="flex-1 h-[1px] bg-[#e5e7eb]" />
-              </View>
-
-              {/* SOCIAL BUTTONS */}
-              <TouchableOpacity className="w-full bg-white border border-[#e5e7eb] py-3.5 rounded-full items-center justify-center flex-row mb-3">
-                <Image 
-                  source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png' }} 
-                  style={{ width: 18, height: 18, marginRight: 10 }}
-                />
-                <Text className="text-[#3c4043] font-semibold text-[15px] font-sans">Continuar com o Google</Text>
-              </TouchableOpacity>
 
               {/* FOOTER LINKS */}
-              <View className="items-center mt-3">
+              <View className="items-center mt-5">
                 <View className="flex-row mb-3">
                   <Text className="text-[#6b7280] text-[14px] font-sans">Já tem uma conta? </Text>
                   <TouchableOpacity onPress={() => router.push('/login')}>

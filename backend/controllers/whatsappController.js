@@ -2,6 +2,13 @@ const db = require('../models');
 const gamificationService = require('../services/gamificationService');
 const { resolveActor, recordDiscardedEvent } = require('../utils/actorClassifier');
 
+function buildWhatsAppUrl(psi) {
+    const primeiroNome = String(psi?.nome || '').trim().split(' ')[0] || 'Profissional';
+    const numeroLimpo = String(psi?.telefone || '').replace(/\D/g, '');
+    const mensagem = `Olá, ${primeiroNome}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento.`;
+    return `https://wa.me/55${numeroLimpo}?text=${encodeURIComponent(mensagem)}`;
+}
+
 /**
  * Endpoint unificado para o Teste A/B de WhatsApp.
  * Consolida TODAS as responsabilidades que antes eram distribuídas entre:
@@ -61,16 +68,14 @@ exports.getWhatsAppLink = async (req, res) => {
                 actorId: actor.userId || null,
                 utmSource: req.query.utm_source || req.query.utmSource || null
             });
-            const numLimpo = psi.telefone.replace(/\D/g, '');
-            return res.json({ success: true, url: `https://wa.me/55${numLimpo}`, variant: null, skipped: true });
+            return res.json({ success: true, url: buildWhatsAppUrl(psi), variant: null, skipped: true });
         }
 
         // 3. Proteção de Idempotência (Cookie de 24h — bloqueia duplo-clique)
         const cookieName = `ab_clicked_${psi.id}`;
         if (req.cookies && req.cookies[cookieName]) {
             console.log(`[A/B] Clique duplicado bloqueado (cookie): Psicólogo ${psi.id}`);
-            const numLimpo = psi.telefone.replace(/\D/g, '');
-            return res.json({ success: true, url: `https://wa.me/55${numLimpo}`, variant: null, skipped: true });
+            return res.json({ success: true, url: buildWhatsAppUrl(psi), variant: null, skipped: true });
         }
         res.cookie(cookieName, 'true', { maxAge: 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'Lax' });
 
@@ -80,10 +85,7 @@ exports.getWhatsAppLink = async (req, res) => {
         const searchId = req.query.searchId || null;
 
         // 5. Mensagem padrão (Vencedora do Teste A/B: Variante A)
-        const primeiroNome = psi.nome.split(' ')[0];
-        const numeroLimpo = psi.telefone.replace(/\D/g, '');
         const variantId = 'A';
-        const mensagem = `Olá, ${primeiroNome}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento.`;
 
         // 6. Salva o log completo no banco (fonte única de verdade)
         await db.WhatsAppClickLog.create({
@@ -113,7 +115,7 @@ exports.getWhatsAppLink = async (req, res) => {
         }
 
         // 10. Monta e retorna a URL
-        const url = `https://wa.me/55${numeroLimpo}?text=${encodeURIComponent(mensagem)}`;
+        const url = buildWhatsAppUrl(psi);
         return res.json({ success: true, url, variant: variantId });
 
     } catch (error) {

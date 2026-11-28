@@ -160,6 +160,8 @@ export default function ForumScreen() {
   const [showRules, setShowRules] = useState(true);
 
   const RULES_COLLAPSED_KEY = 'Yelo_forum_rules_collapsed_v1';
+  const FORUM_BLOCKED_KEY = 'Yelo_forum_blocked_v1';
+  const [blockedKeys, setBlockedKeys] = useState<string[]>([]);
 
   useEffect(() => {
     SecureStore.getItemAsync(RULES_COLLAPSED_KEY)
@@ -168,7 +170,48 @@ export default function ForumScreen() {
         else if (val === 'false') setShowRules(true);
       })
       .catch(() => {});
+
+    SecureStore.getItemAsync(FORUM_BLOCKED_KEY)
+      .then((raw) => {
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setBlockedKeys(parsed.filter((k) => typeof k === 'string'));
+      })
+      .catch(() => {});
   }, []);
+
+  const persistBlockedKeys = (next: string[]) => {
+    setBlockedKeys(next);
+    SecureStore.setItemAsync(FORUM_BLOCKED_KEY, JSON.stringify(next)).catch(() => {});
+  };
+
+  const getAuthorBlockKey = (item: any): string | null => {
+    if (!item || item.isAnonymous || item.isMine) return null;
+    const raw = item.PsychologistId ?? item.psychologistId ?? item.authorSlug ?? item.authorName;
+    if (!raw || String(raw).toLowerCase() === 'anônimo') return null;
+    return `author:${String(raw).trim().toLowerCase()}`;
+  };
+
+  const isBlockedItem = useCallback(
+    (item: any, kind: 'post' | 'comment') => {
+      if (!item || blockedKeys.length === 0) return false;
+      if (item.id && blockedKeys.includes(`${kind}:${item.id}`)) return true;
+      const authorKey = getAuthorBlockKey(item);
+      return Boolean(authorKey && blockedKeys.includes(authorKey));
+    },
+    [blockedKeys]
+  );
+
+  const filterVisibleComments = useCallback(
+    (list: ForumComment[]): ForumComment[] =>
+      list
+        .filter((c) => !isBlockedItem(c, 'comment'))
+        .map((c) => ({
+          ...c,
+          replies: c.replies ? filterVisibleComments(c.replies) : undefined,
+        })),
+    [isBlockedItem]
+  );
 
   const handleToggleRules = () => {
     setShowRules((prev) => {
@@ -450,29 +493,52 @@ export default function ForumScreen() {
     }
   };
 
-  // Denúncia de Discussão
+  // Denúncia ou bloqueio de discussão (Apple Guideline 1.2 UGC)
+  const submitReport = async (targetType: 'post' | 'comment', targetId: number) => {
+    try {
+      await api.post('/api/forum/report', {
+        targetType,
+        targetId,
+        reason: 'Violação das diretrizes éticas da comunidade',
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const blockItemAndAuthor = async (item: any, kind: 'post' | 'comment') => {
+    const keysToAdd = [`${kind}:${item.id}`];
+    const authorKey = getAuthorBlockKey(item);
+    if (authorKey) keysToAdd.push(authorKey);
+    const merged = Array.from(new Set([...blockedKeys, ...keysToAdd]));
+    persistBlockedKeys(merged);
+    await submitReport(kind, item.id);
+    if (kind === 'post' && activePost?.id === item.id) {
+      setActivePost(null);
+    }
+    showToast(authorKey ? 'Autor bloqueado e conteúdo ocultado. 🛡️' : 'Publicação ocultada com sucesso. 🛡️');
+  };
+
   const handleReportPost = (post: any) => {
     Alert.alert(
-      'Denunciar Discussão',
-      'Deseja enviar esta discussão para análise da moderação da Yelo?',
+      'Moderação e Segurança',
+      'Escolha como deseja agir sobre esta discussão:',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Denunciar',
-          style: 'destructive',
           onPress: async () => {
-            try {
-              await api.post('/api/forum/report', {
-                targetType: 'post',
-                targetId: post.id,
-                reason: 'Violação das diretrizes éticas da comunidade'
-              });
-              showToast('Denúncia enviada com sucesso para a moderação! 🛡️');
-            } catch (err: any) {
-              Alert.alert('Aviso', 'Denúncia já registrada ou erro ao enviar.');
-            }
-          }
-        }
+            const ok = await submitReport('post', post.id);
+            if (ok) showToast('Denúncia enviada com sucesso para a moderação! 🛡️');
+            else Alert.alert('Aviso', 'Denúncia já registrada ou erro ao enviar.');
+          },
+        },
+        {
+          text: post.isAnonymous ? 'Ocultar Conteúdo' : 'Bloquear Autor',
+          style: 'destructive',
+          onPress: () => blockItemAndAuthor(post, 'post'),
+        },
       ]
     );
   };
@@ -844,28 +910,25 @@ export default function ForumScreen() {
     }
   };
 
-  // Denúncia de Comentário
+  // Denúncia ou bloqueio de comentário (Apple Guideline 1.2 UGC)
   const handleReportComment = (comment: ForumComment) => {
     Alert.alert(
-      'Denunciar Comentário',
-      'Deseja enviar este comentário para análise da moderação da Yelo?',
+      'Moderação e Segurança',
+      'Escolha como deseja agir sobre este comentário:',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Denunciar',
-          style: 'destructive',
           onPress: async () => {
-            try {
-              await api.post('/api/forum/report', {
-                targetType: 'comment',
-                targetId: comment.id,
-                reason: 'Violação das diretrizes éticas da comunidade',
-              });
-              showToast('Denúncia enviada com sucesso para a moderação! 🛡️');
-            } catch (err: any) {
-              Alert.alert('Aviso', 'Denúncia já registrada ou erro ao enviar.');
-            }
+            const ok = await submitReport('comment', comment.id);
+            if (ok) showToast('Denúncia enviada com sucesso para a moderação! 🛡️');
+            else Alert.alert('Aviso', 'Denúncia já registrada ou erro ao enviar.');
           },
+        },
+        {
+          text: comment.isAnonymous ? 'Ocultar Comentário' : 'Bloquear Autor',
+          style: 'destructive',
+          onPress: () => blockItemAndAuthor(comment, 'comment'),
         },
       ]
     );
@@ -966,6 +1029,15 @@ export default function ForumScreen() {
   const isMainAiAllowed = isUserAdmin && !isDiscussionClosed;
   const detailCat = activePost ? getCategoryStyle(activePost.category) : { bg: '#F1F5F9', text: '#475569', border: '#E2E8F0' };
   const remainingComments = activePost?.commentCount ? Math.max(0, activePost.commentCount - comments.length) : 0;
+
+  const visiblePosts = useMemo(
+    () => posts.filter((p) => !isBlockedItem(p, 'post')),
+    [posts, isBlockedItem]
+  );
+  const visibleComments = useMemo(
+    () => filterVisibleComments(comments),
+    [comments, filterVisibleComments]
+  );
 
   const threadContext = useMemo<ThreadContextValue>(() => ({
     isAdmin: isUserAdmin,
@@ -1205,10 +1277,10 @@ export default function ForumScreen() {
                       <View style={{ paddingVertical: 24, alignItems: 'center' }}>
                         <ActivityIndicator color="#1B4332" />
                       </View>
-                    ) : comments.length === 0 ? (
+                    ) : visibleComments.length === 0 ? (
                       <Text style={styles.emptyThreadText}>Seja o primeiro a comentar nesta discussão!</Text>
                     ) : (
-                      comments.map((comment) => <CommentNode key={comment.id} comment={comment} depth={0} />)
+                      visibleComments.map((comment) => <CommentNode key={comment.id} comment={comment} depth={0} />)
                     )}
                   </View>
                 </ThreadContext.Provider>
@@ -1475,23 +1547,56 @@ export default function ForumScreen() {
               <ActivityIndicator color="#1B4332" size="large" />
               <Text style={styles.loaderText}>Carregando discussões da comunidade...</Text>
             </View>
-          ) : posts.length === 0 ? (
+          ) : visiblePosts.length === 0 ? (
             <View style={styles.emptyBox}>
               <Feather name="message-circle" size={42} color="#cbd5e1" />
               <Text style={styles.emptyTitle}>Nenhuma discussão encontrada</Text>
               <Text style={styles.emptySubtitle}>
-                Seja o primeiro a iniciar uma conversa com os colegas sobre este tema!
+                {blockedKeys.length > 0
+                  ? 'Alguns conteúdos foram ocultados por você. Toque abaixo para limpar seus bloqueios se desejar.'
+                  : 'Seja o primeiro a iniciar uma conversa com os colegas sobre este tema!'}
               </Text>
-              <TouchableOpacity 
-                onPress={() => setModalVisible(true)}
-                style={styles.btnEmptyCreate}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.btnEmptyCreateText}>Criar Nova Discussão</Text>
-              </TouchableOpacity>
+              {blockedKeys.length > 0 ? (
+                <TouchableOpacity
+                  onPress={() => persistBlockedKeys([])}
+                  style={styles.btnEmptyCreate}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.btnEmptyCreateText}>Exibir conteúdos bloqueados ({blockedKeys.length})</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity 
+                  onPress={() => setModalVisible(true)}
+                  style={styles.btnEmptyCreate}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.btnEmptyCreateText}>Criar Nova Discussão</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
-            posts.map((post) => {
+            <>
+              {blockedKeys.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => persistBlockedKeys([])}
+                  activeOpacity={0.8}
+                  style={{
+                    alignSelf: 'flex-end',
+                    marginBottom: 10,
+                    backgroundColor: '#F1F5F9',
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 999,
+                    borderWidth: 1,
+                    borderColor: '#CBD5E1',
+                  }}
+                >
+                  <Text style={{ fontFamily: 'Inter_600SemiBold', fontSize: 11.5, color: '#475569' }}>
+                    Reexibir {blockedKeys.length} bloqueio{blockedKeys.length > 1 ? 's' : ''}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {visiblePosts.map((post) => {
               const isVoted = !!post.supportedByMe;
               const authorName = post.isAnonymous ? 'Anônimo' : (post.authorName || 'Psicólogo(a)');
               const authorPhoto = post.isAnonymous ? null : (post.authorPhoto || post.psychologist?.fotoUrl);
@@ -1646,7 +1751,8 @@ export default function ForumScreen() {
                   </View>
                 </View>
               );
-            })
+            })}
+            </>
           )}
 
           {/* Botão Mostrar Mais */}

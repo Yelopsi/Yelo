@@ -21,10 +21,10 @@ export default function MapaSite() {
       links: [
         { label: 'Início', route: '/' },
         { label: 'Match com Psicólogo', route: '/questionario' },
-        { label: 'Pergunte a um Especialista', route: '/comunidade' },
+        { label: 'Pergunte a um Especialista', route: '/perguntas' },
         { label: 'Blog e Artigos', route: '/blog' },
         { label: 'Para Psicólogos (Plataforma)', route: '/sobre_psis' },
-        { label: 'Sobre a Yelo', route: '/sobre' },
+        { label: 'Rede para Psicólogos', route: '/profissionais' },
         { label: 'Dúvidas Frequentes (FAQ)', route: '/faq' },
         { label: 'Contato', route: '/contato' }
       ]
@@ -33,7 +33,7 @@ export default function MapaSite() {
       titulo: 'Nossos Profissionais',
       desc: 'Conheça nossa rede de especialistas parceiros.',
       links: [
-        { label: 'Buscar Profissionais', route: '/busca' }
+        { label: 'Encontrar Psicólogo (Match)', route: '/questionario' }
       ]
     },
     {

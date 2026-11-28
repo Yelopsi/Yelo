@@ -173,6 +173,7 @@ const SESSAO_GRATIS_TEMPOS = ['15 minutos', '20 minutos', '30 minutos'];
 
 export default function MeuPerfilScreen() {
   const router = useRouter();
+  const { signOut } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -491,8 +492,8 @@ export default function MeuPerfilScreen() {
         statusPerfil === 'pending'
           ? 'Complete seu perfil (incluindo CPF) para liberar sua URL pública.'
           : planoAtual === 'Comunidade' && !isExempt
-            ? 'Seu perfil está no Plano Comunidade (Grátis): oculto das buscas e sem receber cliques de pacientes. Ative o Plano Essencial para liberar sua página pública.'
-            : 'Seu perfil está inativo ou pausado. Reative sua assinatura para liberar sua página pública.';
+            ? 'Seu perfil está no Plano Comunidade (Gratuito) e oculto das buscas. A URL pública é liberada com o Plano Essencial ativo.'
+            : 'Seu perfil público está inativo ou pausado no momento.';
       showToast(msg);
       return;
     }
@@ -509,8 +510,8 @@ export default function MeuPerfilScreen() {
         statusPerfil === 'pending'
           ? 'Complete seu perfil (incluindo CPF) para liberar sua URL pública.'
           : planoAtual === 'Comunidade' && !isExempt
-            ? 'Seu perfil está no Plano Comunidade (Grátis): oculto das buscas e sem receber cliques de pacientes. Ative o Plano Essencial para liberar sua página pública.'
-            : 'Seu perfil está inativo ou pausado. Reative sua assinatura para liberar sua página pública.';
+            ? 'Seu perfil está no Plano Comunidade (Gratuito) e oculto das buscas. A URL pública é liberada com o Plano Essencial ativo.'
+            : 'Seu perfil público está inativo ou pausado no momento.';
       showToast(msg);
       return;
     }
@@ -722,6 +723,7 @@ export default function MeuPerfilScreen() {
               await api.delete('/api/psychologists/me', {
                 data: { senha: senhaExcluir, motivo: motivoExcluir },
               });
+              await signOut();
               Alert.alert('Conta Excluída', 'Sua conta foi removida da plataforma.');
               router.replace('/login');
             } catch (e: any) {
@@ -1011,8 +1013,8 @@ export default function MeuPerfilScreen() {
                   }}
                 >
                   {planoAtual === 'Comunidade' && !isExempt
-                    ? 'Seu perfil não aparece nas buscas e não recebe cliques de pacientes. Toque aqui para ativar o Plano Essencial.'
-                    : 'Seu perfil está oculto nas buscas e sua URL pública está desativada. Toque aqui para reativar sua assinatura.'}
+                    ? 'Seu perfil não aparece nas buscas públicas no Plano Comunidade. Toque para conferir o status do seu plano.'
+                    : 'Seu perfil público está desativado no momento. Toque para ver detalhes do seu plano.'}
                 </Text>
               </View>
             </TouchableOpacity>

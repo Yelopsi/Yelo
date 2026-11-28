@@ -401,8 +401,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     } catch (error) {
                         console.error(error);
                         // Fallback seguro caso a API falhe
-                        const cleanPhone = (psi.telefone || '').replace(/\\D/g, '');
-                        whatsappLink = `https://wa.me/55${cleanPhone}`;
+                        const cleanPhone = (psi.telefone || '').replace(/\D/g, '');
+                        const firstName = (psi.nome || '').trim().split(' ')[0] || 'Profissional';
+                        const fallbackMsg = `Olá, ${firstName}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento.`;
+                        whatsappLink = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(fallbackMsg)}`;
                     }
 
                     const goToWhatsApp = () => {

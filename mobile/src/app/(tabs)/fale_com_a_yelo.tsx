@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Linking, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Linking, Alert, ActivityIndicator } from 'react-native';
 import YeloScrollView from '../../components/YeloScrollView';
 import NativeSelectMenu from '../../components/NativeSelectMenu';
 
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
+import api from '../../services/api';
 import { isMobileNewPricingActive } from '../../utils/pricingLaunch';
 
 const SUPORTE_ASSUNTOS = [
@@ -17,9 +19,11 @@ const SUPORTE_ASSUNTOS = [
 
 export default function FaleComAYeloScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [assunto, setAssunto] = useState('Dúvida sobre a plataforma');
   const [mensagem, setMensagem] = useState('');
+  const [sending, setSending] = useState(false);
 
   const toggleFaq = (index: number) => {
     setActiveFaq(activeFaq === index ? null : index);
@@ -27,8 +31,10 @@ export default function FaleComAYeloScreen() {
 
   const openWhatsApp = () => {
     const numeroYelo = '5511988887723';
-    const mensagem = encodeURIComponent('Olá! Sou psicólogo cadastrado na Yelo e preciso de ajuda com:');
-    Linking.openURL(`whatsapp://send?phone=${numeroYelo}&text=${mensagem}`);
+    const msg = encodeURIComponent('Olá! Sou psicólogo cadastrado na Yelo e preciso de ajuda com:');
+    Linking.openURL(`https://wa.me/${numeroYelo}?text=${msg}`).catch(() => {
+      Alert.alert('Suporte Yelo', 'Envie um e-mail para oi@yelopsi.com.br ou use o formulário abaixo.');
+    });
   };
 
   const faqs = [
@@ -37,14 +43,12 @@ export default function FaleComAYeloScreen() {
       a: "Para começar a receber pacientes, certifique-se de que seu perfil está 100% completo e verificado. Adicione horários disponíveis na sua agenda em \"Clínica\" > \"Minha Agenda\". Perfis completos e com horários aparecem com prioridade no match!"
     },
     {
-      q: "Como funciona o teste grátis?",
-      a: isMobileNewPricingActive()
-        ? "O Plano Comunidade é gratuito sem exigir cartão. Para aparecer nas buscas de pacientes, você pode testar o Plano Essencial por 7 dias grátis mediante a inclusão do cartão de crédito (a primeira cobrança só ocorre após o 7º dia)."
-        : "Você tem 7 dias para usar todas as funcionalidades da plataforma sem custo e sem precisar cadastrar um cartão de crédito. Após esse período, para continuar recebendo pacientes, você precisará escolher um dos nossos planos."
+      q: "Como funciona o Plano Comunidade e o Plano Essencial?",
+      a: "O Plano Comunidade oferece acesso gratuito às ferramentas internas da Yelo (agenda, financeiro e fórum). Já o Plano Essencial inclui visibilidade nas buscas, página pública e indicadores completos de pacientes. Você pode consultar seu status atual em \"Ajustes\" > \"Assinatura & Planos\"."
     },
     {
-      q: "Como cancelar minha assinatura?",
-      a: "Você pode cancelar a renovação automática a qualquer momento na página \"Ajustes\" > \"Assinatura & Planos\". Seu acesso continuará ativo até o final do período que já foi pago."
+      q: "Como cancelar a renovação da minha assinatura?",
+      a: "Caso possua uma assinatura ativa com renovação automática, você pode cancelar a renovação a qualquer momento em \"Ajustes\" > \"Assinatura & Planos\". Seu acesso continua até o fim do período vigente."
     },
     {
       q: "Como preencher meu perfil corretamente?",
@@ -162,17 +166,40 @@ export default function FaleComAYeloScreen() {
             </View>
 
             <TouchableOpacity
-              onPress={() => {
+              disabled={sending}
+              onPress={async () => {
+                if (sending) return;
                 if (!mensagem.trim()) {
                   Alert.alert('Atenção', 'Escreva sua mensagem antes de enviar.');
                   return;
                 }
-                setMensagem('');
-                Alert.alert('Mensagem Enviada', 'Nossa equipe recebeu sua solicitação e responderá em breve!');
+                try {
+                  setSending(true);
+                  await api.post('/api/public/contato', {
+                    nome: user?.nome || 'Psicólogo Yelo',
+                    email: user?.email || 'suporte@yelopsi.com.br',
+                    assunto,
+                    mensagem: mensagem.trim(),
+                  });
+                  setMensagem('');
+                  Alert.alert('Mensagem Enviada', 'Nossa equipe recebeu sua solicitação e responderá em breve!');
+                } catch (err: any) {
+                  Alert.alert(
+                    'Erro ao enviar',
+                    err?.response?.data?.error || 'Não foi possível enviar sua mensagem agora. Tente novamente.'
+                  );
+                } finally {
+                  setSending(false);
+                }
               }}
-              className="bg-[#1B4332] py-4 px-8 rounded-[50px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] mt-2"
+              className="bg-[#1B4332] py-4 px-8 rounded-[50px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] mt-2 items-center justify-center"
+              style={{ opacity: sending ? 0.7 : 1 }}
             >
-              <Text className="font-sans font-bold text-white text-[15px]">Enviar Mensagem</Text>
+              {sending ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text className="font-sans font-bold text-white text-[15px]">Enviar Mensagem</Text>
+              )}
             </TouchableOpacity>
           </View>
 

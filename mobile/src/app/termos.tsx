@@ -78,7 +78,10 @@ export default function Termos() {
             </View>
 
             <Text className="font-sans font-bold text-[#333] text-[16px] mb-[5px]">5.3. Da Yelo</Text>
-            <Text className="font-sans text-[#555] text-[16px] leading-[26px] mb-[20px]">A YELO compromete-se a empregar seus melhores esforços para manter a Plataforma disponível e segura, mas não garante que o serviço será ininterrupto ou livre de erros técnicos, oscilações de internet ou falhas de terceiros.</Text>
+            <Text className="font-sans text-[#555] text-[16px] leading-[26px] mb-[15px]">A YELO compromete-se a empregar seus melhores esforços para manter a Plataforma disponível e segura, mas não garante que o serviço será ininterrupto ou livre de erros técnicos, oscilações de internet ou falhas de terceiros.</Text>
+
+            <Text className="font-sans font-bold text-[#333] text-[16px] mb-[5px]">5.4. Conduta na Comunidade e Tolerância Zero (UGC)</Text>
+            <Text className="font-sans text-[#555] text-[16px] leading-[26px] mb-[20px]">A YELO adota política de tolerância zero contra conteúdos ofensivos, abusivos, discriminatórios, assédio, spam, violações ao sigilo de pacientes ou descumprimento do Código de Ética do Psicólogo nas áreas interativas da Plataforma (incluindo o Fórum e respostas públicas). Usuários podem denunciar publicações ou comentários e bloquear autores abusivos diretamente pelo aplicativo; a YELO poderá remover imediatamente conteúdos inadequados e suspender ou banir permanentemente contas infratoras.</Text>
 
             <Text className="font-title text-[#1B4332] text-[20px] mt-[10px] mb-[15px]">6. Pagamentos e Política de Cancelamento</Text>
             <View className="ml-[10px] mb-[20px]">

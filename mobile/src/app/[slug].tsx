@@ -126,7 +126,7 @@ export default function PerfilPublicoScreen() {
       // Fallback seguro nativo
       const cleanPhone = (psicologo.telefone || '').replace(/\D/g, '');
       if (cleanPhone) {
-        const fallbackMsg = `Olá, ${psicologo.nome.split(' ')[0]}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas.`;
+        const fallbackMsg = `Olá, ${psicologo.nome.split(' ')[0]}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento.`;
         const fallbackUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(fallbackMsg)}`;
         Linking.openURL(fallbackUrl);
       } else {

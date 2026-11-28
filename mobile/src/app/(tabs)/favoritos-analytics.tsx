@@ -176,9 +176,7 @@ export default function FavoritosAnalyticsScreen() {
               title="Análise de favoritos disponível no Plano Essencial"
               trialEligible={data?.trialEligible !== false}
               description={
-                data?.trialEligible === false
-                  ? 'Seu período de teste encerrou e sua conta retornou ao Plano Comunidade (Grátis), sem aparecer nas buscas nem receber cliques. Assine o Plano Essencial para destravar estes indicadores.'
-                  : 'No Plano Comunidade (Grátis), seu perfil fica oculto nas buscas e não recebe cliques ou salvamentos de novos pacientes. Ative seu teste grátis para aparecer nas buscas e destravar estes indicadores.'
+                'No Plano Comunidade (Gratuito), seu perfil fica oculto nas buscas e estes indicadores permanecem desativados. Eles são habilitados automaticamente quando o Plano Essencial está ativo em sua conta.'
               }
               peerStats={data?.peerOpportunityStats}
             />

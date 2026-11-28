@@ -22,6 +22,9 @@ export default function AjustesHubScreen() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [nome, setNome] = useState(user?.nome || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -59,9 +62,30 @@ export default function AjustesHubScreen() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!deletePassword.trim()) {
+      Alert.alert("Atenção", "Informe sua senha (ou digite EXCLUIR se entrou pelo Google) para confirmar.");
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await api.delete('/api/patients/me', { data: { senha: deletePassword } });
+      setDeleteModalVisible(false);
+      setDeletePassword('');
+      await signOut();
+      Alert.alert("Conta excluída", "Sua conta foi removida com sucesso.");
+      router.replace('/');
+    } catch (e: any) {
+      Alert.alert("Erro", e.response?.data?.error || "Não foi possível excluir sua conta.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleSupportWhatsApp = () => {
     const msg = encodeURIComponent("Olá! Sou usuário da Yelo e gostaria de tirar uma dúvida ou pedir suporte.");
-    Linking.openURL(`https://wa.me/5511999999999?text=${msg}`).catch(() => {
+    Linking.openURL(`https://wa.me/5511988887723?text=${msg}`).catch(() => {
       Alert.alert("Suporte", "Você também pode nos enviar um e-mail em suporte@yelopsi.com.br");
     });
   };
@@ -124,16 +148,30 @@ export default function AjustesHubScreen() {
           <Feather name="chevron-right" size={20} color="#ccc" />
         </TouchableOpacity>
 
-        {/* Card Termos e Privacidade */}
+        {/* Card Termos de Uso e Política de Privacidade */}
         <TouchableOpacity 
-          onPress={() => Linking.openURL('https://www.yelopsi.com.br/termos-de-uso')}
+          onPress={() => router.push('/termos')}
           className="bg-white rounded-[20px] p-[20px] flex-row items-center border border-[#f0f0f0] shadow-sm"
+        >
+          <View className="w-[50px] h-[50px] bg-[#e0f2fe] rounded-[16px] items-center justify-center mr-[15px]">
+            <Feather name="file-text" size={22} color="#0284c7" />
+          </View>
+          <View className="flex-1">
+            <Text className="font-title text-[#333] text-[17px] mb-[2px]">Termos de Uso</Text>
+            <Text className="font-sans text-[#666] text-[13px] leading-[18px]">Leia as regras e condições da plataforma</Text>
+          </View>
+          <Feather name="chevron-right" size={20} color="#ccc" />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          onPress={() => router.push('/privacidade')}
+          className="bg-white rounded-[20px] p-[20px] flex-row items-center border border-[#f0f0f0] shadow-sm mt-[10px]"
         >
           <View className="w-[50px] h-[50px] bg-[#e0f2fe] rounded-[16px] items-center justify-center mr-[15px]">
             <Feather name="shield" size={22} color="#0284c7" />
           </View>
           <View className="flex-1">
-            <Text className="font-title text-[#333] text-[17px] mb-[2px]">Termos & Privacidade</Text>
+            <Text className="font-title text-[#333] text-[17px] mb-[2px]">Política de Privacidade</Text>
             <Text className="font-sans text-[#666] text-[13px] leading-[18px]">Conheça nossa política de proteção e sigilo</Text>
           </View>
           <Feather name="chevron-right" size={20} color="#ccc" />
@@ -151,6 +189,24 @@ export default function AjustesHubScreen() {
             <Text className="font-title text-[#e63946] text-[17px] mb-[2px]">Encerrar Sessão</Text>
             <Text className="font-sans text-[#666] text-[13px] leading-[18px]">Sair da conta neste dispositivo</Text>
           </View>
+        </TouchableOpacity>
+
+        {/* Card Excluir Conta */}
+        <TouchableOpacity
+          onPress={() => {
+            setDeletePassword('');
+            setDeleteModalVisible(true);
+          }}
+          className="bg-white rounded-[20px] p-[20px] flex-row items-center border border-[#fee2e2] shadow-sm mt-[10px]"
+        >
+          <View className="w-[50px] h-[50px] bg-[#fef2f2] rounded-[16px] items-center justify-center mr-[15px]">
+            <Feather name="trash-2" size={22} color="#b91c1c" />
+          </View>
+          <View className="flex-1">
+            <Text className="font-title text-[#b91c1c] text-[17px] mb-[2px]">Excluir Minha Conta</Text>
+            <Text className="font-sans text-[#666] text-[13px] leading-[18px]">Apagar permanentemente seus dados da Yelo</Text>
+          </View>
+          <Feather name="chevron-right" size={20} color="#fca5a5" />
         </TouchableOpacity>
       </View>
 
@@ -193,6 +249,58 @@ export default function AjustesHubScreen() {
                   <ActivityIndicator color="white" size="small" />
                 ) : (
                   <Text className="font-sans font-bold text-white text-[14px]">Salvar</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Exclusão de Conta */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => { if (!isDeleting) setDeleteModalVisible(false); }}
+      >
+        <View className="flex-1 bg-black/60 items-center justify-center p-6">
+          <View className="bg-white rounded-[24px] p-6 w-full max-w-[420px] shadow-xl">
+            <Text className="font-title text-[#b91c1c] text-[22px] mb-2">Excluir Conta</Text>
+            <Text className="font-sans text-[#555] text-[14px] leading-[20px] mb-4">
+              Esta ação é permanente e removerá todos os seus dados, avaliações e mensagens da plataforma.
+            </Text>
+
+            <Text className="font-sans font-bold text-[#444] text-[13px] mb-1.5">
+              Confirme sua senha atual (ou digite EXCLUIR se entrou com Google)
+            </Text>
+            <TextInput
+              value={deletePassword}
+              onChangeText={setDeletePassword}
+              placeholder="Sua senha"
+              secureTextEntry
+              autoCapitalize="none"
+              editable={!isDeleting}
+              className="bg-[#f8f9fa] border border-[#e0e0e0] rounded-[14px] px-4 py-3 font-sans text-[15px] text-[#333] mb-5"
+            />
+
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => setDeleteModalVisible(false)}
+                disabled={isDeleting}
+                className="flex-1 border border-[#ccc] rounded-full py-3 items-center justify-center"
+              >
+                <Text className="font-sans font-bold text-[#666] text-[14px]">Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleDeleteAccount}
+                disabled={isDeleting}
+                className="flex-1 bg-[#b91c1c] rounded-full py-3 items-center justify-center"
+              >
+                {isDeleting ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <Text className="font-sans font-bold text-white text-[14px]">Excluir</Text>
                 )}
               </TouchableOpacity>
             </View>

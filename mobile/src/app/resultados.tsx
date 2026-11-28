@@ -55,7 +55,7 @@ export default function ResultadosScreen() {
       const cleanPhone = String(profile.telefone || '').replace(/\D/g, '');
       if (cleanPhone) {
         const firstName = String(profile.nome || 'Profissional').split(' ')[0];
-        const fallbackMsg = `Olá, ${firstName}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas.`;
+        const fallbackMsg = `Olá, ${firstName}! Encontrei seu perfil na Yelo e gostaria de tirar algumas dúvidas sobre como funciona o seu atendimento.`;
         await Linking.openURL(`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(fallbackMsg)}`);
       } else if (profile.slug) {
         router.push(`/${profile.slug}` as any);

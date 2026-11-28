@@ -657,7 +657,7 @@ export default function Index() {
           {/* ============================================================ */}
           <View style={{ backgroundColor: '#fdfaf6', borderTopWidth: 1, borderTopColor: '#e9ecef', paddingVertical: 40, paddingHorizontal: 24, alignItems: 'center' }}>
             <Text className="font-sans text-[14px] text-[#666] text-center leading-[22px] max-w-[650px]">
-              Se você está em crise ou qualquer outra pessoa pode estar em perigo, <Text className="font-bold text-[#333]">não use este aplicativo</Text>. Ligue <Text className="font-bold text-[#1B4332]">188 (CVV)</Text> para apoio emocional gratuito 24h ou <Text onPress={() => router.push('/ajuda')} className="text-[#007bff] underline">estes recursos</Text> podem fornecer ajuda imediata.
+              Se você está em crise ou qualquer outra pessoa pode estar em perigo, <Text className="font-bold text-[#333]">não use este aplicativo</Text>. Ligue <Text className="font-bold text-[#1B4332]">188 (CVV)</Text> para apoio emocional gratuito 24h ou <Text onPress={() => router.push('/ajuda_mulher')} className="text-[#007bff] underline">estes recursos</Text> podem fornecer ajuda imediata.
             </Text>
           </View>
 
