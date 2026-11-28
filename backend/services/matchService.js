@@ -241,6 +241,13 @@ const calculateSimilarity = (psy, preferences = {}, priceRange, referencePrice =
 };
 
 // --- L3: FAIRNESS (MATCH V6 CAPPING) ---
+const isPaidSubscriber = (psy) => {
+    if (!psy) return false;
+    const isVip = psy.is_exempt === true || String(psy.is_exempt).toLowerCase() === 'true';
+    const hasSub = !!(psy.subscriptionId) || (parseInt(psy.subscription_payments_count || 0, 10) > 0);
+    return isVip || hasSub;
+};
+
 const applyFairness = (scoredCandidates, fairShare) => {
     return scoredCandidates.map((c) => {
         try {
@@ -256,9 +263,7 @@ const applyFairness = (scoredCandidates, fairShare) => {
             let finalScore = c.rawMatchScore;
 
             // Identificação precisa do perfil (Trial vs Pagante) alinhada com o KPI do sistema
-            const isVip = c.is_exempt === true || String(c.is_exempt).toLowerCase() === 'true';
-            const hasSub = !!(c.subscriptionId) || (parseInt(c.subscription_payments_count || 0, 10) > 0);
-            const isPaid = isVip || hasSub; 
+            const isPaid = isPaidSubscriber(c);
             const isTrial = !isPaid && (c.planExpiresAt && new Date(c.planExpiresAt) > new Date());
 
             const conversoes = c.conversoes30d || 0;
@@ -391,15 +396,28 @@ exports.calculateMatches = async (preferences = {}) => {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
         debugLog.push(`[${Date.now() - startTime}ms] 📊 Carregando CRM e calculando Leads Válidos (30 dias)...`);
+        // Para pagantes, só contabiliza leads/conversões a partir de subscribedAt/firstPaidAt
+        // para que o fechamento obtido no trial não bloqueie o primeiro mês pago.
         const logs30d = await db.sequelize.query(`
             SELECT 
-                "psychologistId", 
+                w."psychologistId", 
                 COUNT(*) as total_clicks,
-                SUM(CASE WHEN "dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as conversoes,
-                COUNT(*) - SUM(CASE WHEN "contactReceived" = false OR "dealClosed" IN ('no_contact', 'ghosted', 'wpp_issue') THEN 1 ELSE 0 END) as valid_leads
-            FROM "WhatsAppClickLogs" 
-            WHERE "createdAt" >= :thirtyDaysAgo 
-            GROUP BY "psychologistId"
+                SUM(CASE WHEN w."dealClosed" IN ('yes', 'started') THEN 1 ELSE 0 END) as conversoes,
+                COUNT(*) - SUM(CASE WHEN w."contactReceived" = false OR w."dealClosed" IN ('no_contact', 'ghosted', 'wpp_issue') THEN 1 ELSE 0 END) as valid_leads
+            FROM "WhatsAppClickLogs" w
+            LEFT JOIN "Psychologists" p ON p.id = w."psychologistId"
+            WHERE w."createdAt" >= :thirtyDaysAgo
+              AND (
+                p.id IS NULL
+                OR NOT (
+                  COALESCE(p.is_exempt, false) = true
+                  OR COALESCE(p."subscriptionId", '') <> ''
+                  OR COALESCE(p.subscription_payments_count, 0) > 0
+                )
+                OR COALESCE(p."subscribedAt", p."firstPaidAt") IS NULL
+                OR w."createdAt" >= COALESCE(p."subscribedAt", p."firstPaidAt")
+              )
+            GROUP BY w."psychologistId"
         `, { replacements: { thirtyDaysAgo: thirtyDaysAgo }, type: db.sequelize.QueryTypes.SELECT });
         
         const psyStats = {};
@@ -657,6 +675,7 @@ exports.isEligibleForMatch = (psy) => {
 exports.parsePriceRange = parsePriceRange;
 exports.calculateSimilarity = calculateSimilarity;
 exports.getPlatformReferencePrice = getPlatformReferencePrice;
+exports.isPaidSubscriber = isPaidSubscriber;
 exports._resetReferencePriceCache = () => {
     cachedReferencePrice = { value: null, source: null, updatedAt: 0 };
 };

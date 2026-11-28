@@ -1,5 +1,161 @@
 [
   {
+    "id": "change-git-001494f0",
+    "date": "2026-11-28T16:35:07.000Z",
+    "commit": "001494f0",
+    "author": "Anderson",
+    "title": "Novo: Prepare store companion mode and preserve WhatsApp CTA copy (mobile,whatsapp)",
+    "category": "CRM & Mensageria",
+    "badgeColor": "#8b5cf6",
+    "status": "Em Produção",
+    "summary": "prepare store companion mode and preserve WhatsApp CTA copy",
+    "description": "Commit registrado no repositório: \"feat(mobile,whatsapp): prepare store companion mode and preserve WhatsApp CTA copy\". Arquivos modificados: backend/controllers/whatsappController.js, mobile/app.json, mobile/src/app/(admin)/configuracoes.tsx, mobile/src/app/(paciente)/ajustes.tsx, mobile/src/app/(tabs)/ajustes.tsx (+19 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #001494f0"
+    },
+    "after": {
+      "nova_versao": "prepare store companion mode and preserve WhatsApp CTA copy"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/whatsappController.js",
+      "mobile/app.json",
+      "mobile/src/app/(admin)/configuracoes.tsx",
+      "mobile/src/app/(paciente)/ajustes.tsx",
+      "mobile/src/app/(tabs)/ajustes.tsx",
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "mobile/src/app/(tabs)/fale_com_a_yelo.tsx",
+      "mobile/src/app/(tabs)/favoritos-analytics.tsx",
+      "mobile/src/app/(tabs)/forum.tsx",
+      "mobile/src/app/(tabs)/index.tsx",
+      "mobile/src/app/(tabs)/meu_perfil.tsx",
+      "mobile/src/app/[slug].tsx",
+      "mobile/src/app/cadastro.tsx",
+      "mobile/src/app/faq.tsx",
+      "mobile/src/app/ferramentas/calculadora-psi.tsx",
+      "mobile/src/app/index.tsx",
+      "mobile/src/app/login.tsx",
+      "mobile/src/app/mapa_site.tsx",
+      "mobile/src/app/resultados.tsx",
+      "mobile/src/app/termos.tsx",
+      "mobile/src/components/ComunidadeLockedCard.tsx",
+      "public/js/psi_perfil_publico.js",
+      "security/reports/gate_report.json",
+      "views/resultados.ejs"
+    ]
+  },
+  {
+    "id": "change-git-58e63042",
+    "date": "2026-11-28T16:01:56.000Z",
+    "commit": "58e63042",
+    "author": "Anderson",
+    "title": "Novo: Adicionar alerta programado de validacao da virada Jan/2027 (02/01 a 08/01) (admin,mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "adicionar alerta programado de validacao da virada Jan/2027 (02/01 a 08/01)",
+    "description": "Commit registrado no repositório: \"feat(admin,mobile): adicionar alerta programado de validacao da virada Jan/2027 (02/01 a 08/01)\". Arquivos modificados: admin/admin_visao_geral.html, admin/admin_visao_geral.js, backend/jobs/scheduler.js, mobile/src/app/(admin)/index.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #58e63042"
+    },
+    "after": {
+      "nova_versao": "adicionar alerta programado de validacao da virada Jan/2027 (02/01 a 08/01)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "admin/admin_visao_geral.html",
+      "admin/admin_visao_geral.js",
+      "backend/jobs/scheduler.js",
+      "mobile/src/app/(admin)/index.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-ffe954ed",
+    "date": "2026-11-28T15:35:09.000Z",
+    "commit": "ffe954ed",
+    "author": "Anderson",
+    "title": "Correção: Limitar a 10 avisos iniciais para novos cadastros e marcar todos lidos em 1 chamada (read-all) (avisos,mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "limitar a 10 avisos iniciais para novos cadastros e marcar todos lidos em 1 chamada (read-all)",
+    "description": "Commit registrado no repositório: \"fix(avisos,mobile): limitar a 10 avisos iniciais para novos cadastros e marcar todos lidos em 1 chamada (read-all)\". Arquivos modificados: backend/controllers/psiDashboardController.js, backend/routes/psychologistRoutes.js, mobile/src/app/(tabs)/avisos.tsx, public/psi/psi_avisos.html, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #ffe954ed"
+    },
+    "after": {
+      "nova_versao": "limitar a 10 avisos iniciais para novos cadastros e marcar todos lidos em 1 chamada (read-all)"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/controllers/psiDashboardController.js",
+      "backend/routes/psychologistRoutes.js",
+      "mobile/src/app/(tabs)/avisos.tsx",
+      "public/psi/psi_avisos.html",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-48ee64cc",
+    "date": "2026-11-28T15:23:27.000Z",
+    "commit": "48ee64cc",
+    "author": "Anderson",
+    "title": "Correção: Adicionar fallback invoiceUrl no checkout PIX em assinatura.tsx (mobile)",
+    "category": "Segurança & Infra",
+    "badgeColor": "#64748b",
+    "status": "Em Produção",
+    "summary": "adicionar fallback invoiceUrl no checkout PIX em assinatura.tsx",
+    "description": "Commit registrado no repositório: \"fix(mobile): adicionar fallback invoiceUrl no checkout PIX em assinatura.tsx\". Arquivos modificados: mobile/src/app/(tabs)/assinatura.tsx, security/reports/gate_report.json.",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #48ee64cc"
+    },
+    "after": {
+      "nova_versao": "adicionar fallback invoiceUrl no checkout PIX em assinatura.tsx"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "mobile/src/app/(tabs)/assinatura.tsx",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
+    "id": "change-git-b9eacae6",
+    "date": "2026-11-28T15:12:22.000Z",
+    "commit": "b9eacae6",
+    "author": "Anderson",
+    "title": "Correção: Manter fluxo pre-2027 identico a main, preservar invoiceUrl PIX e blindar SQL null-safe (asaas,cron,match)",
+    "category": "Billing & Asaas",
+    "badgeColor": "#10b981",
+    "status": "Em Produção",
+    "summary": "manter fluxo pre-2027 identico a main, preservar invoiceUrl PIX e blindar SQL null-safe",
+    "description": "Commit registrado no repositório: \"fix(asaas,cron,match): manter fluxo pre-2027 identico a main, preservar invoiceUrl PIX e blindar SQL null-safe\". Arquivos modificados: backend/.data/system_changelog.json, backend/controllers/paymentController.js, backend/controllers/subscriptionController.js, backend/data/system_changelog.json, backend/jobs/cronScheduler.js (+5 arquivos).",
+    "rationale": "Atualização contínua implementada na branch principal para evolução e estabilidade da plataforma.",
+    "before": {
+      "estado_anterior": "Versão anterior ao commit #b9eacae6"
+    },
+    "after": {
+      "nova_versao": "manter fluxo pre-2027 identico a main, preservar invoiceUrl PIX e blindar SQL null-safe"
+    },
+    "metricsToCompare": [],
+    "filesChanged": [
+      "backend/.data/system_changelog.json",
+      "backend/controllers/paymentController.js",
+      "backend/controllers/subscriptionController.js",
+      "backend/data/system_changelog.json",
+      "backend/jobs/cronScheduler.js",
+      "backend/routes/publicRoutes.js",
+      "backend/routes/viewRoutes.js",
+      "backend/services/matchService.js",
+      "backend/services/paymentStateService.js",
+      "security/reports/gate_report.json"
+    ]
+  },
+  {
     "id": "change-git-fd0c0802",
     "date": "2026-11-28T01:22:09.000Z",
     "commit": "fd0c0802",
